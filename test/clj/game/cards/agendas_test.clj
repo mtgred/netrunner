@@ -1,6 +1,7 @@
 (ns game.cards.agendas-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -9,41 +10,34 @@
 (deftest ^{:card-title "15-minutes"}
   fifteen-minutes
   ;; 15 Minutes - check if it works correctly from both sides
-)
-
-(deftest fifteen-minutes-in-runner-score-area
-    ;; in runner score area
-    (do-game
-      (new-game {:corp {:hand ["15 Minutes"]}})
-      (play-from-hand state :corp "15 Minutes" "New remote")
-      (take-credits state :corp)
-      ;; use 15 minutes to take it away from runner
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Steal")
-      (take-credits state :runner)
-      (is (= 1 (:agenda-point (get-runner))))
-      (is (= 1 (count (:scored (get-runner)))))
-      (let [fifm (first (:scored (get-runner)))]
-        (is (= 3 (:click (get-corp))))
-        (is (= 1 (count (:abilities (refresh fifm)))))
-        (card-ability state :corp (refresh fifm) 0)
-        (is (zero? (:agenda-point (get-runner))))
-        (is (zero? (count (:scored (get-runner))))))
-      (is (find-card "15 Minutes" (:deck (get-corp))))))
-
-(deftest fifteen-minutes-in-corp-score-area
-    ;; in corp score area
-    (do-game
-      (new-game {:corp {:hand ["15 Minutes"]}})
-      (play-and-score state "15 Minutes")
-      (is (= 1 (:agenda-point (get-corp))))
-      (is (= 1 (count (:scored (get-corp)))))
-      (let [fifm (first (:scored (get-corp)))]
-        (is (= 1 (count (:abilities (refresh fifm)))))
-        (card-ability state :corp (refresh fifm) 0)
-        (is (zero? (:agenda-point (get-corp))))
-        (is (zero? (count (:scored (get-corp))))))
-      (is (find-card "15 Minutes" (:deck (get-corp))))))
+  (do-game
+    (new-game {:corp {:hand ["15 Minutes"]}})
+    (play-from-hand state :corp "15 Minutes" "New remote")
+    (take-credits state :corp)
+    ;; use 15 minutes to take it away from runner
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (is (= 1 (:agenda-point (get-runner))))
+    (is (= 1 (count (:scored (get-runner)))))
+    (let [fifm (first (:scored (get-runner)))]
+      (is (= 3 (:click (get-corp))))
+      (is (= 1 (count (:abilities (refresh fifm)))))
+      (card-ability state :corp (refresh fifm) 0)
+      (is (zero? (:agenda-point (get-runner))))
+      (is (zero? (count (:scored (get-runner))))))
+    (is (find-card "15 Minutes" (:deck (get-corp)))))
+  (do-game
+    (new-game {:corp {:hand ["15 Minutes"]}})
+    (play-and-score state "15 Minutes")
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 1 (count (:scored (get-corp)))))
+    (let [fifm (first (:scored (get-corp)))]
+      (is (= 1 (count (:abilities (refresh fifm)))))
+      (card-ability state :corp (refresh fifm) 0)
+      (is (zero? (:agenda-point (get-corp))))
+      (is (zero? (count (:scored (get-corp))))))
+    (is (find-card "15 Minutes" (:deck (get-corp))))))
 
 (deftest above-the-law
   ;; Above the Law
@@ -56,6 +50,7 @@
      (play-and-score state "Above the Law")
      (click-card state :corp "Armitage Codebusting")
      (is (find-card "Armitage Codebusting" (:discard (get-runner))) "Armitage Codebusting is trashed")))
+
 
 (deftest accelerated-beta-test
   ;; Accelerated Beta Test
@@ -478,11 +473,12 @@
     (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
     (is (= 1 (count-bad-pub state)) "Should gain 1 bad publicity")
-    (play-and-score state "Bifrost Array")
-    (click-prompt state :corp "Yes")
-    (click-card state :corp "Hostile Takeover")
-    (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
-    (is (= 2 (count-bad-pub state)) "Should gain 1 bad publicity")))
+    (let [ht-scored (get-scored state :corp 0)]
+      (play-and-score state "Bifrost Array")
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Hostile Takeover")
+      (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
+      (is (= 2 (count-bad-pub state)) "Should gain 1 bad publicity"))))
 
 (deftest brain-rewiring
   ;; Brain Rewiring
@@ -884,7 +880,11 @@
 
 (deftest degree-mill
   ;; Degree Mill
-  (do-game
+)
+
+(deftest degree-mill-basic-behavior
+    ;; Basic behavior
+    (do-game
       (new-game {:corp {:deck [(qty "Degree Mill" 2)]}
                  :runner {:deck ["Ice Analyzer" "All-nighter" "Hunting Grounds"]}})
       (play-from-hand state :corp "Degree Mill" "New remote")
@@ -1174,7 +1174,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (core/lose state :corp :credit (:credit (get-corp)))
-        (core/lose-tags state :runner (core/make-eid state) tag)))))
+        (core/lose-tags state :runner (game.core.eid/make-eid state) tag)))))
 
 (deftest executive-retreat
   ;; Executive Retreat
@@ -1635,7 +1635,7 @@
           iw (get-ice state :hq 0)]
       (is (zero? (get-counters (refresh hr) :advancement)) "Hollywood Renovation should start with 0 advancement tokens")
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should start with 0 advancement tokens")
-      (dotimes [_ 5]
+      (dotimes [n 5]
         (advance state (refresh hr))
         (click-card state :corp (refresh iw)))
       (is (= 5 (get-counters (refresh hr) :advancement)) "Hollywood Renovation should gain 5 advancement tokens")
@@ -1922,7 +1922,11 @@
 
 (deftest longevity-serum
   ;; Longevity Serum
-  (do-game
+)
+
+(deftest longevity-serum-basic-behavior
+    ;; Basic behavior
+    (do-game
       (new-game {:corp {:hand ["Longevity Serum" "Hedge Fund" "IPO" "Afshar"]
                         :discard ["Ice Wall" "Fire Wall" "Hostile Takeover" "Prisec"]}})
       (play-and-score state "Longevity Serum")
@@ -2304,7 +2308,7 @@
     (play-from-hand state :corp "New Construction" "New remote")
     (let [nc (get-content state :remote1 0)]
       (is (zero? (get-counters (refresh nc) :advancement)))
-      (dotimes [_ 4]
+      (dotimes [n 4]
         (advance state (refresh nc))
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Commercial Bankers Group" (:hand (get-corp)))))
@@ -2568,7 +2572,7 @@
       (card-ability state :corp psf-scored 0)
       (is (= 1 (count (:discard (get-runner)))))
       (take-credits state :runner)
-      (dotimes [_ 3]
+      (dotimes [n 3]
         (card-ability state :corp psf-scored 0))
       (is (= 3 (count (:discard (get-runner)))))
       (is (= :corp (:winner @state)) "Corp wins")
@@ -3659,7 +3663,7 @@
     (starting-hand state :corp (vec (cons "Successful Field Test" (repeat 10 "Ice Wall"))))
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (play-and-score state "Successful Field Test")
-    (dotimes [_ 10]
+    (dotimes [n 10]
       (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
       (click-prompt state :corp "HQ"))
     (is (= 5 (:credit (get-corp))) "Should still have 5 credits")
@@ -3896,7 +3900,12 @@
 
 (deftest transport-monopoly
   ;; Transport Monopoly
-  (do-game
+   ; accessed Hedge Fund
+)
+
+(deftest transport-monopoly-basic-functionality
+    ;; Basic functionality
+    (do-game
       (new-game {:corp {:deck ["Transport Monopoly" "Hedge Fund"]}
                  :runner {:deck [(qty "Dirty Laundry" 3)]}})
       (play-and-score state "Transport Monopoly")
@@ -3914,8 +3923,7 @@
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-prompt state :runner "HQ")
                            (run-continue state)
-                           (click-prompt state :runner "No action")))) ; accessed Hedge Fund
-)
+                           (click-prompt state :runner "No action")))))
 
 (deftest transport-monopoly-omar-interaction
     ;; Omar interaction
@@ -4136,25 +4144,29 @@
 
 (deftest voting-machine-initiative
   ;; Voting Machine Initiative
-  (do-game
-    (new-game {:corp {:deck ["Voting Machine Initiative"]}})
-    (letfn [(vmi-test [vmi choice counter]
-              (let [diff (if (= "Yes" choice) 1 0)]
-                (is (= counter (get-counters (refresh vmi) :agenda)))
-                (is (= 4 (:click (get-runner))))
-                (click-prompt state :corp choice)
-                (is (= (- 4 diff) (:click (get-runner))))
-                (is (= (- counter diff) (get-counters (refresh vmi) :agenda)))
-                (take-credits state :runner)
-                (take-credits state :corp)))]
-      (play-and-score state "Voting Machine Initiative")
-      (take-credits state :corp)
-      (let [vmi-scored (get-scored state :corp 0)]
-        (vmi-test vmi-scored "Yes" 3)
-        (vmi-test vmi-scored "No" 2)
-        (vmi-test vmi-scored "Yes" 2)
-        (vmi-test vmi-scored "Yes" 1)
-        (is (empty (:prompt (get-corp))) "No prompt as there are no agenda counters left")))))
+)
+
+(deftest voting-machine-initiative-voting-machine-initiative
+    ;; Voting Machine Initiative
+    (do-game
+      (new-game {:corp {:deck ["Voting Machine Initiative"]}})
+      (letfn [(vmi-test [vmi choice counter]
+                (let [diff (if (= "Yes" choice) 1 0)]
+                  (is (= counter (get-counters (refresh vmi) :agenda)))
+                  (is (= 4 (:click (get-runner))))
+                  (click-prompt state :corp choice)
+                  (is (= (- 4 diff) (:click (get-runner))))
+                  (is (= (- counter diff) (get-counters (refresh vmi) :agenda)))
+                  (take-credits state :runner)
+                  (take-credits state :corp)))]
+        (play-and-score state "Voting Machine Initiative")
+        (take-credits state :corp)
+        (let [vmi-scored (get-scored state :corp 0)]
+          (vmi-test vmi-scored "Yes" 3)
+          (vmi-test vmi-scored "No" 2)
+          (vmi-test vmi-scored "Yes" 2)
+          (vmi-test vmi-scored "Yes" 1)
+          (is (empty (:prompt (get-corp))) "No prompt as there are no agenda counters left")))))
 
 (deftest vulcan-coverup
   ;; Vulcan Coverup
