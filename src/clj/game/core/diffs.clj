@@ -273,7 +273,7 @@
         install-list (:install-list corp)]
     (-> (player-summary corp state side corp-player? corp-keys)
         (update :deck deck-summary corp-player? corp)
-        (update :hand hand-summary state corp-player? side corp)
+        (update :hand hand-summary state corp-player? :corp corp)
         (update :discard discard-summary state corp-player? side corp)
         (assoc
           :deck-count (count (:deck corp))
@@ -303,7 +303,7 @@
         runnable-list (:runnable-list runner)]
     (-> (player-summary runner state side runner-player? runner-keys)
         (update :deck deck-summary runner-player? runner)
-        (update :hand hand-summary state runner-player? side runner)
+        (update :hand hand-summary state runner-player? :runner runner)
         (update :discard prune-cards)
         (assoc
           :deck-count (count (:deck runner))
@@ -428,8 +428,8 @@
   (let [spectator-hands? (-> stripped-state :options :spectatorhands)]
     (-> stripped-state
         (update-in [:corp :discard] spectator-discard state spectator-hands?)
-        (update-in [:corp :hand] #(if spectator-hands? % []))
-        (update-in [:runner :hand] #(if spectator-hands? % [])))))
+        (update-in [:corp :hand] #(if (or spectator-hands? (:openhand (:corp @state))) % []))
+        (update-in [:runner :hand] #(if (or spectator-hands? (:openhand (:runner @state))) % [])))))
 
 (defn public-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.

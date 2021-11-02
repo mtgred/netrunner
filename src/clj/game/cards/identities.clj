@@ -582,10 +582,10 @@
   {:events [{:event :tags-changed
              :effect (req (if (is-tagged? state)
                             (when-not (get-in @state [:runner :openhand])
-                              (system-msg state :corp "reveals the Runner's hand")
+                              (system-msg state :corp (str "uses " (get-title card) " to reveal the Runner's hand"))
                               (reveal-hand state :runner))
                             (when (get-in @state [:runner :openhand])
-                              (system-msg state :corp "hides the Runner's hand")
+                              (system-msg state :corp (str "uses " (get-title card) " to hide the Runner's hand"))
                               (conceal-hand state :runner))))}]
    :effect (req (when (is-tagged? state)
                   (reveal-hand state :runner)))
