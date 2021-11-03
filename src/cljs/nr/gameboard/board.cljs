@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :as s :refer [capitalize includes? join lower-case split blank? starts-with? ends-with?]]
             [differ.core :as differ]
-            [game.core.card :refer [get-title has-subtype? asset? rezzed? ice? corp?
+            [game.core.card :refer [condition-counter? get-title has-subtype? asset? operation? rezzed? ice? corp?
                                     faceup? installed? same-card? in-scored?
                                     get-counters]]
             [jinteki.utils :refer [str->int is-tagged? add-cost-to-label select-non-nil-keys] :as utils]
@@ -656,11 +656,11 @@
 
 (defn face-down?
   "Returns true if the installed card should be drawn face down."
-  [{:keys [side type facedown rezzed host] :as card}]
-  (if (= side "Corp")
-    (and (and (not= type "Operation")
-              (not= type "Counter"))
-         (not rezzed)
+  [{:keys [facedown host] :as card}]
+  (if (corp? card)
+    (and (not (operation? card))
+         (not (condition-counter? card))
+         (not (rezzed? card))
          (not= (:side host) "Runner"))
     facedown))
 
