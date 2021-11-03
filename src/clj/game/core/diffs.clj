@@ -273,7 +273,7 @@
         install-list (:install-list corp)]
     (-> (player-summary corp state side corp-player? corp-keys)
         (update :deck deck-summary corp-player? corp)
-        (update :hand hand-summary state corp-player? side corp)
+        (update :hand hand-summary state corp-player? :corp corp)
         (update :discard discard-summary state corp-player? side corp)
         (assoc
           :deck-count (count (:deck corp))
@@ -303,7 +303,7 @@
         runnable-list (:runnable-list runner)]
     (-> (player-summary runner state side runner-player? runner-keys)
         (update :deck deck-summary runner-player? runner)
-        (update :hand hand-summary state runner-player? side runner)
+        (update :hand hand-summary state runner-player? :runner runner)
         (update :discard prune-cards)
         (assoc
           :deck-count (count (:deck runner))
@@ -418,18 +418,12 @@
          :corp (:corp corp-player)
          :runner (:runner runner-player)))
 
-(defn spectator-discard [discard state spectator-hands?]
-  (if spectator-hands?
-    discard
-    (cards-summary discard state :spectator)))
-
 (defn strip-for-spectators
-  [state stripped-state]
+  [stripped-state corp-state runner-state]
   (let [spectator-hands? (-> stripped-state :options :spectatorhands)]
     (-> stripped-state
-        (update-in [:corp :discard] spectator-discard state spectator-hands?)
-        (update-in [:corp :hand] #(if spectator-hands? % []))
-        (update-in [:runner :hand] #(if spectator-hands? % [])))))
+        (assoc :corp (if spectator-hands? (:corp corp-state) (:corp runner-state)))
+        (assoc :runner (if spectator-hands? (:runner runner-state) (:runner corp-state))))))
 
 (defn public-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
@@ -442,7 +436,7 @@
     ;; corp, runner, spectator, history
     {:corp-state corp-state
      :runner-state runner-state
-     :spect-state (strip-for-spectators state replay-state)
+     :spect-state (strip-for-spectators replay-state corp-state runner-state)
      :hist-state replay-state}))
 
 (defn public-diffs [old-state new-state]
