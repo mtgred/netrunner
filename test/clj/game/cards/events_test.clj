@@ -2333,7 +2333,8 @@
                         :hand ["Fisk Investment Seminar"]}})
     (take-credits state :corp)
     (let [c-hand (count (:hand (get-corp)))
-          r-hand (count (:hand (get-runner)))]
+          ;; -1 because of playing FIS
+          r-hand (dec (count (:hand (get-runner))))]
       (play-from-hand state :runner "Fisk Investment Seminar")
       (is (= (+ 3 c-hand) (count (:hand (get-corp)))) "Corp draws 3 cards")
       (is (= (+ 3 r-hand) (count (:hand (get-runner)))) "Runner draws 3 cards"))))

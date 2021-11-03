@@ -40,7 +40,7 @@
                                                               "nil") " ]") choices#)) "\n")))]
      ~@body))
 
-(defmacro deftest-pending [name & body]
+(defmacro deftest-pending [name & _body]
   (let [message (str "\n" name " is pending")]
     `(clojure.test/deftest- ~name (println ~message))))
 
@@ -56,7 +56,7 @@
           :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " (cons 'do '~body-form))}))))
 
 (defmacro changes-val [change-amt val-form & body-form]
-  `(changes-val-macro ~change-amt ~val-form ~msg ~@body-form))
+  `(changes-val-macro ~change-amt ~val-form "" ~@body-form))
 
 (defmethod clojure.test/assert-expr 'changes-val [msg form]
   (let [change-amt (nth form 1)
@@ -65,7 +65,7 @@
     `(changes-val-macro ~change-amt ~val-form ~msg ~@body-form)))
 
 (defmacro changes-credits [side change-amt & body-form]
-  `(changes-val-macro ~change-amt (:credit ~side) ~msg ~@body-form))
+  `(changes-val-macro ~change-amt (:credit ~side) "" ~@body-form))
 
 ;; Enables you to do this:
 ;; (is (changes-credits (get-runner) -5
