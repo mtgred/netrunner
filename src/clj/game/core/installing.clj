@@ -12,7 +12,7 @@
     [game.core.flags :refer [turn-flag?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
-    [game.core.initializing :refer [ability-init card-init]]
+    [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.rezzing :refer [rez]]
@@ -435,13 +435,17 @@
   (assert (or (event? card) (operation? card)) "condition counter must be event or operation")
   (let [cdef (card-def card)
         abilities (ability-init cdef)
+        corp-abilities (corp-ability-init cdef)
+        runner-abilities (runner-ability-init cdef)
         card (convert-to-condition-counter card)
         events (filter #(= :hosted (:condition %)) (:events cdef))]
     (if (corp? card)
       (wait-for (corp-install state side (make-eid state eid)
                               card target {:host-card target
                                            :ignore-all-cost true})
-                (let [card (update! state side (assoc async-result :abilities abilities))]
+                (let [card (update! state side (assoc async-result
+                                                      :abilities abilities
+                                                      :runner-abilities runner-abilities))]
                   (unregister-events state side card)
                   (unregister-constant-effects state side card)
                   (register-events state side card events)
@@ -450,7 +454,9 @@
       (wait-for (runner-install state side (make-eid state eid)
                                 card {:host-card target
                                       :ignore-all-cost true})
-                (let [card (update! state side (assoc async-result :abilities abilities))]
+                (let [card (update! state side (assoc async-result
+                                                      :abilities abilities
+                                                      :corp-abilities corp-abilities))]
                   (unregister-events state side card)
                   (unregister-constant-effects state side card)
                   (register-events state side card events)

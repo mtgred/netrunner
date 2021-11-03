@@ -3,7 +3,7 @@
     [clojure.string :as string]
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [active? card-index convert-to-agenda corp? facedown? fake-identity? get-card get-title get-zone has-subtype? ice? in-hand? in-play-area? installed? resource? rezzed? runner?]]
+    [game.core.card :refer [active? card-index convert-to-agenda corp? facedown? fake-identity? get-card get-title get-zone has-subtype? ice? in-hand? in-play-area? installed? is-type? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
@@ -76,9 +76,10 @@
         ;; Set :seen correctly
         c (if (= :corp side)
             (cond
-              ;; Moving rezzed card to discard, explicitly mark as seen
+              ;; Moving rezzed card or condition counter to discard, explicitly mark as seen
               (and (= :discard (first dest))
-                   (rezzed? card))
+                   (or (rezzed? card)
+                       (is-type? card "Counter")))
               (assoc card :seen true)
               ;; Moving card to HQ or R&D, explicitly mark as not seen
               (#{:hand :deck} (first dest))
