@@ -58,5 +58,6 @@
            game.core/req game.macros/req
            game.core/effect game.macros/effect
            game.core/msg game.macros/msg
-           game.core/wait-for game.macros/wait-for}
+           game.core/wait-for game.macros/wait-for
+           game.macros-test/deftest-pending clojure.test/deftest}
  }

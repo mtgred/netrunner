@@ -304,10 +304,6 @@
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall loses an advancement token")
       (is (= 4 (:credit (get-corp))) "Corp gains 3 credits"))))
 
-(deftest aryabhata-tech
-  ;; Aryabhata Tech
-)
-
 (deftest aryabhata-tech-credit-gain-and-loss
     ;; Credit gain and loss
     (do-game
@@ -410,10 +406,6 @@
                  "Dedicated Response Team"
                  "Builder"
                  "Research Station"]))))
-
-(deftest blacklist
-  ;; Blacklist
-)
 
 (deftest blacklist-blocks-moving-cards-from-heap-5044
     ;; Blocks moving cards from heap #5044
@@ -770,10 +762,6 @@
       (take-credits state :runner)
       (is (not (:corp-phase-12 @state)) "Clone Suffrage Movement didn't activate cuz of the ice"))))
 
-(deftest clyde-van-rite
-  ;; Clyde Van Rite - Multiple scenarios involving Runner not having credits/cards to trash
-)
-
 (deftest clyde-van-rite-runner-has-1-credit-and-chooses-to-pay-1-credit
     ;; Runner has 1+ credit and chooses to pay 1 credit
     (do-game
@@ -1057,10 +1045,6 @@
     (rez state :corp (get-content state :remote1 0))
     (is (= 9 (hand-size :corp)) "Corp should have hand size of 9")))
 
-(deftest daily-business-show
-  ;; Daily Business Show
-)
-
 (deftest daily-business-show-full-test
     ;; Full test
     (do-game
@@ -1246,10 +1230,6 @@
         (is (= ["Ice Wall" "None"] (prompt-buttons :corp)))
         (click-prompt state :corp "Ice Wall")
         (is (no-prompt? state :corp) "No DBS prompt cuz all drawn cards have been installed"))))
-
-(deftest daily-quest
-  ;; Daily Quest
-)
 
 (deftest daily-quest-can-only-rez-during-corp-s-action-phase
     ;; Can only rez during Corp's action phase
@@ -1669,10 +1649,6 @@
       (is (= 4 (:credit (get-corp))))
       (is (= 14 (get-counters (refresh eve) :credit))))))
 
-(deftest executive-boot-camp
-  ;; Executive Boot Camp
-)
-
 (deftest executive-boot-camp-suppress-the-start-of-turn-event-on-a-rezzed-card-issue-1346
     ;; suppress the start-of-turn event on a rezzed card. Issue #1346
     (do-game
@@ -1789,10 +1765,6 @@
         (is (= "Exposé" (-> (get-corp) :discard first :title)) "Only card in Archives should be Exposé")
         (core/move state :corp (find-card "Exposé" (:discard (get-corp))) :hand)))))
 
-(deftest false-flag
-  ;; False Flag
-)
-
 (deftest false-flag-when-the-corp-attempts-to-score-false-flag
     ;; when the corp attempts to score False Flag
     (testing "and False Flag has 7 advancements"
@@ -1864,10 +1836,6 @@
     (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
 
-(deftest full-immersion-recstudio
-  ;; Full Immmersion RecStudio - install directly, and via Interns
-)
-
 (deftest full-immersion-recstudio-full-test
     ;; Full test
     (do-game
@@ -1927,10 +1895,6 @@
       (click-prompt state :corp "2 [Credits]")
       (click-prompt state :runner "0 [Credits]")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard a card to meat damage"))))
-
-(deftest gene-splicer
-  ;; Gene Splicer
-)
 
 (deftest gene-splicer-runner-accesses-an-unadvanced-gene-splicer-and-doesn-t-trash-no-net-damage-is-dealt-and-gene-splicer-remains-installed
     ;; Runner accesses an unadvanced Gene Splicer and doesn't trash     ;; No net damage is dealt and Gene Splicer remains installed
@@ -2256,10 +2220,6 @@
     (click-prompt state :runner "No action")
     (is (= 2 (:credit (get-runner))))))
 
-(deftest hostile-infrastructure
-  ;; Hostile Infrastructure - do 1 net damage when runner trashes a corp card
-)
-
 (deftest hostile-infrastructure-basic-behavior
     ;; Basic behavior
     (do-game
@@ -2480,10 +2440,6 @@
           (is (nil? (refresh jhow)))
           (is (nil? (:run @state)))))))
 
-(deftest jeeves-model-bioroids
-  ;; Jeeves Model Bioroids
-)
-
 (deftest jeeves-model-bioroids-cases-where-jeeves-should-trigger
     ;; Cases where Jeeves should trigger
     (testing "Install three different cards"
@@ -2652,10 +2608,6 @@
       (is (= 1 (-> (get-corp) :discard count)) "Kuwinda should be in Archives")
       (is (= "Kuwinda K4H1U3" (-> (get-corp) :discard first :title)) "Kuwinda should be in Archives")
       (end-phase-12 state :corp))))
-
-(deftest lady-liberty
-  ;; Lady Liberty - Score agenda from hand equal to number of power counters on Lady Libery
-)
 
 (deftest lady-liberty-basic-behavior
     ;; Basic behavior
@@ -3526,11 +3478,6 @@
     (is (= 2 (count (:hand (get-corp)))) "Corp drew 1 from Agroplex")
     (is (= 2 (count (:hand (get-runner)))) "Runner drew 1 from Agroplex")))
 
-(deftest personalized-portal
-  ;; Personalized Portal - on corp turn start, force the runner to draw 1 card
-  ;; and then gain 1 credit for every 2 cards in the runners hand
-)
-
 (deftest personalized-portal-vanilla-test
     ;; Vanilla test
     (do-game
@@ -3601,10 +3548,6 @@
     ;; Pick Brain Trust, scores
     (click-card state :corp (find-card "Braintrust" (:hand (get-corp))))
     (is (find-card "Braintrust" (:scored (get-corp))) "Braintrust is scored")))
-
-(deftest political-dealings
-  ;; Political Dealings
-)
 
 (deftest political-dealings-full-test
     ;; Full test
@@ -3984,10 +3927,6 @@
       (is (= "Fire Wall" (-> (get-corp) :hand first :title)))
       (is (= "Ice Wall" (-> (get-corp) :discard first :title))))))
 
-(deftest rashida-jaheem
-  ;; Rashida Jaheem
-)
-
 (deftest rashida-jaheem-when-there-are-enough-cards-in-r-d
     ;; when there are enough cards in R&D
     (do-game
@@ -4117,10 +4056,6 @@
       (card-ability state :corp rev 0)
       (is (= 1 (count (:discard (get-corp)))) "Reversed Accounts trashed")
       (is (= 2 (:credit (get-runner))) "Runner lost 16 credits"))))
-
-(deftest rex-campaign
-  ;; Rex Campaign
-)
 
 (deftest rex-campaign-gain-5-credits
     ;; Gain 5 credits
@@ -4452,27 +4387,25 @@
 
 (deftest shi-kyu
   ;; Shi.Kyū
-  ; (testing "Basic test"
-  ;   (do-game
-  ;     (new-game {:corp {:deck ["Shi.Kyū"]}
-  ;                :runner {:deck [(qty "Sure Gamble" 5)]}})
-  ;     (play-from-hand state :corp "Shi.Kyū" "New remote")
-  ;     (take-credits state :corp)
-  ;     (run-empty-server state "Server 1")
-  ;     (click-prompt state :corp "Yes")
-  ;     (click-prompt state :corp "5")
-  ;     (is (= "Take 5 net damage" (first (prompt-buttons :runner))))
-  ;     (click-prompt state :runner "Take 5 net damage")
-  ;     (click-prompt state :runner "No action")
-  ;     (is (zero? (count (:hand (get-runner)))) "Runner took 5 net damage from Shi.Kyū")
-  ;     (run-empty-server state "Server 1")
-  ;     (click-prompt state :corp "Yes")
-  ;     (click-prompt state :corp "2")
-  ;     (is (= "Take 2 net damage" (first (prompt-buttons :runner))))
-  ;     (click-prompt state :runner "Add Shi.Kyū to score area")
-  ;     (is (empty? (prompt-map :runner)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")
-  ;     (is (= -1 (:agenda-point (get-runner))) "Runner should be at -1 agenda points after adding Shi.Kyū to agenda area")))
-)
+  (do-game
+    (new-game {:corp {:deck ["Shi.Kyū"]}
+               :runner {:deck [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Shi.Kyū" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "5")
+    (is (= "Take 5 net damage" (first (prompt-buttons :runner))))
+    (click-prompt state :runner "Take 5 net damage")
+    (click-prompt state :runner "No action")
+    (is (zero? (count (:hand (get-runner)))) "Runner took 5 net damage from Shi.Kyū")
+    (run-empty-server state "Server 1")
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "2")
+    (is (= "Take 2 net damage" (first (prompt-buttons :runner))))
+    (click-prompt state :runner "Add Shi.Kyū to score area")
+    (is (empty? (prompt-map :runner)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")
+    (is (= -1 (:agenda-point (get-runner))) "Runner should be at -1 agenda points after adding Shi.Kyū to agenda area")))
 
 (deftest shi-kyu-interaction-with-maw-issue-4214
     ;; interaction with Maw. Issue #4214
@@ -4519,10 +4452,6 @@
       (trash-from-hand state :corp "Chairman Hiro")
       (is (= 2 (count (:discard (get-corp)))) "Hiro and Shock still in archives")
       (is (zero? (count (:scored (get-runner)))) "Hiro not scored by Runner")))
-
-(deftest siu
-  ;; SIU
-)
 
 (deftest siu-flags-1-2-and-trace-for-tag-with-base-3
     ;; Flags 1.2 and trace for tag with base 3
@@ -4594,8 +4523,6 @@
         (click-prompt state :runner "Pay 0 [Credits] to trash")
         (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage"))))
 
-(deftest space-camp)
-
 (deftest space-camp-when-in-archives-1929
     ;; when in Archives. #1929
     (do-game
@@ -4653,11 +4580,6 @@
         (is (find-card "Enigma" (:deck (get-corp))) "Enigma is shuffled back into the deck")
         (is (nil? (refresh spin)))
         (is (nil? (:run @state))))))
-
-(deftest storgotic-resonator
-  ;; Storgotic Resonator - Gains power counters on Corp trashing card with same faction as runner ID.
-  ;; Click+counter is 1 net damage
-)
 
 (deftest storgotic-resonator-basic-behavior
     ;; Basic behavior
@@ -4887,10 +4809,6 @@
       (is (= 2 (count (:discard (get-runner))))
           "Runner should take 1 net damage from Synth DNA Modification after Data Mine subroutine"))))
 
-(deftest team-sponsorship
-  ;; Team Sponsorship
-)
-
 (deftest team-sponsorship-install-from-hq
     ;; Install from HQ
     (do-game
@@ -5077,10 +4995,6 @@
       (is (not (rezzed? (refresh news))) "News Team should not be rezzed")
       (is (= 1 (-> (get-corp) :discard count)) "Corp should now have 1 card in discard"))))
 
-(deftest the-board
-  ;; The Board
-)
-
 (deftest the-board-modify-everything-in-the-score-area-regression-test-for-1938
     ;; Modify everything in the score area (regression test for #1938)
     (do-game
@@ -5206,10 +5120,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Rumor Mill")
     (is (find-card "Rumor Mill" (:hand (get-runner))) "Rumor Mill should still be in hand after trying to play it")))
-
-(deftest the-root
-  ;; The Root
-)
 
 (deftest the-root-pay-credits-prompt
     ;; Pay-credits prompt
@@ -5381,10 +5291,6 @@
      (click-prompt state :corp "Yes")
      (is (= 4 (-> (get-runner) :discard count)) "Urtica Cipher should do 4 net damage"))))
 
-(deftest vaporframe-fabricator
-  ;; Vaporframe Fabricator
-)
-
 (deftest vaporframe-fabricator-click-ability
     ;; Click ability
     (testing "Install an agenda"
@@ -5514,8 +5420,6 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner should gain 2 agenda points from trashing Victoria Jenkins")
       (is (= 1 (count (get-scored state :runner))) "Runner should have 1 card in score area")
       (is (zero? (-> (get-corp) :discard count)) "Victoria Jenkins shouldn't go to Archives when trashed"))))
-
-(deftest wall-to-wall)
 
 (deftest wall-to-wall-basic-functionality
     ;; Basic functionality

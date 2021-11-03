@@ -136,10 +136,6 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
-(deftest baklan-bochkin
-  ;; Baklan Bochkin
-)
-
 (deftest baklan-bochkin-gaining-power-counters-each-run
     ;; Gaining power counters each run.
     (do-game
@@ -205,10 +201,6 @@
         (card-ability state :runner bak 0)
         (is (rezzed? (refresh fw)) "Fire Wall not derezzed as too strong")
         (is (zero? (count-tags state)) "Got a tag"))))
-
-(deftest bank-job
-  ;; Bank Job
-)
 
 (deftest bank-job-manhunt-trace-happens-first
     ;; Manhunt trace happens first
@@ -373,10 +365,6 @@
     (take-credits state :corp)
     (is (= 3 (:click (get-runner))) "Lost 1 click at turn start")))
 
-(deftest bhagat
-  ;; Bhagat - only trigger on first run
-)
-
 (deftest bhagat-only-trigger-on-first-run
     ;; only trigger on first run
     (do-game
@@ -535,10 +523,6 @@
       (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
       (is (:end-turn @state) "Runner turn has now ended")
       (is (= 10 (:credit (get-corp))) "Corp lost 1 credit to Corporate Grant")))
-
-(deftest climactic-showdown
-  ;; Climactic Showdown
-)
 
 (deftest climactic-showdown-no-eligible-servers
     ;; No eligible servers
@@ -706,10 +690,6 @@
      (play-from-hand state :runner "Fermenter")
      (is (= 3 (get-counters (get-program state 1) :virus)) "Fermenter has 2 additional counters from Grimoire and Cookbook")))
 
-(deftest councilman
-  ;; Councilman
-)
-
 (deftest councilman-rez-prevention
     ;; Rez prevention
     (do-game
@@ -811,10 +791,6 @@
           (is (rezzed? (refresh slee)) "Chief Slee still rezzed")
           (is (refresh councilman) "Councilman's trash is prevented")))))
 
-(deftest counter-surveillance
-  ;; Counter Surveillance
-)
-
 (deftest counter-surveillance-trash-to-run-on-successful-run-access-cards-equal-to-tags-and-pay-that-amount-in-credits
     ;; Trash to run, on successful run access cards equal to Tags and pay that amount in credits
     (do-game
@@ -888,10 +864,6 @@
         (is (= 4 (count (:discard (get-runner)))) "Counter Surveillance trashed")
         (is (zero? (:credit (get-runner))) "Runner has 2 credits"))))
 
-(deftest crash-space
-  ;; Crash Space
-)
-
 (deftest crash-space-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -905,10 +877,6 @@
                            (remove-tag state :runner)
                            (click-card state :runner cs)
                            (click-card state :runner cs)))))
-
-(deftest crowdfunding
-  ;; Crowdfunding
-)
 
 (deftest crowdfunding-credit-gain-behavior
     ;; Credit gain behavior
@@ -1018,10 +986,6 @@
       (is (not (empty? (:discard (get-runner)))) "Crowdfunding is in discard")
       (is (zero? (count (get-resource state))) "Crowdfunding not installed")))
 
-(deftest crypt
-  ;; Crypt
-)
-
 (deftest crypt-gains-counters-when-running-archives
     ;; Gains counters when running Archives
     (do-game
@@ -1114,12 +1078,6 @@
        (is (= 4 (get-strength (refresh cor))) "Strength back down to 4")
        (take-credits state :runner)
        (is (= 2 (get-strength (refresh cor))) "Corroder strength back down to normal"))))
-
-(deftest dadiana-chacon
-  ;; Dadiana Chacon
-  ;; gain 1 cr at start of turn if you have less than 6,
-  ;; take 3 meat and trash if you have 0
-)
 
 (deftest dadiana-chacon-can-fire-mid-trace
     ;; Can fire mid-trace
@@ -1270,10 +1228,6 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
     (is (zero? (count-tags state)) "Tag avoided")))
-
-(deftest district-99
-  ;; District 99 - Gains power counters on hardware/program trashes, can spend 3 power counters to recur a card matching identity
-)
 
 (deftest district-99-trashes-by-both-sides-and-manual-triggers
     ;; Trashes by both sides and manual triggers
@@ -1672,10 +1626,6 @@
         (is (= 0 (get-counters (refresh blackfile) :power)) "Black File has still 0 power counters")
         (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground has 1 virus counter"))))
 
-(deftest dreamnet
-  ;; DreamNet
-)
-
 (deftest dreamnet-draw-1-card-on-first-successful-run
     ;; Draw 1 card on first successful run
     (do-game
@@ -1859,10 +1809,6 @@
       (is (not (get-resource state 0)) "Eden Shard not installed")
       (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed")))
 
-(deftest enhanced-vision
-  ;; Enhanced Vision
-)
-
 (deftest enhanced-vision-logs-the-revealed-card
     ;; Logs the revealed card
     (do-game
@@ -2044,10 +1990,6 @@
     (core/purge state :corp)
     (is (= 1 (:credit (get-corp))) "Lost no credits when purging, only had 1c")))
 
-(deftest film-critic
-  ;; Film Critic
-)
-
 (deftest film-critic-prevent-corp-trashed-execs-going-to-runner-scored-issues-1181-1042
     ;; Prevent Corp-trashed execs going to Runner scored. Issues #1181/#1042
     (do-game
@@ -2225,10 +2167,6 @@
       (is (= "Shuffle Marilyn Campaign into R&D?" (:msg (prompt-map :corp))) "Now Corp gets shuffle choice")
       (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn))
 
-(deftest gang-sign
-  ;; Gang Sign
-)
-
 (deftest gang-sign-accessing-from-hq-not-including-root-issue-2113
     ;; accessing from HQ, not including root. Issue #2113
     (do-game
@@ -2341,10 +2279,6 @@
           (trash state :runner gcs2)
           (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))))
 
-(deftest ghost-runner
-  ;; Ghost Runner
-)
-
 (deftest ghost-runner-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -2424,10 +2358,6 @@
     (take-credits state :runner)
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
 
-(deftest guru-davinder
-  ;; Guru Davinder
-)
-
 (deftest guru-davinder-no-prompt-trash-for-preventing-0-damage
     ;; no prompt/trash for preventing 0 damage
     (do-game
@@ -2484,10 +2414,6 @@
     (take-credits state :corp)
     (is (= 5 (:credit (get-runner))) "Gained 2c")
     (is (= 3 (:click (get-runner))) "Lost 1 click")))
-
-(deftest hernando-cortez
-  ;; Herando Cortez - Increase all ice rez cost by 1c if the Corp has 10c or more
-)
 
 (deftest hernando-cortez-rezzing-a-one-subroutine-piece-of-ice
     ;; Rezzing a one subroutine piece of ice
@@ -2593,10 +2519,6 @@
         (card-ability state :corp (:identity (get-corp)) 0)
         (click-card state :corp iw)
         (is (= (dec credits) (:credit (get-corp))) "Corp should only gain 1 back when using Blue Sun's ability"))))
-
-(deftest hunting-grounds
-  ;; Hunting Grounds
-)
 
 (deftest hunting-grounds-preventing-an-on-encounter-effect
     ;; Preventing an on-encounter effect
@@ -2773,10 +2695,6 @@
       (card-ability state :runner (get-resource state 0) 0)
       (is (last-log-contains? state "uses Hunting Grounds to prevent the encounter effect on Konjin"))))
 
-(deftest ice-analyzer
-  ;; Ice Analyzer
-)
-
 (deftest ice-analyzer-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -2815,10 +2733,6 @@
       (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-continue state)
       (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
-
-(deftest inside-man
-  ;; Inside Man
-)
 
 (deftest inside-man-pay-credits-prompt
     ;; Pay-credits prompt
@@ -2915,10 +2829,6 @@
         (is (= 1 (count (:scored (get-runner)))) "Chairman Hiro in score area")
         (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
 
-(deftest jak-sinclair
-  ;; Jak Sinclair
-)
-
 (deftest jak-sinclair-lost-clicks-carry-through-to-when-turn-starts-fully-1764
     ;; Lost clicks carry through to when turn starts fully #1764
     (do-game
@@ -2972,10 +2882,6 @@
       (click-prompt state :runner "No action")
       (is (not (get-run)) "Run has ended")
       (is (no-prompt? state :corp) "Corp does not have a start of turn wait prompt")))
-
-(deftest john-masanori
-  ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run
-)
 
 (deftest john-masanori-crisium-grid-interaction
     ;; Crisium grid interaction
@@ -3292,10 +3198,6 @@
       (is (zero? (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
       (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
       (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
-
-(deftest miss-bones
-  ;; Miss Bones - credits for trashing installed cards, trash when empty
-)
 
 (deftest miss-bones-can-be-used-mid-run-in-a-trash-prompt
     ;; Can be used mid-run in a trash-prompt
@@ -3668,10 +3570,6 @@
         (click-prompt state :runner "0")
         (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented"))))))
 
-(deftest off-campus-apartment
-  ;; Off-Campus Apartment
-)
-
 (deftest off-campus-apartment-ability-shows-a-simultaneous-resolution-prompt-when-appropriate
     ;; ability shows a simultaneous resolution prompt when appropriate
     (do-game
@@ -3760,10 +3658,6 @@
     (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
-
-(deftest order-of-sol
-  ;; Order of Sol
-)
 
 (deftest order-of-sol-get-down-to-zero-credits-from-playing-oos
     ;; Get down to zero credits from playing OoS
@@ -3862,10 +3756,6 @@
       (let [credits (:credit (get-runner))]
         (play-from-hand state :corp "Hedge Fund")
         (is (= credits (:credit (get-runner))) "Runner should gain 1 from PAD Tap"))))
-
-(deftest paige-piper
-  ;; Paige Piper
-)
 
 (deftest paige-piper-interaction-with-frantic-coding-issue-2190
     ;; interaction with Frantic Coding. Issue #2190
@@ -4125,10 +4015,6 @@
           (is (second-last-log-contains? state "Runner pays 1 \\[Credits\\] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
           (is (last-log-contains? state "Runner pays 0 \\[Credits\\] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
 
-(deftest penumbral-toolkit
-  ;; Penumbral Toolkit
-)
-
 (deftest penumbral-toolkit-install-cost-reduction-after-hq-run
     ;; install cost reduction after HQ run
     (do-game
@@ -4172,11 +4058,6 @@
                            (card-ability state :runner (refresh refr) 1)
                            (click-card state :runner (refresh pt)))
         (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed"))))
-
-(deftest personal-workshop
-  ;; Personal Workshop
-  ;; Issue #5167
-)
 
 (deftest personal-workshop-removes-token-on-start-of-turn-and-installs
     ;; Removes token on start of turn and installs
@@ -4335,10 +4216,6 @@
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))))
-
-(deftest reclaim
-  ;; Reclaim - trash Reclaim, trash card from grip, install program, hardware, or virtual resource from heap
-)
 
 (deftest reclaim-basic-behavior
     ;; Basic behavior
@@ -4678,10 +4555,6 @@
         (run-continue state)
         (is (= (+ credits 5 2) (:credit (get-runner))) "Runner gains 5 from Dirty Laundry and 2 from Security Testing"))))
 
-(deftest slipstream
-  ;; Slipstream
-)
-
 (deftest slipstream-there-is-an-ice-at-the-correct-position
     ;; There is an ice at the correct position
     (do-game
@@ -4810,10 +4683,6 @@
       (run-continue state)
       (is (= :movement (:phase (get-run))) "Spear Phishing has bypassed Ice Wall")))
 
-(deftest smartware-distributor
-  ;; Smartware Distributor
-)
-
 (deftest smartware-distributor-basic-functionality
     ;; basic functionality
     (do-game
@@ -4830,10 +4699,6 @@
         "Gain 1 credit from Smartware Distributor"
         (take-credits state :corp))
       (is (= 2 (get-counters (get-resource state 0) :credit)) "Smartware Distributor has 2 credits left")))
-
-(deftest spoilers
-  ;; Spoilers - Mill the Corp when it scores an agenda
-)
 
 (deftest spoilers-basic-functionality
     ;; basic functionality
@@ -5249,10 +5114,6 @@
       (card-ability state :runner (get-resource state 0) 0)
       (is (empty? (get-resource state)) "Telework Contract trashed after all credits taken")))
 
-(deftest temujin-contract
-  ;; Temüjin Contract
-)
-
 (deftest temujin-contract-multiple-times-in-one-turn-issue-1952
     ;; Multiple times in one turn. Issue #1952
     (do-game
@@ -5317,10 +5178,6 @@
       (is (= 2 (:click (get-runner))))
       (is (= 2 (count (get-program state))) "2 Programs installed")
       (is (= 6 (:credit (get-runner))) "Artist discount applied new turn"))))
-
-(deftest the-back
-  ;; The Back
-)
 
 (deftest the-back-happy-path
     ;; Happy Path
@@ -5460,10 +5317,6 @@
       (trash-card state :runner (get-resource state 0))
       (is (= :corp (:winner @state)) "Corp has now won")))
 
-(deftest the-class-act
-  ;; The Class Act
-)
-
 (deftest the-class-act-vanilla-test
     ;; Vanilla test
     (do-game
@@ -5563,10 +5416,6 @@
       (take-credits state :runner)
       (is (= 2 (get-strength (refresh corr))) "Corroder back to default strength"))))
 
-(deftest the-nihilist
-  ;; The Nihilist
-)
-
 (deftest the-nihilist-vanilla-test
     ;; Vanilla test
     (do-game
@@ -5663,10 +5512,6 @@
         (is (= 0 (get-counters (refresh nihilist) :virus)) "The Nihilist has 0 virus counters")
         (is (= 2 (get-counters (refresh sandstone) :virus)) "Sandstone has 2 virus counters")
         (is (= 0 (count (prompt-buttons :runner))) "The Nihilist did not trigger"))))
-
-(deftest the-shadow-net
-  ;; The Shadow Net
-)
 
 (deftest the-shadow-net-happy-path
     ;; Happy Path
@@ -5951,10 +5796,6 @@
     (is (= 1 (count (:discard (get-runner)))) "Theo is trashed")
     (is (empty? (get-resource state)) "No resources installed")
     (is (= 5 (hand-size :runner)) "Max hand size is reset to default")))
-
-(deftest thunder-art-gallery
-  ;; Thunder Art Gallery
-)
 
 (deftest thunder-art-gallery-works-when-removing-avoiding-tags
     ;; Works when removing/avoiding tags

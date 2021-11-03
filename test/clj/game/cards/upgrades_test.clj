@@ -85,10 +85,6 @@
        (click-card state :corp "Fire Wall")
        (is (not (:run @state)) "Run ended by Anoetic Void"))))
 
-(deftest arella-salvatore
-  ;; Arella Salvatore - when an agenda is scored from this server, install a card from hq w/ advancement token
-)
-
 (deftest arella-salvatore-install-to-server
     ;; Install to server
     (do-game
@@ -165,10 +161,6 @@
       (let [vit-scored (get-scored state :corp 0)]
         (is (= 1 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 1 agenda counter"))))
 
-(deftest ash-2x3zb9cy
-  ;; Ash 2X3ZB9CY
-)
-
 (deftest ash-2x3zb9cy-ash-2x3zb9cy
     ;; Ash 2X3ZB9CY
     (do-game
@@ -220,10 +212,6 @@
         (click-prompt state :runner "0")
         (click-prompt state :runner "Pay 3 [Credits] to trash")
         (is (no-prompt? state :runner) "Runner gets no further access prompts"))))
-
-(deftest awakening-center
-  ;; Awakening Center
-)
 
 (deftest awakening-center-basic-operation
     ;; Basic Operation
@@ -483,10 +471,6 @@
       (is (not (:run @state)) "Bio Vault fires with 2 advancement tokens")
       (is (= 1 (count (:discard (get-corp)))) "Bio Vault trashed"))))
 
-(deftest black-level-clearance
-  ;;Black Level Clearance
-)
-
 (deftest black-level-clearance-taking-brain-damage
     ;; taking brain damage
     (do-game
@@ -638,10 +622,6 @@
       ;; Check Caprice does not trigger on other servers
       (run-on state "HQ")
       (is (no-prompt? state :corp) "Caprice does not trigger on other servers"))))
-
-(deftest cayambe-grid
-  ;; Cayambe Grid
-)
 
 (deftest cayambe-grid-advance-ability
     ;; Advance ability
@@ -913,10 +893,6 @@
        (is (empty? (:run @state)) "Run has ended")
        (is (not (last-log-contains? state "Runner approaches Ice Wall protecting HQ at position 2")) "Run has ended so no approach"))))
 
-(deftest cold-site-server
-  ;; Cold Site Server - Increase run cost by 1 cred, 1 click per power counters
-)
-
 (deftest cold-site-server-cost-modification-plays-nice-with-derez
     ;; Cost modification plays nice with derez
     (do-game
@@ -1051,10 +1027,6 @@
      (run-empty-server state "HQ")
      (is (= 2 (count (:discard (get-corp)))) "Archive has 2 cards (Crisium and Hedge Fund)")))
 
-(deftest cyberdex-virus-suite
-  ;; Cyberdex Virus Suite
-)
-
 (deftest cyberdex-virus-suite-purge-ability
     ;; Purge ability
     (do-game
@@ -1128,10 +1100,6 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters"))))
 
-(deftest daruma
-  ;; Daruma
-)
-
 (deftest daruma-swapping-with-another-installed-card
     ;; swapping with another installed card
     (do-game
@@ -1190,10 +1158,6 @@
      (click-prompt state :runner "Yes")
      (is (not= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))
      (is (not (:run @state)))))
-
-(deftest dedicated-technician-team
-  ;; Dedicated Technician Team
-)
 
 (deftest dedicated-technician-team-pay-credits-prompt
     ;; Pay-credits prompt
@@ -1399,10 +1363,6 @@
       (click-prompt state :runner "End the run")
       (is (zero? (count (:deck (get-runner)))))
       (is (= 2 (count (:discard (get-runner))))))))
-
-(deftest ganked
-  ;; Ganked!
-)
 
 (deftest ganked-access-ability-forces-runner-to-encounter-ice
     ;; Access ability forces Runner to encounter ice
@@ -1623,10 +1583,6 @@
       (is (= 6 (get-strength (refresh gutenberg))))
       (is (zero? (get-strength (refresh vanilla)))))))
 
-(deftest henry-phillips
-  ;; Henry Philips - gain 2c when runner is tagged and breaks a sub on this server
-)
-
 (deftest henry-phillips-basic-behavior
     ;; Basic behavior
     (do-game
@@ -1657,10 +1613,6 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (is (= (+ 4 corp-creds) (:credit (get-corp))) "Henry gains 4 credits if runner tagged and breaks two subs"))))
-
-(deftest hired-help
-  ;; Hired Help - trash an agenda if you wanna run my server
-)
 
 (deftest hired-help-normal-usage
     ;; Normal usage
@@ -1792,10 +1744,6 @@
     (click-prompt state :runner "5")
     (is (no-prompt? state :corp) "Prompt closes after lost trace")))
 
-(deftest jinja-city-grid
-  ;; Jinja City Grid - install drawn ice, lowering install cost by 4
-)
-
 (deftest jinja-city-grid-single-draws
     ;; Single draws
     (do-game
@@ -1870,10 +1818,6 @@
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
-(deftest khondi-plaza
-  ;; Khondi Plaza
-)
-
 (deftest khondi-plaza-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -1892,8 +1836,6 @@
           "Used 3 credits from Khondi Plaza"
           (rez state :corp en)
           (dotimes [c 3] (click-card state :corp kh))))))
-
-(deftest la-costa-grid)
 
 (deftest la-costa-grid-la-costa-grid-cannot-be-installed-in-a-central-server
     ;; La Costa Grid cannot be installed in a central server
@@ -2255,10 +2197,6 @@
      (is (no-prompt? state :runner) "No open runner prompts")
      (is (no-prompt? state :corp)) "No open corp prompts"))
 
-(deftest midway-station-grid
-  ;; Midway Station Grid
-)
-
 (deftest midway-station-grid-addtional-cost-on-single-sub-break
     ;; Addtional cost on single sub break
     (do-game (new-game {:corp  {:deck [(qty "Hedge Fund" 5)]
@@ -2313,10 +2251,6 @@
         "Runner loses 3 credits, 2 for cradle 1 for midway"
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "End the run"))))
-
-(deftest mumbad-city-grid
-  ;; Mumbad City Grid - when runner passes a piece of ice, swap that ice with another from this server
-)
 
 (deftest mumbad-city-grid-1-ice
     ;; 1 ice
@@ -2911,10 +2845,6 @@
       (is (= ["Steal"] (prompt-buttons :runner)))
       (click-prompt state :runner "Steal")))
 
-(deftest overseer-matrix
-  ;; Overseer Matrix - corp takes a tag when trashing a card in this server
-)
-
 (deftest overseer-matrix-basic-functionality
     ;; Basic functionality
     (do-game
@@ -3430,10 +3360,6 @@
       (card-ability state :runner smc2 0)
       (click-prompt state :runner "Reaver"))))
 
-(deftest simone-diego
-  ;; Simone Diego
-)
-
 (deftest simone-diego-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -3805,10 +3731,6 @@
       (click-card state :runner eve1)
       (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
 
-(deftest valley-grid
-  ;; Valley Grid
-)
-
 (deftest valley-grid-reduce-runner-max-hand-size-and-restore-it-even-if-trashed
     ;; Reduce Runner max hand size and restore it even if trashed
     (do-game
@@ -3837,10 +3759,6 @@
         (is (= 4 (hand-size :runner)) "Valley Grids effect persists through trash")
         (take-credits state :runner)
         (is (= 5 (hand-size :runner)) "Runner max hand size back to normal"))))
-
-(deftest warroid-tracker
-  ;; Warroid Tracker
-)
 
 (deftest warroid-tracker-trashing-warroid-starts-trace
     ;; Trashing Warroid starts trace

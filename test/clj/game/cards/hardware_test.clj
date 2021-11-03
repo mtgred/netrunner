@@ -395,10 +395,6 @@
         (click-card state :runner "Ice Wall")
         (click-prompt state :corp "No"))))
 
-(deftest bookmark
-  ;; Bookmark
-)
-
 (deftest bookmark-click-ability
     ;; Click ability
     (do-game
@@ -727,10 +723,6 @@
     (core/fake-checkpoint state)
     (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
-
-(deftest buffer-drive
-  ;; Buffer Drive
-)
 
 (deftest buffer-drive-the-player-may-decline-to-move-a-card-to-the-bottom-of-the-stack
     ;; The player may decline to move a card to the bottom of the stack
@@ -1195,10 +1187,6 @@
           "Spent 1, paid 1"
           (click-prompt state :runner "End the run")))))
 
-(deftest cyberfeeder
-  ;; Cyberfeeder
-)
-
 (deftest cyberfeeder-pay-credits-prompt-on-install
     ;; Pay-credits prompt on install
     (do-game
@@ -1235,10 +1223,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "CyberSolutions Mem Chip")
     (is (= 6 (core/available-mu state)) "Gain 2 memory")))
-
-(deftest cybsoft-macrodrive
-  ;; Cybsoft MacroDrive
-)
 
 (deftest cybsoft-macrodrive-pay-credits-prompt
     ;; Pay-credits prompt
@@ -1332,10 +1316,6 @@
         (run-jack-out state)
         (is (= 2 (get-strength (refresh enig))) "Enigma is back at 2 strength"))))
 
-(deftest dinosaurus
-  ;; Dinosaurus
-)
-
 (deftest dinosaurus-hosting-a-breaker-with-strength-based-on-unused-mu-should-calculate-correctly
     ;; Hosting a breaker with strength based on unused MU should calculate correctly
     (do-game
@@ -1374,10 +1354,6 @@
           (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
           (is (= 4 (core/available-mu state))
               "Battering Ram 2 MU not added to available MU when Battering Ram was trashed")))))
-
-(deftest docklands-pass
-  ;; Docklands Pass - run again when successful
-)
 
 (deftest docklands-pass-corp-access-extra-card-on-hq-run
     ;; Corp access extra card on HQ run
@@ -1473,10 +1449,6 @@
       (is (zero? (count-tags state)) "Runner has 0 tags")
       (is (= 3 (get-counters (refresh dorm) :power))))))
 
-(deftest dyson-fractal-generator
-  ;; Dyson Fractal Generator
-)
-
 (deftest dyson-fractal-generator-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -1544,10 +1516,6 @@
         (is (= 1 (:brain-damage (get-runner))) "2 of the 3 brain damage prevented")
         (is (= 2 (count (:hand (get-runner)))))
         (is (empty? (get-hardware state)) "Feedback Filter trashed")))))
-
-(deftest flame-out
-  ;; Flame-out - start with 9 credits, use for hosted program, trash hosted program at end of turn when credits used
-)
 
 (deftest flame-out-basic-behavior
     ;; Basic behavior
@@ -1632,10 +1600,6 @@
         (card-ability state :runner fo 3)
         (click-card state :runner "Mimic")
         (is (= mimic-strength (get-strength (first (:hosted (get-hardware state 0)))))))))
-
-(deftest flip-switch
-  ;; Flip Switch
-)
 
 (deftest flip-switch-trace-reaction-ability
     ;; Trace reaction ability
@@ -2018,10 +1982,6 @@
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
       (is (last-n-log-contains? state 2 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 damage\\.")))))
 
-(deftest hijacked-router
-  ;; Hijacked Router
-)
-
 (deftest hijacked-router-run-on-archives
     ;; Run on Archives
     (do-game
@@ -2063,10 +2023,6 @@
       (is (= 8 (:credit (get-corp))) "Corp starts turn with 8 credits")
       (play-from-hand state :corp "Elective Upgrade" "New remote")
       (is (= 7 (:credit (get-corp))) "Corp lost 1 credit from server creation")))
-
-(deftest hippo
-  ;; Hippo - remove from game to trash outermost piece of ice if all subs broken
-)
 
 (deftest hippo-no-ice
     ;; No ice
@@ -2308,10 +2264,6 @@
                              "Did not get 1c back from installing Mystic Maemi"
                              (play-from-hand state :runner "Mystic Maemi"))))))
 
-(deftest knobkierie
-  ;; Knobkierie - first successful run, place a virus counter on a virus program
-)
-
 (deftest knobkierie-functionality
     ;; functionality
     (do-game
@@ -2380,10 +2332,6 @@
       (is (= 1 (get-strength (refresh inti))) "Strength reduced to default")
       (is (= 2 (get-strength (refresh pass))) "Strength reduced to default"))))
 
-(deftest lockpick
-  ;; Lockpick
-)
-
 (deftest lockpick-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -2397,8 +2345,6 @@
                            "Used 1 credit from Lockpick"
                            (card-ability state :runner refr 1)
                            (click-card state :runner lp)))))
-
-(deftest lucky-charm)
 
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
     ;; No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction
@@ -2619,10 +2565,6 @@
       (is (= 6 (count (:hand (get-runner)))) "Hayley install")
       (is (no-prompt? state :runner))))
 
-(deftest maui
-  ;; Maui (Māui)
-)
-
 (deftest maui-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -2820,10 +2762,6 @@
       (is (= "Scorched Earth" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
       (is (:prompt (get-runner)) "Runner has next access prompt")))
 
-(deftest mind-s-eye
-  ;; Mind's Eye - Gain power tokens on R&D runs, and for 3 tokens and a click, access the top card of R&D
-)
-
 (deftest mind-s-eye-interaction-with-rdi-aeneas
     ;; Interaction with RDI + Aeneas
     (do-game
@@ -2848,10 +2786,6 @@
             (click-prompt state :runner "No action")
             (click-prompt state :runner "Yes")) ; Aeneas
           (is (= (+ num-creds 2) (:credit (get-runner))) "Runner has gained 2 from Aeneas")))))
-
-(deftest mu-safecracker
-  ;; MU Safecracker
-)
 
 (deftest mu-safecracker-no-available-stealth-credits
     ;; No available stealth credits
@@ -3064,10 +2998,6 @@
       (play-from-hand state :runner "Paper Tripping")
       (is (zero? (count-tags state)) "Runner loses all tags")))
 
-(deftest omni-drive
-    ;;Omni-drive
-)
-
 (deftest omni-drive-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -3124,10 +3054,6 @@
         (click-card state :runner (find-card "Bankroll" (:hand (get-runner)))))
       (is (get-program state 0) "Bankroll is installed"))))
 
-(deftest paragon
-  ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
-)
-
 (deftest paragon-vanilla-test
     ;; Vanilla test
     (do-game
@@ -3171,10 +3097,6 @@
                                   (click-prompt state :runner "Yes") ; prompt to add a card to bottom
                                   (is (no-prompt? state :runner) "No Paragon prompt")))
              "Paragon fires automatically"))))
-
-(deftest patchwork
-  ;; Patchwork
-)
 
 (deftest patchwork-play-an-event
     ;; Play an event
@@ -3300,10 +3222,6 @@
       (card-ability state :runner plas 0)
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
-
-(deftest prepaid-voicepad
-  ;; Prepaid VoicePAD
-)
 
 (deftest prepaid-voicepad-pay-credits-prompt
     ;; Pay-credits prompt
@@ -3477,10 +3395,6 @@
       (is (prompt-is-type? state :runner :select))
       (is (= "Choose a credit providing card (0 of 1 [Credits])" (:msg (prompt-map :runner)))
           "Credit selection prompt is opened")))
-
-(deftest public-terminal
-  ;; Public Terminal
-)
 
 (deftest public-terminal-pay-credits-prompt
     ;; Pay-credits prompt
@@ -3716,10 +3630,6 @@
     (click-prompt state :runner "PAD Campaign")
     (is (= "PAD Campaign" (-> (get-corp) :deck first :title)) "PAD Campaign is now first card in R&D")))
 
-(deftest replicator
-  ;; Replicator
-)
-
 (deftest replicator-interaction-with-bazaar-issue-1511
     ;; interaction with Bazaar. Issue #1511
     (do-game
@@ -3746,8 +3656,6 @@
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Yes")  ; 6 installed
         (is (count-spy 6) "6 Spy Cameras installed"))))
-
-(deftest respirocytes)
 
 (deftest respirocytes-should-draw-multiple-cards-when-multiple-respirocytes-are-in-play
     ;; Should draw multiple cards when multiple respirocytes are in play
@@ -3927,10 +3835,6 @@
       (click-card state :runner "Şifr")
       (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength"))))
 
-(deftest silencer
-  ;; Silencer
-)
-
 (deftest silencer-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -3944,10 +3848,6 @@
                            "Used 1 credit from Silencer"
                            (card-ability state :runner dag 1)
                            (click-card state :runner sil)))))
-
-(deftest simulchip
-  ;; Simulchip
-)
 
 (deftest simulchip-with-a-program-already-in-the-heap
     ;; with a program already in the heap
@@ -4271,8 +4171,6 @@
       (is (= 6 (hand-size :runner)) "Increased hand size")
       (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
-(deftest the-gauntlet)
-
 (deftest the-gauntlet-doesn-t-give-additional-accesses-when-no-ice-are-broken
     ;; Doesn't give additional accesses when no ice are broken
     (do-game
@@ -4455,10 +4353,6 @@
       (click-card state :runner fae)
       (is (= 1 (count (:hosted (refresh fae)))) "TPT hosted on Faerie")
       (is (= 3 (get-strength (refresh fae))) "Faerie receiving +1 strength from TPT"))))
-
-(deftest the-toolbox
-  ;; The Toolbox
-)
 
 (deftest the-toolbox-pay-credits-prompt
     ;; Pay-credits prompt
@@ -4685,10 +4579,6 @@
     (click-prompt state :runner "Expose a card")
     (click-card state :runner (get-ice state :archives 0))
     (is (= 3 (:credit (get-runner))) "Gained 1 more credit from exposing")))
-
-(deftest zer0
-  ;; Zer0
-)
 
 (deftest zer0-basic-ability
     ;; Basic ability

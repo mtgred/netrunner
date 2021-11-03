@@ -7,10 +7,6 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest afshar
-  ;; Afshar
-)
-
 (deftest afshar-subroutines
     ;; Subroutines
     (do-game
@@ -113,10 +109,6 @@
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck")
       (is (nil? (refresh aim)) "Aimor is trashed"))))
 
-(deftest akhet
-  ;; Akhet
-)
-
 (deftest akhet-akhet-gains-strength-at-3-advancements
     ;; Akhet gains strength at 3 advancements
     (do-game
@@ -186,10 +178,6 @@
           (card-ability state :runner (refresh cor) 0)
           (click-prompt state :runner "End the run")
           (is (no-prompt? state :runner) "No option to break second sub")))))
-
-(deftest anansi
-  ;; Anansi
-)
 
 (deftest anansi-3-net-damage-when-bypassing
     ;; 3 net damage when bypassing
@@ -446,10 +434,6 @@
       (encounter-continue state)
       (is (= "You accessed Archangel." (:msg (prompt-map :runner))) "Return to accessing Archangel")))
 
-(deftest architect
-  ;; Architect
-)
-
 (deftest architect-architect-is-untrashable-while-installed-and-rezzed-but-trashable-if-derezzed-or-from-hq
     ;; Architect is untrashable while installed and rezzed, but trashable if derezzed or from HQ
     (do-game
@@ -465,10 +449,6 @@
         (trash state :corp (get-in @state [:corp :hand 0]))
         (is (= (get-in @state [:corp :discard 0 :title]) "Architect"))
         (is (= (get-in @state [:corp :discard 1 :title]) "Architect")))))
-
-(deftest ashigaru
-  ;; Ashigaru
-)
 
 (deftest ashigaru-gaining-losing-subs
     ;; Gaining/losing subs
@@ -574,8 +554,6 @@
       (run-continue state :movement)
       (run-jack-out state)
       (is (= 1 (count-tags state)) "Run unsuccessful; Runner kept 1 tag"))))
-
-(deftest blockchain)
 
 (deftest blockchain-face-up-transactions
     ;; Face up transactions
@@ -688,10 +666,6 @@
       (card-ability state :corp bc 0)
       (is (nil? (refresh bc)))
       (is (nil? (get-run))))))
-
-(deftest brainstorm
-  ;; Brainstorm
-)
 
 (deftest brainstorm-subroutine-gain-loss-ability
     ;; Subroutine gain/loss ability
@@ -819,10 +793,6 @@
       (is (= 2 (:position (get-run))) "Passed Bullfrog")
       (is (= "Bullfrog" (:title (get-ice state :rd 2))) "Bullfrog at outermost position of R&D"))))
 
-(deftest cell-portal
-  ;; Cell Portal - Bounce Runner to outermost position and derez itself
-)
-
 (deftest cell-portal-run-on-centrals
     ;; Run on centrals
     (do-game
@@ -936,10 +906,6 @@
       (is (= "Chrysalis" (:title (core/get-current-ice state))) "Encountering Chrysalis on access")
       (fire-subs state (core/get-current-ice state))
       (is (= 2 (count (:discard (get-runner)))) "Runner suffered 2 net damage")))
-
-(deftest chum
-  ;; Chum
-)
 
 (deftest chum-2-strength
     ;; +2 strength
@@ -1154,10 +1120,6 @@
       (is (= 2 (count (:discard (get-runner)))))
       (is (= "Corroder" (:title (first (:deck (get-runner)))))))))
 
-(deftest data-loop
-  ;; Data Loop
-)
-
 (deftest data-loop-encounter-ability-issue-4744
     ;; Encounter ability. Issue #4744
     (testing "Enough cards in hand"
@@ -1227,10 +1189,6 @@
       (run-continue state)
       (card-subroutine state :corp dm 0)
       (is (= 1 (count (:discard (get-runner)))) "Runner suffered 1 net damage"))))
-
-(deftest data-ward
-  ;; Data Ward
-)
 
 (deftest data-ward-3-credits-on-encounter-keeps-open-prompt-issue-4965
     ;; 3 credits on encounter keeps open prompt. Issue #4965
@@ -1351,10 +1309,6 @@
       (is (= 1 (count-tags state)) "Runner took 1 tag")
       (is (nil? (get-in @state [:run])) "Run was ended"))))
 
-(deftest drafter
-  ;; Drafter
-)
-
 (deftest drafter-subroutine-1-add-1-card-from-archives-to-hq
     ;; Subroutine 1: Add 1 card from Archives to HQ
     (do-game
@@ -1414,10 +1368,6 @@
             (click-prompt state :corp "HQ"))
           (is (= "Fairchild" (:title (get-ice state :hq 1)))
               "Fairchild is now installed in the outermost position protecting HQ")))))
-
-(deftest endless-eula
-  ;; Endless EULA
-)
 
 (deftest endless-eula-runner-side-ability
     ;; Runner side ability
@@ -1690,10 +1640,6 @@
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
       (is (not (:run @state)) "Run ended"))))
 
-(deftest formicary
-  ;; Formicary - when approaching server, may rez and move to innermost
-)
-
 (deftest formicary-verifies-basic-functionality
     ;; Verifies basic functionality
     (do-game
@@ -1796,10 +1742,6 @@
         (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
         (is (get-run) "The run is still in progress"))))
 
-(deftest free-lunch
-  ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
-)
-
 (deftest free-lunch-basic-behavior
     ;; Basic behavior
     (do-game
@@ -1880,10 +1822,6 @@
         (fire-subs state tt)
         (is (= 1 (:credit (get-runner))))
         (is (= ["Take 1 tag"] (prompt-buttons :runner)) "Runner should have 1 option"))))
-
-(deftest gatekeeper
-  ;; Gatekeeper
-)
 
 (deftest gatekeeper-gatekeeper
     ;; Gatekeeper:
@@ -2032,10 +1970,6 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage"))))
-
-(deftest gold-farmer
-  ;; Gold Farmer
-)
 
 (deftest gold-farmer-subroutine-test
     ;; Subroutine test
@@ -2218,10 +2152,6 @@
       (take-credits state :runner)
       (is (= 5 (hand-size :runner)) "Runner handsize returns to 5"))))
 
-(deftest hagen
-  ;; Hagen
-)
-
 (deftest hagen-trashing-only-non-fracter-non-decoder-non-killer-cards
     ;; Trashing only non-fracter non-decoder non-killer cards.
     (do-game
@@ -2285,10 +2215,6 @@
         (play-from-hand state :runner "Misdirection")
         (run-on state "HQ")
         (is (= 3 (get-strength (refresh hag))) "Misdirection didn't lower strength."))))
-
-(deftest hailstorm
-  ;; Hailstorm
-)
 
 (deftest hailstorm-happy-path
     ;; Happy Path
@@ -2553,10 +2479,6 @@
       (card-subroutine state :corp iw 0)
       (is (nil? (:run @state))))))
 
-(deftest inazuma
-  ;; Inazuma
-)
-
 (deftest inazuma-cannot-jack-out-after-encounter-of-next-piece-of-ice
     ;; Cannot jack out after encounter of next piece of ice
     (do-game
@@ -2743,10 +2665,6 @@
       (is (= 4 (count (:discard (get-runner)))) "Cache trashed")
       (is (= 1 (count (:discard (get-corp)))) "It's a Trap trashed"))))
 
-(deftest jua
-  ;; Jua
-)
-
 (deftest jua-encounter-effect-prevent-runner-from-installing-cards-for-the-rest-of-the-turn
     ;; Encounter effect - Prevent Runner from installing cards for the rest of the turn
     (do-game
@@ -2828,10 +2746,6 @@
         (is (no-prompt? state :runner) "Runner can't install Paperclip because of Jua encounter ability")
         (run-continue state :movement)
         (is (= 2 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo"))))
-
-(deftest kakugo
-  ;; Kakugo
-)
 
 (deftest kakugo-ability-continues-to-work-when-ice-is-swapped
     ;; ability continues to work when ice is swapped
@@ -2929,9 +2843,6 @@
         (is (= 6 (count (:discard (get-runner)))) "6 cards trashed")
         (is (not (nil? (:run @state))) "Run Continues"))))
 
-(deftest kitsune
-)
-
 (deftest kitsune-corp-choices-card-for-runner-to-access
     ;; Corp choices card for Runner to access
     (do-game
@@ -2971,10 +2882,6 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :runner "No action")
         (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
-
-(deftest komainu
-  ;; Komainu
-)
 
 (deftest komainu-subroutine-gain-loss-ability
     ;; Subroutine gain/loss ability
@@ -3025,8 +2932,6 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (is (zero? (count (:subroutines (refresh ko))))))))
-
-(deftest konjin)
 
 (deftest konjin-return-to-encountering-konjin-after-forced-encounter
     ;; Return to encountering Konjin after forced encounter
@@ -3094,8 +2999,6 @@
       (play-from-hand state :runner "Diesel")
       (is (= 3 (count (:hand (get-runner))))
           "New turn ends prevention; remaining 3 cards drawn from Stack"))))
-
-(deftest loki)
 
 (deftest loki-runner-does-not-shuffle-cards
     ;; Runner does not shuffle cards
@@ -3247,10 +3150,6 @@
       (take-credits state :corp 2)
       (is (= 5 (get-strength (refresh lotus))) "Lotus Field strength increased"))))
 
-(deftest macrophage
-  ;; Macrophage
-)
-
 (deftest macrophage-happy-path
     ;; Happy Path
     (do-game
@@ -3338,10 +3237,6 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (nil? (:run @state))))))
-
-(deftest magnet
-  ;; Magnet - host program when rezzed
-)
 
 (deftest magnet-faceup-ice
     ;; Faceup ice
@@ -3536,8 +3431,6 @@
       (is (not (:run @state)) "Run is ended")
       (is (:unsuccessful-run (:register (:runner @state))) "Run was unsuccessful"))))
 
-(deftest meridian)
-
 (deftest meridian-etr
     ;; ETR
     (do-game
@@ -3580,10 +3473,6 @@
     (rez state :corp (get-ice state :rd 0))
     (is (= 4 (get-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
     (is (= 1 (get-strength (get-ice state :rd 0))) "R&D at 0 strength")))
-
-(deftest metamorph
-  ;; Metamorph
-)
 
 (deftest metamorph-with-two-installed-ice
     ;; with two installed ice
@@ -3647,10 +3536,6 @@
       (run-continue state)
       (fire-subs state (get-ice state :archives 0))
       (is (= ["Swap two pieces of ice" "Swap two non-ice"] (prompt-buttons :corp)) "Only non-ice option")))
-
-(deftest mind-game
-  ;; Mind game - PSI redirect to different server
-)
 
 (deftest mind-game-server-redirection
     ;; Server redirection
@@ -3832,10 +3717,6 @@
     (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
     (is (= 6 (:credit (get-corp))) "Didn't pay 1 credit to install as second piece of ice")))
 
-(deftest miraju
-  ;; Miraju
-)
-
 (deftest miraju-breaking-sub-redirects-run
    ;; Breaking sub redirects run
     (do-game
@@ -3912,10 +3793,6 @@
         (is (= (refresh konjin) (core/get-current-ice state)))
         (is (= [:rd] (:server (get-run))) "Run not redirected since Mirāju wasn't passed")
         (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed"))))
-
-(deftest mlinzi
-  ;; Mlinzi - take X net damage or trash the top X+1 cards from the Stack
-)
 
 (deftest mlinzi-each-side-of-each-subroutine
     ;; Each side of each subroutine
@@ -4015,8 +3892,6 @@
       (is (has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
       (is (has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
-(deftest negotiator)
-
 (deftest negotiator-subroutines-fire-correctly
     ;; Subroutines fire correctly.
     (do-game
@@ -4054,10 +3929,6 @@
        (is (= 1 (:credit (get-runner))) "Runner has 1 credit after breaking 2 subs.")
        (run-continue state)
        (is (= [:hq] (:server (get-run)))))))
-
-(deftest news-hound
-  ;; News Hound
-)
 
 (deftest news-hound-rezzes-with-the-etr-sub
     ;; Rezzes with the ETR sub
@@ -4119,10 +3990,6 @@
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice")
       (is (= 3 (get-strength (refresh nb2)))
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
-
-(deftest next-diamond
-  ;; NEXT Diamond - Rez cost is lowered by 1 for each rezzed NEXT ice
-)
 
 (deftest next-diamond-base-rez-cost
     ;; Base rez cost
@@ -4311,11 +4178,6 @@
       (run-jack-out state)
       (take-credits state :runner)
       (is (= 5 (:click (get-corp))) "Corp has 5 clicks"))))
-
-(deftest oduduwa
-  ;; Oduduwa - Gain 1 advancement token when encountered.
-  ;; May placed x advancement tokens on another ice where x is the number of counters on Oduduwa already.
-)
 
 (deftest oduduwa-encounter-effect
     ;; Encounter effect
@@ -4574,10 +4436,6 @@
         "Ice Wal should gain strengh"
         (fire-subs state red-tape)))))
 
-(deftest resistor
-  ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
-)
-
 (deftest resistor-strength-based-on-tags
     ;; Strength based on tags
     (do-game
@@ -4633,10 +4491,6 @@
       (rez state :corp (get-ice state :rd 1))
       (is (= 1 (core/get-strength (refresh iw1))) "Rime no longer gives bonus strength to ice on previous server")
       (is (= 2 (core/get-strength (refresh iw2))) "Rime only gives ice on current server bonus strength"))))
-
-(deftest sadaka
-  ;; Sadaka
-)
 
 (deftest sadaka-sub-1-look-at-the-top-3-cards-of-r-d-arrange-those-or-shuffle-r-d-you-may-draw-1-card
     ;; Sub 1 - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card
@@ -4699,10 +4553,6 @@
         (click-card state :corp (get-resource state 0))
         (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
         (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed"))))
-
-(deftest saisentan
-  ;; Saisentan
-)
 
 (deftest saisentan-corp-chooses-correctly
     ;; Corp chooses correctly
@@ -4790,10 +4640,6 @@
           "Prevent third sub damage"
           (card-ability state :runner cal 0))
         (is (no-prompt? state :runner) "No more damage prevention triggers"))))
-
-(deftest salvage
-  ;; Salvage
-)
 
 (deftest salvage-subroutine-gaining-ability
     ;; Subroutine gaining ability
@@ -5020,10 +4866,6 @@
       (is (= 1 (count (:subroutines (refresh offer)))) "Special Offer resets on run-end")
       (is (= 1 (count (:subroutines (refresh snow)))) "Snowflake resets on run-end"))))
 
-(deftest sherlock-1-0
-  ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
-)
-
 (deftest sherlock-1-0-subroutine-1-trace-4-add-an-installed-program-to-the-top-of-the-stack
     ;; Subroutine 1: Trace 4 - add an installed program to the top of the stack
     (do-game
@@ -5065,10 +4907,6 @@
         (click-card state :corp (get-program state 0))
         (is (empty? (get-program state)) "Gordian uninstalled")
         (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack"))))
-
-(deftest sherlock-2-0
-  ;; Sherlock 2.0 - Trace to add an installed program to the bottom of Runner's Stack
-)
 
 (deftest sherlock-2-0-subroutine-1-trace-4-add-an-installed-program-to-the-bottom-of-the-stack
     ;; Subroutine 1: Trace 4 - add an installed program to the bottom of the stack
@@ -5124,10 +4962,6 @@
         (run-continue state)
         (card-subroutine state :corp sherlock 2)
         (is (= 1 (count-tags state)) "Runner gains 1 tag"))))
-
-(deftest shiro
-  ;; Shiro
-)
 
 (deftest shiro-subroutine-1-rearrange-the-top-3-cards-of-the-stack
     ;; Subroutine 1: Rearrange the top 3 cards of the stack
@@ -5480,10 +5314,6 @@
         (run-continue-until state :encounter-ice cl)
         (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again"))))
 
-(deftest swarm
-  ;; Swarm
-)
-
 (deftest swarm-variable-subroutines-update
     ;; Variable subroutines update
     (do-game
@@ -5521,10 +5351,6 @@
           -3 (:credit (get-runner))
           "Costs 3"
           (click-prompt state :runner "Pay 3 [Credits]")))))
-
-(deftest swordsman
-  ;; Swordsman
-)
 
 (deftest swordsman-can-t-be-broken-with-ai
     ;; Can't be broken with AI
@@ -5575,10 +5401,6 @@
         (is (not (refresh alpha)) "Alpha is trashed because it's an AI")
         (is (= "Alpha" (:title (first (:discard (get-runner)))))
             "Alpha is trashed because it's an AI"))))
-
-(deftest thimblerig
-  ;; Thimblerig
-)
 
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
     ;; Thimblerig does not open a prompt if it's the only piece of ice
@@ -5824,10 +5646,6 @@
         (click-prompt state :runner "2")
         (is (not (rezzed? (refresh tmi)))))))
 
-(deftest tour-guide
-  ;; Tour Guide
-)
-
 (deftest tour-guide-rez-before-other-assets
     ;; Rez before other assets
     (do-game
@@ -5893,11 +5711,6 @@
         (card-ability state :corp (refresh ngo) 0)
         (is (= 1 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 1 subs"))))
 
-(deftest trebuchet
-  ;; Trebuchet
-   ;; Runner couldn't steal
-)
-
 (deftest trebuchet-no-stealing-on-successful-trace
     ;; No stealing on successful trace.
     (do-game
@@ -5950,10 +5763,6 @@
         (click-prompt state :runner "No action")
         (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed"))))
 
-(deftest troll
-  ;; Troll
-)
-
 (deftest troll-giving-the-runner-a-choice-on-successful-trace-shouldn-t-make-runner-pay-trace-first-5335
     ;; Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335
     (do-game
@@ -5985,10 +5794,6 @@
       (card-subroutine state :corp tsurugi 0)
       (is (seq (:prompt (get-corp))) "Corp is prompted to pay")
       (is (no-prompt? state :runner) "Runner is not prompted to pay"))))
-
-(deftest turing
-  ;; Turing
-)
 
 (deftest turing-strength-boosted-when-protecting-a-remote-server
     ;; Strength boosted when protecting a remote server
@@ -6044,10 +5849,6 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state))))
-
-(deftest tyr
-  ;; Týr
-)
 
 (deftest tyr-click-gain-by-bioroid-breaking
     ;; Click gain by bioroid breaking
@@ -6125,10 +5926,6 @@
         (is (not (has-subtype? (refresh wend) "Barrier")) "Wendigo lost Barrier")
         (is (has-subtype? (refresh wend) "Code Gate") "Wendigo gained Code Gate")
         (is (= 4 (get-strength (refresh wend))) "Wendigo returned to normal 4 strength")))))
-
-(deftest whirlpool
-  ;; Whirlpool
-)
 
 (deftest whirlpool-on-remote
     ;; on remote

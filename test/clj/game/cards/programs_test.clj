@@ -99,10 +99,6 @@
       (run-continue state)
       (is (no-prompt? state :runner) "No bypass prompt")))
 
-(deftest aghora
-  ;; Aghora
-)
-
 (deftest aghora-swap-ability
     ;; Swap ability
     (testing "Doesnt work if no Deva in hand"
@@ -155,10 +151,6 @@
       (click-prompt state :runner "Done")
       (is (:broken (first (:subroutines (get-ice state :rd 0))))
           "The break ability worked")))
-
-(deftest algernon
-  ;; Algernon - pay 2 credits to gain a click, trash if no successful run
-)
 
 (deftest algernon-use-successful-run
     ;; Use, successful run
@@ -361,10 +353,6 @@
       (is (find-card "PAD Campaign" (:deck (get-corp))) "PAD Campaign is shuffled into R&D")
       (is (nil? (refresh pad)) "PAD Campaign is shuffled into R&D"))))
 
-(deftest ankusa
-  ;; Ankusa
-)
-
 (deftest ankusa-boost-1-strength-for-1-credit
     ;; Boost 1 strength for 1 credit
     (do-game
@@ -430,10 +418,6 @@
         (click-prompt state :runner "End the run")
         (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand"))))
 
-(deftest atman
-  ;; Atman
-)
-
 (deftest atman-installing-with-0-power-counters
     ;; Installing with 0 power counters
     (do-game
@@ -486,10 +470,6 @@
     (run-on state "Archives")
     (run-jack-out state)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
-
-(deftest aumakua
-  ;; Aumakua - Gain credit on no-trash
-)
 
 (deftest aumakua-gain-counter-on-no-trash
     ;; Gain counter on no trash
@@ -865,10 +845,6 @@
         (click-card state :runner par)
         (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
 
-(deftest bukhgalter
-  ;; Bukhgalter ability
-)
-
 (deftest bukhgalter-2c-for-breaking-subs-only-with-bukhgalter
     ;; 2c for breaking subs only with Bukhgalter
     (do-game
@@ -1111,10 +1087,6 @@
       (is (= 1 (:credit (get-runner))) "No credits spent to break")
       (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
-(deftest chakana
-  ;; Chakana
-)
-
 (deftest chakana-gain-counters-on-r-d-runs
     ;; gain counters on r&d runs
     (do-game
@@ -1148,10 +1120,6 @@
         (is (= 3 (get-counters (refresh chakana) :virus)))
         (is (= 3 (core/get-advancement-requirement (get-content state :remote1 0)))
             "Hostile Takeover is affected by Chakana"))))
-
-(deftest chameleon
-  ;; Chameleon - Install on corp turn, only returns to hand at end of runner's turn
-)
 
 (deftest chameleon-with-clone-chip
     ;; with Clone Chip
@@ -1389,10 +1357,6 @@
           (click-prompt state :runner "End the run"))
         (is (every? :broken (:subroutines (refresh battlement))))))))
 
-(deftest cloak
-  ;; Cloak
-)
-
 (deftest cloak-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -1473,10 +1437,6 @@
         (click-prompt state :runner "Yes")
         (click-card state :runner (refresh conduit))
         (is (= 0 (core/access-bonus-count state :runner :rd)) "Runner should not access additional cards"))))
-
-(deftest consume
-  ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
-)
 
 (deftest consume-trash-and-cash-out
     ;; Trash and cash out
@@ -1701,10 +1661,6 @@
       (is (nil? (get-program state 1)) "Crescentus could be used because the piece of ice is rezzed")
       (is (not (rezzed? (refresh iw))) "Ice Wall is no longer rezzed"))))
 
-(deftest crypsis
-  ;; Crypsis - Loses a virus counter after encountering ice it broke
-)
-
 (deftest crypsis-breaking-a-sub-spends-a-virus-counter
     ;; Breaking a sub spends a virus counter
     (do-game
@@ -1808,10 +1764,6 @@
       (card-ability state :runner cc 0)
       (is (no-prompt? state :runner) "Can't break subs on a different server")
       (is (zero? (count (filter :broken (:subroutines (get-ice state :rd 0))))) "No subs are broken"))))
-
-(deftest d4v1d
-  ;; D4v1d
-)
 
 (deftest d4v1d-can-break-5-strength-ice
     ;; Can break 5+ strength ice
@@ -2007,10 +1959,6 @@
         (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
         (is (= 7 (get-strength (refresh wrap))) "Wraparound not reduced by Datasucker"))))
 
-(deftest davinci
-  ;; DaVinci
-)
-
 (deftest davinci-gain-1-counter-on-successful-run
     ;; Gain 1 counter on successful run
     (do-game
@@ -2086,8 +2034,6 @@
     (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")
     (is (find-card "Demara" (:discard (get-runner))) "Demara is trashed")))
 
-(deftest deus-x)
-
 (deftest deus-x-vs-multiple-hostile-infrastructure
     ;; vs Multiple Hostile Infrastructure
     (do-game
@@ -2125,10 +2071,6 @@
         (click-prompt state :runner "Pay to steal")
         (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
-
-(deftest dhegdheer
-  ;; Dheghdheer - hosting a breaker with strength based on unused MU should calculate correctly
-)
 
 (deftest dhegdheer-with-credit-savings
     ;; with credit savings
@@ -2214,10 +2156,6 @@
     (play-from-hand state :corp "Fire Wall" "HQ") ; 2cr cost from normal install cost
     (is (= "Diwan" (-> (get-runner) :discard first :title)) "Diwan was trashed from purge")
     (is (= 2 (:credit (get-corp))) "No charge for installs after Diwan purged")))
-
-(deftest djinn
-  ;; Djinn
-)
 
 (deftest djinn-hosted-chakana-does-not-disable-advancing-agendas-issue-750
     ;; Hosted Chakana does not disable advancing agendas. Issue #750
@@ -2383,10 +2321,6 @@
       (is (not (has-subtype? (refresh mg) "Code Gate")))
       (is (not (has-subtype? (refresh mg) "Sentry"))))))
 
-(deftest engolo
-  ;; Engolo
-)
-
 (deftest engolo-subtype-is-removed-when-engolo-is-trashed-mid-encounter-issue-4039
     ;; Subtype is removed when Engolo is trashed mid-encounter. Issue #4039
     (do-game
@@ -2525,8 +2459,6 @@
     (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all of the cards cards in HQ:")
         "All of HQ is revealed correctly")))
 
-(deftest faerie)
-
 (deftest faerie-trash-after-encounter-is-over-not-before
     ;; Trash after encounter is over, not before
     (do-game
@@ -2562,10 +2494,6 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh fae)})
         (core/continue state :corp nil)
         (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
-
-(deftest false-echo
-  ;; False Echo - choice for Corp
-)
 
 (deftest false-echo-add-to-hq
     ;; Add to HQ
@@ -2651,10 +2579,6 @@
         (click-card state :runner "Armitage Codebusting")
         (is (no-prompt? state :runner) "No trash-prevention prompt for resource"))))
 
-(deftest fawkes
-  ;; Fawkes
-)
-
 (deftest fawkes-requires-a-stealth-credit-to-pump
     ;; Requires a stealth credit to pump
     (do-game (new-game {:runner {:hand ["Fawkes"] :credits 20}})
@@ -2696,10 +2620,6 @@
           (card-ability state :runner fawkes 1)
           (click-prompt state :runner "3")
           (click-card state :runner cloak)))))
-
-(deftest femme-fatale
-  ;; Femme Fatale
-)
 
 (deftest femme-fatale-bypass-functionality
     ;; Bypass functionality
@@ -2758,10 +2678,6 @@
       (run-continue state)
       (is (no-prompt? state :runner)) "Femme ability doesn't fire after uninstall"))
 
-(deftest fermenter
-  ;; Fermenter - click, trash to get 2c per counter.
-)
-
 (deftest fermenter-trash-and-cash-out
     ;; Trash and cash out
     (do-game
@@ -2799,10 +2715,6 @@
           (card-ability state :runner fermenter 0))
         (is (= 1 (count (:discard (get-runner)))) "Fermenter is trashed")
         (is (= 1 (get-counters (refresh hivemind) :virus)) "Hivemind has still 1 counter"))))
-
-(deftest gauss
-  ;; Gauss
-)
 
 (deftest gauss-loses-strength-at-end-of-runner-s-turn
     ;; Loses strength at end of Runner's turn
@@ -2988,10 +2900,6 @@
       (is (= 1 (count (:deck (get-corp)))))
       (is (= 3 (count (:discard (get-corp)))) "Milled 1 card from R&D"))))
 
-(deftest harbinger
-  ;; Harbinger
-)
-
 (deftest harbinger-install-facedown-when-blacklist-installed
     ;; install facedown when Blacklist installed
     (do-game
@@ -3004,10 +2912,6 @@
       (trash state :runner (-> (get-runner) :rig :program first))
       (is (zero? (count (:discard (get-runner)))) "Harbinger not in heap")
       (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
-
-(deftest houdini
-  ;; Houdini
-)
 
 (deftest houdini-must-use-a-single-stealth-credit-to-pump
     ;; Must use a single stealth credit to pump
@@ -3071,10 +2975,6 @@
           (is (= 7 (:click (get-runner))) "Used Hyperdriver")
           (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game")))))
 
-(deftest ika
-  ;; Ika
-)
-
 (deftest ika-can-be-hosted-on-both-rezzed-unrezzed-ice-respects-no-host-is-blanked-by-magnet
     ;; Can be hosted on both rezzed/unrezzed ice, respects no-host, is blanked by Magnet
     (do-game
@@ -3118,10 +3018,6 @@
           (is (= 1 (count (:hosted (refresh magnet)))) "Ika was hosted onto Magnet")
           (let [ika (first (:hosted (refresh magnet)))]
             (is (zero?(count (:abilities ika))) "Ika was blanked"))))))
-
-(deftest imp
-  ;; Imp
-)
 
 (deftest imp-full-test
     ;; Full test
@@ -3254,10 +3150,6 @@
       (is (= 1 (count (get-program state))))
       (is (= 1 (count (:discard (get-runner)))) "Incubator trashed")
       (is (= 3 (:click (get-runner)))))))
-
-(deftest inversificator
-  ;; Inversificator
-)
 
 (deftest inversificator-shouldn-t-hook-up-events-for-unrezzed-ice
     ;; Shouldn't hook up events for unrezzed ice
@@ -3531,10 +3423,6 @@
       (card-ability state :runner (get-program state 0) 0)
       (is (:run @state) "Keyhole can be used multiple times per turn")))
 
-(deftest kyuban
-  ;; Kyuban
-)
-
 (deftest kyuban-gain-creds-when-passing-a-piece-of-ice-both-when-rezzed-and-when-unrezzed
     ;; Gain creds when passing a piece of ice, both when rezzed and when unrezzed.
     (do-game
@@ -3586,10 +3474,6 @@
         (run-continue state)
         (is (= (+ starting-creds 2) (:credit (get-runner)))
             "Only gained 2 credits for passing Eli"))))
-
-(deftest laamb
-  ;; Laamb
-)
 
 (deftest laamb-ability-gives-an-card-barrier-subtype
     ;; Ability gives an card Barrier subtype
@@ -3823,10 +3707,6 @@
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
-(deftest makler
-  ;; Makler
-)
-
 (deftest makler-break-ability-costs-2-for-2-subroutines
     ;; Break ability costs 2 for 2 subroutines
     (do-game
@@ -3907,10 +3787,6 @@
       (is (= 3 (get-counters (refresh mam) :power)) "Mammon has 3 power counters")
       (take-credits state :runner)
       (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
-
-(deftest mantle
-  ;; Mantle
-)
 
 (deftest mantle-works-with-programs
     ;; Works with programs
@@ -4173,10 +4049,6 @@
         (run-jack-out state)
         (is (= 1 (:credit (get-runner))) "Runner spent 3 credits to break Zed 2.0"))))
 
-(deftest misdirection
-  ;; Misdirection
-)
-
 (deftest misdirection-recurring-credits-interaction-issue-4868
     ;; Recurring credits interaction. Issue #4868
     (do-game
@@ -4241,10 +4113,6 @@
         (is (= 1 (:click (get-runner))) "Runner spent 2 clicks (1 remaining)")
         (is (= 3 (:credit (get-runner))) "Runner spent 2 credits (3 remaining)"))))
 
-(deftest mkultra
-  ;; MKUltra
-)
-
 (deftest mkultra-auto-pump
     ;; auto-pump
     (testing "Pumping and breaking for 1"
@@ -4281,10 +4149,6 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (is (no-prompt? state :runner) "MKUltra prompt did not come up")))
-
-(deftest multithreader
-  ;; Multithreader
-)
 
 (deftest multithreader-pay-credits-prompt
     ;; Pay-credits prompt
@@ -4789,8 +4653,6 @@
           (is (= 3 (get-strength (refresh pc))) "Pumped Paperclip up to str 3")
           (is (= 3 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broke all but 3 subs")))))
 
-(deftest parasite)
-
 (deftest parasite-basic-functionality-gain-1-counter-every-runner-turn
     ;; Basic functionality: Gain 1 counter every Runner turn
     (do-game
@@ -4988,10 +4850,6 @@
         (click-card state :runner "Paricia"))
       (is (nil? (refresh pad)) "PAD Campaign successfully trashed"))))
 
-(deftest pawn
-  ;; Pawn
-)
-
 (deftest pawn-happy-path
     ;; Happy Path
     (do-game
@@ -5042,10 +4900,6 @@
       (run-continue state)
       (run-jack-out state)
       (is (not (has-subtype? (refresh iw) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
-
-(deftest penrose
-  ;; Penrose
-)
 
 (deftest penrose-pay-credits-prompt-and-first-turn-ability
     ;; Pay-credits prompt and first turn ability
@@ -5127,10 +4981,6 @@
                          (run-continue state))
       (is (= 1 (count (:hand (get-runner)))) "Peregrine returned to grip")
       (is (not (rezzed? (refresh bw1))) "Bandwidth derezzed"))))
-
-(deftest persephone
-  ;; Persephone's ability trashes cards from R&D
-)
 
 (deftest persephone-triggers-ar-enhanced-security-issue-3187
     ;; Triggers AR-Enhanced Security. Issue #3187
@@ -5219,10 +5069,6 @@
       (is (= 4 (get-counters (refresh plague) :virus)) "Plague gained 2 counters")
       (run-empty-server state "Archives")
       (is (= 4 (get-counters (refresh plague) :virus)) "Plague did not gain counters"))))
-
-(deftest progenitor
-  ;; Progenitor
-)
 
 (deftest progenitor-hosting-hivemind-using-virus-breeding-ground-issue-738
     ;; Hosting Hivemind, using Virus Breeding Ground. Issue #738
@@ -5316,10 +5162,6 @@
     (let [credits (:credit (get-runner))]
       (take-credits state :corp)
       (is (= (:credit (get-runner)) (+ credits 1)) "Gain 1 from Rezeki"))))
-
-(deftest rng-key
-  ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
-)
 
 (deftest rng-key-basic-behaviour-first-successful-run-on-rd-hq-guess-a-number-gain-credits-or-cards-if-number-matches-card-cost
     ;; Basic behaviour - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
@@ -5424,10 +5266,6 @@
       (click-prompt state :runner "5")
       (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
-(deftest sadyojata
-  ;; Sadyojata
-)
-
 (deftest sadyojata-swap-ability
     ;; Swap ability
     (testing "Doesnt work if no Deva in hand"
@@ -5516,10 +5354,6 @@
       (click-prompt state :runner "Done")
       (is (:broken (first (:subroutines (refresh engima)))) "Broke a code gate subroutine"))))
 
-(deftest sahasrara
-  ;; Sahasrara
-)
-
 (deftest sahasrara-pay-credits-prompt
   ;; Pay-credits prompt
     (do-game
@@ -5593,10 +5427,6 @@
       (is (= 2 (count (:hosted (refresh sch)))) "Can't host non-program")
       (is (= 1 (count (:hand (get-runner))))))))
 
-(deftest self-modifying-code
-  ;; Trash & pay 2 to search deck for a program and install it. Shuffle.
-)
-
 (deftest self-modifying-code-trash-pay-2-to-search-deck-for-a-program-and-install-it-shuffle
     ;; Trash & pay 2 to search deck for a program and install it. Shuffle
     (do-game
@@ -5654,8 +5484,6 @@
       (play-from-hand state :runner "Access to Globalsec")
       (is (= 2 (get-link state)) "2 link")
       (is (= 2 (core/available-mu state)) "Shiv stops using MU when 2+ link"))))
-
-(deftest sneakdoor-beta)
 
 (deftest sneakdoor-beta-gabriel-santiago-ash-on-hq-should-prevent-sneakdoor-hq-access-but-still-give-gabe-credits-issue-1138
     ;; Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits. Issue #1138.
@@ -5795,10 +5623,6 @@
           (run-continue state :success)
           (is (= :archives (get-in @state [:run :server 0])) "Run continues on Archives")))))
 
-(deftest snitch
-  ;; Snitch
-)
-
 (deftest snitch-only-works-on-rezzed-ice
     ;; Only works on rezzed ice
     (do-game
@@ -5842,8 +5666,6 @@
       (run-on state "Archives")
       (is (no-prompt? state :runner) "No option to jack out")
       (run-continue state)))
-
-(deftest snowball)
 
 (deftest snowball-strength-boost-until-end-of-run-when-used-to-break-a-subroutine
     ;; Strength boost until end of run when used to break a subroutine
@@ -6115,10 +5937,6 @@
             "Vanilla is innermost, Ice Wall is outermost again")
         (is (= [0 1] (map :index (get-ice state :hq)))))))
 
-(deftest takobi
-  ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
-)
-
 (deftest takobi-1-counter-when-breaking-all-subs
     ;; +1 counter when breaking all subs
     (do-game
@@ -6237,10 +6055,6 @@
           (is (= 1 (get-counters (refresh tranquilizer) :virus)))
           (is (not (rezzed? (refresh iw))) "Ice Wall derezzed")))))
 
-(deftest trope
-  ;; Trope
-)
-
 (deftest trope-happy-path
     ;; Happy Path
     (do-game
@@ -6284,8 +6098,6 @@
       (is (= 3 (count (:discard (get-runner)))) "3 cards in discard")
       (card-ability state :runner (get-program state 0) 0)
       (is (no-prompt? state :runner) "Shuffle prompt did not come up")))
-
-(deftest trypano)
 
 (deftest trypano-hivemind-and-architect-interactions
     ;; Hivemind and Architect interactions
@@ -6340,14 +6152,6 @@
           (is (= 5 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters (now at 5)")
           (is (zero? (count (get-ice state :rd))) "Unrezzed Architect was trashed")
           (is (= 3 (count (:discard (get-runner)))) "Trypano went to discard")))))
-
-(deftest tycoon
-  ;; Tycoon
-  
-  ;; Issue #4220: Tycoon doesn't fire if Corp ends run before ice is passed
-  
-  ;; Issue #4423: Tycoon no longer working automatically
-)
 
 (deftest tycoon-tycoon-gives-2c-after-using-to-break-ice
     ;; Tycoon gives 2c after using to break ice
@@ -6535,10 +6339,6 @@
         (click-prompt state :runner "Done")
         (is (= (dec credits) (:credit (get-runner)))))
       (is (= 3 (:credit (get-runner))) "Able to use ability now"))))
-
-(deftest vamadeva
-  ;; Vamadeva
-)
 
 (deftest vamadeva-swap-ability
     ;; Swap ability

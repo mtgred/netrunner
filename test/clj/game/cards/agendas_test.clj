@@ -192,10 +192,6 @@
     (click-prompt state :runner "Suffer 5 meat damage")
     (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards after Armed Intimidation meat damage")))
 
-(deftest armored-servers
-  ;; Armored Servers
-)
-
 (deftest armored-servers-should-write-to-the-log
     ;; should write to the log
     (do-game
@@ -356,10 +352,6 @@
       (click-prompt state :runner "Steal")
       (is (= 4 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement tokens"))))
 
-(deftest bacterial-programming
-  ;; Bacterial Programming
-)
-
 (deftest bacterial-programming-scoring-should-not-cause-a-run-to-exist-for-runner
     ;; Scoring should not cause a run to exist for runner.
     (do-game
@@ -517,10 +509,6 @@
     (take-credits state :corp)
     (is (zero? (count-tags state))) "Two tags removed at the end of the turn"))
 
-(deftest broad-daylight
-  ;; Broad Daylight
-)
-
 (deftest broad-daylight-take-bad-pub
     ;; take bad pub
     (do-game
@@ -646,10 +634,6 @@
       (click-card state :corp kati)
       (is (no-prompt? state :runner) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
-
-(deftest chronos-project
-  ;; Chronos Project
-)
 
 (deftest chronos-project-happy-path
     ;; Happy Path
@@ -777,10 +761,6 @@
             (get-corp) 0
             (click-prompt state :corp "Yes")))))
 
-(deftest dedicated-neural-net
-  ;; Dedicated Neural Net
-)
-
 (deftest dedicated-neural-net-corp-chooses-card-to-access-issue-4874
     ;; Corp chooses card to access. Issue #4874
     (do-game
@@ -877,10 +857,6 @@
       (click-prompt state :runner "No action")
       (click-card state :corp "Ice Wall")
       (click-prompt state :runner "No action")))
-
-(deftest degree-mill
-  ;; Degree Mill
-)
 
 (deftest degree-mill-basic-behavior
     ;; Basic behavior
@@ -1031,10 +1007,6 @@
       (is (empty? (:scored (get-runner))) "Runner has no cards scored")
       (is (find-card "Divested Trust" (:rfg (get-corp))) "Divested Trust should be rfg'd")
       (is (find-card "Government Takeover" (:hand (get-corp))) "Gov Takeover should be in HQ")))
-
-(deftest domestic-sleepers
-  ;; Domestic Sleepers
-)
 
 (deftest domestic-sleepers-ability-changes-points
     ;; Ability changes points
@@ -1672,10 +1644,6 @@
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
-(deftest hyperloop-extension
-  ;; Hyperloop Extension
-)
-
 (deftest hyperloop-extension-score
     ;; Score
     (do-game
@@ -1920,10 +1888,6 @@
       (click-prompt state :corp "New remote")
       (is (some? (get-content state :remote8 0))))))
 
-(deftest longevity-serum
-  ;; Longevity Serum
-)
-
 (deftest longevity-serum-basic-behavior
     ;; Basic behavior
     (do-game
@@ -2044,10 +2008,6 @@
       (click-card state :corp (refresh rs))
       (click-card state :corp (refresh sn)))))
 
-(deftest mandatory-upgrades
-  ;; Mandatory Upgrades
-)
-
 (deftest mandatory-upgrades-gain-an-additional-click
     ;; Gain an additional click
     (do-game
@@ -2115,8 +2075,6 @@
       (advance state mb3 2)
       (score state :corp (refresh mb3))
       (is (= 4 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
-
-(deftest megaprix-qualifier)
 
 (deftest megaprix-qualifier-the-first-scored-megaprix-qualifier-doesn-t-get-a-counter-and-is-worth-1-point
     ;; The first scored Megaprix Qualifier doesn't get a counter, and is worth 1 point
@@ -2191,10 +2149,6 @@
     (run-empty-server state :remote2)
     (click-prompt state :runner "Steal")
     (is (= 3 (:agenda-point (get-runner))) "Runner should score 3 points")))
-
-(deftest meteor-mining
-  ;; Meteor Mining
-)
 
 (deftest meteor-mining-when-meteor-mining-is-stolen
     ;; when Meteor Mining is stolen
@@ -2527,10 +2481,6 @@
     (play-and-score state "Philotic Entanglement")
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
-
-(deftest posted-bounty
-  ;; Posted Bounty
-)
 
 (deftest posted-bounty-forfeiting-takes-1-bad-publicity
     ;; Forfeiting takes 1 bad publicity
@@ -2880,8 +2830,6 @@
       (run-jack-out state)
       (is (= 2 (count (:subroutines (refresh eli)))) "Eli resets to normal number of subs"))))
 
-(deftest project-yagi-uda)
-
 (deftest project-yagi-uda-swap-ice-from-hq
     ;; Swap ice from HQ
     (do-game
@@ -3104,10 +3052,6 @@
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
 
-(deftest reeducation
-  ;; Reeducation
-)
-
 (deftest reeducation-simple-test
     ;; Simple test
     (do-game
@@ -3289,10 +3233,6 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
-(deftest sds-drone-deployment
-  ;; SDS Drone Deployment
-)
-
 (deftest sds-drone-deployment-corp-score-a-program-is-installed
     ;; Corp score, a program is installed
     (do-game
@@ -3468,10 +3408,6 @@
     (is (= 1 (count (:hand (get-runner)))) "Runner should have 1 card in hand")
     (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards")))
 
-(deftest ssl-endorsement
-  ;; SSL Endorsement
-)
-
 (deftest ssl-endorsement-gain-credits-when-in-corp-score-area-before-turn-begins
     ;; gain credits when in corp score area before turn begins
     (do-game
@@ -3580,10 +3516,6 @@
       (take-credits state :runner)
       (is (no-prompt? state :corp) "Not prompted when out of money")))
 
-(deftest standoff
-  ;; Standoff
-)
-
 (deftest standoff-runner-declines-first
     ;; Runner declines first
     (do-game
@@ -3634,10 +3566,6 @@
         (click-prompt state :corp "Done")
         (is (= credits (:credit (get-corp))) "Corp should gain no credits from declining to trash an installed card")
         (is (zero? (-> (get-corp) :hand count)) "Corp should draw no cards from declining to trash an installed card"))))
-
-(deftest sting
-  ;; Sting! - do 1 net on score/steal + 1 more net for each sting in the other player's score
-)
 
 (deftest sting-corp-score-then-runner-steal-then-corp-score
     ;; Corp score, then Runner steal, then Corp score
@@ -3740,10 +3668,6 @@
       (play-from-hand state :runner "Respirocytes")
       (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics")))
 
-(deftest the-future-is-now
-  ;; The Future is Now
-)
-
 (deftest the-future-is-now-with-at-least-one-card-in-deck
     ;; With at least one card in deck
     (do-game
@@ -3790,10 +3714,6 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
       (is (= 6 (:agenda-point (get-runner))) "Runner stole TFP - no Psi game on installed TFP"))))
-
-(deftest timely-public-release
-  ;; Timely Public Release: spend agenda counter to install, ignoring all costs
-)
 
 (deftest timely-public-release-install-outside-run
     ;; Install outside run
@@ -3897,11 +3817,6 @@
         1 (count-tags state)
         "Runner takes 1 tag on Tomorrow's Headline steal"
         (click-prompt state :runner "Steal")))))
-
-(deftest transport-monopoly
-  ;; Transport Monopoly
-   ; accessed Hedge Fund
-)
 
 (deftest transport-monopoly-basic-functionality
     ;; Basic functionality
@@ -4055,10 +3970,6 @@
       (play-and-score state "Veterans Program")
       (is (zero? (count-bad-pub state)) "Should lose 1 bad publicity")))
 
-(deftest viral-weaponization
-  ;; Viral Weaponization - at the end of turn scored, do 1 net damage for each card in grip
-)
-
 (deftest viral-weaponization-score-on-corp-turn
     ;; Score on corp turn
     (do-game
@@ -4141,10 +4052,6 @@
         (is (= 5 (count (:hand (get-runner)))) "Runner doesn't take the damage until after resolving The Class Act")
         (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 5 (count (:hand (get-runner)))) "Runner takes damage at end of turn"))))
-
-(deftest voting-machine-initiative
-  ;; Voting Machine Initiative
-)
 
 (deftest voting-machine-initiative-voting-machine-initiative
     ;; Voting Machine Initiative

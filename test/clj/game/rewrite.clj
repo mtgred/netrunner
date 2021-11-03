@@ -154,8 +154,43 @@
        (z/root-string)
        (spit file)))
 
-(defn rewrite-card-tests []
-  (let [dir (clojure.java.io/file "test/clj/game/cards")]
+(defn apply-fn-to-file [f]
+  (let [dir (io/file "test/clj/game/cards")]
     (doseq [file (file-seq dir)
             :when (.isFile file)]
-      (process-file file))))
+      (f file))))
+
+(defn rewrite-card-tests []
+  (apply-fn-to-file process-file))
+
+(defn find-root-deftest [zloc]
+  (if (or (-> zloc z/down deftest?)
+          (-> zloc z/down z/string (= "ns")))
+    zloc
+    (recur (z/up zloc))))
+
+(defn clean-deftest [zloc]
+  (if (and (deftest? (z/down zloc))
+           (-> zloc z/down z/right z/right z/end?))
+    (-> zloc z/remove find-root-deftest)
+    zloc))
+
+(defn clean-file [zloc]
+  (let [zloc (clean-deftest zloc)]
+    (if (z/end? (z/right zloc))
+      zloc
+      (recur (z/right zloc)))))
+
+(defn process-file-to-clean [file]
+  (->> file
+       (z/of-file)
+       (clean-file)
+       (z/root-string)
+       (spit file)))
+
+(defn clean-card-tests []
+  (apply-fn-to-file process-file-to-clean))
+
+(defn load-agendas [& [path]]
+  (->> (io/file (str "test/clj/game/cards/" (or path "agendas") "_test.clj"))
+       (z/of-file)))

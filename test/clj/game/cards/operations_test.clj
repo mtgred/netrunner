@@ -8,11 +8,6 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest ^{:card-title "24-7-news-cycle"}
-  twenty-four-seven-news-cycle
-  ;; 24/7 News Cycle
-)
-
 (deftest twenty-four-seven-news-cycle-breaking-news-interaction
     ;; Breaking News interaction
     (do-game
@@ -172,10 +167,6 @@
     (click-prompt state :corp "Hedge Fund")
     (is (= ["Hedge Fund"] (->> (get-corp) :hand (map :title))) "Hedge Fund is now in HQ")))
 
-(deftest an-offer-you-can-t-refuse
-  ;; An Offer You Can't Refuse - exact card added to score area, not the last discarded one
-)
-
 (deftest an-offer-you-can-t-refuse-add-card-to-score-area
     ;; add card to score area
     (do-game
@@ -243,10 +234,6 @@
                          "Runner took no meat damage on unprotected server"
                          (run-empty-server state :rd))))
 
-(deftest ark-lockdown
-  ;; Ark Lockdown
-)
-
 (deftest ark-lockdown-happy-path
     ;; Happy Path
     (do-game
@@ -310,10 +297,6 @@
         (click-card state :corp (find-card "Hostile Takeover" (:discard (get-corp))))
         (is (= (+ 5 credits) (:credit (get-corp))) "Corp should gain 4 [Credits] for two revealed agendas and 1 [Credits] from Hyoubu ID"))))
 
-(deftest audacity
-  ;; Audacity
-)
-
 (deftest audacity-requires-3-cards-in-hand-to-play
     ;; requires 3 cards in hand to play
     (do-game
@@ -348,10 +331,6 @@
       (click-card state :corp "Hostile Takeover")
       (is (= 1 (get-counters (get-ice state :hq 0) :advancement)) "Ice Wall should have 1 counter")
       (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Hostile Takeover should have 1 counter")))
-
-(deftest back-channels
-  ;; Back Channels
-)
 
 (deftest back-channels-trashing-a-card-with-no-advancements
     ;; trashing a card with no advancements
@@ -498,10 +477,6 @@
     (play-from-hand state :corp "BOOM!")
     (is (= 7 (count (:discard (get-runner)))) "Runner should take 7 damage")))
 
-(deftest building-blocks
-  ;; Building Blocks - install and rez a barrier from HQ at no cost
-)
-
 (deftest building-blocks-basic-behavior
     ;; Basic behavior
     (do-game
@@ -565,10 +540,6 @@
       (click-card state :corp "Ice Wall")
       (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from 5 cards"))))
 
-(deftest cerebral-cast
-  ;; Cerebral Cast
-)
-
 (deftest cerebral-cast-runner-wins
     ;; Runner wins
     (do-game
@@ -604,10 +575,6 @@
       (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
       (is (= 1 (count-tags state)) "Runner took a tag from Cerebral Cast choice")))
 
-(deftest cerebral-static
-  ;; Cerebral Static
-)
-
 (deftest cerebral-static-vs-chaos-theory
     ;; vs Chaos Theory
     (do-game
@@ -641,10 +608,6 @@
     (play-from-hand state :corp "Closed Accounts")
     (is (zero? (:credit (get-runner))) "Runner lost all credits")))
 
-(deftest commercialization
-  ;; Commercialization
-)
-
 (deftest commercialization-single-advancement-token
     ;; Single advancement token
     (do-game
@@ -666,10 +629,6 @@
       (play-from-hand state :corp "Commercialization")
       (click-card state :corp (refresh (get-ice state :hq 0)))
       (is (= 7 (:credit (get-corp))) "Gained 2 for double advanced ice from Commercialization")))
-
-(deftest complete-image
-  ;; Complete Image
-)
 
 (deftest complete-image-correctly-guessing
     ;; Correctly guessing
@@ -894,24 +853,17 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
-(deftest digital-rights-management
-  
-  
-  
-  
-  ;; ToDo: Activate test once implementation is complete
-  ; (testing "Cannot score Agenda installed after playing DRM"
-    ; (do-game
-      ; (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
-                        ; :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
-      ; (take-credits state :corp)
-      ; (take-credits state :runner)
-      ; (play-from-hand state :corp "Digital Rights Management")
-      ; (click-prompt state :corp "None")
-      ; (play-and-score state "Project Vitruvius")
-      ; (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
-      ; ))
-)
+(deftest-pending digital-rights-management
+  ;; Cannot score Agenda installed after playing DRM
+  (do-game
+    (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
+                      :deck [(qty "Project Beale" 2) (qty "Hedge Fund" 3)]}})
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Digital Rights Management")
+    (click-prompt state :corp "None")
+    (play-and-score state "Project Vitruvius")
+    (is (= 0 (count (get-scored state :corp))) "Beale was not scored")))
 
 (deftest digital-rights-management-drm-only-searches-for-agendas-in-r-d
     ;; DRM only searches for Agendas in R&D
@@ -1101,10 +1053,6 @@
     (is (= 1 (count-tags state)) "Runner should still have 1 tag")
     (is (= 2 (-> (get-runner) :hand count)) "Runner should take 1 meat damage from Door to Door")))
 
-(deftest eavesdrop
-  ;; Eavesdrop - host on ice, trace 3 when encountered
-)
-
 (deftest eavesdrop-basic-behavior
     ;; Basic Behavior
     (do-game
@@ -1209,10 +1157,6 @@
     (is (empty? (:discard (get-runner))) "Can't target Inti; matches Runner faction")
     (click-card state :corp (get-resource state 0))
     (is (= 1 (count (:discard (get-runner)))) "Caldera trashed")))
-
-(deftest enhanced-login-protocol
-  ;; Enhanced Login Protocol
-)
 
 (deftest enhanced-login-protocol-first-click-run-each-turn-costs-an-additional-click
     ;; First click run each turn costs an additional click
@@ -1513,10 +1457,6 @@
     (click-prompt state :corp "Hostile Takeover")
     (is (= ["Hostile Takeover"] (->> (get-corp) :hand (map :title))) "Hostile Takeover should now be in hand")))
 
-(deftest financial-collapse
-  ;; Financial Collapse
-)
-
 (deftest financial-collapse-runner-has-no-credits
     ;; runner has no credits
     (do-game
@@ -1571,10 +1511,6 @@
         (click-card state :runner "Kati Jones")
         (is (not (refresh kati)) "Kati Jones should be trashed")
         (is (= credits (:credit (get-runner))) "Runner should lose no credits"))))
-
-(deftest focus-group
-  ;; Focus Group
-)
 
 (deftest focus-group-regular-scenario-can-afford
     ;; Regular scenario - can afford
@@ -1680,10 +1616,6 @@
     (is (= "Ice Wall" (:title (get-ice state :remote1 0))) "Ice Wall should be installed")
     (is (= "Hostile Takeover" (:title (get-content state :remote1 0))) "Hostile Takeover should be installed")))
 
-(deftest fully-operational
-  ;; Fully Operational
-)
-
 (deftest fully-operational-gain-2-credits
     ;; Gain 2 credits
     (do-game
@@ -1739,10 +1671,6 @@
                 (is (= (+ n clicks) (:click (get-corp))) (str "Corp should gain " (utils/quantify n "click")))
                 (is (= 1 (-> (get-corp) :rfg count)) "Game Changer should be in rfg zone now"))))]
     (doall (map game-changer-test (range 5)))))
-
-(deftest game-over
-  ;; Game Over
-)
 
 (deftest game-over-can-t-play-unless-runner-stole-an-agenda-last-turn
     ;; Can't play unless Runner stole an agenda last turn
@@ -1965,10 +1893,6 @@
     (click-prompt state :runner "2")
     (is (= 1 (count-bad-pub state)) "Corp should gain 1 bad publicity from losing Hellion Alpha Test trace")))
 
-(deftest hellion-beta-test
-  ;; Hellion Beta Test
-)
-
 (deftest hellion-beta-test-winning-trace-trashing-2-cards
     ;; Winning Trace - Trashing 2 cards
     (do-game
@@ -2019,8 +1943,6 @@
     (click-card state :corp "Hostile Takeover")
     (is (= "Hostile Takeover" (-> (get-corp) :deck first :title)) "Hostile Takeover should be moved to the top of R&D")))
 
-(deftest high-profile-target)
-
 (deftest high-profile-target-when-the-runner-has-no-tags
     ;; when the runner has no tags
     (do-game
@@ -2057,10 +1979,6 @@
       (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards in hand")
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
-
-(deftest housekeeping
-  ;; Housekeeping - Runner must trash a card from Grip on first install of a turn
-)
 
 (deftest housekeeping-trash-effect
     ;; Trash effect
@@ -2356,8 +2274,6 @@
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
-(deftest market-forces)
-
 (deftest market-forces-full-test
     ;; Full test
     (letfn [(market-forces-credit-test
@@ -2511,10 +2427,6 @@
         (click-prompt state :corp "0")
         (is (= 1 (:agenda-point (get-corp))) "Profiteering was able to be scored")))))
 
-(deftest mutate
-  ;; Mutate - trash a rezzed piece of ice, install and rez one from R&D
-)
-
 (deftest mutate-basic-operation
     ;; Basic operation
     (do-game
@@ -2611,10 +2523,6 @@
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
-(deftest next-activation-command
-  ;; NEXT Activation Command
-)
-
 (deftest next-activation-command-get-trashed-at-start-of-next-corp-turn
     ;; Get trashed at start of next Corp turn
     (do-game
@@ -2706,10 +2614,6 @@
     (click-card state :corp "Kati Jones")
     (is (zero? (count-tags state)) "Runner should lose 1 tag")
     (is (not (get-resource state 0)) "Kati should be trashed")))
-
-(deftest oversight-ai
-  ;; Oversight AI - Rez a piece of ice ignoring all costs
-)
 
 (deftest oversight-ai-rez-at-no-cost
     ;; Rez at no cost
@@ -2813,10 +2717,6 @@
     (click-prompt state :runner "0")
     (click-card state :corp (get-hardware state 0))
     (is (= 1 (-> (get-runner) :discard count)) "Dyson Mem Chip should be in heap after Runner loses Power Grid Overload trace")))
-
-(deftest power-shutdown
-  ;; Power Shutdown - Trash cards from R&D to force Runner to trash a program or hardware
-)
 
 (deftest power-shutdown-default-behavior
     ;; Default behavior
@@ -3125,10 +3025,6 @@
       (click-prompt state :corp "Gain [Click]")
       (is (no-prompt? state :runner) "Runner should have no more prompt")))
 
-(deftest red-planet-couriers
-  ;; Red Planet Couriers
-)
-
 (deftest red-planet-couriers-move-all-advancements-on-cards-to-1-advanceable-card
     ;; Move all advancements on cards to 1 advanceable card
     (do-game
@@ -3172,10 +3068,6 @@
        (is (zero? (count (:subroutines (refresh mas-hq)))) "Subroutines set to 0")
        (is (= 4 (get-counters (refresh mas-rd) :advancement)) "Increased to 4 advancements")
        (is (= 4 (count (:subroutines (refresh mas-rd)))) "Subroutines set to 4"))))
-
-(deftest restore
-  ;;Restore
-)
 
 (deftest restore-show-agenda-name-in-log-when-installed
     ;; Show agenda name in log when installed
@@ -3241,10 +3133,6 @@
     (is (= 11 (:credit (get-corp))) "Gained 6 credits")
     (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
 
-(deftest reverse-infection
-  ;; Reverse Infection
-)
-
 (deftest reverse-infection-gain-2-credits
     ;; Gain 2 credits
     (do-game
@@ -3292,10 +3180,6 @@
       (play-from-hand state :corp "Reverse Infection")
       (click-prompt state :corp "Purge virus counters")
       (is (last-log-contains? state "Corp uses Reverse Infection to purge 9 virus counters and trash 3 cards from the top of the stack.") "Should write correct log")))
-
-(deftest riot-suppression
-  ;; Riot Suppression - lose 3 clicks or take 1 brain damage
-)
 
 (deftest riot-suppression-take-1-brain-damage
     ;; Take 1 brain damage
@@ -3548,10 +3432,6 @@
      (click-card state :corp (get-content state :remote1 0))
      (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "2 counters on Project Atlas")))
 
-(deftest secure-and-protect
-  ;; Secure and Protect
-)
-
 (deftest secure-and-protect-with-ice-in-deck
     ;; With ice in deck
     (do-game
@@ -3609,10 +3489,6 @@
     (is (= 2 (count (:hand (get-runner)))) "2 cards returned to hand")
     (is (zero? (count (get-program state))) "No programs installed")
     (is (zero? (count (get-hardware state))) "No hardware installed")))
-
-(deftest service-outage
-  ;; Service Outage
-)
 
 (deftest service-outage-first-click-run-each-turn-costs-a-credit
     ;; First click run each turn costs a credit
@@ -3932,10 +3808,6 @@
       (is (has-subtype? (refresh qu) "Barrier") "Quandary ice Barrier")
       (is (= 2 (count (:subroutines (refresh qu)))) "Quandry gains a subroutine"))))
 
-(deftest subcontract
-  ;; Subcontract
-)
-
 (deftest subcontract-don-t-allow-second-operation-until-damage-prevention-completes
     ;; Don't allow second operation until damage prevention completes
     (do-game
@@ -4091,10 +3963,6 @@
       (click-prompt state :corp "Yes")
       (is (= 2 (count (:hand (get-corp)))) "Both Subliminals returned to HQ")
       (is (zero? (count (:discard (get-corp)))) "No Subliminals in Archives")))
-
-(deftest success
-  ;; Success
-)
 
 (deftest success-works-with-bad-publicity
     ;; Works with bad publicity
@@ -4333,8 +4201,6 @@
     (let [credits (:credit (get-corp))]
       (play-from-hand state :runner "Sure Gamble")
       (is (= (+ 10 credits) (:credit (get-corp))) "Corp gains 10 credits from Runner playing named card"))))
-
-(deftest the-all-seeing-i)
 
 (deftest the-all-seeing-i-counts-number-of-cards-if-one-card-is-prevented-trashed-with-fall-guy
     ;; Counts number of cards if one card is prevented trashed with fall guy
@@ -4688,10 +4554,6 @@
     (click-prompt state :runner "0 [Credits]")
     (click-card state :corp "Kati Jones")
     (is (not (get-resource state 0)) "Kati Jones is trashed")))
-
-(deftest wake-up-call
-  ;; Wake Up Call
-)
 
 (deftest wake-up-call-should-fire-after-using-en-passant-to-trash-ice
     ;; should fire after using En Passant to trash ice

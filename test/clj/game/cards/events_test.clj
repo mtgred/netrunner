@@ -8,10 +8,6 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest account-siphon
-  ;; Account Siphon
-)
-
 (deftest account-siphon-use-ability
     ;; Use ability
     (do-game
@@ -63,8 +59,6 @@
       (is (zero? (count-tags state)) "Runner did not take any tags")
       (is (= 10 (:credit (get-runner))) "Runner gained 10 credits")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
-
-(deftest always-have-a-backup-plan)
 
 (deftest always-have-a-backup-plan-jacking-out-correctly-triggers-ahbp
     ;; Jacking out correctly triggers AHBP
@@ -155,10 +149,6 @@
     (click-prompt state :runner "1")
     ;; 4 credits after trace, gain 6
     (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")))
-
-(deftest apocalypse
-  ;; Apocalypse
-)
 
 (deftest apocalypse-ensure-mu-is-correct-and-no-duplicate-cards-in-heap
     ;; Ensure MU is correct and no duplicate cards in heap
@@ -445,10 +435,6 @@
         (run-jack-out state)
         (run-on state "Archives"))))
 
-(deftest blueberry-diesel
-  ;; Blueberry Diesel
-)
-
 (deftest blueberry-diesel-selecting-a-card
     ;; Selecting a card
     (do-game
@@ -687,10 +673,6 @@
       (play-from-hand state :runner "Build Script")
       (is (= (inc credits) (:credit (get-runner))) "Gained 1 credit")
       (is (= (+ 2 hand) (count (:hand (get-runner)))) "Drew 2 cards"))))
-
-(deftest by-any-means
-  ;; By Any Means
-)
 
 (deftest by-any-means-full-test
     ;; Full test
@@ -1241,10 +1223,6 @@
           (play-from-hand state :runner "Creative Commission"))
         (is (= (+ clicks -1 -1) (:click (get-runner))) "Runner plays Creative Commission and loses 1 click"))))
 
-(deftest credit-crash
-  ;; Credit Crash
-)
-
 (deftest credit-crash-corp-pays-to-keep
     ;; Corp pays to keep
     (do-game
@@ -1298,10 +1276,6 @@
         (click-card state :runner iw)
         (is (:icon (refresh iw)) "Ice Wall has an icon")))
     (is (= 1 (count-tags state)) "Runner gained a tag")))
-
-(deftest cyber-threat
-  ;; Cyber Threat
-)
 
 (deftest cyber-threat-corp-rezzes-a-piece-of-ice
     ;; Corp rezzes a piece of ice
@@ -1532,10 +1506,6 @@
       (play-from-hand state :runner "Diesel")
       (is (= (+ hand -1 3) (count (:hand (get-runner)))) "Runner plays Diesel and draws 3 cards"))))
 
-(deftest direct-access
-  ;; Direct Access - Make a run where both IDs are blank
-)
-
 (deftest direct-access-direct-access-employee-strike-interaction
     ;; Direct Access/Employee Strike interaction
     (do-game
@@ -1631,10 +1601,6 @@
        (run-continue state)
        (is (not (:run @state)))
        (is (= (+ 5 credits) (:credit (get-runner))) "Runner hasn't gained DL credits yet"))))
-
-(deftest diversion-of-funds
-  ;; Diversion of Funds
-)
 
 (deftest diversion-of-funds-use-ability
     ;; Use ability
@@ -1975,10 +1941,6 @@
             "Install prompt from Emergent Creativity")
         (click-prompt state :runner "Engolo")
         (is (= "Engolo" (:title (get-program state 0))) "Engolo is installed"))))
-
-(deftest employee-strike
-  ;; Employee Strike
-)
 
 (deftest employee-strike-vs-blue-sun-suppress-step-1-2
     ;; vs Blue Sun, suppress Step 1.2
@@ -2377,10 +2339,6 @@
       (play-from-hand state :runner "Fisk Investment Seminar")
       (is (= (+ 3 c-hand (count (:hand (get-corp))))) "Corp draws 3 cards")
       (is (= (+ 3 r-hand (count (:hand (get-runner))))) "Runner draws 3 cards"))))
-
-(deftest forged-activation-orders
-  ;; Forged Activation Orders
-)
 
 (deftest forged-activation-orders-corp-chooses-to-trash-the-ice
     ;; Corp chooses to trash the ice
@@ -2788,10 +2746,6 @@
        (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck")
        (is (= (+ original-hand-count -1 1) (count (:hand (get-runner)))) "Put card in hand"))))
 
-(deftest hot-pursuit
-  ;; Hot Pursuit
-)
-
 (deftest hot-pursuit-basic-behavior
     ;; Basic behavior
     (do-game
@@ -2900,10 +2854,6 @@
       (run-continue state)
       (is (no-prompt? state :runner)) "No prompt for runner"))
 
-(deftest in-the-groove
-  ;; In the Groove - whenever you install cost >0 stuff, draw or gain 1
-)
-
 (deftest in-the-groove-vanilla-test
     ;; Vanilla test
     (do-game
@@ -3011,10 +2961,6 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
-(deftest infiltration
-  ;; Infiltration
-)
-
 (deftest infiltration-gain-2
     ;; Gain 2
     (do-game
@@ -3039,10 +2985,6 @@
       (click-card state :runner "Ice Wall")
       (is (last-log-contains? state "Runner exposes Ice Wall protecting HQ at position 0")
           "Infiltration properly exposes the ice")))
-
-(deftest information-sifting
-  ;; Information Sifting
-)
 
 (deftest information-sifting-hudson-interaction-max-access
     ;; Hudson interaction :max-access
@@ -3231,10 +3173,6 @@
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")
     (is (= 2 (count (:hand (get-runner)))) "One played, one drawn")))
-
-(deftest khusyuk
-  ;; Khusyuk
-)
 
 (deftest khusyuk-basic-functionality
     ;; Basic functionality
@@ -3473,10 +3411,6 @@
     (click-card state :corp (get-ice state :hq 0))
     (is (not (get-ice state :hq 0)) "Ice Wall is trashed")))
 
-(deftest labor-rights
-  ;; Labor Rights - trash 3 cards, shuffle 3 cards from heap->stack, draw 1 card, rfg Labor Rights
-)
-
 (deftest labor-rights-basic-behavior
     ;; Basic behavior
     (do-game
@@ -3669,10 +3603,6 @@
          (is (not (:run @state))
              "Legwork only gives bonus accesses on its own run when combined with Doppelgänger"))))
 
-(deftest leverage
-  ;; Leverage
-)
-
 (deftest leverage-corp-takes-bad-publicity
     ;; Corp takes bad publicity
     (do-game
@@ -3802,10 +3732,6 @@
     (play-from-hand state :runner "Making an Entrance")
     (is (= 1 (count (:hand (get-runner)))) "Can only play on first click")))
 
-(deftest marathon
-  ;; Marathon
-)
-
 (deftest marathon-trashed-on-unsuccessful-run
     ;; Trashed on unsuccessful run
     (do-game
@@ -3905,10 +3831,6 @@
       (play-from-hand state :runner "Mining Accident")
       (is (= 1 (count (prompt-buttons :corp))) "No option to pay credits if corp is below 5c")
       (click-prompt state :corp "Take 1 Bad Publicity"))))
-
-(deftest mobius
-  ;; Mobius
-)
 
 (deftest mobius-second-run-triggered
     ;; Second run triggered
@@ -4097,10 +4019,6 @@
         (is (= (+ original-deck-count -1) (count (:deck (get-runner)))) "Took card from deck...")
         (is (= (+ original-hand-count 1 -1) (count (:hand (get-runner)))) "...into hand -one played, +one drawn")))))
 
-(deftest net-celebrity
-  ;; Net-celebrity
-)
-
 (deftest net-celebrity-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -4181,10 +4099,6 @@
                 (is (= (+ 4 grip) (-> (get-runner) :hand count)) "Runner should draw 4 cards"))))]
     (doall (map office-supplies-test (range 5)))))
 
-(deftest on-the-lam
-  ;; On the Lam
-)
-
 (deftest on-the-lam-vs-tags
     ;; vs tags
     (do-game
@@ -4244,10 +4158,6 @@
       (card-ability state :runner (-> (get-runner-facedown state 0) :hosted first) 0)
       (click-prompt state :runner "Done")
       (is (zero? (count-tags state)) "Runner should avoid tag")))
-
-(deftest out-of-the-ashes
-  ;; Out of the Ashes - ensure card works when played/trashed/milled
-)
 
 (deftest out-of-the-ashes-happy-path
     ;; Happy Path
@@ -4359,10 +4269,6 @@
     (gain-tags state :runner 100)
     (play-from-hand state :runner "Paper Tripping")
     (is (zero? (count-tags state)) "Runner should lose all tags")))
-
-(deftest peace-in-our-time
-  ;; Peace in Our Time - runner gains 10, corp gains 5. No runs allowed during turn.
-)
 
 (deftest peace-in-our-time-no-runs-allowed
     ;; no runs allowed
@@ -4502,10 +4408,6 @@
     (click-prompt state :runner "Steal")
     (is (= 6 (:credit (get-runner))) "No credits gained from 2nd agenda access")))
 
-(deftest prey
-  ;; Prey
-)
-
 (deftest prey-full-test
     ;; Full test
     (do-game
@@ -4602,10 +4504,6 @@
       (play-from-hand state :runner "Process Automation")
       (is (= (+ 2 credits) (:credit (get-runner))) "Should gain 2 credits")
       (is (= (inc hand) (count (:hand (get-runner)))) "Should draw 1 card"))))
-
-(deftest push-your-luck
-  ;; Push Your Luck
-)
 
 (deftest push-your-luck-corp-guesses-correctly
     ;; Corp guesses correctly
@@ -4855,10 +4753,6 @@
         (is (changes-credits (get-corp) -2
                              (rez state :corp (get-ice state :hq 0)))
             "Additional cost from Reina applied for 1st ice rez"))))))
-
-(deftest reboot
-  ;; Reboot - run on Archives, install 5 cards from heap facedown
-)
 
 (deftest reboot-happy-path
     ;; Happy Path

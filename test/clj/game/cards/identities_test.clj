@@ -149,8 +149,6 @@
       (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
       (is (prompt-is-type? state :runner :waiting) "Runner should wait again")))
 
-(deftest acme-consulting-the-truth-you-need)
-
 (deftest acme-consulting-the-truth-you-need-tag-gain-when-rezzing-outermost-ice
     ;; Tag gain when rezzing outermost ice
     (do-game
@@ -368,10 +366,6 @@
        (is (= :encounter-ice (:phase (get-run))) "Still encountering Konjin")
        (is (not (is-tagged? state)) "Runner is no longer tagged"))))
 
-(deftest adam-compulsive-hacker
-  ;; Adam
-)
-
 (deftest adam-compulsive-hacker-allow-runner-to-choose-directives
     ;; Allow runner to choose directives
     (do-game
@@ -427,8 +421,6 @@
       (click-prompt state :runner "Pay 0 [Credits] to trash")
       (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives")))
-
-(deftest aginfusion-new-miracles-for-a-new-world)
 
 (deftest aginfusion-new-miracles-for-a-new-world-ability-works-5056
     ;; Ability works. #5056
@@ -611,10 +603,6 @@
                                  (qty "Security Testing" 3) (qty "Bank Job" 3)]}})
       (is (= 5 (:credit (get-corp))) "Palana does not gain credit from Andromeda's starting hand")))
 
-(deftest apex-invasive-predator
-  ;; Apex
-)
-
 (deftest apex-invasive-predator-allow-facedown-install-of-a-second-console-issue-1326
     ;; Allow facedown install of a second console. Issue #1326
     (do-game
@@ -652,10 +640,6 @@
       (click-card state :runner "Spec Work")
       (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown")))
 
-(deftest armand-geist-walker-tech-lord
-  ;; Armand "Geist" Walker: Tech Lord
-)
-
 (deftest armand-geist-walker-tech-lord-async-costs-with-sync-abilities
     ;; async costs with sync abilities
     (do-game
@@ -681,8 +665,6 @@
       (is (second-last-log-contains? state "Runner uses The Class Act"))
       (is (last-log-contains? state "trashes All-nighter to use All-nighter")
           "All-nighter is now logged correctly, having paid all costs")))
-
-(deftest asa-group-security-through-vigilance)
 
 (deftest asa-group-security-through-vigilance-asa-group-should-not-allow-installing-operations
     ;; Asa Group should not allow installing operations
@@ -788,10 +770,6 @@
       (click-prompt state :runner "Yes")
       (is (= "Professional Contacts" (:title (get-resource state 0))) "ProCo was correctly installed")
       (is (= (+ 5 -1 -5 1) (:credit (get-runner))) "Spent all credits. Was at 5, -1 hostage, -5 ProCo, +1 ID")))
-
-(deftest azmari-edtech-shaping-the-future
-  ;; Azmari EdTech: Shaping the Future
-)
 
 (deftest azmari-edtech-shaping-the-future-don-t-gain-credits-when-installing-facedown-4477
     ;; Don't gain credits when installing facedown #4477
@@ -916,11 +894,6 @@
       (play-from-hand state :corp "Neural EMP")
       (is (no-prompt? state :corp) "No choice because grip is empty")
       (is (= :corp (:winner @state)))))
-
-(deftest earth-station-sea-headquarters
-  ;;Earth Station: SEA Headquarters
-  ;;Flipside. Earth Station: Ascending to Orbit
-)
 
 (deftest earth-station-sea-headquarters-front-side
     ;; Front side:
@@ -1069,10 +1042,6 @@
       (click-card state :corp "NASX")
       (is (= "NASX" (:title (first (:hosted (get-content state :remote1 0))))))))
 
-(deftest edward-kim-humanity-s-hammer
-  ;; Edward Kim
-)
-
 (deftest edward-kim-humanity-s-hammer-trash-first-operation-accessed-each-turn-but-not-if-first-one-was-in-archives
     ;; Trash first operation accessed each turn, but not if first one was in Archives
     (do-game
@@ -1186,10 +1155,6 @@
       (run-empty-server state "HQ")
       (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge Fund at no cost."))))
 
-(deftest ele-smoke-scovak-cynosure-of-the-net
-  ;; Ele "Smoke" Scovak: Cynosure of the Net
-)
-
 (deftest ele-smoke-scovak-cynosure-of-the-net-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -1203,10 +1168,6 @@
                            "Used 1 credit from Smoke"
                            (card-ability state :runner refr 1)
                            (click-card state :runner smoke)))))
-
-(deftest exile-streethawk
-  ;; Exile
-)
 
 (deftest exile-streethawk-simultaneous-resolution-prompt-shown-for-interaction-with-customized-secretary
     ;; Simultaneous-resolution prompt shown for interaction with Customized Secretary
@@ -1243,10 +1204,6 @@
         (card-subroutine state :corp (refresh grim) 0)
         (click-card state :corp harb)
         (is (= 0 (count (:hand (get-runner)))) "Exile didn't draw a card"))))
-
-(deftest freedom-khumalo-crypto-anarchist
-  ;; Freedom Khumalo - Can spend virus counters from other cards to trash accessed cards with play/rez costs
-)
 
 (deftest freedom-khumalo-crypto-anarchist-only-works-with-assets-ice-operations-and-upgrades
     ;; Only works with Assets, ice, Operations, and Upgrades
@@ -1536,8 +1493,6 @@
     (click-prompt state :runner "No action") ; Dismiss trash prompt
     (is (last-log-contains? state "Caprice") "Accessed card name was logged")))
 
-(deftest gamenet-where-dreams-are-real)
-
 (deftest gamenet-where-dreams-are-real-gain-credits-from-gold-farmer
     ;; Gain credits from gold farmer
     (do-game
@@ -1675,10 +1630,6 @@
       (is (= 10 (:credit (get-corp))) "GRNDL starts with 10 credits")
       (is (= 1 (count-bad-pub state)) "GRNDL starts with 1 bad publicity")))
 
-(deftest haarpsichord-studios-entertainment-unleashed
-  ;; Haarpsichord Studios
-)
-
 (deftest haarpsichord-studios-entertainment-unleashed-prevent-stealing-more-than-1-agenda-per-turn
     ;; Prevent stealing more than 1 agenda per turn
     (do-game
@@ -1765,10 +1716,6 @@
       (run-continue state)
       (run-continue state)
       (is (not (no-prompt? state :runner)) "Architects of Tomorrow is still available")))
-
-(deftest haas-bioroid-engineering-the-future
-  ;; Engineering the Future
-)
 
 (deftest haas-bioroid-engineering-the-future-interaction-with-employee-strike
     ;; interaction with Employee Strike
@@ -1869,10 +1816,6 @@
       (take-credits state :corp)
       (card-ability state :runner (get-resource state 0) 1)
       (is (no-prompt? state :corp) "No Hayley wait prompt for facedown installs.")))
-
-(deftest hoshiko-shiro-untold-protagonist
-  ;; Hoshiko Shiro
-)
 
 (deftest hoshiko-shiro-untold-protagonist-id-ability
     ;; ID ability
@@ -2021,11 +1964,6 @@
      (click-prompt state :runner "0")
      (is (:flipped (refresh ho)) "All end of turn effects have been resolved including a flip")
      (is (= 1 (get-link state)) "Flipped Hoshiko has 1 Link"))))
-
-(deftest hyoubu-institute-absolute-clarity
-    ; grip is empty, so revealing nothing gains nothing
-   ; hyoubu doesn't mistake the first reveal it sees for first reveal of turn
-)
 
 (deftest hyoubu-institute-absolute-clarity-id-abilities
     ;; ID abilities
@@ -2287,10 +2225,6 @@
       (run-jack-out state)
       (is (= 1 (count-tags state)) "Jesminder did not avoid John Masanori tag")))
 
-(deftest jinteki-biotech-life-imagined
-  ;; Jinteki Biotech
-)
-
 (deftest jinteki-biotech-life-imagined-brewery-net-damage
     ;; Brewery net damage
     (do-game
@@ -2455,10 +2389,6 @@
       (is (= "Gordian Blade" (-> (get-runner) :rfg last :title))
           "Kabonesa Wu should rfg card installed with ability even tho runner is now a different identity"))))
 
-(deftest kate-mac-mccaffrey-digital-tinker
-  ;; Kate 'Mac' McCaffrey
-)
-
 (deftest kate-mac-mccaffrey-digital-tinker-install-discount
     ;; Install discount
     (do-game
@@ -2503,10 +2433,6 @@
     (play-run-event state "Account Siphon" :hq)
     (is (= 16 (:credit (get-runner))) "No credit gained for second Run event")))
 
-(deftest khan-savvy-skiptracer
-  ;; Khan
-)
-
 (deftest khan-savvy-skiptracer-proper-order-of-events-when-vs-caprice
     ;; proper order of events when vs. Caprice
     (do-game
@@ -2530,10 +2456,6 @@
       (click-prompt state :corp "1 [Credits]")
       (is (not (:run @state)) "Run ended")))
 
-(deftest laramy-fisk-savvy-investor
-  ;; Laramy Fisk
-)
-
 (deftest laramy-fisk-savvy-investor-installing-a-shard-should-still-give-option-to-force-corp-draw
     ;; installing a Shard should still give option to force Corp draw
     (do-game
@@ -2551,10 +2473,6 @@
       (is (= 5 (:credit (get-runner))) "Eden Shard install was free")
       (is (not (:run @state)) "Run ended")
       (is (= 6 (count (:hand (get-corp)))) "Corp forced to draw")))
-
-(deftest lat-ethical-freelancer
-  ;; Lat: Ethical Freelancer
-)
 
 (deftest lat-ethical-freelancer-ability-fires-draw
     ;; Ability fires - draw
@@ -2594,10 +2512,6 @@
       (core/lose state :runner :click 4)
       (core/end-turn state :runner nil)
       (is (no-prompt? state :runner) "No prompt")))
-
-(deftest leela-patel-trained-pragmatist
-  ;; Leela Patel
-)
 
 (deftest leela-patel-trained-pragmatist-complicated-interaction-with-mutiple-gang-sign
     ;; complicated interaction with mutiple Gang Sign
@@ -2796,10 +2710,6 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
 
-(deftest mirrormorph-endless-iteration
-  ;; MirrorMorph: Endless Iteration
-)
-
 (deftest mirrormorph-endless-iteration-mirrormorph-triggers-on-three-different-actions
     ;; Mirrormorph triggers on three different actions
     (testing "Gain credit from MM"
@@ -2946,10 +2856,6 @@
         (play-from-hand state :corp "Wall to Wall" "New remote")
         (is (no-prompt? state :corp) "No MM trigger"))))
 
-(deftest mti-mwekundu-life-improved
-  ;; Mti Mwekundu: Life Improved - when server is approached, install ice from HQ at the innermost position
-)
-
 (deftest mti-mwekundu-life-improved-no-ice
     ;; No ice
     (do-game
@@ -3080,10 +2986,6 @@
       (take-credits state :corp)
       (is (= (inc runner-credits) (:credit (get-runner)))) "Gained 1 credits when on 2 cards")))
 
-(deftest nbn-controlling-the-message
-  ;; NBN: Controlling the Message
-)
-
 (deftest nbn-controlling-the-message-trace-to-tag-runner-when-first-installed-corp-card-is-trashed-issue-2321
     ;; Trace to tag Runner when first installed Corp card is trashed. Issue #2321
     (do-game
@@ -3172,10 +3074,6 @@
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (is (seq (:prompt (get-corp))) "Corp should have a Trace prompt")
       (click-prompt state :corp "No")))
-
-(deftest nbn-making-news
-  ;; NBN: Making News
-)
 
 (deftest nbn-making-news-pay-credits-and-not-refilling-on-disabled-issue-2439
     ;; Pay credits, and not refilling on disabled. Issue #2439
@@ -3476,10 +3374,6 @@
       (is (= "Trash a card in grip to lower ice strength by 2?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")))
 
-(deftest omar-keung-conspiracy-theorist
-  ;; Omar Keung
-)
-
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
     (do-game
@@ -3777,10 +3671,6 @@
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
       (is (no-prompt? state :corp))))
 
-(deftest silhouette-stealth-operative
-  ;; Silhouette
-)
-
 (deftest silhouette-stealth-operative-expose-trigger-ability-resolves-completely-before-access-issue-2173
     ;; Expose trigger ability resolves completely before access. Issue #2173
     (do-game
@@ -3894,10 +3784,6 @@
       (is (= 3 (:credit (get-runner)))
           "Runner lost 1 credit from rez of advertisement (Runner turn)"))))
 
-(deftest sportsmetal-go-big-or-go-home
-  ;; SportsMetal - gain 2 credits or draw 2 cards on agenda scored or stolen
-)
-
 (deftest sportsmetal-go-big-or-go-home-gain-2-credits-on-score
     ;; Gain 2 credits on score
     (do-game
@@ -3982,10 +3868,6 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (is (no-prompt? state :corp) "Not prompted when all ice advanced"))))
-
-(deftest steve-cambridge-master-grifter
-  ;; Steve
-)
 
 (deftest steve-cambridge-master-grifter-happy-path
     ;; Happy Path
@@ -4085,10 +3967,6 @@
        (is (= "Ice Wall" (:title iw)) "Ice Wall now outermost ice")
        (is (= "Enigma" (:title enig)) "Enigma now outermost ice"))))
 
-(deftest the-foundry-refining-the-process
-  ;; The Foundry
-)
-
 (deftest the-foundry-refining-the-process-interaction-with-accelerated-beta-test
     ;; interaction with Accelerated Beta Test
     (do-game
@@ -4144,10 +4022,6 @@
       (is (= 2 (count-bad-pub state)) "Take 1 bad publicity")
       (is (= (+ 5 7 3) (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit")))
 
-(deftest titan-transnational-investing-in-your-future
-  ;; Titan Transnational
-)
-
 (deftest titan-transnational-investing-in-your-future-add-a-counter-to-a-scored-agenda
     ;; Add a counter to a scored agenda
     (do-game
@@ -4190,10 +4064,6 @@
           (is (no-prompt? state :corp) "No prompt for the Corp as no counters exist to spend")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")))))
 
-(deftest weyland-consortium-because-we-built-it
-  ;; Weyland Consortium: Because We Built It
-)
-
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -4206,10 +4076,6 @@
                            "Used 1 credit from Weyland BWBI to advance Ice Wall"
                            (core/advance state :corp {:card (refresh iw)})
                            (click-card state :corp bwbi)))))
-
-(deftest weyland-consortium-builder-of-nations
-  ;; Builder of Nations
-)
 
 (deftest weyland-consortium-builder-of-nations-1-meat-damage-per-turn-at-most
     ;; 1 meat damage per turn at most
@@ -4340,10 +4206,6 @@
       (dotimes [_ 3]
         (click-card state :runner (refresh whiz)))
       (is (nil? (refresh pad)) "PAD Campaign successfully trashed"))))
-
-(deftest wyvern-chemically-enhanced
-  ;; Wyvern: Chemically Enhanced
-)
 
 (deftest wyvern-chemically-enhanced-happy-path
     ;; Happy Path

@@ -7,8 +7,6 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest corp-basic-actions)
-
 (deftest corp-basic-actions-gain-1-credit
     ;; Gain 1 credit
     (do-game
@@ -114,8 +112,6 @@
         (is (= 0 (get-counters (refresh bot) :virus)) "Botulus has zero counters after purge")
         (take-credits state :corp)
         (is (= 1 (get-counters (refresh bot) :virus)) "Botulus gains 1 counter at start of turn"))))
-
-(deftest runner-basic-actions)
 
 (deftest runner-basic-actions-gain-1-credit
     ;; Gain 1 credit
