@@ -191,6 +191,6 @@
 (defn clean-card-tests []
   (apply-fn-to-file process-file-to-clean))
 
-(defn load-agendas [& [path]]
+(defn load-test [& [path]]
   (->> (io/file (str "test/clj/game/cards/" (or path "agendas") "_test.clj"))
        (z/of-file)))

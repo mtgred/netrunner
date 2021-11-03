@@ -1,12 +1,12 @@
 (ns game.cards.resources-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
             [clojure.test :refer :all]
-            [jinteki.validator :refer [legal?]]))
+            [jinteki.validator :refer [legal?]]
+            [clojure.string :as str]))
 
 (deftest activist-support
   ;; Activist Support - Take tag if you have none; Corp gains bad pub if they have none
@@ -256,8 +256,7 @@
       (click-prompt state :runner "4")
       (play-from-hand state :runner "Bank Job")
       (let [bj1 (get-resource state 0)
-            bj2 (get-resource state 1)
-            credits (:credit (get-runner))]
+            bj2 (get-resource state 1)]
         (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
         (run-empty-server state "Server 1")
         (click-prompt state :runner "Bank Job")
@@ -368,6 +367,20 @@
 (deftest bhagat-only-trigger-on-first-run
     ;; only trigger on first run
     (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]
+                        :hand ["AR-Enhanced Security"]}
+                :runner {:deck ["Bhagat"]}})
+      (core/gain state :corp :click 10 :credit 10)
+      (play-and-score state "AR-Enhanced Security")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bhagat")
+      (run-empty-server state :hq)
+      (is (= 0 (count-tags state)) "Runner has no tag")
+      (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
+
+(deftest bhagat-doesn-t-trigger-on-second-successful-run
+    ;; only trigger on first run
+    (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]}
                 :runner {:deck ["Bhagat"]}})
       (starting-hand state :corp [])
@@ -379,20 +392,6 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state :hq)
-      (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
-
-(deftest bhagat-only-trigger-on-first-run
-    ;; only trigger on first run
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]
-                        :hand ["AR-Enhanced Security"]}
-                :runner {:deck ["Bhagat"]}})
-      (core/gain state :corp :click 10 :credit 10)
-      (play-and-score state "AR-Enhanced Security")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Bhagat")
-      (run-empty-server state :hq)
-      (is (= 0 (count-tags state)) "Runner has no tag")
       (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
 
 (deftest charlatan
@@ -983,7 +982,7 @@
       (run-empty-server state :archives)
       (take-credits state :runner)
       (is (no-prompt? state :runner) "No install prompt if no runs")
-      (is (not (empty? (:discard (get-runner)))) "Crowdfunding is in discard")
+      (is (seq (:discard (get-runner))) "Crowdfunding is in discard")
       (is (zero? (count (get-resource state))) "Crowdfunding not installed")))
 
 (deftest crypt-gains-counters-when-running-archives
@@ -1963,8 +1962,7 @@
       (take-credits state :corp)
       (core/lose state :runner :credit 5) ;no money besides fueno
       (play-from-hand state :runner "Fencer Fueno")
-      (let [ff (get-resource state 0)
-            pad (get-content state :remote1 0)]
+      (let [ff (get-resource state 0)]
         (core/add-counter state :runner (refresh ff) :credit 5)
         (is (= 5 (get-counters (refresh ff) :credit)) "Fencer counters added")
         (run-empty-server state "Server 1")
@@ -2089,11 +2087,10 @@
       (play-from-hand state :corp "Kill Switch")
       (take-credits state :corp)
       (play-from-hand state :runner "Film Critic")
-      (let [fc (get-resource state 0)]
-        (run-empty-server state "HQ")
-        (click-prompt state :runner "Yes")
-        (is (no-prompt? state :corp))
-        (is (no-prompt? state :corp)))))
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Yes")
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :corp))))
 
 (deftest film-critic-shouldn-t-register-events-unless-marked-5019
     ;; Shouldn't register events unless marked. #5019
@@ -2267,17 +2264,16 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (play-from-hand state :runner "Adjusted Chronotype")
-      (let [adjusted-chronotype (get-resource state 0)]
-        (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
-        (play-from-hand state :runner "Gene Conditioning Shoppe")
-        (play-from-hand state :runner "Gene Conditioning Shoppe")
-        (let [gcs1 (get-resource state 1)
-              gcs2 (get-resource state 2)]
+      (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
+      (play-from-hand state :runner "Gene Conditioning Shoppe")
+      (play-from-hand state :runner "Gene Conditioning Shoppe")
+      (let [gcs1 (get-resource state 1)
+            gcs2 (get-resource state 2)]
           (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
           (trash state :runner gcs1)
           (is (core/has-flag? state :runner :persistent :genetics-trigger-twice))
           (trash state :runner gcs2)
-          (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))))
+          (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice))))))
 
 (deftest ghost-runner-pay-credits-prompt
     ;; Pay-credits prompt
@@ -2567,11 +2563,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Hunting Grounds")
       (run-on state "Server 1")
-      (let [credits (:credit (get-runner))]
-        (run-continue state)
-        (click-prompt state :runner "No")
-        (is (zero? (:credit (get-runner))) "Runner loses credits to Tollbooth")
-        (is (:run @state) "Run hasn't ended when paying Tollbooth"))))
+      (run-continue state)
+      (click-prompt state :runner "No")
+      (is (zero? (:credit (get-runner))) "Runner loses credits to Tollbooth")
+      (is (:run @state) "Run hasn't ended when paying Tollbooth")))
 
 (deftest hunting-grounds-prints-correctly-to-the-log
     ;; Prints correctly to the log
@@ -2987,24 +2982,10 @@
       (play-from-hand state :corp "NGO Front" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Kasi String")
-      (run-empty-server state "HQ")
-      (click-prompt state :runner "No action")
-      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it - no trigger on HQ")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")))
-
-(deftest kasi-string-triggers-only-on-remote-server
-    ;; Triggers only on remote server
-    (do-game
-      (new-game {:corp {:deck ["NGO Front" "Hedge Fund"]}
-                 :runner {:deck ["Kasi String"]}})
-      (play-from-hand state :corp "NGO Front" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Kasi String")
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it - no trigger on HQ")
+      (is (= 1 (get-counters (get-resource state 0) :power))
+          "Kasi String should have 0 power counter on it - no trigger on HQ")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
@@ -3742,7 +3723,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "PAD Tap")
       ;; Manually ending the turn to trigger Rashida early
-      (dotimes [i (get-in @state [:runner :click])]
+      (dotimes [_ (get-in @state [:runner :click])]
         (click-credit state :runner))
       (core/end-turn state :runner nil)
       (let [credits (:credit (get-runner))]
@@ -3828,7 +3809,6 @@
       (play-from-hand state :runner "Misdirection")
       (let [pp (get-resource state 0)
             fs (get-resource state 1)
-            db (get-resource state 2)
             sac (get-resource state 3)
             misd (get-program state 0)]
         (is (= 0 (get-counters (refresh pp) :credit)) "No credits on Poemu yet")
@@ -3912,22 +3892,21 @@
       (play-from-hand state :corp "Jackson Howard" "New remote")
       (take-credits state :corp 2)
       (play-from-hand state :runner "Patron")
-      (let [p (get-resource state 0)]
-        (take-credits state :runner 3)
-        (take-credits state :corp)
-        (click-prompt state :runner "Server 1")
-        (is (= 4 (count (:hand (get-runner)))) "Starts with 4 cards")
-        (run-empty-server state "Server 1")
-        (is (= 6 (count (:hand (get-runner)))) "Drew 2 cards")
-        (run-empty-server state "Server 1")
-        (click-prompt state :runner "No action")
-        (is (= 6 (count (:hand (get-runner)))) "Drew no cards")
-        (play-from-hand state :runner "Easy Mark")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (click-prompt state :runner "Server 1")
-        (run-empty-server state "Archives")
-        (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
+      (take-credits state :runner 3)
+      (take-credits state :corp)
+      (click-prompt state :runner "Server 1")
+      (is (= 4 (count (:hand (get-runner)))) "Starts with 4 cards")
+      (run-empty-server state "Server 1")
+      (is (= 6 (count (:hand (get-runner)))) "Drew 2 cards")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 6 (count (:hand (get-runner)))) "Drew no cards")
+      (play-from-hand state :runner "Easy Mark")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "Server 1")
+      (run-empty-server state "Archives")
+      (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server")))
 
 (deftest patron-manually-selecting-during-step-1-2-does-not-show-a-second-prompt-at-start-of-turn-issue-1744
     ;; Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744.
@@ -4411,8 +4390,7 @@
     (play-from-hand state :runner "Salsette Slums")
     (core/gain state :runner :credit 2)
     (core/gain state :runner :click 4)
-    (let [ts (get-content state :remote1 0)
-          hostile (get-content state :remote2 0)]
+    (let [hostile (get-content state :remote2 0)]
       (is (= 3 (count (:hand (get-runner)))) "Runner started this part with three cards in hand")
       (rez state :corp hostile)
       (run-empty-server state "Server 1")
@@ -4465,20 +4443,19 @@
       (play-from-hand state :corp "Jackson Howard" "New remote")
       (take-credits state :corp 2)
       (play-from-hand state :runner "Security Testing")
-      (let [st (get-resource state 0)]
-        (take-credits state :runner 3)
-        (take-credits state :corp)
-        (click-prompt state :runner "Server 1")
-        (run-empty-server state "Server 1")
-        (is (= 10 (:credit (get-runner))) "Gained 2 credits from Security Testing")
-        (run-empty-server state "Server 1")
-        (click-prompt state :runner "No action")
-        (is (= 10 (:credit (get-runner))) "Did not gain credits on second run")
-        (take-credits state :runner 2)
-        (take-credits state :corp)
-        (click-prompt state :runner "Server 1")
-        (run-empty-server state "Archives")
-        (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server"))))
+      (take-credits state :runner 3)
+      (take-credits state :corp)
+      (click-prompt state :runner "Server 1")
+      (run-empty-server state "Server 1")
+      (is (= 10 (:credit (get-runner))) "Gained 2 credits from Security Testing")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (= 10 (:credit (get-runner))) "Did not gain credits on second run")
+      (take-credits state :runner 2)
+      (take-credits state :corp)
+      (click-prompt state :runner "Server 1")
+      (run-empty-server state "Archives")
+      (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server")))
 
 (deftest security-testing-with-multiple-copies-on-different-servers
     ;; with multiple copies on different servers
@@ -5245,7 +5222,7 @@
         (run-jack-out state)
         (let [heapsize (count (:discard (get-runner)))]
           (card-ability state :runner tb 1)
-          (is (clojure.string/starts-with? (:msg (prompt-map :runner)) "Choose up to 4") "Runner gets up to 4 choices")
+          (is (str/starts-with? (:msg (prompt-map :runner)) "Choose up to 4") "Runner gets up to 4 choices")
           (click-card state :runner (find-card "Spy Camera" (:discard (get-runner))))
           (click-card state :runner (find-card "Bankroll" (:discard (get-runner))))
           (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
@@ -5826,8 +5803,7 @@
       (play-from-hand state :runner "Sahasrara")
       (core/gain state :runner :credit 4)
       (gain-tags state :corp 1)
-      (let [thund (get-resource state 0)
-            rara (get-program state 0)]
+      (let [rara (get-program state 0)]
         (changes-val-macro -2 (:credit (get-runner))
                            "Used TAG and Sahasrara to install Darwin for free"
                            (remove-tag state :runner)
@@ -5925,9 +5901,7 @@
       (let [tt (get-resource state 0)]
         (core/add-counter state :runner (refresh tt) :credit 4)
         (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added"))
-      (let [tt (get-resource state 0)
-            credits (:credit (get-runner))
-            counters (get-counters (refresh tt) :credit)]
+      (let [tt (get-resource state 0)]
         (run-on state "Server 1")
         (run-continue state)
         (card-ability state :runner tt 0)
@@ -5944,8 +5918,7 @@
       (play-from-hand state :runner "Trickster Taka")
       (take-credits state :runner)
       (take-credits state :corp)
-      (let [tt (get-resource state 0)
-            refr (get-program state 0)]
+      (let [refr (get-program state 0)]
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Trickster Taka"
                            (run-on state :hq)
@@ -6101,10 +6074,7 @@
     (is (= 4 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 8 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
 
-(deftest whistleblower
-  
-  
-  
+(deftest whistleblower-agenda-interactions
   (doseq [agenda-name ["The Future Perfect" "NAPD Contract" "Degree Mill" "Ikawah Project" "Obokata Protocol"]]
     (testing (str "Whistleblower " agenda-name " interaction")
       (do-game

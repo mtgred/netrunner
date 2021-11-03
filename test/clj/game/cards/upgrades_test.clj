@@ -349,8 +349,7 @@
       (play-from-hand state :corp "House of Knives" "Server 1")
       (take-credits state :corp 1)
       (core/gain state :runner :credit 1)
-      (let [bm (get-content state :remote1 0)
-            hok (get-content state :remote1 1)]
+      (let [bm (get-content state :remote1 0)]
         (rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
@@ -840,8 +839,6 @@
      (run-on state "HQ")
      (is (= 3 (:position (get-in @state [:run]))) "Initial position outermost Ice Wall")
      (let [cr (get-content state :hq 0)
-           i1 (get-ice state :hq 0)
-           i2 (get-ice state :hq 1)
            i3 (get-ice state :hq 2)
            corr (get-program state 0)]
        (rez state :corp cr)
@@ -874,8 +871,6 @@
      (run-on state "HQ")
      (is (= 3 (:position (get-in @state [:run]))) "Initial position outermost Ice Wall")
      (let [cr (get-content state :hq 0)
-           i1 (get-ice state :hq 0)
-           i2 (get-ice state :hq 1)
            i3 (get-ice state :hq 2)
            corr (get-program state 0)]
        (rez state :corp cr)
@@ -1064,8 +1059,7 @@
       ;; install cache and medium
       (play-from-hand state :runner "Cache")
       (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
-            cache (find-card "Cache" (get-program state))
-            cvs (get-content state :remote1 0)]
+            cache (find-card "Cache" (get-program state))]
         (is (= 3 (virus-counters cache)))
         (play-from-hand state :runner "Medium")
         (run-empty-server state "Server 1")
@@ -1525,9 +1519,8 @@
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (is (zero? (count-tags state)))
-      (let [credits (:credit (get-runner))]
-        (click-prompt state :runner "End the run")
-        (is (zero? (count-tags state)) "Don't gain a tag from John Masanori"))))
+      (click-prompt state :runner "End the run")
+      (is (zero? (count-tags state)) "Don't gain a tag from John Masanori")))
 
 (deftest heinlein-grid
   (do-game
@@ -1825,7 +1818,7 @@
       (core/gain state :corp :click 10)
       (play-from-hand state :corp "Khondi Plaza" "New remote")
       (play-from-hand state :corp "Enigma" "Server 1")
-      (dotimes [c 3] (play-from-hand state :corp "PAD Campaign" "New remote"))
+      (dotimes [_ 3] (play-from-hand state :corp "PAD Campaign" "New remote"))
       (play-from-hand state :corp "Ice Wall" "HQ")
       (let [kh (get-content state :remote1 0)
             en (get-ice state :remote1 0)]
@@ -1835,13 +1828,15 @@
           0 (:credit (get-corp))
           "Used 3 credits from Khondi Plaza"
           (rez state :corp en)
-          (dotimes [c 3] (click-card state :corp kh))))))
+          (dotimes [_ 3] (click-card state :corp kh))))))
 
 (deftest la-costa-grid-la-costa-grid-cannot-be-installed-in-a-central-server
     ;; La Costa Grid cannot be installed in a central server
     (do-game
       (new-game {:corp {:hand ["La Costa Grid"]}})
-      (is (not (some #{"HQ" "R&D" "Archives"} (prompt-buttons :corp))) "Central servers are not listed in the install prompt")))
+      (play-from-hand state :corp "La Costa Grid")
+      (is (not (some #{"HQ" "R&D" "Archives"} (prompt-buttons :corp)))
+          "Central servers are not listed in the install prompt")))
 
 (deftest la-costa-grid-at-the-start-of-their-turn-the-corp-may-place-an-advancement-token-on-a-card-in-la-costa-grid-s-server
     ;; At the start of their turn The Corp may place an advancement token on a card in La Costa Grid's server
@@ -2331,9 +2326,8 @@
       (is (= 2 (count (prompt-buttons :runner))) "Runner has 2 choices when Imp is installed")
       (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
       (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
-      (let [imp (get-program state 0)]
-        (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
-        (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp"))))
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
+      (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp")))
 
 (deftest mumbad-virtual-tour-interactions-with-imp-and-various-amounts-of-money
     ;; interactions with Imp and various amounts of money
@@ -2435,7 +2429,7 @@
         (run-continue state)
         (click-prompt state :runner "Mwanza City Grid")
         (click-prompt state :runner "No action")
-        (dotimes [c 4]
+        (dotimes [_ 4]
           (click-prompt state :runner "No action"))
         (is (no-prompt? state :runner) "Prompt closed after accessing cards")
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
@@ -2453,7 +2447,7 @@
         (run-continue state)
         (click-prompt state :runner "Mwanza City Grid")
         (click-prompt state :runner "Pay 5 [Credits] to trash")
-        (dotimes [c 4]
+        (dotimes [_ 4]
           (click-prompt state :runner "No action"))
         (is (no-prompt? state :runner) "Prompt closed after accessing cards")
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
@@ -2498,7 +2492,7 @@
         (is (= 2 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
         (click-prompt state :runner "No action")
         ;; Access 3 more cards from HQ
-        (dotimes [c 3]
+        (dotimes [_ 3]
           (click-prompt state :runner "No action"))
         (run-continue state :movement)
         (run-jack-out state)
@@ -2511,7 +2505,7 @@
         (is (= 1 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
         (click-prompt state :runner "No action")
         ;; Access 3 more cards from HQ
-        (dotimes [c 3]
+        (dotimes [_ 3]
           (click-prompt state :runner "No action"))
         (run-continue state :movement)
         (run-jack-out state)
@@ -2781,8 +2775,7 @@
       (play-from-hand state :corp "Old Hollywood Grid" "New remote")
       (play-from-hand state :corp "Project Beale" "Server 1")
       (take-credits state :corp)
-      (let [ohg (get-content state :remote1 0)
-            pb (get-content state :remote1 1)]
+      (let [ohg (get-content state :remote1 0)]
         (run-on state "Server 1")
         (rez state :corp ohg)
         (run-continue state)
@@ -2804,8 +2797,7 @@
       (play-from-hand state :corp "Project Beale" "Server 1")
       (play-from-hand state :corp "Project Beale" "New remote")
       (take-credits state :corp)
-      (let [ohg (get-content state :remote1 0)
-            pb (get-content state :remote1 1)]
+      (let [ohg (get-content state :remote1 0)]
         (rez state :corp ohg)
         (run-empty-server state "Server 2")
         (click-prompt state :runner "Steal")
@@ -3056,13 +3048,12 @@
     (play-from-hand state :corp "Product Placement" "New remote")
     (take-credits state :corp)
     (is (= 7 (:credit (get-corp))))
-    (let [pp (get-content state :remote1 0)]
-      (run-empty-server state "Server 1")
-      (is (= 9 (:credit (get-corp))) "Gained 2 credits from Runner accessing Product Placement")
-      (click-prompt state :runner "Pay 2 [Credits] to trash") ; Runner trashes PP
-      (run-empty-server state "Archives")
-      (is (= 9 (:credit (get-corp)))
-          "No credits gained when Product Placement accessed in Archives"))))
+    (run-empty-server state "Server 1")
+    (is (= 9 (:credit (get-corp))) "Gained 2 credits from Runner accessing Product Placement")
+    (click-prompt state :runner "Pay 2 [Credits] to trash") ; Runner trashes PP
+    (run-empty-server state "Archives")
+    (is (= 9 (:credit (get-corp)))
+        "No credits gained when Product Placement accessed in Archives")))
 
 (deftest red-herrings
   ;; Red Herrings
@@ -3760,7 +3751,7 @@
         (take-credits state :runner)
         (is (= 5 (hand-size :runner)) "Runner max hand size back to normal"))))
 
-(deftest warroid-tracker-trashing-warroid-starts-trace
+(deftest warroid-tracker-trashing-warroid-directly-starts-trace
     ;; Trashing Warroid starts trace
     (do-game
       (new-game {:corp {:deck ["Warroid Tracker"]}
@@ -3860,7 +3851,7 @@
         (click-prompt state :runner "No action")
         (is (= 2 (count (:discard (get-runner)))) "Runner trashes 2 cards to Warriod Tracker"))))
 
-(deftest warroid-tracker-trashing-warroid-starts-trace
+(deftest warroid-tracker-trashing-warroid-with-card-ability-starts-trace
     ;; Trashing Warroid starts trace
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

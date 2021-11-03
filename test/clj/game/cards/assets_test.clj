@@ -2659,7 +2659,7 @@
       (play-from-hand state :corp "Lady Liberty" "New remote")
       (let [ll (get-content state :remote1 0)]
         (rez state :corp ll)
-        (dotimes [i 3]
+        (dotimes [_ 3]
           (take-credits state :corp)
           (take-credits state :runner))
         (card-ability state :corp (refresh ll) 0)
@@ -2836,8 +2836,7 @@
       (play-from-hand state :corp "Malia Z0L0K4" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Miss Bones")
-      (let [malia1 (get-content state :remote1 0)
-            missbones (get-resource state 0)]
+      (let [malia1 (get-content state :remote1 0)]
         (run-empty-server state :remote1)
         (rez state :corp malia1)
         (click-card state :corp (get-resource state 0))
@@ -3753,8 +3752,7 @@
                  :runner {:deck [(qty "Infiltration" 3) (qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Psychic Field" "New remote")
       (play-from-hand state :corp "Psychic Field" "New remote")
-      (let [psyf1 (get-content state :remote1 0)
-            psyf2 (get-content state :remote2 0)]
+      (let [psyf1 (get-content state :remote1 0)]
         (take-credits state :corp)
         (starting-hand state :runner ["Infiltration" "Sure Gamble" "Sure Gamble"])
         (play-from-hand state :runner "Infiltration")
@@ -3812,8 +3810,7 @@
                           :credit 10}})
       (play-from-hand state :corp "Psychic Field" "New remote")
       (play-from-hand state :corp "Fumiko Yamamori" "New remote")
-      (let [field (get-content state :remote1 0)
-            fumiko (get-content state :remote2 0)]
+      (let [fumiko (get-content state :remote2 0)]
         (rez state :corp fumiko)
         (take-credits state :corp)
         (run-empty-server state :remote1)
@@ -4369,8 +4366,7 @@
     (take-credits state :runner)
     (let [remains1 (get-content state :remote1 0)
           remains2 (get-content state :remote2 0)
-          cyber (get-hardware state 0)
-          lemuria (get-hardware state 1)]
+          cyber (get-hardware state 0)]
       (rez state :corp remains1)
       (advance state remains2 1)
       (take-credits state :corp)
@@ -5287,9 +5283,8 @@
    (advance state (get-content state :remote1 0) 2)
    (take-credits state :corp)
    (run-empty-server state "Server 1")
-   (let [credits (:credit (get-corp))]
-     (click-prompt state :corp "Yes")
-     (is (= 4 (-> (get-runner) :discard count)) "Urtica Cipher should do 4 net damage"))))
+   (click-prompt state :corp "Yes")
+   (is (= 4 (-> (get-runner) :discard count)) "Urtica Cipher should do 4 net damage")))
 
 (deftest vaporframe-fabricator-click-ability
     ;; Click ability

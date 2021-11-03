@@ -895,36 +895,38 @@
       (is (no-prompt? state :corp) "No choice because grip is empty")
       (is (= :corp (:winner @state)))))
 
-(deftest earth-station-sea-headquarters-front-side
-    ;; Front side:
-    (testing "Additional cost to run HQ"
-      (do-game
+(deftest earth-station-sea-headquarters-front-side-additional-cost-to-run-hq
+      ;; Additional cost to run HQ
+    (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
         (take-credits state :corp)
         (changes-val-macro -1 (:credit (get-runner))
                            "Paid 1c to run on HQ"
                            (run-on state :hq))))
-    (testing "Flipping costs 1 click"
-      (do-game
+
+(deftest earth-station-sea-headquarters-front-side-flipping-costs-1-click
+      ;; Flipping costs 1 click
+    (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
         (changes-val-macro -1 (:click (get-corp))
                            "Paid 1 click to flip Earth Station"
                            (card-ability state :corp (get-in @state [:corp :identity]) 0))
         (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
-        (is (last-log-contains? state "Corp spends \\[Click\\] to use Earth Station: SEA Headquarters to flip their identity to Earth Station: Ascending to Orbit.") "Should have correct log with click price"))))
+        (is (last-log-contains? state "Corp spends \\[Click\\] to use Earth Station: SEA Headquarters to flip their identity to Earth Station: Ascending to Orbit.") "Should have correct log with click price")))
 
-(deftest earth-station-sea-headquarters-flip-side
-    ;; Flip side:
-    (testing "No additional cost to run HQ"
-      (do-game
+(deftest earth-station-sea-headquarters-flip-side-no-additional-cost-to-run-hq
+      ;; No additional cost to run HQ
+    (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
         (take-credits state :corp)
         (changes-val-macro 0 (:credit (get-runner))
                            "Paid nothing to run on HQ"
                            (run-on state :hq))))
-    (testing "Can't use ability to flip back to front side"
-      (do-game
+
+(deftest earth-station-sea-headquarters-flip-side-can-t-use-ability-to-flip-back-to-front-side
+      ;; Can't use ability to flip back to front side
+    (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
         (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
@@ -932,8 +934,10 @@
                            "Paid 1 click to flip Earth Station"
                            (card-ability state :corp (get-in @state [:corp :identity]) 0))
         (is (:flipped (get-in @state [:corp :identity])) "Earth Station is still on flip side")))
-    (testing "Additional cost to run a remote"
-      (do-game
+
+(deftest earth-station-sea-headquarters-flip-side-additional-cost-to-run-a-remote
+      ;; Additional cost to run a remote
+    (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"
                           :deck ["PAD Campaign"]}})
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
@@ -943,19 +947,10 @@
         (changes-val-macro -6 (:credit (get-runner))
                            "Paid nothing to run on HQ"
                            (run-on state :remote1))))
-    (testing "No additional cost to run HQ"
-      (do-game
-        (new-game {:corp {:id "Earth Station: SEA Headquarters"
-                          :deck ["PAD Campaign"]}})
-        (card-ability state :corp (get-in @state [:corp :identity]) 0)
-        (play-from-hand state :corp "PAD Campaign" "New remote")
-        (take-credits state :corp)
-        (core/gain state :runner :credit 10)
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Paid nothing to run on HQ"
-                           (run-on state :hq))))
-    (testing "Flip back on successful HQ run"
-      (do-game
+
+(deftest earth-station-sea-headquarters-flip-side-flip-back-on-successful-hq-run
+      ;; Flip back on successful HQ run
+    (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"
                           :deck ["PAD Campaign"]}})
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
@@ -966,7 +961,7 @@
         (changes-val-macro 0 (:credit (get-runner))
                            "Paid nothing to run on HQ"
                            (run-empty-server state :hq))
-        (is (not (:flipped (get-in @state [:corp :identity]))) "Corp ID is on the front side"))))
+        (is (not (:flipped (get-in @state [:corp :identity]))) "Corp ID is on the front side")))
 
 (deftest earth-station-sea-headquarters-cannot-install-more-than-one-remote
     ;; Cannot install more than one remote
@@ -2370,8 +2365,7 @@
       (take-credits state :runner)
       (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
       (is (= "Gordian Blade" (-> (get-runner) :rfg last :title)) "Kabonesa Wu should rfg card installed with ability"))
-  (testing "Basic test"
-    (do-game
+  (do-game
       (new-game {:options {:start-as :runner}
                  :runner {:id "Kabonesa Wu: Netspace Thrillseeker"
                           :deck ["Cache" "Gordian Blade"]
@@ -2387,7 +2381,7 @@
       (take-credits state :runner)
       (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
       (is (= "Gordian Blade" (-> (get-runner) :rfg last :title))
-          "Kabonesa Wu should rfg card installed with ability even tho runner is now a different identity"))))
+          "Kabonesa Wu should rfg card installed with ability even tho runner is now a different identity")))
 
 (deftest kate-mac-mccaffrey-digital-tinker-install-discount
     ;; Install discount
@@ -2589,8 +2583,8 @@
       (is (not (get-content state :archives 0)) "Upgrade returned to hand")
       (is (not (:run @state)) "Run ended, no more accesses")))
 
-(deftest leela-patel-trained-pragmatist-
-    ;; 
+(deftest leela-patel-trained-pragmatist
+    ;; Leela Patel: Trained Pragmatist
     (do-game
       (new-game {:corp {:id "Titan Transnational: Investing In Your Future"
                         :deck ["Project Atlas"
@@ -2710,10 +2704,9 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
 
-(deftest mirrormorph-endless-iteration-mirrormorph-triggers-on-three-different-actions
-    ;; Mirrormorph triggers on three different actions
-    (testing "Gain credit from MM"
-      (do-game
+(deftest mirrormorph-endless-iteration-triggers-gain-credit-from-mm
+      ;; Gain credit from MM
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
         (click-draw state :corp)
@@ -2723,14 +2716,15 @@
           5 (:credit (get-corp))
           "Gained 1 credit from MM ability"
           (click-prompt state :corp "Gain 1 [Credits]"))))
-    (testing "Gain click from using Asset ability"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-triggers-gain-click-from-using-asset-ability
+      ;; Gain click from using Asset ability
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Capital Investors" 10)]}})
         (click-draw state :corp)
         (play-from-hand state :corp "Capital Investors" "New remote")
-        (let [ci (get-content state :remote1 0)
-              mm (get-in @state [:corp :identity])]
+        (let [ci (get-content state :remote1 0)]
           (rez state :corp ci)
           (card-ability state :corp (refresh ci) 0)
           (click-prompt state :corp "Gain [Click]")
@@ -2739,14 +2733,15 @@
           (is (= 1 (:click (get-corp))) "Could not use Capital Investors again with MM click")
           (click-credit state :corp)
           (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
-    (testing "Gain click from using Upgrade ability"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-triggers-gain-click-from-using-upgrade-ability
+      ;; Gain click from using Upgrade ability
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Cold Site Server" 10)]}})
         (click-draw state :corp)
         (play-from-hand state :corp "Cold Site Server" "New remote")
-        (let [css (get-content state :remote1 0)
-              mm (get-in @state [:corp :identity])]
+        (let [css (get-content state :remote1 0)]
           (rez state :corp css)
           (card-ability state :corp (refresh css) 0)
           (click-prompt state :corp "Gain [Click]")
@@ -2755,8 +2750,10 @@
           (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")
           (click-credit state :corp)
           (is (= 0 (:click (get-corp))) "Was able to click for credit"))))
-    (testing "Gain click from playing an Operation"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-triggers-gain-click-from-playing-an-operation
+      ;; Gain click from playing an Operation
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
         (click-draw state :corp)
@@ -2766,8 +2763,10 @@
         (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
         (play-from-hand state :corp "Hedge Fund")
         (is (= 1 (:click (get-corp))) "Could not use Hedge Fund again with MM click")))
-    (testing "Gain click from installing card"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-triggers-gain-click-from-installing-card
+      ;; Gain click from installing card
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "PAD Campaign" 10)]}})
         (click-draw state :corp)
@@ -2777,8 +2776,10 @@
         (is (= 1 (:click (get-corp))) "Gained 1 click from MM")
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (is (= 1 (:click (get-corp))) "Could not install another card with MM click")))
-    (testing "Gain click from trashing three different PAD Taps"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-triggers-gain-click-from-trashing-three-different-pad-taps
+      ;; Gain click from trashing three different PAD Taps
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :credits 9}
                    :runner {:deck [(qty "PAD Tap" 3)]}})
@@ -2787,15 +2788,16 @@
         (take-credits state :runner)
         (let [tap1 (get-resource state 0)
               tap2 (get-resource state 1)
-              tap3 (get-resource state 2)
-              mm (get-in @state [:corp :identity])]
+              tap3 (get-resource state 2)]
           (card-side-ability state :corp tap1 0)
           (card-side-ability state :corp tap2 0)
           (card-side-ability state :corp tap3 0)
           (click-prompt state :corp "Gain [Click]")
           (is (= 1 (:click (get-corp))) "Gained 1 click from MM"))))
-    (testing "Trigger Mirrormorph with double Operation"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-triggers-trigger-mirrormorph-with-double-operation
+      ;; Trigger Mirrormorph with double Operation
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :hand ["Mandatory Upgrades" "Blue Level Clearance"]
                           :deck [(qty "Hedge Fund" 10)]}})
@@ -2809,14 +2811,15 @@
           4 (:credit (get-corp))
           "Gained 1 credit from MM ability"
           (click-prompt state :corp "Gain 1 [Credits]"))))
-    (testing "Trigger Mirrormorph with MCAAP"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-triggers-trigger-mirrormorph-with-mcaap
+      ;; Trigger Mirrormorph with MCAAP
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :hand ["MCA Austerity Policy"]
                           :deck [(qty "Hedge Fund" 10)]}})
         (play-from-hand state :corp "MCA Austerity Policy" "New remote")
-        (let [mcaap (get-content state :remote1 0)
-              mm (get-in @state [:corp :identity])]
+        (let [mcaap (get-content state :remote1 0)]
           (rez state :corp mcaap)
           (card-ability state :corp mcaap 0)
           (dotimes [_ 2]
@@ -2827,34 +2830,36 @@
           (card-ability state :corp mcaap 1)
           (changes-val-macro 1 (:credit (get-corp))
                              "Gained 1 credit from MM ability"
-                             (click-prompt state :corp "Gain 1 [Credits]"))))))
+                             (click-prompt state :corp "Gain 1 [Credits]")))))
 
-(deftest mirrormorph-endless-iteration-cases-where-mirrormorph-does-not-trigger
-    ;; Cases where Mirrormorph does not trigger
-    (testing "Using same Asset ability multiple times"
-      (do-game
+(deftest mirrormorph-endless-iteration-does-not-trigger-using-same-asset-ability-multiple-times
+      ;; Using same Asset ability multiple times
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Capital Investors" 10)]}})
         (play-from-hand state :corp "Capital Investors" "New remote")
-        (let [ci (get-content state :remote1 0)
-              mm (get-in @state [:corp :identity])]
+        (let [ci (get-content state :remote1 0)]
           (rez state :corp ci)
           (dotimes [_ 2] (card-ability state :corp (refresh ci) 0))
           (is (no-prompt? state :corp) "No MM trigger"))))
-    (testing "Using different operations"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-does-not-trigger-using-different-operations
+      ;; Using different operations
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :deck [(qty "Hedge Fund" 10)]}})
         (dotimes [_ 3] (play-from-hand state :corp "Hedge Fund"))
         (is (no-prompt? state :corp) "No MM trigger")))
-    (testing "Installing different cards"
-      (do-game
+
+(deftest mirrormorph-endless-iteration-does-not-trigger-installing-different-cards
+      ;; Installing different cards
+    (do-game
         (new-game {:corp {:id "MirrorMorph: Endless Iteration"
                           :hand ["PAD Campaign" "NASX" "Wall to Wall"]}})
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (play-from-hand state :corp "NASX" "New remote")
         (play-from-hand state :corp "Wall to Wall" "New remote")
-        (is (no-prompt? state :corp) "No MM trigger"))))
+        (is (no-prompt? state :corp) "No MM trigger")))
 
 (deftest mti-mwekundu-life-improved-no-ice
     ;; No ice
@@ -2948,8 +2953,7 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
-      (let [iwall (get-ice state :hq 0)
-            nasir (get-in @state [:runner :identity])]
+      (let [iwall (get-ice state :hq 0)]
         (is (= 5 (:credit (get-runner))))
         (rez state :corp iwall)
         (run-continue state)
@@ -2966,8 +2970,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Xanadu")
       (run-on state "HQ")
-      (let [iwall (get-ice state :hq 0)
-            nasir (get-in @state [:runner :identity])]
+      (let [iwall (get-ice state :hq 0)]
         (is (= 3 (:credit (get-runner))) "Pay 3 to install Xanadu")
         (rez state :corp iwall)
         (run-continue state)
@@ -3126,8 +3129,7 @@
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
        (is (no-prompt? state :corp) "No prompt for the Corp for second tag")))
-  (testing "Basic test - draw cards"
-    (do-game
+  (do-game
      (new-game {:corp {:id "NBN: Reality Plus"
                        :credits 40
                        :deck [(qty "Hedge Fund" 10)]
@@ -3149,7 +3151,7 @@
        (rez state :corp (refresh dr))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
-       (is (no-prompt? state :corp) "No prompt for the Corp for second tag")))))
+       (is (no-prompt? state :corp) "No prompt for the Corp for second tag"))))
 
 (deftest nero-severn-information-broker
   ;; Nero Severn: Information Broker
@@ -3598,8 +3600,7 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
     (run-on state "HQ")
-    (let [k (get-in @state [:runner :identity])
-          iwall (get-ice state :hq 0)]
+    (let [iwall (get-ice state :hq 0)]
       (rez state :corp iwall)
       (run-continue state)
       (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")

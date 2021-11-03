@@ -55,11 +55,17 @@
           :expected ~change-amt
           :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " (cons 'do '~body-form))}))))
 
+(defmacro changes-val [change-amt val-form & body-form]
+  `(changes-val-macro ~change-amt ~val-form ~msg ~@body-form))
+
 (defmethod clojure.test/assert-expr 'changes-val [msg form]
   (let [change-amt (nth form 1)
         val-form (nth form 2)
         body-form (drop 3 form)]
     `(changes-val-macro ~change-amt ~val-form ~msg ~@body-form)))
+
+(defmacro changes-credits [side change-amt & body-form]
+  `(changes-val-macro ~change-amt (:credit ~side) ~msg ~@body-form))
 
 ;; Enables you to do this:
 ;; (is (changes-credits (get-runner) -5

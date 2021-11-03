@@ -6,6 +6,7 @@
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
+            [clojure.string :as str]
             [clojure.test :refer :all]))
 
 (deftest abagnale
@@ -368,7 +369,6 @@
       (run-continue state)
       (let [ankusa (get-program state 0)
             credits (:credit (get-runner))]
-          "Boost ability costs 1 credit each"
           (card-ability state :runner ankusa 1)
           (is (= (dec credits) (:credit (get-runner))) "Boost 1 for 1 credit")
           (is (= (inc (get-strength ankusa)) (get-strength (refresh ankusa)))
@@ -1408,8 +1408,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Conduit")
       (play-from-hand state :runner "Knobkierie")
-      (let [conduit (get-program state 0)
-            knobkierie (get-hardware state 0)]
+      (let [conduit (get-program state 0)]
         (card-ability state :runner conduit 0)
         (is (:run @state) "Run initiated")
         (run-continue state :success)
@@ -1428,8 +1427,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Conduit")
       (play-from-hand state :runner "Knobkierie")
-      (let [conduit (get-program state 0)
-            knobkierie (get-hardware state 0)]
+      (let [conduit (get-program state 0)]
         (card-ability state :runner conduit 0)
         (is (:run @state) "Run initiated")
         (run-continue state :success)
@@ -1810,19 +1808,20 @@
             daiv (get-program state 2)]
         (rez state :corp enig)
         (run-continue state)
-        (changes-val-macro -1 (:credit (get-runner))
-                           "Used 1 credit to pump and 2 credits from Cloaks to break"
-                           (card-ability state :runner daiv 1)
-                           (click-prompt state :runner "Done")
-                           (card-ability state :runner daiv 0)
-                           (click-prompt state :runner "Force the Runner to lose 1 [Click]")
-                           (click-prompt state :runner "End the run")
-                           (is (clojure.string/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
-                           (click-card state :runner cl1)
-                           (click-card state :runner cl2))))
-  
-  
-  (comment testing "Additional costs are also stealth"
+        (changes-val-macro
+            -1 (:credit (get-runner))
+            "Used 1 credit to pump and 2 credits from Cloaks to break"
+            (card-ability state :runner daiv 1)
+            (click-prompt state :runner "Done")
+            (card-ability state :runner daiv 0)
+            (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+            (click-prompt state :runner "End the run")
+            (is (str/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
+            (click-card state :runner cl1)
+            (click-card state :runner cl2)))))
+
+(deftest dai-v-additional-costs-are-also-stealth
+    ; Additional costs are also stealth
     (do-game
       (new-game {:corp {:deck ["Enigma" "Midway Station Grid"]}
                  :runner {:deck [(qty "Cloak" 2) "Dai V"]}})
@@ -1837,8 +1836,6 @@
       (play-from-hand state :runner "Dai V")
       (run-on state :hq)
       (let [enig (get-ice state :hq 0)
-            cl1 (get-program state 0)
-            cl2 (get-program state 1)
             daiv (get-program state 2)]
         (rez state :corp enig)
         (run-continue state)
@@ -1850,7 +1847,7 @@
                            (click-prompt state :runner "Force the Runner to lose 1 [Click]")
                            (click-prompt state :runner "End the run")
                            (is (no-prompt? state :runner) "We are incapable of paying")
-                           (is (= 0 (count (filter :broken (:subroutines (refresh enig))))) "No subroutines were broken"))))))
+                           (is (= 0 (count (filter :broken (:subroutines (refresh enig))))) "No subroutines were broken")))))
 
 (deftest dai-v-can-t-pay-with-a-non-stealth-source
     ;; Can't pay with a non-stealth source
@@ -1864,7 +1861,6 @@
       (play-from-hand state :runner "Dai V")
       (run-on state :hq)
       (let [enig (get-ice state :hq 0)
-            mt (get-program state 0)
             daiv (get-program state 1)]
         (rez state :corp enig)
         (run-continue state)
@@ -2237,7 +2233,6 @@
       (core/gain state :runner :credit 100)
       (play-from-hand state :runner "Eater")
       (let [eater (get-program state 0)
-            ngo (get-content state :remote1 0)
             rt (get-ice state :remote1 0)]
         (run-on state "Server 1")
         (rez state :corp (refresh rt))
@@ -2356,8 +2351,7 @@
       (play-from-hand state :runner "Trickster Taka")
       (core/add-counter state :runner (get-resource state 0) :credit 2)
       (play-from-hand state :runner "Engolo")
-      (let [roto (get-ice state :hq 0)
-            engolo (get-program state 0)]
+      (let [roto (get-ice state :hq 0)]
         (run-on state :hq)
         (rez state :corp roto)
         (run-continue state)
@@ -3430,8 +3424,7 @@
                  :runner {:deck [(qty "Kyuban" 1)]}})
       (play-from-hand state :corp "Lockdown" "HQ")
       (play-from-hand state :corp "Lockdown" "Archives")
-      (let [ld1 (get-ice state :archives 0)
-            ld2 (get-ice state :hq 0)]
+      (let [ld1 (get-ice state :archives 0)]
         (take-credits state :corp)
         (play-from-hand state :runner "Kyuban")
         (click-card state :runner ld1)
@@ -3549,19 +3542,18 @@
     (new-game {:runner {:deck ["Lamprey"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Lamprey")
-    (let [lamp (get-program state 0)]
-      (run-empty-server state :hq)
-      (is (= 7 (:credit (get-corp))) "Corp lost 1 credit")
-      (click-prompt state :runner "No action")
-      (run-empty-server state :hq)
-      (is (= 6 (:credit (get-corp))) "Corp lost 1 credit")
-      (click-prompt state :runner "No action")
-      (run-empty-server state :hq)
-      (is (= 5 (:credit (get-corp))) "Corp lost 1 credit")
-      (click-prompt state :runner "No action")
-      (take-credits state :runner)
-      (core/purge state :corp)
-      (is (empty? (get-program state)) "Lamprey trashed by purge"))))
+    (run-empty-server state :hq)
+    (is (= 7 (:credit (get-corp))) "Corp lost 1 credit")
+    (click-prompt state :runner "No action")
+    (run-empty-server state :hq)
+    (is (= 6 (:credit (get-corp))) "Corp lost 1 credit")
+    (click-prompt state :runner "No action")
+    (run-empty-server state :hq)
+    (is (= 5 (:credit (get-corp))) "Corp lost 1 credit")
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (core/purge state :corp)
+    (is (empty? (get-program state)) "Lamprey trashed by purge")))
 
 (deftest leech
   ;; Leech - Reduce strength of encountered piece of ice
@@ -3788,7 +3780,7 @@
       (take-credits state :runner)
       (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
 
-(deftest mantle-works-with-programs
+(deftest mantle-works-with-non-icebreaker-programs
     ;; Works with programs
     (do-game
       ;; Using Tracker to demonstrate that it's not just icebreakers
@@ -3807,26 +3799,6 @@
           "Can spend credits on Mantle for programs"
           (click-card state :runner mantle)))))
 
-(deftest mantle-works-with-programs
-    ;; Works with programs
-    (do-game
-      (new-game {:runner {:deck ["Sure Gamble"]
-                          :hand ["Mantle" "Prognostic Q-Loop"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Mantle")
-      (play-from-hand state :runner "Prognostic Q-Loop")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (let [mantle (get-program state 0)
-            qloop (get-hardware state 0)]
-        (card-ability state :runner qloop 1)
-        (changes-val-macro
-          -1 (get-counters (refresh mantle) :recurring)
-          "Can spend credits on Mantle for programs"
-          (click-card state :runner mantle))
-        (take-credits state :runner)
-        (take-credits state :corp))))
-
 (deftest marjanah
   ;; Marjanah
   (before-each [state (new-game {:runner {:hand [(qty "Marjanah" 2)]
@@ -3840,7 +3812,6 @@
                       (run-on state :hq)
                       (rez state :corp (get-ice state :hq 0))
                       (run-continue state :encounter-ice))
-                ice-wall (get-ice state :hq 0)
                 marjanah (get-program state 0)]
     (testing "pump ability"
       (do-game state
@@ -4586,7 +4557,7 @@
         (core/gain state :corp :click 1)
         (play-from-hand state :corp "Akhet" "HQ")
         (rez state :corp (get-ice state :hq 0))
-        (dotimes [n 3]
+        (dotimes [_ 3]
           (advance state (get-ice state :hq 0)))
         (take-credits state :corp)
         (play-from-hand state :runner "Paperclip")
@@ -4837,8 +4808,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Paricia")
     (let [pad (get-content state :remote1 0)
-          shell (get-content state :remote2 0)
-          paricia (get-program state 0)]
+          shell (get-content state :remote2 0)]
       (run-empty-server state :remote2)
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (no-prompt? state :runner) "No pay-credit prompt as it's an upgrade")
@@ -6064,7 +6034,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Trope")
       ;; wait 3 turns to make Trope have 3 counters
-      (dotimes [n 3]
+      (dotimes [_ 3]
         (take-credits state :runner)
         (take-credits state :corp))
       (is (= 3 (get-counters (refresh (get-program state 0)) :power)))
@@ -6090,7 +6060,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Trope")
       ;; wait 3 turns to make Trope have 3 counters
-      (dotimes [n 3]
+      (dotimes [_ 3]
         (take-credits state :runner)
         (take-credits state :corp))
       (is (= 3 (get-counters (refresh (get-program state 0)) :power)))
@@ -6116,7 +6086,7 @@
         (click-card state :runner architect-unrezzed)
         (is (= 2 (core/available-mu state)) "Trypano consumes 1 MU"))
       ;; wait 4 turns to make both Trypanos have 4 counters on them
-      (dotimes [n 4]
+      (dotimes [_ 4]
         (take-credits state :runner)
         (take-credits state :corp)
         (click-prompt state :runner "Yes")

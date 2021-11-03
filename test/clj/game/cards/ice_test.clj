@@ -1,7 +1,6 @@
 (ns game.cards.ice-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -920,7 +919,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
       (let [chum (get-ice state :hq 3)
-            unrezzed-enigma (get-ice state :hq 2)
             icewall (get-ice state :hq 1)
             enigma (get-ice state :hq 0)
             corroder (get-program state 0)]
@@ -944,26 +942,6 @@
         (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
         (run-continue state :movement)
         (run-jack-out state))))
-
-(deftest chum-net-damage-from-ice-ending-the-run
-    ;; Net damage from ice ending the run
-    (do-game
-      (new-game {:corp {:deck ["Chum" "Ice Wall"]}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (play-from-hand state :corp "Chum" "HQ")
-      (take-credits state :corp)
-      (let [chum (get-ice state :hq 1)
-            icewall (get-ice state :hq 0)]
-        (run-on state :hq)
-        (rez state :corp chum)
-        (run-continue state)
-        (card-subroutine state :corp (refresh chum) 0)
-        (run-continue-until state :approach-ice icewall)
-        (rez state :corp icewall)
-        (run-continue state)
-        (changes-val-macro -3 (count (:hand (get-runner)))
-                           "3 Damage from Ice Wall ending the run"
-                           (card-subroutine state :corp (refresh icewall) 0)))))
 
 (deftest chum-net-damage-from-passing-without-breaking
     ;; Net damage from passing without breaking
@@ -1650,9 +1628,7 @@
       (play-from-hand state :corp "Formicary" "R&D")
       (take-credits state :corp)
       (play-from-hand state :runner "First Responders")
-      (let [form1 (get-ice state :rd 0)
-            form2 (get-ice state :archives 0)
-            responders (get-resource state 0)]
+      (let [responders (get-resource state 0)]
         (run-on state "HQ")
         (run-continue state)
         (is (zero? (get-in @state [:run :position])) "Now approaching server")
@@ -1685,18 +1661,17 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Formicary" "HQ")
       (take-credits state :corp)
-      (let [form (get-ice state :hq 1)]
-        (run-on state "HQ")
-        (run-continue-until state :movement) ; pass the first ice
-        (run-continue-until state :movement) ; pass the second ice
-        (is (zero? (get-in @state [:run :position])) "Now approaching server")
-        (run-continue state)
-        (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
-        (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
-        (click-prompt state :corp "Yes") ; Move Formicary
-        (is (= 1 (get-in @state [:run :position])) "Now approaching the innermost piece of ice")
-        (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is the innermost piece of ice after swap")
-        (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is the outermost piece of ice after swap"))))
+      (run-on state "HQ")
+      (run-continue-until state :movement) ; pass the first ice
+      (run-continue-until state :movement) ; pass the second ice
+      (is (zero? (get-in @state [:run :position])) "Now approaching server")
+      (run-continue state)
+      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
+      (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
+      (click-prompt state :corp "Yes") ; Move Formicary
+      (is (= 1 (get-in @state [:run :position])) "Now approaching the innermost piece of ice")
+      (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is the innermost piece of ice after swap")
+      (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is the outermost piece of ice after swap")))
 
 (deftest formicary-no-prompt-if-unable-to-rez
     ;; No prompt if unable to rez
@@ -2449,7 +2424,7 @@
         (doseq [n (range 3)]
           (card-subroutine state :corp hydra n)
           (is (= 1 (count-tags state)) (str "Hydra sub " (inc n) " gave Runner 1 tag"))
-          (core/lose-tags state :runner (game.core.eid/make-eid state) 1)))
+          (core/lose-tags state :runner (core/make-eid state) 1)))
       (testing "Hydra subroutines do their effect if the Runner is tagged"
         ;; Gain 1 tag to turn on main effect of subroutines
         (gain-tags state :runner 1)
@@ -2564,7 +2539,7 @@
       (is (= 1 (count (:subroutines (refresh io)))))
       (gain-tags state :runner 1)
       (is (= 2 (count (:subroutines (refresh io)))))
-      (core/lose-tags state :runner (game.core.eid/make-eid state) 2)
+      (core/lose-tags state :runner (core/make-eid state) 2)
       (core/fake-checkpoint state)
       (is (zero? (count (:subroutines (refresh io))))))))
 
@@ -2863,8 +2838,8 @@
         (click-prompt state :runner "No action")
         (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
 
-(deftest kitsune-
-    ;; 
+(deftest kitsune-trash-after-use
+    ;; Trash after use
     (do-game
       (new-game {:corp {:hand ["Kitsune" "Snare!" "Hostile Takeover"]}})
       (play-from-hand state :corp "Kitsune" "R&D")
@@ -3516,8 +3491,8 @@
       (is (= "Hostile Takeover" (:title (get-content state :remote1 0))))
       (is (= "Allele Repression" (:title (get-content state :remote2 0))))))
 
-(deftest metamorph-with-two-installed-non-ice
-    ;; with two installed non-ice
+(deftest metamorph-with-two-installed-non-ice-both-options
+    ;; with two installed non-ice both options are avilable
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Metamorph"
@@ -3535,7 +3510,7 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (fire-subs state (get-ice state :archives 0))
-      (is (= ["Swap two pieces of ice" "Swap two non-ice"] (prompt-buttons :corp)) "Only non-ice option")))
+      (is (= ["Swap two pieces of ice" "Swap two non-ice"] (prompt-buttons :corp)) "Both options available")))
 
 (deftest mind-game-server-redirection
     ;; Server redirection
@@ -3651,26 +3626,6 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (is (last-log-contains? state "Runner encounters Ice Wall"))))
-
-(deftest mind-game-server-redirection
-    ;; Server redirection
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Mind Game"]}
-                 :runner {:deck ["Easy Mark"]
-                          :hand ["Sure Gamble"]}})
-      (play-from-hand state :corp "Mind Game" "HQ")
-      (take-credits state :corp)
-      (let [mindgame (get-ice state :hq 0)]
-        (run-on state :hq)
-        (rez state :corp mindgame)
-        (run-continue state)
-        (card-subroutine state :corp mindgame 0))
-      (click-prompt state :corp "1 [Credits]")
-      (click-prompt state :runner "0 [Credits]")
-      (is (= ["Archives" "R&D"] (prompt-buttons :corp)) "Corp cannot choose server Runner is on")
-      (click-prompt state :corp "Archives")
-      (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
 
 (deftest mind-game-redirection-does-not-occur-if-mind-game-would-not-be-passed
     ;; Redirection does not occur if Mind Game would not be passed
@@ -3900,12 +3855,12 @@
      (play-from-hand state :corp "Negotiator" "HQ")
      (take-credits state :corp)
      (play-from-hand state :runner "Pelangi")
-     (let [pelangi (get-program state 0)
-           negotiator (get-ice state :hq 0)]
+     (let [negotiator (get-ice state :hq 0)]
        (run-on state "HQ")
        (rez state :corp negotiator)
        (run-continue state)
-       (is (= 3 (:credit (get-corp) "Corp starts with 3 credits."))) ;; corp has 3 credits after clicking for 2 and rezzing for 3
+       ;; corp has 3 credits after clicking for 2 and rezzing for 3
+       (is (= 3 (:credit (get-corp) "Corp starts with 3 credits.")))
        (card-subroutine state :corp negotiator 0)
        (is (= 5 (:credit (get-corp))) "Corp gained two credits from firing first sub.")
        (card-subroutine state :corp negotiator 1)
@@ -4263,7 +4218,6 @@
 
 (deftest pachinko
   ;;Pachinko
-  
   (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Pachinko"]}})

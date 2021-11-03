@@ -1,7 +1,6 @@
 (ns game.cards.hardware-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game.core.eid :refer [make-eid]]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -109,14 +108,8 @@
     (play-from-hand state :runner "Akamatsu Mem Chip")
     (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
-(deftest aniccam
+(deftest aniccam-trash-trash-before-and-after-install-does-not-trigger
   ;; Aniccam
-  
-  
-  
-  
-  
-  
   (doseq [first-side [:corp :runner]
           second-side [:corp :runner]]
     (testing (str (name first-side) " trash -> install Aniccam -> " (name second-side) " trash does not trigger Aniccam")
@@ -165,7 +158,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
+      (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
       (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))
 
 (deftest aniccam-trashing-an-event-along-with-some-non-events-triggers-aniccam
@@ -175,7 +168,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
+      (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
 
 (deftest aniccam-aniccam-must-not-trigger-a-second-time-in-one-turn
@@ -247,7 +240,7 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))))
+      (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))))
 
 (deftest aniccam-trashing-a-current-triggers-aniccam
     ;; Trashing a current triggers Aniccam
@@ -364,8 +357,7 @@
       (play-from-hand state :runner "Blackguard")
       (is (= 6 (core/available-mu state)) "Runner has 6 MU")
       (play-from-hand state :runner "Snitch")
-      (let [snitch (get-program state 0)
-            iwall (get-ice state :archives 0)]
+      (let [iwall (get-ice state :archives 0)]
         (run-on state :archives)
         (click-prompt state :runner "Yes")
         (is (rezzed? (refresh iwall)) "Ice Wall was rezzed"))))
@@ -455,34 +447,7 @@
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
         (click-prompt state :runner "Yes")
         (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
-        (is (= 0 (count (:discard (get-runner)))) "Heap is empty again")))
-  
-  
-  
-  
-  
-  
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Surveyor" "Ice Wall"]}
-                 :runner {:deck ["Boomerang"]}})
-      (play-from-hand state :corp "Surveyor" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Boomerang")
-      (let [surveyor (get-ice state :hq 0)
-            boom (get-hardware state 0)]
-        (click-card state :runner surveyor)
-        (run-on state :hq)
-        (rez state :corp surveyor)
-        (run-continue state)
-        (card-ability state :runner (refresh boom) 0)
-        (click-prompt state :runner "Trace X - End the run")
-        (click-prompt state :runner "Trace X - Give the Runner 2 tags")
-        (run-continue state)
-        (run-continue state)
-        (click-prompt state :runner "No action")
-        (click-prompt state :runner "Yes")
-        (is (no-prompt? state :runner) "No second prompt for shuffling Boomerang in"))))
+        (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
 
 (deftest boomerang-does-not-trigger-on-following-successful-runs
     ;; Does not trigger on following successful runs
@@ -565,10 +530,9 @@
         (rez state :corp thim)
         (play-from-hand state :runner "Boomerang")
         (click-card state :runner thim)
-        (let [boom (get-hardware state 0)]
-          (take-credits state :runner)
-          (click-prompt state :corp "Yes")
-          (click-card state :corp (refresh icew))))))
+        (take-credits state :runner)
+        (click-prompt state :corp "Yes")
+        (click-card state :corp (refresh icew)))))
 
 (deftest boomerang-update-card-target-on-ice-trash
     ;; Update card-target on ice trash
@@ -609,6 +573,30 @@
         (run-continue state)
         (click-prompt state :runner "No action")
         (is (no-prompt? state :runner) "No prompt for shuffling Boomerang in"))))
+
+(deftest boomerang-no-second-prompt
+    ;; Does not open a second prompt when declining the first time
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Surveyor" "Ice Wall"]}
+                 :runner {:deck ["Boomerang"]}})
+      (play-from-hand state :corp "Surveyor" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (let [surveyor (get-ice state :hq 0)
+            boom (get-hardware state 0)]
+        (click-card state :runner surveyor)
+        (run-on state :hq)
+        (rez state :corp surveyor)
+        (run-continue state)
+        (card-ability state :runner (refresh boom) 0)
+        (click-prompt state :runner "Trace X - End the run")
+        (click-prompt state :runner "Trace X - Give the Runner 2 tags")
+        (run-continue state)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
+        (is (no-prompt? state :runner) "No second prompt for shuffling Boomerang in"))))
 
 (deftest boomerang-multiple-boomerangs-used-during-single-run-are-shuffled-correctly-issue-5112
     ;; Multiple Boomerangs used during single run are shuffled correctly. Issue #5112
@@ -741,8 +729,8 @@
                           :deck ["Stimhack"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (let [[target & non-targets] (:hand (get-runner))]
-        (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
+      (let [[target] (:hand (get-runner))]
+        (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
         (click-prompt state :runner (:title target))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -756,8 +744,8 @@
                           :deck ["Stimhack"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (let [[target & non-targets] (:hand (get-runner))]
-        (core/trash-cards state :runner (make-eid state) (:hand (get-runner)))
+      (let [[target] (:hand (get-runner))]
+        (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
         (click-prompt state :runner (:title target))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -771,8 +759,8 @@
                           :deck ["Stimhack" "Corroder" "Yog.0" "Mimic"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
-      (let [[target & non-targets] (take 3 (:deck (get-runner)))]
-        (core/trash-cards state :runner (make-eid state) (take 3 (:deck (get-runner))))
+      (let [[target] (take 3 (:deck (get-runner)))]
+        (core/trash-cards state :runner (core/make-eid state) (take 3 (:deck (get-runner))))
         (click-prompt state :runner (:title target))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -838,11 +826,10 @@
       (play-from-hand state :runner "Buffer Drive")
       (trash-from-hand state :runner "Corroder")
       (click-prompt state :runner "No action")
-      (let [remaining-grip-cids (set (map :cid (:hand (get-runner))))]
-        (trash-from-hand state :runner "Yog.0")
-        (is (no-prompt? state :runner))
-        (is (= 1 (count (:deck (get-runner)))))
-        (is (= 2 (count (:discard (get-runner))))))))
+      (trash-from-hand state :runner "Yog.0")
+      (is (no-prompt? state :runner))
+      (is (= 1 (count (:deck (get-runner)))))
+      (is (= 2 (count (:discard (get-runner)))))))
 
 (deftest buffer-drive-buffer-drive-must-not-trigger-on-the-second-trash-of-the-turn-if-it-was-installed-after-the-first-trash
     ;; Buffer Drive must not trigger on the second trash of the turn if it was installed after the first trash
@@ -1266,10 +1253,9 @@
       (take-credits state :corp)
       (core/gain state :runner :credit 2)
       (play-from-hand state :runner "Demolisher")
-      (let [demolisher (get-hardware state 0)]
-        (run-empty-server state :remote1)
-        (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (is (= 1 (:credit (get-runner))) "Trashed for 3c and gained 1c"))))
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (is (= 1 (:credit (get-runner))) "Trashed for 3c and gained 1c")))
 
 (deftest demolisher-trash-with-imp
     ;; Trash with Imp
@@ -1304,8 +1290,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Devil Charm")
       (run-on state :hq)
-      (let [dc (get-hardware state 0)
-            enig (get-ice state :hq 0)]
+      (let [enig (get-ice state :hq 0)]
         (rez state :corp (refresh enig))
         (run-continue state)
         (is (= 2 (get-strength (refresh enig))) "Enigma starts at 2 strength")
@@ -2457,8 +2442,7 @@
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Imp")
       (play-from-hand state :runner "Mâché")
-      (let [imp (get-program state 0)
-            mache (get-hardware state 0)
+      (let [mache (get-hardware state 0)
             counters (get-counters (refresh mache) :power)]
         (run-empty-server state :hq)
         (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
@@ -2466,7 +2450,6 @@
         (run-empty-server state :remote1)
         (click-prompt state :runner "Pay 4 [Credits] to trash")
         (is (= counters (get-counters (refresh mache) :power)) "Mache gains no counters as it's been used this turn already"))))
-
 (deftest mache-with-political-operative
     ;; with Political Operative
     (do-game
@@ -2909,7 +2892,7 @@
         (gain-tags state :runner 1)
         (core/fake-checkpoint state)
         (is (= 6 (hand-size :runner)) "Max hand size is 6")
-        (core/lose-tags state :runner (game.core.eid/make-eid state) 1)
+        (core/lose-tags state :runner (core/make-eid state) 1)
         (core/fake-checkpoint state)
         (is (= 5 (hand-size :runner)) "Max hand size is 5")
         (run-empty-server state :hq)
@@ -3485,15 +3468,13 @@
                           :hand [(qty "Ramujan-reliant 550 BMI" 4) "Sure Gamble"]}})
       (play-from-hand state :corp "Data Mine" "New remote")
       (play-from-hand state :corp "Snare!" "Server 1")
-      (let [sn (get-content state :remote1 0)
-            dm (get-ice state :remote1 0)]
+      (let [dm (get-ice state :remote1 0)]
         (take-credits state :corp)
         (play-from-hand state :runner "Ramujan-reliant 550 BMI")
         (play-from-hand state :runner "Ramujan-reliant 550 BMI")
         (play-from-hand state :runner "Ramujan-reliant 550 BMI")
         (let [rr1 (get-hardware state 0)
-              rr2 (get-hardware state 1)
-              rr3 (get-hardware state 2)]
+              rr2 (get-hardware state 1)]
           (run-on state "Server 1")
           (rez state :corp dm)
           (run-continue state)
@@ -3668,7 +3649,7 @@
       (is (= 2 (count (:discard (get-runner)))) "2 damage done")
       (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
 
-(deftest respirocytes-respirocytes-should-not-trigger-after-being-trashed-issue-3699
+(deftest respirocytes-should-not-trigger-after-being-trashed-issue-3699
     ;; Respirocytes should not trigger after being trashed (issue #3699)
     (do-game
       (new-game {:runner {:deck [(qty "Sure Gamble" 20)]
@@ -3681,7 +3662,7 @@
         (is (= 1 (get-counters (refresh respirocytes) :power)) "Respirocytes drew once")
         (take-credits state :runner)
         (take-credits state :corp)
-        (dotimes [n 2]
+        (dotimes [_ 2]
           (play-from-hand state :runner "Sure Gamble")
           (is (= 1 (-> (get-runner) :hand count)) "Drew 1 from Respirocytes")
           (take-credits state :runner)
@@ -3748,8 +3729,7 @@
     (play-from-hand state :corp "Ice Wall" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Security Nexus")
-    (let [nexus (get-hardware state 0)
-          iw (get-ice state :rd 0)]
+    (let [iw (get-ice state :rd 0)]
       (run-on state "R&D")
       (rez state :corp iw)
       (run-continue state)
@@ -4527,13 +4507,13 @@
       (play-from-hand state :runner "Turntable")
       (let [tt (get-hardware state 0)]
         ;; steal Project Vitruvius and swap for Mandatory Upgrades
-        (core/steal state :runner (make-eid state) (find-card "Project Vitruvius" (:hand (get-corp))))
+        (core/steal state :runner (core/make-eid state) (find-card "Project Vitruvius" (:hand (get-corp))))
         (is (prompt-is-card? state :runner tt))
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
         (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
         ;; steal second Mandatory Upgrades and swap for Project Vitruvius
-        (core/steal state :runner (make-eid state) (find-card "Mandatory Upgrades" (:hand (get-corp))))
+        (core/steal state :runner (core/make-eid state) (find-card "Mandatory Upgrades" (:hand (get-corp))))
         (is (prompt-is-card? state :runner tt))
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Project Vitruvius" (:scored (get-corp))))

@@ -60,4 +60,5 @@
            game.core/msg game.macros/msg
            game.core/wait-for game.macros/wait-for
            game.macros-test/deftest-pending clojure.test/deftest}
+ :config-paths ["rewrite-clj/rewrite-clj"]
  }

@@ -1,7 +1,6 @@
 (ns game.cards.agendas-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
-            [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -465,12 +464,11 @@
     (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
     (is (= 1 (count-bad-pub state)) "Should gain 1 bad publicity")
-    (let [ht-scored (get-scored state :corp 0)]
-      (play-and-score state "Bifrost Array")
-      (click-prompt state :corp "Yes")
-      (click-card state :corp "Hostile Takeover")
-      (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
-      (is (= 2 (count-bad-pub state)) "Should gain 1 bad publicity"))))
+    (play-and-score state "Bifrost Array")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Hostile Takeover")
+    (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
+    (is (= 2 (count-bad-pub state)) "Should gain 1 bad publicity")))
 
 (deftest brain-rewiring
   ;; Brain Rewiring
@@ -1146,7 +1144,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (core/lose state :corp :credit (:credit (get-corp)))
-        (core/lose-tags state :runner (game.core.eid/make-eid state) tag)))))
+        (core/lose-tags state :runner (core/make-eid state) tag)))))
 
 (deftest executive-retreat
   ;; Executive Retreat
@@ -1607,7 +1605,7 @@
           iw (get-ice state :hq 0)]
       (is (zero? (get-counters (refresh hr) :advancement)) "Hollywood Renovation should start with 0 advancement tokens")
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should start with 0 advancement tokens")
-      (dotimes [n 5]
+      (dotimes [_ 5]
         (advance state (refresh hr))
         (click-card state :corp (refresh iw)))
       (is (= 5 (get-counters (refresh hr) :advancement)) "Hollywood Renovation should gain 5 advancement tokens")
@@ -2262,7 +2260,7 @@
     (play-from-hand state :corp "New Construction" "New remote")
     (let [nc (get-content state :remote1 0)]
       (is (zero? (get-counters (refresh nc) :advancement)))
-      (dotimes [n 4]
+      (dotimes [_ 4]
         (advance state (refresh nc))
         (click-prompt state :corp "Yes")
         (click-card state :corp (find-card "Commercial Bankers Group" (:hand (get-corp)))))
@@ -2522,7 +2520,7 @@
       (card-ability state :corp psf-scored 0)
       (is (= 1 (count (:discard (get-runner)))))
       (take-credits state :runner)
-      (dotimes [n 3]
+      (dotimes [_ 3]
         (card-ability state :corp psf-scored 0))
       (is (= 3 (count (:discard (get-runner)))))
       (is (= :corp (:winner @state)) "Corp wins")
@@ -3591,7 +3589,7 @@
     (starting-hand state :corp (vec (cons "Successful Field Test" (repeat 10 "Ice Wall"))))
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (play-and-score state "Successful Field Test")
-    (dotimes [n 10]
+    (dotimes [_ 10]
       (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
       (click-prompt state :corp "HQ"))
     (is (= 5 (:credit (get-corp))) "Should still have 5 credits")

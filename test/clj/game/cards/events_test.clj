@@ -1010,11 +1010,10 @@
       (click-prompt state :runner "Heap")
       (click-prompt state :runner "Gordian Blade")
       (is (:installed (get-program state 0)) "Gordian Blade should be installed")
-      (let [deck (count (:deck (get-runner)))]
-        (run-continue state :movement)
-        (run-jack-out state)
-        (is (find-card "Gordian Blade" (:deck (get-runner))) "Gordian Blade should be back in stack")
-        (is (nil? (get-program state 0))))))
+      (run-continue state :movement)
+      (run-jack-out state)
+      (is (find-card "Gordian Blade" (:deck (get-runner))) "Gordian Blade should be back in stack")
+      (is (nil? (get-program state 0)))))
 
 (deftest compile-test-with-self-modifying-code-neither-smc-nor-other-card-should-be-shuffled-back-in
     ;; with Self-modifying Code, neither SMC nor other card should be shuffled back in
@@ -1357,8 +1356,7 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
                :runner {:hand ["Day Job"]}})
     (take-credits state :corp)
-    (let [credits (:credit (get-runner))
-          clicks (:click (get-runner))]
+    (let [credits (:credit (get-runner))]
       (play-from-hand state :runner "Day Job")
       (is (= (+ credits -2 10) (:credit (get-runner))) "Runner spends 2, gains 10")
       (is (zero? (:click (get-runner))) "Runner loses 4 clicks"))))
@@ -2337,8 +2335,8 @@
     (let [c-hand (count (:hand (get-corp)))
           r-hand (count (:hand (get-runner)))]
       (play-from-hand state :runner "Fisk Investment Seminar")
-      (is (= (+ 3 c-hand (count (:hand (get-corp))))) "Corp draws 3 cards")
-      (is (= (+ 3 r-hand (count (:hand (get-runner))))) "Runner draws 3 cards"))))
+      (is (= (+ 3 c-hand) (count (:hand (get-corp)))) "Corp draws 3 cards")
+      (is (= (+ 3 r-hand) (count (:hand (get-runner)))) "Runner draws 3 cards"))))
 
 (deftest forged-activation-orders-corp-chooses-to-trash-the-ice
     ;; Corp chooses to trash the ice
@@ -4323,15 +4321,14 @@
       (play-from-hand state :runner "Turntable")
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
-      (let [tt (get-hardware state 0)]
-        (click-prompt state :runner "Yes")
-        (click-card state :runner (find-card "Breaking News" (:scored (get-corp))))
-        (is (= 1 (:agenda-point (get-corp))))
-        (is (zero? (:agenda-point (get-runner))))
-        (take-credits state :runner)
-        (core/purge state :corp)
-        (is (= 1 (:agenda-point (get-corp))))
-        (is (= 1 (:agenda-point (get-runner)))))))
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (find-card "Breaking News" (:scored (get-corp))))
+      (is (= 1 (:agenda-point (get-corp))))
+      (is (zero? (:agenda-point (get-runner))))
+      (take-credits state :runner)
+      (core/purge state :corp)
+      (is (= 1 (:agenda-point (get-corp))))
+      (is (= 1 (:agenda-point (get-runner))))))
 
 (deftest political-graffiti-forfeiting-agenda-with-political-graffiti-does-not-refund-double-points-issue-2765
     ;; Forfeiting agenda with Political Graffiti does not refund double points. Issue #2765
@@ -4792,10 +4789,6 @@
       (is (no-prompt? state :runner) "Reboot prompt did not come up")))
 
 
-(deftest recon
-  ;; Recon
-)
-
 (deftest recon-runner-jacks-out
     ;; Runner jacks out
     (do-game
@@ -4906,10 +4899,6 @@
     (is (= "Vanilla" (:title (get-ice state :rd 0))) "Vanilla swapped to R&D")
     (is (= "Paper Wall" (:title (get-ice state :hq 1))) "Paper Wall swapped to HQ outer position")))
 
-(deftest retrieval-run
-  ;; Retrieval Run - Run Archives successfully and install a program from Heap for free
-)
-
 (deftest retrieval-run-happy-path
     ;; Happy Path
     (do-game
@@ -4939,10 +4928,6 @@
       (click-prompt state :runner "Retrieval Run")
       (is (no-prompt? state :runner) "Retrieval run didn't attempt to install from heap.")
       (is (not (:run @state)) "Run is complete")))
-
-(deftest rigged-results
-  ;; Rigged Results - success and failure
-)
 
 (deftest rigged-results-corp-guesses-correctly
     ;; Corp guesses correctly
@@ -5068,10 +5053,6 @@
       (play-from-hand state :runner "Rip Deal")
       (run-continue state)
       (is (no-prompt? state :runner) "Rip Deal prompt did not come up")))
-
-(deftest rumor-mill
-  ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects
-)
 
 (deftest rumor-mill-full-test
     ;; Full test
@@ -5203,10 +5184,6 @@
       (is (no-prompt? state :corp))
       (is (= (- credits (:cost iw)) (:credit (get-corp))) "Rezzing Ice Wall costs normal"))))
 
-(deftest satellite-uplink
-  ;; Satellite Uplink
-)
-
 (deftest satellite-uplink-when-exposing-2-cards
     ;; when exposing 2 cards
     (do-game
@@ -5220,7 +5197,7 @@
       (click-card state :runner "Ice Wall")
       (click-card state :runner "Hostile Takeover")))
 
-(deftest satellite-uplink-when-exposing-2-cards
+(deftest satellite-uplink-when-exposing-1-card
     ;; when exposing 2 cards
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -5232,10 +5209,6 @@
       (play-from-hand state :runner "Satellite Uplink")
       (click-card state :runner "Ice Wall")
       (click-prompt state :runner "Done")))
-
-(deftest scavenge
-  ;; Scavenge
-)
 
 (deftest scavenge-happy-path
     ;; Happy Path
@@ -5457,10 +5430,6 @@
     (play-from-hand state :runner "Sure Gamble")
     (is (= 9 (:credit (get-runner))))))
 
-(deftest surge
-  ;; Surge - Add counters if target is a virus and had a counter added this turn
-)
-
 (deftest surge-valid-target
     ;; Valid target
     (do-game
@@ -5479,9 +5448,8 @@
       (new-game {:runner {:deck ["Security Testing" "Surge"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Security Testing")
-      (let [st (get-resource state 0)]
-        (play-from-hand state :runner "Surge")
-        (is (no-prompt? state :runner) "Surge does not fire on Security Testing"))))
+      (play-from-hand state :runner "Surge")
+      (is (no-prompt? state :runner) "Surge does not fire on Security Testing")))
 
 (deftest surge-don-t-fire-surge-if-target-does-not-have-virus-counter-flag-set
     ;; Don't fire surge if target does not have virus counter flag set
@@ -5510,10 +5478,6 @@
             "Gorman Drip gains 3 counters after Corp clicks 3 times for credits")
         (play-from-hand state :runner "Surge")
         (is (no-prompt? state :runner) "Surge does not trigger on Gorman Drip"))))
-
-(deftest syn-attack
-  ;; SYN Attack
-)
 
 (deftest syn-attack-and-corp-chooses-to-draw
     ;; and corp chooses to draw
@@ -5626,10 +5590,6 @@
       (run-continue state)
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength"))))
-
-(deftest test-run
-  ;; Test Run
-)
 
 (deftest test-run-programs-hosted-after-install-get-returned-to-stack-issue-1081
     ;; Programs hosted after install get returned to Stack. Issue #1081
@@ -6010,11 +5970,6 @@
       (is (= 0 (count (:discard (get-corp)))) "Corp should not have discarded cards")
       (is (= 3 (:click (get-runner))) "Runner should spend 0 clicks on ability")
       (is (not (:run @state)) "Run ended")))
-
-(deftest watch-the-world-burn
-  ;; Watch the World Burn - run a remote to RFG the first card accessed
-  ;; and all future copies
-)
 
 (deftest watch-the-world-burn-standard-usage
     ;; Standard usage
