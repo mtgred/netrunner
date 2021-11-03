@@ -55,7 +55,7 @@
           (-> zloc z/down basic-test?)
           (z/root (slurp-and-spit (-> zloc z/down)))
           ;; at the end?
-          (boolean (-> zloc z/right z/end?))
+          (not (-> zloc z/right))
           (-> zloc z/root)
           :else
           (recur (-> zloc z/right)))))))
@@ -64,7 +64,7 @@
   (z/replace
     zloc
     (loop [zloc (z/down (z/subzip zloc))]
-      (let [final-position? (boolean (-> zloc z/right z/end?))]
+      (let [final-position? (not (-> zloc z/right))]
         (cond
           ;; final position testing branch
           (and final-position?
@@ -143,7 +143,7 @@
 
 (defn rewrite-file [zloc]
   (let [zloc (process-deftest zloc)]
-    (if (z/end? (z/right zloc))
+    (if (not (z/right zloc))
       zloc
       (recur (z/right zloc)))))
 
@@ -163,23 +163,14 @@
 (defn rewrite-card-tests []
   (apply-fn-to-file process-file))
 
-(defn find-root-deftest [zloc]
-  (if (or (-> zloc z/down deftest?)
-          (-> zloc z/down z/string (= "ns")))
-    zloc
-    (recur (z/up zloc))))
-
-(defn clean-deftest [zloc]
-  (if (and (deftest? (z/down zloc))
-           (-> zloc z/down z/right z/right z/end?))
-    (-> zloc z/remove find-root-deftest)
-    zloc))
-
 (defn clean-file [zloc]
-  (let [zloc (clean-deftest zloc)]
-    (if (z/end? (z/right zloc))
-      zloc
-      (recur (z/right zloc)))))
+  (z/prewalk
+    (z/up zloc)
+    (fn [zloc]
+      (and (z/list? zloc)
+           (-> zloc z/down deftest?)
+           (not (-> zloc z/down z/right z/right))))
+    z/remove))
 
 (defn process-file-to-clean [file]
   (->> file
