@@ -2,7 +2,7 @@
   (:require
     [clojure.string :as string]
     [game.core.board :refer [all-active all-installed]]
-    [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? rezzed?]]
+    [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [make-eid]]
@@ -304,6 +304,8 @@
   ([state side card {:keys [no-req]}]
    (and
      (agenda? card)
+     ;; The Agenda is not already scored
+     (not (in-scored? card))
      ;; The agenda has enough agenda counters to legally score
      (or no-req
          (let [cost (get-advancement-requirement card)]

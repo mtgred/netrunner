@@ -77,14 +77,14 @@
 
 
 ;;; Initialising a card
-(defn- corp-ability-init
+(defn corp-ability-init
   "Gets abilities associated with the card"
   [cdef]
   (into [] (for [ab (:corp-abilities cdef)
                  :let [ab (assoc (select-keys ab [:cost]) :label (make-label ab))]]
              (add-cost-label-to-ability ab))))
 
-(defn- runner-ability-init
+(defn runner-ability-init
   "Gets abilities associated with the card"
   [cdef]
   (into [] (for [ab (:runner-abilities cdef)
