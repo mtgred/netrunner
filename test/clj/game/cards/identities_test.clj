@@ -1493,6 +1493,23 @@
         "Corp gains no credits when the source's additional cost is paid"
         (click-prompt state :runner "Pay to steal")))))
 
+(deftest gamenet-no-trigger-when-runner-at-zero-credits
+  ;; no trigger when runner at zero credits
+  (do-game
+   (new-game {:corp {:id "GameNET: Where Dreams are Real"
+                     :hand ["Rime"]}
+              :runner {:credits 0}})
+   (play-from-hand state :corp "Rime" "HQ")
+   (take-credits state :corp)
+   (run-on state "HQ")
+   (let [rime (get-ice state :hq 0)]
+     (rez state :corp rime)
+     (run-continue state :encounter-ice)
+     (changes-val-macro
+      0 (:credit (get-corp))
+      "Corp does not gain credits when the Runner loses zero credits"
+      (card-subroutine state :corp (refresh rime) 0)))))
+
 (deftest grndl-power-unleashed
   ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
   (testing "Basic test"
