@@ -6,8 +6,8 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest run-timing
-  (testing "with no ice"
+(deftest run-timing-with-no-ice
+    ;; with no ice
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
@@ -15,7 +15,9 @@
       (run-on state :archives)
       (run-continue state)
       (is (nil? (:run @state)))))
-  (testing "with an ice"
+
+(deftest run-timing-with-an-ice
+    ;; with an ice
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
@@ -29,7 +31,9 @@
       (fire-subs state (get-ice state :remote1 0))
       (is (nil? (:run @state)) "ice Wall subroutine ends the run")
       (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")))
-  (testing "with ice and a breaker"
+
+(deftest run-timing-with-ice-and-a-breaker
+    ;; with ice and a breaker
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}
@@ -50,7 +54,9 @@
       (run-continue state)
       (click-prompt state :runner "No action") ; Access Hedge Fund
       (is (nil? (:run @state)))))
-  (testing "with ice with on-encounter effect"
+
+(deftest run-timing-with-ice-with-on-encounter-effect
+    ;; with ice with on-encounter effect
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Tollbooth"]
@@ -66,7 +72,9 @@
       (is (= :encounter-ice (:phase (:run @state))))
       (fire-subs state (get-ice state :remote1 0))
       (is (nil? (:run @state)))))
-  (testing "with paid ability before ice with on-encounter effect"
+
+(deftest run-timing-with-paid-ability-before-ice-with-on-encounter-effect
+    ;; with paid ability before ice with on-encounter effect
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Tollbooth"]
@@ -86,7 +94,9 @@
       (is (= :approach-ice (:phase (:run @state))) "Haven't left the approach window yet")
       (run-continue state)
       (is (nil? (:run @state)) "Can't afford Tollbooth, so run ends")))
-  (testing "with bypass"
+
+(deftest run-timing-with-bypass
+    ;; with bypass
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}
@@ -101,7 +111,9 @@
       (run-continue state)
       (is (= :movement (:phase (:run @state))) "Inside Job has bypassed Ice Wall")
       (run-jack-out state)))
-  (testing "with bypass vs cannot be bypassed"
+
+(deftest run-timing-with-bypass-vs-cannot-be-bypassed
+    ;; with bypass vs cannot be bypassed
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Guard"]}
@@ -116,7 +128,9 @@
       (is (= :encounter-ice (:phase (:run @state))) "Inside Job hasn't bypassed Guard")
       (fire-subs state (get-ice state :remote1 0))
       (is (nil? (:run @state)))))
-  (testing "with bypass vs ice with on-encounter effect"
+
+(deftest run-timing-with-bypass-vs-ice-with-on-encounter-effect
+    ;; with bypass vs ice with on-encounter effect
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Tollbooth"]
@@ -134,7 +148,9 @@
         (is (= credits (:credit (get-runner)))))
       (run-jack-out state)
       (is (nil? (:run @state)))))
-  (testing "with paid ability that ends the run during encounter (Border Control)"
+
+(deftest run-timing-with-paid-ability-that-ends-the-run-during-encounter-border-control
+    ;; with paid ability that ends the run during encounter (Border Control)
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Border Control" "Tollbooth"]
@@ -151,7 +167,9 @@
         (card-ability state :corp (get-ice state :remote1 1) 0)
         (is (nil? (:run @state)) "Pressing Done properly handles the ended run")
         (is (= credits (:credit (get-runner))) "Runner shouldn't lose any credits to Tollbooth"))))
-  (testing "trashing a solo ice on an empty server #4940"
+
+(deftest run-timing-trashing-a-solo-ice-on-an-empty-server-4940
+    ;; trashing a solo ice on an empty server #4940
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}
@@ -168,7 +186,9 @@
       (click-prompt state :runner "End the run")
       (is (nil? (get-ice state :remote1 0)) "Ice Wall is trashed")
       (is (nil? (:run @state)) "Ice Wall is trashed, so run has been ended")))
-  (testing "Redirection updates current-ice. #5047"
+
+(deftest run-timing-redirection-updates-current-ice-5047
+    ;; Redirection updates current-ice. #5047
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Vanilla" "Ice Wall"]}})
@@ -187,7 +207,9 @@
       (is (= "Ice Wall" (:title (:ice (ffirst (core/turn-events state :corp :approach-ice))))))
       (is (= 2 (count (core/turn-events state :corp :approach-ice))))
       (is (last-log-contains? state "Runner approaches Ice Wall"))))
-  (testing "Changing phases fires end of encounter events"
+
+(deftest run-timing-changing-phases-fires-end-of-encounter-events
+    ;; Changing phases fires end of encounter events
     (do-game
      (new-game {:runner {:hand ["Corroder"]}
                 :corp {:deck [(qty "Hedge Fund" 5)]
@@ -211,7 +233,9 @@
        (is (= 1 (count (:encounters @state))))
        (is (= "Ice Wall" (:title (core/get-current-ice state))))
        (is (= 2 (:current-strength (refresh cor)))))))
-  (testing "cr 1.4 6.8.2c: any other priority window is closed normally"
+
+(deftest run-timing-cr-1-4-6-8-2c-any-other-priority-window-is-closed-normally
+    ;; cr 1.4 6.8.2c: any other priority window is closed normally
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Embolus" "Giordano Memorial Field" "Hostile Takeover"]
@@ -232,10 +256,10 @@
         (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
         (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
         (click-prompt state :corp "Giordano Memorial Field")
-        (click-prompt state :runner "End the run")))))
+        (click-prompt state :runner "End the run"))))
 
-(deftest replace-access
-  (testing "'You may' only"
+(deftest replace-access-you-may-only
+    ;; 'You may' only
     (testing "and choosing replacement effect"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -264,7 +288,9 @@
         (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "Normal access prompt")
         (click-prompt state :runner "No action")
         (is (no-prompt? state :runner) "No access, no replacement effects"))))
-  (testing "must replacement effects only"
+
+(deftest replace-access-must-replacement-effects-only
+    ;; must replacement effects only
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Hedge Fund"]}
@@ -279,7 +305,9 @@
       (is (second-last-log-contains? state "Runner uses the replacement effect from Security Testing")
           "Replacement effect is noted")
       (is (no-prompt? state :runner) "No access, no replacement effects")))
-  (testing "'You may' and must replacement effects"
+
+(deftest replace-access-you-may-and-must-replacement-effects
+    ;; 'You may' and must replacement effects
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Hedge Fund"]}
@@ -295,41 +323,27 @@
       (click-prompt state :runner "Account Siphon")
       (is (second-last-log-contains? state "Runner uses the replacement effect from Account Siphon")
           "Replacement effect is noted")
-      (is (no-prompt? state :runner) "No access, no replacement effects"))))
+      (is (no-prompt? state :runner) "No access, no replacement effects")))
 
-(deftest buffered-continue
-  (testing "Buffered continue on approaching ice"
+(deftest buffered-continue-buffered-continue-on-approaching-ice
+    ;; Buffered continue on approaching ice
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "New remote")
-      (let [iw (get-ice state :remote1 0)]
-        (take-credits state :corp)
-        (run-on state :remote1)
-        (is (= :approach-ice (:phase (:run @state))) "Runner in approach on ice")
-        (is (not (:no-action (:run @state))) "no-action is not set yet")
-        (core/continue state :runner nil)
-        (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
-        (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
-        (core/continue state :corp nil)
-        (is (= :movement (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
-        (is (not (:no-action (:run @state))) "no-action is reset")))
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Ice Wall"]}})
-      (play-from-hand state :corp "Ice Wall" "New remote")
-      (let [iw (get-ice state :remote1 0)]
-        (take-credits state :corp)
-        (run-on state :remote1)
-        (is (= :approach-ice (:phase (:run @state))) "Runner in approach on ice")
-        (is (not (:no-action (:run @state))) "no-action is not set yet")
-        (core/continue state :corp nil)
-        (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
-        (is (= :corp (:no-action (:run @state))) "Corp pressed Continue button")
-        (core/continue state :runner nil)
-        (is (= :movement (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
-        (is (not (:no-action (:run @state))) "no-action is reset"))))
-  (testing "Buffered continue on encountering ice"
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (is (= :approach-ice (:phase (:run @state))) "Runner in approach on ice")
+      (is (not (:no-action (:run @state))) "no-action is not set yet")
+      (core/continue state :runner nil)
+      (is (= :approach-ice (:phase (:run @state))) "Still in approach on ice")
+      (is (= :runner (:no-action (:run @state))) "Runner pressed Continue button")
+      (core/continue state :corp nil)
+      (is (= :movement (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
+      (is (not (:no-action (:run @state))) "no-action is reset")))
+
+(deftest buffered-continue-buffered-continue-on-encountering-ice
+    ;; Buffered continue on encountering ice
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
@@ -347,27 +361,9 @@
         (core/continue state :corp nil)
         (is (= :movement (:phase (:run @state))) "Corp pressed Continue button, now approaching server")
         (is (not (:no-action (:run @state))) "no-action is reset"))))
-  (testing "Buffered continue on encountering ice"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Ice Wall"]}})
-      (play-from-hand state :corp "Ice Wall" "New remote")
-      (let [iw (get-ice state :remote1 0)]
-        (take-credits state :corp)
-        (run-on state :remote1)
-        (rez state :corp iw)
-        (run-continue state)
-        (is (= :encounter-ice (:phase (:run @state))) "Runner in encounter with ice")
-        (is (not (:no-action (core/get-current-encounter state))) "no-action is not set yet")
-        (core/continue state :corp nil)
-        (is (= :encounter-ice (:phase (:run @state))) "Still in encounter with ice")
-        (is (= :corp (:no-action (core/get-current-encounter state))) "Corp pressed Continue button")
-        (core/continue state :runner nil)
-        (is (= :movement (:phase (:run @state))) "Runner pressed Continue button, now approaching server")
-        (is (not (:no-action (:run @state))) "no-action is reset")))))
 
-(deftest auto-no-action
-  (testing "tower of rezzed ice, runner breaks everything and automatically continues until approaching server"
+(deftest auto-no-action-tower-of-rezzed-ice-runner-breaks-everything-and-automatically-continues-until-approaching-server
+    ;; tower of rezzed ice, runner breaks everything and automatically continues until approaching server
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Vanilla" 3)]}
@@ -404,7 +400,9 @@
         (is (= :success (:phase (:run @state))) "Accessing server")
         (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run ended"))))
-  (testing "stop at unrezzed ice"
+
+(deftest auto-no-action-stop-at-unrezzed-ice
+    ;; stop at unrezzed ice
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Vanilla" 3)]}
@@ -432,7 +430,9 @@
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
         (rez state :corp v0 {:press-continue true})
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
-  (testing "auto-no-action on toggling setting"
+
+(deftest auto-no-action-auto-no-action-on-toggling-setting
+    ;; auto-no-action on toggling setting
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Vanilla" 2)]}
@@ -441,8 +441,7 @@
       (play-from-hand state :corp "Vanilla" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
-      (let [v0 (get-ice state :hq 0)
-            cor (get-program state 0)]
+      (let [v0 (get-ice state :hq 0)]
         (rez state :corp v0)
         (run-on state :hq)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
@@ -450,7 +449,9 @@
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
         (core/toggle-auto-no-action state :corp nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
-  (testing "no auto-no-action on toggling setting on unrezzed ice"
+
+(deftest auto-no-action-no-auto-no-action-on-toggling-setting-on-unrezzed-ice
+    ;; no auto-no-action on toggling setting on unrezzed ice
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Vanilla" 2)]}
@@ -459,39 +460,39 @@
       (play-from-hand state :corp "Vanilla" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
-      (let [v0 (get-ice state :hq 0)
-            cor (get-program state 0)]
-        (run-on state :hq)
-        (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
-        (core/continue state :runner nil)
-        (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (core/toggle-auto-no-action state :corp nil)
-        (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, because ice is unrezzed")))))
+      (run-on state :hq)
+      (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
+      (core/continue state :runner nil)
+      (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
+      (core/toggle-auto-no-action state :corp nil)
+      (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, because ice is unrezzed")))
 
-(deftest hide-continue-msg
-  (testing "No message for Runner on approach"
+(deftest hide-continue-msg-no-message-for-runner-on-approach
+    ;; No message for Runner on approach
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "New remote")
-      (let [iw (get-ice state :remote1 0)]
-        (take-credits state :corp)
-        (run-on state :remote1)
-        (is (= :approach-ice (:phase (:run @state))) "Runner approaches ice")
-        (core/continue state :runner nil)
-        (is (not (last-log-contains? state "Runner has no further action.")) "Message is not shown for Runner on approach"))))
-  (testing "Message for Corp on approach"
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (is (= :approach-ice (:phase (:run @state))) "Runner approaches ice")
+      (core/continue state :runner nil)
+      (is (not (last-log-contains? state "Runner has no further action.")) "Message is not shown for Runner on approach")))
+
+(deftest hide-continue-msg-message-for-corp-on-approach
+    ;; Message for Corp on approach
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "New remote")
-      (let [iw (get-ice state :remote1 0)]
-        (take-credits state :corp)
-        (run-on state :remote1)
-        (is (= :approach-ice (:phase (:run @state))) "Runner approaches ice")
-        (core/continue state :corp nil)
-        (is (last-log-contains? state "Corp has no further action.") "Message is shown for Corp on approach"))))
-  (testing "Message for Runner on encounter"
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (is (= :approach-ice (:phase (:run @state))) "Runner approaches ice")
+      (core/continue state :corp nil)
+      (is (last-log-contains? state "Corp has no further action.") "Message is shown for Corp on approach")))
+
+(deftest hide-continue-msg-message-for-runner-on-encounter
+    ;; Message for Runner on encounter
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
@@ -504,7 +505,9 @@
         (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
         (core/continue state :runner nil)
         (is (last-log-contains? state "Runner has no further action.") "Message is shown for Runner on encounter"))))
-  (testing "No message for Corp on encounter"
+
+(deftest hide-continue-msg-no-message-for-corp-on-encounter
+    ;; No message for Corp on encounter
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}})
@@ -516,7 +519,7 @@
         (run-continue state)
         (is (= :encounter-ice (:phase (:run @state))) "Runner encounters ice")
         (core/continue state :corp nil)
-        (is (not (last-log-contains? state "Corp has no further action.")) "Message is not shown for Corp on encounter")))))
+        (is (not (last-log-contains? state "Corp has no further action.")) "Message is not shown for Corp on encounter"))))
 
 (deftest continue-no-action
   (do-game
@@ -532,8 +535,8 @@
     (rez state :corp (get-ice state :rd 0) {:press-continue true})
     (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
 
-(deftest multi-access
-  (testing "Correct handling of multi accesses with draws in between accesses"
+(deftest multi-access-correct-handling-of-multi-accesses-with-draws-in-between-accesses
+    ;; Correct handling of multi accesses with draws in between accesses
     (testing "Drawing cards underneath the currently accessed card"
       (do-game
         (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
@@ -600,7 +603,9 @@
         (click-prompt state :runner "No action")
         (is (no-prompt? state :runner) "No more accesses")
         (is (= "Chiyashi" (-> (get-corp) :deck first :title)) "C on top"))))
-  (testing "Correct handling of multi accesses with shuffle in between accesses"
+
+(deftest multi-access-correct-handling-of-multi-accesses-with-shuffle-in-between-accesses
+    ;; Correct handling of multi accesses with shuffle in between accesses
     (testing "Shuffle from Bacterial Programming"
       (do-game
         (new-game {:corp {:hand ["Advanced Assembly Lines" "Bacterial Programming" "Chiyashi"
@@ -682,7 +687,9 @@
                   "Accessing top card of R&D")
               (click-prompt state :runner "No action")))
           (is (no-prompt? state :runner) "No more accesses")))))
-  (testing "Reordering cards during multi access"
+
+(deftest multi-access-reordering-cards-during-multi-access
+    ;; Reordering cards during multi access
     (testing "Reorder through Anansi sub"
       (do-game
         (new-game {:corp {:hand ["Advanced Assembly Lines" "Brainstorm" "Chrysalis" "DNA Tracker" "Excalibur"
@@ -728,10 +735,10 @@
           (click-prompt state :runner "No action")
           (is (= "You accessed Advanced Assembly Lines." (:msg (prompt-map :runner))) "Accessed A")
           (click-prompt state :runner "No action")
-          (is (no-prompt? state :runner) "No more accesses"))))))
+          (is (no-prompt? state :runner) "No more accesses")))))
 
-(deftest forced-encounters
-  (testing "Forced encounters - During run"
+(deftest forced-encounters-forced-encounters-during-run
+    ;; Forced encounters - During run
     (testing "Forced encounters during access continues access after completion"
       (do-game
        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -842,7 +849,9 @@
           (fire-subs state (refresh iw))
           (is (no-prompt? state :runner) "Encounter has ended and not accessing additional cards")
           (is (empty? (:run @state)) "The run has ended")))))
-  (testing "Ice breakers and broken subroutines reset after a forced encounter ends"
+
+(deftest forced-encounters-ice-breakers-and-broken-subroutines-reset-after-a-forced-encounter-ends
+    ;; Ice breakers and broken subroutines reset after a forced encounter ends
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall" "Ganked!"]}
@@ -872,7 +881,9 @@
         (is (not (-> (refresh iw) :subroutines first :broken)) "Ice Wall's subroutine is no longer broken")
         (is (= (:msg (prompt-map :runner)) "You accessed Hedge Fund.") "Continue access after encounter ends")
         (click-prompt state :runner "No action"))))
-  (testing "Forced Encounters - Outside of run"
+
+(deftest forced-encounters-forced-encounters-outside-of-run
+    ;; Forced Encounters - Outside of run
     (testing "Forced encounters outside of a run end properly on continue"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -981,7 +992,9 @@
           (is (no-prompt? state :runner) "Encounter has ended")
           (is (nil? (get-in @state [:end-run :ended])) "Ended status cleared")
           (is (not (get-in @state [:runner :register :unsuccessful-run :remote1])) "Not a run")))))
-  (testing "Forced Encounters - Redirection"
+
+(deftest forced-encounters-forced-encounters-redirection
+    ;; Forced Encounters - Redirection
     (testing "Forced encounter into redirection outside of access changes position"
       (do-game
         (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1111,4 +1124,4 @@
           (is (-> (get-ice state :archives 1) :subroutines first :fired) "Bullfrog subroutine has fired")
           (is (= :hq (-> @state :run :server first)) "Run is still on HQ")
           (is (= :success (:phase (:run @state))) "Run still in Success phase")
-          (is (not (-> @state :run :prevent-access)) "Access should not be prevented"))))))
+          (is (not (-> @state :run :prevent-access)) "Access should not be prevented")))))
