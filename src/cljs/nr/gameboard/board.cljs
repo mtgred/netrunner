@@ -78,6 +78,7 @@
     (cons "advance")
     ;; score
     (and (= type "Agenda")
+         (#{"servers" "onhost"} (first zone))
          (>= (get-counters card :advancement)
              (or current-advancement-requirement advancementcost)))
     (cons "score")
