@@ -686,6 +686,58 @@
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
         (is (last-log-contains? state "Runner accesses Wraparound from HQ.")))))
 
+(deftest boomerang-shuffles-any-copy
+  ;; shuffles any copy
+  (do-game
+   (new-game {:runner {:deck [(qty "Boomerang" 2) "Reboot"]}
+              :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+   (play-from-hand state :corp "Ice Wall" "Archives")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Boomerang")
+   (trash-from-hand state :runner "Boomerang")
+   (let [icew (get-ice state :archives 0)
+         boom (get-hardware state 0)]
+     (click-card state :runner icew)
+     (play-from-hand state :runner "Reboot")
+     (rez state :corp icew)
+     (run-continue state)
+     (card-ability state :runner (refresh boom) 0)
+     (click-prompt state :runner "End the run")
+     (is (= 2 (count (:discard (get-runner)))) "Two copies of Boomerang in heap")
+     (run-continue-until state :success)
+     (click-card state :runner (get-discarded state :runner 1))
+     (click-prompt state :runner "Done")
+     (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+     (click-prompt state :runner "Yes")
+     (is (= 1 (count (get-runner-facedown state))) "One copy of Boomerang is installed facedown")
+     (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
+     (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+
+(deftest boomerang-no-prompt-if-no-copies-to-shuffle
+  ;; no prompt if no copies to shuffle
+  (do-game
+   (new-game {:runner {:deck ["Boomerang" "Reboot"]}
+              :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+   (play-from-hand state :corp "Ice Wall" "Archives")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Boomerang")
+   (let [icew (get-ice state :archives 0)
+         boom (get-hardware state 0)]
+     (click-card state :runner icew)
+     (play-from-hand state :runner "Reboot")
+     (rez state :corp icew)
+     (run-continue state)
+     (card-ability state :runner (refresh boom) 0)
+     (click-prompt state :runner "End the run")
+     (run-continue-until state :success)
+     (click-card state :runner (get-discarded state :runner 0))
+     (click-prompt state :runner "Done")
+     (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+     (is (no-prompt? state :runner) "The Runner should not be prompted to shuffle Boomerang")
+     (is (= 1 (count (get-runner-facedown state))) "One copy of Boomerang is installed facedown")
+     (is (= 0 (count (:deck (get-runner)))) "Boomerang in stack")
+     (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
   (do-game
