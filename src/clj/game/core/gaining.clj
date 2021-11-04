@@ -94,7 +94,8 @@
   ([state side eid amount args]
    (if (and amount
             (or (= :all amount)
-                (pos? amount)))
+                (pos? amount))
+            (pos? (:credit (side @state))))
      (do (lose state side :credit amount)
          (when (and (= side :runner)
                     (= :all amount))

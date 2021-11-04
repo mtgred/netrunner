@@ -5376,6 +5376,20 @@
      (is (no-prompt? state :corp) "The Class Act is not insisting the corp waits")
      (is (= 2 (count (:deck (get-runner)))) "Deck still has 2 cards")))
 
+(deftest the-class-act-no-trigger-when-drawing-zero-cards
+  ;; no trigger when drawing zero cards
+  (do-game
+   (new-game {:runner {:deck [(qty "Sure Gamble" 3)]
+                       :hand ["The Class Act", "Obelus", "Diversion of Funds"]
+                       :credits 10}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "The Class Act")
+   (play-from-hand state :runner "Obelus")
+   (play-run-event state "Diversion of Funds" :hq)
+   (click-prompt state :runner "Diversion of Funds")
+   (is (no-prompt? state :runner) "No prompt from The Class Act")
+   (is (empty? (find-card "Sure Gamble" (:hand (:runner @state)))) "Sure Gamble has not been drawn")))
+
 (deftest the-helpful-ai
   ;; The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn
   (do-game
