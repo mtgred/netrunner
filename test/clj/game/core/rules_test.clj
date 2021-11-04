@@ -408,9 +408,8 @@
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
-(deftest auto-pump-breakers
-  ;; Breaker get a dynamic ability that matches the strength of the encountered ice
-  (testing "Single pump"
+(deftest auto-pump-breakers-single-pump
+    ;; Single pump
     (do-game
       (new-game {:corp {:deck ["Masvingo"]}
                  :runner {:deck ["Laamb"]}})
@@ -427,7 +426,9 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh laamb)})
         (is (= 8 (get-strength (refresh laamb))) "Laamb is at 8 strength")
         (is (= 3 (:credit (get-runner))) "Spent 3 to pump"))))
-  (testing "Multi pump"
+
+(deftest auto-pump-breakers-multi-pump
+    ;; Multi pump
     (do-game
       (new-game {:corp {:deck ["Masvingo"]}
                  :runner {:deck ["Ankusa"]}})
@@ -443,10 +444,10 @@
         (is (= 4 (:credit (get-runner))) "Spent 6 to install")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
         (is (= 3 (get-strength (refresh ank))) "Ankusa is at 3 strength")
-        (is (= 1 (:credit (get-runner))) "Spent 3 to pump")))))
+        (is (= 1 (:credit (get-runner))) "Spent 3 to pump"))))
 
-(deftest autoresolve
-  (testing "Aeneas with and without autoresolve"
+(deftest autoresolve-aeneas-with-and-without-autoresolve
+    ;; Aeneas with and without autoresolve
     (do-game
      (new-game {:corp {:deck ["Jackson Howard"]}
                 :runner {:deck [(qty "Aeneas Informant" 2)]}})
@@ -493,7 +494,9 @@
        (is (changes-credits (get-runner) 1
                             (run-jackson)))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying"))))
-  (testing "Fisk + FTT with and without autoresolve"
+
+(deftest autoresolve-fisk-ftt-with-and-without-autoresolve
+    ;; Fisk + FTT with and without autoresolve
     (do-game
      (new-game {:corp {:deck [(qty "Archer" 30)]}
                 :runner {:id "Laramy Fisk: Savvy Investor"
@@ -559,7 +562,9 @@
                           "Fisk triggers after closing FTT prompt"
                           (click-prompt state :runner "OK"))
        (is (no-prompt? state :runner) "No prompts displaying"))))
-  (testing "Ensure autoresolve does not break prompts with a :req"
+
+(deftest autoresolve-ensure-autoresolve-does-not-break-prompts-with-a-req
+    ;; Ensure autoresolve does not break prompts with a :req
     (do-game
      (new-game {:corp {:id "SSO Industries: Fueling Innovation"
                        :deck ["Underway Renovation" (qty "Ice Wall" 3)]}})
@@ -587,7 +592,9 @@
        (take-credits state :runner)
        (take-credits state :corp)
        (is (no-prompt? state :corp) "No prompt displaying, as conditions are not met"))))
-  (testing "CtM autoresolve"
+
+(deftest autoresolve-ctm-autoresolve
+    ;; CtM autoresolve
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"
                         :deck [(qty "Rashida Jaheem" 3)]}})
@@ -612,7 +619,7 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (no-prompt? state :corp) "No prompt displaying for Corp")
-        (is (no-prompt? state :runner) "No prompt displaying for Runner")))))
+        (is (no-prompt? state :runner) "No prompt displaying for Runner"))))
 
 (deftest no-scoring-after-terminal
   (do-game

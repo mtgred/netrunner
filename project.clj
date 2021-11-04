@@ -58,6 +58,7 @@
                                   [binaryage/devtools "0.9.7"]
                                   [cider/piggieback "0.5.2"]
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
+                                  [rewrite-clj "1.0.699-alpha"]
                                   [criterium "0.4.6"]]
                    :plugins [[lein-figwheel "0.5.16"]
                              [integrant/repl "0.3.2"]]
