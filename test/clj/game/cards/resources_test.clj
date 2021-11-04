@@ -126,6 +126,7 @@
      (play-from-hand state :runner "Daily Casts")
      (take-credits state :runner)
      (take-credits state :corp)
+     (end-phase-12 state :runner)
      (let [dc (get-resource state 1)]
        (changes-val-macro
         3 (:credit (get-runner))

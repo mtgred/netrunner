@@ -144,7 +144,8 @@
                  :msg (msg "trash " (:title target) " and gain 3 [Credits]")
                  :effect (req (wait-for (trash state side target {:unpreventable true})
                                         (gain-credits state side eid 3)))}]
-    {:events [(assoc ability
+    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
+     :events [(assoc ability
                      :event :runner-turn-begins
                      :interactive (req true))]
      :abilities [ability]}))
