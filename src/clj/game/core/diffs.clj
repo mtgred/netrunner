@@ -160,7 +160,11 @@
 
 (defn card-summary [card state side]
   (if (not (is-public? card side))
-    (private-card card)
+    (-> (cond-> card
+          (:host card) (-> (dissoc-in [:host :hosted])
+                           (update :host card-summary state side))
+          (:hosted card) (update :hosted cards-summary state side))
+        (private-card))
     (-> (cond-> card
           (:host card) (-> (dissoc-in [:host :hosted])
                            (update :host card-summary state side))
