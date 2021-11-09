@@ -4035,6 +4035,22 @@
         (play-from-hand state :runner "Penumbral Toolkit"))
       (is (= 3 (count (get-resource state))) "Installed all three cards")))
 
+(deftest penumbral-toolkit-install-cost-reduction-applies-during-success-phase
+  ;; install cost reduction applies during success phase
+  (do-game
+   (new-game {:corp {:hand ["Hostile Takeover"]}
+              :runner {:hand ["Penumbral Toolkit" "Pantograph"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Pantograph")
+   (run-empty-server state :hq)
+   (is (:successful (get-run)) "The Run is in the success phase")
+   (click-prompt state :runner "Steal")
+   (changes-val-macro
+    0 (:credit (get-runner))
+    "Cost reduction after run on HQ"
+    (click-card state :runner "Penumbral Toolkit"))
+   (is (= 1 (count (get-resource state))) "Installed Penumbral Toolkit")))
+
 (deftest penumbral-toolkit-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
