@@ -5425,6 +5425,23 @@
    (is (no-prompt? state :runner) "No prompt from The Class Act")
    (is (empty? (find-card "Sure Gamble" (:hand (:runner @state)))) "Sure Gamble has not been drawn")))
 
+(deftest the-class-act-no-lingering-bonus-draw-effect-if-no-cards-in-deck
+  ;; The Class Act - Issue #6132 - No lingering bonus draw effect if no cards in deck
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+              :runner {:hand ["The Class Act", "Obelus"]
+                       :credits 10}})
+   (take-credits state :corp)
+   (click-card state :corp (first (:hand (get-corp))))
+   (play-from-hand state :runner "The Class Act")
+   (play-from-hand state :runner "Obelus")
+   (run-empty-server state :hq)
+   (click-prompt state :runner "No action")
+   (changes-val-macro
+    1 (count (:hand (get-corp)))
+    "Draw 1 card at the start of turn"
+    (take-credits state :runner))))
+
 (deftest the-helpful-ai
   ;; The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn
   (do-game

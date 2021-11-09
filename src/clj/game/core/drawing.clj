@@ -53,6 +53,7 @@
                                    (min n (remaining-draws state side))
                                    n)
              deck-count (count (get-in @state [side :deck]))]
+         (swap! state update :bonus dissoc :draw);; clear bonus draws
          (when (and (= side :corp) (< deck-count draws-after-prevent))
            (win-decked state))
          (when (< draws-after-prevent draws-wanted)
@@ -69,7 +70,6 @@
                  drawn-count (count drawn)]
              (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
              (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
-             (swap! state update :bonus dissoc :draw)
              (if suppress-event
                (effect-completed state side eid)
                (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
