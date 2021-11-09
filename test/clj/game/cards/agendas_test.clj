@@ -3565,6 +3565,30 @@
         (is (= credits (:credit (get-corp))) "Corp should gain no credits from declining to trash an installed card")
         (is (zero? (-> (get-corp) :hand count)) "Corp should draw no cards from declining to trash an installed card"))))
 
+(deftest standoff-interactions-with-arella-salvatore
+  ;; Interactions with Arella Salvatore
+  (do-game
+   (new-game {:corp {:deck ["Standoff" "Arella Salvatore" "Ice Wall"]}
+              :runner {:deck ["Cache"]}})
+   (starting-hand state :corp ["Standoff" "Arella Salvatore"])
+   (play-from-hand state :corp "Arella Salvatore" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Cache")
+   (take-credits state :runner)
+   (play-from-hand state :corp "Standoff" "Server 1")
+   (starting-hand state :corp [])
+   (let [arella (get-content state :remote1 0)
+         standoff (get-content state :remote1 1)]
+     (rez state :corp (refresh arella))
+     (score-agenda state :corp (refresh standoff)))
+   (is (not (prompt-is-type? state :corp :choice)) "Arella is silent since no installable cards in hand")
+   (click-prompt state :runner "Done")
+   (is (= 1 (count (:hand (get-corp)))) "Standoff drew a card")
+   (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+   (click-prompt state :corp "Server 1")
+   (is (= 1 (count (get-ice state :remote1))) "Ice Wall installed protecting server 1")
+   (is (= 1 (get-counters (get-ice state :remote1 0) :advancement)) "Agenda has 1 advancement counter")))
+
 (deftest sting-corp-score-then-runner-steal-then-corp-score
     ;; Corp score, then Runner steal, then Corp score
     (do-game

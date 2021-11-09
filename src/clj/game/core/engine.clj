@@ -711,16 +711,18 @@
                                                card (card-for-ability state %)]
                                            (and interactive-fn
                                                 (interactive-fn state side (make-eid state) card event-targets)))
-                                        handlers)]
+                                        non-silent)]
                 ;; If there is only 1 non-silent ability, resolve that then recurse on the rest
-                (if (or (= 1 (count handlers)) (empty? interactive) (>= 1 (count non-silent)))
+                (if (or (= 1 (count handlers))
+                        (empty? interactive)
+                        (<= (count non-silent) 1))
                   (let [to-resolve (if (= 1 (count non-silent))
                                      (first non-silent)
                                      (first handlers))
                         ability-to-resolve (dissoc-req (:ability to-resolve))
-                        others (if (= 1 (count non-silent))
-                                 (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
-                                 (rest handlers))]
+                        remaining-handlers (if (= 1 (count non-silent))
+                                             (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
+                                             (rest handlers))]
                     (if-let [the-card (card-for-ability state to-resolve)]
                       {:async true
                        :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
@@ -731,7 +733,7 @@
                                                 (unregister-event-by-uuid state side (:uuid to-resolve)))
                                               (if (should-continue state handlers)
                                                 (continue-ability state side
-                                                                  (choose-handler others) nil event-targets)
+                                                                  (choose-handler remaining-handlers) nil event-targets)
                                                 (effect-completed state side eid))))}
                       {:async true
                        :effect (req (if (should-continue state handlers)
@@ -890,12 +892,17 @@
                               non-silent)]
       (if (or (= 1 (count handlers))
               (empty? interactive)
-              (= 1 (count non-silent)))
-        (let [handler (first handlers)
+              (<= (count non-silent) 1))
+        (let [handler (if (= 1 (count non-silent))
+                        (first non-silent)
+                        (first handlers))
               to-resolve (:handler handler)
               ability (:ability to-resolve)
               context (:context handler)
-              ability-card (card-for-ability state to-resolve)]
+              ability-card (card-for-ability state to-resolve)
+              remaining-handlers (if (= 1 (count non-silent))
+                                   (remove-once #(same-card? ability-card (card-for-ability state (:handler %))) handlers)
+                                   (rest handlers))]
           (if ability-card
             (wait-for (resolve-ability state (to-keyword (:side ability-card))
                                        (make-eid state (assoc eid :source ability-card :source-type :ability))
@@ -904,8 +911,8 @@
                                        context)
                       (when (:unregister-once-resolved to-resolve)
                         (unregister-event-by-uuid state side (:uuid to-resolve)))
-                      (trigger-queued-event-player state side eid (rest handlers) args))
-            (trigger-queued-event-player state side eid (rest handlers) args)))
+                      (trigger-queued-event-player state side eid remaining-handlers args))
+            (trigger-queued-event-player state side eid remaining-handlers args)))
         (continue-ability
           state side
           (when (pos? (count handlers))
@@ -925,8 +932,8 @@
                                                context)
                               (when (:unregister-once-resolved to-resolve)
                                 (unregister-event-by-uuid state side (:uuid to-resolve)))
-                              (let [handlers (remove-once #(same-card? target (card-for-ability state (:handler %))) handlers)]
-                                (trigger-queued-event-player state side eid handlers args)))))})
+                              (let [remaining-handlers (remove-once #(same-card? target (card-for-ability state (:handler %))) handlers)]
+                                (trigger-queued-event-player state side eid remaining-handlers args)))))})
           nil nil)))))
 
 (defn- is-player

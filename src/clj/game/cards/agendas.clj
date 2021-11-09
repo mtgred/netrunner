@@ -1612,7 +1612,7 @@
      {:interactive (req true)
       :async true
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
-                (continue-ability :runner (stand :runner) card nil))}}))
+                      (continue-ability :runner (stand :runner) card nil))}}))
 
 (defcard "Sting!"
   (letfn [(count-opp-stings [state side]
