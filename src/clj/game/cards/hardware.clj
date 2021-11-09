@@ -165,7 +165,7 @@
                  (break-sub
                    [:trash] 2 "All"
                    {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                                (same-card? current-ice boomerang-target)
+                                (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
                                 true))}) ; When eg. flipped by Assimilator
                  :effect
                  (req (wait-for
