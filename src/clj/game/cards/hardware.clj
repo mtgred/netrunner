@@ -1283,37 +1283,26 @@
 
 (defcard "Pantograph"
   (let [install-ability
-        {:optional
-         {:waiting-prompt "Runner to make a decision"
-          :prompt "Install card with Pantograph ability?"
-          :player :runner
-          :yes-ability
-          {:async true
-           :prompt "Choose a card to install"
-           :choices
-           {:req (req (and (runner? target)
-                           (in-hand? target)
-                           (not (event? target))
-                           (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                     target nil
-                                     [:credit (install-cost state side target nil)])))}
-           :msg (msg "install " (:title target))
-           :effect (effect (runner-install
-                             (assoc eid :source card :source-type :runner-install)
-                             target nil))
-           :cancel-effect (effect (effect-completed eid))}}}
+        {:async true
+         :prompt "Choose a card to install"
+         :waiting-prompt "Runner to make a decision"
+         :player :runner
+         :req (req (pos? (count (:hand runner))))
+         :choices {:req (req (and (runner? target)
+                                  (in-hand? target)
+                                  (not (event? target))
+                                  (runner-can-pay-and-install? state side eid target {:no-toast true})))}
+         :msg (msg "install " (:title target))
+         :effect (effect (runner-install
+                          (assoc eid :source card :source-type :runner-install)
+                          target nil))
+         :cancel-effect (effect (system-msg :runner "declines to install a card with Pantograph")
+                                (effect-completed eid))}
         gain-credit-ability
         {:interactive (req true)
          :async true
-         :effect (req (wait-for (resolve-ability
-                                  state side
-                                  {:optional
-                                   {:prompt "Gain 1 [Credits] with Pantograph ability?"
-                                    :yes-ability
-                                    {:async true
-                                     :msg "gain 1 [Credits]"
-                                     :effect (req (gain-credits state :runner eid 1))}}}
-                                  card nil)
+         :msg "gain 1 [Credits]"
+         :effect (req (wait-for (gain-credits state :runner 1)
                                 (continue-ability state side install-ability card nil)))}]
     {:constant-effects [(mu+ 1)]
      :events [(assoc gain-credit-ability :event :agenda-scored)
