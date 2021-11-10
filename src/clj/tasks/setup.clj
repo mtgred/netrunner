@@ -1,8 +1,10 @@
 (ns tasks.setup
   (:require [web.system :refer [start stop]]))
 
-(defn connect []
-  (start {:only [:mongodb/connection :jinteki/cards]}))
+(def ^:private task-system-keys {:only [:mongodb/connection :jinteki/cards]})
 
-(defn disconnect [mongodb]
-  (stop mongodb))
+(defn connect []
+  (start task-system-keys))
+
+(defn disconnect [system]
+  (stop system task-system-keys))

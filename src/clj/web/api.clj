@@ -1,10 +1,8 @@
 (ns web.api
-  (:require [web.utils :refer [response]]
-            [web.data :as data]
+  (:require [web.data :as data]
             [web.pages :as pages]
             [web.auth :as auth]
             [web.ws :as ws]
-            [web.game :as game]
             [web.chat :as chat]
             [web.stats :as stats]
             [web.angel-arena :as angel-arena]
@@ -16,7 +14,7 @@
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
-            [ring.middleware.json :refer [wrap-json-body wrap-json-params wrap-json-response]]
+            [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
@@ -47,8 +45,8 @@
 
            (GET "/reset/:token" [] pages/reset-password-page)
 
-           (GET "/ws" req ws/handshake-handler)
-           (POST "/ws" req ws/post-handler)
+           (GET "/ws" req (ws/handshake-handler req))
+           (POST "/ws" req (ws/post-handler req))
 
            (GET "/replay/:gameid" [] stats/replay-handler)
            (GET "/bug-report/:bugid" [] stats/replay-handler))
@@ -129,18 +127,20 @@
   (wrap-routes admin-routes auth/wrap-authorization-required))
 
 (defroutes routes
-  (wrap-routes private-routes wrap-anti-forgery)
-  (wrap-routes public-CSRF-routes wrap-anti-forgery)
+  private-routes
+  public-CSRF-routes
   public-routes
   (-> api-routes
       (wrap-cors :access-control-allow-origin [#".*"]
                  :access-control-allow-methods [:get]
-                 :access-control-allow-headers #{"X-JNet-API" "accept" "accept-encoding" "accept-language" "authorization" "content-type" "origin"})
+                 :access-control-allow-headers #{"X-JNet-API"
+                                                 "accept" "accept-encoding" "accept-language"
+                                                 "authorization" "content-type" "origin"})
       (wrap-add-cache-headers))
 
   (route/resources "/")
   missing-resource-routes
-  (wrap-routes public-CSRF-page-routes wrap-anti-forgery)
+  public-CSRF-page-routes
   (route/not-found "Page not found"))
 
 (defn wrap-return-favicon [handler]
@@ -157,10 +157,11 @@
   (-> routes
       (auth/wrap-user)
       (wrap-db mongo)
+      (wrap-json-response)
+      (wrap-json-body {:keywords? true})
       (wrap-keyword-params)
       (wrap-params)
-      (wrap-json-response)
+      (wrap-anti-forgery)
       (wrap-session)
-      (wrap-json-body {:keywords? true})
       (wrap-return-favicon)
       (wrap-stacktrace)))

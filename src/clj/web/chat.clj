@@ -40,7 +40,7 @@
 (defmethod ws/-msg-handler :chat/say
   [{{db :system/db
      {:keys [username emailhash options]} :user} :ring-req
-    client-id :client-id
+    uid :uid
     {:keys [channel msg]} :?data}]
   (when (and username
              emailhash
@@ -57,8 +57,8 @@
               inserted (mc/insert-and-return db msg-collection message)
               inserted (update inserted :_id str)]
           (ws/broadcast! :chat/message inserted))
-        (when client-id
-          (ws/broadcast-to! [client-id] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))))))
+        (when uid
+          (ws/broadcast-to! [uid] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))))))
 
 (defmethod ws/-msg-handler :chat/delete-msg
   [{{db :system/db

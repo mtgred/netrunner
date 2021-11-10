@@ -3,9 +3,11 @@
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
 
-(let [chsk-server (sente/make-channel-socket!
+(let [chsk-server (sente/make-channel-socket-server!
                     (get-sch-adapter)
-                    {:user-id-fn (fn [ring-req] (:client-id ring-req))})
+                    {:user-id-fn (fn [ring-req]
+                                   (or (-> ring-req :session :uid)
+                                       (:client-id ring-req)))})
       {:keys [ch-recv send-fn connected-uids
               ajax-post-fn ajax-get-or-ws-handshake-fn]} chsk-server]
   (defonce handshake-handler ajax-get-or-ws-handshake-fn)
@@ -49,7 +51,7 @@
 (defn broadcast!
   "Sends the given event and msg to all connected clients."
   [event msg]
-  (broadcast-to! (:ws @connected-uids) event msg))
+  (broadcast-to! (:any @connected-uids) event msg))
 
 (defmulti -msg-handler
   "Multimethod to handle Sente `event-msg`s"
@@ -62,10 +64,8 @@
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
 
-(defmethod -msg-handler :chsk/ws-ping
-  ;; do nothing on ping messages
-  [_]
-  nil)
+(defmethod -msg-handler :chsk/ws-ping [_])
+(defmethod -msg-handler :chsk/uidport-open [_])
 
 (defn event-msg-handler
   "Wraps `-msg-handler` with logging, error catching, etc."

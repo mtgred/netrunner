@@ -63,16 +63,17 @@
 (defn wrap-user [handler]
   (fn [{db :system/db
         :keys [cookies] :as req}]
-    (let [auth-cookie (get cookies "session")
-          user (when auth-cookie
-                 (unsign-token (:value auth-cookie)))
-          u (when user
-              (mc/find-one-as-map db "users" {:_id (object-id (:_id user))
-                                              :emailhash (:emailhash user)}))]
-      (if (active-user? u)
+    (let [user (some-> (get cookies "session")
+                       (:value)
+                       (unsign-token)
+                       (#(mc/find-one-as-map db "users" {:_id (object-id (:_id %))
+                                                         :emailhash (:emailhash %)}))
+                       (select-keys user-keys)
+                       (update :_id str))]
+      (if (active-user? user)
         (handler (-> req
-                     (assoc :user (select-keys u user-keys))
-                     (update-in [:user :_id] str)))
+                     (assoc :user user)
+                     (assoc-in [:session :uid] (:username user))))
         (handler req)))))
 
 (defn create-user
@@ -121,8 +122,7 @@
 
 (defn find-non-banned-user
   [db query]
-  (when-let [user (mc/find-one-as-map db "users" query)]
-    (active-user? user)))
+  (active-user? (mc/find-one-as-map db "users" query)))
 
 (defn login-handler
   [{db :system/db
@@ -130,7 +130,6 @@
   (let [user (find-non-banned-user db {:username username})]
     (if (and user
              (password/check password (:password user)))
-
       (do (mc/update db "users"
                      {:username username}
                      {"$set" {:last-connection (java.util.Date.)}})

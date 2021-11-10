@@ -12,7 +12,7 @@
   "Strips private server information from a player map."
   [{:keys [started format]} player]
   (as-> player p
-    (dissoc p :ws-id)
+    (dissoc p :uid)
     (assoc p :user (filter-lobby-user (:user p)))
     (if-let [{:keys [_id] :as deck} (:deck p)]
       (let [legal (get-in deck [:status (keyword format) :legal])

@@ -1,20 +1,18 @@
 (ns web.decks
   (:require
-    ;; external
     [clojure.string :as str]
+    [crypto.password.pbkdf2 :as pbkdf2]
+    [jinteki.cards :refer [all-cards]]
+    [jinteki.utils :refer [slugify]]
+    [jinteki.validator :refer [calculate-deck-status]]
     [monger.collection :as mc]
     [monger.result :refer [acknowledged?]]
-    [crypto.password.pbkdf2 :as pbkdf2]
-    ;; internal
     [web.mongodb :refer [object-id]]
     [web.nrdb :as nrdb]
     [web.utils :refer [response]]
-    [web.ws :as ws]
-    [jinteki.cards :refer [all-cards]]
-    [jinteki.utils :refer [slugify]]
-    [jinteki.validator :refer [calculate-deck-status]])
-  (:import org.bson.types.ObjectId))
-
+    [web.ws :as ws])
+  (:import
+    org.bson.types.ObjectId))
 
 (defn decks-handler
   [{db :system/db
@@ -110,14 +108,14 @@
           (response 403 {:message "Forbidden"}))
         (response 403 {:message "Locked"}))
       (response 401 {:message "Unauthorized"}))
-    (catch Exception ex
+    (catch Exception _
       ;; Deleting a deck that was never saved throws an exception
       (response 409 {:message "Unknown deck id"}))))
 
 (defmethod ws/-msg-handler :decks/import
   [{{db :system/db
      {username :username} :user} :ring-req
-    client-id :client-id
+    uid :uid
     {:keys [input]} :?data}]
   (try
     (let [deck (nrdb/download-public-decklist db input)]
@@ -131,7 +129,7 @@
               deck-hash (hash-deck updated-deck)
               deck (prepare-deck-for-db db-deck username status deck-hash)]
           (mc/insert db "decks" deck)
-          (ws/broadcast-to! [client-id] :decks/import-success "Imported"))
-        (ws/broadcast-to! [client-id] :decks/import-failure "Failed to parse imported deck.")))
-    (catch Exception ex
-      (ws/broadcast-to! [client-id] :decks/import-failure "Failed to import deck."))))
+          (ws/broadcast-to! [uid] :decks/import-success "Imported"))
+        (ws/broadcast-to! [uid] :decks/import-failure "Failed to parse imported deck.")))
+    (catch Exception _
+      (ws/broadcast-to! [uid] :decks/import-failure "Failed to import deck."))))

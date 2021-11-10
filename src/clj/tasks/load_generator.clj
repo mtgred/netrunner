@@ -96,6 +96,7 @@
     ;; Corp create lobby
     (game-ws-handler/-msg-handler {:id :lobby/create :ring-req {:user {:username "TestCorp"}}
                                    :client-id corp-client-id
+                                   :uid "TestCorp"
                                    :?data {:title "Performance Game"
                                            :format "standard"
                                            :allow-spectator true
@@ -111,18 +112,21 @@
                                      :ring-req {:system/db db
                                                 :user {:username "TestRunner"}}
                                      :client-id runner-client-id
+                                     :uid "TestRunner"
                                      :?data {:gameid game-id
                                              :password ""}})
       ;; Select decks
       (game-ws-handler/-msg-handler {:id :lobby/deck
                                      :ring-req {:system/db db
                                                 :user {:username "TestCorp"}}
+                                     :uid "TestCorp"
                                      :client-id corp-client-id
                                      ;; find one deck where :identity :side "Corp", then get the _id
                                      :?data (str (some #(if (= "Corp" ((% :identity) :side)) (% :_id)) corp-decks))})
       (game-ws-handler/-msg-handler {:id :lobby/deck
                                      :ring-req {:system/db db
                                                 :user {:username "TestRunner"}}
+                                     :uid "TestRunner"
                                      :client-id runner-client-id
                                      ;; find one deck where :identity :side "Runner", then get the _id
                                      :?data (str (some #(if (= "Runner" ((% :identity) :side)) (% :_id)) runner-decks))})
@@ -151,6 +155,7 @@
       (game-ws-handler/-msg-handler {:id :netrunner/start
                                      :ring-req {:system/db db
                                                 :user {:username "TestCorp"}}
+                                     :uid "TestCorp"
                                      :client-id corp-client-id})
       (safe-println "Started game"))))
 

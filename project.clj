@@ -12,7 +12,7 @@
                  [stylefruits/gniazdo "1.1.4"]
                  [com.novemberain/monger "3.5.0"]
                  [differ "0.3.3"]
-                 [com.taoensso/sente "1.16.0"]
+                 [com.taoensso/sente "1.16.2"]
                  [ring/ring "1.7.1"]
                  [ring/ring-defaults "0.3.2"] ; Includes `ring-anti-forgery`, etc.
                  [ring/ring-json "0.4.0"]
@@ -37,7 +37,6 @@
                  [org.clojure/tools.analyzer.jvm "0.7.2"]
                  [org.clojars.frozenlock/reagent-modals "0.2.8"]
                  [org.clojure/tools.cli "0.4.2"]
-                 [hawk "0.2.11"]
                  [danlentz/clj-uuid "0.1.9"]
                  [potemkin "0.4.5"]
                  [cond-plus "1.0.1"]
@@ -59,10 +58,10 @@
                                   [cider/piggieback "0.5.2"]
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
                                   [rewrite-clj "1.0.699-alpha"]
-                                  [criterium "0.4.6"]]
-                   :plugins [[lein-figwheel "0.5.16"]
-                             [integrant/repl "0.3.2"]]
-                   :source-paths ["src/clj" "src/cljs" "src/cljc" "test/clj"]
+                                  [criterium "0.4.6"]
+                                  [integrant/repl "0.3.2"]]
+                   :plugins [[lein-figwheel "0.5.16"]]
+                   :source-paths ["dev" "src/clj" "src/cljs" "src/cljc" "test/clj"]
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
                               "-XX:+UnlockDiagnosticVMOptions"
                               "-XX:-OmitStackTraceInFastThrow"
@@ -135,5 +134,5 @@
 
   ;; Set timeout to 2 min to allow for full compilation after a clean.
   :repl-options {:timeout 180000
-                 :init-ns web.core
-                 :init (do (use 'web.lobby) (-main "dev"))})
+                 :init-ns dev.user
+                 :init (use 'web.core)})

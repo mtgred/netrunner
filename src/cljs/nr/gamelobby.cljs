@@ -1,31 +1,29 @@
 (ns nr.gamelobby
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.set :refer [union difference]]
-            [clojure.string :refer [join]]
-            [jinteki.validator :refer [trusted-deck-status legal-deck?]]
-            [jinteki.utils :refer [str->int superuser?]]
-            [nr.angel-arena :as angel-arena]
-            [nr.appstate :refer [app-state]]
-            [nr.ajax :refer [GET]]
-            [nr.auth :refer [authenticated] :as auth]
-            [nr.avatar :refer [avatar]]
-            [nr.cardbrowser :refer [image-url] :as cb]
-            [nr.deck-status :refer [deck-format-status-span]]
-            [nr.deckbuilder :refer [deck-name]]
-            [nr.gameboard.actions :refer [launch-game toast]]
-            [nr.gameboard.state :refer [game-state parse-state]]
-            [nr.game-row :refer [game-row]]
-            [nr.history :refer [history]]
-            [nr.player-view :refer [player-view]]
-            [nr.sounds :refer [play-sound resume-sound]]
-            [nr.translations :refer [tr tr-side tr-format]]
-            [nr.utils :refer [slug->format cond-button non-game-toast num->percent]]
-            [nr.ws :as ws]
-            [reagent.core :as r]
-            [differ.core :as differ]
-            [reagent-modals.modals :as reagent-modals]
-            [taoensso.sente :as sente]))
+  (:require
+    [cljs.core.async :refer [<!] :as async]
+    [clojure.set :refer [difference union]]
+    [differ.core :as differ]
+    [jinteki.utils :refer [str->int superuser?]]
+    [jinteki.validator :refer [trusted-deck-status]]
+    [nr.ajax :refer [GET]]
+    [nr.angel-arena :as angel-arena]
+    [nr.appstate :refer [app-state]]
+    [nr.auth :refer [authenticated] :as auth]
+    [nr.avatar :refer [avatar]]
+    [nr.cardbrowser :refer [image-url] :as cb]
+    [nr.deck-status :refer [deck-format-status-span]]
+    [nr.deckbuilder :refer [deck-name]]
+    [nr.game-row :refer [game-row]]
+    [nr.gameboard.actions :refer [launch-game]]
+    [nr.gameboard.state :refer [game-state parse-state]]
+    [nr.player-view :refer [player-view]]
+    [nr.sounds :refer [play-sound resume-sound]]
+    [nr.translations :refer [tr tr-format tr-side]]
+    [nr.utils :refer [cond-button non-game-toast slug->format]]
+    [nr.ws :as ws]
+    [reagent-modals.modals :as reagent-modals]
+    [reagent.core :as r]))
 
 (def lobby-dom (atom {}))
 
@@ -95,11 +93,6 @@
   (when (= gameid (:gameid @app-state))
     (non-game-toast (tr [:lobby.closed-msg "Game lobby closed due to inactivity"]) "error" {:time-out 0 :close-button true})
     (swap! app-state assoc :gameid nil)))
-
-(defn send
-  ([msg] (send msg nil))
-  ([msg fn]
-   (try (js/ga "send" "event" "lobby" msg) (catch js/Error e))))
 
 (defn new-game [s]
   (authenticated
