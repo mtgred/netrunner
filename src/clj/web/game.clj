@@ -18,9 +18,9 @@
    {:keys [runner-diff corp-diff spect-diff]}]
   (doseq [{:keys [uid side]} players]
     (ws/broadcast-to! [uid] :netrunner/diff (json/generate-string {:gameid gameid
-                                                                     :diff (if (= side "Corp")
-                                                                              corp-diff
-                                                                              runner-diff)})))
+                                                                   :diff (if (= side "Corp")
+                                                                           corp-diff
+                                                                           runner-diff)})))
   (ws/broadcast-to! (keep :uid spectators)
                     :netrunner/diff
                     (json/generate-string {:gameid gameid
@@ -44,8 +44,8 @@
     {:keys [runner-state corp-state spect-state]}]
    (doseq [{:keys [uid side]} players]
      (ws/broadcast-to! [uid] event (json/generate-string (if (= side "Corp")
-                                                              corp-state
-                                                              runner-state))))
+                                                           corp-state
+                                                           runner-state))))
    (ws/broadcast-to! (keep :uid spectators) event (json/generate-string spect-state))))
 
 (defn swap-and-send-diffs!

@@ -322,7 +322,7 @@
 (defmethod ws/-msg-handler :lobby/leave
   [{{db :system/db
      {:keys [username]} :user} :ring-req
-    uid                  :uid}]
+    uid :uid}]
   (when-let [{gameid :gameid} (game-for-client uid)]
     (when (player-or-spectator uid gameid)
       (lobby-say gameid {:user "__system__" :text (str username " left the game.")})
