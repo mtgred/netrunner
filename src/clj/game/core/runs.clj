@@ -306,6 +306,8 @@
   [state side eid ice]
   (swap! state update :encounters conj {:eid eid
                                         :ice ice})
+  (when (:run @state)
+    (swap! state assoc-in [:run :last-encounter] ice))
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))]
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
