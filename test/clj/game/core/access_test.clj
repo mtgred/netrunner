@@ -136,6 +136,51 @@
         (click-prompt state :corp "No")
         (click-prompt state :runner "No action")))))
 
+(deftest rd-total-accesses-reduced-by-1-accessing-1-card
+  ;; R&D - Accesses reduced by 1 - Accessing 1 card
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}})
+   (take-credits state :corp)
+   (run-on state :rd)
+   (core/access-bonus state :corp :total -1)
+   (run-continue state)
+   (is (no-prompt? state :corp))
+   (is (no-prompt? state :runner))
+   (is (nil? (get-run)))))
+
+(deftest rd-total-accesses-reduced-by-1-accessing-1-deck-1-upgrade
+  ;; R&D - Accesses reduced by 1 - Accessing 1 card from deck and 1 upgrade
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}})
+   (play-from-hand state :corp "Bryan Stinson" "R&D")
+   (take-credits state :corp)
+   (run-on state :rd)
+   (core/access-bonus state :corp :total -1)
+   (run-continue state)
+   (click-prompt state :runner "Card from deck")
+   (click-prompt state :runner "No action")
+   (is (no-prompt? state :corp))
+   (is (no-prompt? state :runner))
+   (is (nil? (get-run)))))
+
+(deftest rd-total-accesses-reduced-by-1-accessing-3-deck
+  ;; R&D - Accesses reduced by 1 - Accessing 3 cards from deck
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}
+              :runner {:hand ["The Maker's Eye"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "The Maker's Eye")
+   (core/access-bonus state :corp :total -1)
+   (run-continue state)
+   (click-prompt state :runner "No action")
+   (click-prompt state :runner "No action")
+   (is (no-prompt? state :corp))
+   (is (no-prompt? state :runner))
+   (is (nil? (get-run)))))
+
 (deftest hq-access
   (testing "Nothing in HQ, no upgrades"
     (do-game
@@ -230,6 +275,51 @@
          (encounter-continue state))
        (click-prompt state :corp "No")
        (click-prompt state :runner "No action")))))
+
+(deftest hq-total-accesses-reduced-by-1-accessing-1-card
+  ;; HQ - Accesses reduced by 1 - Accessing 1 card
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}})
+   (take-credits state :corp)
+   (run-on state :hq)
+   (core/access-bonus state :corp :total -1)
+   (run-continue state)
+   (is (no-prompt? state :corp))
+   (is (no-prompt? state :runner))
+   (is (nil? (get-run)))))
+
+(deftest hq-total-accesses-reduced-by-1-accessing-1-hand-1-upgrade
+  ;; HQ - Accesses reduced by 1 - Accessing 1 card from hand and 1 upgrade
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}})
+   (play-from-hand state :corp "Bryan Stinson" "HQ")
+   (take-credits state :corp)
+   (run-on state :hq)
+   (core/access-bonus state :corp :total -1)
+   (run-continue state)
+   (click-prompt state :runner "Card from hand")
+   (click-prompt state :runner "No action")
+   (is (no-prompt? state :corp))
+   (is (no-prompt? state :runner))
+   (is (nil? (get-run)))))
+
+(deftest hq-total-accesses-reduced-by-1-accessing-2-hand
+  ;; HQ - Accesses reduced by 1 - Accessing 2 cards from hand
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand [(qty "Hedge Fund" 2) "Bryan Stinson"]}
+              :runner {:hand ["Docklands Pass"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Docklands Pass")
+   (run-on state :hq)
+   (core/access-bonus state :corp :total -1)
+   (run-continue state)
+   (click-prompt state :runner "No action")
+   (is (no-prompt? state :corp))
+   (is (no-prompt? state :runner))
+   (is (nil? (get-run)))))
 
 (deftest archives-access
   (testing "Nothing in archives"
