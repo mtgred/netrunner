@@ -61,7 +61,7 @@
                         :yes-ability
                         {:effect (req (let [last-run (get-in @state [:runner :register :last-run])
                                             attacked-server (first (:server last-run))
-                                            ice (:last-encounter last-run)]
+                                            ice (:ice (ffirst (run-events last-run :encounter-ice)))]
                                         (update! state side (update card :special
                                                                     assoc
                                                                     :run-again attacked-server
