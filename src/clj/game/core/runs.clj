@@ -100,7 +100,8 @@
                   (can-run-server? state server)
                   (can-pay? state :runner eid card "a run" costs))
        (effect-completed state side eid)
-       (do (when click-run
+       (do (swap! state dissoc-in [:end-run :ended])
+           (when click-run
              (swap! state assoc-in [:runner :register :click-type] :run)
              (swap! state assoc-in [:runner :register :made-click-run] true)
              (play-sfx state side "click-run"))
@@ -646,21 +647,24 @@
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
   ([state side eid card] (end-run state side eid card nil))
   ([state side eid card {:keys [unpreventable] :as args}]
-   (swap! state update-in [:end-run] dissoc :end-run-prevent)
-   (let [prevent (get-prevent-list state :runner :end-run)]
-     (if (and (not unpreventable)
-              (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
-       (do (system-msg state :runner "has the option to prevent the run from ending")
-           (show-wait-prompt state :corp "Runner to prevent the run from ending")
-           (show-prompt state :runner nil
-                        (str "Prevent the run from ending?") ["Done"]
-                        (fn [_]
-                          (clear-wait-prompt state :corp)
-                          (if-let [_ (get-in @state [:end-run :end-run-prevent])]
-                            (effect-completed state side eid)
-                            (do (system-msg state :runner "will not prevent the run from ending")
-                                (resolve-end-run state side eid))))))
-       (resolve-end-run state side eid)))))
+   (if (or (:run @state)
+           (get-current-encounter state))
+     (do (swap! state update-in [:end-run] dissoc :end-run-prevent)
+         (let [prevent (get-prevent-list state :runner :end-run)]
+           (if (and (not unpreventable)
+                    (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
+             (do (system-msg state :runner "has the option to prevent the run from ending")
+                 (show-wait-prompt state :corp "Runner to prevent the run from ending")
+                 (show-prompt state :runner nil
+                              (str "Prevent the run from ending?") ["Done"]
+                              (fn [_]
+                                (clear-wait-prompt state :corp)
+                                (if-let [_ (get-in @state [:end-run :end-run-prevent])]
+                                  (effect-completed state side eid)
+                                  (do (system-msg state :runner "will not prevent the run from ending")
+                                      (resolve-end-run state side eid))))))
+             (resolve-end-run state side eid))))
+     (effect-completed state side eid))))
 
 (defn jack-out-prevent
   [state side]
@@ -766,13 +770,15 @@
   (let [runner-prompt (first (:prompt (:runner @state)))
         corp-prompt (first (:prompt (:corp @state)))]
     (cond (and (:run @state)
-             (not (get-current-encounter state))
-             (or (nil? runner-prompt)
-                 (= :run (:prompt-type runner-prompt)))
-             (or (nil? corp-prompt)
-                 (= :run (:prompt-type corp-prompt))))
+               (not (get-current-encounter state))
+               (or (nil? runner-prompt)
+                   (= :run (:prompt-type runner-prompt)))
+               (or (nil? corp-prompt)
+                   (= :run (:prompt-type corp-prompt))))
         (run-cleanup state side eid)
-        (not (:ended (:end-run @state)))
+        (and (not (:ended (:end-run @state)))
+             (or (:run @state)
+                 (get-current-encounter state)))
         (do (swap! state assoc-in [:end-run :ended] true)
             (when (:run @state)
               (prevent-access state side))

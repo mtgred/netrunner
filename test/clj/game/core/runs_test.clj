@@ -1125,3 +1125,16 @@
           (is (= :hq (-> @state :run :server first)) "Run is still on HQ")
           (is (= :success (:phase (:run @state))) "Run still in Success phase")
           (is (not (-> @state :run :prevent-access)) "Access should not be prevented")))))
+
+(deftest etr-outside-of-runs-does-not-prevent-new-runs
+  ;; ETR outside of a run or encounter does not prevent new runs
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Ice Wall"]}})
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (take-credits state :corp)
+   (let [iw (get-ice state :hq 0)]
+     (rez state :corp iw)
+     (core/process-action "subroutine" state :corp {:card (refresh iw) :subroutine 0}))
+   (run-on state :rd)
+   (is (get-run) "There is a run in progress")))
