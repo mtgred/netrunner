@@ -50,11 +50,6 @@
       (>! websocket-buffer true)
       (chsk-send! client [event msg]))))
 
-(defn broadcast!
-  "Sends the given event and msg to all connected clients."
-  [event msg]
-  (broadcast-to! (:any @connected-uids) event msg))
-
 (defmulti -msg-handler
   "Multimethod to handle Sente `event-msg`s"
   :id)

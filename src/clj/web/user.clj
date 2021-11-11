@@ -1,8 +1,7 @@
 (ns web.user
   (:require
    [crypto.password.bcrypt :as password]
-   [web.utils :refer [md5]]
-   [clojure.set :as set]))
+   [web.utils :refer [md5]]))
 
 (def user-keys
   [:_id :username :emailhash
@@ -28,10 +27,14 @@
   (when (and user (not (:banned user)))
     user))
 
-(defn visible-users
-  "Given a user and a list of username strings,
-  return a seq of the usernames not blocked by the user"
-  [user users]
-  (let [blocked (set (-> user :options :blocked-users))
-        others (set users)]
-    (seq (set/difference others blocked))))
+(defn visible-to-user
+  "Returns true if user has not blocked other and other has not blocked user"
+  [user other connected-users]
+  (let [user-block-list (-> user :options :blocked-users (set))
+        other-username (:username other)
+        other-block-list (-> (get connected-users other-username)
+                             :options
+                             :blocked-users
+                             (set))]
+    (not (or (contains? user-block-list other-username)
+             (contains? other-block-list (:username user))))))

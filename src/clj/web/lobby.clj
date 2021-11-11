@@ -1,7 +1,6 @@
 (ns web.lobby
   (:require
    [clj-time.core :as t]
-   [clojure.set :as set]
    [clojure.string :refer [trim]]
    [crypto.password.bcrypt :as bcrypt]
    [differ.core :as differ]
@@ -16,6 +15,7 @@
    [web.diffs :refer [game-internal-view]]
    [web.mongodb :refer [object-id]]
    [web.stats :as stats]
+   [web.user :refer [visible-to-user]]
    [web.ws :as ws]))
 
 (def log-collection "moderator_actions")
@@ -80,43 +80,36 @@
     (reset! send-ready false)))
 
 (defn visible-lobbies
-  ([lobbies] (visible-lobbies @ws/connected-users lobbies))
-  ([users lobbies]
-   ;; lobbies map:
-   ;; key gameid
-   ;; val lobby map
-   (->> (for [[uid user] users]
-          (let [user-block-list (-> user :options :blocked-users (set))
-                lobbies (reduce
-                          (fn [acc [gameid lobby]]
-                            (let [players (->> (:players lobby)
-                                               (keep #(-> % :user :username))
-                                               (set))
-                                  players-block-list
-                                  (->> (:players lobby)
-                                       (mapcat #(->> (:user %)
-                                                     :username
-                                                     (get @ws/connected-users)
-                                                     :options
-                                                     :blocked-users))
-                                       (filter some?)
-                                       (set))]
-                              (if (or (seq (set/intersection user-block-list players))
-                                      (contains? players-block-list (:username user)))
-                                acc
-                                (conj acc {gameid lobby}))))
-                          []
-                          lobbies)]
-            [uid (into {} lobbies)]))
-        (into {}))))
+  [users lobbies]
+  ;; lobbies map:
+  ;; key gameid
+  ;; val lobby map
+  (->> (for [[uid user] users]
+         (let [lobbies (reduce
+                         (fn [acc [gameid lobby]]
+                           (let [players (keep :user (:players lobby))]
+                             (cond
+                               (empty? players)
+                               acc
+                               (every? #(visible-to-user user % @ws/connected-users) players)
+                               (conj acc {gameid lobby})
+                               :else
+                               acc)))
+                         []
+                         lobbies)]
+           [uid (into {} lobbies)]))
+       (into {})))
 
 (defn update-lobbies-public-view
   "If public view keys exist, send to all connected"
   []
   (when (seq @public-lobby-updates)
-    (let [[old] (reset-vals! public-lobby-updates {})]
-      (doseq [[uid lobbies] (visible-lobbies (:update old))]
-        (ws/broadcast-to! [uid] :games/diff {:diff (assoc old :update lobbies)})))
+    (let [[changes] (reset-vals! public-lobby-updates {})]
+      (doseq [[uid lobbies] (visible-lobbies @ws/connected-users (:update changes))
+              :let [diff (if (seq lobbies)
+                           (assoc changes :update lobbies)
+                           (dissoc changes :update))]]
+        (ws/broadcast-to! [uid] :games/diff {:diff diff})))
     (reset! send-ready false)))
 
 (defn- send-lobby
@@ -238,7 +231,6 @@
 
     (let [{:keys [players] :as game} (game-for-id gameid)]
       (swap! uid-gameids dissoc uid)
-
       (when (empty? (filter identity players))
         (stats/game-finished db game)
         (close-lobby db game)))))
@@ -366,7 +358,11 @@
   [{{db :system/db
      {:keys [username]} :user} :ring-req
     uid :uid}]
-  (when-let [{gameid :gameid} (game-for-client uid)]
+  ;; Do a full scan here even tho it's expensive, to catch any borked state
+  (let [gameid (some (fn [[gameid lobby]]
+                       (when (some #(= username (-> % :user :username)) (:players lobby))
+                         gameid))
+                     @all-games)]
     (when (player-or-spectator uid gameid)
       (lobby-say gameid {:user "__system__" :text (str username " left the game.")})
       (remove-user db uid gameid))))

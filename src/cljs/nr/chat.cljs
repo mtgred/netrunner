@@ -3,7 +3,7 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [lower-case] :as s]
             [jinteki.utils :refer [superuser?]]
-            [nr.ajax :refer [GET PUT]]
+            [nr.ajax :refer [GET]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated] :as auth]
             [nr.avatar :refer [avatar]]
@@ -13,7 +13,8 @@
             [nr.utils :refer [toastr-options render-message set-scroll-top store-scroll-top]]
             [nr.translations :refer [tr tr-pronouns]]
             [nr.ws :as ws]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [nr.account :as account]))
 
 (defonce chat-state (atom {}))
 
@@ -89,13 +90,13 @@
 (defn- delete-message
   [message]
   (authenticated
-    (fn [user]
+    (fn [_]
       (ws/ws-send! [:chat/delete-msg {:msg message}]))))
 
 (defn- delete-all-messages
   [username]
   (authenticated
-    (fn [user]
+    (fn [_]
       (ws/ws-send! [:chat/delete-all {:sender username}]))))
 
 (defn block-user
@@ -109,7 +110,7 @@
                    (= -1 (.indexOf current-blocked-list blocked-user)))
           (let [new-block-list (conj current-blocked-list blocked-user)]
             (swap! app-state assoc-in [:options :blocked-users] new-block-list)
-            (nr.account/post-options "/profile" (partial post-response blocked-user))))))))
+            (account/post-options "/profile" (partial post-response blocked-user))))))))
 
 (defn send-msg [s channel]
   (authenticated
@@ -157,7 +158,7 @@
 (defn- hide-block-menu [msg-state]
   (-> (:msg-buttons @msg-state) js/$ .hide))
 
-(defn message-view [message s]
+(defn message-view [message]
   (let [msg-state (atom {})
         user (:user @app-state)
         my-msg (= (:username message) (:username user))]
@@ -249,7 +250,7 @@
                (swap! old assoc :prev-msg-count curr-msg-count)))))
 
        :reagent-render
-       (fn [s scroll-top]
+       (fn [s _scroll-top]
          [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
                                               :on-scroll #(let [currElt (.-currentTarget %)
                                                                 scroll-top (.-scrollTop currElt)
@@ -263,34 +264,30 @@
               (doall (map-indexed
                        (fn [i message]
                          [:div {:key i}
-                          [message-view message s]]) message-list))))])})))
+                          [message-view message]])
+                       message-list))))])})))
 
-(defn chat [s curr-msg old scroll-top]
+(defn chat []
   (let [user (r/cursor app-state [:user])]
-
-    (r/create-class
-      {:display-name "chat"
-
-       :reagent-render
-       (fn [s curr-msg old scroll-top]
-         [:div#chat.chat-app
-          [:div.blue-shade.panel.channel-list
-           [:h4 (tr [:chat.channels "Channels"])]
-           (doall
-             (for
-               [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
-                    :português :sverige :русский]]
-               ^{:key ch}
-               [channel-view {:channel ch :active-channel (:channel @s)} s]))]
-          [:div.chat-container
-           [:div.chat-card-zoom
-            (when-let [card (:zoom @s)]
-              [card-zoom (r/atom card)])]
-           [:div.chat-box
-            [message-panel s old scroll-top]
-            (when @user
-              [:div
-               [msg-input-view (:channel @s) curr-msg]])]]])})))
+    (fn [s curr-msg old scroll-top]
+      [:div#chat.chat-app
+       [:div.blue-shade.panel.channel-list
+        [:h4 (tr [:chat.channels "Channels"])]
+        (doall
+          (for
+            [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
+                 :português :sverige :русский]]
+            ^{:key ch}
+            [channel-view {:channel ch :active-channel (:channel @s)} s]))]
+       [:div.chat-container
+        [:div.chat-card-zoom
+         (when-let [card (:zoom @s)]
+           [card-zoom (r/atom card)])]
+        [:div.chat-box
+         [message-panel s old scroll-top]
+         (when @user
+           [:div
+            [msg-input-view (:channel @s) curr-msg]])]]])))
 
 (defn chat-page []
   (let [active (r/cursor app-state [:active-page])

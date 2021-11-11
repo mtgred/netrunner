@@ -4,7 +4,7 @@
     [cljs.core.async :refer [<!] :as async]
     [clojure.set :refer [difference union]]
     [differ.core :as differ]
-    [jinteki.utils :refer [str->int superuser?]]
+    [jinteki.utils :refer [str->int]]
     [jinteki.validator :refer [trusted-deck-status]]
     [nr.ajax :refer [GET]]
     [nr.angel-arena :as angel-arena]
@@ -190,7 +190,7 @@
 
 (defn create-game [s]
   (authenticated
-    (fn [user]
+    (fn [_]
       (if (:replay @s)
         (cond
           (not (:replay-file @s))
@@ -302,22 +302,6 @@
                      :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
             [:button (tr [:chat.send "Send"])]]]])})))
 
-(defn- blocked-from-game
-  "Remove games for which the user is blocked by one of the players"
-  [user game]
-  (or (superuser? user)
-      (let [players (get game :players [])
-            blocked-users (flatten (map #(get-in % [:user :options :blocked-users] []) players))]
-        (= -1 (.indexOf blocked-users (:username user))))))
-
-(defn- blocking-from-game
-  "Remove games with players we are blocking"
-  [blocked-users game]
-  (let [players (get game :players [])
-        player-names (map #(get-in % [:user :username] "") players)
-        intersect (clojure.set/intersection (set blocked-users) (set player-names))]
-    (empty? intersect)))
-
 (defn- hidden-formats
   "Remove games which the user has opted to hide"
   [visible-formats game]
@@ -327,49 +311,46 @@
   [user games visible-formats]
   (if (= "tournament" (:room (first games)))
     games
-    (let [blocked-games (filter #(blocked-from-game user %) games)
-          blocked-users (get-in user [:options :blocked-users] [])
-          is-visible (some-fn
-                       #(contains? (get % :players) (:username user))
-                       (every-pred (partial blocking-from-game blocked-users) (partial hidden-formats visible-formats)))]
-      (filter is-visible blocked-games))))
+    (let [is-visible #(or (contains? (get % :players) (:username user))
+                          (hidden-formats visible-formats %))]
+      (filter is-visible games))))
 
 (def open-games-symbol "○")
 (def closed-games-symbol "●")
 
+(defn room-count-str [open-count closed-count]
+  (str " (" @open-count open-games-symbol " " @closed-count closed-games-symbol ")"))
+
 (defn- room-tab
   "Creates the room tab for the specified room"
-  [user s games room room-name]
+  [s games room room-name]
   (r/with-let [room-games (r/track (fn [] (filter #(= room (:room %)) @games)))
-               filtered-games (r/track (fn [] (filter-blocked-games @user @room-games (:visible-formats @app-state))))
-               closed-games (r/track (fn [] (count (filter #(:started %) @filtered-games))))
-               open-games (r/track (fn [] (- (count @filtered-games) @closed-games)))]
+               closed-count (r/track (fn [] (count (filter #(:started %) @room-games))))
+               open-count (r/track (fn [] (- (count @room-games) @closed-count)))]
     [:div.roomtab
      (if (= room (:room @s))
        {:class "current"}
        {:on-click #(swap! s assoc :room room)})
-     room-name " (" @open-games open-games-symbol " "
-     @closed-games closed-games-symbol ")"]))
+     room-name (room-count-str open-count closed-count)]))
 
 (defn- first-user?
   "Is this user the first user in the game?"
   [players user]
   (= (-> players first :user :_id) (:_id user)))
 
-(defn game-list [user {:keys [room games gameid password-game editing]}]
-  (let [roomgames (r/track (fn [] (filter #(= (:room %) room) @games)))
-        filtered-games (r/track #(filter-blocked-games @user @roomgames (:visible-formats @app-state)))
+(defn game-list [{:keys [room games gameid password-game editing]}]
+  (let [room-games (r/track (fn [] (filter #(= (:room %) room) @games)))
         is-filtered? (not= (count slug->format) (count (:visible-formats @app-state)))
-        n (count @filtered-games)
+        n (count @room-games)
         game-count-str (tr [:lobby.game-count] n)]
     [:<>
      [:div.game-count
       [:h4 (str game-count-str (when is-filtered? (str "  " (tr [:lobby.filtered "(filtered)"]))))]]
      [:div.game-list
-      (if (empty? @filtered-games)
+      (if (empty? @room-games)
         [:h4 (tr [:lobby.no-games "No games"])]
         (doall
-          (for [game @filtered-games]
+          (for [game @room-games]
             ^{:key (:gameid game)}
             [game-row (assoc game :current-game @gameid :password-game password-game :editing editing)])))]]))
 
@@ -378,12 +359,11 @@
 (defn- on-change-format-visibility
   "Handle change event for format-toggle input"
   [slug evt]
-  (do
-    (.preventDefault evt)
-    (if (format-visible? slug)
-      (swap! app-state update-in [:visible-formats] difference #{slug})
-      (swap! app-state update-in [:visible-formats] union #{slug}))
-    (.setItem js/localStorage "visible-formats" (.stringify js/JSON (clj->js (:visible-formats @app-state))))))
+  (.preventDefault evt)
+  (if (format-visible? slug)
+    (swap! app-state update-in [:visible-formats] difference #{slug})
+    (swap! app-state update-in [:visible-formats] union #{slug}))
+  (.setItem js/localStorage "visible-formats" (.stringify js/JSON (clj->js (:visible-formats @app-state)))))
 
 (defn format-toggle [slug]
   (r/with-let [id (str "filter-" slug)]
@@ -430,9 +410,9 @@
      ;
      ; [room-tab user s games "tournament" (tr [:lobby.tournament "Tournament"])]
      ; [room-tab user s games "competitive" (tr [:lobby.competitive "Competitive"])]
-     [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]
-     [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
-     [room-tab user s games "competitive" (tr [:lobby.tournament "Tournament"])]]
+     [room-tab s games "casual" (tr [:lobby.casual "Casual"])]
+     [room-tab s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
+     [room-tab s games "competitive" (tr [:lobby.tournament "Tournament"])]]
     (when (not= "angel-arena" (:room @s))
       [:div.lobby-buttons
        [cond-button (tr [:lobby.new-game "New game"])
@@ -464,11 +444,11 @@
                                  :room (:room @s)}]
 
      (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
-       [game-list user {:password-game password-game
-                        :editing (:editing @s)
-                        :games games
-                        :gameid gameid
-                        :room (:room @s)}]))])
+       [game-list {:password-game password-game
+                   :editing (:editing @s)
+                   :games games
+                   :gameid gameid
+                   :room (:room @s)}]))])
 
 (defn create-new-game
   [s user]
@@ -598,7 +578,7 @@
             [:p "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"]]]]])))
 
 (defn pending-game
-  [s decks games gameid password-gameid sets user]
+  [s decks games gameid sets user]
   (let [game (some #(when (= @gameid (:gameid %)) %) @games)
         players (:players game)]
     (when game
@@ -646,7 +626,7 @@
                  ^{:key (or player-id idx)}
                  [:div
                   [player-view player game]
-                  (when-let [{:keys [name status]} (:deck player)]
+                  (when-let [{:keys [status]} (:deck player)]
                     [:span {:class (:status status)}
                      [:span.label
                       (if this-player
@@ -695,12 +675,12 @@
         [chat-view game]]])))
 
 (defn right-panel
-  [decks s games gameid password-gameid sets user]
+  [decks s games gameid sets user]
   (if (= "angel-arena" (:room @s))
     [angel-arena/game-panel decks s user]
     [:div.game-panel
      [create-new-game s user]
-     [pending-game s decks games gameid password-gameid sets user]]))
+     [pending-game s decks games gameid sets user]]))
 
 (defn game-lobby []
   (r/with-let [s (r/atom {:room "casual"})
@@ -722,4 +702,4 @@
         [:div.lobby-bg]
         [:div.lobby.panel.blue-shade
           [games-list-panel s games gameid password-gameid user visible-formats]
-          [right-panel decks s games gameid password-gameid sets user]]])))
+          [right-panel decks s games gameid sets user]]])))

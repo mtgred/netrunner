@@ -1,21 +1,22 @@
 (ns web.auth
   (:require
-    [buddy.sign.jwt :as jwt]
-    [clj-time.coerce :as c]
-    [clj-time.core :as t]
-    [clojure.string :as str]
-    [crypto.password.bcrypt :as password]
-    [monger.collection :as mc]
-    [monger.operators :refer :all]
-    [monger.result :refer [acknowledged?]]
-    [postal.core :as mail]
-    [ring.util.response :refer [redirect]]
-    [web.config :refer [server-config]]
-    [web.mongodb :refer [find-one-as-map-case-insensitive object-id]]
-    [web.user :refer [active-user? create-user user-keys]]
-    [web.utils :refer [response]])
+   [buddy.sign.jwt :as jwt]
+   [clj-time.coerce :as c]
+   [clj-time.core :as t]
+   [clojure.string :as str]
+   [crypto.password.bcrypt :as password]
+   [monger.collection :as mc]
+   [monger.operators :refer :all]
+   [monger.result :refer [acknowledged?]]
+   [postal.core :as mail]
+   [ring.util.response :refer [redirect]]
+   [web.config :refer [server-config]]
+   [web.mongodb :refer [find-one-as-map-case-insensitive object-id]]
+   [web.user :refer [active-user? create-user user-keys]]
+   [web.utils :refer [response]]
+   [web.ws :as ws])
   (:import
-    java.security.SecureRandom))
+   java.security.SecureRandom))
 
 (def auth-config (:auth server-config))
 
@@ -170,7 +171,9 @@
     (if (acknowledged? (mc/update db "users"
                                   {:username username}
                                   {"$set" {:options (select-keys body (profile-keys))}}))
-      (response 200 {:message "Refresh your browser"})
+      (do (when (get @ws/connected-users username)
+            (swap! ws/connected-users assoc-in [username :options] (select-keys body (profile-keys))))
+          (response 200 {:message "Refresh your browser"}))
       (response 404 {:message "Account not found"}))
     (response 401 {:message "Unauthorized"})))
 
