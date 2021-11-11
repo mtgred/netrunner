@@ -673,11 +673,11 @@
     :as card} flipped disable-click]
   (let [title (get-title card)]
     [:div.card-frame.menu-container
-     [:div.blue-shade.card {:class (str (when selected "selected")
-                                        (when (or new
-                                                  (playable? card)) " new")
-                                        (when (same-card? card (-> @game-state :encounters :ice)) " encountered")
-                                        (when (same-card? card (:button @app-state)) " hovered"))
+     [:div.blue-shade.card {:class (str (cond selected "selected"
+                                              (same-card? card (:button @app-state)) "hovered"
+                                              (same-card? card (-> @game-state :encounters :ice)) "encountered"
+                                              (playable? card) "playable"
+                                              new "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)
                                                       (playable? card)))
@@ -826,18 +826,12 @@
     (= (:_id user) (-> @app-state :user :_id))))
 
 (defn build-hand-card-view
-  [hand size prompt-state wrapper-class]
+  [hand size wrapper-class]
   [:div
    (doall (map-indexed
             (fn [i card]
               [:div {:key (or (:cid card) i)
-                     :class (str
-                              (if (and (not= "select" (:prompt-type @prompt-state))
-                                       (not (:selected card))
-                                       (playable? card))
-                                "playable" "")
-                              " "
-                              wrapper-class)
+                     :class (str wrapper-class)
                      :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
                (cond
                  (spectator-view-hidden?)
@@ -857,7 +851,7 @@
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area (if (= :corp side) "HQ" "Grip") {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view filled-hand size prompt-state "card-wrapper"]
+           [build-hand-card-view filled-hand size "card-wrapper"]
            [label filled-hand {:opts {:name (if (= :corp side)
                                               (tr [:game.hq "HQ"])
                                               (tr [:game.grip "Grip"]))
@@ -873,7 +867,7 @@
              [:label (tr [:game.card-count] size)]
              (let [{:keys [total]} @hand-size]
                (stat-controls :hand-size [:div.hand-size (str total " " (tr [:game.max-hand "Max hand size"]))]))
-             [build-hand-card-view filled-hand size prompt-state "card-popup-wrapper"]]])]))))
+             [build-hand-card-view filled-hand size "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
