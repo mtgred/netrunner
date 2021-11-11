@@ -1,19 +1,18 @@
 (ns tasks.load-generator
   (:require
-    ;; external
     [clj-uuid :as uuid]
     [clojure.set :as set]
     [clojure.string :as str]
     [clojure.tools.cli :refer [parse-opts]]
     [gniazdo.core :as ws]
     [monger.collection :as mc]
-    [monger.operators :refer [$in $nin]]
+    [monger.operators :refer [$in]]
     [org.httpkit.client :as http]
-    ;; internal
+    [web.lobby :refer [all-games]]
     [web.system :refer [start stop]]
-    [web.ws :as game-ws-handler]
-    [web.lobby :refer [all-games]])
-  (:import java.net.URLEncoder))
+    [web.ws :as game-ws-handler])
+  (:import
+    java.net.URLEncoder))
 
 ;; This print guarantees a coherent print (i.e. parallel prints will not be interleaved)
 (defn safe-println [& more]
@@ -73,7 +72,7 @@
     (.start client)
 
     (safe-println "Login Corp")
-    (ws/connect (str "ws://localhost:1042/ws"
+    (ws/connect (str "ws://localhost:1042/chsk"
                      "?client-id=" corp-client-id
                      "&csrf-token=" (URLEncoder/encode (get corp-login "X-CSRF-Token")))
                 :client client
@@ -83,7 +82,7 @@
                 :on-close (fn [x y] (safe-println "Corp Disconnected"))
                 :headers corp-login)
     (safe-println "Login Runner")
-    (ws/connect (str "ws://localhost:1042/ws"
+    (ws/connect (str "ws://localhost:1042/chsk"
                      "?client-id=" runner-client-id
                      "&csrf-token=" (URLEncoder/encode (get runner-login "X-CSRF-Token")))
                 :client client
@@ -135,7 +134,7 @@
           (fn [n]
             (let [userClientID (uuid/to-string (uuid/v1))
                   creds (login (str "TestUser" n) "password")
-                  socket (ws/connect (str "ws://localhost:1042/ws"
+                  socket (ws/connect (str "ws://localhost:1042/chsk"
                                           "?client-id=" userClientID
                                           "&csrf-token=" (URLEncoder/encode (get creds "X-CSRF-Token")))
                                      :client client

@@ -45,8 +45,8 @@
 
            (GET "/reset/:token" [] pages/reset-password-page)
 
-           (GET "/ws" req (ws/handshake-handler req))
-           (POST "/ws" req (ws/post-handler req))
+           (GET "/chsk" req (ws/handshake-handler req))
+           (POST "/chsk" req (ws/post-handler req))
 
            (GET "/replay/:gameid" [] stats/replay-handler)
            (GET "/bug-report/:bugid" [] stats/replay-handler))

@@ -44,7 +44,7 @@
       (hiccup/include-js "/lib/moment/min/moment.min.js")
       (hiccup/include-js "/lib/toastr/toastr.min.js")
       (hiccup/include-js "/lib/howler/dist/howler.min.js")
-      [:div#sente-csrf-token {:data-csrf-token anti-forgery/*anti-forgery-token*}]
+      [:div#sente-csrf-token {:data-csrf-token (force anti-forgery/*anti-forgery-token*)}]
       [:script {:type "text/javascript"}
        (str "var user=" (json/generate-string user) ";")]
 

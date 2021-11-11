@@ -34,7 +34,8 @@
    :web/server {:port 1042
                 :app (ig/ref :web/app)}
    :web/lobby {:interval 1000
-               :mongo (ig/ref :mongodb/connection)}
+               :mongo (ig/ref :mongodb/connection)
+               :time-inactive 1800}
    :frontend-version (ig/ref :mongodb/connection)
    :server-mode "dev"
    :sente/router nil
@@ -59,9 +60,9 @@
   (when server
     (server-stop! server nil)))
 
-(defmethod ig/init-key :web/lobby [_ {:keys [interval mongo]}]
+(defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [(tick #(lobby/clear-inactive-lobbies db 1800) interval)
+    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
      (tick #(angel-arena/check-for-inactivity db) interval)
      (tick #(lobby/reset-send-lobby) interval)]))
 

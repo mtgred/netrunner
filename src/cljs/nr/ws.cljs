@@ -9,8 +9,8 @@
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
   (let [{:keys [ch-recv send-fn]}
-        (sente/make-channel-socket-client! "/ws" ?csrf-token {:type :auto
-                                                              :wrap-recv-evs? false})]
+        (sente/make-channel-socket-client! "/chsk" ?csrf-token {:type :auto
+                                                                :wrap-recv-evs? false})]
     (def ch-chsk ch-recv) ; ChannelSocket's receive channel
     (def ws-send! send-fn))) ; ChannelSocket's send API fn
 

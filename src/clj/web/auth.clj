@@ -1,21 +1,21 @@
 (ns web.auth
   (:require
-    [clojure.string :as str]
-    ;; external
     [buddy.sign.jwt :as jwt]
     [clj-time.coerce :as c]
     [clj-time.core :as t]
+    [clojure.string :as str]
     [crypto.password.bcrypt :as password]
     [monger.collection :as mc]
     [monger.operators :refer :all]
     [monger.result :refer [acknowledged?]]
     [postal.core :as mail]
     [ring.util.response :refer [redirect]]
-    ;; internal
     [web.config :refer [server-config]]
     [web.mongodb :refer [find-one-as-map-case-insensitive object-id]]
-    [web.utils :refer [response md5]])
-  (:import java.security.SecureRandom))
+    [web.user :refer [active-user? create-user user-keys]]
+    [web.utils :refer [response]])
+  (:import
+    java.security.SecureRandom))
 
 (def auth-config (:auth server-config))
 
@@ -28,12 +28,6 @@
 (defn unsign-token [token]
   (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
        (catch Exception _ (prn "Received invalid cookie " token))))
-
-(defn active-user?
-  "Returns the given user if it exists and is not banned"
-  [user]
-  (when (and user (not (:banned user)))
-    user))
 
 (defn wrap-authentication-required [handler]
   (fn [{user :user :as req}]
@@ -55,11 +49,6 @@
       (handler req)
       (response 401 {:message "Not authorized"}))))
 
-(def user-keys
-  [:_id :username :emailhash
-   :isadmin :ismoderator :tournament-organizer
-   :special :options :stats :has-api-keys :banned])
-
 (defn wrap-user [handler]
   (fn [{db :system/db
         :keys [cookies] :as req}]
@@ -75,23 +64,6 @@
                      (assoc :user user)
                      (assoc-in [:session :uid] (:username user))))
         (handler req)))))
-
-(defn create-user
-  "Create a new user map."
-  [username password email & {:keys [isadmin]}]
-  (let [email-hash (md5 email)
-        registration-date (java.util.Date.)
-        last-connection registration-date
-        hash-pw (password/encrypt password)
-        isadmin (or isadmin false)]
-    {:username         username
-     :email            email
-     :emailhash        email-hash
-     :registrationDate registration-date
-     :lastConnection   last-connection
-     :password         hash-pw
-     :isadmin          isadmin
-     :options          {}}))
 
 (defn register-handler
   [{db :system/db
