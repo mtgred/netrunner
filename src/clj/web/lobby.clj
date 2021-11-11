@@ -1,20 +1,22 @@
 (ns web.lobby
-  (:require [clojure.string :refer [trim]]
-            [web.mongodb :refer [object-id]]
-            [web.ws :as ws]
-            [web.stats :as stats]
-            [web.diffs :refer [game-internal-view]]
-            [game.utils :refer [remove-once]]
-            [game.core :as core]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.validator :refer [calculate-deck-status legal-deck?]]
-            [jinteki.utils :refer [superuser?]]
-            [crypto.password.bcrypt :as bcrypt]
-            [monger.collection :as mc]
-            [monger.operators :refer [$or]]
-            [differ.core :as differ]
-            [medley.core :refer [find-first]]
-            [clj-time.core :as t]))
+  (:require
+   [clj-time.core :as t]
+   [clojure.set :as set]
+   [clojure.string :refer [trim]]
+   [crypto.password.bcrypt :as bcrypt]
+   [differ.core :as differ]
+   [game.core :as core]
+   [game.utils :refer [remove-once]]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :refer [superuser?]]
+   [jinteki.validator :refer [calculate-deck-status legal-deck?]]
+   [medley.core :refer [find-first]]
+   [monger.collection :as mc]
+   [monger.operators :refer [$or]]
+   [web.diffs :refer [game-internal-view]]
+   [web.mongodb :refer [object-id]]
+   [web.stats :as stats]
+   [web.ws :as ws]))
 
 (def log-collection "moderator_actions")
 
@@ -68,14 +70,6 @@
   [gameid game]
   (game-internal-view (game-for-id gameid) (select-keys game lobby-only-keys)))
 
-(defn update-lobbies-public-view
-  "If public view keys exist, send to all connected"
-  []
-  (when (seq @public-lobby-updates)
-    (let [[old] (reset-vals! public-lobby-updates {})]
-      (ws/broadcast! :games/diff {:diff old}))
-    (reset! send-ready false)))
-
 (defn update-lobbies-joined-view
   "If private view exists, send only to those games clients"
   []
@@ -85,12 +79,52 @@
         (ws/broadcast-to! (lobby-clients gameid) :games/differ {:diff {:update {gameid update}}})))
     (reset! send-ready false)))
 
+(defn visible-lobbies
+  ([lobbies] (visible-lobbies @ws/connected-users lobbies))
+  ([users lobbies]
+   ;; lobbies map:
+   ;; key gameid
+   ;; val lobby map
+   (->> (for [[uid user] users]
+          (let [user-block-list (-> user :options :blocked-users (set))
+                lobbies (reduce
+                          (fn [acc [gameid lobby]]
+                            (let [players (->> (:players lobby)
+                                               (keep #(-> % :user :username))
+                                               (set))
+                                  players-block-list
+                                  (->> (:players lobby)
+                                       (mapcat #(->> (:user %)
+                                                     :username
+                                                     (get @ws/connected-users)
+                                                     :options
+                                                     :blocked-users))
+                                       (filter some?)
+                                       (set))]
+                              (if (or (seq (set/intersection user-block-list players))
+                                      (contains? players-block-list (:username user)))
+                                acc
+                                (conj acc {gameid lobby}))))
+                          []
+                          lobbies)]
+            [uid (into {} lobbies)]))
+        (into {}))))
+
+(defn update-lobbies-public-view
+  "If public view keys exist, send to all connected"
+  []
+  (when (seq @public-lobby-updates)
+    (let [[old] (reset-vals! public-lobby-updates {})]
+      (doseq [[uid lobbies] (visible-lobbies (:update old))]
+        (ws/broadcast-to! [uid] :games/diff {:diff (assoc old :update lobbies)})))
+    (reset! send-ready false)))
+
 (defn- send-lobby
   "Called by a background thread to periodically send game lobby updates to all clients."
   []
   (when @send-ready
-    (update-lobbies-public-view)
-    (update-lobbies-joined-view)))
+    (update-lobbies-joined-view)
+    (update-lobbies-public-view)))
 
 (defn refresh-lobby-update-in
   [gameid targets func]
@@ -98,12 +132,12 @@
         [old] (swap-vals! all-games update-in (concat [gameid] targets) func)
         old-key-diff (select-keys (get old gameid) [target])
         key-diff (select-keys (game-for-id gameid) [target])
-        lobby-updates (game-lobby-view gameid key-diff)
+        internal-lobby-updates (game-lobby-view gameid key-diff)
         public-updates (game-public-view gameid key-diff)]
-    (when (seq lobby-updates)
+    (when (seq internal-lobby-updates)
       (swap! game-lobby-updates
              update-in [:update gameid] conj
-             (differ/diff (game-lobby-view gameid old-key-diff) lobby-updates)))
+             (differ/diff (game-lobby-view gameid old-key-diff) internal-lobby-updates)))
     (when (seq public-updates)
       (swap! public-lobby-updates
              assoc-in [:update gameid target]
@@ -117,7 +151,7 @@
 (defn refresh-lobby-dissoc
   [gameid]
   (swap! all-games dissoc gameid)
-  (swap! public-lobby-updates update :delete #(conj % gameid))
+  (swap! public-lobby-updates update :delete conj gameid)
   (send-lobby))
 
 (defn refresh-lobby
@@ -278,7 +312,16 @@
                                  {:tournament-organizer true}]}))
 
 (defn handle-lobby-list [{:keys [uid]}]
-  (ws/broadcast-to! [uid] :games/list (mapv #(assoc (game-public-view (first %) (second %)) :selected (some (fn [id] (= id uid)) (lobby-clients (first %)))) @all-games)))
+  (let [user (get @ws/connected-users uid)
+        games (->> @all-games
+                   (mapv (fn [[gameid game]]
+                           [gameid
+                            (assoc (game-public-view gameid game)
+                                   :selected (some (fn [id] (= id uid))
+                                                   (keep :uid (concat (:players game) (:spectators game)))))]))
+                   (into {})
+                   (visible-lobbies {uid user}))]
+    (ws/broadcast-to! [uid] :games/list (vals (get games uid)))))
 
 (defmethod ws/-msg-handler :lobby/list [event] (handle-lobby-list event))
 

@@ -1,7 +1,9 @@
 (ns web.ws
-  (:require [clojure.core.async :refer [go <! >! timeout chan]]
-            [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
+  (:require
+   [clojure.core.async :refer [<! >! chan go timeout]]
+   [web.user :refer [active-user?]]
+   [taoensso.sente :as sente]
+   [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
 
 (let [chsk-server (sente/make-channel-socket-server!
                     (get-sch-adapter)
@@ -64,8 +66,14 @@
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
 
+(defonce connected-users (atom {}))
+
 (defmethod -msg-handler :chsk/ws-ping [_])
-(defmethod -msg-handler :chsk/uidport-open [_])
+(defmethod -msg-handler :chsk/uidport-open
+  [{uid :uid
+    {user :user} :ring-req}]
+  (when (active-user? user)
+    (swap! connected-users assoc uid user)))
 
 (defn event-msg-handler
   "Wraps `-msg-handler` with logging, error catching, etc."

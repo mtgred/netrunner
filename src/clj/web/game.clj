@@ -296,6 +296,7 @@
   [{{db :system/db
      {:keys [username]} :user} :ring-req
     uid :uid}]
+  (swap! ws/connected-users dissoc uid)
   (when-let [{:keys [gameid state]} (lobby/game-for-client uid)]
     (lobby/remove-user db uid gameid)
     (when-let [game (lobby/game-for-id gameid)]

@@ -57,7 +57,7 @@
     (play-sound notification)))
 
 (defmethod ws/-msg-handler :games/list [{data :?data}]
-  (let [gamemap (into {} (map #(assoc {} (:gameid %) %) data))
+  (let [gamemap (into {} (for [d data] [(:gameid d) d]))
         missing-gameids (->> (:games @app-state)
                              (remove #(get gamemap (:gameid %)))
                              (map :gameid))]
@@ -69,7 +69,7 @@
 
 (defmethod ws/-msg-handler :games/differ
   [{{:keys [diff]} :?data}]
-  (swap! app-state update-in [:games]
+  (swap! app-state update :games
          (fn [games]
            (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
                  update-diff (reduce-kv
