@@ -12,6 +12,7 @@
     [web.angel-arena.stats :as angel-arena-stats]
     [web.mongodb :refer [object-id]]
     [web.pages :as pages]
+    [web.user :refer [active-user?]]
     [web.utils :refer [json-response response]]
     [web.ws :as ws]))
 
@@ -213,8 +214,8 @@
 
 (defn history
   [{db :system/db
-    {username :username} :user}]
-  (if username
+    {username :username :as user} :user}]
+  (if (active-user? user)
     (let [games (->> (mq/with-collection db "game-logs"
                        (mq/find {$or [{:corp.player.username username}
                                       {:runner.player.username username}]})
@@ -227,9 +228,9 @@
 
 (defn fetch-log
   [{db :system/db
-    {username :username} :user
+    user :user
     {:keys [gameid]} :params}]
-  (if username
+  (if (active-user? user)
     (let [{:keys [log]} (mc/find-one-as-map db "game-logs" {:gameid gameid} ["log"])
           log (or log {})]
       (response 200 log))
@@ -237,9 +238,9 @@
 
 (defn fetch-annotations
   [{db :system/db
-    {username :username} :user
+    {username :username :as user} :user
     {:keys [gameid]}     :params}]
-  (if username
+  (if (active-user? user)
     (let [{:keys [corp runner replay-shared annotations]}
           (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay-shared" "annotations"])
           annotations (or annotations [])]

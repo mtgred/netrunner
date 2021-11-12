@@ -132,18 +132,18 @@
 
 (defn email-handler
   [{db :system/db
-    {username :username} :user}]
-  (if username
+    {username :username :as user} :user}]
+  (if (active-user? user)
     (let [{:keys [email]} (find-one-as-map-case-insensitive db "users" {:username username})]
       (response 200 {:email email}))
     (response 401 {:message "Unauthorized"})))
 
 (defn change-email-handler
   [{db :system/db
-    {username :username} :user
+    {username :username :as user} :user
     {email :email} :body}]
   (cond
-    (not username)
+    (not (active-user? user))
     (response 401 {:message "Unauthorized"})
 
     (mc/find-one-as-map db "users" {:email email})
@@ -165,9 +165,9 @@
 
 (defn update-profile-handler
   [{db :system/db
-    {username :username} :user
-    body                 :body}]
-  (if username
+    {username :username :as user} :user
+    body :body}]
+  (if (active-user? user)
     (if (acknowledged? (mc/update db "users"
                                   {:username username}
                                   {"$set" {:options (select-keys body (profile-keys))}}))

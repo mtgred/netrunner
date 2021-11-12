@@ -114,9 +114,10 @@
 (defn mods-handler [{db :system/db}]
   (find-user db {:ismoderator true}))
 
-(defn mods-update-handler [{db :system/db
-                            {username :username} :body}]
-  (if-not (empty? username)
+(defn mods-update-handler
+  [{db :system/db
+    {username :username :as user} :body}]
+  (if (active-user? user)
     (update-user db {:username username} :ismoderator true)
     (response 400 {:message "Missing username"})))
 
@@ -129,9 +130,10 @@
 (defn tos-handler [{db :system/db}]
   (find-user db {:tournament-organizer true}))
 
-(defn tos-update-handler [{db :system/db
-                           {username :username} :body}]
-  (if-not (empty? username)
+(defn tos-update-handler
+  [{db :system/db
+    {username :username :as user} :body}]
+  (if (active-user? user)
     (update-user db {:username username} :tournament-organizer true)
     (response 400 {:message "Missing username"})))
 
@@ -144,9 +146,10 @@
 (defn specials-handler [{db :system/db}]
   (find-user db {:special {$exists true}}))
 
-(defn specials-update-handler [{db :system/db
-                                {username :username} :body}]
-  (if-not (empty? username)
+(defn specials-update-handler
+  [{db :system/db
+    {username :username :as user} :body}]
+  (if (active-user? user)
     (update-user db {:username username} :special true)
     (response 400 {:message "Missing username"})))
 
