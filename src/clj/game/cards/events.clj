@@ -2,6 +2,7 @@
   (:require [game.core :refer :all]
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
+            [jinteki.validator :refer [legal?]]
             [clojure.string :as string]
             [clojure.set :as set]))
 
@@ -2365,12 +2366,15 @@
     :rfg-instead-of-trashing true
     :choices (req (let [is-draft-id? #(.startsWith (:code %) "00")
                         runner-identity (:identity runner)
+                        format (:format @state)
                         is-swappable #(and (= "Identity" (:type %))
                                            (= (:faction runner-identity) (:faction %))
                                            (not (is-draft-id? %))
-                                           (not= (:title runner-identity) (:title %)))
+                                           (not= (:title runner-identity) (:title %))
+                                           (or (= :casual format)
+                                               (legal? format :legal %)))
                         swappable-ids (filter is-swappable (server-cards))]
-                    (cancellable swappable-ids :sorted)))
+                    (sort-by :title swappable-ids)))
     :msg "change identities"
     :effect (req (let [old-runner-identity (:identity runner)]
                    ;; Handle hosted cards (Ayla) - Part 1
