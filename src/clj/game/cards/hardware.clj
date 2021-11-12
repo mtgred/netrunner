@@ -165,7 +165,7 @@
                  (break-sub
                    [:trash] 2 "All"
                    {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                                (same-card? current-ice boomerang-target)
+                                (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
                                 true))}) ; When eg. flipped by Assimilator
                  :effect
                  (req (wait-for
@@ -185,12 +185,15 @@
                                       :duration :end-of-run
                                       :optional
                                       {:req (req (and (:successful target)
-                                                      (not (zone-locked? state :runner :discard))))
+                                                      (not (zone-locked? state :runner :discard))
+                                                      (some #(= "Boomerang" (:title %)) (:discard runner))))
                                        :once :per-run
                                        :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                        :yes-ability
                                        {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                        :effect (effect (move card :deck)
+                                        :effect (effect (move (some #(when (= "Boomerang" (:title %)) %)
+                                                                    (:discard runner))
+                                                              :deck)
                                                         (shuffle! :deck))}}}]))}}))
                           card nil))))]})
 

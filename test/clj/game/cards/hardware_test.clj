@@ -2,6 +2,7 @@
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.core-test :refer :all]
+            [game.utils :as utils :refer [same-card?]]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
@@ -685,6 +686,84 @@
         (is (no-prompt? state :runner) "Boomerang prompt did not come up")
         (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
         (is (last-log-contains? state "Runner accesses Wraparound from HQ.")))))
+
+(deftest boomerang-shuffles-any-copy
+  ;; shuffles any copy
+  (do-game
+   (new-game {:runner {:deck [(qty "Boomerang" 2) "Reboot"]}
+              :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+   (play-from-hand state :corp "Ice Wall" "Archives")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Boomerang")
+   (trash-from-hand state :runner "Boomerang")
+   (let [icew (get-ice state :archives 0)
+         boom (get-hardware state 0)]
+     (click-card state :runner icew)
+     (play-from-hand state :runner "Reboot")
+     (rez state :corp icew)
+     (run-continue state)
+     (card-ability state :runner (refresh boom) 0)
+     (click-prompt state :runner "End the run")
+     (is (= 2 (count (:discard (get-runner)))) "Two copies of Boomerang in heap")
+     (run-continue-until state :success)
+     (click-card state :runner (get-discarded state :runner 1))
+     (click-prompt state :runner "Done")
+     (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+     (click-prompt state :runner "Yes")
+     (is (= 1 (count (get-runner-facedown state))) "One copy of Boomerang is installed facedown")
+     (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
+     (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+
+(deftest boomerang-no-prompt-if-no-copies-to-shuffle
+  ;; no prompt if no copies to shuffle
+  (do-game
+   (new-game {:runner {:deck ["Boomerang" "Reboot"]}
+              :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+   (play-from-hand state :corp "Ice Wall" "Archives")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Boomerang")
+   (let [icew (get-ice state :archives 0)
+         boom (get-hardware state 0)]
+     (click-card state :runner icew)
+     (play-from-hand state :runner "Reboot")
+     (rez state :corp icew)
+     (run-continue state)
+     (card-ability state :runner (refresh boom) 0)
+     (click-prompt state :runner "End the run")
+     (run-continue-until state :success)
+     (click-card state :runner (get-discarded state :runner 0))
+     (click-prompt state :runner "Done")
+     (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+     (is (no-prompt? state :runner) "The Runner should not be prompted to shuffle Boomerang")
+     (is (= 1 (count (get-runner-facedown state))) "One copy of Boomerang is installed facedown")
+     (is (= 0 (count (:deck (get-runner)))) "Boomerang in stack")
+     (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+
+(deftest boomerang-konjin-can-be-used-on-forced-encounter-ice
+  ;; Boomerang - Targeting Konjin can be used on forced encounter ice
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Konjin" "Ice Wall"]}
+              :runner {:hand ["Boomerang"]}})
+   (play-from-hand state :corp "Konjin" "R&D")
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Boomerang")
+   (let [boomerang (get-hardware state 0)
+         konjin (get-ice state :rd 0)
+         iw (get-ice state :hq 0)]
+     (click-card state :runner (refresh konjin))
+     (rez state :corp (refresh konjin))
+     (rez state :corp (refresh iw))
+     (run-on state :rd)
+     (run-continue state :encounter-ice)
+     (click-prompt state :corp "0 [Credits]")
+     (click-prompt state :runner "1 [Credits]")
+     (click-card state :corp (refresh iw))
+     (is (same-card? (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+     (card-ability state :runner boomerang 0)
+     (click-prompt state :runner "End the run")
+     (is (:broken (first (:subroutines (refresh iw)))) "Ice Wall has been broken"))))
 
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
