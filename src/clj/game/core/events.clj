@@ -91,9 +91,11 @@
 ;; Functions for run event parsing
 (defn run-events
   "Returns the targets vectors of each run event with the given key that was triggered this run."
-  [state _ ev]
-  (when (:run @state)
-    (mapcat rest (filter #(= ev (first %)) (get-in @state [:run :events])))))
+  ([state _ ev]
+   (when (:run @state)
+     (run-events (:run @state) ev)))
+  ([run ev]
+   (mapcat rest (filter #(= ev (first %)) (:events run)))))
 
 (defn no-run-event?
   "Returns true if the given run event has not happened yet this run.

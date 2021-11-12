@@ -48,9 +48,10 @@
              :async true
              :msg (msg "make a run on " target)
              :effect (req (wait-for (make-run state side target card)
-                                    (let [card (get-card state card)]
-                                      (if (get-in card [:special :run-again])
-                                        (make-run state side eid target card {:ignore-costs true})
+                                    (let [card (get-card state card)
+                                          run-again (get-in card [:special :run-again])]
+                                      (if run-again
+                                        (make-run state side eid run-again card {:ignore-costs true})
                                         (effect-completed state side eid)))))}
    :events [{:event :run-ends
              :optional {:req (req (and (not (get-in card [:special :run-again]))
@@ -59,15 +60,11 @@
                         :prompt "Make another run on the same server?"
                         :yes-ability
                         {:effect (req (let [last-run (get-in @state [:runner :register :last-run])
-                                            run-ice (get-in @state (concat [:corp :servers] (:server last-run) [:ices]))
-                                            pos (:position last-run)
-                                            ice (when (and pos
-                                                           (pos? pos)
-                                                           (<= pos (count run-ice)))
-                                                  (get-card state (nth run-ice (dec pos))))]
+                                            attacked-server (first (:server last-run))
+                                            ice (:ice (ffirst (run-events last-run :encounter-ice)))]
                                         (update! state side (update card :special
                                                                     assoc
-                                                                    :run-again true
+                                                                    :run-again attacked-server
                                                                     :run-again-ice ice))))}}}
             {:event :encounter-ice
              :once :per-run

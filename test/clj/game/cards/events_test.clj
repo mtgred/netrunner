@@ -113,6 +113,99 @@
       (is (= 2 (:click (get-runner))) "Initiating 2nd run free")
       (is (= 2 (:credit (get-runner))) "Initiating 2nd run free")))
 
+(deftest always-have-a-backup-plan-bypass-last-encountered-ice-etr-ice
+  ;; Always Have A Backup Plan - Bypass Last Piece of Ice Encountered - Ice ETR
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Ice Wall" "Wall of Static"]
+                     :credits 10}
+              :runner {:hand ["Always Have a Backup Plan"]}})
+   (play-from-hand state :corp "Ice Wall" "New remote")
+   (play-from-hand state :corp "Wall of Static" "Server 1")
+   (take-credits state :corp)
+   (let [iw (get-ice state :remote1 0)
+         ws (get-ice state :remote1 1)]
+     (rez state :corp iw)
+     (rez state :corp ws)
+     (play-from-hand state :runner "Always Have a Backup Plan")
+     (click-prompt state :runner "Server 1")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? (refresh ws) (core/get-current-ice state)) "Encountering Wall of Static")
+     (fire-subs state (refresh ws))
+     (is (nil? (:run @state)) "Run has ended")
+     (click-prompt state :runner "Yes")
+     (run-continue state :movement);; bypass Wall of Static
+     (run-continue state :approach-ice)
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? (refresh iw) (core/get-current-ice state)) "Did not bypass Ice Wall")
+     (fire-subs state (refresh iw))
+     (is (nil? (:run @state)) "Run has ended")
+     (is (no-prompt? state :runner) "Not prompted to run again"))))
+
+(deftest always-have-a-backup-plan-bypass-last-encountered-ice-etr-not-ice
+  ;; Always Have A Backup Plan - Bypass Last Piece of Ice Encountered - Non-ICE ETR
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand [(qty "Hedge Fund" 2) "Ice Wall" "Wall of Static" "Anoetic Void"]
+                     :credits 10}
+              :runner {:hand ["Always Have a Backup Plan"]}})
+   (play-from-hand state :corp "Anoetic Void" "New remote")
+   (play-from-hand state :corp "Ice Wall" "Server 1")
+   (play-from-hand state :corp "Wall of Static" "Server 1")
+   (take-credits state :corp)
+   (let [iw (get-ice state :remote1 0)
+         ws (get-ice state :remote1 1)]
+     (rez state :corp iw)
+     (rez state :corp ws)
+     (rez state :corp (get-content state :remote1 0))
+     (play-from-hand state :runner "Always Have a Backup Plan")
+     (click-prompt state :runner "Server 1")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? (refresh ws) (core/get-current-ice state)) "Encountering Wall of Static")
+     (run-continue-until state :encounter-ice)
+     (is (utils/same-card? (refresh iw) (core/get-current-ice state)) "Encountering Ice Wall")
+     (run-continue-until state :success)
+     (click-prompt state :corp "Yes")
+     (click-card state :corp (first (:hand (get-corp))))
+     (click-card state :corp (second (:hand (get-corp))))
+     (is (nil? (:run @state)) "Run has ended")
+     (click-prompt state :runner "Yes")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? (refresh ws) (core/get-current-ice state)) "Did not bypass Wall of Static")
+     (run-continue-until state :approach-ice)
+     (run-continue state :movement);; bypass Ice Wall
+     (run-jack-out state)
+     (is (nil? (:run @state)) "Run has ended")
+     (is (no-prompt? state :runner) "Not prompted to run again"))))
+
+(deftest always-have-a-backup-plan-run-redirected-second-run-on-redirected-server
+  ;; Always Have A Backup Plan - Run redirected - Second run is on the attacked server
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Bullfrog"]}
+              :runner {:hand ["Always Have a Backup Plan"]}})
+   (play-from-hand state :corp "Bullfrog" "HQ")
+   (take-credits state :corp)
+   (let [bullfrog (get-ice state :hq 0)]
+     (rez state :corp bullfrog)
+     (play-from-hand state :runner "Always Have a Backup Plan")
+     (click-prompt state :runner "HQ")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? (refresh bullfrog) (core/get-current-ice state)) "Encountering Bullfrog")
+     (fire-subs state (refresh bullfrog))
+     (click-prompt state :corp "0 [Credits]")
+     (click-prompt state :runner "1 [Credits]")
+     (click-prompt state :corp "Archives")
+     (run-continue state :movement)
+     (run-jack-out state)
+     (is (nil? (:run @state)) "Run has ended")
+     (click-prompt state :runner "Yes")
+     (is (= :archives (first (:server (:run @state)))) "New Run on Archives and not HQ")
+     (run-continue state :movement);; bypass Bullfrog
+     (run-jack-out state)
+     (is (nil? (:run @state)) "Run has ended")
+     (is (no-prompt? state :runner) "Not prompted to run again"))))
+
 (deftest amped-up
   ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
   (do-game
