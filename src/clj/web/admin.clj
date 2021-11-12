@@ -1,13 +1,16 @@
 (ns web.admin
-  (:require [web.mongodb :refer [->object-id object-id]]
-            [web.lobby :refer [all-games]]
-            [game.main :as main]
-            [web.utils :refer [response]]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged? updated-existing?]]
-            [monger.query :as mq]
-            [monger.operators :refer :all]
-            [web.config :refer [frontend-version]]))
+  (:require
+   [game.main :as main]
+   [monger.collection :as mc]
+   [monger.operators :refer :all]
+   [monger.query :as mq]
+   [monger.result :refer [acknowledged? updated-existing?]]
+   [web.config :refer [frontend-version]]
+   [web.lobby :refer [all-games]]
+   [web.mongodb :refer [->object-id object-id]]
+   [web.user :refer [active-user?]]
+   [web.utils :refer [response]]
+   [web.ws :as ws]))
 
 (defn announce-create-handler [{{message :message} :body}]
   (if-not (empty? message)
@@ -34,7 +37,7 @@
         (response 200 {:message "Deleted"})
         (response 403 {:message "Forbidden"}))
       (response 400 {:message "Missing new items id"}))
-    (catch Exception ex
+    (catch Exception _
       (response 409 {:message "Unknown news item id"}))))
 
 (defn version-handler [{db :system/db}]
@@ -51,8 +54,53 @@
       (response 200 {:message "ok" :version version}))
     (response 400 {:message "Missing version item"})))
 
+(def user-collection "users")
+
+(def user-type->field
+  {:mods :ismoderator
+   :specials :special
+   :tos :tournament-organizer
+   :banned :banned})
+
+(defmethod ws/-msg-handler :admin/edit-user
+  [{{db :system/db user :user} :ring-req
+    {:keys [action user-type username] :as data} :?data
+    uid :uid}]
+  (if (and (active-user? user)
+           (:isadmin user)
+           (not-empty username))
+    (let [field (user-type->field user-type)
+          value (case action
+                  :admin/add-user true
+                  :admin/remove-user false
+                  nil)
+          updated (when (and field (some? value))
+                    (updated-existing? (mc/update db user-collection {:username username} {$set {field value}})))
+          user (when updated
+                 (-> (mc/find-one-as-map db user-collection {:username username} [:_id :username])
+                     (update :_id str)))]
+      (if user
+        (ws/broadcast-to! [uid] :admin/user-edit {:success (assoc data :user user)})
+        (ws/broadcast-to! [uid] :admin/user-edit {:error "Not found"})))
+    (ws/broadcast-to! [uid] :admin/user-edit {:error "Not allowed"})))
+
+(defmethod ws/-msg-handler :admin/fetch-users
+  [{{db :system/db user :user} :ring-req
+    uid :uid}]
+  (if (and (active-user? user)
+           (:isadmin user))
+    (let [users (->> (mc/find-maps db user-collection {$or [{:ismoderator true}
+                                                            {:specials true}
+                                                            {:tournament-organizer true}
+                                                            {:banned true}]}
+                                   [:_id :username :ismoderator :specials :tournament-organizer :banned])
+                     (map #(update % :_id str)))]
+      (println users)
+      (ws/broadcast-to! [uid] :admin/fetch-users {:success users}))
+    (ws/broadcast-to! [uid] :admin/fetch-users {:error "Not allowed"})))
+
 (defn- find-user [db criteria]
-  (let [data (mq/with-collection db "users"
+  (let [data (mq/with-collection db user-collection
                (mq/find criteria)
                (mq/fields [:_id :username])
                (mq/sort (array-map :username 1)))]
@@ -105,10 +153,9 @@
 (defn specials-delete-handler [{db :system/db
                                 {id :id} :params}]
   (if id
-    (do
-      (if (updated-existing? (mc/update db "users" {:_id (object-id id)} {$unset {:special false}}))
-        (response 200 {:message "Removed"})
-        (response 404 {:message "Unknown user"})))
+    (if (updated-existing? (mc/update db "users" {:_id (object-id id)} {$unset {:special false}}))
+      (response 200 {:message "Removed"})
+      (response 404 {:message "Unknown user"}))
     (response 400 {:message "Missing id"})))
 
 (defn features-handler [{db :system/db}]
