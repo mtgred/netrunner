@@ -1,13 +1,14 @@
 (ns nr.auth
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put!] :as async]
-            [nr.ajax :refer [POST GET]]
-            [nr.appstate :refer [app-state]]
-            [nr.avatar :refer [avatar]]
-            [nr.history :refer [history]]
-            [nr.translations :refer [tr]]
-            [clojure.string :refer [lower-case]]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!]]
+   [clojure.string :refer [lower-case]]
+   [nr.ajax :refer [GET POST]]
+   [nr.appstate :refer [app-state]]
+   [nr.avatar :refer [avatar]]
+   [nr.navbar :refer [history]]
+   [nr.translations :refer [tr]]
+   [reagent.core :as r]))
 
 (defn authenticated [f]
   (if-let [user (:user @app-state)]
@@ -33,8 +34,8 @@
 
 (defn handle-logout [event]
   (.preventDefault event)
-  (go (let [response (<! (POST "/logout" nil))]
-        (-> js/document .-location (.reload true)))))
+  (go (<! (POST "/logout" nil))
+      (-> js/document .-location (.reload true))))
 
 (defn logged-menu [user]
   [:ul

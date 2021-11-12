@@ -1,11 +1,10 @@
 (ns nr.features
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [nr.ajax :refer [POST GET PUT DELETE]]
-            [nr.utils :refer [render-icons non-game-toast]]
-            [nr.ws :refer [ws-send!]]
-            [nr.appstate :refer [app-state]]
-            [clojure.string :as s]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!]]
+   [nr.ajax :refer [GET]]
+   [nr.appstate :refer [app-state]]
+   [reagent.core :as r]))
 
 (def feature-state (r/atom {}))
 
@@ -46,7 +45,7 @@
           (reset! feature-state (:features (:json (<! (GET "/admin/features")))))))
 
     (fn []
-      (when (and (= "/features" (first @active))
-                 (:isadmin @user))
-        [:div.page-container
-         [feature-container feature-state]]))))
+      [:div.page-container
+       (when (and (= "/features" (first @active))
+                  (:isadmin @user))
+         [feature-container feature-state])])))

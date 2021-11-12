@@ -2026,116 +2026,116 @@
 
        :reagent-render
        (fn []
-         (when (= "/play" (first @active))
-           (when @@render-board?
-             (let [me-side (if (= :spectator @side) :corp @side)
-                   op-side (utils/other-side me-side)
-                   me (r/cursor game-state [me-side])
-                   opponent (r/cursor game-state [op-side])
-                   ;; hands
-                   me-hand (r/cursor game-state [me-side :hand])
-                   me-hand-count (r/cursor game-state [me-side :hand-count])
-                   op-hand (r/cursor game-state [op-side :hand])
-                   op-hand-count (r/cursor game-state [op-side :hand-count])
-                   me-hand-size (r/cursor game-state [me-side :hand-size])
-                   op-hand-size (r/cursor game-state [op-side :hand-size])
-                   ;; decks
-                   me-deck (r/cursor game-state [me-side :deck])
-                   me-deck-count (r/cursor game-state [me-side :deck-count])
-                   op-deck (r/cursor game-state [op-side :deck])
-                   op-deck-count (r/cursor game-state [op-side :deck-count])
-                   ;; discards
-                   me-discard (r/cursor game-state [me-side :discard])
-                   op-discard (r/cursor game-state [op-side :discard])
-                   ;; user settings
-                   me-user (r/cursor game-state [me-side :user])
-                   op-user (r/cursor game-state [op-side :user])
-                   ;; prompts
-                   me-prompt (r/cursor game-state [me-side :prompt])
-                   prompt-state (r/cursor game-state [me-side :prompt-state])
-                   ;; identity cards
-                   me-ident (r/cursor game-state [me-side :identity])
-                   op-ident (r/cursor game-state [op-side :identity])
-                   ;; score areas
-                   me-scored (r/cursor game-state [me-side :scored])
-                   op-scored (r/cursor game-state [op-side :scored])
-                   me-agenda-point (r/cursor game-state [me-side :agenda-point])
-                   op-agenda-point (r/cursor game-state [op-side :agenda-point])
-                   ;; servers
-                   corp-servers (r/cursor game-state [:corp :servers])
-                   corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
-                   runner-rig (r/cursor game-state [:runner :rig])
-                   sfx (r/cursor game-state [:sfx])]
-               [:div.gameview
-                [:div.gameboard
-                 (let [me-keep (r/cursor game-state [me-side :keep])
-                       op-keep (r/cursor game-state [op-side :keep])
-                       me-quote (r/cursor game-state [me-side :quote])
-                       op-quote (r/cursor game-state [op-side :quote])]
-                   [build-start-box me-ident me-user me-hand prompt-state me-keep op-ident op-user op-keep me-quote op-quote side])
+         (when (and (= "/play" (first @active))
+                    @@render-board?)
+           (let [me-side (if (= :spectator @side) :corp @side)
+                 op-side (utils/other-side me-side)
+                 me (r/cursor game-state [me-side])
+                 opponent (r/cursor game-state [op-side])
+                 ;; hands
+                 me-hand (r/cursor game-state [me-side :hand])
+                 me-hand-count (r/cursor game-state [me-side :hand-count])
+                 op-hand (r/cursor game-state [op-side :hand])
+                 op-hand-count (r/cursor game-state [op-side :hand-count])
+                 me-hand-size (r/cursor game-state [me-side :hand-size])
+                 op-hand-size (r/cursor game-state [op-side :hand-size])
+                 ;; decks
+                 me-deck (r/cursor game-state [me-side :deck])
+                 me-deck-count (r/cursor game-state [me-side :deck-count])
+                 op-deck (r/cursor game-state [op-side :deck])
+                 op-deck-count (r/cursor game-state [op-side :deck-count])
+                 ;; discards
+                 me-discard (r/cursor game-state [me-side :discard])
+                 op-discard (r/cursor game-state [op-side :discard])
+                 ;; user settings
+                 me-user (r/cursor game-state [me-side :user])
+                 op-user (r/cursor game-state [op-side :user])
+                 ;; prompts
+                 me-prompt (r/cursor game-state [me-side :prompt])
+                 prompt-state (r/cursor game-state [me-side :prompt-state])
+                 ;; identity cards
+                 me-ident (r/cursor game-state [me-side :identity])
+                 op-ident (r/cursor game-state [op-side :identity])
+                 ;; score areas
+                 me-scored (r/cursor game-state [me-side :scored])
+                 op-scored (r/cursor game-state [op-side :scored])
+                 me-agenda-point (r/cursor game-state [me-side :agenda-point])
+                 op-agenda-point (r/cursor game-state [op-side :agenda-point])
+                 ;; servers
+                 corp-servers (r/cursor game-state [:corp :servers])
+                 corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
+                 runner-rig (r/cursor game-state [:runner :rig])
+                 sfx (r/cursor game-state [:sfx])]
+             [:div.gameview
+              [:div.gameboard
+               (let [me-keep (r/cursor game-state [me-side :keep])
+                     op-keep (r/cursor game-state [op-side :keep])
+                     me-quote (r/cursor game-state [me-side :quote])
+                     op-quote (r/cursor game-state [op-side :quote])]
+                 [build-start-box me-ident me-user me-hand prompt-state me-keep op-ident op-user op-keep me-quote op-quote side])
 
-                 [build-win-box game-state]
+               [build-win-box game-state]
 
-                 [:div {:class (if (:replay @game-state)
-                                 (case @replay-side
-                                   :runner (get-in @game-state [:runner :user :options :background] "lobby-bg")
-                                   :corp (get-in @game-state [:corp :user :options :background] "lobby-bg")
-                                   :spectator @background)
-                                 @background)}]
+               [:div {:class (if (:replay @game-state)
+                               (case @replay-side
+                                 :runner (get-in @game-state [:runner :user :options :background] "lobby-bg")
+                                 :corp (get-in @game-state [:corp :user :options :background] "lobby-bg")
+                                 :spectator @background)
+                               @background)}]
 
-                 [:div.right-pane
-                  [card-zoom-view zoom-card]
+               [:div.right-pane
+                [card-zoom-view zoom-card]
 
-                  (if (:replay @game-state)
-                    [content-pane :log :settings :notes :notes-shared]
-                    [content-pane :log :settings])]
+                (if (:replay @game-state)
+                  [content-pane :log :settings :notes :notes-shared]
+                  [content-pane :log :settings])]
 
-                 [:div.centralpane
-                  (if (= op-side :corp)
-                    [board-view-corp me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard corp-servers run]
-                    [board-view-runner me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard runner-rig run])
-                  (if (= me-side :corp)
-                    [board-view-corp me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard corp-servers run]
-                    [board-view-runner me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard runner-rig run])]
+               [:div.centralpane
+                (if (= op-side :corp)
+                  [board-view-corp me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard corp-servers run]
+                  [board-view-runner me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard runner-rig run])
+                (if (= me-side :corp)
+                  [board-view-corp me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard corp-servers run]
+                  [board-view-runner me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard runner-rig run])]
 
-                 [:div.leftpane
-                  [:div.opponent
-                   [hand-view op-side op-hand op-hand-size op-hand-count (atom nil) (= @side :spectator) "opponent"]]
+               [:div.leftpane
+                [:div.opponent
+                 [hand-view op-side op-hand op-hand-size op-hand-count (atom nil) (= @side :spectator) "opponent"]]
 
-                  [:div.inner-leftpane
-                   [audio-component {:sfx sfx}]
+                [:div.inner-leftpane
+                 [audio-component {:sfx sfx}]
 
-                   [:div.left-inner-leftpane
+                 [:div.left-inner-leftpane
+                  [:div
+                   [stats-view opponent]
+                   [scored-view op-scored op-agenda-point false]]
+                  [:div
+                   [scored-view me-scored me-agenda-point true]
+                   [stats-view me]]]
+
+                 [:div.right-inner-leftpane
+                  (let [op-rfg (r/cursor game-state [op-side :rfg])
+                        op-current (r/cursor game-state [op-side :current])
+                        op-play-area (r/cursor game-state [op-side :play-area])
+                        me-rfg (r/cursor game-state [me-side :rfg])
+                        me-current (r/cursor game-state [me-side :current])
+                        me-play-area (r/cursor game-state [me-side :play-area])]
                     [:div
-                     [stats-view opponent]
-                     [scored-view op-scored op-agenda-point false]]
-                    [:div
-                     [scored-view me-scored me-agenda-point true]
-                     [stats-view me]]]
+                     (when-not (:replay @game-state) [starting-timestamp @start-date @timer])
+                     [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
+                     [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
+                     [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
+                     [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
+                     [rfg-view op-current (tr [:game.current "Current"]) false]
+                     [rfg-view me-current (tr [:game.current "Current"]) false]])
+                  (when-not (= @side :spectator)
+                    [button-pane {:side me-side :active-player active-player :run run :encounters encounters
+                                  :end-turn end-turn :runner-phase-12 runner-phase-12
+                                  :corp-phase-12 corp-phase-12 :corp corp :runner runner
+                                  :me me :opponent opponent :prompt-state prompt-state}])]]
 
-                   [:div.right-inner-leftpane
-                    (let [op-rfg (r/cursor game-state [op-side :rfg])
-                          op-current (r/cursor game-state [op-side :current])
-                          op-play-area (r/cursor game-state [op-side :play-area])
-                          me-rfg (r/cursor game-state [me-side :rfg])
-                          me-current (r/cursor game-state [me-side :current])
-                          me-play-area (r/cursor game-state [me-side :play-area])]
-                      [:div
-                       (when-not (:replay @game-state) [starting-timestamp @start-date @timer])
-                       [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
-                       [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
-                       [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
-                       [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
-                       [rfg-view op-current (tr [:game.current "Current"]) false]
-                       [rfg-view me-current (tr [:game.current "Current"]) false]])
-                    (when-not (= @side :spectator)
-                      [button-pane {:side me-side :active-player active-player :run run :encounters encounters
-                                    :end-turn end-turn :runner-phase-12 runner-phase-12
-                                    :corp-phase-12 corp-phase-12 :corp corp :runner runner
-                                    :me me :opponent opponent :prompt-state prompt-state}])]]
-
-                  [:div.me
-                   [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true "me"]]]]
-                (when (:replay @game-state)
-                  [:div.bottompane
-                   [replay-panel]])]))))})))
+                [:div.me
+                 [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true "me"]]]]
+              (when (:replay @game-state)
+                [:div.bottompane
+                 [replay-panel]])])))})))

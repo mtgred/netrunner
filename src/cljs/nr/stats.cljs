@@ -229,8 +229,8 @@
     (fetch-game-history)
 
     (fn []
-      (when (= "/stats" (first @active))
-        [:div.page-container
+      [:div.page-container
+       (when (= "/stats" (first @active))
          [:div.lobby.panel.blue-shade
           [left-panel state stats]
-          [right-panel state list-scroll-top log-scroll-top]]]))))
+          [right-panel state list-scroll-top log-scroll-top]])])))
