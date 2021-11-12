@@ -1,21 +1,22 @@
 (ns web.angel-arena
-  (:require [clojure.string :refer [lower-case capitalize]]
-            [game.core.say :refer [system-msg]]
-            [game.core.winning :refer [win]]
-            [game.utils :refer [in-coll?]]
-            [jinteki.utils :refer [other-side]]
-            [web.angel-arena.runs :refer [start-run finish-run add-new-match]]
-            [web.angel-arena.utils :refer [supported-formats get-runs get-deck-from-id get-current-deck
-                                           inactivity-periods max-inactivity-count]]
-            [web.game :refer [swap-and-send-diffs!]]
-            [web.lobby :refer [all-games client-gameids game-for-id close-lobby refresh-lobby refresh-lobby-assoc-in]]
-            [web.stats :as stats]
-            [web.utils :refer [response json-response average]]
-            [web.ws :as ws]
-            [monger.collection :as mc]
-            [monger.operators :refer :all]
-            [monger.query :as mq]
-            [clj-time.core :as t]))
+  (:require
+    [clj-time.core :as t]
+    [clojure.string :refer [capitalize lower-case]]
+    [game.core.say :refer [system-msg]]
+    [game.core.winning :refer [win]]
+    [game.utils :refer [in-coll?]]
+    [jinteki.utils :refer [other-side]]
+    [monger.operators :refer :all]
+    [monger.query :as mq]
+    [web.angel-arena.runs :refer [add-new-match finish-run start-run]]
+    [web.angel-arena.utils :refer [get-deck-from-id get-runs inactivity-periods
+                                   max-inactivity-count supported-formats]]
+    [web.game :refer [swap-and-send-diffs!]]
+    [web.lobby :refer [all-games close-lobby game-for-id refresh-lobby
+                       refresh-lobby-assoc-in uid-gameids]]
+    [web.stats :as stats]
+    [web.utils :refer [average json-response response]]
+    [web.ws :as ws]))
 
 (defonce arena-queue (atom []))
 (defonce arena-queue-times (atom (into (hash-map)
@@ -32,7 +33,6 @@
 (defmethod ws/-msg-handler :angel-arena/start-run
   [{{db :system/db
      {:keys [username]} :user} :ring-req
-    client-id :client-id
     {:keys [deck-id]} :?data}]
   (when username
     (try
@@ -48,7 +48,7 @@
 (defmethod ws/-msg-handler :angel-arena/abandon-run
   [{{db :system/db
      {:keys [username]} :user} :ring-req
-    client-id :client-id
+    uid :uid
     {:keys [deck-id]} :?data}]
   (when username
     (try
@@ -58,7 +58,7 @@
             side (keyword (lower-case (get-in deck [:identity :side])))]
         (when (get-in runs [form side]) ; there's a run in this side and format
           (finish-run db username runs deck)
-          (ws/broadcast-to! [client-id] :angel-arena/run-update {})))
+          (ws/broadcast-to! [uid] :angel-arena/run-update {})))
       (catch Exception e
         (println "Caught exception while abandoning run: " (.getMessage e))))))
 
@@ -75,8 +75,7 @@
       (swap! arena-queue-times update-in [form side] conj queue-time))))
 
 (defn fetch-queue-times
-  [{db :system/db
-    {username :username} :user}]
+  [{{username :username} :user}]
   (if username
     (json-response 200
                    (into (hash-map)
@@ -112,9 +111,9 @@
                                  :text "This game is played in the Angel Arena, a competitive matchmaking system. Wins and losses of your run are being tracked. If by any error, the game should prematurely register a win, please use the /clear-win command to continue playing the game. Good luck and have fun!"} ]
               :last-update     (t/now)}]
     (refresh-lobby gameid game)
-    (swap! client-gameids assoc (:ws-id player1) gameid (:ws-id player2) gameid)
+    (swap! uid-gameids assoc (:uid player1) gameid (:uid player2) gameid)
     ; send clients message to make them join lobby
-    (ws/broadcast-to! [(:ws-id player1) (:ws-id player2)] :lobby/select {:gameid gameid})
+    (ws/broadcast-to! [(:uid player1) (:uid player2)] :lobby/select {:gameid gameid})
     ; send server message to start game
     (ws/event-msg-handler (assoc event :id :netrunner/start))
     gameid))
@@ -122,7 +121,7 @@
 (defmethod ws/-msg-handler :angel-arena/queue
   [{{db :system/db
      {:keys [username] :as user} :user} :ring-req
-    client-id :client-id
+    uid :uid
     {:keys [deck-id]} :?data
     :as event}]
   (when username
@@ -135,7 +134,7 @@
                  ; check that player isn't already queueing
                  (empty? (filter #(= username (:username %)) @arena-queue)))
         (let [player {:user user
-                      :ws-id client-id
+                      :uid uid
                       :format form
                       :side (capitalize (name side))
                       :deck deck
@@ -182,17 +181,15 @@
             (swap! arena-queue conj player)))))))
 
 (defmethod ws/-msg-handler :angel-arena/dequeue
-  [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
-    client-id :client-id}]
+  [{{{:keys [username]} :user} :ring-req}]
   (when username
     (remove-from-queue username)))
 
 (defn check-for-inactivity
   "Called by a background thread to notify lobbies without activity."
-  [db]
+  [_db]
   ;TODO: Turn this into an option for all games, if it is liked by the community
-  (doseq [{:keys [state gameid last-update started original-players players] :as game}
+  (doseq [{:keys [state gameid last-update original-players players] :as game}
           (filter #(= "angel-arena" (:room %)) (vals @all-games))]
     (if (= 1 (count players))
       ; Player leaves
@@ -242,8 +239,8 @@
                     ; still no action
                     (when (t/after? (t/now) (t/plus warning-time (t/seconds period-to-react)))
                       ; reaction period over
-                      (do (swap! state assoc-in [:angel-arena-info :inactivity-warning :stage] 2)
-                          (swap-and-send-diffs! game)))))
+                      (swap! state assoc-in [:angel-arena-info :inactivity-warning :stage] 2)
+                      (swap-and-send-diffs! game))))
               (when-let [{:keys [warning-time]} (get-in @state [:angel-arena-info :inactivity-warning])]
                 (when (t/after? last-update warning-time)
                   ; there was an action after the warning
@@ -251,12 +248,10 @@
                   (swap-and-send-diffs! game))))))))))
 
 (defmethod ws/-msg-handler :angel-arena/more-time
-  [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
-    client-id :client-id
+  [{{{:keys [username]} :user} :ring-req
     {:keys [gameid]} :?data}]
   (when-let [{:keys [state] :as game} (game-for-id (java.util.UUID/fromString gameid))]
-    (when-let [{:keys [stage inactive-side inactive-user warning-time period-to-react]}
+    (when-let [{:keys [inactive-side inactive-user]}
                (get-in @state [:angel-arena-info :inactivity-warning])]
       (when (or (= username (get-in @state [:corp :user :username]))
                 (= username (get-in @state [:runner :user :username])))
@@ -273,11 +268,10 @@
 
 (defmethod ws/-msg-handler :angel-arena/claim-victory
   [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
-    client-id :client-id
+     {:keys [username]} :user} :ring-req
     {:keys [gameid]} :?data}]
   (when-let [{:keys [state] :as game} (game-for-id (java.util.UUID/fromString gameid))]
-    (when-let [{:keys [stage inactive-side inactive-user warning-time period-to-react]}
+    (when-let [{:keys [stage inactive-side]}
                (get-in @state [:angel-arena-info :inactivity-warning])]
       (when (or (= username (get-in @state [:corp :user :username]))
                 (= username (get-in @state [:runner :user :username])))
@@ -292,11 +286,10 @@
 
 (defmethod ws/-msg-handler :angel-arena/cancel-match
   [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
-    client-id :client-id
+     {:keys [username]} :user} :ring-req
     {:keys [gameid]} :?data}]
   (when-let [{:keys [state] :as game} (game-for-id (java.util.UUID/fromString gameid))]
-    (when-let [{:keys [stage inactive-side inactive-user warning-time period-to-react]}
+    (when-let [{:keys [stage inactive-side]}
                (get-in @state [:angel-arena-info :inactivity-warning])]
       (when (or (= username (get-in @state [:corp :user :username]))
                 (= username (get-in @state [:runner :user :username])))

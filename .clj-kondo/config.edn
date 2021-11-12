@@ -59,6 +59,9 @@
            game.core/effect game.macros/effect
            game.core/msg game.macros/msg
            game.core/wait-for game.macros/wait-for
-           game.macros-test/deftest-pending clojure.test/deftest}
+           game.macros-test/deftest-pending clojure.test/deftest
+           monger.operators/defoperator clojure.core/def
+           monger.query/with-collection clojure.core/->
+           }
  :config-paths ["rewrite-clj/rewrite-clj"]
  }

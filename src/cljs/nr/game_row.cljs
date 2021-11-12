@@ -5,7 +5,7 @@
             [nr.auth :refer [authenticated] :as auth]
             [nr.player-view :refer [player-view]]
             [nr.sounds :refer [resume-sound]]
-            [nr.utils :refer [slug->format cond-button]]
+            [nr.utils :refer [slug->format]]
             [nr.translations :refer [tr tr-format tr-watch-join]]
             [nr.ws :as ws]
             [jinteki.utils :refer [superuser?]]))

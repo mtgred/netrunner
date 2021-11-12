@@ -1,16 +1,16 @@
 (ns web.angel-arena.stats
-  (:require [clojure.string :refer [lower-case]]
-            [web.angel-arena.runs :refer [finish-run]]
-            [web.angel-arena.utils :refer [get-runs get-losses get-deck-from-id]]
-            [web.mongodb :refer [object-id]]
-            [web.ws :as ws]
-            [monger.collection :as mc]
-            [monger.operators :refer :all]))
+  (:require
+    [clojure.string :refer [lower-case]]
+    [monger.collection :as mc]
+    [monger.operators :refer :all]
+    [web.angel-arena.runs :refer [finish-run]]
+    [web.angel-arena.utils :refer [get-deck-from-id get-losses get-runs]]
+    [web.ws :as ws]))
 
 (defonce max-losses 3)
 
 (defn- enter-winner
-  [db player {:keys [gameid format ending-players state] :as game}]
+  [db player {:keys [gameid ending-players state]}]
   (try
     (let [username (get-in player [:user :username])
           other-player (first (filter #(not= username (get-in % [:user :username])) ending-players))
@@ -34,7 +34,7 @@
       (println "Caught exception entering winner: " (.getMessage e)))))
 
 (defn game-finished
-  [db {:keys [gameid ending-players original-players state format state] :as game}]
+  [db {:keys [ending-players original-players] :as game}]
   (doall
     (for [player original-players]
       (let [username (get-in player [:user :username])
@@ -45,4 +45,4 @@
           (when-let [deck (get-deck-from-id db username (get-in runs [form side :deck-id]))]
             (when (<= max-losses (get-losses (get-in runs [form side])))
               (finish-run db username runs deck))
-            (ws/broadcast-to! [(:ws-id end-player)] :angel-arena/run-update {})))))))
+            (ws/broadcast-to! [(:uid end-player)] :angel-arena/run-update {})))))))

@@ -46,8 +46,8 @@
 (defmethod ws/-msg-handler :netrunner/state [{data :?data}] (reset-game (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/start [{data :?data}] (launch-game (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/diff [{data :?data}] (handle-diff (parse-state data)))
-(defmethod ws/-msg-handler :netrunner/timeout [{data :?data}] (handle-timeout (parse-state data)))
-(defmethod ws/-msg-handler :netrunner/error [{data :?data}] (handle-error))
+(defmethod ws/-msg-handler :netrunner/timeout [{data :?data}] (handle-timeout data))
+(defmethod ws/-msg-handler :netrunner/error [_] (handle-error))
 
 (defn send-command
   ([command] (send-command command nil))

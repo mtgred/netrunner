@@ -43,7 +43,7 @@
          (do
            (println "Create indexes failed" (.getMessage e))
            (.printStackTrace e)))
-       (finally (when db? (disconnect system)))))))
+       (finally (when-not db? (disconnect system)))))))
 
 (defn drop-indexes
   "Drop all indexes except the index on the `_id` field."

@@ -1,6 +1,7 @@
 (ns nr.angel-arena
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [clojure.string :refer [capitalize lower-case]]
+            [cljs.core.async :refer [<!]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :refer [superuser?]]
             [nr.ajax :refer [GET]]
@@ -10,7 +11,6 @@
             [nr.deckbuilder :refer [deck-name]]
             [nr.deck-status :refer [deck-format-status-span]]
             [nr.game-row :refer [join-game]]
-            [nr.history :refer [navigate]]
             [nr.player-view :refer [user-status-span]]
             [nr.sounds :refer [resume-sound]]
             [nr.translations :refer [tr tr-side tr-format tr-pronouns]]

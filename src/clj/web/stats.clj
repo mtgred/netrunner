@@ -1,19 +1,20 @@
 (ns web.stats
-  (:require [clojure.string :refer [lower-case]]
-            [web.mongodb :refer [object-id]]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [monger.operators :refer :all]
-            [monger.query :as mq]
-            [web.angel-arena.stats :as angel-arena-stats]
-            [web.pages :as pages]
-            [web.ws :as ws]
-            [web.utils :refer [response json-response]]
-            [game.utils :refer [dissoc-in]]
-            [jinteki.cards :refer [all-cards]]
-            [clojure.string :refer [lower-case]]
-            [cheshire.core :as json]
-            [ring.util.request :refer [request-url]]))
+  (:require
+    [cheshire.core :as json]
+    [clojure.string :refer [lower-case]]
+    [game.utils :refer [dissoc-in]]
+    [jinteki.cards :refer [all-cards]]
+    [monger.collection :as mc]
+    [monger.operators :refer :all]
+    [monger.query :as mq]
+    [monger.result :refer [acknowledged?]]
+    [ring.util.request :refer [request-url]]
+    [web.angel-arena.stats :as angel-arena-stats]
+    [web.mongodb :refer [object-id]]
+    [web.pages :as pages]
+    [web.user :refer [active-user?]]
+    [web.utils :refer [json-response response]]
+    [web.ws :as ws]))
 
 (defn clear-userstats-handler
   "Clear any statistics for a given user-id contained in a request"
@@ -132,9 +133,9 @@
             deck-id (get-in p [:deck :_id])
             userstats (:stats (stats-for-user db user-id))
             deckstats (:stats (stats-for-deck db deck-id))]
-        (ws/broadcast-to! [(:ws-id p)] :stats/update {:userstats userstats
-                                                      :deck-id   (str deck-id)
-                                                      :deckstats deckstats})))))
+        (ws/broadcast-to! [(:uid p)] :stats/update {:userstats userstats
+                                                    :deck-id (str deck-id)
+                                                    :deckstats deckstats})))))
 
 (defn game-started
   [db {:keys [gameid date start-date title room players format]}]
@@ -213,8 +214,8 @@
 
 (defn history
   [{db :system/db
-    {username :username} :user}]
-  (if username
+    {username :username :as user} :user}]
+  (if (active-user? user)
     (let [games (->> (mq/with-collection db "game-logs"
                        (mq/find {$or [{:corp.player.username username}
                                       {:runner.player.username username}]})
@@ -227,9 +228,9 @@
 
 (defn fetch-log
   [{db :system/db
-    {username :username} :user
+    user :user
     {:keys [gameid]} :params}]
-  (if username
+  (if (active-user? user)
     (let [{:keys [log]} (mc/find-one-as-map db "game-logs" {:gameid gameid} ["log"])
           log (or log {})]
       (response 200 log))
@@ -237,9 +238,9 @@
 
 (defn fetch-annotations
   [{db :system/db
-    {username :username} :user
+    {username :username :as user} :user
     {:keys [gameid]}     :params}]
-  (if username
+  (if (active-user? user)
     (let [{:keys [corp runner replay-shared annotations]}
           (mc/find-one-as-map db "game-logs" {:gameid gameid} ["corp" "runner" "replay-shared" "annotations"])
           annotations (or annotations [])]
@@ -254,13 +255,12 @@
   (let [stats (mc/find-one-as-map db "game-logs" {:gameid (str gameid)} ["stats"])]
     (-> stats :stats :time :elapsed)))
 
-(defn check-annotations-size [replay annotations]
-  (let [num-diffs (count (:history replay))]
-    ; Not more than 50k characters text
-    (>= 50000
-        (+ (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :corp]))))
-           (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :runner]))))
-           (reduce + (map #(count (:notes %)) (vals (:clicks annotations))))))))
+(defn check-annotations-size [annotations]
+  ; Not more than 50k characters text
+  (>= 50000
+      (+ (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :corp]))))
+         (reduce + (map #(count (:notes %)) (vals (get-in annotations [:turns :runner]))))
+         (reduce + (map #(count (:notes %)) (vals (:clicks annotations)))))))
 
 (defn publish-annotations
   [{db :system/db
@@ -275,7 +275,7 @@
                 (= username (get-in runner [:player :username]))))
       (if (empty? replay)
         (response 404 {:message "Replay not found"})
-        (if (check-annotations-size replay body)
+        (if (check-annotations-size body)
           (let [new-annotations (conj annotations
                                       {:username username
                                        :date (:date body)

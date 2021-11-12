@@ -1,19 +1,18 @@
 (ns tasks.load-generator
   (:require
-    ;; external
     [clj-uuid :as uuid]
     [clojure.set :as set]
     [clojure.string :as str]
     [clojure.tools.cli :refer [parse-opts]]
     [gniazdo.core :as ws]
     [monger.collection :as mc]
-    [monger.operators :refer [$in $nin]]
+    [monger.operators :refer [$in]]
     [org.httpkit.client :as http]
-    ;; internal
+    [web.lobby :refer [all-games]]
     [web.system :refer [start stop]]
-    [web.ws :as game-ws-handler]
-    [web.lobby :refer [all-games]])
-  (:import java.net.URLEncoder))
+    [web.ws :as game-ws-handler])
+  (:import
+    java.net.URLEncoder))
 
 ;; This print guarantees a coherent print (i.e. parallel prints will not be interleaved)
 (defn safe-println [& more]
@@ -73,7 +72,7 @@
     (.start client)
 
     (safe-println "Login Corp")
-    (ws/connect (str "ws://localhost:1042/ws"
+    (ws/connect (str "ws://localhost:1042/chsk"
                      "?client-id=" corp-client-id
                      "&csrf-token=" (URLEncoder/encode (get corp-login "X-CSRF-Token")))
                 :client client
@@ -83,7 +82,7 @@
                 :on-close (fn [x y] (safe-println "Corp Disconnected"))
                 :headers corp-login)
     (safe-println "Login Runner")
-    (ws/connect (str "ws://localhost:1042/ws"
+    (ws/connect (str "ws://localhost:1042/chsk"
                      "?client-id=" runner-client-id
                      "&csrf-token=" (URLEncoder/encode (get runner-login "X-CSRF-Token")))
                 :client client
@@ -96,6 +95,7 @@
     ;; Corp create lobby
     (game-ws-handler/-msg-handler {:id :lobby/create :ring-req {:user {:username "TestCorp"}}
                                    :client-id corp-client-id
+                                   :uid "TestCorp"
                                    :?data {:title "Performance Game"
                                            :format "standard"
                                            :allow-spectator true
@@ -111,18 +111,21 @@
                                      :ring-req {:system/db db
                                                 :user {:username "TestRunner"}}
                                      :client-id runner-client-id
+                                     :uid "TestRunner"
                                      :?data {:gameid game-id
                                              :password ""}})
       ;; Select decks
       (game-ws-handler/-msg-handler {:id :lobby/deck
                                      :ring-req {:system/db db
                                                 :user {:username "TestCorp"}}
+                                     :uid "TestCorp"
                                      :client-id corp-client-id
                                      ;; find one deck where :identity :side "Corp", then get the _id
                                      :?data (str (some #(if (= "Corp" ((% :identity) :side)) (% :_id)) corp-decks))})
       (game-ws-handler/-msg-handler {:id :lobby/deck
                                      :ring-req {:system/db db
                                                 :user {:username "TestRunner"}}
+                                     :uid "TestRunner"
                                      :client-id runner-client-id
                                      ;; find one deck where :identity :side "Runner", then get the _id
                                      :?data (str (some #(if (= "Runner" ((% :identity) :side)) (% :_id)) runner-decks))})
@@ -131,7 +134,7 @@
           (fn [n]
             (let [userClientID (uuid/to-string (uuid/v1))
                   creds (login (str "TestUser" n) "password")
-                  socket (ws/connect (str "ws://localhost:1042/ws"
+                  socket (ws/connect (str "ws://localhost:1042/chsk"
                                           "?client-id=" userClientID
                                           "&csrf-token=" (URLEncoder/encode (get creds "X-CSRF-Token")))
                                      :client client
@@ -151,6 +154,7 @@
       (game-ws-handler/-msg-handler {:id :netrunner/start
                                      :ring-req {:system/db db
                                                 :user {:username "TestCorp"}}
+                                     :uid "TestCorp"
                                      :client-id corp-client-id})
       (safe-println "Started game"))))
 

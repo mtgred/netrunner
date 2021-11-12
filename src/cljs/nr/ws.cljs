@@ -1,26 +1,18 @@
 (ns nr.ws
-  (:require-macros
-    [cljs.core.async.macros :as asyncm :refer [go go-loop]])
   (:require
-    [cljs.core.async :as async :refer [<! >! put! chan]]
-    [nr.utils :refer [non-game-toast]]
-    [nr.ajax :refer [?csrf-token]]
-    [nr.appstate :refer [app-state]]
-    [nr.gameboard.state :refer [lock game-state]]
-    [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
+   [nr.ajax :refer [?csrf-token]]
+   [nr.appstate :refer [app-state]]
+   [nr.gameboard.state :refer [game-state lock]]
+   [nr.utils :refer [non-game-toast]]
+   [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
-  (let [{:keys [chsk ch-recv send-fn state]}
-        (sente/make-channel-socket! "/ws" ?csrf-token {:type :ws
-                                                       :wrap-recv-evs? false})]
-    (def chsk chsk)
-    (def ch-chsk ch-recv)    ; ChannelSocket's receive channel
-    (def ws-send! send-fn)   ; ChannelSocket's send API fn
-    (def chsk-state state))) ; Watchable, read-only atom
-
-
-(enable-console-print!)
+  (let [{:keys [ch-recv send-fn]}
+        (sente/make-channel-socket-client! "/chsk" ?csrf-token {:type :auto
+                                                                :wrap-recv-evs? false})]
+    (def ch-chsk ch-recv) ; ChannelSocket's receive channel
+    (def ws-send! send-fn))) ; ChannelSocket's send API fn
 
 (defmulti -msg-handler
   "Multimethod to handle Sente `event-msg`s"
@@ -37,10 +29,8 @@
 (defmethod -msg-handler :default [event]
   (println "unknown event message" event))
 
-(defmethod -msg-handler :chsk/handshake [event] nil)
-
-(defmethod -msg-handler :chsk/ws-ping [event]
-  nil)
+(defmethod -msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
+(defmethod -msg-handler :chsk/ws-ping [_])
 
 (defn resync []
   (ws-send! [:netrunner/resync {:gameid-str (:gameid @game-state)}]))

@@ -12,6 +12,7 @@
     ;; internal
     [tasks.utils :refer [replace-collection]]
     [tasks.images :refer [add-images]]
+    [tasks.index :refer [create-indexes]]
     [tasks.setup :refer [connect disconnect]]))
 
 (def ^:const edn-base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
@@ -21,7 +22,7 @@
   [localpath]
   (if localpath
     ((comp edn/read-string slurp) (str localpath "/edn/raw_data.edn"))
-    (let [{:keys [status body error] :as resp} @(http/get edn-base-url)]
+    (let [{:keys [status body error]} @(http/get edn-base-url)]
       (cond
         error (throw (Exception. (str "Failed to download file " error)))
         (= 200 status) (edn/read-string body)
@@ -101,15 +102,14 @@
              {:upsert true}))
 
 (defn fetch-data
-  [{:keys [card-images db local db-connection] :as options}]
+  [{:keys [card-images db local]}]
   (let [edn (dissoc (download-edn-data local) :promos)]
     (doseq [[k data] edn
             :let [filename (str "data/" (name k) ".edn")]]
       (write-to-file filename data)
-      (println (str "Wrote data/" filename ".edn to disk")))
+      (println (str "Wrote " filename " to disk")))
     (when db
-      (let [{{:keys [db]} :mongodb/connection :as system}
-            (if db-connection ({:mongodb/connection {:db db}}) (connect))]
+      (let [{{:keys [db]} :mongodb/connection :as system} (connect)]
         (try
           (doseq [[k data] edn
                   :let [col (name k)]]
@@ -119,7 +119,8 @@
           (when card-images
             (download-card-images (:cards edn)))
           (add-images db)
-          (finally (when (not db-connection) (disconnect system))))))
+          (create-indexes db)
+          (finally (disconnect system)))))
     (println (count (:cycles edn)) "cycles imported")
     (println (count (:sets edn)) "sets imported")
     (println (count (:mwls edn)) "MWL versions imported")
