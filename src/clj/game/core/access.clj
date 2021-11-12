@@ -719,13 +719,13 @@
                          (<= (+ max-access total-mod) (:chosen access-amount)))]
     (and (not (get-in @state [:run :prevent-access]))
          (not limit-reached?)
-         (pos? (->> (concat (when (not (:prevent-hand-access (:run @state)))
-                              (get-in @state [:corp :hand]))
-                            (when-not no-root
-                              (root-content state :hq)))
-                    (remove already-accessed-fn)
-                    count
-                    (+ total-mod))))))
+         (pos? (reduce + (concat (when-not (:prevent-hand-access (:run @state))
+                                   (let [hand (get-in @state [:corp :hand])
+                                         hand-candidates (remove already-accessed-fn hand)]
+                                     [(min (:random-access-limit access-amount) (count hand-candidates))]))
+                                 (when-not no-root
+                                   [(count (root-content state :hq already-accessed-fn))])
+                                 [total-mod]))))))
 
 (defn- access-cards-from-hq
   [state]
