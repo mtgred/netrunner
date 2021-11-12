@@ -431,6 +431,7 @@
                       {:type :trash-cost
                        :value -1}]
    :events [{:event :runner-trash
+             :once-per-instance true
              :req (req (and (corp? (:card target))
                             (first-event? state side :runner-trash
                                           (fn [targets]

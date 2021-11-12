@@ -1271,6 +1271,29 @@
         (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
         (is (= (:credit (get-runner)) (+ 1 credits)) "Demolisher earns a credit when trashing with Imp"))))
 
+(deftest demolisher-gain-one-credit-when-trashing-multiple
+  ;; gain one credit when trashing multiple
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                     :hand ["Tithe"]}
+              :runner {:deck [(qty "Sure Gamble" 5)]
+                       :hand ["Demolisher" "Persephone" "Sure Gamble"]
+                       :credits 10}})
+   (play-from-hand state :corp "Tithe" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Demolisher")
+   (play-from-hand state :runner "Persephone")
+   (run-on state "HQ")
+   (rez state :corp (get-ice state :hq 0))
+   (run-continue state :encounter-ice)
+   (fire-subs state (get-ice state :hq 0))
+   (run-continue state :movement)
+   (changes-val-macro
+    1 (:credit (get-runner))
+    "Demolisher provides only 1 credit though 2 cards were trashed"
+    (click-prompt state :runner "Yes"))
+   (is (= 2 (count (:discard (get-corp)))))))
+
 (deftest desperado
   ;; Desperado - Gain 1 MU and gain 1 credit on successful run
   (do-game
