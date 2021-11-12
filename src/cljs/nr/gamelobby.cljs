@@ -693,13 +693,13 @@
                cards-loaded (r/cursor app-state [:cards-loaded])
                active (r/cursor app-state [:active-page])
                visible-formats (r/cursor app-state [:visible-formats])]
-    (when (and (= "/play" (first @active)) @cards-loaded)
-      (authenticated (fn [_] nil))
-      (when (and (not (or @gameid (:editing @s)))
-                 (some? (:create-game-deck @app-state)))
-        (new-game s))
-      [:div.container
-        [:div.lobby-bg]
-        [:div.lobby.panel.blue-shade
-          [games-list-panel s games gameid password-gameid user visible-formats]
-          [right-panel decks s games gameid sets user]]])))
+    [:div.container
+     [:div.lobby-bg]
+     (when (and (= "/play" (first @active)) @cards-loaded)
+       (authenticated (fn [_] nil))
+       (when (and (not (or @gameid (:editing @s)))
+                  (some? (:create-game-deck @app-state)))
+         (new-game s))
+       [:div.lobby.panel.blue-shade
+        [games-list-panel s games gameid password-gameid user visible-formats]
+        [right-panel decks s games gameid sets user]])]))

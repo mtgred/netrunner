@@ -124,7 +124,7 @@
 (defn admin []
   (r/with-let [user (r/cursor app-state [:user])
                active (r/cursor app-state [:active-page])]
-    (when (and (= "/admin" (first @active))
-               (:isadmin @user))
-      [:div.page-container
-       [admin-container]])))
+    [:div.page-container
+     (when (and (= "/admin" (first @active))
+                (:isadmin @user))
+       [admin-container])]))

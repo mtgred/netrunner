@@ -218,13 +218,13 @@
                active (r/cursor app-state [:active-page])
                cobra-link (r/cursor state [:cobra-link])
                games (r/cursor app-state [:games])]
-    (when (and (= "/tournament" (first @active))
-               (:tournament-organizer @user))
-      [:div.container
+    [:div.container
+     (when (and (= "/tournament" (first @active))
+                (:tournament-organizer @user))
        [:div.lobby.panel.blue-shade
         [tournament-container state]
         [:ul.game-list
          (let [filtered-games (filter #(and @cobra-link (= @cobra-link (:cobra-link %))) @games)]
            (doall (for [game filtered-games]
                     ^{:key (:gameid game)}
-                    [game-info game])))]]])))
+                    [game-info game])))]])]))

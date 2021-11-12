@@ -1,6 +1,6 @@
 (ns nr.account
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put!] :as async]
+  (:require [cljs.core.async :refer [<!] :as async]
             [clojure.string :as s]
             [goog.dom :as gdom]
             [nr.auth :refer [valid-email?] :as auth]
@@ -88,7 +88,7 @@
   []
   (map :version (:alt-info @app-state)))
 
-(defn- alt-art-name
+(defn alt-art-name
   [version]
   (let [alt (first (filter #(= (name version) (:version %)) (:alt-info @app-state)))]
     (get alt :name "Official")))
@@ -153,7 +153,7 @@
                                                  (reset! log-top (get-in @app-state [:options :log-top])))}
         (tr [:settings.get-log-top "Get current log top"])]])))
 
-(defn change-email [s]
+(defn change-email [_]
   (let [email-state (r/atom {:flash-message ""
                              :email ""})]
     (fn [s]
@@ -233,14 +233,14 @@
                               (create-api-key s))}
       (tr [:settings.create-api-key "Create API Key"])]]))
 
-(defn account-content [user s scroll-top]
+(defn account-content [_ _ scroll-top]
   (r/create-class
     {
      :display-name "account-content"
      :component-did-mount #(set-scroll-top % @scroll-top)
      :component-will-unmount #(store-scroll-top % scroll-top)
      :reagent-render
-     (fn [user s scroll-top]
+     (fn [user s _]
        [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
          [:h2 (tr [:nav.settings "Settings"])]
          [:form {:on-submit #(handle-post % "/profile" s)}
@@ -542,6 +542,6 @@
     (go (swap! state assoc :api-keys (:json (<! (GET "/data/api-keys")))))
 
     (fn []
-      (when (and @user (= "/account" (first @active)))
-        [:div.page-container
-         [account-content user state scroll-top]]))))
+      [:div.page-container
+       (when (and @user (= "/account" (first @active)))
+         [account-content user state scroll-top])])))

@@ -121,7 +121,7 @@
 (defn users []
   (r/with-let [user (r/cursor app-state [:user])
                active (r/cursor app-state [:active-page])]
-    (when (and (= "/users" (first @active))
-               (:isadmin @user))
-      [:div.page-container
-       [users-container]])))
+    [:div.page-container
+     (when (and (= "/users" (first @active))
+                (:isadmin @user))
+       [users-container])]))

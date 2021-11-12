@@ -93,6 +93,6 @@
     (go (swap! about-state assoc :donors (:json (<! (GET "/data/donors")))))
 
     (fn []
-      (when (= "/about" (first @active))
-        [:div.page-container
-         [about-content about-state scroll-top]]))))
+      [:div.page-container
+       (when (= "/about" (first @active))
+         [about-content about-state scroll-top])])))

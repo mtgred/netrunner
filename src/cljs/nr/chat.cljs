@@ -304,9 +304,10 @@
             (swap! s assoc :zoom card))))
 
     (fn []
-      (when (= "/" (first @active))
-        [:div.container
-         [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
-         [news]
-         [chat s curr-msg old scroll-top]
-         [:div#version [:span (str "Version " (:app-version @app-state "Unknown"))]]]))))
+      [:div.container
+       (when (= "/" (first @active))
+         [:<>
+          [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
+          [news]
+          [chat s curr-msg old scroll-top]
+          [:div#version [:span (str "Version " (:app-version @app-state "Unknown"))]]])])))

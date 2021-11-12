@@ -1,9 +1,13 @@
 (ns nr.navbar
-  (:require [nr.appstate :refer [app-state]]
-            [nr.history :refer [history]]
-            [nr.translations :refer [tr]]
-            [nr.ws :as ws]
-            [reagent.core :as r]))
+  (:require
+   [goog.events :as events]
+   [goog.history.EventType :as EventType]
+   [nr.appstate :refer [app-state]]
+   [nr.translations :refer [tr]]
+   [nr.ws :as ws]
+   [reagent.core :as r])
+  (:import
+   goog.history.Html5History))
 
 (def navbar-links
   [{:title (tr [:nav/chat "Chat"])
@@ -43,12 +47,38 @@
    {:title (tr [:nav/users "Users"])
     :cls "users"
     :route "/users"
-    :show? #(:isadmin (:user %))
+    :show? #(or (:isadmin (:user %))
+                (:ismoderator (:user %)))
     :on-click #(ws/ws-send! [:admin/fetch-users])}
    {:title (tr [:nav/features "Features"])
     :cls "features"
     :route "/features"
     :show? #(:isadmin (:user %))}])
+
+(def tokens
+    (->> navbar-links
+         (map :route)
+         (into [])
+         (clj->js)))
+
+(def history (Html5History.))
+
+(defn navigate-to-current []
+  (let [token (first (:active-page @app-state ["/"]))
+        page-number (.indexOf tokens token)]
+    (.carousel (js/$ ".carousel") page-number)))
+
+(defn navigate [token]
+  (let [page-number (.indexOf tokens token)]
+    (.carousel (js/$ ".carousel") page-number))
+  (.setToken history token)
+  (swap! app-state assoc :active-page [token]))
+
+(events/listen history EventType/NAVIGATE #(navigate (.-token %)))
+(.setUseFragment history false)
+(.setPathPrefix history "")
+(.setEnabled history true)
+
 
 (defn navbar []
   (r/with-let [active (r/cursor app-state [:active-page])]
