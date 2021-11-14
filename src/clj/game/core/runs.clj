@@ -361,15 +361,15 @@
                            (= :encounter-ice previous-phase))
                        (get-card state ice)
                        (= (second (get-zone ice)) (first current-server)))
-        passed-all-ice (or (zero? (dec pos))
+        new-position (if pass-ice? (dec pos) pos)
+        passed-all-ice (or (zero? new-position)
                            (= :initiation previous-phase))]
     (set-phase state :movement)
     (swap! state assoc-in [:run :no-action] false)
     (when pass-ice?
       (system-msg state :runner (str "passes " (card-str state ice)))
       (queue-event state :pass-ice {:ice (get-card state ice)}))
-    (when (pos? pos)
-      (swap! state update-in [:run :position] (fnil dec 1)))
+    (swap! state assoc-in [:run :position] new-position)
     (when passed-all-ice
       (queue-event state :pass-all-ice {:ice (get-card state ice)}))
     (check-auto-no-action state)
