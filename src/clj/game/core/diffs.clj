@@ -344,6 +344,7 @@
    :position
    :corp-auto-no-action
    :cannot-jack-out
+   :current-ice
    :phase
    :next-phase
    :no-action
@@ -352,7 +353,9 @@
 (defn run-summary
   [state]
   (when-let [run (:run @state)]
-    (select-non-nil-keys run run-keys)))
+    (-> run
+        (update :current-ice #(some? (get-card state %)))
+        (select-non-nil-keys run-keys))))
 
 (defn encounter-ice-summary
   [ice state]

@@ -1390,9 +1390,14 @@
 (defn get-current-ice []
   (let [run-ice (get-run-ices)
         pos (get-in @game-state [:run :position])
-        encounter-ice (-> @game-state :encounters :ice)]
+        phase (get-in @game-state [:run :phase])
+        encounter-ice (-> @game-state :encounters :ice)
+        get-ice-from-pos? (or (= "movement" phase)
+                              (and (= "approach-ice" phase)
+                                   (get-in @game-state [:run :current-ice])))]
     (or encounter-ice
-        (when (and pos
+        (when (and get-ice-from-pos?
+                   pos
                    (pos? pos)
                    (<= pos (count run-ice)))
           (nth run-ice (dec pos))))))
@@ -1424,7 +1429,8 @@
   [run encounters]
   (let [ice (get-current-ice)]
     [:div.panel.blue-shade
-     (when @encounters
+     (when (and @encounters
+                ice)
        [:<>
         [:div {:style {:text-align "center"}
                :on-mouse-over #(card-highlight-mouse-over % ice button-channel)
@@ -1437,7 +1443,8 @@
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))])
 
      (cond
-       (= "approach-ice" (:phase @run))
+       (and (= "approach-ice" (:phase @run))
+            ice)
        [cond-button
         (str (tr [:game.rez "Rez"]) " " (get-title ice))
         (not (rezzed? ice))
@@ -1492,7 +1499,8 @@
         pass-ice? (and (= "encounter-ice" phase)
                        (= 1 (:encounter-count @encounters)))]
     [:div.panel.blue-shade
-     (when @encounters
+     (when (and @encounters
+                ice)
        [:<>
         [:div {:style {:text-align "center"}
                :on-mouse-over #(card-highlight-mouse-over % ice button-channel)
