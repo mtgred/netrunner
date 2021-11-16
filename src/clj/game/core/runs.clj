@@ -265,13 +265,14 @@
     (do (swap! state assoc-in [:run :no-action] side)
         (when (= :corp side)
           (system-msg state side "has no further action")))
-    (let [eid (make-phase-eid state nil)]
+    (let [eid (make-phase-eid state nil)
+          approached-ice (get-card state (get-current-ice state))]
       (wait-for (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-approach-ice)
                 (cond
                   (or (check-for-empty-server state)
                       (:ended (:end-run @state)))
                   (handle-end-run state side eid)
-                  (rezzed? (get-current-ice state))
+                  (rezzed? approached-ice)
                   (do (set-next-phase state :encounter-ice)
                       (start-next-phase state :runner nil))
                   :else

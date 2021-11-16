@@ -1393,8 +1393,7 @@
         phase (get-in @game-state [:run :phase])
         encounter-ice (-> @game-state :encounters :ice)
         get-ice-from-pos? (or (= "movement" phase)
-                              (and (= "approach-ice" phase)
-                                   (get-in @game-state [:run :current-ice])))]
+                              (get-in @game-state [:run :approached-ice-in-position?]))]
     (or encounter-ice
         (when (and get-ice-from-pos?
                    pos

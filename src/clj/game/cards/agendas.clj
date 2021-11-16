@@ -1719,10 +1719,8 @@
                                               :choices (vec (reverse (map str (range (inc num-ice)))))
                                               :async true
                                               :effect (req (let [target (Integer/parseInt target)]
-                                                             (wait-for (corp-install
-                                                                         state side chosen-ice chosen-server
-                                                                         {:ignore-all-cost true :index target})
-                                                                       (effect-completed state side eid))))})
+                                                             (corp-install state side eid chosen-ice chosen-server
+                                                                           {:ignore-all-cost true :index target})))})
                                            card nil))})
                             card nil))}]})
 
