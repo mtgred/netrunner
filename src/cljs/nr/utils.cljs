@@ -1,10 +1,10 @@
 (ns nr.utils
-  (:require [clojure.string :refer [join lower-case split] :as s]
-            [reagent.dom :as rd]
-            [goog.string :as gstring]
-            [goog.string.format]
-            [medley.core :refer [find-first]]
-            [nr.appstate :refer [app-state]]))
+  (:require
+   [clojure.string :refer [join] :as s]
+   [goog.string :as gstring]
+   [goog.string.format]
+   [nr.appstate :refer [app-state]]
+   [reagent.dom :as rd]))
 
 ;; Dot definitions
 (def zws "\u200B")                  ; zero-width space for wrapping dots
@@ -124,8 +124,9 @@
    "Classic" "classic"
    "Casual" "casual"})
 
-(defn regex-escape [string]
+(defn regex-escape
   "Escape characters in a string which have special meanings in regexes"
+  [string]
   (let [special-chars ".*+?[](){}^$"
         escaped-chars (map #(str "\\" %) special-chars)
         regex-escape-smap (zipmap special-chars escaped-chars)]
@@ -179,13 +180,12 @@
   "A sequence of card pattern pairs consisting of a regex, used to match a card
   name in text, and the span fragment that should replace it"
   []
-  (letfn [(span-of [title code] [:span {:class "fake-link" :data-card-title title} title])]
+  (letfn [(span-of [title] [:span {:class "fake-link" :data-card-title title} title])]
     (->> (:all-cards-and-flips @app-state)
-      (vals)
-      (filter #(not (:replaced_by %)))
-      (map (juxt :title :code))
-      (map (fn [[k v]] [k (span-of k v)]))
-      (sort-by (comp count str first) >))))
+         (vals)
+         (remove :replaced_by)
+         (map (fn [c] [(:title c) (span-of (:title c))]))
+         (sort-by (comp count str first) >))))
 
 (def card-patterns (memoize card-patterns-impl))
 
@@ -210,11 +210,12 @@
       (map (fn [[k v]] [(regex-of k) v]))
       (sort-by (comp count str first) >))))
 
-(defn replace-in-element [element [regex replacement]]
+(defn replace-in-element
   "Given a string element, split that string on `regex`, then replace the
   matches removed by split with `replacement`. The replacement is performed by
   interleaving `replacement`s into the context and dropping the last one as
   interleave always weaves in excess"
+  [element [regex replacement]]
   (if (string? element)
     (let [context (.split element regex)
           replacements (repeat replacement)]
@@ -223,22 +224,25 @@
            (filter not-empty)))
     [element]))
 
-(defn replace-in-fragment [fragment substitution]
+(defn replace-in-fragment
   "Map `replace-in-element` over each element of a fragment, and concatenate
   each returned fragment to flatten the sequence"
+  [fragment substitution]
   (reduce concat (map #(replace-in-element % substitution) fragment)))
 
-(defn set-react-key [n elem]
+(defn set-react-key
   "Given a reagent-style HTML element, set the :key attribute of the element"
+  [n elem]
   (let [head (first elem)
         attr (if (map? (second elem)) (second elem) {})
         tail (if (map? (second elem)) (drop 2 elem) (drop 1 elem))]
   (into [] (concat [head (merge attr {:key n})] tail))))
 
-(defn render-fragment-impl [fragment patterns]
+(defn render-fragment-impl
   "Run replacements for each [regex replacement] pair in patterns over a
   fragment, and index each HTML element in the return fragment with the :key
   attribute as required by React"
+  [fragment patterns]
   (let [counter (atom 0)
         set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
     (->> (reduce replace-in-fragment fragment patterns)
@@ -249,31 +253,37 @@
 
 (def render-fragment (memoize render-fragment-impl))
 
-(defn render-input [input patterns]
+(defn render-input
   "Sanitize inputs into fragments before processing them with render-fragment"
+  [input patterns]
   (if (not (or (string? input) (vector? input)))
     [:<>]
     (let [fragment (if (string? input) [:<> input] input)]
       (render-fragment fragment patterns))))
 
-(defn render-icons [input]
+(defn render-icons
   "Render all icons in a given text or HTML fragment input"
+  [input]
   (render-input input icon-patterns))
 
-(defn render-cards [input]
+(defn render-cards
   "Render all cards in a given text or HTML fragment input"
-  (if (re-find (contains-card-pattern) (or input ""))
+  [input]
+  (cond
+    (re-find (contains-card-pattern) (or input ""))
     (render-input input (card-patterns))
-    (if (not (or (string? input) (vector? input)))
-      [:<>]
-      (if (string? input) [:<> input] input))))
+    (string? input) [:<> input]
+    (vector? input) input
+    :else [:<>]))
 
-(defn render-specials [input]
+(defn render-specials
   "Render all special codes in a given text or HTML fragment input"
+  [input]
   (render-input input special-patterns))
 
-(defn render-message [input]
+(defn render-message
   "Render icons, cards and special codes in a message"
+  [input]
   (if (string? input)
     (render-specials (render-icons (render-cards input)))
     input))
@@ -311,10 +321,11 @@
 
 (defn non-game-toast
   "Display a toast warning with the specified message."
-  [msg type options]
-  (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr type)]
-    (f msg)))
+  ([msg toast-type] (non-game-toast msg toast-type nil))
+  ([msg toast-type options]
+   (set! (.-options js/toastr) (toastr-options options))
+   (let [f (aget js/toastr toast-type)]
+     (f msg))))
 
 (defn set-scroll-top
   "Set the scrollTop parameter of a reagent component"

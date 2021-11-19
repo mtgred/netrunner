@@ -8,12 +8,14 @@
   (uuid/to-string (uuid/v4)))
 
 (defn server-card
-  [title]
-  (let [card (get @all-cards title)]
-    (cond
-      (and title card) card
-      (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
-      :else (throw (Exception. (str "Tried to select server-card for " title))))))
+  ([title] (server-card title true))
+  ([title strict?]
+   (let [card (get @all-cards title)]
+     (cond
+       (and title card) card
+       (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
+       :else (when strict?
+               (throw (Exception. (str "Tried to select server-card for " title))))))))
 
 (defn server-cards
   []

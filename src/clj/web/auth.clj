@@ -1,5 +1,6 @@
 (ns web.auth
   (:require
+    [web.app-state :as app-state]
    [buddy.sign.jwt :as jwt]
    [clj-time.coerce :as c]
    [clj-time.core :as t]
@@ -171,8 +172,8 @@
     (if (acknowledged? (mc/update db "users"
                                   {:username username}
                                   {"$set" {:options (select-keys body (profile-keys))}}))
-      (do (when (get @ws/connected-users username)
-            (swap! ws/connected-users assoc-in [username :options] (select-keys body (profile-keys))))
+      (do ;(when (get-in @app-state/app-state [:users username])
+          ;  (swap! app-state/app-state assoc-in [:users username :options] (select-keys body (profile-keys))))
           (response 200 {:message "Refresh your browser"}))
       (response 404 {:message "Account not found"}))
     (response 401 {:message "Unauthorized"})))

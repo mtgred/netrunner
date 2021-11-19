@@ -1,6 +1,7 @@
 (ns web.ws
   (:require
    [clojure.core.async :refer [<! >! chan go timeout]]
+   [web.app-state :refer [register-user!]]
    [web.user :refer [active-user?]]
    [taoensso.sente :as sente]
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
@@ -10,14 +11,12 @@
                     {:user-id-fn (fn [ring-req]
                                    (or (-> ring-req :session :uid)
                                        (:client-id ring-req)))})
-      {:keys [ch-recv send-fn connected-uids
+      {:keys [ch-recv send-fn
               ajax-post-fn ajax-get-or-ws-handshake-fn]} chsk-server]
   (defonce handshake-handler ajax-get-or-ws-handshake-fn)
   (defonce post-handler ajax-post-fn)
   (defonce ch-chsk ch-recv)
-  ;; All access to send! should be through the internal buffer
-  (defonce ^:private chsk-send! send-fn)
-  (defonce connected-uids connected-uids))
+  (defn chsk-send! [uid ev] (send-fn uid ev)))
 
 ;; Maximum throughput is 25,000 client updates a second
 ;; or 1024 pending broadcast-to!'s (asyncs limit for pending takes).
@@ -61,14 +60,12 @@
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
 
-(defonce connected-users (atom {}))
-
 (defmethod -msg-handler :chsk/ws-ping [_])
 (defmethod -msg-handler :chsk/uidport-open
   [{uid :uid
     {user :user} :ring-req}]
   (when (active-user? user)
-    (swap! connected-users assoc uid user)))
+    (register-user! uid user)))
 
 (defn event-msg-handler
   "Wraps `-msg-handler` with logging, error catching, etc."
@@ -77,4 +74,4 @@
     (-msg-handler event)
     (catch Exception e
       (println "Caught an error in the message handler")
-      (.printStackTrace e))))
+      (println (.printStackTrace e)))))

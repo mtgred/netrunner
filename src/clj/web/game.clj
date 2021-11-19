@@ -10,6 +10,7 @@
     [jinteki.utils :refer [side-from-str]]
     [web.lobby :as lobby]
     [web.stats :as stats]
+    [web.app-state :as app-state]
     [web.ws :as ws]))
 
 (defn send-state-diffs!
@@ -123,6 +124,7 @@
      {:keys [username]} :user} :ring-req
     uid :uid}]
   (let [{:keys [started gameid state]} (lobby/game-for-client uid)]
+    (println :netrunner/leave uid gameid)
     (when (and started state)
       (lobby/remove-user db uid gameid)
       (when (lobby/game-for-id gameid)
@@ -241,19 +243,19 @@
         (if (and (not (lobby/already-in-game? user game))
                  (or (empty? game-password)
                      (bcrypt/check password game-password)))
-          (let [{:keys [spect-state]} (public-states state)]
-            ;; Add as a spectator, inform the client that this is the active game,
-            ;; Send existing state to spectator
-            ;; add a chat message, then send diff state to all players.
-            (ws/broadcast-to! [uid] :lobby/select {:gameid gameid
-                                                         :started started
-                                                         :state (json/generate-string spect-state)})
-            (ws/broadcast-to! [uid] :games/diff {:diff {:update {gameid (lobby/game-lobby-view gameid game)}}})
-            (lobby/spectate-game user uid gameid)
-            (main/handle-notification state (str username " joined the game as a spectator."))
-            (swap-and-send-diffs! (lobby/game-for-id gameid))
-            (when reply-fn
-              (reply-fn 200)))
+          ;; Add as a spectator, inform the client that this is the active game,
+          ;; Send existing state to spectator
+          ;; add a chat message, then send diff state to all players.
+          (do (lobby/spectate-game user uid gameid)
+              (main/handle-notification state (str username " joined the game as a spectator."))
+              (let [{:keys [spect-state]} (public-states state)]
+                (ws/broadcast-to! [uid] :lobby/select {:gameid gameid
+                                                       :started started
+                                                       :state (json/generate-string spect-state)})
+                (ws/broadcast-to! [uid] :games/diff {:diff {:update {gameid (lobby/game-lobby-view gameid game)}}})
+                (swap-and-send-diffs! (lobby/game-for-id gameid))
+                (when reply-fn
+                  (reply-fn 200))))
           (when reply-fn
             (reply-fn 403)))))
     (when reply-fn
@@ -296,7 +298,7 @@
   [{{db :system/db
      {:keys [username]} :user} :ring-req
     uid :uid}]
-  (swap! ws/connected-users dissoc uid)
+  (app-state/unregister-user! uid)
   (when-let [{:keys [gameid state]} (lobby/game-for-client uid)]
     (lobby/remove-user db uid gameid)
     (when-let [game (lobby/game-for-id gameid)]

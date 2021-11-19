@@ -9,10 +9,15 @@
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
   (let [{:keys [ch-recv send-fn]}
-        (sente/make-channel-socket-client! "/chsk" ?csrf-token {:type :auto
-                                                                :wrap-recv-evs? false})]
-    (def ch-chsk ch-recv) ; ChannelSocket's receive channel
-    (def ws-send! send-fn))) ; ChannelSocket's send API fn
+        (sente/make-channel-socket-client!
+          "/chsk"
+          ?csrf-token
+          {:type :auto
+           :wrap-recv-evs? false})]
+    (def ch-chsk ch-recv)
+    (defn ws-send!
+      ([ev] (send-fn ev))
+      ([ev ?timeout ?cb] (send-fn ev ?timeout ?cb)))))
 
 (defmulti -msg-handler
   "Multimethod to handle Sente `event-msg`s"

@@ -5,6 +5,7 @@
    [clojure.string :as s]
    [monger.collection :as mc]
    [monger.query :as q]
+   [web.app-state :as app-state]
    [web.config :refer [server-config]]
    [web.user :refer [active-user? visible-to-user]]
    [web.utils :refer [response]]
@@ -35,7 +36,7 @@
           usernames (->> messages
                          (map :username)
                          (into #{}))
-          connected-users @ws/connected-users
+          connected-users (app-state/get-users)
           visible-users (->> (for [username usernames
                                    :when (or (= (:username user) username)
                                              (visible-to-user user {:username username} connected-users))]
@@ -70,7 +71,7 @@
                        :date      (java.util.Date.)}
               inserted (mc/insert-and-return db msg-collection message)
               inserted (update inserted :_id str)
-              connected-users @ws/connected-users]
+              connected-users (app-state/get-users)]
           (doseq [uid (keys connected-users)
                   :when (or (= (:username user) uid)
                             (visible-to-user user {:username uid} connected-users))]
@@ -91,7 +92,7 @@
                   :action :delete-message
                   :date (java.util.Date.)
                   :msg msg})
-      (let [connected-users @ws/connected-users]
+      (let [connected-users (app-state/get-users)]
         (doseq [uid (keys connected-users)
                 :when (or (= (:username user) uid)
                           (visible-to-user user {:username uid} connected-users))]
@@ -111,7 +112,7 @@
                 :action :delete-all-messages
                 :date (java.util.Date.)
                 :sender sender})
-    (let [connected-users @ws/connected-users]
+    (let [connected-users (app-state/get-users)]
       (doseq [uid (keys connected-users)
               :when (or (= (:username user) uid)
                         (visible-to-user user {:username uid} connected-users))]

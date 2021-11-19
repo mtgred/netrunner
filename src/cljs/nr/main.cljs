@@ -12,7 +12,7 @@
    [nr.gameboard.actions :refer [concede mute-spectators]]
    [nr.gameboard.board :refer [gameboard]]
    [nr.gameboard.replay :refer [set-replay-side]]
-   [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
+   [nr.gamelobby :refer [filter-games game-lobby leave-game]]
    [nr.help :refer [help]]
    [nr.navbar :refer [navbar navigate navigate-to-current]]
    [nr.player-view :refer [player-view]]
@@ -29,7 +29,7 @@
                gameid (r/cursor app-state [:gameid])]
     [:div
      [:div.float-right
-      (let [c (count (filter-blocked-games @user @games (:visible-formats @app-state)))]
+      (let [c (count (filter-games @user @games (:visible-formats @app-state)))]
         (tr [:nav/game-count] c))]
      (if-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (let [user-id (-> @user :_id)
@@ -54,6 +54,7 @@
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
          (let [c (:spectator-count game)]
+           (println :spectator-count c)
            (when (pos? c)
              [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
               [:div.blue-shade.spectators

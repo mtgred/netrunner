@@ -23,6 +23,7 @@
     [web.angel-arena :as angel-arena]
     [web.api :refer [make-app]]
     [web.lobby :as lobby]
+    [web.new-lobby]
     [web.utils :refer [tick]]
     [web.ws :refer [ch-chsk event-msg-handler]]))
 
@@ -72,10 +73,10 @@
 (defmethod ig/init-key :frontend-version [_ {:keys [db]}]
   (if-let [config (mc/find-one-as-map db "config" nil)]
     (reset! frontend-version (:version config))
-    (-> db
-        (mc/create "config" nil)
-        (mc/insert "config" {:version @frontend-version
-                             :cards-version 0}))))
+    (doto db
+      (mc/create "config" nil)
+      (mc/insert "config" {:version @frontend-version
+                           :cards-version 0}))))
 
 (defmethod ig/init-key :server-mode [_ mode]
   (reset! server-mode mode))

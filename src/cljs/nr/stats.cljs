@@ -1,18 +1,19 @@
 (ns nr.stats
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [capitalize]]
-            [jinteki.cards :refer [all-cards]]
-            [nr.ajax :refer [GET DELETE]]
-            [nr.appstate :refer [app-state]]
-            [nr.auth :refer [authenticated] :as auth]
-            [nr.avatar :refer [avatar]]
-            [nr.end-of-game-stats :refer [build-game-stats]]
-            [nr.player-view :refer [player-view]]
-            [nr.translations :refer [tr tr-side tr-format tr-lobby]]
-            [nr.utils :refer [faction-icon render-message notnum->zero num->percent set-scroll-top store-scroll-top]]
-            [nr.ws :as ws]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!] :as async]
+   [clojure.string :refer [capitalize]]
+   [jinteki.cards :refer [all-cards]]
+   [nr.ajax :refer [DELETE GET]]
+   [nr.appstate :refer [app-state]]
+   [nr.auth :refer [authenticated] :as auth]
+   [nr.avatar :refer [avatar]]
+   [nr.end-of-game-stats :refer [build-game-stats]]
+   [nr.translations :refer [tr tr-format tr-lobby tr-side]]
+   [nr.utils :refer [faction-icon notnum->zero num->percent render-message
+                     set-scroll-top store-scroll-top]]
+   [nr.ws :as ws]
+   [reagent.core :as r]))
 
 (def state (r/atom {:games nil}))
 
@@ -37,7 +38,7 @@
   (fetch-game-history))
 
 (defn share-replay [state gameid]
-  (go (let [{:keys [status json]} (<! (GET (str "/profile/history/share/" gameid)))]
+  (go (let [{:keys [status]} (<! (GET (str "/profile/history/share/" gameid)))]
         (when (= 200 status)
           (swap! state assoc :view-game
                  (assoc (:view-game @state) :replay-shared true))))))
@@ -76,11 +77,9 @@
 
 (defn clear-user-stats []
   (authenticated
-    (fn [user]
-      (let [id (get-in @app-state [:user :_id])]
-        (try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
-        (go (let [result (<! (DELETE "/profile/stats/user"))]
-              (swap! app-state assoc :stats result)))))))
+    (fn [_]
+      (go (let [result (<! (DELETE "/profile/stats/user"))]
+            (swap! app-state assoc :stats result))))))
 
 (defn stat-view [{:keys [start-key complete-key win-key lose-key stats]}]
   (r/with-let [started (notnum->zero (start-key stats))
@@ -125,14 +124,13 @@
     [game-details state]
     [stats-panel stats]))
 
-(defn game-log [state log-scroll-top]
+(defn game-log [_state log-scroll-top]
   (r/create-class
-    {
-     :display-name "stats-game-log"
+    {:display-name "stats-game-log"
      :component-did-mount #(set-scroll-top % @log-scroll-top)
      :component-will-unmount #(store-scroll-top % log-scroll-top)
      :reagent-render
-     (fn [state log-scroll-top]
+     (fn [state _log-scroll-top]
        (let [game (:view-game @state)]
          [:div {:style {:overflow "auto"}}
           [:div.panel.messages
@@ -158,7 +156,7 @@
           (swap! state assoc :view-game (assoc game :log json))))))
 
 (defn game-row
-  [state {:keys [title corp runner turn winner reason replay-shared has-replay start-date] :as game} log-scroll-top]
+  [state {:keys [title corp runner turn winner replay-shared has-replay start-date] :as game} log-scroll-top]
   (let [corp-id (get @all-cards (:identity corp))
         runner-id (get @all-cards (:identity runner))
         turn-count (if turn turn 0)]
@@ -189,13 +187,13 @@
      (when winner
        [:h4 (tr [:stats.winner "Winner"]) ": " (tr-side winner)])]))
 
-(defn history [state list-scroll-top log-scroll-top]
+(defn history [_state list-scroll-top _log-scroll-top]
   (r/create-class
     {:display-name "stats-history"
      :component-did-mount #(set-scroll-top % @list-scroll-top)
      :component-will-unmount #(store-scroll-top % list-scroll-top)
      :reagent-render
-     (fn [state list-scroll-top log-scroll-top]
+     (fn [state _list-scroll-top log-scroll-top]
        (let [all-games (:games @state)
              games (if (:filter-replays @state) (filter #(:replay-shared %) all-games) all-games)
              cnt (count games)]
@@ -225,9 +223,7 @@
         active (r/cursor app-state [:active-page])
         list-scroll-top (atom 0)
         log-scroll-top (atom 0)]
-
     (fetch-game-history)
-
     (fn []
       [:div.page-container
        (when (= "/stats" (first @active))
