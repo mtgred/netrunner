@@ -1,30 +1,45 @@
 (ns nr.lobby-chat
   (:require
-   [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
    [nr.translations :refer [tr]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
-(defn send-msg [state]
+(defn send-message [state]
   (let [text (:msg @state)]
-    (when-not (empty? text)
-      (ws/ws-send! [:lobby/say {:gameid (:gameid @app-state)
-                                :msg text}])
-      (let [msg-list (:message-list @state)]
-        (set! (.-scrollTop msg-list) (+ (.-scrollHeight msg-list) 500)))
+    (when (and (string? text) (not-empty text))
+      (ws/ws-send! [:lobby/say text])
+      (swap! state assoc :should-scroll true)
       (swap! state assoc :msg ""))))
 
+(defn scrolled-to-end?
+  [el tolerance]
+  (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
+
 (defn lobby-chat [_messages]
-  (let [state (r/atom {})]
+  (r/with-let [state (r/atom {:message-list nil
+                              :msg ""
+                              :should-scroll false})
+               message-list (r/cursor state [:message-list])
+               current-input (r/cursor state [:msg])
+               should-scroll (r/cursor state [:should-scroll])]
     (r/create-class
       {:display-name "lobby-chat"
+       :component-did-mount
+       (fn []
+         (let [el (r/dom-node @message-list)]
+           (set! (.-scrollTop el) (.-scrollHeight el))))
+       :component-will-update
+       (fn []
+         (let [el (r/dom-node @message-list)]
+           (swap! state assoc :should-scroll (or @should-scroll
+                                                 (scrolled-to-end? el 15)))))
        :component-did-update
        (fn []
-         (let [msg-list (:message-list @state)
-               height (.-scrollHeight msg-list)]
-           (when (< (- height (.-scrollTop msg-list) (.height (js/$ ".lobby .chat-box"))) 500)
-             (set! (.-scrollTop msg-list) (.-scrollHeight msg-list)))))
+         (let [el (r/dom-node @message-list)]
+           (when @should-scroll
+             (swap! state assoc :should-scroll false)
+             (set! (.-scrollTop el) (.-scrollHeight el)))))
        :reagent-render
        (fn [messages]
          [:div.chat-box
@@ -34,10 +49,8 @@
              (map-indexed
                (fn [i msg]
                  (if (= (:user msg) "__system__")
-                   ^{:key i}
-                   [:div.system (:text msg)]
-                   ^{:key i}
-                   [:div.message
+                   [:div.system {:key i} (:text msg)]
+                   [:div.message {:key i}
                     [avatar (:user msg) {:opts {:size 38}}]
                     [:div.content
                      [:div.username (get-in msg [:user :username])]
@@ -45,9 +58,9 @@
                @messages))]
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
-                                           (send-msg state))}
+                                           (send-message state))}
             [:input {:placeholder (tr [:chat.placeholder "Say something"])
                      :type "text"
-                     :value (:msg @state)
+                     :value @current-input
                      :on-change #(swap! state assoc :msg (-> % .-target .-value))}]
             [:button (tr [:chat.send "Send"])]]]])})))

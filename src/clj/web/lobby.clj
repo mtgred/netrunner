@@ -368,14 +368,6 @@
       (lobby-say gameid {:user "__system__" :text (str username " left the game.")})
       (remove-user db uid gameid))))
 
-(defmethod ws/-msg-handler :lobby/say
-  [{{user :user} :ring-req
-    uid :uid
-    {:keys [msg gameid]} :?data}]
-  (when (player-or-spectator uid gameid)
-    (lobby-say gameid {:user user
-                       :text msg})))
-
 (defmethod ws/-msg-handler :lobby/swap
   [{uid :uid
     {:keys [gameid side]} :?data}]
@@ -443,30 +435,6 @@
     (when reply-fn
       (reply-fn 404)
       false)))
-
-; (defmethod ws/-msg-handler :lobby/deck
-;   [{{db :system/db
-;      {:keys [username]} :user} :ring-req
-;     uid :uid
-;     deck-id :?data}]
-;   (let [game (game-for-client uid)
-;         first-player (if (= uid (:uid (first (:players game)))) 0 1)
-;         gameid (:gameid game)
-;         map-card (fn [c] (update-in c [:card] @all-cards))
-;         unknown-card (fn [c] (nil? (:card c)))
-;         deck (as-> (mc/find-one-as-map db "decks" {:_id (object-id deck-id) :username username}) d
-;                    (update-in d [:cards] #(mapv map-card %))
-;                    (update-in d [:cards] #(vec (remove unknown-card %)))
-;                    (update-in d [:identity] #(@all-cards (:title %)))
-;                    (assoc d :status (calculate-deck-status d)))]
-;     (when (and (:identity deck)
-;                (player? uid game)
-;                (or (= (:format game) "casual")
-;                    (legal-deck? deck (:format game))))
-;       (when (= "tournament" (:room game))
-;         (lobby-say gameid {:user "__system__"
-;                            :text (str username " has selected deck with tournament hash " (:hash deck))}))
-;       (refresh-lobby-assoc-in gameid [:players first-player :deck] deck))))
 
 (defmethod ws/-msg-handler :lobby/rename-game
   [{{db :system/db

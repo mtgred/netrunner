@@ -149,6 +149,7 @@
                current-game (r/cursor app-state [:current-game])
                gameid (r/cursor app-state [:current-game :gameid])
                players (r/cursor app-state [:current-game :players])
+               messages (r/cursor app-state [:current-game :messages])
                create-game-deck (r/cursor app-state [:create-game-deck])]
     (fn []
       (when-let [cd @create-game-deck]
@@ -163,4 +164,4 @@
         [player-list user current-game players]
         [options-list current-game]
         [spectator-list current-game]
-        [lobby-chat current-game]]])))
+        [lobby-chat messages]]])))

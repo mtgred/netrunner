@@ -14,13 +14,22 @@
   [lobbies gameid uid]
   (if gameid
     (let [lobby (get lobbies gameid)
-          players (remove #(= uid (:uid %)) (:players lobby))]
+          players (remove #(= uid (:uid %)) (:players lobby))
+          spectators (remove #(= uid (:uid %)) (:spectators lobby))]
       (if (pos? (count players))
-        (assoc-in lobbies [gameid :players] players)
+        (-> lobbies
+            (assoc-in [gameid :players] players)
+            (assoc-in [gameid :spectators] spectators))
         (dissoc lobbies gameid)))
     lobbies))
 
 (defn uid->lobby [lobbies uid]
+  (find-first
+    (fn [lobby]
+      (some #(= uid (:uid %)) (into (:players lobby) (:spectators lobby))))
+    (vals lobbies)))
+
+(defn uid-player->lobby [lobbies uid]
   (find-first
     (fn [lobby]
       (some #(= uid (:uid %)) (:players lobby)))
@@ -46,22 +55,22 @@
 (defn get-user [uid]
   (get-in @app-state [:users uid]))
 
-(defn uid-in-lobby? [uid]
-  (uid->lobby (:lobbies @app-state) uid))
+(defn uid-in-lobby?
+  ([uid] (uid-in-lobby? uid (:lobbies @app-state)))
+  ([uid lobbies]
+   (uid->lobby lobbies uid)))
+
+(defn uid-in-lobby-as-player?
+  ([uid] (uid-in-lobby-as-player? uid (:lobbies @app-state)))
+  ([uid lobbies]
+   (uid-player->lobby lobbies uid)))
 
 (defn register-lobby
-  [{:keys [lobbies users]} lobby]
-  (let [gameid (:gameid lobby)
-        lobbies (assoc lobbies gameid lobby)]
-    {:lobbies lobbies
-     :users users}))
-
-(defn unregister-lobby
-  [{:keys [lobbies users]} lobby]
-  (let [gameid (:gameid lobby)
-        lobbies (dissoc lobbies gameid)]
-    {:lobbies lobbies
-     :users users}))
+  [lobbies lobby uid]
+  (let [gameid (:gameid lobby)]
+    (if (uid-in-lobby-as-player? uid lobbies)
+      lobbies
+      (assoc lobbies gameid lobby))))
 
 (defn get-lobbies []
   (vals (:lobbies @app-state)))
@@ -74,9 +83,16 @@
                                  players))))
 
 (defn update-deck-for-player [lobbies uid deck]
-  (if-let [gameid (:gameid (uid->lobby lobbies uid))]
+  (if-let [gameid (:gameid (uid-player->lobby lobbies uid))]
     (update lobbies gameid update-deck-for-player-in-lobby uid deck)
     lobbies))
+
+(defn uid-say [lobbies uid message]
+  (if-let [gameid (:gameid (uid->lobby lobbies uid))]
+    (update-in lobbies [gameid :messages] conj message)
+    lobbies))
+
+;;;;;;;;;;;;;;;; mutations below
 
 (defn register-user!
   "Add user to uid in app-state. Mutates."
@@ -90,13 +106,8 @@
 
 (defn register-lobby!
   "Add lobby to gameid in app-state. Mutates."
-  [lobby]
-  (swap! app-state register-lobby lobby))
-
-(defn unregister-lobby!
-  "Remove lobby from app-state. Mutates."
-  [lobby]
-  (swap! app-state unregister-lobby lobby))
+  [lobby uid]
+  (swap! app-state update :lobbies register-lobby lobby uid))
 
 (defn remove-uid-from-lobby!
   "Remove player by uid from participating lobby. Mutates."
@@ -107,3 +118,7 @@
   "Update deck for uid in participating lobby. Mutates."
   [uid deck]
   (swap! app-state update :lobbies update-deck-for-player uid deck))
+
+(defn uid-say!
+  [uid message]
+  (swap! app-state update :lobbies uid-say uid message))

@@ -81,7 +81,6 @@
 (defn prepare-original-players [players]
   (->> players
        (keep (fn [p] (not-empty (select-keys p [:username :emailhash]))))
-       (into [])
        (not-empty)))
 
 (def lobby-keys
@@ -181,26 +180,28 @@
       [uid [:lobby/state lobby-state]])))
 
 (defn send-lobby-state [lobby]
-  (doseq [[uid ev] (prepare-lobby-state lobby)]
-    (ws/chsk-send! uid ev)))
+  (when lobby
+    (doseq [[uid ev] (prepare-lobby-state lobby)]
+      (ws/chsk-send! uid ev))))
 
 (defmethod ws/-msg-handler :lobby/create
   [{uid :uid :as event}]
-  (when-not (app-state/uid-in-lobby? uid)
-    (let [lobby (create-new-lobby event)]
-      (app-state/register-lobby! lobby)
+  (let [lobby (create-new-lobby event)
+        ;; perform the swap and only send updates if not already in a lobby
+        new-app-state (app-state/register-lobby! lobby uid)]
+    (when (-> new-app-state :lobbies (:gameid lobby))
       (send-lobby-state lobby)
       (broadcast-lobby-list))))
 
 (defmethod ws/-msg-handler :lobby/list
   [{uid :uid}]
-  (broadcast-lobby-list [(app-state/get-user uid)]))
+  (broadcast-lobby-list [(app-state/get-user uid)])
+  (send-lobby-state (app-state/uid-in-lobby? uid)))
 
 (defmethod ws/-msg-handler :lobby/leave
   [{uid :uid ?reply-fn :?reply-fn}]
-  (when (app-state/uid-in-lobby? uid)
-    (app-state/remove-uid-from-lobby! uid)
-    (broadcast-lobby-list))
+  (app-state/remove-uid-from-lobby! uid)
+  (broadcast-lobby-list)
   (?reply-fn true))
 
 (defn find-deck
@@ -236,12 +237,24 @@
     uid :uid
     deck-id :?data
     ?reply-fn :?reply-fn}]
-  (when-let [lobby (app-state/uid-in-lobby? uid)]
+  (if-let [lobby (app-state/uid-in-lobby-as-player? uid)]
     (let [raw-deck (find-deck-for-user db deck-id user)
           processed-deck (process-deck raw-deck)]
       (if (valid-deck-for-game? processed-deck lobby)
         (do (app-state/update-deck-for-player! uid processed-deck)
-            (send-lobby-state (app-state/uid-in-lobby? uid))
+            (send-lobby-state (app-state/uid-in-lobby-as-player? uid))
             (broadcast-lobby-list)
             (?reply-fn true))
-        (?reply-fn false)))))
+        (?reply-fn false)))
+    (?reply-fn false)))
+
+(defmethod ws/-msg-handler :lobby/say
+  [{{user :user} :ring-req
+    uid :uid
+    text :?data}]
+  (assert (string? text) "Message must be a string")
+  (when (app-state/uid-in-lobby? uid)
+    (let [message {:user (select-keys user [:username :emailhash])
+                   :text (str/trim text)}]
+      (app-state/uid-say! uid message)
+      (send-lobby-state (app-state/uid-in-lobby-as-player? uid)))))
