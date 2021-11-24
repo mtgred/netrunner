@@ -277,10 +277,9 @@
       [:span.standings wins "-" losses])]))
 
 (defn- game-row
-  [{:keys [title format room started players gameid current-game original-players] :as game}]
-  (r/with-let [s (r/atom {:show-mod-menu false})
-               user (:user @app-state)
-               join (fn [action] (join-game gameid s action nil "Any Side"))]
+  [lobby-state {:keys [format started players gameid current-game original-players] :as game}]
+  (r/with-let [user (:user @app-state)
+               join (fn [action] (join-game lobby-state game action "Any Side"))]
     [:div.gameline {:class (when (= current-game gameid) "active")}
      (when (or (superuser? user)
                (and (:allow-spectator game)
@@ -335,7 +334,7 @@
           blocked-users (get-in user [:options :blocked-users] [])]
       (filter #(blocking-from-game blocked-users %) blocked-games))))
 
-(defn game-list [user {:keys [room games gameid]}]
+(defn game-list [lobby-state user {:keys [room games gameid]}]
   (let [roomgames (r/track (fn [] (filter #(= (:room %) room) @games)))
         filtered-games (r/track #(filter-blocked-games @user @roomgames))]
     [:div.game-list
@@ -352,4 +351,4 @@
               (doall
                 (for [game games]
                   ^{:key (:gameid game)}
-                  [game-row (assoc game :current-game @gameid :password-game nil :editing false)]))]))))]))
+                  [game-row lobby-state (assoc game :current-game @gameid :password-game nil :editing false)]))]))))]))

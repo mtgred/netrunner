@@ -53,10 +53,9 @@
             [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])]))
      (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
        (when (:started game)
-         (let [c (:spectator-count game)]
-           (println :spectator-count c)
+         (let [c (count (:spectator game))]
            (when (pos? c)
-             [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
+             [:div.spectators-count.float-right (str c " Spectator" (when (< 1 c) "s"))
               [:div.blue-shade.spectators
                (for [p (:spectators game)]
                  ^{:key (get-in p [:user :_id])}

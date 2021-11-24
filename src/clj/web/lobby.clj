@@ -279,22 +279,6 @@
                      :uid uid}))
     (swap! uid-gameids assoc uid gameid)))
 
-(defn swap-side
-  "Returns a new player map with the player's :side switched"
-  [player]
-  (-> player
-      (update :side #(if (= % "Corp")
-                       "Runner"
-                       "Corp"))
-      (dissoc :deck)))
-
-(defn change-side
-  "Returns a new player map with the player's :side set to a new side"
-  [player side]
-  (-> player
-      (assoc :side side)
-      (dissoc :deck)))
-
 (defn blocked-users
   [{:keys [players]}]
   (mapcat #(get-in % [:user :options :blocked-users]) players))
@@ -303,49 +287,6 @@
   (mc/find-maps db "users" {$or [{:isadmin true}
                                  {:ismoderator true}
                                  {:tournament-organizer true}]}))
-
-(defn handle-lobby-list [{:keys [uid]}]
-  (let [user (app-state/get-user uid)
-        games (->> @all-games
-                   (mapv (fn [[gameid game]]
-                           [gameid
-                            (assoc (game-public-view gameid game)
-                                   :selected (some (fn [id] (= id uid))
-                                                   (keep :uid (concat (:players game) (:spectators game)))))]))
-                   (into {})
-                   (visible-lobbies {uid user}))]
-    (ws/broadcast-to! [uid] :lobby/list (vals (get games uid)))))
-
-(defmethod ws/-msg-handler :lobby/create
-  [{{{:keys [username] :as user} :user} :ring-req
-    uid :uid
-    {:keys [title format timer allow-spectator save-replay api-access
-            spectatorhands password room side]} :?data}]
-  (when-not (game-for-client uid)
-    (let [gameid (java.util.UUID/randomUUID)
-          game {:date            (java.util.Date.)
-                :gameid          gameid
-                :title           title
-                :allow-spectator allow-spectator
-                :save-replay     save-replay
-                :api-access      api-access
-                :spectatorhands  spectatorhands
-                :mute-spectators false
-                :password        (when (not-empty password) (bcrypt/encrypt password))
-                :room            room
-                :format          format
-                :players         [{:user user
-                                   :uid uid
-                                   :side side}]
-                :spectators      []
-                :spectator-count 0
-                :timer           timer
-                :messages        [{:user "__system__"
-                                   :text (str username " has created the game.")}]
-                :last-update     (t/now)}]
-      (refresh-lobby gameid game)
-      (swap! uid-gameids assoc uid gameid)
-      (ws/broadcast-to! [uid] :lobby/select {:gameid gameid}))))
 
 (defn- lobby-say
   [gameid {:keys [user text]}]
@@ -367,17 +308,6 @@
     (when (player-or-spectator uid gameid)
       (lobby-say gameid {:user "__system__" :text (str username " left the game.")})
       (remove-user db uid gameid))))
-
-(defmethod ws/-msg-handler :lobby/swap
-  [{uid :uid
-    {:keys [gameid side]} :?data}]
-  (let [game (game-for-id gameid)
-        first-player (first (:players game))]
-    (when  (= (:uid first-player) uid)
-      (if (< 1 (count (:players game)))
-        (refresh-lobby-update-in gameid [:players] (partial mapv swap-side))
-        (let [updated-player (change-side first-player side)]
-          (refresh-lobby-assoc-in gameid [:players] [updated-player]))))))
 
 (defn allowed-in-game
   [db game {:keys [username] :as user}]

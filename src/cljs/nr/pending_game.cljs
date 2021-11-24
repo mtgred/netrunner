@@ -14,11 +14,6 @@
    [taoensso.sente :as sente]
    [reagent.core :as r]))
 
-(defn leave-lobby []
-  (ws/ws-send! [:lobby/leave] 8000
-               #(when (sente/cb-success? %)
-                  (swap! app-state assoc :current-game nil))))
-
 (defn select-deck [deck]
   (fn []
     (ws/ws-send! [:lobby/deck (:_id deck)] 8000
@@ -58,53 +53,70 @@
   [players user]
   (= (-> players first :user :_id) (:_id user)))
 
-(defn button-bar [user gameid players]
-  [:div.button-bar
-   (when (first-user? @players @user)
+(defn start-button [user gameid players]
+  (when (first-user? @players @user)
      [cond-button (tr [:lobby.start "Start"])
       (every? :deck @players)
-      #(ws/ws-send! [:netrunner/start @gameid])])
-   [:button {:on-click leave-lobby} (tr [:lobby.leave "Leave"])]
-   (when (first-user? @players @user)
-     (if (> (count @players) 1)
-       [:button {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid}])}
-        (tr [:lobby.swap "Swap sides"])]
-       [:div.dropdown
-        [:button.dropdown-toggle {:data-toggle "dropdown"}
-         (tr [:lobby.swap "Swap sides"])
-         [:b.caret]]
-        (into
-          [:ul.dropdown-menu.blue-shade]
-          (for [side ["Any Side" "Corp" "Runner"]]
-            [:a.block-link {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
-                                                                  :side side}])}
-             (tr-side side)]))]))])
+      #(ws/ws-send! [:netrunner/start @gameid])]))
+
+(defn leave-button []
+  [:button
+   {:on-click
+    (fn [e]
+      (.preventDefault e)
+      (ws/ws-send! [:lobby/leave] 8000
+                   #(when (sente/cb-success? %)
+                      (swap! app-state assoc :editing false :current-game nil))))}
+   (tr [:lobby.leave "Leave"])])
+
+(defn swap-sides-button [user gameid players]
+  (when (first-user? @players @user)
+    (if (< 1 (count @players))
+      [:button {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid}])}
+       (tr [:lobby.swap "Swap sides"])]
+      [:div.dropdown
+       [:button.dropdown-toggle {:data-toggle "dropdown"}
+        (tr [:lobby.swap "Swap sides"])
+        [:b.caret]]
+       (into
+         [:ul.dropdown-menu.blue-shade]
+         (for [side ["Any Side" "Corp" "Runner"]]
+           [:a.block-link
+            {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                   :side side}])}
+            [:li (tr-side side)]]))])))
+
+(defn button-bar [user gameid players]
+  [:div.button-bar
+   [start-button user gameid players]
+   [leave-button]
+   [swap-sides-button user gameid players]])
+
+(defn player-item [user current-game player]
+  (let [player-id (get-in player [:user :_id])
+        this-player (= player-id (:_id @user))]
+    [:div {:key player-id}
+     [player-view player (dissoc @current-game :password)]
+     (when-let [{:keys [status]} (:deck player)]
+       [:span {:class (:status status)}
+        [:span.label
+         (if this-player
+           (deck-name (:deck player) 25)
+           (tr [:lobby.deck-selected "Deck selected"]))]])
+     (when-let [deck (:deck player)]
+       [:div.float-right [deck-format-status-span deck (:format @current-game "standard") true]])
+     (when (and this-player (not (= (:side player) (tr-side "Any Side"))))
+       [:span.fake-link.deck-load
+        {:on-click #(reagent-modals/modal! [select-deck-modal user current-game])}
+        (tr [:lobby.select-deck "Select Deck"])])]))
 
 (defn player-list [user current-game players]
   [:<>
    [:h3 (tr [:lobby.players "Players"])]
-   [:div.players
-    (doall
-      (map-indexed
-        (fn [idx player]
-          (let [player-id (get-in player [:user :_id])
-                this-player (= player-id (:_id @user))]
-            ^{:key (or player-id idx)}
-            [:div
-             [player-view player @current-game]
-             (when-let [{:keys [status]} (:deck player)]
-               [:span {:class (:status status)}
-                [:span.label
-                 (if this-player
-                   (deck-name (:deck player) 25)
-                   (tr [:lobby.deck-selected "Deck selected"]))]])
-             (when-let [deck (:deck player)]
-               [:div.float-right [deck-format-status-span deck (:format @current-game "standard") true]])
-             (when (and this-player (not (= (:side player) (tr-side "Any Side"))))
-               [:span.fake-link.deck-load
-                {:on-click #(reagent-modals/modal! [select-deck-modal user current-game])}
-                (tr [:lobby.select-deck "Select Deck"])])]))
-        @players))]])
+   (into
+     [:div.players]
+     (map (fn [player] [player-item user current-game player])
+          @players))])
 
 (defn options-list [current-game]
   (let [{:keys [allow-spectator api-access password
@@ -144,24 +156,22 @@
          ^{:key _id}
          [player-view spectator])])))
 
-(defn pending-game []
-  (r/with-let [user (r/cursor app-state [:user])
-               current-game (r/cursor app-state [:current-game])
-               gameid (r/cursor app-state [:current-game :gameid])
-               players (r/cursor app-state [:current-game :players])
-               messages (r/cursor app-state [:current-game :messages])
+(defn pending-game [current-game user]
+  (r/with-let [gameid (r/cursor current-game [:gameid])
+               players (r/cursor current-game [:players])
+               messages (r/cursor current-game [:messages])
                create-game-deck (r/cursor app-state [:create-game-deck])]
-    (fn []
-      (when-let [cd @create-game-deck]
-        (ws/ws-send! [:lobby/deck (:_id cd)])
-        (swap! app-state dissoc :create-game-deck))
-      [:div
-       [button-bar user gameid players]
-       [:div.content
-        [:h2 (:title @current-game)]
-        (when-not (every? :deck @players)
-          [:div.flash-message (tr [:lobby.waiting "Waiting players deck selection"])])
-        [player-list user current-game players]
-        [options-list current-game]
-        [spectator-list current-game]
-        [lobby-chat messages]]])))
+    (when-let [cd @create-game-deck]
+      (ws/ws-send! [:lobby/deck (:_id cd)])
+      (swap! app-state dissoc :create-game-deck))
+    [:div
+     [button-bar user gameid players]
+     [:div.content
+      [:h2 (:title @current-game)]
+      (when-not (every? :deck @players)
+        [:div.flash-message
+         (tr [:lobby.waiting "Waiting players deck selection"])])
+      [player-list user current-game players]
+      [options-list current-game]
+      [spectator-list current-game]
+      [lobby-chat messages]]]))

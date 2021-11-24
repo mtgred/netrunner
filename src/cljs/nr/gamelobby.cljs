@@ -7,11 +7,13 @@
    [nr.angel-arena :as angel-arena]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
-   [nr.new-game :refer [create-new-game new-game]]
    [nr.game-row :refer [game-row]]
    [nr.gameboard.actions :refer [launch-game]]
    [nr.gameboard.state :refer [game-state parse-state]]
+   [nr.new-game :refer [create-new-game]]
+   [nr.password-game :refer [password-game]]
    [nr.pending-game :refer [pending-game]]
+   [nr.replay-game :refer [start-replay-div]]
    [nr.sounds :refer [play-sound resume-sound]]
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [cond-button non-game-toast slug->format]]
@@ -44,19 +46,8 @@
 
 (defn replay-game [s]
   (authenticated
-    (fn [user]
-      (swap! s assoc
-             :gameid "local-replay"
-             :title (str (:username user) "'s game")
-             :side "Corp"
-             :format "standard"
-             :editing true
-             :replay true
-             :flash-message ""
-             :protected false
-             :password ""
-             :allow-spectator true
-             :spectatorhands true))))
+    (fn [_]
+      (swap! s assoc :replay true))))
 
 (defn start-shared-replay
   ([s gameid] (start-shared-replay s gameid nil))
@@ -133,25 +124,28 @@
     [:div.roomtab
      (if (= room (:room @s))
        {:class "current"}
-       {:on-click #(swap! s assoc :room room)})
+       {:on-click #(do (swap! s assoc :room room)
+                       (swap! s dissoc :editing))})
      room-name (room-count-str open-count closed-count)]))
 
-(defn game-list [user {:keys [room games current-game password-game editing]}]
-  (let [room-games (r/track (fn [] (filter #(= (:room %) room) @games)))
-        filtered-games (r/track (fn [] (filter-games @user @room-games (:visible-formats @app-state))))
-        is-filtered? (not= (count slug->format) (count (:visible-formats @app-state)))
-        n (count @filtered-games)
-        game-count-str (tr [:lobby.game-count] n)]
+(defn game-list [state user games current-game]
+  (r/with-let [editing (r/cursor state [:editing])
+               room (r/cursor state [:room])
+               room-games (r/track (fn [] (filter #(= (:room %) @room) @games)))
+               visible-formats (r/cursor app-state [:visible-formats])
+               filtered-games (r/track (fn [] (filter-games @user @room-games @visible-formats)))]
     [:<>
      [:div.game-count
-      [:h4 (str game-count-str (when is-filtered? (str "  " (tr [:lobby.filtered "(filtered)"]))))]]
+      [:h4 (str (tr [:lobby.game-count] (count @filtered-games))
+                (when (not= (count slug->format) (count @visible-formats))
+                  (str "  " (tr [:lobby.filtered "(filtered)"]))))]]
      [:div.game-list
       (if (empty? @filtered-games)
         [:h4 (tr [:lobby.no-games "No games"])]
         (doall
           (for [game @filtered-games]
             ^{:key (:gameid game)}
-            [game-row game current-game password-game editing])))]]))
+            [game-row state game @current-game @editing])))]]))
 
 (defn format-visible? [slug] (contains? (:visible-formats @app-state) slug))
 
@@ -169,7 +163,7 @@
     [:div
      [:input.visible-formats {:id id
                               :type "checkbox"
-                              :on-change (partial on-change-format-visibility slug)
+                              :on-change #(on-change-format-visibility slug %)
                               :checked (format-visible? slug)}]
      [:label {:for id} (-> slug slug->format tr-format)]]))
 
@@ -183,8 +177,11 @@
              (mapcat :players)
              (filter #(= (-> % :user :_id) (:_id @user)))
              empty?))
-   #(do (new-game s)
-        (resume-sound))])
+   #(authenticated
+      (fn [_]
+        (swap! s assoc :editing true)
+        (-> ".game-title" js/$ .select)
+        (resume-sound)))])
 
 (defn reload-lobby-button []
   [:button.reload-button {:type "button"
@@ -224,28 +221,30 @@
        [reload-lobby-button]
        [load-replay-button s games current-game user]])])
 
-(defn games-list-panel [s games current-game user visible-formats]
+(defn games-list-panel [state games current-game user visible-formats]
   [:div.games
-   [button-bar s games current-game user visible-formats]
-   (if (= "angel-arena" (:room @s))
-     [angel-arena/game-list user {:games games
-                                  :current-game current-game
-                                  :room (:room @s)}]
-     [game-list user {:editing (:editing @s)
-                      :games games
-                      :current-game current-game
-                      :room (:room @s)}])])
+   [button-bar state games current-game user visible-formats]
+   (if (= "angel-arena" (:room @state))
+     [angel-arena/game-list state user
+      {:games games
+       :current-game current-game
+       :room (:room @state)}]
+     [game-list state user games current-game])])
 
 (defn right-panel
-  [s decks games current-game sets user]
-  (if (= "angel-arena" (:room @s))
-    [angel-arena/game-panel decks s user]
+  [state decks current-game user]
+  (if (= "angel-arena" (:room @state))
+    [angel-arena/game-panel decks state user]
     [:div.game-panel
      (cond
-       (:editing @s)
-       [create-new-game s user]
+       (:replay @state)
+       [start-replay-div state]
+       (:editing @state)
+       [create-new-game state user]
+       (:password-game @state)
+       [password-game state]
        (and @current-game (not (:started @current-game)))
-       [pending-game s games current-game sets user])]))
+       [pending-game current-game user])]))
 
 (defn load-replay-from-params [s params]
   (swap! app-state dissoc :replay-id)
@@ -270,11 +269,10 @@
       nil)))
 
 (defn game-lobby []
-  (r/with-let [s (r/atom {:room "casual"})
+  (r/with-let [state (r/atom {:room "casual"})
                decks (r/cursor app-state [:decks])
                games (r/cursor app-state [:games])
                current-game (r/cursor app-state [:current-game])
-               sets (r/cursor app-state [:sets])
                user (r/cursor app-state [:user])
                cards-loaded (r/cursor app-state [:cards-loaded])
                active (r/cursor app-state [:active-page])
@@ -289,7 +287,7 @@
        ;            (some? (:create-game-deck @app-state)))
        ;   (new-game s))
        (if-let [params @replay-id]
-         (load-replay-from-params s params)
+         (load-replay-from-params state params)
          [:div.lobby.panel.blue-shade
-          [games-list-panel s games current-game user visible-formats]
-          [right-panel s decks games current-game sets user]]))]))
+          [games-list-panel state games current-game user visible-formats]
+          [right-panel state decks current-game user]]))]))

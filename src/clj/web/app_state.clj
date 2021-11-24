@@ -75,6 +75,10 @@
 (defn get-lobbies []
   (vals (:lobbies @app-state)))
 
+(defn get-lobby
+  ([gameid] (get-lobby gameid (:lobbies @app-state)))
+  ([gameid lobbies] (get lobbies gameid)))
+
 (defn update-deck-for-player-in-lobby [lobby uid deck]
   (update lobby :players (fn [players]
                            (mapv (fn [p] (if (= uid (:uid p))
