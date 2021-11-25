@@ -5,7 +5,7 @@
    [monger.operators :refer :all]
    [monger.result :refer [acknowledged? updated-existing?]]
    [web.config :refer [frontend-version]]
-   [web.lobby :refer [all-games]]
+   ; [web.lobby :refer [all-games]]
    [web.mongodb :refer [->object-id object-id]]
    [web.user :refer [active-user?]]
    [web.utils :refer [response]]
@@ -14,7 +14,7 @@
 (defn announce-create-handler [{{message :message} :body}]
   (if-not (empty? message)
     (do
-      (doseq [{state :state} (vals @all-games)]
+      (doseq [{state :state} (vals {})]
         (when state
           (main/handle-announcement state message)))
       (response 200 {:message "ok"}))

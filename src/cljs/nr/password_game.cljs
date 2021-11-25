@@ -13,7 +13,7 @@
       (ws/ws-send! [(case action
                       "join" :lobby/join
                       "watch" :lobby/watch
-                      "rejoin" :netrunner/rejoin)
+                      "rejoin" :game/rejoin)
                     {:gameid (:gameid game)
                      :password (:password @state)}]
                    8000

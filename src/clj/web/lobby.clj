@@ -1,404 +1,545 @@
 (ns web.lobby
   (:require
    [clj-time.core :as t]
-   [clojure.string :refer [trim]]
+   [clj-uuid :as uuid]
+   [clojure.set :as set]
+   [clojure.string :as str]
    [crypto.password.bcrypt :as bcrypt]
-   [differ.core :as differ]
-   [game.core :as core]
-   [game.utils :refer [remove-once]]
-   [jinteki.cards :refer [all-cards]]
-   [jinteki.utils :refer [superuser?]]
-   [jinteki.validator :refer [calculate-deck-status legal-deck?]]
-   [medley.core :refer [find-first]]
+   [game.utils :refer [server-card]]
+   [jinteki.utils :refer [select-non-nil-keys superuser?]]
+   [jinteki.validator :as validator]
    [monger.collection :as mc]
-   [monger.operators :refer [$or]]
-   [web.diffs :refer [game-internal-view]]
-   [web.mongodb :refer [object-id]]
-   [web.stats :as stats]
-   [web.user :refer [visible-to-user]]
    [web.app-state :as app-state]
+   [web.mongodb :as mongodb]
+   [web.stats :as stats]
    [web.ws :as ws]))
 
-(def mod-table "moderator_actions")
+(defn create-new-lobby
+  [{:keys [ring-req uid ?data]}]
+  (let [{user :user} ring-req
+        {:keys [title format timer allow-spectator save-replay api-access
+                spectatorhands password room side]} ?data
+        now (java.util.Date.)
+        players [{:user user
+                  :uid uid
+                  :side side}]]
+    {:gameid (uuid/v4)
+     :date now
+     :title title
+     :allow-spectator allow-spectator
+     :save-replay save-replay
+     :api-access api-access
+     :spectatorhands spectatorhands
+     :mute-spectators false
+     :password (when (not-empty password) (bcrypt/encrypt password))
+     :room room
+     :format format
+     :players players
+     :original-players players
+     :spectators []
+     :spectator-count 0
+     :timer timer
+     :messages [{:user "__system__"
+                 :text (str (:username user) " has created the game.")}]
+     :last-update now}))
 
-;; All games active on the server.
-(defonce all-games (atom {}))
+(defn get-players-and-spectators [lobby]
+  (concat (:players lobby) (:spectators lobby)))
 
-;; The most recent state of each game sent to clients.
-(defonce old-states (atom {}))
+(defn lobby-ting [lobby]
+  (for [user (get-players-and-spectators lobby)
+        :let [uid (:uid user)]]
+    [uid [:lobby/notification "ting"]]))
 
-;; A map from uid to gameid of the game the client is playing or spectating.
-(defonce uid-gameids (atom {}))
+(defn send-lobby-ting [lobby]
+  (when lobby
+    (doseq [[uid ev] (lobby-ting lobby)]
+      (ws/chsk-send! uid ev))))
 
-(defn game-for-id
-  "Returns the game map for the given gameid."
-  [gameid]
-  (get @all-games gameid))
+(defn- filter-lobby-user
+  "Only take keys that are useful in the lobby from a user map"
+  [user]
+  (let [stats (select-keys (:stats user) [:games-started :games-completed])]
+    (-> user
+        (select-keys [:_id :username :emailhash])
+        (assoc :stats stats))))
 
-(defn game-for-client
-  "Returns the game map that the given uid is playing or spectating."
-  [uid]
-  (get @all-games (get @uid-gameids uid)))
+(defn strip-deck [player lobby]
+  (if-let [{:keys [_id] :as deck} (:deck player)]
+    (let [fmt (:format lobby)
+          fmt-kw (keyword fmt)
+          legal (get-in deck [:status fmt-kw :legal])
+          status {:format fmt
+                  fmt-kw {:legal legal}}
+          deck (-> deck
+                   (select-keys
+                     (if (:started lobby)
+                       [:name :date :identity :hash]
+                       [:name :date]))
+                   (assoc :_id (str _id) :status status))]
+      (assoc player :deck deck))
+    player))
 
-(defn- username-is-player
-  [username game]
-  (some #(= username (get-in % [:user :username])) (:players game)))
+(defn user-public-view
+  "Strips private server information from a player map."
+  [lobby player]
+  (-> player
+      (dissoc :uid)
+      (update :user filter-lobby-user)
+      (strip-deck lobby)))
 
-(defn game-for-username
-  "Returns the game map the given username is playing (but not spectating)"
-  [username]
-  (find-first #(username-is-player username %) (vals @all-games)))
+(defn prepare-players [lobby players]
+  (->> players
+       (mapv #(user-public-view lobby %))
+       (not-empty)))
 
-(defn lobby-clients
-  "Returns a seq of all uids playing or spectating a gameid."
-  [gameid]
-  (let [game (game-for-id gameid)]
-    (keep :uid (concat (:players game) (:spectators game)))))
+(defn prepare-original-players [players]
+  (->> players
+       (keep (fn [p] (not-empty (select-keys p [:username :emailhash]))))
+       (not-empty)))
 
-(def ^:private public-lobby-updates (atom {}))
-(def ^:private game-lobby-updates (atom {}))
-(def ^:private send-ready (atom true))
-(def ^:private lobby-only-keys [:messages :spectators :mute-spectators :spectatorhands :timer :api-access])
+(def lobby-keys
+  [:allow-spectator
+   :api-access
+   :date
+   :format
+   :gameid
+   :messages
+   :mute-spectators
+   :original-players
+   :password
+   :players
+   :room
+   :save-replay
+   :spectators
+   :spectatorhands
+   :started
+   :timer
+   :title])
 
-(defn- game-public-view
+(defn lobby-summary
   "Strips private server information from a game map, preparing to send the game to clients."
-  [gameid game]
-  (game-internal-view (game-for-id gameid) (apply dissoc game lobby-only-keys)))
+  ([lobby] (lobby-summary lobby nil))
+  ([lobby participating?]
+   (-> lobby
+       (update :password boolean)
+       (update :players #(prepare-players lobby %))
+       (update :spectators #(prepare-players lobby %))
+       (update :original-players prepare-original-players)
+       (update :messages #(when participating? %))
+       (select-non-nil-keys lobby-keys))))
 
-(defn game-lobby-view
-  "Strips private server information from a game map, preparing to send the game to clients.
-  Strips messages in addition to private info to keep payload size down"
-  [gameid game]
-  (game-internal-view (game-for-id gameid) (select-keys game (cons :spectator-count lobby-only-keys))))
+(defn get-blocked-list [user]
+  (->> user :options :blocked-users (map str/lower-case)))
 
-(defn update-lobbies-joined-view
-  "If private view exists, send only to those games clients"
-  []
-  (when (seq @game-lobby-updates)
-    (let [[old] (reset-vals! game-lobby-updates {})]
-      ; (doseq [[gameid update] (:update old)]
-      ;   (ws/broadcast-to! (lobby-clients gameid) :games/differ {:diff {:update {gameid update}}}))
-      )
-    (reset! send-ready false)))
+(defn filter-lobby-list
+  [lobbies user]
+  (let [user-block-list (set (get-blocked-list user))]
+    (filter
+      (fn [lobby]
+        (let [player-usernames (->> (:players lobby)
+                                    (keep :username)
+                                    (map str/lower-case)
+                                    (set))
+              user-blocked-players?
+              (if (seq user-block-list)
+                (seq (set/intersection user-block-list player-usernames))
+                false)
+              players-blocked-user?
+              (-> (mapcat get-blocked-list (:players lobby))
+                  (set)
+                  (contains? (:username user)))]
+          (not (or user-blocked-players? players-blocked-user?))))
+      lobbies)))
 
-(defn visible-lobbies
-  [users lobbies]
-  ;; lobbies: {gameid lobby map}
-  (->> (for [[uid user] users]
-         (let [lobbies (reduce
-                         (fn [acc [gameid lobby]]
-                           (let [players (keep :user (:players lobby))]
-                             (cond
-                               (empty? players)
-                               acc
-                               (every? #(visible-to-user user % (app-state/get-users)) players)
-                               (conj acc {gameid lobby})
-                               :else
-                               acc)))
-                         []
-                         lobbies)]
-           [uid (into {} lobbies)]))
-       (into {})))
+(defn summaries-for-lobbies [filtered-lobbies]
+  (->> filtered-lobbies
+       (map lobby-summary)
+       (sort-by :date)
+       (reverse)
+       (sort-by :started)
+       (into [])))
 
-(defn update-lobbies-public-view
-  "If public view keys exist, send to all connected"
-  []
-  (when (seq @public-lobby-updates)
-    (let [[changes] (reset-vals! public-lobby-updates {})]
-      (doseq [[uid lobbies] (visible-lobbies (app-state/get-users) (:update changes))
-              :let [diff (if (seq lobbies)
-                           (assoc changes :update lobbies)
-                           (dissoc changes :update))]]
-        (ws/broadcast-to! [uid] :games/diff {:diff diff})))
-    (reset! send-ready false)))
+(comment
+  (->> (for [x (range 5 10)]
+         {:date (doto (java.util.Calendar/getInstance)
+                  (.set (+ 2000 (+ (rand-int x) (rand-int x))) 1 2))
+          :started (rand-nth [true false])})
+       (summaries-for-lobbies)))
 
-(defn- send-lobby
-  "Called by a background thread to periodically send game lobby updates to all clients."
-  []
-  (when @send-ready
-    (update-lobbies-joined-view)
-    (update-lobbies-public-view)))
+(defn prepare-lobby-list
+  [lobbies users]
+  (for [user users
+        :let [uid (:username user)]]
+     (let [filtered-lobbies (filter-lobby-list lobbies user)
+           lobby-summaries (summaries-for-lobbies filtered-lobbies)]
+       [uid [:lobby/list lobby-summaries]])))
 
-(defn refresh-lobby-update-in
-  [gameid targets func]
-  (let [target (first targets)
-        [old new'] (swap-vals! all-games update-in (cons gameid targets) func)
-        old-key-diff (select-keys (get old gameid) [target])
-        old-internal-lobby-update (game-lobby-view gameid old-key-diff)
-        key-diff (select-keys (get new' gameid) [target])
-        internal-lobby-updates (game-lobby-view gameid key-diff)
-        public-updates (game-public-view gameid key-diff)]
-    (when (seq internal-lobby-updates)
-      (swap! game-lobby-updates
-             update-in [:update gameid] conj
-             (differ/diff old-internal-lobby-update internal-lobby-updates)))
-    (when (seq public-updates)
-      (swap! public-lobby-updates
-             assoc-in (concat [:update gameid] targets)
-             (get-in public-updates targets)))
-    (send-lobby)))
+(defn broadcast-lobby-list
+  "Sends the lobby list to all users or a given list of users.
+  Filters the list per each users block list."
+  ([] (broadcast-lobby-list (app-state/get-users)))
+  ([users]
+   (assert (sequential? users) (str "Users must be a sequence: " (pr-str users)))
+   (let [lobbies (app-state/get-lobbies)]
+     (doseq [[uid ev] (prepare-lobby-list lobbies users)]
+       (ws/chsk-send! uid ev)))))
 
-(defn refresh-lobby-assoc-in
-  [gameid targets val]
-  (refresh-lobby-update-in gameid targets (fn [_] val)))
+(defn prepare-lobby-state [lobby]
+  (let [lobby-state (lobby-summary lobby true)]
+    (for [user (get-players-and-spectators lobby)
+          :let [uid (:uid user)]]
+      [uid [:lobby/state lobby-state]])))
 
-(defn refresh-lobby-dissoc
-  [gameid]
-  (swap! all-games dissoc gameid)
-  (swap! public-lobby-updates update :delete conj gameid)
-  (send-lobby))
+(defn send-lobby-state [lobby]
+  (when lobby
+    (doseq [[uid ev] (prepare-lobby-state lobby)]
+      (ws/chsk-send! uid ev))))
 
-(defn refresh-lobby
-  [gameid game]
-  (swap! all-games assoc gameid game)
-  (swap! public-lobby-updates assoc-in [:update gameid] (game-internal-view game game))
-  (send-lobby))
+(defn register-lobby
+  [lobbies lobby uid]
+  (let [gameid (:gameid lobby)]
+    (if (app-state/uid-in-lobby-as-player? uid lobbies)
+      lobbies
+      (assoc lobbies gameid lobby))))
 
-(defn reset-send-lobby
-  []
-  (let [[old] (reset-vals! send-ready true)]
-    (when-not old (send-lobby))))
+(defmethod ws/-msg-handler :lobby/create
+  [{uid :uid :as event}]
+  (let [lobby (create-new-lobby event)
+        new-app-state (swap! app-state/app-state update :lobbies
+                             register-lobby lobby uid)
+        lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
+    (when lobby?
+      (send-lobby-state lobby?)
+      (broadcast-lobby-list))))
 
-(defn player?
-  "True if the given uid is a player in the given game"
-  [uid game]
-  (some #(when (= uid (:uid %)) %) (:players game)))
+(defn clear-lobby-state [uid]
+  (ws/chsk-send! uid [:lobby/state nil]))
 
-(defn first-player?
-  "True if the given uid is the first player in the given game"
-  [uid game]
-  (= uid (-> game :players first :uid)))
+(defn send-lobby-list [uid]
+  (broadcast-lobby-list [(app-state/get-user uid)])
+  (when uid
+    (if-let [lobby (app-state/uid->lobby uid)]
+      (send-lobby-state lobby)
+      (clear-lobby-state uid))))
 
-(defn spectator?
-  "True if the given uid is a spectator in the given game"
-  [uid game]
-  (some #(when (= uid (:uid %)) %) (:spectators game)))
+(defmethod ws/-msg-handler :lobby/list
+  [{uid :uid}]
+  (send-lobby-list uid))
 
-(defn player-or-spectator
-  "True if the given uid is a player or spectator in the given game"
-  [uid gameid]
-  (when-let [game (game-for-id gameid)]
-    (or (player? uid game)
-        (spectator? uid game))))
+(defn make-message [user text]
+  {:user (if (= "__system__" user) user (select-keys user [:username :emailhash]))
+   :text (str/trim text)})
 
-(defn close-lobby
+(defn send-message [lobby message]
+  (update lobby :messages conj message))
+
+(defn handle-leave-lobby [lobbies uid user]
+  (let [lobby (app-state/uid->lobby lobbies uid)
+        gameid (:gameid lobby)
+        players (remove #(= uid (:uid %)) (:players lobby))
+        spectators (remove #(= uid (:uid %)) (:spectators lobby))]
+    (if (pos? (count players))
+      (-> lobbies
+          (update gameid send-message (make-message "__system__" (str (:username user) " left the game.")))
+          (assoc-in [gameid :players] players)
+          (assoc-in [gameid :spectators] spectators))
+      ;; dissoc'ing a non-existent key is perfectly fine
+      (dissoc lobbies gameid))))
+
+(defn close-lobby!
   "Closes the given game lobby, booting all players and updating stats."
-  ([db game] (close-lobby db game nil))
-  ([db {:keys [started gameid]} skip-on-close]
+  ([db lobby] (close-lobby! db lobby nil))
+  ([db {:keys [gameid players started on-close] :as lobby} skip-on-close]
    (when started
-     (stats/update-deck-stats db all-games gameid)
-     (stats/update-game-stats db all-games gameid)
-     (stats/push-stats-update db all-games gameid))
-   (let [old-game (get @all-games gameid)
-         callback (:on-close old-game)]
-     (refresh-lobby-dissoc gameid)
-     (swap! old-states dissoc gameid)
-     (when (and (not skip-on-close) callback)
-       (callback old-game)))))
+     (stats/game-finished db lobby)
+     (stats/update-deck-stats db lobby)
+     (stats/update-game-stats db lobby)
+     (stats/push-stats-update db lobby))
+   (swap! app-state/app-state update :lobbies dissoc gameid)
+   (doseq [player-uid (keep :uid players)]
+     (clear-lobby-state player-uid))
+   (when (and (not skip-on-close) on-close)
+     (on-close lobby))))
 
-(defn clear-inactive-lobbies
-  "Called by a background thread to close lobbies that are inactive for some number of seconds."
-  [db time-inactive]
-  (doseq [{:keys [gameid last-update started] :as game} (vals @all-games)]
-    (when (and gameid (t/after? (t/now) (t/plus last-update (t/seconds time-inactive))))
-      (let [uids (lobby-clients gameid)]
-        (if started
-          (do (stats/game-finished db game)
-              (ws/broadcast-to! uids :netrunner/timeout {:gameid gameid}))
-          (ws/broadcast-to! uids :lobby/timeout {:gameid gameid}))
-        (doseq [uid uids]
-          (swap! uid-gameids dissoc uid))
-        (close-lobby db game)))))
+(defn leave-lobby! [db user uid ?reply-fn lobby]
+  (let [new-app-state (swap! app-state/app-state
+                               update :lobbies handle-leave-lobby uid user)
+          lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
+      (send-lobby-state lobby?)
+      (when-not lobby?
+        (close-lobby! db lobby))
+      (broadcast-lobby-list)
+      (when ?reply-fn (?reply-fn true))
+      lobby?))
 
-(defn remove-user
-  "Removes the given uid from the given gameid, whether it is a player or a spectator.
-  Deletes the game from the lobby if all players have left."
-  [db uid gameid]
-  (when-let [{:keys [players started state] :as game} (game-for-id gameid)]
-    (cond (player? uid game)
-          (refresh-lobby-update-in gameid [:players] #(remove-once (fn [p] (= uid (:uid p))) %))
-          (spectator? uid game)
-          (do
-            (refresh-lobby-update-in gameid [:spectator-count] dec)
-            (refresh-lobby-update-in gameid [:spectators] #(remove-once (fn [p] (= uid (:uid p))) %))))
+(defmethod ws/-msg-handler :lobby/leave
+  [{{db :system/db user :user} :ring-req
+    uid :uid
+    ?reply-fn :?reply-fn}]
+  (when-let [lobby (app-state/uid->lobby uid)]
+    (leave-lobby! db user uid ?reply-fn lobby)))
 
-    ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
-    ; TODO add other player back in if other player rejoins
+(defn find-deck
+  [db opts]
+  (assert (:_id opts) ":_id is required")
+  (mc/find-one-as-map db :decks opts))
 
-    (when state
-      (let [winner (:winning-user @state)]
-        (when (and (= 1 (count players)) started (not winner))
-          (refresh-lobby-assoc-in gameid [:ending-players] players))))
+(defn find-deck-for-user [db deck-id user]
+  (let [username (:username user)]
+    (find-deck db {:_id (mongodb/object-id deck-id)
+                   :username username})))
 
-    (let [{:keys [players] :as game} (game-for-id gameid)]
-      (swap! uid-gameids dissoc uid)
-      (when (empty? (filter identity players))
-        (stats/game-finished db game)
-        (close-lobby db game)))))
+(defn process-deck [raw-deck]
+  (let [identity-card (server-card (-> raw-deck :identity :title) false)
+        cards (->> (:cards raw-deck)
+                   (keep #(when-let [card (server-card (:card %) false)]
+                            (assoc % :card card))))
+        deck (assoc raw-deck
+                    :identity identity-card
+                    :cards cards)
+        status (validator/calculate-deck-status deck)]
+    (-> deck
+        (assoc :status status)
+        (dissoc :parsed?))))
+
+(defn valid-deck-for-lobby? [lobby deck]
+  (and (:identity deck)
+       (or (= "casual" (:format lobby))
+           (validator/legal-deck? deck (:format lobby)))))
+
+(defn update-deck-for-player-in-lobby [players uid deck]
+  (mapv (fn [p] (if (= uid (:uid p))
+                  (assoc p :deck deck)
+                  p))
+        players))
+
+(defn handle-select-deck [lobbies uid deck]
+  (let [lobby (app-state/uid-player->lobby lobbies uid)
+        gameid (:gameid lobby)]
+    (if (and gameid (valid-deck-for-lobby? lobby deck))
+      (update-in lobbies [gameid :players] update-deck-for-player-in-lobby uid deck)
+      lobbies)))
+
+(defmethod ws/-msg-handler :lobby/deck
+  [{{db :system/db user :user} :ring-req
+    uid :uid
+    deck-id :?data
+    ?reply-fn :?reply-fn}]
+  (if-let [lobby (app-state/uid-in-lobby-as-player? uid)]
+    (let [raw-deck (find-deck-for-user db deck-id user)
+          processed-deck (process-deck raw-deck)
+          new-app-state (swap! app-state/app-state
+                               update :lobbies handle-select-deck uid processed-deck)
+          lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
+      (send-lobby-state lobby?)
+      (broadcast-lobby-list)
+      (?reply-fn (some #(= processed-deck (:deck %)) (:players lobby?))))
+    (?reply-fn false)))
+
+(defn handle-send-message [lobbies gameid message]
+  (if-let [lobby (get lobbies gameid)]
+    (-> lobby
+        (send-message message)
+        (->> (assoc lobbies gameid)))
+    lobbies))
+
+(defmethod ws/-msg-handler :lobby/say
+  [{{user :user} :ring-req
+    {:keys [gameid text]} :?data}]
+  (assert (string? text) "Message must be a string")
+  (when (app-state/get-lobby gameid)
+    (let [message (make-message user text)
+          new-app-state (swap! app-state/app-state update :lobbies handle-send-message gameid message)
+          lobby (get-in new-app-state [:lobbies gameid])]
+      (send-lobby-state lobby))))
+
+(defn allowed-in-lobby
+  [user lobby]
+  (or (superuser? user)
+      (seq (filter-lobby-list [lobby] user))))
+
+(defn join-message [user]
+  (make-message "__system__" (str (:username user) " joined the game.")))
 
 (defn already-in-game?
   "Checks if a user with the given username is already in the game"
-  [{:keys [username]} {:keys [players spectators]}]
-  (some #(= username (get-in % [:user :username])) (concat players spectators)))
+  [{:keys [username]} lobby]
+  (some #(= username (get-in % [:user :username])) (get-players-and-spectators lobby)))
 
 (defn determine-player-side
   "Determines the side of a player based on their side and a requested side"
   [player request-side]
-  (let [existing-side (:side player)]
-    (if (= existing-side "Any Side")
-      (if (= request-side "Any Side")
-        (rand-nth ["Corp" "Runner"])
-        (if (= "Corp" request-side) "Runner" "Corp"))
-      existing-side)))
+  (let [side (:side player)]
+    (if (and (some? side) (not= side "Any Side"))
+      side
+      (case request-side
+        "Corp" "Runner"
+        "Runner" "Corp"
+        ; else
+        (rand-nth ["Corp" "Runner"])))))
 
-(defn join-game
-  "Adds the given user as a player in the given gameid."
-  [{:keys [username] :as user} uid gameid request-side]
-  (let [{players :players :as game} (game-for-id gameid)
-        existing-players-count (count (remove #(= username (get-in % [:user :username])) players))]
-    (when (or (< existing-players-count 2)
-              (already-in-game? user game))
-      (let [existing-player (first (remove #(= username (get-in % [:user :username])) players))
-            side (determine-player-side existing-player request-side)
-            existing-player (assoc existing-player :side side)
-            new-side (if (= "Corp" side) "Runner" "Corp")
-            new-player {:user user
-                        :uid uid
-                        :side new-side}]
-        (refresh-lobby-assoc-in gameid [:players] [existing-player new-player])
-        (swap! uid-gameids assoc uid gameid)
-        new-player))))
+(defn join-lobby [lobby uid user request-side]
+  (if (or (not= 1 (-> lobby :players count))
+          (already-in-game? user lobby))
+    lobby
+    (let [existing-player (-> lobby :players first)
+          existing-player-side (determine-player-side existing-player request-side)
+          existing-player (assoc existing-player :side existing-player-side)
+          user-side (if (= "Corp" existing-player-side) "Runner" "Corp")
+          user-as-player {:uid uid
+                          :user user
+                          :side user-side}]
+      (assoc lobby :players [existing-player user-as-player]))))
 
-(defn spectate-game
-  "Adds the given user as a spectator in the given gameid"
-  [user uid gameid]
-  (when (game-for-id gameid)
-    (refresh-lobby-update-in gameid [:spectator-count] inc)
-    (refresh-lobby-update-in gameid [:spectators]
-           #(conj % {:user user
-                     :uid uid}))
-    (swap! uid-gameids assoc uid gameid)))
+(defn handle-join-lobby [lobbies ?data uid user correct-password?]
+  (let [{:keys [gameid request-side]} ?data
+        lobby (get lobbies gameid)]
+    (if (and user lobby (allowed-in-lobby user lobby) correct-password?)
+      (-> lobby
+          (join-lobby uid user request-side)
+          (send-message (join-message user))
+          (->> (assoc lobbies gameid)))
+      lobbies)))
 
-(defn blocked-users
-  [{:keys [players]}]
-  (mapcat #(get-in % [:user :options :blocked-users]) players))
-
-(defn superusers [db]
-  (mc/find-maps db "users" {$or [{:isadmin true}
-                                 {:ismoderator true}
-                                 {:tournament-organizer true}]}))
-
-(defn- lobby-say
-  [gameid {:keys [user text]}]
-  (let [user-name (if (map? user) (select-keys user [:username :emailhash]) user)]
-    (refresh-lobby-update-in gameid [:messages] #(conj % {:user user-name
-                                                          :text (trim text)}))))
-
-(defmethod ws/-msg-handler :lobby/leave
-  [{{db :system/db
-     {:keys [username]} :user} :ring-req
-    uid :uid}]
-  ;; Do a full scan here even tho it's expensive, to catch any borked state
-  (let [gameid (some (fn [[gameid lobby]]
-                       (when (some #(= username (-> % :user :username))
-                                   (concat (:players lobby) (:spectators lobby)))
-                         gameid))
-                     @all-games)]
-  (println :lobby/leave uid gameid)
-    (when (player-or-spectator uid gameid)
-      (lobby-say gameid {:user "__system__" :text (str username " left the game.")})
-      (remove-user db uid gameid))))
-
-(defn allowed-in-game
-  [db game {:keys [username] :as user}]
-  (or (superuser? user)
-      (not-any? #(= username %) (blocked-users game))
-      (some #(= username (:username %)) (superusers db))))
+(defn join-lobby! [user uid ?data ?reply-fn lobby]
+  (let [correct-password? (or (superuser? user)
+                              (empty? (:password lobby))
+                              (bcrypt/check (:password ?data) (:password lobby)))
+        new-app-state (swap! app-state/app-state
+                             update :lobbies handle-join-lobby ?data uid user correct-password?)
+        lobby (get-in new-app-state [:lobbies (:gameid ?data)])]
+    (cond
+      (and lobby correct-password?)
+      (do (send-lobby-state lobby)
+          (send-lobby-ting lobby)
+          (broadcast-lobby-list)
+          (when ?reply-fn (?reply-fn 200))
+          lobby)
+      (false? correct-password?)
+      (when ?reply-fn (?reply-fn 403))
+      :else
+      (when ?reply-fn (?reply-fn 404)))))
 
 (defmethod ws/-msg-handler :lobby/join
-  [{{db :system/db
-     {:keys [username isadmin] :as user} :user} :ring-req
+  [{{user :user} :ring-req
     uid :uid
-    {:keys [gameid password request-side]} :?data
-    reply-fn :?reply-fn}]
-  (if-let [{game-password :password :as game} (@all-games gameid)]
-    (when (and user game (allowed-in-game db game user))
-      (if (or (empty? game-password)
-              (bcrypt/check password game-password)
-              isadmin)
-        (do (ws/broadcast-to! [uid] :lobby/select {:gameid gameid})
-            (ws/broadcast-to! [uid] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
-            (join-game user uid gameid request-side)
-            (lobby-say gameid {:user "__system__"
-                               :text (str username " joined the game.")})
-            (ws/broadcast-to! (lobby-clients gameid) :lobby/notification "ting")
-            (when reply-fn (reply-fn 200)))
-        (when reply-fn (reply-fn 403))))
-    (when reply-fn (reply-fn 404))))
+    {gameid :gameid :as ?data} :?data
+    ?reply-fn :?reply-fn}]
+  (when-let [lobby (app-state/get-lobby gameid)]
+    (join-lobby! user uid ?data ?reply-fn lobby)))
 
-(defn handle-lobby-watch
-  ;; Handles a watch command when a game has not yet started.
-  [{{db :system/db
-     {:keys [username] :as user} :user} :ring-req
-    uid :uid
-    {:keys [gameid password]} :?data
-    reply-fn :?reply-fn}]
-  (if-let [{game-password :password started :started :as game}
-           (@all-games gameid)]
-    (when (and user game (allowed-in-game db game user))
-      (if started
-        false  ; don't handle this message, let game/handle-game-watch.
-        (if (and (not (already-in-game? user game))
-                 (or (empty? game-password)
-                     (bcrypt/check password game-password)))
-          (do (spectate-game user uid gameid)
-              (lobby-say gameid {:user "__system__"
-                                 :text (str username " joined the game as a spectator.")})
-              (ws/broadcast-to! [uid] :games/diff {:diff {:update {gameid (game-lobby-view gameid game)}}})
-              (ws/broadcast-to! [uid] :lobby/select {:gameid gameid})
-              (ws/broadcast-to! (lobby-clients gameid) :lobby/notification "ting")
-              (when reply-fn (reply-fn 200))
-              true)
-          (when reply-fn
-            (reply-fn 403)
-            false))))
-    (when reply-fn
-      (reply-fn 404)
-      false)))
+(defn swap-side
+  "Returns a new player map with the player's :side switched"
+  [player]
+  (-> player
+      (update :side #(if (= % "Corp")
+                       "Runner"
+                       "Corp"))
+      (dissoc :deck)))
+
+(defn change-side
+  "Returns a new player map with the player's :side set to a new side"
+  [player side]
+  (-> player
+      (assoc :side side)
+      (dissoc :deck)))
+
+(defn update-sides [lobby uid side]
+  (let [first-player (first (:players lobby))]
+    (cond
+      (not= (:uid first-player) uid) lobby
+      (some? side) (update-in lobby [:players 0] change-side side)
+      :else (update lobby :players #(mapv swap-side %)))))
+
+(defmethod ws/-msg-handler :lobby/swap
+  [{uid :uid
+    {:keys [gameid side]} :?data}]
+  (when-let [lobby (app-state/get-lobby gameid)]
+    (let [new-app-state (swap! app-state/app-state update-in [:lobbies gameid] update-sides uid side)]
+      (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
+      (broadcast-lobby-list))))
 
 (defmethod ws/-msg-handler :lobby/rename-game
-  [{{db :system/db
-     {:keys [username isadmin ismoderator]} :user} :ring-req
+  [{{db :system/db user :user} :ring-req
     {:keys [gameid]} :?data}]
-  (when-let [game (game-for-id gameid)]
-    (when (and username
-               (or isadmin ismoderator))
-      (let [player-name (:username (:user (first (:players game))))
-            bad-name (:title game)]
-        (refresh-lobby-assoc-in gameid [:title] (str player-name "'s game"))
-        (mc/insert db mod-table
-                   {:moderator username
+  (when-let [lobby (app-state/get-lobby gameid)]
+    (when (superuser? user)
+      (let [player-name (-> lobby :original-players first :user :username)
+            bad-name (:title lobby)
+            new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
+        (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
+        (broadcast-lobby-list)
+        (mc/insert db :moderator_actions
+                   {:moderator (:username user)
                     :action :rename-game
                     :game-name bad-name
                     :first-player player-name
                     :date (java.util.Date.)})))))
 
 (defmethod ws/-msg-handler :lobby/delete-game
-  [{{db :system/db
-     {:keys [username isadmin ismoderator]} :user} :ring-req
+  [{{db :system/db user :user} :ring-req
     {:keys [gameid]} :?data}]
-  (when-let [game (game-for-id gameid)]
-    (when (and username
-               (or isadmin ismoderator))
-      (let [player-name (:username (:user (first (:players game))))
-            uids (lobby-clients gameid)]
-        (doseq [uid uids]
-          (swap! uid-gameids dissoc uid))
-        (close-lobby db game)
-        (ws/broadcast-to! uids :lobby/timeout {:gameid gameid})
-        (mc/insert db mod-table
-                   {:moderator username
-                    :action :delete-game
-                    :game-name (:title game)
-                    :first-player player-name
-                    :date (java.util.Date.)})))))
+  (let [lobby (app-state/get-lobby gameid)
+        player-name (-> lobby :original-players first :user :username)
+        bad-name (:title lobby)]
+    (when (and (superuser? user) lobby)
+      (close-lobby! db lobby)
+      (broadcast-lobby-list)
+      (mc/insert db :moderator_actions
+                 {:moderator (:username user)
+                  :action :delete-game
+                  :game-name bad-name
+                  :first-player player-name
+                  :date (java.util.Date.)}))))
+
+(defn clear-inactive-lobbies
+  "Called by a background thread to close lobbies that are inactive for some number of seconds."
+  [db time-inactive]
+  (doseq [{:keys [gameid last-update started] :as lobby} (app-state/get-lobbies)]
+    (when (and gameid (t/after? (t/now) (t/plus last-update (t/seconds time-inactive))))
+      (when started
+        (stats/game-finished db lobby))
+      (close-lobby! db lobby)))
+  (broadcast-lobby-list))
+
+(defn watch-lobby [lobby uid user]
+  (if (already-in-game? user lobby)
+    lobby
+    (update lobby :spectators conj {:uid uid
+                                    :user user})))
+
+(defn watch-message [user]
+  (make-message "__system__" (str (:username user) " joined the game as a spectator.")))
+
+(defn handle-watch-lobby [lobbies gameid uid user correct-password?]
+  (let [lobby (get lobbies gameid)]
+    (if (and user lobby (allowed-in-lobby user lobby) correct-password?)
+      (-> lobby
+          (watch-lobby uid user)
+          (send-message (watch-message user))
+          (->> (assoc lobbies gameid)))
+      lobbies)))
+
+(defmethod ws/-msg-handler :lobby/watch
+  [{{user :user} :ring-req
+    uid :uid
+    {:keys [gameid password]} :?data
+    ?reply-fn :?reply-fn}]
+  (let [lobby (app-state/get-lobby gameid)
+        correct-password? (or (superuser? user)
+                              (empty? (:password lobby))
+                              (bcrypt/check password (:password lobby)))
+        new-app-state (swap! app-state/app-state
+                             update :lobbies handle-watch-lobby gameid uid user correct-password?)
+        lobby? (get-in new-app-state [:lobbies gameid])]
+    (cond
+      (and lobby? correct-password?)
+      (do (send-lobby-state lobby?)
+          (send-lobby-ting lobby?)
+          (broadcast-lobby-list)
+          (when ?reply-fn (?reply-fn 200)))
+      (false? correct-password?)
+      (when ?reply-fn (?reply-fn 403))
+      :else
+      (when ?reply-fn (?reply-fn 404)))))

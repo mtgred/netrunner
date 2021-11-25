@@ -18,7 +18,8 @@
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [cond-button non-game-toast slug->format]]
    [nr.ws :as ws]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [taoensso.sente :as sente]))
 
 (defmethod ws/-msg-handler :lobby/list [{data :?data}]
   (swap! app-state assoc :games data))
@@ -26,9 +27,7 @@
 (defmethod ws/-msg-handler :lobby/state [{data :?data}]
   (swap! app-state assoc :current-game data))
 
-(defmethod ws/-msg-handler :lobby/select
-  [{{:keys [gameid started state]} :?data}]
-  (swap! app-state assoc :gameid gameid)
+(defmethod ws/-msg-handler :lobby/select [{{:keys [started state]} :?data}]
   (reset! angel-arena/queueing false)
   (when started
     (launch-game (parse-state state))))
@@ -85,15 +84,17 @@
                (non-game-toast (tr [:lobby.replay-link-error "Replay link invalid."])
                                "error" {:time-out 0 :close-button true}))))))))
 
+(defn leave-game! [cb]
+  (when (sente/cb-success? cb)
+    (reset! game-state nil)
+    (swap! app-state dissoc :current-game :start-shown)
+    (set! (.-cursor (.-style (.-body js/document))) "default")
+    (set! (.-onbeforeunload js/window) nil)
+    (-> "#gameboard" js/$ .fadeOut)
+    (-> "#gamelobby" js/$ .fadeIn)))
+
 (defn leave-game []
-  (ws/ws-send! [:netrunner/leave {:gameid-str (:gameid @game-state)}])
-  (reset! game-state nil)
-  (swap! app-state dissoc :gameid :side :password-gameid :win-shown :start-shown)
-  (set! (.-cursor (.-style (.-body js/document))) "default")
-  (.removeItem js/localStorage "gameid")
-  (set! (.-onbeforeunload js/window) nil)
-  (-> "#gameboard" js/$ .fadeOut)
-  (-> "#gamelobby" js/$ .fadeIn))
+  (ws/ws-send! [:game/leave (get-in @app-state [:current-game :gameid])] 8000 leave-game!))
 
 (defn- hidden-formats
   "Remove games which the user has opted to hide"

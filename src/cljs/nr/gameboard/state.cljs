@@ -12,13 +12,14 @@
   (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (defn get-side [state]
-  (if (:replay state)
-    @replay-side
-    (let [user-id (:_id (:user @app-state))]
-      (cond
-        (= (get-in state [:runner :user :_id]) user-id) :runner
-        (= (get-in state [:corp :user :_id]) user-id) :corp
-        :else :spectator))))
+  (r/with-let [user (r/cursor app-state [:user])]
+    (if (:replay state)
+      @replay-side
+      (let [user-id (:_id @user)]
+        (cond
+          (= (get-in state [:runner :user :_id]) user-id) :runner
+          (= (get-in state [:corp :user :_id]) user-id) :corp
+          :else :spectator)))))
 
 (defn not-spectator? []
   (not= :spectator (get-side @game-state)))

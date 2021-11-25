@@ -31,12 +31,12 @@
        (ws/ws-send! [(case action
                        "join" :lobby/join
                        "watch" :lobby/watch
-                       "rejoin" :netrunner/rejoin)
-                     {:gameid gameid
-                      :request-side request-side}])))))
+                       "rejoin" :game/rejoin)
+                     (cond-> {:gameid gameid}
+                       request-side (conj {:request-side request-side}))])))))
 
 (defn can-watch? [user game current-game editing]
-  (or (superuser? user)
+  (or (superuser? @user)
       (and (:allow-spectator game)
            (not (or current-game editing)))))
 
@@ -95,7 +95,7 @@
 
 (defn mod-menu-popup [s user {gameid :gameid}]
   (when (and (:show-mod-menu @s)
-             (superuser? user))
+             (superuser? @user))
     [:div.ctrl-menu
      [:div.panel.blue-shade.mod-menu
       [:div {:on-click #(do (reset-game-name gameid)
@@ -109,7 +109,7 @@
 
 (defn game-title [s user game]
   [:h4 {:on-click #(swap! s update :show-mod-menu not)
-        :class (when (superuser? user) "clickable")}
+        :class (when (superuser? @user) "clickable")}
    (str (when (:save-replay game) "🟢")
         (when (:password game) (str "[" (tr [:lobby.private "PRIVATE"]) "] "))
         (:title game)

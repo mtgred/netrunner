@@ -1,31 +1,31 @@
 (ns web.system
   (:require
-    [web.config :refer [frontend-version server-mode]]
-    [clj-time.format :as f]
-    [game.cards.agendas]
-    [game.cards.assets]
-    [game.cards.basic]
-    [game.cards.events]
-    [game.cards.hardware]
-    [game.cards.ice]
-    [game.cards.identities]
-    [game.cards.operations]
-    [game.cards.programs]
-    [game.cards.resources]
-    [game.cards.upgrades]
-    [game.quotes :refer [load-quotes!]]
-    [integrant.core :as ig]
-    [jinteki.cards :as cards]
-    [monger.collection :as mc]
-    [monger.core :as mg]
-    [org.httpkit.server :refer [run-server server-stop!]]
-    [taoensso.sente :as sente]
-    [web.angel-arena :as angel-arena]
-    [web.api :refer [make-app]]
-    [web.lobby :as lobby]
-    [web.new-lobby]
-    [web.utils :refer [tick]]
-    [web.ws :refer [ch-chsk event-msg-handler]]))
+   [clj-time.format :as f]
+   [game.cards.agendas]
+   [game.cards.assets]
+   [game.cards.basic]
+   [game.cards.events]
+   [game.cards.hardware]
+   [game.cards.ice]
+   [game.cards.identities]
+   [game.cards.operations]
+   [game.cards.programs]
+   [game.cards.resources]
+   [game.cards.upgrades]
+   [game.quotes :refer [load-quotes!]]
+   [integrant.core :as ig]
+   [jinteki.cards :as cards]
+   [monger.collection :as mc]
+   [monger.core :as mg]
+   [org.httpkit.server :refer [run-server server-stop!]]
+   [taoensso.sente :as sente]
+   [web.angel-arena :as angel-arena]
+   [web.api :refer [make-app]]
+   [web.config :refer [frontend-version server-mode]]
+   [web.game]
+   [web.lobby :as new-lobby]
+   [web.utils :refer [tick]]
+   [web.ws :refer [ch-chsk event-msg-handler]]))
 
 (defn build-config []
   {:mongodb/connection {:address "localhost"
@@ -63,9 +63,9 @@
 
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
-     (tick #(angel-arena/check-for-inactivity db) interval)
-     (tick #(lobby/reset-send-lobby) interval)]))
+    [(tick #(new-lobby/clear-inactive-lobbies db time-inactive) interval)
+     ; (tick #(angel-arena/check-for-inactivity db) interval)
+     ]))
 
 (defmethod ig/halt-key! :web/lobby [_ futures]
   (run! future-cancel futures))

@@ -57,7 +57,7 @@
   (when (first-user? @players @user)
      [cond-button (tr [:lobby.start "Start"])
       (every? :deck @players)
-      #(ws/ws-send! [:netrunner/start @gameid])]))
+      #(ws/ws-send! [:game/start @gameid])]))
 
 (defn leave-button []
   [:button
@@ -174,4 +174,4 @@
       [player-list user current-game players]
       [options-list current-game]
       [spectator-list current-game]
-      [lobby-chat messages]]]))
+      [lobby-chat current-game messages]]]))

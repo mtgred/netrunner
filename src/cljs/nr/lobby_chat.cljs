@@ -5,10 +5,11 @@
    [nr.ws :as ws]
    [reagent.core :as r]))
 
-(defn send-message [state]
+(defn send-message [state current-game]
   (let [text (:msg @state)]
     (when (and (string? text) (not-empty text))
-      (ws/ws-send! [:lobby/say text])
+      (ws/ws-send! [:lobby/say {:gameid (:gameid @current-game)
+                                :text text}])
       (swap! state assoc :should-scroll true)
       (swap! state assoc :msg ""))))
 
@@ -16,7 +17,7 @@
   [el tolerance]
   (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
 
-(defn lobby-chat [_messages]
+(defn lobby-chat [_current-game _messages]
   (r/with-let [state (r/atom {:message-list nil
                               :msg ""
                               :should-scroll false})
@@ -41,7 +42,7 @@
              (swap! state assoc :should-scroll false)
              (set! (.-scrollTop el) (.-scrollHeight el)))))
        :reagent-render
-       (fn [messages]
+       (fn [current-game messages]
          [:div.chat-box
           [:h3 (tr [:lobby.chat "Chat"])]
           [:div.message-list {:ref #(swap! state assoc :message-list %)}
@@ -58,7 +59,7 @@
                @messages))]
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
-                                           (send-message state))}
+                                           (send-message state current-game))}
             [:input {:placeholder (tr [:chat.placeholder "Say something"])
                      :type "text"
                      :value @current-input

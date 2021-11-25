@@ -41,7 +41,7 @@
           api-record (mc/find-one-as-map db "api-keys" {:api-key api-uuid} ["username"])
           username (:username api-record)]
       (if username
-        (let [game (lobby/game-for-username username)
+        (let [game {} ; (lobby/game-for-username username)
               allow-access (:api-access game)]
           (if (and game allow-access)
             (action username game ctx)

@@ -2,7 +2,7 @@
   (:require [differ.core :as differ]
             [nr.appstate :refer [app-state]]
             [nr.gameboard.replay :refer [init-replay]]
-            [nr.gameboard.state :refer [game-state last-state lock check-lock? parse-state get-side not-spectator?]]
+            [nr.gameboard.state :refer [game-state last-state lock check-lock? parse-state get-side]]
             [nr.translations :refer [tr]]
             [nr.utils :refer [toastr-options]]
             [nr.ws :as ws]))
@@ -14,7 +14,6 @@
 
 (defn init-game [state]
   (let [side (get-side state)]
-    (.setItem js/localStorage "gameid" (:gameid @app-state))
     (reset! game-state (dissoc state :replay-diffs :replay-jump-to))
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)
@@ -40,11 +39,14 @@
     (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
 
 (defn handle-error []
-  (toast (tr [:game.error "Internal Server Error. Please type /bug in the chat and follow the instructions."]) "error" {:time-out 0 :close-button true})
+  (toast (tr [:game.error "Internal Server Error. Please type /bug in the chat and follow the instructions."])
+         "error"
+         {:time-out 0
+          :close-button true})
   (reset! lock false))
 
-(defmethod ws/-msg-handler :netrunner/state [{data :?data}] (reset-game (parse-state data)))
-(defmethod ws/-msg-handler :netrunner/start [{data :?data}] (launch-game (parse-state data)))
+(defmethod ws/-msg-handler :game/start [{data :?data}] (launch-game (parse-state data)))
+(defmethod ws/-msg-handler :game/resync [{data :?data}] (reset-game (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/diff [{data :?data}] (handle-diff (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/timeout [{data :?data}] (handle-timeout data))
 (defmethod ws/-msg-handler :netrunner/error [_] (handle-error))
@@ -56,7 +58,6 @@
               (or (not @lock) no-lock))
      (let [card (select-keys card [:cid :zone :side :host :type])
            args (merge args (when (seq card) {:card card}))]
-       (try (js/ga "send" "event" "game" command) (catch js/Error e))
        (when-not no-lock (reset! lock true))
        (ws/ws-send! [:netrunner/action {:gameid-str (:gameid @game-state)
                                         :command command
@@ -76,7 +77,7 @@
 
 (defn concede []
   (when (not (:replay @game-state))
-    (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}])))
+    (ws/ws-send! [:game/concede (get-in @app-state [:current-game :gameid])])))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]

@@ -1,7 +1,7 @@
 (ns web.tournament
   (:require [clojure.string :as str]
             [web.mongodb :refer [find-maps-case-insensitive]]
-            [web.lobby :refer [all-games refresh-lobby close-lobby]]
+            ; [web.lobby :refer [all-games refresh-lobby close-lobby]]
             [web.stats :refer [fetch-elapsed]]
             [web.utils :refer [response]]
             [web.ws :as ws]
@@ -112,7 +112,7 @@
               :last-update (t/now)
               :on-close on-close}]
     (when (= 2 (count players))
-      (refresh-lobby gameid game)
+      ; (refresh-lobby gameid game)
       game)))
 
 (defn create-lobbies-for-tournament
@@ -194,11 +194,12 @@
 (defn close-tournament-tables
   [cobra-link]
   (when cobra-link
-    (let [tables (for [game (vals @all-games)
+    (let [tables (for [game (vals {})
                        :when (= cobra-link (:cobra-link game))]
                    {:started false
                     :gameid (:gameid game)})]
-      (map #(close-lobby % true) tables))))
+      ; (map #(close-lobby % true) tables)
+      )))
 
 (defmethod ws/-msg-handler :tournament/fetch [event]
   ((wrap-with-to-handler load-tournament) event))

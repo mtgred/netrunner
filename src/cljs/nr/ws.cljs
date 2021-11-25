@@ -32,31 +32,30 @@
       (println "Caught an error in the message handler: " e))))
 
 (defmethod -msg-handler :default [event]
-  (println "unknown event message" event))
+  (println (str "unknown event message\nid: " (:id event) "\nevent:" event)))
 
 (defmethod -msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
 (defmethod -msg-handler :chsk/ws-ping [_])
 
 (defn resync []
-  (ws-send! [:netrunner/resync {:gameid-str (:gameid @game-state)}]))
+  (ws-send! [:game/resync {:gameid-str (get-in @app-state [:current-game :gameid])}]))
 
 (defmethod -msg-handler :chsk/state
   [{[old-state new-state] :?data}]
-    (when (= (:type old-state) (:type new-state))
-      (when (and (:open? old-state)
-                 (not (:open? new-state))
-                 (not (:first-open? new-state)))
-        (reset! lock true)
-        (non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
-      (when (and (not (:open? old-state))
-                 (:open? new-state)
-                 (not (:first-open? new-state)))
-        (.clear js/toastr)
-        (ws-send! [:lobby/list])
-        (when (and (:gameid @app-state)
-                   (@game-state))
-              (resync))
-        (non-game-toast "Reconnected to server" "success" nil))))
+  (when (= (:type old-state) (:type new-state))
+    (when (and (:open? old-state)
+               (not (:open? new-state))
+               (not (:first-open? new-state)))
+      (reset! lock true)
+      (non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
+    (when (and (not (:open? old-state))
+               (:open? new-state)
+               (not (:first-open? new-state)))
+      (.clear js/toastr)
+      (ws-send! [:lobby/list])
+      (when (get-in @app-state [:current-game :started])
+        (resync))
+      (non-game-toast "Reconnected to server" "success" nil))))
 
 (defonce router_ (atom nil))
 (defn stop-router! [] (when-let [stop-fn @router_] (stop-fn)))
