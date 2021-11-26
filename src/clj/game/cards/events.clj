@@ -1893,7 +1893,7 @@
                                                 (count cards) cards))
                               card nil)
                             (wait-for (trash state side target {:unpreventable true})
-                                      (system-msg state side (str "trash " (:title target)))
+                                      (system-msg state side (str "trashes " (:title target)))
                                       (continue-ability
                                         state side
                                         (when-let [cards (seq (remove-once #(= % target) cards))]
