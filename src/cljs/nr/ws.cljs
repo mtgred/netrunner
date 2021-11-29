@@ -1,8 +1,8 @@
 (ns nr.ws
   (:require
    [nr.ajax :refer [?csrf-token]]
-   [nr.appstate :refer [app-state]]
-   [nr.gameboard.state :refer [game-state lock]]
+   [nr.appstate :refer [app-state current-gameid]]
+   [nr.gameboard.state :refer [lock]]
    [nr.utils :refer [non-game-toast]]
    [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
@@ -32,25 +32,25 @@
       (println "Caught an error in the message handler: " e))))
 
 (defmethod -msg-handler :default [event]
-  (println (str "unknown event message\nid: " (:id event) "\nevent:" event)))
+  (println (str "unknown event message"
+                "\nid: " (:id event)
+                "\nevent:" event)))
 
 (defmethod -msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
 (defmethod -msg-handler :chsk/ws-ping [_])
 
 (defn resync []
-  (ws-send! [:game/resync {:gameid-str (get-in @app-state [:current-game :gameid])}]))
+  (ws-send! [:game/resync (current-gameid app-state)]))
 
 (defmethod -msg-handler :chsk/state
   [{[old-state new-state] :?data}]
-  (when (= (:type old-state) (:type new-state))
+  (when (not (:first-open? new-state))
     (when (and (:open? old-state)
-               (not (:open? new-state))
-               (not (:first-open? new-state)))
+               (not (:open? new-state)))
       (reset! lock true)
       (non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
     (when (and (not (:open? old-state))
-               (:open? new-state)
-               (not (:first-open? new-state)))
+               (:open? new-state))
       (.clear js/toastr)
       (ws-send! [:lobby/list])
       (when (get-in @app-state [:current-game :started])

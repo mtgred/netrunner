@@ -9,7 +9,7 @@
   {"typing" core/typing
    "typingstop" core/typingstop})
 
-(defn not-spectator?
+(defn player?
   "Returns true if the specified user in the specified state is not a spectator"
   [state user]
   (let [corp-id (get-in @state [:corp :user :_id])
@@ -23,8 +23,8 @@
 
 (defn handle-action
   "Ensures the user is allowed to do command they are trying to do"
-  [user command state side args]
-  (if (not-spectator? state user)
+  [state user command side args]
+  (if (player? state user)
     (when (core/process-action command state side args)
       (set-action-id state side))
     (when-let [cmd (spectator-commands command)]

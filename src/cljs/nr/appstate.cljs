@@ -62,3 +62,6 @@
            ;; TODO: new stuff
            :games [] :current-game nil
            }))
+
+(defn current-gameid [app-state]
+  (get-in @app-state [:current-game :gameid]))

@@ -1,11 +1,13 @@
 (ns nr.gameboard.actions
-  (:require [differ.core :as differ]
-            [nr.appstate :refer [app-state]]
-            [nr.gameboard.replay :refer [init-replay]]
-            [nr.gameboard.state :refer [game-state last-state lock check-lock? parse-state get-side]]
-            [nr.translations :refer [tr]]
-            [nr.utils :refer [toastr-options]]
-            [nr.ws :as ws]))
+  (:require
+   [differ.core :as differ]
+   [nr.appstate :refer [app-state current-gameid]]
+   [nr.gameboard.replay :refer [init-replay]]
+   [nr.gameboard.state :refer [check-lock? game-state get-side last-state lock
+                               parse-state]]
+   [nr.translations :refer [tr]]
+   [nr.utils :refer [toastr-options]]
+   [nr.ws :as ws]))
 
 (defn reset-game [state]
   (reset! game-state (assoc state :side (get-side state)))
@@ -28,14 +30,14 @@
   (-> "#gameboard" js/$ .fadeIn))
 
 (defn handle-diff [{:keys [gameid diff]}]
-  (when (= gameid (:gameid @game-state))
+  (when (= gameid (str (current-gameid app-state)))
     (swap! game-state #(differ/patch @last-state diff))
     (check-lock?)
     (reset! last-state @game-state)))
 
 (declare toast)
 (defn handle-timeout [{:keys [gameid]}]
-  (when (= gameid (:gameid @game-state))
+  (when (= gameid (str (current-gameid app-state)))
     (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
 
 (defn handle-error []
@@ -47,7 +49,7 @@
 
 (defmethod ws/-msg-handler :game/start [{data :?data}] (launch-game (parse-state data)))
 (defmethod ws/-msg-handler :game/resync [{data :?data}] (reset-game (parse-state data)))
-(defmethod ws/-msg-handler :netrunner/diff [{data :?data}] (handle-diff (parse-state data)))
+(defmethod ws/-msg-handler :game/diff [{data :?data}] (handle-diff (parse-state data)))
 (defmethod ws/-msg-handler :netrunner/timeout [{data :?data}] (handle-timeout data))
 (defmethod ws/-msg-handler :netrunner/error [_] (handle-error))
 
@@ -59,13 +61,13 @@
      (let [card (select-keys card [:cid :zone :side :host :type])
            args (merge args (when (seq card) {:card card}))]
        (when-not no-lock (reset! lock true))
-       (ws/ws-send! [:netrunner/action {:gameid-str (:gameid @game-state)
-                                        :command command
-                                        :args args}])))))
+       (ws/ws-send! [:game/action {:gameid (current-gameid app-state)
+                                   :command command
+                                   :args args}])))))
 
 (defn mute-spectators [mute-state]
   (when (not (:replay @game-state))
-    (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state)
+    (ws/ws-send! [:netrunner/mute-spectators {:gameid (current-gameid app-state)
                                               :mute-state mute-state}])))
 
 (defn stack-cards []

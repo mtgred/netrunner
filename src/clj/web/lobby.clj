@@ -6,7 +6,7 @@
    [clojure.string :as str]
    [crypto.password.bcrypt :as bcrypt]
    [game.utils :refer [server-card]]
-   [jinteki.utils :refer [select-non-nil-keys superuser?]]
+   [jinteki.utils :refer [select-non-nil-keys side-from-str superuser?]]
    [jinteki.validator :as validator]
    [monger.collection :as mc]
    [web.app-state :as app-state]
@@ -227,6 +227,16 @@
   [{uid :uid}]
   (send-lobby-list uid))
 
+(defn player?
+  "True if the given uid is a player in the given game"
+  [uid lobby]
+  (some #(when (= uid (:uid %)) %) (:players lobby)))
+
+(defn spectator?
+  "True if the given uid is a spectator in the given game"
+  [uid lobby]
+  (some #(= uid (:uid %)) (:spectators lobby)))
+
 (defn make-message [user text]
   {:user (if (= "__system__" user) user (select-keys user [:username :emailhash]))
    :text (str/trim text)})
@@ -267,7 +277,10 @@
                                update :lobbies handle-leave-lobby uid user)
           lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
       (send-lobby-state lobby?)
-      (when-not lobby?
+      (if lobby?
+        (when-let [player (player? uid lobby)]
+          (let [side (side-from-str (:side player))]
+            (swap! (:state lobby?) update side dissoc :user)))
         (close-lobby! db lobby))
       (broadcast-lobby-list)
       (when ?reply-fn (?reply-fn true))
@@ -354,6 +367,11 @@
           lobby (get-in new-app-state [:lobbies gameid])]
       (send-lobby-state lobby))))
 
+(defn check-password [lobby user password]
+  (or (empty? (:password lobby))
+      (superuser? user)
+      (bcrypt/check password (:password lobby))))
+
 (defn allowed-in-lobby
   [user lobby]
   (or (superuser? user)
@@ -403,19 +421,22 @@
       lobbies)))
 
 (defn join-lobby! [user uid ?data ?reply-fn lobby]
-  (let [correct-password? (or (superuser? user)
-                              (empty? (:password lobby))
-                              (bcrypt/check (:password ?data) (:password lobby)))
+  (let [correct-password? (check-password lobby user (:password ?data))
         new-app-state (swap! app-state/app-state
                              update :lobbies handle-join-lobby ?data uid user correct-password?)
-        lobby (get-in new-app-state [:lobbies (:gameid ?data)])]
+        lobby? (get-in new-app-state [:lobbies (:gameid ?data)])]
     (cond
-      (and lobby correct-password?)
-      (do (send-lobby-state lobby)
-          (send-lobby-ting lobby)
+      (and lobby? correct-password?)
+      (do
+        (when-let [player (player? uid lobby?)]
+          (let [side (side-from-str (:side player))]
+            (when-let [state (:state lobby?)]
+              (swap! state assoc-in [side :user] user))))
+          (send-lobby-state lobby?)
+          (send-lobby-ting lobby?)
           (broadcast-lobby-list)
           (when ?reply-fn (?reply-fn 200))
-          lobby)
+          lobby?)
       (false? correct-password?)
       (when ?reply-fn (?reply-fn 403))
       :else
@@ -433,9 +454,7 @@
   "Returns a new player map with the player's :side switched"
   [player]
   (-> player
-      (update :side #(if (= % "Corp")
-                       "Runner"
-                       "Corp"))
+      (update :side #(if (= % "Corp") "Runner" "Corp"))
       (dissoc :deck)))
 
 (defn change-side
@@ -521,25 +540,27 @@
           (->> (assoc lobbies gameid)))
       lobbies)))
 
+(defn watch-lobby!
+  [user uid gameid correct-password?]
+  (let [new-app-state (swap! app-state/app-state
+                             update :lobbies handle-watch-lobby gameid uid user correct-password?)]
+    (get-in new-app-state [:lobbies gameid])))
+
 (defmethod ws/-msg-handler :lobby/watch
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid password]} :?data
     ?reply-fn :?reply-fn}]
-  (let [lobby (app-state/get-lobby gameid)
-        correct-password? (or (superuser? user)
-                              (empty? (:password lobby))
-                              (bcrypt/check password (:password lobby)))
-        new-app-state (swap! app-state/app-state
-                             update :lobbies handle-watch-lobby gameid uid user correct-password?)
-        lobby? (get-in new-app-state [:lobbies gameid])]
-    (cond
-      (and lobby? correct-password?)
-      (do (send-lobby-state lobby?)
-          (send-lobby-ting lobby?)
-          (broadcast-lobby-list)
-          (when ?reply-fn (?reply-fn 200)))
-      (false? correct-password?)
-      (when ?reply-fn (?reply-fn 403))
-      :else
-      (when ?reply-fn (?reply-fn 404)))))
+  (when-let [lobby (app-state/get-lobby gameid)]
+    (let [correct-password? (check-password lobby user password)
+          lobby? (watch-lobby! user uid gameid correct-password?)]
+      (cond
+        (and lobby? correct-password?)
+        (do (send-lobby-state lobby?)
+            (send-lobby-ting lobby?)
+            (broadcast-lobby-list)
+            (when ?reply-fn (?reply-fn 200)))
+        (false? correct-password?)
+        (when ?reply-fn (?reply-fn 403))
+        :else
+        (when ?reply-fn (?reply-fn 404))))))

@@ -56,7 +56,7 @@
 (defmethod -msg-handler :default
   ;; Handles any hecked messages from the client
   [{:keys [id ?data uid ?reply-fn]}]
-  (println "Unhandled WS msg" id uid ?data)
+  (println "Unhandled WS msg" id uid (pr-str ?data))
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
 

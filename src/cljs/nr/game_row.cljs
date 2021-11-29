@@ -24,13 +24,13 @@
 
 (defn join-game
   ([lobby-state game action] (join-game lobby-state game action nil))
-  ([lobby-state {gameid :gameid} action request-side]
+  ([lobby-state {:keys [gameid started]} action request-side]
    (authenticated
      (fn [_]
        (swap! lobby-state assoc :editing false)
        (ws/ws-send! [(case action
                        "join" :lobby/join
-                       "watch" :lobby/watch
+                       "watch" (if started :game/watch :lobby/watch)
                        "rejoin" :game/rejoin)
                      (cond-> {:gameid gameid}
                        request-side (conj {:request-side request-side}))])))))
