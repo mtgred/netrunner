@@ -37,6 +37,7 @@
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
      :classic "Classic"
+     :campaign "Campaign"
      :casual "Casual"
      :system-gateway "System Gateway"
      :startup "Startup"}
@@ -186,6 +187,7 @@
      :title "Title"
      :side "Side"
      :format "Format"
+     :campaign-code "Campaign Passcode"
      :options "Options"
      :spectators "Allow spectators"
      :hidden "Make players' hidden information visible to spectators"

@@ -11,6 +11,7 @@
     [nr.appstate :refer [app-state]]
     [nr.auth :refer [authenticated] :as auth]
     [nr.avatar :refer [avatar]]
+    [nr.campaigns :refer [available-campaigns]]
     [nr.cardbrowser :refer [image-url] :as cb]
     [nr.deck-status :refer [deck-format-status-span]]
     [nr.deckbuilder :refer [deck-name]]
@@ -502,7 +503,26 @@
                           :on-change #(swap! s assoc :format (.. % -target -value))}
           (doall (for [[k v] slug->format]
                    ^{:key k}
-                   [:option {:value k} (tr-format v)]))]]
+                   [:option {:value k} (tr-format v)]))]
+         (when (= (:format @s) "campaign")
+           [:select.format {:value (:campaign @s)
+                            :on-change #(swap! s assoc :campaign (.. % -target -value))}
+            (conj (doall (for [[k c] available-campaigns]
+                           ^{:key k}
+                           [:option {:value k} (:title c)]))
+                  [:option ^{:key "none"} {:value "none"} "Select a Campaign"])])
+         (when (= (:format @s) "campaign")
+           (when-let [campaign (get available-campaigns (keyword (:campaign @s)))]
+             [:div.campaign-description
+              [:h4 (:title campaign)]
+              (:description campaign)
+              [:br]
+              [:a {:href (:url campaign)} "Campaign Document"]
+              [:br]
+              [:input.campaign-code {:on-change #(swap! s assoc :campaign-code (.. % -target -value))
+                                     :value (:campaign-code @s)
+                                     :placeholder (tr [:lobby.campaign-code "Campaign Passcode"])
+                                     :maxLength "100"}]]))]
 
         [:section
          [:h3 (tr [:lobby.options "Options"])]

@@ -461,6 +461,7 @@
     (when (and (:identity deck)
                (player? uid game)
                (or (= (:format game) "casual")
+                   (= (:format game) "campaign")
                    (legal-deck? deck (:format game))))
       (when (= "tournament" (:room game))
         (lobby-say gameid {:user "__system__"

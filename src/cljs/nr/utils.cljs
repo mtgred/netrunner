@@ -112,6 +112,7 @@
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
    "classic" "Classic"
+   "campaign" "Campaign"
    "casual" "Casual"})
 
 (def format->slug
@@ -122,6 +123,7 @@
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
    "Classic" "classic"
+   "Campaign" "campaign"
    "Casual" "casual"})
 
 (defn regex-escape [string]
