@@ -124,10 +124,11 @@
   [game state]
   (when-let [campaign (get available-campaigns (keyword (:campaign game)))]
     (let [campaign-code (:campaign-code game)
-          card (make-card {:side "None"
-                           :type "Campaign"
-                           :title (:title campaign)})]
-      (swap! state assoc :campaign-card (assoc-in card [:special :campaign-code] campaign-code)))))
+          corp-card (card-init state :corp
+                               (make-card {:side "Corp"
+                                           :type "Campaign"
+                                           :title (:campaign-card campaign)}))]
+      (swap! state assoc-in [:corp :campaign-card] corp-card))))
 
 (defn init-game
   "Initializes a new game with the given players vector."

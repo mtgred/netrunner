@@ -19,7 +19,7 @@
     (cond
       (and title card) card
       (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
-      (or (in-coll? (map :title (vals available-campaigns)) title)) {}
+      (or (in-coll? (map :campaign-card (vals available-campaigns)) title)) {}
       :else (throw (Exception. (str "Tried to select server-card for " title))))))
 
 (defn server-cards

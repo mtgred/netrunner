@@ -486,6 +486,7 @@
   (case (to-keyword (:type card))
     :agenda #{:scored}
     (:asset :ice :upgrade) #{:servers}
+    :campaign #{:campaign-card}
     :counter #{:hosted}
     (:event :operation) #{:current :play-area}
     (:hardware :program :resource) #{:rig}

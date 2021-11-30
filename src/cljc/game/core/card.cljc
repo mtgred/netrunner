@@ -247,6 +247,10 @@
   [card]
   (is-type? card "Basic Action"))
 
+(defn campaign-card?
+  [card]
+  (is-type? card "Campaign"))
+
 (defn has-subtype?
   "Checks if the specified subtype is present in the card, ignoring case."
   [card subtype]
@@ -290,6 +294,7 @@
   "Checks if the card is active and should receive game events/triggers."
   [card]
   (or (basic-action? card)
+      (campaign-card? card)
       (and (identity? card)
            (not (facedown? card)))
       (in-play-area? card)
@@ -357,15 +362,17 @@
   (when card
     (if (= type "Identity")
       (get-in @state [(to-keyword side) :identity])
-      (if zone
-        (if host
-          (get-card-hosted state card)
-          (some #(when (= cid (:cid %)) %)
-                (let [zones (map to-keyword zone)]
-                  (if (= (first zones) :scored)
-                    (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
-                    (get-in @state (cons (to-keyword side) zones))))))
-        card))))
+      (if (= type "Campaign")
+        (:campaign-card @state)
+        (if zone
+          (if host
+            (get-card-hosted state card)
+            (some #(when (= cid (:cid %)) %)
+                  (let [zones (map to-keyword zone)]
+                    (if (= (first zones) :scored)
+                      (into (get-in @state [:corp :scored]) (get-in @state [:runner :scored]))
+                      (get-in @state (cons (to-keyword side) zones))))))
+          card)))))
 
 (defn- same-card?
   "Checks if the two cards are the same by `:cid`. Returns false if both cards

@@ -14,6 +14,11 @@
       (swap! state assoc-in [side :identity] card)
       card)
 
+    (= type "Campaign")
+    (do
+      (swap! state assoc :campaign-card card)
+      card)
+
     host
     (do (update-hosted! state side card)
         (get-card state card))
