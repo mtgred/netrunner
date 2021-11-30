@@ -5,6 +5,7 @@
     [game.core.agendas]
     [game.core.bad-publicity]
     [game.core.board]
+    [game.core.campaigns]
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
@@ -158,6 +159,10 @@
    installed-byname
    server->zone
    server-list])
+
+(import-vars
+  [game.core.campaigns
+   available-campaigns])
 
 (import-vars
   [game.core.card

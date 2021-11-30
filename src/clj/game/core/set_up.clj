@@ -1,5 +1,6 @@
 (ns game.core.set-up
   (:require
+    [game.core.campaigns :refer [available-campaigns]]
     [game.core.card :refer [corp? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.checkpoint :refer [fake-checkpoint]]
@@ -119,6 +120,15 @@
                                                                  :type "Basic Action"
                                                                  :title "Runner Basic Action Card"})))
 
+(defn- create-campaign-card
+  [game state]
+  (when-let [campaign (get available-campaigns (keyword (:campaign game)))]
+    (let [campaign-code (:campaign-code game)
+          card (make-card {:side "None"
+                           :type "Campaign"
+                           :title (:title campaign)})]
+      (swap! state assoc :campaign-card (assoc-in card [:special :campaign-code] campaign-code)))))
+
 (defn init-game
   "Initializes a new game with the given players vector."
   [game]
@@ -138,4 +148,6 @@
                             (init-hands state)
                             (fake-checkpoint state)))))
     (swap! state assoc :history [(:hist-state (public-states state))])
+    (when (= "campaign" (:format game))
+      (create-campaign-card game state))
     state))

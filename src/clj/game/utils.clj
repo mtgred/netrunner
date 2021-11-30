@@ -1,11 +1,17 @@
 (ns game.utils
   (:require
     [jinteki.cards :refer [all-cards]]
+    [game.core.campaigns :refer [available-campaigns]]
     [clojure.string :as string]
     [clj-uuid :as uuid]))
 
 (defn make-cid []
   (uuid/to-string (uuid/v4)))
+
+(defn in-coll?
+  "true if coll contains elm"
+  [coll elm]
+  (some #(= elm %) coll))
 
 (defn server-card
   [title]
@@ -13,6 +19,7 @@
     (cond
       (and title card) card
       (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
+      (or (in-coll? (map :title (vals available-campaigns)) title)) {}
       :else (throw (Exception. (str "Tried to select server-card for " title))))))
 
 (defn server-cards
@@ -185,11 +192,6 @@
   (string/join " and "
                (remove empty?
                        [(string/join ", " (butlast coll)) (last coll)])))
-
-(defn in-coll?
-  "true if coll contains elm"
-  [coll elm]
-  (some #(= elm %) coll))
 
 (defn positions
   "Returns the positions of elements in coll matching pred"
