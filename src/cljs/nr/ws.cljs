@@ -2,9 +2,10 @@
   (:require
    [nr.ajax :refer [?csrf-token]]
    [nr.appstate :refer [app-state current-gameid]]
-   [nr.gameboard.state :refer [lock]]
    [nr.utils :refer [non-game-toast]]
    [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
+
+(defonce lock (atom false))
 
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")

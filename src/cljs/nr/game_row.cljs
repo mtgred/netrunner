@@ -85,7 +85,7 @@
        (not current-game)
        (not editing)
        started
-       (not (some #(= (:username user) (get-in % [:user :username])) original-players))))
+       (some #(= (:username @user) (get-in % [:user :username])) original-players)))
 
 (defn rejoin-button [lobby-state user game current-game editing]
   (when (can-rejoin? user game current-game editing)

@@ -59,7 +59,6 @@
            :visible-formats (load-visible-formats)
            :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                       :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
-           ;; TODO: new stuff
            :games [] :current-game nil
            }))
 

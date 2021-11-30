@@ -23,7 +23,7 @@
    [web.api :refer [make-app]]
    [web.config :refer [frontend-version server-mode]]
    [web.game]
-   [web.lobby :as new-lobby]
+   [web.lobby :as lobby]
    [web.utils :refer [tick]]
    [web.ws :refer [ch-chsk event-msg-handler]]))
 
@@ -36,7 +36,7 @@
                 :app (ig/ref :web/app)}
    :web/lobby {:interval 1000
                :mongo (ig/ref :mongodb/connection)
-               :time-inactive 1800}
+               :time-inactive 600}
    :frontend-version (ig/ref :mongodb/connection)
    :server-mode "dev"
    :sente/router nil
@@ -63,7 +63,7 @@
 
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [(tick #(new-lobby/clear-inactive-lobbies db time-inactive) interval)
+    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
      ; (tick #(angel-arena/check-for-inactivity db) interval)
      ]))
 

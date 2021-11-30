@@ -5,11 +5,10 @@
    [clojure.set :refer [difference union]]
    [nr.ajax :refer [GET]]
    [nr.angel-arena :as angel-arena]
-   [nr.appstate :refer [app-state]]
+   [nr.appstate :refer [app-state current-gameid]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.game-row :refer [game-row]]
-   [nr.gameboard.actions :refer [launch-game]]
-   [nr.gameboard.state :refer [game-state parse-state]]
+   [nr.gameboard.actions :refer [leave-game!]]
    [nr.new-game :refer [create-new-game]]
    [nr.password-game :refer [password-game]]
    [nr.pending-game :refer [pending-game]]
@@ -26,11 +25,6 @@
 
 (defmethod ws/-msg-handler :lobby/state [{data :?data}]
   (swap! app-state assoc :current-game data))
-
-(defmethod ws/-msg-handler :lobby/select [{{:keys [started state]} :?data}]
-  (reset! angel-arena/queueing false)
-  (when started
-    (launch-game (parse-state state))))
 
 (defmethod ws/-msg-handler :lobby/notification [{data :?data}]
   (play-sound data))
@@ -84,17 +78,11 @@
                (non-game-toast (tr [:lobby.replay-link-error "Replay link invalid."])
                                "error" {:time-out 0 :close-button true}))))))))
 
-(defn leave-game! [cb]
-  (when (sente/cb-success? cb)
-    (reset! game-state nil)
-    (swap! app-state dissoc :current-game :start-shown)
-    (set! (.-cursor (.-style (.-body js/document))) "default")
-    (set! (.-onbeforeunload js/window) nil)
-    (-> "#gameboard" js/$ .fadeOut)
-    (-> "#gamelobby" js/$ .fadeIn)))
-
 (defn leave-game []
-  (ws/ws-send! [:game/leave (get-in @app-state [:current-game :gameid])] 8000 leave-game!))
+  (ws/ws-send! [:game/leave (current-gameid app-state)]
+               8000
+               #(when (sente/cb-success? %)
+                  (leave-game!))))
 
 (defn- hidden-formats
   "Remove games which the user has opted to hide"

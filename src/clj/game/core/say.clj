@@ -14,23 +14,7 @@
   (let [author (or user (get-in @state [side :user]))
         text (if (= (string/trim text) "null") " null" text)]
     (swap! state update :log conj {:user author :text text})
-    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))))
-
-(defn typing
-  "Updates game state list with username of whoever is typing"
-  [state side {:keys [user]}]
-  (let [author (:username (or user (get-in @state [side :user])))]
-    (swap! state assoc :typing (distinct (conj (:typing @state) author)))
-    ;; say something to force update in client side rendering
-    (say state side {:user "__system__" :text "typing"})))
-
-(defn typingstop
-  "Clears typing flag from game state for user"
-  [state side {:keys [user]}]
-  (let [author (or user (get-in @state [side :user]))]
-    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))
-    ;; say something to force update in client side rendering
-    (say state side {:user "__system__" :text "typing"})))
+    (swap! state assoc :typing false)))
 
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"

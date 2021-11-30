@@ -1,74 +1,85 @@
 (ns nr.gameboard.actions
   (:require
    [differ.core :as differ]
+   [nr.angel-arena :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.replay :refer [init-replay]]
-   [nr.gameboard.state :refer [check-lock? game-state get-side last-state lock
+   [nr.gameboard.state :refer [check-lock? game-state get-side last-state
                                parse-state]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [toastr-options]]
    [nr.ws :as ws]))
 
-(defn reset-game [state]
+(defn reset-game! [state]
   (reset! game-state (assoc state :side (get-side state)))
   (reset! last-state @game-state)
-  (reset! lock false))
+  (reset! ws/lock false))
 
-(defn init-game [state]
+(defn init-game! [state]
   (let [side (get-side state)]
     (reset! game-state (dissoc state :replay-diffs :replay-jump-to))
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)
-    (reset! lock false)
+    (reset! ws/lock false)
     (when (:replay-diffs state)
       (init-replay app-state state))))
 
-(defn launch-game [state]
-  (init-game state)
+(defn launch-game! [state]
+  (init-game! state)
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
 
-(defn handle-diff [{:keys [gameid diff]}]
+(defn leave-game! []
+  (reset! game-state nil)
+  (swap! app-state dissoc :current-game :start-shown)
+  (set! (.-cursor (.-style (.-body js/document))) "default")
+  (set! (.-onbeforeunload js/window) nil)
+  (-> "#gameboard" js/$ .fadeOut)
+  (-> "#gamelobby" js/$ .fadeIn))
+
+(defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
     (swap! game-state #(differ/patch @last-state diff))
     (check-lock?)
     (reset! last-state @game-state)))
 
 (declare toast)
-(defn handle-timeout [{:keys [gameid]}]
-  (when (= gameid (str (current-gameid app-state)))
-    (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})))
+(defn handle-timeout [gameid]
+  (when (= gameid (current-gameid app-state))
+    (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})
+    (leave-game!)))
 
 (defn handle-error []
   (toast (tr [:game.error "Internal Server Error. Please type /bug in the chat and follow the instructions."])
          "error"
          {:time-out 0
           :close-button true})
-  (reset! lock false))
+  (reset! ws/lock false))
 
-(defmethod ws/-msg-handler :game/start [{data :?data}] (launch-game (parse-state data)))
-(defmethod ws/-msg-handler :game/resync [{data :?data}] (reset-game (parse-state data)))
-(defmethod ws/-msg-handler :game/diff [{data :?data}] (handle-diff (parse-state data)))
-(defmethod ws/-msg-handler :netrunner/timeout [{data :?data}] (handle-timeout data))
-(defmethod ws/-msg-handler :netrunner/error [_] (handle-error))
+(defmethod ws/-msg-handler :game/start [{data :?data}]
+  (reset! angel-arena/queueing false)
+  (launch-game! (parse-state data)))
+(defmethod ws/-msg-handler :game/resync [{data :?data}] (reset-game! (parse-state data)))
+(defmethod ws/-msg-handler :game/diff [{data :?data}] (handle-diff! (parse-state data)))
+(defmethod ws/-msg-handler :game/timeout [{data :?data}] (handle-timeout data))
+(defmethod ws/-msg-handler :game/error [_] (handle-error))
 
 (defn send-command
   ([command] (send-command command nil))
   ([command {:keys [no-lock card] :as args}]
    (when (and (not (:replay @game-state))
-              (or (not @lock) no-lock))
+              (or (not @ws/lock) no-lock))
      (let [card (select-keys card [:cid :zone :side :host :type])
            args (merge args (when (seq card) {:card card}))]
-       (when-not no-lock (reset! lock true))
+       (when-not no-lock (reset! ws/lock true))
        (ws/ws-send! [:game/action {:gameid (current-gameid app-state)
                                    :command command
                                    :args args}])))))
 
-(defn mute-spectators [mute-state]
+(defn mute-spectators []
   (when (not (:replay @game-state))
-    (ws/ws-send! [:netrunner/mute-spectators {:gameid (current-gameid app-state)
-                                              :mute-state mute-state}])))
+    (ws/ws-send! [:game/mute-spectators (current-gameid app-state)])))
 
 (defn stack-cards []
   (swap! app-state update-in [:options :stacked-cards] not))
@@ -79,7 +90,7 @@
 
 (defn concede []
   (when (not (:replay @game-state))
-    (ws/ws-send! [:game/concede (get-in @app-state [:current-game :gameid])])))
+    (ws/ws-send! [:game/concede (current-gameid app-state)])))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
@@ -97,8 +108,9 @@
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."
-  [msg type options]
+  [msg toast-type options]
   (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr (if (= "exception" type) "error" type))]
-    (f (if (= "exception" type) (build-exception-msg msg (:last-error @game-state)) msg))
-    (send-command "toast")))
+  (let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
+    (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state)) msg))
+    (when-not (or (= "error" toast-type) (= "exception" toast-type))
+      (send-command "toast"))))

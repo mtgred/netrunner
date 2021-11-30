@@ -54,13 +54,6 @@
     (doseq [side [:runner :corp]]
       (toast state side text "warning" {:time-out 0 :close-button true}))))
 
-(defn handle-typing
-  [state side user typing]
-  (when (and state side)
-    (if typing
-      (core/typing state side {:user user})
-      (core/typingstop state side {:user user}))))
-
 (defn handle-rejoin
   [state {:keys [_id username] :as user}]
   (when-let [side (cond

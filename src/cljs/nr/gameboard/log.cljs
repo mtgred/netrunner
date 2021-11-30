@@ -1,19 +1,23 @@
 (ns nr.gameboard.log
-  (:require [clojure.string :as string]
-            [nr.angel-arena.log :as angel-arena-log]
-            [nr.appstate :refer [app-state]]
-            [nr.avatar :refer [avatar]]
-            [nr.gameboard.actions :refer [send-command]]
-            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out zoom-channel]]
-            [nr.gameboard.state :refer [game-state not-spectator?]]
-            [nr.help :refer [command-info]]
-            [nr.translations :refer [tr]]
-            [nr.utils :refer [influence-dot render-message]]
-            [nr.ws :as ws]
-            [reagent.core :as r]))
+  (:require
+   [clojure.string :as string]
+   [nr.angel-arena.log :as angel-arena-log]
+   [nr.appstate :refer [app-state current-gameid]]
+   [nr.avatar :refer [avatar]]
+   [nr.gameboard.actions :refer [send-command]]
+   [nr.gameboard.card-preview :refer [card-preview-mouse-out
+                                      card-preview-mouse-over zoom-channel]]
+   [nr.gameboard.state :refer [game-state not-spectator?]]
+   [nr.help :refer [command-info]]
+   [nr.translations :refer [tr]]
+   [nr.utils :refer [influence-dot render-message]]
+   [nr.ws :as ws]
+   [reagent.core :as r]))
 
 (def commands (distinct (map :name command-info)))
-(def command-info-map (->> command-info (map (fn [{:keys [name has-args usage help]}] [name {:has-args has-args :usage usage :help help}])) (into {})))
+(def command-info-map (->> command-info
+                           (map (fn [item] [(:name item) (select-keys item [:has-args :usage :help])]))
+                           (into {})))
 
 (defn scrolled-to-end?
   [el tolerance]
@@ -22,9 +26,8 @@
 (def should-scroll (r/atom {:update true :send-msg false}))
 
 (defn log-typing []
-  (let [typing (r/cursor game-state [:typing])
-        username (get-in @app-state [:user :username])]
-    (when (seq (remove nil? (remove #{username} @typing)))
+  (r/with-let [typing (r/cursor game-state [:typing])]
+    (when @typing
       [:div [:p.typing
              (doall
                (for [i (range 10)]
@@ -34,24 +37,20 @@
 (defn send-msg [s]
   (let [text (:msg @s)]
     (when (and (not (:replay @game-state))
-            (not (empty? text)))
+               (seq text))
       (reset! should-scroll {:update false :send-msg true})
-      (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state)
-                                    :msg text}])
+      (ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                               :msg text}])
       (swap! s assoc :msg ""))))
 
-(defn send-typing [s]
+(defn send-typing
   "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
-  (let [text (:msg @s)
-        username (get-in @app-state [:user :username])]
+  [s]
+  (let [text (:msg @s)]
     (when (and (not (:replay @game-state))
-            (not-spectator?))
-      (if (empty? text)
-        (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                         :typing false}])
-        (when (not-any? #{username} (:typing @game-state))
-          (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                           :typing true}]))))))
+               (not-spectator?))
+      (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
+                                  :typing (boolean (seq text))}]))))
 
 (defn indicate-action []
   (when (not-spectator?)
@@ -93,8 +92,8 @@
 (defn reset-command-menu
   "Resets the command menu state."
   [state]
-  (do (swap! state assoc :command-matches ())
-      (swap! state assoc :command-highlight nil)))
+  (swap! state assoc :command-matches '())
+  (swap! state assoc :command-highlight nil))
 
 (defn command-menu-key-down-handler
   [state e]
@@ -152,6 +151,7 @@
                :autoComplete "off"
                :ref (partial reset! !input-ref)
                :value (:msg @s)
+               :on-blur #(send-typing (atom nil))
                :on-key-down (partial command-menu-key-down-handler s)
                :on-change (partial log-input-change-handler s)}]]]
            [indicate-action]

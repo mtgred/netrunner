@@ -26,7 +26,7 @@
           (tr [:game.leave-replay "Leave replay"])
           (tr [:game.leave "Leave game"]))]
        (when is-player
-         [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators @current-game)))}
+         [:a.mute-button {:on-click #(mute-spectators)}
           (if (:mute-spectators @current-game)
             (tr [:game.unmute "Unmute spectators"])
             (tr [:game.mute "Mute spectators"]))])])))
@@ -64,9 +64,8 @@
                games (r/cursor app-state [:games])
                gameid (r/cursor app-state [:gameid])
                current-game (r/cursor app-state [:current-game])]
-    (fn []
-      [:div
-       [current-game-count user games]
-       [in-game-buttons user current-game]
-       [replay-and-spectator-buttons gameid]
-       [spectator-list current-game]])))
+    [:div
+     [current-game-count user games]
+     [in-game-buttons user current-game]
+     [replay-and-spectator-buttons gameid]
+     [spectator-list current-game]]))
