@@ -208,12 +208,18 @@
                (empty? (:password @s)))
           (swap! s assoc :flash-message (tr [:lobby.password-error "Please fill a password."]))
 
+          (and (= "campaign" (:format @s))
+               (or (= "none" (:campaign @s))
+                   (nil? (:campaign @s))))
+          (swap! s assoc :flash-message (tr [:lobby.campaign-error "Please select a campaign."]))
+
           :else
           (do (swap! s assoc :editing false)
               (swap! app-state dissoc :editing-game)
               (ws/ws-send! [:lobby/create
                             (select-keys @s [:title :password :allow-spectator :save-replay
-                                             :spectatorhands :side :format :room :timer :api-access])])))))))
+                                             :spectatorhands :side :format :room :timer :api-access
+                                             :campaign :campaign-code])])))))))
 
 (defn leave-lobby [s]
   (ws/ws-send! [:lobby/leave])
@@ -505,7 +511,7 @@
                    ^{:key k}
                    [:option {:value k} (tr-format v)]))]
          (when (= (:format @s) "campaign")
-           [:select.format {:value (:campaign @s)
+           [:select.campaign {:value (:campaign @s)
                             :on-change #(swap! s assoc :campaign (.. % -target -value))}
             (conj (doall (for [[k c] available-campaigns]
                            ^{:key k}
@@ -662,6 +668,16 @@
                                                            :format (:format game "standard")}])}
                      (tr [:lobby.select-deck "Select Deck"])])]))
              players))]
+        (when-let [campaign (get available-campaigns (keyword (:campaign game)))]
+          [:div
+           [:h3 (tr [:lobby.campaign "Campaign"])]
+           [:div.campaign-description
+            [:h4 (:title campaign)]
+            (:description campaign)
+            [:br]
+            [:a {:href (:url campaign)} "Campaign Document"]
+            [:br]
+            (str (tr [:lobby.campaign-code "Campaign Passcode"]) ": " (:campaign-code game))]])
         [:h3 (tr [:lobby.options "Options"])]
         [:ul.options
          (when (:allow-spectator game)

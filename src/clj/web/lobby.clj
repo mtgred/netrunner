@@ -320,7 +320,7 @@
 (defmethod ws/-msg-handler :lobby/create
   [{{{:keys [username] :as user} :user} :ring-req
     uid :uid
-    {:keys [title format timer allow-spectator save-replay api-access
+    {:keys [title format timer allow-spectator save-replay api-access campaign campaign-code
             spectatorhands password room side]} :?data}]
   (when-not (game-for-client uid)
     (let [gameid (java.util.UUID/randomUUID)
@@ -335,6 +335,8 @@
                 :password        (when (not-empty password) (bcrypt/encrypt password))
                 :room            room
                 :format          format
+                :campaign        campaign
+                :campaign-code   campaign-code
                 :players         [{:user user
                                    :uid uid
                                    :side side}]

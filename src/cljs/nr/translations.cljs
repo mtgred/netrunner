@@ -206,6 +206,7 @@
      :closed-msg "Game lobby closed due to inactivity"
      :title-error "Please fill a game title."
      :password-error "Please fill a password."
+     :campaign-error "Please select a campaign."
      :too-little-data "Too little data"
      :completion-rate "Game Completion Rate"
      :watch "Watch"
