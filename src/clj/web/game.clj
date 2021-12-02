@@ -14,7 +14,9 @@
    [web.stats :as stats]
    [web.ws :as ws]))
 
-(defn game-diff-json [gameid side {:keys [runner-diff corp-diff spect-diff]}]
+(defn game-diff-json
+  "Converts the appropriate diff to json"
+  [gameid side {:keys [runner-diff corp-diff spect-diff]}]
   (json/generate-string {:gameid gameid
                          :diff (cond
                                  (= side "Corp")
@@ -90,10 +92,10 @@
 
 (defmethod ws/-msg-handler :game/start
   [{{db :system/db} :ring-req
-    uid :uid}]
-  (when-let [{:keys [gameid players started]} (app-state/uid-in-lobby-as-player? uid)]
-    (when (and (= uid (-> players first :uid))
-               (not started))
+    uid :uid
+    {gameid :gameid} :?data}]
+  (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
+    (when (and lobby (lobby/first-player? uid lobby) (not started))
       (let [stripped-players (mapv strip-deck players)
             start-date (t/now)
             new-app-state
@@ -122,17 +124,17 @@
 (defmethod ws/-msg-handler :game/leave
   [{{db :system/db user :user} :ring-req
     uid :uid
-    gameid :?data
+    {gameid :gameid} :?data
     ?reply-fn :?reply-fn}]
   (let [{:keys [started state] :as lobby} (app-state/get-lobby gameid)]
-    (when (and started state)
+    (when (and lobby (lobby/in-lobby? uid lobby) started state)
       ; The game will not exist if this is the last player to leave.
       (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
         (update-and-send-diffs!
-          main/handle-notification lobby? (str (:username user) " has left the game.")))))
-  (lobby/send-lobby-list uid)
-  (lobby/broadcast-lobby-list)
-  (when ?reply-fn (?reply-fn true)))
+          main/handle-notification lobby? (str (:username user) " has left the game.")))
+      (lobby/send-lobby-list uid)
+      (lobby/broadcast-lobby-list)
+      (when ?reply-fn (?reply-fn true)))))
 
 (defn uid-in-lobby-as-original-player? [uid]
   (find-first
@@ -155,31 +157,30 @@
           (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
           (update-and-send-diffs! main/handle-rejoin lobby? user))))))
 
-(defn player-side [players uid]
-  (some #(when (= uid (:uid %)) (:side %)) players))
-
 (defmethod ws/-msg-handler :game/concede
   [{uid :uid
-    gameid :?data}]
-  (let [{:keys [players] :as lobby} (app-state/get-lobby gameid)
-        side (player-side players uid)]
-    (when (and lobby side (app-state/uid-in-lobby? uid lobby))
-      (update-and-send-diffs! main/handle-concede lobby (side-from-str side)))))
+    {gameid :gameid} :?data}]
+  (let [lobby (app-state/get-lobby gameid)
+        player (lobby/player? uid lobby)]
+    (when (and lobby player)
+      (let [side (side-from-str (:side player))]
+        (update-and-send-diffs! main/handle-concede lobby side)))))
 
 (defmethod ws/-msg-handler :game/action
-  [{{user :user} :ring-req
-    uid :uid
+  [{uid :uid
     {:keys [gameid command args]} :?data}]
   (try
-    (let [{:keys [players state] :as lobby} (app-state/get-lobby gameid)
-          side (player-side players uid)
+    (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)
+          player (lobby/player? uid lobby)
           spectator (lobby/spectator? uid lobby)]
       (cond
-        (and state side)
-        (let [old-state @state]
+        (and state player)
+        (let [old-state @state
+              side (side-from-str (:side player))]
           (try
-            (swap! app-state/app-state update :lobbies lobby/handle-set-last-update gameid uid)
-            (update-and-send-diffs! main/handle-action lobby user command (side-from-str side) args)
+            (swap! app-state/app-state
+                   update :lobbies lobby/handle-set-last-update gameid uid)
+            (update-and-send-diffs! main/handle-action lobby side command args)
             (catch Exception e
               (reset! state old-state)
               (throw e))))
@@ -187,8 +188,7 @@
         (throw (ex-info "handle-game-action unknown state or side"
                         {:gameid gameid
                          :uid uid
-                         :side side
-                         :players (map #(select-keys % [:uid :side]) players)
+                         :players (map #(select-keys % [:uid :side]) (:players lobby))
                          :spectators (map #(select-keys % [:uid]) (:spectators lobby))
                          :command command
                          :args args}))))
@@ -200,16 +200,16 @@
 
 (defmethod ws/-msg-handler :game/resync
   [{uid :uid
-    gameid :?data}]
-  (let [{:keys [gameid players state] :as lobby} (app-state/get-lobby gameid)]
-    (when (and lobby (app-state/uid-in-lobby? uid lobby))
-      (if state
+    {gameid :gameid} :?data}]
+  (let [lobby (app-state/get-lobby gameid)]
+    (when (and lobby (lobby/in-lobby? uid lobby))
+      (if-let [state (:state lobby)]
         (send-state-to-uid! uid :game/resync lobby (diffs/public-states state))
         (println (str "resync request unknown state"
                       "\nGameID:" gameid
                       "\nGameID by ClientID:" gameid
                       "\nClientID:" uid
-                      "\nPlayers:" (map #(select-keys % [:uid :side]) players)
+                      "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
                       "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))))
 
 (defmethod ws/-msg-handler :game/watch
@@ -219,10 +219,12 @@
     ?reply-fn :?reply-fn}]
   (when-let [lobby (app-state/get-lobby gameid)]
     (let [correct-password? (lobby/check-password lobby user password)
+          watch-message (core/make-system-message (str (:username user) " joined the game as a spectator."))
           new-app-state (swap! app-state/app-state
-                               update :lobbies #(-> %
-                                                    (lobby/handle-watch-lobby gameid uid user correct-password?)
-                                                    (lobby/handle-set-last-update gameid uid)))
+                               update :lobbies
+                               #(-> %
+                                    (lobby/handle-watch-lobby gameid uid user correct-password? watch-message)
+                                    (lobby/handle-set-last-update gameid uid)))
           lobby? (get-in new-app-state [:lobbies gameid])]
       (cond
         (and lobby? (lobby/spectator? uid lobby?))
@@ -241,14 +243,13 @@
 (defmethod ws/-msg-handler :game/mute-spectators
   [{{user :user} :ring-req
     uid :uid
-    gameid :?data}]
+    {gameid :gameid} :?data}]
   (let [new-app-state (swap! app-state/app-state update :lobbies #(-> %
                                                                       (lobby/handle-toggle-spectator-mute gameid uid)
                                                                       (lobby/handle-set-last-update gameid uid)))
-        {:keys [players state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
-        side (player-side players uid)
+        {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
         message (if mute-spectators "unmuted" "muted")]
-    (when (and lobby? state side)
+    (when (and lobby? state (lobby/player? uid lobby?))
       (update-and-send-diffs! main/handle-notification lobby? (str (:username user) " " message " spectators."))
       ;; needed to update the status bar
       (lobby/send-lobby-state lobby?))))

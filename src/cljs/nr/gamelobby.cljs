@@ -79,7 +79,7 @@
                                "error" {:time-out 0 :close-button true}))))))))
 
 (defn leave-game []
-  (ws/ws-send! [:game/leave (current-gameid app-state)]
+  (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
                8000
                #(when (sente/cb-success? %)
                   (leave-game!))))

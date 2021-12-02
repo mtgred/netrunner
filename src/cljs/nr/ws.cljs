@@ -41,7 +41,7 @@
 (defmethod -msg-handler :chsk/ws-ping [_])
 
 (defn resync []
-  (ws-send! [:game/resync (current-gameid app-state)]))
+  (ws-send! [:game/resync {:gameid (current-gameid app-state)}]))
 
 (defmethod -msg-handler :chsk/state
   [{[old-state new-state] :?data}]

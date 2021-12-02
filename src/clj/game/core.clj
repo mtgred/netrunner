@@ -712,12 +712,12 @@
   [game.core.say
    enforce-msg
    indicate-action
+   make-message
+   make-system-message
    play-sfx
    say
    system-msg
-   system-say
-   typing
-   typingstop])
+   system-say])
 
 (import-vars
   [game.core.servers

@@ -79,18 +79,18 @@
 
 (defn mute-spectators []
   (when (not (:replay @game-state))
-    (ws/ws-send! [:game/mute-spectators (current-gameid app-state)])))
+    (ws/ws-send! [:game/mute-spectators {:gameid (current-gameid app-state)}])))
 
 (defn stack-cards []
   (swap! app-state update-in [:options :stacked-cards] not))
 
-(defn flip-runner-board []
-  (let [layout (if (= "irl" (get-in @app-state [:options :runner-board-order])) "jnet" "irl")]
-    (swap! app-state assoc-in [:options :runner-board-order] layout)))
+; (defn flip-runner-board []
+;   (let [layout (if (= "irl" (get-in @app-state [:options :runner-board-order])) "jnet" "irl")]
+;     (swap! app-state assoc-in [:options :runner-board-order] layout)))
 
 (defn concede []
   (when (not (:replay @game-state))
-    (ws/ws-send! [:game/concede (current-gameid app-state)])))
+    (ws/ws-send! [:game/concede {:gameid (current-gameid app-state)}])))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]

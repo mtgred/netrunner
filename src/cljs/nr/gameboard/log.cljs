@@ -125,53 +125,54 @@
         nil))))
 
 (defn log-input-change-handler
-  [s e]
-  (reset-command-menu s)
-  (swap! s assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
-  (swap! s assoc :msg (-> e .-target .-value))
-  (send-typing s))
+  [state e]
+  (reset-command-menu state)
+  (swap! state assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
+  (swap! state assoc :msg (-> e .-target .-value))
+  (send-typing state))
+
+(defn command-menu [!input-ref state]
+  (when (show-command-menu? @state)
+    [:div.command-matches-container.panel.blue-shade
+     {:on-mouse-leave #(swap! state dissoc :command-highlight)}
+     [:ul.command-matches
+      (doall (map-indexed
+               (fn [i match]
+                 [:li.command-match
+                  {:key match
+                   :class (when (= i (:command-highlight @state)) "highlight")}
+                  [:span {:on-mouse-over #(swap! state assoc :command-highlight i)
+                          :on-click #(do
+                                       (swap! state assoc :msg (str match " "))
+                                       (reset-command-menu state)
+                                       (.focus @!input-ref))}
+
+                          (get-in command-info-map [match :usage])]])
+                      (:command-matches @state)))]]))
 
 (defn log-input []
-  (let [gameid (r/cursor game-state [:gameid])
-        games (r/cursor app-state [:games])
+  (let [current-game (r/cursor app-state [:current-game])
         !input-ref (r/atom nil)
-        s (r/atom {})]
+        state (r/atom {})]
     (fn []
-      (let [game (some #(when (= @gameid (str (:gameid %))) %) @games)]
-        (when (or (not-spectator?)
-                (not (:mutespectators game)))
-          [:div.log-input
-           [:div.form-container
-            [:form {:on-submit #(do (.preventDefault %)
-                                    (reset-command-menu s)
-                                    (send-msg s))}
-             [:input#log-input
-              {:placeholder (tr [:chat.placeholder "Say something"])
-               :type "text"
-               :autoComplete "off"
-               :ref (partial reset! !input-ref)
-               :value (:msg @s)
-               :on-blur #(send-typing (atom nil))
-               :on-key-down (partial command-menu-key-down-handler s)
-               :on-change (partial log-input-change-handler s)}]]]
-           [indicate-action]
-           (when (show-command-menu? @s)
-             [:div.command-matches-container.panel.blue-shade
-              {:on-mouse-leave #(swap! s dissoc :command-highlight)}
-              [:ul.command-matches
-               (doall (map-indexed
-                        (fn [i match]
-                          [:li.command-match
-                           {:key match
-                            :class (when (= i (:command-highlight @s)) "highlight")}
-                           [:span {:on-mouse-over #(swap! s assoc :command-highlight i)
-                                   :on-click #(do
-                                                (swap! s assoc :msg (str match " "))
-                                                (reset-command-menu s)
-                                                (.focus @!input-ref))}
-
-                            (get-in command-info-map [match :usage])]])
-                        (:command-matches @s)))]])])))))
+      (when (or (not-spectator?)
+                (not (:mutespectators @current-game)))
+        [:div.log-input
+         [:div.form-container
+          [:form {:on-submit #(do (.preventDefault %)
+                                  (reset-command-menu state)
+                                  (send-msg state))}
+           [:input#log-input
+            {:placeholder (tr [:chat.placeholder "Say something"])
+             :type "text"
+             :autoComplete "off"
+             :ref #(reset! !input-ref %)
+             :value (:msg @state)
+             :on-blur #(send-typing (atom nil))
+             :on-key-down #(command-menu-key-down-handler state %)
+             :on-change #(log-input-change-handler state %)}]]]
+         [indicate-action]
+         [command-menu !input-ref state]]))))
 
 
 (defn log-messages []
@@ -206,14 +207,13 @@
                          :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
           (doall (map-indexed
                    (fn [i msg]
-                     (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
-                       (if (= (:user msg) "__system__")
-                         [:div.system {:key i} (render-message (:text msg))]
-                         [:div.message {:key i}
-                          [avatar (:user msg) {:opts {:size 38}}]
-                          [:div.content
-                           [:div.username (get-in msg [:user :username])]
-                           [:div (render-message (:text msg))]]])))
+                     (if (= (:user msg) "__system__")
+                       [:div.system {:key i} (render-message (:text msg))]
+                       [:div.message {:key i}
+                        [avatar (:user msg) {:opts {:size 38}}]
+                        [:div.content
+                         [:div.username (get-in msg [:user :username])]
+                         [:div (render-message (:text msg))]]]))
                    @log))])})))
 
 (defn log-pane []

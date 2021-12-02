@@ -1,7 +1,7 @@
 (ns nr.pending-game
   (:require
    [jinteki.validator :refer [trusted-deck-status]]
-   [nr.appstate :refer [app-state]]
+   [nr.appstate :refer [app-state current-gameid]]
    [nr.cardbrowser :refer [image-url] :as cb]
    [nr.deck-status :refer [deck-format-status-span]]
    [nr.deckbuilder :refer [deck-name]]
@@ -16,7 +16,9 @@
 
 (defn select-deck [deck]
   (fn []
-    (ws/ws-send! [:lobby/deck (:_id deck)] 8000
+    (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
+                               :deck-id (:_id deck)}]
+                 8000
                  #(when (sente/cb-error? %)
                     (non-game-toast "Cannot select that deck" "error")))
     (reagent-modals/close-modal!)))
@@ -57,14 +59,14 @@
   (when (first-user? @players @user)
      [cond-button (tr [:lobby.start "Start"])
       (every? :deck @players)
-      #(ws/ws-send! [:game/start @gameid])]))
+      #(ws/ws-send! [:game/start {:gameid @gameid}])]))
 
-(defn leave-button []
+(defn leave-button [gameid]
   [:button
    {:on-click
     (fn [e]
       (.preventDefault e)
-      (ws/ws-send! [:lobby/leave] 8000
+      (ws/ws-send! [:lobby/leave {:gameid gameid}] 8000
                    #(when (sente/cb-success? %)
                       (swap! app-state assoc :editing false :current-game nil))))}
    (tr [:lobby.leave "Leave"])])
@@ -89,7 +91,7 @@
 (defn button-bar [user gameid players]
   [:div.button-bar
    [start-button user gameid players]
-   [leave-button]
+   [leave-button gameid]
    [swap-sides-button user gameid players]])
 
 (defn player-item [user current-game player]
@@ -162,7 +164,11 @@
                messages (r/cursor current-game [:messages])
                create-game-deck (r/cursor app-state [:create-game-deck])]
     (when-let [cd @create-game-deck]
-      (ws/ws-send! [:lobby/deck (:_id cd)])
+      (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
+                                 :deck-id(:_id cd)}]
+                   8000
+                   #(when (sente/cb-error? %)
+                      (non-game-toast "Cannot select that deck" "error")))
       (swap! app-state dissoc :create-game-deck))
     [:div
      [button-bar user gameid players]

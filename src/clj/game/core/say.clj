@@ -1,26 +1,41 @@
 (ns game.core.say
-  (:require [clojure.string :as string]
-            [game.core.toasts :refer [toast]]))
+  (:require
+   [clj-time.core :as t]
+   [clojure.string :as str]
+   [game.core.toasts :refer [toast]]))
 
-(defn unsafe-say
-  "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
-  [state text]
-  (swap! state update :log conj {:user "__system__" :text text}))
+(defn make-message
+  "Create a message map, along with timestamp if none is provided."
+  [{:keys [user text timestamp]
+    :or {timestamp (t/now)}}]
+  {:user (if (= "__system__" user) user (select-keys user [:username :emailhash]))
+   :text (str/trim text)
+   :timestamp timestamp})
+
+(defn make-system-message
+  "Creates a message map from the __system__ user, which won't display a username."
+  [text]
+  (make-message {:user "__system__" :text text}))
 
 (defn say
-  "Prints a message to the log as coming from the given username. The special user string
-  __system__ shows no user name."
+  "Prints a message to the log as coming from the given user."
   [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))
-        text (if (= (string/trim text) "null") " null" text)]
-    (swap! state update :log conj {:user author :text text})
+        message (make-message {:user author :text text})]
+    (swap! state update :log conj message)
     (swap! state assoc :typing false)))
 
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
   ([state side text {:keys [hr]}]
-   (say state side {:user "__system__" :text (str text (when hr "[hr]"))})))
+   (say state side (make-system-message (str text (when hr "[hr]"))))))
+
+(defn unsafe-say
+  "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
+  [state text]
+  (let [message (make-system-message text)]
+    (swap! state update :log conj message)))
 
 (defn system-msg
   "Prints a message to the log without a username."
@@ -33,7 +48,8 @@
   "Prints a message related to a rules enforcement on a given card.
   Example: 'Architect cannot be trashed while installed.'"
   [state card text]
-  (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")}))
+  (say state nil {:user (get-in card [:title])
+                  :text (str (:title card) " " text ".")}))
 
 (defn indicate-action
   [state side _]
@@ -53,6 +69,9 @@
   Each SFX comes with a unique ID, so each client can track for themselves which sounds have already been played.
   The sfx queue has size limited to 3 to limit the sound torrent tabbed out or lagged players will experience."
   [state _ sfx]
-  (when-let [current-id (get-in @state [:sfx-current-id])]
-    (swap! state update-in [:sfx] #(take 3 (conj % {:id (inc current-id) :name sfx})))
-    (swap! state update-in [:sfx-current-id] inc)))
+  (swap! state (fn [state]
+                 (if-let [current-id (get-in state [:sfx-current-id])]
+                   (-> state
+                       (update :sfx #(take 3 (conj % {:id (inc current-id) :name sfx})))
+                       (update :sfx-current-id inc))
+                   state))))

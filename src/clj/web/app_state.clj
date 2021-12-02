@@ -18,9 +18,6 @@
        (some #(= uid (:uid %)) (into (:players lobby) (:spectators lobby))))
      (vals lobbies))))
 
-(defn uid-in-lobby? [uid lobby]
-  (some #(= uid (:uid %)) (into (:players lobby) (:spectators lobby))))
-
 (defn uid-player->lobby [lobbies uid]
   (find-first
     (fn [lobby]
@@ -44,8 +41,6 @@
 (defn get-lobby
   ([gameid] (get-lobby gameid (:lobbies @app-state)))
   ([gameid lobbies] (get lobbies gameid)))
-
-;;;;;;;;;;;;;;;; mutations below
 
 (defn register-user!
   "Add user to uid in app-state. Mutates."
