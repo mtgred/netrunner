@@ -171,7 +171,7 @@
 (defn prepare-lobby-list
   [lobbies users]
   (for [user users
-        :let [uid (:username user)]]
+        :let [uid (:uid user)]]
      (let [filtered-lobbies (filter-lobby-list lobbies user)
            lobby-summaries (summaries-for-lobbies filtered-lobbies)]
        [uid [:lobby/list lobby-summaries]])))

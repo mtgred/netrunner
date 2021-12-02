@@ -184,7 +184,7 @@
             (catch Exception e
               (reset! state old-state)
               (throw e))))
-        (not spectator)
+        (and (not spectator) (not= command "toast"))
         (throw (ex-info "handle-game-action unknown state or side"
                         {:gameid gameid
                          :uid uid

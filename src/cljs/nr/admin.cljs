@@ -1,11 +1,14 @@
 (ns nr.admin
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [nr.ajax :refer [POST GET PUT DELETE]]
-            [nr.utils :refer [render-icons non-game-toast]]
-            [nr.ws :refer [ws-send!]]
-            [nr.appstate :refer [app-state]]
-            [clojure.string :as s]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!]]
+   [clojure.string :as s]
+   [nr.ajax :refer [DELETE GET POST PUT]]
+   [nr.appstate :refer [app-state]]
+   [nr.utils :refer [non-game-toast render-icons]]
+   [nr.ws :as ws]
+   [reagent.core :as r]
+   [taoensso.sente :as sente]))
 
 (def admin-state (r/atom {}))
 
@@ -42,12 +45,18 @@
         (update-version-response response))))
 
 (defn- update-announce-response [response]
-  (if (= 200 (:status response))
-    (non-game-toast "Sent announcement" "success" nil)
+  (if (sente/cb-success? response)
+    (case response
+      200 (non-game-toast "Sent announcement" "success" nil)
+      403 (non-game-toast "Not an admin" "error" nil)
+      ; else
+      (non-game-toast "Failed to send announcement" "error" nil))
     (non-game-toast "Failed to send announcement" "error" nil)))
 
 (defn- post-announce-item [msg]
-  (post-data "/admin/announce" update-announce-response {:message msg}))
+  (ws/ws-send! [:admin/announce {:message msg}]
+               8000
+               update-announce-response))
 
 (defn admin-container []
   (r/with-let [news (r/cursor admin-state [:news])
@@ -61,7 +70,7 @@
          (for [d @news]
            [:li.news-item
             {:key (:date d)}
-            [:span 
+            [:span
              [:button.delete
               {:on-click #(delete-news-item (:_id d))}
               "Delete"]]

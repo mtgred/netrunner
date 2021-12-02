@@ -29,6 +29,9 @@
 (defmethod ws/-msg-handler :lobby/notification [{data :?data}]
   (play-sound data))
 
+(defmethod ws/-msg-handler :lobby/toast [{{:keys [message type]} :?data}]
+  (non-game-toast message type {:time-out 30000 :close-button true}))
+
 (defmethod ws/-msg-handler :lobby/timeout
   [{{:keys [gameid]} :?data}]
   (when (= gameid (:gameid @app-state))

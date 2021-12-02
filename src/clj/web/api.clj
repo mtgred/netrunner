@@ -71,7 +71,6 @@
            (GET "/game/log" [] #'game-api/log-handler))
 
 (defroutes admin-routes
-           (POST "/admin/announce" [] #'admin/announce-create-handler)
            (POST "/admin/news" [] #'admin/news-create-handler)
            (DELETE "/admin/news/:id" [] #'admin/news-delete-handler)
            (GET "/admin/version" [] #'admin/version-handler)
