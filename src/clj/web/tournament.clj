@@ -1,16 +1,17 @@
 (ns web.tournament
-  (:require [clojure.string :as str]
-            [web.mongodb :refer [find-maps-case-insensitive]]
-            ; [web.lobby :refer [all-games refresh-lobby close-lobby]]
-            [web.stats :refer [fetch-elapsed]]
-            [web.utils :refer [response]]
-            [web.ws :as ws]
-            [jinteki.utils :refer [str->int]]
-            [monger.operators :refer :all]
-            [org.httpkit.client :as http]
-            [cheshire.core :as json]
-            [clj-time.core :as t]
-            [clj-uuid :as uuid]))
+  (:require
+   [cheshire.core :as json]
+   [clj-uuid :as uuid]
+   [cljc.java-time.instant :as inst]
+   [clojure.string :as str]
+   [jinteki.utils :refer [str->int]]
+   [monger.operators :refer :all]
+   [org.httpkit.client :as http]
+   ; [web.lobby :refer [all-games refresh-lobby close-lobby]]
+   [web.mongodb :refer [find-maps-case-insensitive]]
+   [web.stats :refer [fetch-elapsed]]
+   [web.utils :refer [response]]
+   [web.ws :as ws]))
 
 (defn auth [_]
   (response 200 {:message "ok"}))
@@ -92,6 +93,7 @@
                        [(second players) (first players)])
                      (filter identity)
                      (into []))
+        now (inst/now)
         game {:gameid gameid
               :title title
               :room "tournament"
@@ -108,8 +110,8 @@
               :timer timer
               :spectatorhands false
               :mute-spectators true
-              :date (java.util.Date.)
-              :last-update (t/now)
+              :date now
+              :last-update now
               :on-close on-close}]
     (when (= 2 (count players))
       ; (refresh-lobby gameid game)

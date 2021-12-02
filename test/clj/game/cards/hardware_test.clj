@@ -2,7 +2,6 @@
   (:require [game.core :as core]
             [game.core.card :refer :all]
             [game.core-test :refer :all]
-            [game.utils :as utils :refer [same-card?]]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))

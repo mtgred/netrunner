@@ -1,12 +1,10 @@
 (ns web.angel-arena.utils
-  (:require [clojure.string :refer [lower-case capitalize]]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.validator :refer [calculate-deck-status]]
-            [web.mongodb :refer [object-id]]
-            [web.ws :as ws]
-            [monger.collection :as mc]
-            [monger.operators :refer :all]
-            [clj-time.core :as t]))
+  (:require
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.validator :refer [calculate-deck-status]]
+   [monger.collection :as mc]
+   [monger.operators :refer :all]
+   [web.mongodb :refer [->object-id]]))
 
 (defonce supported-formats [:standard :startup :eternal])
 
@@ -34,7 +32,7 @@
   (try
     (let [map-card (fn [c] (update-in c [:card] @all-cards))
           unknown-card (fn [c] (nil? (:card c)))]
-      (as-> (mc/find-one-as-map db "decks" {:_id (object-id deck-id) :username username}) d
+      (as-> (mc/find-one-as-map db "decks" {:_id (->object-id deck-id) :username username}) d
         (update-in d [:cards] #(mapv map-card %))
         (update-in d [:cards] #(vec (remove unknown-card %)))
         (update-in d [:identity] #(@all-cards (:title %)))

@@ -1,6 +1,6 @@
 (ns web.lobby
   (:require
-   [clj-time.core :as t]
+   [cljc.java-time.instant :as inst]
    [clj-uuid :as uuid]
    [clojure.set :as set]
    [clojure.string :as str]
@@ -25,7 +25,7 @@
                   :uid uid
                   :side side}]]
     {:gameid (uuid/v4)
-     :date (java.util.Date.)
+     :date (inst/now)
      :title title
      :allow-spectator allow-spectator
      :save-replay save-replay
@@ -40,9 +40,8 @@
      :spectators []
      :spectator-count 0
      :timer timer
-     :messages [{:user "__system__"
-                 :text (str (:username user) " has created the game.")}]
-     :last-update (t/now)}))
+     :messages [(core/make-system-message (str (:username user) " has created the game."))]
+     :last-update (inst/now)}))
 
 (defn get-players-and-spectators [lobby]
   (concat (:players lobby) (:spectators lobby)))
@@ -255,7 +254,7 @@
 (defn handle-set-last-update [lobbies gameid uid]
   (let [lobby (get lobbies gameid)]
     (if (and lobby (in-lobby? uid lobby))
-      (assoc-in lobbies [gameid :last-update] (t/now))
+      (assoc-in lobbies [gameid :last-update] (inst/now))
       lobbies)))
 
 (defn send-message [lobby message]
@@ -322,7 +321,7 @@
 
 (defn find-deck-for-user [db deck-id user]
   (let [username (:username user)]
-    (find-deck db {:_id (mongodb/object-id deck-id)
+    (find-deck db {:_id (mongodb/->object-id deck-id)
                    :username username})))
 
 (defn process-deck [raw-deck]
@@ -549,7 +548,7 @@
                     :action :rename-game
                     :game-name bad-name
                     :first-player player-name
-                    :date (java.util.Date.)})))))
+                    :date (inst/now)})))))
 
 (defmethod ws/-msg-handler :lobby/delete-game
   [{{db :system/db user :user} :ring-req
@@ -565,14 +564,14 @@
                   :action :delete-game
                   :game-name bad-name
                   :first-player player-name
-                  :date (java.util.Date.)}))))
+                  :date (inst/now)}))))
 
 (defn clear-inactive-lobbies
   "Called by a background thread to close lobbies that are inactive for some number of seconds."
   [db time-inactive]
   (let [changed? (volatile! false)]
     (doseq [{:keys [gameid last-update started] :as lobby} (app-state/get-lobbies)]
-      (when (and gameid (t/after? (t/now) (t/plus last-update (t/seconds time-inactive))))
+      (when (and gameid (inst/is-after (inst/now) (inst/plus-seconds last-update time-inactive)))
         (let [uids (keep :uid (get-players-and-spectators lobby))]
           (vreset! changed? true)
           (when started

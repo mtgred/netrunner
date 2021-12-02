@@ -66,7 +66,8 @@
    {:on-click
     (fn [e]
       (.preventDefault e)
-      (ws/ws-send! [:lobby/leave {:gameid gameid}] 8000
+      (ws/ws-send! [:lobby/leave {:gameid @gameid}]
+                   8000
                    #(when (sente/cb-success? %)
                       (swap! app-state assoc :editing false :current-game nil))))}
    (tr [:lobby.leave "Leave"])])

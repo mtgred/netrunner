@@ -1,26 +1,27 @@
 (ns web.stats
   (:require
-    [cheshire.core :as json]
-    [clojure.string :refer [lower-case]]
-    [game.utils :refer [dissoc-in]]
-    [jinteki.cards :refer [all-cards]]
-    [monger.collection :as mc]
-    [monger.operators :refer :all]
-    [monger.query :as mq]
-    [monger.result :refer [acknowledged?]]
-    [ring.util.request :refer [request-url]]
-    [web.angel-arena.stats :as angel-arena-stats]
-    [web.mongodb :refer [object-id]]
-    [web.pages :as pages]
-    [web.user :refer [active-user?]]
-    [web.utils :refer [json-response response]]
-    [web.ws :as ws]))
+   [cheshire.core :as json]
+   [cljc.java-time.instant :as inst]
+   [clojure.string :refer [lower-case]]
+   [game.utils :refer [dissoc-in]]
+   [jinteki.cards :refer [all-cards]]
+   [monger.collection :as mc]
+   [monger.operators :refer :all]
+   [monger.query :as mq]
+   [monger.result :refer [acknowledged?]]
+   [ring.util.request :refer [request-url]]
+   [web.angel-arena.stats :as angel-arena-stats]
+   [web.mongodb :refer [->object-id]]
+   [web.pages :as pages]
+   [web.user :refer [active-user?]]
+   [web.utils :refer [json-response response]]
+   [web.ws :as ws]))
 
 (defn clear-userstats-handler
   "Clear any statistics for a given user-id contained in a request"
   [{db :system/db
     {:keys [_id]} :user}]
-  (if (acknowledged? (mc/update db :users {:_id (object-id _id)} {$unset {:stats ""}}))
+  (if (acknowledged? (mc/update db :users {:_id (->object-id _id)} {$unset {:stats ""}}))
     (response 200 {:message "Deleted"})
     (response 403 {:message "Forbidden"})))
 
@@ -29,7 +30,7 @@
   [{db :system/db
     {id :id} :params}]
   (if id
-    (if (acknowledged? (mc/update db :decks {:_id (object-id id)} {$unset {:stats ""}}))
+    (if (acknowledged? (mc/update db :decks {:_id (->object-id id)} {$unset {:stats ""}}))
       (response 200 {:message "Deleted"})
       (response 403 {:message "Forbidden"}))
     (response 401 {:message "Unauthorized"})))
@@ -37,12 +38,12 @@
 (defn stats-for-deck
   "Get statistics for a given deck id"
   [db deck-id]
-  (mc/find-one-as-map db :decks {:_id (object-id deck-id)} ["stats"]))
+  (mc/find-one-as-map db :decks {:_id (->object-id deck-id)} ["stats"]))
 
 (defn stats-for-user
   "Get statistics for a given user id"
   [db user-id]
-  (mc/find-one-as-map db :users {:_id (object-id user-id)} ["stats"]))
+  (mc/find-one-as-map db :users {:_id (->object-id user-id)} ["stats"]))
 
 (defn build-stats-kw
   "Take a stats prefix and add a side to it"
@@ -53,7 +54,7 @@
   "Update deck stats for a given counter"
   [db deck-id record]
   (when record
-    (mc/update db :decks {:_id (object-id deck-id)} {$inc record})))
+    (mc/update db :decks {:_id (->object-id deck-id)} {$inc record})))
 
 (defn deck-record-end
   [state player]
@@ -83,7 +84,7 @@
 (defn inc-game-stats
   "Update user's game stats for a given counter"
   [db user-id record]
-  (mc/update db :users {:_id (object-id user-id)} {$inc record}))
+  (mc/update db :users {:_id (->object-id user-id)} {$inc record}))
 
 (defn game-record-start
   [p]
@@ -167,7 +168,7 @@
   (json/generate-string
     {:metadata {:winner (:winner @state)
                 :reason (:reason @state)
-                :end-date (java.util.Date.)
+                :end-date (inst/now)
                 :stats (-> (:stats @state)
                            (dissoc-in [:time :started])
                            (dissoc-in [:time :ended]))
@@ -184,7 +185,7 @@
                  {:gameid (str gameid)}
                  {$set {:winner (:winner @state)
                         :reason (:reason @state)
-                        :end-date (java.util.Date.)
+                        :end-date (inst/now)
                         :stats (-> (:stats @state)
                                    (dissoc-in [:time :started])
                                    (dissoc-in [:time :ended]))

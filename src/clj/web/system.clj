@@ -1,6 +1,5 @@
 (ns web.system
   (:require
-   [clj-time.format :as f]
    [game.cards.agendas]
    [game.cards.assets]
    [game.cards.basic]
@@ -19,13 +18,17 @@
    [monger.core :as mg]
    [org.httpkit.server :refer [run-server server-stop!]]
    [taoensso.sente :as sente]
-   [web.angel-arena :as angel-arena]
+   [time-literals.data-readers]
+   [time-literals.read-write]
    [web.api :refer [make-app]]
    [web.config :refer [frontend-version server-mode]]
    [web.game]
    [web.lobby :as lobby]
    [web.utils :refer [tick]]
-   [web.ws :refer [ch-chsk event-msg-handler]]))
+   [web.ws :refer [ch-chsk event-msg-handler]]
+   [cljc.java-time.local-date :as ld]))
+
+(time-literals.read-write/print-time-literals-clj!)
 
 (defn build-config []
   {:mongodb/connection {:address "localhost"
@@ -109,7 +112,7 @@
         cycles (mc/find-maps db "cycles" nil)
         mwl (mc/find-maps db "mwls" nil)
         latest-mwl (->> mwl
-                        (map (fn [e] (update e :date-start #(f/parse (f/formatters :date) %))))
+                        (map (fn [e] (update e :date-start ld/parse)))
                         (group-by #(keyword (:format %)))
                         (mapv (fn [[k, v]] [k (->> v
                                                   (sort-by :date-start)

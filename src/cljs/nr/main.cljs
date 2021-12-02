@@ -18,7 +18,11 @@
    [nr.tournament :refer [tournament]]
    [nr.users :refer [users]]
    [reagent-modals.modals :as reagent-modals]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [time-literals.data-readers]
+   [time-literals.read-write]))
+
+(time-literals.read-write/print-time-literals-cljs!)
 
 (defn- get-server-data
   [tag]

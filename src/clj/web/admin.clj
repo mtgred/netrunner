@@ -1,12 +1,12 @@
 (ns web.admin
   (:require
+   [cljc.java-time.instant :as inst]
    [game.main :as main]
    [monger.collection :as mc]
    [monger.operators :refer :all]
    [monger.result :refer [acknowledged? updated-existing?]]
    [web.config :refer [frontend-version]]
-   ; [web.lobby :refer [all-games]]
-   [web.mongodb :refer [->object-id object-id]]
+   [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user?]]
    [web.utils :refer [response]]
    [web.ws :as ws]))
@@ -24,7 +24,9 @@
                             {item :item} :body}]
   (if-not (empty? item)
     (do
-      (mc/insert db "news" {:_id (->object-id) :item item :date (java.util.Date.)})
+      (mc/insert db "news" {:_id (->object-id)
+                            :item item
+                            :date (inst/now)})
       (response 200 {:message "ok"}))
     (response 400 {:message "Missing news item"})))
 
@@ -32,7 +34,7 @@
                             {id :id} :params}]
   (try
     (if id
-      (if (acknowledged? (mc/remove db "news" {:_id (object-id id)}))
+      (if (acknowledged? (mc/remove db "news" {:_id (->object-id id)}))
         (response 200 {:message "Deleted"})
         (response 403 {:message "Forbidden"}))
       (response 400 {:message "Missing new items id"}))

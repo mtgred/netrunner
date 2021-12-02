@@ -201,20 +201,20 @@
 
        :reagent-render
        (fn []
-         [:div.messages {:class [(when (:replay @game-state)
-                                   "panel-bottom")]
-                         :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                         :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
-          (doall (map-indexed
-                   (fn [i msg]
-                     (if (= (:user msg) "__system__")
-                       [:div.system {:key i} (render-message (:text msg))]
-                       [:div.message {:key i}
-                        [avatar (:user msg) {:opts {:size 38}}]
-                        [:div.content
-                         [:div.username (get-in msg [:user :username])]
-                         [:div (render-message (:text msg))]]]))
-                   @log))])})))
+         (into [:div.messages {:class [(when (:replay @game-state)
+                                         "panel-bottom")]
+                               :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                               :on-mouse-out #(card-preview-mouse-out % zoom-channel)}]
+               (map
+                 (fn [{:keys [user text timestamp]}]
+                   (if (= user "__system__")
+                     [:div.system {:key timestamp} (render-message text)]
+                     [:div.message {:key timestamp}
+                      [avatar user {:opts {:size 38}}]
+                      [:div.content
+                       [:div.username (:username user)]
+                       [:div (render-message text)]]]))
+                 @log)))})))
 
 (defn log-pane []
   (fn []

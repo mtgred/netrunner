@@ -45,18 +45,17 @@
        (fn [current-game messages]
          [:div.chat-box
           [:h3 (tr [:lobby.chat "Chat"])]
-          [:div.message-list {:ref #(swap! state assoc :message-list %)}
-           (doall
-             (map-indexed
-               (fn [i msg]
-                 (if (= (:user msg) "__system__")
-                   [:div.system {:key i} (:text msg)]
-                   [:div.message {:key i}
-                    [avatar (:user msg) {:opts {:size 38}}]
-                    [:div.content
-                     [:div.username (get-in msg [:user :username])]
-                     [:div (:text msg)]]]))
-               @messages))]
+          (into [:div.message-list {:ref #(swap! state assoc :message-list %)}]
+                (map
+                  (fn [{:keys [user text timestamp]}]
+                    (if (= user "__system__")
+                      [:div.system {:key timestamp} text]
+                      [:div.message {:key timestamp}
+                       [avatar user {:opts {:size 38}}]
+                       [:div.content
+                        [:div.username (:username user)]
+                        [:div text]]]))
+                  @messages))
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
                                            (send-message state current-game))}

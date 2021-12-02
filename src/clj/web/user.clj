@@ -1,5 +1,6 @@
 (ns web.user
   (:require
+   [cljc.java-time.instant :as inst]
    [crypto.password.bcrypt :as password]
    [web.utils :refer [md5]]))
 
@@ -11,7 +12,7 @@
 (defn create-user
   "Create a new user map."
   [username password email & {:keys [isadmin]}]
-  (let [registration-date (java.util.Date.)]
+  (let [registration-date (inst/now)]
     {:username         username
      :email            email
      :emailhash        (md5 email)

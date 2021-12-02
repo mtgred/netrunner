@@ -1,13 +1,13 @@
 (ns game.core.say
   (:require
-   [clj-time.core :as t]
+   [cljc.java-time.instant :as inst]
    [clojure.string :as str]
    [game.core.toasts :refer [toast]]))
 
 (defn make-message
   "Create a message map, along with timestamp if none is provided."
   [{:keys [user text timestamp]
-    :or {timestamp (t/now)}}]
+    :or {timestamp (inst/now)}}]
   {:user (if (= "__system__" user) user (select-keys user [:username :emailhash]))
    :text (str/trim text)
    :timestamp timestamp})
@@ -48,8 +48,7 @@
   "Prints a message related to a rules enforcement on a given card.
   Example: 'Architect cannot be trashed while installed.'"
   [state card text]
-  (say state nil {:user (get-in card [:title])
-                  :text (str (:title card) " " text ".")}))
+  (system-say state nil (str (:title card) " " text ".")))
 
 (defn indicate-action
   [state side _]

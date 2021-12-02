@@ -1,7 +1,7 @@
 (ns web.game
   (:require
    [cheshire.core :as json]
-   [clj-time.core :as t]
+   [cljc.java-time.instant :as inst]
    [clojure.stacktrace :as stacktrace]
    [cond-plus.core :refer [cond+]]
    [game.core :as core]
@@ -97,7 +97,7 @@
   (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
     (when (and lobby (lobby/first-player? uid lobby) (not started))
       (let [stripped-players (mapv strip-deck players)
-            start-date (t/now)
+            start-date (inst/now)
             new-app-state
             (swap! app-state/app-state update :lobbies
                    (fn [lobbies]
@@ -106,7 +106,7 @@
                          (merge g {:started true
                                    :original-players stripped-players
                                    :ending-players stripped-players
-                                   :start-date (java.util.Date.)
+                                   :start-date start-date
                                    :last-update start-date
                                    :last-update-only-actions start-date
                                    :state (core/init-game g)})

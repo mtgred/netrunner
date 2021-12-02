@@ -58,8 +58,8 @@
                        4 {:args [:any :any :map :any]}}}
      insert-and-return {:arities {3 {:args [:any :any :map]}
                                   4 {:args [:any :any :map :any]}}}
-     insert-batch {:arities {3 {:args [:any :any :map]}
-                             4 {:args [:any :any :map :any]}}}
+     insert-batch {:arities {3 {:args [:any :any :seq]}
+                             4 {:args [:any :any :seq :any]}}}
      find {:arities {2 {:args [:any :any]}
                      3 {:args [:any :any :any]}
                      4 {:args [:any :any :any :any]}}}

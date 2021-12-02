@@ -90,7 +90,7 @@
 ;(defn- start-game
 ;  [event player1 player2 form]
 ;  (let [gameid (java.util.UUID/randomUUID)
-;        game {:date            (java.util.Date.)
+;        game {:date            (inst/now)
 ;              :gameid          gameid
 ;              :title           (str "Match between "
 ;                                    (get-in player1 [:user :username])

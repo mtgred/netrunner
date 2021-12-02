@@ -1,18 +1,17 @@
 (ns web.decks
   (:require
-    [clojure.string :as str]
-    [crypto.password.pbkdf2 :as pbkdf2]
-    [jinteki.cards :refer [all-cards]]
-    [jinteki.utils :refer [slugify]]
-    [jinteki.validator :refer [calculate-deck-status]]
-    [monger.collection :as mc]
-    [monger.result :refer [acknowledged?]]
-    [web.mongodb :refer [object-id]]
-    [web.nrdb :as nrdb]
-    [web.utils :refer [response]]
-    [web.ws :as ws])
-  (:import
-    org.bson.types.ObjectId))
+   [cljc.java-time.instant :as inst]
+   [clojure.string :as str]
+   [crypto.password.pbkdf2 :as pbkdf2]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :refer [slugify]]
+   [jinteki.validator :refer [calculate-deck-status]]
+   [monger.collection :as mc]
+   [monger.result :refer [acknowledged?]]
+   [web.mongodb :refer [->object-id ->object-id]]
+   [web.nrdb :as nrdb]
+   [web.utils :refer [response]]
+   [web.ws :as ws]))
 
 (defn decks-handler
   [{db :system/db
@@ -41,7 +40,7 @@
 
 (defn- deck-locked?
   [db deck-id]
-  (let [deck (mc/find-one-as-map db "decks" {:_id (object-id deck-id)})]
+  (let [deck (mc/find-one-as-map db "decks" {:_id (->object-id deck-id)})]
     (or (:locked deck)
         false)))
 
@@ -88,9 +87,9 @@
         (if-not (deck-locked? db deck-id)
           (if (:identity deck)
             (do (mc/update db "decks"
-                           {:_id (object-id deck-id) :username username}
+                           {:_id (->object-id deck-id) :username username}
                            {"$set" (dissoc deck :_id)})
-                (response 200 {:message "OK" :_id (object-id deck-id)}))
+                (response 200 {:message "OK" :_id (->object-id deck-id)}))
             (response 409 {:message "Deck is missing identity"}))
           (response 403 {:message "Deck is locked"}))
         (response 409 {:message "Deck is missing _id"})))
@@ -103,7 +102,7 @@
   (try
     (if (and username id)
       (if-not (deck-locked? db id)
-        (if (acknowledged? (mc/remove db "decks" {:_id (object-id id) :username username}))
+        (if (acknowledged? (mc/remove db "decks" {:_id (->object-id id) :username username}))
           (response 200 {:message "Deleted"})
           (response 403 {:message "Forbidden"}))
         (response 403 {:message "Locked"}))
@@ -121,8 +120,8 @@
     (let [deck (nrdb/download-public-decklist db input)]
       (if (every? #(contains? deck %) [:name :identity :cards])
         (let [db-deck (assoc deck
-                             :_id (ObjectId.)
-                             :date (java.util.Date.)
+                             :_id (->object-id)
+                             :date (inst/now)
                              :format "standard")
               updated-deck (update-deck db-deck)
               status (calculate-deck-status updated-deck)

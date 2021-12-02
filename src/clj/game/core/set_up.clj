@@ -1,22 +1,22 @@
 (ns game.core.set-up
   (:require
-    [game.core.card :refer [corp? runner?]]
-    [game.core.card-defs :refer [card-def]]
-    [game.core.checkpoint :refer [fake-checkpoint]]
-    [game.core.diffs :refer [public-states]]
-    [game.core.drawing :refer [draw]]
-    [game.core.eid :refer [make-eid]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
-    [game.core.initializing :refer [card-init make-card]]
-    [game.core.player :refer [new-corp new-runner]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
-    [game.core.say :refer [system-msg]]
-    [game.core.shuffling :refer [shuffle-into-deck]]
-    [game.core.state :refer [new-state]]
-    [game.macros :refer [wait-for]]
-    [game.quotes :as quotes]
-    [game.utils :refer [server-card]]
-    [clj-time.core :as t]))
+   [cljc.java-time.instant :as inst]
+   [game.core.card :refer [corp? runner?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.diffs :refer [public-states]]
+   [game.core.drawing :refer [draw]]
+   [game.core.eid :refer [make-eid]]
+   [game.core.engine :refer [trigger-event trigger-event-sync]]
+   [game.core.initializing :refer [card-init make-card]]
+   [game.core.player :refer [new-corp new-runner]]
+   [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
+   [game.core.say :refer [system-msg system-say]]
+   [game.core.shuffling :refer [shuffle-into-deck]]
+   [game.core.state :refer [new-state]]
+   [game.macros :refer [wait-for]]
+   [game.quotes :as quotes]
+   [game.utils :refer [server-card]]))
 
 (defn build-card
   [card]
@@ -102,7 +102,7 @@
         gameid
         room
         format
-        (t/now)
+        (inst/now)
         {:timer timer
          :spectatorhands spectatorhands
          :api-access api-access
@@ -126,16 +126,15 @@
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
     (when-let [messages (seq (:messages game))]
-      (swap! state assoc :log (conj (vec messages) {:user "__system__" :text "[hr]"})))
+      (swap! state assoc :log (into [] messages))
+      (system-say state nil "[hr]"))
     (card-init state :corp corp-identity)
     (card-init state :runner runner-identity)
     (create-basic-action-cards state)
     (fake-checkpoint state)
-    (let [side :corp]
-      (wait-for (trigger-event-sync state side :pre-start-game nil)
-                (let [side :runner]
-                  (wait-for (trigger-event-sync state side :pre-start-game nil)
-                            (init-hands state)
-                            (fake-checkpoint state)))))
+    (wait-for (trigger-event-sync state :corp :pre-start-game nil)
+              (wait-for (trigger-event-sync state :runner :pre-start-game nil)
+                        (init-hands state)
+                        (fake-checkpoint state)))
     (swap! state assoc :history [(:hist-state (public-states state))])
     state))

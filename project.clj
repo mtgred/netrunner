@@ -6,7 +6,7 @@
             :url "https://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.10.238"]
+                 [org.clojure/clojurescript "1.10.741"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire/cheshire "5.6.3"]
                  [stylefruits/gniazdo "1.1.4"]
@@ -26,7 +26,6 @@
                  [crypto-password "0.2.0"]
                  [digest "1.4.6"]
                  [http-kit "2.4.0"]
-                 [clj-time "0.14.2"]
                  [com.draines/postal "2.0.2"]
                  [throttler "1.0.0"]
                  [clj-http "3.7.0"]
@@ -44,7 +43,9 @@
                  [org.clojure/data.csv "1.0.0"]
                  [medley "1.3.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
-                 [integrant "0.8.0"]]
+                 [integrant "0.8.0"]
+                 [cljc.java-time "0.1.18"]
+                 [time-literals "0.1.5"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]

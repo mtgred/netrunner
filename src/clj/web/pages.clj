@@ -1,13 +1,13 @@
 (ns web.pages
-  (:require [clj-time.core :as t]
-            [clj-time.coerce :as c]
-            [cheshire.core :as json]
-            [hiccup.page :as hiccup]
-            [monger.collection :as mc]
-            [monger.operators :refer :all]
-            [ring.middleware.anti-forgery :as anti-forgery]
-            [web.config :refer [frontend-version server-mode]]
-            [web.utils :refer [response]]))
+  (:require
+   [cheshire.core :as json]
+   [cljc.java-time.instant :as inst]
+   [hiccup.page :as hiccup]
+   [monger.collection :as mc]
+   [monger.operators :refer :all]
+   [ring.middleware.anti-forgery :as anti-forgery]
+   [web.config :refer [frontend-version server-mode]]
+   [web.utils :refer [response]]))
 
 (defn index-page
   ([req] (index-page req nil nil))
@@ -65,8 +65,9 @@
 (defn reset-password-page
   [{db :system/db
     {:keys [token]} :params}]
-  (if (mc/find-one-as-map db "users" {:resetPasswordToken   token
-                                      :resetPasswordExpires {"$gt" (c/to-date (t/now))}})
+  (if (mc/find-one-as-map db "users"
+                          {:resetPasswordToken token
+                           :resetPasswordExpires {"$gt" (inst/now)}})
     (hiccup/html5
       [:head
        [:title "Jinteki"]
