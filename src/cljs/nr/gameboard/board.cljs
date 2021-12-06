@@ -1,32 +1,31 @@
 (ns nr.gameboard.board
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <! timeout] :as async]
-            [clojure.string :as s :refer [capitalize includes? join lower-case split blank? starts-with? ends-with?]]
-            [differ.core :as differ]
-            [game.core.card :refer [condition-counter? get-title has-subtype? asset? operation? rezzed? ice? corp?
-                                    faceup? installed? same-card? in-scored?
-                                    get-counters]]
-            [jinteki.utils :refer [str->int is-tagged? add-cost-to-label select-non-nil-keys] :as utils]
-            [jinteki.cards :refer [all-cards]]
-            [nr.ajax :refer [GET PUT DELETE]]
-            [nr.appstate :refer [app-state]]
-            [nr.auth :as auth]
-            [nr.cardbrowser :refer [card-as-text]]
-            [nr.end-of-game-stats :refer [build-game-stats]]
-            [nr.gameboard.actions :refer [send-command toast]]
-            [nr.gameboard.log :refer [send-msg should-scroll]]
-            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out
-                                               card-highlight-mouse-over card-highlight-mouse-out zoom-channel]]
-            [nr.gameboard.right-pane :refer [content-pane]]
-            [nr.gameboard.player-stats :refer [stat-controls stats-view]]
-            [nr.gameboard.replay :refer [replay-panel]]
-            [nr.gameboard.state :refer [game-state replay-side not-spectator?]]
-            [nr.translations :refer [tr tr-side]]
-            [nr.utils :refer [banned-span influence-dot influence-dots map-longest
-                              toastr-options render-icons render-message
-                              checkbox-button cond-button get-image-path
-                              non-game-toast image-or-face]]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<! chan put!] :as async]
+   [clojure.string :as s :refer [capitalize ends-with? join lower-case split
+                           starts-with?]]
+   [game.core.card :refer [asset? condition-counter? corp? faceup?
+                           get-counters get-title has-subtype? ice? operation? rezzed?
+                           same-card?]]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :refer [add-cost-to-label is-tagged? select-non-nil-keys
+                          str->int] :as utils]
+   [nr.appstate :refer [app-state]]
+   [nr.cardbrowser :refer [card-as-text]]
+   [nr.end-of-game-stats :refer [build-game-stats]]
+   [nr.gameboard.actions :refer [send-command toast]]
+   [nr.gameboard.card-preview :refer [card-highlight-mouse-out
+                                      card-highlight-mouse-over card-preview-mouse-out
+                                      card-preview-mouse-over zoom-channel]]
+   [nr.gameboard.log :refer [should-scroll]]
+   [nr.gameboard.player-stats :refer [stat-controls stats-view]]
+   [nr.gameboard.replay :refer [replay-panel]]
+   [nr.gameboard.right-pane :refer [content-pane]]
+   [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
+   [nr.translations :refer [tr tr-side]]
+   [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
+                     image-or-face render-icons render-message]]
+   [reagent.core :as r]))
 
 (declare stacked-card-view show-distinct-cards)
 

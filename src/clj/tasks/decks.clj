@@ -4,7 +4,7 @@
     [monger.collection :as mc]
     [monger.result :refer [acknowledged?]]
     [tasks.setup :refer [connect disconnect]]
-    [web.mongodb :refer [object-id]]))
+    [web.mongodb :refer [->object-id]]))
 
 (defn- get-all-usernames
   "Get all usernames in the database."
@@ -14,7 +14,7 @@
 (defn- get-deck
   "Get a deck by _id"
   [db deck-id]
-  (dissoc (mc/find-one-as-map db "decks" {:_id (object-id deck-id)}) :_id))
+  (dissoc (mc/find-one-as-map db "decks" {:_id (->object-id deck-id)}) :_id))
 
 (defn add-for-all-users
   "Add the specified deck id for all users"

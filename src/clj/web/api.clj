@@ -71,7 +71,6 @@
            (GET "/game/log" [] #'game-api/log-handler))
 
 (defroutes admin-routes
-           (POST "/admin/announce" [] #'admin/announce-create-handler)
            (POST "/admin/news" [] #'admin/news-create-handler)
            (DELETE "/admin/news/:id" [] #'admin/news-delete-handler)
            (GET "/admin/version" [] #'admin/version-handler)
@@ -95,10 +94,6 @@
            (DELETE "/profile/history/annotations/delete/:gameid" [date] #'stats/delete-annotations)
            (GET "/profile/history/share/:gameid" [] #'stats/share-replay)
            (GET "/profile/history/full/:gameid" [] #'stats/fetch-replay)
-
-           (GET "/profile/angel-arena/runs" [] #'angel-arena/fetch-runs)
-           (GET "/profile/angel-arena/queue-times" [] #'angel-arena/fetch-queue-times)
-           (GET "/profile/angel-arena/history" [] #'angel-arena/fetch-history)
 
            (GET "/data/decks" [] #'decks/decks-handler)
            (POST "/data/decks" [] #'decks/decks-create-handler)

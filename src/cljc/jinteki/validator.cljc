@@ -1,16 +1,12 @@
 (ns jinteki.validator
-  (:require [clojure.string :refer [split split-lines join escape] :as s]
-            [game.core.card :refer [has-subtype?]]
-            [jinteki.utils :refer [faction-label INFINITY]]
-            [jinteki.cards :as cards]
-            #?@(:clj [[clj-time.core :as t]
-                      [clj-time.format :as f]
-                      [clj-time.coerce :as c]])))
+  (:require
+   [game.core.card :refer [has-subtype?]]
+   [jinteki.cards :as cards]
+   [jinteki.utils :refer [faction-label INFINITY]]))
 
 (defn card-count
   [cards]
   (reduce (fn [sum line] (+ sum (:qty line))) 0 cards))
-
 
 ;;; Helpers for Alliance cards
 (defn default-alliance-is-free?
@@ -119,7 +115,7 @@
 
 ;; Deck attribute calculations
 (defn agenda-points
-  [{:keys [cards] :as deck}]
+  [{:keys [cards]}]
   (reduce (fn [acc card]
             (if-let [point (get-in card [:card :agendapoints])]
               (+ acc (* point (:qty card)))
@@ -173,8 +169,7 @@
                (not legal-num-copies?) (str "Too many copies of a card: "
                                             (get-in (some #(when ((complement legal-num-copies-fn) %) %) cards) [:card :title]))
                (not agenda-points?) (str "Incorrect amount of agenda points: " agenda-points
-                                         ", Between: " min-agenda-points " and " (inc min-agenda-points)))
-     :description "Basic deckbuilding rules"}))
+                                         ", Between: " min-agenda-points " and " (inc min-agenda-points)))}))
 
 (defn combine-id-and-cards
   [deck]
@@ -253,21 +248,14 @@
                (or (= id "The Catalyst: Convention Breaker")
                    (= id "The Syndicate: Profit over Principle")))
       {:legal false
-       :reason (str "Illegal identity: " id)
-       :description (str "Legal for " (-> fmt name s/capitalize))})))
+       :reason (str "Illegal identity: " id)})))
 
 (defn build-format-legality
   [valid fmt deck]
   (let [mwl (legal-format? fmt deck)]
     (or (reject-system-gateway-neutral-ids fmt deck)
         {:legal (and (:legal valid) (:legal mwl))
-         :reason (or (:reason valid) (:reason mwl))
-         :description (str "Legal for " (-> fmt name s/capitalize))})))
-
-(defn build-snapshot-plus-legality
-  [valid deck]
-  (merge (build-format-legality valid :snapshot-plus deck)
-         {:description "Legal for Snapshot Plus"}))
+         :reason (or (:reason valid) (:reason mwl))})))
 
 (defn cards-over-one-sg
   "Returns cards in deck that require more than one copy of System Gateway."
@@ -286,8 +274,7 @@
                    (str "Only one copy of System Gateway permitted - check: "
                         (get-in example-card [:card :title])))
                  (:reason valid)
-                 (:reason mwl))
-     :description "Legal for System Gateway"}))
+                 (:reason mwl))}))
 
 (defn calculate-deck-status
   "Calculates all the deck's validity for the basic deckbuilding rules,
@@ -302,7 +289,7 @@
      :eternal (build-format-legality valid :eternal deck)
      :classic (build-format-legality valid :classic deck)
      :snapshot (build-format-legality valid :snapshot deck)
-     :snapshot-plus (build-snapshot-plus-legality valid deck)}))
+     :snapshot-plus (build-format-legality valid :snapshot-plus deck)}))
 
 (defn trusted-deck-status
   [{:keys [status] :as deck}]

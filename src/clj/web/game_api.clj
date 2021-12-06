@@ -1,5 +1,5 @@
 (ns web.game-api
-  (:require [web.mongodb :refer [object-id]]
+  (:require [web.mongodb :refer [->object-id]]
             [web.decks :as decks]
             [web.lobby :as lobby]
             [web.utils :refer [response]]
@@ -26,7 +26,7 @@
 
 (defn- get-deck [db username game]
   (if-let [deck-id (get-deck-id username game)]
-    (decks/update-deck (mc/find-one-as-map db "decks" {:_id (object-id deck-id) :username username}))
+    (decks/update-deck (mc/find-one-as-map db "decks" {:_id (->object-id deck-id) :username username}))
     nil))
 
 (defn- api-handler [{db :system/db
@@ -41,7 +41,7 @@
           api-record (mc/find-one-as-map db "api-keys" {:api-key api-uuid} ["username"])
           username (:username api-record)]
       (if username
-        (let [game (lobby/game-for-username username)
+        (let [game {} ; (lobby/game-for-username username)
               allow-access (:api-access game)]
           (if (and game allow-access)
             (action username game ctx)

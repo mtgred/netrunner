@@ -1,15 +1,58 @@
 (ns web.mongodb
-  (:require [monger.collection]
-            [monger.cursor])
-  (:import org.bson.types.ObjectId))
+  (:require
+   [cljc.java-time.local-date :as ld]
+   [cljc.java-time.local-date-time :as ldt]
+   [cljc.java-time.zone-id :as zid]
+   [cljc.java-time.zone-offset :as zoff]
+   [cljc.java-time.zoned-date-time :as zdt]
+   [monger.collection]
+   [monger.conversion :refer [ConvertFromDBObject ConvertToDBObject
+                              from-db-object to-db-object]]
+   [monger.cursor])
+  (:import
+   (java.time
+     Instant
+     LocalDate
+     LocalDateTime
+     ZonedDateTime)
+   java.util.Date
+   org.bson.types.ObjectId))
 
-(defn ->object-id []
-  (ObjectId.))
+(extend-protocol ConvertToDBObject
+  Instant
+  (to-db-object [^Instant input]
+    (to-db-object (Date/from input)))
+  LocalDate
+  (to-db-object [^LocalDate input]
+    (-> input
+        (ld/at-start-of-day (zid/from zoff/utc))
+        (zdt/to-instant)
+        (Date/from)
+        (to-db-object)))
+  LocalDateTime
+  (to-db-object [^LocalDateTime input]
+    (-> input
+        (ldt/to-instant (zid/from zoff/utc))
+        (Date/from)
+        (to-db-object)))
+  ZonedDateTime
+  (to-db-object [^ZonedDateTime input]
+    (-> input
+        (zdt/to-instant)
+        (Date/from)
+        (to-db-object))))
 
-(defn object-id [id]
-  (if (string? id)
-    (ObjectId. id)
-    id))
+(extend-protocol ConvertFromDBObject
+  java.util.Date
+  (from-db-object [^java.util.Date input keywordize]
+    (ldt/of-instant (.toInstant input) (zid/from zoff/utc))))
+
+(defn ->object-id
+  ([] (ObjectId.))
+  ([id]
+   (if (string? id)
+     (ObjectId. id)
+     id)))
 
 (defn- create-collation
   [locale strength]

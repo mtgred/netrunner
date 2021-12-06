@@ -9,57 +9,20 @@
    [nr.chat :refer [chat-page]]
    [nr.deckbuilder :refer [deck-builder]]
    [nr.features :refer [features]]
-   [nr.gameboard.actions :refer [concede mute-spectators]]
    [nr.gameboard.board :refer [gameboard]]
-   [nr.gameboard.replay :refer [set-replay-side]]
-   [nr.gamelobby :refer [filter-blocked-games game-lobby leave-game]]
+   [nr.gamelobby :refer [game-lobby]]
    [nr.help :refer [help]]
    [nr.navbar :refer [navbar navigate navigate-to-current]]
-   [nr.player-view :refer [player-view]]
    [nr.stats :refer [stats]]
+   [nr.status-bar :refer [status]]
    [nr.tournament :refer [tournament]]
-   [nr.translations :refer [tr]]
    [nr.users :refer [users]]
    [reagent-modals.modals :as reagent-modals]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [time-literals.data-readers]
+   [time-literals.read-write]))
 
-(defn- status []
-  (r/with-let [user (r/cursor app-state [:user])
-               games (r/cursor app-state [:games])
-               gameid (r/cursor app-state [:gameid])]
-    [:div
-     [:div.float-right
-      (let [c (count (filter-blocked-games @user @games (:visible-formats @app-state)))]
-        (tr [:nav/game-count] c))]
-     (if-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
-       (let [user-id (-> @user :_id)
-             is-player (some #(= user-id (-> % :user :_id)) (:players game))]
-         (when (:started game)
-           [:div.float-right
-            (when is-player
-              [:a.concede-button {:on-click #(concede)} (tr [:game.concede "Concede"])])
-            [:a.leave-button {:on-click #(leave-game)} (if (:replay game) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
-            (when is-player
-              [:a.mute-button {:on-click #(mute-spectators (not (:mute-spectators game)))}
-               (if (:mute-spectators game) (tr [:game.unmute "Unmute spectators"]) (tr [:game.mute "Mute spectators"]))])]))
-       (when (not (nil? @gameid))
-         [:div.float-right
-          [:a {:on-click #(leave-game)} (if (= "local-replay" @gameid) (tr [:game.leave-replay "Leave replay"]) (tr [:game.leave "Leave game"]))]
-          (when (= "local-replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :corp)} (tr [:game.corp-view "Corp View"])])
-          (when (= "local-replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :runner)} (tr [:game.runner-view "Runner View"])])
-          (when (= "local-replay" @gameid)
-            [:a.replay-button {:on-click #(set-replay-side :spectator)} (tr [:game.spec-view "Spectator View"])])]))
-     (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
-       (when (:started game)
-         (let [c (:spectator-count game)]
-           (when (pos? c)
-             [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
-              [:div.blue-shade.spectators
-               (for [p (:spectators game)]
-                 ^{:key (get-in p [:user :_id])}
-                 [player-view p])]]))))]))
+(time-literals.read-write/print-time-literals-cljs!)
 
 (defn- get-server-data
   [tag]

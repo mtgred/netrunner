@@ -3,7 +3,6 @@
 
 (def INFINITY 2147483647)
 
-
 (defn str->int
   [string]
   #?(:clj (java.lang.Integer/parseInt (re-find #"^\d+" string))

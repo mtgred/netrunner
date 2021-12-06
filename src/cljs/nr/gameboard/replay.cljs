@@ -1,14 +1,16 @@
 (ns nr.gameboard.replay
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [<! timeout] :as async]
-            [clojure.string :as s :refer [join blank? capitalize ends-with?]]
-            [differ.core :as differ]
-            [nr.ajax :refer [GET PUT DELETE]]
-            [nr.appstate :refer [app-state]]
-            [nr.gameboard.state :refer [game-state last-state lock replay-side]]
-            [nr.translations :refer [tr]]
-            [nr.utils :refer [render-message non-game-toast]]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<! timeout] :as async]
+   [clojure.string :as s :refer [blank? capitalize ends-with? join]]
+   [differ.core :as differ]
+   [nr.ajax :refer [DELETE GET PUT]]
+   [nr.appstate :refer [app-state]]
+   [nr.gameboard.state :refer [game-state last-state replay-side]]
+   [nr.translations :refer [tr]]
+   [nr.utils :refer [non-game-toast render-message]]
+   [nr.ws :as ws]
+   [reagent.core :as r]))
 
 (defonce replay-timeline (atom []))
 (defonce replay-status (r/atom {:autoplay false :speed 1600}))
@@ -61,7 +63,7 @@
 (defn replay-apply-patch
   [patch]
   (reset! game-state (replay-prepare-state (differ/patch @last-state patch)))
-  (reset! lock false)
+  (reset! ws/lock false)
   (reset! last-state @game-state))
 
 (declare load-notes)
@@ -76,7 +78,7 @@
     (do
       (swap! app-state assoc :start-shown true)
       (reset! game-state (replay-prepare-state (get-in @replay-timeline [n :state])))
-      (reset! lock false)
+      (reset! ws/lock false)
       (reset! last-state @game-state)
       (swap! replay-status merge {:n n :diffs (get-in @replay-timeline [n :diffs])})
       (load-notes))))

@@ -1,10 +1,10 @@
 (ns web.api-keys
-  (:require [web.mongodb :refer [object-id]]
-            [web.utils :refer [response]]
-            [web.ws :as ws]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]])
-  (:import org.bson.types.ObjectId))
+  (:require
+   [cljc.java-time.instant :as inst]
+   [monger.collection :as mc]
+   [monger.result :refer [acknowledged?]]
+   [web.mongodb :refer [->object-id]]
+   [web.utils :refer [response]]))
 
 (defn api-keys-handler [{db :system/db
                          {username :username} :user}]
@@ -18,7 +18,7 @@
     (let [new-key (java.util.UUID/randomUUID)
           new-entry (mc/insert db "api-keys"
                                {:username username
-                                :date (java.util.Date.)
+                                :date (inst/now)
                                 :api-key new-key})]
       (if (acknowledged? new-entry)
         (if (acknowledged? (mc/update db "users" {:username username} {"$set" {:has-api-keys true}}))
@@ -32,7 +32,7 @@
                                 {id :id}             :params}]
   (try
     (if (and username id)
-      (if (acknowledged? (mc/remove db "api-keys" {:_id (object-id id) :username username}))
+      (if (acknowledged? (mc/remove db "api-keys" {:_id (->object-id id) :username username}))
         (let [key-count (mc/count db "api-keys" {:username username})]
           (when-not (pos? key-count)
             (mc/update db "users" {:username username} {"$set" {:has-api-keys false}}))

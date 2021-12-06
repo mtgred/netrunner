@@ -1,19 +1,23 @@
 (ns nr.gameboard.log
-  (:require [clojure.string :as string]
-            [nr.angel-arena.log :as angel-arena-log]
-            [nr.appstate :refer [app-state]]
-            [nr.avatar :refer [avatar]]
-            [nr.gameboard.actions :refer [send-command]]
-            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out zoom-channel]]
-            [nr.gameboard.state :refer [game-state not-spectator?]]
-            [nr.help :refer [command-info]]
-            [nr.translations :refer [tr]]
-            [nr.utils :refer [influence-dot render-message]]
-            [nr.ws :as ws]
-            [reagent.core :as r]))
+  (:require
+   [clojure.string :as string]
+   [nr.angel-arena.log :as angel-arena-log]
+   [nr.appstate :refer [app-state current-gameid]]
+   [nr.avatar :refer [avatar]]
+   [nr.gameboard.actions :refer [send-command]]
+   [nr.gameboard.card-preview :refer [card-preview-mouse-out
+                                      card-preview-mouse-over zoom-channel]]
+   [nr.gameboard.state :refer [game-state not-spectator?]]
+   [nr.help :refer [command-info]]
+   [nr.translations :refer [tr]]
+   [nr.utils :refer [influence-dot render-message]]
+   [nr.ws :as ws]
+   [reagent.core :as r]))
 
 (def commands (distinct (map :name command-info)))
-(def command-info-map (->> command-info (map (fn [{:keys [name has-args usage help]}] [name {:has-args has-args :usage usage :help help}])) (into {})))
+(def command-info-map (->> command-info
+                           (map (fn [item] [(:name item) (select-keys item [:has-args :usage :help])]))
+                           (into {})))
 
 (defn scrolled-to-end?
   [el tolerance]
@@ -22,9 +26,8 @@
 (def should-scroll (r/atom {:update true :send-msg false}))
 
 (defn log-typing []
-  (let [typing (r/cursor game-state [:typing])
-        username (get-in @app-state [:user :username])]
-    (when (seq (remove nil? (remove #{username} @typing)))
+  (r/with-let [typing (r/cursor game-state [:typing])]
+    (when @typing
       [:div [:p.typing
              (doall
                (for [i (range 10)]
@@ -34,24 +37,20 @@
 (defn send-msg [s]
   (let [text (:msg @s)]
     (when (and (not (:replay @game-state))
-            (not (empty? text)))
+               (seq text))
       (reset! should-scroll {:update false :send-msg true})
-      (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state)
-                                    :msg text}])
+      (ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                               :msg text}])
       (swap! s assoc :msg ""))))
 
-(defn send-typing [s]
+(defn send-typing
   "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
-  (let [text (:msg @s)
-        username (get-in @app-state [:user :username])]
+  [s]
+  (let [text (:msg @s)]
     (when (and (not (:replay @game-state))
-            (not-spectator?))
-      (if (empty? text)
-        (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                         :typing false}])
-        (when (not-any? #{username} (:typing @game-state))
-          (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state)
-                                           :typing true}]))))))
+               (not-spectator?))
+      (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
+                                  :typing (boolean (seq text))}]))))
 
 (defn indicate-action []
   (when (not-spectator?)
@@ -93,8 +92,8 @@
 (defn reset-command-menu
   "Resets the command menu state."
   [state]
-  (do (swap! state assoc :command-matches ())
-      (swap! state assoc :command-highlight nil)))
+  (swap! state assoc :command-matches '())
+  (swap! state assoc :command-highlight nil))
 
 (defn command-menu-key-down-handler
   [state e]
@@ -126,52 +125,54 @@
         nil))))
 
 (defn log-input-change-handler
-  [s e]
-  (reset-command-menu s)
-  (swap! s assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
-  (swap! s assoc :msg (-> e .-target .-value))
-  (send-typing s))
+  [state e]
+  (reset-command-menu state)
+  (swap! state assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
+  (swap! state assoc :msg (-> e .-target .-value))
+  (send-typing state))
+
+(defn command-menu [!input-ref state]
+  (when (show-command-menu? @state)
+    [:div.command-matches-container.panel.blue-shade
+     {:on-mouse-leave #(swap! state dissoc :command-highlight)}
+     [:ul.command-matches
+      (doall (map-indexed
+               (fn [i match]
+                 [:li.command-match
+                  {:key match
+                   :class (when (= i (:command-highlight @state)) "highlight")}
+                  [:span {:on-mouse-over #(swap! state assoc :command-highlight i)
+                          :on-click #(do
+                                       (swap! state assoc :msg (str match " "))
+                                       (reset-command-menu state)
+                                       (.focus @!input-ref))}
+
+                          (get-in command-info-map [match :usage])]])
+                      (:command-matches @state)))]]))
 
 (defn log-input []
-  (let [gameid (r/cursor game-state [:gameid])
-        games (r/cursor app-state [:games])
+  (let [current-game (r/cursor app-state [:current-game])
         !input-ref (r/atom nil)
-        s (r/atom {})]
+        state (r/atom {})]
     (fn []
-      (let [game (some #(when (= @gameid (str (:gameid %))) %) @games)]
-        (when (or (not-spectator?)
-                (not (:mutespectators game)))
-          [:div.log-input
-           [:div.form-container
-            [:form {:on-submit #(do (.preventDefault %)
-                                    (reset-command-menu s)
-                                    (send-msg s))}
-             [:input#log-input
-              {:placeholder (tr [:chat.placeholder "Say something"])
-               :type "text"
-               :autoComplete "off"
-               :ref (partial reset! !input-ref)
-               :value (:msg @s)
-               :on-key-down (partial command-menu-key-down-handler s)
-               :on-change (partial log-input-change-handler s)}]]]
-           [indicate-action]
-           (when (show-command-menu? @s)
-             [:div.command-matches-container.panel.blue-shade
-              {:on-mouse-leave #(swap! s dissoc :command-highlight)}
-              [:ul.command-matches
-               (doall (map-indexed
-                        (fn [i match]
-                          [:li.command-match
-                           {:key match
-                            :class (when (= i (:command-highlight @s)) "highlight")}
-                           [:span {:on-mouse-over #(swap! s assoc :command-highlight i)
-                                   :on-click #(do
-                                                (swap! s assoc :msg (str match " "))
-                                                (reset-command-menu s)
-                                                (.focus @!input-ref))}
-
-                            (get-in command-info-map [match :usage])]])
-                        (:command-matches @s)))]])])))))
+      (when (or (not-spectator?)
+                (not (:mutespectators @current-game)))
+        [:div.log-input
+         [:div.form-container
+          [:form {:on-submit #(do (.preventDefault %)
+                                  (reset-command-menu state)
+                                  (send-msg state))}
+           [:input#log-input
+            {:placeholder (tr [:chat.placeholder "Say something"])
+             :type "text"
+             :autoComplete "off"
+             :ref #(reset! !input-ref %)
+             :value (:msg @state)
+             :on-blur #(send-typing (atom nil))
+             :on-key-down #(command-menu-key-down-handler state %)
+             :on-change #(log-input-change-handler state %)}]]]
+         [indicate-action]
+         [command-menu !input-ref state]]))))
 
 
 (defn log-messages []
@@ -200,21 +201,20 @@
 
        :reagent-render
        (fn []
-         [:div.messages {:class [(when (:replay @game-state)
-                                   "panel-bottom")]
-                         :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                         :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
-          (doall (map-indexed
-                   (fn [i msg]
-                     (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
-                       (if (= (:user msg) "__system__")
-                         [:div.system {:key i} (render-message (:text msg))]
-                         [:div.message {:key i}
-                          [avatar (:user msg) {:opts {:size 38}}]
-                          [:div.content
-                           [:div.username (get-in msg [:user :username])]
-                           [:div (render-message (:text msg))]]])))
-                   @log))])})))
+         (into [:div.messages {:class [(when (:replay @game-state)
+                                         "panel-bottom")]
+                               :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                               :on-mouse-out #(card-preview-mouse-out % zoom-channel)}]
+               (map
+                 (fn [{:keys [user text timestamp]}]
+                   (if (= user "__system__")
+                     [:div.system {:key timestamp} (render-message text)]
+                     [:div.message {:key timestamp}
+                      [avatar user {:opts {:size 38}}]
+                      [:div.content
+                       [:div.username (:username user)]
+                       [:div (render-message text)]]]))
+                 @log)))})))
 
 (defn log-pane []
   (fn []

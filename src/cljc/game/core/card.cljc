@@ -367,7 +367,7 @@
                     (get-in @state (cons (to-keyword side) zones))))))
         card))))
 
-(defn- same-card?
+(defn same-card?
   "Checks if the two cards are the same by `:cid`. Returns false if both cards
   do not have `:cid`. Alternatively specify 1-function to use to check the card."
   ([card1 card2] (same-card? :cid card1 card2))

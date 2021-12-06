@@ -2,13 +2,14 @@
   "Database maintenance tasks"
   (:require
    [clj-uuid :as uuid]
+   [cljc.java-time.instant :as inst]
    [jinteki.validator :refer [calculate-deck-status]]
    [monger.collection :as mc]
    [monger.db]
    [monger.operators :refer :all]
    [tasks.setup :refer [connect disconnect]]
    [web.decks :refer [hash-deck prepare-deck-for-db update-deck]]
-   [web.mongodb :refer [object-id]]
+   [web.mongodb :refer [->object-id]]
    [web.nrdb :refer [download-public-decklist]]
    [web.user :refer [create-user]]
    [web.utils :refer [md5]]))
@@ -22,7 +23,7 @@
 
 (defn update-all-decks
   "Run after fetching the data to update all decks"
-  [& args]
+  [& _]
   (let [{{:keys [db]} :mongodb/connection :as system} (connect)
         cnt (atom 0)]
     (try
@@ -34,7 +35,7 @@
             (flush))
           (let [status (get-deck-status deck)]
             (mc/update db "decks"
-                       {:_id (object-id deck-id)}
+                       {:_id (->object-id deck-id)}
                        {"$set" {"status" status}}))))
       (newline)
       (println "Updated" @cnt "decks")
@@ -85,7 +86,7 @@
   (vec
    (for [url nrdb-urls]
      (let [deck (assoc (download-public-decklist db url)
-                       :date (java.util.Date.)
+                       :date (inst/now)
                        :format "standard")
            updated-deck (update-deck deck)
            status (calculate-deck-status updated-deck)
@@ -113,42 +114,51 @@
 (defn- create-sample-game-log
   [username]
   (let [email (str username "@example.com")
-        players {:runner {:player {:username "<nobody>", :emailhash (md5 "nobody@example.com")},
-                          :deck-name "Firestorm (Worlds 110th)",
-                          :identity "Ele \"Smoke\" Scovak: Cynosure of the Net",
+        players {:runner {:player {:username "<nobody>" :emailhash (md5 "nobody@example.com")}
+                          :deck-name "Firestorm (Worlds 110th)"
+                          :identity "Ele \"Smoke\" Scovak: Cynosure of the Net"
                           :agenda-points 0}
-                 :corp {:player {:username "<nobody>", :emailhash (md5 "nobody@example.com")},
-                        :deck-name "That One SYNC Deck -- 35th at Worlds",
-                        :identity "SYNC: Everything, Everywhere",
+                 :corp {:player {:username "<nobody>" :emailhash (md5 "nobody@example.com")}
+                        :deck-name "That One SYNC Deck -- 35th at Worlds"
+                        :identity "SYNC: Everything, Everywhere"
                         :agenda-points 0}}
         side (rand-nth (keys players))
         players (update players side
-                        #(assoc % :player {:username username :emailhash (md5 email)}))]
-    {:gameid (uuid/v4),
-     :format "standard",
-     :replay-shared false,
-     :end-date (java.util.Date.),
-     :winner "runner",
-     :replay nil,
-     :title (str username "'s game"),
-     :turn 0,
-     :reason "Concede",
-     :creation-date (java.util.Date.),
-     :runner (:runner players),
-     :corp (:corp players),
-     :room "casual",
-     :start-date (java.util.Date.),
+                        #(assoc % :player {:username username :emailhash (md5 email)}))
+        now (inst/minus-seconds (inst/now) 100)]
+    {:gameid (uuid/v4)
+     :format "standard"
+     :replay-shared false
+     :end-date (inst/now)
+     :winner "runner"
+     :replay nil
+     :title (str username "'s game")
+     :turn 0
+     :reason "Concede"
+     :creation-date now
+     :runner (:runner players)
+     :corp (:corp players)
+     :room "casual"
+     :start-date now
      :log
-     [{:user "__system__", :text "<username> has created the game."}
-      {:user "__system__", :text "<username> joined the game."}
-      {:user "__system__", :text "[hr]"}
-      {:user "__system__", :text "<username> keeps their hand."}
-      {:user "__system__", :text "<username> keeps their hand."}
-      {:user "__system__", :text "<username> concedes."}
-      {:user "__system__", :text "<username> wins the game."}
-      {:user "__system__", :text "<username> has left the game."}],
+     (->> ["<username> has created the game."
+           "<username> joined the game."
+           "[hr]"
+           "<username> keeps their hand."
+           "<username> keeps their hand."
+           "<username> concedes."
+           "<username> wins the game."
+           "<username> has left the game."]
+          (map-indexed
+            (fn [idx text]
+              {:user "__system__"
+               :text text
+               :timestamp (inst/plus-seconds now idx)}))
+          (into []))
      :stats
-     {:time {:elapsed 0}, :corp {:gain {:card 5}}, :runner {:gain {:card 5}}}}))
+     {:time {:elapsed 0}
+      :corp {:gain {:card 5}}
+      :runner {:gain {:card 5}}}}))
 
 (defn- create-sample-message
   [username messages]
@@ -158,7 +168,7 @@
      :emailhash (md5 email)
      :msg message
      :channel "general"
-     :date (java.util.Date.)}))
+     :date (inst/now)}))
 
 (defn- samples-for-user
   "Number of samples to be created for a specific user.
@@ -241,11 +251,10 @@
         (println "Press any key to continue.")
         (read-line)
         (doseq [batch (sample-data-batches db username-prefix users decks game-logs messages)]
-          (do
-            (mc/insert-batch db "users" (:users batch))
-            (mc/insert-batch db "decks" (:decks batch))
-            (mc/insert-batch db "game-logs" (:game-logs batch))
-            (mc/insert-batch db "messages" (:messages batch))))
+          (mc/insert-batch db "users" (:users batch))
+          (mc/insert-batch db "decks" (:decks batch))
+          (mc/insert-batch db "game-logs" (:game-logs batch))
+          (mc/insert-batch db "messages" (:messages batch)))
         (println "Successfully created sample data.")
         (println "You can now login with e.g. username"
                  (format "\"%s%d\"," username-prefix 1)

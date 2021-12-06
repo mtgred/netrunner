@@ -1,9 +1,9 @@
 (ns web.angel-arena.stats
   (:require
-    [clojure.string :refer [lower-case]]
+    [clojure.string :as str]
     [monger.collection :as mc]
     [monger.operators :refer :all]
-    [web.angel-arena.runs :refer [finish-run]]
+    [web.angel-arena.runs :refer [finish-run!]]
     [web.angel-arena.utils :refer [get-deck-from-id get-losses get-runs]]
     [web.ws :as ws]))
 
@@ -15,17 +15,21 @@
     (let [username (get-in player [:user :username])
           other-player (first (filter #(not= username (get-in % [:user :username])) ending-players))
           runs (get-runs db username)
-          form (keyword (lower-case format))
-          side (keyword (lower-case (:side player)))
+          form (:format player)
+          side (keyword (str/lower-case (:side player)))
+          updated-run {:game-id gameid
+                       :winner (:winner @state)
+                       :reason (:reason @state)
+                       :opponent {:username (get-in other-player [:user :username])
+                                  :pronouns (get-in other-player [:user :options :pronouns])
+                                  :identity (get-in @state [(keyword (str/lower-case (:side other-player))) :identity :title])}}
           new-runs (update-in runs [form side :games]
-                                     (partial map #(if (= (str gameid) (:game-id %))
-                                                     {:game-id (str gameid)
-                                                      :winner (:winner @state)
-                                                      :reason (:reason @state)
-                                                      :opponent {:username (get-in other-player [:user :username])
-                                                                 :pronouns (get-in other-player [:user :options :pronouns])
-                                                                 :identity (get-in @state [(keyword (lower-case (:side other-player))) :identity :title])}}
-                                                     %)))]
+                              (fn [games]
+                                (mapv (fn [game]
+                                        (if (= gameid (:game-id game))
+                                          updated-run
+                                          game))
+                                      games)))]
       (mc/update db "users"
                  {:username username}
                  {"$set" {:angel-arena-runs new-runs}})
@@ -35,14 +39,13 @@
 
 (defn game-finished
   [db {:keys [ending-players original-players] :as game}]
-  (doall
-    (for [player original-players]
-      (let [username (get-in player [:user :username])
-            end-player (first (filter #(= username (get-in % [:user :username])) ending-players))
-            form (keyword (lower-case format))
-            side (keyword (lower-case (:side player)))]
-        (when-let [runs (enter-winner db player game)]
-          (when-let [deck (get-deck-from-id db username (get-in runs [form side :deck-id]))]
-            (when (<= max-losses (get-losses (get-in runs [form side])))
-              (finish-run db username runs deck))
-            (ws/broadcast-to! [(:uid end-player)] :angel-arena/run-update {})))))))
+  (doseq [player original-players]
+    (let [username (get-in player [:user :username])
+          end-player (first (filter #(= username (get-in % [:user :username])) ending-players))
+          form (keyword (str/lower-case format))
+          side (keyword (str/lower-case (:side player)))]
+      (when-let [runs (enter-winner db player game)]
+        (when-let [deck (get-deck-from-id db username (get-in runs [form side :deck-id]))]
+          (when (<= max-losses (get-losses (get-in runs [form side])))
+            (finish-run! db username runs deck))
+          (ws/chsk-send! (:uid end-player) [:angel-arena/run-update]))))))

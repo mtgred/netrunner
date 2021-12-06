@@ -1,30 +1,39 @@
 (ns web.admin
   (:require
-   [game.main :as main]
+   [cljc.java-time.instant :as inst]
+   [jinteki.utils :refer [superuser?]]
    [monger.collection :as mc]
    [monger.operators :refer :all]
    [monger.result :refer [acknowledged? updated-existing?]]
+   [web.app-state :as app-state]
    [web.config :refer [frontend-version]]
-   [web.lobby :refer [all-games]]
-   [web.mongodb :refer [->object-id object-id]]
+   [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user?]]
    [web.utils :refer [response]]
    [web.ws :as ws]))
 
-(defn announce-create-handler [{{message :message} :body}]
-  (if-not (empty? message)
+(defmethod ws/-msg-handler :admin/announce
+  [{{user :user} :ring-req
+    {message :message} :?data
+    reply-fn :?reply-fn}]
+  (cond
+    (not (superuser? user)) (reply-fn 403)
+    (empty? message) (reply-fn 400)
+    :else
     (do
-      (doseq [{state :state} (vals @all-games)]
-        (when state
-          (main/handle-announcement state message)))
-      (response 200 {:message "ok"}))
-    (response 400 {:message "Missing announcement"})))
+      (doseq [u (app-state/get-users)
+              :let [uid (:uid u)]]
+        (ws/chsk-send! uid [:lobby/toast {:message message
+                                          :type "warning"}]))
+      (reply-fn 200))))
 
 (defn news-create-handler [{db :system/db
                             {item :item} :body}]
   (if-not (empty? item)
     (do
-      (mc/insert db "news" {:_id (->object-id) :item item :date (java.util.Date.)})
+      (mc/insert db "news" {:_id (->object-id)
+                            :item item
+                            :date (inst/now)})
       (response 200 {:message "ok"}))
     (response 400 {:message "Missing news item"})))
 
@@ -32,7 +41,7 @@
                             {id :id} :params}]
   (try
     (if id
-      (if (acknowledged? (mc/remove db "news" {:_id (object-id id)}))
+      (if (acknowledged? (mc/remove db "news" {:_id (->object-id id)}))
         (response 200 {:message "Deleted"})
         (response 403 {:message "Forbidden"}))
       (response 400 {:message "Missing new items id"}))

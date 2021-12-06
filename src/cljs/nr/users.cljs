@@ -29,7 +29,6 @@
     error (non-game-toast error "error" nil)
     success
     (let [{:keys [action user-type user]} success]
-      (println success)
       (case action
         :admin/add-user
         (do (swap! users-state update user-type (fnil conj #{}) user)

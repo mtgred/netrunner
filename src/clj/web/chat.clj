@@ -1,16 +1,15 @@
 (ns web.chat
   (:require
-   [clj-time.coerce :as c]
-   [clj-time.core :as t]
+   [cljc.java-time.instant :as inst]
    [clojure.string :as s]
    [monger.collection :as mc]
    [monger.query :as q]
+   [web.app-state :as app-state]
    [web.config :refer [server-config]]
+   [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user? visible-to-user]]
    [web.utils :refer [response]]
-   [web.ws :as ws])
-  (:import
-   org.bson.types.ObjectId))
+   [web.ws :as ws]))
 
 (defonce chat-config (:chat server-config))
 (def msg-collection "messages")
@@ -35,7 +34,7 @@
           usernames (->> messages
                          (map :username)
                          (into #{}))
-          connected-users @ws/connected-users
+          connected-users (app-state/get-users)
           visible-users (->> (for [username usernames
                                    :when (or (= (:username user) username)
                                              (visible-to-user user {:username username} connected-users))]
@@ -48,7 +47,7 @@
 (defn- within-rate-limit
   [db username]
   (let [window (:rate-window chat-config 60)
-        start-date (c/to-date (t/plus (t/now) (t/seconds (- window))))
+        start-date (inst/plus-seconds (inst/now) (- window))
         max-cnt (:rate-cnt chat-config 10)
         msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
@@ -67,10 +66,10 @@
                        :pronouns  (-> user :options :pronouns)
                        :msg       msg
                        :channel   channel
-                       :date      (java.util.Date.)}
+                       :date      (inst/now)}
               inserted (mc/insert-and-return db msg-collection message)
               inserted (update inserted :_id str)
-              connected-users @ws/connected-users]
+              connected-users (app-state/get-users)]
           (doseq [uid (keys connected-users)
                   :when (or (= (:username user) uid)
                             (visible-to-user user {:username uid} connected-users))]
@@ -85,13 +84,13 @@
   (when-let [id (:_id msg)]
     (when (or isadmin ismoderator)
       (println username "deleted message" msg "\n")
-      (mc/remove-by-id db msg-collection (ObjectId. id))
+      (mc/remove-by-id db msg-collection (->object-id id))
       (mc/insert db log-collection
                  {:moderator username
                   :action :delete-message
-                  :date (java.util.Date.)
+                  :date (inst/now)
                   :msg msg})
-      (let [connected-users @ws/connected-users]
+      (let [connected-users (app-state/get-users)]
         (doseq [uid (keys connected-users)
                 :when (or (= (:username user) uid)
                           (visible-to-user user {:username uid} connected-users))]
@@ -109,9 +108,9 @@
     (mc/insert db log-collection
                {:moderator username
                 :action :delete-all-messages
-                :date (java.util.Date.)
+                :date (inst/now)
                 :sender sender})
-    (let [connected-users @ws/connected-users]
+    (let [connected-users (app-state/get-users)]
       (doseq [uid (keys connected-users)
               :when (or (= (:username user) uid)
                         (visible-to-user user {:username uid} connected-users))]

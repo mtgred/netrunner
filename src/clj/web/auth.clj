@@ -1,8 +1,8 @@
 (ns web.auth
   (:require
    [buddy.sign.jwt :as jwt]
-   [clj-time.coerce :as c]
-   [clj-time.core :as t]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
+   [cljc.java-time.instant :as inst]
    [clojure.string :as str]
    [crypto.password.bcrypt :as password]
    [monger.collection :as mc]
@@ -10,11 +10,11 @@
    [monger.result :refer [acknowledged?]]
    [postal.core :as mail]
    [ring.util.response :refer [redirect]]
+   [web.app-state :as app-state]
    [web.config :refer [server-config]]
-   [web.mongodb :refer [find-one-as-map-case-insensitive object-id]]
+   [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
    [web.user :refer [active-user? create-user user-keys]]
-   [web.utils :refer [response]]
-   [web.ws :as ws])
+   [web.utils :refer [response]])
   (:import
    java.security.SecureRandom))
 
@@ -23,7 +23,7 @@
 (defn create-token [{:keys [_id emailhash]}]
   (let [claims {:_id _id
                 :emailhash emailhash
-                :exp (-> (:expiration auth-config) (t/days) (t/from-now))}]
+                :exp (inst/plus (inst/now) (:expiration auth-config) chrono/days)}]
     (jwt/sign claims (:secret auth-config) {:alg :hs512})))
 
 (defn unsign-token [token]
@@ -56,7 +56,7 @@
     (let [user (some-> (get cookies "session")
                        (:value)
                        (unsign-token)
-                       (#(mc/find-one-as-map db "users" {:_id (object-id (:_id %))
+                       (#(mc/find-one-as-map db "users" {:_id (->object-id (:_id %))
                                                          :emailhash (:emailhash %)}))
                        (select-keys user-keys)
                        (update :_id str))]
@@ -105,7 +105,7 @@
              (password/check password (:password user)))
       (do (mc/update db "users"
                      {:username username}
-                     {"$set" {:last-connection (java.util.Date.)}})
+                     {"$set" {:last-connection (inst/now)}})
           (assoc (response 200 {:message "ok"})
                  :cookies {"session" (merge {:value (create-token user)}
                                             (get-in server-config [:auth :cookie]))}))
@@ -171,8 +171,8 @@
     (if (acknowledged? (mc/update db "users"
                                   {:username username}
                                   {"$set" {:options (select-keys body (profile-keys))}}))
-      (do (when (get @ws/connected-users username)
-            (swap! ws/connected-users assoc-in [username :options] (select-keys body (profile-keys))))
+      (do (when (get-in @app-state/app-state [:users username])
+            (swap! app-state/app-state assoc-in [:users username :options] (select-keys body (profile-keys))))
           (response 200 {:message "Refresh your browser"}))
       (response 404 {:message "Account not found"}))
     (response 401 {:message "Unauthorized"})))
@@ -193,11 +193,11 @@
   and returns the code."
   [db email]
   (let [reset-code (hexadecimalize (generate-secure-token 20))
-        reset-expires (t/plus (t/now) (t/hours 1))]
+        reset-expires (inst/plus (inst/now) 1 chrono/hours)]
     (mc/update db "users"
                {:email email}
                {"$set" {:resetPasswordToken reset-code
-                        :resetPasswordExpires (c/to-date reset-expires)}})
+                        :resetPasswordExpires reset-expires}})
     reset-code))
 
 (defn forgot-password-handler
@@ -225,7 +225,7 @@
     {:keys [password confirm token]} :params}]
   (if-let [{:keys [username email]}
            (find-non-banned-user db {:resetPasswordToken   token
-                                     :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
+                                     :resetPasswordExpires {"$gt" (inst/now)}})]
     (if (= password confirm)
       (let [hash-pw (password/encrypt password)]
         (mc/update db "users"

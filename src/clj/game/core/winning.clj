@@ -1,31 +1,35 @@
 (ns game.core.winning
   (:require
-    [game.core.effects :refer [any-effects]]
-    [game.core.say :refer [play-sfx system-msg system-say]]
-    [game.utils :refer [dissoc-in]]
-    [jinteki.utils :refer [other-side]]
-    [cond-plus.core :refer [cond+]]
-    [clj-time.core :as t]))
+   [cljc.java-time.duration :as duration]
+   [cljc.java-time.instant :as inst]
+   [cond-plus.core :refer [cond+]]
+   [game.core.effects :refer [any-effects]]
+   [game.core.say :refer [play-sfx system-msg system-say]]
+   [game.utils :refer [dissoc-in]]
+   [jinteki.utils :refer [other-side]]))
 
 (defn win
   "Records a win reason for statistics."
   [state side reason]
   (when-not (:winner @state)
     (let [started (get-in @state [:stats :time :started])
-          now (t/now)]
+          now (inst/now)
+          duration (duration/to-minutes (duration/between started now))]
       (system-msg state side "wins the game")
       (play-sfx state side "game-end")
-      (swap! state assoc-in [:stats :time :ended] now)
-      (swap! state assoc-in [:stats :time :elapsed] (t/in-minutes (t/interval started now)))
-      (swap! state assoc
-             :winner side
-             :loser (other-side side)
-             :winning-user (get-in @state [side :user :username])
-             :losing-user (get-in @state [(other-side side) :user :username])
-             :reason reason
-             :end-time (java.util.Date.)
-             :winning-deck-id (get-in @state [side :deck-id])
-             :losing-deck-id (get-in @state [(other-side side) :deck-id]))
+      (swap! state (fn [state]
+                     (-> state
+                         (assoc-in [:stats :time :ended] now)
+                         (assoc-in [:stats :time :elapsed] duration)
+                         (assoc
+                           :winner side
+                           :loser (other-side side)
+                           :winning-user (get-in state [side :user :username])
+                           :losing-user (get-in state [(other-side side) :user :username])
+                           :reason reason
+                           :end-time now
+                           :winning-deck-id (get-in state [side :deck-id])
+                           :losing-deck-id (get-in state [(other-side side) :deck-id])))))
       true)))
 
 (defn tie
@@ -33,12 +37,16 @@
   [state reason]
   (when-not (:winner @state)
     (let [started (get-in @state [:stats :time :started])
-          now (t/now)]
+          now (inst/now)
+          duration (duration/to-minutes (duration/between started now))]
       (system-say state nil "The game is a tie!")
       (play-sfx state nil "game-end")
-      (swap! state assoc-in [:stats :time :ended] now)
-      (swap! state assoc-in [:stats :time :elapsed] (t/in-minutes (t/interval started now)))
-      (swap! state assoc :reason reason :end-time (java.util.Date.))
+      (swap! state (fn [state]
+                     (-> state
+                         (assoc-in [:stats :time :ended] now)
+                         (assoc-in [:stats :time :elapsed] duration)
+                         (assoc :reason reason
+                                :end-time now))))
       true)))
 
 (defn win-decked

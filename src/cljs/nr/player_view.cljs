@@ -32,7 +32,5 @@
                (not= "Neutral" faction)
                specs)
           (faction-icon faction identity)
-
           side
           (str " (" (tr-side side) ")"))))]))
-

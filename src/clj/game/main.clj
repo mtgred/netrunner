@@ -5,17 +5,6 @@
 
 (add-encoder java.lang.Object encode-str)
 
-(def spectator-commands
-  {"typing" core/typing
-   "typingstop" core/typingstop})
-
-(defn not-spectator?
-  "Returns true if the specified user in the specified state is not a spectator"
-  [state user]
-  (let [corp-id (get-in @state [:corp :user :_id])
-        runner-id (get-in @state [:runner :user :_id])]
-    (and state ((set [corp-id runner-id]) (:_id user)))))
-
 (defn set-action-id
   "Creates a unique action id for each server response - used in client lock"
   [state side]
@@ -23,12 +12,9 @@
 
 (defn handle-action
   "Ensures the user is allowed to do command they are trying to do"
-  [user command state side args]
-  (if (not-spectator? state user)
-    (when (core/process-action command state side args)
-      (set-action-id state side))
-    (when-let [cmd (spectator-commands command)]
-      (cmd state side args))))
+  [state side command args]
+  (when (core/process-action command state side args)
+    (set-action-id state side)))
 
 (defn handle-concede
   "Concedes victory from the given player."
@@ -46,20 +32,13 @@
 (defn handle-notification
   [state text]
   (when state
-    (swap! state update :log conj {:user "__system__" :text text})))
+    (core/system-say state nil text)))
 
 (defn handle-announcement
   [state text]
   (when state
     (doseq [side [:runner :corp]]
       (toast state side text "warning" {:time-out 0 :close-button true}))))
-
-(defn handle-typing
-  [state side user typing]
-  (when (and state side)
-    (if typing
-      (core/typing state side {:user user})
-      (core/typingstop state side {:user user}))))
 
 (defn handle-rejoin
   [state {:keys [_id username] :as user}]

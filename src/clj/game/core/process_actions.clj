@@ -1,21 +1,26 @@
 (ns game.core.process-actions
   (:require
-    [clojure.string :as string]
-    [game.core.actions :refer [click-advance click-credit click-draw click-run close-deck do-purge generate-install-list generate-runnable-zones move-card play play-ability play-corp-ability play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag resolve-prompt score select trash-resource view-deck]]
-    [game.core.card :refer [get-card]]
-    [game.core.change-vals :refer [change]]
-    [game.core.checkpoint :refer [fake-checkpoint]]
-    [game.core.commands :refer [parse-command]]
-    [game.core.eid :refer [make-eid]]
-    [game.core.moving :refer [trash]]
-    [game.core.rezzing :refer [derez rez]]
-    [game.core.runs :refer [check-for-empty-server continue handle-end-run jack-out start-next-phase toggle-auto-no-action]]
-    [game.core.say :refer [indicate-action say system-msg]]
-    [game.core.set-up :refer [keep-hand mulligan]]
-    [game.core.shuffling :refer [shuffle-deck]]
-    [game.core.toasts :refer [toast]]
-    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
-    [game.core.winning :refer [concede]]))
+   [clojure.string :as str]
+   [game.core.actions :refer [click-advance click-credit click-draw click-run
+                              close-deck do-purge generate-install-list
+                              generate-runnable-zones move-card play play-ability play-corp-ability
+                              play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag
+                              resolve-prompt score select trash-resource view-deck]]
+   [game.core.card :refer [get-card]]
+   [game.core.change-vals :refer [change]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.commands :refer [parse-command]]
+   [game.core.eid :refer [make-eid]]
+   [game.core.moving :refer [trash]]
+   [game.core.rezzing :refer [derez rez]]
+   [game.core.runs :refer [check-for-empty-server continue handle-end-run
+                           jack-out start-next-phase toggle-auto-no-action]]
+   [game.core.say :refer [indicate-action say system-msg]]
+   [game.core.set-up :refer [keep-hand mulligan]]
+   [game.core.shuffling :refer [shuffle-deck]]
+   [game.core.toasts :refer [toast]]
+   [game.core.turns :refer [end-phase-12 end-turn start-turn]]
+   [game.core.winning :refer [concede]]))
 
 (defn checkpoint+clean-up
   [state]
@@ -29,7 +34,7 @@
 (defn command-parser
   [state side {:keys [user text] :as args}]
   (let [author (or user (get-in @state [side :user]))
-        text (if (= (string/trim text) "null") " null" text)]
+        text (if (= (str/trim text) "null") " null" text)]
     (if-let [command (parse-command text)]
       (when (and (not= side nil) (not= side :spectator))
         (command state side)
