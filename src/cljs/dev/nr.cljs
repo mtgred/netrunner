@@ -1,4 +1,4 @@
-(ns ^:figwheel-no-load dev.nr
+(ns dev.nr
   (:require
     [nr.main :as main]
     [devtools.core :as devtools]))

@@ -7,6 +7,7 @@
  :auth {:expiration 60
         :secret "Dev salt"
         :cookie {:http-only true
+                 :same-site :lax
                  ; 60 days
                  :max-age 5184000}}
  :chat {:max-length 144

@@ -39,5 +39,5 @@
           (response 200 {:message "Deleted"}))
         (response 403 {:message "Forbidden"}))
       (response 401 {:message "Unauthorized"}))
-    (catch Exception ex
+    (catch Exception _
       (response 409 {:message "Unknown API Key"}))))

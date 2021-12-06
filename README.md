@@ -55,8 +55,6 @@ Compile ClojureScript frontend:
 
     $ lein cljsbuild once dev
 
-Alternatively, to watch ClojureScript files for changes and for access to a ClojureScript REPL, use `lein figwheel`.
-
 Finally, launch the webserver and the Clojure REPL:
 
     $ lein repl

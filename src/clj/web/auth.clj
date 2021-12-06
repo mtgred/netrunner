@@ -38,15 +38,13 @@
 
 (defn wrap-authorization-required [handler]
   (fn [{user :user :as req}]
-    (if (and (active-user? user)
-             (:isadmin user))
+    (if (:isadmin user)
       (handler req)
       (response 401 {:message "Not authorized"}))))
 
 (defn wrap-tournament-auth-required [handler]
   (fn [{user :user :as req}]
-    (if (and (active-user? user)
-             (:tournament-organizer user))
+    (if (:tournament-organizer user)
       (handler req)
       (response 401 {:message "Not authorized"}))))
 

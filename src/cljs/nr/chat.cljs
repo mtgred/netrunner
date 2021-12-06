@@ -158,7 +158,7 @@
 (defn- hide-block-menu [msg-state]
   (-> (:msg-buttons @msg-state) js/$ .hide))
 
-(defn message-view [message]
+(defn message-view [message s]
   (let [msg-state (atom {})
         user (:user @app-state)
         my-msg (= (:username message) (:username user))]
@@ -264,7 +264,7 @@
               (doall (map-indexed
                        (fn [i message]
                          [:div {:key i}
-                          [message-view message]])
+                          [message-view message s]])
                        message-list))))])})))
 
 (defn chat []

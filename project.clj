@@ -13,9 +13,9 @@
                  [com.novemberain/monger "3.5.0"]
                  [differ "0.3.3"]
                  [com.taoensso/sente "1.16.2"]
-                 [ring/ring "1.7.1"]
-                 [ring/ring-defaults "0.3.2"] ; Includes `ring-anti-forgery`, etc.
-                 [ring/ring-json "0.4.0"]
+                 [ring/ring-core "1.9.4"]
+                 [ring/ring-anti-forgery "1.3.0"]
+                 [ring/ring-json "0.5.1"]
                  [puppetlabs/ring-middleware "1.3.0"]
                  [ring-cors "0.1.13"]
                  [compojure "1.6.0"]
@@ -45,23 +45,21 @@
                  [org.slf4j/slf4j-nop "1.7.12"]
                  [integrant "0.8.0"]
                  [cljc.java-time "0.1.18"]
-                 [time-literals "0.1.5"]]
+                 [time-literals "0.1.5"]
+                 [metosin/reitit "0.5.15"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
-            [lein-figwheel "0.5.16"]
             [lein-ring "0.9.7"]
             [lein-eftest "0.5.8"]
             [lein-exec "0.3.7"]
             [cider/cider-nrepl "0.26.0"]]
 
-  :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
-                                  [binaryage/devtools "0.9.7"]
+  :profiles {:dev {:dependencies [[binaryage/devtools "0.9.7"]
                                   [cider/piggieback "0.5.2"]
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
                                   [rewrite-clj "1.0.699-alpha"]
                                   [criterium "0.4.6"]
                                   [integrant/repl "0.3.2"]]
-                   :plugins [[lein-figwheel "0.5.16"]]
                    :source-paths ["dev" "src/clj" "src/cljs" "src/cljc" "test/clj"]
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
                               "-XX:+UnlockDiagnosticVMOptions"
@@ -105,7 +103,6 @@
   {:builds
    [{:id "dev"
      :source-paths ["src/cljs/nr" "src/cljs/dev" "src/cljc"]
-     :figwheel true
      :compiler {:output-to "resources/public/cljs/app10.js"
                 :output-dir "resources/public/cljs"
                 :main "dev.nr"
@@ -127,11 +124,6 @@
                           "src/cljs/externs/io.js"
                           "src/cljs/externs/moment.js"
                           "src/cljs/externs/toastr.js"]}}]}
-
-  :figwheel {:http-server-root "public"
-             :server-port 3449
-             :reload-clj-files false
-             :css-dirs ["resources/public/css"]}
 
   ;; Set timeout to 2 min to allow for full compilation after a clean.
   :repl-options {:timeout 180000
