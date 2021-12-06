@@ -78,7 +78,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid timer spectatorhands api-access save-replay room format]}]
+  [{:keys [players gameid timer spectatorhands api-access save-replay room] :as game}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp))
@@ -96,12 +96,13 @@
                                          :type "Identity"
                                          :title "The Professor: Keeper of Knowledge"}))
         corp-quote (quotes/make-quote corp-identity runner-identity)
-        runner-quote (quotes/make-quote runner-identity corp-identity)]
+        runner-quote (quotes/make-quote runner-identity corp-identity)
+        fmt (:format game)]
     (atom
       (new-state
         gameid
         room
-        format
+        fmt
         (inst/now)
         {:timer timer
          :spectatorhands spectatorhands
@@ -112,12 +113,16 @@
 
 (defn- create-basic-action-cards
   [state]
-  (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp"
-                                                               :type "Basic Action"
-                                                               :title "Corp Basic Action Card"}))
-  (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner"
-                                                                 :type "Basic Action"
-                                                                 :title "Runner Basic Action Card"})))
+  (swap! state
+         assoc-in [:corp :basic-action-card]
+         (make-card {:side "Corp"
+                     :type "Basic Action"
+                     :title "Corp Basic Action Card"}))
+  (swap! state
+         assoc-in [:runner :basic-action-card]
+         (make-card {:side "Runner"
+                     :type "Basic Action"
+                     :title "Runner Basic Action Card"})))
 
 (defn init-game
   "Initializes a new game with the given players vector."

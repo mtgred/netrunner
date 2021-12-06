@@ -32,7 +32,7 @@
   LocalDateTime
   (to-db-object [^LocalDateTime input]
     (-> input
-        (ldt/to-instant)
+        (ldt/to-instant (zid/from zoff/utc))
         (Date/from)
         (to-db-object)))
   ZonedDateTime

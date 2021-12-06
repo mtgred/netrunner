@@ -7,7 +7,7 @@
    [web.angel-arena.utils :refer [get-runs]]
    [web.mongodb :refer [->object-id]]))
 
-(defn start-run
+(defn start-run!
   [db username runs deck]
   (let [form (keyword (lower-case (get-in deck [:status :format])))
         side (keyword (lower-case (get-in deck [:identity :side])))
@@ -25,10 +25,11 @@
                                      :run-started (inst/now)})}})
       ; lock deck
       (mc/update db "decks"
-                 {:_id (->object-id deck-id) :username username}
+                 {:_id (->object-id deck-id)
+                  :username username}
                  {"$set" {:locked true}}))))
 
-(defn finish-run
+(defn finish-run!
   [db username runs deck]
   (let [form (keyword (lower-case (get-in deck [:status :format])))
         side (keyword (lower-case (get-in deck [:identity :side])))
@@ -40,7 +41,8 @@
                         (assoc-in runs [form side] nil)}})
     ; unlock deck
     (mc/update db "decks"
-               {:_id (->object-id deck-id) :username username}
+               {:_id (->object-id deck-id)
+                :username username}
                {"$set" {:locked false}})
     ; add run to run history
     (when-not (empty? (get-in runs [form side :games]))
@@ -51,7 +53,7 @@
                         :run-finished (inst/now)
                         :username username)))))
 
-(defn add-new-match
+(defn add-new-match!
   [db player other-player game-id]
   (try
     (let [username (get-in player [:user :username])
@@ -64,11 +66,12 @@
       (mc/update db "users"
                  {:username username}
                  {"$set" {:angel-arena-runs
-                          (update-in runs [form side :games] conj {:game-id game-id
-                                                                   :winner nil
-                                                                   :reason nil
-                                                                   :opponent {:username other-username
-                                                                              :pronouns other-pronouns
-                                                                              :identity other-identity}})}}))
+                          (update-in runs [form side :games]
+                                     conj {:game-id game-id
+                                           :winner nil
+                                           :reason nil
+                                           :opponent {:username other-username
+                                                      :pronouns other-pronouns
+                                                      :identity other-identity}})}}))
     (catch Exception e
       (println "Caught exception adding new game to Angel Arena history: " (.getMessage e)))))

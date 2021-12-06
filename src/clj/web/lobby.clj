@@ -17,31 +17,33 @@
    [web.ws :as ws]))
 
 (defn create-new-lobby
-  [{:keys [ring-req uid ?data]}]
-  (let [{user :user} ring-req
-        {:keys [title format timer allow-spectator save-replay api-access
-                spectatorhands password room side]} ?data
-        players [{:user user
-                  :uid uid
-                  :side side}]]
-    {:gameid (uuid/v4)
-     :date (inst/now)
-     :title title
+  [{uid :uid
+    user :user
+    {:keys [gameid now
+            allow-spectator api-access format mute-spectators password room save-replay
+            side spectatorhands timer title]
+     :or {gameid (uuid/v4)
+          now (inst/now)}} :options}]
+  (let [player {:user user
+                :uid uid
+                :side side}]
+    {:gameid gameid
+     :date now
+     :last-update now
+     :players [player]
+     :spectators []
+     :messages []
+     ;; options
      :allow-spectator allow-spectator
-     :save-replay save-replay
      :api-access api-access
-     :spectatorhands spectatorhands
-     :mute-spectators false
+     :format format
+     :mute-spectators mute-spectators
      :password (when (not-empty password) (bcrypt/encrypt password))
      :room room
-     :format format
-     :players players
-     :original-players players
-     :spectators []
-     :spectator-count 0
+     :save-replay save-replay
+     :spectatorhands spectatorhands
      :timer timer
-     :messages [(core/make-system-message (str (:username user) " has created the game."))]
-     :last-update (inst/now)}))
+     :title title}))
 
 (defn get-players-and-spectators [lobby]
   (concat (:players lobby) (:spectators lobby)))
@@ -181,7 +183,7 @@
   Filters the list per each users block list."
   ([] (broadcast-lobby-list (app-state/get-users)))
   ([users]
-   (assert (sequential? users) (str "Users must be a sequence: " (pr-str users)))
+   (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
    (let [lobbies (app-state/get-lobbies)]
      (doseq [[uid ev] (prepare-lobby-list lobbies users)]
        (ws/chsk-send! uid ev)))))
@@ -204,9 +206,16 @@
       lobbies
       (assoc lobbies gameid lobby))))
 
+(defn send-message [lobby message]
+  (update lobby :messages conj message))
+
 (defmethod ws/-msg-handler :lobby/create
-  [{uid :uid :as event}]
-  (let [lobby (create-new-lobby event)
+  [{{user :user} :ring-req
+    uid :uid
+    ?data :?data}]
+  (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
+                  (send-message
+                    (core/make-system-message (str (:username user) " has created the game."))))
         new-app-state (swap! app-state/app-state update :lobbies
                              register-lobby lobby uid)
         lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
@@ -256,9 +265,6 @@
     (if (and lobby (in-lobby? uid lobby))
       (assoc-in lobbies [gameid :last-update] (inst/now))
       lobbies)))
-
-(defn send-message [lobby message]
-  (update lobby :messages conj message))
 
 (defn handle-leave-lobby [lobbies uid leave-message]
   (if-let [lobby (app-state/uid->lobby lobbies uid)]
@@ -604,24 +610,25 @@
     uid :uid
     {:keys [gameid password]} :?data
     ?reply-fn :?reply-fn}]
-  (when-let [lobby (app-state/get-lobby gameid)]
-    (let [correct-password? (check-password lobby user password)
-          watch-message (core/make-system-message (str (:username user) " joined the game as a spectator."))
-          new-app-state (swap! app-state/app-state
-                               update :lobbies #(-> %
-                                                    (handle-watch-lobby gameid uid user correct-password? watch-message)
-                                                    (handle-set-last-update gameid uid)))
-          lobby? (get-in new-app-state [:lobbies gameid])]
-      (cond
-        (and lobby? correct-password?)
-        (do (send-lobby-state lobby?)
-            (send-lobby-ting lobby?)
-            (broadcast-lobby-list)
-            (when ?reply-fn (?reply-fn 200)))
-        (false? correct-password?)
-        (when ?reply-fn (?reply-fn 403))
-        :else
-        (when ?reply-fn (?reply-fn 404))))))
+  (let [lobby (app-state/get-lobby gameid)]
+    (when (and lobby (allowed-in-lobby user lobby))
+      (let [correct-password? (check-password lobby user password)
+            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator."))
+            new-app-state (swap! app-state/app-state
+                                 update :lobbies #(-> %
+                                                      (handle-watch-lobby gameid uid user correct-password? watch-message)
+                                                      (handle-set-last-update gameid uid)))
+            lobby? (get-in new-app-state [:lobbies gameid])]
+        (cond
+          (and lobby? correct-password? (allowed-in-lobby user lobby?))
+          (do (send-lobby-state lobby?)
+              (send-lobby-ting lobby?)
+              (broadcast-lobby-list)
+              (when ?reply-fn (?reply-fn 200)))
+          (false? correct-password?)
+          (when ?reply-fn (?reply-fn 403))
+          :else
+          (when ?reply-fn (?reply-fn 404)))))))
 
 (defn handle-toggle-spectator-mute [lobbies gameid uid]
   (let [lobby (get lobbies gameid)]

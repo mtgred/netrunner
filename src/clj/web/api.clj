@@ -95,10 +95,6 @@
            (GET "/profile/history/share/:gameid" [] #'stats/share-replay)
            (GET "/profile/history/full/:gameid" [] #'stats/fetch-replay)
 
-           ; (GET "/profile/angel-arena/runs" [] #'angel-arena/fetch-runs)
-           ; (GET "/profile/angel-arena/queue-times" [] #'angel-arena/fetch-queue-times)
-           ; (GET "/profile/angel-arena/history" [] #'angel-arena/fetch-history)
-
            (GET "/data/decks" [] #'decks/decks-handler)
            (POST "/data/decks" [] #'decks/decks-create-handler)
            (PUT "/data/decks" [] #'decks/decks-save-handler)

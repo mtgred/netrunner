@@ -1,5 +1,6 @@
 (ns web.system
   (:require
+   [cljc.java-time.local-date :as ld]
    [game.cards.agendas]
    [game.cards.assets]
    [game.cards.basic]
@@ -20,13 +21,14 @@
    [taoensso.sente :as sente]
    [time-literals.data-readers]
    [time-literals.read-write]
+   [web.angel-arena :as angel-arena]
    [web.api :refer [make-app]]
    [web.config :refer [frontend-version server-mode]]
    [web.game]
    [web.lobby :as lobby]
    [web.utils :refer [tick]]
    [web.ws :refer [ch-chsk event-msg-handler]]
-   [cljc.java-time.local-date :as ld]))
+   [web.app-state :as app-state]))
 
 (time-literals.read-write/print-time-literals-clj!)
 
@@ -44,6 +46,7 @@
    :server-mode "dev"
    :sente/router nil
    :game/quotes nil
+   :web/app-state nil
    :jinteki/cards (ig/ref :mongodb/connection)})
 
 (defmethod ig/init-key :mongodb/connection [_ opts]
@@ -67,8 +70,7 @@
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
     [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
-     ; (tick #(angel-arena/check-for-inactivity db) interval)
-     ]))
+     (tick #(angel-arena/check-for-inactivity db) interval)]))
 
 (defmethod ig/halt-key! :web/lobby [_ futures]
   (run! future-cancel futures))
@@ -95,6 +97,12 @@
 
 (defmethod ig/init-key :game/quotes [_ _opts]
   (load-quotes!))
+
+(defmethod ig/init-key :web/app-state [_ _]
+  (reset! app-state/app-state
+          {:lobbies {}
+           :users {}})
+  (reset! angel-arena/arena-queue []))
 
 (defn- format-card-key->string
   [fmt]

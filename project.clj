@@ -6,7 +6,7 @@
             :url "https://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.10.741"]
+                 [org.clojure/clojurescript "1.10.773"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire/cheshire "5.6.3"]
                  [stylefruits/gniazdo "1.1.4"]

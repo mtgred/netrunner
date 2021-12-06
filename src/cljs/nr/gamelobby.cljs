@@ -217,16 +217,14 @@
   [:div.games
    [button-bar state games current-game user visible-formats]
    (if (= "angel-arena" (:room @state))
-     [angel-arena/game-list state user
-      {:games games
-       :current-game current-game
-       :room (:room @state)}]
+     [angel-arena/game-list state {:games games
+                                   :current-game current-game}]
      [game-list state user games current-game])])
 
 (defn right-panel
   [state decks current-game user]
   (if (= "angel-arena" (:room @state))
-    [angel-arena/game-panel decks state user]
+    [angel-arena/game-panel decks]
     [:div.game-panel
      (cond
        (:replay @state)

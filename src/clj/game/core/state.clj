@@ -56,13 +56,13 @@
     current-rid))
 
 (defn new-state
-  [gameid room format now options corp runner]
+  [gameid room fmt now options corp runner]
   (map->State
     {:gameid gameid
      :log []
      :active-player :runner
      :end-turn true
-     :format (keyword format)
+     :format (keyword fmt)
      :history []
      :room room
      :rid 1 :turn 0 :eid 0
