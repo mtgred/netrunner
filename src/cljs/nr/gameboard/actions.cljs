@@ -1,7 +1,7 @@
 (ns nr.gameboard.actions
   (:require
    [differ.core :as differ]
-   [nr.angel-arena :as angel-arena]
+   [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state

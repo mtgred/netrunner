@@ -48,8 +48,7 @@
                  [metosin/reitit "0.5.15"]
                  [metosin/malli "0.7.0"]]
 
-  :plugins [[lein-cljsbuild "1.1.8"]
-            [lein-ring "0.12.6"]
+  :plugins [[lein-ring "0.12.6"]
             [lein-eftest "0.5.9"]
             [lein-exec "0.3.7"]
             [cider/cider-nrepl "0.27.3"]]
@@ -87,7 +86,7 @@
             ;; figwheel-main commands
             "fig"       ["trampoline" "run" "-m" "figwheel.main"]
             "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
-            "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dev"]
+            "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "prod"]
             ; "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" "nr.test-runner"]
             }
 
@@ -106,26 +105,6 @@
   :test-paths ["test/clj"]
   :eftest {:report eftest.report.pretty/report
            :fail-fast? false}
-
-  :cljsbuild
-  {:builds
-   [{:id "dev"
-     :source-paths ["src/cljs/nr" "src/cljs/dev" "src/cljc"]
-     :compiler {:output-to "resources/public/cljs/app10.js"
-                :output-dir "resources/public/cljs"
-                :main "dev.nr"
-                :asset-path   "/cljs"
-                :optimizations :none
-                :source-map-timestamp true
-                :npm-deps true
-                :external-config {:devtools/config {:features-to-install :all}}}}
-    {:id "prod"
-     :source-paths ["src/cljs/nr" "src/cljs/prod" "src/cljc"]
-     :compiler {:output-to "resources/public/js/app10.js"
-                :output-dir "out"
-                :optimizations :advanced
-                :pretty-print false
-                :npm-deps true}}]}
 
   ;; Set timeout to 2 min to allow for full compilation after a clean.
   :repl-options {:timeout 180000

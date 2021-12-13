@@ -50,7 +50,7 @@
         (if (= "dev" @server-mode)
           (list (hiccup/include-js "/cljs-out/dev/goog/base.js")
                 (hiccup/include-js "/cljs-out/dev/main_bundle.js"))
-          (list (hiccup/include-js (str "/js/app10.js?v=" @frontend-version))))]))))
+          (list (hiccup/include-js (str "/cljs-out/prod/main.js?v=" @frontend-version))))]))))
 
 (defn reset-password-page
   [{db :system/db

@@ -4,7 +4,7 @@
    [cljs.core.async :refer [<!] :as async]
    [clojure.set :refer [difference union]]
    [nr.ajax :refer [GET]]
-   [nr.angel-arena :as angel-arena]
+   [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.game-row :refer [game-row]]

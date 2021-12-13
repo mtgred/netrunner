@@ -1,4 +1,4 @@
-(ns nr.angel-arena
+(ns nr.angel-arena.lobby
   (:require
    [clojure.string :refer [capitalize lower-case]]
    [jinteki.cards :refer [all-cards]]
