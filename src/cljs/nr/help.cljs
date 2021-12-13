@@ -1,5 +1,4 @@
-(ns nr.help
-  (:require [clojure.string :refer [split]]))
+(ns nr.help)
 
 (def command-info
   [{:name "/adv-counter"
@@ -482,34 +481,35 @@
             {:id "awesome"
              :title "Why is this site so awesome?"
              :content [:ul
-                        [:p "Because We Built It."]]}
-            )}))
+                        [:p "Because We Built It."]]})}))
 
 (def help-toc
   "Generates list serving as help's table of contents. Parses help-data."
   [:nav {:role "navigation" :class "table-of-contents" :key "nav"}
-   [:ul (doall
-          (for [{:keys [id title sub] :as section} help-data]
-            ^{:key id}
-            [:li [:a (when id {:href (str "#" id)}) title]
-             [:ul (doall
-                    (for [{:keys [id title] :as question} sub]
-                      ^{:key id}
-                      [:li [:a (when id {:href (str "#" id)}) title]]))]]))]])
+   (into [:ul]
+         (for [{:keys [id title sub]} help-data]
+           ^{:key id}
+           [:li
+            [:a (when id {:href (str "#" id)}) title]
+            (into [:ul]
+                  (for [{:keys [id title]} sub]
+                    ^{:key id}
+                    [:li [:a (when id {:href (str "#" id)}) title]]))]))])
 
 (def help-contents
   "Takes help-data and translates it to HTML tags."
   (doall
-    (for [{:keys [id title sub] :as section} help-data]
-      (list [:h2 {:id id :key id} title]
-            (doall
-              (for [{:keys [id title content] :as question} sub]
-                ^{:key title}
-                [:div [:h3 {:id id :key title} title]
-                 content]))))))
+    (for [{:keys [id title sub]} help-data]
+      (into [:h2 {:id id :key id} title]
+            (for [{:keys [id title content]} sub]
+              ^{:key title}
+              [:div [:h3 {:id id :key title} title]
+               content])))))
 
 (defn help []
+  (println "rendering help")
   [:div.page-container
+   [:div.help-bg]
    [:div.help.panel.content-page.blue-shade
     [:h2 "Help Topics"]
     help-toc

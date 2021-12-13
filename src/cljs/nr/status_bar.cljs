@@ -3,7 +3,7 @@
    [nr.appstate :refer [app-state]]
    [nr.gameboard.actions :refer [concede mute-spectators]]
    [nr.gameboard.replay :refer [set-replay-side]]
-   [nr.gamelobby :refer [filter-games leave-game]]
+   [nr.lobby :refer [filter-games leave-game]]
    [nr.player-view :refer [player-view]]
    [nr.translations :refer [tr]]
    [reagent.core :as r]))

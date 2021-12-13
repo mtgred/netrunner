@@ -8,20 +8,20 @@
    [nr.lobby-chat :refer [lobby-chat]]
    [nr.player-view :refer [player-view]]
    [nr.translations :refer [tr tr-side]]
-   [nr.utils :refer [cond-button non-game-toast]]
+   [nr.utils :refer [cond-button format-zoned-date-time mdy-formatter
+                     non-game-toast]]
    [nr.ws :as ws]
    [reagent-modals.modals :as reagent-modals]
-   [taoensso.sente :as sente]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [taoensso.sente :as sente]))
 
 (defn select-deck [deck]
-  (fn []
-    (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
-                               :deck-id (:_id deck)}]
-                 8000
-                 #(when (sente/cb-error? %)
-                    (non-game-toast "Cannot select that deck" "error")))
-    (reagent-modals/close-modal!)))
+  (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
+                             :deck-id (:_id deck)}]
+               1500
+               #(when (sente/cb-error? %)
+                  (non-game-toast "Cannot select that deck" "error")))
+  (reagent-modals/close-modal!))
 
 (defn select-deck-modal [user current-game]
   (r/with-let [decks (r/cursor app-state [:decks])]
@@ -42,12 +42,13 @@
                           (sort-by (complement legal?))
                           (sort-by :date))]
             [:div.deckline {:key (:_id deck)
-                            :on-click (select-deck deck)}
+                            :on-click #(select-deck deck)}
              [:img {:src (image-url (:identity deck))
                     :alt (get-in deck [:identity :title] "")}]
              [:div.float-right [deck-format-status-span deck fmt true]]
              [:h4 (:name deck)]
-             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+             [:div.float-right
+              (format-zoned-date-time mdy-formatter (:date deck))]
              [:p (get-in deck [:identity :title])]])))]]))
 
 (defn- first-user?

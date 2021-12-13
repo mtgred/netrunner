@@ -15,7 +15,7 @@
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [check-for-empty-server continue handle-end-run
                            jack-out start-next-phase toggle-auto-no-action]]
-   [game.core.say :refer [indicate-action say system-msg]]
+   [game.core.say :refer [indicate-action say system-msg system-say]]
    [game.core.set-up :refer [keep-hand mulligan]]
    [game.core.shuffling :refer [shuffle-deck]]
    [game.core.toasts :refer [toast]]
@@ -38,7 +38,7 @@
     (if-let [command (parse-command text)]
       (when (and (not= side nil) (not= side :spectator))
         (command state side)
-        (swap! state update :log conj {:user nil :text (str "[!]" (:username author) " uses a command: " text)}))
+        (system-say state side (str "[!]" (:username author) " uses a command: " text)))
       (say state side args))))
 
 (def commands

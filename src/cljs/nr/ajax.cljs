@@ -31,7 +31,10 @@
      ch))
   ([url params format]
    (let [ch (chan)
-         headers (if (= format :json) #js {"Content-Type" "application/json" "X-CSRF-Token" ?csrf-token} #js {"X-CSRF-Token" ?csrf-token})
+         headers (if (= format :json)
+                   #js {"Content-Type" "application/json"
+                        "X-CSRF-Token" ?csrf-token}
+                   #js {"X-CSRF-Token" ?csrf-token})
          content (if (= format :json) (json/serialize (clj->js params)) params)]
      (xhr/send url #(put! ch (parse %)) "POST" content headers)
      ch)))

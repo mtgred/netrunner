@@ -7,11 +7,9 @@
 
 (def go ig-repl/go)
 (def halt ig-repl/halt)
-(def reset ig-repl/reset)
-(def reset-all ig-repl/reset-all)
+(defn restart [] (halt) (go))
 
 (comment
   (go)
   (halt)
-  (reset)
-  (reset-all))
+  (restart))

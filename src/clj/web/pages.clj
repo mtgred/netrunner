@@ -27,11 +27,12 @@
         [:meta {:property "og:description" :content (:description og "Build Netrunner decks and test them online against other players.")}]
         [:link {:rel "apple-touch-icon" :href "/img/icons/jinteki_167.png"}]
         [:title "Jinteki"]
-        (hiccup/include-css "/css/carousel.css")
-        (hiccup/include-css (str "/css/netrunner.css?v=" @frontend-version))
-        (hiccup/include-css "/lib/toastr/toastr.min.css")
-        (hiccup/include-css "/lib/jqueryui/themes/base/jquery-ui.min.css")]
+        (hiccup/include-css "/css/toastr.min.css")
+        (hiccup/include-css (str "/css/netrunner.css?v=" @frontend-version))]
        [:body
+        [:div#sente-csrf-token
+         {:style {:display "hidden"}
+          :data-csrf-token (force anti-forgery/*anti-forgery-token*)}]
         [:div {:style {:display "hidden"}
                :id "server-originated-data"
                :data-version @frontend-version
@@ -40,26 +41,16 @@
         [:audio#ting
          [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
          [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]
-        (hiccup/include-js "/lib/jquery/jquery.min.js")
-        (hiccup/include-js "/lib/jqueryui/jquery-ui.min.js")
-        (hiccup/include-js "/lib/bootstrap/dist/js/bootstrap.js")
-        (hiccup/include-js "/lib/moment/min/moment.min.js")
-        (hiccup/include-js "/lib/toastr/toastr.min.js")
-        (hiccup/include-js "/lib/howler/dist/howler.min.js")
-        [:div#sente-csrf-token {:data-csrf-token (force anti-forgery/*anti-forgery-token*)}]
+        (hiccup/include-js "https://code.jquery.com/jquery-2.1.1.min.js")
+        (hiccup/include-js "https://code.jquery.com/ui/1.13.0/jquery-ui.min.js")
+        (hiccup/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
+        (hiccup/include-js "/lib/js/toastr.min.js")
         [:script {:type "text/javascript"}
          (str "var user=" (json/generate-string user) ";")]
-
         (if (= "dev" @server-mode)
-          (list (hiccup/include-js "/cljs/goog/base.js")
-                (hiccup/include-js (str "/cljs/app10.js?v=" @frontend-version)))
-          (list (hiccup/include-js (str "/js/app10.js?v=" @frontend-version))
-                [:script
-                 "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-                 ga('create', 'UA-20250150-2', 'www.jinteki.net');"
-                 (when user
-                   (str "ga('set', '&uid', '" (:username user) "');"))
-                 "ga('send', 'pageview');"]))]))))
+          (list (hiccup/include-js "/cljs-out/dev/goog/base.js")
+                (hiccup/include-js "/cljs-out/dev/main_bundle.js"))
+          (list (hiccup/include-js (str "/js/app10.js?v=" @frontend-version))))]))))
 
 (defn reset-password-page
   [{db :system/db

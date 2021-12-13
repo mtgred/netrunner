@@ -2,19 +2,20 @@
   (:require
     [jinteki.validator :refer [calculate-deck-status trusted-deck-status]]
     [nr.translations :refer [tr tr-format]]
-    [nr.utils :refer [slug->format]]))
+    [nr.utils :refer [slug->format]]
+    [clojure.string :as str]))
 
 (defn- build-deck-status-label [deck-status violation-details?]
   [:div.status-tooltip.blue-shade
-   (doall (for [format (keys slug->format)]
-            (let [{{:keys [legal reason description]} (keyword format)} deck-status]
-              ^{:key format}
+   (doall (for [fmt (keys slug->format)]
+            (let [{:keys [legal reason description]} (get deck-status (keyword fmt))]
+              ^{:key fmt}
               [:div {:class (if legal "legal" "invalid")
                      :title (when (and violation-details?
                                        (not legal))
                               (or reason "Unknown"))}
                [:span.tick (if legal "✔" "✘")]
-               description])))])
+               (str/capitalize fmt) description])))])
 
 (defn- deck-status-details
   [deck use-trusted-info]
@@ -34,15 +35,20 @@
         status (check-deck-status deck-status)
         message (str (tr-format (get slug->format (:format deck-status) "Standard"))
                      " "
-                     (if-not (= "invalid" status) (tr [:deck-builder.legal "legal"]) (tr [:deck-builder.illegal "illegal"])))]
+                     (if (= "invalid" status)
+                       (tr [:deck-builder.illegal "illegal"])
+                       (tr [:deck-builder.legal "legal"])))]
     [:<>
      [:span.deck-status.shift-tooltip {:class status} message
       (when tooltip?
         (build-deck-status-label deck-status violation-details?))]
      (when-let [reason (:reason ((keyword format) deck-status))]
        (when (and tooltip? (= "invalid" status))
-         [:span.deck-status.shift-tooltip.invalid-explanation {:class status} (tr [:deck-builder.why "Why?"])
-          [:div.status-tooltip.blue-shade [:div.invalid reason]]]))]))
+         [:span.deck-status.shift-tooltip.invalid-explanation
+          {:class status}
+          (tr [:deck-builder.why "Why?"])
+          [:span.status-tooltip.blue-shade
+           [:span.invalid reason]]]))]))
 
 (defn- deck-status-span-impl [deck tooltip? violation-details? use-trusted-info]
   (format-deck-status-span (deck-status-details deck use-trusted-info) tooltip? violation-details?))

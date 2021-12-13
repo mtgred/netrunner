@@ -28,7 +28,7 @@
 (defn clear-deckstats-handler
   "Clear any statistics for a given deck-id contained in a request"
   [{db :system/db
-    {id :id} :params}]
+    {id :id} :path-params}]
   (if id
     (if (acknowledged? (mc/update db :decks {:_id (->object-id id)} {$unset {:stats ""}}))
       (response 200 {:message "Deleted"})

@@ -1,0 +1,6 @@
+^{:watch-dirs ["src/cljs" "src/cljc"]
+  :css-dirs ["resources/public/css"]
+  :open-url false
+  :clean-outputs true
+  :auto-bundle :webpack}
+{:main dev.nr}

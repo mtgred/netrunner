@@ -3,8 +3,8 @@
   (:require
    [cljs.core.async :refer [<!]]
    [nr.ajax :refer [GET]]
-   [nr.appstate :refer [app-state]]
-   [nr.utils :refer [render-icons]]
+   [nr.utils :refer [day-word-with-time-formatter format-zoned-date-time
+                     render-icons]]
    [reagent.core :as r]))
 
 (def news-state (r/atom {}))
@@ -12,15 +12,12 @@
 (go (swap! news-state assoc :news (:json (<! (GET "/data/news")))))
 
 (defn news []
-  (r/with-let [news (r/cursor news-state [:news])
-               active (r/cursor app-state [:active-page])]
+  (r/with-let [news (r/cursor news-state [:news])]
     [:div#news.news-box.panel.blue-shade
-     (when (or (= "/news" (first @active))
-               (= "/" (first @active)))
-       [:ul.list
-        (doall
-          (for [d @news]
-            [:li.news-item
-             {:key (:date d)}
-             [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
-             [:span.title (render-icons (:item d ""))]]))])]))
+     (into
+       [:ul.list]
+       (for [d @news]
+         [:li.news-item
+          {:key (:date d)}
+          [:span.date (format-zoned-date-time day-word-with-time-formatter (str (:date d) "Z"))]
+          [:span.title (render-icons (:item d ""))]]))]))

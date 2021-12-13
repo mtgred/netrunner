@@ -1,24 +1,14 @@
 (ns nr.main
   (:require
-   [nr.about :refer [about]]
-   [nr.account :refer [account]]
-   [nr.admin :refer [admin]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [auth-forms auth-menu]]
-   [nr.cardbrowser :refer [card-browser]]
-   [nr.chat :refer [chat-page]]
-   [nr.deckbuilder :refer [deck-builder]]
-   [nr.features :refer [features]]
-   [nr.gameboard.board :refer [gameboard]]
-   [nr.gamelobby :refer [game-lobby]]
-   [nr.help :refer [help]]
-   [nr.navbar :refer [navbar navigate navigate-to-current]]
-   [nr.stats :refer [stats]]
+   [nr.navbar :refer [navbar navigate]]
+   [nr.routes :as routes]
    [nr.status-bar :refer [status]]
-   [nr.tournament :refer [tournament]]
-   [nr.users :refer [users]]
+   [nr.ws :refer [start-router!]]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]
+   [reagent.dom :as rdom]
    [time-literals.data-readers]
    [time-literals.read-write]))
 
@@ -32,57 +22,19 @@
 (defn pages []
   (r/create-class
     {:display-name "main-pages"
-
      :component-did-mount
      (fn []
-      (let [ver (get-server-data "version")
-            rid (get-server-data "replay-id")]
-        (swap! app-state assoc :app-version ver)
-        (swap! app-state assoc :replay-id rid)
-        (if rid
-          (navigate "/play")
-          (navigate-to-current))))
-
+       (let [ver (get-server-data "version")
+             rid (get-server-data "replay-id")]
+         (swap! app-state assoc :app-version ver)
+         (swap! app-state assoc :replay-id rid)
+         (when rid
+           (navigate "/play"))))
      :reagent-render
      (fn []
-       [:div#main.carousel.slide {:data-interval "false"}
-        [:div.carousel-inner
-         [:div.item.active
-          [:div.home-bg]
-          [chat-page]]
-         [:div.item
-          [:div.cardbrowser-bg]
-          [card-browser]]
-         [:div.item
-          [:div.deckbuilder-bg]
-          [deck-builder]]
-         [:div.item
-          [:div#gamelobby [game-lobby]]
-          [:div#gameboard [gameboard]]]
-         [:div.item
-          [:div.help-bg]
-          [help]]
-         [:div.item
-          [:div.account-bg]
-          [account]]
-         [:div.item
-          [:div.stats-bg]
-          [stats]]
-         [:div.item
-          [:div.about-bg]
-          [about]]
-         [:div.item
-          [:div.about-bg]
-          [tournament]]
-         [:div.item
-          [:div.help-bg]
-          [admin]]
-         [:div.item
-          [:div.account-bg]
-          [users]]
-         [:div.item
-          [:div.help-bg]
-          [features]]]])}))
+       [:div#main
+        [:div.item
+         [(-> @routes/current-view :data :view)]]])}))
 
 (defn main-window []
   [:<>
@@ -94,5 +46,10 @@
    [reagent-modals/modal-window]
    [pages]])
 
+(defn mount []
+  (rdom/render [main-window] (.getElementById js/document "main-content")))
+
 (defn init! []
-  (r/render [main-window] (.getElementById js/document "main-content")))
+  (routes/init-routes!)
+  (start-router!)
+  (mount))

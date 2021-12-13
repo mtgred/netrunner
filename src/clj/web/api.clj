@@ -40,87 +40,89 @@
              (fn [request]
                (handler (assoc request :system/db (:db mongo)))))}))
 
+(defn api-routes []
+  (ring/router
+    [["/chsk" {:get ws/handshake-handler
+               :post ws/post-handler}]
+     ["/data"
+      ["/cards"
+       ["" {:get data/cards-handler}]
+       ["/version" {:get data/cards-version-handler}]
+       ["/altarts" {:get data/alt-arts-handler}]]
+      ["/news" {:get data/news-handler}]
+      ["/sets" {:get data/sets-handler}]
+      ["/mwl" {:get data/mwl-handler}]
+      ["/cycles" {:get data/cycles-handler}]
+      ["/donors" {:get data/donors-handler}]
+      ["/decks"
+       ["" {:get decks/decks-handler
+            :post decks/decks-create-handler
+            :put decks/decks-save-handler}]
+       ["/:id" {:delete decks/decks-delete-handler}]]
+      ["/api-keys" {:middleware [::auth]}
+       ["" {:get api-keys/api-keys-handler
+            :post api-keys/api-keys-create-handler}]
+       ["/:id" {:get api-keys/api-keys-delete-handler}]]]
+     ["/chat/config" {:get chat/config-handler}]
+     ["/messages/:channel" {:get chat/messages-handler}]
+     ["/reset/:token" {:get pages/reset-password-page
+                       :post auth/reset-password-handler}]
+     ["/replay/:gameid" {:get stats/replay-handler}]
+     ["/bug-report/:bugid" {:get stats/replay-handler}]
+     ["/register" {:post auth/register-handler}]
+     ["/check-username/:username" {:get auth/check-username-handler}]
+     ["/check-email/:email" {:get auth/check-email-handler}]
+     ["/login" {:post auth/login-handler}]
+     ["/forgot" {:post auth/forgot-password-handler}]
+     ["/logout" {:middleware [::auth]
+                 :post auth/logout-handler}]
+     ["/game" {:middleware [::cors
+                            wrap-add-cache-headers]}
+      ["/decklist" {:get game-api/decklist-handler}]
+      ["/hand" {:get game-api/hand-handler}]
+      ["/discard" {:get game-api/discard-handler}]
+      ["/deck" {:get game-api/deck-handler}]
+      ["/log" {:get game-api/log-handler}]]
+     ["/profile" {:middleware [::auth]}
+      ["" {:put auth/update-profile-handler}]
+      ["/email" {:get auth/email-handler
+                 :put auth/change-email-handler}]
+      ["/stats"
+       ["/user" {:delete stats/clear-userstats-handler}]
+       ["/deck/{id}" {:delete stats/clear-deckstats-handler}]]
+      ["/history"
+       ["" {:get stats/history}]
+       ["/:gameid" {:get stats/fetch-log}]
+       ["/annotations"
+        ["/:gameid" {:get stats/fetch-annotations}]
+        ["/publish/:gameid" {:get stats/publish-annotations}]
+        ["/delete/:gameid" {:delete stats/delete-annotations}]]
+       ["/share/:gameid" {:get stats/share-replay}]
+       ["/full/:gameid" {:get stats/fetch-replay}]]]
+     ["/tournament-auth/:username" {:middleware [::auth ::tournament-auth]
+                                    :get tournament/auth}]
+     ["/admin" {:middleware [::auth ::admin]}
+      ["/news"
+       ["" {:post admin/news-create-handler}]
+       ["/:id" {:delete admin/news-delete-handler}]]
+      ["/version" {:get admin/version-handler
+                   :put admin/version-update-handler}]
+      ["/features" {:get admin/features-handler
+                    :put admin/features-update-handler}]]]
+    {:reitit.middleware/registry
+     {::auth auth/wrap-authentication-required
+      ::tournament-auth auth/wrap-tournament-auth-required
+      ::admin auth/wrap-authorization-required
+      ::cors [[wrap-cors
+               :access-control-allow-origin [#".*"]
+               :access-control-allow-methods [:get]
+               :access-control-allow-headers #{"X-JNet-API"
+                                               "accept" "accept-encoding" "accept-language"
+                                               "authorization" "content-type" "origin"}]]}}))
+
 (defn make-app [mongo]
   (ring/ring-handler
-    (ring/router
-      [["/chsk" {:get ws/handshake-handler
-                 :post ws/post-handler}]
-       ["/data"
-        ["/cards"
-         ["" {:get data/cards-handler}]
-         ["/version" {:get data/cards-version-handler}]
-         ["/altarts" {:get data/alt-arts-handler}]]
-        ["/news" {:get data/news-handler}]
-        ["/sets" {:get data/sets-handler}]
-        ["/mwl" {:get data/mwl-handler}]
-        ["/cycles" {:get data/cycles-handler}]
-        ["/donors" {:get data/donors-handler}]
-        ["/decks"
-         ["" {:get decks/decks-handler
-              :post decks/decks-create-handler
-              :put decks/decks-save-handler}]
-         ["/:id" {:delete decks/decks-delete-handler}]]
-        ["/api-keys" {:middleware [::auth]}
-         ["" {:get api-keys/api-keys-handler
-              :post api-keys/api-keys-create-handler}]
-         ["/:id" {:get api-keys/api-keys-delete-handler}]]]
-       ["/chat/config" {:get chat/config-handler}]
-       ["/messages/:channel" {:get chat/messages-handler}]
-       ["/reset/:token" {:get pages/reset-password-page
-                         :post auth/reset-password-handler}]
-       ["/replay/:gameid" {:get stats/replay-handler}]
-       ["/bug-report/:bugid" {:get stats/replay-handler}]
-       ["/register" {:post auth/register-handler}]
-       ["/check-username/:username" {:get auth/check-username-handler}]
-       ["/check-email/:email" {:get auth/check-email-handler}]
-       ["/login" {:post auth/login-handler}]
-       ["/forgot" {:post auth/forgot-password-handler}]
-       ["/logout" {:middleware [::auth]
-                   :post auth/logout-handler}]
-       ["/game" {:middleware [::cors
-                              wrap-add-cache-headers]}
-        ["/decklist" {:get game-api/decklist-handler}]
-        ["/hand" {:get game-api/hand-handler}]
-        ["/discard" {:get game-api/discard-handler}]
-        ["/deck" {:get game-api/deck-handler}]
-        ["/log" {:get game-api/log-handler}]]
-       ["/profile" {:middleware [::auth]}
-        ["" {:put auth/update-profile-handler}]
-        ["/email" {:get auth/email-handler
-                   :put auth/change-email-handler}]
-        ["/stats"
-         ["/user"
-          ["" {:delete stats/clear-userstats-handler}]
-          ["/deck/:id" {:delete stats/clear-deckstats-handler}]]]
-        ["/history"
-         ["" {:get stats/history}]
-         ["/:gameid" {:get stats/fetch-log}]
-         ["/annotations"
-          ["/:gameid" {:get stats/fetch-annotations}]
-          ["/publish/:gameid" {:get stats/publish-annotations}]
-          ["/delete/:gameid" {:delete stats/delete-annotations}]]
-         ["/share/:gameid" {:get stats/share-replay}]
-         ["/full/:gameid" {:get stats/fetch-replay}]]]
-       ["/tournament-auth/:username" {:middleware [::auth ::tournament-auth]
-                                      :get tournament/auth}]
-       ["/admin" {:middleware [::auth ::admin]}
-        ["/news"
-         ["" {:post admin/news-create-handler}]
-         [":id" {:delete admin/news-delete-handler}]]
-        ["/version" {:get admin/version-handler
-                     :put admin/version-update-handler}]
-        ["/features" {:get admin/features-handler
-                      :put admin/features-update-handler}]]]
-      {:reitit.middleware/registry
-       {::auth auth/wrap-authentication-required
-        ::tournament-auth auth/wrap-tournament-auth-required
-        ::admin auth/wrap-authorization-required
-        ::cors [[wrap-cors
-                 :access-control-allow-origin [#".*"]
-                 :access-control-allow-methods [:get]
-                 :access-control-allow-headers #{"X-JNet-API"
-                                                 "accept" "accept-encoding" "accept-language"
-                                                 "authorization" "content-type" "origin"}]]}})
+    (api-routes)
     (ring/routes
       (ring/redirect-trailing-slash-handler)
       (ring/create-resource-handler {:path "/"})

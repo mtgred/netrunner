@@ -5,7 +5,8 @@
    [clojure.string :as s]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
-   [nr.utils :refer [non-game-toast render-icons]]
+   [nr.utils :refer [format-zoned-date-time ISO-ish-formatter non-game-toast
+                     render-icons]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [taoensso.sente :as sente]))
@@ -74,7 +75,9 @@
              [:button.delete
               {:on-click #(delete-news-item (:_id d))}
               "Delete"]]
-            [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
+            [:span.date
+             (format-zoned-date-time ISO-ish-formatter
+                                     (str (:date d) "Z"))]
             [:span.title (render-icons (:item d ""))]]))]]
      [:h4 "Add news item"]
      [:form.msg-box {:on-submit #(let [msg (:news-msg @s "")]
@@ -131,9 +134,8 @@
 
 
 (defn admin []
-  (r/with-let [user (r/cursor app-state [:user])
-               active (r/cursor app-state [:active-page])]
+  (r/with-let [user (r/cursor app-state [:user])]
     [:div.page-container
-     (when (and (= "/admin" (first @active))
-                (:isadmin @user))
+     [:div.help-bg]
+     (when (:isadmin @user)
        [admin-container])]))

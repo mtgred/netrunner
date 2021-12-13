@@ -59,8 +59,7 @@
            :visible-formats (load-visible-formats)
            :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                       :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
-           :games [] :current-game nil
-           }))
+           :games [] :current-game nil}))
 
 (defn current-gameid [app-state]
   (get-in @app-state [:current-game :gameid]))

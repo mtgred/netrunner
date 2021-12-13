@@ -1,6 +1,7 @@
 (ns nr.cardbrowser
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
+   [cljc.java-time.local-date :as ld]
    [cljs.core.async :refer [<! chan put!] :as async]
    [clojure.string :as s]
    [jinteki.cards :refer [all-cards] :as cards]
@@ -43,7 +44,7 @@
           cycles (:json (<! (GET "/data/cycles")))
           mwls (:json (<! (GET "/data/mwl")))
           latest-mwl (->> mwls
-                          (map (fn [e] (update e :date-start #(js/Date.parse %))))
+                          (map (fn [e] (update e :date-start ld/parse)))
                           (group-by #(keyword (:format %)))
                           (mapv (fn [[k, v]] [k (->> v
                                                      (sort-by :date-start)
@@ -584,8 +585,7 @@
              [:a {:href link} "More Info"])])))))
 
 (defn card-browser []
-  (let [active (r/cursor app-state [:active-page])
-        state (r/atom {:search-query ""
+  (let [state (r/atom {:search-query ""
                        :sort-field "Faction"
                        :format-filter "All"
                        :set-filter "All"
@@ -598,14 +598,14 @@
         scroll-top (atom 0)]
 
     (fn []
+      (println "card-browser")
       [:div#cardbrowser.cardbrowser
-       (when (= "/cards" (first @active))
-         [:<>
-          [:div.card-info
-           [:div.blue-shade.panel.filters
-            [query-builder state]
-            [sort-by-builder state]
-            [dropdown-builder state]
-            [clear-filters state]]
-           [art-info state]]
-          [card-list-view state scroll-top]])])))
+       [:div.cardbrowser-bg]
+       [:div.card-info
+        [:div.blue-shade.panel.filters
+         [query-builder state]
+         [sort-by-builder state]
+         [dropdown-builder state]
+         [clear-filters state]]
+        [art-info state]]
+       [card-list-view state scroll-top]])))

@@ -3,7 +3,8 @@
    [nr.avatar :refer [avatar]]
    [nr.translations :refer [tr]]
    [nr.ws :as ws]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [reagent.dom :as rdom]))
 
 (defn send-message [state current-game]
   (let [text (:msg @state)]
@@ -28,17 +29,13 @@
       {:display-name "lobby-chat"
        :component-did-mount
        (fn []
-         (let [el (r/dom-node @message-list)]
+         (let [el (rdom/dom-node @message-list)]
            (set! (.-scrollTop el) (.-scrollHeight el))))
-       :component-will-update
-       (fn []
-         (let [el (r/dom-node @message-list)]
-           (swap! state assoc :should-scroll (or @should-scroll
-                                                 (scrolled-to-end? el 15)))))
        :component-did-update
        (fn []
-         (let [el (r/dom-node @message-list)]
-           (when @should-scroll
+         (let [el (rdom/dom-node @message-list)]
+           (when (or @should-scroll
+                     (scrolled-to-end? el 15))
              (swap! state assoc :should-scroll false)
              (set! (.-scrollTop el) (.-scrollHeight el)))))
        :reagent-render
