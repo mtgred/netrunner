@@ -5,20 +5,19 @@
    [monger.collection :as mc]
    [monger.query :as q]
    [web.app-state :as app-state]
-   [web.config :refer [server-config]]
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user? visible-to-user]]
    [web.utils :refer [response]]
    [web.ws :as ws]))
 
-(defonce chat-config (:chat server-config))
 (def msg-collection "messages")
 (def log-collection "moderator_actions")
 
-(defn- chat-max-length [] (:max-length chat-config 144))
+(defn- chat-max-length [chat-settings] (:max-length chat-settings 144))
 
-(defn config-handler [_]
-  (response 200 {:max-length (chat-max-length)}))
+(defn config-handler
+  [{chat-settings :system/chat}]
+  (response 200 {:max-length (chat-max-length chat-settings)}))
 
 (defn messages-handler
   [{db :system/db
@@ -45,21 +44,24 @@
     (response 200 [])))
 
 (defn- within-rate-limit
-  [db username]
-  (let [window (:rate-window chat-config 60)
+  [db chat-settings username]
+  (let [window (:rate-window chat-settings 60)
         start-date (inst/plus-seconds (inst/now) (- window))
-        max-cnt (:rate-cnt chat-config 10)
-        msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
+        max-cnt (:rate-cnt chat-settings 10)
+        msg-cnt (mc/count db msg-collection {:username username
+                                             :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
 
 (defmethod ws/-msg-handler :chat/say
-  [{{db :system/db user :user} :ring-req
+  [{{db :system/db
+     chat-settings :system/chat
+     user :user} :ring-req
     uid :uid
     {:keys [channel msg]} :?data}]
   (when (and (active-user? user)
              (not (s/blank? msg)))
-    (let [len-valid (<= (count msg) (chat-max-length))
-          rate-valid (within-rate-limit db (:username user))]
+    (let [len-valid (<= (count msg) (chat-max-length chat-settings))
+          rate-valid (within-rate-limit db chat-settings (:username user))]
       (if (and len-valid rate-valid)
         (let [message {:emailhash (:emailhash user)
                        :username  (:username user)

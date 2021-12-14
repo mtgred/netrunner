@@ -6,10 +6,10 @@
    [monger.operators :refer :all]
    [monger.result :refer [acknowledged? updated-existing?]]
    [web.app-state :as app-state]
-   [web.config :refer [frontend-version]]
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user?]]
    [web.utils :refer [response]]
+   [web.versions :refer [frontend-version]]
    [web.ws :as ws]))
 
 (defmethod ws/-msg-handler :admin/announce

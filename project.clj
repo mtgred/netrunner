@@ -12,6 +12,7 @@
                  [com.taoensso/sente "1.16.2"]
                  [com.taoensso/tempura "1.2.1"]
                  [ring/ring-core "1.9.4"]
+                 [ring/ring-devel "1.9.4"]
                  [ring/ring-anti-forgery "1.3.0"]
                  [ring/ring-json "0.5.1"]
                  [puppetlabs/ring-middleware "1.3.1"]
@@ -48,9 +49,7 @@
                  [metosin/reitit "0.5.15"]
                  [metosin/malli "0.7.0"]]
 
-  :plugins [[lein-ring "0.12.6"]
-            [lein-eftest "0.5.9"]
-            [lein-exec "0.3.7"]
+  :plugins [[lein-eftest "0.5.9"]
             [cider/cider-nrepl "0.27.3"]]
 
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.4"]
@@ -84,16 +83,16 @@
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
             "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]
             ;; figwheel-main commands
-            "fig"       ["trampoline" "run" "-m" "figwheel.main"]
-            "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
-            "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "prod"]
+            "fig"      ["trampoline" "run" "-m" "figwheel.main"]
+            "fig:dev"  ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
+            "fig:prod" ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "prod"]
             ; "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" "nr.test-runner"]
             }
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
   ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and (most of the) task namespaces.
-  :aot [#"web.core"]
+  :aot [web.core]
   :jar-name "netrunner.jar"
   :jar-exclusions [#"public/img/cards/*"]
   :uberjar-name "netrunner-standalone.jar"

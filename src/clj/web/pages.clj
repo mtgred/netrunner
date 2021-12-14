@@ -6,12 +6,12 @@
    [monger.collection :as mc]
    [monger.operators :refer :all]
    [ring.middleware.anti-forgery :as anti-forgery]
-   [web.config :refer [frontend-version server-mode]]
-   [web.utils :refer [response]]))
+   [web.utils :refer [response]]
+   [web.versions :refer [frontend-version]]))
 
 (defn index-page
   ([req] (index-page req nil nil))
-  ([{:keys [user]} og replay-id]
+  ([{user :user server-mode :system/server-mode} og replay-id]
    (response
      200
      (hiccup/html5
@@ -47,10 +47,10 @@
         (hiccup/include-js "/lib/js/toastr.min.js")
         [:script {:type "text/javascript"}
          (str "var user=" (json/generate-string user) ";")]
-        (if (= "dev" @server-mode)
+        (if (= "dev" server-mode)
           (list (hiccup/include-js "/cljs-out/dev/goog/base.js")
                 (hiccup/include-js "/cljs-out/dev/main_bundle.js"))
-          (list (hiccup/include-js (str "/cljs-out/prod/main.js?v=" @frontend-version))))]))))
+          (list (hiccup/include-js (str "/cljs-out/prod/main_bundle.js?v=" @frontend-version))))]))))
 
 (defn reset-password-page
   [{db :system/db

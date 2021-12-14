@@ -1,9 +1,12 @@
 (ns dev.user
   (:require
-    [integrant.repl :as ig-repl]
-    [web.system :as system]))
+   [integrant.repl :as ig-repl]
+   [time-literals.read-write :as read-write]
+   [web.system :as system]))
 
-(ig-repl/set-prep! (fn [] (system/build-config)))
+(read-write/print-time-literals-clj!)
+
+(ig-repl/set-prep! (fn [] (system/server-config)))
 
 (def go ig-repl/go)
 (def halt ig-repl/halt)

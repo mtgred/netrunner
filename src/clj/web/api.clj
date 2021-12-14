@@ -26,20 +26,6 @@
 
 (add-encoder org.bson.types.ObjectId encode-str)
 
-(defn wrap-return-favicon [handler]
-  (fn [request]
-    (if (= [:get "/favicon.ico"] [(:request-method request) (:uri request)])
-      (resource-response "jinteki.ico" {:root "public/img"})
-      (handler request))))
-
-(def wrap-db
-  (middleware/map->Middleware
-    {:name ::wrap-db
-     :description "Adds the database connection to :system/db"
-     :wrap (fn [handler mongo]
-             (fn [request]
-               (handler (assoc request :system/db (:db mongo)))))}))
-
 (defn api-routes []
   (ring/router
     [["/chsk" {:get ws/handshake-handler
@@ -120,27 +106,57 @@
                                                "accept" "accept-encoding" "accept-language"
                                                "authorization" "content-type" "origin"}]]}}))
 
-(defn make-app [mongo]
+(defn make-default-routes []
+  (ring/routes
+    (ring/redirect-trailing-slash-handler)
+    (ring/create-resource-handler {:path "/"})
+    (ring/create-default-handler
+      {:not-found pages/index-page})))
+
+(defn wrap-return-favicon [handler]
+  (fn [request]
+    (if (= [:get "/favicon.ico"] [(:request-method request) (:uri request)])
+      (resource-response "jinteki.ico" {:root "public/img"})
+      (handler request))))
+
+(def wrap-system
+  (middleware/map->Middleware
+    {:name ::wrap-system
+     :description "Adds the relevant integrant system pieces to requests"
+     :wrap (fn [handler system]
+             (fn [request]
+               (-> request
+                   (assoc :system/db (-> system :mongodb/connection :db))
+                   (assoc :system/server-mode (:server-mode system))
+                   (assoc :system/auth (:web/auth system))
+                   (assoc :system/chat (:web/chat system))
+                   (assoc :system/email (:web/email system))
+                   (handler))))}))
+
+(defn make-middleware [system]
+  {:middleware [wrap-return-favicon
+                wrap-session
+                wrap-anti-forgery
+                wrap-params
+                wrap-keyword-params
+                [wrap-json-body {:keywords? true}]
+                wrap-json-response
+                [wrap-system system]
+                auth/wrap-user]})
+
+(defn make-app [system]
   (ring/ring-handler
     (api-routes)
-    (ring/routes
-      (ring/redirect-trailing-slash-handler)
-      (ring/create-resource-handler {:path "/"})
-      (ring/create-default-handler
-        {:not-found pages/index-page}))
-    {:middleware [wrap-stacktrace
-                  wrap-return-favicon
-                  wrap-session
-                  wrap-anti-forgery
-                  wrap-params
-                  wrap-keyword-params
-                  [wrap-json-body {:keywords? true}]
-                  wrap-json-response
-                  [wrap-db mongo]
-                  auth/wrap-user]}))
+    (make-default-routes)
+    (make-middleware system)))
+
+(defn make-dev-app [system]
+  (ring/ring-handler
+    (api-routes)
+    (make-default-routes)
+    (update (make-middleware system) :middleware #(vec (cons wrap-stacktrace %)))))
 
 (comment
   ((make-app nil) {:request-method :get :uri "/chat/config"})
   (require '[reitit.core :as r])
-  (r/router-name (ring/get-router (make-app nil)))
-  )
+  (r/router-name (ring/get-router (make-app nil))))
