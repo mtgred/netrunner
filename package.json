@@ -1,6 +1,12 @@
 {
 	"scripts": {
-		"css": "stylus src/css/netrunner.styl -o resources/public/css/"
+		"css:build": "stylus -o resources/public/css/ src/css/netrunner.styl",
+		"css:watch": "npm run css:build -- -w",
+		"css:release": "npm run css:build -- -c",
+		"cljs:build": "shadow-cljs compile app",
+		"cljs:watch": "shadow-cljs watch app",
+		"cljs:release": "shadow-cljs release app",
+		"release": "npm run release:css && npm run release:cljs"
 	},
 	"devDependencies": {
 		"shadow-cljs": "^2.16.8",
