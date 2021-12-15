@@ -39,7 +39,7 @@
                  [ring/ring-anti-forgery "1.3.0"]
                  [ring/ring-json "0.5.1"]
                  [puppetlabs/ring-middleware "1.3.1"
-                  :exclusions [org.clojure/tools.logging prismatic/schema org.bouncycastle/bcpkix-jdk15on]]
+                  :exclusions [prismatic/schema org.bouncycastle/bcpkix-jdk15on]]
                  [ring-cors "0.1.13"]
                  [compojure "1.6.2"]
                  [hiccup "1.0.5"]
