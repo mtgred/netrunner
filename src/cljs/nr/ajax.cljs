@@ -8,10 +8,10 @@
     (.getAttribute el "data-csrf-token")))
 
 (defn parse [event]
-  (let [xhr (.-target event)
-        status (.getStatus xhr)]
+  (let [^goog.net.XhrIo target (.-target event)
+        status (.getStatus target)]
     {:status status
-     :json (-> xhr .getResponseText ((.-parse js/JSON)) (js->clj :keywordize-keys true))}))
+     :json (-> target .getResponseText ((.-parse js/JSON)) (js->clj :keywordize-keys true))}))
 
 (defn GET [url]
   (let [ch (chan)]

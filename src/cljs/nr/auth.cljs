@@ -55,7 +55,7 @@
   [:ul
    [:li
     [:a {:href "" :data-target "#register-form" :data-toggle "modal"
-         :on-click (fn [] .focus (js/$ "input[name='email']"))} "Sign up"]]
+         :on-click (fn [] (.focus (js/$ "input[name='email']")))} "Sign up"]]
    [:li
     [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]])
 

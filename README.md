@@ -41,19 +41,17 @@ You can optionally pass `--no-card-images` if you don't want to download images 
 
 To install frontend dependencies, run:
 
-    $ npm install -g bower
-    $ npm install -g stylus
-    $ bower install
+    $ npm ci
 
 To compile CSS:
 
-    $ stylus src/css -o resources/public/css/
+    $ npx stylus src/css/netrunner.styl -o resources/public/css/
 
 Optionally you can pass `-w` to `stylus` to watch for changes and automatically recompile.
 
 Compile ClojureScript frontend:
 
-    $ lein cljsbuild once dev
+    $ npx shadow-cljs compile app
 
 Finally, launch the webserver and the Clojure REPL:
 

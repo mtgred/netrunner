@@ -2,6 +2,7 @@
   (:require
    [cheshire.generate :refer [add-encoder encode-str]]
    [puppetlabs.ring-middleware.core :refer [wrap-add-cache-headers]]
+   [reitit.core :as r]
    [reitit.ring :as ring]
    [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
    [ring.middleware.cors :refer [wrap-cors]]
@@ -25,6 +26,16 @@
    [web.ws :as ws]))
 
 (add-encoder org.bson.types.ObjectId encode-str)
+
+(def paths ["" "cards" "deckbuilder" "play" "help" "account" "stats" "about" "tournament" "admin" "users" "features"])
+
+(defn base-routes []
+  (ring/router
+    (mapv (fn [path] [(str "/" path) {:get pages/index-page}]) paths)))
+
+(comment
+  ((ring/ring-handler (base-routes)) {:request-method :get :uri "/"})
+  )
 
 (defn api-routes []
   (ring/router
@@ -106,12 +117,27 @@
                                                "accept" "accept-encoding" "accept-language"
                                                "authorization" "content-type" "origin"}]]}}))
 
+(comment
+  ((ring/ring-handler (api-routes)) {:request-method :get :uri "/data/cards"})
+  )
+
+(defn merge-routes [& routes]
+  (ring/router
+    (apply merge (map r/routes routes))
+    (apply merge (map r/options routes))))
+
+(comment
+  (r/routes (merge-routes (base-routes) (api-routes)))
+  ((ring/ring-handler (merge-routes (base-routes) (api-routes))) {:request-method :get :uri "/play"})
+  )
+
 (defn make-default-routes []
   (ring/routes
     (ring/redirect-trailing-slash-handler)
     (ring/create-resource-handler {:path "/"})
-    (ring/create-default-handler
-      {:not-found pages/index-page})))
+    ; (ring/create-default-handler
+    ;   {:not-found pages/index-page})
+    ))
 
 (defn wrap-return-favicon [handler]
   (fn [request]
@@ -146,17 +172,16 @@
 
 (defn make-app [system]
   (ring/ring-handler
-    (api-routes)
+    (merge-routes (base-routes) (api-routes))
     (make-default-routes)
     (make-middleware system)))
 
 (defn make-dev-app [system]
   (ring/ring-handler
-    (api-routes)
+    (merge-routes)
     (make-default-routes)
     (update (make-middleware system) :middleware #(vec (cons wrap-stacktrace %)))))
 
 (comment
   ((make-app nil) {:request-method :get :uri "/chat/config"})
-  (require '[reitit.core :as r])
   (r/router-name (ring/get-router (make-app nil))))

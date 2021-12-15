@@ -10,7 +10,7 @@
    [web.versions :refer [frontend-version]]))
 
 (defn index-page
-  ([req] (index-page req nil nil))
+  ([request] (index-page request nil nil))
   ([{user :user server-mode :system/server-mode} og replay-id]
    (response
      200
@@ -27,8 +27,10 @@
         [:meta {:property "og:description" :content (:description og "Build Netrunner decks and test them online against other players.")}]
         [:link {:rel "apple-touch-icon" :href "/img/icons/jinteki_167.png"}]
         [:title "Jinteki"]
-        (hiccup/include-css "/css/toastr.min.css")
-        (hiccup/include-css (str "/css/netrunner.css?v=" @frontend-version))]
+        (hiccup/include-css "/lib/css/toastr.min.css")
+        (if (= "dev" server-mode)
+          (hiccup/include-css "/css/netrunner.css")
+          (hiccup/include-css (str "/css/netrunner.css?v=" @frontend-version)))]
        [:body
         [:div#sente-csrf-token
          {:style {:display "hidden"}
@@ -48,9 +50,9 @@
         [:script {:type "text/javascript"}
          (str "var user=" (json/generate-string user) ";")]
         (if (= "dev" server-mode)
-          (list (hiccup/include-js "/cljs-out/dev/goog/base.js")
-                (hiccup/include-js "/cljs-out/dev/main_bundle.js"))
-          (list (hiccup/include-js (str "/cljs-out/prod/main_bundle.js?v=" @frontend-version))))]))))
+          (list (hiccup/include-js "/js/cljs-runtime/goog.base.js")
+                (hiccup/include-js "/js/main.js"))
+          (list (hiccup/include-js (str "/js/main.js?v=" @frontend-version))))]))))
 
 (defn reset-password-page
   [{db :system/db

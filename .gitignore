@@ -53,3 +53,4 @@ tags.temp
 tags.temp.tmp
 
 .lsp/
+.shadow-cljs/

@@ -1,7 +1,0 @@
-^{:css-dirs ["resources/public/css"]
-  :clean-outputs true
-  :auto-bundle :webpack}
-{:optimizations :advanced
- :pretty-print false
- :npm-deps true
- :main prod.nr}

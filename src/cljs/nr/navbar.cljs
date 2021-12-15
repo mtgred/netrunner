@@ -58,7 +58,7 @@
 (defn navigate [token]
   (.setToken history token))
 
-(events/listen history EventType/NAVIGATE #(navigate (.-token %)))
+(events/listen history EventType/NAVIGATE #(navigate (.-token ^js %)))
 (.setUseFragment history false)
 (.setPathPrefix history "")
 (.setEnabled history true)

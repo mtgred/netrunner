@@ -52,7 +52,7 @@
               (if (pos? inactivities-remaining)
                 "Please confirm, you are still there. Otherwise, y"
                 "Y") "our opponent will be able to claim victory or cancel the match in "
-              (time-span-string (Math.floor time-remaining)) "."]
+              (time-span-string (js/Math.floor time-remaining)) "."]
              (when (pos? inactivities-remaining)
                [:div.button-bar.centered
                 [:button {:on-click more-time} (tr [:angel-arena.still-here "Need more time"])]])]
@@ -61,13 +61,13 @@
                [:div.infobox
                 "Your opponent has been inactive for a while. "
                 "You will be able to claim victory or cancel the match in "
-                (time-span-string (Math.floor time-remaining))
+                (time-span-string (js/Math.floor time-remaining))
                 "."]]
               [:div.angel-arena-time-warning
                [:div.infobox
                 (:username inactive-user) " has been inactive for a while. "
                 "Their opponent will be able to claim victory or cancel the match in "
-                (time-span-string (Math.floor time-remaining))
+                (time-span-string (js/Math.floor time-remaining))
                 "."]])))
 
         "inactive-countdown"
@@ -76,7 +76,7 @@
             [:div.angel-arena-time-warning
              [:div.infobox
               (str "You have been inactive for "
-                   (time-span-string (Math.floor time-inactive))
+                   (time-span-string (js/Math.floor time-inactive))
                    ". Your opponent can decide to either claim victory or cancel the match.")]
              (when (pos? inactivities-remaining)
                [:div.button-bar.centered
@@ -85,7 +85,7 @@
               [:div.angel-arena-time-warning
                [:div.infobox
                 (str "Your opponent has been inactive for "
-                     (time-span-string (Math.floor time-inactive))
+                     (time-span-string (js/Math.floor time-inactive))
                      ". You can decide to either claim victory or cancel the match.")]
                [:div.button-bar.centered
                 [:button {:on-click claim-victory} (tr [:angel-arena.claim-victory "Claim victory"])]
@@ -93,7 +93,7 @@
               [:div.angel-arena-time-warning
                [:div.infobox
                 (str (:username inactive-user) " has been inactive for "
-                     (time-span-string (Math.floor time-inactive))
+                     (time-span-string (js/Math.floor time-inactive))
                      ". Their opponent can decide to either claim victory or cancel the match.")]])))
 
         ; else

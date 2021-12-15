@@ -1,13 +1,13 @@
 (ns nr.sounds
   (:require
-   ["howler" :refer [Howl]]
+   ["howler" :as howler :refer [Howl]]
    [jinteki.utils :refer [str->int]]
    [nr.appstate :refer [app-state]]))
 
 (defn audio-sfx [sound]
   (let [args (clj->js {:src [(str "/sound/" sound ".ogg")
                              (str "/sound/" sound ".mp3")]})]
-    [sound (new Howl. args)]))
+    [sound (new Howl args)]))
 
 (defonce soundbank
   (->> ["agenda-score"

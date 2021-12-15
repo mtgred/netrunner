@@ -20,7 +20,6 @@
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
-   [nr.gameboard.log :refer [should-scroll]]
    [nr.gameboard.player-stats :refer [stat-controls stats-view]]
    [nr.gameboard.replay :refer [replay-panel]]
    [nr.gameboard.right-pane :refer [content-pane]]
@@ -205,12 +204,12 @@
 ;; touch support
 (defonce touchmove (atom {}))
 
-(defn release-touch [card]
+(defn release-touch [^js/$ card]
   (-> card (.removeClass "disable-transition"))
   (-> card (.css "position" ""))
   (-> card (.css "top" "")))
 
-(defn update-card-position [card touch]
+(defn update-card-position [^js/$ card touch]
   (-> card (.css "left" (str (- (int (aget touch "pageX")) 30) "px")))
   (-> card (.css "top"  (str (- (int (aget touch "pageY")) 42) "px"))))
 
