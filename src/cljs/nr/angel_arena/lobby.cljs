@@ -1,4 +1,4 @@
-(ns nr.angel-arena
+(ns nr.angel-arena.lobby
   (:require
    [clojure.string :refer [capitalize lower-case]]
    [jinteki.cards :refer [all-cards]]
@@ -12,8 +12,8 @@
    [nr.player-view :refer [user-status-span]]
    [nr.sounds :refer [resume-sound]]
    [nr.translations :refer [tr tr-format tr-pronouns tr-side]]
-   [nr.utils :refer [cond-button faction-icon slug->format time-span-string
-                     tristate-button]]
+   [nr.utils :refer [cond-button faction-icon format-zoned-date-time
+                     mdy-formatter slug->format time-span-string tristate-button]]
    [nr.ws :as ws]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]
@@ -144,7 +144,7 @@
                     :alt (get-in deck [:identity :title] "")}]
              [:div.float-right [deck-format-status-span deck (get-in deck [:status :format]) true]]
              [:h4 (:name deck)]
-             [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+             [:div.float-right (format-zoned-date-time mdy-formatter (:date deck))]
              [:p (get-in deck [:identity :title])]]))))]])
 
 (defn- new-run-button-bar [side decks]
@@ -154,7 +154,7 @@
     #(reagent-modals/modal!
        [deckselect-modal {:side side :decks decks}])]])
 
-(defmethod ws/-msg-handler :angel-arena/run-update
+(defmethod ws/event-msg-handler :angel-arena/run-update
   [{{:keys [finished-run] :as data} :?data}]
   ;; TODO: Implement this
   (when finished-run

@@ -27,8 +27,9 @@
    {:hiccup [settings-pane]
     :label (tr [:log.settings "Settings"])}})
 
-(defn- resize-card-zoom []
+(defn- resize-card-zoom
   "Resizes the card zoom based on the values in the app-state"
+  []
   (let [width (get-in @app-state [:options :log-width])
         top (get-in @app-state [:options :log-top])
         max-card-width (- width 5)

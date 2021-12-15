@@ -533,8 +533,7 @@
                                  update :lobbies
                                  #(-> %
                                       (handle-swap-sides gameid uid side swap-message)
-                                      (handle-set-last-update gameid uid))
-                                 update-sides uid side)
+                                      (handle-set-last-update gameid uid)))
             lobby? (get-in new-app-state [:lobbies gameid])]
         (send-lobby-state lobby?)
         (broadcast-lobby-list)))))

@@ -1,10 +1,10 @@
-(ns nr.gamelobby
+(ns nr.lobby
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
    [cljs.core.async :refer [<!] :as async]
    [clojure.set :refer [difference union]]
    [nr.ajax :refer [GET]]
-   [nr.angel-arena :as angel-arena]
+   [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.game-row :refer [game-row]]
@@ -20,19 +20,21 @@
    [reagent.core :as r]
    [taoensso.sente :as sente]))
 
-(defmethod ws/-msg-handler :lobby/list [{data :?data}]
+(defmethod ws/event-msg-handler :lobby/list [{data :?data}]
   (swap! app-state assoc :games data))
 
-(defmethod ws/-msg-handler :lobby/state [{data :?data}]
-  (swap! app-state assoc :current-game data))
+(defmethod ws/event-msg-handler :lobby/state [{data :?data}]
+  (swap! app-state assoc :current-game data)
+  (when (:started data)
+    (ws/ws-send! [:game/resync {:gameid (:gameid data)}])))
 
-(defmethod ws/-msg-handler :lobby/notification [{data :?data}]
+(defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
   (play-sound data))
 
-(defmethod ws/-msg-handler :lobby/toast [{{:keys [message type]} :?data}]
+(defmethod ws/event-msg-handler :lobby/toast [{{:keys [message type]} :?data}]
   (non-game-toast message type {:time-out 30000 :close-button true}))
 
-(defmethod ws/-msg-handler :lobby/timeout
+(defmethod ws/event-msg-handler :lobby/timeout
   [{{:keys [gameid]} :?data}]
   (when (= gameid (:gameid @app-state))
     (non-game-toast (tr [:lobby.closed-msg "Game lobby closed due to inactivity"])
@@ -71,7 +73,7 @@
                      init-state (assoc-in init-state [:options :spectatorhands] true)
                      diffs (rest history)
                      init-state (assoc init-state :replay-diffs diffs)]
-                 (ws/event-msg-handler
+                 (ws/event-msg-handler-wrapper
                    {:id :netrunner/start
                     :?data (.stringify js/JSON (clj->js
                                                  (if jump-to
@@ -264,20 +266,18 @@
                games (r/cursor app-state [:games])
                current-game (r/cursor app-state [:current-game])
                user (r/cursor app-state [:user])
-               cards-loaded (r/cursor app-state [:cards-loaded])
-               active (r/cursor app-state [:active-page])
                visible-formats (r/cursor app-state [:visible-formats])
                replay-id (r/cursor app-state [:replay-id])]
+    (println "rendering game-lobby")
     [:div.container
      [:div.lobby-bg]
-     (when (and (= "/play" (first @active)) @cards-loaded)
-       (authenticated (fn [_] nil))
-       ; TODO: make starting a game from deckbuilder work again
-       ; (when (and (not (or @gameid (:editing @s)))
-       ;            (some? (:create-game-deck @app-state)))
-       ;   (new-game s))
-       (if-let [params @replay-id]
-         (load-replay-from-params state params)
-         [:div.lobby.panel.blue-shade
-          [games-list-panel state games current-game user visible-formats]
-          [right-panel state decks current-game user]]))]))
+     (authenticated (fn [_] nil))
+     ; TODO: make starting a game from deckbuilder work again
+     ; (when (and (not (or @gameid (:editing @s)))
+     ;            (some? (:create-game-deck @app-state)))
+     ;   (new-game s))
+     (if-let [params @replay-id]
+       (load-replay-from-params state params)
+       [:div.lobby.panel.blue-shade
+        [games-list-panel state games current-game user visible-formats]
+        [right-panel state decks current-game user]])]))

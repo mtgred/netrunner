@@ -20,30 +20,30 @@
       ([ev] (send-fn ev))
       ([ev ?timeout ?cb] (send-fn ev ?timeout ?cb)))))
 
-(defmulti -msg-handler
+(defmulti event-msg-handler
   "Multimethod to handle Sente `event-msg`s"
   :id)
 
-(defn event-msg-handler
+(defn event-msg-handler-wrapper
   "Wraps `-msg-handler` with logging, error catching, etc."
   [event]
   (try
-    (-msg-handler event)
+    (event-msg-handler event)
     (catch js/Object e
       (println "Caught an error in the message handler: " e))))
 
-(defmethod -msg-handler :default [event]
+(defmethod event-msg-handler :default [event]
   (println (str "unknown event message"
                 "\nid: " (:id event)
                 "\nevent:" event)))
 
-(defmethod -msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
-(defmethod -msg-handler :chsk/ws-ping [_])
+(defmethod event-msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
+(defmethod event-msg-handler :chsk/ws-ping [_])
 
 (defn resync []
   (ws-send! [:game/resync {:gameid (current-gameid app-state)}]))
 
-(defmethod -msg-handler :chsk/state
+(defmethod event-msg-handler :chsk/state
   [{[old-state new-state] :?data}]
   (when (not (:first-open? new-state))
     (when (and (:open? old-state)
@@ -65,6 +65,4 @@
   (reset! router_
           (start-client-chsk-router!
             ch-chsk
-            event-msg-handler)))
-
-(start-router!)
+            event-msg-handler-wrapper)))

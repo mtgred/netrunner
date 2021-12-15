@@ -1,2 +1,0 @@
-var iourl = {};
-var user = {};

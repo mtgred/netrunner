@@ -11,23 +11,21 @@
    [postal.core :as mail]
    [ring.util.response :refer [redirect]]
    [web.app-state :as app-state]
-   [web.config :refer [server-config]]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
    [web.user :refer [active-user? create-user user-keys]]
    [web.utils :refer [response]])
   (:import
    java.security.SecureRandom))
 
-(def auth-config (:auth server-config))
-
-(defn create-token [{:keys [_id emailhash]}]
+(defn create-token [{:keys [expiration secret]}
+                    {:keys [_id emailhash]}]
   (let [claims {:_id _id
                 :emailhash emailhash
-                :exp (inst/plus (inst/now) (:expiration auth-config) chrono/days)}]
-    (jwt/sign claims (:secret auth-config) {:alg :hs512})))
+                :exp (inst/plus (inst/now) expiration chrono/days)}]
+    (jwt/sign claims secret {:alg :hs512})))
 
-(defn unsign-token [token]
-  (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
+(defn unsign-token [{:keys [secret]} token]
+  (try (jwt/unsign token secret {:alg :hs512})
        (catch Exception _ (prn "Received invalid cookie " token))))
 
 (defn wrap-authentication-required [handler]
@@ -38,24 +36,23 @@
 
 (defn wrap-authorization-required [handler]
   (fn [{user :user :as req}]
-    (if (and (active-user? user)
-             (:isadmin user))
+    (if (:isadmin user)
       (handler req)
       (response 401 {:message "Not authorized"}))))
 
 (defn wrap-tournament-auth-required [handler]
   (fn [{user :user :as req}]
-    (if (and (active-user? user)
-             (:tournament-organizer user))
+    (if (:tournament-organizer user)
       (handler req)
       (response 401 {:message "Not authorized"}))))
 
 (defn wrap-user [handler]
   (fn [{db :system/db
+        auth :system/auth
         :keys [cookies] :as req}]
     (let [user (some-> (get cookies "session")
                        (:value)
-                       (unsign-token)
+                       (->> (unsign-token auth))
                        (#(mc/find-one-as-map db "users" {:_id (->object-id (:_id %))
                                                          :emailhash (:emailhash %)}))
                        (select-keys user-keys)
@@ -99,6 +96,7 @@
 
 (defn login-handler
   [{db :system/db
+    auth :system/auth
     {:keys [username password]} :params}]
   (let [user (find-non-banned-user db {:username username})]
     (if (and user
@@ -107,8 +105,8 @@
                      {:username username}
                      {"$set" {:last-connection (inst/now)}})
           (assoc (response 200 {:message "ok"})
-                 :cookies {"session" (merge {:value (create-token user)}
-                                            (get-in server-config [:auth :cookie]))}))
+                 :cookies {"session" (merge {:value (create-token auth user)}
+                                            (:cookie auth))}))
       (response 401 {:error "Invalid login or password"}))))
 
 (defn logout-handler [_]
@@ -202,12 +200,13 @@
 
 (defn forgot-password-handler
   [{db :system/db
+    email-settings :system/email
     {:keys [email]} :params
     headers         :headers}]
   (if (find-non-banned-user db {:email email})
     (let [code (set-password-reset-code! db email)
           msg (mail/send-message
-                (:email server-config)
+                email-settings
                 {:from    "support@jinteki.net"
                  :to      email
                  :subject "Jinteki Password Reset"
@@ -222,6 +221,7 @@
 
 (defn reset-password-handler
   [{db :system/db
+    email-settings :system/email
     {:keys [password confirm token]} :params}]
   (if-let [{:keys [username email]}
            (find-non-banned-user db {:resetPasswordToken   token
@@ -234,7 +234,7 @@
                             :resetPasswordExpires nil
                             :resetPasswordToken   nil}})
         (mail/send-message
-          (:email server-config)
+          email-settings
           {:from    "support@jinteki.net"
            :to      email
            :subject "Your password has been changed"

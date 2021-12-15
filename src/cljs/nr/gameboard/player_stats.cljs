@@ -1,10 +1,11 @@
 (ns nr.gameboard.player-stats
-  (:require [clojure.string :as s :refer [capitalize join lower-case]]
-            [nr.appstate :refer [app-state]]
-            [nr.avatar :refer [avatar]]
-            [nr.gameboard.actions :refer [send-command]]
-            [nr.gameboard.state :refer [game-state]]
-            [nr.translations :refer [tr tr-pronouns]]))
+  (:require
+   [clojure.string :as s :refer [capitalize lower-case]]
+   [nr.appstate :refer [app-state]]
+   [nr.avatar :refer [avatar]]
+   [nr.gameboard.actions :refer [send-command]]
+   [nr.gameboard.state :refer [game-state]]
+   [nr.translations :refer [tr tr-pronouns]]))
 
 (defn stat-controls
   "Create an overlay to increase/decrease a player attribute (e.g. credits)."

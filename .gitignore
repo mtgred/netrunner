@@ -21,9 +21,10 @@ pom.xml
 
 /resources/public/js/
 /resources/public/cljs/
-/resources/public/lib/
+/resources/public/cljs-out/
 /resources/public/css/
-/resources/public/img/cards
+/resources/public/img/cards/
+/resources/public/sound/
 /data/andb-*.json
 /data/cards.edn
 /data/cycles.edn
@@ -52,3 +53,4 @@ tags.temp
 tags.temp.tmp
 
 .lsp/
+.shadow-cljs/

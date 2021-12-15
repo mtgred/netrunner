@@ -69,8 +69,9 @@
   The sfx queue has size limited to 3 to limit the sound torrent tabbed out or lagged players will experience."
   [state _ sfx]
   (swap! state (fn [state]
-                 (if-let [current-id (get-in state [:sfx-current-id])]
+                 (if-let [current-id (:sfx-current-id state)]
                    (-> state
-                       (update :sfx #(take 3 (conj % {:id (inc current-id) :name sfx})))
+                       (update :sfx conj {:id (inc current-id) :name sfx})
+                       (update :sfx #(take 3 %))
                        (update :sfx-current-id inc))
                    state))))

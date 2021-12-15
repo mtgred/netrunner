@@ -1,20 +1,23 @@
 (ns nr.chat
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [clojure.string :refer [lower-case] :as s]
-            [jinteki.utils :refer [superuser?]]
-            [nr.ajax :refer [GET]]
-            [nr.appstate :refer [app-state]]
-            [nr.auth :refer [authenticated] :as auth]
-            [nr.avatar :refer [avatar]]
-            [nr.gameboard.card-preview :refer [card-preview-mouse-over card-preview-mouse-out]]
-            [nr.news :refer [news]]
-            [nr.cardbrowser :refer [image-url]]
-            [nr.utils :refer [toastr-options render-message set-scroll-top store-scroll-top]]
-            [nr.translations :refer [tr tr-pronouns]]
-            [nr.ws :as ws]
-            [reagent.core :as r]
-            [nr.account :as account]))
+  (:require
+   [cljs.core.async :refer [<! chan put!] :as async]
+   [clojure.string :refer [lower-case] :as s]
+   [jinteki.utils :refer [superuser?]]
+   [nr.account :as account]
+   [nr.ajax :refer [GET]]
+   [nr.appstate :refer [app-state]]
+   [nr.auth :refer [authenticated] :as auth]
+   [nr.avatar :refer [avatar]]
+   [nr.cardbrowser :refer [image-url]]
+   [nr.gameboard.card-preview :refer [card-preview-mouse-out
+                                      card-preview-mouse-over]]
+   [nr.news :refer [news]]
+   [nr.translations :refer [tr tr-pronouns]]
+   [nr.utils :refer [non-game-toast render-message set-scroll-top
+                     store-scroll-top]]
+   [nr.ws :as ws]
+   [reagent.core :as r]))
 
 (defonce chat-state (atom {}))
 
@@ -24,18 +27,11 @@
 
 (go (swap! chat-state assoc :config (:json (<! (GET "/chat/config")))))
 
-(defn non-game-toast
-  "Display a toast warning with the specified message."
-  [msg type options]
-  (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr type)]
-    (f msg)))
+(defmethod ws/event-msg-handler :chat/message [{data :?data}] (put! chat-channel data))
+(defmethod ws/event-msg-handler :chat/delete-msg [{data :?data}] (put! delete-msg-channel data))
+(defmethod ws/event-msg-handler :chat/delete-all [{data :?data}] (put! delete-all-channel data))
 
-(defmethod ws/-msg-handler :chat/message [{data :?data}] (put! chat-channel data))
-(defmethod ws/-msg-handler :chat/delete-msg [{data :?data}] (put! delete-msg-channel data))
-(defmethod ws/-msg-handler :chat/delete-all [{data :?data}] (put! delete-all-channel data))
-
-(defmethod ws/-msg-handler :chat/blocked
+(defmethod ws/event-msg-handler :chat/blocked
   [{{:keys [reason]} :?data}]
   (let [reason-str (case reason
                      :rate-exceeded "Rate exceeded"
@@ -158,7 +154,7 @@
 (defn- hide-block-menu [msg-state]
   (-> (:msg-buttons @msg-state) js/$ .hide))
 
-(defn message-view [message]
+(defn message-view [message _]
   (let [msg-state (atom {})
         user (:user @app-state)
         my-msg (= (:username message) (:username user))]
@@ -219,14 +215,11 @@
 (fetch-all-messages)
 
 (defn message-panel [s old scroll-top]
-  (let [cards-loaded (r/cursor app-state [:cards-loaded])]
+  (r/with-let [cards-loaded (r/cursor app-state [:cards-loaded])]
     (r/create-class
-      {
-       :display-name "message-panel"
-
+      {:display-name "message-panel"
        :component-did-mount #(set-scroll-top % @scroll-top)
        :component-will-unmount #(store-scroll-top % scroll-top)
-
        :component-did-update
        (fn []
          (when-let [msg-list (:message-list @chat-state)]
@@ -250,7 +243,7 @@
                (swap! old assoc :prev-msg-count curr-msg-count)))))
 
        :reagent-render
-       (fn [s _scroll-top]
+       (fn [s _old _scroll-top]
          [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
                                               :on-scroll #(let [currElt (.-currentTarget %)
                                                                 scroll-top (.-scrollTop currElt)
@@ -264,7 +257,7 @@
               (doall (map-indexed
                        (fn [i message]
                          [:div {:key i}
-                          [message-view message]])
+                          [message-view message s]])
                        message-list))))])})))
 
 (defn chat []
@@ -290,14 +283,13 @@
             [msg-input-view (:channel @s) curr-msg]])]]])))
 
 (defn chat-page []
-  (let [active (r/cursor app-state [:active-page])
-        s (r/atom {:channel :general
-                   :zoom false
-                   :zoom-ch (chan)
-                   :scrolling false})
-        curr-msg (r/atom{})
-        scroll-top (atom 0)
-        old (atom {:prev-msg-count 0})] ; old is not a r/atom so we don't render when this is updated
+  (r/with-let [s (r/atom {:channel :general
+                          :zoom false
+                          :zoom-ch (chan)
+                          :scrolling false})
+               curr-msg (r/atom {})
+               scroll-top (atom 0)
+               old (atom {:prev-msg-count 0})] ; old is not a r/atom so we don't render when this is updated
 
     (go (while true
           (let [card (<! (:zoom-ch @s))]
@@ -305,9 +297,8 @@
 
     (fn []
       [:div.container
-       (when (= "/" (first @active))
-         [:<>
-          [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
-          [news]
-          [chat s curr-msg old scroll-top]
-          [:div#version [:span (str "Version " (:app-version @app-state "Unknown"))]]])])))
+       [:div.home-bg]
+       [:h1 (tr [:chat.title "Play Android: Netrunner in your browser"])]
+       [news]
+       [chat s curr-msg old scroll-top]
+       [:div#version [:span (str "Version " "Unknown")]]])))

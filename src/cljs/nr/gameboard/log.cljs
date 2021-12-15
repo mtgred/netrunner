@@ -12,7 +12,8 @@
    [nr.translations :refer [tr]]
    [nr.utils :refer [influence-dot render-message]]
    [nr.ws :as ws]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [reagent.dom :as rdom]))
 
 (def commands (distinct (map :name command-info)))
 (def command-info-map (->> command-info
@@ -183,33 +184,31 @@
        :component-did-mount
        (fn [this]
          (when (:update @should-scroll)
-           (let [n (r/dom-node this)]
+           (let [n (rdom/dom-node this)]
              (set! (.-scrollTop n) (.-scrollHeight n)))))
-
-       :component-will-update
-       (fn [this]
-         (let [n (r/dom-node this)]
-           (reset! should-scroll {:update (or (:send-msg @should-scroll)
-                                              (scrolled-to-end? n 15))
-                                  :send-msg false})))
 
        :component-did-update
        (fn [this]
-         (when (:update @should-scroll)
-           (let [n (r/dom-node this)]
+         (println "log did update")
+         (let [n (rdom/dom-node this)]
+           (when (or (:send-msg @should-scroll)
+                     (scrolled-to-end? n 15))
+             (reset! should-scroll {:send-msg false})
              (set! (.-scrollTop n) (.-scrollHeight n)))))
 
        :reagent-render
        (fn []
+         (println "render")
          (into [:div.messages {:class [(when (:replay @game-state)
                                          "panel-bottom")]
                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)
                                :on-mouse-out #(card-preview-mouse-out % zoom-channel)}]
                (map
                  (fn [{:keys [user text timestamp]}]
+                   ^{:key timestamp}
                    (if (= user "__system__")
-                     [:div.system {:key timestamp} (render-message text)]
-                     [:div.message {:key timestamp}
+                     [:div.system (render-message text)]
+                     [:div.message
                       [avatar user {:opts {:size 38}}]
                       [:div.content
                        [:div.username (:username user)]

@@ -106,17 +106,17 @@
     .card.playable
         box-shadow(0 0 1px 2px gold-base)
         animation: none
-        
+
     .card.hovered
         animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
         border-color: blue-light
-    
+
     .card
         &:not(.selected)
             &:focus
                 box-shadow(0 0 1px 2px blue-light)
                 animation: none
-        
+
     .counters
         position: absolute
         top: 0
@@ -232,10 +232,10 @@
         width: 200px
         font-size: .75rem
         line-height: 1rem
-        
+
         ul
             list-style: none
-            
+
         > span
             margin: 2px
             &:last-child
@@ -322,7 +322,7 @@
         height: 84px
         width: 60px
         border-radius: 4px
-    
+
     .server-card
         position: relative
         min-height: 84px
@@ -416,7 +416,8 @@
             border:solid 4px red-core
             padding: 12px
             border-radius:5px
-            zoom:1
+            transform: scale(1)
+            transform-origin: 0 0
             opacity:0.9
             text-shadow: 0 0 2px red-core
             box-shadow: 0 0 2px red-core

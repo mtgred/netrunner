@@ -8,7 +8,7 @@
 
 (def users-state (r/atom {}))
 
-(defmethod ws/-msg-handler :admin/fetch-users
+(defmethod ws/event-msg-handler :admin/fetch-users
   [{{success :success} :?data}]
   (when success
     (reset!
@@ -23,7 +23,7 @@
         {}
         success))))
 
-(defmethod ws/-msg-handler :admin/user-edit
+(defmethod ws/event-msg-handler :admin/user-edit
   [{{:keys [error success]} :?data}]
   (cond
     error (non-game-toast error "error" nil)
@@ -118,9 +118,9 @@
                    (map-indexed (fn [idx itm] ^{:key idx} itm))))))))
 
 (defn users []
-  (r/with-let [user (r/cursor app-state [:user])
-               active (r/cursor app-state [:active-page])]
+  (r/with-let [user (r/cursor app-state [:user])]
+    (ws/ws-send! [:admin/fetch-users])
     [:div.page-container
-     (when (and (= "/users" (first @active))
-                (:isadmin @user))
+     [:div.account-bg]
+     (when (:isadmin @user)
        [users-container])]))

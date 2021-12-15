@@ -1,6 +1,9 @@
 (ns nr.gameboard.board
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
+   [cljc.java-time.duration :as duration]
+   [cljc.java-time.instant :as inst]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljs.core.async :refer [<! chan put!] :as async]
    [clojure.string :as s :refer [capitalize ends-with? join lower-case split
                            starts-with?]]
@@ -17,11 +20,11 @@
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
-   [nr.gameboard.log :refer [should-scroll]]
    [nr.gameboard.player-stats :refer [stat-controls stats-view]]
    [nr.gameboard.replay :refer [replay-panel]]
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
+   [nr.sounds :refer [update-audio]]
    [nr.translations :refer [tr tr-side]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face render-icons render-message]]
@@ -30,7 +33,6 @@
 (declare stacked-card-view show-distinct-cards)
 
 (defonce board-dom (atom {}))
-(defonce sfx-state (atom {}))
 (defonce card-menu (r/atom {}))
 
 (defn- image-url [{:keys [side code] :as card}]
@@ -47,12 +49,6 @@
         images (image-or-face card)]
     (get-image-path images (keyword lang) (keyword res) (keyword art))))
 
-
-(defn notify
-  "Send a notification to the chat, and a toast to the current player of the specified severity"
-  [text severity]
-  (swap! game-state update-in [:log] #(conj % {:user "__system__" :text text}))
-  (toast text severity nil))
 
 (defonce button-channel (chan))
 
@@ -199,8 +195,7 @@
 
 (defn handle-drop [e server]
   (-> e .-target js/$ (.removeClass "dragover"))
-  (let [card (-> e .-dataTransfer (.getData "card") ((.-parse js/JSON)) (js->clj :keywordize-keys true))
-        side (if (#{"HQ" "R&D" "Archives"} server) "Corp" "Runner")]
+  (let [card (-> e .-dataTransfer (.getData "card") ((.-parse js/JSON)) (js->clj :keywordize-keys true))]
     (when (not= "Identity" (:type card))
       (send-command "move" {:card card :server server}))))
 
@@ -209,16 +204,16 @@
 ;; touch support
 (defonce touchmove (atom {}))
 
-(defn release-touch [card]
+(defn release-touch [^js/$ card]
   (-> card (.removeClass "disable-transition"))
   (-> card (.css "position" ""))
   (-> card (.css "top" "")))
 
-(defn update-card-position [card touch]
+(defn update-card-position [^js/$ card touch]
   (-> card (.css "left" (str (- (int (aget touch "pageX")) 30) "px")))
   (-> card (.css "top"  (str (- (int (aget touch "pageY")) 42) "px"))))
 
-(defn get-card [e server]
+(defn get-card [e _server]
   (-> e .-target js/$ (.closest ".card-wrapper")))
 
 (defn get-server-from-touch [touch]
@@ -336,7 +331,7 @@
         [card-zoom-display zoom-card img-side])
     (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
-(defn card-zoom-view [zoom-card]
+(defn card-zoom-view [_zoom-card]
   (let [zoomed-card (r/atom nil)
         img-side (r/atom true)]
     (fn [zoom-card]
@@ -582,8 +577,7 @@
              (not (facedown? card))))))
 
 (defn card-abilities [card abilities subroutines]
-  (let [actions (action-list card)
-        dynabi-count (count (filter :dynamic abilities))]
+  (let [actions (action-list card)]
     (when (and (= (:cid card) (:source @card-menu))
                (or (nil? (:keep-menu-open @card-menu))
                    (check-keep-menu-open card))
@@ -778,12 +772,13 @@
                               ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
                                                 [card-view c true]])
                             ; Rest
-                            (if (not-empty others)
+                            (when (not-empty others)
                               (if (= 1 (count others))
                                 (let [c (first others)
                                       flipped (face-down? c)]
-                                  ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
-                                                    [card-view c flipped]])
+                                  ^{:key (:cid c)}
+                                  [:div.card-wrapper {:class (when (playable? c) "playable")}
+                                   [card-view c flipped]])
                                 [stacked-card-view others]))])))))
 
 (defn stacked-card-view
@@ -843,7 +838,7 @@
 
 (defn hand-view []
   (let [s (r/atom {})]
-    (fn [side hand hand-size hand-count prompt-state popup popup-direction]
+    (fn [side hand hand-size hand-count popup popup-direction]
       (let [size (if (nil? @hand-count) (count @hand) @hand-count)
             filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
         [:div.hand-container
@@ -1206,31 +1201,6 @@
                       [card-view c]])))]))
      (when is-me centrals)]))
 
-(defn play-sfx
-  "Plays a list of sounds one after another."
-  [sfx soundbank]
-  (when-not (empty? sfx)
-    (when-let [sfx-key (keyword (first sfx))]
-      (.volume (sfx-key soundbank) (/ (str->int (get-in @app-state [:options :sounds-volume])) 100))
-      (.play (sfx-key soundbank)))
-    (play-sfx (rest sfx) soundbank)))
-
-(defn update-audio [{:keys [gameid sfx sfx-current-id]} soundbank]
-  ;; When it's the first game played with this state or when the sound history comes from different game, we skip the cacophony
-  (let [sfx-last-played (:sfx-last-played @sfx-state)]
-    (when (and (get-in @app-state [:options :sounds])
-               (not (nil? sfx-last-played))
-               (= gameid (:gameid sfx-last-played)))
-      ;; Skip the SFX from queue with id smaller than the one last played, queue the rest
-      (let [sfx-to-play (reduce (fn [sfx-list {:keys [id name]}]
-                                  (if (> id (:id sfx-last-played))
-                                    (conj sfx-list name)
-                                    sfx-list)) [] sfx)]
-        (play-sfx sfx-to-play soundbank)))
-  ;; Remember the most recent sfx id as last played so we don't repeat it later
-  (when sfx-current-id
-    (swap! sfx-state assoc :sfx-last-played {:gameid gameid :id sfx-current-id}))))
-
 (defn build-win-box
   "Builds the end of game pop up game end"
   [game-state]
@@ -1348,36 +1318,13 @@
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
-(defn audio-component [{:keys [sfx] :as cursor}]
-    (let [s (r/atom {})
-        audio-sfx (fn [name] (list (keyword name)
-                                   (new js/Howl (clj->js {:src [(str "/sound/" name ".ogg")
-                                                                (str "/sound/" name ".mp3")]}))))
-        soundbank (apply hash-map (concat
-                                    (audio-sfx "agenda-score")
-                                    (audio-sfx "agenda-steal")
-                                    (audio-sfx "click-advance")
-                                    (audio-sfx "click-card")
-                                    (audio-sfx "click-credit")
-                                    (audio-sfx "click-run")
-                                    (audio-sfx "click-remove-tag")
-                                    (audio-sfx "game-end")
-                                    (audio-sfx "install-corp")
-                                    (audio-sfx "install-runner")
-                                    (audio-sfx "play-instant")
-                                    (audio-sfx "rez-ice")
-                                    (audio-sfx "rez-other")
-                                    (audio-sfx "run-successful")
-                                    (audio-sfx "run-unsuccessful")
-                                    (audio-sfx "virus-purge")))]
-        (r/create-class
-            {:display-name "audio-component"
-             :component-did-update
-             (fn []
-                 (update-audio (select-keys @game-state [:sfx :sfx-current-id :gameid]) soundbank))
-             :reagent-render
-             (fn [{:keys [sfx] :as cursor}]
-              (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
+(defn audio-component [_input]
+  (r/with-let [sfx-state (r/track #(select-keys @game-state [:sfx :sfx-current-id]))]
+    (r/create-class
+      {:display-name "audio-component"
+       :component-did-update (fn [] (update-audio @sfx-state))
+       ;; make this component rebuild when sfx changes.
+       :reagent-render (fn [sfx] @sfx nil)})))
 
 (defn get-run-ices []
   (let [server (-> (:run @game-state)
@@ -1798,11 +1745,14 @@
 (defn- time-until
   "Helper method for timer. Computes how much time is left until `end`"
   [end]
-  (let [now (js/moment)
-        minutes (abs (. end (diff now "minutes")))
-        positive (pos? (. end (diff now "seconds")))
-        seconds (mod (abs (. end (diff now "seconds"))) 60)]
-    {:minutes minutes :seconds seconds :pos positive}))
+  (let [
+        now (inst/now)
+        diff (duration/between now end)
+        total-seconds (duration/get diff chrono/seconds)
+        minutes (abs (quot total-seconds 60))
+        seconds (mod (abs total-seconds) 60)
+        positive (pos? total-seconds)]
+        {:minutes minutes :seconds seconds :pos positive}))
 
 (defn- warning-class
   "Styling for the timer display."
@@ -1817,15 +1767,21 @@
 (defn time-remaining
   "Component which displays a readout of the time remaining on the timer."
   [start-date timer hidden]
-  (let [end-date (-> start-date js/moment (.add timer "minutes"))
+  (let [end-time (-> start-date
+                     (inst/parse)
+                     (inst/plus timer chrono/minutes))
         remaining (r/atom nil)
         interval (r/atom nil)]
     (r/create-class
-      {:component-did-mount #(reset! interval
-                               (js/setInterval ;; Update timer at most every 1 sec
-                                 (fn [] (reset! remaining (time-until end-date)))
-                                 1000))
-       :component-will-unmount #(js/clearInterval interval)
+      {:component-did-mount
+       (fn []
+         (reset! interval
+                 ;; Update timer at most every 1 sec
+                 (js/setInterval #(reset! remaining (time-until end-time)) 1000)))
+       :component-will-unmount
+       (fn []
+         (js/clearInterval @interval)
+         (reset! interval nil))
        :reagent-render
        (fn []
          (when (and @remaining (not @hidden))
@@ -1837,17 +1793,23 @@
               (:seconds @remaining) "s remaining")]))})))
 
 (defn starting-timestamp [start-date timer]
-  (let [d (js/Date. start-date)
+  ;; I don't like using js/Date, but `toLocalTimeString`
+  ;; is just too convenient
+  (let [start-time-string (str (tr [:game.game-start "Game start"])
+                               ": " (.toLocaleTimeString (js/Date. start-date)))
         hide-remaining (r/atom false)]
-    (fn [] [:div.panel.blue-shade.timestamp
-            [:span.float-center
-             (str (tr [:game.game-start "Game start"]) ": " (.toLocaleTimeString d))]
-            (when timer [:span.pm {:on-click #(swap! hide-remaining not)} (if @hide-remaining "+" "-")])
-            (when timer [:span {:on-click #(swap! hide-remaining not)} [time-remaining start-date timer hide-remaining]])])))
+    (fn []
+      [:div.panel.blue-shade.timestamp
+       [:span.float-center start-time-string]
+       (when timer
+         [:<>
+          [:span.pm {:on-click #(swap! hide-remaining not)}
+           (if @hide-remaining "+" "-")]
+          [:span {:on-click #(swap! hide-remaining not)}
+           [time-remaining start-date timer hide-remaining]]])])))
 
-(defn- handle-click [{:keys [active-page render-board?]} e]
-  (when (and (= "/play" (first @active-page))
-             @@render-board?)
+(defn- handle-click [{:keys [render-board?]} e]
+  (when @render-board?
     (when (-> e .-target (.closest ".menu-container") nil?)
       (close-card-menu))))
 
@@ -1881,9 +1843,8 @@
     (when clear-input?
       (set! (.-value log-input) ""))))
 
-(defn- handle-key-down [{:keys [active-page render-board?]} e]
-  (when (and (= "/play" (first @active-page))
-             @@render-board?)
+(defn- handle-key-down [{:keys [render-board?]} e]
+  (when @render-board?
     (let [active-element-type (.-type (.-activeElement js/document))
           not-text-input? (not= "text" active-element-type)
           can-focus? (-> js/document .-activeElement js/$ (.attr "tabindex"))]
@@ -1906,8 +1867,7 @@
                              corp-phase-12 runner-phase-12
                              end-turn run
                              encounters active-page]} e]
-  (when (and (= "/play" (first @active-page))
-             @@render-board?
+  (when (and @render-board?
              (not= "text" (.-type (.-activeElement js/document))))
     (let [clicks (:click (@side @game-state))
           active-player-kw (keyword @active-player)
@@ -1973,7 +1933,7 @@
         corp (r/cursor game-state [:corp])
         runner (r/cursor game-state [:runner])
         active-player (r/cursor game-state [:active-player])
-        render-board? (r/track (fn [] (and corp runner side)))
+        render-board? (r/track (fn [] (and corp runner side true)))
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])]
 
@@ -1985,48 +1945,42 @@
           (let [button (<! button-channel)]
             (swap! app-state assoc :button button))))
 
-    (add-watch active :change-page
-      (fn [_k _r [o] [n]]
-        (when (and (not= o "/play") (= n "/play"))
-          (reset! should-scroll {:update true :send-msg false}))))
-
     (r/create-class
       {:display-name "gameboard"
 
        :component-did-mount
        (fn [this]
          (-> js/document (.addEventListener
-                          "keydown"
-                          (partial handle-key-down {:active-page active :render-board? render-board?})))
+                           "keydown"
+                           (partial handle-key-down {:render-board? render-board?})))
          (-> js/document (.addEventListener
-                          "keyup"
-                          (partial handle-key-up {:side side :active-player active-player :render-board? render-board?
-                                           :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
-                                           :end-turn end-turn :run run :active-page active
-                                           :encounters encounters})))
+                           "keyup"
+                           (partial handle-key-up {:side side :active-player active-player :render-board? render-board?
+                                                   :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
+                                                   :end-turn end-turn :run run
+                                                   :encounters encounters})))
          (-> js/document (.addEventListener
-                          "click"
-                          (partial handle-click {:active-page active :render-board? render-board?}))))
+                           "click"
+                           (partial handle-click {:render-board? render-board?}))))
 
        :component-will-unmount
        (fn [this]
          (-> js/document (.addEventListener
-                          "keydown"
-                          (partial handle-key-down {:active-page active :render-board? render-board?})))
+                           "keydown"
+                           (partial handle-key-down {:render-board? render-board?})))
          (-> js/document (.removeEventListener
-                          "keyup"
-                          (partial handle-key-up {:side side :active-player active-player :render-board? render-board?
-                                                  :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
-                                                  :end-turn end-turn :run run
-                                                  :encounters encounters})))
+                           "keyup"
+                           (partial handle-key-up {:side side :active-player active-player :render-board? render-board?
+                                                   :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
+                                                   :end-turn end-turn :run run
+                                                   :encounters encounters})))
          (-> js/document (.addEventListener
-                          "click"
-                          (partial handle-click {:active-page active :render-board? render-board?}))))
+                           "click"
+                           (partial handle-click {:render-board? render-board?}))))
 
        :reagent-render
        (fn []
-         (when (and (= "/play" (first @active))
-                    @@render-board?)
+         (when @render-board?
            (let [me-side (if (= :spectator @side) :corp @side)
                  op-side (utils/other-side me-side)
                  me (r/cursor game-state [me-side])
@@ -2102,7 +2056,7 @@
                  [hand-view op-side op-hand op-hand-size op-hand-count (atom nil) (= @side :spectator) "opponent"]]
 
                 [:div.inner-leftpane
-                 [audio-component {:sfx sfx}]
+                 [audio-component sfx]
 
                  [:div.left-inner-leftpane
                   [:div
@@ -2120,7 +2074,8 @@
                         me-current (r/cursor game-state [me-side :current])
                         me-play-area (r/cursor game-state [me-side :play-area])]
                     [:div
-                     (when-not (:replay @game-state) [starting-timestamp @start-date @timer])
+                     (when-not (:replay @game-state)
+                       [starting-timestamp @start-date @timer])
                      [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
                      [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
                      [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]

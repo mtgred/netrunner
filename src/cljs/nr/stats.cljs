@@ -10,7 +10,8 @@
    [nr.avatar :refer [avatar]]
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.translations :refer [tr tr-format tr-lobby tr-side]]
-   [nr.utils :refer [faction-icon notnum->zero num->percent render-message
+   [nr.utils :refer [day-word-with-time-formatter faction-icon
+                     format-zoned-date-time notnum->zero num->percent render-message
                      set-scroll-top store-scroll-top]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -32,7 +33,7 @@
         others (remove #(= (:_id %) deck-id) (:decks @app-state))]
     (swap! app-state assoc :decks (conj others deck))))
 
-(defmethod ws/-msg-handler :stats/update [{{:keys [userstats deck-id deckstats]} :?data}]
+(defmethod ws/event-msg-handler :stats/update [{{:keys [userstats deck-id deckstats]} :?data}]
   (swap! app-state assoc :stats userstats)
   (update-deck-stats deck-id deckstats)
   (fetch-game-history))
@@ -170,7 +171,10 @@
       {:title (when replay-shared "Replay shared")}
       title " (" (tr [:stats.turn-count] turn-count) ")" (when has-replay (if replay-shared " ⭐" " 🟢"))]
 
-     [:div.log-date (-> start-date js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
+     [:div.log-date
+      (as-> start-date date
+        (.toISOString date)
+        (format-zoned-date-time day-word-with-time-formatter date))]
 
      [:div
       [:span.player
@@ -220,13 +224,12 @@
 
 (defn stats []
   (let [stats (r/cursor app-state [:stats])
-        active (r/cursor app-state [:active-page])
         list-scroll-top (atom 0)
         log-scroll-top (atom 0)]
     (fetch-game-history)
     (fn []
       [:div.page-container
-       (when (= "/stats" (first @active))
-         [:div.lobby.panel.blue-shade
-          [left-panel state stats]
-          [right-panel state list-scroll-top log-scroll-top]])])))
+       [:div.stats-bg]
+       [:div.lobby.panel.blue-shade
+        [left-panel state stats]
+        [right-panel state list-scroll-top log-scroll-top]]])))

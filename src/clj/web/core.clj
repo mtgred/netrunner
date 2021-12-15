@@ -1,14 +1,17 @@
 (ns web.core
   (:require
-    [web.config :refer [frontend-version server-mode]]
-    [web.system :refer [start stop]])
+    [web.system :refer [start stop]]
+    [monger.collection :as mc])
   (:gen-class :main true))
 
 (defn -main [& _args]
   (let [system (start)
-        port (get-in system [:web/server :port])]
-    (reset! server-mode "prod")
-    (println "Jinteki server running in" @server-mode "mode on port" port)
-    (println "Frontend version " @frontend-version)
+        port (-> system :web/server :port)
+        server-mode (:server/mode system)
+        db (-> system :mongodb/connection :db)
+        config (mc/find-one-as-map db "config" nil)
+        frontend-version (:version config)]
+    (println "Jinteki server running in" server-mode "mode on port" port)
+    (println "Frontend version" frontend-version)
 
     (.addShutdownHook (Runtime/getRuntime) (Thread. #(stop system)))))

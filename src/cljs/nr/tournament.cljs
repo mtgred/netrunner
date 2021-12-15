@@ -178,7 +178,7 @@
    [:span.player
     [avatar player {:opts {:size 24}}]
     (get-in player [:player :username]) " - "
-    (if-let [id (get-in player [:deck :identity])]
+    (when-let [id (get-in player [:deck :identity])]
       (str (faction-icon-memo (:faction id) (:title id)) " " (:title id)))]]
   [:div.player-info
    [:div.user-info
@@ -187,7 +187,7 @@
    [:div.side-info
     [:span.side-label "Side: "]
     [:span.side-value (:side player)]]
-   (if (:deck player)
+   (when (:deck player)
      [deck-info (:deck player)])])
 
 (defn game-info
@@ -204,23 +204,22 @@
 
 (defonce state (r/atom {:selected-round "0"}))
 
-(defmethod ws/-msg-handler :tournament/loaded [{data :?data}]
+(defmethod ws/event-msg-handler :tournament/loaded [{data :?data}]
   (load-players state data))
 
-(defmethod ws/-msg-handler :tournament/created [{data :?data}]
+(defmethod ws/event-msg-handler :tournament/created [{data :?data}]
   (store-results state "created" data))
 
-(defmethod ws/-msg-handler :tournament/deleted [{data :?data}]
+(defmethod ws/event-msg-handler :tournament/deleted [{data :?data}]
   (store-results state "deleted" data))
 
 (defn tournament []
   (r/with-let [user (r/cursor app-state [:user])
-               active (r/cursor app-state [:active-page])
                cobra-link (r/cursor state [:cobra-link])
                games (r/cursor app-state [:games])]
     [:div.container
-     (when (and (= "/tournament" (first @active))
-                (:tournament-organizer @user))
+     [:div.about-bg]
+     (when (:tournament-organizer @user)
        [:div.lobby.panel.blue-shade
         [tournament-container state]
         [:ul.game-list

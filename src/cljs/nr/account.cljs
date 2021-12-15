@@ -1,17 +1,19 @@
 (ns nr.account
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [<!] :as async]
-            [clojure.string :as s]
-            [goog.dom :as gdom]
-            [nr.auth :refer [valid-email?] :as auth]
-            [nr.appstate :refer [app-state]]
-            [nr.ajax :refer [POST GET PUT DELETE]]
-            [nr.avatar :refer [avatar]]
-            [nr.translations :refer [tr]]
-            [nr.utils :refer [non-game-toast set-scroll-top store-scroll-top]]
-            [jinteki.cards :refer [all-cards]]
-            [reagent-modals.modals :as reagent-modals]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!] :as async]
+   [clojure.string :as s]
+   [goog.dom :as gdom]
+   [jinteki.cards :refer [all-cards]]
+   [nr.ajax :refer [DELETE GET POST PUT]]
+   [nr.appstate :refer [app-state]]
+   [nr.auth :refer [valid-email?]]
+   [nr.avatar :refer [avatar]]
+   [nr.translations :refer [tr]]
+   [nr.utils :refer [format-zoned-date-time ISO-ish-formatter non-game-toast
+                     set-scroll-top store-scroll-top]]
+   [reagent-modals.modals :as reagent-modals]
+   [reagent.core :as r]))
 
 (defn post-response [s response]
   (case (:status response)
@@ -227,7 +229,9 @@
               {:on-click #(do (.preventDefault %)
                               (delete-api-key (:_id d) s))}
               (tr [:settings.delete-api-key "Delete"])]]
-            [:span.date (-> (:date d) js/Date. js/moment (.format "DD-MMM-YYYY, HH:mm "))]
+            [:span.date
+             (format-zoned-date-time ISO-ish-formatter
+                                     (str (:date d) "Z"))]
             [:span.title (:api-key d "")]]))]]
      [:button {:on-click #(do (.preventDefault %)
                               (create-api-key s))}
@@ -235,8 +239,7 @@
 
 (defn account-content [_ _ scroll-top]
   (r/create-class
-    {
-     :display-name "account-content"
+    {:display-name "account-content"
      :component-did-mount #(set-scroll-top % @scroll-top)
      :component-will-unmount #(store-scroll-top % scroll-top)
      :reagent-render
@@ -502,14 +505,8 @@
       [:button.float-right (tr [:settings.update-profile "Update Profile"])]
       [:span.flash-message (:flash-message @s)]]]])}))
 
-(defn account-wrapper [user s scroll-top]
-  [:div.account
-   [change-email s]
-   [account-content user s scroll-top]])
-
 (defn account []
-  (let [active (r/cursor app-state [:active-page])
-        user (r/cursor app-state [:user])
+  (let [user (r/cursor app-state [:user])
         scroll-top (atom 0)
         state (r/atom {:flash-message ""
                        :background (get-in @app-state [:options :background])
@@ -543,5 +540,5 @@
 
     (fn []
       [:div.page-container
-       (when (and @user (= "/account" (first @active)))
-         [account-content user state scroll-top])])))
+       [:div.account-bg]
+       [account-content user state scroll-top]])))

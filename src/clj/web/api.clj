@@ -1,153 +1,187 @@
 (ns web.api
-  (:require [web.data :as data]
-            [web.pages :as pages]
-            [web.auth :as auth]
-            [web.ws :as ws]
-            [web.chat :as chat]
-            [web.stats :as stats]
-            [web.angel-arena :as angel-arena]
-            [web.admin :as admin]
-            [web.tournament :as tournament]
-            [web.decks :as decks]
-            [web.api-keys :as api-keys]
-            [web.game-api :as game-api]
-            [compojure.route :as route]
-            [ring.middleware.params :refer [wrap-params]]
-            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
-            [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
-            [ring.middleware.session :refer [wrap-session]]
-            [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
-            [ring.middleware.stacktrace :refer [wrap-stacktrace]]
-            [ring.middleware.cors :refer [wrap-cors]]
-            [ring.util.response :refer [resource-response]]
-            [puppetlabs.ring-middleware.core :refer [wrap-add-cache-headers]]
-            [cheshire.generate :refer [add-encoder encode-str]]
-            [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]))
+  (:require
+   [cheshire.generate :refer [add-encoder encode-str]]
+   [puppetlabs.ring-middleware.core :refer [wrap-add-cache-headers]]
+   [reitit.core :as r]
+   [reitit.ring :as ring]
+   [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
+   [ring.middleware.cors :refer [wrap-cors]]
+   [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
+   [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+   [ring.middleware.params :refer [wrap-params]]
+   [ring.middleware.session :refer [wrap-session]]
+   [ring.middleware.stacktrace :refer [wrap-stacktrace]]
+   [ring.util.response :refer [resource-response]]
+   [reitit.middleware :as middleware]
+   [web.admin :as admin]
+   [web.api-keys :as api-keys]
+   [web.auth :as auth]
+   [web.chat :as chat]
+   [web.data :as data]
+   [web.decks :as decks]
+   [web.game-api :as game-api]
+   [web.pages :as pages]
+   [web.stats :as stats]
+   [web.tournament :as tournament]
+   [web.ws :as ws]))
 
 (add-encoder org.bson.types.ObjectId encode-str)
 
-(defroutes public-CSRF-routes
-           (GET "/check-username/:username" [] #'auth/check-username-handler)
-           (GET "/check-email/:email" [] #'auth/check-email-handler)
+(def paths ["" "cards" "deckbuilder" "play" "help" "account" "stats" "about" "tournament" "admin" "users" "features"])
 
-           (GET "/data/cards" [] #'data/cards-handler)
-           (GET "/data/cards/version" [] #'data/cards-version-handler)
-           (GET "/data/cards/altarts" [] #'data/alt-arts-handler)
+(defn base-routes []
+  (ring/router
+    (mapv (fn [path] [(str "/" path) {:get pages/index-page}]) paths)))
 
-           (GET "/data/news" [] #'data/news-handler)
-           (GET "/data/sets" [] #'data/sets-handler)
-           (GET "/data/mwl" [] #'data/mwl-handler)
-           (GET "/data/cycles" [] #'data/cycles-handler)
-           (GET "/data/donors" [] #'data/donors-handler)
+(comment
+  ((ring/ring-handler (base-routes)) {:request-method :get :uri "/"})
+  )
 
-           (GET "/chat/config" [] #'chat/config-handler)
-           (GET "/messages/:channel" [] #'chat/messages-handler)
+(defn api-routes []
+  (ring/router
+    [["/chsk" {:get ws/handshake-handler
+               :post ws/post-handler}]
+     ["/data"
+      ["/cards"
+       ["" {:get data/cards-handler}]
+       ["/version" {:get data/cards-version-handler}]
+       ["/altarts" {:get data/alt-arts-handler}]]
+      ["/news" {:get data/news-handler}]
+      ["/sets" {:get data/sets-handler}]
+      ["/mwl" {:get data/mwl-handler}]
+      ["/cycles" {:get data/cycles-handler}]
+      ["/donors" {:get data/donors-handler}]
+      ["/decks"
+       ["" {:get decks/decks-handler
+            :post decks/decks-create-handler
+            :put decks/decks-save-handler}]
+       ["/:id" {:delete decks/decks-delete-handler}]]
+      ["/api-keys" {:middleware [::auth]}
+       ["" {:get api-keys/api-keys-handler
+            :post api-keys/api-keys-create-handler}]
+       ["/:id" {:get api-keys/api-keys-delete-handler}]]]
+     ["/chat/config" {:get chat/config-handler}]
+     ["/messages/:channel" {:get chat/messages-handler}]
+     ["/reset/:token" {:get pages/reset-password-page
+                       :post auth/reset-password-handler}]
+     ["/replay/:gameid" {:get stats/replay-handler}]
+     ["/bug-report/:bugid" {:get stats/replay-handler}]
+     ["/register" {:post auth/register-handler}]
+     ["/check-username/:username" {:get auth/check-username-handler}]
+     ["/check-email/:email" {:get auth/check-email-handler}]
+     ["/login" {:post auth/login-handler}]
+     ["/forgot" {:post auth/forgot-password-handler}]
+     ["/logout" {:middleware [::auth]
+                 :post auth/logout-handler}]
+     ["/game" {:middleware [::cors
+                            wrap-add-cache-headers]}
+      ["/decklist" {:get game-api/decklist-handler}]
+      ["/hand" {:get game-api/hand-handler}]
+      ["/discard" {:get game-api/discard-handler}]
+      ["/deck" {:get game-api/deck-handler}]
+      ["/log" {:get game-api/log-handler}]]
+     ["/profile" {:middleware [::auth]}
+      ["" {:put auth/update-profile-handler}]
+      ["/email" {:get auth/email-handler
+                 :put auth/change-email-handler}]
+      ["/stats"
+       ["/user" {:delete stats/clear-userstats-handler}]
+       ["/deck/{id}" {:delete stats/clear-deckstats-handler}]]
+      ["/history"
+       ["" {:get stats/history}]
+       ["/:gameid" {:get stats/fetch-log}]
+       ["/annotations"
+        ["/:gameid" {:get stats/fetch-annotations}]
+        ["/publish/:gameid" {:get stats/publish-annotations}]
+        ["/delete/:gameid" {:delete stats/delete-annotations}]]
+       ["/share/:gameid" {:get stats/share-replay}]
+       ["/full/:gameid" {:get stats/fetch-replay}]]]
+     ["/tournament-auth/:username" {:middleware [::auth ::tournament-auth]
+                                    :get tournament/auth}]
+     ["/admin" {:middleware [::auth ::admin]}
+      ["/news"
+       ["" {:post admin/news-create-handler}]
+       ["/:id" {:delete admin/news-delete-handler}]]
+      ["/version" {:get admin/version-handler
+                   :put admin/version-update-handler}]
+      ["/features" {:get admin/features-handler
+                    :put admin/features-update-handler}]]]
+    {:reitit.middleware/registry
+     {::auth auth/wrap-authentication-required
+      ::tournament-auth auth/wrap-tournament-auth-required
+      ::admin auth/wrap-authorization-required
+      ::cors [[wrap-cors
+               :access-control-allow-origin [#".*"]
+               :access-control-allow-methods [:get]
+               :access-control-allow-headers #{"X-JNet-API"
+                                               "accept" "accept-encoding" "accept-language"
+                                               "authorization" "content-type" "origin"}]]}}))
 
-           (GET "/reset/:token" [] #'pages/reset-password-page)
+(comment
+  ((ring/ring-handler (api-routes)) {:request-method :get :uri "/data/cards"})
+  )
 
-           (GET "/chsk" req (ws/handshake-handler req))
-           (POST "/chsk" req (ws/post-handler req))
+(defn merge-routes [& routes]
+  (ring/router
+    (apply merge (map r/routes routes))
+    (apply merge (map r/options routes))))
 
-           (GET "/replay/:gameid" [] #'stats/replay-handler)
-           (GET "/bug-report/:bugid" [] #'stats/replay-handler))
+(comment
+  (r/routes (merge-routes (base-routes) (api-routes)))
+  ((ring/ring-handler (merge-routes (base-routes) (api-routes))) {:request-method :get :uri "/play"})
+  )
 
-(defroutes missing-resource-routes
-           (GET "/*/*" [] {:status 404 :body "Resource not found"}))
-
-(defroutes public-CSRF-page-routes
-           (GET "/*" [] #'pages/index-page))
-
-(defroutes public-routes
-           (POST "/register" [] #'auth/register-handler)
-           (POST "/login" [] #'auth/login-handler)
-           (POST "/forgot" [] #'auth/forgot-password-handler)
-           (POST "/reset/:token" [] #'auth/reset-password-handler))
-
-(defroutes api-routes
-           (GET "/game/decklist" [] #'game-api/decklist-handler)
-           (GET "/game/hand" [] #'game-api/hand-handler)
-           (GET "/game/discard" [] #'game-api/discard-handler)
-           (GET "/game/deck" [] #'game-api/deck-handler)
-           (GET "/game/log" [] #'game-api/log-handler))
-
-(defroutes admin-routes
-           (POST "/admin/news" [] #'admin/news-create-handler)
-           (DELETE "/admin/news/:id" [] #'admin/news-delete-handler)
-           (GET "/admin/version" [] #'admin/version-handler)
-           (PUT "/admin/version" [] #'admin/version-update-handler)
-           (GET "/admin/features" [] #'admin/features-handler)
-           (PUT "/admin/features" [] #'admin/features-update-handler))
-
-(defroutes user-routes
-           (POST "/logout" [] #'auth/logout-handler)
-           (PUT "/profile" [] #'auth/update-profile-handler)
-           (GET "/profile/email" [] #'auth/email-handler)
-           (PUT "/profile/email" [] #'auth/change-email-handler)
-
-           (DELETE "/profile/stats/user" [] #'stats/clear-userstats-handler)
-           (DELETE "/profile/stats/deck/:id" [] #'stats/clear-deckstats-handler)
-
-           (GET "/profile/history" [] #'stats/history)
-           (GET "/profile/history/:gameid" [] #'stats/fetch-log)
-           (GET "/profile/history/annotations/:gameid" [] #'stats/fetch-annotations)
-           (PUT "/profile/history/annotations/publish/:gameid" [] #'stats/publish-annotations)
-           (DELETE "/profile/history/annotations/delete/:gameid" [date] #'stats/delete-annotations)
-           (GET "/profile/history/share/:gameid" [] #'stats/share-replay)
-           (GET "/profile/history/full/:gameid" [] #'stats/fetch-replay)
-
-           (GET "/data/decks" [] #'decks/decks-handler)
-           (POST "/data/decks" [] #'decks/decks-create-handler)
-           (PUT "/data/decks" [] #'decks/decks-save-handler)
-           (DELETE "/data/decks/:id" [] #'decks/decks-delete-handler)
-
-           (GET "/data/api-keys" [] #'api-keys/api-keys-handler)
-           (POST "/data/api-keys" [] #'api-keys/api-keys-create-handler)
-           (DELETE "/data/api-keys/:id" [] #'api-keys/api-keys-delete-handler))
-
-(defroutes tournament-routes
-  (GET "/tournament-auth/:username" [] #'tournament/auth))
-
-(defroutes private-routes
-  (wrap-routes user-routes auth/wrap-authentication-required)
-  (wrap-routes tournament-routes auth/wrap-tournament-auth-required)
-  (wrap-routes admin-routes auth/wrap-authorization-required))
-
-(defroutes routes
-  private-routes
-  public-CSRF-routes
-  public-routes
-  (-> api-routes
-      (wrap-cors :access-control-allow-origin [#".*"]
-                 :access-control-allow-methods [:get]
-                 :access-control-allow-headers #{"X-JNet-API"
-                                                 "accept" "accept-encoding" "accept-language"
-                                                 "authorization" "content-type" "origin"})
-      (wrap-add-cache-headers))
-
-  (route/resources "/")
-  missing-resource-routes
-  public-CSRF-page-routes
-  (route/not-found "Page not found"))
+(defn make-default-routes []
+  (ring/routes
+    (ring/redirect-trailing-slash-handler)
+    (ring/create-resource-handler {:path "/"})
+    ; (ring/create-default-handler
+    ;   {:not-found pages/index-page})
+    ))
 
 (defn wrap-return-favicon [handler]
-  (fn [req]
-    (if (= [:get "/favicon.ico"] [(:request-method req) (:uri req)])
+  (fn [request]
+    (if (= [:get "/favicon.ico"] [(:request-method request) (:uri request)])
       (resource-response "jinteki.ico" {:root "public/img"})
-      (handler req))))
+      (handler request))))
 
-(defn wrap-db [handler mongo]
-  (fn [req]
-    (handler (assoc req :system/db (:db mongo)))))
+(def wrap-system
+  (middleware/map->Middleware
+    {:name ::wrap-system
+     :description "Adds the relevant integrant system pieces to requests"
+     :wrap (fn [handler system]
+             (fn [request]
+               (-> request
+                   (assoc :system/db (-> system :mongodb/connection :db))
+                   (assoc :system/server-mode (:server-mode system))
+                   (assoc :system/auth (:web/auth system))
+                   (assoc :system/chat (:web/chat system))
+                   (assoc :system/email (:web/email system))
+                   (handler))))}))
 
-(defn make-app [mongo]
-  (-> routes
-      (auth/wrap-user)
-      (wrap-db mongo)
-      (wrap-json-response)
-      (wrap-json-body {:keywords? true})
-      (wrap-keyword-params)
-      (wrap-params)
-      (wrap-anti-forgery)
-      (wrap-session)
-      (wrap-return-favicon)
-      (wrap-stacktrace)))
+(defn make-middleware [system]
+  {:middleware [wrap-return-favicon
+                wrap-session
+                wrap-anti-forgery
+                wrap-params
+                wrap-keyword-params
+                [wrap-json-body {:keywords? true}]
+                wrap-json-response
+                [wrap-system system]
+                auth/wrap-user]})
+
+(defn make-app [system]
+  (ring/ring-handler
+    (merge-routes (base-routes) (api-routes))
+    (make-default-routes)
+    (make-middleware system)))
+
+(defn make-dev-app [system]
+  (ring/ring-handler
+    (merge-routes)
+    (make-default-routes)
+    (update (make-middleware system) :middleware #(vec (cons wrap-stacktrace %)))))
+
+(comment
+  ((make-app nil) {:request-method :get :uri "/chat/config"})
+  (r/router-name (ring/get-router (make-app nil))))

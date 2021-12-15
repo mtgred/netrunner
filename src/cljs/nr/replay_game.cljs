@@ -13,7 +13,7 @@
         init-state (assoc-in init-state [:options :spectatorhands] true)
         diffs (rest history)
         init-state (assoc init-state :replay-diffs diffs :gameid "local-replay")]
-    (ws/event-msg-handler
+    (ws/event-msg-handler-wrapper
       {:id :netrunner/start
        :?data (.stringify js/JSON (clj->js init-state))})))
 

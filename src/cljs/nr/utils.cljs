@@ -1,6 +1,10 @@
 (ns nr.utils
   (:require
+   ["@js-joda/locale_en-us" :as js-joda-locale]
+   [cljc.java-time.format.date-time-formatter :as formatter]
+   [cljc.java-time.zoned-date-time :as zdt]
    [clojure.string :refer [join] :as s]
+   [goog.object :as gobject]
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
@@ -95,6 +99,14 @@
           "showMethod" "fadeIn"
           "hideMethod" "fadeOut"
           "tapToDismiss" (:tap-to-dismiss options true)))
+
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  ([msg toast-type] (non-game-toast msg toast-type nil))
+  ([msg toast-type options]
+   (set! (.-options js/toastr) (toastr-options options))
+   (let [f (aget js/toastr toast-type)]
+     (f msg))))
 
 (defn map-longest
   [f default & colls]
@@ -319,14 +331,6 @@
     "0"
     (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
 
-(defn non-game-toast
-  "Display a toast warning with the specified message."
-  ([msg toast-type] (non-game-toast msg toast-type nil))
-  ([msg toast-type options]
-   (set! (.-options js/toastr) (toastr-options options))
-   (let [f (aget js/toastr toast-type)]
-     (f msg))))
-
 (defn set-scroll-top
   "Set the scrollTop parameter of a reagent component"
   [this scroll-top]
@@ -371,3 +375,26 @@
       (pos? hours) (str hours " hours, " minutes " minutes")
       (pos? minutes) (str minutes " minutes, " seconds " seconds")
       :else (str seconds " seconds"))))
+
+(def mdy-formatter
+  (-> (formatter/of-pattern "MMM d YYYY")
+      (formatter/with-locale
+        (some-> (gobject/get js-joda-locale "Locale")
+                (gobject/get "US")))))
+
+(def day-word-with-time-formatter
+  (-> (formatter/of-pattern "E, MMM d, YYYY - HH:mm")
+      (formatter/with-locale
+        (some-> (gobject/get js-joda-locale "Locale")
+                (gobject/get "US")))))
+
+(def ISO-ish-formatter
+  (-> (formatter/of-pattern "YYYY-MM-dd, HH:mm")
+      (formatter/with-locale
+        (some-> (gobject/get js-joda-locale "Locale")
+                (gobject/get "US")))))
+
+(defn format-zoned-date-time
+  "Formats a date string with trailing Z"
+  [formatter date]
+  (formatter/format formatter (zdt/parse date)))

@@ -1,6 +1,8 @@
 (ns web.system
   (:require
+   [aero.core :as aero]
    [cljc.java-time.local-date :as ld]
+   [clojure.java.io :as io]
    [game.cards.agendas]
    [game.cards.assets]
    [game.cards.basic]
@@ -15,6 +17,7 @@
    [game.quotes :refer [load-quotes!]]
    [integrant.core :as ig]
    [jinteki.cards :as cards]
+   [medley.core :refer [deep-merge]]
    [monger.collection :as mc]
    [monger.core :as mg]
    [org.httpkit.server :refer [run-server server-stop!]]
@@ -22,32 +25,27 @@
    [time-literals.data-readers]
    [time-literals.read-write]
    [web.angel-arena :as angel-arena]
-   [web.api :refer [make-app]]
-   [web.config :refer [frontend-version server-mode]]
+   [web.versions :refer [frontend-version]]
+   [web.api :refer [make-app make-dev-app]]
+   [web.app-state :as app-state]
    [web.game]
    [web.lobby :as lobby]
    [web.utils :refer [tick]]
-   [web.ws :refer [ch-chsk event-msg-handler]]
-   [web.app-state :as app-state]))
+   [web.ws :refer [ch-chsk event-msg-handler]]))
 
-(time-literals.read-write/print-time-literals-clj!)
+(defmethod aero/reader 'ig/ref
+  [_ _ value]
+  (ig/ref value))
 
-(defn build-config []
-  {:mongodb/connection {:address "localhost"
-                        :port 27017
-                        :name "netrunner"}
-   :web/app (ig/ref :mongodb/connection)
-   :web/server {:port 1042
-                :app (ig/ref :web/app)}
-   :web/lobby {:interval 1000
-               :mongo (ig/ref :mongodb/connection)
-               :time-inactive 600}
-   :frontend-version (ig/ref :mongodb/connection)
-   :server-mode "dev"
-   :sente/router nil
-   :game/quotes nil
-   :web/app-state nil
-   :jinteki/cards (ig/ref :mongodb/connection)})
+(defn server-config []
+  (let [dev-file (io/resource "dev.edn")
+        dev-config (when dev-file (aero/read-config dev-file))
+        prod-file (io/resource "prod.edn")
+        master-config (when prod-file (aero/read-config prod-file))]
+    (deep-merge dev-config master-config)))
+
+(defmethod ig/init-key :server/mode [_ mode]
+  mode)
 
 (defmethod ig/init-key :mongodb/connection [_ opts]
   (let [{:keys [address port name]} opts]
@@ -57,7 +55,15 @@
   (mg/disconnect conn))
 
 (defmethod ig/init-key :web/app [_ opts]
-  (make-app opts))
+  (if (:server-mode opts)
+    (make-app opts)
+    (make-dev-app opts)))
+
+(defmethod ig/init-key :web/app-state [_ _]
+  (reset! app-state/app-state
+          {:lobbies {}
+           :users {}})
+  (reset! angel-arena/arena-queue []))
 
 (defmethod ig/init-key :web/server [_ {:keys [app port]}]
   (run-server app {:port port
@@ -67,6 +73,9 @@
   (when server
     (server-stop! server nil)))
 
+(defmethod ig/init-key :web/auth [_ settings]
+  settings)
+
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
     [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
@@ -75,16 +84,22 @@
 (defmethod ig/halt-key! :web/lobby [_ futures]
   (run! future-cancel futures))
 
-(defmethod ig/init-key :frontend-version [_ {:keys [db]}]
-  (if-let [config (mc/find-one-as-map db "config" nil)]
-    (reset! frontend-version (:version config))
-    (doto db
-      (mc/create "config" nil)
-      (mc/insert "config" {:version @frontend-version
-                           :cards-version 0}))))
+(defmethod ig/init-key :web/chat [_ settings]
+  settings)
 
-(defmethod ig/init-key :server-mode [_ mode]
-  (reset! server-mode mode))
+(defmethod ig/init-key :web/email [_ settings]
+  settings)
+
+(defmethod ig/init-key :frontend/version [_ {initial :initial
+                                             {:keys [db]} :mongo}]
+  (if-let [config (mc/find-one-as-map db "config" nil)]
+    (do (reset! frontend-version (:version config))
+        config)
+    (do (doto db
+          (mc/create "config" nil)
+          (mc/insert-and-return "config" {:version initial
+                                          :cards-version 0}))
+        (reset! frontend-version initial))))
 
 (defmethod ig/init-key :sente/router [_ _opts]
   (sente/start-server-chsk-router!
@@ -98,12 +113,6 @@
 (defmethod ig/init-key :game/quotes [_ _opts]
   (load-quotes!))
 
-(defmethod ig/init-key :web/app-state [_ _]
-  (reset! app-state/app-state
-          {:lobbies {}
-           :users {}})
-  (reset! angel-arena/arena-queue []))
-
 (defn- format-card-key->string
   [fmt]
   (assoc fmt :cards
@@ -112,7 +121,7 @@
              (assoc m (name k) v))
            {} (:cards fmt))))
 
-(defmethod ig/init-key :jinteki/cards [_ {:keys [db]}]
+(defmethod ig/init-key :jinteki/cards [_ {{:keys [db]} :mongo}]
   (let [cards (mc/find-maps db "cards" nil)
         stripped-cards (map #(update % :_id str) cards)
         all-cards (into {} (map (juxt :title identity) stripped-cards))
@@ -144,7 +153,7 @@
 
 (defn start
   [& [{:keys [only]}]]
-  (let [config (build-config)]
+  (let [config (server-config)]
     (if only
       (ig/init config only)
       (ig/init config))))

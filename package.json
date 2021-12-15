@@ -1,0 +1,22 @@
+{
+	"scripts": {
+		"css:build": "stylus -o resources/public/css/ src/css/netrunner.styl",
+		"css:watch": "npm run css:build -- -w",
+		"css:release": "npm run css:build -- -c",
+		"cljs:build": "shadow-cljs compile app",
+		"cljs:watch": "shadow-cljs watch app",
+		"cljs:release": "shadow-cljs release app",
+		"release": "npm run release:css && npm run release:cljs"
+	},
+	"devDependencies": {
+		"shadow-cljs": "^2.16.8",
+		"stylus": "^0.55.0"
+	},
+	"dependencies": {
+		"@js-joda/core": "3.2.0",
+		"@js-joda/locale_en-us": "^4.4.0",
+		"howler": "^2.2.3",
+		"react": "^17.0.2",
+		"react-dom": "^17.0.2"
+	}
+}

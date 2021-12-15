@@ -1,7 +1,7 @@
 (ns nr.gameboard.actions
   (:require
    [differ.core :as differ]
-   [nr.angel-arena :as angel-arena]
+   [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state
@@ -57,13 +57,13 @@
           :close-button true})
   (reset! ws/lock false))
 
-(defmethod ws/-msg-handler :game/start [{data :?data}]
+(defmethod ws/event-msg-handler :game/start [{data :?data}]
   (reset! angel-arena/queueing false)
   (launch-game! (parse-state data)))
-(defmethod ws/-msg-handler :game/resync [{data :?data}] (reset-game! (parse-state data)))
-(defmethod ws/-msg-handler :game/diff [{data :?data}] (handle-diff! (parse-state data)))
-(defmethod ws/-msg-handler :game/timeout [{data :?data}] (handle-timeout data))
-(defmethod ws/-msg-handler :game/error [_] (handle-error))
+(defmethod ws/event-msg-handler :game/resync [{data :?data}] (reset-game! (parse-state data)))
+(defmethod ws/event-msg-handler :game/diff [{data :?data}] (handle-diff! (parse-state data)))
+(defmethod ws/event-msg-handler :game/timeout [{data :?data}] (handle-timeout data))
+(defmethod ws/event-msg-handler :game/error [_] (handle-error))
 
 (defn send-command
   ([command] (send-command command nil))

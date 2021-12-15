@@ -6,7 +6,6 @@
    [nr.ajax :refer [GET POST]]
    [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
-   [nr.navbar :refer [history]]
    [nr.translations :refer [tr]]
    [reagent.core :as r]))
 
@@ -46,17 +45,17 @@
      [:b.caret]]
     [:div.dropdown-menu.blue-shade.float-right
      (when (:isadmin user)
-       [:a.block-link {:on-click #(.setToken history "/admin")} (str "[" (tr [:menu/admin "Admin"]) "]")])
+       [:a.block-link {:href "/admin"} (str "[" (tr [:menu/admin "Admin"]) "]")])
      (when (:ismoderator user)
        [:a.block-link (str "[" (tr [:menu/moderator "Moderator"]) "]")])
-     [:a.block-link {:on-click #(.setToken history "/account")} (tr [:menu/settings "Settings"])]
+     [:a.block-link {:href "/admin"} (tr [:menu/settings "Settings"])]
      [:a.block-link {:on-click #(handle-logout %)} (tr [:menu/logout "Jack out"])]]]])
 
 (defn unlogged-menu []
   [:ul
    [:li
     [:a {:href "" :data-target "#register-form" :data-toggle "modal"
-         :on-click (fn [] .focus (js/$ "input[name='email']"))} "Sign up"]]
+         :on-click (fn [] (.focus (js/$ "input[name='email']")))} "Sign up"]]
    [:li
     [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]])
 

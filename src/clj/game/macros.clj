@@ -11,7 +11,7 @@
       run-server (get-in @state (concat [:corp :servers] (:server (:run @state))))
       run-ices (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices]))
       run-position (get-in @state [:run :position])
-      current-ice (get-current-ice state)
+      current-ice (game.core.ice/get-current-ice state)
       corp-reg (get-in @state [:corp :register])
       corp-reg-last (get-in @state [:corp :register-last-turn])
       runner-reg (get-in @state [:runner :register])
@@ -28,22 +28,23 @@
                          (contains? t :value))
                   (:value t)
                   t))
-      installed (#{:rig :servers} (first (get-zone card)))
-      remotes (get-remote-names state)
-      servers (zones->sorted-names (get-zones state))
-      unprotected (let [server (second (get-zone card))]
+      installed (#{:rig :servers} (first (game.core.card/get-zone card)))
+      remotes (game.core.board/get-remote-names state)
+      servers (game.core.servers/zones->sorted-names (game.core.board/get-zones state))
+      unprotected (let [server (second (game.core.card/get-zone card))]
                     (empty? (get-in @state [:corp :servers server :ices])))
-      runnable-servers (zones->sorted-names (get-runnable-zones state side eid card nil))
+      runnable-servers (game.core.servers/zones->sorted-names
+                         (game.core.actions/get-runnable-zones state side eid card nil))
       hq-runnable (not (:hq (get-in (:runner @state) [:register :cannot-run-on-server])))
       rd-runnable (not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
       archives-runnable (not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))
-      tagged (is-tagged? state)
+      tagged (jinteki.utils/is-tagged? state)
       ;; only intended for use in event listeners on (pre-/post-, un-)successful-run or run-ends
       ;; true if the run was initiated by this card
       this-card-run (and (get-in card [:special :run-id])
                          (= (get-in card [:special :run-id])
                             (:run-id (first targets))))
-      this-server (let [s (get-zone card)
+      this-server (let [s (game.core.card/get-zone card)
                         r (:server (:run @state))]
                     (= (second s) (first r)))
       corp-currently-drawing (seq (peek (get-in @state [:corp :register :currently-drawing])))

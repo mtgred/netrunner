@@ -1630,11 +1630,11 @@
     :card "카드"}
   }})
 
-(def opts {:dict translation-dictionary})
+(defn opts [] {:dict translation-dictionary})
 
 (defn tr [resource & params]
   (let [lang (keyword (get-in @app-state [:options :language] "en"))]
-    (tempura/tr opts [lang :en] resource (vec params))))
+    (tempura/tr (opts) [lang :en] resource (vec params))))
 
 (defn tr-string [prefix s]
   (let [side (lower-case (replace (or s "") " " "-"))

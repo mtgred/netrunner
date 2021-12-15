@@ -11,12 +11,11 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
    [nr.deck-status :refer [deck-status-span]]
-   [nr.navbar :refer [history]]
    [nr.translations :refer [tr tr-faction tr-format tr-side tr-type]]
    [nr.utils :refer [alliance-dots banned-span cond-button
-                     deck-points-card-span dots-html format->slug influence-dot influence-dots
-                     non-game-toast num->percent restricted-span rotated-span set-scroll-top
-                     slug->format store-scroll-top]]
+                     deck-points-card-span dots-html format->slug format-zoned-date-time
+                     influence-dot influence-dots mdy-formatter non-game-toast num->percent
+                     restricted-span rotated-span set-scroll-top slug->format store-scroll-top]]
    [nr.ws :as ws]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
@@ -527,61 +526,63 @@
      (str (s/trim (subs deck-name 0 limit))
           (when (< limit (count deck-name)) "...")))))
 
-(defn deck-date
-  [deck]
-  (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY")))
+(defn deck-date [deck]
+  (when-let [date (:date deck)]
+    (format-zoned-date-time mdy-formatter date)))
 
-(defn deck-entry
-  [s deck]
-  [:div.deckline {:class (when (= (:_id deck) (:_id (:deck @s))) "active")
-                  :on-click #(put! select-channel deck)}
-   [:img {:src (image-url (:identity deck))
-          :alt (get-in deck [:identity :title] "")}]
-   [:div.float-right [deck-status-span deck]]
-   [:h4 (deck-name deck)]
-   [:div.float-right (deck-date deck)]
-   [:p (get-in deck [:identity :title])
-    [:br]
-    (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
+(defn deck-stats-line [deck]
+  (r/with-let [deckstats (r/cursor app-state [:options :deckstats])]
+    (when (and (:stats deck) (not= "none" @deckstats))
       (let [stats (:stats deck)
             games (or (:games stats) 0)
             started (or (:games-started stats) 0)
             completed (or (:games-completed stats) 0)
             wins (or (:wins stats) 0)
             losses (or (:loses stats) 0)]
-        ; adding key :games to handle legacy stats before adding started vs completed
-        [:span "  " (tr [:deck-builder.games "Games"]) ": " (+ started games)
+        [:p
+         ; adding key :games to handle legacy stats before adding started vs completed
+         "  " (tr [:deck-builder.games "Games"]) ": " (+ started games)
          " - " (tr [:deck-builder.completed "Completed"]) ": " (+ completed games)
          " - " (tr [:deck-builder.won "Won"]) ": " wins " (" (num->percent wins (+ wins losses)) "%)"
-         " - " (tr [:deck-builder.lost "Lost"]) ": " losses]))]])
+         " - " (tr [:deck-builder.lost "Lost"]) ": " losses]))))
+
+(defn deck-entry [s deck]
+  (r/with-let [state-deck (r/cursor s [:deck])]
+    [:div.deckline {:class (when (= (:_id deck) (:_id @state-deck)) "active")
+                    :on-click #(put! select-channel deck)}
+     [:img {:src (image-url (:identity deck))
+            :alt (get-in deck [:identity :title] "")}]
+     [:span.float-right
+      [deck-status-span deck]
+      [:p (deck-date deck)]]
+     [:h4 (deck-name deck)]
+     [:span (get-in deck [:identity :title])]
+     [deck-stats-line deck]]))
 
 (def all-sides-filter "Any Side")
 (def all-factions-filter "Any Faction")
 (def all-formats-filter "Any Format")
 
-(defn- filter-side [state decks]
-  (let [side (:side-filter @state)]
-    (if (= all-sides-filter (:side-filter @state))
-      decks
-      (filter #(= (get-in % [:identity :side]) side) decks))))
+(defn- filter-side [side-filter decks]
+  (if (= all-sides-filter @side-filter)
+    decks
+    (filter #(= (get-in % [:identity :side]) @side-filter) decks)))
 
-(defn- filter-faction [state decks]
-  (let [faction (:faction-filter @state)]
-    (if (= all-factions-filter (:faction-filter @state))
-      decks
-      (filter #(= (get-in % [:identity :faction]) faction) decks))))
+(defn- filter-faction [faction-filter decks]
+  (if (= all-factions-filter @faction-filter)
+    decks
+    (filter #(= (get-in % [:identity :faction]) @faction-filter) decks)))
 
-(defn- filter-format [state decks]
-  (let [fmt (:format-filter @state)
-        fmt-slug (format->slug fmt)]
-    (if (= all-formats-filter fmt)
-      decks
+(defn- filter-format [fmt-filter decks]
+  (if (= all-formats-filter @fmt-filter)
+    decks
+    (let [fmt-slug (format->slug @fmt-filter)]
       (filter #(= (:format %) fmt-slug) decks))))
 
-(defn- filter-selected [state]
-  (not (and (= all-sides-filter (:side-filter @state))
-            (= all-factions-filter (:faction-filter @state))
-            (= all-formats-filter (:format-filter @state)))))
+(defn- filter-selected [side-filter faction-filter fmt-filter]
+  (not (and (= all-sides-filter @side-filter)
+            (= all-factions-filter @faction-filter)
+            (= all-formats-filter @fmt-filter))))
 
 (defn decks-list [_ _ scroll-top]
   (r/create-class
@@ -590,42 +591,42 @@
      :component-will-unmount #(store-scroll-top % scroll-top)
      :reagent-render
      (fn [filtered-decks s _]
-       [:div.deck-collection
-        (doall
-          (for [deck (sort-by (juxt :date :_id) > filtered-decks)]
-            ^{:key (:_id deck)}
-            [deck-entry s deck]))])}))
+       (into [:div.deck-collection]
+             (for [deck (sort-by (juxt :date :_id) > filtered-decks)]
+               ^{:key (:_id deck)}
+               [deck-entry s deck])))}))
 
 (defn deck-collection
-  [s decks decks-loaded scroll-top]
-  (when-not (:edit @s)
-    (cond
-
-      (not @decks-loaded)
-      [:div.deck-collection
-       [:h4 (tr [:deck-builder.loading-msg "Loading deck collection..."])]]
-
-      (empty? @decks)
-      [:div.deck-collection
-       [:h4 (tr [:deck-builder.no-decks "No decks"])]]
-
-      :else
-      (let [filtered-decks (->> @decks
-                                (filter-side s)
-                                (filter-faction s)
-                                (filter-format s))
-            n (count filtered-decks)
-            deck-str (tr [:deck-builder.deck-count] n)]
-        [:<>
-         [:div.deck-count
-          [:h4 (str deck-str (when (filter-selected s) (str "  " (tr [:deck-builder.filtered "(filtered)"]))))]]
-         [decks-list filtered-decks s scroll-top]]))))
+  [state decks decks-loaded scroll-top]
+  (r/with-let [side-filter (r/cursor state [:side-filter])
+               faction-filter (r/cursor state [:faction-filter])
+               fmt-filter (r/cursor state [:format-filter])]
+    (when-not (:edit @state)
+      (cond
+        (not @decks-loaded)
+        [:div.deck-collection
+         [:h4 (tr [:deck-builder.loading-msg "Loading deck collection..."])]]
+        (empty? @decks)
+        [:div.deck-collection
+         [:h4 (tr [:deck-builder.no-decks "No decks"])]]
+        :else
+        (let [filtered-decks (->> @decks
+                                  (filter-side side-filter)
+                                  (filter-faction faction-filter)
+                                  (filter-format fmt-filter))
+              n (count filtered-decks)
+              deck-str (tr [:deck-builder.deck-count] n)]
+          [:<>
+           [:div.deck-count
+            [:h4 (str deck-str (when (filter-selected side-filter faction-filter fmt-filter)
+                                 (str "  " (tr [:deck-builder.filtered "(filtered)"]))))]]
+           [decks-list filtered-decks state scroll-top]])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
   [{:keys [identity cards format] :as deck} {:keys [qty card] :as line}]
   [:span qty "  "
-   (if-let [name (:title card)]
+   (if-let [title (:title card)]
      (let [infaction (no-inf-cost? identity card)
            card-status (format-status format card)
            banned (:banned card-status)
@@ -640,8 +641,8 @@
                                   banned " invalid"
                                   (not valid) " invalid"))
                 :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
-                :on-mouse-leave #(put! zoom-channel false)} name]
-        (card-influence-html format card modqty infaction allied)])
+                :on-mouse-leave #(put! zoom-channel false)} title]
+        [card-influence-html format card modqty infaction allied]])
      card)])
 
 (defn line-qty-span
@@ -801,14 +802,17 @@
    [:button {:on-click #(delete-deck s)} (tr [:deck-builder.delete "Delete"])]
    (when (and (:stats deck)
               (not= "none" (get-in @app-state [:options :deckstats])))
-     [:button {:on-click #(clear-deck-stats s)} (tr [:deck-builder.clear-stats "Clear Stats"])])
+     [:button {:on-click #(clear-deck-stats s)}
+      (tr [:deck-builder.clear-stats "Clear Stats"])])
    (let [disabled (or (:editing-game @app-state false)
                       (:gameid @app-state false)
                       (and (not= (:format deck) "casual")
                            (not (validator/legal-deck? deck))))]
-     [:button.float-right {:on-click #(do
+     [:button.float-right {:href "/play"
+                           :on-click #(do
                                         (swap! app-state assoc :create-game-deck (:deck @s))
-                                        (.setToken history "/play"))
+                                        ; (.setToken history "/play")
+                                        )
                            :disabled disabled
                            :class (when disabled "disabled")}
       (tr [:deck-builder.create-game "Create Game"])])])
@@ -982,37 +986,39 @@
 
 (defn list-panel
   [s user decks decks-loaded scroll-top]
-  [:div.decks
-   [collection-buttons s user decks-loaded]
-   [filter-builder s decks-loaded scroll-top]
-   [deck-collection s decks decks-loaded scroll-top]
-   [:div {:class (when (:edit @s) "edit")}
-    (when-let [line (:zoom @s)]
-      (let [art (:art line)
-            id (:id line)
-            updated-card (add-params-to-card (:card line) id art)]
-        [zoom-card-view updated-card s]))]])
+  (r/with-let [zoom-card (r/cursor s [:zoom])]
+    [:div.decks
+     [collection-buttons s user decks-loaded]
+     [filter-builder s decks-loaded scroll-top]
+     [deck-collection s decks decks-loaded scroll-top]
+     [:div {:class (when (:edit @s) "edit")}
+      (when-let [line @zoom-card]
+        (let [art (:art line)
+              id (:id line)
+              updated-card (add-params-to-card (:card line) id art)]
+          [zoom-card-view updated-card s]))]]))
 
 (defn- class-for-state [s]
-  (cond
-    (:edit @s) "edit"
-    (:delete @s) "delete"
-    :else ""))
+  (r/with-let [edit (r/cursor s [:edit])
+               delete (r/cursor s [:delete])]
+    (cond
+      @edit "edit"
+      @delete "delete"
+      :else "")))
 
 (defn deck-builder
   "Make the deckbuilder view"
   []
-  (let [active (r/cursor app-state [:active-page])
-        s (r/atom {:edit false
-                   :old-deck nil
-                   :deck nil
-                   :side-filter all-sides-filter
-                   :faction-filter all-factions-filter
-                   :format-filter all-formats-filter})
-        decks (r/cursor app-state [:decks])
-        user (r/cursor app-state [:user])
-        decks-loaded (r/cursor app-state [:decks-loaded])
-        scroll-top (atom 0)]
+  (r/with-let [s (r/atom {:edit false
+                          :old-deck nil
+                          :deck nil
+                          :side-filter all-sides-filter
+                          :faction-filter all-factions-filter
+                          :format-filter all-formats-filter})
+               decks (r/cursor app-state [:decks])
+               user (r/cursor app-state [:user])
+               decks-loaded (r/cursor app-state [:decks-loaded])
+               scroll-top (atom 0)]
 
     (go (while true
           (let [card (<! zoom-channel)]
@@ -1024,13 +1030,13 @@
 
     (fn []
       [:div.container
-       (when (= "/deckbuilder" (first @active))
-         [:div.deckbuilder.blue-shade.panel
-          [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
-                          :class (class-for-state s)}
-           [list-panel s user decks decks-loaded scroll-top]
-           [selected-panel s]
-           [edit-panel s]]])])))
+       [:div.deckbuilder-bg]
+       [:div.deckbuilder.blue-shade.panel
+        [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
+                        :class (class-for-state s)}
+         [list-panel s user decks decks-loaded scroll-top]
+         [selected-panel s]
+         [edit-panel s]]]])))
 
 (go (let [cards (<! cards-channel)
           json (:json (<! (GET (str "/data/decks"))))
@@ -1038,10 +1044,10 @@
       (load-decks decks)
       (>! cards-channel cards)))
 
-(defmethod ws/-msg-handler :decks/import-failure [{data :?data}]
+(defmethod ws/event-msg-handler :decks/import-failure [{data :?data}]
   (non-game-toast data "error" nil))
 
-(defmethod ws/-msg-handler :decks/import-success [{data :?data}]
+(defmethod ws/event-msg-handler :decks/import-success [{data :?data}]
   (non-game-toast data "success" nil)
   (go (let [json (:json (<! (GET (str "/data/decks"))))
             decks (load-decks-from-json json)]

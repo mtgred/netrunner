@@ -1,0 +1,8 @@
+{:lein true
+ :builds
+ {:app {:target :browser
+        :output-dir "resources/public/js"
+        :devtools {:watch-dir "resources/public/css"
+                   :repl-init-ns dev.nr}
+        :dev {:modules {:main {:entries [dev.nr]}}}
+        :release {:modules {:main {:entries [prod.nr]}}}}}}

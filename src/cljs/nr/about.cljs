@@ -1,9 +1,11 @@
 (ns nr.about
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [nr.ajax :refer [GET]]
-            [nr.appstate :refer [app-state]]
-            [nr.utils :refer [set-scroll-top store-scroll-top]]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!]]
+   [nr.ajax :refer [GET]]
+   [nr.appstate :refer [app-state]]
+   [nr.utils :refer [set-scroll-top store-scroll-top]]
+   [reagent.core :as r]))
 
 (defn- single-artist [info]
   ^{:key (:name info)}
@@ -17,12 +19,11 @@
 (defn about-content [state scroll-top]
   (let [donors (r/cursor state [:donors])]
     (r/create-class
-      {
-       :display-name "about-content"
+      {:display-name "about-content"
        :component-did-mount #(set-scroll-top % @scroll-top)
        :component-will-unmount #(store-scroll-top % scroll-top)
        :reagent-render
-       (fn [state scroll-top]
+       (fn [_ _]
          [:div.about.panel.content-page.blue-shade
           [:h3 "About"]
           [:p "This website was founded by " [:a {:href "http://twitter.com/mtgred" :target "_blank"} "@mtgred"]
@@ -86,13 +87,10 @@
            [:a {:href "http://creativecommons.org/licenses/by/3.0/" :title "Creative Commons BY 3.0" :target "_blank"} "CC BY 3.0"]]])})))
 
 (defn about []
-  (let [active (r/cursor app-state [:active-page])
-        about-state (r/atom {})
+  (let [about-state (r/atom {})
         scroll-top (atom 0)]
-
     (go (swap! about-state assoc :donors (:json (<! (GET "/data/donors")))))
-
     (fn []
       [:div.page-container
-       (when (= "/about" (first @active))
-         [about-content about-state scroll-top])])))
+       [:div.about-bg]
+       [about-content about-state scroll-top]])))
