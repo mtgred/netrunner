@@ -11,6 +11,7 @@
             :secret "Dev salt"
             :cookie {:http-only true
                      :same-site :lax
+                     :secure true
                      ; 60 days
                      :max-age 5184000}}
  :web/lobby {:interval 1000

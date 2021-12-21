@@ -12,7 +12,8 @@
 (defn authenticated [f]
   (if-let [user (:user @app-state)]
     (f user)
-    (.modal (js/$ "#login-form") "show")))
+    (do (.modal (js/$ "#login-form") "show")
+        nil)))
 
 (defn handle-post [event url s]
   (.preventDefault event)
