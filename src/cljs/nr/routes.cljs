@@ -18,15 +18,17 @@
    [reitit.frontend :as rf]
    [reitit.frontend.easy :as rfe]))
 
-(defonce current-view (r/atom chat-page))
+(defonce current-view (r/atom {:data {:view chat-page}}))
 
 (defn update-current-view [match _history]
   (reset! current-view match))
 
 (defn lobby-or-game []
-  (if (get-in @app-state [:current-game :started])
-    [gameboard]
-    [game-lobby]))
+  (let [game-started? (r/cursor app-state [:current-game :started])]
+    (fn []
+      (if @game-started?
+        [gameboard]
+        [game-lobby]))))
 
 (def routes
   (rf/router

@@ -271,7 +271,7 @@
     (println "rendering game-lobby")
     [:div.container
      [:div.lobby-bg]
-     (authenticated (fn [_] nil))
+     (do (authenticated (fn [_] nil)) nil)
      ; TODO: make starting a game from deckbuilder work again
      ; (when (and (not (or @gameid (:editing @s)))
      ;            (some? (:create-game-deck @app-state)))

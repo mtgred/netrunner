@@ -1,7 +1,6 @@
 (ns web.lobby
   (:require
    [cljc.java-time.instant :as inst]
-   [clj-uuid :as uuid]
    [clojure.set :as set]
    [clojure.string :as str]
    [crypto.password.bcrypt :as bcrypt]
@@ -9,7 +8,7 @@
    [game.utils :refer [server-card]]
    [jinteki.utils :refer [select-non-nil-keys side-from-str superuser?]]
    [jinteki.validator :as validator]
-   [medley.core :refer [find-first]]
+   [medley.core :refer [find-first random-uuid]]
    [monger.collection :as mc]
    [web.app-state :as app-state]
    [web.mongodb :as mongodb]
@@ -22,7 +21,7 @@
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
             side spectatorhands timer title]
-     :or {gameid (uuid/v4)
+     :or {gameid (random-uuid)
           now (inst/now)}} :options}]
   (let [player {:user user
                 :uid uid
