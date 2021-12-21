@@ -226,7 +226,7 @@
 (defn fetch-log
   [{db :system/db
     user :user
-    {:keys [gameid]} :params}]
+    {:keys [gameid]} :path-params}]
   (if (active-user? user)
     (let [{:keys [log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["log"])]
       (response 200 (or log {})))
@@ -235,7 +235,7 @@
 (defn fetch-annotations
   [{db :system/db
     {username :username :as user} :user
-    {:keys [gameid]} :params}]
+    {:keys [gameid]} :path-params}]
   (if (active-user? user)
     (let [{:keys [corp runner replay-shared annotations]}
           (mc/find-one-as-map db game-log-coll {:gameid gameid} ["corp" "runner" "replay-shared" "annotations"])]

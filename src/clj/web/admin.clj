@@ -37,8 +37,9 @@
       (response 200 {:message "ok"}))
     (response 400 {:message "Missing news item"})))
 
-(defn news-delete-handler [{db :system/db
-                            {id :id} :path-params}]
+(defn news-delete-handler
+  [{db :system/db
+    {id :id} :path-params}]
   (try
     (if id
       (if (acknowledged? (mc/remove db "news" {:_id (->object-id id)}))

@@ -27,9 +27,10 @@
         (response 500 {:message "Failed to create API Key"})))
     (response 401 {:message "Unauthorized"})))
 
-(defn api-keys-delete-handler [{db :system/db
-                                {username :username} :user
-                                {id :id}             :params}]
+(defn api-keys-delete-handler
+  [{db :system/db
+    {username :username} :user
+    {id :id}             :path-params}]
   (try
     (if (and username id)
       (if (acknowledged? (mc/remove db "api-keys" {:_id (->object-id id) :username username}))

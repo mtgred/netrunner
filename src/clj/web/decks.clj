@@ -98,7 +98,7 @@
 (defn decks-delete-handler
   [{db :system/db
     {username :username} :user
-    {id :id}             :params}]
+    {id :id}             :path-params}]
   (try
     (if (and username id)
       (if-not (deck-locked? db id)
