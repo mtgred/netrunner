@@ -1,10 +1,66 @@
 (ns game.cards.assets
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]
-            [clojure.pprint :as pprint]
-            [clojure.set :as set]
-            [clojure.string :as string]))
+  (:require
+   [clojure.pprint :as pprint]
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [game.core.access :refer [access-card]]
+   [game.core.actions :refer [score]]
+   [game.core.agendas :refer [update-all-advancement-requirements
+                              update-all-agenda-points]]
+   [game.core.bad-publicity :refer [bad-publicity-prevent gain-bad-publicity
+                                    lose-bad-publicity]]
+   [game.core.board :refer [all-active-installed all-installed
+                            installable-servers]]
+   [game.core.card :refer [agenda? asset? can-be-advanced? corp? event?
+                           fake-identity? get-advancement-requirement
+                           get-agenda-points get-card get-counters get-zone hardware? has-subtype? ice? identity?
+                           in-deck? in-discard? in-hand? in-server? installed? is-type? operation? program?
+                           resource? rezzed? runner? upgrade?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.damage :refer [damage damage-prevent]]
+   [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
+                                  trash-on-empty]]
+   [game.core.drawing :refer [draw first-time-draw-bonus max-draw
+                              remaining-draws]]
+   [game.core.effects :refer [register-floating-effect]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.engine :refer [pay prompt! register-events resolve-ability]]
+   [game.core.events :refer [first-event? no-event? turn-events]]
+   [game.core.expose :refer [expose-prevent]]
+   [game.core.flags :refer [lock-zone prevent-current prevent-draw
+                            register-turn-flag! release-zone]]
+   [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
+                              lose-credits]]
+   [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
+   [game.core.hosting :refer [host]]
+   [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice
+                          update-ice-strength]]
+   [game.core.identities :refer [disable-card enable-card]]
+   [game.core.initializing :refer [card-init]]
+   [game.core.installing :refer [corp-install corp-install-msg]]
+   [game.core.link :refer [get-link]]
+   [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
+                             swap-cards swap-installed trash trash-cards]]
+   [game.core.optional :refer [get-autoresolve set-autoresolve]]
+   [game.core.payment :refer [cost-value]]
+   [game.core.play-instants :refer [play-instant]]
+   [game.core.prompts :refer [cancellable]]
+   [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
+   [game.core.revealing :refer [reveal]]
+   [game.core.rezzing :refer [derez rez]]
+   [game.core.say :refer [system-msg]]
+   [game.core.servers :refer [is-remote? zone->name]]
+   [game.core.set-aside :refer [swap-set-aside-cards]]
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck
+                                shuffle-into-rd-effect]]
+   [game.core.tags :refer [gain-tags]]
+   [game.core.to-string :refer [card-str]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.core.winning :refer [check-win-by-agenda]]
+   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.utils :refer :all]
+   [jinteki.utils :refer :all]))
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
@@ -83,7 +139,7 @@
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (program? %))}
-                     :msg (msg "trash " (string/join ", " (map :title targets)))
+                     :msg (msg "trash " (str/join ", " (map :title targets)))
                      :async true
                      :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
@@ -919,7 +975,7 @@
                         :req (req (seq (:hand runner)))
                         :prompt "Choose a card type"
                         :choices ["Event" "Hardware" "Program" "Resource"]
-                        :msg (msg "reveal " (string/join ", " (map :title (:hand runner))))
+                        :msg (msg "reveal " (str/join ", " (map :title (:hand runner))))
                         :async true
                         :effect (effect (continue-ability (trash-ability target) card nil))}]
     {:additional-cost [:forfeit]
@@ -1087,12 +1143,11 @@
                                               (<= (:agendapoints target) (cost-value eid :x-power))))}
                      :msg (msg "reveal " (:title target) " from HQ")
                      :effect (req (wait-for (reveal state side target)
-                                            (let [title (:title target)
-                                                  pts (:agendapoints target)]
+                                            (let [title (:title target)]
                                               (register-turn-flag!
                                                 state side
                                                 card :can-steal
-                                                (fn [state side card]
+                                                (fn [state _side card]
                                                   (if (= (:title card) title)
                                                     ((constantly false)
                                                      (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
@@ -1332,7 +1387,7 @@
                 :msg (msg "shuffle "
                           (let [seen (filter :seen targets)
                                 n (count (filter #(not (:seen %)) targets))]
-                            (str (string/join ", " (map :title seen))
+                            (str (str/join ", " (map :title seen))
                                  (when (pos? n)
                                    (str (when-not (empty? seen) " and ")
                                         (quantify n "card")))))
@@ -1415,7 +1470,7 @@
                                        :choices {:card #(and (installed? %)
                                                              (runner? %))
                                                  :max cnt}
-                                       :msg (msg "shuffle " (string/join ", " (map :title targets)) " into the stack")
+                                       :msg (msg "shuffle " (str/join ", " (map :title targets)) " into the stack")
                                        :effect (req (doseq [c targets]
                                                       (move state :runner c :deck))
                                                     (shuffle! state :runner :deck))}
@@ -1469,7 +1524,7 @@
                             (wait-for
                               (trash state :corp card {:unpreventable true :cause-card card})
                               (system-msg state :corp (str "trashes Nico Campaign"
-                                                           (when (not (empty? (:deck corp)))
+                                                           (when (seq (:deck corp))
                                                              " and draws 1 card")))
                               (draw state :corp eid 1))))))}]
     {:data {:counter {:credit 9}}
@@ -1840,7 +1895,8 @@
                  :effect (req (add-counter state side card :power -1)
                               (if (zero? (get-counters (get-card state card) :power))
                                 (wait-for (trash state side card {:cause-card card})
-                                          (continue-ability state side payout-ab card nil))))}]
+                                          (continue-ability state side payout-ab card nil))
+                                (effect-completed state side eid)))}]
     {:on-rez {:effect (effect (add-counter card :power 3))}
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1992,7 +2048,7 @@
                      :waiting-prompt "Corp to make a decision"
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
-                     :msg (msg "trash " (string/join ", " (map :title targets)))
+                     :msg (msg "trash " (str/join ", " (map :title targets)))
                      :cost [:credit 1]
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
@@ -2107,7 +2163,7 @@
   ; being run on in :runner-spent-click.
   {:events [{:event :runner-spent-click
              :req (req (first-event? state side :runner-spent-click))
-             :msg (req (if (not= :run (get-in @state [:runner :register :click-type]))
+             :msg (req (when-not (= :run (get-in @state [:runner :register :click-type]))
                          "gain 2 [Credits]"))
              :async true
              :effect (req (if (not= :run (get-in @state [:runner :register :click-type]))
@@ -2116,8 +2172,8 @@
             {:event :run
              :once :per-turn
              :req (req (first-event? state side :runner-spent-click))
-             :msg (req (if (and (= :run (get-in @state [:runner :register :click-type]))
-                                (not this-server))
+             :msg (req (when (and (= :run (get-in @state [:runner :register :click-type]))
+                                  (not this-server))
                          "gain 2 [Credits]"))
              :async true
              :effect (req (if (and (= :run (get-in @state [:runner :register :click-type]))
@@ -2443,15 +2499,15 @@
                  :effect (req (add-one (:cid card) state (get-card state (:card context))))}]})))
 
 (defcard "Watchdog"
-  (letfn [(not-triggered? [state card]
+  (letfn [(not-triggered? [state]
             (no-event? state :runner :rez #(ice? (:card (first %)))))]
     {:constant-effects [{:type :rez-cost
                          :req (req (and (ice? target)
-                                        (not-triggered? state card)))
+                                        (not-triggered? state)))
                          :value (req (- (count-tags state)))}]
      :events [{:event :rez
                :req (req (and (ice? (:card context))
-                              (not-triggered? state card)))
+                              (not-triggered? state)))
                :msg (msg "reduce the rez cost of " (:title (:card context))
                       " by " (count-tags state) " [Credits]")}]}))
 

@@ -1,9 +1,64 @@
 (ns game.cards.operations
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]
-            [clojure.string :as string]
-            [clojure.set :as set]))
+  (:require
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [game.core.access :refer [access-card steal-cost-bonus]]
+   [game.core.actions :refer [advance]]
+   [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
+   [game.core.board :refer [all-active-installed all-installed
+                            get-all-installed get-remote-names get-remotes
+                            installable-servers server->zone]]
+   [game.core.card :refer [agenda? asset? can-be-advanced? card-index corp?
+                           event? facedown? faceup? get-advancement-requirement
+                           get-card get-counters get-zone hardware? has-subtype? ice? identity? in-discard?
+                           in-hand? installed? is-type? operation? program? resource? rezzed? runner?
+                           upgrade?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.cost-fns :refer [play-cost trash-cost]]
+   [game.core.costs :refer [total-available-credits]]
+   [game.core.damage :refer [damage damage-bonus]]
+   [game.core.def-helpers :refer [corp-recur defcard do-brain-damage
+                                  reorder-choice]]
+   [game.core.drawing :refer [draw]]
+   [game.core.effects :refer [register-floating-effect]]
+   [game.core.eid :refer [effect-completed make-eid make-result]]
+   [game.core.engine :refer [pay register-events resolve-ability]]
+   [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
+                             turn-events]]
+   [game.core.flags :refer [clear-persistent-flag! in-corp-scored?
+                            in-runner-scored? is-scored? prevent-jack-out
+                            register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
+   [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
+                              lose-credits]]
+   [game.core.hand-size :refer [runner-hand-size+]]
+   [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice]]
+   [game.core.identities :refer [disable-identity enable-identity]]
+   [game.core.initializing :refer [ability-init card-init]]
+   [game.core.installing :refer [corp-install corp-install-list
+                                 corp-install-msg install-as-condition-counter]]
+   [game.core.memory :refer [mu+ update-mu]]
+   [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
+                             trash-cards]]
+   [game.core.payment :refer [can-pay? cost-target]]
+   [game.core.play-instants :refer [play-instant]]
+   [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
+   [game.core.props :refer [add-counter add-prop]]
+   [game.core.purging :refer [purge]]
+   [game.core.revealing :refer [reveal]]
+   [game.core.rezzing :refer [derez rez]]
+   [game.core.runs :refer [end-run make-run]]
+   [game.core.say :refer [system-msg]]
+   [game.core.servers :refer [is-remote? remote->name zone->name]]
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck
+                                shuffle-into-rd-effect]]
+   [game.core.tags :refer [gain-tags]]
+   [game.core.to-string :refer [card-str]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.core.virus :refer [number-of-virus-counters]]
+   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.utils :refer :all]
+   [jinteki.utils :refer :all]))
 
 
 (defn- lockdown
@@ -50,7 +105,7 @@
                                       (let [cards (filterv #(not (same-card? % target)) cards)]
                                         (continue-ability state side (ad state side eid card cards) card nil))))}))]
     {:on-play
-     {:prompt (msg "The top 3 cards of R&D are " (string/join ", " (map :title (take 3 (:deck corp)))) ".")
+     {:prompt (msg "The top 3 cards of R&D are " (str/join ", " (map :title (take 3 (:deck corp)))) ".")
       :choices ["OK"]
       :async true
       :effect (effect (continue-ability (ad state side eid card (take 3 (:deck corp))) card nil))}}))
@@ -165,14 +220,14 @@
                          (system-msg
                            state side
                            (str "uses Attitude Adjustment to shuffle "
-                                (string/join
+                                (str/join
                                   " and "
                                   (filter identity
                                           [(when (not-empty from-hq)
-                                             (str (string/join " and " from-hq)
+                                             (str (str/join " and " from-hq)
                                                   " from HQ"))
                                            (when (not-empty from-archives)
-                                             (str (string/join " and " from-archives)
+                                             (str (str/join " and " from-archives)
                                                   " from Archives"))]))
                                 " into R&D and gain "
                                 (* 2 (count targets)) " [Credits]")))
@@ -262,7 +317,7 @@
                                    (wait-for
                                      (gain-credits state :runner (count trashed-cards))
                                      (system-msg state :runner
-                                                 (str "trashes " (string/join ", " (map :title trashed-cards))
+                                                 (str "trashes " (str/join ", " (map :title trashed-cards))
                                                       " and gains " (count trashed-cards)
                                                       " [Credits]"))
                                      (effect-completed state side eid)))))}
@@ -358,7 +413,7 @@
    {:choices {:max 5
               :card #(and (corp? %)
                           (in-hand? %))}
-    :msg (msg "reveal " (string/join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
+    :msg (msg "reveal " (str/join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
     :async true
     :effect (req (wait-for
                    (reveal state side targets)
@@ -776,7 +831,7 @@
                      state :corp
                      (str "uses Focus Group to choose " target
                           " and reveal the Runner's Grip ("
-                          (string/join ", " (map :title (sort-by :title (:hand runner))))
+                          (str/join ", " (map :title (sort-by :title (:hand runner))))
                           ")"))
                    (wait-for
                      (reveal state side (:hand runner))
@@ -818,7 +873,7 @@
 (defcard "Freelancer"
   {:on-play
    {:req (req tagged)
-    :msg (msg "trash " (string/join ", " (map :title (sort-by :title targets))))
+    :msg (msg "trash " (str/join ", " (map :title (sort-by :title targets))))
     :choices {:max 2
               :card #(and (installed? %)
                           (resource? %))}
@@ -854,7 +909,7 @@
               {:async true
                :prompt (str "Choice " current " of " total ": Gain 2 [Credits] or draw 2 cards? ")
                :choices ["Gain 2 [Credits]" "Draw 2 cards"]
-               :msg (msg (string/lower-case target))
+               :msg (msg (str/lower-case target))
                :effect (req (if (= target "Gain 2 [Credits]")
                               (wait-for (gain-credits state :corp 2)
                                         (continue-ability state side (repeat-choice (inc current) total)
@@ -901,7 +956,7 @@
                                                        (system-msg
                                                          state :runner
                                                          (str (:msg async-result) " to prevent the trashing of "
-                                                              (string/join ", " (map :title (sort-by :title targets)))))
+                                                              (str/join ", " (map :title (sort-by :title targets)))))
                                                        (effect-completed state side (make-result eid targets))))}
                                card nil)
                              (let [prevented async-result
@@ -914,7 +969,7 @@
                                                      (str "trashes all "
                                                           (when (seq prevented) "other ")
                                                           typemsg
-                                                          ": " (string/join ", " (map :title (sort-by :title async-result)))))
+                                                          ": " (str/join ", " (map :title (sort-by :title async-result)))))
                                          (wait-for (gain-bad-publicity state :corp 1)
                                                    (when async-result
                                                      (system-msg state :corp "takes 1 bad publicity from Game Over"))
@@ -997,7 +1052,7 @@
 
 (defcard "Hasty Relocation"
   (letfn [(hr-final [chosen original]
-            {:prompt (str "The top cards of R&D will be " (string/join  ", " (map :title chosen)) ".")
+            {:prompt (str "The top cards of R&D will be " (str/join  ", " (map :title chosen)) ".")
              :choices ["Done" "Start over"]
              :async true
              :effect (req (if (= target "Done")
@@ -1066,7 +1121,7 @@
                             :all true
                             :card #(and (installed? %)
                                         (not (program? %)))}
-                  :msg (msg "trash " (string/join ", " (map :title (sort-by :title targets))))
+                  :msg (msg "trash " (str/join ", " (map :title (sort-by :title targets))))
                   :async true
                   :effect (effect (trash-cards eid targets {:cause-card card}))}
      :unsuccessful {:msg "take 1 bad publicity"
@@ -1171,7 +1226,7 @@
                                      (system-msg
                                        state :corp
                                        (str "reveals the Runner's Grip ( "
-                                            (string/join ", " (map :title (sort-by :title (:hand runner))))
+                                            (str/join ", " (map :title (sort-by :title (:hand runner))))
                                             " ) and can trash up to " x " resources or events"))
                                      (continue-ability state side (iop (dec x)) card nil))))}
        :unsuccessful {:msg "take 1 bad publicity"
@@ -1260,7 +1315,7 @@
     :choices {:max (req (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
               :card #(and (rezzed? %)
                           (not (agenda? %)))}
-    :msg (msg "trash " (string/join ", " (map :title targets))
+    :msg (msg "trash " (str/join ", " (map :title targets))
               " and gain " (* (count targets) 3) " [Credits]")
     :async true
     :effect (req (wait-for (trash-cards state side targets {:cause-card card})
@@ -1448,7 +1503,7 @@
     :choices {:max (req (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
               :card #(and (rezzed? %)
                           (not (agenda? %)))}
-    :msg (msg "trash " (string/join ", " (map :title targets))
+    :msg (msg "trash " (str/join ", " (map :title targets))
               " and give the runner " (quantify (count targets) "tag"))
     :async true
     :effect (req (wait-for (trash-cards state side targets {:cause-card card})
@@ -1500,11 +1555,10 @@
                        :player :runner
                        :yes-ability {:async true
                                      :effect (req (let [c (take 1 (shuffle (:hand runner)))]
-                                                    (do
-                                                      (system-msg state :corp
-                                                                  (str "uses O₂ Shortage to trash "
-                                                                       (:title (first c)) " from the Runner's Grip"))
-                                                      (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash}))))}
+                                                    (system-msg state :corp
+                                                                (str "uses O₂ Shortage to trash "
+                                                                     (:title (first c)) " from the Runner's Grip"))
+                                                    (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash})))}
                        :no-ability {:msg "gain [Click][Click]"
                                     :effect (effect (gain-clicks :corp 2))}}}
                      card nil)))}})
@@ -1630,7 +1684,7 @@
                    "Draw 3 cards"
                    (when tagged
                      "Gain 3 [Credits] and draw 3 cards")])
-    :msg (msg (string/lower-case target))
+    :msg (msg (str/lower-case target))
     :async true
     :effect (req (case target
                    "Gain 3 [Credits]"
@@ -2054,7 +2108,7 @@
     :async true
     :effect (req (system-msg state side
                              (str "uses Salem's Hospitality to reveal the Runner's Grip ( "
-                                  (string/join ", " (map :title (sort-by :title (:hand runner))))
+                                  (str/join ", " (map :title (sort-by :title (:hand runner))))
                                   " ) and trash any copies of " target))
                  (let [cards (filter #(= target (:title %)) (:hand runner))]
                    (wait-for
@@ -2149,7 +2203,7 @@
     :choices {:card #(and (installed? %)
                           (runner? %))
               :max 2}
-    :msg (msg (str "move " (string/join ", " (map :title targets)) " to the Runner's Grip"))
+    :msg (msg (str "move " (str/join ", " (map :title targets)) " to the Runner's Grip"))
     :effect (req (doseq [c targets]
                    (move state :runner c :hand)))}})
 
@@ -2288,7 +2342,7 @@
     :prompt "Choose a card type"
     :choices ["Event" "Hardware" "Program" "Resource"]
     :msg (msg "name " target
-              ", revealing " (string/join ", " (map :title (:hand runner)))
+              ", revealing " (str/join ", " (map :title (:hand runner)))
               " in the Runner's Grip, and gains "
               (* 2 (count (filter #(is-type? % target) (:hand runner)))) " [Credits]")
     :async true

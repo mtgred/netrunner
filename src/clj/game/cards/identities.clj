@@ -1,8 +1,63 @@
 (ns game.cards.identities
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]
-            [clojure.string :as string]))
+  (:require
+   [clojure.string :as str]
+   [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
+   [game.core.bad-publicity :refer [gain-bad-publicity]]
+   [game.core.board :refer [all-active-installed all-installed card->server
+                            get-remote-names get-remotes server->zone]]
+   [game.core.card :refer [agenda? asset? can-be-advanced?
+                           corp-installable-type? corp? faceup? get-advancement-requirement
+                           get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
+                           ice? in-discard? in-hand? in-play-area? installed? is-type? operation? program?
+                           resource? rezzed? runner? upgrade?]]
+   [game.core.cost-fns :refer [install-cost play-cost rez-cost rez-additional-cost-bonus]]
+   [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
+                             enable-corp-damage-choice]]
+   [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
+   [game.core.drawing :refer [draw]]
+   [game.core.effects :refer [register-floating-effect]]
+   [game.core.eid :refer [effect-completed make-eid]]
+   [game.core.engine :refer [pay register-events resolve-ability trigger-event]]
+   [game.core.events :refer [event-count first-event?
+                             first-successful-run-on-server? no-event? not-last-turn? turn-events]]
+   [game.core.expose :refer [expose]]
+   [game.core.finding :refer [find-latest]]
+   [game.core.flags :refer [card-flag? enable-run-on-server
+                            prevent-run-on-server register-turn-flag! zone-locked? register-persistent-flag! clear-persistent-flag!]]
+   [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
+   [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
+   [game.core.hosting :refer [host]]
+   [game.core.ice :refer [break-sub update-all-ice update-all-icebreakers]]
+   [game.core.initializing :refer [make-card]]
+   [game.core.installing :refer [corp-install runner-install]]
+   [game.core.link :refer [link+ update-link]]
+   [game.core.memory :refer [mu+]]
+   [game.core.moving :refer [mill move swap-ice trash trash-cards]]
+   [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
+   [game.core.payment :refer [can-pay? cost-name merge-costs]]
+   [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
+   [game.core.play-instants :refer [play-instant]]
+   [game.core.prompts :refer [cancellable clear-wait-prompt]]
+   [game.core.props :refer [add-counter add-prop]]
+   [game.core.revealing :refer [conceal-hand reveal reveal-hand]]
+   [game.core.rezzing :refer [rez]]
+   [game.core.runs :refer [get-current-encounter make-run redirect-run
+                           set-next-phase start-next-phase total-cards-accessed]]
+   [game.core.say :refer [system-msg]]
+   [game.core.servers :refer [central->name is-central? is-remote? name-zone
+                              target-server zone->name]]
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
+   [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
+   [game.core.to-string :refer [card-str]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.core.virus :refer [number-of-runner-virus-counters]]
+   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.utils :refer :all]
+   [jinteki.utils :refer :all]
+   [game.core.charge :refer [charge-ability]]
+   [game.core.sabotage :refer [sabotage-ability]]
+   [game.core.mark :refer [identify-mark-ability]]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -348,7 +403,7 @@
               :yes-ability
               {:async true
                :msg (msg "look at the Runner's Grip ( "
-                         (string/join ", " (map :title (sort-by :title (:hand runner))))
+                         (str/join ", " (map :title (sort-by :title (:hand runner))))
                          " ) and choose the card that is trashed")
                :effect
                (effect (continue-ability
@@ -610,12 +665,12 @@
 (defcard "Harishchandra Ent.: Where You're the Star"
   (letfn [(format-grip [runner]
             (if (pos? (count (:hand runner)))
-              (string/join ", " (map :title (sort-by :title (:hand runner))))
+              (str/join ", " (map :title (sort-by :title (:hand runner))))
               "no cards"))]
     {:events [{:event :post-runner-draw
                :req (req (is-tagged? state))
                :msg (msg "see that the Runner drew: "
-                         (string/join ", " (map :title runner-currently-drawing)))}
+                         (str/join ", " (map :title runner-currently-drawing)))}
               {:event :tags-changed
                :effect (req (if (is-tagged? state)
                               (when-not (get-in @state [:runner :openhand])
@@ -921,14 +976,14 @@
   ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
   (letfn [(kate-type? [card] (or (hardware? card)
                                  (program? card)))
-          (not-triggered? [state card] (no-event? state :runner :runner-install #(kate-type? (:card (first %)))))]
+          (not-triggered? [state] (no-event? state :runner :runner-install #(kate-type? (:card (first %)))))]
     {:constant-effects [{:type :install-cost
                          :req (req (and (kate-type? target)
-                                        (not-triggered? state card)))
+                                        (not-triggered? state)))
                          :value -1}]
      :events [{:event :runner-install
                :req (req (and (kate-type? (:card context))
-                              (not-triggered? state card)))
+                              (not-triggered? state)))
                :silent (req true)
                :msg (msg "reduce the install cost of " (:title (:card context)) " by 1 [Credits]")}]}))
 
@@ -1027,7 +1082,7 @@
 (defcard "MaxX: Maximum Punk Rock"
   (let [ability {:msg (msg (let [deck (:deck runner)]
                              (if (pos? (count deck))
-                               (str "trash " (string/join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
+                               (str "trash " (str/join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                  :label "trash and draw cards"
                  :once :per-turn
@@ -1389,7 +1444,7 @@
           ;; This requires that any (trash-cards ..) or (trash ..) fns use {:source card}
           ;; to be compatable. Updating those functions is quite quick, just make sure it actually
           ;; is the corporation doing it.
-          (trash-cause [eid target context]
+          (trash-cause [eid target]
             (let [cause (:cause target)
                   cause-card (:cause-card target)]
               (cond
@@ -1423,7 +1478,7 @@
                :req (req (and
                            (installed? (:card context))
                            (rezzed? (:card context))
-                           (some? (trash-cause eid target context))
+                           (some? (trash-cause eid target))
                            (not (used-this-turn? (:cid card) state))))
                :async true
                :interactive (req true)
@@ -1530,7 +1585,7 @@
                             (register-turn-flag!
                               state side
                               card :can-score
-                              (fn [state side card]
+                              (fn [state _side card]
                                 (if (and (= (:cid card) tgtcid)
                                          (<= (get-advancement-requirement card) (get-counters card :advancement)))
                                   ((constantly false)
@@ -1632,8 +1687,7 @@
                  :effect (req (let [agendas (installed-faceup-agendas state)
                                     agenda-points (->> agendas
                                                        (map :agendapoints)
-                                                       (reduce +))
-                                    ice (ice-with-no-advancement-tokens state)]
+                                                       (reduce +))]
                                 (continue-ability
                                   state side
                                   {:prompt (str "Choose a piece of ice with no advancement tokens to place "

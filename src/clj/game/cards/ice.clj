@@ -1,9 +1,63 @@
 (ns game.cards.ice
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]
-            [clojure.string :as string]
-            [cond-plus.core :refer [cond+]]))
+  (:require
+   [clojure.string :as str]
+   [cond-plus.core :refer [cond+]]
+   [game.core.access :refer [access-bonus access-card breach-server max-access]]
+   [game.core.bad-publicity :refer [gain-bad-publicity]]
+   [game.core.board :refer [all-active-installed all-installed card->server
+                            server->zone get-all-cards get-all-installed]]
+   [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index
+                           corp? faceup? get-card get-counters get-zone
+                           hardware? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
+                           program? protecting-a-central? protecting-hq? resource? rezzed? runner? protecting-archives?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.costs :refer [total-available-credits]]
+   [game.core.damage :refer [damage]]
+   [game.core.def-helpers :refer [combine-abilities corp-recur defcard
+                                  do-brain-damage do-net-damage offer-jack-out
+                                  reorder-choice]]
+   [game.core.drawing :refer [draw]]
+   [game.core.effects :refer [get-effects register-floating-effect]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.engine :refer [pay register-events resolve-ability trigger-event
+                             unregister-events gather-events]]
+   [game.core.flags :refer [can-rez? prevent-draw prevent-jack-out
+                            register-run-flag! register-turn-flag! zone-locked? card-flag?]]
+   [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
+   [game.core.hand-size :refer [hand-size]]
+   [game.core.hosting :refer [host]]
+   [game.core.ice :refer [add-sub add-sub! break-sub remove-sub! remove-subs!
+                          resolve-subroutine set-current-ice
+                          unbroken-subroutines-choice update-all-ice update-all-icebreakers update-ice-strength]]
+   [game.core.initializing :refer [card-init]]
+   [game.core.installing :refer [corp-install corp-install-list
+                                 corp-install-msg]]
+   [game.core.memory :refer [available-mu]]
+   [game.core.moving :refer [as-agenda mill move swap-ice swap-installed trash
+                             trash-cards]]
+   [game.core.optional :refer [get-autoresolve set-autoresolve]]
+   [game.core.payment :refer [can-pay?]]
+   [game.core.prompts :refer [cancellable clear-wait-prompt]]
+   [game.core.props :refer [add-counter add-prop]]
+   [game.core.purging :refer [purge]]
+   [game.core.revealing :refer [reveal]]
+   [game.core.rezzing :refer [derez get-rez-cost rez]]
+   [game.core.runs :refer [bypass-ice continue encounter-ends end-run
+                           force-ice-encounter prevent-access redirect-run
+                           set-next-phase get-current-encounter]]
+   [game.core.say :refer [system-msg system-say]]
+   [game.core.servers :refer [central->name is-remote? protecting-same-server?
+                              target-server zone->name]]
+   [game.core.shuffling :refer [shuffle!]]
+   [game.core.subtypes :refer [update-all-subtypes]]
+   [game.core.tags :refer [gain-tags lose-tags]]
+   [game.core.to-string :refer [card-str]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.utils :refer :all]
+   [jinteki.utils :refer :all]
+   [game.core.finding :refer [find-cid]]))
 
 ;;;; Helper functions specific for ice
 (defn reset-variable-subs
@@ -288,12 +342,12 @@
    :msg "prevent the Runner from stealing or trashing Corp cards for the remainder of the run"
    :effect (effect (register-run-flag!
                      card :can-steal
-                     (fn [state side card]
+                     (fn [state _side _card]
                        ((constantly false)
                         (toast state :runner "Cannot steal due to subroutine." "warning"))))
                    (register-run-flag!
                      card :can-trash
-                     (fn [state side card]
+                     (fn [state _side card]
                        ((constantly (not (corp? card)))
                         (toast state :runner "Cannot trash due to subroutine." "warning")))))})
 
@@ -351,7 +405,7 @@
    :async true
    :effect (effect (reveal eid targets))
    :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
-          (msg "reveal " (string/join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
+          (msg "reveal " (str/join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
 (def resolve-grail
   "Ability for resolving a subroutine on a Grail ice in HQ."
@@ -515,7 +569,7 @@
                   :label "Trash the top 3 cards of the Stack. Trash Aimor."
                   :effect (req (system-msg state :corp
                                            (str "uses Aimor to trash "
-                                                (string/join ", " (map :title (take 3 (:deck runner))))
+                                                (str/join ", " (map :title (take 3 (:deck runner))))
                                                 " from the Runner's Stack"))
                                (wait-for (mill state :corp :runner 3)
                                          (system-msg state side (str "trashes Aimor"))
@@ -1284,7 +1338,7 @@
   (let [sub {:async true
              :label "Reveal the grip"
              :msg (msg "reveal " (quantify (count (:hand runner)) "card")
-                       " from grip: " (string/join ", " (map :title (:hand runner))))
+                       " from grip: " (str/join ", " (map :title (:hand runner))))
              :effect (effect (reveal eid (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
@@ -1426,7 +1480,7 @@
                    {:label "Do 1 brain damage or end the run"
                     :prompt "Choose one"
                     :choices ["Do 1 brain damage" "End the run"]
-                    :msg (msg (string/lower-case target))
+                    :msg (msg (str/lower-case target))
                     :async true
                     :effect (req (if (= target "Do 1 brain damage")
                                    (damage state side eid :brain 1 {:card card})
@@ -1572,7 +1626,7 @@
                                                    (effect-completed eid))
                             :msg (msg
                                    "shuffle "
-                                   (string/join
+                                   (str/join
                                      " and "
                                      (filter identity
                                              [(when-let [h (->> targets
@@ -1662,10 +1716,8 @@
                              card
                              {:type :prevent-paid-ability
                               :duration :end-of-turn
-                              :req (req (let [target-card (first targets)
-                                              ability (second targets)]
-                                          (and (ice? target-card)
-                                               (has-subtype? target-card "Bioroid"))))
+                              :req (req (and (ice? target)
+                                             (has-subtype? target "Bioroid")))
                               :value true}))}})
 
 (defcard "Hagen"
@@ -1710,7 +1762,7 @@
                                            :effect (req (wait-for (trash-cards state :runner targets)
                                                                   (system-msg
                                                                     state :runner
-                                                                    (str "trashes " (string/join ", " (map :title targets))))
+                                                                    (str "trashes " (str/join ", " (map :title targets))))
                                                                   (effect-completed state side eid)))}))
                                       card nil)))}]
     {:subroutines [sub
@@ -2194,7 +2246,7 @@
                    {:label "Reveal the top 3 cards of the Stack"
                     :async true
                     :effect (req (system-msg state side (str "uses Loot Box to reveal the top 3 cards of the stack: "
-                                                             (string/join ", " (top-3-names state))))
+                                                             (str/join ", " (top-3-names state))))
                               (wait-for
                                 (reveal state side (top-3 state))
                                 (continue-ability
@@ -2518,7 +2570,7 @@
                                 (damage state :runner eid :net net-dmg {:card card}))
                             (do (system-msg state :corp
                                             (str "uses Mlinzi to trash "
-                                                 (string/join ", " (map :title (take mill-cnt (:deck runner))))
+                                                 (str/join ", " (map :title (take mill-cnt (:deck runner))))
                                                  " from the runner's stack"))
                                 (mill state :runner eid :runner mill-cnt))))})]
     {:subroutines [(net-or-trash 1 2)
@@ -2674,7 +2726,7 @@
                   :msg (msg "add "
                             (let [seen (filter :seen targets)
                                   m (count (filter #(not (:seen %)) targets))]
-                              (str (string/join ", " (map :title seen))
+                              (str (str/join ", " (map :title seen))
                                    (when (pos? m)
                                      (str (when-not (empty? seen) " and ")
                                           (quantify m "unseen card")))))
@@ -2803,7 +2855,7 @@
                     :effect (req (let [n (count (filter #(is-type? % target) (:hand runner)))]
                                    (system-msg state side
                                                (str "uses Peeping Tom to name " target ", then reveals "
-                                                    (string/join ", " (map :title (:hand runner)))
+                                                    (str/join ", " (map :title (:hand runner)))
                                                     " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
                                    (wait-for
                                      (reveal state side (:hand runner))
@@ -2913,7 +2965,7 @@
                               (let [top-cards (take 3 (:deck corp))
                                     top-names (map :title top-cards)]
                                 {:waiting-prompt "Corp to make a decision"
-                                 :prompt (str "Top 3 cards of R&D: " (string/join ", " top-names))
+                                 :prompt (str "Top 3 cards of R&D: " (str/join ", " top-names))
                                  :choices ["Arrange cards" "Shuffle R&D"]
                                  :async true
                                  :effect
@@ -3119,7 +3171,7 @@
                             (system-msg state side
                                         (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                              " then reveal the top 3 cards in the stack: "
-                                             (string/join ", " (top-3-names t3))))
+                                             (str/join ", " (top-3-names t3))))
                             (reveal state side eid t3)))})]
     {:on-encounter (ability)
      :abilities [(ability)]
@@ -3157,7 +3209,7 @@
 
 (defcard "Snoop"
   {:on-encounter {:msg (msg "reveal the Runner's Grip ("
-                            (string/join ", " (map :title (:hand runner)))
+                            (str/join ", " (map :title (:hand runner)))
                             ")")
                   :async true
                   :effect (effect (reveal eid (:hand runner)))}
@@ -3570,14 +3622,14 @@
 (defcard "Waiver"
   {:subroutines [(trace-ability
                    5 {:label "Reveal the grip and trash cards"
-                      :msg (msg "reveal all cards in the grip: " (string/join ", " (map :title (:hand runner))))
+                      :msg (msg "reveal all cards in the grip: " (str/join ", " (map :title (:hand runner))))
                       :async true
                       :effect (req (wait-for
                                      (reveal state side (:hand runner))
                                      (let [delta (- target (second targets))
                                            cards (filter #(<= (:cost %) delta) (:hand runner))]
                                        (system-msg state side (str "uses Waiver to trash "
-                                                                   (string/join ", " (map :title cards))))
+                                                                   (str/join ", " (map :title cards))))
                                        (trash-cards state side eid cards {:cause :subroutine}))))})]})
 
 (defcard "Wall of Static"
