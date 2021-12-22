@@ -23,15 +23,17 @@
    [org.httpkit.server :refer [run-server server-stop!]]
    [taoensso.sente :as sente]
    [time-literals.data-readers]
-   [time-literals.read-write]
+   [time-literals.read-write :as read-write]
    [web.angel-arena :as angel-arena]
-   [web.versions :refer [frontend-version]]
    [web.api :refer [make-app make-dev-app]]
    [web.app-state :as app-state]
    [web.game]
    [web.lobby :as lobby]
    [web.utils :refer [tick]]
+   [web.versions :refer [frontend-version]]
    [web.ws :refer [ch-chsk event-msg-handler]]))
+
+(read-write/print-time-literals-clj!)
 
 (defmethod aero/reader 'ig/ref
   [_ _ value]
