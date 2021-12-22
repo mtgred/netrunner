@@ -1,13 +1,12 @@
 (ns game.cards.events-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core.eid :refer :all]
-            [game.utils :as utils]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [jinteki.validator :refer [legal?]]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.eid :refer :all]
+   [game.utils :as utils]
+   [jinteki.validator :refer [legal?]]
+   [test-setup :refer :all]))
 
 (deftest account-siphon-use-ability
     ;; Use ability

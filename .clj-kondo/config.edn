@@ -1,6 +1,7 @@
 {:linters
  {:unresolved-symbol
-  {:exclude [(game.macros/req [state side eid card targets target context
+  {:exclude [
+             (game.macros/req [state side eid card targets target context
                                runner corp run run-server run-ices run-position
                                current-ice corp-reg corp-reg-last runner-reg
                                runner-reg-last installed remotes servers
@@ -22,9 +23,6 @@
                                archives-runnable tagged this-card-run this-server
                                corp-currently-drawing runner-currently-drawing])
              (game.macros/wait-for [async-result])
-             (game.macros-test/do-game [state get-corp get-runner get-run refresh hand-size
-                                        prompt-map prompt-button prompt-type prompt-buttons
-                                        prompt-titles prompt-fmt])
              (game.core/req [state side eid card targets target context
                              runner corp run run-server run-ices run-position
                              current-ice corp-reg corp-reg-last runner-reg
@@ -46,7 +44,11 @@
                              unprotected runnable-servers hq-runnable rd-runnable
                              archives-runnable tagged this-card-run this-server
                              corp-currently-drawing runner-currently-drawing])
-             (game.core/wait-for [async-result])]}
+             (game.core/wait-for [async-result])
+             (test-setup/do-game [state get-corp get-runner get-run refresh hand-size
+                                  prompt-map prompt-button prompt-type prompt-buttons
+                                  prompt-titles prompt-fmt])
+             ]}
   :invalid-arity {:skip-args [game.macros/effect game.macros/wait-for
                               game.core/effect game.core/wait-for]}
   :unused-namespace {:exclude ["game.core.*"]}
@@ -104,14 +106,15 @@
      create-index {:arities {3 {:args [:any :any :any]}
                              4 {:args [:any :any :any :any]}}}}}}
   }
- :lint-as {game.macros-test/before-each clojure.core/let
+ :lint-as {
            reagent.core/with-let clojure.core/let
            game.macros/when-let* clojure.core/let
            game.core/req game.macros/req
            game.core/effect game.macros/effect
            game.core/msg game.macros/msg
            game.core/wait-for game.macros/wait-for
-           game.macros-test/deftest-pending clojure.test/deftest
+           test-setup/before-each clojure.core/let
+           test-setup/deftest-pending clojure.test/deftest
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->
            }

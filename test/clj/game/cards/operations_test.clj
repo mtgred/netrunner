@@ -1,12 +1,11 @@
 (ns game.cards.operations-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core.eid :refer [make-eid]]
-            [game.utils :as utils]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.eid :refer [make-eid]]
+   [game.utils :as utils]
+   [test-setup :refer :all]))
 
 (deftest twenty-four-seven-news-cycle-breaking-news-interaction
     ;; Breaking News interaction

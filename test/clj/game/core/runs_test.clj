@@ -1,10 +1,9 @@
 (ns game.core.runs-test
-  (:require [game.core :as core]
-            [game.core-test :refer :all]
-            [game.core.card :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [test-setup :refer :all]))
 
 (deftest run-timing-with-no-ice
     ;; with no ice

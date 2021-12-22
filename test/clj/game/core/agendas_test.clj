@@ -1,11 +1,10 @@
 (ns game.core.agendas-test
-  (:require [game.core :as core]
-            [game.macros :refer [req]]
-            [game.core.agendas :refer [agenda-points]]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.agendas :refer [agenda-points]]
+   [game.macros :refer [req]]
+   [test-setup :refer :all]))
 
 (deftest agenda-points-test
   (defmethod core/defcard-impl "Test Card" [_] {})

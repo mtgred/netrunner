@@ -1,6 +1,7 @@
 (ns game.web.deck-test
-  (:require [web.decks :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [web.decks :refer :all]))
 
 (deftest hash-salt
   (testing "Generate salt for hash from unicode string"

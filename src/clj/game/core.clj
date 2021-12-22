@@ -30,6 +30,7 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.installing]
+    [game.core.link]
     [game.core.memory]
     [game.core.moving]
     [game.core.optional]
@@ -91,7 +92,6 @@
    no-trash-or-steal
    num-cards-central
    num-cards-to-access
-   root-content
    set-only-card-to-access
    steal
    steal-cost
@@ -596,7 +596,6 @@
    can-pay?
    cost->string
    cost-name
-   cost-ranks
    cost-target
    cost-targets
    cost-value
