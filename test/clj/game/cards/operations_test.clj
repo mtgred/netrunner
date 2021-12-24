@@ -420,6 +420,7 @@
       (click-prompt state :corp "Resource")
       (click-card state :runner (get-resource state 0))
       (click-prompt state :runner "Done")
+      (is (last-n-log-contains? state 2 "Resource") "Chosen card type should be logged")
       (is (= (inc rc) (:credit (get-runner))) "Runner should gain 1 credit for trashing a Fan Site")
       (is (= (+ (* 4 2) cc) (:credit (get-corp))) "Corp should gain 8 credits for remaining 4 Fan Sites"))))
 
