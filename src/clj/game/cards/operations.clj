@@ -233,11 +233,9 @@
       :prompt "Choose a card type"
       :choices ["Hardware" "Program" "Resource"]
       :async true
+      :msg (msg "choose " target)
       :effect (req (let [t target
                          n (num-installed state t)]
-                     (system-msg
-                       state :corp
-                       (str "uses Biased Reporting to choose " target))
                      (wait-for
                        (resolve-ability
                          state :runner
