@@ -2429,6 +2429,23 @@
       (click-prompt state :runner "Yes")
       (is (not (get-run)))))
 
+(deftest guru-davinder-trash-does-not-trigger-dummy-box
+    ;; Guru Davinder trash doesn't trigger Dummy Box
+    (do-game
+      (new-game {:corp {:id "Argus Security: Protection Guaranteed"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Vanity Project"]}
+                 :runner {:deck [(qty "Guru Davinder" 2) "Dummy Box"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Guru Davinder")
+      (play-from-hand state :runner "Dummy Box")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "2 meat damage")
+      (click-prompt state :runner "Yes")
+      (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
+
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
   (do-game

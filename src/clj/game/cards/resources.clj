@@ -1205,7 +1205,7 @@
                               :unregister-once-resolved true
                               :async true
                               :effect (req (if (< (:credit runner) 4)
-                                             (trash state side eid card nil)
+                                             (trash state side eid card {:cause :runner-ability})
                                              (continue-ability
                                                state :runner
                                                {:optional
@@ -1217,7 +1217,7 @@
                                                                                    "from being trashed"))
                                                                   (lose-credits :runner eid 4))}
                                                  :no-ability {:async true
-                                                              :effect (effect (trash eid card nil))}}}
+                                                              :effect (effect (trash eid card {:cause :runner-ability}))}}}
                                                card nil)))}]))}]})
 
 (defcard "Hades Shard"
