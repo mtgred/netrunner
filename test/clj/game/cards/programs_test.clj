@@ -3958,6 +3958,26 @@
         (run-jack-out state)
         (is (= 1 (count (:discard (get-runner)))) "Mayfly trashed when run ends"))))
 
+(deftest mayfly-trash-does-not-trigger-dummy-box
+  ;; Mayfly trash doesn't trigger Dummy Box
+  (do-game
+      (new-game {:corp {:deck ["Spiderweb"]
+                        :credits 20}
+                 :runner {:hand [(qty "Mayfly" 2) "Dummy Box"]
+                          :credits 20}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mayfly")
+      (play-from-hand state :runner "Dummy Box")
+      (let [mayfly (get-program state 0)]
+        (run-on state "HQ")
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
+        (core/continue state :corp nil)
+        (run-jack-out state)
+        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
+
 (deftest mimic
   ;; Mimic
   (do-game
