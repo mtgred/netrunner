@@ -1772,7 +1772,7 @@
    :events [{:event :agenda-stolen
              :async true
              :msg "trash itself"
-             :effect (effect (trash eid card nil))}]
+             :effect (effect (trash eid card {:cause :runner-ability}))}]
    :abilities [{:async true
                 :cost [:credit 2]
                 :msg "avoid 1 tag"

@@ -3491,6 +3491,20 @@
         (is (= 1 (:agenda-point (get-runner))))
         (is (empty? (get-resource state)) "NACH trashed by agenda steal"))))
 
+(deftest new-angeles-city-hall-trash-does-not-trigger-dummy-box
+  ;; New Angeles City Hall trash doesn't trigger Dummy Box
+  (do-game
+      (new-game {:corp {:deck ["Breaking News"]}
+                 :runner {:deck [(qty "New Angeles City Hall" 2) "Dummy Box"]}})
+      (play-from-hand state :corp "Breaking News" "New remote")
+      (take-credits state :corp 2)
+      (play-from-hand state :runner "New Angeles City Hall")
+      (play-from-hand state :runner "Dummy Box")
+      (let [nach (get-resource state 0)]
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Steal")
+        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
+
 (deftest new-angeles-city-hall-don-t-gain-siphon-credits-until-opportunity-to-avoid-tags-has-passed
     ;; don't gain Siphon credits until opportunity to avoid tags has passed
     (do-game
