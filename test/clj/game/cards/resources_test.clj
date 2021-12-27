@@ -2373,6 +2373,16 @@
     (take-credits state :runner)
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
 
+(deftest grifter-trash-does-not-trigger-dummy-box
+  ;; Grifter trash doesn't trigger Dummy Box
+  (do-game
+    (new-game {:runner {:deck [(qty "Grifter" 2) "Dummy Box"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Grifter")
+    (play-from-hand state :runner "Dummy Box")
+    (take-credits state :runner)
+    (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
+
 (deftest guru-davinder-no-prompt-trash-for-preventing-0-damage
     ;; no prompt/trash for preventing 0 damage
     (do-game

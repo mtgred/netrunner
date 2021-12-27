@@ -1188,7 +1188,7 @@
                                       :effect (effect (gain-credits eid 1))}
                                      {:msg "trash Grifter"
                                       :async true
-                                      :effect (effect (trash eid card nil))})]
+                                      :effect (effect (trash eid card {:cause :runner-ability}))})]
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
