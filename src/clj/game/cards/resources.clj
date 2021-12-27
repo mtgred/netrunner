@@ -2813,10 +2813,10 @@
                        :value 1}]
    :events [{:event :agenda-scored
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :agenda-stolen
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :pre-steal-cost
              :effect (effect (steal-cost-bonus [:credit 3] {:source card :source-type :ability}))}]})
 
