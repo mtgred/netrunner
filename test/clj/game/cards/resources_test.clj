@@ -413,6 +413,38 @@
       (run-empty-server state :hq)
       (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
 
+;; Bloo Moose
+(deftest bloo-moose-manual-use
+  ;; Manual use
+  (do-game
+   (new-game {:runner {:deck ["Bloo Moose"] :discard ["Sure Gamble"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Bloo Moose")
+   (let [orig-credits (:credit (get-runner))
+         bm (get-resource state 0)]
+     (card-ability state :runner bm 0)
+     (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+     (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
+     (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")
+     (card-ability state :runner bm 0)
+     (is (not= :select (:prompt-type (prompt-map :runner))) "Bloo Moose has already been used this turn"))))
+
+(deftest bloo-moose-triggered-at-start-of-turn
+  ;; Triggered at start of turn
+  (do-game
+    (new-game {:runner {:deck ["Bloo Moose"] :discard ["Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bloo Moose")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (end-phase-12 state :runner)
+    (changes-val-macro
+      2 (:credit (get-runner))
+      "Remove 1 card from the game and gain 2 credits"
+      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner)))))
+    (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
+    (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
+
 (deftest charlatan
   ;; Charlatan
   (do-game
