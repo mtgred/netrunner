@@ -161,10 +161,9 @@
                       card nil))}})
 
 (defcard "Armed Intimidation"
-  {:on-score
+  (letfn [(ab []
    {:player :runner
     :async true
-    :waiting-prompt "Runner to choose an option"
     :prompt "Choose Armed Intimidation score effect"
     :choices ["Suffer 5 meat damage" "Take 2 tags"]
     :effect (req (case target
@@ -175,7 +174,12 @@
                    (do (system-msg state :runner "chooses to take 2 tags from Armed Intimidation")
                        (gain-tags state :runner eid 2 {:card card}))
                    ; else
-                   (effect-completed state side eid)))}})
+                   (effect-completed state side eid)))})]
+    {:on-score
+     {:interactive (req true)
+      :async true
+      :effect (effect (show-wait-prompt "Runner to choose an option")
+                      (continue-ability :runner (ab) card nil))}}))
 
 (defcard "Armored Servers"
   {:on-score {:effect (effect (add-counter card :agenda 1))
