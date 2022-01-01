@@ -1207,6 +1207,57 @@
       (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
       (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack")))
 
+(deftest compile-effects-ordering-1
+  ;; Compile & Mayfly - should get order of choice
+  (do-game
+      (new-game {:corp {:deck ["Masvingo"]
+                        :credits 20}
+                 :runner {:hand ["Compile"]
+                          :deck ["Mayfly"]
+                          :credits 20}})
+      (play-from-hand state :corp "Masvingo" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Compile")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Stack")
+      (click-prompt state :runner "Mayfly")
+      (let [mayfly (get-program state 0)
+            deck (count (:deck (get-runner)))]
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
+        (core/continue state :corp nil)
+        (run-jack-out state)
+        (click-prompt state :runner "Compile")
+        (is (= (inc deck) (count (:deck (get-runner)))) "Mayfly should be back in stack")
+      )))
+
+(deftest compile-effects-ordering-2
+  ;; Compile & Mayfly - should get order of choice
+  (do-game
+      (new-game {:corp {:deck ["Masvingo"]
+                        :credits 20}
+                 :runner {:hand ["Compile"]
+                          :deck ["Mayfly"]
+                          :credits 20}})
+      (play-from-hand state :corp "Masvingo" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Compile")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Stack")
+      (click-prompt state :runner "Mayfly")
+      (let [mayfly (get-program state 0)]
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
+        (core/continue state :corp nil)
+        (run-jack-out state)
+        (click-prompt state :runner "Mayfly")
+        (is (zero? (count (:deck (get-runner)))) "Mayfly should not be back in the stack")
+      )))
+
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
   (do-game
