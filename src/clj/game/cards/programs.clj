@@ -1605,10 +1605,10 @@
   {:interactions {:prevent [{:type #{:trash-hardware}
                              :req (req true)}]}
    :abilities [{:cost [:credit 3]
-                :msg "prevent a hardware from being trashed"
+                :msg "prevent a piece of hardware from being trashed"
                 :effect (effect (trash-prevent :hardware 1))}
                {:cost [:trash]
-                :msg "prevent a hardware from being trashed"
+                :msg "prevent a piece of hardware from being trashed"
                 :effect (effect (trash-prevent :hardware 1))}]})
 
 (defcard "Lustig"

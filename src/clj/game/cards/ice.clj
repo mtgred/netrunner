@@ -1346,7 +1346,7 @@
 (defcard "Flare"
   {:subroutines [(trace-ability
                    6
-                   {:label "Trash 1 hardware, do 2 meat damage, and end the run"
+                   {:label "Trash 1 piece of hardware, do 2 meat damage, and end the run"
                     :async true
                     :effect
                     (effect
