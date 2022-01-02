@@ -2115,11 +2115,15 @@
 
 (defcard "Psych Mike"
   {:events [{:event :run-ends
-             :req (req (and (= :rd (target-server context))
-                            (first-successful-run-on-server? state :rd)))
-             :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
-             :async true
-             :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}]})
+             :optional {:req (req (and (= :rd (target-server context))
+                                       (first-successful-run-on-server? state :rd)
+                                       (pos? (total-cards-accessed target :deck))))
+                        :prompt "Gain 1 [Credits] for each card you accessed from R&D?"
+                        :async true
+                        :yes-ability
+                        {:msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
+                         :async true
+                         :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}}}]})
 
 (defcard "Public Sympathy"
   {:constant-effects [(runner-hand-size+ 2)]})
