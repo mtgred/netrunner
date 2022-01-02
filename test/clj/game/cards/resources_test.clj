@@ -105,6 +105,41 @@
       (play-from-hand state :runner "Sure Gamble")
       (is (= 3 (:click (get-runner))) "Should have lost 1 click and gained 0 clicks")))
 
+(deftest aeneas-informant
+    ;; Aeneas Informant
+    (do-game
+      (new-game {:runner {:hand ["Aeneas Informant"]}
+                 :corp {:hand ["Rashida Jaheem" "Hedge Fund"]}})
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aeneas Informant")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No Aeneas Informant prompt")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (changes-val-macro 1 (:credit (get-runner))
+                           "Runner got 1 credit from Aeneas Informant"
+                           (click-prompt state :runner "Yes"))
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (is (no-prompt? state :runner) "No Aeneas Informant prompt")))
+
+(deftest aeneas-informant-triggers-on-cards-moved-to-rfg
+    ;; Aeneas Informant & Salsette Slums - Runner gains credits from cards moved to RFG
+    (do-game
+      (new-game {:runner {:hand ["Aeneas Informant" "Salsette Slums"]}
+                 :corp {:hand ["Rashida Jaheem"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aeneas Informant")
+      (play-from-hand state :runner "Salsette Slums")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "[Salsette Slums] Remove card from game")
+      (is (= "Rashida Jaheem" (:title (first (:rfg (get-corp))))) "Rashida Jaheem removed from game")
+      (changes-val-macro 1 (:credit (get-runner))
+                           "Runner got 1 credit from Aeneas Informant"
+                           (click-prompt state :runner "Yes"))))
+
 ;; Aesop's Pawnshop
 (deftest aesop-s-pawnshop-manual-use
   ;; Manual use
