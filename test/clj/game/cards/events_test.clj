@@ -1208,8 +1208,8 @@
       (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack")))
 
 (deftest compile-effects-ordering-1
-  ;; Compile & Mayfly - should get order of choice
-  (do-game
+    ;; Compile & Mayfly - should get order of choice
+    (do-game
       (new-game {:corp {:deck ["Masvingo"]
                         :credits 20}
                  :runner {:hand ["Compile"]
@@ -1230,12 +1230,11 @@
         (core/continue state :corp nil)
         (run-jack-out state)
         (click-prompt state :runner "Compile")
-        (is (= (inc deck) (count (:deck (get-runner)))) "Mayfly should be back in stack")
-      )))
+        (is (= (inc deck) (count (:deck (get-runner)))) "Mayfly should be back in stack"))))
 
 (deftest compile-effects-ordering-2
-  ;; Compile & Mayfly - should get order of choice
-  (do-game
+    ;; Compile & Mayfly - should get order of choice
+    (do-game
       (new-game {:corp {:deck ["Masvingo"]
                         :credits 20}
                  :runner {:hand ["Compile"]
@@ -1255,8 +1254,7 @@
         (core/continue state :corp nil)
         (run-jack-out state)
         (click-prompt state :runner "Mayfly")
-        (is (zero? (count (:deck (get-runner)))) "Mayfly should not be back in the stack")
-      )))
+        (is (zero? (count (:deck (get-runner)))) "Mayfly should not be back in the stack"))))
 
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
