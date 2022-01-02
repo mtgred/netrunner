@@ -2115,9 +2115,8 @@
 
 (defcard "Psych Mike"
   {:events [{:event :run-ends
-             :req (req (and (:successful target)
-                            (first-event? state side :run-ends #(and (= :rd (target-server (first %)))
-                                                                     (:successful (first %))))))
+             :req (req (and (= :rd (target-server context))
+                            (first-successful-run-on-server? state :rd)))
              :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
              :async true
              :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}]})

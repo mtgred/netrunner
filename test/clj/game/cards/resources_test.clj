@@ -4202,6 +4202,10 @@
         (dotimes [_ 5]
           (click-prompt state :runner "No action"))
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "No action")
+        (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed"))
       (testing "Regression test for #3828"
         (take-credits state :runner)
         (take-credits state :corp)
