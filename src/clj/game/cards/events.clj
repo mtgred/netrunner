@@ -647,6 +647,102 @@
                                                          (max 0 (min 4 (available-mu state)))
                                                          {:duration :end-of-run})]))}]})
 
+(defcard "Deep Dive"
+ (letfn [(deep-dive-single [cards state side eid shuffle]
+ 	  ;;access the top card from cards - to skip menu when there is only one valid choice
+ 	  ((system-msg state side (str " accesses the only remaining card in R&D."))
+	     (access-card state side eid (first cards))
+	     (if shuffle
+	       (system-msg state side (str " shuffles R&D!"))
+	       (shuffle! state :corp :deck)
+	     )))
+
+	 ;;access one card from a list of cards
+	 (deep-dive-select [cards]
+          {:prompt "Select another card to access"
+	   :waiting-prompt "Runner to access a card"
+	   :not-distinct true
+	   :choices cards
+	   :async true
+	   :effect (req (wait-for (access-card state side target)
+			(system-msg state side (str " shuffles R&D!"))
+			(shuffle! state :corp :deck)
+			(effect-completed state side eid)
+	   	   ))})
+
+	 ;;access exactly one card from a set of cards
+	 ;;then, potentially access a different card from that set
+	 ;;there is probably a better way to do this
+	 (deep-dive-recursive [cards]
+         {:prompt "Select a card to access"
+	  :waiting-prompt "Runner to access a card"
+	  :not-distinct true
+	  :choices cards
+	  :effect (req (let [chosen target
+	  	       	     second-selection (remove #(same-card? % target) cards)]
+			     (wait-for
+			       (access-card state side target)			       
+			       ;;if there is at least one remaining card, we can do part
+			       ;;two of the ability - payment + the second access
+			       (if second-selection
+			       	   ;;there exists at least one other element
+				   ;;see if the runner wishes/is able to access it
+				   (wait-for
+				     (resolve-ability state side
+				       {:optional
+		            	         {:prompt "Pay [Click] to access another card?"
+
+					  :no-ability
+					  {:msg "decline to access another card"
+					   :effect (req (shuffle! state :corp :deck)
+					   	   (system-msg state side (str " shuffles R&D!")))
+					  }
+					  
+			     		  :yes-ability
+			     		  {:cost [:lose-click 1]
+			      		   :msg "access another card"
+			      		   :effect (req					     
+					     (if (= 1 (count second-selection))
+					      ;;there is only one element, access it
+					      (deep-dive-single second-selection state side eid true)
+					      ;;otherwise select an element from the list
+      					      (resolve-ability state side		     
+						  (deep-dive-select second-selection)
+						card nil)))
+				       }}}				       
+				       card nil))))))})]
+	  
+  {:on-play
+    {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                              (some #{:rd} (:successful-run runner-reg))
+                              (some #{:archives} (:successful-run runner-reg))))
+     :async true
+     :msg "select a card to access from the top 8 cards of R&D."     
+     :effect
+       (req
+         (let [top-8 (seq (take 8 (:deck corp)))]
+	 ;;reveal the cards chosen
+	   (system-msg state side
+ 	    (str " uses Deep Dive to reveal "
+	      (if top-8
+	  	(str "(top: ) " (string/join ", " (map :title top-8))
+				     		    " from the top of R&D")
+		"no cards")))
+	  ;;if there is only one card in that set, it must be accessed (and we can skip the menu)
+	  (if (= 1 (count top-8))
+	     (deep-dive-single top-8 state side eid false)
+	     ;;if there's more than one card to choose from
+	     (if (< 1 (count top-8))
+	          ;;the runner needs to make a choice as to what card to access
+		  (wait-for
+		    (resolve-ability state side
+		      (deep-dive-recursive top-8)
+		     card nil)
+		  )))
+	    (effect-completed state side eid)	  
+	 ))}}
+))
+
 (defcard "Déjà Vu"
   {:on-play
    {:req (req (not (zone-locked? state :runner :discard)))
