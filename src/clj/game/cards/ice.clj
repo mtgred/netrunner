@@ -598,8 +598,7 @@
 	      (wait-for (gain-credits state :corp (make-eid state eid) 1)
 	      		(bailiff-gain-credits state side eid (dec n)))
 	      (effect-completed state side eid)))]
-  {:implementation "Gain credit is manual"
-   :on-break-subs {:msg (msg (let [n-subs (count (second targets))]
+  {:on-break-subs {:msg (msg (let [n-subs (count (second targets))]
    		  	       (str "gain " n-subs " [Credits] from the runner breaking subs")))
 		   :async true
 		   :effect (effect (bailiff-gain-credits eid (count (second targets))))}
