@@ -593,9 +593,17 @@
                  end-the-run]})
 
 (defcard "Bailiff"
+  (letfn [(bailiff-gain-credits [state side eid n]
+  	    (if (pos? n)
+	      (wait-for (gain-credits state :corp (make-eid state eid) 1)
+	      		(bailiff-gain-credits state side eid (dec n)))
+	      (effect-completed state side eid)))]
   {:implementation "Gain credit is manual"
-   :abilities [(gain-credits-sub 1)]
-   :subroutines [end-the-run]})
+   :on-break-subs {:msg (msg (let [n-subs (count (second targets))]
+   		  	       (str "gain " n-subs " [Credits] from the runner breaking subs")))
+		   :async true
+		   :effect (effect (bailiff-gain-credits eid (count (second targets))))}
+   :subroutines [end-the-run]}))
 
 (defcard "Ballista"
   {:subroutines [{:label "Trash 1 program or end the run"
