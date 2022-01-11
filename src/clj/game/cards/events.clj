@@ -655,7 +655,7 @@
 	     (if shuffle
 	       (system-msg state side (str " shuffles R&D!"))
 	       (shuffle! state :corp :deck)
-	     )))
+	     )))	 	
 
 	 ;;access one card from a list of cards
 	 (deep-dive-select [cards]
@@ -717,18 +717,19 @@
                               (some #{:rd} (:successful-run runner-reg))
                               (some #{:archives} (:successful-run runner-reg))))
      :async true
-     :msg "select a card to access from the top 8 cards of R&D."     
+     :msg (req
+     	    ;going to have to trust this occurs before the cards are actually set aside
+            (let [top-8-msg (seq (take 8 (:deck corp)))]
+              (str "set aside the top 8 cards of R&D."     	         
+	        (if top-8-msg
+	  	  (str "(set-aside: ) " (string/join ", " (map :title top-8-msg))
+		    " from the top of R&D")
+		  "no cards"))))
      :effect
        (req
+         ;TODO - use set-aside zone
          (let [top-8 (seq (take 8 (:deck corp)))]
-	 ;;reveal the cards chosen
-	   (system-msg state side
- 	    (str " uses Deep Dive to reveal "
-	      (if top-8
-	  	(str "(top: ) " (string/join ", " (map :title top-8))
-				     		    " from the top of R&D")
-		"no cards")))
-	  ;;if there is only one card in that set, it must be accessed (and we can skip the menu)
+	  ;if there is only one card in that set, it must be accessed (and we can skip the menu)
 	  (if (= 1 (count top-8))
 	     (deep-dive-single top-8 state side eid false)
 	     ;;if there's more than one card to choose from
@@ -737,11 +738,9 @@
 		  (wait-for
 		    (resolve-ability state side
 		      (deep-dive-recursive top-8)
-		     card nil)
-		  )))
+		     card nil))))
 	    (effect-completed state side eid)	  
-	 ))}}
-))
+	 ))}}))
 
 (defcard "Déjà Vu"
   {:on-play
