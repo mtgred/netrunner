@@ -48,6 +48,12 @@
      (update! state :corp new-card)
      (trigger-event state side :subroutines-changed (get-card state new-card)))))
 
+;;; Checks if the runner has active events that would force them to avoid/prevent a tag
+(defn forced-to-avoid-tags?
+  ([state side] (let [handlers (gather-events state side :pre-tag nil)]
+                  (let [cards (map :card handlers)]
+                    (pos? (count (filter #(card-flag? % :forced-to-avoid-tag true) cards)))))))
+
 ;;; Runner abilites for breaking subs
 (defn bioroid-break
   ([cost qty] (bioroid-break cost qty nil))
@@ -581,7 +587,8 @@
 
 (defcard "Authenticator"
   {:on-encounter {:optional
-                  {:req (req (not (:bypass run)))
+                  {:req (req (and (not (:bypass run))
+                                  (not (forced-to-avoid-tags? state side))))
                    :player :runner
                    :prompt "Take 1 tag to bypass?"
                    :yes-ability
@@ -1423,11 +1430,13 @@
   {:on-encounter {:msg "force the Runner to take 1 tag or end the run"
                   :player :runner
                   :prompt "Choose one"
-                  :choices ["Take 1 tag" "End the run"]
+                  :choices (req [(when (not (forced-to-avoid-tags? state side))
+                                 "Take 1 tag")
+                                 "End the run"])
                   :async true
                   :effect (req (if (= target "Take 1 tag")
                                  (do (system-msg state :runner "chooses to take 1 tag")
-                                     (gain-tags state :runner eid 1))
+                                     (gain-tags state :runner eid 1 {:unpreventable true}))
                                  (do (system-msg state :runner "ends the run")
                                      (end-run state :runner eid card))))}
    :subroutines [{:player :runner
