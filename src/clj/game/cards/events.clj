@@ -648,99 +648,72 @@
                                                          {:duration :end-of-run})]))}]})
 
 (defcard "Deep Dive"
- (letfn [(deep-dive-single [cards state side eid shuffle]
- 	  ;;access the top card from cards - to skip menu when there is only one valid choice
- 	  ((system-msg state side (str " accesses the only remaining card in R&D."))
-	     (access-card state side eid (first cards))
-	     (if shuffle
-	       (system-msg state side (str " shuffles R&D!"))
-	       (shuffle! state :corp :deck)
-	     )))	 	
-
-	 ;;access one card from a list of cards
-	 (deep-dive-select [cards]
-          {:prompt "Select another card to access"
-	   :waiting-prompt "Runner to access a card"
-	   :not-distinct true
-	   :choices cards
-	   :async true
-	   :effect (req (wait-for (access-card state side target)
-			(system-msg state side (str " shuffles R&D!"))
-			(shuffle! state :corp :deck)
-			(effect-completed state side eid)
-	   	   ))})
-
-	 ;;access exactly one card from a set of cards
-	 ;;then, potentially access a different card from that set
-	 ;;there is probably a better way to do this
-	 (deep-dive-recursive [cards]
-         {:prompt "Select a card to access"
-	  :waiting-prompt "Runner to access a card"
-	  :not-distinct true
-	  :choices cards
-	  :effect (req (let [chosen target
-	  	       	     second-selection (remove #(same-card? % target) cards)]
-			     (wait-for
-			       (access-card state side target)			       
-			       ;;if there is at least one remaining card, we can do part
-			       ;;two of the ability - payment + the second access
-			       (if second-selection
-			       	   ;;there exists at least one other element
-				   ;;see if the runner wishes/is able to access it
-				   (wait-for
-				     (resolve-ability state side
-				       {:optional
-		            	         {:prompt "Pay [Click] to access another card?"
-
-					  :no-ability
-					  {:msg "decline to access another card"
-					   :effect (req (shuffle! state :corp :deck)
-					   	   (system-msg state side (str " shuffles R&D!")))
-					  }
-					  
-			     		  :yes-ability
-			     		  {:cost [:lose-click 1]
-			      		   :msg "access another card"
-			      		   :effect (req					     
-					     (if (= 1 (count second-selection))
-					      ;;there is only one element, access it
-					      (deep-dive-single second-selection state side eid true)
-					      ;;otherwise select an element from the list
-      					      (resolve-ability state side		     
-						  (deep-dive-select second-selection)
-						card nil)))
-				       }}}				       
-				       card nil))))))})]
-	  
+ (letfn [(deep-dive-access-singleton [cards]
+ 	  ;; access exactly one card without showing a menu
+	   {:async true
+	    :msg (msg "access " (:title (first cards)))
+	    :effect (req (wait-for
+	     	     	    (access-card state side (first cards))			    
+			    (effect-completed state side eid)))})
+	 (deep-dive-select [cards]	 
+	   ;; access a card, then return the list of cards without the accessed card
+	   {:prompt "Select a card to access"
+	    :waiting-prompt "Runner to access a card"
+	    :not-distinct true
+	    :choices cards
+	    :async true
+	    :effect (req (wait-for
+	    	    	   (access-card state side target)
+			   (let [new-cards (remove #(same-card? % target) cards)]
+			     (effect-completed state side (make-result eid new-cards)))))})]
   {:on-play
     {:req (req (and (some #{:hq} (:successful-run runner-reg))
                               (some #{:rd} (:successful-run runner-reg))
-                              (some #{:archives} (:successful-run runner-reg))))
+                              (some #{:archives} (:successful-run runner-reg))
+			      (pos? (count (:deck corp)))))
      :async true
      :msg (req
      	    ;going to have to trust this occurs before the cards are actually set aside
             (let [top-8-msg (seq (take 8 (:deck corp)))]
-              (str "set aside the top 8 cards of R&D."     	         
+              (str "set aside "     	         
 	        (if top-8-msg
 	  	  (str "(set-aside: ) " (string/join ", " (map :title top-8-msg))
 		    " from the top of R&D")
 		  "no cards"))))
      :effect
        (req
-         ;TODO - use set-aside zone
+         ; TODO - use set-aside zone once it is implemented
          (let [top-8 (seq (take 8 (:deck corp)))]
-	  ;if there is only one card in that set, it must be accessed (and we can skip the menu)
-	  (if (= 1 (count top-8))
-	     (deep-dive-single top-8 state side eid false)
-	     ;;if there's more than one card to choose from
-	     (if (< 1 (count top-8))
-	          ;;the runner needs to make a choice as to what card to access
-		  (wait-for
-		    (resolve-ability state side
-		      (deep-dive-recursive top-8)
-		     card nil))))
-	    (effect-completed state side eid)	  
-	 ))}}))
+	   (if (= 1 (count top-8))
+	       (resolve-ability state side (deep-dive-access-singleton top-8) card nil)
+	       (wait-for
+	             (resolve-ability state side (deep-dive-select top-8) card nil)		     
+	   	     (if (and (pos? (count async-result))
+		     	      (pos? (:click runner)))
+		       ;; If there's at least one card remaining, prompt for the repeat access
+		       (wait-for
+		         (resolve-ability state side
+		           {:optional
+			    {:prompt "Pay [Click] to access another card?"
+			     :waiting-prompt "Runner to make a decision"
+			     :no-ability {:msg "decline to access another card"}
+			     :yes-ability
+			     {:cost [:lose-click 1]
+			      :msg "access another card"
+			      :effect (req
+			        (wait-for (resolve-ability state side
+			          (if (= 1 (count async-result))
+			            (resolve-ability state side (deep-dive-access-singleton async-result) card nil)
+				    (resolve-ability state side (deep-dive-select async-result) card nil))
+				    card nil)
+                                ((system-msg state side (str " shuffles R&D"))
+	                          (shuffle! state :corp :deck)
+			          (effect-completed state side eid))))}}} card nil)
+			 (effect-completed state side eid))
+		       ((system-msg state side (str " shuffles R&D"))
+		         (shuffle! state :corp :deck)
+	                 (effect-completed state side eid)))))))}}))
+
 
 (defcard "Déjà Vu"
   {:on-play
