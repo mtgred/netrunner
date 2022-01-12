@@ -1472,6 +1472,165 @@
       (click-prompt state :runner "No action"))
     (is (no-prompt? state :runner) "No more accesses after 3")))
 
+(deftest deep-dive-single-card
+  ;;there is only a single card to access - the runner doesn't see a menu, 
+  ;; or get offered to spend a click. 
+  (do-game
+    (new-game {:corp {:deck ["Fire Wall" "Brainstorm" "Chiyashi" 
+    	      	     	     "DNA Tracker" "Excalibur" "PAD Campaign"]}
+	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+    (draw state :corp)
+    (core/move state :corp (find-card "PAD Campaign" (:hand (get-corp))) :deck)
+    (take-credits state :corp)
+    ;; R&D is now: Pad Campaign
+    (core/gain state :runner :click 1)
+    (core/gain state :runner :credit 100)    
+    ;;run the three centrals
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")    
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner) "Access not completed or offered second access")
+    (is (no-prompt? state :corp) "Corp stuck waiting for runner")
+    ;;now we check pad campaign still exists, and that we didn't spend a second click
+    (is (= 1 (count (:deck (get-corp)))))
+    (is (= 0 (count (:discard (get-corp)))))
+    (is (= 1 (:click (get-runner))) "Shouldn't lose a click from deep dive")))
+
+(deftest deep-dive-two-cards
+  (do-game
+    (new-game {:corp {:hand ["Fire Wall" "Brainstorm" "Chiyashi" 
+    	      	     	     "DNA Tracker" "Marilyn Campaign" "PAD Campaign"]}
+	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+    (draw state :corp)
+    (core/move state :corp (find-card "PAD Campaign" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Marilyn Campaign" (:hand (get-corp))) :deck)
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "PAD Campaign"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Marilyn Campaign"))
+    ;;R&D is now: PAD Campaign, Marilyn Campaign
+    (take-credits state :corp)
+    (core/gain state :runner :click 96)
+    (core/gain state :runner :credit 100)    
+    ;;run the three centrals
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")  
+    ;;access pad campaign, do not trash it, then refuse the second access  
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "PAD Campaign")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No")
+    (is (no-prompt? state :runner) 
+        "Runner shouldn't be given the option to access from an empty R&D")
+    (is (no-prompt? state :corp)
+        "Corporation player shouldn't be waiting on prompts")
+    (is (= 96 (:click (get-runner))) "Shouldn't spend a click with Deep Dive")
+    ;;access marilyn campaign, trash it, then access pad campaign
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "Marilyn Campaign")
+    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (is (no-prompt? state :runner) 
+        "Runner should not be waiting on a prompt")
+    (is (no-prompt? state :corp)
+        "Corporation player shouldn't be waiting on prompts (again)")
+    (is (= 94 (:click (get-runner))) "Should have spend two clicks on Deep Dive")
+    (is (= 0 (count (:deck (get-corp)))))
+    (is (= 2 (count (:discard (get-corp)))))))
+
+(deftest deep-dive-basic-functionality
+  (do-game
+    (new-game {:corp {:hand ["Ansel 1.0" "Better Citizen Program" "Chiyashi" 
+    	      	     	     "Dedicated Technician Team"
+    	      	     	     "Efficiency Committee" "Friends in High Places" "Gyri Labyrinth"
+			     "Heimdall 1.0" "Ichi 1.0" "Janus 1.0"]}
+ 	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+    (draw state :corp)
+    (core/move state :corp (find-card "Ansel 1.0" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Better Citizen Program" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Dedicated Technician Team" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Efficiency Committee" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Friends in High Places" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Gyri Labyrinth" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Heimdall 1.0" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Ichi 1.0" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Janus 1.0" (:hand (get-corp))) :deck)    
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Ansel 1.0"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Better Citizen Program"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+    (is (= (:title (nth (-> @state :corp :deck) 3)) "Dedicated Technician Team"))
+    (is (= (:title (nth (-> @state :corp :deck) 4)) "Efficiency Committee"))
+    (is (= (:title (nth (-> @state :corp :deck) 5)) "Friends in High Places"))
+    (is (= (:title (nth (-> @state :corp :deck) 6)) "Gyri Labyrinth"))
+    (is (= (:title (nth (-> @state :corp :deck) 7)) "Heimdall 1.0"))
+    (is (= (:title (nth (-> @state :corp :deck) 8)) "Ichi 1.0"))
+    (is (= (:title (nth (-> @state :corp :deck) 9)) "Janus 1.0"))
+    ;;R&D is now: A B C D E F G H I J
+    (take-credits state :corp)
+    (core/gain state :runner :click 96)
+    (core/gain state :runner :credit 100)    
+    ;;run the three centrals
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    ;;steal better citizen and effcom
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "Better Citizen Program")
+    (click-prompt state :runner "Steal")
+    (click-prompt state :runner "Yes")    
+    (click-prompt state :runner "Efficiency Committee")
+    (click-prompt state :runner "Steal")    
+    (is (no-prompt? state :runner) 
+        "Runner should not be waiting on a prompt")
+    (is (no-prompt? state :corp)
+        "Corporation player shouldn't be waiting on prompts")
+    (is (= 95 (:click (get-runner))) "Should have spend two clicks on Deep Dive")
+    (is (= 8 (count (:deck (get-corp)))))
+    (is (= 0 (count (:discard (get-corp)))))
+    (is (= 4 (:agenda-point (get-runner))) "Runner scored two agendas")))
+
+(deftest deep-dive-strongbox-ikawah-bellona
+  (do-game 
+    (new-game {:corp {:hand ["Strongbox" "Ikawah Project" "Bellona" "Fire Wall"]}
+	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+    (draw state :corp)
+    (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Ikawah Project" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Bellona" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Strongbox" "R&D")
+    (rez state :corp (get-content state :rd 0))
+    (take-credits state :corp)
+    (core/gain state :runner :click 96)
+    (core/gain state :runner :credit 95)    
+    ;;run the three centrals
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "Card from deck")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    ;;play from hand, and attempt to steal ikawah - this should cost us 2 clicks and 2 credits
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "Bellona")
+    (click-prompt state :runner "Pay to steal")
+    ;;runner should now have 95 clicks and 93 credits
+    (is (= 95 (:click (get-runner))) "Should have spent +1 click to steal bellona")
+    (is (= 93 (:credit (get-runner))) "Should have spent +5 credits to steal bellona")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Ikawah Project")
+    (click-prompt state :runner "Pay to steal")
+    ;;runner should now have 92 clicks and 91 credits
+    (is (= 92 (:click (get-runner))) "Should have spent +1 click to steal bellona")
+    (is (= 91 (:credit (get-runner))) "Should have spent +5 credits to steal bellona")))
+
 (deftest deja-vu
   ;; Deja Vu - recur one non-virus or two virus cards
   (do-game

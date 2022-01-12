@@ -647,6 +647,70 @@
                                                          (max 0 (min 4 (available-mu state)))
                                                          {:duration :end-of-run})]))}]})
 
+(defcard "Deep Dive"
+  (letfn [(deep-dive-access [cards]
+ 	   ;; Accesses a card from a set of given cards.
+	   ;; Returns the set of unchosen cards as async-result
+	   {:async true
+	    :effect (req (wait-for (resolve-ability state side
+	       (if (= 1 (count cards))
+	             ;; Only show a menu if there's more than one card
+	     	     {:async true
+		      :msg (msg "access " (:title (first cards)))
+	              :effect (req (wait-for
+	     	                     (access-card state side (first cards))
+		                     (effect-completed state side eid)))}
+		     {:prompt "Select a card to access"
+	              :waiting-prompt "Runner to access a card"
+	              :not-distinct true
+	              :choices cards
+	              :async true
+	              :effect (req (wait-for
+	    	                     (access-card state side target)
+		                     (let [new-cards (remove #(same-card? % target) cards)]
+		                       (effect-completed state side (make-result eid new-cards)))))})
+	        card nil)
+	        (effect-completed state side (make-result eid async-result))))})]
+  {:on-play
+    {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                              (some #{:rd} (:successful-run runner-reg))
+                              (some #{:archives} (:successful-run runner-reg))
+			      (pos? (count (:deck corp)))))
+     :async true
+     :msg (req
+            (let [top-8-msg (seq (take 8 (:deck corp)))]
+              (str "set aside "
+	        (if top-8-msg
+	  	  (str (string/join ", " (map :title top-8-msg)) " from the top of R&D")
+		  ;; note - this should never happen
+		  "no cards"))))
+     :effect
+       (req
+         ;; TODO - use set-aside zone once it is implemented
+         (let [top-8 (seq (take 8 (:deck corp)))]
+	   (wait-for
+	     (resolve-ability state side (deep-dive-access top-8) card nil)
+	     (if (and (pos? (count async-result))
+	              (pos? (:click runner)))
+	       (wait-for (resolve-ability state side
+	         {:optional
+		   {:prompt "Pay [Click] to access another card?"
+		    :no-ability {:msg "decline to access another card"}
+		    :yes-ability
+		    {:async true
+		     :cost [:lose-click 1]
+		     :msg "access another card"
+		     :effect (req (wait-for
+		               (resolve-ability state side (deep-dive-access async-result) card nil)
+			       (effect-completed state side eid)))}}}
+		 card nil)
+		 (do (system-msg state :side (str "shuffles R&D"))
+		   (shuffle! state :corp :deck)
+		   (effect-completed state side eid)))
+	       (do (system-msg state :side (str "shuffles R&D"))
+		   (shuffle! state :corp :deck)
+		   (effect-completed state side eid))))))}}))
+
 (defcard "Déjà Vu"
   {:on-play
    {:req (req (not (zone-locked? state :runner :discard)))
