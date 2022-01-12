@@ -754,7 +754,8 @@
                  card nil))}]})
 
 (defcard "Jesminder Sareen: Girl Behind the Curtain"
-  {:events [{:event :pre-tag
+  {:flags {:forced-to-avoid-tag true}
+   :events [{:event :pre-tag
              :async true
              :once :per-run
              :req (req (:run @state))
