@@ -1801,6 +1801,7 @@
       (new-game {:corp {:hand ["Hansei Review" "IPO"]}})
       (is (= 5 (:credit (get-corp))) "Starting with 5 credits")
       (play-from-hand state :corp "Hansei Review")
+      (is (zero? (:credit (get-corp))) "Now at 0 credits")
       (click-card state :corp "IPO")
       (is (= 10 (:credit (get-corp))) "Now at 10 credits")
       (is (= 2 (count (:discard (get-corp)))))))
