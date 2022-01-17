@@ -462,6 +462,8 @@
                                    (compile-fn (if (= "Stack" target) :deck :discard))
                                    card nil))}}}
               {:event :run-ends
+               :async true
+               :interactive (req true)
                :effect (req (let [compile-installed (first (filterv #(get-in % [:special :compile-installed])
                                                                     (all-active-installed state :runner)))]
                               (when (some? compile-installed)
