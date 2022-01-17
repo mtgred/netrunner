@@ -4262,6 +4262,7 @@
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
         (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
@@ -4274,7 +4275,19 @@
         (run-continue state)
         (dotimes [_ 5]
           (click-prompt state :runner "No action"))
+        (click-prompt state :runner "Yes")
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "No action")
+        (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No")
+        (is (= credits (:credit (get-runner))) "Psych Mike should give 0 credits when declining to use her ability"))
       (testing "Regression test for #3828"
         (take-credits state :runner)
         (take-credits state :corp)
@@ -4285,6 +4298,7 @@
         (let [credits (:credit (get-runner))]
           (run-empty-server state "R&D")
           (click-prompt state :runner "No action")
+          (click-prompt state :runner "Yes")
           (is (= (inc credits) (:credit (get-runner)))
               "Psych Mike should give 1 credit for second run of the turn, if first on HQ")))))
 
@@ -4302,6 +4316,7 @@
         (click-prompt state :runner "Unrezzed upgrade")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))))
 
 (deftest reclaim-basic-behavior
