@@ -50,9 +50,9 @@
 
 ;;; Checks if the runner has active events that would force them to avoid/prevent a tag
 (defn forced-to-avoid-tags?
-  ([state side] (let [handlers (gather-events state side :pre-tag nil)]
-                  (let [cards (map :card handlers)]
-                    (pos? (count (filter #(card-flag? % :forced-to-avoid-tag true) cards)))))))
+  [state side]
+  (let [cards (map :card (gather-events state side :pre-tag nil))]
+    (pos? (count (filter #(card-flag? % :forced-to-avoid-tag true) cards)))))
 
 ;;; Runner abilites for breaking subs
 (defn bioroid-break
