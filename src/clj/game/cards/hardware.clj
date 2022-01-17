@@ -1494,7 +1494,7 @@
 
 (defcard "Qianju PT"
   {:flags {:runner-phase-12 (req true)
-  	   :forced-to-avoid-tag true}
+  	       :forced-to-avoid-tag true}
    :abilities [{:label "Lose [Click], avoid 1 tag (start of turn)"
                 :once :per-turn
                 :req (req (:runner-phase-12 @state))
