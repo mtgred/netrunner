@@ -120,10 +120,10 @@
              :effect (effect (gain-clicks :runner 1))}]})
 
 (defcard "Aeneas Informant"
-  {:events [{:event :no-trash
+  {:events [{:event :post-access-card
              :optional
              {:autoresolve (get-autoresolve :auto-reveal-and-gain)
-              :req (req (and (:trash target)
+              :req (req (and (:trash (second targets))
                              (not (in-discard? target))))
               :prompt "Use Aeneas Informant?"
               :yes-ability {:msg (msg (str "gain 1 [Credits]"
