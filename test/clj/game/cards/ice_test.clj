@@ -850,6 +850,38 @@
        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed")
        (is (empty? (:run @state)) "Run has ended"))))
 
+(deftest checkpoint-deals-damage-on-successful-run
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Checkpoint" "Hedge Fund"]}
+                 :runner {:hand [(qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Checkpoint" "HQ")
+      (let [chckpnt (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (rez state :corp chckpnt)
+        (run-continue state)
+        (fire-subs state chckpnt)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 5 (:base (prompt-map :corp))) "Trace is base 5")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state :movement)
+        (run-jack-out state)
+        (is (= 0 (count (:discard (get-runner)))) "Runner suffered no meat damage")
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state chckpnt)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-continue state)
+        (is (prompt-map :runner) "Still have access prompt")
+        (is (= 3 (count (:discard (get-runner)))) "Runner suffered 3 meat damage")
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run is finished")
+      )))
+
 (deftest chimera
   ;; Chimera - Gains chosen subtype
   (before-each [state (new-game {:corp {:deck ["Chimera"]
