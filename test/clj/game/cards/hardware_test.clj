@@ -3526,6 +3526,29 @@
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner pt)))))
 
+(deftest quianju-pt-activate-start-of-turn
+  (do-game
+    (new-game {:runner {:hand ["Qianju PT"] :credits 15}
+               :corp {:hand ["Public Trail" "Public Trail"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Qianju PT")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [pt (get-hardware state 0)]
+      (card-ability state :runner pt 0)
+      (end-phase-12 state :runner)
+      (is (= 3 (:click (get-runner))) "Spent 1 click on Qianju PT")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Public Trail")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 0 (count-tags state)) "Avoided a tag")
+      (play-from-hand state :corp "Public Trail")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 1 (count-tags state)) "Took a tag (QPT expired)"))))
+
 (deftest q-coherence-chip
   ;; Q-Coherence Chip
   (do-game

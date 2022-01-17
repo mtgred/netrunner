@@ -496,6 +496,99 @@
       (rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
 
+(deftest authenticator-encounter-decline-to-take-tag
+  (do-game
+    (new-game{:corp {:hand ["Authenticator"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (let [ath (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= 0 (count-tags state)))
+      (click-prompt state :runner "No")
+      (is (= 0 (count-tags state)) "Authenticator did not give a tag")
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has not been bypassed"))))
+
+(deftest authenticator-encounter-take-tag-to-bypass
+  (do-game
+    (new-game{:corp {:hand ["Authenticator"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (let [ath (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= 0 (count-tags state)))
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count-tags state)))
+      (is (= :movement (:phase (:run @state))) "Authenticator has been bypassed"))))
+
+(deftest authenticator-encounter-jesminder-fizzles
+  (do-game
+    (new-game {:corp {:hand ["Authenticator"]}
+               :runner {:id "Jesminder Sareen: Girl Behind the Curtain"
+                        :hand ["Dorm Computer"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (let [ath (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has been encountered")
+      (is (not (= "Take 1 tag to bypass?" (:msg (prompt-map :runner))))
+          "No prompt to bypass authenticator because we are tag-immune"))))
+
+(deftest authenticator-encounter-qianju-fizzles
+  (do-game
+    (new-game {:corp {:hand ["Authenticator"]}
+               :runner {:hand ["Qianju PT"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Qianju PT")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [pt (get-hardware state 0)
+          ath (get-ice state :hq 0)]
+      (card-ability state :runner pt 0)
+      (end-phase-12 state :runner)
+      (is (= 3 (:click (get-runner))) "Spent 1 click on Qianju PT")
+      (run-on state :hq)
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has been encountered")
+      (is (not (= "Take 1 tag to bypass?" (:msg (prompt-map :runner))))
+          "No prompt to bypass authenticator because we are tag-immune")
+      (fire-subs state ath)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (end-phase-12 state :runner)
+      (run-on state :hq)
+      (run-continue state)
+      (is (= 0 (count-tags state)))
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count-tags state)))
+      (is (= :movement (:phase (:run @state))) "Authenticator has been bypassed"))))
+
+(deftest authenticator-encounter-dorm-computer-fizzles
+  (do-game
+    (new-game {:corp {:hand ["Authenticator"]}
+               :runner {:hand ["Dorm Computer"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dorm Computer")
+    (let [dorm (get-hardware state 0)
+          ath (get-ice state :hq 0)]
+      (card-ability state :runner dorm 0)
+      (click-prompt state :runner "HQ")
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has been encountered")
+      (is (not (= "Take 1 tag to bypass?" (:msg (prompt-map :runner))))
+          "No prompt to bypass authenticator because we are tag-immune"))))
+
 (deftest bailiff-gain-credit-when-broken
   (do-game
     (new-game {:corp {:hand ["Bailiff"]}
@@ -1938,6 +2031,59 @@
         (fire-subs state tt)
         (is (= 1 (:credit (get-runner))))
         (is (= ["Take 1 tag"] (prompt-buttons :runner)) "Runner should have 1 option"))))
+
+(deftest funhouse-vs-jesminder
+  (do-game
+    (new-game {:corp {:hand ["Funhouse"]}
+               :runner {:id "Jesminder Sareen: Girl Behind the Curtain"}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (take-credits state :corp)
+    (let [tt (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp tt)
+      (run-continue state)
+      (is (= ["End the run"] (prompt-buttons :runner)) "Only option should be 'End the run'")
+      (click-prompt state :runner "End the run"))))
+
+(deftest funhouse-vs-dorm-computer
+  (do-game
+    (new-game {:corp {:hand ["Funhouse"]}
+               :runner {:hand ["Dorm Computer"]}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dorm Computer")
+    (let [dorm (get-hardware state 0)
+          tt (get-ice state :hq 0)]
+      (card-ability state :runner dorm 0)
+      (click-prompt state :runner "HQ")
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
+      (rez state :corp tt)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Funhouse has been encountered")
+      (is (= ["End the run"] (prompt-buttons :runner)) "Only option should be 'End the run'")
+      (click-prompt state :runner "End the run"))))
+
+(deftest funhouse-vs-qianju-pt
+  (do-game
+    (new-game {:corp {:hand ["Funhouse"]}
+               :runner {:hand ["Qianju PT"]}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Qianju PT")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [pt (get-hardware state 0)
+          tt (get-ice state :hq 0)]
+      (card-ability state :runner pt 0)
+      (end-phase-12 state :runner)
+      (is (= 3 (:click (get-runner))) "Spent 1 click on Qianju PT")
+      (run-on state :hq)
+      (rez state :corp tt)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Funhouse has been encountered")
+      (is (= ["End the run"] (prompt-buttons :runner)) "Only option should be 'End the run'")
+      (click-prompt state :runner "End the run"))))
 
 (deftest gatekeeper-gatekeeper
     ;; Gatekeeper:

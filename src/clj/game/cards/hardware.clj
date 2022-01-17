@@ -529,7 +529,8 @@
                                             (make-run eid target (get-card state card)))}}}]})
 
 (defcard "Dorm Computer"
-  {:data {:counter {:power 4}}
+  {:flags {:forced-to-avoid-tag true}
+   :data {:counter {:power 4}}
    :abilities [{:cost [:click 1 :power 1]
                 :req (req (not run))
                 :prompt "Choose a server"
@@ -1492,7 +1493,8 @@
               (assoc e :event :corp-trash)])})
 
 (defcard "Qianju PT"
-  {:flags {:runner-phase-12 (req true)}
+  {:flags {:runner-phase-12 (req true)
+  	       :forced-to-avoid-tag true}
    :abilities [{:label "Lose [Click], avoid 1 tag (start of turn)"
                 :once :per-turn
                 :req (req (:runner-phase-12 @state))
