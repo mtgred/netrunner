@@ -1371,6 +1371,21 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner cl)))))
 
+(deftest clot-trashed-on-purge-triggers-reaver
+  (do-game
+    (new-game {:corp {:deck ["Hedge Fund"]}
+               :runner {:deck ["Clot" (qty "Reaver" 5)]}})
+    (starting-hand state :runner ["Clot" "Reaver"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clot")
+    (play-from-hand state :runner "Reaver")
+    (take-credits state :runner)
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    (core/purge state :corp)
+    (is (= "Clot" (-> (get-runner) :discard first :title)) "Clot was trashed on purge")
+    (is (= 1 (count (:hand (get-runner)))) "Reaver triggered when Clot was trashed")
+    ))
+
 (deftest conduit
   ;; Conduit
   (do-game
