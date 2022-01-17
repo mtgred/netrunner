@@ -847,7 +847,10 @@
 
 (defcard "Customized Secretary"
   (letfn [(custsec-host [cards]
-            (when (seq (filter program? cards))
+            (if (empty? (filter program? cards))
+              {:async true
+               :msg "shuffle the stack"
+               :effect (effect (shuffle! :deck))}
               {:prompt "Choose a program to host"
                :choices (concat (filterv program? cards) ["Done"])
                :async true
