@@ -1063,7 +1063,7 @@
                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) card %
                                               [:credit (install-cost state side % {:cost-bonus 1})]))
                               (:hand runner)))
-              :prompt "Pay 1 [Credit] to install a hardware?"
+              :prompt "Pay 1 [Credit] to install a piece of hardware?"
               :yes-ability {:async true
                             :prompt "Choose a piece of hardware"
                             :choices

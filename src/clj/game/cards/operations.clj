@@ -1879,7 +1879,7 @@
                         (filter #(or (hardware? %)
                                      (program? %)))
                         not-empty)))
-    :prompt "Choose a program or hardware to trash"
+    :prompt "Choose a program or piece of hardware to trash"
     :choices {:req (req (and (installed? target)
                              (or (program? target)
                                  (hardware? target))))}

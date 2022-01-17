@@ -900,7 +900,7 @@
 (defcard "Emergent Creativity"
   (letfn [(ec [trash-cost to-trash]
             {:async true
-             :prompt "Choose a hardware or program to install"
+             :prompt "Choose a piece of hardware or program to install"
              :msg (msg "trash " (if (empty? to-trash) "no cards" (string/join ", " (map :title to-trash)))
                        " and install " (:title target)
                        " lowering the cost by " trash-cost)
@@ -914,7 +914,7 @@
                           (runner-install state side (assoc eid :source card :source-type :runner-install)
                                           target {:cost-bonus (- trash-cost)}))})]
     {:on-play
-     {:prompt "Choose Hardware and Programs to trash from your Grip"
+     {:prompt "Choose pieces of hardware and/or programs to trash from your Grip"
       :choices {:card #(and (or (hardware? %)
                                 (program? %))
                          (in-hand? %))

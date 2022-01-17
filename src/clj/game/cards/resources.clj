@@ -850,7 +850,7 @@
   (letfn [(eligible-cards [runner]
             (filter #(same-card? :faction (:identity runner) %)
                     (:discard runner)))]
-    {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
+    {:implementation "Adding power counters must be done manually for programs/pieces of hardware trashed manually (e.g. by being over MU)"
      :abilities [{:label "Add a card from your heap to your grip"
                   :req (req (and (seq (eligible-cards runner))
                                  (not (zone-locked? state :runner :discard))))
@@ -985,8 +985,9 @@
                 :msg "draw 10 cards"}]})
 
 (defcard "Dummy Box"
-  (letfn [(dummy-prevent [card-type]
-            {:msg (str "prevent a " card-type " from being trashed")
+  (letfn [(better-name [card-type] (if (= "hardware" card-type) "piece of hardware" card-type))
+          (dummy-prevent [card-type]
+            {:msg (str "prevent a " (better-name card-type) " from being trashed")
              :async true
              :cost [(keyword (str "trash-" card-type "-from-hand")) 1]
              :effect (effect (trash-prevent (keyword card-type) 1))})]
@@ -2638,7 +2639,7 @@
                 :async true
                 :effect (effect (gain-credits eid 2))}
                {:cost [:click 1]
-                :label "Install a program of piece of hardware"
+                :label "Install a program or piece of hardware"
                 :req (req (some #(and (or (hardware? %)
                                           (program? %))
                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
@@ -2978,7 +2979,7 @@
 
 (defcard "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
-                :label "search stack for a hardware"
+                :label "search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
                 :keep-open :while-2-clicks-left
