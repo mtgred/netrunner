@@ -940,7 +940,7 @@
               :all true
               :card #(and (corp? %)
                           (in-hand? %))}
-    :msg "trash a card from HQ to gain 10 [Credits]"
+    :msg "trash a card from HQ and gain 10 [Credits]"
     :effect (req (wait-for (trash-cards state side targets)
                            (gain-credits state side eid 10)))}})
 
