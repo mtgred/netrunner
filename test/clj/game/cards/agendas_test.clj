@@ -191,6 +191,38 @@
     (click-prompt state :runner "Suffer 5 meat damage")
     (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards after Armed Intimidation meat damage")))
 
+(deftest armed-intimidation-effects-ordering-1
+  ;; Armed Intimidation & Malapert Data Vault - should get order of choice
+  (do-game
+    (new-game {:corp {:hand ["Armed Intimidation" "Malapert Data Vault"]
+                      :deck ["Hedge Fund"]}
+               :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 2)]}})
+    (play-from-hand state :corp "Malapert Data Vault" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Armed Intimidation" "Server 1")
+    (let [ai (get-content state :remote1 1)]
+      (score-agenda state :corp (refresh ai))
+      (click-prompt state :corp "Armed Intimidation")
+      (click-prompt state :runner "Suffer 5 meat damage")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Hedge Fund"))))
+
+(deftest armed-intimidation-effects-ordering-2
+  ;; Armed Intimidation & Malapert Data Vault - should get order of choice
+  (do-game
+    (new-game {:corp {:hand ["Armed Intimidation" "Malapert Data Vault"]
+                      :deck ["Hedge Fund"]}
+               :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 2)]}})
+    (play-from-hand state :corp "Malapert Data Vault" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Armed Intimidation" "Server 1")
+    (let [ai (get-content state :remote1 1)]
+      (score-agenda state :corp (refresh ai))
+      (click-prompt state :corp "Malapert Data Vault")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Hedge Fund")
+      (click-prompt state :runner "Suffer 5 meat damage"))))
+
 (deftest armored-servers-should-write-to-the-log
     ;; should write to the log
     (do-game
