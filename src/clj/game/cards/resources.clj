@@ -120,10 +120,10 @@
              :effect (effect (gain-clicks :runner 1))}]})
 
 (defcard "Aeneas Informant"
-  {:events [{:event :no-trash
+  {:events [{:event :post-access-card
              :optional
              {:autoresolve (get-autoresolve :auto-reveal-and-gain)
-              :req (req (and (:trash target)
+              :req (req (and (:trash (second targets))
                              (not (in-discard? target))))
               :prompt "Use Aeneas Informant?"
               :yes-ability {:msg (msg (str "gain 1 [Credits]"
@@ -383,9 +383,7 @@
                                          card nil)))}]})
 
 (defcard "Bloo Moose"
-  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
-   :abilities [{:req (req (and (:runner-phase-12 @state)
-                               (not (zone-locked? state :runner :discard))))
+  (let [ability {:req (req (not (zone-locked? state :runner :discard)))
                 :label "rfg a card to gain 2 [Credits]"
                 :once :per-turn
                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
@@ -395,7 +393,12 @@
                 :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
                 :async true
                 :effect (effect (move target :rfg)
-                                (gain-credits eid 2))}]})
+                                (gain-credits eid 2))}]
+  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
+   :events [(assoc ability
+                   :event :runner-turn-begins
+                   :interactive (req true))]
+   :abilities [ability]}))
 
 (defcard "Borrowed Satellite"
   {:constant-effects [(link+ 1)
@@ -847,7 +850,7 @@
   (letfn [(eligible-cards [runner]
             (filter #(same-card? :faction (:identity runner) %)
                     (:discard runner)))]
-    {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
+    {:implementation "Adding power counters must be done manually for programs/pieces of hardware trashed manually (e.g. by being over MU)"
      :abilities [{:label "Add a card from your heap to your grip"
                   :req (req (and (seq (eligible-cards runner))
                                  (not (zone-locked? state :runner :discard))))
@@ -982,8 +985,9 @@
                 :msg "draw 10 cards"}]})
 
 (defcard "Dummy Box"
-  (letfn [(dummy-prevent [card-type]
-            {:msg (str "prevent a " card-type " from being trashed")
+  (letfn [(better-name [card-type] (if (= "hardware" card-type) "piece of hardware" card-type))
+          (dummy-prevent [card-type]
+            {:msg (str "prevent a " (better-name card-type) " from being trashed")
              :async true
              :cost [(keyword (str "trash-" card-type "-from-hand")) 1]
              :effect (effect (trash-prevent (keyword card-type) 1))})]
@@ -1188,7 +1192,7 @@
                                       :effect (effect (gain-credits eid 1))}
                                      {:msg "trash Grifter"
                                       :async true
-                                      :effect (effect (trash eid card nil))})]
+                                      :effect (effect (trash eid card {:cause :runner-ability}))})]
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
@@ -1205,7 +1209,7 @@
                               :unregister-once-resolved true
                               :async true
                               :effect (req (if (< (:credit runner) 4)
-                                             (trash state side eid card nil)
+                                             (trash state side eid card {:cause :runner-ability})
                                              (continue-ability
                                                state :runner
                                                {:optional
@@ -1217,7 +1221,7 @@
                                                                                    "from being trashed"))
                                                                   (lose-credits :runner eid 4))}
                                                  :no-ability {:async true
-                                                              :effect (effect (trash eid card nil))}}}
+                                                              :effect (effect (trash eid card {:cause :runner-ability}))}}}
                                                card nil)))}]))}]})
 
 (defcard "Hades Shard"
@@ -1772,7 +1776,7 @@
    :events [{:event :agenda-stolen
              :async true
              :msg "trash itself"
-             :effect (effect (trash eid card nil))}]
+             :effect (effect (trash eid card {:cause :runner-ability}))}]
    :abilities [{:async true
                 :cost [:credit 2]
                 :msg "avoid 1 tag"
@@ -2115,12 +2119,15 @@
 
 (defcard "Psych Mike"
   {:events [{:event :run-ends
-             :req (req (and (:successful target)
-                            (first-event? state side :run-ends #(and (= :rd (target-server (first %)))
-                                                                     (:successful (first %))))))
-             :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
-             :async true
-             :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}]})
+             :optional {:req (req (and (= :rd (target-server context))
+                                       (first-successful-run-on-server? state :rd)
+                                       (pos? (total-cards-accessed target :deck))))
+                        :prompt "Gain 1 [Credits] for each card you accessed from R&D?"
+                        :async true
+                        :yes-ability
+                        {:msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
+                         :async true
+                         :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}}}]})
 
 (defcard "Public Sympathy"
   {:constant-effects [(runner-hand-size+ 2)]})
@@ -2632,7 +2639,7 @@
                 :async true
                 :effect (effect (gain-credits eid 2))}
                {:cost [:click 1]
-                :label "Install a program of piece of hardware"
+                :label "Install a program or piece of hardware"
                 :req (req (some #(and (or (hardware? %)
                                           (program? %))
                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
@@ -2813,10 +2820,10 @@
                        :value 1}]
    :events [{:event :agenda-scored
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :agenda-stolen
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :pre-steal-cost
              :effect (effect (steal-cost-bonus [:credit 3] {:source card :source-type :ability}))}]})
 
@@ -2972,7 +2979,7 @@
 
 (defcard "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
-                :label "search stack for a hardware"
+                :label "search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
                 :keep-open :while-2-clicks-left

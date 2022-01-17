@@ -681,7 +681,7 @@
    :events [{:event :purge
              :async true
              :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
-                          (trash state side eid card {:cause :purge}))}
+                          (trash state :runner eid card {:cause :purge}))}
             {:event :corp-install
              :req (req (agenda? (:card context)))
              :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
@@ -847,7 +847,10 @@
 
 (defcard "Customized Secretary"
   (letfn [(custsec-host [cards]
-            (when (seq (filter program? cards))
+            (if (empty? (filter program? cards))
+              {:async true
+               :msg "shuffle the stack"
+               :effect (effect (shuffle! :deck))}
               {:prompt "Choose a program to host"
                :choices (concat (filterv program? cards) ["Done"])
                :async true
@@ -1179,7 +1182,7 @@
                               :async true
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg "trash " (:title card))
-                              :effect (effect (trash eid card nil))}]}))
+                              :effect (effect (trash eid card {:cause :runner-ability}))}]}))
 
 (defcard "False Echo"
   {:events [{:event :pass-ice
@@ -1605,10 +1608,10 @@
   {:interactions {:prevent [{:type #{:trash-hardware}
                              :req (req true)}]}
    :abilities [{:cost [:credit 3]
-                :msg "prevent a hardware from being trashed"
+                :msg "prevent a piece of hardware from being trashed"
                 :effect (effect (trash-prevent :hardware 1))}
                {:cost [:trash]
-                :msg "prevent a hardware from being trashed"
+                :msg "prevent a piece of hardware from being trashed"
                 :effect (effect (trash-prevent :hardware 1))}]})
 
 (defcard "Lustig"
@@ -1697,7 +1700,8 @@
                                    :duration :end-of-run
                                    :unregister-once-resolved true
                                    :async true
-                                   :effect (effect (trash eid card))}]))}})
+                                   :interactive (req true)
+                                   :effect (effect (trash eid card {:cause :runner-ability}))}]))}})
                  (strength-pump 1 1)]}))
 
 (defcard "Medium"

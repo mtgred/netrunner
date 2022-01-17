@@ -105,6 +105,41 @@
       (play-from-hand state :runner "Sure Gamble")
       (is (= 3 (:click (get-runner))) "Should have lost 1 click and gained 0 clicks")))
 
+(deftest aeneas-informant
+    ;; Aeneas Informant
+    (do-game
+      (new-game {:runner {:hand ["Aeneas Informant"]}
+                 :corp {:hand ["Rashida Jaheem" "Hedge Fund"]}})
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aeneas Informant")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No Aeneas Informant prompt")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (changes-val-macro 1 (:credit (get-runner))
+                           "Runner got 1 credit from Aeneas Informant"
+                           (click-prompt state :runner "Yes"))
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (is (no-prompt? state :runner) "No Aeneas Informant prompt")))
+
+(deftest aeneas-informant-triggers-on-cards-moved-to-rfg
+    ;; Aeneas Informant & Salsette Slums - Runner gains credits from cards moved to RFG
+    (do-game
+      (new-game {:runner {:hand ["Aeneas Informant" "Salsette Slums"]}
+                 :corp {:hand ["Rashida Jaheem"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aeneas Informant")
+      (play-from-hand state :runner "Salsette Slums")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "[Salsette Slums] Remove card from game")
+      (is (= "Rashida Jaheem" (:title (first (:rfg (get-corp))))) "Rashida Jaheem removed from game")
+      (changes-val-macro 1 (:credit (get-runner))
+                           "Runner got 1 credit from Aeneas Informant"
+                           (click-prompt state :runner "Yes"))))
+
 ;; Aesop's Pawnshop
 (deftest aesop-s-pawnshop-manual-use
   ;; Manual use
@@ -412,6 +447,38 @@
       (take-credits state :corp)
       (run-empty-server state :hq)
       (is (= 1 (count (:discard (get-corp)))) "Bhagat milled one card")))
+
+;; Bloo Moose
+(deftest bloo-moose-manual-use
+  ;; Manual use
+  (do-game
+   (new-game {:runner {:deck ["Bloo Moose"] :discard ["Sure Gamble"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Bloo Moose")
+   (let [orig-credits (:credit (get-runner))
+         bm (get-resource state 0)]
+     (card-ability state :runner bm 0)
+     (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+     (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
+     (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")
+     (card-ability state :runner bm 0)
+     (is (not= :select (:prompt-type (prompt-map :runner))) "Bloo Moose has already been used this turn"))))
+
+(deftest bloo-moose-triggered-at-start-of-turn
+  ;; Triggered at start of turn
+  (do-game
+    (new-game {:runner {:deck ["Bloo Moose"] :discard ["Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bloo Moose")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (end-phase-12 state :runner)
+    (changes-val-macro
+      2 (:credit (get-runner))
+      "Remove 1 card from the game and gain 2 credits"
+      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner)))))
+    (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
+    (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
 
 (deftest charlatan
   ;; Charlatan
@@ -2373,6 +2440,16 @@
     (take-credits state :runner)
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
 
+(deftest grifter-trash-does-not-trigger-dummy-box
+  ;; Grifter trash doesn't trigger Dummy Box
+  (do-game
+    (new-game {:runner {:deck [(qty "Grifter" 2) "Dummy Box"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Grifter")
+    (play-from-hand state :runner "Dummy Box")
+    (take-credits state :runner)
+    (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
+
 (deftest guru-davinder-no-prompt-trash-for-preventing-0-damage
     ;; no prompt/trash for preventing 0 damage
     (do-game
@@ -2418,6 +2495,23 @@
       (click-prompt state :runner "2 meat damage")
       (click-prompt state :runner "Yes")
       (is (not (get-run)))))
+
+(deftest guru-davinder-trash-does-not-trigger-dummy-box
+    ;; Guru Davinder trash doesn't trigger Dummy Box
+    (do-game
+      (new-game {:corp {:id "Argus Security: Protection Guaranteed"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Vanity Project"]}
+                 :runner {:deck [(qty "Guru Davinder" 2) "Dummy Box"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Guru Davinder")
+      (play-from-hand state :runner "Dummy Box")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "2 meat damage")
+      (click-prompt state :runner "Yes")
+      (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
@@ -3491,6 +3585,20 @@
         (is (= 1 (:agenda-point (get-runner))))
         (is (empty? (get-resource state)) "NACH trashed by agenda steal"))))
 
+(deftest new-angeles-city-hall-trash-does-not-trigger-dummy-box
+  ;; New Angeles City Hall trash doesn't trigger Dummy Box
+  (do-game
+      (new-game {:corp {:deck ["Breaking News"]}
+                 :runner {:deck [(qty "New Angeles City Hall" 2) "Dummy Box"]}})
+      (play-from-hand state :corp "Breaking News" "New remote")
+      (take-credits state :corp 2)
+      (play-from-hand state :runner "New Angeles City Hall")
+      (play-from-hand state :runner "Dummy Box")
+      (let [nach (get-resource state 0)]
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Steal")
+        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
+
 (deftest new-angeles-city-hall-don-t-gain-siphon-credits-until-opportunity-to-avoid-tags-has-passed
     ;; don't gain Siphon credits until opportunity to avoid tags has passed
     (do-game
@@ -4189,6 +4297,7 @@
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
         (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
@@ -4201,7 +4310,19 @@
         (run-continue state)
         (dotimes [_ 5]
           (click-prompt state :runner "No action"))
+        (click-prompt state :runner "Yes")
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "HQ")
+        (click-prompt state :runner "No action")
+        (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No")
+        (is (= credits (:credit (get-runner))) "Psych Mike should give 0 credits when declining to use her ability"))
       (testing "Regression test for #3828"
         (take-credits state :runner)
         (take-credits state :corp)
@@ -4212,6 +4333,7 @@
         (let [credits (:credit (get-runner))]
           (run-empty-server state "R&D")
           (click-prompt state :runner "No action")
+          (click-prompt state :runner "Yes")
           (is (= (inc credits) (:credit (get-runner)))
               "Psych Mike should give 1 credit for second run of the turn, if first on HQ")))))
 
@@ -4229,6 +4351,7 @@
         (click-prompt state :runner "Unrezzed upgrade")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))))
 
 (deftest reclaim-basic-behavior
@@ -5626,6 +5749,30 @@
       (score state :corp (refresh ht))
       (is (= 1 (:agenda-point (get-corp))) "Hostile Takeover scored with 3 adv")
       (is (= 3 (count (:discard (get-runner)))) "The Source is trashed"))))
+
+(deftest the-source-trash-does-not-trigger-dummy-box
+  ;; The Source trash doesn't trigger Dummy Box
+  (do-game
+    (new-game {:corp {:deck [(qty "Hostile Takeover" 2)]}
+               :runner {:deck ["Sure Gamble" (qty "The Source" 3) "Dummy Box"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "The Source")
+    (play-from-hand state :runner "Dummy Box")
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Pay to steal")
+    (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")
+    (play-from-hand state :runner "The Source")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [ht (get-content state :remote2 0)]
+      (core/advance state :corp {:card (refresh ht)})
+      (core/advance state :corp {:card (refresh ht)})
+      (core/gain state :corp :click 1)
+      (core/advance state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
+      (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 
 (deftest the-supplier
   ;; The Supplier

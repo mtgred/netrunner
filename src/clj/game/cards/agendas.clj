@@ -163,6 +163,7 @@
 (defcard "Armed Intimidation"
   {:on-score
    {:player :runner
+    :interactive (req true)
     :async true
     :waiting-prompt "Runner to choose an option"
     :prompt "Choose Armed Intimidation score effect"
