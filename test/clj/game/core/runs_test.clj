@@ -1,5 +1,6 @@
 (ns game.core.runs-test
   (:require [game.core :as core]
+            [game.utils :as utils]
             [game.core-test :refer :all]
             [game.core.card :refer :all]
             [game.utils-test :refer :all]
@@ -1138,3 +1139,113 @@
      (core/process-action "subroutine" state :corp {:card (refresh iw) :subroutine 0}))
    (run-on state :rd)
    (is (get-run) "There is a run in progress")))
+
+(deftest ice-trashed-during-movement-does-not-reapproach-passed-ice
+  ;; Ice trashed during Movement - Runner does not reapproach passed ice
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Wall of Static" "Ice Wall" "Vanilla" "Hedge Fund"]
+                     :credits 10}})
+   (play-from-hand state :corp "Vanilla" "HQ")
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (play-from-hand state :corp "Wall of Static" "HQ")
+   (take-credits state :corp)
+   (let [vanilla (get-ice state :hq 0)
+         iw (get-ice state :hq 1)
+         ws (get-ice state :hq 2)]
+     (rez state :corp vanilla)
+     (rez state :corp iw)
+     (rez state :corp ws)
+     ;; middle ice trashed - move to approach next ice
+     (run-on state "HQ")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? ws (core/get-current-ice state)) "Encountering Wall of Static")
+     (run-continue state :movement)
+     (trash-card state :corp (refresh iw))
+     (run-continue state :approach-ice)
+     (is (utils/same-card? vanilla (core/get-current-ice state)) "Approaching Vanilla")
+     (run-continue-until state :movement)
+     (run-jack-out state)
+     ;; inner most ice trashed - move to success
+     (run-on state "HQ")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? ws (core/get-current-ice state)) "Encountering Wall of Static")
+     (run-continue state :movement)
+     (trash-card state :corp (refresh vanilla))
+     (run-continue state :success))))
+
+(deftest ice-trashed-during-approach-does-not-reapproach-passed-ice
+  ;; Ice trashed during Approach - Runner does not reapproach passed ice
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Wall of Static" "Ice Wall" "Vanilla" "Hedge Fund"]
+                     :credits 10}})
+   (play-from-hand state :corp "Vanilla" "HQ")
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (play-from-hand state :corp "Wall of Static" "HQ")
+   (take-credits state :corp)
+   (let [vanilla (get-ice state :hq 0)
+         iw (get-ice state :hq 1)
+         ws (get-ice state :hq 2)]
+     (rez state :corp vanilla)
+     (rez state :corp iw)
+     (rez state :corp ws)
+     ;; middle ice trashed - continue to movement then to approach next ice
+     (run-on state "HQ")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? ws (core/get-current-ice state)) "Encountering Wall of Static")
+     (run-continue-until state :approach-ice)
+     (is (utils/same-card? iw (core/get-current-ice state)) "Approaching Ice Wall")
+     (trash-card state :corp (refresh iw))
+     (run-continue state :movement)
+     (run-continue state :approach-ice)
+     (is (utils/same-card? vanilla (core/get-current-ice state)) "Approaching Vanilla")
+     (run-continue-until state :movement)
+     (run-jack-out state)
+     ;; inner most ice trashed - continue to Movement at innermost position
+     (run-on state "HQ")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? ws (core/get-current-ice state)) "Encountering Wall of Static")
+     (run-continue-until state :approach-ice)
+     (is (utils/same-card? vanilla (core/get-current-ice state)) "Approaching Vanilla")
+     (trash-card state :corp (refresh vanilla))
+     (run-continue state :movement)
+     (run-continue state :success))))
+
+(deftest ice-trashed-during-encounter-does-not-reapproach-passed-ice
+  ;; Ice trashed during Encounter - Runner does not reapproach passed ice
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Wall of Static" "Ice Wall" "Vanilla" "Hedge Fund"]
+                     :credits 10}})
+   (play-from-hand state :corp "Vanilla" "HQ")
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (play-from-hand state :corp "Wall of Static" "HQ")
+   (take-credits state :corp)
+   (let [vanilla (get-ice state :hq 0)
+         iw (get-ice state :hq 1)
+         ws (get-ice state :hq 2)]
+     (rez state :corp vanilla)
+     (rez state :corp iw)
+     (rez state :corp ws)
+     ;; middle ice trashed - continue to movement then to approach next ice
+     (run-on state "HQ")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? ws (core/get-current-ice state)) "Encountering Wall of Static")
+     (run-continue-until state :encounter-ice)
+     (is (utils/same-card? iw (core/get-current-ice state)) "Encountering Ice Wall")
+     (trash-card state :corp (refresh iw))
+     (run-continue state :movement)
+     (run-continue state :approach-ice)
+     (is (utils/same-card? vanilla (core/get-current-ice state)) "Approaching Vanilla")
+     (run-continue-until state :movement)
+     (run-jack-out state)
+     ;; inner most ice trashed - continue to Movement at innermost position
+     (run-on state "HQ")
+     (run-continue state :encounter-ice)
+     (is (utils/same-card? ws (core/get-current-ice state)) "Encountering Wall of Static")
+     (run-continue-until state :encounter-ice)
+     (is (utils/same-card? vanilla (core/get-current-ice state)) "Approaching Vanilla")
+     (trash-card state :corp (refresh vanilla))
+     (run-continue state :movement)
+     (run-continue state :success))))

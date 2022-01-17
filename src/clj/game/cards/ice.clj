@@ -713,8 +713,7 @@
      :effect (req (corp-install state side eid
                                 target (zone->name (target-server run))
                                 {:ignore-all-cost true
-                                 :index (max (dec run-position) 0)})
-                  (swap! state update-in [:run :position] inc))}]})
+                                 :index (max (dec run-position) 0)}))}]})
 
 (defcard "Border Control"
   {:abilities [{:label "End the run"
@@ -764,9 +763,6 @@
                                                        (zone->name (second (get-zone card)))
                                                        {:ignore-install-cost true
                                                         :index (:index card)})
-                                         (when (:run @state)
-                                           (swap! state update-in [:run :position] inc)
-                                           (set-current-ice state))
                                          (effect-completed state side eid)))
                   :cancel-effect (req (system-msg state :corp "chooses not to install a card with Brân 1.0")
                                       (effect-completed state side eid))}

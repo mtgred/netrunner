@@ -347,12 +347,16 @@
    :phase
    :next-phase
    :no-action
-   :source-card])
+   :source-card
+   :approached-ice-in-position?])
 
 (defn run-summary
   [state]
   (when-let [run (:run @state)]
-    (select-non-nil-keys run run-keys)))
+    (-> run
+        (assoc :approached-ice-in-position? (when (= :approach-ice (:phase run))
+                                              (some? (get-card state (:current-ice run)))))
+        (select-non-nil-keys run-keys))))
 
 (defn encounter-ice-summary
   [ice state]

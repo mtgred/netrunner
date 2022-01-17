@@ -15,10 +15,10 @@
     [game.core.initializing :refer [card-init deactivate reset-card]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [enforce-msg system-msg]]
-    [game.core.servers :refer [is-remote? type->rig-zone]]
+    [game.core.servers :refer [is-remote? target-server type->rig-zone]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
-    [game.macros :refer [wait-for]]
+    [game.macros :refer [wait-for when-let*]]
     [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
     [medley.core :refer [insert-nth]]))
 
@@ -153,10 +153,30 @@
     (swap! state update-in (cons side server)
            #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %)))))
 
+(defn- update-run-position
+  "If there is an active run, update the Runner's position if any ice was moved to or from an inward position"
+  [state old-card moved-card]
+  (when-let* [run (:run @state)
+              position (:position run)
+              _ (pos? position)]
+    (letfn [(protecting-run-server? [card]
+              (and (ice? card)
+                   (= (target-server run) (second (:zone card)))
+                   (= :ices (last (:zone card)))))
+            (inward-position? [card]
+              (< (:index card) position))]
+      (cond
+        (and (protecting-run-server? old-card)
+             (inward-position? old-card))
+        (swap! state update-in [:run :position] dec)
+        (and (protecting-run-server? moved-card)
+             (inward-position? moved-card))
+        (swap! state update-in [:run :position] inc)))))
+
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event]}]
+  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event swap]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)]
@@ -183,6 +203,8 @@
            (when (seq zone)
              (update-installed-card-indices state side zone))
            (update-installed-card-indices state side dest)
+           (when-not swap
+             (update-run-position state card (get-card state moved-card)))
            (let [z (vec (cons :corp (butlast zone)))]
              (when (and (not keep-server-alive)
                         (is-remote? z)
@@ -455,11 +477,13 @@
           moved-a (move state a-side a (get-zone b)
                         {:keep-server-alive true
                          :index (card-index state b)
-                         :suppress-event true})
+                         :suppress-event true
+                         :swap true})
           moved-b (move state b-side b (get-zone a)
                         {:keep-server-alive true
                          :index (card-index state a)
-                         :suppress-event true})]
+                         :suppress-event true
+                         :swap true})]
       (trigger-event state side :swap moved-a moved-b)
       (when (and (:run @state)
                  (or (ice? a)
