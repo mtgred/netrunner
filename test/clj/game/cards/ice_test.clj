@@ -496,6 +496,115 @@
       (rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
 
+(deftest bailiff-gain-credit-when-broken
+  (do-game
+    (new-game {:corp {:hand ["Bailiff"]}
+               :runner {:hand ["Corroder"]}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (let [blf (get-ice state :hq 0)
+          cor (get-program state 0)]
+      (run-on state "HQ")
+      (rez state :corp blf)
+      (run-continue state)
+      (changes-val-macro
+        +1 (:credit (get-corp))
+        "Gained 1c from subroutines being broken"
+        (card-ability state :runner cor 0)
+        (click-prompt state :runner "End the run")
+        (is (last-log-contains? state "Corp uses Bailiff to gain 1 \\[Credits\\]")
+            "Correct message")))))
+
+(deftest bailiff-interaction-with-hippo
+  (do-game
+    (new-game {:corp {:hand ["Bailiff"]}
+    	       :runner {:hand ["Corroder" "Hippo"]}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Hippo")
+    (let [blf (get-ice state :hq 0)
+    	  cor (get-program state 0)]
+      (run-on state "HQ")
+      (rez state :corp blf)
+      (run-continue state)
+      (changes-val-macro
+        0 (:credit (get-corp))
+	"Never gained money from bailiff"
+	(core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	(click-prompt state :runner "Yes")))))
+
+(deftest bailiff-interaction-with-hippo-sub-boost-with-cleaver
+  (do-game
+    (new-game {:corp {:hand ["Bailiff" "Sub Boost"]}
+    	       :runner {:hand ["Cleaver" "Hippo"]
+	       	        :credits 6}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Sub Boost")
+    (click-card state :corp (refresh (get-ice state :hq 0)))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cleaver")
+    (play-from-hand state :runner "Hippo")
+    (let [blf (get-ice state :hq 0)
+    	  cor (get-program state 0)]
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro
+        +0 (:credit (get-corp))
+	"Gained 0 credits from bailiff + sub boost being broken with cleaver + hippo"
+	(core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	(click-prompt state :runner "Yes")))))
+
+(deftest bailiff-interaction-with-hippo-sub-boost-with-corroder
+  (do-game
+    (new-game {:corp {:hand ["Bailiff" "Sub Boost"]}
+    	       :runner {:hand ["Corroder" "Hippo"]
+	       	        :credits 6}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Sub Boost")
+    (click-card state :corp (refresh (get-ice state :hq 0)))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Hippo")
+    (let [blf (get-ice state :hq 0)
+    	  cor (get-program state 0)]
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro
+        +1 (:credit (get-corp))
+	"Gained 1 credit from bailiff + sub boost being broken with corroder + hippo"
+	(core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	(click-prompt state :runner "Yes")))))
+
+(deftest bailiff-sub-boost-auto-break
+  (do-game
+    (new-game {:corp {:hand["Bailiff" "Sub Boost"]}
+    	       :runner {:hand ["Corroder"]}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (let [blf (get-ice state :hq 0)]
+      (rez state :corp blf)
+      (play-from-hand state :corp "Sub Boost")
+      (click-card state :corp (refresh blf))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [cor (get-program state 0)]
+        (run-on state "HQ")
+	(run-continue state)
+	(changes-val-macro
+          +2 (:credit (get-corp))
+	  "Gained 2c from the runner breaking"
+	  (core/play-dynamic-ability state :runner
+                                     {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	  (is (and (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 \\[Credits\\]")
+	      	   (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 \\[Credits\\]"))
+	      "Correct messages"))))))
+
 (deftest ballista
   ;; Ballista
   (do-game
