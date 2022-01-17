@@ -2846,6 +2846,36 @@
       (is (= "Scorched Earth" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
       (is (:prompt (get-runner)) "Runner has next access prompt")))
 
+(deftest maya-triggers-only-on-rd-accesses
+    ;; Maya does not trigger on accesses out of R&D
+    (do-game
+      (new-game {:corp {:deck ["Anansi" "Brainstorm" "Chiyashi"]}
+                 :runner {:hand ["Maya" "Equivocation"]}})
+      (core/move state :corp (find-card "Anansi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Anansi"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (take-credits state :corp)
+      (core/gain state :runner :click 1)
+      (play-from-hand state :runner "Maya")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No")
+      (play-from-hand state :runner "Equivocation")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "Yes") ; Equivocation prompt
+      (click-prompt state :runner "Yes") ; force the draw
+      (is (find-card "Anansi" (:hand (get-corp))) "Anansi added to HQ")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No") ; Maya prompt
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No more prompts for runner")
+      (is (not (:run @state)) "Run is ended")))
+
 (deftest mind-s-eye-interaction-with-rdi-aeneas
     ;; Interaction with RDI + Aeneas
     (do-game
