@@ -383,9 +383,7 @@
                                          card nil)))}]})
 
 (defcard "Bloo Moose"
-  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
-   :abilities [{:req (req (and (:runner-phase-12 @state)
-                               (not (zone-locked? state :runner :discard))))
+  (let [ability {:req (req (not (zone-locked? state :runner :discard)))
                 :label "rfg a card to gain 2 [Credits]"
                 :once :per-turn
                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
@@ -395,7 +393,12 @@
                 :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
                 :async true
                 :effect (effect (move target :rfg)
-                                (gain-credits eid 2))}]})
+                                (gain-credits eid 2))}]
+  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
+   :events [(assoc ability
+                   :event :runner-turn-begins
+                   :interactive (req true))]
+   :abilities [ability]}))
 
 (defcard "Borrowed Satellite"
   {:constant-effects [(link+ 1)
