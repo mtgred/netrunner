@@ -1436,8 +1436,8 @@
   {:on-encounter {:msg "force the Runner to take 1 tag or end the run"
                   :player :runner
                   :prompt "Choose one"
-                  :choices (req [(when (not (forced-to-avoid-tags? state side))
-                                 "Take 1 tag")
+                  :choices (req [(when-not (forced-to-avoid-tags? state side)
+                                   "Take 1 tag")
                                  "End the run"])
                   :async true
                   :effect (req (if (= target "Take 1 tag")
