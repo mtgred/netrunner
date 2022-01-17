@@ -2373,6 +2373,16 @@
     (take-credits state :runner)
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
 
+(deftest grifter-trash-does-not-trigger-dummy-box
+  ;; Grifter trash doesn't trigger Dummy Box
+  (do-game
+    (new-game {:runner {:deck [(qty "Grifter" 2) "Dummy Box"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Grifter")
+    (play-from-hand state :runner "Dummy Box")
+    (take-credits state :runner)
+    (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
+
 (deftest guru-davinder-no-prompt-trash-for-preventing-0-damage
     ;; no prompt/trash for preventing 0 damage
     (do-game
@@ -2418,6 +2428,23 @@
       (click-prompt state :runner "2 meat damage")
       (click-prompt state :runner "Yes")
       (is (not (get-run)))))
+
+(deftest guru-davinder-trash-does-not-trigger-dummy-box
+    ;; Guru Davinder trash doesn't trigger Dummy Box
+    (do-game
+      (new-game {:corp {:id "Argus Security: Protection Guaranteed"
+                        :deck [(qty "Hedge Fund" 5)]
+                        :hand ["Vanity Project"]}
+                 :runner {:deck [(qty "Guru Davinder" 2) "Dummy Box"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Guru Davinder")
+      (play-from-hand state :runner "Dummy Box")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "2 meat damage")
+      (click-prompt state :runner "Yes")
+      (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
@@ -3490,6 +3517,20 @@
         (click-prompt state :runner "Steal")
         (is (= 1 (:agenda-point (get-runner))))
         (is (empty? (get-resource state)) "NACH trashed by agenda steal"))))
+
+(deftest new-angeles-city-hall-trash-does-not-trigger-dummy-box
+  ;; New Angeles City Hall trash doesn't trigger Dummy Box
+  (do-game
+      (new-game {:corp {:deck ["Breaking News"]}
+                 :runner {:deck [(qty "New Angeles City Hall" 2) "Dummy Box"]}})
+      (play-from-hand state :corp "Breaking News" "New remote")
+      (take-credits state :corp 2)
+      (play-from-hand state :runner "New Angeles City Hall")
+      (play-from-hand state :runner "Dummy Box")
+      (let [nach (get-resource state 0)]
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Steal")
+        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 
 (deftest new-angeles-city-hall-don-t-gain-siphon-credits-until-opportunity-to-avoid-tags-has-passed
     ;; don't gain Siphon credits until opportunity to avoid tags has passed
@@ -5626,6 +5667,30 @@
       (score state :corp (refresh ht))
       (is (= 1 (:agenda-point (get-corp))) "Hostile Takeover scored with 3 adv")
       (is (= 3 (count (:discard (get-runner)))) "The Source is trashed"))))
+
+(deftest the-source-trash-does-not-trigger-dummy-box
+  ;; The Source trash doesn't trigger Dummy Box
+  (do-game
+    (new-game {:corp {:deck [(qty "Hostile Takeover" 2)]}
+               :runner {:deck ["Sure Gamble" (qty "The Source" 3) "Dummy Box"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "The Source")
+    (play-from-hand state :runner "Dummy Box")
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Pay to steal")
+    (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")
+    (play-from-hand state :runner "The Source")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [ht (get-content state :remote2 0)]
+      (core/advance state :corp {:card (refresh ht)})
+      (core/advance state :corp {:card (refresh ht)})
+      (core/gain state :corp :click 1)
+      (core/advance state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
+      (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 
 (deftest the-supplier
   ;; The Supplier

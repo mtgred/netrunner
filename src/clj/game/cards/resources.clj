@@ -1188,7 +1188,7 @@
                                       :effect (effect (gain-credits eid 1))}
                                      {:msg "trash Grifter"
                                       :async true
-                                      :effect (effect (trash eid card nil))})]
+                                      :effect (effect (trash eid card {:cause :runner-ability}))})]
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
@@ -1205,7 +1205,7 @@
                               :unregister-once-resolved true
                               :async true
                               :effect (req (if (< (:credit runner) 4)
-                                             (trash state side eid card nil)
+                                             (trash state side eid card {:cause :runner-ability})
                                              (continue-ability
                                                state :runner
                                                {:optional
@@ -1217,7 +1217,7 @@
                                                                                    "from being trashed"))
                                                                   (lose-credits :runner eid 4))}
                                                  :no-ability {:async true
-                                                              :effect (effect (trash eid card nil))}}}
+                                                              :effect (effect (trash eid card {:cause :runner-ability}))}}}
                                                card nil)))}]))}]})
 
 (defcard "Hades Shard"
@@ -1772,7 +1772,7 @@
    :events [{:event :agenda-stolen
              :async true
              :msg "trash itself"
-             :effect (effect (trash eid card nil))}]
+             :effect (effect (trash eid card {:cause :runner-ability}))}]
    :abilities [{:async true
                 :cost [:credit 2]
                 :msg "avoid 1 tag"
@@ -2813,10 +2813,10 @@
                        :value 1}]
    :events [{:event :agenda-scored
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :agenda-stolen
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :pre-steal-cost
              :effect (effect (steal-cost-bonus [:credit 3] {:source card :source-type :ability}))}]})
 

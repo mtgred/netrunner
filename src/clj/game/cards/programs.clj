@@ -1179,7 +1179,7 @@
                               :async true
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg "trash " (:title card))
-                              :effect (effect (trash eid card nil))}]}))
+                              :effect (effect (trash eid card {:cause :runner-ability}))}]}))
 
 (defcard "False Echo"
   {:events [{:event :pass-ice
@@ -1697,7 +1697,7 @@
                                    :duration :end-of-run
                                    :unregister-once-resolved true
                                    :async true
-                                   :effect (effect (trash eid card))}]))}})
+                                   :effect (effect (trash eid card {:cause :runner-ability}))}]))}})
                  (strength-pump 1 1)]}))
 
 (defcard "Medium"
