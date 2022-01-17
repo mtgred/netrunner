@@ -3606,6 +3606,22 @@
      (play-and-score state "Sting!")
      (is (= 5 (-> (get-runner) :discard count)) "Runner should take 2 net damage because there is a Sting! in the Runner's score area")))
 
+(deftest sting-swapping-agendas-does-no-damage
+    ;; Swapping Sting! with another agenda does no damage
+    (do-game
+      (new-game {:corp {:deck ["Exchange of Information"
+                               "Sting!"
+                               "Jumon"]}
+                 :runner {:deck [(qty "Spy Camera" 5)]}})
+      (play-and-score state "Sting!")
+      (take-credits state :corp)
+      (core/steal state :runner (make-eid state) (find-card "Jumon" (:hand (get-corp))))
+      (take-credits state :runner)
+      (play-from-hand state :corp "Exchange of Information")
+      (click-card state :corp (find-card "Jumon" (:scored (get-runner))))
+      (click-card state :corp (find-card "Sting!" (:scored (get-corp))))
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should take no damage from the agendas swap")))
+
 (deftest successful-field-test
   ;; Successful Field Test
   (do-game
@@ -3838,7 +3854,20 @@
       (changes-val-macro
         1 (count-tags state)
         "Runner takes 1 tag on Tomorrow's Headline steal"
-        (click-prompt state :runner "Steal")))))
+        (click-prompt state :runner "Steal"))))
+  (testing "Runner takes no tag when swapping agendas"
+    (do-game
+      (new-game {:corp {:deck ["Tomorrow's Headline", "Exchange of Information", "Project Beale"]}})
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (play-and-score state "Tomorrow's Headline")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Exchange of Information")
+      (click-card state :corp (find-card "Project Beale" (:scored (get-runner))))
+      (click-card state :corp (find-card "Tomorrow's Headline" (:scored (get-corp))))
+      (is (= 1 (count-tags state)) "Runner takes no tag from the agendas swap"))))
 
 (deftest transport-monopoly-basic-functionality
     ;; Basic functionality

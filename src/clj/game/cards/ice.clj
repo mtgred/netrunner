@@ -818,10 +818,9 @@
                                    :msg "do 3 meat damage when this run is successful"
                                    :effect (effect (register-events
                                                      card
-                                                     [{:event :run-ends
+                                                     [{:event :successful-run
                                                        :duration :end-of-run
                                                        :async true
-                                                       :req (req (:successful target))
                                                        :msg "do 3 meat damage"
                                                        :effect (effect (damage eid :meat 3 {:card card}))}]))})]})
 

@@ -681,7 +681,7 @@
    :events [{:event :purge
              :async true
              :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
-                          (trash state side eid card {:cause :purge}))}
+                          (trash state :runner eid card {:cause :purge}))}
             {:event :corp-install
              :req (req (agenda? (:card context)))
              :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
@@ -1179,7 +1179,7 @@
                               :async true
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg "trash " (:title card))
-                              :effect (effect (trash eid card nil))}]}))
+                              :effect (effect (trash eid card {:cause :runner-ability}))}]}))
 
 (defcard "False Echo"
   {:events [{:event :pass-ice
@@ -1698,7 +1698,7 @@
                                    :unregister-once-resolved true
                                    :async true
                                    :interactive (req true)
-                                   :effect (effect (trash eid card))}]))}})
+                                   :effect (effect (trash eid card {:cause :runner-ability}))}]))}})
                  (strength-pump 1 1)]}))
 
 (defcard "Medium"

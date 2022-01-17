@@ -233,6 +233,7 @@
       :prompt "Choose a card type"
       :choices ["Hardware" "Program" "Resource"]
       :async true
+      :msg (msg "choose " target)
       :effect (req (let [t target
                          n (num-installed state t)]
                      (wait-for

@@ -1371,6 +1371,21 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner cl)))))
 
+(deftest clot-trashed-on-purge-triggers-reaver
+  (do-game
+    (new-game {:corp {:deck ["Hedge Fund"]}
+               :runner {:deck ["Clot" (qty "Reaver" 5)]}})
+    (starting-hand state :runner ["Clot" "Reaver"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clot")
+    (play-from-hand state :runner "Reaver")
+    (take-credits state :runner)
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    (core/purge state :corp)
+    (is (= "Clot" (-> (get-runner) :discard first :title)) "Clot was trashed on purge")
+    (is (= 1 (count (:hand (get-runner)))) "Reaver triggered when Clot was trashed")
+    ))
+
 (deftest conduit
   ;; Conduit
   (do-game
@@ -2472,6 +2487,26 @@
         (is (refresh fae) "Faerie not trashed until encounter over")
         (run-continue state)
         (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
+
+(deftest faerie-trash-does-not-trigger-dummy-box
+    ;; Faerie trash doesn't trigger Dummy Box
+    (do-game
+      (new-game {:corp {:deck ["Caduceus"]}
+                 :runner {:deck [(qty "Faerie" 2) "Dummy Box"]}})
+      (play-from-hand state :corp "Caduceus" "Archives")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Faerie")
+      (play-from-hand state :runner "Dummy Box")
+      (let [fae (get-program state 0)]
+        (run-on state :archives)
+        (rez state :corp (get-ice state :archives 0))
+        (run-continue state)
+        (card-ability state :runner fae 1)
+        (card-ability state :runner fae 0)
+        (click-prompt state :runner "Trace 3 - Gain 3 [Credits]")
+        (click-prompt state :runner "Trace 2 - End the run")
+        (run-continue state)
+        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 
 (deftest faerie-works-with-auto-pump-and-break
     ;; Works with auto-pump-and-break
@@ -3957,6 +3992,26 @@
         (core/continue state :corp nil)
         (run-jack-out state)
         (is (= 1 (count (:discard (get-runner)))) "Mayfly trashed when run ends"))))
+
+(deftest mayfly-trash-does-not-trigger-dummy-box
+  ;; Mayfly trash doesn't trigger Dummy Box
+  (do-game
+      (new-game {:corp {:deck ["Spiderweb"]
+                        :credits 20}
+                 :runner {:hand [(qty "Mayfly" 2) "Dummy Box"]
+                          :credits 20}})
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Mayfly")
+      (play-from-hand state :runner "Dummy Box")
+      (let [mayfly (get-program state 0)]
+        (run-on state "HQ")
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
+        (core/continue state :corp nil)
+        (run-jack-out state)
+        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 
 (deftest mimic
   ;; Mimic

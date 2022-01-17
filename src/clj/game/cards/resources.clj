@@ -383,9 +383,7 @@
                                          card nil)))}]})
 
 (defcard "Bloo Moose"
-  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
-   :abilities [{:req (req (and (:runner-phase-12 @state)
-                               (not (zone-locked? state :runner :discard))))
+  (let [ability {:req (req (not (zone-locked? state :runner :discard)))
                 :label "rfg a card to gain 2 [Credits]"
                 :once :per-turn
                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
@@ -395,7 +393,12 @@
                 :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
                 :async true
                 :effect (effect (move target :rfg)
-                                (gain-credits eid 2))}]})
+                                (gain-credits eid 2))}]
+  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
+   :events [(assoc ability
+                   :event :runner-turn-begins
+                   :interactive (req true))]
+   :abilities [ability]}))
 
 (defcard "Borrowed Satellite"
   {:constant-effects [(link+ 1)
@@ -1188,7 +1191,7 @@
                                       :effect (effect (gain-credits eid 1))}
                                      {:msg "trash Grifter"
                                       :async true
-                                      :effect (effect (trash eid card nil))})]
+                                      :effect (effect (trash eid card {:cause :runner-ability}))})]
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
@@ -1205,7 +1208,7 @@
                               :unregister-once-resolved true
                               :async true
                               :effect (req (if (< (:credit runner) 4)
-                                             (trash state side eid card nil)
+                                             (trash state side eid card {:cause :runner-ability})
                                              (continue-ability
                                                state :runner
                                                {:optional
@@ -1217,7 +1220,7 @@
                                                                                    "from being trashed"))
                                                                   (lose-credits :runner eid 4))}
                                                  :no-ability {:async true
-                                                              :effect (effect (trash eid card nil))}}}
+                                                              :effect (effect (trash eid card {:cause :runner-ability}))}}}
                                                card nil)))}]))}]})
 
 (defcard "Hades Shard"
@@ -1772,7 +1775,7 @@
    :events [{:event :agenda-stolen
              :async true
              :msg "trash itself"
-             :effect (effect (trash eid card nil))}]
+             :effect (effect (trash eid card {:cause :runner-ability}))}]
    :abilities [{:async true
                 :cost [:credit 2]
                 :msg "avoid 1 tag"
@@ -2813,10 +2816,10 @@
                        :value 1}]
    :events [{:event :agenda-scored
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :agenda-stolen
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability}))}
             {:event :pre-steal-cost
              :effect (effect (steal-cost-bonus [:credit 3] {:source card :source-type :ability}))}]})
 
