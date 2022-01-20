@@ -1,6 +1,7 @@
 (ns game.cards.agendas-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.core.eid :refer [make-eid]]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -3649,6 +3650,7 @@
       (take-credits state :corp)
       (core/steal state :runner (make-eid state) (find-card "Jumon" (:hand (get-corp))))
       (take-credits state :runner)
+      (gain-tags state :runner 1)
       (play-from-hand state :corp "Exchange of Information")
       (click-card state :corp (find-card "Jumon" (:scored (get-runner))))
       (click-card state :corp (find-card "Sting!" (:scored (get-corp))))
