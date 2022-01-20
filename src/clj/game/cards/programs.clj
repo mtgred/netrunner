@@ -1693,14 +1693,13 @@
                    1 1 "All"
                    {:additional-ability
                     {:msg "will trash itself when this run ends"
-                     :effect (effect
+                     :effect (req
                                (register-events
-                                 card
+                                 state :runner (get-card state card)
                                  [{:event :run-ends
                                    :duration :end-of-run
                                    :unregister-once-resolved true
                                    :async true
-                                   :interactive (req true)
                                    :effect (effect (trash eid card {:cause :runner-ability}))}]))}})
                  (strength-pump 1 1)]}))
 
