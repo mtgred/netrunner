@@ -1,8 +1,7 @@
 (ns web.ws
   (:require
    [clojure.core.async :refer [<! >! chan go timeout]]
-   [web.app-state :refer [register-user!]]
-   [web.user :refer [active-user?]]
+   [executor.core :as executor]
    [taoensso.sente :as sente]
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
 
@@ -13,10 +12,14 @@
                                        (:client-id ring-req)))})
       {:keys [ch-recv send-fn
               ajax-post-fn ajax-get-or-ws-handshake-fn]} chsk-server]
-  (defonce handshake-handler ajax-get-or-ws-handshake-fn)
-  (defonce post-handler ajax-post-fn)
-  (defonce ch-chsk ch-recv)
+  (defn handshake-handler [request] (ajax-get-or-ws-handshake-fn request))
+  (defn post-handler [request] (ajax-post-fn request))
+  (def ch-chsk ch-recv)
+  ;; redefined here to get clj-kondo checking
   (defn chsk-send! [uid ev] (send-fn uid ev)))
+
+(executor/reg-fx :ws/chsk-send (fn [[uid ev]] (chsk-send! uid ev)))
+(executor/reg-fx :ws/reply-fn (fn [[reply-fn value]] (when reply-fn (reply-fn value))))
 
 ;; Maximum throughput is 25,000 client updates a second
 ;; or 1024 pending broadcast-to!'s (asyncs limit for pending takes).
@@ -60,18 +63,23 @@
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
 
-(defmethod -msg-handler :chsk/ws-ping [_])
-(defmethod -msg-handler :chsk/uidport-open
-  [{uid :uid
-    {user :user} :ring-req}]
-  (when (active-user? user)
-    (register-user! uid user)))
+(def executor-namespaces
+  #{"chsk" "lobby"})
+
+(def executor-events
+  #{
+    })
 
 (defn event-msg-handler
   "Wraps `-msg-handler` with logging, error catching, etc."
   [event]
   (try
-    (-msg-handler event)
+    (cond
+      (or (contains? executor-namespaces (namespace (:id event)))
+          (contains? executor-events (:id event)))
+      (executor/dispatch-sync [(:id event) event])
+      :else
+      (-msg-handler event))
     (catch Exception e
       (println "Caught an error in the message handler")
       (println (.printStackTrace e)))))

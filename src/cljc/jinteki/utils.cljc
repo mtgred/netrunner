@@ -9,7 +9,10 @@
      :cljs (js/parseInt string 10)))
 
 (defn side-from-str [side-str]
-  (keyword (str/lower-case side-str)))
+  (some-> side-str
+          (not-empty)
+          (str/lower-case)
+          (keyword)))
 
 (defn faction-label
   "Returns faction of a card as a lowercase label"

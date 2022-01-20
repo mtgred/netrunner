@@ -35,12 +35,12 @@
   (non-game-toast message type {:time-out 30000 :close-button true}))
 
 (defmethod ws/event-msg-handler :lobby/timeout
-  [{{:keys [gameid]} :?data}]
-  (when (= gameid (:gameid @app-state))
+  [{data :?data}]
+  (when (= data (-> @app-state :current-game :gameid))
     (non-game-toast (tr [:lobby.closed-msg "Game lobby closed due to inactivity"])
                     "error"
                     {:time-out 0 :close-button true})
-    (swap! app-state assoc :gameid nil)))
+    (swap! app-state assoc :current-game nil)))
 
 (defn replay-game [s]
   (authenticated
@@ -268,7 +268,6 @@
                user (r/cursor app-state [:user])
                visible-formats (r/cursor app-state [:visible-formats])
                replay-id (r/cursor app-state [:replay-id])]
-    (println "rendering game-lobby")
     [:div.container
      [:div.lobby-bg]
      (do (authenticated (fn [_] nil)) nil)

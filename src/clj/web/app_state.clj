@@ -1,10 +1,9 @@
 (ns web.app-state
   (:require
+    [executor.db :as db]
     [medley.core :refer [find-first]]))
 
-(defonce app-state
-  (atom {:lobbies {}
-         :users {}}))
+(defonce app-state db/app-db)
 
 (defn register-user
   [app-state uid user]

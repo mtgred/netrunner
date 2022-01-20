@@ -1,16 +1,22 @@
 (ns game.core-test
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.test :refer :all]
-            [game.core :as core]
-            [game.core.card :refer [get-card installed? rezzed? active? get-counters get-title]]
-            [game.core.ice :refer [active-ice?]]
-            [game.utils :as utils :refer [server-card]]
-            [game.core.eid :as eid]
-            [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
-            [game.macros :refer [wait-for]]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.utils :as jutils]))
+  (:require
+   [clojure.edn :as edn]
+   [clojure.java.io :as io]
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer [active? get-card get-counters get-title installed?
+                           rezzed?]]
+   [game.core.eid :as eid]
+   [game.core.ice :refer [active-ice?]]
+   [game.macros :refer [wait-for]]
+   [game.utils :as utils :refer [server-card]]
+   [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :as jutils]
+   [malli.instrument :as mi]))
+
+;; instrument all malli-spec'd functions
+(mi/instrument!)
 
 ;; Card information and definitions
 (defn load-cards []

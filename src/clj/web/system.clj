@@ -3,6 +3,7 @@
    [aero.core :as aero]
    [cljc.java-time.local-date :as ld]
    [clojure.java.io :as io]
+   [executor.core :as executor]
    [game.cards.agendas]
    [game.cards.assets]
    [game.cards.basic]
@@ -23,15 +24,16 @@
    [org.httpkit.server :refer [run-server server-stop!]]
    [taoensso.sente :as sente]
    [time-literals.data-readers]
-   [time-literals.read-write]
+   [time-literals.read-write :as read-write]
    [web.angel-arena :as angel-arena]
-   [web.versions :refer [frontend-version]]
    [web.api :refer [make-app make-dev-app]]
-   [web.app-state :as app-state]
    [web.game]
-   [web.lobby :as lobby]
+   [web.lobby.loader]
    [web.utils :refer [tick]]
+   [web.versions :refer [frontend-version]]
    [web.ws :refer [ch-chsk event-msg-handler]]))
+
+(read-write/print-time-literals-clj!)
 
 (defmethod aero/reader 'ig/ref
   [_ _ value]
@@ -60,9 +62,7 @@
     (make-dev-app opts)))
 
 (defmethod ig/init-key :web/app-state [_ _]
-  (reset! app-state/app-state
-          {:lobbies {}
-           :users {}})
+  (executor/dispatch-sync [:db/initialize])
   (reset! angel-arena/arena-queue []))
 
 (defmethod ig/init-key :web/server [_ {:keys [app port]}]
@@ -78,7 +78,7 @@
 
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
+    [(tick #(executor/dispatch-sync [:lobby/clean-up {:system/db db :time-inactive time-inactive}]) interval)
      (tick #(angel-arena/check-for-inactivity db) interval)]))
 
 (defmethod ig/halt-key! :web/lobby [_ futures]

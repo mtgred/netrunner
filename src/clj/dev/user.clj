@@ -1,10 +1,13 @@
 (ns dev.user
   (:require
+   [io.aviso.exception :as exception]
    [integrant.repl :as ig-repl]
-   [time-literals.read-write :as read-write]
+   [malli.dev :as mdev]
+   [malli.clj-kondo :as mc]
    [web.system :as system]))
 
-(read-write/print-time-literals-clj!)
+(mdev/start!)
+(mc/emit!)
 
 (ig-repl/set-prep! (fn [] (system/server-config)))
 
@@ -16,3 +19,12 @@
   (go)
   (halt)
   (restart))
+
+;; Show clojure java calls in stack traces during development
+(alter-var-root
+  #'exception/*default-frame-rules*
+  (constantly
+    [[:package #"sun\.reflect.*" :hide]
+     [:package "java.lang.reflect" :omit]
+     [:name #"speclj\..*" :terminate]
+     [:name #"clojure\.main/repl/read-eval-print.*" :terminate]]))

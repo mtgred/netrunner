@@ -23,7 +23,7 @@
                  :init-ns dev.user
                  :init (do (use 'web.core) (go))}
 
-  :dependencies [[org.clojure/clojure "1.10.3"]
+  :dependencies [[org.clojure/clojure "1.11.0-alpha3"]
                  [org.clojure/clojurescript "1.10.891"
                   :exclusions [org.clojure/google-closure-library
                                org.clojure/data.json
@@ -32,7 +32,10 @@
                                com.cognitect/transit-java]]
                  [com.google.javascript/closure-compiler-unshaded "v20211006"]
                  [org.clojure/core.async "1.5.644"]
-                 [com.taoensso/sente "1.16.2" :exclusions [org.clojure/tools.reader]]
+                 [io.aviso/pretty "1.1.1"]
+                 [com.taoensso/sente "1.16.2"
+                  :exclusions [org.clojure/tools.reader
+                               io.aviso/pretty]]
                  [com.taoensso/tempura "1.2.1"]
                  [ring/ring-core "1.9.4"]
                  [ring/ring-devel "1.9.4" :exclusions [org.clojure/java.classpath]]
@@ -67,12 +70,12 @@
                  [cond-plus "1.1.1"]
                  [org.clojure/data.csv "1.0.0"]
                  [medley "1.3.0"]
-                 [org.slf4j/slf4j-nop "1.7.32"]
+                 [com.fzakaria/slf4j-timbre "0.3.21"]
                  [integrant "0.8.0"]
                  [cljc.java-time "0.1.18"]
                  [time-literals "0.1.5"]
                  [metosin/reitit "0.5.15"]
-                 [metosin/malli "0.7.0"]]
+                 [metosin/malli "0.7.5"]]
 
   :plugins [[lein-eftest "0.5.9"]
             [cider/cider-nrepl "0.27.3"]]
@@ -90,6 +93,7 @@
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
                               "-XX:+UnlockDiagnosticVMOptions"
                               "-XX:-OmitStackTraceInFastThrow"
+                              "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"
                               "-XX:+DebugNonSafepoints"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]

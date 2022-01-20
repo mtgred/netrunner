@@ -481,7 +481,7 @@
     {gameid :gameid :as ?data} :?data
     ?reply-fn :?reply-fn}]
   (when-let [lobby (app-state/get-lobby gameid)]
-    (join-lobby! user uid ?data ?reply-fn lobby)))
+    #_(join-lobby! user uid ?data ?reply-fn lobby)))
 
 (defn swap-side
   "Returns a new player map with the player's :side switched"
