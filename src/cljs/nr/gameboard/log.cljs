@@ -189,7 +189,6 @@
 
        :component-did-update
        (fn [this]
-         (println "log did update")
          (let [n (rdom/dom-node this)]
            (when (or (:send-msg @should-scroll)
                      (scrolled-to-end? n 15))
@@ -198,7 +197,6 @@
 
        :reagent-render
        (fn []
-         (println "render")
          (into [:div.messages {:class [(when (:replay @game-state)
                                          "panel-bottom")]
                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)

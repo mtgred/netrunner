@@ -245,9 +245,11 @@
   [{{user :user} :ring-req
     uid :uid
     {gameid :gameid} :?data}]
-  (let [new-app-state (swap! app-state/app-state update :lobbies #(-> %
-                                                                      (lobby/handle-toggle-spectator-mute gameid uid)
-                                                                      (lobby/handle-set-last-update gameid uid)))
+  (let [new-app-state (swap! app-state/app-state
+                             update :lobbies
+                             #(-> %
+                                  (lobby/handle-toggle-spectator-mute gameid uid)
+                                  (lobby/handle-set-last-update gameid uid)))
         {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
         message (if mute-spectators "unmuted" "muted")]
     (when (and lobby? state (lobby/player? uid lobby?))

@@ -78,7 +78,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid timer spectatorhands api-access save-replay room] :as game}]
+  [{:keys [players gameid timer spectatorhands api-access save-replay room] :as lobby}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp))
@@ -97,7 +97,7 @@
                                          :title "The Professor: Keeper of Knowledge"}))
         corp-quote (quotes/make-quote corp-identity runner-identity)
         runner-quote (quotes/make-quote runner-identity corp-identity)
-        fmt (:format game)]
+        fmt (:format lobby)]
     (atom
       (new-state
         gameid
@@ -126,11 +126,11 @@
 
 (defn init-game
   "Initializes a new game with the given players vector."
-  [game]
-  (let [state (init-game-state game)
+  [lobby]
+  (let [state (init-game-state lobby)
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
-    (when-let [messages (seq (:messages game))]
+    (when-let [messages (seq (:messages lobby))]
       (swap! state assoc :log (into [] messages))
       (system-say state nil "[hr]"))
     (card-init state :corp corp-identity)

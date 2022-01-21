@@ -90,7 +90,7 @@
   :fx
   (fn handle-fx [seq-of-effects]
     (if-not (validate-fx seq-of-effects)
-      (console :warn "executor: \":fx\"" (subs (print-str seq-of-effects) 0 20) "contains error" (me/humanize (explain-fx seq-of-effects)) ". Ignoring.")
+      (console :warn "executor: \":fx\"" seq-of-effects "contains error" (me/humanize (explain-fx seq-of-effects)) ". Ignoring.")
       (doseq [[effect-key effect-value] (remove nil? seq-of-effects)]
         (if (= :db effect-key)
           (console :warn "executor: \":fx\" effect should not contain a :db effect. Ignoring.")

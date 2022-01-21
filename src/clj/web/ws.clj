@@ -64,7 +64,7 @@
     (?reply-fn {:msg "Unhandled event"})))
 
 (def executor-namespaces
-  #{"chsk" "lobby"})
+  #{"chsk" "lobby" "game"})
 
 (def executor-events
   #{

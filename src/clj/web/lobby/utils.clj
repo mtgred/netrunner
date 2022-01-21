@@ -20,6 +20,14 @@
       (some #(= uid (:uid %)) (:players lobby)))
     (vals lobbies)))
 
+(defn uid-original-player->lobby
+  "Returns the lobby if uid is an original player"
+  [lobbies uid]
+  (find-first
+    (fn [lobby]
+      (some #(= uid (:uid %)) (:original-players lobby)))
+    (vals lobbies)))
+
 (defn player?
   "Returns player if the uid is a player in a given lobby"
   [uid lobby]
