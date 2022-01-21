@@ -1389,10 +1389,7 @@
                             (check-win-by-agenda))}})
 
 (defcard "Rebranding Team"
-  {:flags {:has-events-when-stolen true}
-   :move-zone (req (when (and (in-scored? card)
-                              (= :corp (:scored-side card)))
-                     (system-msg state side "uses Rebranding Team to make all assets gain Advertisement")))
+  {:on-score {:msg "make all assets gain Advertisement"}
    :constant-effects [{:type :gain-subtype
                        :req (req (asset? target))
                        :value "Advertisement"}]})

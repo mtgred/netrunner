@@ -3083,6 +3083,16 @@
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
 
+(deftest rebranding-team-not-active-if-stolen
+  ;; Rebranding Team - not active while in the Runner's score area
+  (do-game
+    (new-game {:corp {:deck ["Rebranding Team" "Museum of History"]}})
+    (play-from-hand state :corp "Rebranding Team" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Remote 1")
+    (click-prompt state :runner "Steal")
+    (is (not (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))))
+
 (deftest reeducation-simple-test
     ;; Simple test
     (do-game
