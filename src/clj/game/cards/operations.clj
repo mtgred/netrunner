@@ -518,7 +518,7 @@
                                                     :effect (effect (corp-install eid card-to-install target nil))})
                                                  target nil)
                                                (end-effect state side eid card targets)))
-                        :cancel-effect (effect (system-msg "does not use Digital Rights Management to install a card")
+                        :cancel-effect (effect (system-msg "declines to use Digital Rights Management to install a card")
                                                (end-effect eid card targets))}
                        card nil))))}})
 
@@ -1039,7 +1039,7 @@
     :effect (req (wait-for (draw state side 3)
                            (continue-ability
                              state side
-                             {:prompt "Choose a card in HQ to put on top of R&D"
+                             {:prompt "Choose a card in HQ to add to the top of R&D"
                               :choices {:card #(and (corp? %)
                                                     (in-hand? %))}
                               :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
@@ -1731,7 +1731,7 @@
                    {:prompt (str "Choose a Sysop (" (inc (- total left)) "/" total ")")
                     :choices (req (cancellable (filter #(and (has-subtype? % "Sysop")
                                                              (not-any? #{(:title %)} selected)) (:deck corp)) :sorted))
-                    :msg (msg "put " (:title target) " into HQ")
+                    :msg (msg "add " (:title target) " to HQ")
                     :async true
                     :effect (req (move state side target :hand)
                                  (continue-ability

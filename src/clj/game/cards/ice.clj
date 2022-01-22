@@ -764,7 +764,7 @@
                                                        {:ignore-install-cost true
                                                         :index (:index card)})
                                          (effect-completed state side eid)))
-                  :cancel-effect (req (system-msg state :corp "chooses not to install a card with Brân 1.0")
+                  :cancel-effect (req (system-msg state :corp "declines to install a card with Brân 1.0")
                                       (effect-completed state side eid))}
                  end-the-run
                  end-the-run]
@@ -2817,7 +2817,7 @@
                               :prompt "Choose a card in HQ to trash"
                               :choices (req (cancellable (:hand corp) :sorted))
                               :async true
-                              :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
+                              :cancel-effect (effect (system-msg "declines to trash a card from HQ with Sadaka")
                                                      (effect-completed eid))
                               :effect (req (wait-for
                                              (trash state :corp target {:cause :subroutine})

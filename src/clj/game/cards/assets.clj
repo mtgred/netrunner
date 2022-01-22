@@ -1117,11 +1117,11 @@
             :effect (effect (draw eid 3))
             :msg (msg "draw 3 cards")}
    :abilities [{:label "Search R&D for an operation"
-                :prompt "Choose an operation to put on top of R&D"
+                :prompt "Choose an operation to add to the top of R&D"
                 :cost [:click 1 :tag 1]
                 :msg (msg (if (= target "No action")
                             "search R&D, but does not find an operation"
-                            (str "put " (:title target) " on top of R&D")))
+                            (str "add " (:title target) " to the top of R&D")))
                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
                 :async true
                 :effect (req (if (= target "No action")
@@ -1491,7 +1491,7 @@
                               (draw state side 1)
                               (continue-ability
                                 state side
-                                {:prompt "Choose a card in HQ to put on top of R&D"
+                                {:prompt "Choose a card in HQ to add to the top of R&D"
                                  :async true
                                  :choices {:card #(and (in-hand? %)
                                                        (corp? %))}

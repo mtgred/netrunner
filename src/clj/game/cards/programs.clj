@@ -551,7 +551,7 @@
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :player :runner ; Needed for when the run is ended by the Corp
-                              :prompt "Choose a non-virus program to put on top of your stack."
+                              :prompt "Choose a non-virus program to add to the top of your stack."
                               :choices {:card #(and (installed? %)
                                                     (program? %)
                                                     (not (facedown? %))

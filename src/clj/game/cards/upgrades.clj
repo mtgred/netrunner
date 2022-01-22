@@ -123,7 +123,7 @@
                                             :req (req (get-card state ice))
                                             :effect (effect (trash eid (get-card state ice) nil))}])
                                         (force-ice-encounter state side eid ice))))}
-              :no-ability {:effect (effect (system-msg :corp (str "declines to rez a hosted piece of ice")))}}}]})
+              :no-ability {:effect (effect (system-msg :corp (str "declines to rez a hosted piece of ice with Awakening Center")))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -547,7 +547,7 @@
       :msg (msg "force the Runner to encounter " (card-str state target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
                              (force-ice-encounter state side eid target)))}
-     :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter a piece of ice")))}}}})
+     :no-ability {:effect (effect (system-msg :corp (str "declines to use Ganked!")))}}}})
 
 (defcard "Georgia Emelyov"
   {:events [{:event :unsuccessful-run
