@@ -417,11 +417,11 @@
              :msg "gain 1 [Credits]"}]})
 
 (defcard "Aumakua"
-  (auto-icebreaker {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
+  (auto-icebreaker {:implementation "Place counters manually for access outside of a run or cards that replace access like Ash"
                     ; We would need a :once :per-access key to make this work for Gang Sign etc.
                     :abilities [(break-sub 1 1)
-                                {:label "Add a virus counter"
-                                 :effect (effect (system-msg "manually adds a virus counter to Aumakua")
+                                {:label "Place a virus counter"
+                                 :effect (effect (system-msg "manually places a virus counter on Aumakua")
                                                  (add-counter card :virus 1))}]
                     :strength-bonus (req (get-virus-counters state card))
                     :events [{:event :run-ends
@@ -461,8 +461,8 @@
   {:implementation "Bankroll gains credits automatically."
    :events [{:event :successful-run
              :req (req (not (= "Jak Sinclair" (get-in run [:source-card :title])))) ;; TODO: dirty hack
-             :effect (effect (add-counter card :credit 1)
-                             (system-msg "places 1 [Credit] on Bankroll"))}]
+             :msg "place 1 [Credit] on itself"
+             :effect (effect (add-counter card :credit 1))}]
    :abilities [{:label "Take all credits from Bankroll"
                 :async true
                 ;; Cannot trash unless there are counters (so game state changes)
@@ -703,9 +703,9 @@
               :waiting-prompt "Runner to choose an option"
               :autoresolve (get-autoresolve :auto-conduit)
               :prompt "Use Conduit?"
-              :yes-ability {:msg "add 1 virus counter to Conduit"
+              :yes-ability {:msg "place 1 virus counter on itself"
                             :effect (effect (add-counter card :virus 1))}
-              :no-ability {:effect (effect (system-msg "does not add counter to Conduit"))}}}
+              :no-ability {:effect (effect (system-msg "declines to place a virus counter on Conduit"))}}}
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
@@ -1571,7 +1571,7 @@
 (defcard "Leech"
   {:events [{:event :successful-run
              :req (req (is-central? (target-server context)))
-             :msg "add 1 virus counter to Leech"
+             :msg "place 1 virus counter on itself"
              :effect (req (add-counter state side card :virus 1))}]
    :autoresolve (get-autoresolve :auto-fire)
    :abilities [{:cost [:virus 1]
@@ -1647,7 +1647,7 @@
                                  :req (req (:runner-phase-12 @state))
                                  :async true
                                  :effect (effect (add-counter card :power (cost-value eid :x-credits)))
-                                 :msg (msg "place " (cost-value eid :x-credits) " power counters on it")}
+                                 :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on it")}
                                 (break-sub [:power 1] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
@@ -2434,7 +2434,7 @@
                         :prompt "Place 1 power counter on Takobi?"
                         :autoresolve (get-autoresolve :auto-takobi)
                         :yes-ability
-                        {:msg "add 1 power counter to Takobi"
+                        {:msg "place 1 power counter on itself"
                          :effect (effect (add-counter card :power 1))}}}]
    :abilities [{:req (req (get-current-encounter state))
                 :cost [:power 2]
@@ -2530,13 +2530,13 @@
                            (can-host? %))}
      :on-install {:async true
                   :effect trash-if-5}
-     :abilities [(set-autoresolve :auto-accept "add virus counter to Trypano")]
+     :abilities [(set-autoresolve :auto-accept "place virus counter on Trypano")]
      :events [{:event :runner-turn-begins
                :optional
                {:prompt "Place a virus counter on Trypano?"
                 :autoresolve (get-autoresolve :auto-accept)
-                :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
-                                           (add-counter state side card :virus 1))}}}
+                :yes-ability {:msg "place a virus counter on itself"
+                              :effect (req (add-counter state side card :virus 1))}}}
               {:event :counter-added
                :async true
                :effect trash-if-5}

@@ -1449,7 +1449,7 @@
       (is (= "Corroder" (:title (nth (:deck (get-runner)) 1))))
       (take-credits state :corp)
       (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
-      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards")))
+      (is (last-log-contains? state "uses District 99 to place 1 power counter on itself") "D99 checks both cards")))
 
 (deftest district-99-happy-path
     ;; Happy Path

@@ -1241,7 +1241,7 @@
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
 
 (deftest embolus
-  ;; Embolus - 1 power token to end the run, tokens are lost on successful runs
+  ;; Embolus - 1 power counter to end the run, counters are lost on successful runs
   (do-game
     (new-game {:corp {:deck ["Embolus"]}})
     (play-from-hand state :corp "Embolus" "New remote")

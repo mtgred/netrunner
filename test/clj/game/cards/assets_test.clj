@@ -1628,12 +1628,12 @@
       (let [em (get-content state :remote1 0)]
         (rez state :corp (refresh em))
         (play-from-hand state :corp "Encryption Protocol" "New remote")
-        (is (= 1 (get-counters (refresh em) :power)) "Moon has one power token")
+        (is (= 1 (get-counters (refresh em) :power)) "Moon has one power counter")
         (play-from-hand state :corp "Divert Power")
         (click-card state :corp (refresh em)) ;derez moon
         (click-card state :corp (refresh em)) ;rez again
         (play-from-hand state :corp "Encryption Protocol" "New remote")
-        (is (= 2 (get-counters (refresh em) :power)) "Moon has two power tokens"))))
+        (is (= 2 (get-counters (refresh em) :power)) "Moon has two power counters"))))
 
 (deftest eve-campaign
   ;; Eve Campaign
@@ -3586,12 +3586,12 @@
         (let [corp-credits (:credit (get-corp))]
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
           (card-ability state :corp (refresh pc) 0)
-          (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power token")
+          (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power counter")
           (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
           (play-from-hand state :corp "Neural EMP")
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
           (card-ability state :corp pc 0)
-          (is (= 2 (get-counters (refresh pc) :power)) "Added another power token")
+          (is (= 2 (get-counters (refresh pc) :power)) "Added another power counter")
           (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
         (take-credits state :runner)
@@ -3614,7 +3614,7 @@
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
           (click-prompt state :corp "Done")
           (is (= 4 (count (:hand (get-runner)))) "1 net damage dealt")
-          (is (= 0 (get-counters (refresh pc) :power)) "No power token added")
+          (is (= 0 (get-counters (refresh pc) :power)) "No power counter added")
           (is (= corp-credits (:credit (get-corp))) "No credits gained")))))
 
 (deftest prana-condenser-runner-preventing-damage-on-their-turn

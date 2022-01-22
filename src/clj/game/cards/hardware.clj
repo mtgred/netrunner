@@ -1601,7 +1601,7 @@
 
 (defcard "Respirocytes"
   (let [ability {:once :per-turn
-                 :msg "draw 1 card and add a power counter"
+                 :msg "draw 1 card and place a power counter"
                  :async true
                  :effect (req (wait-for (draw state :runner 1)
                                         (add-counter state side (get-card state card) :power 1)

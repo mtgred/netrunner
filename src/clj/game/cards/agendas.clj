@@ -724,7 +724,7 @@
 
 (defcard "Genetic Resequencing"
   {:on-score {:choices {:card in-scored?}
-              :msg (msg "add 1 agenda counter on " (:title target))
+              :msg (msg "place 1 agenda counter on " (:title target))
               :effect (effect (add-counter target :agenda 1)
                               (update-all-agenda-points))
               :silent (req true)}})
@@ -830,7 +830,7 @@
                    (continue-ability
                      state side
                      {:choices {:card #(pos? (get-counters % :power))}
-                      :msg (msg "add " c " power counters on " (:title target))
+                      :msg (msg "place " (quantify c "power counter") " on " (:title target))
                       :effect (effect (add-counter target :power c))}
                      card nil)))}})
 

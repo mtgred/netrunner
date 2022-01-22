@@ -1627,7 +1627,7 @@
 
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored
-             :msg (msg "add 1 agenda counter to " (:title (:card context)))
+             :msg (msg "place 1 agenda counter on " (:title (:card context)))
              :effect (effect (add-counter (get-card state (:card context)) :agenda 1))}]})
 
 (defcard "Valencia Estevez: The Angel of Cayambe"

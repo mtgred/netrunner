@@ -188,8 +188,8 @@
 (defcard "Anson Rose"
   (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
                  :once :per-turn
-                 :effect (effect (system-msg (str "places 1 advancement counter on Anson Rose"))
-                                 (add-prop card :advance-counter 1 {:placed true}))}]
+                 :msg "place 1 advancement counter on Anson Rose"
+                 :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)
@@ -209,8 +209,9 @@
                                    :choices {:number (req (get-counters card :advancement))}
                                    :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
                                                    (add-prop :corp card :advance-counter (- target) {:placed true})
-                                                   (system-msg (str "uses Anson Rose to move " target
-                                                                    " advancement tokens to " (card-str state ice))))}}}
+                                                   (system-msg (str "uses Anson Rose to move "
+                                                                    (quantify target "advancement token")
+                                                                    " to " (card-str state ice))))}}}
                                 card nil)))}]
      :abilities [ability]}))
 
@@ -310,9 +311,9 @@
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :corp-turn-begins
+             :msg "place 2 [Credits] on C.I. Fund"
              :req (req (>= (get-counters card :credit) 6))
-             :effect (effect (add-counter card :credit 2)
-                             (system-msg (str "adds 2 [Credits] to C.I. Fund")))}]})
+             :effect (effect (add-counter card :credit 2))}]})
 
 (defcard "Calvin B4L3Y"
   {:abilities [{:cost [:click 1]
@@ -351,7 +352,7 @@
   {:events [{:event :end-of-encounter
              :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))
              :msg (req (let [unbroken-count (count (remove :broken (:subroutines (:ice context))))]
-                        (str "add " (quantify unbroken-count "power counter") " to Chief Slee")))
+                        (str "place " (quantify unbroken-count "power counter") " on Chief Slee")))
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:cost [:click 1 :power 5]
                 :keep-open :while-5-power-tokens-left
@@ -621,7 +622,7 @@
 (defcard "Docklands Crackdown"
   {:abilities [{:cost [:click 2]
                 :keep-open :while-2-clicks-left
-                :msg "add 1 power counter"
+                :msg "place 1 power counter"
                 :effect (effect (add-counter card :power 1))}]
    :constant-effects [{:type :install-cost
                        :req (req (and (pos? (get-counters card :power))
@@ -714,8 +715,8 @@
                                 (agenda? (:card context))
                                 (upgrade? (:card context)))
                             (is-remote? (second (get-zone (:card context))))))
-             :effect (effect (add-counter card :power 1)
-                             (system-msg "places 1 power counter on Estelle Moon"))}]
+             :msg "place 1 power counter on itself"
+             :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
                 :cost [:trash]
                 :async true
@@ -963,7 +964,7 @@
 (defcard "IT Department"
   {:abilities [{:cost [:click 1]
                 :keep-open :while-clicks-left
-                :msg "add 1 counter"
+                :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}
                {:cost [:power 1]
                 :keep-open :while-power-tokens-left
@@ -1143,8 +1144,8 @@
                 :async true
                 :effect (effect (gain-credits eid target))}]
    :events [{:event :corp-turn-begins
-             :effect (effect (add-counter card :credit 2)
-                             (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}]})
+             :msg "place 2 [Credit] on itself"
+             :effect (effect (add-counter card :credit 2))}]})
 
 (defcard "Lt. Todachine"
   {:events [{:event :rez
@@ -1362,18 +1363,18 @@
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
-    {:implementation "Manual - click NASX to add power counters"
+    {:implementation "Manual - click NASX to place power counters on it"
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability
                  {:label "Place 1 power counter"
                   :cost [:credit 1]
-                  :effect (effect (add-counter card :power 1)
-                                  (system-msg (str "places 1 power counter on NASX")))}
+                  :msg "place 1 power counter on itself"
+                  :effect (effect (add-counter card :power 1))}
                  {:label "Place 2 power counters"
                   :cost [:credit 2]
-                  :effect (effect (add-counter card :power 2)
-                                  (system-msg (str "places 2 power counters on NASX")))}
+                  :msg "place 2 power counters on itself"
+                  :effect (effect (add-counter card :power 2))}
                  {:label "[Trash] and gain 2 [Credits] for each power counter"
                   :cost [:click 1 :trash]
                   :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
@@ -1593,8 +1594,8 @@
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}
                              :req (req (= :corp (:side target)))}]}
-   :abilities [{:label "Prevent 1 net damage to add power token to Prāna Condenser"
-                :msg "prevent 1 net damage, place 1 power token, and gain 3 [Credits]"
+   :abilities [{:label "Prevent 1 net damage to place power counter on Prāna Condenser"
+                :msg "prevent 1 net damage, place 1 power counter, and gain 3 [Credits]"
                 :async true
                 :req (req true)
                 :effect (req (add-counter state side card :power 1)
@@ -1766,8 +1767,8 @@
   {:events [{:event :damage
              :req (req (and (pos? (:amount context))
                             (= :meat (:damage-type context))))
-             :effect (effect (add-counter card :advancement 1)
-                             (system-msg "adds 1 advancement token to Reconstruction Contract"))}]
+             :msg "place 1 advancement token on itself"
+             :effect (effect (add-counter card :advancement 1))}]
    :abilities [{:label "Move advancement tokens to another card"
                 :async true
                 :trash-icon true
@@ -1777,13 +1778,13 @@
                           (continue-ability
                             (let [move-to target]
                               {:async true
-                               :prompt "Move how many tokens?"
+                               :prompt "Move how many advancement tokens?"
                                :choices {:number (req (get-counters card :advancement))
                                          :default (req (get-counters card :advancement))}
                                :cost [:trash]
                                :effect (effect (add-counter move-to :advancement target {:placed true})
                                                (system-msg (str "trashes Reconstruction Contract to move "
-                                                                target (pluralize " advancement token" target)
+                                                                (quantify target "advancement token")
                                                                 " to " (card-str state move-to)))
                                                (effect-completed eid))})
                             card nil))}]})
@@ -2077,8 +2078,8 @@
                               state side :corp-trash
                               (fn [targets]
                                 (some #(= (:faction (:identity runner)) (:faction (:card %))) targets)))))
-             :effect (effect (system-msg :corp "adds 1 power counter on Storgotic Resonator")
-                             (add-counter card :power 1))}]})
+             :msg "place 1 power counter on itself"
+             :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Student Loans"
   {:constant-effects [{:type :play-additional-cost

@@ -81,8 +81,8 @@
 ;; Card definitions
 
 (defcard "Aaron Marrón"
-  (let [am {:effect (effect (add-counter card :power 2)
-                            (system-msg :runner "places 2 power counters on Aaron Marrón"))}]
+  (let [am {:msg "place 2 power counters on itself"
+            :effect (effect (add-counter card :power 2))}]
     {:abilities [{:cost [:power 1]
                   :keep-open :while-power-tokens-left
                   :msg "remove 1 tag and draw 1 card"
@@ -172,8 +172,8 @@
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :runner-turn-begins
              :req (req (>= (get-counters card :credit) 6))
-             :effect (effect (add-counter card :credit 2)
-                             (system-msg (str "adds 2 [Credit] to Algo Trading")))}]})
+             :msg "add 2 [Credit] to itself"
+             :effect (effect (add-counter card :credit 2))}]})
 
 (defcard "All-nighter"
   {:abilities [{:cost [:click 1 :trash]
@@ -189,7 +189,7 @@
 (defcard "Angel Arena"
   {:on-install {:prompt "How many power counters?"
                 :choices :credit
-                :msg (msg "add " target " power counters")
+                :msg (msg "place " (quantify target "power counter"))
                 :effect (effect (add-counter card :power target))}
    :events [(trash-on-empty :power)]
    :abilities [{:cost [:power 1]
@@ -407,7 +407,7 @@
 (defcard "Bug Out Bag"
   {:on-install {:prompt "How many power counters?"
                 :choices :credit
-                :msg (msg "add " target " power counters")
+                :msg (msg "place " (quantify target "power counter"))
                 :effect (effect (add-counter card :power target))}
    :events [{:event :runner-turn-ends
              :req (req (zero? (count (:hand runner))))
@@ -517,8 +517,8 @@
 (defcard "Clan Vengeance"
   {:events [{:event :damage
              :req (req (pos? (:amount context)))
-             :effect (effect (add-counter card :power 1)
-                             (system-msg :runner "places 1 power counter on Clan Vengeance"))}]
+             :msg "place 1 power counter on itself"
+             :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Trash 1 random card from HQ for each power counter"
                 :async true
                 :req (req (pos? (get-counters card :power)))
@@ -722,8 +722,8 @@
              :optional {:prompt "Place a virus counter on Crypt?"
                         :req (req (= :archives (target-server context)))
                         :autoresolve (get-autoresolve :auto-add)
-                        :yes-ability {:effect (effect (add-counter card :virus 1)
-                                                      (system-msg "places a virus counter on Crypt"))}}}]
+                        :yes-ability {:msg "place a virus counter on itself"
+                                      :effect (effect (add-counter card :virus 1))}}}]
    :abilities [{:async true
                 :label "Install a virus program from the stack"
                 :prompt "Choose a virus"
@@ -735,7 +735,7 @@
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
-               (set-autoresolve :auto-add "adding virus counters to Crypt")]})
+               (set-autoresolve :auto-add "placing virus counters on Crypt")]})
 
 (defcard "Cybertrooper Talut"
   {:constant-effects [(link+ 1)]
@@ -850,7 +850,7 @@
   (letfn [(eligible-cards [runner]
             (filter #(same-card? :faction (:identity runner) %)
                     (:discard runner)))]
-    {:implementation "Adding power counters must be done manually for programs/pieces of hardware trashed manually (e.g. by being over MU)"
+    {:implementation "Place counters manually for programs or pieces of hardware trashed manually (e.g. by being over MU)"
      :abilities [{:label "Add a card from your heap to your grip"
                   :req (req (and (seq (eligible-cards runner))
                                  (not (zone-locked? state :runner :discard))))
@@ -859,10 +859,10 @@
                   :choices (req (eligible-cards runner))
                   :effect (effect (move target :hand))
                   :msg (msg "add " (:title target) " to grip")}
-                 {:label "Add a power counter manually"
+                 {:label "Place a power counter"
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
-                  :msg "manually add a power counter"}]
+                  :msg "manually place a power counter on District 99"}]
      :events (let [prog-or-hw (fn [targets]
                                 (some #(or (program? (:card %))
                                            (hardware? (:card %)))
@@ -873,8 +873,8 @@
                                   :once-per-instance true
                                   :req (req (and (prog-or-hw targets)
                                                  (first-event? state side side-trash prog-or-hw)))
-                                  :effect (effect (system-msg :runner "adds 1 power counter on District 99")
-                                                  (add-counter card :power 1))})]
+                                  :msg "place 1 power counter on itself"
+                                  :effect (effect (add-counter card :power 1))})]
                [(trash-event :corp-trash)
                 (trash-event :runner-trash)])}))
 
@@ -1441,7 +1441,7 @@
      :abilities [ability]}))
 
 (defcard "Kasi String"
-  {:implementation "Adds counters automatically"
+  {:implementation "Places counters automatically"
    :events [{:event :run-ends
              :req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
                             (not (:did-steal target))
@@ -1449,7 +1449,7 @@
                             (is-remote? (:server target))))
              :msg (msg (if (<= 3 (get-counters card :power))
                          "add it to their score area as an agenda worth 1 agenda point"
-                         "add a power counter to itself"))
+                         "place a power counter on itself"))
              :async true
              :effect (req (if (<= 3 (get-counters card :power))
                             (do (as-agenda state :runner card 1)
@@ -2072,8 +2072,8 @@
                                                 (if-let [payment-str (:msg async-result)]
                                                   (do (system-msg state side
                                                                   (str (build-spend-msg payment-str "use") (:title card)
-                                                                       " to remove " target
-                                                                       " counters from " (:title paydowntarget)))
+                                                                       " to remove " (quantify target "counter")
+                                                                       " from " (:title paydowntarget)))
                                                       (if (= num-counters target)
                                                         (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true})
                                                         (do (add-counter state side paydowntarget :power (- target))
@@ -2573,8 +2573,8 @@
              :req (req (and (or (hardware? (:card context))
                                 (program? (:card context)))
                             (not (:facedown? context))))
-             :effect (effect (system-msg "places 1 [Credits] on Technical Writer")
-                             (add-counter :runner card :credit 1))}]
+             :msg "place 1 [Credits] on itself"
+             :effect (effect (add-counter :runner card :credit 1))}]
    :abilities [{:cost [:click 1 :trash]
                 :label "gain credits"
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
@@ -2661,17 +2661,17 @@
                 :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]})
 
 (defcard "The Back"
-  {:implementation "Adding power tokens is manual"
+  {:implementation "Placing power counters is manual"
    ; :events [{:event :spent-credits-from-card
                ; :req (req (and (:run @state)
                                 ; (hardware? target)
                                 ; (not (used-this-turn? (:cid card) state))))
                ; :once :per-turn
                ; :async true
-               ; :effect (effect (system-msg (str "places 1 power token on " (:title card)))
+               ; :effect (effect (system-msg (str "places 1 power counter on " (:title card)))
                                  ; (add-counter card :power 1))}]
-   :abilities [{:label "Manually place 1 power token"
-                :effect (effect (system-msg (str "manually places 1 power token on " (:title card)))
+   :abilities [{:label "Manually place 1 power counter"
+                :effect (effect (system-msg (str "manually places 1 power counter on " (:title card)))
                                 (add-counter card :power 1))}
                {:label "Shuffle back cards with [Trash] abilities"
                 :req (req (and (pos? (get-counters card :power))
@@ -2799,7 +2799,7 @@
     {:events [maybe-spend-2
               {:event :runner-install
                :once :per-turn
-               :msg "add 2 virus tokens to The Nihilist"
+               :msg "place 2 virus tokens on itself"
                :req (req (has-subtype? (:card context) "Virus"))
                :effect (effect (add-counter card :virus 2))}]}))
 

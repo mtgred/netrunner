@@ -140,8 +140,8 @@
 
 (def add-power-counter
   "Adds 1 power counter to the card."
-  {:label "Add 1 power counter"
-   :msg "add 1 power counter"
+  {:label "Place 1 power counter"
+   :msg "place 1 power counter"
    :effect (effect (add-counter card :power 1))})
 
 (defn trace-ability
@@ -1127,7 +1127,7 @@
 (defcard "Dracō"
   {:on-rez {:prompt "How many power counters?"
             :choices :credit
-            :msg (msg "add " target " power counters")
+            :msg (msg "place " (quantify target "power counter"))
             :effect (effect (add-counter card :power target)
                             (update-ice-strength card))}
    :strength-bonus (req (get-counters card :power))
@@ -1630,7 +1630,7 @@
                                                (system-msg state :corp (:msg async-result))
                                                (continue-ability
                                                  state side
-                                                 {:msg (msg "pay " c " [Credits] and place " (quantify c " advancement token")
+                                                 {:msg (msg "pay " c " [Credits] and place " (quantify c "advancement token")
                                                             " on " (card-str state target))
                                                   :choices {:card can-be-advanced?}
                                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
@@ -2180,8 +2180,8 @@
 (defcard "Mamba"
   {:abilities [(power-counter-ability (do-net-damage 1))]
    :subroutines [(do-net-damage 1)
-                 (do-psi {:label "Add 1 power counter"
-                          :msg "add 1 power counter"
+                 (do-psi {:label "Place 1 power counter"
+                          :msg "place 1 power counter"
                           :effect (effect (add-counter card :power 1)
                                           (effect-completed eid))})]})
 
@@ -2732,7 +2732,7 @@
   {:subroutines [end-the-run]})
 
 (defcard "Quicksand"
-  {:on-encounter {:msg "add 1 power counter to Quicksand"
+  {:on-encounter {:msg "place 1 power counter on itself"
                   :effect (effect (add-counter card :power 1)
                                   (update-all-ice))}
    :subroutines [end-the-run]
