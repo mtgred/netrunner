@@ -183,9 +183,9 @@
      {:req (req (and (<= 3 (count (:hand corp)))
                      (some can-be-advanced? (all-installed state :corp))))
       :async true
-      :effect (req (system-msg state side "trashes all cards in HQ due to Audacity")
-                (wait-for (trash-cards state side (:hand corp) {:unpreventable true})
-                          (continue-ability state side (audacity 0) card nil)))}}))
+      :msg "trash all cards in HQ"
+      :effect (req (wait-for (trash-cards state side (:hand corp) {:unpreventable true})
+                             (continue-ability state side (audacity 0) card nil)))}}))
 
 (defcard "Back Channels"
   {:on-play

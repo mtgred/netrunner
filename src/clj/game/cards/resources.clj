@@ -2758,8 +2758,8 @@
                               :unregister-once-resolved true
                               :duration :end-of-run
                               :async true
-                              :effect (effect (system-msg :runner "uses The Masque A to draw 1 card")
-                                              (draw :runner eid 1))}])
+                              :msg "draw 1 card"
+                              :effect (effect (draw :runner eid 1))}])
                           (make-run eid target card))}]})
 
 (defcard "The Masque B"
@@ -2782,8 +2782,8 @@
                                     :effect (effect (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
                                                     (mill :corp eid :corp 1))}
                       :no-ability {:async true
-                                   :effect (effect (system-msg :runner "draw 2 cards")
-                                                   (draw :runner eid 2))}}}
+                                   :msg "draw 2 cards"
+                                   :effect (effect (draw :runner eid 2))}}}
         maybe-spend-2 {:event :runner-turn-begins
                        :interactive (req true)
                        :optional

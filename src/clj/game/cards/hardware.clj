@@ -919,8 +919,8 @@
               :prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
               :yes-ability
               {:async true
-               :effect (req (system-msg state :runner "trashes Hijacked Router to force the Corp to lose 3 [Credits]")
-                            (wait-for (trash state :runner card {:unpreventable true})
+               :msg "force the Corp to lose 3 [Credits]"
+               :effect (req (wait-for (trash state :runner card {:unpreventable true})
                                       (lose-credits state :corp eid 3)))}}}]})
 
 (defcard "Hippo"
@@ -1828,8 +1828,8 @@
    :recurring 2
    :events [{:event :successful-trace
              :req (req run)
-             :effect (effect (system-msg (str "suffers 1 brain damage from Spinal Modem"))
-                             (damage eid :brain 1 {:card card}))}]
+             :msg "suffer 1 brain damage"
+             :effect (effect (damage eid :brain 1 {:card card}))}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
@@ -1929,8 +1929,8 @@
 
 (defcard "Titanium Ribs"
   {:on-install {:async true
+                :msg "suffer 2 meat damage"
                 :effect (effect (enable-runner-damage-choice)
-                                (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
                                 (damage eid :meat 2 {:unboostable true :card card}))}
    :leave-play (req (swap! state update :damage dissoc :damage-choose-runner))
    :events [{:event :pre-resolve-damage

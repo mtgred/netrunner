@@ -1691,7 +1691,7 @@
       (play-from-hand state :corp "Hyperloop Extension" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (is (= 7 (:credit (get-corp))) "Corp starts with 5 credits")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
       (click-prompt state :runner "Steal")
       (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")))
 

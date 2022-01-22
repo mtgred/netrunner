@@ -1757,8 +1757,8 @@
                  :label "Gain credits (start of turn)"
                  :once :per-turn
                  :msg (msg (if tagged "gain 2 [Credits]" "gain 1 [Credits]"))}]
-    {:on-rez {:effect (effect (gain-bad-publicity :corp 1)
-                              (system-msg "takes 1 bad publicity"))}
+    {:on-rez {:msg "take 1 bad publicity"
+              :effect (effect (gain-bad-publicity :corp 1))}
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
@@ -2365,10 +2365,8 @@
             (update-all [state func]
               (doseq [i (all-rezzed-bios state)]
                 (func state i)))]
-      {:on-rez {:effect (req (system-msg
-                               state :corp
-                               "uses Warden Fatuma to add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines")
-                          (update-all state (partial add-one (:cid card))))}
+      {:on-rez {:msg "add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines"
+                :effect (req (update-all state (partial add-one (:cid card))))}
        :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
                      (update-all state (partial remove-one (:cid card))))
        :sub-effect {:msg "force the Runner to lose 1 [Click], if able"

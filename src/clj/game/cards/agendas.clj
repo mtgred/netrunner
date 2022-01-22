@@ -364,8 +364,8 @@
       {:prompt "Take 1 bad publicity?"
        :async true
        :yes-ability {:async true
+                     :msg "take 1 bad publicity"
                      :effect (req (wait-for (gain-bad-publicity state :corp 1)
-                                            (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
                                             (add-counters state side card eid)))}
        :no-ability {:async true
                     :effect (effect (add-counters card eid))}}}
@@ -876,9 +876,8 @@
                 :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "Hyperloop Extension"
-  (let [he {:async true
-            :effect (req (system-msg state side (str "uses Hyperloop Extension to gain 3 [Credits]"))
-                         (gain-credits state :corp eid 3))}]
+  (let [he {:msg "gain 3 [Credits]"
+            :effect (effect (gain-credits eid 3))}]
     {:on-score he
      :stolen he}))
 
@@ -1063,8 +1062,8 @@
     {:events [{:event :pre-init-trace
                :once :per-turn
                :silent (req true)
-               :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
-                            (swap! state assoc-in [:trace :force-link] 0))}
+               :msg "reduce Runner's base link to zero"
+               :effect (req (swap! state assoc-in [:trace :force-link] 0))}
               (assoc nq :event :successful-trace)
               (assoc nq :event :unsuccessful-trace)]}))
 
