@@ -3399,6 +3399,30 @@
     (play-and-score state "Self-Destruct Chips")
     (is (= 4 (hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
 
+(deftest self-destruct-chips-logging-when-entering-the-corp-score-area
+  ;; Self-Destruct Chips - logging when entering the Corp's score area
+  (do-game
+    (new-game {:corp {:deck ["Self-Destruct Chips" "Project Vitruvius" "Exchange of Information" "Exchange of Information"]}})
+    (play-from-hand state :corp "Self-Destruct Chips" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Remote 1")
+    (click-prompt state :runner "Steal")
+    (is (= 5 (hand-size :runner)))
+    (take-credits state :runner)
+    (core/gain state :corp :click 3)
+    (play-and-score state "Project Vitruvius")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Self-Destruct Chips" (:scored (get-runner))))
+    (click-card state :corp (find-card "Project Vitruvius" (:scored (get-corp))))
+    (is (last-log-contains? state "decrease the Runner's maximum hand size by 1")
+          "Self-Destruct Chips prints its log")
+    (is (= 4 (hand-size :runner)))
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Project Vitruvius" (:scored (get-runner))))
+    (click-card state :corp (find-card "Self-Destruct Chips" (:scored (get-corp))))
+    (is (= 5 (hand-size :runner)))))
+
 (deftest send-a-message
   ;; Send a Message
   (do-game

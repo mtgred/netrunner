@@ -1518,8 +1518,9 @@
               :effect (effect (trash eid target))}})
 
 (defcard "Self-Destruct Chips"
-  {:on-score {:silent (req true)
-              :msg "decrease the Runner's maximum hand size by 1"}
+  {:move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Self-Destruct Chips to decrease the Runner's maximum hand size by 1")))
    :constant-effects [(runner-hand-size+ -1)]})
 
 (defcard "Send a Message"
