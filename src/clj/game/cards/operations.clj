@@ -636,7 +636,7 @@
       :effect (effect (trash eid target nil))}}}})
 
 (defcard "Enhanced Login Protocol"
-  {:on-play {:msg (str "uses Enhanced Login Protocol to add an additional cost of [Click]"
+  {:on-play {:msg (str "add an additional cost of [Click]"
                        " to make the first run not through a card ability this turn")}
    :constant-effects [{:type :run-additional-cost
                        :req (req (and (no-event? state side :run #(:click-run (:cost-args (first %))))
