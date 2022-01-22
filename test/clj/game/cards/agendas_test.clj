@@ -3083,14 +3083,28 @@
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
 
-(deftest rebranding-team-not-active-if-stolen
+(deftest rebranding-team-not-active-while-in-runner-score-area
   ;; Rebranding Team - not active while in the Runner's score area
   (do-game
-    (new-game {:corp {:deck ["Rebranding Team" "Museum of History"]}})
+    (new-game {:corp {:deck ["Rebranding Team" "Project Beale" "Museum of History" "Exchange of Information" "Exchange of Information"]}})
     (play-from-hand state :corp "Rebranding Team" "New remote")
     (take-credits state :corp)
     (run-empty-server state "Remote 1")
     (click-prompt state :runner "Steal")
+    (is (not (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))
+    (take-credits state :runner)
+    (core/gain state :corp :click 3)
+    (play-and-score state "Project Beale")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Rebranding Team" (:scored (get-runner))))
+    (click-card state :corp (find-card "Project Beale" (:scored (get-corp))))
+    (is (last-log-contains? state "make all assets gain Advertisement")
+          "Rebranding Team prints its log")
+    (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement"))
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Project Beale" (:scored (get-runner))))
+    (click-card state :corp (find-card "Rebranding Team" (:scored (get-corp))))
     (is (not (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))))
 
 (deftest reeducation-simple-test

@@ -1389,7 +1389,9 @@
                             (check-win-by-agenda))}})
 
 (defcard "Rebranding Team"
-  {:on-score {:msg "make all assets gain Advertisement"}
+  {:move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Rebranding Team to make all assets gain Advertisement")))
    :constant-effects [{:type :gain-subtype
                        :req (req (asset? target))
                        :value "Advertisement"}]})
