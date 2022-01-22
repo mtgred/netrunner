@@ -3187,6 +3187,30 @@
       (play-and-score state "Remote Data Farm")
       (is (= 7 (hand-size :corp)))))
 
+(deftest remote-data-farm-logging-when-entering-the-corp-score-area
+  ;; Remote Data Farm - logging when entering the Corp's score area
+  (do-game
+    (new-game {:corp {:deck ["Remote Data Farm" "Project Beale" "Exchange of Information" "Exchange of Information"]}})
+    (play-from-hand state :corp "Remote Data Farm" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Remote 1")
+    (click-prompt state :runner "Steal")
+    (is (= 5 (hand-size :corp)))
+    (take-credits state :runner)
+    (core/gain state :corp :click 3)
+    (play-and-score state "Project Beale")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Remote Data Farm" (:scored (get-runner))))
+    (click-card state :corp (find-card "Project Beale" (:scored (get-corp))))
+    (is (last-log-contains? state "increase their maximum hand size by 2")
+          "Remote Data Farm prints its log")
+    (is (= 7 (hand-size :corp)))
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Project Beale" (:scored (get-runner))))
+    (click-card state :corp (find-card "Remote Data Farm" (:scored (get-corp))))
+    (is (= 5 (hand-size :corp)))))
+
 (deftest remote-data-farm-removed-from-runner-score-area-issue-5109
     ;; removed from runner score area. Issue #5109
     (do-game

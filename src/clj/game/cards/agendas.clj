@@ -1447,8 +1447,9 @@
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Remote Data Farm"
-  {:on-score {:silent (req true)
-              :msg "increase their maximum hand size by 2"}
+  {:move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Remote Data Farm to increase their maximum hand size by 2")))
    :constant-effects [(corp-hand-size+ 2)]})
 
 (defcard "Remote Enforcement"
