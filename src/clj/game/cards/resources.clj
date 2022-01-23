@@ -862,7 +862,7 @@
                  {:label "Place a power counter"
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
-                  :msg "manually place a power counter on District 99"}]
+                  :msg "manually place a power counter on itself"}]
      :events (let [prog-or-hw (fn [targets]
                                 (some #(or (program? (:card %))
                                            (hardware? (:card %)))

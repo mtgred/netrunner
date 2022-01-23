@@ -188,7 +188,7 @@
 (defcard "Anson Rose"
   (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
                  :once :per-turn
-                 :msg "place 1 advancement counter on Anson Rose"
+                 :msg "place 1 advancement counter on itself"
                  :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
