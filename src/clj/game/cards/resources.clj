@@ -748,7 +748,7 @@
 (defcard "Dadiana Chacon"
   (let [trash-effect {:async true
                       :req (req (zero? (get-in @state [:runner :credit])))
-                      :msg (msg "trashes Dadiana Chacon and suffers 3 meat damage")
+                      :msg "trash itself and suffers 3 meat damage"
                       :effect (req (wait-for (trash state :runner card {:unpreventable true})
                                              (damage state :runner eid :meat 3 {:unboostable true :card card})))}]
     {:on-install {:async true
