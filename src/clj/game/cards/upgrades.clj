@@ -178,8 +178,8 @@
                                   :effect (effect (gain-tags :corp eid 1))}
                      :unsuccessful
                      {:async true
-                      :effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
-                                      (trash eid card nil))}}}]})
+                      :msg "trash itself"
+                      :effect (effect (trash eid card nil))}}}]})
 
 (defcard "Bio Vault"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -1067,8 +1067,8 @@
             {:event :successful-run
              :req (req (= :hq (target-server context)))
              :async true
+             :msg "trash itself"
              :effect (req (enable-run-on-server state card (second (get-zone card)))
-                          (system-msg state :corp (str "trashes Off the Grid"))
                           (trash state :corp eid card nil))}]
    :leave-play (req (enable-run-on-server state card (second (get-zone card))))})
 

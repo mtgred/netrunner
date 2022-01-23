@@ -745,7 +745,7 @@
                   :cost [:click 1]
                   :prompt "Choose a server"
                   :choices (req servers)
-                  :msg (msg "move it to the outermost position of " target)
+                  :msg (msg "move itself to the outermost position of " target)
                   :effect (effect (move card (conj (server->zone state target) :ices)))}]
      :subroutines [sub
                    sub]}))
@@ -775,7 +775,7 @@
                           :player :corp
                           :prompt "Choose a server"
                           :choices (req servers)
-                          :msg (msg "move it to the outermost position of " target)
+                          :msg (msg "move itself to the outermost position of " target)
                           :effect (effect (move card (conj (server->zone state target) :ices))
                                           (redirect-run target)
                                           (effect-completed eid))})]})
@@ -846,7 +846,7 @@
 (defcard "Chimera"
   {:on-rez {:prompt "Choose one subtype"
             :choices ["Barrier" "Code Gate" "Sentry"]
-            :msg (msg "make it gain " target)
+            :msg (msg "make itself gain " target)
             :effect (effect (update! (assoc card :subtype-target target)))}
    :constant-effects [{:type :gain-subtype
                        :req (req (and (same-card? card target) (:subtype-target card)))
@@ -1642,7 +1642,7 @@
             :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Himitsu-Bako"
-  {:abilities [{:msg "add it to HQ"
+  {:abilities [{:msg "add itself to HQ"
                 :cost [:credit 1]
                 :effect (effect (move card :hand))}]
    :subroutines [end-the-run]})

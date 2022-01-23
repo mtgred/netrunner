@@ -89,7 +89,7 @@
                                 :effect (effect (clear-wait-prompt :corp)
                                                 (make-run eid serv card)
                                                 (prevent-jack-out))}
-                  :no-ability {:msg "add it to their score area as an agenda worth 1 agenda point"
+                  :no-ability {:msg "add itself to their score area as an agenda worth 1 agenda point"
                                :effect (effect (clear-wait-prompt :corp)
                                                (as-agenda :corp card 1))}}})
               card nil))}})
@@ -928,7 +928,7 @@
                                         (update! state side (assoc card :rfg-instead-of-trashing true))
                                         (effect-completed state side eid)))}
                 :no-ability
-                {:msg "add it to the Runner's score area as an agenda worth -1 agenda point"
+                {:msg "add itself to the Runner's score area as an agenda worth -1 agenda point"
                  :effect (effect (as-agenda :runner card -1))}}}
               card targets))}})
 
@@ -1290,7 +1290,7 @@
              :choices {:card #(and (runner? %)
                                    (has-subtype? % "Connection")
                                    (installed? %))}
-             :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
+             :msg (msg "host itself on " (card-str state target) ". The Runner has an additional tag")
              :effect (effect (install-as-condition-counter eid card target))}
    :constant-effects [{:type :tags
                        :value 1}]
@@ -1958,7 +1958,7 @@
 (defcard "Rover Algorithm"
   {:on-play {:choices {:card #(and (ice? %)
                                    (rezzed? %))}
-             :msg (msg "host it as a condition counter on " (card-str state target))
+             :msg (msg "host itself as a condition counter on " (card-str state target))
              :async true
              :effect (effect (install-as-condition-counter eid card target))}
    :constant-effects [{:type :ice-strength
@@ -1967,7 +1967,7 @@
    :events [{:event :pass-ice
              :condition :hosted
              :req (req (same-card? (:ice context) (:host card)))
-             :msg (msg "place 1 power counter on itself")
+             :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Sacrifice"

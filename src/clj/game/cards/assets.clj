@@ -50,7 +50,7 @@
   {:when-inactive true
    :req (req (and (= side :runner)
                   (:accessed target)))
-   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+   :msg "add itself to the Runner's score area as an agenda worth 2 agenda points"
    :effect (req (as-agenda state :runner card 2))})
 
 ;; Card definitions
@@ -674,7 +674,7 @@
 (defcard "Echo Chamber"
   {:abilities [{:label "Add Echo Chamber to your score area as an agenda worth 1 agenda point"
                 :cost [:click 3]
-                :msg "add it to their score area as an agenda worth 1 agenda point"
+                :msg "add itself to their score area as an agenda worth 1 agenda point"
                 :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Edge of World"
@@ -794,13 +794,13 @@
               :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
      :abilities [{:cost [:click 1 :advancement 7]
                   :label "Add False Flag to your score area as an agenda worth 3 agenda points"
-                  :msg "add it to their score area as an agenda worth 3 agenda points"
+                  :msg "add itself to their score area as an agenda worth 3 agenda points"
                   :effect (req (as-agenda state :corp card 3))}]}))
 
 (defcard "Franchise City"
   {:events [{:event :access
              :req (req (agenda? target))
-             :msg "add it to their score area as an agenda worth 1 agenda point"
+             :msg "add itself to their score area as an agenda worth 1 agenda point"
              :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Full Immersion RecStudio"
@@ -845,7 +845,7 @@
                                     {:card card}))}
    :abilities [{:cost [:click 1 :advancement 3]
                 :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
-                :msg "add it to their score area as an agenda worth 1 agenda point"
+                :msg "add itself to their score area as an agenda worth 1 agenda point"
                 :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Genetics Pavilion"
@@ -1195,7 +1195,7 @@
                  :prompt "Shuffle Marilyn Campaign into R&D?"
                  :autoresolve (get-autoresolve :auto-reshuffle)
                  :player :corp
-                 :yes-ability {:msg "shuffle it back into R&D"
+                 :yes-ability {:msg "shuffle itself back into R&D"
                                :effect (effect (move :corp card :deck)
                                                (shuffle! :corp :deck))}}}}))
 
@@ -1363,7 +1363,7 @@
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
-    {:implementation "Manual - click NASX to place power counters on it"
+    {:implementation "Manual - click NASX to place power counters on itself"
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability
@@ -1424,7 +1424,7 @@
 (defcard "News Team"
   {:flags {:rd-reveal (req true)}
    :access {:async true
-            :msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point"
+            :msg "force the Runner take 2 tags or add itself to their score area as an agenda worth -1 agenda point"
             :effect (effect (continue-ability
                               {:player :runner
                                :async true
@@ -1670,7 +1670,7 @@
             {:event :counter-added
              :req (req (same-card? card target)
                        (not (pos? (get-counters card :power))))
-             :msg "add it to their score area as an agenda worth 1 agenda point"
+             :msg "add itself to their score area as an agenda worth 1 agenda point"
              :effect (effect (as-agenda card 1))}]})
 
 (defcard "Quarantine System"
@@ -1900,7 +1900,7 @@
                {:label "Move any number of credits to your credit pool"
                 :prompt "How many credits do you want to move?"
                 :choices {:counter :credit}
-                :msg (msg "trash it and gain " target " [Credits]")
+                :msg (msg "trash itself and gain " target " [Credits]")
                 :cost [:trash]
                 :async true
                 :effect (effect (gain-credits eid target))}]})
@@ -2242,7 +2242,7 @@
      :choices {:card #(and (or (agenda? %)
                                (asset? %))
                            (in-hand? %))}
-     :msg "swap it for an asset or agenda from HQ"
+     :msg "swap itself for an asset or agenda from HQ"
      :effect (req (let [counters (get-counters card :advancement)
                         [moved-card moved-target] (swap-cards state side card target)]
                     (set-prop state side moved-target :advance-counter counters)
@@ -2327,7 +2327,7 @@
               :effect (effect (add-prop target :advance-counter 1 {:placed true})
                               (effect-completed eid))}
              {:label "add this asset to HQ"
-              :msg "add it to HQ"
+              :msg "add itself to HQ"
               :effect (effect (move card :hand))}]
         choice (fn choice [abis n]
                  (let [choices (concat (mapv make-label abis) ["Done"])]

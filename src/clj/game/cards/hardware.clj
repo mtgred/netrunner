@@ -32,7 +32,7 @@
                 :choices {:card #(and (runner? %)
                                       (has-subtype? % "Icebreaker")
                                       (installed? %))}
-                :msg (msg "host it on " (card-str state target))
+                :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host (get-card state target) (get-card state card)))}
    :constant-effects [{:type :gain-subtype
                        :req (req (same-card? target (:host card)))
@@ -99,8 +99,8 @@
              :effect (effect (gain-clicks 1))}
             {:event :unsuccessful-run
              :async true
-             :effect (effect (system-msg "trashes Autoscripter")
-                             (trash eid card))}]})
+             :msg "trash itself"
+             :effect (effect (trash eid card))}]})
 
 (defcard "Blackguard"
   {:constant-effects [(mu+ 2)]
@@ -832,7 +832,7 @@
                                      card nil))))}]}))
 
 (defcard "Gebrselassie"
-  {:abilities [{:msg "host it on an installed non-AI icebreaker"
+  {:abilities [{:msg "host itself on an installed non-AI icebreaker"
                 :cost [:click 1]
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker")
@@ -1487,8 +1487,8 @@
                     :interactive (req true)
                     :req (req (and (installed? (:card target))
                                    (program? (:card target))))
-                    :effect (effect (system-msg "trashes Q-Coherence Chip")
-                                    (trash eid card nil))}]
+                    :msg "trash itself"
+                    :effect (effect (trash eid card nil))}]
              [(assoc e :event :runner-trash)
               (assoc e :event :corp-trash)])})
 

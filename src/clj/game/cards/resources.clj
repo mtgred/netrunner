@@ -167,7 +167,7 @@
                 :msg (msg "move " target " [Credit] to Algo Trading")}
                {:label "Take all credits from Algo Trading"
                 :cost [:click 1 :trash]
-                :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
+                :msg (msg "trash itself and gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :runner-turn-begins
@@ -473,7 +473,7 @@
   {:abilities [{:cost [:click 1]
                 :keep-open :while-clicks-left
                 :label "Place 1 power counter"
-                :msg "place 1 power counter on it"
+                :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}
                {:cost [:click 1]
                 :keep-open :while-clicks-left
@@ -1053,7 +1053,7 @@
 
 (defcard "Fan Site"
   {:events [{:event :agenda-scored
-             :msg "add it to their score area as an agenda worth 0 agenda points"
+             :msg "add itself to their score area as an agenda worth 0 agenda points"
              :req (req (installed? card))
              :effect (req (as-agenda state :runner card 0))}]})
 
@@ -1336,7 +1336,7 @@
                 :effect (effect (gain-bad-publicity :corp 1))}]})
 
 (defcard "Investigator Inez Delgado"
-  {:abilities [{:msg "add it to their score area as an agenda worth 0 agenda points"
+  {:abilities [{:msg "add itself to their score area as an agenda worth 0 agenda points"
                 :label "Add to score area and reveal cards in server"
                 :async true
                 :prompt "Choose a server"
@@ -1448,7 +1448,7 @@
                             (:did-access target)
                             (is-remote? (:server target))))
              :msg (msg (if (<= 3 (get-counters card :power))
-                         "add it to their score area as an agenda worth 1 agenda point"
+                         "add itself to their score area as an agenda worth 1 agenda point"
                          "place a power counter on itself"))
              :async true
              :effect (req (if (<= 3 (get-counters card :power))
@@ -1548,7 +1548,7 @@
 
 (defcard "Liberated Chela"
   {:abilities [{:cost [:click 5 :forfeit]
-                :msg "add it to their score area"
+                :msg "add itself to their score area"
                 :async true
                 :effect
                 (effect (continue-ability
@@ -1567,9 +1567,9 @@
                                                       (move state :runner card :rfg)
                                                       (effect-completed state side eid)))}
                               :no-ability
-                              {:msg "add it to their score area as an agenda worth 2 points"
+                              {:msg "add itself to their score area as an agenda worth 2 points"
                                :effect (effect (as-agenda :runner card 2))}}}
-                            {:msg "add it to their score area as an agenda worth 2 points"
+                            {:msg "add itself to their score area as an agenda worth 2 points"
                              :effect (effect (as-agenda :runner card 2))})
                           card nil))}]})
 
@@ -2596,7 +2596,7 @@
 (defcard "Temple of the Liberated Mind"
   {:abilities [{:cost [:click 1]
                 :label "Place 1 power counter"
-                :msg "place 1 power counter on it"
+                :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}
                {:label "Gain [Click]"
                 :cost [:power 1]

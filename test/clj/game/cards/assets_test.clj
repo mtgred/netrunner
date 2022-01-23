@@ -2179,7 +2179,7 @@
         (rez state :corp grndl)
         (when (pos? i)
           (advance state (refresh grndl) i)
-          (is (= i (get-counters (refresh grndl) :advancement)) (str "GRNDL Refinery should have " i " advancement counters on it")))
+          (is (= i (get-counters (refresh grndl) :advancement)) (str "GRNDL Refinery should have " i " advancement counters on itself")))
         (card-ability state :corp (refresh grndl) 0)
         (is (= (+ credits (* i 4)) (:credit (get-corp))) (str "Corp should gain " (* i 4) " credits"))
         (is (= 1 (-> (get-corp) :discard count)) "Archives should have 1 card in it")
@@ -2936,7 +2936,7 @@
       (play-from-hand state :corp "Marked Accounts" "New remote")
       (let [ma (get-content state :remote1 0)]
         (rez state :corp ma)
-        (is (zero? (get-counters (refresh ma) :credit)) "Marked Accounts should start with 0 credits on it")
+        (is (zero? (get-counters (refresh ma) :credit)) "Marked Accounts should start with 0 credits on itself")
         (card-ability state :corp ma 1)
         (is (= 3 (get-counters (refresh ma) :credit)) "Marked Accounts should gain 3 credits when ability is used")
         (take-credits state :corp)
@@ -2956,8 +2956,8 @@
             take-credits-both (fn [state] (doseq [side [:corp :runner]] (take-credits state side)))]
         (rez state :corp ma1)
         (rez state :corp ma2)
-        (is (zero? (get-counters (refresh ma1) :credit)) "First Marked Accounts should start with 0 credits on it")
-        (is (zero? (get-counters (refresh ma2) :credit)) "Second Marked Accounts should start with 0 credits on it")
+        (is (zero? (get-counters (refresh ma1) :credit)) "First Marked Accounts should start with 0 credits on itself")
+        (is (zero? (get-counters (refresh ma2) :credit)) "Second Marked Accounts should start with 0 credits on itself")
         (card-ability state :corp ma2 1)
         (is (= 3 (get-counters (refresh ma2) :credit)) "Second Marked Accounts should gain 3 credits when ability is used")
         (take-credits-both state)

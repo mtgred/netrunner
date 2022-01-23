@@ -506,7 +506,7 @@
                                                           (= (last (get-zone %)) :ices)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %))))}
-                                  :msg (msg "host it on " (card-str state target))
+                                  :msg (msg "host itself on " (card-str state target))
                                   :effect (effect (host target card))}
                                  card nil)))}]
    :constant-effects [{:type :ice-strength
@@ -1430,7 +1430,7 @@
                                  :choices {:card #(and (ice? %)
                                                        (installed? %)
                                                        (can-host? %))}
-                                 :msg (msg "host it on " (card-str state target))
+                                 :msg (msg "host itself on " (card-str state target))
                                  :effect (effect (host target card))}
                                 (break-sub 1 2 "Sentry")
                                 (strength-pump 2 3)]}))
@@ -1539,7 +1539,7 @@
                                                             (installed? %)
                                                             (can-host? %)
                                                             (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
-                                    :msg (msg "host it on " (card-str state target))
+                                    :msg (msg "host itself on " (card-str state target))
                                     :effect (effect (host target card))}
                                    card nil)))}
                  (break-sub 2 1 "All" {:req knight-req})]}))
@@ -1647,7 +1647,7 @@
                                  :req (req (:runner-phase-12 @state))
                                  :async true
                                  :effect (effect (add-counter card :power (cost-value eid :x-credits)))
-                                 :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on it")}
+                                 :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")}
                                 (break-sub [:power 1] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
@@ -1790,7 +1790,7 @@
                     :strength-bonus (req (get-counters card :power))
                     :events [{:event :end-of-encounter
                               :req (req (all-subs-broken-by-card? (:ice context) card))
-                              :msg "place 1 power counter on it"
+                              :msg "place 1 power counter on itself"
                               :effect (effect (add-counter card :power 1))}]}))
 
 (defcard "Ninja"
@@ -1954,7 +1954,7 @@
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
                                       (is-central? (second (get-zone %))))}
-                :msg (msg "host it on " (card-str state target))
+                :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:label "Advance to next piece of ice"
                 :prompt "Choose the next innermost piece of ice to host Pawn on it"
@@ -1962,7 +1962,7 @@
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
                                       (is-central? (second (get-zone %))))}
-                :msg (msg "host it on " (card-str state target))
+                :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:req (req (not (zone-locked? state :runner :discard)))
                 :label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
@@ -2206,7 +2206,7 @@
                                                           (can-host? %)
                                                           (= (last (get-zone %)) :ices)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
-                                  :msg (msg "host it on " (card-str state target))
+                                  :msg (msg "host itself on " (card-str state target))
                                   :effect (effect (host target card))}
                                  card nil)))}]
    :constant-effects [{:type :rez-cost
@@ -2394,7 +2394,7 @@
                     :strength-bonus (req (get-counters card :power))
                     :events [{:event :end-of-encounter
                               :req (req (all-subs-broken-by-card? (:ice context) card))
-                              :msg "place 1 power counter on it"
+                              :msg "place 1 power counter on itself"
                               :effect (effect (add-counter card :power 1))}]}))
 
 (defcard "Surfer"

@@ -32,7 +32,7 @@
 
 (defcard "15 Minutes"
   {:abilities [{:cost [:click 1]
-                :msg "shuffle 15 Minutes into R&D"
+                :msg "shuffle itself into R&D"
                 :label "Shuffle 15 Minutes into R&D"
                 :effect (effect (move :corp card :deck nil)
                                 (shuffle! :corp :deck)
@@ -1383,7 +1383,7 @@
             :interactive (req true)
             :prompt "Quantum Predictive Model was added to the corp's score area"
             :choices ["OK"]
-            :msg "add it to their score area and gain 1 agenda point"
+            :msg "add itself to their score area and gain 1 agenda point"
             :effect (effect (move :corp card :scored {:force true})
                             (update-all-agenda-points)
                             (check-win-by-agenda))}})
@@ -1680,7 +1680,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:psi {:req (req (not installed))
                   :not-equal
-                  {:msg "prevent it from being stolen"
+                  {:msg "prevent itself from being stolen"
                    :effect (effect (register-run-flag!
                                      card :can-steal
                                      (fn [_ _ c] (not (same-card? c card))))
