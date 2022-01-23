@@ -1941,8 +1941,8 @@
               {:event :corp-install
                :req (req (ice? (:card context)))
                :async true
-               :effect (effect (system-msg :runner "trashes Server Diagnostics")
-                               (trash eid card))}]}))
+               :msg "trash itself"
+               :effect (effect (trash eid card))}]}))
 
 (defcard "Shannon Claire"
   {:abilities [{:cost [:click 1]
