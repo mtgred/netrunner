@@ -1191,7 +1191,7 @@
               :prompt "Trash False Echo?"
               :yes-ability
               {:async true
-               :msg "trashes False Echo to make the Corp rez the passed piece of ice or add it to HQ"
+               :msg "trash itself to make the Corp rez the passed piece of ice or add it to HQ"
                :effect
                (req (wait-for
                       (trash state side card nil)
