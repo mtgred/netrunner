@@ -1152,13 +1152,13 @@
                      :prompt "Choose an agenda, asset or upgrade to install from Archives and place 2 advancement tokens on"
                      :show-discard true
                      :not-distinct true
-                     :msg "place 2 advancements counters on the installed card"
                      :choices {:card #(and (or (agenda? %)
                                                (asset? %)
                                                (upgrade? %))
                                            (in-discard? %))}
                      :effect (req (wait-for (corp-install state side (make-eid state {:source card :source-type :corp-install})
                                                           target nil nil)
+                                            (system-msg state side "uses Kakurenbo to place 2 advancements counters on the installed card")
                                             (add-prop state side eid async-result :advance-counter 2 {:placed true})))}]
     {:on-play
      {:prompt "Choose any number of cards in HQ to trash"
