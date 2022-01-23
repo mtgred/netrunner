@@ -552,7 +552,8 @@
   {:derezzed-events [corp-rez-toast]
    :events [(first-time-draw-bonus :corp 1)
             {:event :corp-draw
-             :req (req (first-event? state :corp :corp-draw))
+             :req (req (and (first-event? state :corp :corp-draw)
+                            (< 1 (count corp-currently-drawing))))
              :once :per-turn
              :once-key :daily-business-show-put-bottom
              :interactive (req true)

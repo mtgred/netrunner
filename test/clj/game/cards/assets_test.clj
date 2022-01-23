@@ -1127,6 +1127,17 @@
       (is (= 1 (count (:hand (get-corp)))) "DBS did not fire on manual draw")
       (is (no-prompt? state :corp) "Corp is not being asked to bury a card with DBS")))
 
+(deftest daily-business-show-no-trigger-when-drawing-one-card
+    ;; Should not trigger when drawing one card
+    (do-game
+      (new-game {:corp {:deck ["Hedge Fund"]
+                        :hand ["Daily Business Show"]}})
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (no-prompt? state :corp) "No prompt from DBS")))
+
 (deftest daily-business-show-fire-on-runner-turn
     ;; Fire on Runner turn
     (do-game
