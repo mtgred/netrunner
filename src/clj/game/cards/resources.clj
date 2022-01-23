@@ -2713,7 +2713,8 @@
               (assoc draw-ability :event :runner-turn-ends)
               (first-time-draw-bonus :runner 1)
               {:event :runner-draw
-               :req (req (first-event? state :runner :runner-draw))
+               :req (req (and (first-event? state :runner :runner-draw)
+                              (< 1 (count runner-currently-drawing))))
                :once :per-turn
                :once-key :the-class-act-put-bottom
                :async true
