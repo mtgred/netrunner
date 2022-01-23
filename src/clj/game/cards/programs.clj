@@ -595,7 +595,7 @@
                     :events [{:event :subroutines-broken
                               :req (req (and (all-subs-broken-by-card? target card)
                                              (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
-                              :msg (msg "gain 2 [Credits]")
+                              :msg "gain 2 [Credits]"
                               :async true
                               :effect (effect (gain-credits :runner eid 2))}]}))
 
@@ -1092,7 +1092,7 @@
                                 (update-mu))}]})
 
 (defcard "Eater"
-  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
+  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg "access not more than 0 cards for the remainder of this run"
                                                                            :effect (req (max-access state 0))}
                                                       :label "break 1 subroutine and access 0 cards"})
                                 (strength-pump 1 1)]}))
@@ -1425,7 +1425,7 @@
 
 (defcard "Ika"
   (auto-icebreaker {:abilities [{:label "Host Ika on a piece of ice"
-                                 :prompt (msg "Host Ika on a piece of ice")
+                                 :prompt "Host Ika on a piece of ice"
                                  :cost [:credit 2]
                                  :choices {:card #(and (ice? %)
                                                        (installed? %)
@@ -1634,7 +1634,7 @@
                                                            (fn [targets]
                                                              (let [context (first targets)]
                                                                (all-subs-broken-by-card? (:ice context) card))))))
-                              :msg (msg "gain 1 [Credits]")
+                              :msg "gain 1 [Credits]"
                               :async true
                               :effect (effect (gain-credits :runner eid 1))}]}))
 

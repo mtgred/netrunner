@@ -717,7 +717,7 @@
 
 (defcard "Border Control"
   {:abilities [{:label "End the run"
-                :msg (msg "end the run")
+                :msg "end the run"
                 :async true
                 :cost [:trash]
                 :effect (effect (end-run eid card))}]
@@ -2187,7 +2187,7 @@
 
 (defcard "Marker"
   {:subroutines [{:label "Give next encountered ice \"End the run\""
-                  :msg (msg "give next encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")
+                  :msg "give next encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run"
                   :effect (effect
                             (register-events
                               card
@@ -2906,7 +2906,7 @@
 
 (defcard "Sensei"
   {:subroutines [{:label "Give encountered ice \"End the run\""
-                  :msg (msg "give encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")
+                  :msg "give encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run"
                   :effect (effect
                             (register-events
                               card

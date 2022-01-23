@@ -972,7 +972,7 @@
                 :choices {:card #(and (ice? %)
                                       (rezzed? %))}
                 :req (req (pos? (get-counters card :power)))
-                :msg (msg "add strength to a rezzed piece of ice")
+                :msg "add strength to a rezzed piece of ice"
                 :effect (effect (register-floating-effect
                                   card
                                   (let [it-target target]
@@ -1115,7 +1115,7 @@
 (defcard "Lily Lockwell"
   {:on-rez {:async true
             :effect (effect (draw eid 3))
-            :msg (msg "draw 3 cards")}
+            :msg "draw 3 cards"}
    :abilities [{:label "Search R&D for an operation"
                 :prompt "Choose an operation to add to the top of R&D"
                 :cost [:click 1 :tag 1]
@@ -1353,7 +1353,7 @@
                :waiting-prompt "Corp to choose an option"
                :prompt "Gain 2 [credits]?"
                :yes-ability
-               {:msg (msg "gain 2 [Credits]")
+               {:msg "gain 2 [Credits]"
                 :async true
                 :effect (effect (gain-credits :corp eid 2))}}}})
 
@@ -2451,5 +2451,5 @@
                 :label "Give the Runner 1 tag"
                 :cost [:click 1 :credit 1]
                 :keep-open :while-clicks-left
-                :msg (msg "give the Runner 1 tag")
+                :msg "give the Runner 1 tag"
                 :effect (effect (gain-tags eid 1))}]})

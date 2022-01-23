@@ -368,7 +368,7 @@
    :access {:optional
             {:waiting-prompt "Corp to choose an option"
              :prompt "Purge virus counters with Cyberdex Virus Suite?"
-             :yes-ability {:msg (msg "purge virus counters")
+             :yes-ability {:msg "purge virus counters"
                            :effect (effect (purge))}}}
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
@@ -1289,7 +1289,7 @@
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
-                :msg (msg "prevent cards being installed until the end of the run")
+                :msg "prevent cards being installed until the end of the run"
                 :req (req this-server)
                 :cost [:trash]
                 :effect (effect (register-run-flag! card :corp-lock-install (constantly true))

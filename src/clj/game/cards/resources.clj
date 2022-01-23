@@ -555,7 +555,7 @@
                               (continue-ability
                                 state side
                                 (if (pos? (count (iced-servers state side eid card)))
-                                  {:prompt (msg  "Choose a server")
+                                  {:prompt "Choose a server"
                                    :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
                                              " and removes Climactic Showdown from the game")
@@ -1148,7 +1148,7 @@
   {:events [{:event :agenda-scored
              :async true
              :interactive (req true)
-             :msg (msg "breach HQ")
+             :msg "breach HQ"
              :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}]})
 
 (defcard "Gbahali"
@@ -2138,7 +2138,7 @@
 (defcard "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
              :async true
-             :msg (msg "breach HQ")
+             :msg "breach HQ"
              :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}]
    :abilities [{:msg "expose 1 card"
                 :label "Expose 1 installed card"

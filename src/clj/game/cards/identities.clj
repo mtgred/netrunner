@@ -1359,7 +1359,7 @@
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
                                      (corp? %)
                                      (in-hand? %))}
-                  :msg (msg "install a card in a remote server and place 1 advancement token on it")
+                  :msg "install a card in a remote server and place 1 advancement token on it"
                   :effect (effect (continue-ability (install-card target) card nil))}]}))
 
 (defcard "Seidr Laboratories: Destiny Defined"
@@ -1401,7 +1401,7 @@
                             (first-event? state :corp :rez #(has-subtype? (:card (first %)) "Advertisement"))))
              :async true
              :effect (effect (lose-credits :runner eid 1))
-             :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}]})
+             :msg "make the Runner lose 1 [Credits] by rezzing an Advertisement"}]})
 
 (defcard "Sportsmetal: Go Big or Go Home"
   (let [ab {:prompt "Gain 2 [Credits] or draw 2 cards?"
@@ -1534,7 +1534,7 @@
                                (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
                                (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
-                :msg (msg "flip their ID")}]})
+                :msg "flip their ID"}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game

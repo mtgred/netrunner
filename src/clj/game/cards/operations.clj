@@ -107,7 +107,7 @@
   {:on-play {:trash-after-resolving false}
    :events [{:event :successful-run
              :req (req (not-empty run-ices))
-             :msg (msg "deal 2 meat damage")
+             :msg "deal 2 meat damage"
              :async true
              :effect (effect (damage eid :meat 2 {:card card}))}
             {:event :corp-turn-begins
@@ -612,7 +612,7 @@
                    (filter #(not (same-card? % card)))
                    count
                    pos?))
-    :msg (msg "trash all cards in HQ and draw 5 cards")
+    :msg "trash all cards in HQ and draw 5 cards"
     :async true
     :effect (req (wait-for (trash-cards state side (get-in @state [:corp :hand]))
                            (draw state side eid 5)))}})
@@ -1739,7 +1739,7 @@
                                    (rt total (dec left) (cons (:title target) selected))
                                    card nil))}
                    {:effect (effect (shuffle! :corp :deck))
-                    :msg (msg "shuffle R&D")}))]
+                    :msg "shuffle R&D"}))]
     {:on-play
      {:prompt "How many Sysops?"
       :choices :credit

@@ -516,7 +516,7 @@
 (defcard "Cyberdex Sandbox"
   {:on-score {:optional
               {:prompt "Purge virus counters with Cyberdex Sandbox?"
-               :yes-ability {:msg (msg "purge virus counters")
+               :yes-ability {:msg "purge virus counters"
                              :effect (effect (purge))}}}
    :events [{:event :purge
              :req (req (first-event? state :corp :purge))
@@ -1671,7 +1671,7 @@
   {:on-score {:interactive (req true)
               :prompt "Choose a card to add to HQ"
               :choices (req (:deck corp))
-              :msg (msg "add a card from R&D to HQ and shuffle R&D")
+              :msg "add a card from R&D to HQ and shuffle R&D"
               :req (req (pos? (count (:deck corp))))
               :effect (effect (shuffle! :deck)
                               (move target :hand))}})
