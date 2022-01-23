@@ -915,6 +915,7 @@
     :choices {:card #(and (corp? %)
                           (installed? %))}
     :async true
+    :msg (msg "choose " (card-str state target))
     :effect
     (effect (continue-ability
               {:optional
