@@ -877,6 +877,7 @@
 
 (defcard "Hyperloop Extension"
   (let [he {:msg "gain 3 [Credits]"
+            :async true
             :effect (effect (gain-credits eid 3))}]
     {:on-score he
      :stolen he}))
