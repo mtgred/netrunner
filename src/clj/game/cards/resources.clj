@@ -825,7 +825,7 @@
 (defcard "Dean Lister"
   {:abilities [{:req (req run)
                 :label "pump icebreaker"
-                :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
+                :msg (msg "give +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
                 :cost [:trash]

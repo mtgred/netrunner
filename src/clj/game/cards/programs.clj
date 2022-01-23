@@ -2443,7 +2443,7 @@
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
-                :msg (msg "add +3 strength to " (:title target))
+                :msg (msg "give +3 strength to " (:title target))
                 :effect (effect (pump target 3))}
                (set-autoresolve :auto-takobi "Takobi")]})
 
