@@ -122,7 +122,7 @@
                     (do (system-msg state :corp (str "uses Advanced Concept Hopper to draw 1 card"))
                         (draw state :corp eid 1))
                     "No action"
-                    (do (system-msg state :corp (str "doesn't use Advanced Concept Hopper"))
+                    (do (system-msg state :corp (str "declines to use Advanced Concept Hopper"))
                         (effect-completed state side eid))))}]})
 
 (defcard "Ancestral Imager"
