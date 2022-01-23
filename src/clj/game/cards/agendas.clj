@@ -962,7 +962,7 @@
                           (in-hand? %))}
     :msg (msg "trash " (quantify (count targets) "card") " from HQ")
     :async true
-    :cancel-effect (req (system-msg state :corp "declines to trash any cards from HQ with Longevity Serum")
+    :cancel-effect (req (system-msg state :corp "declines to use Longevity Serum to trash any cards from HQ")
                         (shuffle-into-rd-effect state side eid card 3)
                         (effect-completed state side eid))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})

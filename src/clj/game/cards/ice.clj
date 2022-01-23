@@ -534,7 +534,7 @@
       :async true
       :msg "force the Runner to encounter Archangel"
       :effect (req (force-ice-encounter state side eid card))}
-     :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel"))}}}
+     :no-ability {:effect (effect (system-msg :corp "declines to use Archangel to force the Runner to encounter it"))}}}
    :subroutines [(trace-ability 6 add-runner-card-to-grip)]})
 
 (defcard "Archer"
@@ -764,7 +764,7 @@
                                                        {:ignore-install-cost true
                                                         :index (:index card)})
                                          (effect-completed state side eid)))
-                  :cancel-effect (req (system-msg state :corp "declines to install a card with Brân 1.0")
+                  :cancel-effect (req (system-msg state :corp "declines to use Brân 1.0 to install a card")
                                       (effect-completed state side eid))}
                  end-the-run
                  end-the-run]
@@ -2817,7 +2817,7 @@
                               :prompt "Choose a card in HQ to trash"
                               :choices (req (cancellable (:hand corp) :sorted))
                               :async true
-                              :cancel-effect (effect (system-msg "declines to trash a card from HQ with Sadaka")
+                              :cancel-effect (effect (system-msg "declines to use Sadaka to trash a card from HQ")
                                                      (effect-completed eid))
                               :effect (req (wait-for
                                              (trash state :corp target {:cause :subroutine})

@@ -953,7 +953,7 @@
       (let [bran (get-ice state :hq 0)
             unrezzed-msg "Corp uses Brân 1.0 to install an unseen card from Archives."
             rezzed-msg "Corp uses Brân 1.0 to install Ice Wall from Archives."
-            declined-msg "Corp declines to install a card with Brân 1.0."]
+            declined-msg "Corp declines to use Brân 1.0 to install a card."]
         (rez state :corp bran)
         (run-continue state)
         (card-subroutine state :corp bran 0)

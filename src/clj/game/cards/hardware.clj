@@ -1301,7 +1301,7 @@
          :effect (effect (runner-install
                           (assoc eid :source card :source-type :runner-install)
                           target nil))
-         :cancel-effect (effect (system-msg :runner "declines to install a card with Pantograph")
+         :cancel-effect (effect (system-msg :runner "declines to use Pantograph to install a card")
                                 (effect-completed eid))}
         gain-credit-ability
         {:interactive (req true)
@@ -1876,7 +1876,7 @@
               :yes-ability {:msg "gain 2 [Credits]"
                             :async true
                             :effect (effect (gain-credits eid 2))}
-              :no-ability {:effect (effect (system-msg "declines to gain 2 [Credits] from Supercorridor"))}}}]
+              :no-ability {:effect (effect (system-msg "declines to use Supercorridor to gain 2 [Credits]"))}}}]
    :abilities [(set-autoresolve :auto-fire "Supercorridor")]})
 
 (defcard "Swift"

@@ -123,7 +123,7 @@
                                             :req (req (get-card state ice))
                                             :effect (effect (trash eid (get-card state ice) nil))}])
                                         (force-ice-encounter state side eid ice))))}
-              :no-ability {:effect (effect (system-msg :corp (str "declines to rez a hosted piece of ice with Awakening Center")))}}}]})
+              :no-ability {:effect (effect (system-msg :corp (str "declines to use Awakening Center")))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))

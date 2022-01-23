@@ -705,7 +705,7 @@
               :prompt "Use Conduit?"
               :yes-ability {:msg "place 1 virus counter on itself"
                             :effect (effect (add-counter card :virus 1))}
-              :no-ability {:effect (effect (system-msg "declines to place a virus counter on Conduit"))}}}
+              :no-ability {:effect (effect (system-msg "declines to use Conduit to place a virus counter on itself"))}}}
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
