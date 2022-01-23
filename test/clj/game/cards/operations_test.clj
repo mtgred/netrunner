@@ -2415,6 +2415,8 @@
       (rez state :corp (refresh ronin))
       (is (not (rezzed? (refresh ronin))) "Ronin did not rez")
       (take-credits state :corp)
+      (rez state :corp (refresh ronin))
+      (is (not (rezzed? (refresh ronin))) "Ronin did not rez on the Runner's turn")
       (take-credits state :runner)
       (rez state :corp (refresh ronin))
       (is (rezzed? (refresh ronin)) "Ronin now rezzed")
