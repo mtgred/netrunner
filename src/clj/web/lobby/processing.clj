@@ -128,7 +128,7 @@
   "Converts [:lobby/leave] into effect handler calls.
   Doesn't do anything if the user isn't in a game.
   Uses :lobby/broadcast-list but only passes a single element in the list."
-  [{{lobbies :lobbies :as db} :db} lobby uid]
+  [{lobbies :lobbies :as db} lobby uid]
   (let [user (uid->user db uid)
         leave-message (make-system-message
                         (str (:username user) " left the game."))
@@ -150,30 +150,31 @@
     reply-fn :?reply-fn}]
   (if-let [lobby (uid-player->lobby lobbies uid)]
     (let [db (leave-lobby db lobby uid)
-          still-active? (->> (get lobbies (:gameid lobby))
+          still-active? (->> (get (:lobbies db) (:gameid lobby))
                              (:players)
                              (count)
-                             (pos?))]
+                             (pos?))
+          fx (cond-> []
+               ;; either remove the user and update the participant's state
+               ;; or close the whole damn thing
+               still-active?
+               (conj [:game/remove-user [lobby uid]]
+                     [:lobby/state lobby])
+               (not still-active?)
+               (conj [:lobby/close-lobby [system-db lobby]])
+               true
+               (conj [:lobby/broadcast-list db]
+                     [:ws/reply-fn [reply-fn true]]))]
       {:db db
-       :fx (cond-> []
-             ;; either remove the user and update the participant's state
-             ;; or close the whole damn thing
-             still-active?
-             (conj [:game/remove-user [lobby uid]]
-                   [:lobby/state lobby])
-             still-active?
-             (conj [:lobby/close-lobby [system-db lobby]])
-             true
-             (conj [[:lobby/broadcast-list db]
-                    [:ws/reply-fn [reply-fn true]]]))})
-    {:fx [[:lobby/clear]
+       :fx fx})
+    {:fx [[:lobby/clear uid]
           [:lobby/broadcast-list db]
           [:ws/reply-fn [reply-fn false]]]}))
 
 (executor/reg-event-fx
   :lobby/leave
   [executor/unwrap set-last-update]
-  #'leave-lobby)
+  #'handle-leave-lobby)
 
 (defn update-deck-for-player-in-lobby [players uid deck]
   (mapv (fn [p] (if (= uid (:uid p))
@@ -525,7 +526,7 @@
       (let [lobby (start-game-for-lobby lobby now)
             db (assoc-in db [:lobbies gameid] lobby)]
         {:db db
-         :fx [[:stats/game-started system-db lobby]
+         :fx [[:stats/game-started [system-db lobby]]
               [:lobby/state lobby]
               [:lobby/broadcast-list db]
               [:game/start lobby]]}))))

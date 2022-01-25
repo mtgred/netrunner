@@ -117,10 +117,10 @@
 (defn player-list [user current-game players]
   [:<>
    [:h3 (tr [:lobby.players "Players"])]
-   (into
-     [:div.players]
-     (map (fn [player] [player-item user current-game player])
-          @players))])
+   [:div.players
+   (doall
+     (map (fn [player] ^{:key (get-in player [:user :_id])} [player-item user current-game player])
+          @players))]])
 
 (defn options-list [current-game]
   (let [{:keys [allow-spectator api-access password
