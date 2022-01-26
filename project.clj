@@ -75,7 +75,7 @@
                  [metosin/malli "0.7.0"]]
 
   :plugins [[lein-eftest "0.5.9"]
-            [cider/cider-nrepl "0.27.3"]]
+            [cider/cider-nrepl "0.26.0"]]
 
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.4"]
                                   [cider/piggieback "0.5.3"]
