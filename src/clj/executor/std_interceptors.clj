@@ -91,6 +91,12 @@
                 (->> (handler-fn db event)
                      (assoc-effect context :db))))))
 
+(defn ^:private fx-handler-before
+  [handler-fn context]
+  (let [{:keys [event] :as coeffects} (get-coeffect context)]
+    (->> (handler-fn coeffects event)
+         (assoc context :effects))))
+
 (defn fx-handler->interceptor
   "Returns an interceptor which wraps the kind of event handler given to `reg-event-fx`.
 
@@ -107,11 +113,7 @@
   [handler-fn]
   (->interceptor
     :id     :fx-handler
-    :before (fn fx-handler-before
-              [context]
-              (let [{:keys [event] :as coeffects} (get-coeffect context)]
-                (->> (handler-fn coeffects event)
-                     (assoc context :effects))))))
+    :before (fn [context] (fx-handler-before handler-fn context))))
 
 (defn ctx-handler->interceptor
   "Returns an interceptor which wraps the kind of event handler given to `reg-event-ctx`.
@@ -155,18 +157,21 @@
                      (->> (assoc-in original-db path db)
                           (assoc-effect context' :db))))))))
 
+(defn enrich-after
+  [f context]
+  (let [event (get-coeffect context :event)
+        prev-db (if (contains? (get-effect context) :db)
+                  (get-effect context :db)
+                  ;; If no db effect is returned, we provide the original coeffect.
+                  (get-coeffect context :db))
+        new-db (f prev-db event)]
+    (assoc-effect context :db (or new-db prev-db))))
+
 (defn enrich
   [f]
   (->interceptor
     :id :enrich
-    :after (fn enrich-after
-             [context]
-             (let [event (get-coeffect context :event)
-                   db    (if (contains? (get-effect context) :db)
-                           (get-effect context :db) ;; If no db effect is returned, we provide the original coeffect.
-                           (get-coeffect context :db))]
-               (->> (f db event)
-                    (assoc-effect context :db))))))
+    :after (fn [context] (enrich-after f context))))
 
 (defn after
   [f]

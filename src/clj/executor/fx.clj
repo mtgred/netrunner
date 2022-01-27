@@ -23,6 +23,18 @@
 
 ;; -- Interceptor -------------------------------------------------------------
 
+(defn do-fx-after
+  [context]
+  (let [effects            (:effects context)
+        effects-without-db (dissoc effects :db)]
+    ;; :db effect is guaranteed to be handled before all other effects.
+    (when-let [new-db (:db effects)]
+      ((get-handler kind :db false) new-db))
+    (doseq [[effect-key effect-value] effects-without-db]
+      (if-let [effect-fn (get-handler kind effect-key false)]
+        (effect-fn effect-value)
+        (console :warn "executor: no handler registered for effect:" effect-key ". Ignoring.")))))
+
 (def do-fx
   "An interceptor whose `:after` actions the contents of `:effects`. As a result,
   this interceptor is Domino 3.
@@ -47,17 +59,7 @@
   `:db` is guaranteed to be executed first."
   (->interceptor
     :id :do-fx
-    :after (fn do-fx-after
-             [context]
-             (let [effects            (:effects context)
-                   effects-without-db (dissoc effects :db)]
-               ;; :db effect is guaranteed to be handled before all other effects.
-               (when-let [new-db (:db effects)]
-                 ((get-handler kind :db false) new-db))
-               (doseq [[effect-key effect-value] effects-without-db]
-                 (if-let [effect-fn (get-handler kind effect-key false)]
-                   (effect-fn effect-value)
-                   (console :warn "executor: no handler registered for effect:" effect-key ". Ignoring.")))))))
+    :after #'do-fx-after))
 
 ;; -- Builtin Effect Handlers  ------------------------------------------------
 
@@ -124,6 +126,6 @@
 ;;
 (reg-fx
   :db
-  (fn [value]
+  (fn update-app-db! [value]
     (when-not (identical? @app-db value)
       (reset! app-db value))))

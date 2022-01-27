@@ -296,9 +296,10 @@
 (defn leave-lobby! [db user uid ?reply-fn lobby]
   (let [leave-message (core/make-system-message (str (:username user) " left the game."))
         new-app-state (swap! app-state/app-state
-                               update :lobbies #(-> %
-                                                    (handle-leave-lobby uid leave-message)
-                                                    (handle-set-last-update (:gameid lobby) uid)))
+                               update :lobbies
+                               #(-> %
+                                    (handle-leave-lobby uid leave-message)
+                                    (handle-set-last-update (:gameid lobby) uid)))
           lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
       (if lobby?
         (when-let [state (:state lobby?)]

@@ -149,17 +149,19 @@
     uid :uid
     reply-fn :?reply-fn}]
   (if-let [lobby (uid-player->lobby lobbies uid)]
-    (let [db (leave-lobby db lobby uid)
-          still-active? (->> (get (:lobbies db) (:gameid lobby))
-                             (:players)
+    (let [
+          db (leave-lobby db lobby uid)
+          updated-lobby (get-in db [:lobbies (:gameid lobby)])
+          still-active? (->> (:players updated-lobby)
                              (count)
                              (pos?))
           fx (cond-> []
                ;; either remove the user and update the participant's state
                ;; or close the whole damn thing
                still-active?
-               (conj [:game/remove-user [lobby uid]]
-                     [:lobby/state lobby])
+               (conj [:game/remove-user [updated-lobby uid]]
+                     [:lobby/state updated-lobby]
+                     [:lobby/clear uid])
                (not still-active?)
                (conj [:lobby/close-lobby [system-db lobby]])
                true
@@ -170,6 +172,7 @@
     {:fx [[:lobby/clear uid]
           [:lobby/broadcast-list db]
           [:ws/reply-fn [reply-fn false]]]}))
+
 
 (executor/reg-event-fx
   :lobby/leave
@@ -209,7 +212,8 @@
         deck (prepare-deck deck)]
     (if (and lobby (not-empty deck) (valid-deck-for-lobby? lobby deck))
       (let [gameid (:gameid lobby)
-            db (update-in db [:lobbies gameid :players] update-deck-for-player-in-lobby uid deck)]
+            db (update-in db [:lobbies gameid :players] update-deck-for-player-in-lobby uid deck)
+            lobby (get-in db [:lobbies gameid])]
         {:db db
          :fx [[:lobby/state lobby]
               [:lobby/broadcast-list db]
@@ -315,9 +319,14 @@
            {gameid :gameid} :?data
            reply-fn :?reply-fn} data
           lobby (get lobbies gameid)
-          user (uid->user db uid)]
+          user (uid->user db uid)
+          player (player? uid lobby)
+          side (side-from-str (:side player))]
       {:db db
-       :fx [[:lobby/state lobby]
+       :fx [(when (and lobby player side)
+              [:game/update-state [#(swap! % assoc-in [side :user] user) lobby]])
+            [:lobby/state lobby]
+            [:lobby/broadcast-list db]
             [:lobby/ting lobby]
             [:ws/reply-fn [reply-fn true]]]})
     {:ws/reply-fn [(:?reply-fn data) false]}))
@@ -537,23 +546,33 @@
   #'handle-start-game)
 
 (defn handle-leave-game
-  [{{lobbies :lobbies :as db} :db now :inst/now}
+  [{{lobbies :lobbies :as db} :db :as cofx}
    {{system-db :system/db} :ring-req
     uid :uid
-    {gameid :gameid} :?data}]
+    {gameid :gameid} :?data :as event}]
   (let [lobby (uid-player->lobby lobbies uid)
         user (uid->user db uid)]
-    (when (and lobby (:started lobby))
+    (if (and lobby (= gameid (:gameid lobby)) (:started lobby))
       (let [db (leave-lobby db lobby uid)
-            lobby (uid-player->lobby (:lobbies db) uid)
-            still-active? (->> (:players lobby)
+            updated-lobby (get (:lobbies db) gameid)
+            still-active? (->> (:players updated-lobby)
                                (count)
-                               (pos?))]
+                               (pos?))
+            player (player? uid updated-lobby)
+            side (side-from-str (:side player))
+            fx (cond-> []
+                 still-active?
+                 (conj [:game/update-state [main/handle-notification updated-lobby (str (:username user) " has left the game.")]]
+                       [:game/update-state [#(swap! % update side dissoc :user) updated-lobby]]
+                       [:lobby/clear uid])
+                 (not still-active?)
+                 (conj [:lobby/close-lobby [system-db lobby]])
+                 true
+                 (conj [:lobby/state updated-lobby]
+                       [:lobby/broadcast-list db]))]
         {:db db
-         :fx [(when still-active?
-                [:game/update-state [main/handle-notification lobby (str (:username user) " has left the game.")]])
-              [:lobby/state lobby]
-              [:lobby/broadcast-list db]]}))))
+         :fx fx})
+      (send-lobby-list cofx event))))
 
 (executor/reg-event-fx
   :game/leave
@@ -561,7 +580,7 @@
   #'handle-leave-game)
 
 (defn handle-rejoin-game
-  [{{lobbies :lobbies :as db} :db now :inst/now :as cofx}
+  [{{lobbies :lobbies} :db :as cofx}
    {uid :uid :as data}]
   (let [lobby (uid-original-player->lobby lobbies uid)
         original-player (find-first #(= uid (:uid %)) (:original-players lobby))]
@@ -584,7 +603,7 @@
   #'handle-rejoin-game)
 
 (defn handle-concede-game
-  [{{lobbies :lobbies :as db} :db}
+  [{{lobbies :lobbies} :db}
    {uid :uid}]
   (let [lobby (uid-player->lobby lobbies uid)
         player (player? uid lobby)
@@ -598,7 +617,7 @@
   #'handle-concede-game)
 
 (defn handle-game-action
-  [{{lobbies :lobbies :as db} :db :as cofx}
+  [{{lobbies :lobbies} :db}
    {uid :uid {:keys [command args]} :?data}]
   (let [lobby (uid-player->lobby lobbies uid)
         state (:state lobby)
@@ -625,9 +644,8 @@
   #'handle-game-action)
 
 (defn handle-resync
-  [{{lobbies :lobbies :as db} :db
-    new-gameid :lobby/new-gameid :as cofx}
-   {uid :uid :as data}]
+  [{{lobbies :lobbies :as db} :db}
+   {uid :uid}]
   (let [lobby (uid-player->lobby lobbies uid)
         state (:state lobby)]
     (if state
@@ -677,8 +695,7 @@
 (defn handle-mute-spectators
   [{{lobbies :lobbies :as db} :db}
    {uid :uid
-    {gameid :gameid} :?data
-    reply-fn :?reply-fn}]
+    {gameid :gameid} :?data}]
   (let [lobby (uid-player->lobby lobbies uid)
         user (uid->user db uid)]
     (when (and lobby (= gameid (:gameid lobby)))
@@ -714,7 +731,7 @@
   #'handle-game-say)
 
 (defn handle-typing
-  [{{lobbies :lobbies :as db} :db}
+  [{{lobbies :lobbies} :db}
    {uid :uid
     {:keys [gameid typing]} :?data}]
   (let [lobby (uid-player->lobby lobbies uid)]
@@ -736,12 +753,20 @@
       (let [db (leave-lobby db lobby uid)
             lobby (get (:lobbies db) (:gameid lobby))
             user (uid->user db uid)
-            message (str (:username user) " has left the game.")]
+            message (str (:username user) " has left the game.")
+            still-active? (->> (get (:lobbies db) (:gameid lobby))
+                               (:players)
+                               (count)
+                               (pos?))
+            fx (cond-> [[:game/update-state [main/handle-notification lobby message]]]
+                 (not still-active?)
+                 (conj [:lobby/close-lobby [system-db lobby]])
+                 true
+                 (conj [:lobby/state lobby]
+                       [:lobby/broadcast-list db]
+                       [:ws/reply-fn [reply-fn true]]))]
         {:db db
-         :fx [[:game/update-state [main/handle-notification lobby message]]
-              [:lobby/state lobby]
-              [:lobby/broadcast-list db]
-              [:ws/reply-fn [reply-fn true]]]}))))
+         :fx fx}))))
 
 (executor/reg-event-fx
   :chsk/uidport-close

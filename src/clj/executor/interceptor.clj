@@ -14,8 +14,8 @@
       [:and
        [:map {:closed true}
         [:id keyword?]
-        [:before {:optional true} [:maybe fn?]]
-        [:after {:optional true} [:maybe fn?]]]
+        [:before {:optional true} [:maybe [:or fn? any?]]]
+        [:after {:optional true} [:maybe [:or fn? any?]]]]
        [:fn {:error/message "should have at least one of :before or :after"
              :error/path [:before-after]}
         (fn [{:keys [before after]}] (or before after))]]))

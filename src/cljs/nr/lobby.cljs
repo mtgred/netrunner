@@ -24,9 +24,7 @@
   (swap! app-state assoc :games data))
 
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
-  (swap! app-state assoc :current-game data)
-  (when (:started data)
-    (ws/ws-send! [:game/resync {:gameid (:gameid data)}])))
+  (swap! app-state assoc :current-game data))
 
 (defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
   (play-sound data))
