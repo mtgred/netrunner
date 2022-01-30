@@ -5660,17 +5660,17 @@
      (rez state :corp mindgame)
      (take-credits state :corp)
      (play-from-hand state :runner "Sneakdoor Beta")
-        (let [sb (get-program state 0)]
-          (card-ability state :runner sb 0)
-          (run-continue state)
-          (fire-subs state (refresh mindgame))
-          (click-prompt state :corp "1 [Credits]")
-          (click-prompt state :runner "0 [Credits]")
-          (click-prompt state :corp "R&D")
-          (click-prompt state :runner "No")
-          (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D")
-          (run-continue state)
-          (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D (not HQ)")))))
+     (let [sb (get-program state 0)]
+       (card-ability state :runner sb 0)
+       (run-continue state)
+       (fire-subs state (refresh mindgame))
+       (click-prompt state :corp "1 [Credits]")
+       (click-prompt state :runner "0 [Credits]")
+       (click-prompt state :corp "R&D")
+       (click-prompt state :runner "No")
+       (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D")
+       (run-continue state)
+       (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D (not HQ)")))))
 
 (deftest sneakdoor-beta-sneakdoor-beta-trashed-during-run
     ;; Sneakdoor Beta trashed during run
