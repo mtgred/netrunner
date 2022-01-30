@@ -5670,8 +5670,7 @@
           (click-prompt state :runner "No")
           (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D")
           (run-continue state)
-          (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D")
-          ))))
+          (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D (not HQ)")))))
 
 (deftest sneakdoor-beta-sneakdoor-beta-trashed-during-run
     ;; Sneakdoor Beta trashed during run
