@@ -3910,9 +3910,9 @@
 (deftest raman-rai
   ;; Raman Rai
   (do-game
-    (new-game {:corp {:deck ["Ice Wall"]
+    (new-game {:corp {:deck [(qty "Ice Wall" 2)]
                       :hand ["Raman Rai"]
-                      :discard ["Fire Wall"]}})
+                      :discard ["Fire Wall" "Hedge Fund"]}})
     (play-from-hand state :corp "Raman Rai" "New remote")
     (let [raman (get-content state :remote1 0)]
       (rez state :corp raman)
@@ -3922,7 +3922,10 @@
       (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
       (click-card state :corp (find-card "Fire Wall" (:discard (get-corp))))
       (is (= "Fire Wall" (-> (get-corp) :hand first :title)))
-      (is (= "Ice Wall" (-> (get-corp) :discard first :title))))))
+      (is (= "Ice Wall" (-> (get-corp) :discard first :title)))
+      (core/move state :corp (find-card "Ice Wall" (:discard (get-corp))) :hand)
+      (draw state :corp)
+      (is (no-prompt? state :corp) "No prompt to trigger Raman Rai since no card in Archives matches the drawn card's type"))))
 
 (deftest rashida-jaheem-when-there-are-enough-cards-in-r-d
     ;; when there are enough cards in R&D
