@@ -4677,6 +4677,27 @@
         "Ice Wal should gain strengh"
         (fire-subs state red-tape)))))
 
+(deftest red-tape-strength-after-rez
+  ;; Red Tape
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Red Tape"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Red Tape" "R&D")
+    (let [iw (get-ice state :hq 0)
+          red-tape (get-ice state :rd 0)]      
+      (rez state :corp red-tape)
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (changes-val-macro
+        3 (core/get-strength (refresh iw))
+        "Ice Wall should gain strengh"
+        (fire-subs state red-tape)
+        (rez state :corp iw)))))
+
+
 (deftest resistor-strength-based-on-tags
     ;; Strength based on tags
     (do-game

@@ -2752,7 +2752,12 @@
 (defcard "Red Tape"
   {:subroutines [{:label "Give +3 strength to all ice for the remainder of the run"
                   :msg "give +3 strength to all ice for the remainder of the run"
-                  :effect (effect (pump-all-ice 3 :end-of-run))}]})
+                  :effect (effect (register-floating-effect
+                                  card
+                                  {:type :ice-strength
+                                   :duration :end-of-run
+                                   :value 3})
+                                  (update-all-ice))}]})
 
 (defcard "Resistor"
   {:strength-bonus (req (count-tags state))
