@@ -1474,6 +1474,19 @@
                                 :req (req (= :runner side))
                                 :value -1}))}]})
 
+(defcard "Vladisibirsk Grid"
+  {:advanceable :always
+   :abilities [{:cost [:advancement 2]
+                :async true
+                :once :per-turn
+                :prompt (msg "Choose an advanceable card in " (zone->name (second (get-zone card))))
+                :label "Place 2 advancement counters (once per turn)"
+                :msg (msg "place 2 advancement counter counters on " (card-str state target))
+                :choices {:req (req (and (installed? target)
+                                         (in-same-server? card target)
+                                         (not (same-card? card target))))}
+                :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
+
 (defcard "Warroid Tracker"
   (letfn [(wt [n]
             {:waiting-prompt "Runner to make a decision"
