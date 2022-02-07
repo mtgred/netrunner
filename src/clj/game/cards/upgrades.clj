@@ -1476,8 +1476,7 @@
 
 (defcard "Vladisibirsk Grid"
   {:advanceable :always
-   :abilities [{:cost [:advancement 2]
-                :async true
+   :abilities [{:cost [:advancement 2]              
                 :once :per-turn
                 :prompt (msg "Choose an advanceable card in " (zone->name (second (get-zone card))))
                 :label "Place 2 advancement counters (once per turn)"
