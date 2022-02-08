@@ -2127,6 +2127,20 @@
                     :abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 3 :end-of-encounter {:label "add 3 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
+(defcard "Revolver"
+  (auto-icebreaker
+   {:data {:counter {:power 6}}
+    :abilities [(break-sub [:power 1] 1 "Sentry")
+                (strength-pump 2 3)
+                ;; note - trash ability needs to be in a separate block so auto-icebreaker plays nice
+                ;; there may be a more concise way to do this that plays well with auto-icebreaker
+                {:label (str "Break sentry subroutine")
+                 :cost [:trash]
+                 :req (req (and (active-encounter? state)
+                                (has-subtype? current-ice "Sentry")
+                                (<= (get-strength current-ice) (get-strength card))))
+                 :effect (req (break-sub nil 1 "Sentry"))}]}))
+
 (defcard "Rezeki"
   {:events [{:event :runner-turn-begins
              :msg "gain 1 [Credits]"
