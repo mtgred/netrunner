@@ -27,7 +27,6 @@
    [time-literals.read-write :as read-write]
    [web.angel-arena :as angel-arena]
    [web.api :refer [make-app make-dev-app]]
-   [web.game]
    [web.lobby.loader]
    [web.utils :refer [tick]]
    [web.versions :refer [frontend-version]]

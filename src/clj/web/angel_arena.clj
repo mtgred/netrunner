@@ -15,8 +15,6 @@
                                   inactive-period-countdown inactive-period-warning
                                   max-inactivity-count supported-formats]]
    [web.app-state :as app-state]
-   [web.game :as game]
-   [web.lobby :as lobby]
    [web.stats :as stats]
    [web.utils :refer [average]]
    [web.ws :as ws]))

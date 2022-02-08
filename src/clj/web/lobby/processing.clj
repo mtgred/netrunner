@@ -20,6 +20,8 @@
                             uid-player->lobby uid-original-player->lobby]]
    [web.mongodb :as mongodb]))
 
+;;; Lobby/pre-game
+
 (executor/reg-event-fx
   :chsk/ws-ping
   (fn [_ _]))
@@ -486,6 +488,8 @@
   [executor/unwrap (executor/inject-cofx :inst/now) set-last-update]
   #'handle-watch-lobby)
 
+;;; Active game
+
 (defn- is-starter-deck?
   [player]
   (let [id (get-in player [:deck :identity :title])
@@ -772,3 +776,21 @@
   :chsk/uidport-close
   [executor/unwrap set-last-update]
   #'handle-uidport-close)
+
+;;; Angel Arena
+
+(defn fetch-runs
+  [{db :db}
+   {{system-db :system/db
+     uid :uid
+     user :user} :ring-req
+    reply-fn :?reply-fn}]
+  (let [db-user (uid->user db uid)
+        user (and (= user db-user) db-user)]
+    (when user
+      {:fx [[:angel-arena/get-runs {:system/db system-db :user user :?reply-fn reply-fn}]]})))
+
+(executor/reg-event-fx
+  :angel-arena/fetch-runs
+  [executor/unwrap]
+  #'fetch-runs)
