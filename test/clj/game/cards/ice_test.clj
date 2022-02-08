@@ -304,6 +304,61 @@
                           (click-prompt state :runner "No"))
        (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
+(deftest anemone-happy-path
+  ;; Anemone
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (changes-val-macro
+       2 (count (:discard (get-runner)))
+       "Runner takes 2 net damage"
+       (changes-val-macro
+         1 (count (:discard (get-corp)))
+         "Corporation discards a card"
+         (run-on state :hq)
+         (rez state :corp anem)
+         (click-prompt state :corp "Yes")
+         (is (= :select (prompt-type :corp)))
+         (click-card state :corp "Hedge Fund"))))))
+
+(deftest anemone-wrong-server
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (run-on state :rd)
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active outside attacked server"))))
+
+(deftest anemone-outside-run
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active outside run"))))
+
+(deftest anemone-cant-afford
+  (do-game
+   (new-game {:corp {:hand ["Anemone"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (run-on state :hq)
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active if corp can't pay the cost"))))
+
 (deftest ansel-1-0
   ;; Ansel 1.0
   (before-each [state (new-game {:corp {:hand ["Ansel 1.0" "NGO Front" "Merger"]
