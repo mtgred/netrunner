@@ -2533,6 +2533,92 @@
         (run-on state "HQ")
         (is (= 3 (get-strength (refresh hag))) "Misdirection didn't lower strength."))))
 
+(deftest hakarl-1-0-happy-path
+  (do-game
+   (new-game {:corp {:hand ["Hakarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hakarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (run-on state "HQ")
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (not (no-prompt? state :corp)))     
+     (click-card state :corp rash)
+     (is (no-prompt? state :corp))
+     (is (not (rezzed? (refresh rash))) "Rashida was derezzed")
+     (run-continue state)
+     (card-side-ability state :runner hakarl 0)
+     (is (no-prompt? state :runner) "No prompt to break hakarl")
+     (fire-subs state (refresh hakarl))
+     (is (nil? (:run @state)))
+     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+     (run-on state "Server 1")
+     ;; effect lasts all turn
+     (rez state :corp eli)
+     (run-continue state)
+     (card-side-ability state :runner eli 0)
+     (is (no-prompt? state :runner) "no prompt to break eli")
+     (fire-subs state (refresh eli))
+     (take-credits state :runner)
+     (take-credits state :corp)
+     ;; check effect gone after turn end
+     (run-on state "HQ")
+     (run-continue state)
+     (card-side-ability state :runner hakarl 0)
+     (is (not (no-prompt? state :runner)) "Runner prompted to break hakarl")
+     (click-prompt state :runner "Do 1 brain damage")
+     (click-prompt state :runner "End the run")
+     (is (= 1 (:click (get-runner))) "Runner spent clicks breaking hakarl")
+     (is (not (nil? (:run @state))))
+     (fire-subs state (refresh hakarl))
+     (is (= 1 (:brain-damage (get-runner))) "Runner did not take any extra brain damage")
+     (is (not (nil? (:run @state)))))))
+
+(deftest hakarl-1-0-wrong-server
+  (do-game
+   (new-game {:corp {:hand ["Hakarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hakarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (run-on state "R&D")
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+
+(deftest hakarl-1-0-outside-run
+  (do-game
+   (new-game {:corp {:hand ["Hakarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hakarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+   
 (deftest hailstorm-happy-path
     ;; Happy Path
     (do-game
