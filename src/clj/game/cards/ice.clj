@@ -1568,6 +1568,30 @@
 (defcard "Hadrian's Wall"
   (wall-ice [end-the-run end-the-run]))
 
+
+(defcard "Hakarl 1.0"
+  ; note - prompt will appear even if there are no legal targets to derez
+  {:runner-abilities [(bioroid-break 1 1)]
+   :subroutines [(do-brain-damage 1)
+                 end-the-run]   
+   :on-rez {:req (req (and run this-server))
+            :prompt "Derez another card to prevent the runner using printed abilities on bioroid ice this turn?"
+            :choices {:req (req (and (installed? target)
+                                     (rezzed? target)
+                                     (not (same-card? card target))))}
+            :waiting-prompt "Corp to resolve Hakarl 1.0"
+            :effect (effect (derez target)
+                            (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
+                            (register-floating-effect
+                             card
+                             {:type :prevent-ability
+                              :duration :end-of-turn
+                              :req (req (let [target-card (first targets)
+                                              ability (second targets)]
+                                          (and (ice? target-card)
+                                               (has-subtype? target-card "Bioroid"))))
+                              :value true}))}})
+
 (defcard "Hagen"
   {:subroutines [{:label "Trash 1 program"
                   :prompt "Choose a program that is not a decoder, fracter or killer"
