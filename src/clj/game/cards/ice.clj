@@ -1570,7 +1570,6 @@
 
 
 (defcard "Hakarl 1.0"
-  ; note - prompt will appear even if there are no legal targets to derez
   {:runner-abilities [(bioroid-break 1 1)]
    :subroutines [(do-brain-damage 1)
                  end-the-run]   

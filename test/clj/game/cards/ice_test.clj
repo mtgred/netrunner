@@ -2601,6 +2601,23 @@
      (rez state :corp hakarl)
      (is (no-prompt? state :corp)))))
 
+(deftest hakarl-1-0-no-targets
+  (do-game
+   (new-game {:corp {:hand ["Hakarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hakarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (run-on state "HQ")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+
 (deftest hakarl-1-0-outside-run
   (do-game
    (new-game {:corp {:hand ["Hakarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
