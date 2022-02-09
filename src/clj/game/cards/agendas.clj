@@ -1793,6 +1793,12 @@
           :async true
           :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}]))}})
 
+(defcard "Vosmash Sell-Off"
+  {:additional-cost [:installed 1]
+   :on-score {:async true
+              :msg "do 2 meat damage"
+              :effect (effect (damage eid :meat 2 {:card card}))}})
+
 (defcard "Voting Machine Initiative"
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 3))}
@@ -1829,6 +1835,4 @@
                                       (not (:facedown (second targets)))))
                        :value 1}]})
 
-(defcard "Vosmash Sell-Off"
-  {:score-cost-bonus (req [:installed-corp 1])
-   })
+
