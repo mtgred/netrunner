@@ -1574,7 +1574,8 @@
   {:runner-abilities [(bioroid-break 1 1)]
    :subroutines [(do-brain-damage 1)
                  end-the-run]   
-   :on-rez {:req (req (and run this-server))
+   :on-rez {:req (req (and run this-server
+                           (->> (get-all-installed state) (remove #(same-card? card %)) (filter rezzed?) (count) (pos?))))
             :prompt "Derez another card to prevent the runner using printed abilities on bioroid ice this turn?"
             :choices {:req (req (and (installed? target)
                                      (rezzed? target)
