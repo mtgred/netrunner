@@ -1596,8 +1596,7 @@
                   :async true
                   :effect (effect (register-events card [ability])
                                   (register-floating-effect card fire-effect)
-                                  (make-run (make-eid state eid) target card)
-                                  (effect-completed eid))}]}))
+                                  (make-run eid target card))}]}))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
