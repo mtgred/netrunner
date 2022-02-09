@@ -578,8 +578,7 @@
            cost-strs (build-cost-string cost)
            can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)]
        (if (string/blank? cost-strs)
-         (do (resolve-score state side eid card)
-             system-msg state side cost)
+         (resolve-score state side eid card)         
          (if-not can-pay
            (effect-completed state side eid) ;; << TODO - toast that corp cannot pay;
            (wait-for (pay state side (make-eid state
@@ -589,7 +588,6 @@
                        (if (string/blank? (:msg payment-result))
                          (effect-completed state side eid)
                          (do
-                          (system-msg state side (str (:msg payment-result) " to score "
-                                                      (:title card)))
-                          (resolve-score state side eid card)))))))))))
+                           (system-msg state side (str (:msg payment-result) " to score " (:title card)))
+                           (resolve-score state side eid card)))))))))))
          
