@@ -1579,7 +1579,14 @@
                    :duration :end-of-run
                    :ability {:async true
                              :msg "trash all cards in the server at no cost"
-                             :effect (effect (trash-cards eid (:content run-server)))}})]
+                             :effect (effect (trash-cards eid (:content run-server)))}})
+        fire-effect {:type :prevent-ability
+                     :duration :end-of-run
+                     :req (req (let [target-card (first targets)
+                                     zone (get-zone target-card)]
+                                 (and (some #(= (target-server run) %) zone)
+                                      (some #(= :content %) zone))))
+                     :value true}]
     {:abilities [{:label "Run a remote server."
                   :cost [:trash :click 1 :brain 1]
                   :prompt "Choose a remote server to run with Light the Fire"
@@ -1587,19 +1594,10 @@
                   :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
                   :makes-run true
                   :async true
-                  :effect (effect
-                           (register-events card [ability])
-                           (register-floating-effect
-                            card
-                            {:type :prevent-ability
-                             :duration :end-of-run
-                             :req (req (let [target-card (first targets)
-                                             zone (get-zone target-card)]
-                                         (and (some #(= (target-server run) %) zone)
-                                              (some #(= :content %) zone))))
-                             :value true})
-                           (make-run (make-eid state eid) target card)
-                           (effect-completed eid))}]}))
+                  :effect (effect (register-events card [ability])
+                                  (register-floating-effect card fire-effect)
+                                  (make-run (make-eid state eid) target card)
+                                  (effect-completed eid))}]}))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
