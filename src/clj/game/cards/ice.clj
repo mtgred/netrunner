@@ -1584,7 +1584,7 @@
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
                             (register-floating-effect
                              card
-                             {:type :prevent-ability
+                             {:type :prevent-paid-ability
                               :duration :end-of-turn
                               :req (req (let [target-card (first targets)
                                               ability (second targets)]
