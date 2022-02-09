@@ -15,7 +15,7 @@
     [game.core.ice :refer [break-subroutine! get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string add-cost-label-to-ability]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
@@ -546,26 +546,66 @@
                    (effect-completed state side eid)))
        (effect-completed state side eid)))))
 
+;;; scoring agendas
+(defn score-cost-bonus
+  "Applies a cost to the next score attempt. Costs can be a vector of [:key value] pairs,
+  for example [:credit 2 :click 1]."
+  ([state side costs] (score-cost-bonus state side costs nil))
+  ([state side costs source]
+   (swap! state update-in [:bonus :score-cost] #(conj % [costs source]))))
+
+(defn score-cost
+  "Gets a vector of costs and their sources for scoring a given agenda"
+  [state side card]
+  (-> (when-let [costfun (:score-cost-bonus (card-def card))]
+        [[(costfun state side (make-eid state) card nil) {:source card :source-type :ability}]])
+      (concat (get-in @state [:bonus :score-cost]))
+      vec))
+
+(defn resolve-score
+  "resolves the actual 'scoring' of an agenda (after costs/can-steal has been worked out)"
+  [state side eid card]
+  (let [moved-card (move state :corp card :scored)
+        c (card-init state :corp moved-card {:resolve-effect false
+                                             :init-data true})
+        _ (update-all-advancement-requirements state)
+        _ (update-all-agenda-points state)
+        c (get-card state c)
+        points (get-agenda-points c)]
+    (system-msg state :corp (str "scores " (:title c)
+                                 " and gains " (quantify points "agenda point")))
+    (set-prop state :corp (get-card state c) :advance-counter 0)
+    (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+    (play-sfx state side "agenda-score")
+    (when-let [on-score (:on-score (card-def c))]
+      (register-pending-event state :agenda-scored c on-score))
+    (queue-event state :agenda-scored {:card c
+                                       :points points})
+    (checkpoint state nil eid {:duration :agenda-scored})))
+
 (defn score
   "Score an agenda."
   ([state side eid card] (score state side eid card nil))
   ([state side eid card {:keys [no-req]}]
    (if-not (can-score? state side card {:no-req no-req})
      (effect-completed state side eid)
-     (let [moved-card (move state :corp card :scored)
-           c (card-init state :corp moved-card {:resolve-effect false
-                                                :init-data true})
-           _ (update-all-advancement-requirements state)
-           _ (update-all-agenda-points state)
-           c (get-card state c)
-           points (get-agenda-points c)]
-       (system-msg state :corp (str "scores " (:title c)
-                                    " and gains " (quantify points "agenda point")))
-       (set-prop state :corp (get-card state c) :advance-counter 0)
-       (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-       (play-sfx state side "agenda-score")
-       (when-let [on-score (:on-score (card-def c))]
-         (register-pending-event state :agenda-scored c on-score))
-       (queue-event state :agenda-scored {:card c
-                                          :points points})
-       (checkpoint state nil eid {:duration :agenda-scored})))))
+     (let [additional-costs (score-cost state side card)
+           cost (merge-costs (mapv first additional-costs))
+           cost-strs (build-cost-string cost)
+           can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)]
+       (if (string/blank? cost-strs)
+         (resolve-score state side eid card)
+         (if-not can-pay
+           (effect-completed state side eid) ;; << - toast that corp cannot pay;;
+           (wait-for (pay state side (make-eid state
+                                               (assoc eid :additional-costs additional-costs :source card :source-type :corp-score))
+                          nil cost {:action :score-cost})
+                     (let [payment-result async-result]
+                       (if (string/blank? (:msg payment-result))
+                         (effect-completed state side eid)
+                         (do
+                          (system-msg state side (str (:msg payment-result) " to score "
+                                                      (:title card)))
+                          (resolve-score state side eid card))))))
+         )))))
+         
