@@ -345,35 +345,7 @@
                      :targets targets}))}
     card nil))
 
-;; TrashInstalledCorpCard
-(defmethod cost-name :installed-corp [_] :installed-corp)
-(defmethod value :installed-corp [[_ cost-value]] cost-value)
-(defmethod label :installed-corp [cost]
-  (str "trash " (quantify (value cost) "installed card")))
-(defmethod payable? :installed-corp
-  [cost state side eid card]
-  (<= 0 (- (count (all-installed state side)) (value cost))))
-(defmethod handler :installed-corp
-  [cost state side eid card actions]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
-     :choices {:all true
-               :max (value cost)
-               :card (every-pred installed? corp?)}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:msg (str "trashes " (quantify (count async-result) "installed card")
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
-                               :type :installed
-                               :value (count async-result)
-                               :targets targets})))}
-    card nil))
-
-
-;; TrashInstalledRunnerCard
+;; TrashInstalledCard
 (defmethod cost-name :installed [_] :installed)
 (defmethod value :installed [[_ cost-value]] cost-value)
 (defmethod label :installed [cost]
@@ -388,7 +360,10 @@
     {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
      :choices {:all true
                :max (value cost)
-               :card (every-pred installed? runner?)}
+               :card #(and (installed? %)
+                           (if (= side :runner)
+                             (runner? %)
+                             (corp? %)))}
      :async true
      :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                             (complete-with-result
