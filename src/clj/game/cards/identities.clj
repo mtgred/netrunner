@@ -1034,7 +1034,7 @@
                                 (effect-completed state side eid))))}
               {:event :corp-turn-ends
                :effect (effect (update! (assoc-in card [:special :mm-actions] [])))}]
-     :constant-effects [{:type :prevent-ability
+     :constant-effects [{:type :prevent-paid-ability
                          :req (req (and (get-in card [:special :mm-click])
                                         (let [cid (:cid target)
                                               ability-idx (nth targets 2 nil)

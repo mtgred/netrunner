@@ -996,7 +996,7 @@
                                          :req (req (= (:from-server target) (second (:previous-zone card)))))]))}}))
 
 (defcard "Navi Mumbai City Grid"
-  {:constant-effects [{:type :prevent-ability
+  {:constant-effects [{:type :prevent-paid-ability
                        :req (req (let [target-card (first targets)]
                                    (and run
                                         (= (:side target-card) "Runner")

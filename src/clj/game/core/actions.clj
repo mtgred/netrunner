@@ -45,7 +45,7 @@
         abilities (:abilities card)
         ab (nth abilities ability)
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab ability]))]
+                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
@@ -433,7 +433,7 @@
         cdef (card-def card)
         ab (get-in cdef [:corp-abilities ability])
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab ability]))]
+                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
@@ -444,7 +444,7 @@
         cdef (card-def card)
         ab (get-in cdef [:runner-abilities ability])
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab ability]))]
+                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
