@@ -2131,15 +2131,8 @@
   (auto-icebreaker
    {:data {:counter {:power 6}}
     :abilities [(break-sub [:power 1] 1 "Sentry")
-                (strength-pump 2 3)
-                ;; note - trash ability needs to be in a separate block so auto-icebreaker plays nice
-                ;; there may be a more concise way to do this that plays well with auto-icebreaker
-                {:label (str "Break sentry subroutine")
-                 :cost [:trash]
-                 :req (req (and (active-encounter? state)
-                                (has-subtype? current-ice "Sentry")
-                                (<= (get-strength current-ice) (get-strength card))))
-                 :effect (req (break-sub nil 1 "Sentry"))}]}))
+                (break-sub [:trash] 1 "Sentry")
+                (strength-pump 2 3)]}))
 
 (defcard "Rezeki"
   {:events [{:event :runner-turn-begins
