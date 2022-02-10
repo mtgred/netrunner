@@ -903,7 +903,7 @@
                              :req (req true)}]}
    :abilities [{:label "Prevent 1 damage"
                 :msg "prevent 1 damage"
-                :cost [:installed 1]
+                :cost [:trash-installed 1]
                 :effect (effect (damage-prevent :brain 1)
                                 (damage-prevent :meat 1)
                                 (damage-prevent :net 1))}]})

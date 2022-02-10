@@ -1794,7 +1794,7 @@
           :effect (effect (damage eid :net (count (:hand runner)) {:card card}))}]))}})
 
 (defcard "Vosmash Sell-Off"
-  {:additional-cost [:installed 1]
+  {:additional-cost [:trash-other-installed 1]
    :on-score {:async true
               :msg "do 2 meat damage"
               :effect (effect (damage eid :meat 2 {:card card}))}})

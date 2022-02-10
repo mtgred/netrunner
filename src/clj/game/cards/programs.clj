@@ -1116,7 +1116,7 @@
 
 (defcard "Endless Hunger"
   {:implementation "ETR restriction not implemented"
-   :abilities [(break-sub [:installed 1] 1 "All" {:label "break 1 \"[Subroutine] End the run.\" subroutine"})]})
+   :abilities [(break-sub [:trash-installed 1] 1 "All" {:label "break 1 \"[Subroutine] End the run.\" subroutine"})]})
 
 (defcard "Engolo"
   (give-ice-subtype 2 "Code Gate"

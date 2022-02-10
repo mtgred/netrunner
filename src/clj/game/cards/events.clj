@@ -2323,7 +2323,7 @@
                        :once :per-run
                        :yes-ability
                        {:async true
-                        :cost [:installed (get-strength ice)]
+                        :cost [:trash-installed (get-strength ice)]
                         :msg (msg "trash " (card-str state ice))
                         :effect (effect (trash eid ice nil))}}}
                      {:optional
