@@ -732,7 +732,7 @@
   {:abilities [{:label "End the run"
                 :msg (msg "end the run")
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (end-run eid card))}]
    :subroutines [{:label "Gain 1 [Credits] for each ice protecting this server"
                   :msg (msg "gain "

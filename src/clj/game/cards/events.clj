@@ -2163,11 +2163,11 @@
    :abilities [{:label "Avoid 3 tags"
                 :msg "avoid up to 3 tags"
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (tag-prevent :runner eid 3))}
                {:label "Prevent up to 3 damage"
                 :msg "prevent up to 3 damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :net 3)
                                 (damage-prevent :meat 3)
                                 (damage-prevent :brain 3))}]})

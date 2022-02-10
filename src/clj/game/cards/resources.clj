@@ -28,7 +28,7 @@
                   :effect (effect (runner-install eid card {:ignore-all-cost true}))}})
               :location :hand)]
    :abilities [{:async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg message
                 :effect (effect (effect-fn eid card targets))}]})
 
@@ -71,8 +71,8 @@
                                  (not (:broken (selector (:subroutines current-ice))))))
                   :break 1
                   :breaks "All"
-                  :break-cost [:trash]
-                  :cost [:trash]
+                  :break-cost [:trash-can]
+                  :cost [:trash-can]
                   :label (str "Break the " descriptor " subroutine")
                   :msg (msg "break the " descriptor " subroutine on " (:title current-ice)
                             " (\"[subroutine] " (:label (selector (:subroutines current-ice))) "\")")
@@ -166,7 +166,7 @@
                                 (lose-credits eid target))
                 :msg (msg "move " target " [Credit] to Algo Trading")}
                {:label "Take all credits from Algo Trading"
-                :cost [:click 1 :trash]
+                :cost [:click 1 :trash-can]
                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
@@ -176,7 +176,7 @@
                              (system-msg (str "adds 2 [Credit] to Algo Trading")))}]})
 
 (defcard "All-nighter"
-  {:abilities [{:cost [:click 1 :trash]
+  {:abilities [{:cost [:click 1 :trash-can]
                 :effect (effect (gain-clicks 2))
                 :msg "gain [Click][Click]"}]})
 
@@ -253,7 +253,7 @@
                 :req (req (and (get-current-encounter state)
                                (rezzed? current-ice)
                                (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (derez current-ice)
                                 (gain-tags eid 1))}]})
@@ -354,7 +354,7 @@
              :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}]
    :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
                 :label "prevent net damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :net (dec (:dmg-amount card))))}]})
 
 (defcard "Biometric Spoofing"
@@ -362,7 +362,7 @@
                              :req (req true)}]}
    :abilities [{:label "Prevent 2 damage"
                 :msg "prevent 2 damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :brain 2)
                                 (damage-prevent :net 2)
                                 (damage-prevent :meat 2))}]})
@@ -502,7 +502,7 @@
                              :req (req true)}]}
    :abilities [{:label "Prevent all meat damage"
                 :msg "prevent all meat damage"
-                :cost [:trash :trash-entire-hand]
+                :cost [:trash-can :trash-entire-hand]
                 :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
    :events [{:event :runner-turn-ends
              :interactive (req true)
@@ -522,7 +522,7 @@
    :abilities [{:label "Trash 1 random card from HQ for each power counter"
                 :async true
                 :req (req (pos? (get-counters card :power)))
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg (msg "trash " (quantify (min (get-counters card :power) (count (:hand corp))) "card")
                           " from HQ")
                 :effect (effect (trash-cards eid (take (min (get-counters card :power) (count (:hand corp)))
@@ -653,7 +653,7 @@
                                      ;; Can't pay, don't access cards
                                      (do (system-msg state :runner "could not afford to use Counter Surveillance")
                                          (effect-completed state nil eid)))))}})]
-    {:abilities [{:cost [:click 1 :trash]
+    {:abilities [{:cost [:click 1 :trash-can]
                   :label "run a server"
                   :makes-run true
                   :prompt "Choose a server"
@@ -673,7 +673,7 @@
    :recurring 2
    :abilities [{:label "Trash to prevent up to 3 meat damage"
                 :msg "prevent up to 3 meat damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :meat 3))}]})
 
 (defcard "Crowdfunding"
@@ -731,7 +731,7 @@
                 :choices (req (cancellable (filter #(and (program? %)
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
-                :cost [:click 1 :virus 3 :trash]
+                :cost [:click 1 :virus 3 :trash-can]
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
@@ -809,7 +809,7 @@
 
 (defcard "DDoS"
   {:abilities [{:msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect
                           (register-turn-flag!
                             card :can-rez
@@ -828,7 +828,7 @@
                 :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (register-floating-effect
                                   card
                                   (let [breaker target]
@@ -842,7 +842,7 @@
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
    :abilities [{:async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg "avoid 1 tag"
                 :effect (effect (tag-prevent :runner eid 1))}]})
 
@@ -1043,11 +1043,11 @@
   {:interactions {:prevent [{:type #{:trash-resource}
                              :req (req true)}]}
    :abilities [{:label "Prevent another installed resource from being trashed"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (trash-prevent :resource 1))}
                {:label "Gain 2 [Credits]"
                 :msg "gain 2 [Credits]"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (gain-credits eid 2))}]})
 
@@ -1300,7 +1300,7 @@
                    {:async true
                     :label "Install the top 3 cards of your Stack facedown"
                     :msg "install the top 3 cards of their Stack facedown"
-                    :cost [:trash]
+                    :cost [:trash-can]
                     :effect (effect (continue-ability (ri (take 3 (:deck runner))) card nil))})]}))
 
 (defcard "Ice Analyzer"
@@ -1331,7 +1331,7 @@
 
 (defcard "Investigative Journalism"
   {:req (req (has-bad-pub? state))
-   :abilities [{:cost [:click 4 :trash]
+   :abilities [{:cost [:click 4 :trash-can]
                 :msg "give the Corp 1 bad publicity"
                 :effect (effect (gain-bad-publicity :corp 1))}]})
 
@@ -1651,7 +1651,7 @@
                           (when (pos? (:click runner))
                             (str " and loses "
                                  (apply str (repeat (:click runner) "[Click]")))))
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (req (bypass-ice state)
                              (lose-clicks state :runner (:click runner)))}]})
 
@@ -1685,7 +1685,7 @@
                                       (rezzed? %)
                                       (is-remote? (second (get-zone %))))}
                 :msg "derez a piece of ice protecting a remote server"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (derez target))}]})
 
 (defcard "Miss Bones"
@@ -1751,7 +1751,7 @@
                                          (:title target) " at no cost"))
                         (rez eid target {:ignore-cost :rez-cost :no-msg true}))}
        card nil))
-   :abilities [{:cost [:trash]
+   :abilities [{:cost [:trash-can]
                 :msg "draw 1 card"
                 :async true
                 :effect (effect (draw eid 1))}]})
@@ -1904,7 +1904,7 @@
              :effect (effect (draw eid 1))}]})
 
 (defcard "Officer Frank"
-  {:abilities [{:cost [:credit 1 :trash]
+  {:abilities [{:cost [:credit 1 :trash-can]
                 :req (req (find-first #(= :meat (:damage-type (first %))) (turn-events state :runner :damage)))
                 :msg "force the Corp to trash 2 random cards from HQ"
                 :async true
@@ -2168,7 +2168,7 @@
                                (continue-ability
                                  {:async true
                                   :msg (msg "trash " (card-str state target))
-                                  :cost [:credit (trash-cost state :runner target) :trash]
+                                  :cost [:credit (trash-cost state :runner target) :trash-can]
                                   :effect (effect (trash eid target nil))}
                                  card targets))}
                     card nil))}]})
@@ -2213,7 +2213,7 @@
                 :label "Expose 1 installed card"
                 :choices {:card installed?}
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (expose eid target))}]})
 
 (defcard "Reclaim"
@@ -2229,7 +2229,7 @@
                                              (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
                                                        [:credit (install-cost state side %)]))
                                        (:discard runner)))))
-     :cost [:click 1 :trash :trash-from-hand 1]
+     :cost [:click 1 :trash-can :trash-from-hand 1]
      :msg "install a program, piece of hardware, or virtual resource from the Heap"
      :effect
      (effect
@@ -2346,7 +2346,7 @@
 (defcard "Sacrificial Clone"
   {:interactions {:prevent [{:type #{:net :brain :meat}
                              :req (req true)}]}
-   :abilities [{:cost [:trash]
+   :abilities [{:cost [:trash-can]
                 :label "prevent damage"
                 :async true
                 :msg (msg (let [cards (concat (get-in runner [:rig :hardware])
@@ -2374,7 +2374,7 @@
 (defcard "Sacrificial Construct"
   {:interactions {:prevent [{:type #{:trash-program :trash-hardware}
                              :req (req true)}]}
-   :abilities [{:cost [:trash]
+   :abilities [{:cost [:trash-can]
                 :label "prevent a program trash"
                 :effect (effect (trash-prevent :program 1)
                                 (trash-prevent :hardware 1))}]})
@@ -2416,7 +2416,7 @@
              {:waiting-prompt "Runner to choose an option"
               :prompt "Use Salvaged Vanadis Armory?"
               :yes-ability {:async true
-                            :cost [:trash]
+                            :cost [:trash-can]
                             :msg (msg "force the Corp to trash the top "
                                       (get-turn-damage state :runner)
                                       " cards of R&D and trash itself")
@@ -2425,7 +2425,7 @@
 (defcard "Same Old Thing"
   {:abilities [{:async true
                 :label "play an event in the heap"
-                :cost [:click 2 :trash]
+                :cost [:click 2 :trash-can]
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (pos? (count (filter event? (:discard runner))))))
                 :prompt "Choose an event to play"
@@ -2613,7 +2613,7 @@
 (defcard "Tallie Perrault"
   {:abilities [{:label "Draw 1 card for each Corp bad publicity"
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (draw eid (count-bad-pub state)))
                 :msg (msg "draw " (count-bad-pub state) " cards")}]
    :events [{:event :play-operation
@@ -2644,7 +2644,7 @@
                             (not (:facedown? context))))
              :effect (effect (system-msg "places 1 [Credits] on Technical Writer")
                              (add-counter :runner card :credit 1))}]
-   :abilities [{:cost [:click 1 :trash]
+   :abilities [{:cost [:click 1 :trash-can]
                 :label "gain credits"
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :async true
@@ -2809,11 +2809,11 @@
                 :label "pump icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (pump target 2 :end-of-turn))}]})
 
 (defcard "The Masque A"
-  {:abilities [{:cost [:click 1, :trash]
+  {:abilities [{:cost [:click 1, :trash-can]
                 :label "Make a run and gain [click]. If successful, draw 1 card."
                 :prompt "Choose a server"
                 :choices (req runnable-servers)
@@ -2833,7 +2833,7 @@
 
 (defcard "The Masque B"
   {:implementation "Successful run condition not implemented"
-   :abilities [{:cost [:click 1 :trash]
+   :abilities [{:cost [:click 1 :trash-can]
                 :label "Make a run and gain [click]. If successful, make another run on another server."
                 :prompt "Choose a server"
                 :choices (req runnable-servers)
