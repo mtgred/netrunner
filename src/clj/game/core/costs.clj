@@ -200,18 +200,18 @@
     card nil))
 
 ;; Trash
-(defmethod cost-name :trash [_] :trash)
-(defmethod value :trash [cost] 1)
-(defmethod label :trash [cost] "[trash]")
-(defmethod payable? :trash
+(defmethod cost-name :trash-can [_] :trash-can)
+(defmethod value :trash-can [cost] 1)
+(defmethod label :trash-can [cost] "[trash]")
+(defmethod payable? :trash-can
   [cost state side eid card]
   (installed? (get-card state card)))
-(defmethod handler :trash
+(defmethod handler :trash-can
   [cost state side eid card actions]
   (wait-for (trash state side card {:cause :ability-cost
                                     :unpreventable true})
             (complete-with-result state side eid {:msg (str "trashes " (:title card))
-                                                  :type :trash
+                                                  :type :trash-can
                                                   :value 1
                                                   :targets [card]})))
 
