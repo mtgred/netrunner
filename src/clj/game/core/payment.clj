@@ -34,7 +34,7 @@
     :click 1
     :lose-click 2
     :credit 3
-    (:trash :remove-from-game) 4
+    (:trash-can :remove-from-game) 4
     5))
 
 (defn merge-cost-impl
@@ -42,7 +42,7 @@
   [[_ value-acc stealth-acc] [cost-type cost-value stealth-value]]
   (->> [cost-type
         ;; Using the multi-method value here in case a cost-type
-        ;; shouldn't have more than 1 (e.g. :trash)
+        ;; shouldn't have more than 1 (e.g. :trash-can)
         (value [cost-type ((fnil + 0 0) value-acc cost-value)])
         (when (or stealth-acc stealth-value)
           ((fnil + 0 0) stealth-acc stealth-value))]
@@ -135,7 +135,7 @@
   ([ability cost]
    (assoc ability :cost-label
           (build-cost-label (if (:trash-icon ability)
-                              (conj cost [:trash])
+                              (conj cost [:trash-can])
                               cost)))))
 
 (comment
