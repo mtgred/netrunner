@@ -352,7 +352,7 @@
   (str "trash " (quantify (value cost) "installed card")))
 (defmethod payable? :trash-other-installed
   [cost state side eid card]
-  (<= 0 (- (count (remove #(= (:source eid) %) (all-installed state side))) (value cost))))
+  (<= 0 (- (count (filter #(not (same-card? card %)) (all-installed state side))) (value cost))))
 (defmethod handler :trash-other-installed
   [cost state side eid card actions]
   (continue-ability
@@ -361,7 +361,7 @@
      :choices {:all true
                :max (value cost)
                :card #(and (installed? %)
-                           (not (same-card? % (:source eid)))
+                           (not (same-card? % card))
                            (if (= side :runner)
                              (runner? %)
                              (corp? %)))}
