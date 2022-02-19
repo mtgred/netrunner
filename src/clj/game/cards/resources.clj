@@ -1574,68 +1574,69 @@
                           card nil))}]})
 
 (defcard "Light the Fire"
-  (letfn [;; given a card and a server (key - :serverx),
-          ;; checks if the card is installed in that server as content
-          (eligible? [state card server]
-            (let [zone (:zone card)]              
-              (and (some #{:content} zone)
-                   (some #{server} zone))))
-
-          ;; selects all target to enable/disable, given a server name
+  (letfn [(eligible? [state card server]
+            (let [zone (:zone card)] (and (some #{:content} zone) (some #{server} zone))))
           (select-targets [state server]
             (filter #(eligible? state % server) (all-installed state :corp)))
-
-          ;; disables all targets in a given server (by name)
           (disable-server [state side server]
-            (system-msg state side (str "target server: " server))
             (doseq [c (select-targets state server)]
-              (system-msg state :corp (str "eligible: " (:title c)))
               (disable-card state :corp c)))
-
-          ;; enables all targets in a given server
           (enable-server [state side server]
             (doseq [c (select-targets state server)]
               (enable-card state :corp c)))]
-
-    ;; replaces the breach ability with trashing all cards in the given server
     (let [breach-ability (successful-run-replace-breach
                           {:mandatory true
                            :duration :end-of-run
                            :ability {:async true
                                      :msg "trash all cards in the server at no cost"
                                      :effect (effect (trash-cards eid (:content run-server)))}})
-
           pre-redirect-trigger {:event :pre-redirect-server
                                 :duration :end-of-run
                                 :async true
                                 :effect (effect (enable-server (first target))
                                                 (effect-completed eid))}
-
-          ;; TODO - triggers for when a card is swapped into this server
-          ;; TODO - triggers for when a card is swapped out of this server
-          
           corp-install-trigger {:event :corp-install
                                 :duration :end-of-run
-                                :async true                                
-                                ;; disabling the server again is MUCH less verbose that picking
-                                ;; out a card to disable
+                                :async true
+                                :req (req (and (or (asset? (:card context))
+                                                   (agenda? (:card context))
+                                                   (upgrade? (:card context)))
+                                               (in-same-server? card (first (:server run)))))
                                 :effect (req (disable-server state side (first (:server run)))
                                              (effect-completed state side eid))}
-          
           post-redirect-trigger {:event :redirect-server
                                  :duration :end-of-run
-                                 :async true                                 
+                                 :async true
                                  :effect (effect (disable-server (first target))
                                                  (effect-completed eid))}
-          
-          ;; when a run ends, enable all cards in the server it ended on
+          swap-trigger {:event :swap
+                        :duration :end-of-run
+                        :async true
+                        :effect (req (let [first-card (first targets)
+                                           second-card (second targets)
+                                           server (first (:server run))]
+                                       (do
+                                         ;; disable cards that have moved into the server
+                                         (when (and (some #{:content} (:zone first-card))
+                                                    (some #{server} (:zone first-card)))
+                                           (disable-card state :corp first-card))
+                                         (when (and (some #{:content} (:zone second-card))
+                                                    (some #{server} (:zone second-card)))
+                                           (disable-card state :corp second-card))
+                                         ;; disable cards that have left the server
+                                         (when (and (some #{:content} (:zone first-card))
+                                                    (not (some #{server} (:zone first-card)))
+                                                    (some #{server} (:zone second-card)))
+                                           (enable-card state :corp first-card))
+                                         (when (and (some #{:content} (:zone second-card))
+                                                    (not (some #{server} (:zone second-card)))
+                                                    (some #{server} (:zone first-card)))
+                                           (enable-card state :corp second-card)))))}
           run-end-trigger {:event :run-ends
-                           ;:duration :end-of-turn
                            :unregister-once-resolved true
-                           :async true                           
+                           :async true
                            :effect (effect (enable-server (first (:server target)))
-                                           (effect-completed eid))
-                           }]      
+                                           (effect-completed eid))}]
       {:abilities [{:label "Run a remote server."
                     :cost [:trash :click 1 :brain 1]
                     :prompt "Choose a remote server to run with Light the Fire"
@@ -1644,7 +1645,7 @@
                     :makes-run true
                     :async true
                     :effect (effect (register-events card [breach-ability])
-                                    (register-events card [run-end-trigger pre-redirect-trigger corp-install-trigger])
+                                    (register-events card [run-end-trigger pre-redirect-trigger corp-install-trigger swap-trigger])
                                     (disable-server (second (server->zone state target)))
                                     (make-run eid target card)
                                     (effect-completed eid))}]})))
