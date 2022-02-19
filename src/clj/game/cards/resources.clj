@@ -1574,29 +1574,81 @@
                           card nil))}]})
 
 (defcard "Light the Fire"
-  (let [ability (successful-run-replace-breach
-                  {:mandatory true
-                   :duration :end-of-run
-                   :ability {:async true
-                             :msg "trash all cards in the server at no cost"
-                             :effect (effect (trash-cards eid (:content run-server)))}})
-        fire-effect {:type :prevent-ability
-                     :duration :end-of-run
-                     :req (req (let [target-card (first targets)
-                                     zone (get-zone target-card)]
-                                 (and (some #(= (target-server run) %) zone)
-                                      (some #(= :content %) zone))))
-                     :value true}]
-    {:abilities [{:label "Run a remote server."
-                  :cost [:trash :click 1 :brain 1]
-                  :prompt "Choose a remote server to run with Light the Fire"
-                  :choices (req (filter #(can-run-server? state %) remotes))
-                  :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
-                  :makes-run true
-                  :async true
-                  :effect (effect (register-events card [ability])
-                                  (register-floating-effect card fire-effect)
-                                  (make-run eid target card))}]}))
+  (letfn [;; given a card and a server (key - :serverx),
+          ;; checks if the card is installed in that server as content
+          (eligible? [state card server]
+            (let [zone (:zone card)]              
+              (and (some #{:content} zone)
+                   (some #{server} zone))))
+
+          ;; selects all target to enable/disable, given a server name
+          (select-targets [state server]
+            (filter #(eligible? state % server) (all-installed state :corp)))
+
+          ;; disables all targets in a given server (by name)
+          (disable-server [state side server]
+            (system-msg state side (str "target server: " server))
+            (doseq [c (select-targets state server)]
+              (system-msg state :corp (str "eligible: " (:title c)))
+              (disable-card state :corp c)))
+
+          ;; enables all targets in a given server
+          (enable-server [state side server]
+            (doseq [c (select-targets state server)]
+              (enable-card state :corp c)))]
+
+    ;; replaces the breach ability with trashing all cards in the given server
+    (let [breach-ability (successful-run-replace-breach
+                          {:mandatory true
+                           :duration :end-of-run
+                           :ability {:async true
+                                     :msg "trash all cards in the server at no cost"
+                                     :effect (effect (trash-cards eid (:content run-server)))}})
+
+          pre-redirect-trigger {:event :pre-redirect-server
+                                :duration :end-of-run
+                                :async true
+                                :effect (effect (enable-server (first target))
+                                                (effect-completed eid))}
+
+          ;; TODO - triggers for when a card is swapped into this server
+          ;; TODO - triggers for when a card is swapped out of this server
+          
+          corp-install-trigger {:event :corp-install
+                                :duration :end-of-run
+                                :async true                                
+                                ;; disabling the server again is MUCH less verbose that picking
+                                ;; out a card to disable
+                                :effect (req (disable-server state side (first (:server run)))
+                                             (effect-completed state side eid))}
+          
+          post-redirect-trigger {:event :redirect-server
+                                 :duration :end-of-run
+                                 :async true                                 
+                                 :effect (effect (disable-server (first target))
+                                                 (effect-completed eid))}
+          
+          ;; when a run ends, enable all cards in the server it ended on
+          run-end-trigger {:event :run-ends
+                           ;:duration :end-of-turn
+                           :unregister-once-resolved true
+                           :async true                           
+                           :effect (effect (enable-server (first (:server target)))
+                                           (effect-completed eid))
+                           }]      
+      {:abilities [{:label "Run a remote server."
+                    :cost [:trash :click 1 :brain 1]
+                    :prompt "Choose a remote server to run with Light the Fire"
+                    :choices (req (filter #(can-run-server? state %) remotes))
+                    :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
+                    :makes-run true
+                    :async true
+                    :effect (effect (register-events card [breach-ability])
+                                    (register-events card [run-end-trigger pre-redirect-trigger corp-install-trigger])
+                                    (disable-server (second (server->zone state target)))
+                                    (make-run (make-eid state eid) target card)
+                                    (effect-completed eid))}]})))
+>>>>>>> fd031bb57... WIP light the fire: fully disables cards, works when run is redirected, and when corporation installs during a run
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
