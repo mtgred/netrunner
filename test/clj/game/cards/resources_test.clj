@@ -3209,6 +3209,47 @@
         (card-ability state :runner (get-resource state 0) 0))
       (is (= 1 (count (:discard (get-runner)))) "Liberated Account trashed")))
 
+(deftest light-the-fire-happy-path
+  ;; Light the Fire
+  (do-game
+   (new-game {:corp {:hand ["Hokusai Grid"]}
+              :runner {:hand ["Light the Fire", "Sure Gamble", "Sure Gamble"]}})
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (:brain-damage (get-runner))))
+   (rez state :corp (refresh (get-content state :remote1 0)))   
+   (changes-val-macro 0 (:credit (get-runner))
+                      "Did not spend credits to trash"
+                      (run-continue state)
+                      (is (= 1 (count (:discard (get-corp)))) "Hokusai Grid trashed from Server 1"))
+   (is (nil? (get-in @state [:corp :servers :remote1 :content])) "Server 1 no longer exists")
+   (is (= 1 (count (:hand (get-runner)))) "Did not take damage from Hokusai Grid")))
+
+(deftest light-the-fire-effect-goes-away
+  ;; Light the Fire - effect goes away after end of run
+  (do-game
+   (new-game {:corp {:hand ["Hokusai Grid"]}
+              :runner {:hand ["Light the Fire", "Sure Gamble", "Sure Gamble"]}})
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (:brain-damage (get-runner))))
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (run-jack-out state)
+   (is (not (nil? (get-in @state [:corp :servers :remote1 :content]))) "Server 1 still exists")
+   (run-empty-server state "Server 1")
+   (click-prompt state :runner "No action")
+   (is (= 0 (count (:hand (get-runner)))) "Lost card from Grip to Hokusai Grid")))
+   
+   
+
 (deftest logic-bomb
   ;; Logic Bomb
   (do-game
