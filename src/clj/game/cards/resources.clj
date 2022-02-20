@@ -1592,10 +1592,8 @@
                                      :effect (effect (trash-cards eid (:content run-server)))}})
           pre-redirect-trigger {:event :pre-redirect-server
                                 :duration :end-of-run
-                                :async true
                                 :effect (effect (enable-server (first target))
-                                                (disable-server (second (second targets)))
-                                                (effect-completed eid))}
+                                                (disable-server (second (second targets))))}
           ;post-redirect-trigger {:event :redirect-server
           ;                       :duration :end-of-run
           ;                       :async true
@@ -1603,38 +1601,31 @@
           ;                                       (effect-completed eid))}
           corp-install-trigger {:event :corp-install
                                 :duration :end-of-run
-                                :async true
-                                :effect (req (disable-server state side (first (:server run)))
-                                             (effect-completed state side eid))}          
+                                :effect (req (disable-server state side (first (:server run))))}
           swap-trigger {:event :swap
                         :duration :end-of-run
-                        :async true
                         :effect (req (let [first-card (first targets)
                                            second-card (second targets)
                                            server (first (:server run))]
-                                       (do
-                                         ;; disable cards that have moved into the server
-                                         (when (and (some #{:content} (:zone first-card))
-                                                    (some #{server} (:zone first-card)))
-                                           (disable-card state :corp first-card))
-                                         (when (and (some #{:content} (:zone second-card))
-                                                    (some #{server} (:zone second-card)))
-                                           (disable-card state :corp second-card))
-                                         ;; disable cards that have left the server
-                                         (when (and (some #{:content} (:zone first-card))
-                                                    (not (some #{server} (:zone first-card)))
-                                                    (some #{server} (:zone second-card)))
-                                           (enable-card state :corp first-card))
-                                         (when (and (some #{:content} (:zone second-card))
-                                                    (not (some #{server} (:zone second-card)))
-                                                    (some #{server} (:zone first-card)))
-                                           (enable-card state :corp second-card)))))}
+                                       ;; disable cards that have moved into the server
+                                       (when (and (some #{:content} (:zone first-card))
+                                                  (some #{server} (:zone first-card)))
+                                         (disable-card state :corp first-card))
+                                       (when (and (some #{:content} (:zone second-card))
+                                                  (some #{server} (:zone second-card)))
+                                         (disable-card state :corp second-card))
+                                       ;; disable cards that have left the server
+                                       (when (and (some #{:content} (:zone first-card))
+                                                  (not (some #{server} (:zone first-card)))
+                                                  (some #{server} (:zone second-card)))
+                                         (enable-card state :corp first-card))
+                                       (when (and (some #{:content} (:zone second-card))
+                                                  (not (some #{server} (:zone second-card)))
+                                                  (some #{server} (:zone first-card)))
+                                         (enable-card state :corp second-card))))}
           run-end-trigger {:event :run-ends
-                           ;; this timing seems dicey, but it works
                            :duration :end-of-run 
-                           :async true
-                           :effect (effect (enable-server (first (:server target)))
-                                           (effect-completed eid))}]
+                           :effect (effect (enable-server (first (:server target))))}]
       {:abilities [{:label "Run a remote server."
                     :cost [:trash :click 1 :brain 1]
                     :prompt "Choose a remote server to run with Light the Fire"
@@ -1642,15 +1633,14 @@
                     :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
                     :makes-run true
                     :async true
-                    :effect (effect (register-events card [breach-ability])
-                                    (register-events card [run-end-trigger
+                    :effect (effect (register-events card [breach-ability
+                                                           run-end-trigger
                                                            pre-redirect-trigger
                                                            ;post-redirect-trigger
                                                            corp-install-trigger
                                                            swap-trigger])
                                     (disable-server (second (server->zone state target)))
-                                    (make-run eid target card)
-                                    (effect-completed eid))}]})))
+                                    (make-run eid target card))}]})))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
