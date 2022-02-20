@@ -9,6 +9,28 @@
    :isadmin :ismoderator :tournament-organizer
    :special :options :stats :has-api-keys :banned])
 
+(def max-username-chars 20)
+(def ascii-invalid-char-pattern #"[^\w.-]")
+(def unicode-invalid-char-pattern #"[^\p{Alnum}\p{M}._-]")
+(def invalid-leading-char-pattern #"^[^\p{Alnum}\p{M}_]+")
+(def invalid-trailing-char-pattern #"[^\p{Alnum}\p{M}]+$")
+(def repeated-special-char-pattern #"[-_.]{2,}")
+(def patterns-username [
+                        ascii-invalid-char-pattern,
+                        unicode-invalid-char-pattern,
+                        invalid-leading-char-pattern,
+                        invalid-trailing-char-pattern,
+                        repeated-special-char-pattern
+                        ])
+
+(defn valid-username?
+  "Validate a username"
+  [username]
+  (if (<= (count username) max-username-chars)
+    (every? (fn [re] (= (re-matches re username) false)) patterns-username)
+    false
+  )
+
 (defn create-user
   "Create a new user map."
   [username password email & {:keys [isadmin]}]
