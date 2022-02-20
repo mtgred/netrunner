@@ -1633,7 +1633,8 @@
                                                     (some #{server} (:zone first-card)))
                                            (enable-card state :corp second-card)))))}
           run-end-trigger {:event :run-ends
-                           :unregister-once-resolved true
+                           ;; this timing seems dicey, but it works
+                           :duration :end-of-run 
                            :async true
                            :effect (effect (enable-server (first (:server target)))
                                            (effect-completed eid))}]
