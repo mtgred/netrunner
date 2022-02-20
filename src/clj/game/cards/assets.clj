@@ -1368,11 +1368,11 @@
      :abilities [ability
                  {:label "Place 1 power counter"
                   :cost [:credit 1]
-                  :msg "spend 1 [Credits] to place 1 power counter on NASX"
+                  :msg "place 1 power counter on NASX"
                   :effect (effect (add-counter card :power 1))}
                  {:label "Place 2 power counters"
                   :cost [:credit 2]
-                  :msg "spend 2 [Credits] to place 2 power counters on NASX"
+                  :msg "place 2 power counters on NASX"
                   :effect (effect (add-counter card :power 2))}
                  {:label "Gain 2 [Credits] for each power counter"
                   :cost [:click 1 :trash]
