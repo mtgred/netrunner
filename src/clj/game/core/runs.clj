@@ -477,12 +477,12 @@
                      :approach-ice
                      :movement)
                    phase)]
-       (wait-for (trigger-event-sync state side :pre-redirect-server (:server (:run @state)))
+       (wait-for (trigger-event-sync state side :pre-redirect-server (:server (:run @state)) dest)
                  (swap! state update :run
                         assoc
                         :position num-ice
                         :server [(second dest)])
-                 (trigger-event-sync state side :redirect-server (second dest)))
+                 (trigger-event-sync state side :redirect-server dest))
        (when phase
          (set-next-phase state phase)))
      (set-current-ice state))))

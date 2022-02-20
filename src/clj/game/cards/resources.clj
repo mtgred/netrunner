@@ -1594,17 +1594,18 @@
                                 :duration :end-of-run
                                 :async true
                                 :effect (effect (enable-server (first target))
+                                                (disable-server (second (second targets)))
                                                 (effect-completed eid))}
+          ;post-redirect-trigger {:event :redirect-server
+          ;                       :duration :end-of-run
+          ;                       :async true
+          ;                       :effect (effect (disable-server (first (:server run)))
+          ;                                       (effect-completed eid))}
           corp-install-trigger {:event :corp-install
                                 :duration :end-of-run
                                 :async true
                                 :effect (req (disable-server state side (first (:server run)))
-                                             (effect-completed state side eid))}
-          post-redirect-trigger {:event :redirect-server
-                                 :duration :end-of-run
-                                 :async true
-                                 :effect (effect (disable-server (first target))
-                                                 (effect-completed eid))}
+                                             (effect-completed state side eid))}          
           swap-trigger {:event :swap
                         :duration :end-of-run
                         :async true
@@ -1642,7 +1643,11 @@
                     :makes-run true
                     :async true
                     :effect (effect (register-events card [breach-ability])
-                                    (register-events card [run-end-trigger pre-redirect-trigger corp-install-trigger swap-trigger])
+                                    (register-events card [run-end-trigger
+                                                           pre-redirect-trigger
+                                                           ;post-redirect-trigger
+                                                           corp-install-trigger
+                                                           swap-trigger])
                                     (disable-server (second (server->zone state target)))
                                     (make-run eid target card)
                                     (effect-completed eid))}]})))
