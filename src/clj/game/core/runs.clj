@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability unregister-floating-events trigger-event-sync]]
+    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability unregister-floating-events trigger-event]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
@@ -477,12 +477,12 @@
                      :approach-ice
                      :movement)
                    phase)]
-       (wait-for (trigger-event-sync state side :pre-redirect-server (:server (:run @state)) dest)
-                 (swap! state update :run
-                        assoc
-                        :position num-ice
-                        :server [(second dest)])
-                 (trigger-event-sync state side :redirect-server dest))
+       (do (trigger-event state side :pre-redirect-server (:server (:run @state)) dest)
+           (swap! state update :run
+                  assoc
+                  :position num-ice
+                  :server [(second dest)])
+           (trigger-event state side :redirect-server dest))
        (when phase
          (set-next-phase state phase)))
      (set-current-ice state))))
