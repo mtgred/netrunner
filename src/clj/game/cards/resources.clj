@@ -1598,10 +1598,6 @@
           corp-install-trigger {:event :corp-install
                                 :duration :end-of-run
                                 :async true
-                                :req (req (and (or (asset? (:card context))
-                                                   (agenda? (:card context))
-                                                   (upgrade? (:card context)))
-                                               (in-same-server? card (first (:server run)))))
                                 :effect (req (disable-server state side (first (:server run)))
                                              (effect-completed state side eid))}
           post-redirect-trigger {:event :redirect-server
