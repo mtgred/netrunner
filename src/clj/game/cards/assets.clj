@@ -1369,12 +1369,12 @@
                  {:label "Place 1 power counter"
                   :cost [:credit 1]
                   :effect (effect (add-counter card :power 1)
-                                  (system-msg (str "places 1 power counter on NASX")))}
+                                  (system-msg (str "spends 1 [Credits] to place 1 power counter on NASX")))}
                  {:label "Place 2 power counters"
                   :cost [:credit 2]
                   :effect (effect (add-counter card :power 2)
-                                  (system-msg (str "places 2 power counters on NASX")))}
-                 {:label "[Trash] and gain 2 [Credits] for each power counter"
+                                  (system-msg (str "spends 2 [Credits] to place 2 power counters on NASX")))}
+                 {:label "Gain 2 [Credits] for each power counter"
                   :cost [:click 1 :trash]
                   :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                   :async true
