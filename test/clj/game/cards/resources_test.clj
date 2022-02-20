@@ -3248,7 +3248,31 @@
    (click-prompt state :runner "No action")
    (is (= 0 (count (:hand (get-runner)))) "Lost card from Grip to Hokusai Grid")))
    
+(deftest light-the-fire-card-installed
+  ;; Light the fire - effect applies if the corporation installs a card mid run
+  (do-game
+   (new-game {:corp {:hand ["Crick"] :discard ["Hokusai Grid"]}
+              :runner {:hand ["Sure Gamble" "Sure Gamble" "Light the Fire"]}})
+   (play-from-hand state :corp "Crick" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (let [crick (get-ice state :remote1 0)]
+     (rez state :corp crick)
+     (run-continue state)     
+     (card-subroutine state :corp crick 0)
+     (click-card state :corp "Hokusai Grid")
+     (click-prompt state :corp "Server 1"))
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (run-continue state :movement)
+   (run-continue-until state :success)
+   (is (= 1 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
    
+             
 
 (deftest logic-bomb
   ;; Logic Bomb
