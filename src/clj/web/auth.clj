@@ -12,7 +12,7 @@
    [ring.util.response :refer [redirect]]
    [web.app-state :as app-state]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
-   [web.user :refer [active-user? valid-username? max-username-chars create-user user-keys]]
+   [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
    [web.utils :refer [response]])
   (:import
    java.security.SecureRandom))
@@ -67,7 +67,7 @@
   [{db :system/db
     {:keys [username password confirm-password email]} :params}]
   (cond
-    (< max-username-chars (count username))
+    (within-char-limit-username? username)
     (response 401 {:message "Usernames are limited to 20 characters"})
 
     (= (valid-username? username) false)
