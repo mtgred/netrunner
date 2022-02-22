@@ -2490,7 +2490,8 @@
                       (derez state side (get-card state (:host card)))))]
     {:hosting {:card #(and (ice? %)
                            (can-host? %))}
-     :on-install {:effect action}
+     :on-install {:interactive (req true)
+                  :effect action}
      :events [{:event :runner-turn-begins
                :effect action}]}))
 

@@ -579,7 +579,7 @@
 
 (defcard "Cookbook"
   {:events [{:event :runner-install
-             :silent (req true)
+             :interactive (req true)
              :optional {:prompt "Place a virus counter?"
                         :req (req (has-subtype? (:card context) "Virus"))
                         :autoresolve (get-autoresolve :auto-cookbook)
