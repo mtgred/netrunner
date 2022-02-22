@@ -384,6 +384,57 @@
       (click-prompt state :runner "Steal")
       (is (= 4 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement tokens"))))
 
+(deftest azef-protocol-happy
+  ;; Azef Protocol
+  (do-game
+   (new-game {:corp {:hand ["Azef Protocol", "PAD Campaign"]}
+              :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
+   (play-from-hand state :corp "Azef Protocol" "New remote")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
+   (score state :corp (get-content state :remote1 0))
+   ;; check not scored yet
+   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol requires a cost be paid")
+   (is (not (no-prompt? state :corp)) "Azef Protocol active")
+   (click-card state :corp "PAD Campaign")
+   ;; check scored, damage dealt
+   (is (no-prompt? state :corp) "Azef Protocol prompt resolved")
+   (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring")
+   (is (= 1 (count (:discard (get-corp)))) "Trashed PAD Campaign")
+   (is (= 1 (count (:scored (get-corp)))) "Azef Protocol completed")))
+
+(deftest azef-protocol-requires-valid-target
+  ;; Azef Protocol needs a valid target to pay the cost to score
+    (do-game
+   (new-game {:corp {:hand ["Azef Protocol", "PAD Campaign"]}
+              :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
+   (play-from-hand state :corp "Azef Protocol" "New remote")   
+   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
+   (score state :corp (get-content state :remote1 0))
+   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol requires a cost be paid")
+   (is (no-prompt? state :corp) "No prompt for Azef Protocol because there are no targets")
+   (is (= 0 (count (:discard (get-corp)))) "Trashed PAD Campaign")
+   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol Sell-Off completed")))
+
+(deftest azef-protocol-cant-target-self
+  ;; Azef Protocol can't trash itself to pay its cost
+  (do-game
+   (new-game {:corp {:hand ["Azef Protocol", "PAD Campaign"]}
+              :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
+   (play-from-hand state :corp "Azef Protocol" "New remote")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
+   (score state :corp (get-content state :remote1 0))
+   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol Sell-Off requires a cost be paid")
+   (is (not (no-prompt? state :corp)) "Azef Protocol prompt active")
+   (click-card state :corp "Azef Protocol")
+   ;; check not scored
+   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol can't target self")
+   (is (not (no-prompt? state :corp)) "Azef Protocol still active")
+   (is (= 0 (count (:discard (get-runner)))) "No meat damage dealt")
+   (is (= 0 (count (:discard (get-corp)))) "No card trashed")
+   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol not scored")))
+
 (deftest bacterial-programming-scoring-should-not-cause-a-run-to-exist-for-runner
     ;; Scoring should not cause a run to exist for runner.
     (do-game
@@ -4159,57 +4210,6 @@
           (vmi-test vmi-scored "Yes" 2)
           (vmi-test vmi-scored "Yes" 1)
           (is (empty (:prompt (get-corp))) "No prompt as there are no agenda counters left")))))
-
-(deftest vosmash-sell-off-happy
-  ;; Vosmash Sell-Off
-  (do-game
-   (new-game {:corp {:hand ["Vosmash Sell-Off", "PAD Campaign"]}
-              :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
-   (play-from-hand state :corp "Vosmash Sell-Off" "New remote")
-   (play-from-hand state :corp "PAD Campaign" "New remote")
-   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
-   (score state :corp (get-content state :remote1 0))
-   ;; check not scored yet
-   (is (= 0 (count (:scored (get-corp)))) "Vosmash Sell-Off requires a cost be paid")
-   (is (not (no-prompt? state :corp)) "Vosmash prompt active")
-   (click-card state :corp "PAD Campaign")
-   ;; check scored, damage dealt
-   (is (no-prompt? state :corp) "Vosmash prompt resolved")
-   (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring")
-   (is (= 1 (count (:discard (get-corp)))) "Trashed PAD Campaign")
-   (is (= 1 (count (:scored (get-corp)))) "Vosmash Sell-Off completed")))
-
-(deftest vosmash-sell-off-requires-valid-target
-  ;; Vosmash Sell-Off
-    (do-game
-   (new-game {:corp {:hand ["Vosmash Sell-Off", "PAD Campaign"]}
-              :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
-   (play-from-hand state :corp "Vosmash Sell-Off" "New remote")   
-   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
-   (score state :corp (get-content state :remote1 0))
-   (is (= 0 (count (:scored (get-corp)))) "Vosmash Sell-Off requires a cost be paid")
-   (is (no-prompt? state :corp) "No prompt for Vosmash because there are no targets")
-   (is (= 0 (count (:discard (get-corp)))) "Trashed PAD Campaign")
-   (is (= 0 (count (:scored (get-corp)))) "Vosmash Sell-Off completed")))
-
-(deftest vosmash-sell-off-cant-target-self
-  ;; Vosmash Sell-Off
-  (do-game
-   (new-game {:corp {:hand ["Vosmash Sell-Off", "PAD Campaign"]}
-              :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
-   (play-from-hand state :corp "Vosmash Sell-Off" "New remote")
-   (play-from-hand state :corp "PAD Campaign" "New remote")
-   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
-   (score state :corp (get-content state :remote1 0))
-   (is (= 0 (count (:scored (get-corp)))) "Vosmash Sell-Off requires a cost be paid")
-   (is (not (no-prompt? state :corp)) "Vosmash prompt active")
-   (click-card state :corp "Vosmash Sell-Off")
-   ;; check not scored
-   (is (= 0 (count (:scored (get-corp)))) "Vosmash Sell-Off can't target self")
-   (is (not (no-prompt? state :corp)) "Vosmash prompt still active")
-   (is (= 0 (count (:discard (get-runner)))) "No meat damage dealt")
-   (is (= 0 (count (:discard (get-corp)))) "No card trashed")
-   (is (= 0 (count (:scored (get-corp)))) "Vosmosh not scored")))
 
 (deftest vulcan-coverup
   ;; Vulcan Coverup
