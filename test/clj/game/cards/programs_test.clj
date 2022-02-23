@@ -153,6 +153,34 @@
       (is (:broken (first (:subroutines (get-ice state :rd 0))))
           "The break ability worked")))
 
+(deftest aghora-break-ability-interacts-with-xanadu
+    ;; Break ability targets ice with rez cost 4 or higher when using xanadu
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]
+                        :credits 10}
+                 :runner {:hand ["Aghora" "Xanadu"]
+                          :credits 20}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aghora")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (no-prompt? state :runner) "No break prompt")
+      (run-continue state :movement)
+      (run-jack-out state)
+      (play-from-hand state :runner "Xanadu")
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "Done")
+      (is (:broken (first (:subroutines (get-ice state :hq 0))))
+          "The break ability worked")))
+
 (deftest algernon-use-successful-run
     ;; Use, successful run
     (do-game
