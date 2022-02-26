@@ -2364,7 +2364,7 @@
                 :show-discard true
                 :choices {:card #(and (event? %)
                                       (in-discard? %))}
-                :effect (effect (play-instant eid target {:no-additional-cost true}))}]})
+                :effect (effect (play-instant eid target))}]})
 
 (defcard "Scrubber"
   {:recurring 2

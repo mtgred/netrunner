@@ -4572,6 +4572,28 @@
       (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (= 2 (count (:rfg (get-corp)))) "Two cards should be RFG now"))))
 
+(deftest same-old-thing
+  ;; Same Old Thing
+  (do-game
+      (new-game {:runner {:hand [(qty "Same Old Thing" 2)]
+                          :discard ["Lucky Find" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Same Old Thing")
+      (changes-val-macro
+          4 (:credit (get-runner))
+          "Sure Gamble is played from the Heap"
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-card state :runner "Sure Gamble"))
+      (is (= 1 (:click (get-runner))) "One click left")
+      (play-from-hand state :runner "Same Old Thing")
+      (core/gain state :runner :click 3)
+      (changes-val-macro
+          6 (:credit (get-runner))
+          "Lucky Find is played from the Heap"
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-card state :runner "Lucky Find"))
+      (is (zero? (:click (get-runner))) "No clicks left")))
+
 (deftest scrubber
   ;; Scrubber
   (do-game
