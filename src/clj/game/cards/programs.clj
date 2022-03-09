@@ -2131,7 +2131,7 @@
   (auto-icebreaker
    {:data {:counter {:power 6}}
     :abilities [(break-sub [:power 1] 1 "Sentry")
-                (break-sub [:trash] 1 "Sentry")
+                (break-sub [:trash-can] 1 "Sentry")
                 (strength-pump 2 3)]}))
 
 (defcard "Rezeki"
