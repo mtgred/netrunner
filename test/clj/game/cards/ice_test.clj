@@ -304,6 +304,54 @@
                           (click-prompt state :runner "No"))
        (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
+(deftest anemone
+  ;; Anemone
+  (do-game
+      (new-game {:corp {:hand ["Hedge Fund" (qty "Anemone" 2)]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Anemone" "HQ")
+      (play-from-hand state :corp "Anemone" "New remote")
+      (take-credits state :corp)
+      (let [anem1 (get-ice state :hq 0)
+            anem2 (get-ice state :remote1 0)]
+        (rez state :corp (refresh anem2))
+        (is (no-prompt? state :runner) "No Anemone trigger outside of run")
+        (run-on state "HQ")
+        (rez state :corp (refresh anem1))
+        (click-prompt state :corp "Yes")
+        (click-card state :corp "Hedge Fund")
+        (is (= 1 (count (:discard (get-corp)))) "Corp discards 1 card")
+        (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
+        (run-continue state)
+        (changes-val-macro 1 (count (:discard (get-runner)))
+                           "Runner suffered 1 net damage"
+                           (fire-subs state anem1)))))
+
+(deftest anemone-decline-to-pay-on-rez-cost
+  ;; Anemone
+  (do-game
+      (new-game {:corp {:hand ["Subliminal Messaging" (qty "Anemone" 2)]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Anemone" "HQ")
+      (play-from-hand state :corp "Anemone" "R&D")
+      (take-credits state :corp)
+      (let [anem1 (get-ice state :hq 0)
+            anem2 (get-ice state :rd 0)]
+        (run-on state "R&D")
+        (rez state :corp (refresh anem2))
+        (click-prompt state :corp "No")
+        (is (zero? (count (:discard (get-corp)))) "Corp discards no card")
+        (is (zero? (count (:discard (get-runner)))) "Runner took no damage")
+        (run-continue state)
+        (run-continue state :movement)
+        (run-jack-out state)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Subliminal Messaging")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (rez state :corp (refresh anem1))
+        (is (no-prompt? state :corp) "Corp cannot pay for Anemone's on-rez ability"))))
+
 (deftest ansel-1-0
   ;; Ansel 1.0
   (before-each [state (new-game {:corp {:hand ["Ansel 1.0" "NGO Front" "Merger"]

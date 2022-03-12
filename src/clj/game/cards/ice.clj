@@ -431,6 +431,18 @@
 
 ;; Card definitions
 
+(defcard "Anemone"
+  {:on-rez {:optional
+            {:prompt "Trash a card from HQ?"
+             :waiting-prompt "Corp to choose an option"
+             :req (req (and (and run this-server)
+                            (can-pay? state side eid card nil [:trash-from-hand 1])))
+             :yes-ability {:async true
+                           :cost [:trash-from-hand 1]
+                           :effect (req (continue-ability state :corp (do-net-damage 2) card nil))}
+             :no-ability {:effect (effect (system-msg :corp "declines to trash a card from HQ"))}}}
+   :subroutines [(do-net-damage 1)]})
+
 (defcard "Ansel 1.0"
   {:subroutines [trash-installed-sub
                  (install-from-hq-or-archives-sub)
