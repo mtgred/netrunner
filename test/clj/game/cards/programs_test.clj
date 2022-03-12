@@ -5227,6 +5227,45 @@
       (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")))
 
+(deftest revolver
+  ;; Revolver
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tribunal"]}
+               :runner {:deck ["Revolver"]}})
+    (play-from-hand state :corp "Tribunal" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Revolver")
+    (core/gain state :runner :credit 5)
+    (let [trib (get-ice state :hq 0)
+          rev (get-program state 0)]
+      (run-on state "HQ")
+      (rez state :corp trib)
+      (run-continue state)
+      (is (= 6 (get-counters rev :power)) "Start with 6 counters")
+      ;; boost strength
+      (card-ability state :runner rev 2)
+      (is (= 6 (:credit (get-runner))) "Spend 2 credit to boost")
+      (is (= 4 (get-strength (refresh rev))) "At strength 4 after boost")
+      ;; break
+      (card-ability state :runner rev 0)
+      (click-prompt state :runner "Force the Runner to trash an installed card")
+      (click-prompt state :runner "Force the Runner to trash an installed card")
+      (click-prompt state :runner "Force the Runner to trash an installed card")
+      (is (= 3 (get-counters (refresh rev) :power)) "3 counters used to break")
+      (run-continue state :movement)
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner rev 2)
+      (card-ability state :runner rev 0)
+      (click-prompt state :runner "Force the Runner to trash an installed card")
+      (click-prompt state :runner "Force the Runner to trash an installed card")
+      (click-prompt state :runner "Done")
+      (card-ability state :runner rev 1)
+      (click-prompt state :runner "Force the Runner to trash an installed card")
+      (is (nil? (refresh rev)) "Revolver should be trashed"))))
+
 (deftest rezeki
   ;; Rezeki - gain 1c when turn begins
   (do-game

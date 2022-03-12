@@ -2127,6 +2127,12 @@
                     :abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 3 :end-of-encounter {:label "add 3 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
+(defcard "Revolver"
+  (auto-icebreaker {:data {:counter {:power 6}}
+                    :abilities [(break-sub [:power 1] 1 "Sentry")
+                                (break-sub [:trash] 1 "Sentry")
+                                (strength-pump 2 3)]}))
+
 (defcard "Rezeki"
   {:events [{:event :runner-turn-begins
              :msg "gain 1 [Credits]"
