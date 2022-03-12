@@ -3751,6 +3751,38 @@
         (take-credits state :runner)
         (is (= 5 (hand-size :runner)) "Runner max hand size back to normal"))))
 
+(deftest vladisibirsk-city-grid
+  ;; Vladisibirsk City Grid
+  (do-game
+    (new-game {:corp {:hand ["Vladisibirsk City Grid" "Project Beale" "Bellona" "Anoetic Void"]}})
+    (core/gain state :corp :click 10)
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Vladisibirsk City Grid" "New remote")
+    (play-from-hand state :corp "Project Beale" "Server 1")
+    (play-from-hand state :corp "Anoetic Void" "Server 1")
+    (play-from-hand state :corp "Bellona" "New remote")
+    (let [vcg (get-content state :remote1 0)
+          beale (get-content state :remote1 1)
+          av (get-content state :remote1 2)
+          bellona (get-content state :remote2 0)]
+      (advance state vcg 4)
+      (rez state :corp vcg)
+      (card-ability state :corp vcg 0)
+      (is (= "Vladisibirsk City Grid" (-> (prompt-map :corp) :card :title)))
+      (click-card state :corp av)
+      (is (zero? (get-counters (refresh av) :advancement)) "Cannot select non-advanceable cards")
+      (click-card state :corp bellona)
+      (is (zero? (get-counters (refresh bellona) :advancement)) "Cannot select cards in a different server")
+      (click-card state :corp beale)
+      (is (= 2 (get-counters (refresh beale) :advancement)))
+      (card-ability state :corp vcg 0)
+      (is (no-prompt? state :corp) "Vladisibirsk City Grid can be activated only once per turn")
+      (take-credits state :corp)
+      (card-ability state :corp vcg 0)
+      (click-card state :corp beale)
+      (is (zero? (get-counters (refresh vcg) :advancement)))
+      (is (= 4 (get-counters (refresh beale) :advancement))))))
+
 (deftest warroid-tracker-trashing-warroid-directly-starts-trace
     ;; Trashing Warroid starts trace
     (do-game

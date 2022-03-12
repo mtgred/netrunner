@@ -1474,6 +1474,23 @@
                                 :req (req (= :runner side))
                                 :value -1}))}]})
 
+(defcard "Vladisibirsk City Grid"
+  {:advanceable :always
+   :abilities [{:label "Move 2 advancement tokens to another card"
+                :async true
+                :once :per-turn
+                :effect (effect (continue-ability
+                                  {:waiting-prompt "Corp to choose an option"
+                                   :prompt "Choose another card in the root of this sever that can be advanced"
+                                   :choices {:card #(and (in-same-server? % card)
+                                                         (not (same-card? % card))
+                                                         (can-be-advanced? %))}
+                                   :async true
+                                   :msg (msg "place 2 advancement tokens on " (card-str state target))
+                                   :cost [:advancement 2]
+                                   :effect (effect (add-prop target :advance-counter 2 {:placed true}))}
+                                  card nil))}]})
+
 (defcard "Warroid Tracker"
   (letfn [(wt [n]
             {:waiting-prompt "Runner to make a decision"
