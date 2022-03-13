@@ -22,7 +22,7 @@
 (defn messages-handler
   [{db :system/db
     user :user
-    {:keys [channel]} :params}]
+    {:keys [channel]} :path-params :as args}]
   (if user
     (let [messages (->> (q/with-collection
                           db msg-collection
@@ -71,8 +71,9 @@
                        :date      (inst/now)}
               inserted (mc/insert-and-return db msg-collection message)
               inserted (update inserted :_id str)
+              inserted (update inserted :date #(.toString %))
               connected-users (app-state/get-users)]
-          (doseq [uid (keys connected-users)
+          (doseq [uid (map :uid connected-users)
                   :when (or (= (:username user) uid)
                             (visible-to-user user {:username uid} connected-users))]
             (ws/broadcast-to! [uid] :chat/message inserted)))
