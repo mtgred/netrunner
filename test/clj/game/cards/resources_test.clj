@@ -3210,13 +3210,13 @@
       (is (= 1 (count (:discard (get-runner)))) "Liberated Account trashed")))
 
 (deftest light-the-fire-happy-path
-  ;; Light the Fire
+  ;; Light the Fire!
   (do-game
    (new-game {:corp {:hand ["Hokusai Grid"]}
-              :runner {:hand ["Light the Fire", "Sure Gamble", "Sure Gamble"]}})
+              :runner {:hand ["Light the Fire!", "Sure Gamble", "Sure Gamble"]}})
    (play-from-hand state :corp "Hokusai Grid" "New remote")
    (take-credits state :corp)
-   (play-from-hand state :runner "Light the Fire")
+   (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
    (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
@@ -3233,10 +3233,10 @@
   ;; Light the Fire - effect goes away after end of run
   (do-game
    (new-game {:corp {:hand ["Hokusai Grid"]}
-              :runner {:hand ["Light the Fire", "Sure Gamble", "Sure Gamble"]}})
+              :runner {:hand ["Light the Fire!", "Sure Gamble", "Sure Gamble"]}})
    (play-from-hand state :corp "Hokusai Grid" "New remote")
    (take-credits state :corp)
-   (play-from-hand state :runner "Light the Fire")
+   (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
    (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
@@ -3252,10 +3252,10 @@
   ;; Light the fire - effect applies if the corporation installs a card mid run
   (do-game
    (new-game {:corp {:hand ["Crick"] :discard ["Hokusai Grid"]}
-              :runner {:hand ["Sure Gamble" "Sure Gamble" "Light the Fire"]}})
+              :runner {:hand ["Sure Gamble" "Sure Gamble" "Light the Fire!"]}})
    (play-from-hand state :corp "Crick" "New remote")
    (take-credits state :corp)
-   (play-from-hand state :runner "Light the Fire")
+   (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
    (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
@@ -3277,7 +3277,7 @@
   (do-game
    (new-game {:corp {:hand ["Metamorph", "NGO Front", "Hokusai Grid"]
                      :credit 10}
-              :runner {:hand ["Light the Fire" "Sure Gamble" "Sure Gamble"]}})
+              :runner {:hand ["Light the Fire!" "Sure Gamble" "Sure Gamble"]}})
    (core/gain-clicks state :corp 5)
    (play-from-hand state :corp "NGO Front" "New remote")
    (play-from-hand state :corp "Metamorph" "Server 1")
@@ -3285,7 +3285,7 @@
    ;(let [ht (get-content state :remote2 0)]
    (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
    (take-credits state :corp)
-   (play-from-hand state :runner "Light the Fire")
+   (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
    (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")   
@@ -3313,7 +3313,7 @@
   (do-game
    (new-game {:corp {:hand ["Sand Storm", "NGO Front", "Hokusai Grid"]
                      :credit 10}
-              :runner {:hand ["Light the Fire" "Sure Gamble" "Sure Gamble"]}})
+              :runner {:hand ["Light the Fire!" "Sure Gamble" "Sure Gamble"]}})
    (core/gain-clicks state :corp 5)
    (play-from-hand state :corp "NGO Front" "New remote")
    (play-from-hand state :corp "Sand Storm" "Server 1")
@@ -3321,7 +3321,7 @@
    ;(let [ht (get-content state :remote2 0)]
    (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
    (take-credits state :corp)
-   (play-from-hand state :runner "Light the Fire")
+   (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
    (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")

@@ -1573,7 +1573,7 @@
                              :effect (effect (as-agenda :runner card 2))})
                           card nil))}]})
 
-(defcard "Light the Fire"
+(defcard "Light the Fire!"
   (letfn [(eligible? [state card server]
             (let [zone (:zone card)] (and (some #{:content} zone) (some #{server} zone))))
           (select-targets [state server]
