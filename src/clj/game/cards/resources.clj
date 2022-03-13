@@ -1646,9 +1646,8 @@
                     :effect (effect (register-events card [breach-ability])
                                     (register-events card [run-end-trigger pre-redirect-trigger corp-install-trigger])
                                     (disable-server (second (server->zone state target)))
-                                    (make-run (make-eid state eid) target card)
+                                    (make-run eid target card)
                                     (effect-completed eid))}]})))
->>>>>>> fd031bb57... WIP light the fire: fully disables cards, works when run is redirected, and when corporation installs during a run
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
