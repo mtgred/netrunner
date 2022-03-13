@@ -1569,7 +1569,7 @@
   (wall-ice [end-the-run end-the-run]))
 
 
-(defcard "Hakarl 1.0"
+(defcard "Hákarl 1.0"
   {:runner-abilities [(bioroid-break 1 1)]
    :subroutines [(do-brain-damage 1)
                  end-the-run]   
@@ -1579,7 +1579,7 @@
             :choices {:req (req (and (installed? target)
                                      (rezzed? target)
                                      (not (same-card? card target))))}
-            :waiting-prompt "Corp to resolve Hakarl 1.0"
+            :waiting-prompt "Corp to resolve Hákarl 1.0"
             :effect (effect (derez target)
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
                             (register-floating-effect
