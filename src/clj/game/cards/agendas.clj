@@ -220,6 +220,23 @@
                                  :effect (effect (add-prop :corp target :advance-counter c {:placed true}))})
                               card nil))}})
 
+(defcard "Azef Protocol"
+  (let [ability {:async true
+                 :msg "do 2 meat damage"
+                 :effect (effect (damage eid :meat 2 {:card card}))}
+        pay-score-cost {:waiting-prompt "Corp to make a decision"
+                        :prompt "Choose another installed card to trash"
+                        :msg (msg "trash " (card-str state target))
+                        :choices {:card #(and (installed? %)
+                                              (corp? %))}
+                        :effect (req (trash state side eid target {:unpreventable true})
+                                     (continue-ability state side ability card nil))}]
+    {:on-score pay-score-cost
+     :flags {:can-score (req (let [result (<= 2 (count (all-installed state :corp)))]
+                               (when-not result
+                                 (toast state :corp "Cannot score Azef Protocol without trashing another installed card." "warning"))
+                               result))}}))
+
 (defcard "Bacterial Programming"
   (letfn [(hq-step [remaining to-trash to-hq]
             {:async true

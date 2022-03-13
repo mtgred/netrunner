@@ -384,6 +384,25 @@
       (click-prompt state :runner "Steal")
       (is (= 4 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement tokens"))))
 
+(deftest azef-protocol
+  ;; Azef Protocol
+  (do-game
+    (new-game {:corp {:hand ["Azef Protocol" "Ice Wall"]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Azef Protocol" "New remote")
+    (let [azef (get-content state :remote1 0)]
+      (advance state azef 3)
+      (score state :corp (refresh azef))
+      (is (zero? (:agenda-point (get-corp))) "Corp should not be able to score Azef Protocol")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (score state :corp (refresh azef))
+      (is (not (no-prompt? state :runner)) "Runner waiting for Corp to pay additional cost to score Azef Protocol")
+      (click-card state :corp (get-ice state :hq 0))
+      (is (= 1 (count (:discard (get-corp)))) "Ice Wall trashed to pay Azef Protocol's score cost")
+      (is (= 2 (:agenda-point (get-corp))) "Scored Azef Protocol for 2 points")
+      (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards"))))
+
 (deftest bacterial-programming-scoring-should-not-cause-a-run-to-exist-for-runner
     ;; Scoring should not cause a run to exist for runner.
     (do-game
