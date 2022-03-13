@@ -577,17 +577,16 @@
            cost (merge-costs (mapv first additional-costs))
            cost-strs (build-cost-string cost)
            can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)]
-       (if (string/blank? cost-strs)
-         (resolve-score state side eid card)         
-         (if-not can-pay
-           (effect-completed state side eid) ;; << TODO - toast that corp cannot pay;
-           (wait-for (pay state side (make-eid state
-                                               (assoc eid :additional-costs additional-costs :source card :source-type :corp-score))
-                          nil cost 0)
-                     (let [payment-result async-result]
-                       (if (string/blank? (:msg payment-result))
-                         (effect-completed state side eid)
-                         (do
-                           (system-msg state side (str (:msg payment-result) " to score " (:title card)))
-                           (resolve-score state side eid card)))))))))))
+       (cond         
+         (string/blank? cost-strs) (resolve-score state side eid card)
+         (not can-pay) (effect-completed state side eid)
+         :else (wait-for (pay state side (make-eid state
+                                                   (assoc eid :additional-costs additional-costs :source card :source-type :corp-score))
+                              nil cost 0)
+                         (let [payment-result async-result]
+                           (if (string/blank? (:msg payment-result))
+                             (effect-completed state side eid)
+                             (do
+                               (system-msg state side (str (:msg payment-result) " to score " (:title card)))
+                               (resolve-score state side eid card))))))))))
          
