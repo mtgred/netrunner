@@ -4041,6 +4041,7 @@
         (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")
         (core/continue state :corp nil)
         (run-jack-out state)
+        (is (no-prompt? state :runner) "Mayfly not prompting to resolve each of its events")
         (is (= 1 (count (:discard (get-runner)))) "Mayfly trashed when run ends"))))
 
 (deftest mayfly-trash-does-not-trigger-dummy-box
