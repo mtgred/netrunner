@@ -72,7 +72,7 @@
                                       (in-hand? %)
                                       (corp? %))}
                 :msg (msg (corp-install-msg target))
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (corp-install eid target nil nil))}]})
 
 (defcard "Aggressive Secretary"
@@ -90,7 +90,7 @@
 (defcard "Alexa Belsky"
   {:abilities [{:label "Shuffle all cards in HQ into R&D"
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect
                           (continue-ability
                             {:waiting-prompt "Runner to make a decision"
@@ -118,7 +118,7 @@
   {:events [{:event :corp-install
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Gain 2 [Credits] for each counter on Alix T4LB07"
-                :cost [:click 1 :trash]
+                :cost [:click 1 :trash-can]
                 :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (* 2 (get-counters card :power))))}]})
@@ -143,7 +143,7 @@
              :effect (effect (complete-with-result eid targets))})]
     {:advanceable :always
      :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
-                  :cost [:trash]
+                  :cost [:trash-can]
                   :msg (msg "swap "
                          (quantify (max (count (:discard corp))
                                         (count (:hand corp))
@@ -241,7 +241,7 @@
                                     (lose-credits state :runner eid 1)))}]})
 
 (defcard "Bass CH1R180G4"
-  {:abilities [{:cost [:click 1 :trash]
+  {:abilities [{:cost [:click 1 :trash-can]
                 :msg "gain [Click][Click]"
                 :effect (effect (gain-clicks 2))}]})
 
@@ -264,7 +264,7 @@
                 :choices {:card #(and (not (operation? %))
                                       (in-hand? %)
                                       (corp? %))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (corp-install eid target nil nil))
                 :msg (msg (corp-install-msg target))}]})
@@ -307,7 +307,7 @@
                                 (lose-credits eid target))
                 :msg (msg "move " target " [Credit] to C.I. Fund")}
                {:label "Take all credits from C.I. Fund"
-                :cost [:credit 2 :trash]
+                :cost [:credit 2 :trash-can]
                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
@@ -495,14 +495,14 @@
   {:advanceable :always
    :abilities [{:label "Trash a connection"
                 :async true
-                :cost [:click 1 :trash]
+                :cost [:click 1 :trash-can]
                 :req (req (>= (get-counters card :advancement) 2))
                 :choices {:card #(has-subtype? % "Connection")}
                 :msg (msg "trash " (:title target))
                 :effect (effect (trash eid target nil))}
                {:label "Do 2 meat damage"
                 :async true
-                :cost [:click 1 :trash]
+                :cost [:click 1 :trash-can]
                 :req (req (>= (get-counters card :advancement) 2))
                 :msg "do 2 meat damage"
                 :effect (effect (damage eid :meat 2 {:card card}))}]})
@@ -697,7 +697,7 @@
 (defcard "Elizabeth Mills"
   {:on-rez {:msg "remove 1 bad publicity"
             :effect (effect (lose-bad-publicity 1))}
-   :abilities [{:cost [:click 1 :trash]
+   :abilities [{:cost [:click 1 :trash-can]
                 :label "Trash a location"
                 :msg (msg "trash " (:title target) " and take 1 bad publicity")
                 :choices {:card #(has-subtype? % "Location")}
@@ -719,7 +719,7 @@
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (req (let [counters (get-counters card :power)
                                    credits (* 2 counters)]
@@ -754,7 +754,7 @@
                 :choices (req (cancellable (filter asset?
                                                    (:deck corp))
                                            :sorted))
-                :cost [:credit 1 :trash]
+                :cost [:credit 1 :trash-can]
                 :label "Search R&D for an asset"
                 :async true
                 :effect (req (wait-for
@@ -782,7 +782,7 @@
   {:advanceable :always
    :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
                 :msg (msg "remove " (get-counters card :advancement) " bad publicity")
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (lose-bad-publicity (get-counters card :advancement)))}]})
 
 (defcard "False Flag"
@@ -868,7 +868,7 @@
 (defcard "GRNDL Refinery"
   {:advanceable :always
    :abilities [{:label "Gain 4 [Credits] for each advancement token on GRNDL Refinery"
-                :cost [:click 1 :trash]
+                :cost [:click 1 :trash-can]
                 :msg (msg "gain " (* 4 (get-counters card :advancement)) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (* 4 (get-counters card :advancement))))}]})
@@ -1028,7 +1028,7 @@
                {:async true
                 :label "Trash the top card of the Runner's Stack"
                 :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (mill :corp eid :runner 1))}]})
 
 (defcard "Kuwinda K4H1U3"
@@ -1207,7 +1207,7 @@
              :effect (effect (gain-credits eid 1))}]
    :abilities [{:label "Gain 2 [Credits]"
                 :msg "gain 2 [Credits]"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (gain-credits eid 2))}
                {:label "Gain 2 [Credits]"
@@ -1240,7 +1240,7 @@
                                                 :duration :until-runner-turn-begins
                                                 :effect (effect (lose-clicks :runner 1))}])
                              (add-counter state side card :power 1))}
-               {:cost [:click 1 :power 3 :trash]
+               {:cost [:click 1 :power 3 :trash-can]
                 :msg "gain 4 [Click] and trash itself"
                 :effect (effect (gain-clicks 4))}]})
 
@@ -1377,7 +1377,7 @@
                   :msg "place 2 power counters on itself"
                   :effect (effect (add-counter card :power 2))}
                  {:label "[Trash] and gain 2 [Credits] for each power counter"
-                  :cost [:click 1 :trash]
+                  :cost [:click 1 :trash-can]
                   :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                   :async true
                   :effect (effect (gain-credits eid (* 2 (get-counters card :power))))}]}))
@@ -1443,7 +1443,7 @@
 
 (defcard "NGO Front"
   (letfn [(builder [cost cred]
-            {:cost [:advancement cost :trash]
+            {:cost [:advancement cost :trash-can]
              :async true
              :effect (effect (gain-credits eid cred))
              :label (str "Gain " cred " [Credits]")
@@ -1604,7 +1604,7 @@
                              (damage-prevent state :corp :net 1))}
                {:msg (msg "deal " (get-counters card :power) " net damage")
                 :label "deal net damage"
-                :cost [[:click 2] [:trash]]
+                :cost [[:click 2] [:trash-can]]
                 :effect (effect (damage eid :net (get-counters card :power) {:card card}))}]})
 
 (defcard "Primary Transmission Dish"
@@ -1786,7 +1786,7 @@
                                :prompt "Move how many advancement tokens?"
                                :choices {:number (req (get-counters card :advancement))
                                          :default (req (get-counters card :advancement))}
-                               :cost [:trash]
+                               :cost [:trash-can]
                                :effect (effect (add-counter move-to :advancement target {:placed true})
                                                (system-msg (str "trashes Reconstruction Contract to move "
                                                                 (quantify target "advancement token")
@@ -1809,7 +1809,7 @@
 
 (defcard "Reversed Accounts"
   {:advanceable :always
-   :abilities [{:cost [:click 1 :trash]
+   :abilities [{:cost [:click 1 :trash-can]
                 :label "Force the Runner to lose 4 [Credits] per advancement"
                 :msg (msg "force the Runner to lose " (min (* 4 (get-counters card :advancement)) (:credit runner)) " [Credits]")
                 :async true
@@ -1848,7 +1848,7 @@
 
 (defcard "Ronin"
   {:advanceable :always
-   :abilities [{:cost [:click 1 :trash]
+   :abilities [{:cost [:click 1 :trash-can]
                 :req (req (>= (get-counters card :advancement) 4))
                 :msg "do 3 net damage"
                 :async true
@@ -1906,7 +1906,7 @@
                 :prompt "How many credits do you want to move?"
                 :choices {:counter :credit}
                 :msg (msg "trash itself and gain " target " [Credits]")
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (gain-credits eid target))}]})
 
@@ -1959,7 +1959,7 @@
                 :prompt "Choose an agenda to add to the bottom of R&D"
                 :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (req (wait-for
                                (reveal state side target)
@@ -1970,7 +1970,7 @@
                 :prompt "Choose an agenda to add to the bottom of R&D"
                 :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:discard corp)) :sorted))
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (req (wait-for
                                (reveal state side target)
@@ -2029,7 +2029,7 @@
    :abilities [{:label "Trace 3 - Give the Runner 1 tag"
                 :req (req (:corp-phase-12 @state))
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (continue-ability
                                   {:trace {:base 3
                                            :label "Trace 3 - Give the Runner 1 tag"
@@ -2198,7 +2198,7 @@
      :abilities [{:label "Derez 1 card for each advancement token"
                   :req (req (pos? (get-counters card :advancement)))
                   :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
-                  :cost [:trash]
+                  :cost [:trash-can]
                   :async true
                   :effect (req (let [advancements (get-counters card :advancement)
                                      wait-msg (str "Corp to derez " (quantify advancements "card"))]
@@ -2227,7 +2227,7 @@
   {:advanceable :always
    :abilities [{:label "Gain credits"
                 :msg (msg "gain " (* 2 (get-counters card :advancement)) " [Credits]")
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (gain-credits eid (* 2 (get-counters card :advancement))))}]})
 
@@ -2447,7 +2447,7 @@
                 :effect (effect (expose-prevent 1))}
                {:msg "prevent 1 card from being exposed"
                 :label "Prevent 1 card from being exposed"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (expose-prevent 1))}]})
 
 (defcard "Zealous Judge"

@@ -250,6 +250,7 @@
    rez-cost
    run-additional-cost-bonus
    run-cost
+   score-additional-cost-bonus
    trash-cost])
 
 (import-vars

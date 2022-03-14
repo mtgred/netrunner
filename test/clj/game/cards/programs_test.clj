@@ -5256,6 +5256,97 @@
       (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")))
 
+(deftest revolver-automatic-breaking
+  (do-game
+   (new-game {:corp {:hand ["Anansi"] :credits 10}
+              :runner {:hand ["Revolver" "Sure Gamble"] :credits 10}})
+   (play-from-hand state :corp "Anansi" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Revolver")
+   (let [anansi (get-ice state :hq 0)
+         revolver (get-program state 0)]
+     (is (= 6 (get-counters revolver :power)) "Starts with 6 counters")
+     (run-on state "HQ")
+     (rez state :corp anansi)
+     (run-continue state)
+     ;; boost/break     
+     (changes-val-macro
+       -4 (:credit (get-runner))
+       "Spent 4 credits matching Anansi strength"
+       (changes-val-macro
+         -3 (get-counters (refresh revolver) :power)
+         "Used 3 counters from revolver"
+         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh revolver)})
+         (core/continue state :corp nil)))
+     (is (= 0 (count (:discard (get-runner)))) "0 cards in discard"))))
+
+(deftest revolver-manual-breaking
+  (do-game
+   (new-game {:corp {:hand ["Anansi"] :credits 10}
+              :runner {:hand ["Revolver" "Sure Gamble"] :credits 10}})
+   (play-from-hand state :corp "Anansi" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Revolver")
+   (let [anansi (get-ice state :hq 0)
+         revolver (get-program state 0)]
+     (is (= 6 (get-counters revolver :power)) "Starts with 6 counters")
+     (run-on state "HQ")
+     (rez state :corp anansi)
+     (run-continue state)
+     ;; boost
+     (changes-val-macro
+       -4 (:credit (get-runner))
+       "Spent 4 credits matching Anansi strength"
+       (card-ability state :runner revolver 2)
+       (card-ability state :runner revolver 2))
+     ;; break
+     (changes-val-macro
+       -3 (get-counters (refresh revolver) :power)
+       "Used 3 counters from revolver"
+       (card-ability state :runner revolver 0)
+       (click-prompt state :runner "Do 1 net damage")
+       (click-prompt state :runner "Rearrange the top 5 cards of R&D")
+       (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
+     (run-continue state :movement)     
+     (run-jack-out state)
+     (is (= 0 (count (:discard (get-runner)))) "0 cards in discard"))))
+
+(deftest revolver-trash-ability
+  (do-game
+   (new-game {:corp {:hand ["Anansi"] :credits 10}
+              :runner {:hand ["Revolver" "Sure Gamble"] :credits 10}})
+   (play-from-hand state :corp "Anansi" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Revolver")
+   (let [anansi (get-ice state :hq 0)
+         revolver (get-program state 0)]
+     (is (= 6 (get-counters revolver :power)) "Starts with 6 counters")
+     (run-on state "HQ")
+     (rez state :corp anansi)
+     (run-continue state)
+     ;; boost
+     (changes-val-macro
+       -4 (:credit (get-runner))
+       "Spent 4 credits matching Anansi strength"
+       (card-ability state :runner revolver 2)
+       (card-ability state :runner revolver 2))
+     ;; break with counters
+     (changes-val-macro
+       -2 (get-counters (refresh revolver) :power)
+       "Used 2 counters from revolver"
+       (card-ability state :runner revolver 0)
+       (click-prompt state :runner "Do 1 net damage")
+       (click-prompt state :runner "Rearrange the top 5 cards of R&D")
+       (click-prompt state :runner "Done"))
+     (changes-val-macro
+       1 (count (:discard (get-runner)))
+       "One card added to discard"
+       (card-ability state :runner revolver 1)
+       (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
+     (run-continue state :movement)     
+     (run-jack-out state)
+     (is (= 1 (count (:discard (get-runner)))) "1 cards (revolver) in discard"))))
+
 (deftest rezeki
   ;; Rezeki - gain 1c when turn begins
   (do-game

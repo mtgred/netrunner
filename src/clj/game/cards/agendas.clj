@@ -220,6 +220,12 @@
                                  :effect (effect (add-prop :corp target :advance-counter c {:placed true}))})
                               card nil))}})
 
+(defcard "Azef Protocol"
+  {:additional-cost [:trash-other-installed 1]
+   :on-score {:async true
+              :msg "do 2 meat damage"
+              :effect (effect (damage eid :meat 2 {:card card}))}})
+
 (defcard "Bacterial Programming"
   (letfn [(hq-step [remaining to-trash to-hq]
             {:async true

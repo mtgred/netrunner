@@ -2164,11 +2164,11 @@
    :abilities [{:label "Avoid 3 tags"
                 :msg "avoid up to 3 tags"
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (tag-prevent :runner eid 3))}
                {:label "Prevent up to 3 damage"
                 :msg "prevent up to 3 damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :net 3)
                                 (damage-prevent :meat 3)
                                 (damage-prevent :brain 3))}]})
@@ -2325,7 +2325,7 @@
                        :once :per-run
                        :yes-ability
                        {:async true
-                        :cost [:installed (get-strength ice)]
+                        :cost [:trash-installed (get-strength ice)]
                         :msg (msg "trash " (card-str state ice))
                         :effect (effect (trash eid ice nil))}}}
                      {:optional
