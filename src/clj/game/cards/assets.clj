@@ -3,6 +3,7 @@
             [game.utils :refer :all]
             [jinteki.utils :refer :all]
             [clojure.pprint :as pprint]
+            [clojure.set :as set]
             [clojure.string :as string]))
 
 ;;; Asset-specific helpers
@@ -1695,6 +1696,10 @@
              :optional
              {:prompt "Swap two cards?"
               :req (req (and (pos? (:click corp))
+                             ;; don't prompt unless there's at least 1 card which type matches one among cards in Archives
+                             (not-empty (set/intersection
+                                          (into #{} (map :type (:discard corp)))
+                                          (into #{} (map :type corp-currently-drawing))))
                              (not-empty (turn-events state side :corp-draw))))
               :yes-ability
               {:once :per-turn
