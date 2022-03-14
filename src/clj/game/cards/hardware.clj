@@ -32,7 +32,7 @@
                 :choices {:card #(and (runner? %)
                                       (has-subtype? % "Icebreaker")
                                       (installed? %))}
-                :msg (msg "host it on " (card-str state target))
+                :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host (get-card state target) (get-card state card)))}
    :constant-effects [{:type :gain-subtype
                        :req (req (same-card? target (:host card)))
@@ -99,8 +99,8 @@
              :effect (effect (gain-clicks 1))}
             {:event :unsuccessful-run
              :async true
-             :effect (effect (system-msg "trashes Autoscripter")
-                             (trash eid card))}]})
+             :msg "trash itself"
+             :effect (effect (trash eid card))}]})
 
 (defcard "Blackguard"
   {:constant-effects [(mu+ 2)]
@@ -832,7 +832,7 @@
                                      card nil))))}]}))
 
 (defcard "Gebrselassie"
-  {:abilities [{:msg "host it on an installed non-AI icebreaker"
+  {:abilities [{:msg "host itself on an installed non-AI icebreaker"
                 :cost [:click 1]
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker")
@@ -893,7 +893,7 @@
 (defcard "Grimoire"
   {:constant-effects [(mu+ 2)]
    :events [{:event :runner-install
-             :silent (req true)
+             :interactive (req true)
              :req (req (has-subtype? (:card context) "Virus"))
              :effect (effect (add-counter (:card context) :virus 1))}]})
 
@@ -919,8 +919,8 @@
               :prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
               :yes-ability
               {:async true
-               :effect (req (system-msg state :runner "trashes Hijacked Router to force the Corp to lose 3 [Credits]")
-                            (wait-for (trash state :runner card {:unpreventable true})
+               :msg "force the Corp to lose 3 [Credits]"
+               :effect (req (wait-for (trash state :runner card {:unpreventable true})
                                       (lose-credits state :corp eid 3)))}}}]})
 
 (defcard "Hippo"
@@ -1301,7 +1301,7 @@
          :effect (effect (runner-install
                           (assoc eid :source card :source-type :runner-install)
                           target nil))
-         :cancel-effect (effect (system-msg :runner "declines to install a card with Pantograph")
+         :cancel-effect (effect (system-msg :runner "declines to use Pantograph to install a card")
                                 (effect-completed eid))}
         gain-credit-ability
         {:interactive (req true)
@@ -1487,8 +1487,8 @@
                     :interactive (req true)
                     :req (req (and (installed? (:card target))
                                    (program? (:card target))))
-                    :effect (effect (system-msg "trashes Q-Coherence Chip")
-                                    (trash eid card nil))}]
+                    :msg "trash itself"
+                    :effect (effect (trash eid card nil))}]
              [(assoc e :event :runner-trash)
               (assoc e :event :corp-trash)])})
 
@@ -1601,7 +1601,7 @@
 
 (defcard "Respirocytes"
   (let [ability {:once :per-turn
-                 :msg "draw 1 card and add a power counter"
+                 :msg "draw 1 card and place a power counter"
                  :async true
                  :effect (req (wait-for (draw state :runner 1)
                                         (add-counter state side (get-card state card) :power 1)
@@ -1828,8 +1828,8 @@
    :recurring 2
    :events [{:event :successful-trace
              :req (req run)
-             :effect (effect (system-msg (str "suffers 1 brain damage from Spinal Modem"))
-                             (damage eid :brain 1 {:card card}))}]
+             :msg "suffer 1 brain damage"
+             :effect (effect (damage eid :brain 1 {:card card}))}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
@@ -1876,7 +1876,7 @@
               :yes-ability {:msg "gain 2 [Credits]"
                             :async true
                             :effect (effect (gain-credits eid 2))}
-              :no-ability {:effect (effect (system-msg "chooses not to gain 2 [Credits] from Supercorridor"))}}}]
+              :no-ability {:effect (effect (system-msg "declines to use Supercorridor to gain 2 [Credits]"))}}}]
    :abilities [(set-autoresolve :auto-fire "Supercorridor")]})
 
 (defcard "Swift"
@@ -1929,8 +1929,8 @@
 
 (defcard "Titanium Ribs"
   {:on-install {:async true
+                :msg "suffer 2 meat damage"
                 :effect (effect (enable-runner-damage-choice)
-                                (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
                                 (damage eid :meat 2 {:unboostable true :card card}))}
    :leave-play (req (swap! state update :damage dissoc :damage-choose-runner))
    :events [{:event :pre-resolve-damage

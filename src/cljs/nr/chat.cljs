@@ -15,7 +15,7 @@
    [nr.news :refer [news]]
    [nr.translations :refer [tr tr-pronouns]]
    [nr.utils :refer [non-game-toast render-message set-scroll-top
-                     store-scroll-top]]
+                     store-scroll-top format-date-time day-word-with-time-formatter]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -188,7 +188,7 @@
                                  (block-user (:username message))
                                  (hide-block-menu msg-state))} (tr [:chat.block "Block User"])]
              [:div {:on-click #(hide-block-menu msg-state)} (tr [:chat.cancel "Cancel"])]]))
-        [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
+         [:span.date (format-date-time day-word-with-time-formatter (:date message))]]
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
          :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch @s))}

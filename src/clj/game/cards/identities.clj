@@ -354,7 +354,7 @@
                           :effect (req (chosen-damage state :corp target))}
                          card nil))}
               :no-ability
-              {:effect (req (system-msg state :corp "doesn't use Chronos Protocol to choose the first card trashed"))}}}]})
+              {:effect (req (system-msg state :corp "declines to use Chronos Protocol"))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:constant-effects [(hand-size+ -1)]})
@@ -1359,7 +1359,7 @@
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
                                      (corp? %)
                                      (in-hand? %))}
-                  :msg (msg "install a card in a remote server and place 1 advancement token on it")
+                  :msg "install a card in a remote server and place 1 advancement token on it"
                   :effect (effect (continue-ability (install-card target) card nil))}]}))
 
 (defcard "Seidr Laboratories: Destiny Defined"
@@ -1401,7 +1401,7 @@
                             (first-event? state :corp :rez #(has-subtype? (:card (first %)) "Advertisement"))))
              :async true
              :effect (effect (lose-credits :runner eid 1))
-             :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}]})
+             :msg "make the Runner lose 1 [Credits] by rezzing an Advertisement"}]})
 
 (defcard "Sportsmetal: Go Big or Go Home"
   (let [ab {:prompt "Gain 2 [Credits] or draw 2 cards?"
@@ -1534,7 +1534,7 @@
                                (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
                                (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
-                :msg (msg "flip their ID")}]})
+                :msg "flip their ID"}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game
@@ -1627,7 +1627,7 @@
 
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored
-             :msg (msg "add 1 agenda counter to " (:title (:card context)))
+             :msg (msg "place 1 agenda counter on " (:title (:card context)))
              :effect (effect (add-counter (get-card state (:card context)) :agenda 1))}]})
 
 (defcard "Valencia Estevez: The Angel of Cayambe"
