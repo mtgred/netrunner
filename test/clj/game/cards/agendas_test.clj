@@ -1691,7 +1691,7 @@
       (play-from-hand state :corp "Hyperloop Extension" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (is (= 7 (:credit (get-corp))) "Corp starts with 5 credits")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
       (click-prompt state :runner "Steal")
       (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")))
 
@@ -2768,8 +2768,8 @@
       (click-prompt state :runner "HQ")
       (run-continue state)
       (click-prompt state :runner "Steal")
-      (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on it")
-      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
+      (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on itself")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on itself")))
 
 (deftest project-vacheron-scoring-other-agendas-shouldn-t-increase-number-of-agenda-counters-issue-4715
     ;; Scoring other agendas shouldn't increase number of agenda counters. Issue #4715
@@ -2780,10 +2780,10 @@
       (take-credits state :corp)
       (run-empty-server state :hq)
       (click-prompt state :runner "Steal")
-      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on itself")
       (run-empty-server state :remote1)
       (click-prompt state :runner "Steal")
-      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on itself")))
 
 (deftest project-vacheron-stealing-from-archives-shouldn-t-add-any-counters-issue-4799
     ;; Stealing from Archives shouldn't add any counters. Issue #4799
@@ -2795,7 +2795,7 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (click-prompt state :runner "Steal")
-      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on it")))
+      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on itself")))
 
 (deftest project-vacheron-still-adds-counters-when-swapped-with-turntable-5036
     ;; Still adds counters when swapped with Turntable #5036
@@ -3083,6 +3083,30 @@
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
     (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
 
+(deftest rebranding-team-not-active-while-in-runner-score-area
+  ;; Rebranding Team - not active while in the Runner's score area
+  (do-game
+    (new-game {:corp {:deck ["Rebranding Team" "Project Beale" "Museum of History" "Exchange of Information" "Exchange of Information"]}})
+    (play-from-hand state :corp "Rebranding Team" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Remote 1")
+    (click-prompt state :runner "Steal")
+    (is (not (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))
+    (take-credits state :runner)
+    (core/gain state :corp :click 3)
+    (play-and-score state "Project Beale")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Rebranding Team" (:scored (get-runner))))
+    (click-card state :corp (find-card "Project Beale" (:scored (get-corp))))
+    (is (last-log-contains? state "make all assets gain Advertisement")
+          "Rebranding Team prints its log")
+    (is (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement"))
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Project Beale" (:scored (get-runner))))
+    (click-card state :corp (find-card "Rebranding Team" (:scored (get-corp))))
+    (is (not (has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))))
+
 (deftest reeducation-simple-test
     ;; Simple test
     (do-game
@@ -3162,6 +3186,30 @@
       (is (= 5 (hand-size :corp)))
       (play-and-score state "Remote Data Farm")
       (is (= 7 (hand-size :corp)))))
+
+(deftest remote-data-farm-logging-when-entering-the-corp-score-area
+  ;; Remote Data Farm - logging when entering the Corp's score area
+  (do-game
+    (new-game {:corp {:deck ["Remote Data Farm" "Project Beale" "Exchange of Information" "Exchange of Information"]}})
+    (play-from-hand state :corp "Remote Data Farm" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Remote 1")
+    (click-prompt state :runner "Steal")
+    (is (= 5 (hand-size :corp)))
+    (take-credits state :runner)
+    (core/gain state :corp :click 3)
+    (play-and-score state "Project Beale")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Remote Data Farm" (:scored (get-runner))))
+    (click-card state :corp (find-card "Project Beale" (:scored (get-corp))))
+    (is (last-log-contains? state "increase their maximum hand size by 2")
+          "Remote Data Farm prints its log")
+    (is (= 7 (hand-size :corp)))
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Project Beale" (:scored (get-runner))))
+    (click-card state :corp (find-card "Remote Data Farm" (:scored (get-corp))))
+    (is (= 5 (hand-size :corp)))))
 
 (deftest remote-data-farm-removed-from-runner-score-area-issue-5109
     ;; removed from runner score area. Issue #5109
@@ -3350,6 +3398,30 @@
     (is (= 5 (hand-size :runner)) "Runner's hand size starts at 5")
     (play-and-score state "Self-Destruct Chips")
     (is (= 4 (hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
+
+(deftest self-destruct-chips-logging-when-entering-the-corp-score-area
+  ;; Self-Destruct Chips - logging when entering the Corp's score area
+  (do-game
+    (new-game {:corp {:deck ["Self-Destruct Chips" "Project Vitruvius" "Exchange of Information" "Exchange of Information"]}})
+    (play-from-hand state :corp "Self-Destruct Chips" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Remote 1")
+    (click-prompt state :runner "Steal")
+    (is (= 5 (hand-size :runner)))
+    (take-credits state :runner)
+    (core/gain state :corp :click 3)
+    (play-and-score state "Project Vitruvius")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Self-Destruct Chips" (:scored (get-runner))))
+    (click-card state :corp (find-card "Project Vitruvius" (:scored (get-corp))))
+    (is (last-log-contains? state "decrease the Runner's maximum hand size by 1")
+          "Self-Destruct Chips prints its log")
+    (is (= 4 (hand-size :runner)))
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Project Vitruvius" (:scored (get-runner))))
+    (click-card state :corp (find-card "Self-Destruct Chips" (:scored (get-corp))))
+    (is (= 5 (hand-size :runner)))))
 
 (deftest send-a-message
   ;; Send a Message

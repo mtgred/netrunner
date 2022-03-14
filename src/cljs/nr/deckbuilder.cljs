@@ -13,7 +13,7 @@
    [nr.deck-status :refer [deck-status-span]]
    [nr.translations :refer [tr tr-faction tr-format tr-side tr-type]]
    [nr.utils :refer [alliance-dots banned-span cond-button
-                     deck-points-card-span dots-html format->slug format-zoned-date-time
+                     deck-points-card-span dots-html format->slug format-date-time
                      influence-dot influence-dots mdy-formatter non-game-toast num->percent
                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top]]
    [nr.ws :as ws]
@@ -528,7 +528,7 @@
 
 (defn deck-date [deck]
   (when-let [date (:date deck)]
-    (format-zoned-date-time mdy-formatter date)))
+    (format-date-time mdy-formatter date)))
 
 (defn deck-stats-line [deck]
   (r/with-let [deckstats (r/cursor app-state [:options :deckstats])]
@@ -804,18 +804,19 @@
               (not= "none" (get-in @app-state [:options :deckstats])))
      [:button {:on-click #(clear-deck-stats s)}
       (tr [:deck-builder.clear-stats "Clear Stats"])])
-   (let [disabled (or (:editing-game @app-state false)
-                      (:gameid @app-state false)
-                      (and (not= (:format deck) "casual")
-                           (not (validator/legal-deck? deck))))]
-     [:button.float-right {:href "/play"
-                           :on-click #(do
-                                        (swap! app-state assoc :create-game-deck (:deck @s))
-                                        ; (.setToken history "/play")
-                                        )
-                           :disabled disabled
-                           :class (when disabled "disabled")}
-      (tr [:deck-builder.create-game "Create Game"])])])
+   ;; (let [disabled (or (:editing-game @app-state false)
+   ;;                    (:gameid @app-state false)
+   ;;                    (and (not= (:format deck) "casual")
+   ;;                         (not (validator/legal-deck? deck))))]
+   ;;   [:button.float-right {:href "/play"
+   ;;                         :on-click #(do
+   ;;                                      (swap! app-state assoc :create-game-deck (:deck @s))
+   ;;                                      ; (.setToken history "/play")
+   ;;                                      )
+   ;;                         :disabled disabled
+   ;;                         :class (when disabled "disabled")}
+   ;;    (tr [:deck-builder.create-game "Create Game"])])
+   ])
 
 (defn selected-panel
   [s]

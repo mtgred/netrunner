@@ -507,7 +507,6 @@
                content])))))
 
 (defn help []
-  (println "rendering help")
   [:div.page-container
    [:div.help-bg]
    [:div.help.panel.content-page.blue-shade

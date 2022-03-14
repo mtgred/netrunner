@@ -1196,7 +1196,7 @@
       (play-from-hand state :runner "Dadiana Chacon")
       (play-from-hand state :runner "Corroder")
       (is (last-n-log-contains? state 3 "Runner spends \\[Click\\] and pays 0 \\[Credits\\] to install Dadiana Chacon."))
-      (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to trashes Dadiana Chacon and suffers 3 meat damage."))
+      (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to trash itself and suffers 3 meat damage."))
       (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder."))))
 
@@ -1449,7 +1449,7 @@
       (is (= "Corroder" (:title (nth (:deck (get-runner)) 1))))
       (take-credits state :corp)
       (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
-      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards")))
+      (is (last-log-contains? state "uses District 99 to place 1 power counter on itself") "D99 checks both cards")))
 
 (deftest district-99-happy-path
     ;; Happy Path
@@ -3070,10 +3070,10 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on it")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on itself")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")))
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")))
 
 (deftest kasi-string-no-counter-when-stealing-agenda
     ;; No counter when stealing agenda
@@ -3085,7 +3085,7 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
-      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it")))
+      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on itself")))
 
 (deftest kasi-string-triggers-only-on-remote-server
     ;; Triggers only on remote server
@@ -3098,17 +3098,17 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
       (is (= 1 (get-counters (get-resource state 0) :power))
-          "Kasi String should have 0 power counter on it - no trigger on HQ")
+          "Kasi String should have 0 power counter on itself - no trigger on HQ")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
@@ -4572,6 +4572,28 @@
       (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (= 2 (count (:rfg (get-corp)))) "Two cards should be RFG now"))))
 
+(deftest same-old-thing
+  ;; Same Old Thing
+  (do-game
+      (new-game {:runner {:hand [(qty "Same Old Thing" 2)]
+                          :discard ["Lucky Find" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Same Old Thing")
+      (changes-val-macro
+          4 (:credit (get-runner))
+          "Sure Gamble is played from the Heap"
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-card state :runner "Sure Gamble"))
+      (is (= 1 (:click (get-runner))) "One click left")
+      (play-from-hand state :runner "Same Old Thing")
+      (core/gain state :runner :click 3)
+      (changes-val-macro
+          6 (:credit (get-runner))
+          "Lucky Find is played from the Heap"
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-card state :runner "Lucky Find"))
+      (is (zero? (:click (get-runner))) "No clicks left")))
+
 (deftest scrubber
   ;; Scrubber
   (do-game
@@ -5547,6 +5569,16 @@
    (click-prompt state :runner "Diversion of Funds")
    (is (no-prompt? state :runner) "No prompt from The Class Act")
    (is (empty? (find-card "Sure Gamble" (:hand (:runner @state)))) "Sure Gamble has not been drawn")))
+
+(deftest the-class-act-no-trigger-when-drawing-one-card
+  ;; no trigger when drawing one card
+  (do-game
+   (new-game {:runner {:deck ["Sure Gamble"]
+                       :hand ["The Class Act"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "The Class Act")
+   (click-draw state :runner)
+   (is (no-prompt? state :runner) "No prompt from The Class Act")))
 
 (deftest the-class-act-no-lingering-bonus-draw-effect-if-no-cards-in-deck
   ;; The Class Act - Issue #6132 - No lingering bonus draw effect if no cards in deck

@@ -153,6 +153,34 @@
       (is (:broken (first (:subroutines (get-ice state :rd 0))))
           "The break ability worked")))
 
+(deftest aghora-break-ability-interacts-with-xanadu
+    ;; Break ability targets ice with rez cost 4 or higher when using xanadu
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Rototurret"]
+                        :credits 10}
+                 :runner {:hand ["Aghora" "Xanadu"]
+                          :credits 20}})
+      (play-from-hand state :corp "Rototurret" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aghora")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (no-prompt? state :runner) "No break prompt")
+      (run-continue state :movement)
+      (run-jack-out state)
+      (play-from-hand state :runner "Xanadu")
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (is (seq (:prompt (get-runner))) "Have a break prompt")
+      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "Done")
+      (is (:broken (first (:subroutines (get-ice state :hq 0))))
+          "The break ability worked")))
+
 (deftest algernon-use-successful-run
     ;; Use, successful run
     (do-game
@@ -1841,14 +1869,14 @@
       (let [had (get-ice state :hq 1)
             iw (get-ice state :hq 0)
             d4 (get-program state 0)]
-        (is (= 3 (get-counters d4 :power)) "D4v1d installed with 3 power tokens")
+        (is (= 3 (get-counters d4 :power)) "D4v1d installed with 3 power counters")
         (run-on state :hq)
         (rez state :corp had)
         (run-continue state)
         (card-ability state :runner d4 0)
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "End the run")
-        (is (= 1 (get-counters (refresh d4) :power)) "Used 2 power tokens from D4v1d to break")
+        (is (= 1 (get-counters (refresh d4) :power)) "Used 2 power counters from D4v1d to break")
         (run-continue state)
         (rez state :corp iw)
         (run-continue state)
@@ -3440,7 +3468,7 @@
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 0)
-        (click-prompt state :runner "Trace 3 - Add 1 power counter")
+        (click-prompt state :runner "Trace 3 - Place 1 power counter")
         (run-continue state)
         (click-prompt state :runner "Yes")
         (click-card state :runner "Vanilla")
@@ -4041,6 +4069,7 @@
         (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")
         (core/continue state :corp nil)
         (run-jack-out state)
+        (is (no-prompt? state :runner) "Mayfly not prompting to resolve each of its events")
         (is (= 1 (count (:discard (get-runner)))) "Mayfly trashed when run ends"))))
 
 (deftest mayfly-trash-does-not-trigger-dummy-box
@@ -5649,6 +5678,28 @@
         (run-continue state)
         (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
         (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
+
+(deftest sneakdoor-beta-deflected-successful-run
+  ;;sneakdoor beta should not access hq when deflected from archives
+  (do-game
+   (new-game {:corp {:hand ["Mind Game"] :deck ["NGO Front"]}
+              :runner {:hand ["Sneakdoor Beta"]}})
+   (play-from-hand state :corp "Mind Game" "Archives")
+   (let [mindgame (get-ice state :archives 0)]
+     (rez state :corp mindgame)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Sneakdoor Beta")
+     (let [sb (get-program state 0)]
+       (card-ability state :runner sb 0)
+       (run-continue state)
+       (fire-subs state (refresh mindgame))
+       (click-prompt state :corp "1 [Credits]")
+       (click-prompt state :runner "0 [Credits]")
+       (click-prompt state :corp "R&D")
+       (click-prompt state :runner "No")
+       (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D")
+       (run-continue state)
+       (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D (not HQ)")))))
 
 (deftest sneakdoor-beta-sneakdoor-beta-trashed-during-run
     ;; Sneakdoor Beta trashed during run
