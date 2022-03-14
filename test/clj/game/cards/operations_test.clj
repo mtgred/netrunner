@@ -824,7 +824,7 @@
     (play-from-hand state :corp "Dedication Ceremony")
     (click-card state :corp "Underway Renovation")
     (let [under (get-content state :remote1 0)]
-      (is (= 3 (get-counters under :advancement)) "Underway Renovation has 3 advancement counters on it")
+      (is (= 3 (get-counters under :advancement)) "Underway Renovation has 3 advancement counters on itself")
       (score state :corp (refresh under))
       (is (refresh under) "Underway Renovation isn't scored because of Dedication Ceremony")
       (play-and-score state "Hostile Takeover")
@@ -2888,7 +2888,7 @@
     (let [credits (:credit (get-corp))]
       (click-prompt state :corp "Server 1")
       (is (= credits (:credit (get-corp))) "Installing another ice in an iced server shouldn't cost credits")
-      (is (= 3 (get-counters (get-ice state :remote1 1) :advancement)) "Ice Wall should be installed with 3 counters on it"))))
+      (is (= 3 (get-counters (get-ice state :remote1 1) :advancement)) "Ice Wall should be installed with 3 counters on itself"))))
 
 (deftest product-recall
   ;; Crisium Grid

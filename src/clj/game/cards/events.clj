@@ -841,7 +841,7 @@
                             {:optional
                              {:prompt "Shuffle Direct Access into the Stack?"
                               :yes-ability
-                              {:msg (msg "shuffles Direct Access into the Stack")
+                              {:msg "shuffle itself into the Stack"
                                :effect (effect (move (get-card state card) :deck)
                                                (shuffle! :deck))}}}
                             card nil))}]})
@@ -1298,7 +1298,7 @@
 
 (defcard "\"Freedom Through Equality\""
   {:events [{:event :agenda-stolen
-             :msg "add it to their score area as an agenda worth 1 agenda point"
+             :msg "add itself to their score area as an agenda worth 1 agenda point"
              :effect (req (as-agenda state :runner card 1))}]})
 
 (defcard "Freelance Coding Contract"
@@ -1850,7 +1850,7 @@
     :choices (req runnable-servers)
     :msg (msg "make a run on " target
               (when (<= (count (filter program? (all-active-installed state :runner))) 3)
-                ", adding +2 strength to all icebreakers"))
+                ", giving +2 strength to all icebreakers"))
     :async true
     :effect (req (when (<= (count (filter program? (all-active-installed state :runner))) 3)
                    (pump-all-icebreakers state side 2 :end-of-run))
@@ -2125,7 +2125,7 @@
                               {:prompt "Pay 1 [Credits] to add Networking to Grip?"
                                :yes-ability
                                {:cost [:credit 1]
-                                :msg "add it to their Grip"
+                                :msg "add itself to their Grip"
                                 :effect (effect (move card :hand))}}}
                              card nil)))}})
 
@@ -2134,7 +2134,7 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :msg "add it to their score area as an agenda worth 1 agenda point"
+    :msg "add itself to their score area as an agenda worth 1 agenda point"
     :effect (req (as-agenda state :runner card 1))}})
 
 (defcard "Office Supplies"
@@ -2272,7 +2272,7 @@
                :ability
                {:prompt "Choose an agenda to host Political Graffiti on"
                 :choices {:req (req (in-corp-scored? state side target))}
-                :msg (msg "host Political Graffiti on " (:title target) " as a hosted condition counter")
+                :msg (msg "host itself on " (:title target) " as a hosted condition counter")
                 :async true
                 :effect (req (wait-for (install-as-condition-counter state side (make-eid state eid) card target)
                                        (update-all-agenda-points state side)
@@ -2382,7 +2382,7 @@
    :on-play {:prompt "Choose a server"
              :choices (req runnable-servers)
              :msg (msg (if (<= (count (:hand runner)) 2)
-                         "make a run, and adds +2 strength to installed icebreakers"
+                         "make a run, and give +2 strength to installed icebreakers"
                          "make a run"))
              :async true
              :effect (req (when (<= (count (:hand runner)) 2)
@@ -2406,7 +2406,7 @@
                   {:choices {:card #(and (is-remote? (second (get-zone %)))
                                          (= (last (get-zone %)) :content)
                                          (not (:rezzed %)))}
-                   :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
+                   :msg (msg "place " (quantify c "advancement token") " on a card and gain " (* 2 c) " [Credits]")
                    :async true
                    :effect (req (wait-for (gain-credits state side (* 2 c))
                                           (add-prop state :corp target :advance-counter c {:placed true})

@@ -1691,7 +1691,7 @@
       (play-from-hand state :corp "Hyperloop Extension" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (is (= 7 (:credit (get-corp))) "Corp starts with 5 credits")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
       (click-prompt state :runner "Steal")
       (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")))
 
@@ -2768,8 +2768,8 @@
       (click-prompt state :runner "HQ")
       (run-continue state)
       (click-prompt state :runner "Steal")
-      (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on it")
-      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
+      (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on itself")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on itself")))
 
 (deftest project-vacheron-scoring-other-agendas-shouldn-t-increase-number-of-agenda-counters-issue-4715
     ;; Scoring other agendas shouldn't increase number of agenda counters. Issue #4715
@@ -2780,10 +2780,10 @@
       (take-credits state :corp)
       (run-empty-server state :hq)
       (click-prompt state :runner "Steal")
-      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on itself")
       (run-empty-server state :remote1)
       (click-prompt state :runner "Steal")
-      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on it")))
+      (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on itself")))
 
 (deftest project-vacheron-stealing-from-archives-shouldn-t-add-any-counters-issue-4799
     ;; Stealing from Archives shouldn't add any counters. Issue #4799
@@ -2795,7 +2795,7 @@
       (take-credits state :corp)
       (run-empty-server state :archives)
       (click-prompt state :runner "Steal")
-      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on it")))
+      (is (zero? (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 0 tokens on itself")))
 
 (deftest project-vacheron-still-adds-counters-when-swapped-with-turntable-5036
     ;; Still adds counters when swapped with Turntable #5036

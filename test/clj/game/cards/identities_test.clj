@@ -796,7 +796,7 @@
     (let [rs (get-content state :remote1 0)]
       (rez state :corp rs)
       (click-prompt state :corp "3")
-      (is (= 3 (get-counters (refresh rs) :power)) "Reduced Service should have 3 counters on it")
+      (is (= 3 (get-counters (refresh rs) :power)) "Reduced Service should have 3 counters on itself")
       (take-credits state :corp)
       (take-credits state :runner)
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
@@ -804,7 +804,7 @@
       (is (nil? (refresh rs)) "Reduced Service is picked up")
       (is (find-card "Reduced Service" (:hand (get-corp))) "Reduced Service is now in HQ"))
     (play-from-hand state :corp "Reduced Service" "New remote")
-    (is (zero? (get-counters (get-content state :remote2 0) :power)) "Reduced Service should have 0 counters on it after reinstall")))
+    (is (zero? (get-counters (get-content state :remote2 0) :power)) "Reduced Service should have 0 counters on itself after reinstall")))
 
 (deftest cerebral-imaging-infinite-frontiers
   ;; Cerebral Imaging - Maximum hand size equal to credits

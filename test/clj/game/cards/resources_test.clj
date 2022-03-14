@@ -1449,7 +1449,7 @@
       (is (= "Corroder" (:title (nth (:deck (get-runner)) 1))))
       (take-credits state :corp)
       (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
-      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards")))
+      (is (last-log-contains? state "uses District 99 to place 1 power counter on itself") "D99 checks both cards")))
 
 (deftest district-99-happy-path
     ;; Happy Path
@@ -3070,10 +3070,10 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on it")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on itself")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")))
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")))
 
 (deftest kasi-string-no-counter-when-stealing-agenda
     ;; No counter when stealing agenda
@@ -3085,7 +3085,7 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
-      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it")))
+      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on itself")))
 
 (deftest kasi-string-triggers-only-on-remote-server
     ;; Triggers only on remote server
@@ -3098,17 +3098,17 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
       (is (= 1 (get-counters (get-resource state 0) :power))
-          "Kasi String should have 0 power counter on it - no trigger on HQ")
+          "Kasi String should have 0 power counter on itself - no trigger on HQ")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")

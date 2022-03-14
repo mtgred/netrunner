@@ -417,12 +417,12 @@
              :msg "gain 1 [Credits]"}]})
 
 (defcard "Aumakua"
-  (auto-icebreaker {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
+  (auto-icebreaker {:implementation "Place counters manually for access outside of a run or cards that replace access like Ash"
                     ; We would need a :once :per-access key to make this work for Gang Sign etc.
                     :abilities [(break-sub 1 1)
-                                {:label "Add a virus counter"
-                                 :effect (effect (system-msg "manually adds a virus counter to Aumakua")
-                                                 (add-counter card :virus 1))}]
+                                {:label "Place a virus counter"
+                                 :msg "manually place a virus counter on itself"
+                                 :effect (effect (add-counter card :virus 1))}]
                     :strength-bonus (req (get-virus-counters state card))
                     :events [{:event :run-ends
                               :req (req (and (not (or (:did-trash target)
@@ -461,8 +461,8 @@
   {:implementation "Bankroll gains credits automatically."
    :events [{:event :successful-run
              :req (req (not (= "Jak Sinclair" (get-in run [:source-card :title])))) ;; TODO: dirty hack
-             :effect (effect (add-counter card :credit 1)
-                             (system-msg "places 1 [Credit] on Bankroll"))}]
+             :msg "place 1 [Credit] on itself"
+             :effect (effect (add-counter card :credit 1))}]
    :abilities [{:label "Take all credits from Bankroll"
                 :async true
                 ;; Cannot trash unless there are counters (so game state changes)
@@ -506,7 +506,7 @@
                                                           (= (last (get-zone %)) :ices)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %))))}
-                                  :msg (msg "host it on " (card-str state target))
+                                  :msg (msg "host itself on " (card-str state target))
                                   :effect (effect (host target card))}
                                  card nil)))}]
    :constant-effects [{:type :ice-strength
@@ -551,7 +551,7 @@
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :player :runner ; Needed for when the run is ended by the Corp
-                              :prompt "Choose a non-virus program to put on top of your stack."
+                              :prompt "Choose a non-virus program to add to the top of your stack."
                               :choices {:card #(and (installed? %)
                                                     (program? %)
                                                     (not (facedown? %))
@@ -595,7 +595,7 @@
                     :events [{:event :subroutines-broken
                               :req (req (and (all-subs-broken-by-card? target card)
                                              (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
-                              :msg (msg "gain 2 [Credits]")
+                              :msg "gain 2 [Credits]"
                               :async true
                               :effect (effect (gain-credits :runner eid 2))}]}))
 
@@ -703,9 +703,9 @@
               :waiting-prompt "Runner to choose an option"
               :autoresolve (get-autoresolve :auto-conduit)
               :prompt "Use Conduit?"
-              :yes-ability {:msg "add 1 virus counter to Conduit"
+              :yes-ability {:msg "place 1 virus counter on itself"
                             :effect (effect (add-counter card :virus 1))}
-              :no-ability {:effect (effect (system-msg "does not add counter to Conduit"))}}}
+              :no-ability {:effect (effect (system-msg "declines to use Conduit to place a virus counter on itself"))}}}
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
@@ -1092,7 +1092,7 @@
                                 (update-mu))}]})
 
 (defcard "Eater"
-  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg (msg "access not more than 0 cards for the remainder of this run")
+  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg "access not more than 0 cards for the remainder of this run"
                                                                            :effect (req (max-access state 0))}
                                                       :label "break 1 subroutine and access 0 cards"})
                                 (strength-pump 1 1)]}))
@@ -1425,12 +1425,12 @@
 
 (defcard "Ika"
   (auto-icebreaker {:abilities [{:label "Host Ika on a piece of ice"
-                                 :prompt (msg "Host Ika on a piece of ice")
+                                 :prompt "Host Ika on a piece of ice"
                                  :cost [:credit 2]
                                  :choices {:card #(and (ice? %)
                                                        (installed? %)
                                                        (can-host? %))}
-                                 :msg (msg "host it on " (card-str state target))
+                                 :msg (msg "host itself on " (card-str state target))
                                  :effect (effect (host target card))}
                                 (break-sub 1 2 "Sentry")
                                 (strength-pump 2 3)]}))
@@ -1539,7 +1539,7 @@
                                                             (installed? %)
                                                             (can-host? %)
                                                             (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
-                                    :msg (msg "host it on " (card-str state target))
+                                    :msg (msg "host itself on " (card-str state target))
                                     :effect (effect (host target card))}
                                    card nil)))}
                  (break-sub 2 1 "All" {:req knight-req})]}))
@@ -1571,7 +1571,7 @@
 (defcard "Leech"
   {:events [{:event :successful-run
              :req (req (is-central? (target-server context)))
-             :msg "add 1 virus counter to Leech"
+             :msg "place 1 virus counter on itself"
              :effect (req (add-counter state side card :virus 1))}]
    :autoresolve (get-autoresolve :auto-fire)
    :abilities [{:cost [:virus 1]
@@ -1634,7 +1634,7 @@
                                                            (fn [targets]
                                                              (let [context (first targets)]
                                                                (all-subs-broken-by-card? (:ice context) card))))))
-                              :msg (msg "gain 1 [Credits]")
+                              :msg "gain 1 [Credits]"
                               :async true
                               :effect (effect (gain-credits :runner eid 1))}]}))
 
@@ -1647,7 +1647,7 @@
                                  :req (req (:runner-phase-12 @state))
                                  :async true
                                  :effect (effect (add-counter card :power (cost-value eid :x-credits)))
-                                 :msg (msg "place " (cost-value eid :x-credits) " power counters on it")}
+                                 :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")}
                                 (break-sub [:power 1] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
@@ -1789,7 +1789,7 @@
                     :strength-bonus (req (get-counters card :power))
                     :events [{:event :end-of-encounter
                               :req (req (all-subs-broken-by-card? (:ice context) card))
-                              :msg "place 1 power counter on it"
+                              :msg "place 1 power counter on itself"
                               :effect (effect (add-counter card :power 1))}]}))
 
 (defcard "Ninja"
@@ -1953,7 +1953,7 @@
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
                                       (is-central? (second (get-zone %))))}
-                :msg (msg "host it on " (card-str state target))
+                :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:label "Advance to next piece of ice"
                 :prompt "Choose the next innermost piece of ice to host Pawn on it"
@@ -1961,7 +1961,7 @@
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
                                       (is-central? (second (get-zone %))))}
-                :msg (msg "host it on " (card-str state target))
+                :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:req (req (not (zone-locked? state :runner :discard)))
                 :label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
@@ -2205,7 +2205,7 @@
                                                           (can-host? %)
                                                           (= (last (get-zone %)) :ices)
                                                           (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
-                                  :msg (msg "host it on " (card-str state target))
+                                  :msg (msg "host itself on " (card-str state target))
                                   :effect (effect (host target card))}
                                  card nil)))}]
    :constant-effects [{:type :rez-cost
@@ -2393,7 +2393,7 @@
                     :strength-bonus (req (get-counters card :power))
                     :events [{:event :end-of-encounter
                               :req (req (all-subs-broken-by-card? (:ice context) card))
-                              :msg "place 1 power counter on it"
+                              :msg "place 1 power counter on itself"
                               :effect (effect (add-counter card :power 1))}]}))
 
 (defcard "Surfer"
@@ -2433,7 +2433,7 @@
                         :prompt "Place 1 power counter on Takobi?"
                         :autoresolve (get-autoresolve :auto-takobi)
                         :yes-ability
-                        {:msg "add 1 power counter to Takobi"
+                        {:msg "place 1 power counter on itself"
                          :effect (effect (add-counter card :power 1))}}}]
    :abilities [{:req (req (get-current-encounter state))
                 :cost [:power 2]
@@ -2442,7 +2442,7 @@
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
-                :msg (msg "add +3 strength to " (:title target))
+                :msg (msg "give +3 strength to " (:title target))
                 :effect (effect (pump target 3))}
                (set-autoresolve :auto-takobi "Takobi")]})
 
@@ -2529,13 +2529,13 @@
                            (can-host? %))}
      :on-install {:async true
                   :effect trash-if-5}
-     :abilities [(set-autoresolve :auto-accept "add virus counter to Trypano")]
+     :abilities [(set-autoresolve :auto-accept "place virus counter on Trypano")]
      :events [{:event :runner-turn-begins
                :optional
                {:prompt "Place a virus counter on Trypano?"
                 :autoresolve (get-autoresolve :auto-accept)
-                :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
-                                           (add-counter state side card :virus 1))}}}
+                :yes-ability {:msg "place a virus counter on itself"
+                              :effect (req (add-counter state side card :virus 1))}}}
               {:event :counter-added
                :async true
                :effect trash-if-5}

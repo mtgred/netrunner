@@ -123,7 +123,7 @@
                                             :req (req (get-card state ice))
                                             :effect (effect (trash eid (get-card state ice) nil))}])
                                         (force-ice-encounter state side eid ice))))}
-              :no-ability {:effect (effect (system-msg :corp (str "declines to rez a hosted piece of ice")))}}}]})
+              :no-ability {:effect (effect (system-msg :corp (str "declines to use Awakening Center")))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -178,8 +178,8 @@
                                   :effect (effect (gain-tags :corp eid 1))}
                      :unsuccessful
                      {:async true
-                      :effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
-                                      (trash eid card nil))}}}]})
+                      :msg "trash itself"
+                      :effect (effect (trash eid card nil))}}}]})
 
 (defcard "Bio Vault"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -368,7 +368,7 @@
    :access {:optional
             {:waiting-prompt "Corp to choose an option"
              :prompt "Purge virus counters with Cyberdex Virus Suite?"
-             :yes-ability {:msg (msg "purge virus counters")
+             :yes-ability {:msg "purge virus counters"
                            :effect (effect (purge))}}}
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
@@ -547,7 +547,7 @@
       :msg (msg "force the Runner to encounter " (card-str state target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
                              (force-ice-encounter state side eid target)))}
-     :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter a piece of ice")))}}}})
+     :no-ability {:effect (effect (system-msg :corp (str "declines to use Ganked!")))}}}})
 
 (defcard "Georgia Emelyov"
   {:events [{:event :unsuccessful-run
@@ -1067,8 +1067,8 @@
             {:event :successful-run
              :req (req (= :hq (target-server context)))
              :async true
+             :msg "trash itself"
              :effect (req (enable-run-on-server state card (second (get-zone card)))
-                          (system-msg state :corp (str "trashes Off the Grid"))
                           (trash state :corp eid card nil))}]
    :leave-play (req (enable-run-on-server state card (second (get-zone card))))})
 
@@ -1289,7 +1289,7 @@
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
-                :msg (msg "prevent cards being installed until the end of the run")
+                :msg "prevent cards being installed until the end of the run"
                 :req (req this-server)
                 :cost [:trash]
                 :effect (effect (register-run-flag! card :corp-lock-install (constantly true))

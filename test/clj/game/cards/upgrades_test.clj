@@ -1241,7 +1241,7 @@
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
 
 (deftest embolus
-  ;; Embolus - 1 power token to end the run, tokens are lost on successful runs
+  ;; Embolus - 1 power counter to end the run, counters are lost on successful runs
   (do-game
     (new-game {:corp {:deck ["Embolus"]}})
     (play-from-hand state :corp "Embolus" "New remote")
@@ -1850,7 +1850,7 @@
         (take-credits state :runner)
         (is (not (no-prompt? state :corp)) "The Corp is prompted to place one advancement token on a card")
         (click-card state :corp la-costa)
-        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances it")
+        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances itself")
         (take-credits state :corp)
         (take-credits state :runner)
         (click-card state :corp breaking-news)
@@ -2684,7 +2684,7 @@
       (rez state :corp (refresh oberth))
       (click-card state :corp (get-scored state :corp 0))
       (advance state oak)
-      (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on it"))))
+      (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on itself"))))
 
 (deftest off-the-grid
   ;; Off the Grid run restriction - and interaction with RP
