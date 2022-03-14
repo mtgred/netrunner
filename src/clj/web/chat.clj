@@ -94,11 +94,10 @@
                   :date (inst/now)
                   :msg msg})
       (let [connected-users (app-state/get-users)]
-        (doseq [uid (keys connected-users)
+        (doseq [uid (map :uid connected-users)
                 :when (or (= (:username user) uid)
                           (visible-to-user user {:username uid} connected-users))]
           (ws/broadcast-to! [uid] :chat/delete-msg msg))))))
-
 
 (defmethod ws/-msg-handler :chat/delete-all
   [{{db :system/db
@@ -114,7 +113,7 @@
                 :date (inst/now)
                 :sender sender})
     (let [connected-users (app-state/get-users)]
-      (doseq [uid (keys connected-users)
+      (doseq [uid (map :uid connected-users)
               :when (or (= (:username user) uid)
                         (visible-to-user user {:username uid} connected-users))]
         (ws/broadcast-to! [uid] :chat/delete-all {:username sender})))))

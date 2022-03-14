@@ -116,16 +116,16 @@
 
 (defn check-username-handler
   [{db :system/db
-    {:keys [username]} :params}]
+    {:keys [username]} :path-params}]
   (if (find-one-as-map-case-insensitive db "users" {:username username})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
 (defn check-email-handler
   [{db :system/db
-    {:keys [email]} :params}]
+    {:keys [email]} :path-params}]
   (if (find-one-as-map-case-insensitive db "users" {:email email})
-    (response 422 {:message "Username taken"})
+    (response 422 {:message "Email taken"})
     (response 200 {:message "OK"})))
 
 (defn email-handler
@@ -222,7 +222,7 @@
 (defn reset-password-handler
   [{db :system/db
     email-settings :system/email
-    {:keys [password confirm token]} :params}]
+    {:keys [password confirm token]} :path-params}]
   (if-let [{:keys [username email]}
            (find-non-banned-user db {:resetPasswordToken   token
                                      :resetPasswordExpires {"$gt" (inst/now)}})]

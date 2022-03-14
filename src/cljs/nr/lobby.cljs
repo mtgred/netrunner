@@ -268,7 +268,6 @@
                user (r/cursor app-state [:user])
                visible-formats (r/cursor app-state [:visible-formats])
                replay-id (r/cursor app-state [:replay-id])]
-    (println "rendering game-lobby")
     [:div.container
      [:div.lobby-bg]
      (do (authenticated (fn [_] nil)) nil)

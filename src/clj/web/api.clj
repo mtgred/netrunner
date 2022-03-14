@@ -59,7 +59,7 @@
       ["/api-keys" {:middleware [::auth]}
        ["" {:get api-keys/api-keys-handler
             :post api-keys/api-keys-create-handler}]
-       ["/:id" {:get api-keys/api-keys-delete-handler}]]]
+       ["/:id" {:delete api-keys/api-keys-delete-handler}]]]
      ["/chat/config" {:get chat/config-handler}]
      ["/messages/:channel" {:get chat/messages-handler}]
      ["/reset/:token" {:get pages/reset-password-page

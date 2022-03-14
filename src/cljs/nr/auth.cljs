@@ -49,7 +49,7 @@
        [:a.block-link {:href "/admin"} (str "[" (tr [:menu/admin "Admin"]) "]")])
      (when (:ismoderator user)
        [:a.block-link (str "[" (tr [:menu/moderator "Moderator"]) "]")])
-     [:a.block-link {:href "/admin"} (tr [:menu/settings "Settings"])]
+     [:a.block-link {:href "/account"} (tr [:menu/settings "Settings"])]
      [:a.block-link {:on-click #(handle-logout %)} (tr [:menu/logout "Jack out"])]]]])
 
 (defn unlogged-menu []
