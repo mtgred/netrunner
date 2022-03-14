@@ -1376,7 +1376,7 @@
                   :cost [:credit 2]
                   :msg "place 2 power counters on itself"
                   :effect (effect (add-counter card :power 2))}
-                 {:label "[Trash] and gain 2 [Credits] for each power counter"
+                 {:label "Gain 2 [Credits] for each power counter"
                   :cost [:click 1 :trash-can]
                   :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                   :async true
