@@ -3636,6 +3636,8 @@
       (rez state :corp (refresh splicer))
       (is (not (rezzed? (refresh splicer))) "Gene Splicer did not rez")
       (take-credits state :corp)
+      (rez state :corp (refresh splicer))
+      (is (not (rezzed? (refresh splicer))) "Gene Splicer did not rez on the Runner's turn")
       (take-credits state :runner)
       (rez state :corp (refresh splicer))
       (is (rezzed? (refresh splicer)) "Gene Splicer now rezzed")

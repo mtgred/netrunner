@@ -1332,10 +1332,10 @@
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
              :effect (req (let [tgtcid (:cid chosen)]
-                            (register-turn-flag!
+                            (register-persistent-flag!
                               state side
                               card :can-rez
-                              (fn [state side card]
+                              (fn [state _ card]
                                 (if (= (:cid card) tgtcid)
                                   ((constantly false)
                                    (toast state :corp "Cannot rez due to Saraswati Mnemonics: Endless Exploration." "warning"))
@@ -1359,8 +1359,11 @@
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
                                      (corp? %)
                                      (in-hand? %))}
-                  :msg "install a card in a remote server and place 1 advancement token on it"
-                  :effect (effect (continue-ability (install-card target) card nil))}]}))
+                  :msg (msg "install a card in a remote server and place 1 advancement token on it")
+                  :effect (effect (continue-ability (install-card target) card nil))}]}
+     :events [{:event :corp-turn-begins
+               :async true
+               :effect (req (clear-persistent-flag! state side card :can-rez))}]))
 
 (defcard "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"

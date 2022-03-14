@@ -1347,7 +1347,7 @@
     :effect (req (wait-for (corp-install state side target "New remote" nil)
                            (let [installed-card async-result]
                              (add-prop state side installed-card :advance-counter 3 {:placed true})
-                             (register-turn-flag!
+                             (register-persistent-flag!
                                state side
                                card :can-rez
                                (fn [state _ card]
@@ -1361,7 +1361,11 @@
                                  (if (same-card? card installed-card)
                                    ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
                                    true)))
-                             (effect-completed state side eid))))}})
+                             (effect-completed state side eid))))}
+   :events [{:event :corp-turn-begins
+             :duration :until-corp-turn-begins
+             :async true
+             :effect (req (clear-persistent-flag! state :corp card :can-rez))}]})
 
 (defcard "Mutate"
   {:on-play
