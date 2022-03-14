@@ -422,7 +422,8 @@
              :prompt "Choose a server"
              :choices (req runnable-servers)
              :effect (effect (make-run eid target card))}
-   :interactions {:pay-credits {:type :credit}}
+   :interactions {:pay-credits {:req (req run)
+                                :type :credit}}
    :events [{:event :run-ends
              :player :runner
              :prompt "Choose a program that was used during the run"
@@ -2215,7 +2216,8 @@
 (defcard "Overclock"
   {:makes-run true
    :data {:counter {:credit 5}}
-   :interactions {:pay-credits {:type :credit}}
+   :interactions {:pay-credits {:req (req run)
+                                :type :credit}}
    :on-play {:prompt "Choose a server"
              :choices (req runnable-servers)
              :async true
