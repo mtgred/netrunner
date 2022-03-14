@@ -323,7 +323,7 @@
 
 (defcard "Aghora"
   (swap-with-in-hand "Aghora"
-                     {:req (req (and (<= 5 (:cost current-ice 0))
+                     {:req (req (and (<= 5 (second (first (get-rez-cost state side current-ice nil))))
                                      (<= (get-strength current-ice) (get-strength card))))}))
 
 (defcard "Algernon"
