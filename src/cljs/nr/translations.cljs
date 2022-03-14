@@ -2187,7 +2187,7 @@
      :import "Importuj"
      :cancel "Anuluj"
      :import-placeholder "ID z NRDB"
-     :deck-count (fn "Talie: " [[cnt]])
+     :deck-count (fn [[cnt]] (str "Talie: " cnt))
      :filtered "(filtrowane)"
      :save "Zapisz"
      :confirm-delete "Potwierdź usunięcie"
