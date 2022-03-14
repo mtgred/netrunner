@@ -598,7 +598,6 @@
         scroll-top (atom 0)]
 
     (fn []
-      (println "card-browser")
       [:div#cardbrowser.cardbrowser
        [:div.cardbrowser-bg]
        [:div.card-info

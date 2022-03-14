@@ -56,7 +56,7 @@
 
 (defn reset-password-page
   [{db :system/db
-    {:keys [token]} :params}]
+    {:keys [token]} :path-params}]
   (if (mc/find-one-as-map db "users"
                           {:resetPasswordToken token
                            :resetPasswordExpires {"$gt" (inst/now)}})

@@ -8,7 +8,7 @@
    [nr.lobby-chat :refer [lobby-chat]]
    [nr.player-view :refer [player-view]]
    [nr.translations :refer [tr tr-side]]
-   [nr.utils :refer [cond-button format-zoned-date-time mdy-formatter
+   [nr.utils :refer [cond-button format-date-time mdy-formatter
                      non-game-toast]]
    [nr.ws :as ws]
    [reagent-modals.modals :as reagent-modals]
@@ -48,7 +48,7 @@
              [:div.float-right [deck-format-status-span deck fmt true]]
              [:h4 (:name deck)]
              [:div.float-right
-              (format-zoned-date-time mdy-formatter (:date deck))]
+              (format-date-time mdy-formatter (:date deck))]
              [:p (get-in deck [:identity :title])]])))]]))
 
 (defn- first-user?

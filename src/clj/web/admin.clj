@@ -99,10 +99,10 @@
   (if (and (active-user? user)
            (:isadmin user))
     (let [users (->> (mc/find-maps db user-collection {$or [{:ismoderator true}
-                                                            {:specials true}
+                                                            {:special true}
                                                             {:tournament-organizer true}
                                                             {:banned true}]}
-                                   [:_id :username :ismoderator :specials :tournament-organizer :banned])
+                                   [:_id :username :ismoderator :special :tournament-organizer :banned])
                      (map #(update % :_id str)))]
       (ws/broadcast-to! [uid] :admin/fetch-users {:success users}))
     (ws/broadcast-to! [uid] :admin/fetch-users {:error "Not allowed"})))
