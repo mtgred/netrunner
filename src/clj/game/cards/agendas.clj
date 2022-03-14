@@ -1389,8 +1389,7 @@
                             (check-win-by-agenda))}})
 
 (defcard "Rebranding Team"
-  {:flags {:has-events-when-stolen true}
-   :move-zone (req (when (and (in-scored? card)
+  {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
                      (system-msg state side "uses Rebranding Team to make all assets gain Advertisement")))
    :constant-effects [{:type :gain-subtype
@@ -1448,8 +1447,9 @@
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Remote Data Farm"
-  {:on-score {:silent (req true)
-              :msg "increase their maximum hand size by 2"}
+  {:move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Remote Data Farm to increase their maximum hand size by 2")))
    :constant-effects [(corp-hand-size+ 2)]})
 
 (defcard "Remote Enforcement"
@@ -1518,8 +1518,9 @@
               :effect (effect (trash eid target))}})
 
 (defcard "Self-Destruct Chips"
-  {:on-score {:silent (req true)
-              :msg "decrease the Runner's maximum hand size by 1"}
+  {:move-zone (req (when (and (in-scored? card)
+                              (= :corp (:scored-side card)))
+                     (system-msg state side "uses Self-Destruct Chips to decrease the Runner's maximum hand size by 1")))
    :constant-effects [(runner-hand-size+ -1)]})
 
 (defcard "Send a Message"
