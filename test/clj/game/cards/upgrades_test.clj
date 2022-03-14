@@ -3751,6 +3751,54 @@
         (take-credits state :runner)
         (is (= 5 (hand-size :runner)) "Runner max hand size back to normal"))))
 
+(deftest vladisibirsk-grid
+  ;; Vladisibirsk Grid: can't target self, once per turn, moves counters, same server
+  (do-game
+   (new-game  {:corp {:deck ["Vladisibirsk Grid" "NGO Front" "NGO Front" "Dedication Ceremony" "Warroid Tracker"]
+                      :credits 10}})
+   (core/gain state :corp :click 10)
+   (play-from-hand state :corp "Vladisibirsk Grid", "New remote")
+   (play-from-hand state :corp "NGO Front", "Server 1")
+   (play-from-hand state :corp "NGO Front", "New remote")
+   (play-from-hand state :corp "Warroid Tracker", "Server 1")
+   (let [vlad (get-content state :remote1 0)
+         ngo1 (get-content state :remote1 1)
+         war (get-content state :remote1 2)
+         ngo2 (get-content state :remote2 0)]
+     (rez state :corp (refresh vlad))
+     (play-from-hand state :corp "Dedication Ceremony")
+     (click-card state :corp vlad)
+     (is (= 3 (get-counters (refresh vlad) :advancement)) "Vladisibirsk Grid has 3 counters on it")
+     (advance state (refresh vlad) 1)
+     (is (= 4 (get-counters (refresh vlad) :advancement)) "Vladisibirsk Grid has 4 counters on it")
+     (card-ability state :corp (refresh vlad) 0)
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt is active")
+     ;; check it cant be used on itself
+     (click-card state :corp "Vladisibirsk Grid")
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt still active")
+     (is (= 4 (get-counters (refresh vlad) :advancement)) "Vladisibirsk Grid still has 4 counters on it")
+     ;; check it can't be used on cards that cannot be advanced
+     (click-card state :corp "Warroid Tracker")
+     (is (not (no-prompt? state :corp)) "ability not used, prompt still active")
+     (is (= 4 (get-counters (refresh vlad) :advancement)) "Vladisibirsk Grid still has 4 counters on it")
+     (is (= 0 (get-counters (refresh war) :advancement)) "Warroid Tracker has no counters on it")
+     ;; check it works on cards that can be advanced
+     (click-card state :corp ngo1)
+     (is (= 2 (get-counters (refresh vlad) :advancement)) "Vladisibirsk Grid has spent 2 counters")
+     (is (= 2 (get-counters (refresh ngo1) :advancement)) "NGO Front has gained 2 counters")
+     (is (no-prompt? state :corp) "ability used, prompt gone?")
+     ;;check it only works once per turn
+     (card-ability state :corp (refresh vlad) 0)
+     (is (no-prompt? state :corp) "Vlad Grid prompt is not active")
+     (take-credits state :corp)
+     ;;check it only works on cards installed in the same server
+     (card-ability state :corp (refresh vlad) 0)
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt is active")
+     (click-card state :corp ngo2)
+     (is (= 2 (get-counters (refresh vlad) :advancement)) "Vladisibirsk Grid has not spent counters")
+     (is (= 0 (get-counters (refresh ngo2) :advancement)) "NGO Front 2 has gained no counters")
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt is still active"))))
+
 (deftest warroid-tracker-trashing-warroid-directly-starts-trace
     ;; Trashing Warroid starts trace
     (do-game
