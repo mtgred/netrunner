@@ -893,7 +893,7 @@
 (defcard "Grimoire"
   {:constant-effects [(mu+ 2)]
    :events [{:event :runner-install
-             :silent (req true)
+             :interactive (req true)
              :req (req (has-subtype? (:card context) "Virus"))
              :effect (effect (add-counter (:card context) :virus 1))}]})
 
