@@ -1787,6 +1787,7 @@
         (take-credits state :runner)
         (play-from-hand state :corp "Hangeki")
         (click-card state :corp (get-content state :remote1 0))
+        (is (last-log-contains? state "choose a card in Server 1"))
         (click-prompt state :runner choice)
         (if (= "Yes" choice)
           (do (click-prompt state :runner "Steal")
