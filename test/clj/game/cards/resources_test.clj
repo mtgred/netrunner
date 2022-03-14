@@ -5570,6 +5570,16 @@
    (is (no-prompt? state :runner) "No prompt from The Class Act")
    (is (empty? (find-card "Sure Gamble" (:hand (:runner @state)))) "Sure Gamble has not been drawn")))
 
+(deftest the-class-act-no-trigger-when-drawing-one-card
+  ;; no trigger when drawing one card
+  (do-game
+   (new-game {:runner {:deck ["Sure Gamble"]
+                       :hand ["The Class Act"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "The Class Act")
+   (click-draw state :runner)
+   (is (no-prompt? state :runner) "No prompt from The Class Act")))
+
 (deftest the-class-act-no-lingering-bonus-draw-effect-if-no-cards-in-deck
   ;; The Class Act - Issue #6132 - No lingering bonus draw effect if no cards in deck
   (do-game
