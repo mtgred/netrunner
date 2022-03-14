@@ -41,6 +41,7 @@
        (click-card state :runner atlas)
        (click-prompt state :runner "Steal")
        (click-prompt state :runner "No action")
+       (is (last-log-contains? state "give the Runner 2 tags"))
        (is (= 2 (count-tags state)) "Runner has 2 tags")))
   (testing "Basic test - trash"
     (do-game

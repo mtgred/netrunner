@@ -19,7 +19,8 @@
          :req (req (= (second (get-zone card)) (first (:server context))))
          :async true
          :effect (req (if (:did-steal context)
-                        (gain-tags state :corp eid 2)
+                        (do (gain-tags state :corp eid 2)
+                            (system-msg state :corp (str "uses AMAZE Amusements to give the Runner 2 tags")))
                         (effect-completed state side eid)))}]
   {:events [ability]
    :on-trash
