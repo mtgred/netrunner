@@ -5651,6 +5651,28 @@
         (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
         (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
 
+(deftest sneakdoor-beta-deflected-successful-run
+  ;;sneakdoor beta should not access hq when deflected from archives
+  (do-game
+   (new-game {:corp {:hand ["Mind Game"] :deck ["NGO Front"]}
+              :runner {:hand ["Sneakdoor Beta"]}})
+   (play-from-hand state :corp "Mind Game" "Archives")
+   (let [mindgame (get-ice state :archives 0)]
+     (rez state :corp mindgame)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Sneakdoor Beta")
+     (let [sb (get-program state 0)]
+       (card-ability state :runner sb 0)
+       (run-continue state)
+       (fire-subs state (refresh mindgame))
+       (click-prompt state :corp "1 [Credits]")
+       (click-prompt state :runner "0 [Credits]")
+       (click-prompt state :corp "R&D")
+       (click-prompt state :runner "No")
+       (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D")
+       (run-continue state)
+       (is (= :rd (get-in @state [:run :server 0])) "Run continues on R&D (not HQ)")))))
+
 (deftest sneakdoor-beta-sneakdoor-beta-trashed-during-run
     ;; Sneakdoor Beta trashed during run
     (do-game
