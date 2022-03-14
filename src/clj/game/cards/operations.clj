@@ -1420,7 +1420,7 @@
   {:on-play {:trash-after-resolving false}
    :constant-effects [{:type :ice-strength
                        :value 2}
-                      {:type :prevent-ability
+                      {:type :prevent-paid-ability
                        :req (req (let [target-card (first targets)
                                        ability (second targets)]
                                    (and (not (has-subtype? target-card "Icebreaker"))

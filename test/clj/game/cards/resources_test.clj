@@ -3209,6 +3209,139 @@
         (card-ability state :runner (get-resource state 0) 0))
       (is (= 1 (count (:discard (get-runner)))) "Liberated Account trashed")))
 
+(deftest light-the-fire-happy-path
+  ;; Light the Fire!
+  (do-game
+   (new-game {:corp {:hand ["Hokusai Grid"]}
+              :runner {:hand ["Light the Fire!", "Sure Gamble", "Sure Gamble"]}})
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (:brain-damage (get-runner))))
+   (rez state :corp (refresh (get-content state :remote1 0)))   
+   (changes-val-macro 0 (:credit (get-runner))
+                      "Did not spend credits to trash"
+                      (run-continue state)
+                      (is (= 1 (count (:discard (get-corp)))) "Hokusai Grid trashed from Server 1"))
+   (is (nil? (get-in @state [:corp :servers :remote1 :content])) "Server 1 no longer exists")
+   (is (= 1 (count (:hand (get-runner)))) "Did not take damage from Hokusai Grid")))
+
+(deftest light-the-fire-effect-goes-away
+  ;; Light the Fire - effect goes away after end of run
+  (do-game
+   (new-game {:corp {:hand ["Hokusai Grid"]}
+              :runner {:hand ["Light the Fire!", "Sure Gamble", "Sure Gamble"]}})
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (:brain-damage (get-runner))))
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (run-jack-out state)
+   (is (not (nil? (get-in @state [:corp :servers :remote1 :content]))) "Server 1 still exists")
+   (run-empty-server state "Server 1")
+   (click-prompt state :runner "No action")
+   (is (= 0 (count (:hand (get-runner)))) "Lost card from Grip to Hokusai Grid")))
+   
+(deftest light-the-fire-card-installed
+  ;; Light the fire - effect applies if the corporation installs a card mid run
+  (do-game
+   (new-game {:corp {:hand ["Crick"] :discard ["Hokusai Grid"]}
+              :runner {:hand ["Sure Gamble" "Sure Gamble" "Light the Fire!"]}})
+   (play-from-hand state :corp "Crick" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (let [crick (get-ice state :remote1 0)]
+     (rez state :corp crick)
+     (run-continue state)     
+     (card-subroutine state :corp crick 0)
+     (click-card state :corp "Hokusai Grid")
+     (click-prompt state :corp "Server 1"))
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (run-continue state :movement)
+   (run-continue-until state :success)
+   (is (= 1 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
+(deftest light-the-fire-cards-swapped
+  ;; Light the Fire - effect applies to cards swapped into,
+  ;; and stops applying to cards swapped out of, the server
+  (do-game
+   (new-game {:corp {:hand ["Metamorph", "NGO Front", "Hokusai Grid"]
+                     :credit 10}
+              :runner {:hand ["Light the Fire!" "Sure Gamble" "Sure Gamble"]}})
+   (core/gain-clicks state :corp 5)
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (play-from-hand state :corp "Metamorph" "Server 1")
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   ;(let [ht (get-content state :remote2 0)]
+   (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")   
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (rez state :corp (refresh (get-content state :remote2 0)))
+   (let [meta (get-ice state :remote1 0)]
+     (rez state :corp meta)   
+     (run-continue state)
+     (fire-subs state (get-ice state :remote1 0))
+     (click-prompt state :corp "Swap two non-ice")
+     (click-card state :corp "NGO Front")
+     (click-card state :corp "Hokusai Grid")
+     ;; hokusai is now in server 1, ngo in server 2
+     (changes-val-macro 5 (:credit (get-corp))
+                        "NGO Front reactivated"
+                        (card-ability state :corp (refresh (get-content state :remote2 0)) 0)))     
+   (run-continue state :movement)
+   (run-continue-until state :success)
+   (is (= 2 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
+(deftest light-the-fire-run-redirected
+  ;; Light the Fire - effect applies to cards swapped into,
+  ;; and stops applying to cards swapped out of, the server
+  (do-game
+   (new-game {:corp {:hand ["Sand Storm", "NGO Front", "Hokusai Grid"]
+                     :credit 10}
+              :runner {:hand ["Light the Fire!" "Sure Gamble" "Sure Gamble"]}})
+   (core/gain-clicks state :corp 5)
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (play-from-hand state :corp "Sand Storm" "Server 1")
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   ;(let [ht (get-content state :remote2 0)]
+   (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (let [sand (get-ice state :remote1 0)
+         ngo (get-content state :remote1 0)
+         hoku (get-content state :remote2 0)]
+     (rez state :corp (refresh ngo))
+     (rez state :corp (refresh hoku))
+     (rez state :corp sand)        
+     (run-continue state)
+     (fire-subs state (refresh sand))
+     (click-prompt state :corp "Server 2")
+     (changes-val-macro 5 (:credit (get-corp))
+                        "NGO Front reactivated"
+                        (card-ability state :corp (refresh ngo) 0)))
+   (is (= :remote2 (first (get-in @state [:run :server]))) "Is running on server 2")
+   (run-continue-until state :success)
+   (is (= 3 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 2")
+   (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
 (deftest logic-bomb
   ;; Logic Bomb
   (do-game

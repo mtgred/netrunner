@@ -304,6 +304,61 @@
                           (click-prompt state :runner "No"))
        (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
+(deftest anemone-happy-path
+  ;; Anemone
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (changes-val-macro
+       2 (count (:discard (get-runner)))
+       "Runner takes 2 net damage"
+       (changes-val-macro
+         1 (count (:discard (get-corp)))
+         "Corporation discards a card"
+         (run-on state :hq)
+         (rez state :corp anem)
+         (click-prompt state :corp "Yes")
+         (is (= :select (prompt-type :corp)))
+         (click-card state :corp "Hedge Fund"))))))
+
+(deftest anemone-wrong-server
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (run-on state :rd)
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active outside attacked server"))))
+
+(deftest anemone-outside-run
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active outside run"))))
+
+(deftest anemone-cant-afford
+  (do-game
+   (new-game {:corp {:hand ["Anemone"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (run-on state :hq)
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active if corp can't pay the cost"))))
+
 (deftest ansel-1-0
   ;; Ansel 1.0
   (before-each [state (new-game {:corp {:hand ["Ansel 1.0" "NGO Front" "Merger"]
@@ -2478,6 +2533,109 @@
         (run-on state "HQ")
         (is (= 3 (get-strength (refresh hag))) "Misdirection didn't lower strength."))))
 
+(deftest hakarl-1-0-happy-path
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (run-on state "HQ")
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (not (no-prompt? state :corp)))     
+     (click-card state :corp rash)
+     (is (no-prompt? state :corp))
+     (is (not (rezzed? (refresh rash))) "Rashida was derezzed")
+     (run-continue state)
+     (card-side-ability state :runner hakarl 0)
+     (is (no-prompt? state :runner) "No prompt to break hakarl")
+     (fire-subs state (refresh hakarl))
+     (is (nil? (:run @state)))
+     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+     (run-on state "Server 1")
+     ;; effect lasts all turn
+     (rez state :corp eli)
+     (run-continue state)
+     (card-side-ability state :runner eli 0)
+     (is (no-prompt? state :runner) "no prompt to break eli")
+     (fire-subs state (refresh eli))
+     (take-credits state :runner)
+     (take-credits state :corp)
+     ;; check effect gone after turn end
+     (run-on state "HQ")
+     (run-continue state)
+     (card-side-ability state :runner hakarl 0)
+     (is (not (no-prompt? state :runner)) "Runner prompted to break hakarl")
+     (click-prompt state :runner "Do 1 brain damage")
+     (click-prompt state :runner "End the run")
+     (is (= 1 (:click (get-runner))) "Runner spent clicks breaking hakarl")
+     (is (not (nil? (:run @state))))
+     (fire-subs state (refresh hakarl))
+     (is (= 1 (:brain-damage (get-runner))) "Runner did not take any extra brain damage")
+     (is (not (nil? (:run @state)))))))
+
+(deftest hakarl-1-0-wrong-server
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (run-on state "R&D")
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+
+(deftest hakarl-1-0-no-targets
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (run-on state "HQ")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+
+(deftest hakarl-1-0-outside-run
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+   
 (deftest hailstorm-happy-path
     ;; Happy Path
     (do-game

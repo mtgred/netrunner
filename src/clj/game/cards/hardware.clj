@@ -149,7 +149,7 @@
                                (move state side c :hand))
                              (continue-ability
                                state side
-                               {:cost [:trash]
+                               {:cost [:trash-can]
                                 :msg "add all hosted cards to their Grip"}
                                (get-card state card) nil))}]})
 
@@ -163,7 +163,7 @@
    :leave-play (effect (remove-icon card))
    :abilities [(assoc
                  (break-sub
-                   [:trash] 2 "All"
+                   [:trash-can] 2 "All"
                    {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
                                 (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
                                 true))}) ; When eg. flipped by Assimilator
@@ -322,7 +322,7 @@
                                          (in-discard? target)
                                          (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                    [:credit (install-cost state side target)])))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg (msg "install " (:title target))
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]})
 
@@ -350,7 +350,7 @@
                                       (not (rezzed? %)))}
                 :msg (msg "increase the rez cost of " (card-str state target)
                           " by 2 [Credits] until the end of the turn")
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (register-floating-effect
                                   card
                                   (let [ice target]
@@ -585,7 +585,7 @@
 (defcard "EMP Device"
   {:abilities [{:req (req run)
                 :msg "prevent the Corp from rezzing more than 1 piece of ice for the remainder of the run"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect
                           (register-events
                             card
@@ -609,7 +609,7 @@
                 :effect (effect (damage-prevent :net 1))}
                {:label "Prevent up to 2 brain damage"
                 :msg "prevent up to 2 brain damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :brain 2))}]})
 
 (defcard "Flame-out"
@@ -688,21 +688,21 @@
               :prompt "Use Flip Switch to reduce base trace strength to 0?"
               :player :runner
               :yes-ability {:msg "reduce the base trace strength to 0"
-                            :cost [:trash]
+                            :cost [:trash-can]
                             :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]
    :abilities [{:label "Jack out"
                 :req (req (and (or run
                                    (get-current-encounter state))
                                (= :runner (:active-player @state))))
                 :msg "jack out"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (jack-out eid))}
                {:label "Remove 1 tag"
                 :req (req (and (pos? (count-real-tags state))
                                (= :runner (:active-player @state))))
                 :msg "remove 1 tag"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (lose-tags eid 1))}]})
 
@@ -713,11 +713,11 @@
    :abilities [{:msg "avoid 1 tag"
                 :label "Avoid 1 tag"
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (tag-prevent :runner eid 1))}
                {:msg "remove 1 tag"
                 :label "Remove 1 tag"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (lose-tags eid 1))}]})
 
@@ -798,7 +798,7 @@
                                                 (shuffle-next set-aside target to-shuffle)
                                                 card nil)))}))]
     {:abilities [{:label "Install a card from the top of the stack"
-                  :cost [:trash]
+                  :cost [:trash-can]
                   :msg "install a card from the top of the stack"
                   :async true
                   :waiting-prompt "Runner to make a decision"
@@ -903,7 +903,7 @@
                              :req (req true)}]}
    :abilities [{:label "Prevent 1 damage"
                 :msg "prevent 1 damage"
-                :cost [:installed 1]
+                :cost [:trash-installed 1]
                 :effect (effect (damage-prevent :brain 1)
                                 (damage-prevent :meat 1)
                                 (damage-prevent :net 1))}]})
@@ -1544,7 +1544,7 @@
                                   :choices {:number (req (min n (count (:deck runner))))}
                                   :msg (msg "trash " (string/join ", " (map :title (take target (:deck runner))))
                                             " from their Stack and prevent " target " damage")
-                                  :cost [:trash]
+                                  :cost [:trash-can]
                                   :effect (effect (damage-prevent :net target)
                                                   (damage-prevent :brain target)
                                                   (mill :runner eid :runner target))}
@@ -1556,7 +1556,7 @@
             (into {} (reverse (get s :turn-events))))]
     {:interactions {:prevent [{:type #{:net :brain :meat}
                                :req (req (:access @state))}]}
-     :abilities [{:cost [:x-credits :trash]
+     :abilities [{:cost [:x-credits :trash-can]
                   :label "prevent damage"
                   :req (req (and (:access @state)
                                  (= (:cid (second (:pre-damage (eventmap @state))))
@@ -1672,7 +1672,7 @@
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "Cloud"))
                                       (installed? %))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (pump target (get-link state) :end-of-run))}
                {:label "Add [Link] strength to any Cloud icebreakers until the end of the run"
                 :msg (msg "add " (get-link state)
@@ -1684,7 +1684,7 @@
                           :card #(and (has-subtype? % "Icebreaker")
                                       (has-subtype? % "Cloud")
                                       (installed? %))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (req (doseq [t targets]
                                (pump state side t (get-link state) :end-of-run)
                                (update-breaker-strength state side t)))}]})
@@ -1804,7 +1804,7 @@
                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                      [:credit (install-cost state side % {:cost-bonus -3})]))
                                      (:discard runner))))
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg "install a program"
                 :effect
                 (effect
@@ -1839,7 +1839,7 @@
    :abilities [{:label "Draw 3 cards"
                 :msg "draw 3 cards"
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (draw :runner eid 3))}]})
 
 (defcard "Spy Camera"
@@ -1858,7 +1858,7 @@
                                  card nil)))}
                {:label "Look at the top card of R&D"
                 :msg "look at the top card of R&D"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {}))}]})
 
 (defcard "Supercorridor"

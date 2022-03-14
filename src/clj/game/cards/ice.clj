@@ -431,6 +431,19 @@
 
 ;; Card definitions
 
+(defcard "Anemone"
+  {:on-rez {:optional {:prompt "trash a card from HQ to do 2 net damage?"
+                       :req (req (and (< 0 (count (:hand corp)))
+                                      run
+                                      this-server))
+                       :waiting-prompt "Corp to resolve Anemone"
+                       :yes-ability {:msg "do 2 net damage"
+                                     :cost [:trash-from-hand 1]
+                                     :async true
+                                     :effect (effect (damage eid :net 2 {:card card}))}
+                       :no-ability {:msg "decline to deal 2 net damage"}}}
+   :subroutines [(do-net-damage 1)]})
+
 (defcard "Ansel 1.0"
   {:subroutines [trash-installed-sub
                  (install-from-hq-or-archives-sub)
@@ -719,7 +732,7 @@
   {:abilities [{:label "End the run"
                 :msg "end the run"
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (end-run eid card))}]
    :subroutines [{:label "Gain 1 [Credits] for each ice protecting this server"
                   :msg (msg "gain "
@@ -1554,6 +1567,30 @@
 
 (defcard "Hadrian's Wall"
   (wall-ice [end-the-run end-the-run]))
+
+
+(defcard "Hákarl 1.0"
+  {:runner-abilities [(bioroid-break 1 1)]
+   :subroutines [(do-brain-damage 1)
+                 end-the-run]   
+   :on-rez {:req (req (and run this-server
+                           (->> (get-all-installed state) (remove #(same-card? card %)) (filter rezzed?) (count) (pos?))))
+            :prompt "Derez another card to prevent the runner using printed abilities on bioroid ice this turn?"
+            :choices {:req (req (and (installed? target)
+                                     (rezzed? target)
+                                     (not (same-card? card target))))}
+            :waiting-prompt "Corp to resolve Hákarl 1.0"
+            :effect (effect (derez target)
+                            (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
+                            (register-floating-effect
+                             card
+                             {:type :prevent-paid-ability
+                              :duration :end-of-turn
+                              :req (req (let [target-card (first targets)
+                                              ability (second targets)]
+                                          (and (ice? target-card)
+                                               (has-subtype? target-card "Bioroid"))))
+                              :value true}))}})
 
 (defcard "Hagen"
   {:subroutines [{:label "Trash 1 program"

@@ -264,7 +264,7 @@
       {:abilities [break
                    pump
                    {:label (str "Bypass " ice-type " being encountered")
-                    :cost [:trash]
+                    :cost [:trash-can]
                     :req (req (and (active-encounter? state)
                                    (has-subtype? current-ice ice-type)))
                     :msg (msg "bypass " (:title current-ice))
@@ -283,7 +283,7 @@
   "No MU with 2+ link, strength based on installed Icebreakers, trash to break 3 subs
   (Breaking and Entering suite: Crowbar, Shiv, Spike)"
   [ice-type]
-  (auto-icebreaker (cloud-icebreaker {:abilities [(break-sub [:trash] 3 ice-type)]
+  (auto-icebreaker (cloud-icebreaker {:abilities [(break-sub [:trash-can] 3 ice-type)]
                                       :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
                                                                           (all-active-installed state :runner))))})))
 
@@ -468,7 +468,7 @@
                 ;; Cannot trash unless there are counters (so game state changes)
                 :req (req (pos? (get-counters card :credit)))
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]})
 
 (defcard "Battering Ram"
@@ -819,7 +819,7 @@
                                (rezzed? current-ice)
                                (all-subs-broken? current-ice)))
                 :label "derez an ice"
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg (msg "derez " (:title current-ice))
                 :effect (effect (derez current-ice))}]})
 
@@ -941,7 +941,7 @@
                                            (<= (install-cost state side %) (get-counters card :power)))
                                      (:hand runner))))
                 :label "install a card from the grip"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect
                           (continue-ability
@@ -953,7 +953,7 @@
                                                           (program? target)
                                                           (resource? target))
                                                       (<= (install-cost state side target)
-                                                          (get-counters (cost-target eid :trash) :power))))}
+                                                          (get-counters (cost-target eid :trash-can) :power))))}
                              :async true
                              :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
                                                              target {:ignore-install-cost true}))}
@@ -976,9 +976,9 @@
 (defcard "Deus X"
   {:interactions {:prevent [{:type #{:net}
                              :req (req true)}]}
-   :abilities [(break-sub [:trash] 0 "AP")
+   :abilities [(break-sub [:trash-can] 0 "AP")
                {:msg "prevent any amount of net damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :net Integer/MAX_VALUE))}]})
 
 (defcard "Dhegdheer"
@@ -1044,7 +1044,7 @@
       :waiting-prompt "Runner to choose an option"
       :prompt "Use Disrupter's ability?"
       :yes-ability
-      {:cost [:trash]
+      {:cost [:trash-can]
        :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]})
 
 (defcard "Diwan"
@@ -1116,7 +1116,7 @@
 
 (defcard "Endless Hunger"
   {:implementation "ETR restriction not implemented"
-   :abilities [(break-sub [:installed 1] 1 "All" {:label "break 1 \"[Subroutine] End the run.\" subroutine"})]})
+   :abilities [(break-sub [:trash-installed 1] 1 "All" {:label "break 1 \"[Subroutine] End the run.\" subroutine"})]})
 
 (defcard "Engolo"
   (give-ice-subtype 2 "Code Gate"
@@ -1256,7 +1256,7 @@
    :events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:req (req (pos? (get-virus-counters state card)))
-                :cost [:click 1 :trash]
+                :cost [:click 1 :trash-can]
                 :label "Gain 2 [Credits] for each hosted virus counter"
                 :msg (msg (str "gain " (* 2 (get-virus-counters state card)) " [Credits]"))
                 :async true
@@ -1311,7 +1311,7 @@
                                 (strength-pump 1 1 :end-of-run)]}))
 
 (defcard "Gorman Drip v1"
-  {:abilities [{:cost [:click 1 :trash]
+  {:abilities [{:cost [:click 1 :trash-can]
                 :label "gain credits"
                 :async true
                 :effect (effect (gain-credits eid (get-virus-counters state card)))
@@ -1330,8 +1330,8 @@
                                  (< 1 (count (remove :broken (:subroutines current-ice))))))
                   :break 1 ;technically not correct, but will only be used by the engine to check for breaking abilities
                   :breaks "All"
-                  :break-cost [:trash]
-                  :cost [:trash]
+                  :break-cost [:trash-can]
+                  :cost [:trash-can]
                   :prompt "Choose the subroutine to NOT break"
                   :choices (req (unbroken-subroutines-choice current-ice))
                   :msg (msg (let [subroutines (:subroutines current-ice)
@@ -1448,7 +1448,7 @@
 (defcard "Incubator"
   {:events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
-   :abilities [{:cost [:click 1 :trash]
+   :abilities [{:cost [:click 1 :trash-can]
                 :label "move hosted virus counters"
                 :msg (msg "move " (get-counters card :virus) " virus counter to " (:title target))
                 :choices {:card #(and (installed? %)
@@ -1609,8 +1609,8 @@
                              :req (req true)}]}
    :abilities [{:cost [:credit 3]
                 :msg "prevent a piece of hardware from being trashed"
-                :effect (effect (trash-prevent :hardware 1))}
-               {:cost [:trash]
+                :effect (effect (trash-prevent :hardware 1))}               
+               {:cost [:trash-can]
                 :msg "prevent a piece of hardware from being trashed"
                 :effect (effect (trash-prevent :hardware 1))}]})
 
@@ -2126,6 +2126,13 @@
                     :abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 3 :end-of-encounter {:label "add 3 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
+(defcard "Revolver"
+  (auto-icebreaker
+   {:data {:counter {:power 6}}
+    :abilities [(break-sub [:power 1] 1 "Sentry")
+                (break-sub [:trash-can] 1 "Sentry")
+                (strength-pump 2 3)]}))
+
 (defcard "Rezeki"
   {:events [{:event :runner-turn-begins
              :msg "gain 1 [Credits]"
@@ -2277,7 +2284,7 @@
 (defcard "Self-modifying Code"
   {:abilities [{:req (req (not (install-locked? state side)))
                 :label "install a program"
-                :cost [:trash :credit 2]
+                :cost [:trash-can :credit 2]
                 :async true
                 :effect (effect (continue-ability
                                   {:prompt "Choose a program to install"
@@ -2298,7 +2305,7 @@
                                   card nil))}]})
 
 (defcard "Sharpshooter"
-  (auto-icebreaker {:abilities [(break-sub [:trash] 0 "Destroyer")
+  (auto-icebreaker {:abilities [(break-sub [:trash-can] 0 "Destroyer")
                                 (strength-pump 1 2)]}))
 
 (defcard "Shiv"
