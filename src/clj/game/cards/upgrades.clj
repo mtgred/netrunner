@@ -1475,7 +1475,7 @@
                                 :req (req (= :runner side))
                                 :value -1}))}]})
 
-(defcard "Vladisibirsk Grid"
+(defcard "Vladisibirsk City Grid"
   {:advanceable :always
    :abilities [{:cost [:advancement 2]              
                 :once :per-turn
