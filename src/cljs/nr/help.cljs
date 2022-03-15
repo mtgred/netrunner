@@ -500,11 +500,13 @@
   "Takes help-data and translates it to HTML tags."
   (doall
     (for [{:keys [id title sub]} help-data]
-      (into [:h2 {:id id :key id} title]
-            (for [{:keys [id title content]} sub]
-              ^{:key title}
-              [:div [:h3 {:id id :key title} title]
-               content])))))
+      ^{:key id}
+      [:<>
+       [:h2 {:id id :key id} title]
+       (for [{:keys [id title content]} sub]
+         ^{:key title}
+         [:div [:h3 {:id id :key title} title]
+          content])])))
 
 (defn help []
   [:div.page-container
