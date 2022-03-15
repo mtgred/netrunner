@@ -39,8 +39,9 @@
         (doall
           (for [deck (->> @decks
                           (filter same-side?)
-                          (sort-by (complement legal?))
-                          (sort-by :date))]
+                          (filter legal?)
+                          (sort-by :date)
+                          (reverse))]
             [:div.deckline {:key (:_id deck)
                             :on-click #(select-deck deck)}
              [:img {:src (image-url (:identity deck))
