@@ -4801,6 +4801,7 @@
         (play-from-hand state :runner "Grimoire")
         (play-from-hand state :runner "Parasite")
         (click-card state :runner arch)
+        (click-prompt state :runner "Grimoire")
         (let [psite (first (:hosted (refresh arch)))]
           (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
           (take-credits state :runner)
@@ -4879,6 +4880,7 @@
         (play-from-hand state :runner "Grimoire")
         (play-from-hand state :runner "Parasite")
         (click-card state :runner enig)
+        (click-prompt state :runner "Grimoire")
         (let [psite (first (:hosted (refresh enig)))]
           (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
           (is (= 1 (get-strength (refresh enig))) "Enigma reduced to 1 strength")
