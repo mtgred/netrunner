@@ -768,11 +768,14 @@
      (play-from-hand state :runner "Grimoire")
      (play-from-hand state :runner "Cookbook")
      (play-from-hand state :runner "Leech")
+     (click-prompt state :runner "Grimoire")
      (click-prompt state :runner "Yes")
      (is (= 2 (get-counters (get-program state 0) :virus)) "Leech has 2 counters from Grimoire and Cookbook")
      (card-ability state :runner (get-resource state 0) 0)
      (click-prompt state :runner "Always")
      (play-from-hand state :runner "Fermenter")
+     (click-prompt state :runner "Grimoire")
+     (click-prompt state :runner "Cookbook")
      (is (= 3 (get-counters (get-program state 1) :virus)) "Fermenter has 2 additional counters from Grimoire and Cookbook")))
 
 (deftest councilman-rez-prevention
