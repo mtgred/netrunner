@@ -402,7 +402,7 @@
     (formatter/format formatter (zdt/parse date)))
 
 (defn format-date-time
-  "Formats a date time in some random format from the db"
+  "Formats a date time string into a local time string"
   [formatter date]
   (try
     (let [parsed (zdt/parse date)
