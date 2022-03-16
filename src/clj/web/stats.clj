@@ -359,7 +359,8 @@
 
 (defn replay-handler
   [{db :system/db
-    {:keys [gameid bugid n d b]}  :params
+    {:keys [gameid bugid]}  :path-params
+    {:keys [n d b]}               :query-params
     scheme                        :scheme
     headers                       :headers
     :as req}]
