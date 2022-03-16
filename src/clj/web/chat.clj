@@ -7,7 +7,7 @@
    [web.app-state :as app-state]
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user? visible-to-user]]
-   [web.utils :refer [response]]
+   [web.utils :refer [response mongo-time-to-utc-string]]
    [web.ws :as ws]))
 
 (def msg-collection "messages")
@@ -30,6 +30,7 @@
                           (q/sort (array-map :date -1))
                           (q/limit 100))
                         reverse)
+          messages (map #(update % :date mongo-time-to-utc-string) messages)
           usernames (->> messages
                          (map :username)
                          (into #{}))

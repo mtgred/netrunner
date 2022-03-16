@@ -3,6 +3,7 @@
    ["@js-joda/locale_en-us" :as js-joda-locale]
    [cljc.java-time.format.date-time-formatter :as formatter]
    [cljc.java-time.zoned-date-time :as zdt]
+   [cljc.java-time.zone-id :as zone]
    [cljc.java-time.instant :as inst]
    [clojure.string :refer [join] :as s]
    [goog.object :as gobject]
@@ -384,7 +385,7 @@
                 (gobject/get "US")))))
 
 (def day-word-with-time-formatter
-  (-> (formatter/of-pattern "E, MMM d, YYYY - HH:mm")
+  (-> (formatter/of-pattern "EEEE, MMM d, YYYY - HH:mm")
       (formatter/with-locale
         (some-> (gobject/get js-joda-locale "Locale")
                 (gobject/get "US")))))
@@ -404,9 +405,8 @@
   "Formats a date time in some random format from the db"
   [formatter date]
   (try
-    (formatter/format formatter (zdt/parse date))
-    (catch js/Object e
-      (try
-        (formatter/format formatter (zdt/parse (str date "Z")))
-        (catch js/Object e2
-          "dunno")))))
+    (let [parsed (zdt/parse date)
+          default-zone (zone/system-default)
+          local-time (zdt/with-zone-same-instant parsed default-zone)]
+      (formatter/format formatter local-time))
+    (catch js/Object e "dunno")))
