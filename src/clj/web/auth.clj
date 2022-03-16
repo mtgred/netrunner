@@ -222,11 +222,12 @@
 (defn reset-password-handler
   [{db :system/db
     email-settings :system/email
-    {:keys [password confirm token]} :path-params}]
+    {:keys [password confirm]} :params
+    {:keys [token]} :path-params}]
   (if-let [{:keys [username email]}
            (find-non-banned-user db {:resetPasswordToken   token
                                      :resetPasswordExpires {"$gt" (inst/now)}})]
-    (if (= password confirm)
+    (if (and password (= password confirm))
       (let [hash-pw (password/encrypt password)]
         (mc/update db "users"
                    {:username username}
