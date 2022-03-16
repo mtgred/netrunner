@@ -10,15 +10,16 @@
    [monger.result :refer [acknowledged?]]
    [web.mongodb :refer [->object-id ->object-id]]
    [web.nrdb :as nrdb]
-   [web.utils :refer [response]]
+   [web.utils :refer [response mongo-time-to-utc-string]]
    [web.ws :as ws]))
 
 (defn decks-handler
   [{db :system/db
     {:keys [username]} :user}]
-  (if username
-    (response 200 (mc/find-maps db "decks" {:username username}))
-    (response 200 (mc/find-maps db "decks" {:username "__demo__"}))))
+  (let [uname (or username "__demo__")
+        decks (mc/find-maps db "decks" {:username uname})
+        decks (map #(update % :date (fn [x] (if (string? x) x (mongo-time-to-utc-string x)))) decks)]
+    (response 200 decks)))
 
 (defn update-card
   [card]
