@@ -1599,7 +1599,7 @@
 
        ;; choice of number of credits
        (= choices "credit")
-       (let [n (:number choices)]
+       (let [n (get-in @game-state [(:side @game-state) :credit])]
          [:div
           [:div.credit-select
            [:select#credit {:default-value (:default choices 0)
