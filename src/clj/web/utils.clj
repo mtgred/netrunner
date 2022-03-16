@@ -39,4 +39,8 @@
     0
     (/ (reduce + numbers) (count numbers))))
 
-(defn mongo-time-to-utc-string [s] (.toString (ldt/to-instant s zone/utc)))
+(defn mongo-time-to-utc-string
+  [s]
+  (if s
+    (.toString (ldt/to-instant s zone/utc))
+    ""))
