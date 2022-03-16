@@ -14,7 +14,7 @@
    [web.mongodb :refer [->object-id]]
    [web.pages :as pages]
    [web.user :refer [active-user?]]
-   [web.utils :refer [json-response response]]
+   [web.utils :refer [json-response response mongo-time-to-utc-string]]
    [web.ws :as ws]))
 
 (defn clear-userstats-handler
@@ -219,7 +219,11 @@
                        (mq/fields {:replay 0 :log 0 :_id 0})
                        (mq/sort (array-map :start-date -1))
                        (mq/limit 100))
-                     (into []))]
+                     (into []))
+          games (map #(update % :creation-date mongo-time-to-utc-string) games)
+          games (map #(update % :start-date mongo-time-to-utc-string) games)
+          games (map #(update % :end-date mongo-time-to-utc-string) games)
+          ]
       (response 200 games))
     (response 401 {:message "Unauthorized"})))
 

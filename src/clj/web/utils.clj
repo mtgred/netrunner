@@ -1,5 +1,7 @@
 (ns web.utils
-  (:require [ring.util.response :as resp])
+  (:require [ring.util.response :as resp]
+            [cljc.java-time.local-date-time :as ldt]
+            [cljc.java-time.zone-offset :as zone])
   (:import java.security.MessageDigest))
 
 (defn tick
@@ -36,3 +38,9 @@
   (if (empty? numbers)
     0
     (/ (reduce + numbers) (count numbers))))
+
+(defn mongo-time-to-utc-string
+  [s]
+  (if s
+    (.toString (ldt/to-instant s zone/utc))
+    ""))

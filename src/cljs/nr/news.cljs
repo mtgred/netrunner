@@ -3,7 +3,7 @@
   (:require
    [cljs.core.async :refer [<!]]
    [nr.ajax :refer [GET]]
-   [nr.utils :refer [day-word-with-time-formatter format-zoned-date-time
+   [nr.utils :refer [day-word-with-time-formatter format-date-time
                      render-icons]]
    [reagent.core :as r]))
 
@@ -19,5 +19,5 @@
        (for [d @news]
          [:li.news-item
           {:key (:date d)}
-          [:span.date (format-zoned-date-time day-word-with-time-formatter (str (:date d) "Z"))]
+          [:span.date (format-date-time day-word-with-time-formatter (:date d))]
           [:span.title (render-icons (:item d ""))]]))]))
