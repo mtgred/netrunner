@@ -48,6 +48,7 @@
     [game.core.runs]
     [game.core.say]
     [game.core.servers]
+    [game.core.set-aside]
     [game.core.set-up]
     [game.core.shuffling]
     [game.core.state]
@@ -740,6 +741,11 @@
    zone->name
    zone->sort-key
    zones->sorted-names])
+
+(import-vars
+  [game.core.set-aside
+   set-aside
+   get-set-aside])
 
 (import-vars
   [game.core.set-up

@@ -763,16 +763,16 @@
                        (doseq [c shuffle-back]
                          (move state side c :deck))
                        (shuffle! state side :deck))})
-          (shuffle-next [set-aside target to-shuffle]
-            (let [set-aside (remove-once #(= % target) set-aside)
+          (shuffle-next [set-aside-cards target to-shuffle]
+            (let [set-aside-cards (remove-once #(= % target) set-aside-cards)
                   to-shuffle (if target
                                (concat to-shuffle [target])
                                [])
                   finished? (or (= 3 (count to-shuffle))
-                                (empty? set-aside))]
+                                (empty? set-aside-cards))]
               {:prompt (msg (if finished?
-                              (str "Removing: " (if (not-empty set-aside)
-                                                  (string/join ", " (map :title set-aside))
+                              (str "Removing: " (if (not-empty set-aside-cards)
+                                                  (string/join ", " (map :title set-aside-cards))
                                                   "nothing")
                                    "[br]Shuffling: " (if (not-empty to-shuffle)
                                                        (string/join ", " (map :title to-shuffle))
@@ -784,51 +784,52 @@
                :not-distinct true ; show cards separately
                :choices (req (if finished?
                                ["Done" "Start over"]
-                               (seq set-aside)))
+                               (seq set-aside-cards)))
                :effect (req (if finished?
                               (if (= "Done" target)
                                 (continue-ability state side
-                                                  (shuffle-end set-aside to-shuffle)
+                                                  (shuffle-end set-aside-cards to-shuffle)
                                                   card nil)
                                 (continue-ability state side
-                                                  (shuffle-next (sort-by :title (concat set-aside to-shuffle)) nil nil)
+                                                  (shuffle-next (sort-by :title (concat set-aside-cards to-shuffle)) nil nil)
                                                   card nil))
                               (continue-ability state side
-                                                (shuffle-next set-aside target to-shuffle)
+                                                (shuffle-next set-aside-cards target to-shuffle)
                                                 card nil)))}))]
     {:abilities [{:label "Install a card from the top of the stack"
                   :cost [:trash]
                   :msg "install a card from the top of the stack"
                   :async true
                   :waiting-prompt "Runner to make a decision"
-                  :effect (req (let [set-aside (sort-by :title (take 6 (:deck runner)))]
-                                 (wait-for
-                                   (resolve-ability state side
-                                                    {:prompt (msg "The set aside cards are: " (string/join ", " (map :title set-aside)))
-                                                     :choices ["OK"]}
-                                                    card nil)
-                                   (continue-ability
-                                     state side
-                                     {:prompt "Choose a card to install"
-                                      :async true
-                                      :choices (req (concat
-                                                      (filter #(and (or (program? %)
-                                                                        (and (resource? %)
-                                                                             (has-subtype? % "Virtual")))
-                                                                    (can-pay? state side
-                                                                              (assoc eid :source card :source-type :runner-install)
-                                                                              % nil [:credit (install-cost state side % {:cost-bonus -2})]))
-                                                              set-aside)
-                                                      ["No action"]))
-                                      :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
-                                      :effect (req (if (= "No action" target)
-                                                     (continue-ability state side (shuffle-next set-aside nil nil) card nil)
-                                                     (let [to-install target
-                                                           set-aside (remove-once #(= % target) set-aside)
-                                                           new-eid (assoc eid :source card :source-type :runner-install)]
-                                                       (wait-for (runner-install state side new-eid target {:cost-bonus -2})
-                                                                 (continue-ability state side (shuffle-next set-aside nil nil) card nil)))))}
-                                     card nil))))}]}))
+                  :effect (req (set-aside state side eid (take 6 (:deck runner)))
+                               (let [set-aside-cards (sort-by :title (get-set-aside state side eid))]
+                                 (wait-for (resolve-ability state side
+                                                            {:async true
+                                                             :prompt (msg "The set aside cards are: " (string/join ", " (map :title set-aside-cards)))
+                                                             :choices ["OK"]}
+                                                            card nil)
+                                           (continue-ability
+                                             state side
+                                             {:prompt "Choose a card to install"
+                                              :async true
+                                              :choices (req (concat
+                                                              (filter #(and (or (program? %)
+                                                                                (and (resource? %)
+                                                                                     (has-subtype? % "Virtual")))
+                                                                            (can-pay? state side
+                                                                                      (assoc eid :source card :source-type :runner-install)
+                                                                                      % nil [:credit (install-cost state side % {:cost-bonus -2})]))
+                                                                      set-aside-cards)
+                                                              ["No action"]))
+                                              :cancel-effect (effect (continue-ability (shuffle-next set-aside-cards nil nil) card nil))
+                                              :effect (req (if (= "No action" target)
+                                                             (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)
+                                                             (let [to-install target
+                                                                   set-aside-cards (remove-once #(= % target) set-aside-cards)
+                                                                   new-eid (assoc eid :source card :source-type :runner-install)]
+                                                               (wait-for (runner-install state side new-eid target {:cost-bonus -2})
+                                                                         (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)))))}
+                                             card nil))))}]}))
 
 (defcard "Gebrselassie"
   {:abilities [{:msg "host it on an installed non-AI icebreaker"

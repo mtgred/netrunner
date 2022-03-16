@@ -1826,11 +1826,12 @@
       (click-prompt state :runner "OK")
       (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
       (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
-      (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+      (is (= 0 (count (:deck (get-runner)))) "0 cards in deck")
+      (is (= 6 (count (:set-aside (get-runner)))) "6 cards set-aside")
       (changes-val-macro -1 (:credit (get-runner))
                          "Paid 1c to install DDoS"
                          (click-prompt state :runner "DDoS"))
-      (is (= 5 (count (:deck (get-runner)))) "5 cards remain in deck")
+      (is (= 5 (count (:set-aside (get-runner)))) "5 cards remain set-aside")
       (click-prompt state :runner "Au Revoir")
       (click-prompt state :runner "Clone Chip")
       (click-prompt state :runner "Equivocation")
@@ -1845,7 +1846,9 @@
       (is (= 3 (count (:deck (get-runner)))) "3 cards remain in deck")
       (is (= 2 (count (:rfg (get-runner)))) "Removed 2 cards from game")
       (is (no-prompt? state :runner) "No more prompts")
-      (is (no-prompt? state :corp) "Waiting prompt cleared")))
+      (is (no-prompt? state :corp) "Waiting prompt cleared")
+      (is false "boop")
+      ))
 
 (deftest gachapon-shuffling-with-less-than-3-cards-set-aside
     ;; Shuffling with less than 3 cards set aside

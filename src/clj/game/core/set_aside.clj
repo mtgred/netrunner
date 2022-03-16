@@ -1,0 +1,20 @@
+(ns game.core.set-aside
+  (:require
+    [game.core.eid :refer [effect-completed]]
+    [game.core.moving :refer [move]]
+    [clojure.string :as string]))
+
+(defn set-aside
+  [state side eid cards]
+  (swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
+  (doseq [c cards] (move state side c :set-aside))
+  (effect-completed state side eid))
+
+(defn get-set-aside
+  [state side eid]
+  (let [eid (:eid eid)
+        cids (set (get-in @state [side :set-aside-tracking eid]))
+        player (get @state side)]
+    (->> (:set-aside player)
+         (filter #(contains? cids (:cid %)))
+         (into []))))
