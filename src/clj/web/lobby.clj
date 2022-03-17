@@ -10,10 +10,13 @@
    [jinteki.validator :as validator]
    [medley.core :refer [find-first random-uuid]]
    [monger.collection :as mc]
+   [time-literals.read-write :as read-write]
    [web.app-state :as app-state]
    [web.mongodb :as mongodb]
    [web.stats :as stats]
    [web.ws :as ws]))
+
+(read-write/print-time-literals-clj!)
 
 (defn create-new-lobby
   [{uid :uid
