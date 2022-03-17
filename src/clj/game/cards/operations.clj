@@ -992,7 +992,7 @@
             {:choices {:card #(and (installed? %)
                                    (runner? %)
                                    (not (has-subtype? % "Virtual")))}
-             :msg "add an installed non-virtual card to the Runner's grip"
+             :msg "add an installed non-virtual card to the Runner's Grip"
              :effect (effect (move :runner target :hand true))}}}})
 
 (defcard "Hedge Fund"
@@ -1064,7 +1064,7 @@
                                    (in-hand? %))}
              :async true
              :msg (msg "force the Runner to trash"
-                       (:title target) " from their grip")
+                       (:title target) " from their Grip")
              :effect (effect (trash :runner eid target {:unpreventable true}))}]})
 
 (defcard "Hunter Seeker"
@@ -1448,7 +1448,12 @@
                        :prompt "Trash 1 random card from your Grip?"
                        :player :runner
                        :yes-ability {:async true
-                                     :effect (effect (trash-cards :runner eid (take 1 (shuffle (:hand runner))) nil))}
+                                     :effect (req (let [c (take 1 (shuffle (:hand runner)))]
+                                                    (do
+                                                      (system-msg state :corp
+                                                                  (str "uses O₂ Shortage to trash "
+                                                                       (:title (first c)) " from the Runner's Grip"))
+                                                      (trash-cards state :runner eid c nil))))}
                        :no-ability {:msg "gain [Click][Click]"
                                     :effect (effect (gain-clicks :corp 2))}}}
                      card nil)))}})
@@ -2093,7 +2098,7 @@
     :choices {:card #(and (installed? %)
                           (runner? %))
               :max 2}
-    :msg (msg (str "move " (string/join ", " (map :title targets)) " to the Runner's grip"))
+    :msg (msg (str "move " (string/join ", " (map :title targets)) " to the Runner's Grip"))
     :effect (req (doseq [c targets]
                    (move state :runner c :hand)))}})
 
