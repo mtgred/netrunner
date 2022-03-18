@@ -291,8 +291,8 @@
      (stats/update-game-stats db lobby)
      (stats/push-stats-update db lobby))
    (swap! app-state/app-state update :lobbies dissoc gameid)
-   (doseq [player-uid (keep :uid players)]
-     (clear-lobby-state player-uid))
+   (doseq [uid (keep :uid (get-players-and-spectators lobby))]
+     (clear-lobby-state uid))
    (when (and (not skip-on-close) on-close)
      (on-close lobby))))
 
