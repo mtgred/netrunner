@@ -35,7 +35,6 @@
                  " " (:title @game))]
        [:p
         [:input.game-title {:on-change #(swap! state assoc :password (.. % -target -value))
-                            :type "password"
                             :value (:password @state)
                             :placeholder (tr [:lobby.password "Password"])
                             :maxLength "30"
