@@ -32,14 +32,15 @@
             players (:players @current-game)
             side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
             same-side? (fn [deck] (= side (get-in deck [:identity :side])))
-            legal? (fn [deck] (get-in deck [:status (keyword fmt) :legal]
-                                      (get-in (trusted-deck-status (assoc deck :format fmt))
-                                              [(keyword fmt) :legal]
-                                              false)))]
+            legal? (fn [deck fmt] (or (= "casual" fmt)
+                                      (get-in deck [:status (keyword fmt) :legal]
+                                              (get-in (trusted-deck-status (assoc deck :format fmt))
+                                                      [(keyword fmt) :legal]
+                                                      false))))]
         (doall
           (for [deck (->> @decks
                           (filter same-side?)
-                          (filter legal?)
+                          (filter #(legal? % fmt))
                           (sort-by :date)
                           (reverse))]
             [:div.deckline {:key (:_id deck)
