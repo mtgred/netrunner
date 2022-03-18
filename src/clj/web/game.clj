@@ -233,7 +233,7 @@
             (lobby/send-lobby-state lobby?)
             (lobby/send-lobby-ting lobby?)
             (lobby/broadcast-lobby-list)
-            (main/handle-notification lobby? message)
+            (main/handle-notification (:state lobby?) message)
             (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
             (when ?reply-fn (?reply-fn 200)))
           (false? correct-password?)
