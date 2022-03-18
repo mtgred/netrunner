@@ -124,5 +124,5 @@
     (ws/ws-send! [:admin/fetch-users])
     [:div.page-container
      [:div.account-bg]
-     (when (:isadmin @user)
+     (when (or (:isadmin @user) (:ismoderator @user))
        [users-container])]))
