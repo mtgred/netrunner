@@ -709,10 +709,10 @@
                                                   (resolve-ability state side (deep-dive-access async-result) card nil)
                                                   (effect-completed state side eid)))}}}
                                  card nil)
-                                (do (system-msg state :side (str "shuffles R&D"))
+                                (do (system-msg state :corp (str "shuffles R&D"))
                                     (shuffle! state :corp :deck)
                                     (effect-completed state side eid)))
-                      (do (system-msg state :side (str "shuffles R&D"))
+                      (do (system-msg state :corp (str "shuffles R&D"))
                           (shuffle! state :corp :deck)
                           (effect-completed state side eid))))))}}))
 
