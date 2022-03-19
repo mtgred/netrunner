@@ -187,12 +187,17 @@
            (let [n (rdom/dom-node this)]
              (set! (.-scrollTop n) (.-scrollHeight n)))))
 
-       :component-did-update
+       :component-will-update
        (fn [this]
          (let [n (rdom/dom-node this)]
-           (when (or (:send-msg @should-scroll)
-                     (scrolled-to-end? n 15))
-             (reset! should-scroll {:send-msg false})
+           (reset! should-scroll {:update (or (:send-msg @should-scroll)
+                                              (scrolled-to-end? n 15))
+                                  :send-msg false})))
+
+       :component-did-update
+       (fn [this]
+         (when (:update @should-scroll)
+           (let [n (rdom/dom-node this)]
              (set! (.-scrollTop n) (.-scrollHeight n)))))
 
        :reagent-render
