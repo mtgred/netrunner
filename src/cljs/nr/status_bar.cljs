@@ -51,7 +51,7 @@
 (defn spectator-list [current-game]
   (when-let [game @current-game]
     (when (:started game)
-      (let [c (count (:spectator game))]
+      (let [c (count (:spectators game))]
         (when (pos? c)
           [:div.spectators-count.float-right (str c " Spectator" (when (< 1 c) "s"))
            [:div.blue-shade.spectators
