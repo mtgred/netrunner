@@ -407,7 +407,7 @@
 (defn check-password [lobby user password]
   (or (empty? (:password lobby))
       (superuser? user)
-      (bcrypt/check password (:password lobby))))
+      (bcrypt/check (or password "") (:password lobby))))
 
 (defn allowed-in-lobby
   [user lobby]

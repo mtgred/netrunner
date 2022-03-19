@@ -61,7 +61,7 @@
   [:div.users-box.panel.blue-shade
    [:ul.list
     (doall
-      (for [d (sort-by :username @users)]
+      (for [d (sort-by #(str/lower-case (:username %)) @users)]
         [:li.users-item
          {:key (:_id d)}
          [:span
