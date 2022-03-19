@@ -15,7 +15,7 @@
                                        (not legal))
                               (or reason "Unknown"))}
                [:span.tick (if legal "✔" "✘")]
-               (str/capitalize fmt) description])))])
+               (get slug->format fmt) description])))])
 
 (defn- deck-status-details
   [deck use-trusted-info]
