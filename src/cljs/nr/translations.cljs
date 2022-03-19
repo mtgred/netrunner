@@ -2056,7 +2056,8 @@
     :pass-jack "아이스 통과하고 잭 아웃하기"
     :trace "추적"
     :credits "크레딧"
-    :card "카드"}
+    :card "카드"}}
+
   :pl
    {:missing ":pl missing text"
     :side
@@ -2484,7 +2485,7 @@
    :win-claimed (fn [[turn]] (str "wygrywa przez zgłoszenie wygranej w " turn " turze."))
    :win-points (fn [[turn]] (str "wygrywa przez zdobycie punktów zwycięstwa w " turn " turze."))}
    } 
-   }})
+   })
 
 (defn opts [] {:dict translation-dictionary})
 

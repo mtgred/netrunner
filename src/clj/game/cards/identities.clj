@@ -1362,7 +1362,6 @@
                   :msg (msg "install a card in a remote server and place 1 advancement token on it")
                   :effect (effect (continue-ability (install-card target) card nil))}]
      :events [{:event :corp-turn-begins
-               :async true
                :effect (req (clear-persistent-flag! state side card :can-rez))}]}))
 
 (defcard "Seidr Laboratories: Destiny Defined"
