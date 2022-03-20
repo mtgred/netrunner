@@ -1817,6 +1817,32 @@
               (= (:title (nth (-> @state :runner :deck) 2)) "Deuces Wild")
               (= (:title (nth (-> @state :runner :deck) 3)) "Encore"))))))
 
+(deftest customized-secretary-shuffles-stack-when-no-program-is-hosted
+  ;; Customized Secretary - shuffles the stack when no program is hosted
+  (do-game
+    (new-game {:runner {:deck ["Aniccam" "Bravado" "Councilman" "Deuces Wild" "Encore"]
+                        :hand ["Customized Secretary"]
+                        :credits 50}})
+    (take-credits state :corp)
+    (core/move state :runner (find-card "Aniccam" (:deck (get-runner))) :deck)
+    (core/move state :runner (find-card "Bravado" (:deck (get-runner))) :deck)
+    (core/move state :runner (find-card "Councilman" (:deck (get-runner))) :deck)
+    (core/move state :runner (find-card "Deuces Wild" (:deck (get-runner))) :deck)
+    (core/move state :runner (find-card "Encore" (:deck (get-runner))) :deck)
+    (is (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam"))
+    (is (= (:title (nth (-> @state :runner :deck) 1)) "Bravado"))
+    (is (= (:title (nth (-> @state :runner :deck) 2)) "Councilman"))
+    (is (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild"))
+    (is (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))
+    ;; Stack is now from top to bottom: A B C D E
+    (play-from-hand state :runner "Customized Secretary")
+    (is (not (and (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam")
+              (= (:title (nth (-> @state :runner :deck) 1)) "Bravado")
+              (= (:title (nth (-> @state :runner :deck) 2)) "Councilman")
+              (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild")
+              (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))))
+    (is (no-prompt? state :corp))))
+
 (deftest cyber-cypher
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
