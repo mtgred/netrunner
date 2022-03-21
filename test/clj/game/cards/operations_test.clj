@@ -1808,6 +1808,16 @@
       (is (= 10 (:credit (get-corp))) "Now at 10 credits")
       (is (= 2 (count (:discard (get-corp)))))))
 
+(deftest hansei-review-no-cards
+  ;; Hansei Review - with an empty hand, should not get a trash prompt
+  (do-game
+      (new-game {:corp {:hand ["Hansei Review"]}})
+      (is (= 5 (:credit (get-corp))) "Starting with 5 credits")
+      (play-from-hand state :corp "Hansei Review")
+      (is (no-prompt? state :corp) "Corp should have no prompt with no cards in hand")
+      (is (= 10 (:credit (get-corp))) "Now at 10 credits")
+      (is (= 1 (count (:discard (get-corp)))))))
+
 (deftest hard-hitting-news
   ;; Hard-Hitting News
   (do-game
