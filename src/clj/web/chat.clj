@@ -19,6 +19,14 @@
   [{chat-settings :system/chat}]
   (response 200 {:max-length (chat-max-length chat-settings)}))
 
+(defn- blocked-by-user
+  [db username]
+    (let [blocks
+          (mc/find-one-as-map db :users
+                              {:username username}
+                              ["username" "options.blocked-users"])]
+      [username blocks]))
+
 (defn messages-handler
   [{db :system/db
     user :user
@@ -31,13 +39,13 @@
                           (q/limit 100))
                         reverse)
           messages (map #(update % :date mongo-time-to-utc-string) messages)
-          usernames (->> messages
-                         (map :username)
-                         (into #{}))
-          connected-users (app-state/get-users)
-          visible-users (->> (for [username usernames
+          senders (->> messages
+                       (map :username)
+                       (map #(blocked-by-user db %))
+                       (into {}))
+          visible-users (->> (for [username (keys senders)
                                    :when (or (= (:username user) username)
-                                             (visible-to-user user {:username username} connected-users))]
+                                             (visible-to-user user {:username username} senders))]
                                username)
                              (into #{}))
           messages (filter #(contains? visible-users (:username %)) messages)]
