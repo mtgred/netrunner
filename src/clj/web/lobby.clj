@@ -143,7 +143,7 @@
     (filter
       (fn [lobby]
         (let [player-usernames (->> (:players lobby)
-                                    (keep :username)
+                                    (map #(get-in % [:user :username]))
                                     (map str/lower-case)
                                     (set))
               user-blocked-players?
@@ -151,7 +151,7 @@
                 (seq (set/intersection user-block-list player-usernames))
                 false)
               players-blocked-user?
-              (-> (mapcat get-blocked-list (:players lobby))
+              (-> (mapcat get-blocked-list (map :user (:players lobby)))
                   (set)
                   (contains? (:username user)))]
           (not (or user-blocked-players? players-blocked-user?))))
