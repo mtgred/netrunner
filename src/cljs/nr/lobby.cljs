@@ -24,6 +24,7 @@
   (swap! app-state assoc :games data))
 
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
+  ;; XXX - the empty state sent with the lobby list is blowing up the replay's started flag
   (swap! app-state assoc :current-game data)
   (when (:started data)
     (ws/ws-send! [:game/resync {:gameid (:gameid data)}])))
@@ -72,13 +73,9 @@
                      init-state (assoc init-state :gameid gameid)
                      init-state (assoc-in init-state [:options :spectatorhands] true)
                      diffs (rest history)
-                     init-state (assoc init-state :replay-diffs diffs)
-                     
-                     ;; XXX
-                     _ (println "LOBBY HANDLER")
-                     ]
-                 (ws/event-msg-handler
-                   {:id :netrunner/start
+                     init-state (assoc init-state :replay-diffs diffs)]
+                 (ws/event-msg-handler-wrapper
+                   {:id :game/start
                     :?data (.stringify js/JSON (clj->js
                                                  (if jump-to
                                                    (assoc init-state :replay-jump-to jump-to)
