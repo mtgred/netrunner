@@ -72,8 +72,12 @@
                      init-state (assoc init-state :gameid gameid)
                      init-state (assoc-in init-state [:options :spectatorhands] true)
                      diffs (rest history)
-                     init-state (assoc init-state :replay-diffs diffs)]
-                 (ws/event-msg-handler-wrapper
+                     init-state (assoc init-state :replay-diffs diffs)
+                     
+                     ;; XXX
+                     _ (println "LOBBY HANDLER")
+                     ]
+                 (ws/event-msg-handler
                    {:id :netrunner/start
                     :?data (.stringify js/JSON (clj->js
                                                  (if jump-to
