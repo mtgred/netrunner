@@ -24,9 +24,10 @@
   (swap! app-state assoc :games data))
 
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
-  (swap! app-state assoc :current-game data)
-  (when (:started data)
-    (ws/ws-send! [:game/resync {:gameid (:gameid data)}])))
+  (when-not (= "local-replay" (:gameid @app-state))
+    (swap! app-state assoc :current-game data)
+    (when (:started data)
+      (ws/ws-send! [:game/resync {:gameid (:gameid data)}]))))
 
 (defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
   (play-sound data))
@@ -74,7 +75,7 @@
                      diffs (rest history)
                      init-state (assoc init-state :replay-diffs diffs)]
                  (ws/event-msg-handler-wrapper
-                   {:id :netrunner/start
+                   {:id :game/start
                     :?data (.stringify js/JSON (clj->js
                                                  (if jump-to
                                                    (assoc init-state :replay-jump-to jump-to)
@@ -84,10 +85,14 @@
                                "error" {:time-out 0 :close-button true}))))))))
 
 (defn leave-game []
-  (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
-               8000
-               #(when (sente/cb-success? %)
-                  (leave-game!))))
+  (if (= "local-replay" (:gameid @app-state))
+    (do
+      (swap! app-state assoc :gameid nil)
+      (leave-game!))
+    (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
+                 8000
+                 #(when (sente/cb-success? %)
+                    (leave-game!)))))
 
 (defn- hidden-formats
   "Remove games which the user has opted to hide"

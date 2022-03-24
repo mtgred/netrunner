@@ -151,7 +151,7 @@
           (range 1 max-users)))
 
       (safe-println "Spectators connected")
-      (game-ws-handler/-msg-handler {:id :netrunner/start
+      (game-ws-handler/-msg-handler {:id :game/start
                                      :ring-req {:system/db db
                                                 :user {:username "TestCorp"}}
                                      :uid "TestCorp"

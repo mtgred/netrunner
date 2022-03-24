@@ -52,6 +52,9 @@
                       :choices {:card (fn [t] (same-side? (:side t) side))}}
                      (map->Card {:title "/adv-counter command"}) nil)))
 
+(defn command-save-replay [state _]
+  (swap! state assoc-in [:options :save-replay] true))
+
 (defn command-bug-report [state side]
   (swap! state update :bug-reported (fnil inc -1))
   (let [title "[EDITME] Please give a short description of your bug here"
@@ -388,6 +391,7 @@
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
+        "/save-replay" command-save-replay
         "/summon"     #(command-summon %1 %2 args)
         "/swap-ice"   #(when (= %2 :corp)
                           (resolve-ability
