@@ -4574,7 +4574,11 @@
       (click-prompt state :runner "Archives")
       (run-continue state)
       (is (= 9 (:credit (get-runner))) "Runner has 9 credits")
-      (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team has 3 credits remaining")))
+      (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team has 3 credits remaining")
+      (core/gain state :runner :click 1)
+      (run-empty-server state "Archives")
+      (is (= 9 (:credit (get-runner))) "Runner still has 9 credits")
+      (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team still has 3 credits remaining")))
 
 (deftest rolodex
   ;; Rolodex - Full test
