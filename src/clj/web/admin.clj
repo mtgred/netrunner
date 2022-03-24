@@ -102,7 +102,7 @@
   (if (and (active-user? user)
            (or (:ismoderator user) (:isadmin user)))
     (let [users (->> (mc/find-maps db user-collection {$or [{:ismoderator true}
-                                                            {:special true}
+                                                            {:special {$exists true}}
                                                             {:tournament-organizer true}
                                                             {:banned true}]}
                                    [:_id :username :ismoderator :special :tournament-organizer :banned])

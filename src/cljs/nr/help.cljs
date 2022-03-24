@@ -424,7 +424,7 @@
             {:id "altarts"
              :title "How do I change my decks to use alternative art versions of cards (or promotional ones)?"
              :content [:ul
-                        [:p "Alternative art cards are enabled for the " [:a {:href "#donations"} "donators"] " and "
+                        [:p "Alternative art cards are enabled for " [:a {:href "#donations"} "donors"] " and "
                          [:a {:href "#devs"} "developers"] " of the site. If you belong to one of the aforementioned groups and you feel like you should have them enabled, "
                          "but you don't, " [:a {:href "/about"} "contact us"] "."]]})}
     {:id "troubleshooting"

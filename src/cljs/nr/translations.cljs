@@ -96,7 +96,8 @@
     {:settings :en.nav/settings
      :logout "Jack out"
      :admin :en.nav/admin
-     :moderator "Moderator"}
+     :moderator "Moderator"
+     :donor "Donor"}
     :card-browser
     {:search-hint "Search cards"
      :sort "Sort by"
@@ -915,7 +916,8 @@
     {:settings :la-pig.nav/settings
      :logout "Ackjay outyay"
      :admin :la-pig.nav/admin
-     :moderator "Oderatormay"}
+     :moderator "Oderatormay"
+     :donor "Onorday"}
     :card-browser
     {:search-hint "Earchsay ardscay"
      :sort "Ortsay ybay"
