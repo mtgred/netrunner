@@ -235,7 +235,6 @@
       (ws/chsk-send! uid ev))
     (if-let [lobby (app-state/uid->lobby uid)]
       (send-lobby-state lobby)
-      ;; XXX - this clear lobby is blowing up the current-game started flag for replays
       (clear-lobby-state uid))))
 
 (defmethod ws/-msg-handler :lobby/list
