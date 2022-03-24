@@ -936,15 +936,21 @@
 (defcard "Hansei Review"
   {:on-play
    {:async true
-    :req (req (pos? (count (:hand corp))))
-    :prompt "Choose a card in HQ to trash"
-    :choices {:max 1
-              :all true
-              :card #(and (corp? %)
-                          (in-hand? %))}
-    :msg "trash a card from HQ and gain 10 [Credits]"
-    :effect (req (wait-for (trash-cards state side targets)
-                           (gain-credits state side eid 10)))}})
+    :effect (req (if (pos? (count (:hand corp)))
+                   (continue-ability
+                     state :corp
+                     {:prompt "Choose a card in HQ to trash"
+                      :choices {:max 1
+                                :all true
+                                :card #(and (corp? %)
+                                            (in-hand? %))}
+                      :msg "trash a card from HQ and gain 10 [Credits]"
+                      :async true
+                      :effect (req (wait-for (trash-cards state side targets)
+                                             (gain-credits state side eid 10)))} card nil)
+                   (do
+                     (system-msg state side "uses Hansei Review to gain 10 [Credits]")
+                     (gain-credits state side eid 10))))}})
 
 (defcard "Hard-Hitting News"
   {:on-play
