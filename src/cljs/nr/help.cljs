@@ -109,6 +109,9 @@
     :has-args :required
     :usage "/roll n"
     :help "Roll an n-sided die"}
+   {:name "/save-replay"
+    :usage "/save-replay"
+    :help "Save a replay of the game"}
    {:name "/summon"
     :has-args :required
     :usage "/summon n"
