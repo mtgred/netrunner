@@ -10,10 +10,13 @@
    [jinteki.validator :as validator]
    [medley.core :refer [find-first random-uuid]]
    [monger.collection :as mc]
+   [time-literals.read-write :as read-write]
    [web.app-state :as app-state]
    [web.mongodb :as mongodb]
    [web.stats :as stats]
    [web.ws :as ws]))
+
+(read-write/print-time-literals-clj!)
 
 (defn create-new-lobby
   [{uid :uid
@@ -140,7 +143,7 @@
     (filter
       (fn [lobby]
         (let [player-usernames (->> (:players lobby)
-                                    (keep :username)
+                                    (map #(get-in % [:user :username]))
                                     (map str/lower-case)
                                     (set))
               user-blocked-players?
@@ -148,7 +151,7 @@
                 (seq (set/intersection user-block-list player-usernames))
                 false)
               players-blocked-user?
-              (-> (mapcat get-blocked-list (:players lobby))
+              (-> (mapcat get-blocked-list (map :user (:players lobby)))
                   (set)
                   (contains? (:username user)))]
           (not (or user-blocked-players? players-blocked-user?))))
@@ -288,8 +291,8 @@
      (stats/update-game-stats db lobby)
      (stats/push-stats-update db lobby))
    (swap! app-state/app-state update :lobbies dissoc gameid)
-   (doseq [player-uid (keep :uid players)]
-     (clear-lobby-state player-uid))
+   (doseq [uid (keep :uid (get-players-and-spectators lobby))]
+     (clear-lobby-state uid))
    (when (and (not skip-on-close) on-close)
      (on-close lobby))))
 
@@ -404,7 +407,7 @@
 (defn check-password [lobby user password]
   (or (empty? (:password lobby))
       (superuser? user)
-      (bcrypt/check password (:password lobby))))
+      (bcrypt/check (or password "") (:password lobby))))
 
 (defn allowed-in-lobby
   [user lobby]

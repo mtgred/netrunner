@@ -1336,9 +1336,13 @@
 (defn get-current-ice []
   (let [run-ice (get-run-ices)
         pos (get-in @game-state [:run :position])
-        encounter-ice (-> @game-state :encounters :ice)]
+        phase (get-in @game-state [:run :phase])
+        encounter-ice (-> @game-state :encounters :ice)
+        get-ice-from-pos? (or (= "movement" phase)
+                              (get-in @game-state [:run :approached-ice-in-position?]))]
     (or encounter-ice
-        (when (and pos
+        (when (and get-ice-from-pos?
+                   pos
                    (pos? pos)
                    (<= pos (count run-ice)))
           (nth run-ice (dec pos))))))
@@ -1370,7 +1374,8 @@
   [run encounters]
   (let [ice (get-current-ice)]
     [:div.panel.blue-shade
-     (when @encounters
+     (when (and @encounters
+                ice)
        [:<>
         [:div {:style {:text-align "center"}
                :on-mouse-over #(card-highlight-mouse-over % ice button-channel)
@@ -1383,7 +1388,8 @@
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))])
 
      (cond
-       (= "approach-ice" (:phase @run))
+       (and (= "approach-ice" (:phase @run))
+            ice)
        [cond-button
         (str (tr [:game.rez "Rez"]) " " (get-title ice))
         (not (rezzed? ice))
@@ -1438,7 +1444,8 @@
         pass-ice? (and (= "encounter-ice" phase)
                        (= 1 (:encounter-count @encounters)))]
     [:div.panel.blue-shade
-     (when @encounters
+     (when (and @encounters
+                ice)
        [:<>
         [:div {:style {:text-align "center"}
                :on-mouse-over #(card-highlight-mouse-over % ice button-channel)
@@ -1592,7 +1599,7 @@
 
        ;; choice of number of credits
        (= choices "credit")
-       (let [n (:number choices)]
+       (let [n (get-in @game-state [(:side @game-state) :credit])]
          [:div
           [:div.credit-select
            [:select#credit {:default-value (:default choices 0)
@@ -1809,7 +1816,7 @@
            [time-remaining start-date timer hide-remaining]]])])))
 
 (defn- handle-click [{:keys [render-board?]} e]
-  (when @render-board?
+  (when render-board?
     (when (-> e .-target (.closest ".menu-container") nil?)
       (close-card-menu))))
 
@@ -1844,7 +1851,7 @@
       (set! (.-value log-input) ""))))
 
 (defn- handle-key-down [{:keys [render-board?]} e]
-  (when @render-board?
+  (when render-board?
     (let [active-element-type (.-type (.-activeElement js/document))
           not-text-input? (not= "text" active-element-type)
           can-focus? (-> js/document .-activeElement js/$ (.attr "tabindex"))]
@@ -1867,7 +1874,7 @@
                              corp-phase-12 runner-phase-12
                              end-turn run
                              encounters active-page]} e]
-  (when (and @render-board?
+  (when (and render-board?
              (not= "text" (.-type (.-activeElement js/document))))
     (let [clicks (:click (@side @game-state))
           active-player-kw (keyword @active-player)
@@ -1933,7 +1940,6 @@
         corp (r/cursor game-state [:corp])
         runner (r/cursor game-state [:runner])
         active-player (r/cursor game-state [:active-player])
-        render-board? (r/track (fn [] (and corp runner side true)))
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])]
 
@@ -1952,35 +1958,35 @@
        (fn [this]
          (-> js/document (.addEventListener
                            "keydown"
-                           (partial handle-key-down {:render-board? render-board?})))
+                           (partial handle-key-down {:render-board? (and @corp @runner @side true)})))
          (-> js/document (.addEventListener
                            "keyup"
-                           (partial handle-key-up {:side side :active-player active-player :render-board? render-board?
+                           (partial handle-key-up {:side side :active-player active-player :render-board? (and @corp @runner @side true)
                                                    :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
                                                    :end-turn end-turn :run run
                                                    :encounters encounters})))
          (-> js/document (.addEventListener
                            "click"
-                           (partial handle-click {:render-board? render-board?}))))
+                           (partial handle-click {:render-board? (and @corp @runner @side true)}))))
 
        :component-will-unmount
        (fn [this]
          (-> js/document (.addEventListener
                            "keydown"
-                           (partial handle-key-down {:render-board? render-board?})))
+                           (partial handle-key-down {:render-board? (and @corp @runner @side true)})))
          (-> js/document (.removeEventListener
                            "keyup"
-                           (partial handle-key-up {:side side :active-player active-player :render-board? render-board?
+                           (partial handle-key-up {:side side :active-player active-player :render-board? (and @corp @runner @side true)
                                                    :corp-phase-12 corp-phase-12 :runner-phase-12 runner-phase-12
                                                    :end-turn end-turn :run run
                                                    :encounters encounters})))
          (-> js/document (.addEventListener
                            "click"
-                           (partial handle-click {:render-board? render-board?}))))
+                           (partial handle-click {:render-board? (and @corp @runner @side true)}))))
 
        :reagent-render
        (fn []
-         (when @render-board?
+        (when (and @corp @runner @side true)
            (let [me-side (if (= :spectator @side) :corp @side)
                  op-side (utils/other-side me-side)
                  me (r/cursor game-state [me-side])
@@ -2016,7 +2022,6 @@
                  op-agenda-point (r/cursor game-state [op-side :agenda-point])
                  ;; servers
                  corp-servers (r/cursor game-state [:corp :servers])
-                 corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
                  runner-rig (r/cursor game-state [:runner :rig])
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview

@@ -76,7 +76,10 @@
     {:keys [action user-type username] :as data} :?data
     uid :uid}]
   (if (and (active-user? user)
-           (:isadmin user)
+           (or (:isadmin user)
+               (and (:ismoderator user)
+                    (or (= user-type :specials)
+                        (= user-type :banned))))
            (not-empty username))
     (let [field (user-type->field user-type)
           value (case action
@@ -97,12 +100,12 @@
   [{{db :system/db user :user} :ring-req
     uid :uid}]
   (if (and (active-user? user)
-           (:isadmin user))
+           (or (:ismoderator user) (:isadmin user)))
     (let [users (->> (mc/find-maps db user-collection {$or [{:ismoderator true}
-                                                            {:specials true}
+                                                            {:special true}
                                                             {:tournament-organizer true}
                                                             {:banned true}]}
-                                   [:_id :username :ismoderator :specials :tournament-organizer :banned])
+                                   [:_id :username :ismoderator :special :tournament-organizer :banned])
                      (map #(update % :_id str)))]
       (ws/broadcast-to! [uid] :admin/fetch-users {:success users}))
     (ws/broadcast-to! [uid] :admin/fetch-users {:error "Not allowed"})))

@@ -13,8 +13,9 @@
    (let [c (count (filter-games @user @games (:visible-formats @app-state)))]
      (tr [:nav/game-count] c))])
 
-(defn in-game-buttons [user current-game]
-  (when (:started @current-game)
+(defn in-game-buttons [user current-game gameid]
+  (when (and (:started @current-game)
+             (not= "local-replay" @gameid))
     (let [user-id (-> @user :_id)
           is-player (some #(= user-id (-> % :user :_id)) (:players @current-game))]
       [:div.float-right
@@ -51,7 +52,7 @@
 (defn spectator-list [current-game]
   (when-let [game @current-game]
     (when (:started game)
-      (let [c (count (:spectator game))]
+      (let [c (count (:spectators game))]
         (when (pos? c)
           [:div.spectators-count.float-right (str c " Spectator" (when (< 1 c) "s"))
            [:div.blue-shade.spectators
@@ -66,6 +67,6 @@
                current-game (r/cursor app-state [:current-game])]
     [:div
      [current-game-count user games]
-     [in-game-buttons user current-game]
+     [in-game-buttons user current-game gameid]
      [replay-and-spectator-buttons gameid]
      [spectator-list current-game]]))

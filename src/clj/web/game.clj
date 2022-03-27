@@ -233,7 +233,7 @@
             (lobby/send-lobby-state lobby?)
             (lobby/send-lobby-ting lobby?)
             (lobby/broadcast-lobby-list)
-            (main/handle-notification lobby? message)
+            (main/handle-notification (:state lobby?) message)
             (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
             (when ?reply-fn (?reply-fn 200)))
           (false? correct-password?)
@@ -249,7 +249,7 @@
                                                                       (lobby/handle-toggle-spectator-mute gameid uid)
                                                                       (lobby/handle-set-last-update gameid uid)))
         {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
-        message (if mute-spectators "unmuted" "muted")]
+        message (if mute-spectators "muted" "unmuted")]
     (when (and lobby? state (lobby/player? uid lobby?))
       (update-and-send-diffs! main/handle-notification lobby? (str (:username user) " " message " spectators."))
       ;; needed to update the status bar

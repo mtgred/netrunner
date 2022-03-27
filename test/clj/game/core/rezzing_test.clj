@@ -21,11 +21,11 @@
     (testing "ignoring cost"
       (is (= () (rezzing/get-rez-cost state nil card {:ignore-cost true})))))
   (before-each [state (new-game)
-                card {:title "No match" :cost 5 :additional-cost [:trash]}]
+                card {:title "No match" :cost 5 :additional-cost [:trash-can]}]
     (testing "ignoring cost with additional costs"
-      (is (= [[:trash 1]] (rezzing/get-rez-cost state nil card {:ignore-cost true}))))
+      (is (= [[:trash-can 1]] (rezzing/get-rez-cost state nil card {:ignore-cost true}))))
     (testing "with additional costs"
-      (is (= [[:credit 5] [:trash 1]] (rezzing/get-rez-cost state nil card nil))))
+      (is (= [[:credit 5] [:trash-can 1]] (rezzing/get-rez-cost state nil card nil))))
     (testing "with additional costs and card disabled"
       (let [card (assoc card :disabled true)]
         (is (= [[:credit 5]] (rezzing/get-rez-cost state nil card nil)))))))

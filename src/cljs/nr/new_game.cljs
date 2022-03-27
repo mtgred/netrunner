@@ -112,7 +112,6 @@
    (when (:protected @options)
      [:p
       [:input.game-title {:on-change #(swap! options assoc :password (.. % -target -value))
-                          :type "password"
                           :value (:password @options)
                           :placeholder (tr [:lobby.password "Password"])
                           :maxLength "30"}]])])

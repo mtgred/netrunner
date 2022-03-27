@@ -41,7 +41,7 @@
 (defn draw
   "Draw n cards from :deck to :hand."
   ([state side eid n] (draw state side eid n nil))
-  ([state side eid n {:keys [suppress-event]}]
+  ([state side eid n {:keys [suppress-event no-update-draw-stats]}]
    (if (zero? n)
      (effect-completed state side eid)
      (do
@@ -69,7 +69,8 @@
                  drawn (mapv #(move state side % :hand) to-draw)
                  drawn-count (count drawn)]
              (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
-             (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
+             (if (not no-update-draw-stats)
+                 (swap! state update-in [:stats side :gain :card] (fnil + 0) n))
              (if suppress-event
                (effect-completed state side eid)
                (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]

@@ -2849,6 +2849,36 @@
       (is (= "Scorched Earth" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
       (is (:prompt (get-runner)) "Runner has next access prompt")))
 
+(deftest maya-triggers-only-on-rd-accesses
+    ;; Maya does not trigger on accesses out of R&D
+    (do-game
+      (new-game {:corp {:deck ["Anansi" "Brainstorm" "Chiyashi"]}
+                 :runner {:hand ["Maya" "Equivocation"]}})
+      (core/move state :corp (find-card "Anansi" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Anansi"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C
+      (take-credits state :corp)
+      (core/gain state :runner :click 1)
+      (play-from-hand state :runner "Maya")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No")
+      (play-from-hand state :runner "Equivocation")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "Yes") ; Equivocation prompt
+      (click-prompt state :runner "Yes") ; force the draw
+      (is (find-card "Anansi" (:hand (get-corp))) "Anansi added to HQ")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No") ; Maya prompt
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No more prompts for runner")
+      (is (not (:run @state)) "Run is ended")))
+
 (deftest mind-s-eye-interaction-with-rdi-aeneas
     ;; Interaction with RDI + Aeneas
     (do-game
@@ -3498,6 +3528,29 @@
                            "Used 1 credit from Public Terminal"
                            (play-from-hand state :runner "Dirty Laundry")
                            (click-card state :runner pt)))))
+
+(deftest quianju-pt-activate-start-of-turn
+  (do-game
+    (new-game {:runner {:hand ["Qianju PT"] :credits 15}
+               :corp {:hand ["Public Trail" "Public Trail"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Qianju PT")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [pt (get-hardware state 0)]
+      (card-ability state :runner pt 0)
+      (end-phase-12 state :runner)
+      (is (= 3 (:click (get-runner))) "Spent 1 click on Qianju PT")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Public Trail")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 0 (count-tags state)) "Avoided a tag")
+      (play-from-hand state :corp "Public Trail")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 1 (count-tags state)) "Took a tag (QPT expired)"))))
 
 (deftest q-coherence-chip
   ;; Q-Coherence Chip

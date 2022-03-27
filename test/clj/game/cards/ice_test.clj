@@ -304,6 +304,61 @@
                           (click-prompt state :runner "No"))
        (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
+(deftest anemone-happy-path
+  ;; Anemone
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (changes-val-macro
+       2 (count (:discard (get-runner)))
+       "Runner takes 2 net damage"
+       (changes-val-macro
+         1 (count (:discard (get-corp)))
+         "Corporation discards a card"
+         (run-on state :hq)
+         (rez state :corp anem)
+         (click-prompt state :corp "Yes")
+         (is (= :select (prompt-type :corp)))
+         (click-card state :corp "Hedge Fund"))))))
+
+(deftest anemone-wrong-server
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (run-on state :rd)
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active outside attacked server"))))
+
+(deftest anemone-outside-run
+  (do-game
+   (new-game {:corp {:hand [(qty "Anemone" 2) "Hedge Fund"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active outside run"))))
+
+(deftest anemone-cant-afford
+  (do-game
+   (new-game {:corp {:hand ["Anemone"]
+                     :credits 50}
+              :runner {:hand [(qty "Sure Gamble" 5)]}})
+   (play-from-hand state :corp "Anemone" "HQ")
+   (let [anem (get-ice state :hq 0)]
+     (take-credits state :corp)
+     (run-on state :hq)
+     (rez state :corp anem)
+     (is (no-prompt? state :corp) "Anemone not active if corp can't pay the cost"))))
+
 (deftest ansel-1-0
   ;; Ansel 1.0
   (before-each [state (new-game {:corp {:hand ["Ansel 1.0" "NGO Front" "Merger"]
@@ -495,6 +550,208 @@
       (is (= 2 (get-counters (refresh ab) :advancement)))
       (rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
+
+(deftest authenticator-encounter-decline-to-take-tag
+  (do-game
+    (new-game{:corp {:hand ["Authenticator"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (let [ath (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= 0 (count-tags state)))
+      (click-prompt state :runner "No")
+      (is (= 0 (count-tags state)) "Authenticator did not give a tag")
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has not been bypassed"))))
+
+(deftest authenticator-encounter-take-tag-to-bypass
+  (do-game
+    (new-game{:corp {:hand ["Authenticator"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (let [ath (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= 0 (count-tags state)))
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count-tags state)))
+      (is (= :movement (:phase (:run @state))) "Authenticator has been bypassed"))))
+
+(deftest authenticator-encounter-jesminder-fizzles
+  (do-game
+    (new-game {:corp {:hand ["Authenticator"]}
+               :runner {:id "Jesminder Sareen: Girl Behind the Curtain"
+                        :hand ["Dorm Computer"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (let [ath (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has been encountered")
+      (is (not (= "Take 1 tag to bypass?" (:msg (prompt-map :runner))))
+          "No prompt to bypass authenticator because we are tag-immune"))))
+
+(deftest authenticator-encounter-qianju-fizzles
+  (do-game
+    (new-game {:corp {:hand ["Authenticator"]}
+               :runner {:hand ["Qianju PT"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Qianju PT")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [pt (get-hardware state 0)
+          ath (get-ice state :hq 0)]
+      (card-ability state :runner pt 0)
+      (end-phase-12 state :runner)
+      (is (= 3 (:click (get-runner))) "Spent 1 click on Qianju PT")
+      (run-on state :hq)
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has been encountered")
+      (is (not (= "Take 1 tag to bypass?" (:msg (prompt-map :runner))))
+          "No prompt to bypass authenticator because we are tag-immune")
+      (fire-subs state ath)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (end-phase-12 state :runner)
+      (run-on state :hq)
+      (run-continue state)
+      (is (= 0 (count-tags state)))
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count-tags state)))
+      (is (= :movement (:phase (:run @state))) "Authenticator has been bypassed"))))
+
+(deftest authenticator-encounter-dorm-computer-fizzles
+  (do-game
+    (new-game {:corp {:hand ["Authenticator"]}
+               :runner {:hand ["Dorm Computer"]}})
+    (play-from-hand state :corp "Authenticator" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dorm Computer")
+    (let [dorm (get-hardware state 0)
+          ath (get-ice state :hq 0)]
+      (card-ability state :runner dorm 0)
+      (click-prompt state :runner "HQ")
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
+      (rez state :corp ath)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Authenticator has been encountered")
+      (is (not (= "Take 1 tag to bypass?" (:msg (prompt-map :runner))))
+          "No prompt to bypass authenticator because we are tag-immune"))))
+
+(deftest bailiff-gain-credit-when-broken
+  (do-game
+    (new-game {:corp {:hand ["Bailiff"]}
+               :runner {:hand ["Corroder"]}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (let [blf (get-ice state :hq 0)
+          cor (get-program state 0)]
+      (run-on state "HQ")
+      (rez state :corp blf)
+      (run-continue state)
+      (changes-val-macro
+        +1 (:credit (get-corp))
+        "Gained 1c from subroutines being broken"
+        (card-ability state :runner cor 0)
+        (click-prompt state :runner "End the run")
+        (is (last-log-contains? state "Corp uses Bailiff to gain 1 \\[Credits\\]")
+            "Correct message")))))
+
+(deftest bailiff-interaction-with-hippo
+  (do-game
+    (new-game {:corp {:hand ["Bailiff"]}
+    	       :runner {:hand ["Corroder" "Hippo"]}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Hippo")
+    (let [blf (get-ice state :hq 0)
+    	  cor (get-program state 0)]
+      (run-on state "HQ")
+      (rez state :corp blf)
+      (run-continue state)
+      (changes-val-macro
+        0 (:credit (get-corp))
+	"Never gained money from bailiff"
+	(core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	(click-prompt state :runner "Yes")))))
+
+(deftest bailiff-interaction-with-hippo-sub-boost-with-cleaver
+  (do-game
+    (new-game {:corp {:hand ["Bailiff" "Sub Boost"]}
+    	       :runner {:hand ["Cleaver" "Hippo"]
+	       	        :credits 6}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Sub Boost")
+    (click-card state :corp (refresh (get-ice state :hq 0)))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cleaver")
+    (play-from-hand state :runner "Hippo")
+    (let [blf (get-ice state :hq 0)
+    	  cor (get-program state 0)]
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro
+        +0 (:credit (get-corp))
+	"Gained 0 credits from bailiff + sub boost being broken with cleaver + hippo"
+	(core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	(click-prompt state :runner "Yes")))))
+
+(deftest bailiff-interaction-with-hippo-sub-boost-with-corroder
+  (do-game
+    (new-game {:corp {:hand ["Bailiff" "Sub Boost"]}
+    	       :runner {:hand ["Corroder" "Hippo"]
+	       	        :credits 6}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Sub Boost")
+    (click-card state :corp (refresh (get-ice state :hq 0)))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Hippo")
+    (let [blf (get-ice state :hq 0)
+    	  cor (get-program state 0)]
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro
+        +1 (:credit (get-corp))
+	"Gained 1 credit from bailiff + sub boost being broken with corroder + hippo"
+	(core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	(click-prompt state :runner "Yes")))))
+
+(deftest bailiff-sub-boost-auto-break
+  (do-game
+    (new-game {:corp {:hand["Bailiff" "Sub Boost"]}
+    	       :runner {:hand ["Corroder"]}})
+    (play-from-hand state :corp "Bailiff" "HQ")
+    (let [blf (get-ice state :hq 0)]
+      (rez state :corp blf)
+      (play-from-hand state :corp "Sub Boost")
+      (click-card state :corp (refresh blf))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [cor (get-program state 0)]
+        (run-on state "HQ")
+	(run-continue state)
+	(changes-val-macro
+          +2 (:credit (get-corp))
+	  "Gained 2c from the runner breaking"
+	  (core/play-dynamic-ability state :runner
+                                     {:dynamic "auto-pump-and-break" :card (refresh cor)})
+	  (is (and (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 \\[Credits\\]")
+	      	   (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 \\[Credits\\]"))
+	      "Correct messages"))))))
 
 (deftest ballista
   ;; Ballista
@@ -751,7 +1008,7 @@
       (let [bran (get-ice state :hq 0)
             unrezzed-msg "Corp uses Brân 1.0 to install an unseen card from Archives."
             rezzed-msg "Corp uses Brân 1.0 to install Ice Wall from Archives."
-            declined-msg "Corp chooses not to install a card with Brân 1.0."]
+            declined-msg "Corp declines to use Brân 1.0 to install a card."]
         (rez state :corp bran)
         (run-continue state)
         (card-subroutine state :corp bran 0)
@@ -849,6 +1106,38 @@
        (click-prompt state :runner "Yes")
        (is (not (rezzed? (refresh cp))) "Cell Portal derezzed")
        (is (empty? (:run @state)) "Run has ended"))))
+
+(deftest checkpoint-deals-damage-on-successful-run
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Checkpoint" "Hedge Fund"]}
+                 :runner {:hand [(qty "Sure Gamble" 3)]}})
+      (play-from-hand state :corp "Checkpoint" "HQ")
+      (let [chckpnt (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (rez state :corp chckpnt)
+        (run-continue state)
+        (fire-subs state chckpnt)
+        (is (= :trace (prompt-type :corp)) "Trace is initiated")
+        (is (= 5 (:base (prompt-map :corp))) "Trace is base 5")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state :movement)
+        (run-jack-out state)
+        (is (= 0 (count (:discard (get-runner)))) "Runner suffered no meat damage")
+        (run-on state "HQ")
+        (run-continue state)
+        (fire-subs state chckpnt)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (run-continue state)
+        (run-continue state)
+        (is (prompt-map :runner) "Still have access prompt")
+        (is (= 3 (count (:discard (get-runner)))) "Runner suffered 3 meat damage")
+        (click-prompt state :runner "No action")
+        (is (not (:run @state)) "Run is finished")
+      )))
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
@@ -1798,6 +2087,59 @@
         (is (= 1 (:credit (get-runner))))
         (is (= ["Take 1 tag"] (prompt-buttons :runner)) "Runner should have 1 option"))))
 
+(deftest funhouse-vs-jesminder
+  (do-game
+    (new-game {:corp {:hand ["Funhouse"]}
+               :runner {:id "Jesminder Sareen: Girl Behind the Curtain"}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (take-credits state :corp)
+    (let [tt (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp tt)
+      (run-continue state)
+      (is (= ["End the run"] (prompt-buttons :runner)) "Only option should be 'End the run'")
+      (click-prompt state :runner "End the run"))))
+
+(deftest funhouse-vs-dorm-computer
+  (do-game
+    (new-game {:corp {:hand ["Funhouse"]}
+               :runner {:hand ["Dorm Computer"]}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dorm Computer")
+    (let [dorm (get-hardware state 0)
+          tt (get-ice state :hq 0)]
+      (card-ability state :runner dorm 0)
+      (click-prompt state :runner "HQ")
+      (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
+      (rez state :corp tt)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Funhouse has been encountered")
+      (is (= ["End the run"] (prompt-buttons :runner)) "Only option should be 'End the run'")
+      (click-prompt state :runner "End the run"))))
+
+(deftest funhouse-vs-qianju-pt
+  (do-game
+    (new-game {:corp {:hand ["Funhouse"]}
+               :runner {:hand ["Qianju PT"]}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Qianju PT")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [pt (get-hardware state 0)
+          tt (get-ice state :hq 0)]
+      (card-ability state :runner pt 0)
+      (end-phase-12 state :runner)
+      (is (= 3 (:click (get-runner))) "Spent 1 click on Qianju PT")
+      (run-on state :hq)
+      (rez state :corp tt)
+      (run-continue state)
+      (is (= :encounter-ice (:phase (:run @state))) "Funhouse has been encountered")
+      (is (= ["End the run"] (prompt-buttons :runner)) "Only option should be 'End the run'")
+      (click-prompt state :runner "End the run"))))
+
 (deftest gatekeeper-gatekeeper
     ;; Gatekeeper:
     (testing "basic tests"
@@ -2191,6 +2533,109 @@
         (run-on state "HQ")
         (is (= 3 (get-strength (refresh hag))) "Misdirection didn't lower strength."))))
 
+(deftest hakarl-1-0-happy-path
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (run-on state "HQ")
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (not (no-prompt? state :corp)))     
+     (click-card state :corp rash)
+     (is (no-prompt? state :corp))
+     (is (not (rezzed? (refresh rash))) "Rashida was derezzed")
+     (run-continue state)
+     (card-side-ability state :runner hakarl 0)
+     (is (no-prompt? state :runner) "No prompt to break hakarl")
+     (fire-subs state (refresh hakarl))
+     (is (nil? (:run @state)))
+     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+     (run-on state "Server 1")
+     ;; effect lasts all turn
+     (rez state :corp eli)
+     (run-continue state)
+     (card-side-ability state :runner eli 0)
+     (is (no-prompt? state :runner) "no prompt to break eli")
+     (fire-subs state (refresh eli))
+     (take-credits state :runner)
+     (take-credits state :corp)
+     ;; check effect gone after turn end
+     (run-on state "HQ")
+     (run-continue state)
+     (card-side-ability state :runner hakarl 0)
+     (is (not (no-prompt? state :runner)) "Runner prompted to break hakarl")
+     (click-prompt state :runner "Do 1 brain damage")
+     (click-prompt state :runner "End the run")
+     (is (= 1 (:click (get-runner))) "Runner spent clicks breaking hakarl")
+     (is (not (nil? (:run @state))))
+     (fire-subs state (refresh hakarl))
+     (is (= 1 (:brain-damage (get-runner))) "Runner did not take any extra brain damage")
+     (is (not (nil? (:run @state)))))))
+
+(deftest hakarl-1-0-wrong-server
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (run-on state "R&D")
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+
+(deftest hakarl-1-0-no-targets
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (run-on state "HQ")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+
+(deftest hakarl-1-0-outside-run
+  (do-game
+   (new-game {:corp {:hand ["Hákarl 1.0" "Rashida Jaheem" "Eli 1.0" "Eli 1.0"]
+                     :credit 20}
+              :runner {:hand ["Sure Gamble"]}})
+   (core/gain state :corp :click 4)   
+   (play-from-hand state :corp "Hákarl 1.0" "HQ")
+   (play-from-hand state :corp "Eli 1.0" "New remote")
+   (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+   (take-credits state :corp)
+   (let [rash (get-content state :remote1 0)
+         hakarl (get-ice state :hq 0)
+         eli (get-ice state :remote1 0)]
+     (rez state :corp rash)
+     (is (rezzed? (refresh rash)) "Rashida is rezzed")
+     (rez state :corp hakarl)
+     (is (no-prompt? state :corp)))))
+   
 (deftest hailstorm-happy-path
     ;; Happy Path
     (do-game
@@ -2386,8 +2831,8 @@
           (fire-subs state (refresh howler))
           (click-card state :corp "Eli 1.0")
           (is (find-card "Eli 1.0" (get-ice state :hq))))
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :encounter-ice (get-ice state :hq 0))
+        (run-continue-until state :success)
         (click-prompt state :runner "No action")
         (is (not (rezzed? (get-ice state :hq 0))))
         (is (find-card "Howler" (:discard (get-corp))))))
@@ -2400,8 +2845,8 @@
           (fire-subs state (refresh howler))
           (click-card state :corp "Ichi 1.0")
           (is (find-card "Ichi 1.0" (get-ice state :hq))))
-        (run-continue state)
-        (run-continue state)
+        (run-continue-until state :encounter-ice (get-ice state :hq 0))
+        (run-continue-until state :success)
         (click-prompt state :runner "No action")
         (is (not (rezzed? (get-ice state :hq 0))))
         (is (find-card "Howler" (:discard (get-corp))))))))
@@ -4389,6 +4834,27 @@
         3 (core/get-strength (refresh iw))
         "Ice Wal should gain strengh"
         (fire-subs state red-tape)))))
+
+(deftest red-tape-strength-after-rez
+  ;; Red Tape
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall" "Red Tape"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Red Tape" "R&D")
+    (let [iw (get-ice state :hq 0)
+          red-tape (get-ice state :rd 0)]      
+      (rez state :corp red-tape)
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (changes-val-macro
+        3 (core/get-strength (refresh iw))
+        "Ice Wall should gain strengh"
+        (fire-subs state red-tape)
+        (rez state :corp iw)))))
+
 
 (deftest resistor-strength-based-on-tags
     ;; Strength based on tags

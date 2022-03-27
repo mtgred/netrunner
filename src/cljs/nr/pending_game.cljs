@@ -8,7 +8,7 @@
    [nr.lobby-chat :refer [lobby-chat]]
    [nr.player-view :refer [player-view]]
    [nr.translations :refer [tr tr-side]]
-   [nr.utils :refer [cond-button format-zoned-date-time mdy-formatter
+   [nr.utils :refer [cond-button format-date-time mdy-formatter
                      non-game-toast]]
    [nr.ws :as ws]
    [reagent-modals.modals :as reagent-modals]
@@ -32,15 +32,17 @@
             players (:players @current-game)
             side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
             same-side? (fn [deck] (= side (get-in deck [:identity :side])))
-            legal? (fn [deck] (get-in deck [:status (keyword fmt) :legal]
-                                      (get-in (trusted-deck-status (assoc deck :format fmt))
-                                              [(keyword fmt) :legal]
-                                              false)))]
+            legal? (fn [deck fmt] (or (= "casual" fmt)
+                                      (get-in deck [:status (keyword fmt) :legal]
+                                              (get-in (trusted-deck-status (assoc deck :format fmt))
+                                                      [(keyword fmt) :legal]
+                                                      false))))]
         (doall
           (for [deck (->> @decks
                           (filter same-side?)
-                          (sort-by (complement legal?))
-                          (sort-by :date))]
+                          (filter #(legal? % fmt))
+                          (sort-by :date)
+                          (reverse))]
             [:div.deckline {:key (:_id deck)
                             :on-click #(select-deck deck)}
              [:img {:src (image-url (:identity deck))
@@ -48,7 +50,7 @@
              [:div.float-right [deck-format-status-span deck fmt true]]
              [:h4 (:name deck)]
              [:div.float-right
-              (format-zoned-date-time mdy-formatter (:date deck))]
+              (format-date-time mdy-formatter (:date deck))]
              [:p (get-in deck [:identity :title])]])))]]))
 
 (defn- first-user?

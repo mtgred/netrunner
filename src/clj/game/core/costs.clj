@@ -17,7 +17,7 @@
     [game.core.update :refer [update!]]
     [game.core.virus :refer [number-of-virus-counters]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [quantify]]
+    [game.utils :refer [quantify same-card?]]
     [clojure.string :as string]))
 
 ;; Click
@@ -200,18 +200,18 @@
     card nil))
 
 ;; Trash
-(defmethod cost-name :trash [_] :trash)
-(defmethod value :trash [cost] 1)
-(defmethod label :trash [cost] "[trash]")
-(defmethod payable? :trash
+(defmethod cost-name :trash-can [_] :trash-can)
+(defmethod value :trash-can [cost] 1)
+(defmethod label :trash-can [cost] "[trash]")
+(defmethod payable? :trash-can
   [cost state side eid card]
   (installed? (get-card state card)))
-(defmethod handler :trash
+(defmethod handler :trash-can
   [cost state side eid card actions]
   (wait-for (trash state side card {:cause :ability-cost
                                     :unpreventable true})
             (complete-with-result state side eid {:msg (str "trashes " (:title card))
-                                                  :type :trash
+                                                  :type :trash-can
                                                   :value 1
                                                   :targets [card]})))
 
@@ -345,29 +345,63 @@
                      :targets targets}))}
     card nil))
 
-;; TrashInstalledRunnerCard
-(defmethod cost-name :installed [_] :installed)
-(defmethod value :installed [[_ cost-value]] cost-value)
-(defmethod label :installed [cost]
+;; TrashOtherInstalledCard - this may NOT target the source card (itself), use :trash-installed instead
+(defmethod cost-name :trash-other-installed [_] :trash-other-installed)
+(defmethod value :trash-other-installed [[_ cost-value]] cost-value)
+(defmethod label :trash-other-installed [cost]
   (str "trash " (quantify (value cost) "installed card")))
-(defmethod payable? :installed
+(defmethod payable? :trash-other-installed
   [cost state side eid card]
-  (<= 0 (- (count (all-installed state side)) (value cost))))
-(defmethod handler :installed
+  (<= 0 (- (count (filter #(not (same-card? card %)) (all-installed state side))) (value cost))))
+(defmethod handler :trash-other-installed
   [cost state side eid card actions]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
      :choices {:all true
                :max (value cost)
-               :card (every-pred installed? runner?)}
+               :card #(and (installed? %)
+                           (not (same-card? % card))
+                           (if (= side :runner)
+                             (runner? %)
+                             (corp? %)))}
      :async true
      :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed card")
                                          " (" (string/join ", " (map #(card-str state %) targets)) ")")
-                               :type :installed
+                               :type :trash-other-installed
+                               :value (count async-result)
+                               :targets targets})))}
+    card nil))
+
+;; TrashInstalledCard - this may target the source card (itself)
+(defmethod cost-name :trash-installed [_] :trash-installed)
+(defmethod value :trash-installed [[_ cost-value]] cost-value)
+(defmethod label :trash-installed [cost]
+  (str "trash " (quantify (value cost) "installed card")))
+(defmethod payable? :trash-installed
+  [cost state side eid card]
+  (<= 0 (- (count (all-installed state side)) (value cost))))
+(defmethod handler :trash-installed
+  [cost state side eid card actions]
+  (continue-ability
+    state side
+    {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
+     :choices {:all true
+               :max (value cost)
+               :card #(and (installed? %)                           
+                           (if (= side :runner)
+                             (runner? %)
+                             (corp? %)))}
+     :async true
+     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+                            (complete-with-result
+                              state side eid
+                              {:msg (str "trashes " (quantify (count async-result) "installed card")
+                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                               :type :trash-installed
                                :value (count async-result)
                                :targets targets})))}
     card nil))

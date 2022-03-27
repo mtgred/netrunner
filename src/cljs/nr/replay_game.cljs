@@ -14,7 +14,7 @@
         diffs (rest history)
         init-state (assoc init-state :replay-diffs diffs :gameid "local-replay")]
     (ws/event-msg-handler-wrapper
-      {:id :netrunner/start
+      {:id :game/start
        :?data (.stringify js/JSON (clj->js init-state))})))
 
 (defn start-replay [replay-file]
