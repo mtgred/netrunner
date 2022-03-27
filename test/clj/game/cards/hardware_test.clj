@@ -1923,7 +1923,7 @@
         (click-prompt state :runner "OK")
         (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
         (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
-        (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+        (is (= 6 (count (:set-aside (get-runner)))) "6 cards in deck")
         (click-prompt state :runner "DDoS")
         (click-card state :runner pp)
         (is (= 0 (:credit (get-runner))) "DDoS installed with 2c discount using only Paladin Poemu credits")
@@ -1955,7 +1955,7 @@
       (click-prompt state :runner "OK")
       (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
       (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
-      (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+      (is (= 6 (count (:set-aside (get-runner)))) "6 cards in deck")
       (click-prompt state :runner "DDoS")
       (is (= "DDoS" (:title (get-resource state 0))) "DDoS is installed")))
 
