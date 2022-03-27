@@ -504,7 +504,7 @@
   (let [first-player (first (:players lobby))]
     (cond
       (not= (:uid first-player) uid) lobby
-      (some? side) (update-in lobby [:players 0] change-side side)
+      (some? side) (update lobby :players (fn [x] (mapv #(change-side % side) x)))
       :else (update lobby :players #(mapv swap-side %)))))
 
 (defn handle-swap-sides [lobbies gameid uid side swap-message]
