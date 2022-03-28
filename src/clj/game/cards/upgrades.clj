@@ -220,7 +220,7 @@
 
 (defcard "Bryan Stinson"
   {:abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :req (req (and (< (:credit runner) 6)
                                (pos? (count (filter #(and (operation? %)
                                                           (has-subtype? % "Transaction")) (:discard corp))))))
@@ -343,7 +343,7 @@
              :msg "remove all hosted power counters"
              :effect (effect (add-counter card :power (- (get-counters card :power))))}]
    :abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :msg "place 1 power counter on Cold Site Server"
                 :effect (effect (add-counter card :power 1))}]})
 
@@ -1145,7 +1145,7 @@
 (defcard "Panic Button"
   {:install-req (req (filter #{"HQ"} targets))
    :abilities [{:cost [:credit 1]
-                :keep-open :while-credits-left
+                :keep-menu-open :while-credits-left
                 :msg "draw 1 card"
                 :req (req (and run (= (target-server run) :hq)))
                 :async true
