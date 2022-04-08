@@ -2181,7 +2181,9 @@
         ashes-recur (fn ashes-recur []
                       {:optional
                        {:req (req (not (zone-locked? state :runner :discard)))
-                        :prompt "Remove Out of the Ashes from the game to make a run?"
+                        :prompt (req (str "Remove Out of the Ashes from the game to make a run? ("
+                                          (count (filter #(= "Out of the Ashes" (:title %)) (:discard runner)))
+                                          " available)"))
                         :yes-ability
                         {:async true
                          :msg "removes Out of the Ashes from the game to make a run"
