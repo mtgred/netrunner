@@ -9,7 +9,7 @@
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user?]]
    [web.utils :refer [response]]
-   [web.versions :refer [frontend-version]]
+   [web.versions :refer [frontend-version banned-msg]]
    [web.ws :as ws]))
 
 (defmethod ws/-msg-handler :admin/announce
@@ -62,6 +62,20 @@
       (mc/update db "config" {} {$set {:version version}})
       (response 200 {:message "ok" :version version}))
     (response 400 {:message "Missing version item"})))
+
+(defn banned-message-handler [{db :system/db}]
+  (let [config (mc/find-one-as-map db "config" nil)
+        banned (:banned-msg config "Account is locked")]
+    (response 200 {:message "ok" :banned banned})))
+
+(defn banned-message-update-handler [{db :system/db
+                               {banned :banned} :body}]
+  (if-not (empty? banned)
+    (do
+      (reset! banned-msg banned)
+      (mc/update db "config" {} {$set {:banned-msg banned}})
+      (response 200 {:message "ok" :banned banned}))
+    (response 400 {:message "Missing banned message item"})))
 
 (def user-collection "users")
 
