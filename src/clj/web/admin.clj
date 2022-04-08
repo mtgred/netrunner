@@ -106,7 +106,11 @@
                  (-> (mc/find-one-as-map db user-collection {:username username} [:_id :username])
                      (update :_id str)))]
       (if user
-        (ws/broadcast-to! [uid] :admin/user-edit {:success (assoc data :user user)})
+        (do
+          (ws/broadcast-to! [uid] :admin/user-edit {:success (assoc data :user user)})
+          (when (= user-type :banned)
+            (when-let [connected-user ((:users @app-state/app-state) username)]
+              (ws/broadcast-to! [(:uid connected-user)] :system/force-disconnect {}))))
         (ws/broadcast-to! [uid] :admin/user-edit {:error "Not found"})))
     (ws/broadcast-to! [uid] :admin/user-edit {:error "Not allowed"})))
 
