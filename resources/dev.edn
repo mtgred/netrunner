@@ -31,6 +31,8 @@
            :web/auth #ig/ref :web/auth
            :web/chat #ig/ref :web/chat
            :web/email #ig/ref :web/email}
+ :web/banned-msg {:initial "Account Banned"
+                  :mongo #ig/ref :mongodb/connection}
  :frontend/version {:initial "1"
                     :mongo #ig/ref :mongodb/connection}
  :sente/router nil
