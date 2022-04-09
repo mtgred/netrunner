@@ -21,8 +21,7 @@
     (empty? message) (reply-fn 400)
     :else
     (do
-      (doseq [u (app-state/get-users)
-              :let [uid (:uid u)]]
+      (doseq [uid (ws/connected-uids)]
         (ws/chsk-send! uid [:lobby/toast {:message message
                                           :type "warning"}]))
       (reply-fn 200))))
