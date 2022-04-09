@@ -82,7 +82,7 @@
               inserted (update inserted :_id str)
               inserted (update inserted :date #(.toString %))
               connected-users (app-state/get-users)]
-          (doseq [uid (map :uid connected-users)
+          (doseq [uid (ws/connected-uids)
                   :when (or (= (:username user) uid)
                             (visible-to-user user {:username uid} connected-users))]
             (ws/broadcast-to! [uid] :chat/message inserted)))
@@ -102,11 +102,8 @@
                   :action :delete-message
                   :date (inst/now)
                   :msg msg})
-      (let [connected-users (app-state/get-users)]
-        (doseq [uid (map :uid connected-users)
-                :when (or (= (:username user) uid)
-                          (visible-to-user user {:username uid} connected-users))]
-          (ws/broadcast-to! [uid] :chat/delete-msg msg))))))
+      (doseq [uid (ws/connected-uids)]
+        (ws/broadcast-to! [uid] :chat/delete-msg msg)))))
 
 (defmethod ws/-msg-handler :chat/delete-all
   [{{db :system/db
@@ -121,8 +118,5 @@
                 :action :delete-all-messages
                 :date (inst/now)
                 :sender sender})
-    (let [connected-users (app-state/get-users)]
-      (doseq [uid (map :uid connected-users)
-              :when (or (= (:username user) uid)
-                        (visible-to-user user {:username uid} connected-users))]
-        (ws/broadcast-to! [uid] :chat/delete-all {:username sender})))))
+    (doseq [uid (ws/connected-uids)]
+      (ws/broadcast-to! [uid] :chat/delete-all {:username sender}))))

@@ -46,3 +46,12 @@
   "Add user to uid in app-state. Mutates."
   [uid user]
   (swap! app-state register-user uid user))
+
+(defn deregister-user!
+  "Remove user from app-state. Mutates."
+  [uid]
+  (let [users (:users @app-state)
+        _ (println "USERS" users)
+        new-users (dissoc users uid)
+        _ (println "NEW USERS" new-users)]
+    (swap! app-state #(assoc %1 :users new-users))))

@@ -183,7 +183,11 @@
 (defn broadcast-lobby-list
   "Sends the lobby list to all users or a given list of users.
   Filters the list per each users block list."
-  ([] (broadcast-lobby-list (app-state/get-users)))
+  ([]
+   (let [user-cache (:users @app-state/app-state)
+         uids (ws/connected-uids)
+         users (map #(get user-cache %) uids)]
+     (broadcast-lobby-list users)))
   ([users]
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
    (let [lobbies (app-state/get-lobbies)]
