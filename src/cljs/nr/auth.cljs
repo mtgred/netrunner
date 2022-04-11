@@ -49,6 +49,8 @@
        [:a.block-link {:href "/admin"} (str "[" (tr [:menu/admin "Admin"]) "]")])
      (when (:ismoderator user)
        [:a.block-link (str "[" (tr [:menu/moderator "Moderator"]) "]")])
+     (when (:special user)
+       [:a.block-link (str "[" (tr [:menu/donor "Donor"]) "]")])
      [:a.block-link {:href "/account"} (tr [:menu/settings "Settings"])]
      [:a.block-link {:on-click #(handle-logout %)} (tr [:menu/logout "Jack out"])]]]])
 
