@@ -58,7 +58,8 @@
 (defn send-lobby-ting [lobby]
   (when lobby
     (doseq [[uid ev] (lobby-ting lobby)]
-      (ws/chsk-send! uid ev))))
+      (when uid
+        (ws/chsk-send! uid ev)))))
 
 (defn- filter-lobby-user
   "Only take keys that are useful in the lobby from a user map"
@@ -192,7 +193,8 @@
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
    (let [lobbies (app-state/get-lobbies)]
      (doseq [[uid ev] (prepare-lobby-list lobbies users)]
-       (ws/chsk-send! uid ev)))))
+       (when uid
+         (ws/chsk-send! uid ev))))))
 
 (defn prepare-lobby-state [lobby]
   (let [lobby-state (lobby-summary lobby true)]
@@ -203,7 +205,8 @@
 (defn send-lobby-state [lobby]
   (when lobby
     (doseq [[uid ev] (prepare-lobby-state lobby)]
-      (ws/chsk-send! uid ev))))
+      (when uid
+        (ws/chsk-send! uid ev)))))
 
 (defn register-lobby
   [lobbies lobby uid]
@@ -230,7 +233,8 @@
       (broadcast-lobby-list))))
 
 (defn clear-lobby-state [uid]
-  (ws/chsk-send! uid [:lobby/state]))
+  (when uid
+    (ws/chsk-send! uid [:lobby/state])))
 
 (defn send-lobby-list [uid]
   (when uid
@@ -588,7 +592,8 @@
           (when started
             (stats/game-finished db lobby)
             (doseq [uid uids]
-              (ws/chsk-send! uid [:game/timeout gameid])))
+              (when uid
+                (ws/chsk-send! uid [:game/timeout gameid]))))
           (close-lobby! db lobby)
           (doseq [uid uids]
             (send-lobby-list uid)))))
