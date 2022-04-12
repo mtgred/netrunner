@@ -354,7 +354,7 @@
                           :effect (req (chosen-damage state :corp target))}
                          card nil))}
               :no-ability
-              {:effect (req (system-msg state :corp "doesn't use Chronos Protocol to choose the first card trashed"))}}}]})
+              {:effect (req (system-msg state :corp "declines to use Chronos Protocol"))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:constant-effects [(hand-size+ -1)]})
@@ -754,7 +754,8 @@
                  card nil))}]})
 
 (defcard "Jesminder Sareen: Girl Behind the Curtain"
-  {:events [{:event :pre-tag
+  {:flags {:forced-to-avoid-tag true}
+   :events [{:event :pre-tag
              :async true
              :once :per-run
              :req (req (:run @state))
@@ -1033,7 +1034,7 @@
                                 (effect-completed state side eid))))}
               {:event :corp-turn-ends
                :effect (effect (update! (assoc-in card [:special :mm-actions] [])))}]
-     :constant-effects [{:type :prevent-ability
+     :constant-effects [{:type :prevent-paid-ability
                          :req (req (and (get-in card [:special :mm-click])
                                         (let [cid (:cid target)
                                               ability-idx (nth targets 2 nil)
@@ -1331,10 +1332,10 @@
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
              :effect (req (let [tgtcid (:cid chosen)]
-                            (register-turn-flag!
+                            (register-persistent-flag!
                               state side
                               card :can-rez
-                              (fn [state side card]
+                              (fn [state _ card]
                                 (if (= (:cid card) tgtcid)
                                   ((constantly false)
                                    (toast state :corp "Cannot rez due to Saraswati Mnemonics: Endless Exploration." "warning"))
@@ -1359,7 +1360,9 @@
                                      (corp? %)
                                      (in-hand? %))}
                   :msg (msg "install a card in a remote server and place 1 advancement token on it")
-                  :effect (effect (continue-ability (install-card target) card nil))}]}))
+                  :effect (effect (continue-ability (install-card target) card nil))}]
+     :events [{:event :corp-turn-begins
+               :effect (req (clear-persistent-flag! state side card :can-rez))}]}))
 
 (defcard "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"
@@ -1400,7 +1403,7 @@
                             (first-event? state :corp :rez #(has-subtype? (:card (first %)) "Advertisement"))))
              :async true
              :effect (effect (lose-credits :runner eid 1))
-             :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}]})
+             :msg "make the Runner lose 1 [Credits] by rezzing an Advertisement"}]})
 
 (defcard "Sportsmetal: Go Big or Go Home"
   (let [ab {:prompt "Gain 2 [Credits] or draw 2 cards?"
@@ -1533,7 +1536,7 @@
                                (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
                                (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
-                :msg (msg "flip their ID")}]})
+                :msg "flip their ID"}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game
@@ -1626,7 +1629,7 @@
 
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored
-             :msg (msg "add 1 agenda counter to " (:title (:card context)))
+             :msg (msg "place 1 agenda counter on " (:title (:card context)))
              :effect (effect (add-counter (get-card state (:card context)) :agenda 1))}]})
 
 (defcard "Valencia Estevez: The Angel of Cayambe"

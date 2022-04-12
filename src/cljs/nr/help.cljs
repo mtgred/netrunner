@@ -109,6 +109,9 @@
     :has-args :required
     :usage "/roll n"
     :help "Roll an n-sided die"}
+   {:name "/save-replay"
+    :usage "/save-replay"
+    :help "Save a replay of the game"}
    {:name "/summon"
     :has-args :required
     :usage "/summon n"
@@ -500,14 +503,15 @@
   "Takes help-data and translates it to HTML tags."
   (doall
     (for [{:keys [id title sub]} help-data]
-      (into [:h2 {:id id :key id} title]
-            (for [{:keys [id title content]} sub]
-              ^{:key title}
-              [:div [:h3 {:id id :key title} title]
-               content])))))
+      ^{:key id}
+      [:<>
+       [:h2 {:id id :key id} title]
+       (for [{:keys [id title content]} sub]
+         ^{:key title}
+         [:div [:h3 {:id id :key title} title]
+          content])])))
 
 (defn help []
-  (println "rendering help")
   [:div.page-container
    [:div.help-bg]
    [:div.help.panel.content-page.blue-shade

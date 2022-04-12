@@ -5,9 +5,9 @@
    [game.core.card :refer [agenda? can-be-advanced? corp? get-card
                            has-subtype? ice? in-hand? installed? map->Card rezzed?
                            runner?]]
+   [game.core.change-vals :refer [change]]
    [game.core.damage :refer [damage]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [resolve-ability trigger-event]]
    [game.core.flags :refer [is-scored?]]
@@ -51,6 +51,9 @@
                      {:effect (effect (set-adv-counter target value))
                       :choices {:card (fn [t] (same-side? (:side t) side))}}
                      (map->Card {:title "/adv-counter command"}) nil)))
+
+(defn command-save-replay [state _]
+  (swap! state assoc-in [:options :save-replay] true))
 
 (defn command-bug-report [state side]
   (swap! state update :bug-reported (fnil inc -1))
@@ -334,11 +337,9 @@
                           (end-run state side (make-eid state) nil)))
         "/error"      show-error-toast
         "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
-        "/handsize"   #(register-floating-effect
-                         %1 %2 nil
-                         {:type :user-hand-size
-                          :req (req (= %2 side))
-                          :value (req (- (constrain-value value -1000 1000) (get-in @%1 [%2 :hand-size :base])))})
+        "/handsize"   #(change %1 %2 {:key :hand-size
+                                      :delta (- (constrain-value value -1000 1000)
+                                                (get-in @%1 [%2 :hand-size :total]))})
         "/host"       command-host
         "/install-ice" command-install-ice
         "/jack-out"   (fn [state side]
@@ -390,6 +391,7 @@
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
+        "/save-replay" command-save-replay
         "/summon"     #(command-summon %1 %2 args)
         "/swap-ice"   #(when (= %2 :corp)
                           (resolve-ability

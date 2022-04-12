@@ -554,7 +554,7 @@
                              (<= (get-strength current-ice) (get-strength card))
                              true))]
      (merge
-       (when (some #(= :trash (first %)) (merge-costs cost))
+       (when (some #(= :trash-can (first %)) (merge-costs cost))
          {:trash-icon true})
        {:async true
         :req (req (and (break-req state side eid card targets)

@@ -10,7 +10,7 @@
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
    [nr.translations :refer [tr]]
-   [nr.utils :refer [format-zoned-date-time ISO-ish-formatter non-game-toast
+   [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top store-scroll-top]]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
@@ -230,8 +230,7 @@
                               (delete-api-key (:_id d) s))}
               (tr [:settings.delete-api-key "Delete"])]]
             [:span.date
-             (format-zoned-date-time ISO-ish-formatter
-                                     (str (:date d) "Z"))]
+             (format-date-time ISO-ish-formatter (:date d))]
             [:span.title (:api-key d "")]]))]]
      [:button {:on-click #(do (.preventDefault %)
                               (create-api-key s))}
@@ -291,6 +290,7 @@
                             {:name "Italiano" :ref "it"}
                             {:name "日本語" :ref "jp"}
                             {:name "한국어" :ref "ko"}
+                            {:name "Polski" :ref "pl"}
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
           [:section

@@ -1,5 +1,5 @@
 (ns web.data
-  (:require [web.utils :refer [response]]
+  (:require [web.utils :refer [response mongo-time-to-utc-string]]
             [monger.collection :as mc]
             [monger.query :as mq]
             [game.core.initializing :refer [card-implemented]]
@@ -9,7 +9,8 @@
   (let [data (mq/with-collection db "news"
                (mq/find {})
                (mq/fields [:_id :item :date])
-               (mq/sort (array-map :date -1)))]
+               (mq/sort (array-map :date -1)))
+        data (map #(update % :date mongo-time-to-utc-string) data)]
     (response 200 data)))
 
 (defn- cards-version-impl [db]

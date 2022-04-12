@@ -42,9 +42,17 @@
 
 (defn watch-button [lobby-state user game current-game editing]
   (when (can-watch? user game current-game editing)
-    [:button {:on-click #(do (join-game lobby-state game "watch")
-                             (resume-sound))}
-     (tr [:lobby.watch "Watch"])]))
+    (if (not (:password game))
+      [:button {:on-click #(do (join-game lobby-state game "watch")
+                               (resume-sound))}
+       (tr [:lobby.watch "Watch"])]
+      [:button {:on-click #(if (:password game)
+                             (authenticated
+                               (fn [_]
+                                 (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                             (do (join-game lobby-state game "watch")
+                                 (resume-sound)))}
+       (tr [:lobby.watch "Watch"])])))
 
 (defn can-join? [user {:keys [room started players]} current-game editing]
   (if (= "tournament" room)

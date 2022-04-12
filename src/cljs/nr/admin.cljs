@@ -5,7 +5,7 @@
    [clojure.string :as s]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
-   [nr.utils :refer [format-zoned-date-time ISO-ish-formatter non-game-toast
+   [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      render-icons]]
    [nr.ws :as ws]
    [reagent.core :as r]
@@ -76,8 +76,7 @@
               {:on-click #(delete-news-item (:_id d))}
               "Delete"]]
             [:span.date
-             (format-zoned-date-time ISO-ish-formatter
-                                     (str (:date d) "Z"))]
+             (format-date-time ISO-ish-formatter (:date d))]
             [:span.title (render-icons (:item d ""))]]))]]
      [:h4 "Add news item"]
      [:form.msg-box {:on-submit #(let [msg (:news-msg @s "")]

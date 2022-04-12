@@ -40,6 +40,8 @@
                       :view deck-builder}]
      ["/play" {:name :nav/lobby
                :view lobby-or-game}]
+     ["/replay/:rid" {:name :nav/replay-lobby
+               :view lobby-or-game}]
      ["/help" {:name :nav/help
                :view help}]
      ["/account" {:name :nav/account

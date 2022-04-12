@@ -19,7 +19,8 @@
          :req (req (= (second (get-zone card)) (first (:server context))))
          :async true
          :effect (req (if (:did-steal context)
-                        (gain-tags state :corp eid 2)
+                        (do (gain-tags state :corp eid 2)
+                            (system-msg state :corp (str "uses AMAZE Amusements to give the Runner 2 tags")))
                         (effect-completed state side eid)))}]
   {:events [ability]
    :on-trash
@@ -123,7 +124,7 @@
                                             :req (req (get-card state ice))
                                             :effect (effect (trash eid (get-card state ice) nil))}])
                                         (force-ice-encounter state side eid ice))))}
-              :no-ability {:effect (effect (system-msg :corp (str "declines to rez a hosted piece of ice")))}}}]})
+              :no-ability {:effect (effect (system-msg :corp (str "declines to use Awakening Center")))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -178,8 +179,8 @@
                                   :effect (effect (gain-tags :corp eid 1))}
                      :unsuccessful
                      {:async true
-                      :effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
-                                      (trash eid card nil))}}}]})
+                      :msg "trash itself"
+                      :effect (effect (trash eid card nil))}}}]})
 
 (defcard "Bio Vault"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -188,7 +189,7 @@
                 :req (req (:run @state))
                 :msg "end the run"
                 :async true
-                :cost [:advancement 2 :trash]
+                :cost [:advancement 2 :trash-can]
                 :effect (effect (end-run eid card))}]})
 
 (defcard "Black Level Clearance"
@@ -244,7 +245,7 @@
                                    :choices {:card #(in-same-server? % card)}
                                    :async true
                                    :msg (msg "place an advancement token on " (card-str state target))
-                                   :cost [:trash]
+                                   :cost [:trash-can]
                                    :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
                                   card nil))}]})
 
@@ -349,7 +350,7 @@
 (defcard "Corporate Troubleshooter"
   {:abilities [{:async true
                 :label "Add strength to a rezzed piece of ice protecting this server"
-                :cost [:trash :x-credits]
+                :cost [:trash-can :x-credits]
                 :choices {:all true
                           :req (req (and (ice? target)
                                          (rezzed? target)
@@ -368,11 +369,11 @@
    :access {:optional
             {:waiting-prompt "Corp to choose an option"
              :prompt "Purge virus counters with Cyberdex Virus Suite?"
-             :yes-ability {:msg (msg "purge virus counters")
+             :yes-ability {:msg "purge virus counters"
                            :effect (effect (purge))}}}
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (purge))}]})
 
 (defcard "Daruma"
@@ -385,7 +386,7 @@
                                           (ice? %)))
                                  (or (in-hand? %) ; agenda, asset or upgrade from HQ
                                      (installed? %)))} ; card installed in a server
-           :cost [:trash]
+           :cost [:trash-can]
            :msg (msg "swap " (card-str state to-swap)
                      " with " (card-str state target))
            :effect (effect (swap-cards to-swap target))})
@@ -420,7 +421,7 @@
                 :req (req (and run
                                (= (:server run) [:archives])
                                (pos? (get-counters card :advancement))))
-                :cost [:trash]
+                :cost [:trash-can]
                 :show-discard true
                 :choices {:max (req (get-counters card :advancement))
                           :card #(and (corp? %)
@@ -547,7 +548,7 @@
       :msg (msg "force the Runner to encounter " (card-str state target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
                              (force-ice-encounter state side eid target)))}
-     :no-ability {:effect (effect (system-msg :corp (str "declines to force the Runner to encounter a piece of ice")))}}}})
+     :no-ability {:effect (effect (system-msg :corp (str "declines to use Ganked!")))}}}})
 
 (defcard "Georgia Emelyov"
   {:events [{:event :unsuccessful-run
@@ -792,7 +793,7 @@
                 :msg (msg "trash " (:title target))
                 :choices {:card #(and (installed? %)
                                       (program? %))}
-                :cost [:tag 1 :trash]
+                :cost [:tag 1 :trash-can]
                 :async true
                 :effect (effect (trash eid target nil))}]})
 
@@ -888,7 +889,7 @@
 
 (defcard "Marcus Batty"
   {:abilities [{:label "Start a Psi game to resolve a subroutine"
-                :cost [:trash]
+                :cost [:trash-can]
                 :psi {:req (req this-server)
                       :not-equal
                       {:prompt "Choose the ice"
@@ -996,7 +997,7 @@
                                          :req (req (= (:from-server target) (second (:previous-zone card)))))]))}}))
 
 (defcard "Navi Mumbai City Grid"
-  {:constant-effects [{:type :prevent-ability
+  {:constant-effects [{:type :prevent-paid-ability
                        :req (req (let [target-card (first targets)]
                                    (and run
                                         (= (:side target-card) "Runner")
@@ -1067,8 +1068,8 @@
             {:event :successful-run
              :req (req (= :hq (target-server context)))
              :async true
+             :msg "trash itself"
              :effect (req (enable-run-on-server state card (second (get-zone card)))
-                          (system-msg state :corp (str "trashes Off the Grid"))
                           (trash state :corp eid card nil))}]
    :leave-play (req (enable-run-on-server state card (second (get-zone card))))})
 
@@ -1232,7 +1233,7 @@
 (defcard "Ryon Knight"
   {:abilities [{:label "Do 1 brain damage"
                 :req (req (and this-server (zero? (:click runner))))
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg "do 1 brain damage"
                 :async true
                 :effect (effect (damage eid :brain 1 {:card card}))}]})
@@ -1258,7 +1259,7 @@
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
    :abilities [{:async true
                 :req (req this-server)
-                :cost [:trash]
+                :cost [:trash-can]
                 :label "Trace X - Do 3 net damage"
                 :effect (req (let [serv (card->server state card)
                                    cards (concat (:ices serv) (:content serv))]
@@ -1289,9 +1290,9 @@
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
-                :msg (msg "prevent cards being installed until the end of the run")
+                :msg "prevent cards being installed until the end of the run"
                 :req (req this-server)
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (register-run-flag! card :corp-lock-install (constantly true))
                                 (register-run-flag! card :runner-lock-install (constantly true))
                                 (toast :runner "Cannot install until the end of the run")
@@ -1451,7 +1452,7 @@
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ice from being broken"
                 :req (req (and (= (butlast (get-zone current-ice)) (butlast (get-zone card)))
                                (has-subtype? current-ice "Bioroid")))
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]})
 
 (defcard "Underway Grid"
@@ -1473,6 +1474,19 @@
                                 :duration :until-corp-turn-begins
                                 :req (req (= :runner side))
                                 :value -1}))}]})
+
+(defcard "Vladisibirsk City Grid"
+  {:advanceable :always
+   :abilities [{:cost [:advancement 2]              
+                :once :per-turn
+                :prompt (msg "Choose an advanceable card in " (zone->name (second (get-zone card))))
+                :label "Place 2 advancement counters (once per turn)"
+                :msg (msg "place 2 advancement counter counters on " (card-str state target))
+                :choices {:req (req (and (installed? target)
+                                         (can-be-advanced? target)
+                                         (in-same-server? card target)
+                                         (not (same-card? card target))))}
+                :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
 
 (defcard "Warroid Tracker"
   (letfn [(wt [n]

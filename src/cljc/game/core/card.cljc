@@ -144,6 +144,11 @@
   [card]
   (= (get-zone card) [:play-area]))
 
+(defn in-set-aside?
+  "Checks if the specific card is in a set-aside area."
+  [card]
+  (= (get-zone card) [:set-aside]))
+
 (defn in-current?
   "Checks if the specified card is in the 'current' zone."
   [card]
@@ -406,6 +411,7 @@
        (in-scored? card)
        (in-current? card)
        (in-play-area? card)
+       (in-set-aside? card)
        (in-rfg? card)
        (if (= side :corp)
          ;; public runner cards:

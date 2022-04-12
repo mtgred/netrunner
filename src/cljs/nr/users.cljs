@@ -14,10 +14,10 @@
     (reset!
       users-state
       (reduce
-        (fn [acc {:keys [ismoderator specials tournament-organizer banned] :as user}]
+        (fn [acc {:keys [ismoderator special tournament-organizer banned] :as user}]
           (cond-> acc
             ismoderator (update :mods conj user)
-            specials (update :specials conj user)
+            special (update :specials conj user)
             tournament-organizer (update :tos conj user)
             banned (update :banned conj user)))
         {}
@@ -34,7 +34,9 @@
         (do (swap! users-state update user-type (fnil conj #{}) user)
             (non-game-toast (str "Updated " (:username user)) "success" nil))
         :admin/remove-user
-        (do (swap! users-state update user-type (fnil disj #{}) user)
+        (do (swap! users-state update user-type
+                   (fn [lst elt] (remove #(= (:_id elt) (:_id %)) lst))
+                   user)
             (non-game-toast (str "Removed " (:username user)) "success" nil))
         ; else
         (non-game-toast "Wrong action type" "error" nil)))))
@@ -59,7 +61,7 @@
   [:div.users-box.panel.blue-shade
    [:ul.list
     (doall
-      (for [d (sort-by :username @users)]
+      (for [d (sort-by #(str/lower-case (:username %)) @users)]
         [:li.users-item
          {:key (:_id d)}
          [:span
@@ -122,5 +124,5 @@
     (ws/ws-send! [:admin/fetch-users])
     [:div.page-container
      [:div.account-bg]
-     (when (:isadmin @user)
+     (when (or (:isadmin @user) (:ismoderator @user))
        [users-container])]))

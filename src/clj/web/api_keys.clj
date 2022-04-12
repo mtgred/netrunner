@@ -4,12 +4,14 @@
    [monger.collection :as mc]
    [monger.result :refer [acknowledged?]]
    [web.mongodb :refer [->object-id]]
-   [web.utils :refer [response]]))
+   [web.utils :refer [response mongo-time-to-utc-string]]))
 
 (defn api-keys-handler [{db :system/db
                          {username :username} :user}]
   (if username
-    (response 200 (mc/find-maps db "api-keys" {:username username}))
+    (let [k (mc/find-maps db "api-keys" {:username username})
+          converted (map #(update % :date mongo-time-to-utc-string) k)]
+      (response 200 converted))
     (response 401 {:message "Unauthorized"})))
 
 (defn api-keys-create-handler [{db :system/db
