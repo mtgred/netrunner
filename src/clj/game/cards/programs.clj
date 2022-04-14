@@ -1462,6 +1462,7 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 1)]
                     :events [{:event :pass-ice
+                              :interactive (req true)
                               :req (req (and (all-subs-broken-by-card? (:ice context) card)
                                              (first-event? state side :end-of-encounter
                                                            (fn [targets]
@@ -1547,6 +1548,7 @@
   {:hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :pass-ice
+             :interactive (req true)
              :req (req (same-card? (:ice context) (:host card)))
              :msg "gain 2 [Credits]"
              :async true
