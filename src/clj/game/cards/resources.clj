@@ -1759,7 +1759,11 @@
 (defcard "Mystic Maemi"
   (companion-builder
     ;; companion-builder: pay-credits-req
-    (req (= :play (:source-type eid)))
+   (req (and
+         (event? target)
+         (or (= 0 (count (:cost-paid eid)))
+             (:x-cost eid))
+         (= :play (:source-type eid))))
     ;; companion-builder: turn-ends-ability
     {:prompt "Trash 1 card from your grip at random or trash Mystic Maemi?"
      :choices (req (if (can-pay? state :runner
