@@ -143,7 +143,6 @@
           (:number choices))
       (if (number? choice)
         (do (remove-from-prompt-queue state side prompt)
-            (system-msg state side (str (:eid prompt)))
             (let [eid (make-eid state (:eid prompt))]
               (wait-for (maybe-pay state side eid card choices choice)
                         (when (:counter choices)
