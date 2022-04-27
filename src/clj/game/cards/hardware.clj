@@ -1251,6 +1251,7 @@
                       (runner-hand-size+ (req (count-tags state)))]
    :events [{:event :run-ends
              :once :per-turn
+             :interactive (req true) ;;interact with other run-ends effects which modify the deck (ie boomerang)
              :req (req (and (:successful target)
                             (#{:rd :hq} (target-server target))
                             (first-event? state side :run-ends
