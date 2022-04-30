@@ -2783,7 +2783,8 @@
               (first-time-draw-bonus :runner 1)
               {:event :runner-draw
                :req (req (and (first-event? state :runner :runner-draw)
-                              (< 1 (count runner-currently-drawing))))
+                              (or (= (count runner-currently-drawing) (:target-draws context))
+                                  (< 0 (count (:deck runner))))))
                :once :per-turn
                :once-key :the-class-act-put-bottom
                :async true

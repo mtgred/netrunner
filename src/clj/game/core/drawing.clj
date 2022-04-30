@@ -76,6 +76,7 @@
                (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
                  (swap! state update-in [side :register :currently-drawing] conj drawn)
                  (queue-event state draw-event {:cards drawn
+                                                :target-draws draws-wanted
                                                 :count drawn-count})
                  (wait-for
                   (checkpoint state nil (make-eid state eid) nil)
