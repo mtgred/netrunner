@@ -1124,7 +1124,18 @@
              :msg (msg "reveal that they drew: "
                        (string/join ", " (map :title runner-currently-drawing)))
              :async true
-             :effect (effect (reveal eid runner-currently-drawing))}
+             :effect (req (let [current-draws runner-currently-drawing]
+                            (reveal state side eid current-draws)
+                            ;; If the corp wants explicit reveals from FTT, then show a prompt with
+                            ;; the card names in it
+                            (when  (= (get-in (get-card state card) [:special :explicit-reveal])
+                                      :yes)
+                              (continue-ability
+                               state :corp
+                               {:prompt (msg "The runner reveals that they drew "
+                                             (string/join ", " (map :title current-draws)))
+                                :choices ["OK"]}
+                               card nil))))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1135,7 +1146,15 @@
                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                       :msg "look at the top card of R&D"
                                       :choices ["OK"]}}}]
-   :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]})
+   :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]
+   :corp-abilities [{:label (str "Explicitly reveal cards")
+                     :prompt (str "Explicitly reveal runner draws due to Find the Truth?")
+                     :choices ["Yes" "No"]
+                     :effect (effect (update! (assoc-in card [:special :explicit-reveal](keyword (string/lower-case target))))
+                                     (toast (str "From now on, Find the Truth will "
+                                                 (when (= target "No") "Not")
+                                                 "explicitly reveal cards the runner draws")
+                                            "info"))}]})
 
 (defcard "First Responders"
   {:abilities [{:cost [:credit 2]
