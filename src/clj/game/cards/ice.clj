@@ -1311,6 +1311,22 @@
   {:subroutines [runner-loses-click
                  end-the-run]})
 
+(defcard "Envelopment"
+  (let [subs-effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))
+        ability {:req (req (same-card? card target))
+                 :effect subs-effect}]
+    {:on-rez {:effect (effect (add-counter card :power 4))}
+     :events [{:event :corp-turn-begins
+               :req (req (pos? (get-counters card :power)))
+               :effect (effect (add-counter card :power -1))}
+              (assoc ability
+                     :event :counter-added
+                     :req (req (and (same-card? card target))))]
+     :subroutines [{:label "Trash this ice"
+                    :async true
+                    :msg (msg "trash " (:title card))
+                    :effect (effect (trash eid card {:cause :subroutine}))}]}))
+
 (defcard "Envelope"
   {:subroutines [(do-net-damage 1)
                  end-the-run]})
@@ -2300,6 +2316,10 @@
                  end-the-run]
    :runner-abilities [(bioroid-break 1 1)]})
 
+(defcard "Maskirovka"
+  {:subroutines [(gain-credits-sub 2)
+                 end-the-run]})
+
 (defcard "Masvingo"
   (let [subs-effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))
         ability {:req (req (same-card? card target))
@@ -3167,6 +3187,26 @@
   {:subroutines [end-the-run
                  end-the-run
                  end-the-run]})
+
+(defcard "Stavka"
+  {:on-rez {:optional {:prompt "Trash another card to give Stavka +5 strength?"
+                       :waiting-prompt "corp to make a decision"
+                       :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
+                                           card nil
+                                           [:trash-other-installed 1]))
+                       :yes-ability {:prompt "Select another card to trash"
+                                     :cost [:trash-other-installed 1]
+                                     :msg (msg " to give itself +5 strength for the remainder of the run")
+                                     :waiting-prompt "corp to trash a card"
+                                     :effect (effect (register-floating-effect
+                                                      card
+                                                      {:type :ice-strength
+                                                       :duration :end-of-run
+                                                       :req (req (same-card? target card))
+                                                       :value 5})
+                                                     (update-ice-strength card))}}}
+   :subroutines [trash-program-sub
+                 trash-program-sub]})
 
 (defcard "Surveyor"
   (let [x (req (* 2 (count (:ices (card->server state card)))))]

@@ -3524,6 +3524,97 @@
       "gained 1 click from running the mark"
       (run-continue state))))
 
+(deftest ob-logistics-basic-test
+  ;; The ability works, and it works once per turn - depends on Extract to be correct
+  (do-game
+   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+                     :hand [(qty "Extract" 3) (qty "Launch Campaign" 2) "PAD Campaign"]
+                     :deck [(qty "Prisec" 2) "Anoetic Void" "Ice Wall"]
+                     :credits 10}})
+   (core/gain state :corp :click 10)
+   ;; launch campaign is 1 cost, and can summon prisec
+   (play-from-hand state :corp "Launch Campaign" "New remote")
+   (play-from-hand state :corp "Launch Campaign" "New remote")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (rez state :corp (get-content state :remote2 0))
+   (rez state :corp (get-content state :remote3 0))
+   ;; decline to use
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote1 0))
+   (click-prompt state :corp "No")
+   (is (no-prompt? state :corp) "No further prompt for Ob")
+   ;; pull prisec
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote2 0))
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Prisec")
+   (click-prompt state :corp "New remote")
+   (is (= "Prisec" (:title (get-content state :remote4 0))) "Installed Prisec in remote")
+   (is (rezzed? (get-content state :remote4 0)) "Prisec is rezzed")
+   ;; ability can't be used again
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote3 0))
+   (is (no-prompt? state :corp) "No prompt to use Ob again")))
+
+(deftest ob-logistics-additional-costs
+  ;; ob-logistics doesn't waive additional costs to rez (ie corp. town)
+  (do-game
+   ;; can't pay cost
+   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+                     :hand ["Extract" "PAD Campaign"]
+                     :deck ["Corporate Town"]
+                     :credits 10}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "PAD Campaign")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Corporate Town")
+   (click-prompt state :corp "New remote")
+   (is (no-prompt? state :corp) "No prompt to rez")
+   (is (= "Corporate Town" (:title (get-content state :remote2 0))) "Installed C. Town in remote")
+   (is (not (rezzed? (get-content state :remote2 0))) "Did not rez C. Town"))
+  (do-game
+   ;; refuse to pay cost
+   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+                     :hand ["Extract" "PAD Campaign" "Hostile Takeover"]
+                     :deck ["Corporate Town"]
+                     :credits 10}})
+   (core/gain state :corp :click 10)
+   (play-and-score state "Hostile Takeover")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote2 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "PAD Campaign")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Corporate Town")
+   (click-prompt state :corp "No")
+   (click-prompt state :corp "New remote")
+   (is (no-prompt? state :corp) "No prompt to rez")
+   (is (= "Corporate Town" (:title (get-content state :remote3 0))) "Installed C. Town in remote")
+   (is (not (rezzed? (get-content state :remote3 0))) "Did not rez C. Town"))
+  (do-game
+   ;; pay additional cost to rez
+   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+                     :hand ["Extract" "PAD Campaign" "Hostile Takeover"]
+                     :deck ["Corporate Town"]
+                     :credits 10}})
+   (core/gain state :corp :click 10)
+   (play-and-score state "Hostile Takeover")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote2 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "PAD Campaign")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Corporate Town")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "New remote")
+   (click-card state :corp "Hostile Takeover")
+   (is (no-prompt? state :corp) "No prompt to rez")
+   (is (= "Corporate Town" (:title (get-content state :remote3 0))) "Installed C. Town in remote")
+   (is (rezzed? (get-content state :remote3 0)) "rezzed C. Town")))
+
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
     (do-game

@@ -2125,6 +2125,23 @@
                             (gain-credits state :corp eid 2)
                             (effect-completed state side eid)))}]})
 
+(defcard "Svyatogor Excavator"
+  (let [ability {:async true
+                 :label "trash a card to gain 3 [Credits]"
+                 :once :per-turn
+                 :req (req (>= (count (all-installed state :corp)) 2))
+                 :choices {:req (req (and (corp? target)
+                                          (installed? target)
+                                          (not (same-card? target card))))}
+                 :msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                 :effect (req (wait-for (trash state side target {:unpreventable true :cause card})
+                                        (gain-credits state side eid 3)))}]
+    {:flags {:corp-phase-12 (req (>= (count (all-installed state :corp)) 2))}
+     :events [(assoc ability
+                     :event :corp-turn-begins
+                     :interactive (req true))]
+     :abilities [ability]}))
+
 (defcard "Synth DNA Modification"
   {:implementation "Manual fire once subroutine is broken"
    :abilities [{:msg "do 1 net damage"

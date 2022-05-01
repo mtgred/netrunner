@@ -4820,6 +4820,46 @@
       (is (= 2 (count (:discard (get-runner))))
           "Runner should take 1 net damage from Synth DNA Modification after Data Mine subroutine"))))
 
+(deftest syvatogor-excavator-manual-use
+  ;; Svyatogor Excavator - Manual use
+  (do-game
+   (new-game {:corp {:hand ["Svyatogor Excavator" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "Svyatogor Excavator" "New remote")
+   (let [se (get-content state :remote2 0)
+         pad (get-content state :remote1 0)]
+     (rez state :corp (refresh se))
+     (changes-val-macro
+      3 (:credit (get-corp))
+      "gained 3c from ~"
+      (card-ability state :corp se 0)
+      (click-card state :corp pad))
+     (card-ability state :corp se 0)
+     (is (not= :select (:prompt-type (prompt-map :corp))) "~ has already been used this turn"))
+   (let [se (get-content state :remote2 0)
+         pad (get-in @state [:corp :discard 0])]
+     (is (not= pad nil) "PAD should be in Heap")
+     (is (not= se nil) "~ should still be installed"))))
+
+(deftest syvatogor-excavator-triggered-at-start-of-turn
+  ;; Syvatogor Excavator - Triggered at start of turn
+  (do-game
+   (new-game {:corp {:hand ["Svyatogor Excavator" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "Svyatogor Excavator" "New remote")
+   (let [se (get-content state :remote2 0)
+         pad (get-content state :remote1 0)]
+     (rez state :corp (refresh se))
+     (rez state :corp (refresh pad))
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (card-ability state :corp se 0)
+     (changes-val-macro
+      3 (:credit (get-corp))
+      "~ sells PAD Campaign before it triggers so only 3 credits gained"
+      (click-card state :corp (refresh pad)))
+     (is (= (refresh pad) nil) "PAD Campaign should be in Heap"))))
+
 (deftest team-sponsorship-install-from-hq
     ;; Install from HQ
     (do-game

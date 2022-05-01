@@ -671,6 +671,27 @@
                    :effect (effect (swap-agendas target stolen))})
                 card nil))}})
 
+(defcard "Extract"
+  ;; doesn't check to see the card is actually trashed (it's not a cost, so may be prevented?)
+  {:on-play
+   {:effect (req (if (not-empty (all-installed state :corp))
+                   (do
+                     (system-msg state side "uses Extract to gain 6 [Credit]")
+                     (continue-ability
+                      state side
+                      {:prompt "Choose a card to trash"
+                       :async true
+                       :choices {:card #(and (installed? %)
+                                             (corp? %))}
+                       :cancel-effect (effect (system-msg "declines to trash a card"))
+                       :effect (req (wait-for (trash state side target {:cause card})
+                                              (system-msg state side "uses extract to gain 3 [credit]")
+                                              (gain-credits state side eid 3)))}
+                      card nil))
+                   ;; no cards to trash -> skip prompt, no info is given away
+                   (do (system-msg state side "uses extract to gain 6 [credit]")
+                       (gain-credits state side eid 6))))}})
+
 (defcard "Fast Break"
   {:on-play
    {:req (req (-> runner :scored count pos?))
@@ -1415,6 +1436,21 @@
                                                                               :index index}))
                                    (do (system-msg state side "does not find any ice to install from R&D")
                                        (effect-completed state side eid))))))))}})
+
+(defcard "Mutually Assured Destruction"
+  {:on-play
+   {:req (req (some #(and (rezzed? %)
+                          (not (agenda? %)))
+                    (all-installed state :corp)))
+    :prompt "Choose any number of rezzed cards to trash"
+    :choices {:max (req (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
+              :card #(and (rezzed? %)
+                          (not (agenda? %)))}
+    :msg (msg "trash " (string/join ", " (map :title targets))
+              " and give the runner " (quantify (count targets) "tag"))
+    :async true
+    :effect (req (wait-for (trash-cards state side targets {:cause card})
+                           (gain-tags state :corp eid (count targets))))}})
 
 (defcard "NAPD Cordon"
   (lockdown
@@ -2558,6 +2594,28 @@
                         :msg (msg "trash " (card-str state target))
                         :effect (effect (trash eid target nil))}
                        card nil)))}}}})
+
+(defcard "Trust Operation"
+  (let [ability {:prompt "Choose a card to install from archives"
+                 :show-discard true
+                 :choices {:card #(and (corp? %)
+                                       (in-discard? %))}
+                 :msg (msg "install and rez " (:title target) ", ignoring all costs")
+                 :async true
+                 :cancel-effect (effect (system-msg "declines to use Trust Operation to install a card")
+                                        (effect-completed eid))
+                 :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}]
+    {:on-play {:req (req tagged)
+               :msg (msg "trash " (:title target))
+               :prompt "Choose a resource to trash"
+               :choices {:card #(and (installed? %)
+                                     (resource? %))}
+               :async true
+               :cancel-effect (effect
+                               (system-msg "declines to use Trust Operation to trash a resource")
+                               (continue-ability ability card nil))
+               :effect (req (wait-for (trash state side target {:cause card})
+                                      (continue-ability state side ability card nil)))}}))
 
 (defcard "Ultraviolet Clearance"
   {:on-play
