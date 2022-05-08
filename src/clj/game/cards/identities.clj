@@ -1000,7 +1000,12 @@
      :abilities [ability]}))
 
 (defcard "MirrorMorph: Endless Iteration"
-  (let [mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
+  (let [mm-clear {:prompt "Manually fix Mirrormorph"
+                  :msg (msg "manually clear Mirrormorph flags")
+                  :effect (effect
+                           (update! (assoc-in card [:special :mm-actions] []))
+                           (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
+        mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
                     :choices ["Gain [Click]" "Gain 1 [Credits]"]
                     :msg (msg (decapitalize target))
                     :once :per-turn
@@ -1012,7 +1017,7 @@
                                        (effect-completed state side eid))
                                    (gain-credits state side eid 1)))}]
     {:implementation "Does not work with terminal Operations"
-     :abilities [mm-ability]
+     :abilities [mm-ability mm-clear]
      :events [{:event :corp-spent-click
                :async true
                :effect (req (let [cid (first target)
@@ -1032,8 +1037,14 @@
                                        (= 3 (count (distinct actions))))
                                 (continue-ability state side mm-ability (get-card state card) nil)
                                 (effect-completed state side eid))))}
+              {:event :runner-turn-begins
+               :effect (effect
+                        (update! (assoc-in card [:special :mm-actions] []))
+                        (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
               {:event :corp-turn-ends
-               :effect (effect (update! (assoc-in card [:special :mm-actions] [])))}]
+               :effect (effect
+                        (update! (assoc-in card [:special :mm-actions] []))
+                        (update! (assoc-in (get-card state card) [:special :mm-click] false)))}]
      :constant-effects [{:type :prevent-paid-ability
                          :req (req (and (get-in card [:special :mm-click])
                                         (let [cid (:cid target)
