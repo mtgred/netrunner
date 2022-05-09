@@ -2051,7 +2051,7 @@
        (take-credits state :corp)
        (run-on state "R&D")
        (rez state :corp sm)
-       (is (changes-credits (get-corp) 1
+       (is (changes-credits (get-corp) 0
                             (run-continue state))) ;trigger slot machine
        (run-continue state :movement)
        (run-jack-out state)
