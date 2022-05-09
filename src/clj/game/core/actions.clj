@@ -20,7 +20,7 @@
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
     [game.core.runs :refer [continue total-run-cost]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
@@ -558,6 +558,7 @@
         points (get-agenda-points c)]
     (system-msg state :corp (str "scores " (:title c)
                                  " and gains " (quantify points "agenda point")))
+    (implementation-msg state card)
     (set-prop state :corp (get-card state c) :advance-counter 0)
     (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
     (play-sfx state side "agenda-score")
