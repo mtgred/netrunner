@@ -11,7 +11,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [same-card? to-keyword]]))
@@ -48,6 +48,8 @@
                             card)
                           {:resolve-effect true :init-data true});;:resolve-effect is true as a temporary solution to allow Direct Access to blank IDs
           play-event (if (= side :corp) :play-operation :play-event)]
+      ;; print card errata/implementation if it has any
+      (implementation-msg state card)
       (queue-event state play-event {:card card :event play-event})
       (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
                 (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
