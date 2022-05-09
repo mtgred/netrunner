@@ -16,7 +16,7 @@
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.rezzing :refer [rez]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
     [game.core.state :refer [make-rid]]
     [game.core.to-string :refer [card-str]]
@@ -113,6 +113,9 @@
           server-name (if (= server "New remote")
                         (str (remote-num->name (dec (:rid @state))) " (new remote)")
                         server)]
+      (when (and (= :face-up install-state)
+                 (agenda? card))
+        (implementation-msg state card))
       (system-msg state side (str (build-spend-msg cost-str "install") card-name
                                   (if (ice? card) " protecting " " in ") server-name)))))
 
@@ -351,6 +354,8 @@
                                                   :no-mu no-mu}))]
     (when-not no-msg
       (runner-install-message state side (:title installed-card) payment-str args))
+    (when-not facedown
+      (implementation-msg state card))
     (play-sfx state side "install-runner")
     (when (and (not facedown)
                (resource? card))
