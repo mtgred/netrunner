@@ -680,7 +680,7 @@
 (defcard "Hyoubu Institute: Absolute Clarity"
   {:events [{:event :corp-reveal
              :once :per-turn
-             :req (req (first-event? state side :corp-reveal))
+             :req (req (first-event? state side :corp-reveal #(pos? (count %))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]
