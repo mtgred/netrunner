@@ -36,6 +36,7 @@
                    "play "
                    (build-spend-msg payment-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
+    (implementation-msg state card)
     (play-sfx state side "play-instant")
     ;; Select the "on the table" version of the card
     (let [card (current-handler state side card)
@@ -48,8 +49,6 @@
                             card)
                           {:resolve-effect true :init-data true});;:resolve-effect is true as a temporary solution to allow Direct Access to blank IDs
           play-event (if (= side :corp) :play-operation :play-event)]
-      ;; print card errata/implementation if it has any
-      (implementation-msg state card)
       (queue-event state play-event {:card card :event play-event})
       (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
                 (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)

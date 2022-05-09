@@ -113,11 +113,11 @@
           server-name (if (= server "New remote")
                         (str (remote-num->name (dec (:rid @state))) " (new remote)")
                         server)]
+      (system-msg state side (str (build-spend-msg cost-str "install") card-name
+                                  (if (ice? card) " protecting " " in ") server-name))
       (when (and (= :face-up install-state)
                  (agenda? card))
-        (implementation-msg state card))
-      (system-msg state side (str (build-spend-msg cost-str "install") card-name
-                                  (if (ice? card) " protecting " " in ") server-name)))))
+        (implementation-msg state card)))))
 
 (defn corp-install-list
   "Returns a list of targets for where a given card can be installed."

@@ -65,13 +65,13 @@
                                               (update-in [:zone] #(map to-keyword %))
                                               (update-in [:host :zone] #(map to-keyword %)))))
                     (when-not no-msg
-                      (do (system-msg state side
-                                      (str (build-spend-msg msg "rez" "rezzes")
-                                           (:title card)
-                                           (cond
-                                             alternative-cost " by paying its alternative cost"
-                                             ignore-cost " at no cost")))
-                          (implementation-msg state card)))
+                      (system-msg state side
+                                  (str (build-spend-msg msg "rez" "rezzes")
+                                       (:title card)
+                                       (cond
+                                         alternative-cost " by paying its alternative cost"
+                                         ignore-cost " at no cost")))
+                      (implementation-msg state card))
                     (when (and (not no-warning) (:corp-phase-12 @state))
                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                                          Please rez prior to clicking Start Turn in the future." "warning"
