@@ -50,6 +50,11 @@
   [state card text]
   (system-say state nil (str (:title card) " " text ".")))
 
+(defn implementation-msg
+  [state card]
+  (when (not= :full (:implementation card))
+    (enforce-msg state card (str "implementation: " (:implementation card)))))
+
 (defn indicate-action
   [state side _]
   (system-say state side
