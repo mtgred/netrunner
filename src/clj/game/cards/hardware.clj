@@ -341,7 +341,7 @@
                                       (in-hand? %))}
                 :msg (msg "play " (:title target))
                 :effect (effect (update! (dissoc (get-card state card) :comet-event))
-                                (play-instant eid target nil))}]})
+                                (play-instant (assoc eid :source-type :play) target nil))}]})
 
 (defcard "Cortez Chip"
   {:abilities [{:prompt "Choose a piece of ice"
