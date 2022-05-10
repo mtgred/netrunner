@@ -65,6 +65,9 @@
     :has-args :required
     :usage "/handsize n"
     :help "Set your handsize to n"}
+   {:name "/host"
+    :usage "/host"
+    :help "Manually host a card on another card"}
    {:name "/install-ice"
     :usage "/install-ice"
     :help "Install a piece of ice at any position in a server (Corp only)"}
@@ -102,9 +105,6 @@
     :has-args :required
     :usage "/replace-id n"
     :help "Replace your ID with the card \"n\""}
-   {:name "/reveal-hand"
-    :usage "/reveal-hand"
-    :help "Reveals your hand in the chat log"}
    {:name "/rez"
     :usage "/rez"
     :help "Choose a card to rez, ignoring all costs (Corp only)"}
@@ -124,6 +124,9 @@
    {:name "/save-replay"
     :usage "/save-replay"
     :help "Save a replay of the game"}
+   {:name "/show-hand"
+    :usage "/show-hand"
+    :help "Shows your hand in the chat log (does not proc reveal triggers)"}
    {:name "/summon"
     :has-args :required
     :usage "/summon n"

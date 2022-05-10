@@ -405,13 +405,6 @@
                                                       :not-equal {:msg "resolve unequal bets effect"}}))
         "/reload-id"  command-reload-id
         "/replace-id" #(command-replace-id %1 %2 args)
-        "/reveal-hand" #(resolve-ability %1 %2
-                                         {:effect (effect (system-msg (str
-                                                                       (if (= :corp %2)
-                                                                         "reveals cards from HQ: "
-                                                                         "reveals cards from the Grip: ")
-                                                                       (string/join ", " (sort (map :title (:hand (if (= side :corp) corp runner))))))))}
-                                         nil nil)
     :async true
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
@@ -436,6 +429,13 @@
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
         "/save-replay" command-save-replay
+        "/show-hand" #(resolve-ability %1 %2
+                                         {:effect (effect (system-msg (str
+                                                                       (if (= :corp %2)
+                                                                         "shows cards from HQ: "
+                                                                         "shows cards from the Grip: ")
+                                                                       (string/join ", " (sort (map :title (:hand (if (= side :corp) corp runner))))))))}
+                                         nil nil)
         "/summon"     #(command-summon %1 %2 args)
         "/swap-ice"   #(when (= %2 :corp)
                           (resolve-ability
