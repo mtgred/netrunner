@@ -12,7 +12,7 @@
    [game.core.engine :refer [resolve-ability trigger-event]]
    [game.core.flags :refer [is-scored?]]
    [game.core.hosting :refer [host]]
-   [game.core.identities :refer [disable-identity]]
+   [game.core.identities :refer [disable-identity disable-card enable-card]]
    [game.core.initializing :refer [card-init deactivate make-card]]
    [game.core.installing :refer [corp-install runner-install]]
    [game.core.moving :refer [move swap-ice swap-installed trash]]
@@ -405,6 +405,14 @@
                                                       :not-equal {:msg "resolve unequal bets effect"}}))
         "/reload-id"  command-reload-id
         "/replace-id" #(command-replace-id %1 %2 args)
+        "/reveal-hand" #(resolve-ability %1 %2
+                                         {:effect (effect (system-msg (str
+                                                                       (if (= :corp %2)
+                                                                         "reveals cards from HQ: "
+                                                                         "reveals cards from the Grip: ")
+                                                                       (string/join ", " (sort (map :title (:hand (if (= side :corp) corp runner))))))))}
+                                         nil nil)
+    :async true
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
                                           {:choices {:card (fn [t] (same-side? (:side t) %2))}
@@ -412,6 +420,14 @@
                                            :effect (effect (rez eid target {:ignore-cost :all-costs :force true}))}
                                           (map->Card {:title "/rez command"}) nil))
         "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2))
+        "/rez-free"   #(when (= %2 :corp)
+                          (resolve-ability %1 %2
+                                          {:choices {:card (fn [t] (same-side? (:side t) %2))}
+                                           :async true
+                                           :effect (effect (disable-card target)
+                                                           (rez eid target {:ignore-cost :all-costs :force true})
+                                                           (enable-card (get-card state target)))}
+                                          (map->Card {:title "/rez command"}) nil))
         "/rfg"        #(resolve-ability %1 %2
                                         {:prompt "Choose a card to remove from the game"
                                          :effect (req (let [c (deactivate %1 %2 target)]

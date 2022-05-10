@@ -102,12 +102,18 @@
     :has-args :required
     :usage "/replace-id n"
     :help "Replace your ID with the card \"n\""}
+   {:name "/reveal-hand"
+    :usage "/reveal-hand"
+    :help "Reveals your hand in the chat log"}
    {:name "/rez"
     :usage "/rez"
     :help "Choose a card to rez, ignoring all costs (Corp only)"}
    {:name "/rez-all"
     :usage "/rez-all"
     :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
+   {:name "/rez-free"
+    :usage "/rez-free"
+    :help "Choose a card to rez, ignoring all costs and on-rez abilities (Corp only)"}
    {:name "/rfg"
     :usage "/rfg"
     :help "Choose a card to remove from the game"}
