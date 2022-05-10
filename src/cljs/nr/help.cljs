@@ -95,6 +95,9 @@
    {:name "/psi"
     :usage "/psi"
     :help "Start a Psi game (Corp only)"}
+   {:name "/reload-id"
+    :usage "/reload-id"
+    :help "Reloads your ID (this can sometimes fix gamestates)"}
    {:name "/replace-id"
     :has-args :required
     :usage "/replace-id n"

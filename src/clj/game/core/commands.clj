@@ -256,6 +256,22 @@
       (catch Exception ex
         (toast state side (str card-name " isn't a real card"))))))
 
+(defn command-reload-id
+  [state side]
+  (let [card-name (:title (get-in @state [side :identity]))]
+    (try
+      (let [s-card (server-card card-name)
+            card (when (and s-card (same-side? (:side s-card) side))
+                   (build-card s-card))]
+        (if card
+          (let [new-id (-> card :title server-card make-card (assoc :zone [:identity] :type "Identity"))]
+            (disable-identity state side)
+            (swap! state assoc-in [side :identity] new-id)
+            (card-init state side new-id {:resolve-effect true :init-data true}))
+          (toast state side (str card-name " isn't a valid card"))))
+      (catch Exception ex
+        (toast state side (str card-name " isn't a real card"))))))
+
 (defn command-replace-id
   [state side args]
   (let [card-name (string/join " " args)]
@@ -387,6 +403,7 @@
                                                     (map->Card {:title "/psi command" :side %2})
                                                     {:equal  {:msg "resolve equal bets effect"}
                                                       :not-equal {:msg "resolve unequal bets effect"}}))
+        "/reload-id"  command-reload-id
         "/replace-id" #(command-replace-id %1 %2 args)
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
