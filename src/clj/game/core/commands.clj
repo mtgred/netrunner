@@ -20,7 +20,7 @@
    [game.core.prompts :refer [show-prompt]]
    [game.core.props :refer [set-prop]]
    [game.core.psi :refer [psi-game]]
-   [game.core.rezzing :refer [rez]]
+   [game.core.rezzing :refer [rez derez]]
    [game.core.runs :refer [end-run get-current-encounter jack-out]]
    [game.core.say :refer [system-msg system-say unsafe-say]]
    [game.core.set-up :refer [build-card]]
@@ -292,6 +292,16 @@
                    nil nil))}
       nil nil)))
 
+(defn command-derez
+  [state side]
+  (when (= :corp side)
+    (resolve-ability
+     state side
+     {:prompt "Choose a card to derez"
+      :choices {:card #(rezzed? %)}
+      :effect (effect (derez target))}
+     nil nil)))
+
 (defn command-trash
   [state side]
   (let [f (if (= :corp side) corp? runner?)]
@@ -328,6 +338,7 @@
         "/counter"    #(command-counter %1 %2 args)
         "/credit"     #(swap! %1 assoc-in [%2 :credit] (constrain-value value 0 1000))
         "/deck"       #(toast %1 %2 "/deck number takes the format #n")
+        "/derez"      command-derez
         "/discard"    #(toast %1 %2 "/discard number takes the format #n")
         "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
         "/draw"       #(draw %1 %2 (make-eid %1) (constrain-value value 0 1000))

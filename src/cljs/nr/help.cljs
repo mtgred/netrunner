@@ -41,6 +41,9 @@
     :has-args :required
     :usage "/deck #n"
     :help "Put card number n from your hand on top of your deck"}
+   {:name "/derez"
+    :usage "/derez"
+    :help "derez a rezzed card (corp only)"}
    {:name "/discard"
     :has-args :required
     :usage "/discard #n"
