@@ -149,6 +149,15 @@
   [card]
   (= (get-zone card) [:set-aside]))
 
+(defn set-aside-visible?
+  "Checks if the specific card is in set aside and visible to this side"
+  [card side]
+  (and (in-set-aside? card)
+       (if (= :corp side)
+         (true? (:corp-can-see (:set-aside-visibility card)))
+         (true? (:runner-can-see (:set-aside-visibility card))))))
+
+
 (defn in-current?
   "Checks if the specified card is in the 'current' zone."
   [card]
@@ -411,13 +420,14 @@
        (in-scored? card)
        (in-current? card)
        (in-play-area? card)
-       (in-set-aside? card)
        (in-rfg? card)
+       (set-aside-visible? card side)
        (if (= side :corp)
          ;; public runner cards:
          ;; * installed/hosted and not facedown
          ;; * in heap
-         (or (corp? card)
+         (or (and (corp? card)
+                  (not (in-set-aside? card)))
              (and (or (installed? card)
                       (:host card))
                   (not (facedown? card)))
@@ -425,7 +435,8 @@
          ;; public corp cards:
          ;; * installed and rezzed
          ;; * in archives and faceup
-         (or (runner? card)
+         (or (and (runner? card)
+                  (not (in-set-aside? card)))
              (and (or (installed? card)
                       (:host card))
                   (or (operation? card)

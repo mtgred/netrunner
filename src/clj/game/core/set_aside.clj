@@ -5,10 +5,16 @@
     [clojure.string :as string]))
 
 (defn set-aside
-  [state side eid cards]
-  (swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
-  (doseq [c cards] (move state side c :set-aside))
-  (effect-completed state side eid))
+  ([state side eid cards] (set-aside state side eid cards true true))
+   ;(swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
+   ;(doseq [c cards] (move state side c :set-aside))
+   ;(effect-completed state side eid))
+  ([state side eid cards corp-vis runner-vis]
+   (swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
+   (doseq [c cards]
+     (move state side (assoc c :set-aside-visibility
+                             {:corp-can-see corp-vis :runner-can-see runner-vis}) :set-aside))
+   (effect-completed state side eid)))
 
 (defn get-set-aside
   [state side eid]
