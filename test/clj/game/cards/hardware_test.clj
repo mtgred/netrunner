@@ -1846,9 +1846,7 @@
       (is (= 3 (count (:deck (get-runner)))) "3 cards remain in deck")
       (is (= 2 (count (:rfg (get-runner)))) "Removed 2 cards from game")
       (is (no-prompt? state :runner) "No more prompts")
-      (is (no-prompt? state :corp) "Waiting prompt cleared")
-      (is false "boop")
-      ))
+      (is (no-prompt? state :corp) "Waiting prompt cleared")))
 
 (deftest gachapon-shuffling-with-less-than-3-cards-set-aside
     ;; Shuffling with less than 3 cards set aside
