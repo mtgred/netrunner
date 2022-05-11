@@ -154,8 +154,8 @@
   [card side]
   (and (in-set-aside? card)
        (if (= :corp side)
-         (true? (:corp-can-see (:set-aside-visibility card)))
-         (true? (:runner-can-see (:set-aside-visibility card))))))
+         (:corp-can-see (:set-aside-visibility card))
+         (:runner-can-see (:set-aside-visibility card)))))
 
 
 (defn in-current?
