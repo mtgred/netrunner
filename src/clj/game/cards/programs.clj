@@ -424,10 +424,9 @@
                                  :msg "manually place a virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
                     :strength-bonus (req (get-virus-counters state card))
-                    :events [{:event :run-ends
-                              :req (req (and (not (or (:did-trash target)
-                                                      (:did-steal target)))
-                                             (:did-access target)))
+                    :events [{:event :end-breach-server
+                              :req (req (and (not (or (:did-steal target)
+                                                      (:did-trash target)))))
                               :effect (effect (add-counter card :virus 1))}
                              {:event :expose
                               :effect (effect (add-counter card :virus 1))}]}))
