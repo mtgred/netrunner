@@ -308,7 +308,8 @@
 (defn spent-click-to-break-sub
   "Checks if the runner has spent(lost) a click to break a subroutine this run"
   [state run]
-  (let [events (:events run)
+  (let [all-cards (get-all-cards state)
+        events (:events run)
         breaks (filter #(= :subroutines-broken (first %)) events)
         cards (vec (map #(first (second %)) breaks))
         subs (map #(:subroutines %) cards)
@@ -321,9 +322,9 @@
         ;; If Adjusted Matrix ever gets correctly implemented, there will be
         ;; a minor edge case here if the runner uses a non-click break ab on a
         ;; card hosting adjusted matrix -nbkelly, 2022
-        actual-breakers (map #(find-cid % (get-all-cards state)) breakers)
-        abs (map #(if (= (:side %) "Runner") (:abilities %) (:runner-abilities %)) actual-breakers)
-        costs (map :break-cost (apply concat abs))
+        actual-breakers (map #(find-cid % all-cards) breakers)
+        abs (mapcat #(if (= (:side %) "Runner") (:abilities %) (:runner-abilities %)) actual-breakers)
+        costs (map :break-cost abs)
         clicks (filter #(some #{:lose-click} %) costs)]
     (not-empty clicks)))
 
@@ -3585,20 +3586,26 @@
 
 (defcard "Zed 1.0"
   {:subroutines [{:label "Do 1 brain damage"
+                  :async true
                   :effect (req (if (spent-click-to-break-sub state run)
-                                 (resolve-ability state side (do-brain-damage 1) card nil)
-                                 (system-msg state side "does not do brain damage with Zed 1.0")))}
+                                 (continue-ability state side (do-brain-damage 1) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                     (effect-completed state side eid))))}
                  {:label "Do 1 brain damage"
+                  :async true
                   :effect (req (if (spent-click-to-break-sub state run)
-                                 (resolve-ability state side (do-brain-damage 1) card nil)
-                                 (system-msg state side "does not do brain damage with Zed 1.0")))}]
+                                 (continue-ability state side (do-brain-damage 1) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                     (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Zed 2.0"
   {:subroutines [trash-hardware-sub
                  trash-hardware-sub
-                 {:label "Do 2 brain damage"
+                 {:label "Do 1 brain damage"
+                  :async true
                   :effect (req (if (spent-click-to-break-sub state run)
-                                 (resolve-ability state side (do-brain-damage 2) card nil)
-                                 (system-msg state side "does not do brain damage with Zed 2.0")))}]
+                                 (continue-ability state side (do-brain-damage 2) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 2.0")
+                                     (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 2 2)]})
