@@ -425,8 +425,8 @@
                                  :effect (effect (add-counter card :virus 1))}]
                     :strength-bonus (req (get-virus-counters state card))
                     :events [{:event :end-breach-server
-                              :req (req (and (not (or (:did-steal target)
-                                                      (:did-trash target)))))
+                              :req (req (not (or (:did-steal target)
+                                                 (:did-trash target))))
                               :effect (effect (add-counter card :virus 1))}
                              {:event :expose
                               :effect (effect (add-counter card :virus 1))}]}))
