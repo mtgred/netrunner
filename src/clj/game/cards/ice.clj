@@ -313,7 +313,7 @@
         cards (vec (map #(first (second %)) breaks))
         subs (map #(:subroutines %) cards)
         broken-subs (map #(filter :broken %) subs)
-        breakers (flatten (map #(map :breaker %) broken-subs))
+        breakers (mapcat #(map :breaker %) broken-subs)
         ;; this is the list of every breaker the runner used to
         ;; break a subroutine this run. If we check that it has a
         ;; 'lose-click' break ability, we should be safe most of the
