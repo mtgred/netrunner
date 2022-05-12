@@ -128,6 +128,8 @@
                           ; Pay credits (from pool or cards) to trash
                           (= target (first trash-cost-str))
                           (wait-for (pay state side (make-eid state trash-eid) card [:credit trash-cost])
+                                    (when (:breach @state)
+                                      (swap! state assoc-in [:breach :did-trash] true))
                                     (when (:run @state)
                                       (swap! state assoc-in [:run :did-trash] true)
                                       (when must-trash?
@@ -145,6 +147,9 @@
                                 ability-card (nth access-ab-cards idx)
                                 ability-eid (assoc eid :source ability-card :source-type :ability)
                                 ability (access-ab ability-card)]
+                            (when (and (:breach @state)
+                                       (:trash? ability true))
+                              (swap! state assoc-in [:breach :did-trash] true))
                             (when (and (:run @state)
                                        (:trash? ability true))
                               (swap! state assoc-in [:run :did-trash] true))
@@ -183,6 +188,8 @@
     (system-msg state :runner (str "steals " (:title c) " and gains " (quantify points "agenda point")))
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
     (play-sfx state side "agenda-steal")
+    (when (:breach @state)
+      (swap! state assoc-in [:breach :did-steal] true))
     (when (:run @state)
       (swap! state assoc-in [:run :did-steal] true))
     (when-let [on-stolen (:stolen (card-def c))]
@@ -262,6 +269,9 @@
                             ability-card (nth access-ab-cards idx)
                             ability-eid (assoc eid :source ability-card :source-type :ability)
                             ability (access-ab ability-card)]
+                        (when (and (:breach @state)
+                                   (:trash? ability true))
+                          (swap! state assoc-in [:breach :did-trash] true))
                         (when (and (:run @state)
                                    (:trash? ability true))
                           (swap! state assoc-in [:run :did-trash] true))
@@ -1275,13 +1285,16 @@
   ([state side eid server {:keys [no-root access-first] :as args}]
    (system-msg state side (str "breaches " (zone->name server)))
    (wait-for (trigger-event-sync state side :breach-server (first server))
+             (swap! state assoc :breach {:breach-server (first server) })
              (let [args (clean-access-args args)
                    access-amount (num-cards-to-access state side (first server) nil)]
                (turn-archives-faceup state side server)
                (when (:run @state)
                  (swap! state assoc-in [:run :did-access] true))
                (wait-for (resolve-ability state side (choose-access access-amount server (assoc args :server server)) nil nil)
-                         (wait-for (trigger-event-sync state side :end-breach-server {:from-server (first server)})
+                         (system-msg state side (str "breach: " (:breach @state)))
+                         (wait-for (trigger-event-sync state side :end-breach-server (:breach @state))
+                                   (swap! state assoc :breach nil)
                                    (unregister-floating-effects state side :end-of-access)
                                    (unregister-floating-events state side :end-of-access)
                                    (effect-completed state side eid)))))))
