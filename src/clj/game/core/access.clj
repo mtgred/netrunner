@@ -1285,14 +1285,13 @@
   ([state side eid server {:keys [no-root access-first] :as args}]
    (system-msg state side (str "breaches " (zone->name server)))
    (wait-for (trigger-event-sync state side :breach-server (first server))
-             (swap! state assoc :breach {:breach-server (first server) })
+             (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)
                    access-amount (num-cards-to-access state side (first server) nil)]
                (turn-archives-faceup state side server)
                (when (:run @state)
                  (swap! state assoc-in [:run :did-access] true))
                (wait-for (resolve-ability state side (choose-access access-amount server (assoc args :server server)) nil nil)
-                         (system-msg state side (str "breach: " (:breach @state)))
                          (wait-for (trigger-event-sync state side :end-breach-server (:breach @state))
                                    (swap! state assoc :breach nil)
                                    (unregister-floating-effects state side :end-of-access)
