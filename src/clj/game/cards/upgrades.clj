@@ -974,9 +974,34 @@
                                                                (str "gains " total " [Credits] from Mwanza City Grid"))
                                                    (gain-credits state :corp eid total))
                                                (effect-completed state side eid))))}
+        ;;note - the 'unboost' fns need to be tied to the boost fns, otherwise we hit some
+        ;; edge cases where mwanza is trashed during access, but another access is forced
+        ;; with something like ganked into shiro or ganked into kitsune -nbkelly, 2022
+        unboost-access (fn [bonus-server]
+                         {:req (req (= (:from-server target) bonus-server))
+                          :unregister-once-resolved true
+                          :effect (req (access-bonus state :runner bonus-server -3))})
+        boost-access-when-trashed (fn [bonus-server]
+                                    {:req (req (= target bonus-server))
+                                     :msg "force the runner to access 3 additional cards"
+                                     :effect (req (access-bonus state :runner bonus-server 3)
+                                                  (register-events
+                                                   state side
+                                                   card
+                                                   [(assoc (unboost-access bonus-server)
+                                                           :event :end-breach-server
+                                                           :duration :end-of-run)]))})
         boost-access-by-3 {:req (req (= target (second (get-zone card))))
                            :msg "force the Runner to access 3 additional cards"
-                           :effect (req (access-bonus state :runner (-> card :zone second) 3))}]
+                           :effect (req (let [bonus-server (-> card :zone second)]
+
+                                          (access-bonus state :runner bonus-server 3)
+                                          (register-events
+                                           state side
+                                           card
+                                           [(assoc (unboost-access bonus-server)
+                                                   :event :end-breach-server
+                                                   :duration :end-of-run)])))}]
     {:install-req (req (filter #{"HQ" "R&D"} targets))
      :events [(assoc boost-access-by-3 :event :breach-server)
               (assoc gain-creds-and-clear :event :end-breach-server)]
@@ -985,16 +1010,18 @@
               :on-trash ; if there is a run, mark mwanza effects to remain active until the end of the run
               {:req (req (and (= :runner side)
                               (:run @state)))
-               :effect (effect (register-events
-                                 card
-                                 [(assoc boost-access-by-3
-                                         :event :breach-server
-                                         :duration :end-of-run
-                                         :req (req (= target (second (:previous-zone card)))))
-                                  (assoc gain-creds-and-clear
-                                         :event :end-breach-server
-                                         :duration :end-of-run
-                                         :req (req (= (:from-server target) (second (:previous-zone card)))))]))}}))
+               :effect (req
+                        (let [bonus-server (second (:previous-zone card))]
+                          (register-events
+                           state side
+                           card
+                           [(assoc (boost-access-when-trashed bonus-server)
+                                   :event :breach-server
+                                   :duration :end-of-run)
+                            (assoc gain-creds-and-clear
+                                   :event :end-breach-server
+                                   :duration :end-of-run
+                                   :req (req (= (:from-server target) bonus-server)))])))}}))
 
 (defcard "Navi Mumbai City Grid"
   {:constant-effects [{:type :prevent-paid-ability
