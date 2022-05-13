@@ -963,20 +963,20 @@
   {:flags {:must-trash (req (when installed true))}})
 
 (defcard "Mwanza City Grid"
-  (let [gain-creds-and-clear {:req (req (= (:from-server target)
-                                           (second (get-zone card))))
-                              :silent (req true)
-                              :async true
-                              :effect (req (let [cnt (total-cards-accessed run)
-                                                 total (* 2 cnt)]
-                                             (if cnt
-                                               (do (system-msg state :corp
-                                                               (str "gains " total " [Credits] from Mwanza City Grid"))
-                                                   (gain-credits state :corp eid total))
-                                               (effect-completed state side eid))))}
-        ;;note - the 'unboost' fns need to be tied to the boost fns, otherwise we hit some
-        ;; edge cases where mwanza is trashed during access, but another access is forced
-        ;; with something like ganked into shiro or ganked into kitsune -nbkelly, 2022
+  ;; note - the 'unboost' and 'gain-creds' fns need to be tied to the access-boost fns,
+  ;; otherwise we hit some edge cases where mwanza is trashed during access,
+  ;; but another access is forced or credits are paid twice with something like
+  ;; ganked into shiro or ganked into kitsune -nbkelly, 2022
+  (let [mwanza-gain-creds
+        {:silent (req true)
+         :async true
+         :unregister-once-resolved true
+         :effect (req (if-let [accessed-cards (reduce + (vals (:cards-accessed target)))]
+                        (do (system-msg state :corp
+                                        (str "gains " (* 2 accessed-cards)
+                                             " [Credits] from "(:title card)))
+                            (gain-credits state :corp eid (* 2 accessed-cards)))
+                        (effect-completed state side eid)))}
         unboost-access (fn [bonus-server]
                          {:req (req (= (:from-server target) bonus-server))
                           :unregister-once-resolved true
@@ -988,7 +988,10 @@
                                                   (register-events
                                                    state side
                                                    card
-                                                   [(assoc (unboost-access bonus-server)
+                                                   [(assoc mwanza-gain-creds
+                                                           :event :end-breach-server
+                                                           :duration :end-of-run)
+                                                    (assoc (unboost-access bonus-server)
                                                            :event :end-breach-server
                                                            :duration :end-of-run)]))})
         boost-access-by-3 {:req (req (= target (second (get-zone card))))
@@ -999,29 +1002,25 @@
                                           (register-events
                                            state side
                                            card
-                                           [(assoc (unboost-access bonus-server)
+                                           [(assoc mwanza-gain-creds
+                                                           :event :end-breach-server
+                                                           :duration :end-of-run)
+                                            (assoc (unboost-access bonus-server)
                                                    :event :end-breach-server
                                                    :duration :end-of-run)])))}]
     {:install-req (req (filter #{"HQ" "R&D"} targets))
-     :events [(assoc boost-access-by-3 :event :breach-server)
-              (assoc gain-creds-and-clear :event :end-breach-server)]
-     ;; TODO: as written, this may fail if mwanza is trashed outside of a run on its server
-     ;; (e.g. mwanza on R&D, run HQ, use polop to trash mwanza mid-run, shiro fires to cause RD
-              :on-trash ; if there is a run, mark mwanza effects to remain active until the end of the run
-              {:req (req (and (= :runner side)
-                              (:run @state)))
-               :effect (req
-                        (let [bonus-server (second (:previous-zone card))]
-                          (register-events
-                           state side
-                           card
-                           [(assoc (boost-access-when-trashed bonus-server)
-                                   :event :breach-server
-                                   :duration :end-of-run)
-                            (assoc gain-creds-and-clear
-                                   :event :end-breach-server
-                                   :duration :end-of-run
-                                   :req (req (= (:from-server target) bonus-server)))])))}}))
+     :events [(assoc boost-access-by-3 :event :breach-server)]
+     ;; if there is a run, mark mwanza effects to remain active until the run
+     :on-trash  {:req (req (and (= :runner side)
+                                (:run @state)))
+                 :effect (req
+                          (let [bonus-server (second (:previous-zone card))]
+                            (register-events
+                             state side
+                             card
+                             [(assoc (boost-access-when-trashed bonus-server)
+                                     :event :breach-server
+                                     :duration :end-of-run)])))}}))
 
 (defcard "Navi Mumbai City Grid"
   {:constant-effects [{:type :prevent-paid-ability
