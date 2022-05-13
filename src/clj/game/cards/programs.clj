@@ -417,8 +417,7 @@
              :msg "gain 1 [Credits]"}]})
 
 (defcard "Aumakua"
-  (auto-icebreaker {:implementation "Place counters manually for access outside of a run or cards that replace access like Ash"
-                    ; We would need a :once :per-access key to make this work for Gang Sign etc.
+  (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
                                 {:label "Place a virus counter"
                                  :msg "manually place a virus counter on itself"
