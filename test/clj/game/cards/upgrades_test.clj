@@ -2514,6 +2514,21 @@
       (click-prompt state :runner "No action")
       (is (not (:breach @state)) "Not currently breaching")))))
 
+(deftest mwanza-city-grid-salsette-slums
+  (do-game
+   (new-game {:corp {:hand ["Mwanza City Grid"]}
+              :runner {:hand ["Salsette Slums"] :credits 10}})
+   (play-from-hand state :corp "Mwanza City Grid" "HQ")
+   (rez state :corp (get-content state :hq 0))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Salsette Slums")
+   (run-on state "HQ")
+   (run-continue state)
+   (changes-val-macro
+    +2 (:credit (get-corp))
+    "Corp gained +2, even after mwanza was RFG'd"
+    (click-prompt state :runner "[Salsette Slums] Remove card from game"))))
+
 (deftest mwanza-city-grid-interaction-with-kitsune
     ;; Regression test for #3469
     ;; interaction with Kitsune
