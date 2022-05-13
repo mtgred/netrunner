@@ -537,6 +537,39 @@
       (run-empty-server state "Server 1")
       (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash")))
 
+(deftest aumakua-gang-sign-interaction
+  ;; Gang sign should give turtle counters
+  (do-game
+   (new-game {:corp {:hand ["Hostile Takeover" "NGO Front"]}
+              :runner {:hand ["Aumakua" (qty "Gang Sign" 2)]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Aumakua")
+   (play-from-hand state :runner "Gang Sign")
+   (play-from-hand state :runner "Gang Sign")
+   (take-credits state :runner)
+   (play-and-score state "Hostile Takeover")
+   (click-prompt state :runner "Gang Sign")
+   (click-prompt state :runner "No action")
+   (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter from the first breach")
+   (click-prompt state :runner "Pay 1 [Credits] to trash")
+   (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gained no virus counter from the second breach")))
+
+(deftest aumakua-divide-and-conquer
+  ;; divide and conquer should proc turtle for each access
+  (do-game
+   (new-game {:corp {:discard ["Hostile Takeover"] :deck ["Ice Wall"] :hand ["Ice Wall"]}
+              :runner {:hand ["Aumakua" "Sure Gamble" "Divide and Conquer"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Sure Gamble")
+   (play-from-hand state :runner "Aumakua")
+   (play-run-event state "Divide and Conquer" :archives)
+   (click-prompt state :runner "Steal")
+   (is (= 0 (get-counters (get-program state 0) :virus)) "Aumakua gained no virus counter")
+   (click-prompt state :runner "No action")
+   (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter")
+   (click-prompt state :runner "No action")
+   (is (= 2 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter")))
+
 (deftest baba-yaga
   ;; Baba Yaga
   (do-game
