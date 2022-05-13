@@ -2469,6 +2469,51 @@
       (is (not (:run @state)) "Run ended after Embezzle completed - no accesses from Mwanza")
       (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza")))
 
+(deftest mwanza-city-grid-multiple-breaches-correctness
+  ;; Test that mwanza acts correctly when we breach multiple times in a run
+  (do-game
+   (new-game {:corp {:hand ["Mwanza City Grid" "Shiro"]
+                     :deck ["Advanced Assembly Lines" "Biotic Labor" "Caduceus"
+                            "Death and Taxes" "Economic Warfare"]}
+              :runner {:hand ["Kongamato"]}})
+   (play-from-hand state :corp "Mwanza City Grid" "R&D")
+   (play-from-hand state :corp "Shiro" "R&D")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Kongamato")
+   (rez state :corp (get-content state :rd 0))
+   (let [shiro (get-ice state :rd 0)]
+     (rez state :corp shiro)
+     (run-on state "R&D")
+     (run-continue state)
+     (card-ability state :runner (get-resource state 0) 0)
+     (fire-subs state (refresh shiro))
+     (click-prompt state :corp "No")
+     ;;first access - we should only see 4 cards
+     (is (:breach @state) "Currently breaching")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (changes-val-macro
+      +8 (:credit (get-corp))
+      "Gained 6c from Mwanza City Grid"
+      (click-prompt state :runner "No action")
+      (is (not (:breach @state)) "Not currently breaching"))
+     ;; continue until access
+     (run-continue state :movement)
+     (run-continue state :success)
+     (is (:breach @state) "Currently breaching (for real)")
+     (click-prompt state :runner "Mwanza City Grid")
+     (click-prompt state :runner "No action")
+     ;; plus four cards from deck
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (changes-val-macro
+      +10 (:credit (get-corp))
+      "Five cards accessed, +10 credits"
+      (click-prompt state :runner "No action")
+      (is (not (:breach @state)) "Not currently breaching")))))
+
 (deftest mwanza-city-grid-interaction-with-kitsune
     ;; Regression test for #3469
     ;; interaction with Kitsune
