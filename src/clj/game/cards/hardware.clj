@@ -613,12 +613,16 @@
                 :effect (effect (damage-prevent :brain 2))}]})
 
 (defcard "Flame-out"
-  (let [turn-end {:async true
-                  :effect (req (unregister-events state :runner card)
-                               (if-let [hosted (first (:hosted card))]
-                                 (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))
-                                     (trash state side eid hosted nil))
-                                 (effect-completed state side eid)))}]
+  (let [register-flame-effect
+        (fn [state card]
+          (update! state :runner (assoc-in (get-card state card) [:special :flame-out-trigger] true)))
+        maybe-turn-end {:async true
+                        :req (req (:flame-out-trigger (:special (get-card state card))))
+                        :effect (req (update! state side (assoc-in (get-card state card) [:special :flame-out-trigger] nil))
+                                     (if-let [hosted (first (:hosted card))]
+                                       (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))
+                                           (trash state side eid hosted nil))
+                                       (effect-completed state side eid)))}]
     {:implementation "Credit usage restriction not enforced"
      :data {:counter {:credit 9}}
      :abilities [{:label "Take 1 [Credits] from Flame-out"
@@ -627,10 +631,7 @@
                   :async true
                   :effect (req (add-counter state side card :credit -1)
                                (system-msg state :runner "takes 1 [Credits] from Flame-out")
-                               (register-events
-                                 state :runner (get-card state card)
-                                 [(assoc turn-end :event :runner-turn-ends)
-                                  (assoc turn-end :event :corp-turn-ends)])
+                               (register-flame-effect state card)
                                (gain-credits state :runner eid 1))}
                  {:label "Take all [Credits] from Flame-out"
                   :req (req (and (not-empty (:hosted card))
@@ -639,10 +640,7 @@
                   :effect (req (let [credits (get-counters card :credit)]
                                  (update! state :runner (dissoc-in card [:counter :credit]))
                                  (system-msg state :runner (str "takes " credits " [Credits] from Flame-out"))
-                                 (register-events
-                                   state :runner (get-card state card)
-                                   [(assoc turn-end :event :runner-turn-ends)
-                                    (assoc turn-end :event :corp-turn-ends)])
+                                 (register-flame-effect state card)
                                  (gain-credits state :runner eid credits)))}
                  {:label "Install a program on Flame-out"
                   :req (req (empty? (:hosted card)))
@@ -666,17 +664,14 @@
      :events [{:event :card-moved
                :req (req (= (:cid target) (get-in (get-card state card) [:special :flame-out])))
                :effect (effect (update! (dissoc-in card [:special :flame-out])))}
-              {:event :runner-turn-ends}
-              {:event :corp-turn-ends}]
+              (assoc maybe-turn-end :event :runner-turn-ends)
+              (assoc maybe-turn-end :event :corp-turn-ends)]
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (same-card? card (:host target))
                                                  (pos? (get-counters card :credit))))
                                   :custom-amount 1
                                   :custom (req (add-counter state side card :credit -1)
-                                               (register-events
-                                                 state side (get-card state card)
-                                                 [(assoc turn-end :event :runner-turn-ends)
-                                                  (assoc turn-end :event :corp-turn-ends)])
+                                               (register-flame-effect state card)
                                                (effect-completed state side (make-result eid 1)))
                                   :type :custom}}}))
 
