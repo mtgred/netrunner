@@ -3014,7 +3014,8 @@
                                       (when (pos? (count from))
                                         (reorder-choice :corp :runner from '() (count from) from)))
                                     card nil))}
-                 {:optional
+                 {:label "The runner breaches R&D unless the corp pays 1 [Credit]"
+                  :optional
                   {:prompt "Pay 1 [Credits] to keep the Runner from breaching R&D?"
                    :yes-ability {:cost [:credit 1]
                                  :msg "keep the Runner from breaching R&D"}
