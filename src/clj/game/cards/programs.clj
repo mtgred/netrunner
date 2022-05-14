@@ -2005,7 +2005,7 @@
                                   card
                                   (let [ice current-ice]
                                     {:type :gain-subtype
-                                     :duration :end-of-run
+                                     :duration :end-of-encounter
                                      :req (req (same-card? target ice))
                                      :value target})))}]})
 
