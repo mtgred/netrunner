@@ -232,11 +232,29 @@
   (Central suite: Alias, Breach, Passport)"
   [break pump]
   (auto-icebreaker
-    {:abilities [(break-sub (:break-cost break) (:break break) (:breaks break)
-                            {:req (req (and (#{:hq :rd :archives} (target-server run))
-                                            (<= (get-strength current-ice) (get-strength card))
-                                            (has-subtype? current-ice (:breaks break))))})
-                 pump]}))
+   {:cannot-use-ability (req
+                         ;(system-msg state side (str "cannot-use check"))
+                         (let [encountered-ice-zone (:zone (get-current-ice state))]
+                           ;; passport requires the ice is NOT protecting a remote server
+                           ;; this means we can't just check which server we're on (because of
+                           ;; cards like konjin, awakening center, etc), so we have to check
+                           ;; where the ice is.
+                           ;;(system-msg state side (pr-str encountered))
+                           (and (some #{:ices} encountered-ice-zone)
+                                (some #{:server} encountered-ice-zone)
+                                (not (some #{:hq :rd :archives} encountered-ice-zone)))))
+                           ;(system-msg state side (:zone encountered-ice))))
+                           ;;(not (#{:hq :rd :archives} (target-server run)))))
+    :abilities [(break-sub (:break-cost break) (:break break) (:breaks break)
+                           {:req (req (let [cannot-fn (:cannot-use-ability card)
+                                            ;; state side eid card ???
+                                             cannot-use-abi (cannot-fn state side nil card nil)]
+                                        (and
+                                         (not cannot-use-abi)
+                                         (<= (get-strength current-ice) (get-strength card))
+                                         (has-subtype? current-ice (:breaks break)))))})
+                pump]}))
+    
 
 (defn- return-and-derez
   "Return to grip to derez current ice
