@@ -1169,9 +1169,28 @@
 (defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created
              :req (req (first-event? state :corp :server-created))
-             :msg "draw 1 card"
              :async true
-             :effect (effect (draw :corp eid 1))}]})
+             :msg "draw 1 card"
+             :effect (req
+                      (if-not (some #(= % :deck) (:zone target))
+                        (draw state :corp eid 1)
+                        (do
+                          ;; Register the draw to go off when the card is finished installing -
+                          ;;  this is after the checkpoint when it should go off, but is needed to
+                          ;;  fix the interaction between architect (and any future install from R&D
+                          ;;  cards) and NEH, where the card would get drawn before the install,
+                          ;;  fizzling it in a confusing manner. Because we only do it in this
+                          ;;  special case, there should be no gameplay implications. -nbkelly, 2022
+                          (register-events
+                           state side
+                           card
+                           [{:event :corp-install
+                             :interactive (req true)
+                             :duration (req true)
+                             :register-once-resolved true
+                             :async true
+                             :effect (effect (draw :corp eid 1))}])
+                          (effect-completed state side eid))))}]})
 
 (defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice
