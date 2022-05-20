@@ -269,7 +269,7 @@
     (let [alias (get-program state 0)
           zed1 (get-ice state :hq 0)
           zed2 (get-ice state :remote1 0)]
-      (is (= 1 (get-strength (refresh alias))) "Starts with 2 strength")
+      (is (= 1 (get-strength (refresh alias))) "Starts with 1 strength")
       (card-ability state :runner (refresh alias) 1)
       (is (= 4 (get-strength (refresh alias))) "Can gain strength outside of a run")
       (run-on state :hq)
@@ -285,6 +285,7 @@
       (run-on state :remote1)
       (rez state :corp (refresh zed2))
       (run-continue state)
+      (is (no-prompt? state :runner) "Just checking")
       (card-ability state :runner (refresh alias) 0)
       (is (no-prompt? state :runner) "No break prompt because we're running a remote"))))
 
