@@ -579,18 +579,30 @@
    :effect (effect (update-all-ice))})
 
 (defcard "Harishchandra Ent.: Where You're the Star"
-  {:events [{:event :tags-changed
-             :effect (req (if (is-tagged? state)
-                            (when-not (get-in @state [:runner :openhand])
-                              (system-msg state :corp (str "uses " (get-title card) " to reveal the Runner's hand"))
+  (letfn [(format-grip [runner]
+            (if (pos? (count (:hand runner)))
+              (string/join ", " (map :title (sort-by :title (:hand runner))))
+              "no cards"))]
+    {:events [{:event :post-runner-draw
+               :req (req (is-tagged? state))
+               :msg (msg "see that the Runner drew: "
+                         (string/join ", " (map :title runner-currently-drawing)))}
+              {:event :tags-changed
+               :effect (req (if (is-tagged? state)
+                              (when-not (get-in @state [:runner :openhand])
+                                (system-msg state :corp (str "uses " (get-title card) " make the Runner play with their grip revealed"))
+                                (system-msg state :corp (str "uses " (get-title card) " to see that the Runner currently has "
+                                                             (format-grip runner) " in their grip"))
                               (reveal-hand state :runner))
                             (when (get-in @state [:runner :openhand])
-                              (system-msg state :corp (str "uses " (get-title card) " to hide the Runner's hand"))
+                              (system-msg state :corp (str "uses " (get-title card) " stop making the Runner play with their grip revealed"))
+                              (system-msg state :corp (str "uses " (get-title card) " to see that the Runner had "
+                                                           (format-grip runner) " in their grip before it was concealed"))
                               (conceal-hand state :runner))))}]
    :effect (req (when (is-tagged? state)
                   (reveal-hand state :runner)))
    :leave-play (req (when (is-tagged? state)
-                      (conceal-hand state :runner)))})
+                      (conceal-hand state :runner)))}))
 
 (defcard "Harmony Medtech: Biomedical Pioneer"
   {:effect (effect (lose :agenda-point-req 1)
