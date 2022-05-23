@@ -746,6 +746,7 @@
 (import-vars
   [game.core.set-aside
    set-aside
+   set-aside-for-me
    get-set-aside])
 
 (import-vars
