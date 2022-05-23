@@ -54,11 +54,18 @@
   (let [cards (map :card (gather-events state side :pre-tag nil))]
     (pos? (count (filter #(card-flag? % :forced-to-avoid-tag true) cards)))))
 
+;;; Break abilities on ice should only occur when encountering that ice
+(defn currently-encountering-card
+  [card state]
+  (same-card? (:ice (get-current-encounter state)) card))
+
 ;;; Runner abilites for breaking subs
 (defn bioroid-break
   ([cost qty] (bioroid-break cost qty nil))
   ([cost qty args]
-   (break-sub [:lose-click cost] qty nil args)))
+   (break-sub [:lose-click cost] qty nil
+              (assoc args :req (req (currently-encountering-card card state))))))
+
 
 ;;; General subroutines
 (def end-the-run
@@ -1286,7 +1293,9 @@
 (defcard "F2P"
   {:subroutines [add-runner-card-to-grip
                  (give-tags 1)]
-   :runner-abilities [(break-sub [:credit 2] 1 nil {:req (req (not tagged))})]})
+   :runner-abilities [(break-sub [:credit 2] 1 nil
+                                 {:req (req (and (not tagged)
+                                                 (currently-encountering-card card state)))})]})
 
 (defcard "Fairchild"
   {:subroutines [(end-the-run-unless-runner-pays 4)
@@ -2480,7 +2489,7 @@
 (defcard "Negotiator"
   {:subroutines [(gain-credits-sub 2)
                  trash-program-sub]
-   :runner-abilities [(break-sub [:credit 2] 1)]})
+   :runner-abilities [(break-sub [:credit 2] 1 "All" {:req (req (currently-encountering-card card state))})]})
 
 (defcard "Nerine 2.0"
   (let [sub {:label "Do 1 brain damage and Corp may draw 1 card"
@@ -3005,7 +3014,8 @@
                                       (when (pos? (count from))
                                         (reorder-choice :corp :runner from '() (count from) from)))
                                     card nil))}
-                 {:optional
+                 {:label "The runner breaches R&D unless the corp pays 1 [Credit]"
+                  :optional
                   {:prompt "Pay 1 [Credits] to keep the Runner from breaching R&D?"
                    :yes-ability {:cost [:credit 1]
                                  :msg "keep the Runner from breaching R&D"}
