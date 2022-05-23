@@ -3197,6 +3197,21 @@
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
+(deftest lewi-guilherme-lovegood-interaction-#3345
+  ;; hand size does not persist while blanked by Dr. Lovegood
+  (do-game
+   (new-game {:runner {:hand ["Lewi Guilherme" "Dr. Lovegood"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Lewi Guilherme")
+   (is (= 4 (hand-size :corp)) "-1 hand size from lewi")
+   (play-from-hand state :runner "Dr. Lovegood")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (click-prompt state :runner "Dr. Lovegood")
+   (click-card state :runner "Lewi Guilherme")
+   (is (= 5 (hand-size :corp)) "-1 hand size from lewi")
+   (is (no-prompt? state :runner) "No more prompt to activate")))
+
 (deftest liberated-account
   ;; Liberated Account
   (do-game

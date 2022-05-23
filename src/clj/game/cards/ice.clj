@@ -311,6 +311,30 @@
    :subroutines (vec abilities)
    :rez-cost-bonus (req (* -3 (get-counters card :advancement)))})
 
+;;; For Zed 1.0 and 2.0
+(defn spent-click-to-break-sub
+  "Checks if the runner has spent(lost) a click to break a subroutine this run"
+  [state run]
+  (let [all-cards (get-all-cards state)
+        events (:events run)
+        breaks (filter #(= :subroutines-broken (first %)) events)
+        cards (vec (map #(first (second %)) breaks))
+        subs (map #(:subroutines %) cards)
+        broken-subs (map #(filter :broken %) subs)
+        breakers (mapcat #(map :breaker %) broken-subs)
+        ;; this is the list of every breaker the runner used to
+        ;; break a subroutine this run. If we check that it has a
+        ;; 'lose-click' break ability, we should be safe most of the
+        ;; time. This can only be: adjusted matrix, ABR, and corp cards
+        ;; If Adjusted Matrix ever gets correctly implemented, there will be
+        ;; a minor edge case here if the runner uses a non-click break ab on a
+        ;; card hosting adjusted matrix -nbkelly, 2022
+        actual-breakers (map #(find-cid % all-cards) breakers)
+        abs (mapcat #(if (= (:side %) "Runner") (:abilities %) (:runner-abilities %)) actual-breakers)
+        costs (map :break-cost abs)
+        clicks (filter #(some #{:lose-click} %) costs)]
+    (not-empty clicks)))
+
 ;;; For Grail ice
 (defn grail-in-hand
   "Req that specified card is a Grail card in the Corp's hand."
@@ -3571,14 +3595,27 @@
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"
-  {:implementation "Restriction on having spent [click] is not implemented"
-   :subroutines [(do-brain-damage 1)
-                 (do-brain-damage 1)]
+  {:subroutines [{:label "Do 1 brain damage"
+                  :async true
+                  :effect (req (if (spent-click-to-break-sub state run)
+                                 (continue-ability state side (do-brain-damage 1) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                     (effect-completed state side eid))))}
+                 {:label "Do 1 brain damage"
+                  :async true
+                  :effect (req (if (spent-click-to-break-sub state run)
+                                 (continue-ability state side (do-brain-damage 1) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                     (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Zed 2.0"
-  {:implementation "Restriction on having spent [click] is not implemented"
-   :subroutines [trash-hardware-sub
+  {:subroutines [trash-hardware-sub
                  trash-hardware-sub
-                 (do-brain-damage 2)]
+                 {:label "Do 1 brain damage"
+                  :async true
+                  :effect (req (if (spent-click-to-break-sub state run)
+                                 (continue-ability state side (do-brain-damage 2) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 2.0")
+                                     (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 2 2)]})
