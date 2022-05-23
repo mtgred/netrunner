@@ -38,9 +38,11 @@
                 :msg (msg "force the Corp to lose " (min 5 (:credit corp))
                           " [Credits], gain " (* 2 (min 5 (:credit corp)))
                           " [Credits] and take 2 tags")
-                :effect (req (wait-for (gain-tags state :runner 2)
-                                       (wait-for (gain-credits state :runner (* 2 (min 5 (:credit corp))))
-                                                 (lose-credits state :corp eid (min 5 (:credit corp))))))}})]})
+                :effect (req (let [creds-lost (min 5 (:credit corp))]
+                               (wait-for
+                                (lose-credits state :corp creds-lost)
+                                (wait-for (gain-tags state :runner 2)
+                                          (gain-credits state :runner eid (* 2 creds-lost))))))}})]})
 
 (defcard "Always Have a Backup Plan"
   {:makes-run true

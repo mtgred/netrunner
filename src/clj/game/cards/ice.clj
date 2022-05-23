@@ -3233,7 +3233,8 @@
   (constellation-ice trash-hardware-sub))
 
 (defcard "Thimblerig"
-  (let [ability {:optional
+  (let [ability {:interactive (req run)
+                 :optional
                  {:req (req (and (<= 2 (count (filter ice? (all-installed state :corp))))
                                  (if run (same-card? (:ice context) card) true)))
                   :prompt "Swap Thimblerig with another ice?"
