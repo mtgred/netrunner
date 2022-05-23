@@ -1187,7 +1187,7 @@
                            [{:event :corp-install
                              :interactive (req true)
                              :duration (req true)
-                             :register-once-resolved true
+                             :unregister-once-resolved true
                              :async true
                              :effect (effect (draw :corp eid 1))}])
                           (effect-completed state side eid))))}]})
