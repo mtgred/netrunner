@@ -3170,6 +3170,67 @@
        (click-prompt state :runner "Take 1 tag")
        (is (no-prompt? state :corp) "No prompt for the Corp for second tag"))))
 
+(deftest near-earth-hub
+  ;; NEH - draws a card when you install a card in a new remote
+  (do-game
+   (new-game {:corp {:id "Near-Earth Hub: Broadcast Center"
+                     :hand [(qty "Advanced Assembly Lines" 5) "PAD Campaign"]
+                     :deck [(qty "Advanced Assembly Lines" 5)]}})
+   (changes-val-macro
+    0 (count (:hand (get-corp)))
+    "Draw 1 card (net 0) with NEH"
+    (play-from-hand state :corp "Advanced Assembly Lines" "New remote"))
+   (changes-val-macro
+    -1 (count (:hand (get-corp)))
+    "NEH does not fire twice"
+    (play-from-hand state :corp "Advanced Assembly Lines" "New remote"))
+   (take-credits state :corp)
+   (rez state :corp (get-content state :remote1 0))
+   (changes-val-macro
+    0 (count (:hand (get-corp)))
+    "NEH on runner turn draws 1"
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp "PAD Campaign")
+    (click-prompt state :corp "New remote"))))
+
+(deftest near-earth-hub-install-from-rnd
+  ;; NEH does not fail when installing from R&D
+  (do-game
+   (new-game {:corp {:id "Near-Earth Hub: Broadcast Center"
+                     :hand ["Architect" "Ballista" "Chum" "Drafter"
+                            "Eli 1.0" "Fenris" "Galahad"]}})
+   ;; just starting them in deck has them unordered - need to to it the hard way
+   (core/move state :corp (find-card "Ballista" (:hand (get-corp))) :deck)
+   (core/move state :corp (find-card "Chum" (:hand (get-corp))) :deck)
+   (core/move state :corp (find-card "Drafter" (:hand (get-corp))) :deck)
+   (core/move state :corp (find-card "Eli 1.0" (:hand (get-corp))) :deck)
+   (core/move state :corp (find-card "Fenris" (:hand (get-corp))) :deck)
+   (core/move state :corp (find-card "Galahad" (:hand (get-corp))) :deck)
+   (is (= ["Ballista" "Chum" "Drafter" "Eli 1.0" "Fenris" "Galahad"]
+          (map :title (:deck (get-corp)))) "DECK is BCDEFG")
+   (play-from-hand state :corp "Architect" "HQ")
+   (rez state :corp (get-ice state :hq 0))
+   (take-credits state :corp)
+   (run-on state :hq)
+   (run-continue state)
+   (fire-subs state (get-ice state :hq 0))
+   (changes-val-macro
+    1 (count (:hand (get-corp)))
+    "drew 1 card with neh"
+    (click-prompt state :corp "Ballista")
+    (click-prompt state :corp "New remote"))
+   (is (= ["Drafter" "Eli 1.0" "Fenris" "Galahad"]
+          (map :title (:deck (get-corp)))) "Deck is DEFG")
+   (is (= ["Chum"]
+          (map :title (:hand (get-corp)))) "Hand is chummy")
+   (changes-val-macro
+    -1 (count (:hand (get-corp)))
+    "installed 1 card with architect"
+    (click-card state :corp "Chum")
+    (click-prompt state :corp "New remote"))
+   (is (= "Chum" (:title (get-ice state :remote2 0))))
+   (is (= "Ballista" (:title (get-ice state :remote1 0))))))
+
 (deftest nero-severn-information-broker
   ;; Nero Severn: Information Broker
   (do-game
