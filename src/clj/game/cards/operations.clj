@@ -1355,23 +1355,28 @@
                              (add-prop state side installed-card :advance-counter 3 {:placed true})
                              (register-persistent-flag!
                                state side
-                               card :can-rez
+                               installed-card :can-rez
                                (fn [state _ card]
                                  (if (same-card? card installed-card)
                                    ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
                                    true)))
                              (register-turn-flag!
                                state side
-                               card :can-score
+                               installed-card :can-score
                                (fn [state _ card]
                                  (if (same-card? card installed-card)
                                    ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
                                    true)))
-                             (effect-completed state side eid))))}
-   :events [{:event :corp-turn-begins
-             :duration :until-corp-turn-begins
-             :async true
-             :effect (req (clear-persistent-flag! state :corp card :can-rez))}]})
+                             (register-events
+                              state side installed-card
+                              [{:event :corp-turn-begins
+                                :duration :until-corp-turn-begins
+                                :unregister-once-resolved true
+                                :async true
+                                :effect (req
+                                         (clear-persistent-flag! state :corp installed-card :can-rez)
+                                         (effect-completed state side eid))}])
+                             (effect-completed state side eid))))}})
 
 (defcard "Mutate"
   {:on-play
