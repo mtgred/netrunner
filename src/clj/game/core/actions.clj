@@ -7,7 +7,7 @@
     [game.core.board :refer [get-zones installable-servers]]
     [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
@@ -15,12 +15,12 @@
     [game.core.ice :refer [break-subroutine! get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
     [game.core.runs :refer [continue total-run-cost]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
@@ -45,7 +45,7 @@
         abilities (:abilities card)
         ab (nth abilities ability)
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab ability]))]
+                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
@@ -433,7 +433,7 @@
         cdef (card-def card)
         ab (get-in cdef [:corp-abilities ability])
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab ability]))]
+                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
@@ -444,7 +444,7 @@
         cdef (card-def card)
         ab (get-in cdef [:runner-abilities ability])
         cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-ability true? card [ab ability]))]
+                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
@@ -546,26 +546,48 @@
                    (effect-completed state side eid)))
        (effect-completed state side eid)))))
 
+(defn resolve-score
+  "resolves the actual 'scoring' of an agenda (after costs/can-steal has been worked out)"
+  [state side eid card]
+  (let [moved-card (move state :corp card :scored)
+        c (card-init state :corp moved-card {:resolve-effect false
+                                             :init-data true})
+        _ (update-all-advancement-requirements state)
+        _ (update-all-agenda-points state)
+        c (get-card state c)
+        points (get-agenda-points c)]
+    (system-msg state :corp (str "scores " (:title c)
+                                 " and gains " (quantify points "agenda point")))
+    (implementation-msg state card)
+    (set-prop state :corp (get-card state c) :advance-counter 0)
+    (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+    (play-sfx state side "agenda-score")
+    (when-let [on-score (:on-score (card-def c))]
+      (register-pending-event state :agenda-scored c on-score))
+    (queue-event state :agenda-scored {:card c
+                                       :points points})
+    (checkpoint state nil eid {:duration :agenda-scored})))
+
 (defn score
   "Score an agenda."
   ([state side eid card] (score state side eid card nil))
   ([state side eid card {:keys [no-req]}]
    (if-not (can-score? state side card {:no-req no-req})
      (effect-completed state side eid)
-     (let [moved-card (move state :corp card :scored)
-           c (card-init state :corp moved-card {:resolve-effect false
-                                                :init-data true})
-           _ (update-all-advancement-requirements state)
-           _ (update-all-agenda-points state)
-           c (get-card state c)
-           points (get-agenda-points c)]
-       (system-msg state :corp (str "scores " (:title c)
-                                    " and gains " (quantify points "agenda point")))
-       (set-prop state :corp (get-card state c) :advance-counter 0)
-       (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-       (play-sfx state side "agenda-score")
-       (when-let [on-score (:on-score (card-def c))]
-         (register-pending-event state :agenda-scored c on-score))
-       (queue-event state :agenda-scored {:card c
-                                          :points points})
-       (checkpoint state nil eid {:duration :agenda-scored})))))
+     (let [additional-costs (score-additional-cost-bonus state side card)
+           cost (merge-costs (mapv first additional-costs))
+           cost-strs (build-cost-string cost)
+           can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)]
+       (cond         
+         (string/blank? cost-strs) (resolve-score state side eid card)
+         (not can-pay) (effect-completed state side eid)
+         :else (wait-for (pay state side (make-eid state
+                                                   (assoc eid :additional-costs additional-costs :source card :source-type :corp-score))
+                              nil cost 0)
+                         (let [payment-result async-result]
+                           (if (string/blank? (:msg payment-result))
+                             (effect-completed state side eid)
+                             (do
+                               (system-msg state side (str (:msg payment-result) " to score " (:title card)))
+                               (resolve-score state side eid card))))))))))
+         

@@ -16,11 +16,11 @@
   (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (defn get-side [state]
-  (r/with-let [user-id (r/cursor app-state [:user :_id])]
+  (let [user-id (get-in @app-state [:user :_id])]
     (cond
       (:replay state) @replay-side
-      (= @user-id (get-in state [:runner :user :_id])) :runner
-      (= @user-id (get-in state [:corp :user :_id])) :corp
+      (= user-id (get-in state [:runner :user :_id])) :runner
+      (= user-id (get-in state [:corp :user :_id])) :corp
       :else :spectator)))
 
 (defn not-spectator? []

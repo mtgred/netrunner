@@ -1044,6 +1044,22 @@
       (click-card state :runner (get-program state 0))
       (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")))
 
+(deftest cold-read-earth-station
+  ;;ensure that cold read can't pay for the earth station ability
+  (do-game
+    (new-game {:runner {:hand ["Cold Read" "Sure Gamble"]}
+               :corp {:id "Earth Station: SEA Headquarters" :hand ["PAD Campaign"]}})
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (:flipped (get-in @state [:corp :identity])) "Earth station is on flip side")
+    (play-from-hand state :corp "PAD Campaign" "New Remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (changes-val-macro -6 (:credit (get-runner))
+                       "Paid for earth station"
+                       (play-from-hand state :runner "Cold Read")
+                       (click-prompt state :runner "Server Remote"))
+    (is (no-prompt? state :runner) "waiting on earth station payment prompt")))
+
 (deftest cold-read-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -1060,7 +1076,7 @@
                            (click-card state :runner cr))
         (run-continue state)
         (click-card state :runner refr)
-        (is (= 2 (count (:discard (get-runner)))) "Cold Read and Refractor in discard"))))
+        (is (= 2 (count (:discard (get-runner)))) "Cold Read and Refractor in discard"))))    
 
 (deftest ^{:card-title "compile"}
   compile-test
@@ -1636,7 +1652,8 @@
     (click-prompt state :runner "Steal")
     (click-prompt state :runner "Yes")    
     (click-prompt state :runner "Efficiency Committee")
-    (click-prompt state :runner "Steal")    
+    (click-prompt state :runner "Steal")
+    (is (last-log-contains? state "Corp shuffles R&D"))
     (is (no-prompt? state :runner) 
         "Runner should not be waiting on a prompt")
     (is (no-prompt? state :corp)
@@ -4558,6 +4575,22 @@
              (= 1 (count (:discard (get-corp)))))
         "Corp hand empty and Eve in Archives")
     (is (= 4 (:credit (get-runner))))))
+
+(deftest overclock-earth-station
+  ;;ensure that overclock can't pay for the earth station ability
+  (do-game
+    (new-game {:runner {:hand ["Overclock" "Sure Gamble"]}
+               :corp {:id "Earth Station: SEA Headquarters" :hand ["PAD Campaign"]}})
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (:flipped (get-in @state [:corp :identity])) "Earth station is on flip side")
+    (play-from-hand state :corp "PAD Campaign" "New Remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (changes-val-macro -7 (:credit (get-runner))
+                       "Paid for earth station"
+                       (play-from-hand state :runner "Overclock")
+                       (click-prompt state :runner "Server Remote"))
+    (is (no-prompt? state :runner) "waiting on earth station payment prompt")))
 
 (deftest paper-tripping
   ;; Paper Tripping

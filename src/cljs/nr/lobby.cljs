@@ -24,9 +24,10 @@
   (swap! app-state assoc :games data))
 
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
-  (swap! app-state assoc :current-game data)
-  (when (:started data)
-    (ws/ws-send! [:game/resync {:gameid (:gameid data)}])))
+  (when-not (= "local-replay" (:gameid @app-state))
+    (swap! app-state assoc :current-game data)
+    (when (:started data)
+      (ws/ws-send! [:game/resync {:gameid (:gameid data)}]))))
 
 (defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
   (play-sound data))
@@ -74,7 +75,7 @@
                      diffs (rest history)
                      init-state (assoc init-state :replay-diffs diffs)]
                  (ws/event-msg-handler-wrapper
-                   {:id :netrunner/start
+                   {:id :game/start
                     :?data (.stringify js/JSON (clj->js
                                                  (if jump-to
                                                    (assoc init-state :replay-jump-to jump-to)
@@ -84,10 +85,14 @@
                                "error" {:time-out 0 :close-button true}))))))))
 
 (defn leave-game []
-  (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
-               8000
-               #(when (sente/cb-success? %)
-                  (leave-game!))))
+  (if (= "local-replay" (:gameid @app-state))
+    (do
+      (swap! app-state assoc :gameid nil)
+      (leave-game!))
+    (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
+                 8000
+                 #(when (sente/cb-success? %)
+                    (leave-game!)))))
 
 (defn- hidden-formats
   "Remove games which the user has opted to hide"
@@ -125,21 +130,21 @@
 (defn game-list [state user games current-game]
   (r/with-let [editing (r/cursor state [:editing])
                room (r/cursor state [:room])
-               room-games (r/track (fn [] (filter #(= (:room %) @room) @games)))
-               visible-formats (r/cursor app-state [:visible-formats])
-               filtered-games (r/track (fn [] (filter-games @user @room-games @visible-formats)))]
+               visible-formats (r/cursor app-state [:visible-formats])]
+    (let [room-games (filter #(= (:room %) @room) @games)
+          filtered-games (filter-games @user room-games @visible-formats)]
     [:<>
      [:div.game-count
-      [:h4 (str (tr [:lobby.game-count] (count @filtered-games))
+      [:h4 (str (tr [:lobby.game-count] (count filtered-games))
                 (when (not= (count slug->format) (count @visible-formats))
                   (str "  " (tr [:lobby.filtered "(filtered)"]))))]]
      [:div.game-list
-      (if (empty? @filtered-games)
+      (if (empty? filtered-games)
         [:h4 (tr [:lobby.no-games "No games"])]
         (doall
-          (for [game @filtered-games]
+          (for [game filtered-games]
             ^{:key (:gameid game)}
-            [game-row state game @current-game @editing])))]]))
+            [game-row state game @current-game @editing])))]])))
 
 (defn format-visible? [slug] (contains? (:visible-formats @app-state) slug))
 
@@ -268,7 +273,6 @@
                user (r/cursor app-state [:user])
                visible-formats (r/cursor app-state [:visible-formats])
                replay-id (r/cursor app-state [:replay-id])]
-    (println "rendering game-lobby")
     [:div.container
      [:div.lobby-bg]
      (do (authenticated (fn [_] nil)) nil)

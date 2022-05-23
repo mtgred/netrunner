@@ -5,7 +5,7 @@
    [clojure.string :as s]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
-   [nr.utils :refer [format-zoned-date-time ISO-ish-formatter non-game-toast
+   [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      render-icons]]
    [nr.ws :as ws]
    [reagent.core :as r]
@@ -45,6 +45,17 @@
   (go (let [response (<! (PUT "/admin/version" {:version msg} :json))]
         (update-version-response response))))
 
+(defn- update-banned-response [response]
+  (if (= 200 (:status response))
+    (do
+      (go (swap! admin-state assoc :banned (:json (<! (GET "/admin/banned")))))
+      (non-game-toast "Updated banned message" "success" nil))
+    (non-game-toast "Failed to update banned message" "error" nil)))
+
+(defn- update-banned-item [msg]
+  (go (let [response (<! (PUT "/admin/banned" {:banned msg} :json))]
+        (update-banned-response response))))
+
 (defn- update-announce-response [response]
   (if (sente/cb-success? response)
     (case response
@@ -76,8 +87,7 @@
               {:on-click #(delete-news-item (:_id d))}
               "Delete"]]
             [:span.date
-             (format-zoned-date-time ISO-ish-formatter
-                                     (str (:date d) "Z"))]
+             (format-date-time ISO-ish-formatter (:date d))]
             [:span.title (render-icons (:item d ""))]]))]]
      [:h4 "Add news item"]
      [:form.msg-box {:on-submit #(let [msg (:news-msg @s "")]
@@ -110,6 +120,23 @@
                :value (:version-msg @s "")
                :on-change #(swap! s assoc :version-msg (-> % .-target .-value))}]
       (let [msg (:version-msg @s "")
+            disabled (s/blank? msg)]
+        [:button {:disabled disabled
+                  :class (if disabled "disabled" "")}
+         "Update"])]
+
+     [:br]
+     [:h3 "Update banned user login failure message"]
+     [:form.msg-box {:on-submit #(let [msg (:banned @s)]
+                                   (.preventDefault %)
+                                   (when-not (s/blank? msg)
+                                     (update-banned-item msg)
+                                     (swap! s assoc :banned "")))}
+      [:input {:type "text"
+               :placeholder "Type something...."
+               :value (:banned @s "")
+               :on-change #(swap! s assoc :banned (-> % .-target .-value))}]
+      (let [msg (:banned @s "")
             disabled (s/blank? msg)]
         [:button {:disabled disabled
                   :class (if disabled "disabled" "")}

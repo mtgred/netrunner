@@ -11,7 +11,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [same-card? to-keyword]]))
@@ -36,6 +36,7 @@
                    "play "
                    (build-spend-msg payment-str "play"))]
     (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
+    (implementation-msg state card)
     (play-sfx state side "play-instant")
     ;; Select the "on the table" version of the card
     (let [card (current-handler state side card)

@@ -11,7 +11,7 @@
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.translations :refer [tr tr-format tr-lobby tr-side]]
    [nr.utils :refer [day-word-with-time-formatter faction-icon
-                     format-zoned-date-time notnum->zero num->percent render-message
+                     format-date-time notnum->zero num->percent render-message
                      set-scroll-top store-scroll-top]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -20,10 +20,7 @@
 
 (defn- fetch-game-history []
   (go (let [{:keys [status json]} (<! (GET "/profile/history"))]
-        (when (= 200 status)
-          (let [games (mapv #(assoc % :start-date (js/Date. (:start-date %))
-                               :end-date (js/Date. (:end-date %))) json)]
-            (swap! state assoc :games games))))))
+        (when (= 200 status) (swap! state assoc :games json)))))
 
 (defn update-deck-stats
   "Update the local app-state with a new version of deck stats"
@@ -60,8 +57,8 @@
        [:div (str (tr [:stats.format "Format"]) ": " (capitalize (tr-format (:format game))))]
        [:div (str (tr [:stats.winner "Winner"]) ": " (capitalize (tr-side (:winner game))))]
        [:div (str (tr [:stats.win-method "Win method"]) ": " (:reason game))]
-       [:div (str (tr [:stats.started "Started"]) ": " (:start-date game))]
-       [:div (str (tr [:stats.ended "Ended"]) ": " (:end-date game))]]
+       [:div (str (tr [:stats.started "Started"]) ": " (format-date-time day-word-with-time-formatter (:start-date game)))]
+       [:div (str (tr [:stats.ended "Ended"]) ": " (format-date-time day-word-with-time-formatter (:end-date game)))]]
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p
@@ -171,10 +168,7 @@
       {:title (when replay-shared "Replay shared")}
       title " (" (tr [:stats.turn-count] turn-count) ")" (when has-replay (if replay-shared " ⭐" " 🟢"))]
 
-     [:div.log-date
-      (as-> start-date date
-        (.toISOString date)
-        (format-zoned-date-time day-word-with-time-formatter date))]
+     [:div.log-date (format-date-time day-word-with-time-formatter start-date)]
 
      [:div
       [:span.player

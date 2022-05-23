@@ -22,7 +22,8 @@
     (reset! last-state @game-state)
     (reset! ws/lock false)
     (when (:replay-diffs state)
-      (init-replay app-state state))))
+      (init-replay app-state state)
+      (swap! app-state assoc-in [:current-game :started] true))))
 
 (defn launch-game! [state]
   (init-game! state)

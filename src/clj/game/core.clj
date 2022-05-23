@@ -250,6 +250,7 @@
    rez-cost
    run-additional-cost-bonus
    run-cost
+   score-additional-cost-bonus
    trash-cost])
 
 (import-vars
@@ -717,6 +718,7 @@
    play-sfx
    say
    system-msg
+   implementation-msg
    system-say])
 
 (import-vars

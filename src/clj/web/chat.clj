@@ -7,7 +7,7 @@
    [web.app-state :as app-state]
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user? visible-to-user]]
-   [web.utils :refer [response]]
+   [web.utils :refer [response mongo-time-to-utc-string]]
    [web.ws :as ws]))
 
 (def msg-collection "messages")
@@ -19,10 +19,18 @@
   [{chat-settings :system/chat}]
   (response 200 {:max-length (chat-max-length chat-settings)}))
 
+(defn- blocked-by-user
+  [db username]
+    (let [blocks
+          (mc/find-one-as-map db :users
+                              {:username username}
+                              ["username" "options.blocked-users"])]
+      [username blocks]))
+
 (defn messages-handler
   [{db :system/db
     user :user
-    {:keys [channel]} :params}]
+    {:keys [channel]} :path-params :as args}]
   (if user
     (let [messages (->> (q/with-collection
                           db msg-collection
@@ -30,13 +38,14 @@
                           (q/sort (array-map :date -1))
                           (q/limit 100))
                         reverse)
-          usernames (->> messages
-                         (map :username)
-                         (into #{}))
-          connected-users (app-state/get-users)
-          visible-users (->> (for [username usernames
+          messages (map #(update % :date mongo-time-to-utc-string) messages)
+          senders (->> messages
+                       (map :username)
+                       (map #(blocked-by-user db %))
+                       (into {}))
+          visible-users (->> (for [username (keys senders)
                                    :when (or (= (:username user) username)
-                                             (visible-to-user user {:username username} connected-users))]
+                                             (visible-to-user user {:username username} senders))]
                                username)
                              (into #{}))
           messages (filter #(contains? visible-users (:username %)) messages)]
@@ -71,8 +80,9 @@
                        :date      (inst/now)}
               inserted (mc/insert-and-return db msg-collection message)
               inserted (update inserted :_id str)
+              inserted (update inserted :date #(.toString %))
               connected-users (app-state/get-users)]
-          (doseq [uid (keys connected-users)
+          (doseq [uid (ws/connected-uids)
                   :when (or (= (:username user) uid)
                             (visible-to-user user {:username uid} connected-users))]
             (ws/broadcast-to! [uid] :chat/message inserted)))
@@ -92,12 +102,8 @@
                   :action :delete-message
                   :date (inst/now)
                   :msg msg})
-      (let [connected-users (app-state/get-users)]
-        (doseq [uid (keys connected-users)
-                :when (or (= (:username user) uid)
-                          (visible-to-user user {:username uid} connected-users))]
-          (ws/broadcast-to! [uid] :chat/delete-msg msg))))))
-
+      (doseq [uid (ws/connected-uids)]
+        (ws/broadcast-to! [uid] :chat/delete-msg msg)))))
 
 (defmethod ws/-msg-handler :chat/delete-all
   [{{db :system/db
@@ -112,8 +118,5 @@
                 :action :delete-all-messages
                 :date (inst/now)
                 :sender sender})
-    (let [connected-users (app-state/get-users)]
-      (doseq [uid (keys connected-users)
-              :when (or (= (:username user) uid)
-                        (visible-to-user user {:username uid} connected-users))]
-        (ws/broadcast-to! [uid] :chat/delete-all {:username sender})))))
+    (doseq [uid (ws/connected-uids)]
+      (ws/broadcast-to! [uid] :chat/delete-all {:username sender}))))

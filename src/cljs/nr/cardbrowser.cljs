@@ -363,7 +363,8 @@
       "All" (concat runner-factions corp-factions)
       "Any Side" (concat runner-factions corp-factions)
       "Runner" (conj runner-factions "Neutral")
-      "Corp" corp-factions)))
+      "Corp" corp-factions
+      (concat runner-factions corp-factions))))
 
 (defn- filter-alt-art-cards [cards]
   (let [lang (get-in @app-state [:options :language] "en")
@@ -598,7 +599,6 @@
         scroll-top (atom 0)]
 
     (fn []
-      (println "card-browser")
       [:div#cardbrowser.cardbrowser
        [:div.cardbrowser-bg]
        [:div.card-info

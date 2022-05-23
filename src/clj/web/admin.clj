@@ -9,7 +9,7 @@
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user?]]
    [web.utils :refer [response]]
-   [web.versions :refer [frontend-version]]
+   [web.versions :refer [frontend-version banned-msg]]
    [web.ws :as ws]))
 
 (defmethod ws/-msg-handler :admin/announce
@@ -21,8 +21,7 @@
     (empty? message) (reply-fn 400)
     :else
     (do
-      (doseq [u (app-state/get-users)
-              :let [uid (:uid u)]]
+      (doseq [uid (ws/connected-uids)]
         (ws/chsk-send! uid [:lobby/toast {:message message
                                           :type "warning"}]))
       (reply-fn 200))))
@@ -63,6 +62,20 @@
       (response 200 {:message "ok" :version version}))
     (response 400 {:message "Missing version item"})))
 
+(defn banned-message-handler [{db :system/db}]
+  (let [config (mc/find-one-as-map db "config" nil)
+        banned (:banned-msg config "Account is locked")]
+    (response 200 {:message "ok" :banned banned})))
+
+(defn banned-message-update-handler [{db :system/db
+                               {banned :banned} :body}]
+  (if-not (empty? banned)
+    (do
+      (reset! banned-msg banned)
+      (mc/update db "config" {} {$set {:banned-msg banned}})
+      (response 200 {:message "ok" :banned banned}))
+    (response 400 {:message "Missing banned message item"})))
+
 (def user-collection "users")
 
 (def user-type->field
@@ -76,7 +89,10 @@
     {:keys [action user-type username] :as data} :?data
     uid :uid}]
   (if (and (active-user? user)
-           (:isadmin user)
+           (or (:isadmin user)
+               (and (:ismoderator user)
+                    (or (= user-type :specials)
+                        (= user-type :banned))))
            (not-empty username))
     (let [field (user-type->field user-type)
           value (case action
@@ -89,7 +105,11 @@
                  (-> (mc/find-one-as-map db user-collection {:username username} [:_id :username])
                      (update :_id str)))]
       (if user
-        (ws/broadcast-to! [uid] :admin/user-edit {:success (assoc data :user user)})
+        (do
+          (ws/broadcast-to! [uid] :admin/user-edit {:success (assoc data :user user)})
+          (when (= user-type :banned)
+            (when-let [connected-user ((:users @app-state/app-state) username)]
+              (ws/broadcast-to! [(:uid connected-user)] :system/force-disconnect {}))))
         (ws/broadcast-to! [uid] :admin/user-edit {:error "Not found"})))
     (ws/broadcast-to! [uid] :admin/user-edit {:error "Not allowed"})))
 
@@ -97,12 +117,12 @@
   [{{db :system/db user :user} :ring-req
     uid :uid}]
   (if (and (active-user? user)
-           (:isadmin user))
+           (or (:ismoderator user) (:isadmin user)))
     (let [users (->> (mc/find-maps db user-collection {$or [{:ismoderator true}
-                                                            {:specials true}
+                                                            {:special {$exists true}}
                                                             {:tournament-organizer true}
                                                             {:banned true}]}
-                                   [:_id :username :ismoderator :specials :tournament-organizer :banned])
+                                   [:_id :username :ismoderator :special :tournament-organizer :banned])
                      (map #(update % :_id str)))]
       (ws/broadcast-to! [uid] :admin/fetch-users {:success users}))
     (ws/broadcast-to! [uid] :admin/fetch-users {:error "Not allowed"})))

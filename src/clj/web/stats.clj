@@ -14,7 +14,7 @@
    [web.mongodb :refer [->object-id]]
    [web.pages :as pages]
    [web.user :refer [active-user?]]
-   [web.utils :refer [json-response response]]
+   [web.utils :refer [json-response response mongo-time-to-utc-string]]
    [web.ws :as ws]))
 
 (defn clear-userstats-handler
@@ -219,7 +219,11 @@
                        (mq/fields {:replay 0 :log 0 :_id 0})
                        (mq/sort (array-map :start-date -1))
                        (mq/limit 100))
-                     (into []))]
+                     (into []))
+          games (map #(update % :creation-date mongo-time-to-utc-string) games)
+          games (map #(update % :start-date mongo-time-to-utc-string) games)
+          games (map #(update % :end-date mongo-time-to-utc-string) games)
+          ]
       (response 200 games))
     (response 401 {:message "Unauthorized"})))
 
@@ -260,7 +264,7 @@
 (defn publish-annotations
   [{db :system/db
     {username :username} :user
-    {:keys [gameid]} :params
+    {:keys [gameid]} :path-params
     body :body}]
   (let [{:keys [corp runner replay replay-shared annotations]}
         (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
@@ -287,7 +291,7 @@
 (defn delete-annotations
   [{db :system/db
     {username :username} :user
-    {:keys [gameid date]} :params}]
+    {:keys [gameid date]} :path-params}]
   (let [{:keys [corp runner replay annotations]}
         (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
         replay (or replay {})
@@ -312,7 +316,7 @@
 (defn fetch-replay
   [{db :system/db
     {username :username} :user
-    {:keys [gameid]} :params}]
+    {:keys [gameid]} :path-params}]
   (let [{:keys [corp runner replay replay-shared bug-reported]}
         (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "bug-reported"])
         replay (or replay {})]
@@ -328,7 +332,7 @@
 (defn share-replay
   [{db :system/db
     {username :username} :user
-    {:keys [gameid]} :params}]
+    {:keys [gameid]} :path-params}]
   (if username
     (try
       (mc/update db :game-logs
@@ -355,7 +359,8 @@
 
 (defn replay-handler
   [{db :system/db
-    {:keys [gameid bugid n d b]}  :params
+    {:keys [gameid bugid]}        :path-params
+    {:keys [n d b]}               :query-params
     scheme                        :scheme
     headers                       :headers
     :as req}]

@@ -41,6 +41,7 @@
        (click-card state :runner atlas)
        (click-prompt state :runner "Steal")
        (click-prompt state :runner "No action")
+       (is (last-log-contains? state "give the Runner 2 tags"))
        (is (= 2 (count-tags state)) "Runner has 2 tags")))
   (testing "Basic test - trash"
     (do-game
@@ -1241,7 +1242,7 @@
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
 
 (deftest embolus
-  ;; Embolus - 1 power token to end the run, tokens are lost on successful runs
+  ;; Embolus - 1 power counter to end the run, counters are lost on successful runs
   (do-game
     (new-game {:corp {:deck ["Embolus"]}})
     (play-from-hand state :corp "Embolus" "New remote")
@@ -1850,7 +1851,7 @@
         (take-credits state :runner)
         (is (not (no-prompt? state :corp)) "The Corp is prompted to place one advancement token on a card")
         (click-card state :corp la-costa)
-        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances it")
+        (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances itself")
         (take-credits state :corp)
         (take-credits state :runner)
         (click-card state :corp breaking-news)
@@ -2468,6 +2469,66 @@
       (is (not (:run @state)) "Run ended after Embezzle completed - no accesses from Mwanza")
       (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza")))
 
+(deftest mwanza-city-grid-multiple-breaches-correctness
+  ;; Test that mwanza acts correctly when we breach multiple times in a run
+  (do-game
+   (new-game {:corp {:hand ["Mwanza City Grid" "Shiro"]
+                     :deck ["Advanced Assembly Lines" "Biotic Labor" "Caduceus"
+                            "Death and Taxes" "Economic Warfare"]}
+              :runner {:hand ["Kongamato"]}})
+   (play-from-hand state :corp "Mwanza City Grid" "R&D")
+   (play-from-hand state :corp "Shiro" "R&D")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Kongamato")
+   (rez state :corp (get-content state :rd 0))
+   (let [shiro (get-ice state :rd 0)]
+     (rez state :corp shiro)
+     (run-on state "R&D")
+     (run-continue state)
+     (card-ability state :runner (get-resource state 0) 0)
+     (fire-subs state (refresh shiro))
+     (click-prompt state :corp "No")
+     ;;first access - we should only see 4 cards
+     (is (:breach @state) "Currently breaching")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (changes-val-macro
+      +8 (:credit (get-corp))
+      "Gained 6c from Mwanza City Grid"
+      (click-prompt state :runner "No action")
+      (is (not (:breach @state)) "Not currently breaching"))
+     ;; continue until access
+     (run-continue state :movement)
+     (run-continue state :success)
+     (is (:breach @state) "Currently breaching (for real)")
+     (click-prompt state :runner "Mwanza City Grid")
+     (click-prompt state :runner "No action")
+     ;; plus four cards from deck
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (changes-val-macro
+      +10 (:credit (get-corp))
+      "Five cards accessed, +10 credits"
+      (click-prompt state :runner "No action")
+      (is (not (:breach @state)) "Not currently breaching")))))
+
+(deftest mwanza-city-grid-salsette-slums
+  (do-game
+   (new-game {:corp {:hand ["Mwanza City Grid"]}
+              :runner {:hand ["Salsette Slums"] :credits 10}})
+   (play-from-hand state :corp "Mwanza City Grid" "HQ")
+   (rez state :corp (get-content state :hq 0))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Salsette Slums")
+   (run-on state "HQ")
+   (run-continue state)
+   (changes-val-macro
+    +2 (:credit (get-corp))
+    "Corp gained +2, even after mwanza was RFG'd"
+    (click-prompt state :runner "[Salsette Slums] Remove card from game"))))
+
 (deftest mwanza-city-grid-interaction-with-kitsune
     ;; Regression test for #3469
     ;; interaction with Kitsune
@@ -2684,7 +2745,7 @@
       (rez state :corp (refresh oberth))
       (click-card state :corp (get-scored state :corp 0))
       (advance state oak)
-      (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on it"))))
+      (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on itself"))))
 
 (deftest off-the-grid
   ;; Off the Grid run restriction - and interaction with RP
@@ -3750,6 +3811,54 @@
         (is (= 4 (hand-size :runner)) "Valley Grids effect persists through trash")
         (take-credits state :runner)
         (is (= 5 (hand-size :runner)) "Runner max hand size back to normal"))))
+
+(deftest vladisibirsk-city-grid
+  ;; Vladisibirsk Grid: can't target self, once per turn, moves counters, same server
+  (do-game
+   (new-game  {:corp {:deck ["Vladisibirsk City Grid" "NGO Front" "NGO Front" "Dedication Ceremony" "Warroid Tracker"]
+                      :credits 10}})
+   (core/gain state :corp :click 10)
+   (play-from-hand state :corp "Vladisibirsk City Grid", "New remote")
+   (play-from-hand state :corp "NGO Front", "Server 1")
+   (play-from-hand state :corp "NGO Front", "New remote")
+   (play-from-hand state :corp "Warroid Tracker", "Server 1")
+   (let [vlad (get-content state :remote1 0)
+         ngo1 (get-content state :remote1 1)
+         war (get-content state :remote1 2)
+         ngo2 (get-content state :remote2 0)]
+     (rez state :corp (refresh vlad))
+     (play-from-hand state :corp "Dedication Ceremony")
+     (click-card state :corp vlad)
+     (is (= 3 (get-counters (refresh vlad) :advancement)) "Vladisibirsk City Grid has 3 counters on it")
+     (advance state (refresh vlad) 1)
+     (is (= 4 (get-counters (refresh vlad) :advancement)) "Vladisibirsk City Grid has 4 counters on it")
+     (card-ability state :corp (refresh vlad) 0)
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt is active")
+     ;; check it cant be used on itself
+     (click-card state :corp "Vladisibirsk City Grid")
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt still active")
+     (is (= 4 (get-counters (refresh vlad) :advancement)) "Vladisibirsk City Grid still has 4 counters on it")
+     ;; check it can't be used on cards that cannot be advanced
+     (click-card state :corp "Warroid Tracker")
+     (is (not (no-prompt? state :corp)) "ability not used, prompt still active")
+     (is (= 4 (get-counters (refresh vlad) :advancement)) "Vladisibirsk City Grid still has 4 counters on it")
+     (is (= 0 (get-counters (refresh war) :advancement)) "Warroid Tracker has no counters on it")
+     ;; check it works on cards that can be advanced
+     (click-card state :corp ngo1)
+     (is (= 2 (get-counters (refresh vlad) :advancement)) "Vladisibirsk City Grid has spent 2 counters")
+     (is (= 2 (get-counters (refresh ngo1) :advancement)) "NGO Front has gained 2 counters")
+     (is (no-prompt? state :corp) "ability used, prompt gone?")
+     ;;check it only works once per turn
+     (card-ability state :corp (refresh vlad) 0)
+     (is (no-prompt? state :corp) "Vlad Grid prompt is not active")
+     (take-credits state :corp)
+     ;;check it only works on cards installed in the same server
+     (card-ability state :corp (refresh vlad) 0)
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt is active")
+     (click-card state :corp ngo2)
+     (is (= 2 (get-counters (refresh vlad) :advancement)) "Vladisibirsk City Grid has not spent counters")
+     (is (= 0 (get-counters (refresh ngo2) :advancement)) "NGO Front 2 has gained no counters")
+     (is (not (no-prompt? state :corp)) "Vlad Grid prompt is still active"))))
 
 (deftest warroid-tracker-trashing-warroid-directly-starts-trace
     ;; Trashing Warroid starts trace

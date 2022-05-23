@@ -187,18 +187,21 @@
            (let [n (rdom/dom-node this)]
              (set! (.-scrollTop n) (.-scrollHeight n)))))
 
+       :component-will-update
+       (fn [this]
+         (let [n (rdom/dom-node this)]
+           (reset! should-scroll {:update (or (:send-msg @should-scroll)
+                                              (scrolled-to-end? n 15))
+                                  :send-msg false})))
+
        :component-did-update
        (fn [this]
-         (println "log did update")
-         (let [n (rdom/dom-node this)]
-           (when (or (:send-msg @should-scroll)
-                     (scrolled-to-end? n 15))
-             (reset! should-scroll {:send-msg false})
+         (when (:update @should-scroll)
+           (let [n (rdom/dom-node this)]
              (set! (.-scrollTop n) (.-scrollHeight n)))))
 
        :reagent-render
        (fn []
-         (println "render")
          (into [:div.messages {:class [(when (:replay @game-state)
                                          "panel-bottom")]
                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)

@@ -10,10 +10,13 @@
    [jinteki.validator :as validator]
    [medley.core :refer [find-first random-uuid]]
    [monger.collection :as mc]
+   [time-literals.read-write :as read-write]
    [web.app-state :as app-state]
    [web.mongodb :as mongodb]
    [web.stats :as stats]
    [web.ws :as ws]))
+
+(read-write/print-time-literals-clj!)
 
 (defn create-new-lobby
   [{uid :uid
@@ -55,7 +58,8 @@
 (defn send-lobby-ting [lobby]
   (when lobby
     (doseq [[uid ev] (lobby-ting lobby)]
-      (ws/chsk-send! uid ev))))
+      (when uid
+        (ws/chsk-send! uid ev)))))
 
 (defn- filter-lobby-user
   "Only take keys that are useful in the lobby from a user map"
@@ -140,7 +144,7 @@
     (filter
       (fn [lobby]
         (let [player-usernames (->> (:players lobby)
-                                    (keep :username)
+                                    (map #(get-in % [:user :username]))
                                     (map str/lower-case)
                                     (set))
               user-blocked-players?
@@ -148,7 +152,7 @@
                 (seq (set/intersection user-block-list player-usernames))
                 false)
               players-blocked-user?
-              (-> (mapcat get-blocked-list (:players lobby))
+              (-> (mapcat get-blocked-list (map :user (:players lobby)))
                   (set)
                   (contains? (:username user)))]
           (not (or user-blocked-players? players-blocked-user?))))
@@ -180,12 +184,17 @@
 (defn broadcast-lobby-list
   "Sends the lobby list to all users or a given list of users.
   Filters the list per each users block list."
-  ([] (broadcast-lobby-list (app-state/get-users)))
+  ([]
+   (let [user-cache (:users @app-state/app-state)
+         uids (ws/connected-uids)
+         users (map #(get user-cache %) uids)]
+     (broadcast-lobby-list users)))
   ([users]
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
    (let [lobbies (app-state/get-lobbies)]
      (doseq [[uid ev] (prepare-lobby-list lobbies users)]
-       (ws/chsk-send! uid ev)))))
+       (when uid
+         (ws/chsk-send! uid ev))))))
 
 (defn prepare-lobby-state [lobby]
   (let [lobby-state (lobby-summary lobby true)]
@@ -196,7 +205,8 @@
 (defn send-lobby-state [lobby]
   (when lobby
     (doseq [[uid ev] (prepare-lobby-state lobby)]
-      (ws/chsk-send! uid ev))))
+      (when uid
+        (ws/chsk-send! uid ev)))))
 
 (defn register-lobby
   [lobbies lobby uid]
@@ -223,7 +233,8 @@
       (broadcast-lobby-list))))
 
 (defn clear-lobby-state [uid]
-  (ws/chsk-send! uid [:lobby/state]))
+  (when uid
+    (ws/chsk-send! uid [:lobby/state])))
 
 (defn send-lobby-list [uid]
   (when uid
@@ -288,8 +299,8 @@
      (stats/update-game-stats db lobby)
      (stats/push-stats-update db lobby))
    (swap! app-state/app-state update :lobbies dissoc gameid)
-   (doseq [player-uid (keep :uid players)]
-     (clear-lobby-state player-uid))
+   (doseq [uid (keep :uid (get-players-and-spectators lobby))]
+     (clear-lobby-state uid))
    (when (and (not skip-on-close) on-close)
      (on-close lobby))))
 
@@ -404,7 +415,7 @@
 (defn check-password [lobby user password]
   (or (empty? (:password lobby))
       (superuser? user)
-      (bcrypt/check password (:password lobby))))
+      (bcrypt/check (or password "") (:password lobby))))
 
 (defn allowed-in-lobby
   [user lobby]
@@ -501,7 +512,7 @@
   (let [first-player (first (:players lobby))]
     (cond
       (not= (:uid first-player) uid) lobby
-      (some? side) (update-in lobby [:players 0] change-side side)
+      (some? side) (update lobby :players (fn [x] (mapv #(change-side % side) x)))
       :else (update lobby :players #(mapv swap-side %)))))
 
 (defn handle-swap-sides [lobbies gameid uid side swap-message]
@@ -581,7 +592,8 @@
           (when started
             (stats/game-finished db lobby)
             (doseq [uid uids]
-              (ws/chsk-send! uid [:game/timeout gameid])))
+              (when uid
+                (ws/chsk-send! uid [:game/timeout gameid]))))
           (close-lobby! db lobby)
           (doseq [uid uids]
             (send-lobby-list uid)))))

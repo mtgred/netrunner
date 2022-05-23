@@ -31,7 +31,7 @@
 
 (defn base-routes []
   (ring/router
-    (mapv (fn [path] [(str "/" path) {:get pages/index-page}]) paths)))
+    (mapv (fn [path] [(str "/" path) {:get pages/index-page :middleware [wrap-anti-forgery]}]) paths)))
 
 (comment
   ((ring/ring-handler (base-routes)) {:request-method :get :uri "/"})
@@ -40,8 +40,9 @@
 (defn api-routes []
   (ring/router
     [["/chsk" {:get ws/handshake-handler
-               :post ws/post-handler}]
-     ["/data"
+               :post ws/post-handler
+               :middleware [::forgery]}]
+     ["/data" {:middleware [::forgery]}
       ["/cards"
        ["" {:get data/cards-handler}]
        ["/version" {:get data/cards-version-handler}]
@@ -59,28 +60,29 @@
       ["/api-keys" {:middleware [::auth]}
        ["" {:get api-keys/api-keys-handler
             :post api-keys/api-keys-create-handler}]
-       ["/:id" {:get api-keys/api-keys-delete-handler}]]]
-     ["/chat/config" {:get chat/config-handler}]
-     ["/messages/:channel" {:get chat/messages-handler}]
+       ["/:id" {:delete api-keys/api-keys-delete-handler}]]]
+     ["/chat/config" {:get chat/config-handler :middleware [::forgery]}]
+     ["/messages/:channel" {:get chat/messages-handler :middleware [::forgery]}]
      ["/reset/:token" {:get pages/reset-password-page
                        :post auth/reset-password-handler}]
-     ["/replay/:gameid" {:get stats/replay-handler}]
-     ["/bug-report/:bugid" {:get stats/replay-handler}]
-     ["/register" {:post auth/register-handler}]
-     ["/check-username/:username" {:get auth/check-username-handler}]
-     ["/check-email/:email" {:get auth/check-email-handler}]
-     ["/login" {:post auth/login-handler}]
-     ["/forgot" {:post auth/forgot-password-handler}]
-     ["/logout" {:middleware [::auth]
+     ["/replay/:gameid" {:get stats/replay-handler :middleware [::forgery]}]
+     ["/bug-report/:bugid" {:get stats/replay-handler :middleware [::forgery]}]
+     ["/register" {:post auth/register-handler :middleware [::forgery]}]
+     ["/check-username/:username" {:get auth/check-username-handler :middleware [::forgery]}]
+     ["/check-email/:email" {:get auth/check-email-handler :middleware [::forgery]}]
+     ["/login" {:post auth/login-handler :middleware [::forgery]}]
+     ["/forgot" {:post auth/forgot-password-handler :middleware [::forgery]}]
+     ["/logout" {:middleware [::auth ::forgery]
                  :post auth/logout-handler}]
-     ["/game" {:middleware [::cors
+     ["/game" {:middleware [::forgery
+                            ::cors
                             wrap-add-cache-headers]}
       ["/decklist" {:get game-api/decklist-handler}]
       ["/hand" {:get game-api/hand-handler}]
       ["/discard" {:get game-api/discard-handler}]
       ["/deck" {:get game-api/deck-handler}]
       ["/log" {:get game-api/log-handler}]]
-     ["/profile" {:middleware [::auth]}
+     ["/profile" {:middleware [::auth ::forgery]}
       ["" {:put auth/update-profile-handler}]
       ["/email" {:get auth/email-handler
                  :put auth/change-email-handler}]
@@ -96,20 +98,23 @@
         ["/delete/:gameid" {:delete stats/delete-annotations}]]
        ["/share/:gameid" {:get stats/share-replay}]
        ["/full/:gameid" {:get stats/fetch-replay}]]]
-     ["/tournament-auth/:username" {:middleware [::auth ::tournament-auth]
+     ["/tournament-auth/:username" {:middleware [::auth ::tournament-auth ::forgery]
                                     :get tournament/auth}]
-     ["/admin" {:middleware [::auth ::admin]}
+     ["/admin" {:middleware [::auth ::admin ::forgery]}
       ["/news"
        ["" {:post admin/news-create-handler}]
        ["/:id" {:delete admin/news-delete-handler}]]
       ["/version" {:get admin/version-handler
                    :put admin/version-update-handler}]
+      ["/banned" {:get admin/banned-message-handler
+                   :put admin/banned-message-update-handler}]
       ["/features" {:get admin/features-handler
                     :put admin/features-update-handler}]]]
     {:reitit.middleware/registry
      {::auth auth/wrap-authentication-required
       ::tournament-auth auth/wrap-tournament-auth-required
       ::admin auth/wrap-authorization-required
+      ::forgery wrap-anti-forgery
       ::cors [[wrap-cors
                :access-control-allow-origin [#".*"]
                :access-control-allow-methods [:get]
@@ -162,7 +167,8 @@
 (defn make-middleware [system]
   {:middleware [wrap-return-favicon
                 wrap-session
-                wrap-anti-forgery
+                ;; Removed to allow reset password flow to work
+                ;; wrap-anti-forgery
                 wrap-params
                 wrap-keyword-params
                 [wrap-json-body {:keywords? true}]

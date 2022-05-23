@@ -824,7 +824,7 @@
     (play-from-hand state :corp "Dedication Ceremony")
     (click-card state :corp "Underway Renovation")
     (let [under (get-content state :remote1 0)]
-      (is (= 3 (get-counters under :advancement)) "Underway Renovation has 3 advancement counters on it")
+      (is (= 3 (get-counters under :advancement)) "Underway Renovation has 3 advancement counters on itself")
       (score state :corp (refresh under))
       (is (refresh under) "Underway Renovation isn't scored because of Dedication Ceremony")
       (play-and-score state "Hostile Takeover")
@@ -1787,6 +1787,7 @@
         (take-credits state :runner)
         (play-from-hand state :corp "Hangeki")
         (click-card state :corp (get-content state :remote1 0))
+        (is (last-log-contains? state "choose a card in Server 1"))
         (click-prompt state :runner choice)
         (if (= "Yes" choice)
           (do (click-prompt state :runner "Steal")
@@ -1806,6 +1807,16 @@
       (click-card state :corp "IPO")
       (is (= 10 (:credit (get-corp))) "Now at 10 credits")
       (is (= 2 (count (:discard (get-corp)))))))
+
+(deftest hansei-review-no-cards
+  ;; Hansei Review - with an empty hand, should not get a trash prompt
+  (do-game
+      (new-game {:corp {:hand ["Hansei Review"]}})
+      (is (= 5 (:credit (get-corp))) "Starting with 5 credits")
+      (play-from-hand state :corp "Hansei Review")
+      (is (no-prompt? state :corp) "Corp should have no prompt with no cards in hand")
+      (is (= 10 (:credit (get-corp))) "Now at 10 credits")
+      (is (= 1 (count (:discard (get-corp)))))))
 
 (deftest hard-hitting-news
   ;; Hard-Hitting News
@@ -2414,6 +2425,8 @@
       (rez state :corp (refresh ronin))
       (is (not (rezzed? (refresh ronin))) "Ronin did not rez")
       (take-credits state :corp)
+      (rez state :corp (refresh ronin))
+      (is (not (rezzed? (refresh ronin))) "Ronin did not rez on the Runner's turn")
       (take-credits state :runner)
       (rez state :corp (refresh ronin))
       (is (rezzed? (refresh ronin)) "Ronin now rezzed")
@@ -2524,6 +2537,18 @@
     (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
+(deftest next-activation-command-lockdowns-restriction
+  ;; Can't play if there's an active lockdown
+  (do-game
+   (new-game {:corp {:hand ["NEXT Activation Command" "NEXT Activation Command"]}})
+   (is (= 0 (count (:play-area (get-corp)))) "Play area is empty")
+   (is (= 0 (count (:discard (get-corp)))) "Discard is empty")
+   (play-from-hand state :corp "NEXT Activation Command")
+   (is (= 1 (count (:play-area (get-corp)))) "NAC in play area")
+   (play-from-hand state :corp "NEXT Activation Command")
+   (is (= 1 (count (:play-area (get-corp)))) "ONLY one NAC in play area")
+   (is (= 0 (count (:discard (get-corp)))) "Discard is empty")))
 
 (deftest next-activation-command-get-trashed-at-start-of-next-corp-turn
     ;; Get trashed at start of next Corp turn
@@ -2888,7 +2913,7 @@
     (let [credits (:credit (get-corp))]
       (click-prompt state :corp "Server 1")
       (is (= credits (:credit (get-corp))) "Installing another ice in an iced server shouldn't cost credits")
-      (is (= 3 (get-counters (get-ice state :remote1 1) :advancement)) "Ice Wall should be installed with 3 counters on it"))))
+      (is (= 3 (get-counters (get-ice state :remote1 1) :advancement)) "Ice Wall should be installed with 3 counters on itself"))))
 
 (deftest product-recall
   ;; Crisium Grid

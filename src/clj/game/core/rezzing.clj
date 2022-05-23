@@ -13,7 +13,7 @@
     [game.core.moving :refer [trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.runs :refer [continue]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.toasts :refer [toast]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
@@ -70,7 +70,8 @@
                                        (:title card)
                                        (cond
                                          alternative-cost " by paying its alternative cost"
-                                         ignore-cost " at no cost"))))
+                                         ignore-cost " at no cost")))
+                      (implementation-msg state card))
                     (when (and (not no-warning) (:corp-phase-12 @state))
                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                                          Please rez prior to clicking Start Turn in the future." "warning"

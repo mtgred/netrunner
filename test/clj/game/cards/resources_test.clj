@@ -768,11 +768,14 @@
      (play-from-hand state :runner "Grimoire")
      (play-from-hand state :runner "Cookbook")
      (play-from-hand state :runner "Leech")
+     (click-prompt state :runner "Grimoire")
      (click-prompt state :runner "Yes")
      (is (= 2 (get-counters (get-program state 0) :virus)) "Leech has 2 counters from Grimoire and Cookbook")
      (card-ability state :runner (get-resource state 0) 0)
      (click-prompt state :runner "Always")
      (play-from-hand state :runner "Fermenter")
+     (click-prompt state :runner "Grimoire")
+     (click-prompt state :runner "Cookbook")
      (is (= 3 (get-counters (get-program state 1) :virus)) "Fermenter has 2 additional counters from Grimoire and Cookbook")))
 
 (deftest councilman-rez-prevention
@@ -1196,7 +1199,7 @@
       (play-from-hand state :runner "Dadiana Chacon")
       (play-from-hand state :runner "Corroder")
       (is (last-n-log-contains? state 3 "Runner spends \\[Click\\] and pays 0 \\[Credits\\] to install Dadiana Chacon."))
-      (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to trashes Dadiana Chacon and suffers 3 meat damage."))
+      (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to trash itself and suffers 3 meat damage."))
       (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder."))))
 
@@ -1449,7 +1452,7 @@
       (is (= "Corroder" (:title (nth (:deck (get-runner)) 1))))
       (take-credits state :corp)
       (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
-      (is (last-log-contains? state "Runner adds 1 power counter on District 99.") "D99 checks both cards")))
+      (is (last-log-contains? state "uses District 99 to place 1 power counter on itself") "D99 checks both cards")))
 
 (deftest district-99-happy-path
     ;; Happy Path
@@ -3070,10 +3073,10 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on it")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on itself")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")))
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")))
 
 (deftest kasi-string-no-counter-when-stealing-agenda
     ;; No counter when stealing agenda
@@ -3085,7 +3088,7 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
-      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on it")))
+      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on itself")))
 
 (deftest kasi-string-triggers-only-on-remote-server
     ;; Triggers only on remote server
@@ -3098,17 +3101,17 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
       (is (= 1 (get-counters (get-resource state 0) :power))
-          "Kasi String should have 0 power counter on it - no trigger on HQ")
+          "Kasi String should have 0 power counter on itself - no trigger on HQ")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on it")
+      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
@@ -3194,6 +3197,21 @@
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
+(deftest lewi-guilherme-lovegood-interaction-#3345
+  ;; hand size does not persist while blanked by Dr. Lovegood
+  (do-game
+   (new-game {:runner {:hand ["Lewi Guilherme" "Dr. Lovegood"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Lewi Guilherme")
+   (is (= 4 (hand-size :corp)) "-1 hand size from lewi")
+   (play-from-hand state :runner "Dr. Lovegood")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (click-prompt state :runner "Dr. Lovegood")
+   (click-card state :runner "Lewi Guilherme")
+   (is (= 5 (hand-size :corp)) "-1 hand size from lewi")
+   (is (no-prompt? state :runner) "No more prompt to activate")))
+
 (deftest liberated-account
   ;; Liberated Account
   (do-game
@@ -3208,6 +3226,158 @@
       (dotimes [_ 3]
         (card-ability state :runner (get-resource state 0) 0))
       (is (= 1 (count (:discard (get-runner)))) "Liberated Account trashed")))
+
+(deftest light-the-fire-happy-path
+  ;; Light the Fire!
+  (do-game
+   (new-game {:corp {:hand ["Hokusai Grid"]}
+              :runner {:hand ["Light the Fire!", "Sure Gamble", "Sure Gamble"]}})
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (:brain-damage (get-runner))))
+   (rez state :corp (refresh (get-content state :remote1 0)))   
+   (changes-val-macro 0 (:credit (get-runner))
+                      "Did not spend credits to trash"
+                      (run-continue state)
+                      (is (= 1 (count (:discard (get-corp)))) "Hokusai Grid trashed from Server 1"))
+   (is (nil? (get-in @state [:corp :servers :remote1 :content])) "Server 1 no longer exists")
+   (is (= 1 (count (:hand (get-runner)))) "Did not take damage from Hokusai Grid")))
+
+(deftest light-the-fire-effect-goes-away
+  ;; Light the Fire - effect goes away after end of run
+  (do-game
+   (new-game {:corp {:hand ["Hokusai Grid"]}
+              :runner {:hand ["Light the Fire!", "Sure Gamble", "Sure Gamble"]}})
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (:brain-damage (get-runner))))
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (run-jack-out state)
+   (is (not (nil? (get-in @state [:corp :servers :remote1 :content]))) "Server 1 still exists")
+   (run-empty-server state "Server 1")
+   (click-prompt state :runner "No action")
+   (is (= 0 (count (:hand (get-runner)))) "Lost card from Grip to Hokusai Grid")))
+   
+(deftest light-the-fire-card-installed
+  ;; Light the fire - effect applies if the corporation installs a card mid run
+  (do-game
+   (new-game {:corp {:hand ["Crick"] :discard ["Hokusai Grid"]}
+              :runner {:hand ["Sure Gamble" "Sure Gamble" "Light the Fire!"]}})
+   (play-from-hand state :corp "Crick" "New remote")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (let [crick (get-ice state :remote1 0)]
+     (rez state :corp crick)
+     (run-continue state)     
+     (card-subroutine state :corp crick 0)
+     (click-card state :corp "Hokusai Grid")
+     (click-prompt state :corp "Server 1"))
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (run-continue state :movement)
+   (run-continue-until state :success)
+   (is (= 1 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
+(deftest light-the-fire-cards-swapped
+  ;; Light the Fire - effect applies to cards swapped into,
+  ;; and stops applying to cards swapped out of, the server
+  (do-game
+   (new-game {:corp {:hand ["Metamorph", "NGO Front", "Hokusai Grid"]
+                     :credit 10}
+              :runner {:hand ["Light the Fire!" "Sure Gamble" "Sure Gamble"]}})
+   (core/gain-clicks state :corp 5)
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (play-from-hand state :corp "Metamorph" "Server 1")
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   ;(let [ht (get-content state :remote2 0)]
+   (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")   
+   (rez state :corp (refresh (get-content state :remote1 0)))
+   (rez state :corp (refresh (get-content state :remote2 0)))
+   (let [meta (get-ice state :remote1 0)]
+     (rez state :corp meta)   
+     (run-continue state)
+     (fire-subs state (get-ice state :remote1 0))
+     (click-prompt state :corp "Swap two non-ice")
+     (click-card state :corp "NGO Front")
+     (click-card state :corp "Hokusai Grid")
+     ;; hokusai is now in server 1, ngo in server 2
+     (changes-val-macro 5 (:credit (get-corp))
+                        "NGO Front reactivated"
+                        (card-ability state :corp (refresh (get-content state :remote2 0)) 0)))     
+   (run-continue state :movement)
+   (run-continue-until state :success)
+   (is (= 2 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
+(deftest light-the-fire-run-redirected
+  ;; Light the Fire - effect applies to cards swapped into,
+  ;; and stops applying to cards swapped out of, the server
+  (do-game
+   (new-game {:corp {:hand ["Sand Storm", "NGO Front", "Hokusai Grid"]
+                     :credit 10}
+              :runner {:hand ["Light the Fire!" "Sure Gamble" "Sure Gamble"]}})
+   (core/gain-clicks state :corp 5)
+   (play-from-hand state :corp "NGO Front" "New remote")
+   (play-from-hand state :corp "Sand Storm" "Server 1")
+   (play-from-hand state :corp "Hokusai Grid" "New remote")
+   ;(let [ht (get-content state :remote2 0)]
+   (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Light the Fire!")
+   (card-ability state :runner (get-resource state 0) 0)
+   (click-prompt state :runner "Server 1")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (let [sand (get-ice state :remote1 0)
+         ngo (get-content state :remote1 0)
+         hoku (get-content state :remote2 0)]
+     (rez state :corp (refresh ngo))
+     (rez state :corp (refresh hoku))
+     (rez state :corp sand)        
+     (run-continue state)
+     (fire-subs state (refresh sand))
+     (click-prompt state :corp "Server 2")
+     (changes-val-macro 5 (:credit (get-corp))
+                        "NGO Front reactivated"
+                        (card-ability state :corp (refresh ngo) 0)))
+   (is (= :remote2 (first (get-in @state [:run :server]))) "Is running on server 2")
+   (run-continue-until state :success)
+   (is (= 3 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 2")
+   (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
+(deftest light-the-fire-reduced-service-issue-#6340
+  ;; github issue #6340
+  (do-game
+    ;; can afford to pay 8 - pay 8 before the run initiates
+    (new-game {:corp {:hand ["Reduced Service"]} :credits 10
+               :runner {:hand ["Light the Fire!" "Sure Gamble"]
+                        :credits 12}})
+    (play-from-hand state :corp "Reduced Service" "New remote")
+    (let [rs (get-content state :remote1 0)]
+      (rez state :corp rs)
+      (click-prompt state :corp "4")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Light the Fire!")
+      (card-ability state :runner (get-resource state 0) 0)
+      (changes-val-macro
+       -8 (:credit (get-runner))
+       "Spent 8 credits to make a run on the server"
+       (click-prompt state :runner "Server 1")))))
 
 (deftest logic-bomb
   ;; Logic Bomb
@@ -4438,7 +4608,11 @@
       (click-prompt state :runner "Archives")
       (run-continue state)
       (is (= 9 (:credit (get-runner))) "Runner has 9 credits")
-      (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team has 3 credits remaining")))
+      (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team has 3 credits remaining")
+      (core/gain state :runner :click 1)
+      (run-empty-server state "Archives")
+      (is (= 9 (:credit (get-runner))) "Runner still has 9 credits")
+      (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team still has 3 credits remaining")))
 
 (deftest rolodex
   ;; Rolodex - Full test
@@ -4571,6 +4745,28 @@
           "Second Salsette Slums can be used")
       (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (= 2 (count (:rfg (get-corp)))) "Two cards should be RFG now"))))
+
+(deftest same-old-thing
+  ;; Same Old Thing
+  (do-game
+      (new-game {:runner {:hand [(qty "Same Old Thing" 2)]
+                          :discard ["Lucky Find" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Same Old Thing")
+      (changes-val-macro
+          4 (:credit (get-runner))
+          "Sure Gamble is played from the Heap"
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-card state :runner "Sure Gamble"))
+      (is (= 1 (:click (get-runner))) "One click left")
+      (play-from-hand state :runner "Same Old Thing")
+      (core/gain state :runner :click 3)
+      (changes-val-macro
+          6 (:credit (get-runner))
+          "Lucky Find is played from the Heap"
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-card state :runner "Lucky Find"))
+      (is (zero? (:click (get-runner))) "No clicks left")))
 
 (deftest scrubber
   ;; Scrubber
@@ -5547,6 +5743,16 @@
    (click-prompt state :runner "Diversion of Funds")
    (is (no-prompt? state :runner) "No prompt from The Class Act")
    (is (empty? (find-card "Sure Gamble" (:hand (:runner @state)))) "Sure Gamble has not been drawn")))
+
+(deftest the-class-act-no-trigger-when-drawing-one-card
+  ;; no trigger when drawing one card
+  (do-game
+   (new-game {:runner {:deck ["Sure Gamble"]
+                       :hand ["The Class Act"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "The Class Act")
+   (click-draw state :runner)
+   (is (no-prompt? state :runner) "No prompt from The Class Act")))
 
 (deftest the-class-act-no-lingering-bonus-draw-effect-if-no-cards-in-deck
   ;; The Class Act - Issue #6132 - No lingering bonus draw effect if no cards in deck

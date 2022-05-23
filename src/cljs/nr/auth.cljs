@@ -26,6 +26,7 @@
             (swap! s assoc :flash-message "Reset password sent")
             (case (:status response)
               401 (swap! s assoc :flash-message "Invalid login or password")
+              403 (swap! s assoc :flash-message (or (:error (:json response)) "Account banned"))
               421 (swap! s assoc :flash-message "No account with that email address exists")
               422 (swap! s assoc :flash-message "Username taken")
               423 (swap! s assoc :flash-message "Username too long")
@@ -49,7 +50,9 @@
        [:a.block-link {:href "/admin"} (str "[" (tr [:menu/admin "Admin"]) "]")])
      (when (:ismoderator user)
        [:a.block-link (str "[" (tr [:menu/moderator "Moderator"]) "]")])
-     [:a.block-link {:href "/admin"} (tr [:menu/settings "Settings"])]
+     (when (:special user)
+       [:a.block-link (str "[" (tr [:menu/donor "Donor"]) "]")])
+     [:a.block-link {:href "/account"} (tr [:menu/settings "Settings"])]
      [:a.block-link {:on-click #(handle-logout %)} (tr [:menu/logout "Jack out"])]]]])
 
 (defn unlogged-menu []

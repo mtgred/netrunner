@@ -13,7 +13,8 @@
    [web.app-state :as app-state]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
    [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
-   [web.utils :refer [response]])
+   [web.utils :refer [response]]
+   [web.versions :refer [banned-msg]])
   (:import
    java.security.SecureRandom))
 
@@ -101,16 +102,17 @@
   [{db :system/db
     auth :system/auth
     {:keys [username password]} :params}]
-  (let [user (find-non-banned-user db {:username username})]
-    (if (and user
-             (password/check password (:password user)))
+  (let [user (mc/find-one-as-map db "users" {:username username})]
+    (cond
+      (and user (:banned user)) (response 403 {:error (or @banned-msg "Account Locked")})
+      (and user (password/check password (:password user)))
       (do (mc/update db "users"
                      {:username username}
                      {"$set" {:last-connection (inst/now)}})
           (assoc (response 200 {:message "ok"})
                  :cookies {"session" (merge {:value (create-token auth user)}
                                             (:cookie auth))}))
-      (response 401 {:error "Invalid login or password"}))))
+      :else (response 401 {:error "Invalid login or password"}))))
 
 (defn logout-handler [_]
   (assoc (response 200 {:message "ok"})
@@ -119,16 +121,16 @@
 
 (defn check-username-handler
   [{db :system/db
-    {:keys [username]} :params}]
+    {:keys [username]} :path-params}]
   (if (find-one-as-map-case-insensitive db "users" {:username username})
     (response 422 {:message "Username taken"})
     (response 200 {:message "OK"})))
 
 (defn check-email-handler
   [{db :system/db
-    {:keys [email]} :params}]
+    {:keys [email]} :path-params}]
   (if (find-one-as-map-case-insensitive db "users" {:email email})
-    (response 422 {:message "Username taken"})
+    (response 422 {:message "Email taken"})
     (response 200 {:message "OK"})))
 
 (defn email-handler
@@ -225,11 +227,12 @@
 (defn reset-password-handler
   [{db :system/db
     email-settings :system/email
-    {:keys [password confirm token]} :params}]
+    {:keys [password confirm]} :params
+    {:keys [token]} :path-params}]
   (if-let [{:keys [username email]}
            (find-non-banned-user db {:resetPasswordToken   token
                                      :resetPasswordExpires {"$gt" (inst/now)}})]
-    (if (= password confirm)
+    (if (and password (= password confirm))
       (let [hash-pw (password/encrypt password)]
         (mc/update db "users"
                    {:username username}

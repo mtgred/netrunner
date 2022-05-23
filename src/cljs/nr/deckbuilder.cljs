@@ -1,7 +1,7 @@
 (ns nr.deckbuilder
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
-   [cljs.core.async :refer [<! >! chan put! timeout] :as async]
+   [cljs.core.async :refer [<! >! chan put! timeout close! go-loop] :as async]
    [clojure.string :refer [join lower-case split split-lines] :as s]
    [jinteki.cards :refer [all-cards] :as cards]
    [jinteki.utils :refer [INFINITY str->int] :as utils]
@@ -13,7 +13,7 @@
    [nr.deck-status :refer [deck-status-span]]
    [nr.translations :refer [tr tr-faction tr-format tr-side tr-type]]
    [nr.utils :refer [alliance-dots banned-span cond-button
-                     deck-points-card-span dots-html format->slug format-zoned-date-time
+                     deck-points-card-span dots-html format->slug format-date-time
                      influence-dot influence-dots mdy-formatter non-game-toast num->percent
                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top]]
    [nr.ws :as ws]
@@ -528,7 +528,7 @@
 
 (defn deck-date [deck]
   (when-let [date (:date deck)]
-    (format-zoned-date-time mdy-formatter date)))
+    (format-date-time mdy-formatter date)))
 
 (defn deck-stats-line [deck]
   (r/with-let [deckstats (r/cursor app-state [:options :deckstats])]
@@ -804,18 +804,19 @@
               (not= "none" (get-in @app-state [:options :deckstats])))
      [:button {:on-click #(clear-deck-stats s)}
       (tr [:deck-builder.clear-stats "Clear Stats"])])
-   (let [disabled (or (:editing-game @app-state false)
-                      (:gameid @app-state false)
-                      (and (not= (:format deck) "casual")
-                           (not (validator/legal-deck? deck))))]
-     [:button.float-right {:href "/play"
-                           :on-click #(do
-                                        (swap! app-state assoc :create-game-deck (:deck @s))
-                                        ; (.setToken history "/play")
-                                        )
-                           :disabled disabled
-                           :class (when disabled "disabled")}
-      (tr [:deck-builder.create-game "Create Game"])])])
+   ;; (let [disabled (or (:editing-game @app-state false)
+   ;;                    (:gameid @app-state false)
+   ;;                    (and (not= (:format deck) "casual")
+   ;;                         (not (validator/legal-deck? deck))))]
+   ;;   [:button.float-right {:href "/play"
+   ;;                         :on-click #(do
+   ;;                                      (swap! app-state assoc :create-game-deck (:deck @s))
+   ;;                                      ; (.setToken history "/play")
+   ;;                                      )
+   ;;                         :disabled disabled
+   ;;                         :class (when disabled "disabled")}
+   ;;    (tr [:deck-builder.create-game "Create Game"])])
+   ])
 
 (defn selected-panel
   [s]
@@ -1009,34 +1010,46 @@
 (defn deck-builder
   "Make the deckbuilder view"
   []
-  (r/with-let [s (r/atom {:edit false
-                          :old-deck nil
-                          :deck nil
-                          :side-filter all-sides-filter
-                          :faction-filter all-factions-filter
-                          :format-filter all-formats-filter})
-               decks (r/cursor app-state [:decks])
-               user (r/cursor app-state [:user])
-               decks-loaded (r/cursor app-state [:decks-loaded])
-               scroll-top (atom 0)]
+  (let [s (r/atom {:edit false
+                   :old-deck nil
+                   :deck nil
+                   :side-filter all-sides-filter
+                   :faction-filter all-factions-filter
+                   :format-filter all-formats-filter})
+        decks (r/cursor app-state [:decks])
+        user (r/cursor app-state [:user])
+        decks-loaded (r/cursor app-state [:decks-loaded])
+        scroll-top (atom 0)]
+    (r/create-class
+      {:display-name "deck-builder"
+       :component-did-mount
+       (fn [_comp]
+         (go-loop [card (<! zoom-channel)]
+                  (when-not (= :exit card)
+                    (swap! s assoc :zoom card)
+                    (recur (<! zoom-channel))))
 
-    (go (while true
-          (let [card (<! zoom-channel)]
-            (swap! s assoc :zoom card))))
-    (go (while true
-          (let [deck (<! select-channel)]
-            (end-delete s)
-            (set-deck-on-state s deck))))
+         (go-loop [deck (<! select-channel)]
+                  (when-not (= :exit deck)
+                    (end-delete s)
+                    (set-deck-on-state s deck)
+                    (recur (<! select-channel)))))
 
-    (fn []
-      [:div.container
-       [:div.deckbuilder-bg]
-       [:div.deckbuilder.blue-shade.panel
-        [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
-                        :class (class-for-state s)}
-         [list-panel s user decks decks-loaded scroll-top]
-         [selected-panel s]
-         [edit-panel s]]]])))
+       :component-will-unmount
+       (fn [_comp]
+         (put! zoom-channel :exit)
+         (put! select-channel :exit))
+
+       :reagent-render
+       (fn []
+         [:div.container
+          [:div.deckbuilder-bg]
+          [:div.deckbuilder.blue-shade.panel
+           [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
+                           :class (class-for-state s)}
+            [list-panel s user decks decks-loaded scroll-top]
+            [selected-panel s]
+            [edit-panel s]]]])})))
 
 (go (let [cards (<! cards-channel)
           json (:json (<! (GET (str "/data/decks"))))
