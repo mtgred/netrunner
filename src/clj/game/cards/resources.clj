@@ -1633,7 +1633,7 @@
                                        (when (and (some #{:content} (:zone second-card))
                                                   (some #{server} (:zone second-card)))
                                          (disable-card state :corp second-card))
-                                       ;; disable cards that have left the server
+                                       ;; enable cards that have left the server
                                        (when (and (some #{:content} (:zone first-card))
                                                   (not (some #{server} (:zone first-card)))
                                                   (some #{server} (:zone second-card)))
@@ -1643,12 +1643,12 @@
                                                   (some #{server} (:zone first-card)))
                                          (enable-card state :corp second-card))))}
           run-end-trigger {:event :run-ends
-                           :duration :end-of-run 
+                           :duration :end-of-run
                            :effect (effect (enable-server (first (:server target))))}]
       {:abilities [{:label "Run a remote server."
                     :cost [:trash-can :click 1 :brain 1]
                     :prompt "Choose a remote server to run with Light the Fire"
-                    :choices (req (filter #(can-run-server? state %) remotes))
+                    :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
                     :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
                     :makes-run true
                     :async true
@@ -1658,8 +1658,8 @@
                                                            ;post-redirect-trigger
                                                            corp-install-trigger
                                                            swap-trigger])
-                                    (disable-server (second (server->zone state target)))
-                                    (make-run eid target card))}]})))
+                                    (make-run eid target card)
+                                    (disable-server (second (server->zone state target))))}]})))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
