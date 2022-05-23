@@ -41,6 +41,9 @@
     :has-args :required
     :usage "/deck #n"
     :help "Put card number n from your hand on top of your deck"}
+   {:name "/derez"
+    :usage "/derez"
+    :help "derez a rezzed card (corp only)"}
    {:name "/discard"
     :has-args :required
     :usage "/discard #n"
@@ -62,6 +65,9 @@
     :has-args :required
     :usage "/handsize n"
     :help "Set your handsize to n"}
+   {:name "/host"
+    :usage "/host"
+    :help "Manually host a card on another card"}
    {:name "/install-ice"
     :usage "/install-ice"
     :help "Install a piece of ice at any position in a server (Corp only)"}
@@ -92,6 +98,9 @@
    {:name "/psi"
     :usage "/psi"
     :help "Start a Psi game (Corp only)"}
+   {:name "/reload-id"
+    :usage "/reload-id"
+    :help "Reloads your ID (this can sometimes fix gamestates)"}
    {:name "/replace-id"
     :has-args :required
     :usage "/replace-id n"
@@ -102,6 +111,9 @@
    {:name "/rez-all"
     :usage "/rez-all"
     :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
+   {:name "/rez-free"
+    :usage "/rez-free"
+    :help "Choose a card to rez, ignoring all costs and on-rez abilities (Corp only)"}
    {:name "/rfg"
     :usage "/rfg"
     :help "Choose a card to remove from the game"}
@@ -112,6 +124,9 @@
    {:name "/save-replay"
     :usage "/save-replay"
     :help "Save a replay of the game"}
+   {:name "/show-hand"
+    :usage "/show-hand"
+    :help "Shows your hand in the chat log (does not proc reveal triggers)"}
    {:name "/summon"
     :has-args :required
     :usage "/summon n"
