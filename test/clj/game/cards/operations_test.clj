@@ -2538,6 +2538,18 @@
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
+(deftest next-activation-command-lockdowns-restriction
+  ;; Can't play if there's an active lockdown
+  (do-game
+   (new-game {:corp {:hand ["NEXT Activation Command" "NEXT Activation Command"]}})
+   (is (= 0 (count (:play-area (get-corp)))) "Play area is empty")
+   (is (= 0 (count (:discard (get-corp)))) "Discard is empty")
+   (play-from-hand state :corp "NEXT Activation Command")
+   (is (= 1 (count (:play-area (get-corp)))) "NAC in play area")
+   (play-from-hand state :corp "NEXT Activation Command")
+   (is (= 1 (count (:play-area (get-corp)))) "ONLY one NAC in play area")
+   (is (= 0 (count (:discard (get-corp)))) "Discard is empty")))
+
 (deftest next-activation-command-get-trashed-at-start-of-next-corp-turn
     ;; Get trashed at start of next Corp turn
     (do-game
