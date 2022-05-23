@@ -12,7 +12,7 @@
    [ring.util.response :refer [redirect]]
    [web.app-state :as app-state]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
-   [web.user :refer [active-user? create-user user-keys]]
+   [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
    [web.utils :refer [response]]
    [web.versions :refer [banned-msg]])
   (:import
@@ -68,8 +68,11 @@
   [{db :system/db
     {:keys [username password confirm-password email]} :params}]
   (cond
-    (< 20 (count username))
+    (within-char-limit-username? username)
     (response 401 {:message "Usernames are limited to 20 characters"})
+
+    (= (valid-username? username) false)
+    (response 401 {:message "Username contain invalid characters."})
 
     (not= password confirm-password)
     (response 401 {:message "Passwords must match"})
@@ -205,14 +208,14 @@
     email-settings :system/email
     {:keys [email]} :params
     headers         :headers}]
-  (if (find-non-banned-user db {:email email})
+  (if-let [user (find-non-banned-user db {:email email})]
     (let [code (set-password-reset-code! db email)
           msg (mail/send-message
                 email-settings
                 {:from    "support@jinteki.net"
                  :to      email
                  :subject "Jinteki Password Reset"
-                 :body    (str "You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n"
+                 :body    (str "You are receiving this because you (or someone else) have requested the reset of the password for your account " (user :username) ".\n\n"
                                "Please click on the following link, or paste this into your browser to complete the process:\n\n"
                                "http://" (headers "host") "/reset/" code "\n\n"
                                "If you did not request this, please ignore this email and your password will remain unchanged.\n")})]
