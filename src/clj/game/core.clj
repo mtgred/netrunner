@@ -718,6 +718,7 @@
    play-sfx
    say
    system-msg
+   implementation-msg
    system-say])
 
 (import-vars
