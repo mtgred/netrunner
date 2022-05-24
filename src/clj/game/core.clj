@@ -197,6 +197,7 @@
    in-play-area?
    in-rd-root?
    in-root?
+   in-set-aside?
    in-scored?
    in-server?
    installed?
@@ -747,6 +748,8 @@
   [game.core.set-aside
    set-aside
    set-aside-for-me
+   add-to-set-aside
+   swap-set-aside-cards
    get-set-aside])
 
 (import-vars
