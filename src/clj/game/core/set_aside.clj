@@ -14,8 +14,9 @@
   ([state side eid cards corp-vis runner-vis]
    (swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
    (doseq [c cards]
-     (move state side (assoc c :set-aside-visibility
-                             {:corp-can-see corp-vis :runner-can-see runner-vis}) :set-aside))))
+     (move state side (assoc c
+                             :set-aside-visibility {:corp-can-see corp-vis :runner-can-see runner-vis}
+                             :set-aside-eid eid) :set-aside))))
 
 (defn set-aside-for-me
   "sets aside cards visible only to the player setting them aside"
