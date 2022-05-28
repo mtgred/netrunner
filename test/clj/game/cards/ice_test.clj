@@ -1773,6 +1773,49 @@
       (card-subroutine state :corp envl 1)
       (is (not (:run @state)) "Run ended"))))
 
+(deftest envelopment
+  ;; Envelopment
+  (do-game
+   (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+   (play-from-hand state :corp "Envelopment" "HQ")
+   (let [env (get-ice state :hq 0)]
+     (letfn [(subs-test [env n]
+               ;; n power counters, n+1 subs, advance game state by a turn
+               (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
+               (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
+                   "one more sub than power counters")
+               (take-credits state :corp)
+               (take-credits state :runner))]
+       (rez state :corp env)
+       ;; starts with 4 counters
+       (subs-test env 4)
+       (subs-test env 3)
+       (subs-test env 2)
+       (subs-test env 1)
+       (subs-test env 0)
+       (take-credits state :corp)
+       (run-on state :hq)
+       (run-continue state)
+       (fire-subs state (refresh env))
+       (is (= 1 (count (:discard (get-corp)))) "Envelopment was trashed")))))
+
+(deftest envelopment-etr-does-not-trash
+  (do-game
+   (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+   (play-from-hand state :corp "Envelopment" "HQ")
+   (let [env (get-ice state :hq 0)
+         n 3]
+     (rez state :corp env)
+     (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
+     (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
+         "one more sub than power counters")
+     (take-credits state :corp)
+     (run-on state :hq)
+     (run-continue state)
+     (fire-subs state (refresh env)))
+   (is (empty? (:discard (get-corp))))
+   (is (not (:run @state)) "Run ended")))
+
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
@@ -3834,6 +3877,7 @@
       (run-continue state :movement)
       (run-jack-out state)
       (is (= 1 (count (:subroutines (refresh iw)))) "Ice Wall's subroutines reset after the run ends"))))
+
 (deftest maskirovka
   (do-game
    (new-game {:corp {:hand ["Maskirovka"]}})
@@ -3848,49 +3892,6 @@
       "gained 2c from Maskirovka"
       (fire-subs state (refresh money))
       (is (not (:run @state)) "Run ended")))))
-
-(deftest stavka
-  ;; Stavka
-  (do-game
-   (new-game {:corp {:hand ["Stavka"] :credits 10}})
-   (play-from-hand state :corp "Stavka" "HQ")
-   (let [sta (get-ice state :hq 0)]
-     (letfn [(subs-test [sta n]
-               ;; n power counters, n+1 subs, advance game state by a turn
-               (is (= n (get-counters (refresh sta) :power)) (str "Stavka has "n" power counters"))
-               (is (= (inc (get-counters (refresh sta) :power)) (count (:subroutines (refresh sta))))
-                   "one more sub than power counters")
-               (take-credits state :corp)
-               (take-credits state :runner))]
-       (rez state :corp sta)
-       ;; starts with 4 counters
-       (subs-test sta 4)
-       (subs-test sta 3)
-       (subs-test sta 2)
-       (subs-test sta 1)
-       (subs-test sta 0)
-       (take-credits state :corp)
-       (run-on state :hq)
-       (run-continue state)
-       (fire-subs state (refresh sta))
-       (is (= 1 (count (:discard (get-corp)))) "Maskirovka was trashed")))))
-
-(deftest stavka-etr-does-not-trash
-  (do-game
-   (new-game {:corp {:hand ["Stavka"] :credits 10}})
-   (play-from-hand state :corp "Stavka" "HQ")
-   (let [sta (get-ice state :hq 0)
-         n 3]
-     (rez state :corp sta)
-     (is (= n (get-counters (refresh sta) :power)) (str "Stavka has "n" power counters"))
-     (is (= (inc (get-counters (refresh sta) :power)) (count (:subroutines (refresh sta))))
-         "one more sub than power counters")
-     (take-credits state :corp)
-     (run-on state :hq)
-     (run-continue state)
-     (fire-subs state (refresh sta)))
-   (is (empty? (:discard (get-corp))))
-   (is (not (:run @state)) "Run ended")))
 
 (deftest masvingo
   ;; Masvingo
