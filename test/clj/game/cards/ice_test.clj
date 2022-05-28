@@ -3872,7 +3872,7 @@
        (take-credits state :corp)
        (run-on state :hq)
        (run-continue state)
-       (fire-subs state (refresh ol))
+       (fire-subs state (refresh sta))
        (is (= 1 (count (:discard (get-corp)))) "Maskirovka was trashed")))))
 
 (deftest stavka-etr-does-not-trash
@@ -3881,7 +3881,7 @@
    (play-from-hand state :corp "Stavka" "HQ")
    (let [sta (get-ice state :hq 0)
          n 3]
-     (rez state :corp sat)
+     (rez state :corp sta)
      (is (= n (get-counters (refresh sta) :power)) (str "Stavka has "n" power counters"))
      (is (= (inc (get-counters (refresh sta) :power)) (count (:subroutines (refresh sta))))
          "one more sub than power counters")

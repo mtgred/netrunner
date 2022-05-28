@@ -677,6 +677,7 @@
    {:effect (req (if (not-empty (all-installed state :corp))
                    (do
                      (system-msg state side "uses Extract to gain 6 [Credit]")
+                     (gain-credits state side eid 6)
                      (continue-ability
                       state side
                       {:prompt "Choose a card to trash"
