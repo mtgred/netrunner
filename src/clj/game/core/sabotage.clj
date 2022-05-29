@@ -20,11 +20,11 @@
                                  " up to " n " " (pluralize "card" n)
                                  " to trash from HQ. Remainder will be trashed from top of R&D.")))
         trash-req (req
-                    (let [selected-hq (count targets)
+                    (let [targets (if (nil? target) [] targets) ; catch cancel-effect that gives [nil] as targets
+                          selected-hq (count targets)
                           selected-rd (min (count (:deck corp))
                                            (- n selected-hq))
-                          ; to-trash (concat targets (take selected-rd (:deck corp)))]
-                          to-trash targets]
+                          to-trash (concat targets (take selected-rd (:deck corp)))]
                       (system-msg state side
                                   (str
                                     "trashes"
@@ -40,11 +40,12 @@
                       {:waiting-prompt "Corp to choose an option"
                        :player :corp
                        :prompt choosing-prompt
-                       :choices {;:min forced-hq
+                       :choices {:min forced-hq
                                  :max n
                                  :card #(and (corp? %)
                                              (in-hand? %))}
                        :async true
+                       :cancel-effect trash-req
                        :effect trash-req})
         check-forcing-ab {:async true
                           :effect (req
@@ -52,11 +53,12 @@
                                           cards-hq (count (:hand corp))
                                           forced-hq (- n cards-rd)]
                                       (if (> forced-hq cards-hq)
-                                        (do (trash-req state :corp eid card (:hand corp))
-                                            (effect-completed state side eid))
-                                        (resolve-ability state side eid
-                                                         (choosing-ab forced-hq)
-                                                         card nil))))}]
+                                        (wait-for (trash-req state :corp card (:hand corp))
+                                                  (effect-completed state side eid))
+                                        (wait-for (resolve-ability state side
+                                                                   (choosing-ab forced-hq)
+                                                                   card nil)
+                                                  (effect-completed state side eid)))))}]
     {:req (req (> n 0))
      :msg (msg "sabotage " n)
      :async true
