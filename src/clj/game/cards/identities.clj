@@ -429,6 +429,23 @@
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
 
+(defcard "Esa Afontov: Eco-Insurrectionist"
+  (letfn
+    [(check-brain [targets]
+       (let [context (first targets)]
+         (and (pos? (:amount context))
+              (= :brain (:damage-type context)))))]
+    {:events [{:event :damage
+               :req (req (and (check-brain targets)
+                              (first-event? state :runner :damage check-brain)))
+               :async true
+               :effect (req
+                         (continue-ability
+                           state side
+                           (sabotage-ability 2)
+                           card nil))}]}))
+
+
 (defcard "Exile: Streethawk"
   {:flags {:runner-install-draw true}
    :events [{:event :runner-install

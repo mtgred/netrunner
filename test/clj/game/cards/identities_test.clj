@@ -1161,6 +1161,30 @@
       (run-empty-server state "HQ")
       (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge Fund at no cost."))))
 
+(deftest esa-afontov-eco-insurrectionist
+  (testing "happy path"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:id "Esa Afontov: Eco-Insurrectionist"
+                          :hand [(qty "Amped Up" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Amped Up")
+      (is (last-log-contains? state "uses Esa Afontov: Eco-Insurrectionist to sabotage 2") "Sabotage happened")
+      (is (prompt-is-type? state :corp :select) "Corp has sabotage prompt")))
+  (testing "Does not trigger on second time"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:id "Esa Afontov: Eco-Insurrectionist"
+                          :hand [(qty "Amped Up" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Amped Up")
+      (is (last-log-contains? state "uses Esa Afontov: Eco-Insurrectionist to sabotage 2") "Sabotage happened")
+      (play-from-hand state :runner "Amped Up")
+      (is (not (last-log-contains? state "uses Esa Afontov: Eco-Insurrectionist to sabotage 2")) "Sabotage did not happen")
+      (is (empty (:prompt (get-corp))) "no Corp prompt"))))
+
 (deftest ele-smoke-scovak-cynosure-of-the-net-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
