@@ -31,6 +31,7 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.installing]
+    [game.core.mark]
     [game.core.memory]
     [game.core.moving]
     [game.core.optional]
@@ -564,6 +565,13 @@
    get-link
    link+
    update-link])
+
+(expose-vars
+  [game.core.mark
+   set-mark
+   is-mark?
+   identify-mark
+   identify-mark-ability])
 
 (expose-vars
   [game.core.memory

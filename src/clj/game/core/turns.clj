@@ -152,6 +152,7 @@
                (swap! state assoc :end-turn true)
                (swap! state update-in [side :register] dissoc :cannot-draw)
                (swap! state update-in [side :register] dissoc :drawn-this-turn)
+               (swap! state assoc :mark nil)
                (clear-turn-register! state)
                (when-let [extra-turns (get-in @state [side :extra-turns])]
                  (when (pos? extra-turns)
