@@ -8,6 +8,7 @@
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
+    [game.core.charge]
     [game.core.checkpoint]
     [game.core.commands]
     [game.core.cost-fns]
@@ -228,6 +229,12 @@
 (expose-vars
   [game.core.change-vals
    change])
+
+(expose-vars
+  [game.core.charge
+   can-charge
+   charge-ability
+   charge-card])
 
 (expose-vars
   [game.core.checkpoint
