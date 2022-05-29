@@ -148,7 +148,7 @@
                           " and")
                         (when max-choices
                           (str (if all "" " up to")
-                               max-choices))
+                               " " max-choices))
                         (if max-choices
                           (str " " (pluralize "target" max-choices))
                           (if min-choices
