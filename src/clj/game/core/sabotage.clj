@@ -6,7 +6,7 @@
     [game.core.engine :refer [resolve-ability]]
     [game.core.moving :refer [trash-cards]]
     [game.core.say :refer [system-msg]]
-    [game.macros :refer [req msg wait-for continue-ability]]
+    [game.macros :refer [req msg continue-ability]]
     [game.utils :refer [pluralize]]))
 
 (defn sabotage-ability
@@ -34,8 +34,7 @@
                                       " and")
                                     (when selected-rd
                                       (str " " selected-rd " " (pluralize "card" selected-rd) " from the top of R&D"))))
-                      (wait-for (trash-cards state side to-trash {:unpreventable true})
-                                (effect-completed state side eid))))
+                      (trash-cards state side eid to-trash {:unpreventable true})))
         choosing-ab (fn [forced-hq]
                       {:waiting-prompt "Corp to choose an option"
                        :player :corp
@@ -53,15 +52,11 @@
                                           cards-hq (count (:hand corp))
                                           forced-hq (- n cards-rd)]
                                       (if (> forced-hq cards-hq)
-                                        (wait-for (trash-req state :corp card (:hand corp))
-                                                  (effect-completed state side eid))
-                                        (wait-for (resolve-ability state side
-                                                                   (choosing-ab forced-hq)
-                                                                   card nil)
-                                                  (effect-completed state side eid)))))}]
+                                        (trash-req state :corp eid card (:hand corp))
+                                        (resolve-ability state side eid
+                                                          (choosing-ab forced-hq)
+                                                          card nil))))}]
     {:req (req (> n 0))
      :msg (msg "sabotage " n)
      :async true
-     :effect (req (wait-for
-                    (resolve-ability state side check-forcing-ab card targets)
-                    (effect-completed state side eid)))}))
+     :effect (req (resolve-ability state side check-forcing-ab card targets))}))
