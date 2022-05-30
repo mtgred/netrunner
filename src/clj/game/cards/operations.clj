@@ -674,7 +674,8 @@
 (defcard "Extract"
   ;; doesn't check to see the card is actually trashed (it's not a cost, so may be prevented?)
   {:on-play
-   {:effect (req (if (not-empty (all-installed state :corp))
+   {:async true
+    :effect (req (if (not-empty (all-installed state :corp))
                    (do
                      (system-msg state side "uses Extract to gain 6 [Credit]")
                      (gain-credits state side eid 6)
@@ -685,8 +686,8 @@
                        :choices {:card #(and (installed? %)
                                              (corp? %))}
                        :cancel-effect (effect (system-msg "declines to trash a card"))
+                       :msg "uses Extract to gain 3 [Credit]"
                        :effect (req (wait-for (trash state side target {:cause card})
-                                              (system-msg state side "uses extract to gain 3 [credit]")
                                               (gain-credits state side eid 3)))}
                       card nil))
                    ;; no cards to trash -> skip prompt, no info is given away
@@ -2597,7 +2598,7 @@
                        card nil)))}}}})
 
 (defcard "Trust Operation"
-  (let [ability {:prompt "Choose a card to install from archives"
+  (let [ability {:prompt "Choose a card to install from Archives"
                  :show-discard true
                  :choices {:card #(and (corp? %)
                                        (in-discard? %))}

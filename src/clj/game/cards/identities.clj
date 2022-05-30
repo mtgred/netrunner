@@ -1343,39 +1343,39 @@
   ;;  or it must be an ability cost.
   (letfn [(resolve-install [target]
             (req ;; if it has an additional cost, the rez needs to be optional
-             (shuffle! state side :deck)
-             (system-msg state side (str "shuffles R&D"))
-             (let [add-costs (rez-additional-cost-bonus state side target)
-                   inst-target target]
-               (if (pos? (count add-costs))
-                 (if (can-pay? state side (:title inst-target) add-costs)
-                   (continue-ability
-                    state side
-                    {:optional
-                     {:prompt (str "Rez " (:title inst-target) ", paying additional costs?")
-                      :yes-ability {:msg (msg "to rez "(:title inst-target)
-                                              ", paying additional costs")
-                                    :async true
-                                    :effect (req (corp-install state side eid inst-target nil
-                                                               {:ignore-all-cost true
-                                                                :install-state :rezzed-no-rez-cost})
-                                                 (system-msg state side (str add-costs)))}
-                      :no-ability {:msg(msg "install a card without paying additional costs to rez")
-                                   :effect (req (corp-install state side eid inst-target nil
-                                                              {:ignore-all-cost true}))}}}
-                    card nil)
-                   ;; It might be worth having a fake prompt here - at the very least, this prevents
-                   ;; the corp from accidentally revealing the card they select
-                   (continue-ability
-                    state side
-                    {:msg (msg "install a card without paying additional costs to rez")
-                     :effect (req (corp-install state side eid inst-target nil
-                                                {:ignore-all-cost true}))}
-                    card nil))
-                 (do (reveal state side inst-target)
-                     (corp-install state side eid (get-card state inst-target) nil
-                                   {:ignore-all-cost true
-                                    :install-state :rezzed-no-rez-cost}))))))
+              (shuffle! state side :deck)
+              (system-msg state side (str "shuffles R&D"))
+              (let [add-costs (rez-additional-cost-bonus state side target)
+                    inst-target target]
+                (if (pos? (count add-costs))
+                  (if (can-pay? state side (:title inst-target) add-costs)
+                    (continue-ability
+                      state side
+                      {:optional
+                       {:prompt (str "Rez " (:title inst-target) ", paying additional costs?")
+                        :yes-ability {:msg (msg "to rez "(:title inst-target)
+                                                ", paying additional costs")
+                                      :async true
+                                      :effect (req (corp-install state side eid inst-target nil
+                                                                 {:ignore-all-cost true
+                                                                  :install-state :rezzed-no-rez-cost}))}
+                        :no-ability {:msg "install a card ignoring all credit costs"
+                                     :effect (req (corp-install state side eid inst-target nil
+                                                                {:ignore-all-cost true}))}}}
+                      card nil)
+                    ;; It might be worth having a fake prompt here - at the very least, this prevents
+                    ;; the corp from accidentally revealing the card they select
+                    (continue-ability
+                      state side
+                      {:msg (msg "install a card without paying additional costs to rez")
+                       :async true
+                       :effect (req (corp-install state side eid inst-target nil
+                                                  {:ignore-all-cost true}))}
+                      card nil))
+                  (wait-for (reveal state side inst-target)
+                            (corp-install state side eid (get-card state inst-target) nil
+                                          {:ignore-all-cost true
+                                           :install-state :rezzed-no-rez-cost}))))))
           ;; Identify that the card wasn't just dragged to the discard, and that it was trashed
           ;; by the corporation.
           ;; This requires that any (trash-cards ..) or (trash ..) fns use {:source card}
@@ -1391,37 +1391,37 @@
           ;; prompts to install an x-cost card (handles validation)
           (ob-ability [target-cost]
             {:optional
-             {:prompt (str "Install a "target-cost"-cost card from your deck?")
+             {:prompt (str "Install a " target-cost "-cost card from your deck?")
               :once :per-turn
               :req (req (>= target-cost 0))
               :yes-ability
-              {:msg (msg "to search R&D for a "(str target-cost)"-cost card")
+              {:msg (msg "to search R&D for a " (str target-cost) "-cost card")
                :async true
                :effect (effect (continue-ability
-                                {:prompt "Choose a card to install and rez"
-                                 :choices (req (conj (filter #(and (= target-cost (:cost %))
-                                                                   (or (asset? %)
-                                                                       (upgrade? %)
-                                                                       (ice? %)))
-                                                             (vec (sort-by :title (:deck corp))))
-                                                     "No install"))
-                                 :async true
-                                 :effect (resolve-install target)}
-                                card nil))}}})]
+                                 {:prompt "Choose a card to install and rez"
+                                  :choices (req (conj (filter #(and (= target-cost (:cost %))
+                                                                    (or (asset? %)
+                                                                        (upgrade? %)
+                                                                        (ice? %)))
+                                                              (vec (sort-by :title (:deck corp))))
+                                                      "No install"))
+                                  :async true
+                                  :effect (resolve-install target)}
+                                 card nil))}}})]
     {:events [{:event :corp-trash
                :req (req (and
-                          (installed? (:card context))
-                          (rezzed? (:card context))
-                          (some? (trash-cause eid target context))
-                          (not (used-this-turn? (:cid card) state))))
+                           (installed? (:card context))
+                           (rezzed? (:card context))
+                           (some? (trash-cause eid target context))
+                           (not (used-this-turn? (:cid card) state))))
                :async true
                :interactive (req true)
                :waiting "Corp to make a decision"
                :effect (req (let [target-cost (dec (:cost (:card target)))]
                               (continue-ability
-                               state side
-                               (ob-ability target-cost)
-                               card nil)))}]}))
+                                state side
+                                (ob-ability target-cost)
+                                card nil)))}]}))
 
 (defcard "Omar Keung: Conspiracy Theorist"
   {:abilities [{:cost [:click 1]
