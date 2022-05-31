@@ -687,7 +687,7 @@
                                              (corp? %))}
                        :cancel-effect (effect (system-msg "declines to trash a card"))
                        :msg "uses Extract to gain 3 [Credit]"
-                       :effect (req (wait-for (trash state side target {:cause card})
+                       :effect (req (wait-for (trash state side target {:cause-card card})
                                               (gain-credits state side eid 3)))}
                       card nil))
                    ;; no cards to trash -> skip prompt, no info is given away
@@ -1451,7 +1451,7 @@
     :msg (msg "trash " (string/join ", " (map :title targets))
               " and give the runner " (quantify (count targets) "tag"))
     :async true
-    :effect (req (wait-for (trash-cards state side targets {:cause card})
+    :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                            (gain-tags state :corp eid (count targets))))}})
 
 (defcard "NAPD Cordon"
@@ -2616,7 +2616,7 @@
                :cancel-effect (effect
                                (system-msg "declines to use Trust Operation to trash a resource")
                                (continue-ability ability card nil))
-               :effect (req (wait-for (trash state side target {:cause card})
+               :effect (req (wait-for (trash state side target {:cause-card card})
                                       (continue-ability state side ability card nil)))}}))
 
 (defcard "Ultraviolet Clearance"

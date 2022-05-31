@@ -1804,7 +1804,7 @@
    (new-game {:corp {:hand ["Envelopment"] :credits 10}})
    (play-from-hand state :corp "Envelopment" "HQ")
    (let [env (get-ice state :hq 0)
-         n 3]
+         n 4]
      (rez state :corp env)
      (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
      (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))

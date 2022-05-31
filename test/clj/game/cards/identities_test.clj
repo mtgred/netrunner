@@ -3527,7 +3527,7 @@
 (deftest ob-logistics-basic-test
   ;; The ability works, and it works once per turn - depends on Extract to be correct
   (do-game
-   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+   (new-game {:corp {:id "Ob Superheavy Logistics: Matter Made Easy"
                      :hand [(qty "Extract" 3) (qty "Launch Campaign" 2) "PAD Campaign"]
                      :deck [(qty "Prisec" 2) "Anoetic Void" "Ice Wall"]
                      :credits 10}})
@@ -3561,7 +3561,7 @@
   ;; ob-logistics doesn't waive additional costs to rez (ie corp. town)
   (do-game
    ;; can't pay cost
-   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+   (new-game {:corp {:id "Ob Superheavy Logistics: Matter Made Easy"
                      :hand ["Extract" "PAD Campaign"]
                      :deck ["Corporate Town"]
                      :credits 10}})
@@ -3577,7 +3577,7 @@
    (is (not (rezzed? (get-content state :remote2 0))) "Did not rez C. Town"))
   (do-game
    ;; refuse to pay cost
-   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+   (new-game {:corp {:id "Ob Superheavy Logistics: Matter Made Easy"
                      :hand ["Extract" "PAD Campaign" "Hostile Takeover"]
                      :deck ["Corporate Town"]
                      :credits 10}})
@@ -3596,7 +3596,7 @@
    (is (not (rezzed? (get-content state :remote3 0))) "Did not rez C. Town"))
   (do-game
    ;; pay additional cost to rez
-   (new-game {:corp {:id "Ob Superheavy Logistics: No Place Out Of Reach"
+   (new-game {:corp {:id "Ob Superheavy Logistics: Matter Made Easy"
                      :hand ["Extract" "PAD Campaign" "Hostile Takeover"]
                      :deck ["Corporate Town"]
                      :credits 10}})

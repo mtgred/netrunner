@@ -347,7 +347,7 @@
   "Attempts to trash each given card, and then once all given cards have been either
   added or not added to the trash list, all of those cards are trashed"
   ([state side eid cards] (trash-cards state side eid cards nil))
-  ([state side eid cards {:keys [accessed cause keep-server-alive game-trash suppress-checkpoint] :as args}]
+  ([state side eid cards {:keys [accessed cause cause-card keep-server-alive game-trash suppress-checkpoint] :as args}]
    (if (empty? (filter identity cards))
      (effect-completed state side eid)
      (wait-for (prevent-trash state side (make-eid state eid) cards args)
@@ -400,6 +400,7 @@
                    (doseq [trashed-card trashlist]
                      (queue-event state trash-event {:card trashed-card
                                                      :cause cause
+                                                     :cause-card cause-card
                                                      :accessed accessed}))
                    (if suppress-checkpoint
                      (effect-completed state nil eid)

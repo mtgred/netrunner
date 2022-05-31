@@ -2134,7 +2134,7 @@
                                           (installed? target)
                                           (not (same-card? target card))))}
                  :msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                 :effect (req (wait-for (trash state side target {:unpreventable true :cause card})
+                 :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                         (gain-credits state side eid 3)))}]
     {:flags {:corp-phase-12 (req (>= (count (all-installed state :corp)) 2))}
      :events [(assoc ability
