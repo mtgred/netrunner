@@ -1084,8 +1084,9 @@
              :req (req (and (or (hardware? (:card context))
                                 (program? (:card context)))
                             (not (:facedown? context))))
-             :effect (effect (system-msg "places 1 power counter on " (:title card))
-                             (add-counter :runner card :power 1))}
+             :async true
+             :msg "place 1 power counter on Environmental Testing"
+             :effect (req (add-counter state :runner eid card :power 1 nil))}
             {:event :counter-added
              :async true
              :req (req (<= 4 (get-counters (get-card state card) :power)))
