@@ -1078,6 +1078,22 @@
                             (reveal state :corp eid target)))
              :req (req (genetics-trigger? state side :successful-run))}]})
 
+(defcard "Environmental Testing"
+  {:events [{:event :runner-install
+             :silent (req true)
+             :req (req (and (or (hardware? (:card context))
+                                (program? (:card context)))
+                            (not (:facedown? context))))
+             :effect (effect (system-msg "places 1 power counter on " (:title card))
+                             (add-counter :runner card :power 1))}
+            {:event :counter-added
+             :async true
+             :req (req (<= 4 (get-counters (get-card state card) :power)))
+             :msg "trash itself and gain 9 [Credit]"
+             :effect (req (wait-for (trash state side card {:unpreventable :true
+                                                            :cause-card card})
+                                    (gain-credits state side eid 9)))}]})
+
 (defcard "Fall Guy"
   {:interactions {:prevent [{:type #{:trash-resource}
                              :req (req true)}]}

@@ -1982,6 +1982,34 @@
         "Corp gains 1 from Enhanced Vision forced reveal"
         (run-empty-server state "Archives"))))
 
+(deftest environmental-testing
+  ;; Pops at 4 power counters
+  (do-game
+    (new-game {:runner {:hand ["Environmental Testing" (qty "Spy Camera" 2) (qty "Marjanah" 2)]}})
+    (take-credits state :corp)
+    (core/gain-clicks state :runner 5)
+    (play-from-hand state :runner "Environmental Testing")
+    (let [env (get-resource state 0)]
+      (is (= 0 (get-counters (refresh env) :power)) "starts at 0 counters")
+      (changes-val-macro
+        1 (get-counters (refresh env) :power)
+        "+1 from hardware"
+        (play-from-hand state :runner "Spy Camera"))
+      (changes-val-macro
+        1 (get-counters (refresh env) :power)
+        "+1 from hardware"
+        (play-from-hand state :runner "Spy Camera"))
+      (changes-val-macro
+        1 (get-counters (refresh env) :power)
+        "+1 from program"
+        (play-from-hand state :runner "Marjanah"))
+      (changes-val-macro
+        9 (:credit (get-runner))
+        "Env Testing pops for 9c"
+        (play-from-hand state :runner "Marjanah")
+        (is (find-card "Environmental Testing" (:discard (get-runner)))
+            "Env. Testing was trashed")))))
+
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (do-game
