@@ -817,6 +817,28 @@
     (play-from-hand state :corp "Reduced Service" "New remote")
     (is (zero? (get-counters (get-content state :remote2 0) :power)) "Reduced Service should have 0 counters on itself after reinstall")))
 
+(deftest captain-padma-isbister-intrepid-explorer
+  (do-game
+    (new-game {:runner {:id "Captain Padma Isbister: Intrepid Explorer"
+                        :hand ["Earthrise Hotel"]}})
+    (take-credits state :corp)
+    (run-on state :rd)
+    (is (no-prompt? state :runner) "no prompt to charge (no targets)")
+    (run-jack-out state)
+    (play-from-hand state :runner "Earthrise Hotel")
+    (run-on state :rd)
+    (is (no-prompt? state :runner) "no prompt to charge (chance already missed)")
+    (run-jack-out state)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (changes-val-macro
+      +1 (get-counters (get-resource state 0) :power)
+      "Gained 1 power counter from charging hotel"
+      (run-on state :rd)
+      (is (not (no-prompt? state :runner)) "prompt to charge")
+      (click-card state :runner "Earthrise Hotel"))
+    (run-jack-out state)))
+
 (deftest cerebral-imaging-infinite-frontiers
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game

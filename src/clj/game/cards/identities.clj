@@ -311,6 +311,14 @@
              :async true
              :effect (effect (lose-tags eid 1))}]})
 
+(defcard "Captain Padma Isbister: Intrepid Explorer"
+  {:events [{:event :run
+             :once :per-turn
+             :async true
+             :req (req (and (= (:server target) [:rd])
+                            (first-event? state side :run #(= [:rd] (:server (first %))))))
+             :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+
 (defcard "Cerebral Imaging: Infinite Frontiers"
   {:constant-effects [(corp-hand-size+ (req (:credit corp)))]
    :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
