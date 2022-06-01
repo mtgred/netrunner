@@ -3177,6 +3177,24 @@
           "Strength has not been changed"
           (card-ability state :runner houdini 1)))))
 
+(deftest hyperbaric
+  ;; Hyperbaric - I can't believe it's not Study Guide
+  ;; Starts with a counter, 2c to add a power counter; +1 strength per counter
+  (do-game
+    (new-game {:runner {:deck ["Hyperbaric" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Hyperbaric")
+    (let [sg (get-program state 0)]
+      (card-ability state :runner sg 1)
+      (is (= 4 (:credit (get-runner))) "Paid 2c")
+      (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
+      (is (= 2 (get-strength (refresh sg))) "2 strength")
+      (card-ability state :runner sg 1)
+      (is (= 2 (:credit (get-runner))) "Paid 2c")
+      (is (= 3 (get-counters (refresh sg) :power)) "Has 3 power counters")
+      (is (= 3 (get-strength (refresh sg))) "3 strength"))))
+
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks
   (do-game
