@@ -8,30 +8,27 @@
    [game.core.props :refer [add-counter]]))
 
 (defn can-charge
+  "A card can be charged if it has at least one power counter"
   ([state side]
    (let [cards (all-installed state side)]
      (some #(can-charge state side %) cards)))
   ([state side card]
-   "A card can be charged if it has at least one power counter"
    (pos? (get-counters (get-card state card) :power))))
 
 (defn charge-card
+  "Charge: place a power counter on a card that has at least one power counter"
   ([state side eid target]
-   "Charge: place a power counter on a card that has at least one power counter"
    (charge-card state side eid target 1))
   ([state side eid target count]
-   "Charge X: place X power counters on a card that has at least one power counter"
    (if (can-charge state side target)
      (add-counter state side eid target :power count {:placed true})
      (effect-completed state side eid))))
 
 (defn charge-ability
-  ;;([state side card] (charge state side nil card))
+  "Creates a charge prompt (if there is a valid target) to charge a card once"
   ([state side eid card]
-   "Creates a charge prompt (if there is a valid target) to charge a card once"
    (charge-ability state side eid card 1))
   ([state side eid card n]
-   "Creates a charge prompt (if there is a valid target) to charge a card n times"
    (if (can-charge state side)
      {:waiting-prompt (format "%s to charge a card" (if (= :runner side) "Runner" "Corp"))
       :prompt (str "Select a card to charge")
