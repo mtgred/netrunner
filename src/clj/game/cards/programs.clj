@@ -345,7 +345,7 @@
                       (if-not (:successful-run runner-reg)
                         (do
                           (system-msg state :runner "trashes Algernon because a successful run did not occur")
-                          (trash state :runner eid card nil))
+                          (trash state :runner eid card {:cause-card card}))
                         (effect-completed state side eid)))
                     (effect-completed state side eid)))}]})
 
@@ -660,7 +660,7 @@
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
                             (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
-                                (trash state side eid (:ice context) nil))))}]})
+                                (trash state side eid (:ice context) {:cause-card card}))))}]})
 
 (defcard "Cleaver"
   (auto-icebreaker {:abilities [(break-sub 1 2 "Barrier")
@@ -681,7 +681,8 @@
    :events [{:event :purge
              :async true
              :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
-                          (trash state :runner eid card {:cause :purge}))}
+                          (trash state :runner eid card {:cause :purge
+                                                         :cause-card card}))}
             {:event :corp-install
              :req (req (agenda? (:card context)))
              :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
@@ -766,7 +767,8 @@
                                (swap! state update-in [:run]
                                       #(assoc % :position tgtndx :server [dest]))
                                (set-current-ice state)
-                               (trash state side eid card {:unpreventable true})))}]})
+                               (trash state side eid card {:unpreventable true
+                                                           :cause-card card})))}]})
 
 (defcard "Cordyceps"
   {:data {:counter {:virus 2}}
@@ -843,7 +845,7 @@
                                                      (if-let [payment-str (:msg async-result)]
                                                        (do (system-msg state :runner payment-str)
                                                            (effect-completed state side eid))
-                                                       (trash state side eid card nil))))}]}))
+                                                       (trash state side eid card {:cause-card card}))))}]}))
 
 (defcard "Customized Secretary"
   (letfn [(custsec-host [cards]
@@ -1056,7 +1058,8 @@
                        :value 1}]
    :events [{:event :purge
              :async true
-             :effect (effect (trash eid card {:cause :purge}))}]})
+             :effect (effect (trash eid card {:cause :purge
+                                              :cause-card card}))}]})
 
 (defcard "Djinn"
   {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"
@@ -1156,7 +1159,8 @@
   {:events [(breach-access-bonus :rd 1)
             {:event :purge
              :async true
-             :effect (effect (trash eid card {:cause :purge}))}]})
+             :effect (effect (trash eid card {:cause :purge
+                                              :cause-card card}))}]})
 
 (defcard "Expert Schedule Analyzer"
   (let [ability (successful-run-replace-breach
@@ -1181,7 +1185,8 @@
                               :async true
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg "trash " (:title card))
-                              :effect (effect (trash eid card {:cause :runner-ability}))}]}))
+                              :effect (effect (trash eid card {:cause :runner-ability
+                                                               :cause-card card}))}]}))
 
 (defcard "False Echo"
   {:events [{:event :pass-ice
@@ -1396,7 +1401,8 @@
                                 :prompt "Choose a card to trash"
                                 :choices (req (filter corp? (:hand corp)))
                                 :async true
-                                :effect (effect (trash eid target nil))}
+                                :effect (effect (trash eid target {:cause-card card
+                                                                   :cause :forced-to-trash}))}
                                card nil))}]})
 
 (defcard "Hivemind"
@@ -1442,7 +1448,9 @@
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn
                                    :async true
-                                   :effect (effect (trash eid (assoc target :seen true) {:accessed true}))}}})
+                                   :effect (effect (trash eid (assoc target :seen true)
+                                                          {:accessed true
+                                                           :cause-card card}))}}})
 
 (defcard "Incubator"
   {:events [{:event :runner-turn-begins
@@ -1491,7 +1499,7 @@
              :effect (effect (gain-credits :runner eid 1))}
             {:event :purge
              :async true
-             :effect (effect (trash eid card {:cause :purge}))}]})
+             :effect (effect (trash eid card {:cause :purge :cause-card card}))}]})
 
 (defcard "Keyhole"
   (let [ability (successful-run-replace-breach
@@ -1505,7 +1513,7 @@
                    :choices (req (take 3 (:deck corp)))
                    :async true
                    :effect (effect (shuffle! :corp :deck)
-                                   (trash eid (assoc target :seen true) nil))}})]
+                                   (trash eid (assoc target :seen true) {:cause-card card}))}})]
     {:abilities [{:cost [:click 1]
                   :msg "make a run on R&D"
                   :makes-run true
@@ -1565,7 +1573,8 @@
              :effect (effect (lose-credits :corp eid 1))}
             {:event :purge
              :async true
-             :effect (effect (trash eid card {:cause :purge}))}]})
+             :effect (effect (trash eid card {:cause :purge
+                                              :cause-card card}))}]})
 
 (defcard "Leech"
   {:events [{:event :successful-run
@@ -1608,7 +1617,7 @@
                              :req (req true)}]}
    :abilities [{:cost [:credit 3]
                 :msg "prevent a piece of hardware from being trashed"
-                :effect (effect (trash-prevent :hardware 1))}               
+                :effect (effect (trash-prevent :hardware 1))}
                {:cost [:trash-can]
                 :msg "prevent a piece of hardware from being trashed"
                 :effect (effect (trash-prevent :hardware 1))}]})
@@ -1699,7 +1708,8 @@
                                    :duration :end-of-run
                                    :unregister-once-resolved true
                                    :async true
-                                   :effect (effect (trash eid card {:cause :runner-ability}))}]))}})
+                                   :effect (effect (trash eid card {:cause :runner-ability
+                                                                    :cause-card card}))}]))}})
                  (strength-pump 1 1)]}))
 
 (defcard "Medium"
@@ -1930,7 +1940,7 @@
                           (when (get-in card [:special :installing])
                             (update! state side (update-in card [:special] dissoc :installing))
                             (trigger-event state :runner :runner-install card))
-                          (trash state :runner eid target {:unpreventable true}))
+                          (trash state :runner eid target {:unpreventable true :cause-card card}))
              :msg (msg "trash " (:title target))}]})
 
 (defcard "Paricia"
@@ -2377,7 +2387,7 @@
                                                (if (= 1 (count (filter #{(:title target)} card-titles)))
                                                  (str "trash " (:title target))
                                                  (str "trash " position (:title target)))))
-                                   :effect (effect (trash :runner eid (assoc target :seen true) nil))}
+                                   :effect (effect (trash :runner eid (assoc target :seen true) {:cause-card card}))}
                                   card nil)))}})]
     {:abilities [{:cost [:click 1]
                   :once :per-turn
@@ -2465,7 +2475,7 @@
      :events [(assoc ability :event :runner-turn-begins)
               {:event :purge
                :async true
-               :effect (effect (trash eid card {:cause :purge}))}]}))
+               :effect (effect (trash eid card {:cause :purge :cause-card card}))}]}))
 
 (defcard "Torch"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
@@ -2530,7 +2540,7 @@
                                              (rezzed? h))))
                             (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
                                 (unregister-events state side card)
-                                (trash state :runner eid h nil))
+                                (trash state :runner eid h {:cause-card card}))
                             (effect-completed state side eid))))]
     {:hosting {:card #(and (ice? %)
                            (can-host? %))}
@@ -2611,7 +2621,8 @@
             {:prompt "Choose a subtype"
              :choices ["Barrier" "Code Gate" "Sentry"]
              :async true
-             :effect (req (wait-for (trash state side card {:unpreventable true})
+             :effect (req (wait-for (trash state side card {:unpreventable true
+                                                            :cause-card card})
                                     (continue-ability state side
                                                       (expose-and-maybe-bounce target)
                                                       card nil)))})
