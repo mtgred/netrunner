@@ -22,8 +22,7 @@
   ([state side eid target count]
    "Charge X: place X power counters on a card that has at least one power counter"
    (if (can-charge state side target)
-     (do (add-counter state side eid target :power count {:placed true})
-         (effect-completed state side eid))
+     (add-counter state side eid target :power count {:placed true})
      (effect-completed state side eid))))
 
 (defn charge-ability
