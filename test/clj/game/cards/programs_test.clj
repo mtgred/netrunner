@@ -5627,17 +5627,19 @@
   ;; Savant
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Cobra" "Enigma"]
+                      :hand ["Cobra" "Enigma" "Quandary"]
                       :credits 10}
                :runner {:deck ["Savant" "Box-E"]
                         :credits 20}})
     (play-from-hand state :corp "Cobra" "HQ")
+    (play-from-hand state :corp "Quandary" "R&D")
     (play-from-hand state :corp "Enigma" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Savant")
     (let [savant (get-program state 0)
           cobra (get-ice state :hq 0)
-          enigma (get-ice state :rd 0)]
+          quandary (get-ice state :rd 0)
+          enigma (get-ice state :rd 1)]
       (is (= 2 (core/available-mu state)))
       (is (= 3 (get-strength (refresh savant))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
@@ -5658,7 +5660,15 @@
       (card-ability state :runner (refresh savant) 0)
       (click-prompt state :runner "Force the Runner to lose 1 [Click]")
       (click-prompt state :runner "End the run")
-      (is (:broken (first (:subroutines (refresh enigma)))) "Broke a code gate subroutine"))))
+      (is (:broken (first (:subroutines (refresh enigma)))) "Broke code gate first subroutine")
+      (is (:broken (last (:subroutines (refresh enigma)))) "Broke code gate second subroutine")
+      (run-continue state :movement)
+      (run-continue state :approach-ice)
+      (rez state :corp quandary)
+      (run-continue state)
+      (card-ability state :runner (refresh savant) 0)
+      (click-prompt state :runner "End the run")
+      (is (:broken (first (:subroutines (refresh quandary)))) "Broke a code gate subroutine on a single-sub ice"))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
