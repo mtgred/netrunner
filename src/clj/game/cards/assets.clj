@@ -85,7 +85,7 @@
                                            (program? %))}
                      :msg (msg "trash " (string/join ", " (map :title targets)))
                      :async true
-                     :effect (effect (trash-cards eid targets))}))
+                     :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
 (defcard "Alexa Belsky"
   {:abilities [{:label "Shuffle all cards in HQ into R&D"
@@ -395,7 +395,7 @@
                      {:async true
                       :msg "do 1 meat damage for each hosted advancement counter"
                       :effect (req (wait-for
-                                    (trash state side card nil)
+                                    (trash state side card {:cause-card card})
                                     (damage state side eid :meat (get-counters card :advancement) {:card card})))}}}
                    card nil))}]
     {:derezzed-events [corp-rez-toast]
@@ -499,7 +499,7 @@
                 :req (req (>= (get-counters card :advancement) 2))
                 :choices {:card #(has-subtype? % "Connection")}
                 :msg (msg "trash " (:title target))
-                :effect (effect (trash eid target nil))}
+                :effect (effect (trash eid target {:cause-card card}))}
                {:label "Do 2 meat damage"
                 :async true
                 :cost [:click 1 :trash-can]
@@ -521,7 +521,7 @@
                 :prompt "Choose a resource to trash"
                 :choices {:card resource?}
                 :msg (msg "trash " (:title target))
-                :effect (effect (trash eid target {:unpreventable true}))}]})
+                :effect (effect (trash eid target {:unpreventable true :cause-card card}))}]})
 
 (defcard "CPC Generator"
   {:events [{:event :runner-click-credit
@@ -702,7 +702,7 @@
                 :msg (msg "trash " (:title target) " and take 1 bad publicity")
                 :choices {:card #(has-subtype? % "Location")}
                 :async true
-                :effect (req (wait-for (trash state side target nil)
+                :effect (req (wait-for (trash state side target {:cause-card card})
                                        (gain-bad-publicity state :corp eid 1)))}]})
 
 (defcard "Encryption Protocol"
@@ -912,7 +912,7 @@
                          :prompt (str "Choose a " card-type " to trash")
                          :choices (req (filter #(is-type? % card-type) (:hand runner)))
                          :async true
-                         :effect (effect (trash eid target nil))
+                         :effect (effect (trash eid target {:cause-card card}))
                          :msg (msg "trash " (:title target) " from the grip")})
         choose-ability {:label "Trash 1 card in the grip of a named type"
                         :once :per-turn
@@ -1040,7 +1040,7 @@
                         {:async true
                          :msg "do 1 brain damage"
                          :effect (req (wait-for (damage state :runner :brain 1 {:card card})
-                                                (trash state side eid card nil)))}
+                                                (trash state side eid card {:cause-card card})))}
                         :unsuccessful
                         {:effect (effect (add-counter card :power 1)
                                          (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]})
@@ -1184,7 +1184,7 @@
                                 (add-counter state side card :credit (- credits))
                                 (wait-for (gain-credits state :corp credits)
                                           (if (not (pos? (get-counters (get-card state card) :credit)))
-                                            (trash state :corp eid card {:unpreventable true})
+                                            (trash state :corp eid card {:unpreventable true :cause-card card})
                                             (effect-completed state :corp eid)))))}]
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1467,7 +1467,7 @@
                           (if (pos? (get-counters (get-card state card) :credit))
                             (effect-completed state side eid)
                             (wait-for
-                              (trash state :corp card {:unpreventable true})
+                              (trash state :corp card {:unpreventable true :cause-card card})
                               (system-msg state :corp (str "trashes Nico Campaign"
                                                            (when (not (empty? (:deck corp)))
                                                              " and draws 1 card")))
@@ -1746,7 +1746,7 @@
                        {:async true
                         :msg "gain 3 [Credits] and draw 3 cards"
                         :effect (req (wait-for
-                                       (trash state side card nil)
+                                       (trash state side card {:cause-card card})
                                        (wait-for
                                          (gain-credits state side 3)
                                          (draw state side eid 3))))}}}
@@ -1829,7 +1829,7 @@
                  :label "Remove 1 counter (start of turn)"
                  :effect (req (add-counter state side card :power -1)
                               (if (zero? (get-counters (get-card state card) :power))
-                                (wait-for (trash state side card nil)
+                                (wait-for (trash state side card {:cause-card card})
                                           (continue-ability state side payout-ab card nil))))}]
     {:on-rez {:effect (effect (add-counter card :power 3))}
      :derezzed-events [corp-rez-toast]
@@ -1948,7 +1948,7 @@
                :req (req (ice? (:card context)))
                :async true
                :msg "trash itself"
-               :effect (effect (trash eid card))}]}))
+               :effect (effect (trash eid card {:cause-card card}))}]}))
 
 (defcard "Shannon Claire"
   {:abilities [{:cost [:click 1]
@@ -1987,7 +1987,7 @@
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (hardware? %))}
-                     :effect (effect (trash-cards eid targets))}))
+                     :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
 (defcard "Shi.Kyū"
   {:access
@@ -2145,7 +2145,7 @@
                 :choices (req (filter asset? (:deck corp)))
                 :async true
                 :effect (req (wait-for
-                               (trash state side card nil)
+                               (trash state side card {:cause-card card})
                                (wait-for
                                  (reveal state side target)
                                  (shuffle! state side :deck)
@@ -2273,7 +2273,7 @@
              :async true
              :effect (req (add-counter state side card :power -1)
                           (if (not (pos? (get-counters (get-card state card) :power)))
-                            (wait-for (trash state side card nil)
+                            (wait-for (trash state side card {:cause-card card})
                                       (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
                                       (damage state side eid :meat 4 {:card card}))
                             (effect-completed state side eid)))}]})
