@@ -2124,6 +2124,11 @@
              :effect (req (when-let [c (first (:hosted card))]
                             (add-counter state side c :virus 1)))}]})
 
+(defcard "Propeller"
+  (auto-icebreaker {:data {:counter {:power 4}}
+                    :abilities [(break-sub 1 1 "Barrier")
+                                (strength-pump [:power 1] 2)]}))
+
 (defcard "Puffer"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 2 1)

@@ -5366,6 +5366,29 @@
         (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
         (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
 
+(deftest propeller
+  ;; counter: +2 str, 0 str start, 1c: break barrier
+  (do-game
+    (new-game {:runner {:hand ["Propeller"] :credits 10}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Propeller")
+    (let [prop (get-program state 0)]
+      (run-on state :hq)
+      (run-continue state)
+      (changes-val-macro
+        -1 (get-counters (refresh prop) :power)
+        "Spent 1 power counter to boost"
+        (card-ability state :runner prop 1)
+        (is (= 2 (get-strength (refresh prop))) "At strength 2 after boost"))
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Spent 1 credit to break"
+        (card-ability state :runner prop 0)
+        (click-prompt state :runner "End the run")))))
+
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
   (do-game
