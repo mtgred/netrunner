@@ -811,6 +811,18 @@
      :events [(assoc ability :event :runner-turn-begins)
               (trash-on-empty :credit)]}))
 
+(defcard "Daeg, First Net-Cat"
+  {:events [{:event :agenda-scored
+             :async true
+             :interactive (req true)
+             :msg (msg "charge")
+             :effect (effect (continue-ability (charge-ability state side eid card 1) card nil))}
+            {:event :agenda-stolen
+             :async true
+             :interactive (req true)
+             :msg (msg "charge")
+             :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+
 (defcard "Data Dealer"
   {:abilities [{:cost [:click 1 :forfeit]
                 :async true

@@ -1232,6 +1232,36 @@
       (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder."))))
 
+(deftest daeg-first-net-cat
+  ;; Daeg, First Net-Cat - charge on score/steal
+  (do-game
+    (new-game {:runner {:hand ["Daeg, First Net-Cat" "Earthrise Hotel"]}
+               :corp {:hand ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Earthrise Hotel")
+    (play-from-hand state :runner "Daeg, First Net-Cat")
+    (take-credits state :runner)
+    (let [hotel (get-resource state 0)]
+      (play-and-score state "Hostile Takeover")
+      (changes-val-macro
+        1 (get-counters (refresh hotel) :power)
+        "charge added 1 counter"
+        (click-card state :runner "Earthrise Hotel"))))
+  (do-game
+    (new-game {:runner {:hand ["Daeg, First Net-Cat" "Earthrise Hotel"]}
+               :corp {:hand ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Earthrise Hotel")
+    (play-from-hand state :runner "Daeg, First Net-Cat")
+    (let [hotel (get-resource state 0)]
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (changes-val-macro
+        1 (get-counters (refresh hotel) :power)
+        "charge added 1 counter"
+        (click-card state :runner "Earthrise Hotel")))))
+
+
 (deftest daily-casts
   ;; Daily Casts
   ;; Play and tick through all turns of daily casts
