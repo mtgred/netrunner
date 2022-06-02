@@ -2656,6 +2656,28 @@
                          choices (map str valid-amounts)]
                      (continue-ability state side (runner-choice choices) card nil)))}}))
 
+(defcard "Rigging Up"
+  {:on-play
+   {:prompt "Choose a program or piece of hardware to install from your Grip"
+    :choices {:req (req (and (or (hardware? target)
+                                 (program? target))
+                             (in-hand? target)
+                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                       [:credit (install-cost state side target {:cost-bonus -3})])))}
+    :async true
+    :effect (req (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install}) target {:cost-bonus -3})
+                           (let [rig-target async-result]
+                             (continue-ability
+                               state side
+                               {:optional
+                                {:prompt (str "Charge " (:title rig-target) "?")
+                                 :req (req (can-charge state side rig-target))
+                                 :yes-ability
+                                 {:async true
+                                  :effect (effect (charge-card eid rig-target))
+                                  :msg (msg "charge " (:title rig-target))}}}
+                               card nil))))}})
+
 (defcard "Rip Deal"
   (let [add-cards-from-heap
         {:optional

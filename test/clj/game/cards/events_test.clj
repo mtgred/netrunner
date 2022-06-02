@@ -5377,6 +5377,32 @@
       (play-from-hand state :runner "Rigged Results")
       (is (= ["0" "1"] (prompt-buttons :runner)) "Runner can't choose 2 because of Government Investigations")))
 
+(deftest rigging-up
+  ;; Rigging Up - Modded, but you may charge
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "D4v1d"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigging Up")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "Yes")
+    (is (= 4 (get-counters (get-program state 0) :power)) "Rigging up gave +1 counter"))
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "D4v1d"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigging Up")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "No")
+    (is (= 3 (get-counters (get-program state 0) :power)) "Rigging up gave no extra counters"))
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "Maw"]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "saved 3 credits with Rigging up"
+      (play-from-hand state :runner "Rigging Up")
+      (click-card state :runner "Maw")
+      (is (no-prompt? state :runner) "No prompt because maw cannot be charged"))))
+
 (deftest rip-deal
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval
   (do-game
