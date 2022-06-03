@@ -2634,6 +2634,18 @@
                                 (gain-clicks state side 1)
                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})
 
+(defcard "Stoneship Library"
+  {:abilities [{:label "Draw 2 cards"
+                :msg "draw 2 cards"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (draw :runner eid 2))}
+               {:label "Charge a card"
+                :req (req (can-charge state side))
+                :cost [:trash-can]
+                :async true
+                :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+
 (defcard "Street Magic"
   (letfn [(runner-break [unbroken-subs]
             {:prompt "Resolve a subroutine"
