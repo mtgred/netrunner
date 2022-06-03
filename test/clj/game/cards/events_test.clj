@@ -3476,6 +3476,51 @@
       (rez state :corp jackson)
       (is (not (rezzed? (refresh jackson))) "Jackson is not rezzed"))))
 
+(deftest into-the-depths
+  ;; Into the depths
+  (do-game
+    ;; Didn't pass any ice
+    (new-game {:runner {:hand ["Into the Depths"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (click-prompt state :runner "No action"))
+  (do-game
+    ;; Passed 1 ice
+    (new-game {:runner {:hand ["Into the Depths"]}
+               :corp {:hand [(qty "Ice Wall" 5)] :credits 50}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "Gain 4 [Credits]")
+    (click-prompt state :runner "No action"))
+  (do-game
+    ;; Passed 4 ice
+    (new-game {:runner {:hand ["Into the Depths"] :deck ["D4v1d"]}
+               :corp {:hand [(qty "Ice Wall" 5)] :credits 50}})
+    (core/gain state :corp :click 2)
+    (doseq [n [0 1 2 3]]
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (rez state :corp (get-ice state :hq n)))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (dotimes [n 12]
+      (run-continue state))
+    (click-prompt state :runner "Gain 4 [Credits]")
+    (click-prompt state :runner "Install a program from R&D")
+    (click-prompt state :runner "D4v1d")
+    (click-prompt state :runner "Charge a card")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "No action")
+    (is (= 4 (get-counters (get-program state 0) :power)) "4 counters on david")))
+
 (deftest isolation
   ;; Isolation - A resource must be trashed, gain 7c
   (do-game

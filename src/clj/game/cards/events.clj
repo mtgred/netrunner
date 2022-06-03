@@ -1724,6 +1724,64 @@
                :effect ab}]
      :leave-play (req (clear-all-flags-for-card! state side card))}))
 
+(defcard "Into the Depths"
+  ;; note - Into the Depths specifies "each time you passed an ICE". This means, unlike bravado,
+  ;; passing the same ice multiple times (ie thimblerig) counts.
+  (let [all [{:effect (effect (gain-credits eid 4))
+              :async true
+              :msg "gain 4 [Credits]"}
+             {:async true
+              :effect (effect (continue-ability
+                                {:prompt "Choose a program to install"
+                                 :msg (req (if (not= target "No install")
+                                             (str "install " (:title target))
+                                             (str "shuffle their Stack")))
+                                 :choices (req (conj (filter #(can-pay? state side
+                                                                        (assoc eid :source card :source-type :runner-install)
+                                                                        % nil [:credit (install-cost state side %)])
+                                                             (vec (sort-by :title (filter program? (:deck runner)))))
+                                                     "No install"))
+                                 :async true
+                                 :effect (req (trigger-event state side :searched-stack nil)
+                                              (shuffle! state side :deck)
+                                              (if (not= target "No install")
+                                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
+                                                (effect-completed state side eid)))}
+                                card nil))
+              :msg "install a program from R&D"}
+             {:async true
+              :effect (effect (continue-ability (charge-ability state side eid card) card nil))
+              :msg "charge a card"}]
+        choice (fn choice [abis rem]
+                 {:prompt "Choose an ability to resolve"
+                  :choices (map #(capitalize (:msg %)) abis)
+                  :async true
+                  :effect (req (let [chosen (some #(when (= target (capitalize (:msg %))) %) abis)]
+                                 (wait-for
+                                   (resolve-ability state side chosen card nil)
+                                   (if (< 1 rem)
+                                     (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec rem)) card nil)
+                                     (effect-completed state side eid)))))})]
+    {:makes-run true
+     :on-play {:prompt "Choose a server"
+               :choices (req runnable-servers)
+               :async true
+               :effect (effect (register-events
+                                 card
+                                 [{:event :pass-ice
+                                   :duration :end-of-run
+                                   :effect (effect (update! (update-in (get-card state card) [:special :how-deep-are-we] (fnil inc 0))))}])
+                               (make-run eid target card))}
+     :events [{:event :successful-run
+               :interactive (req true)
+               :async true
+               :req (req this-card-run)
+               :effect (req (let [ice-passed (get-in card [:special :how-deep-are-we])
+                                  num-choices (if (nil? ice-passed) 0 (min 3 ice-passed))]
+                              (if (< 0 num-choices)
+                                (continue-ability state side (choice all num-choices) card nil)
+                                (effect-completed state side eid))))}]}))
+
 (defcard "Isolation"
   {:on-play
    {:additional-cost [:resource 1]
