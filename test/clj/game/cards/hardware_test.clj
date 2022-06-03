@@ -4321,6 +4321,26 @@
       (is (= 6 (hand-size :runner)) "Increased hand size")
       (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
+(deftest the-endurance
+  ;; The Endurance
+  (do-game
+    (new-game {:runner {:hand ["The Endurance"] :credits 10}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Endurance")
+    (let [end (get-hardware state 0)]
+      (is (= 3 (get-counters (refresh end) :power)) "starts with 3 counters")
+      (run-on state :hq)
+      (run-continue state)
+      (card-ability state :runner (refresh end) 0)
+      (click-prompt state :runner "End the run")
+      (is (= 1 (get-counters (refresh end) :power)) "spend 2 counters to break")
+      (run-continue state)
+      (run-continue state)
+      (is (= 2 (get-counters (refresh end) :power)) "gained 1 counter from a successful run"))))
+
 (deftest the-gauntlet-doesn-t-give-additional-accesses-when-no-ice-are-broken
     ;; Doesn't give additional accesses when no ice are broken
     (do-game

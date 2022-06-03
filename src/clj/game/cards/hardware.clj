@@ -1899,6 +1899,18 @@
                        :req (req (= :runner side))
                        :value 1}]})
 
+(defcard "The Endurance"
+  {:data {:counter {:power 3}}
+   :constant-effects [(mu+ 2)]
+   :events [{:event :successful-run
+             :req (req (first-event? state :runner :successful-run))
+             :silent (req true)
+             :msg "place 1 power counter on itself"
+             :async true
+             :effect (effect (add-counter card :power 1)
+                             (effect-completed eid))}]
+   :abilities [(break-sub [:power 2] 2 "All")]})
+
 (defcard "The Gauntlet"
   {:constant-effects [(mu+ 2)]
    :events [{:event :breach-server
