@@ -4731,6 +4731,41 @@
     (is (not= (count (:hand (get-corp))) (hand-size :corp)) "Corp hand below max")
     (is (= 1 (count (:hand (get-runner)))) "No card drawn")))
 
+(deftest virtuoso
+  ;; Virtuoso - mark start of turn, +1 mu, hq mark -> +1, otherwise breach hq after run
+  (do-game
+    (new-game {:corp {:deck ["Hedge Fund"] :hand ["IPO" "IPO"]}
+               :runner {:hand ["Virtuoso"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (is (= 5 (core/available-mu state)))
+    (is (nil? (:mark @state)) "No mark identified")
+    ;; breach +1 when hq marked
+    (core/set-mark state :hq)
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner))
+    ;; only works once/turn
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner)))
+  (do-game
+    (new-game {:corp {:deck ["Hedge Fund"] :hand ["Rashida Jaheem"]}
+               :runner {:hand ["Virtuoso"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (is (nil? (:mark @state)) "No mark identified")
+    ;; when marj rd/archives, breach hq after run ends
+    (core/set-mark state :rd)
+    (run-on state :rd)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (no-prompt? state :runner))))
+
 (deftest zamba
   ;; Zamba - Whenever corp card is exposed you may gain 1 credit
   (do-game

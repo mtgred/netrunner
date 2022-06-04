@@ -2055,6 +2055,36 @@
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
+(defcard "Virtuoso"
+  {:constant-effects [(mu+ 1)]
+   :events [{:event :runner-turn-begins
+             :req (req true)
+             :effect (effect (continue-ability
+                               identify-mark-ability
+                               card nil))}
+            {:event :successful-run
+             :req (req (and (:marked-server target)
+                            (first-event? state side :successful-run #(:marked-server (first %)))))
+             :async true
+             :effect (req (if (= :hq (first (:server target)))
+                            (do
+                              (system-msg state side (str "uses " (:title card) " to access 1 additional card from HQ this run"))
+                              (register-events
+                                  state side
+                                  card [(breach-access-bonus :hq 1 {:duration :end-of-run})])
+                                (effect-completed state side eid))
+                            (do (system-msg state side (str "will use " (:title card) " to breach HQ when this run ends"))
+                                (register-events
+                                  state side
+                                  card
+                                  [{:event :run-ends
+                                    :duration :end-of-run
+                                    :async true
+                                    :interactive (req true)
+                                    :msg (msg "breach HQ")
+                                    :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}])
+                                (effect-completed state side eid))))}]})
+
 (defcard "Window"
   {:abilities [{:cost [:click 1]
                 :keep-menu-open :while-clicks-left
