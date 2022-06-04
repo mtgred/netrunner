@@ -2239,6 +2239,44 @@
                            (register-turn-flag! state side card :can-run nil)
                            (gain-credits state :corp eid 5)))}})
 
+(defcard "Pinhole Threading"
+  {:makes-run true
+   :on-play {:prompt "Choose a server"
+             :choices (req runnable-servers)
+             :async true
+             :effect (effect (make-run eid target card))}
+   :events [(successful-run-replace-breach
+              {:mandatory true
+               :this-card-run true
+               :ability
+               {:prompt "Select a card to access in the root of another server"
+                :choices {:req (req (and (system-msg state side (first (:server (:run @state))))
+                                         (not= (first (:server (:run @state)))
+                                               (second (get-zone (get-nested-host target))))
+                                         (= (last (get-zone (get-nested-host target)))
+                                            :content)))}
+                :async true
+                :waiting-prompt "Runner to choose an option"
+                :effect (req (if (agenda? target)
+                               (let [protected-card target]
+                                 ;; Prevent the runner from stealing or trashing agendas
+                                 ;; we can't just register a run flag, because there may be another
+                                 ;; breach after this (ie ganked into kitsune),
+                                 ;; so we have to clear the flags after this access.
+                                 (register-run-flag!
+                                   state side
+                                   card :can-steal
+                                   (fn [_ _ c] (not (same-card? c protected-card))))
+                                 (register-run-flag!
+                                   state side
+                                   card :can-trash
+                                   (fn [_ _ c] (not (same-card? c protected-card))))
+                                 (wait-for (access-card state side protected-card)
+                                           (clear-run-flag! state side card :can-steal)
+                                           (clear-run-flag! state side card :can-trash)
+                                           (effect-completed state side eid)))
+                               (access-card state side eid target)))}})]})
+
 (defcard "Planned Assault"
   {:on-play
    {:prompt "Choose a Run event"
