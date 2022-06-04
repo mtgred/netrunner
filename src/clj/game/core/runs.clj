@@ -11,6 +11,7 @@
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
+    [game.core.mark :refer [is-mark?]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
@@ -614,8 +615,12 @@
               (effect-completed state side eid)
               (do (swap! state update-in [:runner :register :successful-run] conj (-> @state :run :server first))
                   (swap! state assoc-in [:run :successful] true)
-                  (queue-event state :successful-run (select-keys (:run @state) [:server :run-id]))
-                  (checkpoint state nil eid)))))
+                  ;; if the server is a mark, add it to the successful run
+                  (let [marked (when (is-mark? state (first (:server (:run @state))))
+                                 {:marked-server true})
+                        keys (conj (select-keys (:run @state) [:server :run-id]) marked)]
+                    (queue-event state :successful-run keys)
+                    (checkpoint state nil eid))))))
 
 (defn successful-run
   "The real 'successful run' trigger."
