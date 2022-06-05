@@ -283,11 +283,11 @@
 (defcard "Big Deal"
   {:on-play
    {:req (req (pos? (count (all-installed state :corp))))
-    :prompt "Choose a card on which to place an advancement"
+    :prompt "Choose a card on which to place 4 advancement counters"
     :async true
     :choices {:card #(and (corp? %)
                           (installed? %))}
-    :msg (msg "placed 4 advancement counters on " (card-str state target))
+    :msg (msg "place 4 advancement counters on " (card-str state target))
     :effect (req (wait-for (add-prop state :corp target :advance-counter 4 {:placed true})
                            (let [card-to-score target]
                              (continue-ability
@@ -295,7 +295,6 @@
                                {:optional
                                 {:req (req (can-score? state side (get-card state card-to-score)))
                                  :prompt (str "Score " (:title card-to-score) "?")
-                                 :msg (msg "to score " (:title card-to-score))
                                  :async true
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
