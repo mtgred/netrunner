@@ -295,7 +295,6 @@
                                {:optional
                                 {:req (req (can-score? state side (get-card state card-to-score)))
                                  :prompt (str "Score " (:title card-to-score) "?")
-                                 :async true
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
                                  :no-ability {:msg "decline to score the card"}}}
