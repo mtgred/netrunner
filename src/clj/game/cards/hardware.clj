@@ -1298,13 +1298,15 @@
                 :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
    :events [{:event :successful-run
              :req (req (and
-                         (< 0 (:credit corp))
                          (= :hq (first (:server target)))
                          (first-event? state side :successful-run #(= :hq (first (:server (first %)))))))
-             :msg (msg "force the Corp to lose 1 [Credits], and gain 1 [Credits]")
+             :msg (msg "force the Corp to lose 1 [Credits]")
              :async true
-             :effect (req (wait-for (gain-credits state :runner (min 1 (:credit corp)))
-                                    (lose-credits state :corp eid (min 1 (:credit corp)))))}]})
+             :effect (req (if (pos? (:credit corp))
+                            (wait-for (lose-credits state :corp 1)
+                                      (system-msg state side (str "uses " (:title card) " to gain 1 [Credits]"))
+                                      (gain-credits state :runner eid 1))
+                            (effect-completed state side eid)))}]})
 
 (defcard "Pantograph"
   (let [install-ability
