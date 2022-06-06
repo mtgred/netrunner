@@ -1292,6 +1292,20 @@
                                                (same-card? card (:host target))))
                                 :type :recurring}}})
 
+(defcard "PAN-Weave"
+  {:on-install {:async true
+                :msg "suffer 1 meat damage"
+                :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
+   :events [{:event :successful-run
+             :req (req (and
+                         (< 0 (:credit corp))
+                         (= :hq (first (:server target)))
+                         (first-event? state side :successful-run #(= :hq (first (:server (first %)))))))
+             :msg (msg "force the Corp to lose 1 [Credits], and gain 1 [Credits]")
+             :async true
+             :effect (req (wait-for (gain-credits state :runner (min 1 (:credit corp)))
+                                    (lose-credits state :corp eid (min 1 (:credit corp)))))}]})
+
 (defcard "Pantograph"
   (let [install-ability
         {:async true
