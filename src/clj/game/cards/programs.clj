@@ -673,6 +673,14 @@
                             (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
                                 (trash state side eid (:ice context) nil))))}]})
 
+(defcard "Cat's Cradle"
+  (auto-icebreaker
+    {:constant-effects [{:type :rez-cost
+                         :req (req (and (ice? target) (has-subtype? target "Code Gate")))
+                         :value 1}]
+     :abilities [(break-sub 1 1 "Code Gate")
+                 (strength-pump 1 1)]}))
+
 (defcard "Cleaver"
   (auto-icebreaker {:abilities [(break-sub 1 2 "Barrier")
                                 (strength-pump 2 1)]}))

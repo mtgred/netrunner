@@ -1429,6 +1429,34 @@
         (is (nil? (refresh iw)) "Ice Wall should be trashed")
         (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
 
+(deftest cats-cradle
+  ;; cats cradle: 1str decoder, 1/1 break, code gates cost 1 more
+  (do-game
+    (new-game {:corp {:hand [(qty "Enigma" 2)] :credits 20}
+               :runner {:hand [(qty "Cat's Cradle" 2)] :credits 20}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cat's Cradle")
+    (changes-val-macro
+      -4 (:credit (get-corp))
+      "Enigma costs 3 + 1 to rez"
+      (rez state :corp (get-ice state :hq 0)))
+    (play-from-hand state :runner "Cat's Cradle")
+    (changes-val-macro
+      -5 (:credit (get-corp))
+      "Enigma costs 3 + 2 to rez"
+      (rez state :corp (get-ice state :hq 1)))
+    (run-on state :hq)
+    (run-continue state)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "3c to break enigma"
+      (card-ability state :runner (get-program state 0) 1)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Force the Runner to lose 1 [Click]"))))
+
 (deftest cleaver
   ;; Cleaver
   (before-each [state (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
