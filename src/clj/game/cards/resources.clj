@@ -1901,6 +1901,18 @@
                 :msg "avoid 1 tag"
                 :effect (effect (tag-prevent :runner eid 1))}]})
 
+(defcard "No Free Lunch"
+  {:abilities [{:label "Gain 3 [Credits]"
+                :msg "gain 3 [Credits]"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (gain-credits eid 3))}
+               {:label "Remove 1 tag"
+                :msg "remove 1 tag"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (lose-tags :runner eid 1))}]})
+
 (defcard "No One Home"
   (letfn [(first-chance? [state side]
             (< (+ (event-count state side :pre-tag)

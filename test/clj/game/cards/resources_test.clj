@@ -3815,6 +3815,29 @@
         (is (= 10 (:credit (get-runner))) "10 credits siphoned")
         (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
+(deftest no-free-lunch-gain-credits
+  (do-game
+    (new-game {:runner {:deck ["No Free Lunch"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "No Free Lunch")
+    (changes-val-macro
+      3 (:credit (get-runner))
+      "gained 3 for lunch"
+      (card-ability state :runner (get-resource state 0) 0))
+    (is (= 1 (count (:discard (get-runner)))) "Free lunch trashed")))
+
+(deftest no-free-lunch-remove-tag
+  (do-game
+    (new-game {:runner {:hand ["No Free Lunch" "Rogue Trading"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rogue Trading")
+    (play-from-hand state :runner "No Free Lunch")
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (= 1 (count-tags state)) "+1 tag from Rogue Trading")
+    (card-ability state :runner (get-resource state 1) 1)
+    (is (= 0 (count-tags state)) "-1 tag from Free Lunch")
+    (is (= 1 (count (:discard (get-runner)))) "Free lunch trashed")))
+
 (deftest no-one-home
   ;; Prevent first tag or net damage of the turn if you beat trace0, then trash
   (do-game
