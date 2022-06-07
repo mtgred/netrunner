@@ -964,6 +964,34 @@
       (rez state :corp (refresh pad))
       (is (rezzed? (refresh pad)) "Rez prevention of asset ended"))))
 
+(deftest carpe-diem-no-mark
+  ;; Carpe Diem - identify mark. Gain 4. You may run mark.
+  (do-game
+    (new-game {:runner {:hand ["Carpe Diem"]}})
+    (take-credits state :corp)
+    (is (nil? (:mark @state)) "No mark identified")
+    (changes-val-macro
+      3 (:credit (get-runner))
+      "gained 3c  net from carpe diem"
+      (play-from-hand state :runner "Carpe Diem"))
+    (click-prompt state :runner "Yes")
+    (is (= (first (:server (get-run))) (:mark @state)))
+    (run-jack-out state)))
+
+(deftest carpe-diem-hq-marked
+  ;; Carpe Diem - identify mark. Gain 4. You may run mark.
+  (do-game
+    (new-game {:runner {:hand ["Carpe Diem"]}})
+    (take-credits state :corp)
+    (is (nil? (:mark @state)) "No mark identified")
+    (core/set-mark state :hq)
+    (changes-val-macro
+      3 (:credit (get-runner))
+      "gained 3c  net from carpe diem"
+      (play-from-hand state :runner "Carpe Diem"))
+    (click-prompt state :runner "Yes")
+    (is (= [:hq] (:server (get-run))) "Ran the correct server")))
+
 (deftest cbi-raid
   ;; CBI Raid - Full test
   (do-game

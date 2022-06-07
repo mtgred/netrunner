@@ -348,6 +348,26 @@
                                               (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
                                              true))))}})
 
+(defcard "Carpe Diem"
+  {:makes-run true
+   :on-play
+   {:async true
+    :effect (req (wait-for
+                   (resolve-ability state side identify-mark-ability card nil)
+                   (let [marked-server (:mark @state)]
+                     (system-msg state side (str "uses " (:title card) " to gain 4 [Credits]"))
+                     (wait-for (gain-credits state :runner 4)
+                               (continue-ability
+                                 state side
+                                 {:optional
+                                  {:prompt (str "Run on " (zone->name marked-server) "?")
+                                   :async true
+                                   :no-ability {:msg (str "decline to make a run on " (zone->name marked-server))}
+                                   :yes-ability {:msg (str "make a run on " (zone->name marked-server))
+                                                 :async true
+                                                 :effect (effect (make-run eid marked-server))}}}
+                                 card nil)))))}})
+
 (defcard "CBI Raid"
   (letfn [(cbi-final [chosen original]
             {:player :corp
