@@ -1907,8 +1907,7 @@
              :silent (req true)
              :msg "place 1 power counter on itself"
              :async true
-             :effect (effect (add-counter card :power 1)
-                             (effect-completed eid))}]
+             :effect (effect (add-counter eid card :power 1 nil))}]
    :abilities [(break-sub [:power 2] 2 "All")]})
 
 (defcard "The Gauntlet"
