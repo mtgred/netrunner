@@ -1,5 +1,6 @@
 (ns game.cards.identities-test
   (:require [game.core :as core]
+            [game.core.servers :refer [zone->name]]
             [game.core.card :refer :all]
             [game.utils :as utils]
             [game.core-test :refer :all]
@@ -3510,6 +3511,18 @@
       (is (prompt-is-type? state :corp :waiting) "Corp should now be again waiting on Runner for Null ability")
       (is (= "Trash a card in grip to lower ice strength by 2?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")))
+
+(deftest nyusha-sable-sintashta
+  ;; Nyusha "Sable" Sintashta start of turn: mark server. First successful run on mark: gain click
+  (do-game
+    (new-game {:runner {:id "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"}
+               :corp {:hand ["Hedge Fund"] :deck ["Hedge Fund"] :discard ["Hedge Fund"]}})
+    (take-credits state :corp)
+    (run-on state (zone->name (:mark @state)))
+    (changes-val-macro
+      1 (:click (get-runner))
+      "gained 1 click from running the mark"
+      (run-continue state))))
 
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
