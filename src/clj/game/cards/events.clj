@@ -2250,8 +2250,7 @@
                :this-card-run true
                :ability
                {:prompt "Select a card to access in the root of another server"
-                :choices {:req (req (and (system-msg state side (first (:server (:run @state))))
-                                         (not= (first (:server (:run @state)))
+                :choices {:req (req (and (not= (first (:server (:run @state)))
                                                (second (get-zone (get-nested-host target))))
                                          (= (last (get-zone (get-nested-host target)))
                                             :content)))}
