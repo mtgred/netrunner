@@ -1727,9 +1727,9 @@
 (defcard "Into the Depths"
   ;; note - Into the Depths specifies "each time you passed an ICE". This means, unlike bravado,
   ;; passing the same ice multiple times (ie thimblerig) counts.
-  (let [all [{:effect (effect (gain-credits eid 4))
+  (let [all [{:msg "gain 4 [Credits]"
               :async true
-              :msg "gain 4 [Credits]"}
+              :effect (effect (gain-credits eid 4))}
              {:async true
               :effect (effect (continue-ability
                                 {:prompt "Choose a program to install"
