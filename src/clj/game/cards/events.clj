@@ -1730,22 +1730,25 @@
   (let [all [{:msg "gain 4 [Credits]"
               :async true
               :effect (effect (gain-credits eid 4))}
-             {:prompt "Choose a program to install"
-              :msg (req (if (not= target "No install")
-                          (str "install " (:title target))
-                          (str "shuffle their Stack")))
-              :choices (req (conj (filter #(can-pay? state side
-                                                     (assoc eid :source card :source-type :runner-install)
-                                                     % nil [:credit (install-cost state side %)])
-                                          (vec (sort-by :title (filter program? (:deck runner)))))
-                                  "No install"))
+             {:msg "install a program from R&D"
               :async true
-              :effect (req (trigger-event state side :searched-stack nil)
-                           (shuffle! state side :deck)
-                           (if (not= target "No install")
-                             (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                             (effect-completed state side eid)))}
-              :msg "install a program from R&D"}
+              :effect (effect (continue-ability
+                                {:prompt "Choose a program to install"
+                                 :msg (req (if (not= target "No install")
+                                             (str "install " (:title target))
+                                             (str "shuffle their Stack")))
+                                 :choices (req (conj (filter #(can-pay? state side
+                                                                        (assoc eid :source card :source-type :runner-install)
+                                                                        % nil [:credit (install-cost state side %)])
+                                                             (vec (sort-by :title (filter program? (:deck runner)))))
+                                                     "No install"))
+                                 :async true
+                                 :effect (req (trigger-event state side :searched-stack nil)
+                                              (shuffle! state side :deck)
+                                              (if (not= target "No install")
+                                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
+                                                (effect-completed state side eid)))}
+                                card nil))}
              {:async true
               :effect (effect (continue-ability (charge-ability state side eid card) card nil))
               :msg "charge a card"}]
