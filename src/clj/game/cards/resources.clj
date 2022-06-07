@@ -253,6 +253,27 @@
                          (sabotage-ability 1)
                          card nil))}]})
 
+(defcard "Backstitching"
+  ;; only fire the event for one backstitching per encounter (otherwise you have to press no 3x)
+  (letfn [(is-min-index [state card]
+            (let [stitches (filterv #(= (:title card) (:title %))
+                                    (all-active-installed state :runner))
+                  ordered (sort-by :index stitches)]
+              (= (:index (first ordered)) (:index card))))]
+    {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+              {:event :encounter-ice
+               :async true
+               :interactive (req true)
+               :optional
+               {:prompt (req (str "Trash backstitching to bypass " (:title current-ice) "?"))
+                :req (req (and (is-min-index state card)
+                               (= (:mark @state) (first (:server run)))))
+                :yes-ability {:msg (msg (format "trash %s and bypass %s" (:title card) (:title current-ice)))
+                              :async true
+                              :effect (req (wait-for (trash state side card {:cause-card card :cause :runner-ability})
+                                                     (bypass-ice state)
+                                                     (effect-completed state side eid)))}}}]}))
+
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))

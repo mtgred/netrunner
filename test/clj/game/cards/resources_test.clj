@@ -205,6 +205,20 @@
     (play-from-hand state :runner "Cache")
     (is (last-log-contains? state "uses August Ivanovsky to sabotage 1") "Sabotage happened")))
 
+(deftest backstitching
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Backstitching"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (core/set-mark state :hq)
+    (play-from-hand state :runner "Backstitching")
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
+
 (deftest baklan-bochkin-gaining-power-counters-each-run
     ;; Gaining power counters each run.
     (do-game
