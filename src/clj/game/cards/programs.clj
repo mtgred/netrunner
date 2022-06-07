@@ -1438,7 +1438,8 @@
                     :abilities [(break-sub 1 1 "Code Gate")
                                 {:cost [:credit 2]
                                  :msg "place 1 power counter"
-                                 :effect (effect (add-counter card :power 1))}]
+                                 :async true
+                                 :effect (effect (add-counter eid card :power 1 nil))}]
                     :strength-bonus (req (get-counters card :power))}))
 
 (defcard "Hyperdriver"
