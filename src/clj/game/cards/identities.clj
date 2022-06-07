@@ -1322,20 +1322,13 @@
                                (trash eid target {:unpreventable true}))}}}]})
 
 (defcard "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
-  {:events [{:event :runner-turn-begins
-             :req (req true)
-             :async true
-             :effect (effect (continue-ability
-                               identify-mark-ability
-                               card nil))}
+  {:events [(assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
              :interactive (req true)
              :req (req (and (:marked-server target)
                             (first-event? state side :successful-run #(:marked-server (first %)))))
-             :async true
              :msg "gain [Click]"
-             :effect (effect (gain-clicks 1)
-                             (effect-completed eid))}]})
+             :effect (effect (gain-clicks 1))}]})
 
 (defcard "Omar Keung: Conspiracy Theorist"
   {:abilities [{:cost [:click 1]
