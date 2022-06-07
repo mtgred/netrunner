@@ -265,7 +265,7 @@
                :async true
                :interactive (req true)
                :optional
-               {:prompt (req (str "Trash backstitching to bypass " (:title current-ice) "?"))
+               {:prompt (msg "Trash backstitching to bypass " (:title current-ice) "?")
                 :req (req (and (is-min-index state card)
                                (= (:mark @state) (first (:server run)))))
                 :yes-ability {:msg (msg (format "trash %s and bypass %s" (:title card) (:title current-ice)))
