@@ -361,7 +361,6 @@
                                  state side
                                  {:optional
                                   {:prompt (str "Run on " (zone->name marked-server) "?")
-                                   :async true
                                    :no-ability {:msg (str "decline to make a run on " (zone->name marked-server))}
                                    :yes-ability {:msg (str "make a run on " (zone->name marked-server))
                                                  :async true
