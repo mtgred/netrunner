@@ -2057,12 +2057,7 @@
 
 (defcard "Virtuoso"
   {:constant-effects [(mu+ 1)]
-   :events [{:event :runner-turn-begins
-             :req (req true)
-             :async true
-             :effect (effect (continue-ability
-                               identify-mark-ability
-                               card nil))}
+   :events [(assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
              :req (req (and (:marked-server target)
                             (first-event? state side :successful-run #(:marked-server (first %)))))
