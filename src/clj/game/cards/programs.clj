@@ -622,6 +622,12 @@
 (defcard "Cerberus \"Rex\" H2"
   (power-counter-break "Code Gate"))
 
+(defcard "Cezve"
+  {:recurring 2
+   :interactions {:pay-credits {:req (req (and (:run @state)
+                                               (is-central? (:server run))))
+                                :type :recurring}}})
+
 (defcard "Chakana"
   {:constant-effects [{:type :advancement-requirement
                        :req (req (<= 3 (get-virus-counters state card)))

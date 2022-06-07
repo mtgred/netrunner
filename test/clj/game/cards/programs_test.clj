@@ -1148,6 +1148,29 @@
       (is (= 1 (:credit (get-runner))) "No credits spent to break")
       (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
+(deftest cezve
+  ;; 2 recurring credits for runs on central servers
+  (do-game
+    (new-game {:runner {:hand ["Sure Gamble" "Cezve" "Marjanah"] :credits 10}
+               :corp {:hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Cezve")
+    (play-from-hand state :runner "Sure Gamble")
+    (is (no-prompt? state :runner) "No prompt outside of run")
+    (play-from-hand state :runner "Marjanah")
+    (run-on state :remote1)
+    (let [mar (get-program state 1)]
+      (card-ability state :runner (refresh mar) 1)
+      (is (no-prompt? state :runner) "no prompt on remote run")
+      (run-jack-out state)
+      (run-on state :hq)
+      (card-ability state :runner (refresh mar) 1)
+      (is (not (no-prompt? state :runner)) "prompt to spend credits")
+      (click-card state :runner (get-program state 0))
+      (is (no-prompt? state :runner) "credit spent"))))
+
 (deftest chakana-gain-counters-on-r-d-runs
     ;; gain counters on r&d runs
     (do-game
