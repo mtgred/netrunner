@@ -1359,6 +1359,16 @@
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
 
+(defcard "Pravdivost Consulting: Political Solution"
+  {:events [{:event :successful-run
+             :req (req (first-event? state side :successful-run))
+             :interactive (req true)
+             :waiting-prompt "Corp to make a decision"
+             :prompt "Choose a card to place 1 advancement token on"
+             :choices {:card can-be-advanced?}
+             :msg (msg "place 1 advancement token on " (card-str state target))
+             :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
+
 (defcard "Quetzal: Free Spirit"
   {:abilities [(assoc (break-sub nil 1 "Barrier" {:repeatable false}) :once :per-turn)]})
 
