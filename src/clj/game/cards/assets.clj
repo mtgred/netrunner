@@ -1794,6 +1794,16 @@
                                                (effect-completed eid))})
                             card nil))}]})
 
+(defcard "Refuge Campaign"
+  (let [ability {:msg "gain 2 [Credits]"
+                 :label "Gain 2 [Credits] (start of turn)"
+                 :once :per-turn
+                 :async true
+                 :effect (effect (gain-credits eid 2))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (defcard "Regolith Mining License"
   {:data {:counter {:credit 15}}
    :events [(trash-on-empty :credit)]

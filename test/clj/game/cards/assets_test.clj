@@ -4022,6 +4022,18 @@
       (is (= 2 (count (:discard (get-runner)))))
       (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract doesn't get advancement token for net damage"))))
 
+(deftest refuge-campaign
+  ;; PAD Campaign
+  (do-game
+    (new-game {:corp {:deck ["Refuge Campaign"]}})
+    (play-from-hand state :corp "Refuge Campaign" "New remote")
+    (let [ref (get-content state :remote1 0)]
+      (rez state :corp ref)
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (+ 2 credits) (:credit (get-corp))) "Should gain 1 credit at start of turn from PAD Campaign")))))
+
 (deftest regolith-mining-license
   ;; Regolith Mining License
   (do-game
