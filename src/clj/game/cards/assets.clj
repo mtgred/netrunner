@@ -2260,6 +2260,31 @@
                       moved-card nil)))}
     "Swap Toshiyuki Sakai with an agenda or asset from HQ?"))
 
+(defcard "Trieste Model Bioroids"
+  {:on-rez {:msg (msg "prevent " (card-str state target)
+                      " from being broken by runner card abilities")
+            :choices {:card #(and (ice? %)
+                                  (rezzed? %)
+                                  (has-subtype? % "Bioroid"))}
+            :effect (effect (add-icon card target "T" "red")
+                            (update! (assoc-in (get-card state card) [:special :trieste-target] target)))}
+   :leave-play (effect (remove-icon card))
+   :constant-effects [{:type :prevent-paid-ability
+                       :req (req
+                              (let [relevant (take 2 (take-last 3 targets))
+                                    break-card (first relevant)
+                                    break-ability (second relevant)]
+                                (and
+                                  (same-card? current-ice (get-in card [:special :trieste-target]))
+                                  (runner? break-card)
+                                  (or (not (identity? break-card))
+                                      (fake-identity? break-card))
+                                  (or (contains? break-ability :break)
+                                      (contains? break-ability :breaks)
+                                      (contains? break-ability :heap-breaker-break)
+                                      (contains? break-ability :break-cost)))))
+                       :value true}]})
+
 (defcard "Turtlebacks"
   {:events [{:event :server-created
              :msg "gain 1 [Credits]"
