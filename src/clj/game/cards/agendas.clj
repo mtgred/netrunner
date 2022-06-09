@@ -196,6 +196,12 @@
                                    :duration :end-of-run
                                    :value [:trash-from-hand 1]}))}]})
 
+(defcard "Artificial Cryptocrash"
+  {:on-score
+   {:async true
+    :msg "make the Runner lose 7 [Credits]"
+    :effect (effect (lose-credits :runner eid 7))}})
+
 (defcard "AstroScript Pilot Program"
   {:on-score {:effect (effect (add-counter card :agenda 1))
               :silent (req true)}

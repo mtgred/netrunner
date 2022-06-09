@@ -363,6 +363,20 @@
         (should-not-place token-astro hand-ice-wall " in hand")
         (should-place token-astro installed-ice-wall " that is installed")))))
 
+(deftest artificial-cryptocrash
+  ;; Offworld Office
+  (do-game
+    (new-game {:corp {:hand [(qty "Artificial Cryptocrash" 2)]}
+               :runner {:credits 9}})
+    (changes-val-macro
+      -7 (:credit (get-runner))
+      "Runner loses 7 from cryptocrash"
+      (play-and-score state "Artificial Cryptocrash"))
+    (changes-val-macro
+      -2 (:credit (get-runner))
+      "Runner loses (all) 2 from cryptocrash"
+      (play-and-score state "Artificial Cryptocrash"))))
+
 (deftest award-bait
   ;; Award Bait
   (do-game
