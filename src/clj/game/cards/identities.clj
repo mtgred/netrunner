@@ -1359,7 +1359,7 @@
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
 
-(defcard "Pravdivost Consulting: Political Solution"
+(defcard "Pravdivost Consulting: Political Solutions"
   {:events [{:event :successful-run
              :req (req (first-event? state side :successful-run))
              :interactive (req true)

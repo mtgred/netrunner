@@ -3635,6 +3635,29 @@
         (is (no-prompt? state :corp))
         (is (no-prompt? state :runner)))))
 
+(deftest pravdivost-consulting-fake-prompt
+  ;; Pravdivost Consulting: Political Solutions
+  (do-game
+    (new-game {:corp {:id "Pravdivost Consulting: Political Solutions"
+                      :hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-continue state)
+    ;; fake prompt, doesn't give away that PAD cannot be advanced
+    (click-prompt state :corp "Done")))
+
+(deftest pravdivost-consulting-happy-path
+  (do-game
+    (new-game {:corp {:id "Pravdivost Consulting: Political Solutions"
+                      :hand ["NGO Front"]}})
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-continue state)
+    (click-card state :corp "NGO Front")
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "NGO was advanced")))
+
 (deftest quetzal-free-spirit
   ;; Quetzal
   (do-game
