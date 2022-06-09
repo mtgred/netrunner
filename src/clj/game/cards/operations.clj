@@ -208,6 +208,12 @@
     :effect (req (wait-for (gain-credits state side (* 3 (get-counters target :advancement)))
                            (trash state side eid target nil)))}})
 
+(defcard "Backroom Machinations"
+  {:on-play
+   {:additional-cost [:tag 1]
+    :msg "add it to their score area as an agenda worth 1 agenda point"
+    :effect (req (as-agenda state :corp card 1))}})
+
 (defcard "Bad Times"
   {:implementation "Any required program trashing is manual"
    :on-play {:req (req tagged)

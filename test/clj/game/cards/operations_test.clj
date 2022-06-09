@@ -355,6 +355,17 @@
         (click-card state :corp "NGO Front")
         (is (= (+ credits 9) (:credit (get-corp))) "Corp should gain 3 * 3 credits"))))
 
+(deftest backroom-machinations
+  (do-game
+    (new-game {:corp {:hand ["Backroom Machinations"]}})
+    (play-from-hand state :corp "Backroom Machinations")
+    (is (= 1 (count (:hand (get-corp)))) "Card not played because Runner has no tags")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Backroom Machinations")
+    (is (zero? (count-tags state)) "Runner should lose 1 tag")
+    (is (= 1 (:agenda-point (get-corp))) "Corp gained 1 points")
+    (is (= 1 (count (get-scored state :corp))) "Corp has backroom in score area")))
+
 (deftest bad-times
   ;; Bad Times
   (do-game
