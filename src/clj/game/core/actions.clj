@@ -269,7 +269,8 @@
         current-ice (get-current-ice state)
         ;; match strength
         can-pump (fn [ability]
-                   (when (:heap-breaker-pump ability)
+                   (when (and (:heap-breaker-pump ability)
+                              (not (any-effects state side :prevent-paid-ability true? current-ice [card ability 0])))
                      ((:req ability (req true)) state side eid card nil)))
         breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
         pump-strength-at-once (when breaker-ability
@@ -304,7 +305,8 @@
                      (if x-breaker
                        [:credit x-number]
                        (repeat ability-uses-needed (:cost breaker-ability))))]
-    (when (can-pay? state side eid card (:title card) total-cost)
+    (when (and breaker-ability
+               (can-pay? state side eid card (:title card) total-cost))
       (wait-for (pay state side (make-eid state eid) card total-cost)
                 (if x-breaker
                   (pump state side (get-card state card) x-number)
@@ -370,7 +372,8 @@
                             (repeat times-pump (pump-cost-req [(:cost pump-ability)])))
           ;; break all subs
           can-break (fn [ability]
-                      (when (:break-req ability)
+                      (when (and (:break-req ability)
+                                 (not (any-effects state side :prevent-paid-ability true? current-ice [card ability 0])))
                         ((:break-req ability) state side eid card nil)))
           break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
           break-cost-req (or (:cost-req break-ability) identity)
