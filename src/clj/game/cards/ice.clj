@@ -368,12 +368,23 @@
    :subroutines [ability resolve-grail]})
 
 ;;; For NEXT ice
+(defn subtype-ice-count
+  "Counts number of rezzed pieces of ice with the given subtype"
+  [corp subtype]
+  (let [servers (flatten (seq (:servers corp)))
+        rezzed-ice? #(and (rezzed? %) (has-subtype? % subtype))]
+    (reduce (fn [c server] (+ c (count (filter rezzed-ice? (:ices server))))) 0 servers)))
+
 (defn next-ice-count
   "Counts number of rezzed pieces of NEXT ice - for use with NEXT Bronze and NEXT Gold"
   [corp]
-  (let [servers (flatten (seq (:servers corp)))
-        rezzed-next? #(and (rezzed? %) (has-subtype? % "NEXT"))]
-    (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
+  (subtype-ice-count corp "NEXT"))
+
+;;; For Harmonic ice
+(defn harmonic-ice-count
+  "Counts the number of rezzed pieces of Harmonic ice - for use with Wave and others"
+  [corp]
+  (subtype-ice-count corp "Harmonic"))
 
 ;;; For Morph ice
 (defn morph-ice
@@ -3515,6 +3526,23 @@
                   :cancel-effect (effect (system-msg "cancels the effect of Watchtower"))
                   :effect (effect (shuffle! :deck)
                                   (move target :hand))}]})
+
+(defcard "Wave"
+  {:on-rez
+   {:optional {:prompt "Search R&D for a piece of ice?"
+               :req (req (and run this-server))
+               :yes-ability {:prompt "Choose a card"
+                             :msg (msg "reveal they added " (:title target) " to HQ from R&D")
+                             :choices (req (cancellable (filter #(ice? %) (:deck corp)) :sorted))
+                             :cancel-effect (effect (system-msg "uses Wave to shuffle R&D")
+                                                    (shuffle! :deck))
+                             :effect (effect (shuffle! :deck)
+                                             (move target :hand))}
+               :no-ability {:msg "decline to search for a piece of ice"}}}
+   :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
+                  :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
+                  :async true
+                  :effect (req (gain-credits state :corp eid (harmonic-ice-count corp)))}]})
 
 (defcard "Weir"
   {:subroutines [runner-loses-click

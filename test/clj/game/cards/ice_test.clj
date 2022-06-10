@@ -6342,6 +6342,26 @@
       (is (not (find-card "Caldera" (:discard (get-runner)))) "Caldera not trashed")
       (is (= 2 (count (:discard (get-runner)))) "2 cards trashed"))))
 
+(deftest wave
+  ;; Wave - on rez vs. server, search R&D for an ice. Gain 1c for each rezzed harmonic ice.
+  (do-game
+    (new-game {:corp {:hand ["Wave" "Wave"] :deck ["Ice Wall"] :credits 10}})
+    (play-from-hand state :corp "Wave" "HQ")
+    (play-from-hand state :corp "Wave" "R&D")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (rez state :corp (get-ice state :rd 0))
+    (is (no-prompt? state :corp) "No prompt to search from ice on another server")
+    (rez state :corp (get-ice state :hq 0))
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Ice Wall")
+    (is (find-card "Ice Wall" (:hand (get-corp))))
+    (run-continue state)
+    (changes-val-macro
+      2 (:credit (get-corp))
+      "gained 2c from wave"
+      (card-subroutine state :corp (get-ice state :hq 0) 0))))
+
 (deftest wendigo
   ;; Morph ice gain and lose subtypes from normal advancements and placed advancements
   (do-game
