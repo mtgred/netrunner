@@ -610,6 +610,13 @@
                 :msg "place 1 agenda counter on Domestic Sleepers"
                 :effect (effect (add-agenda-point-counters card 1))}]})
 
+(defcard "Élivágar Bifurcation"
+  {:on-score
+   {:interactive (req true)
+    :choices {:card #(rezzed? %)}
+    :cancel-effect {:msg "decline to derez a card"}
+    :effect (effect (derez target))}})
+
 (defcard "Eden Fragment"
   {:constant-effects [{:type :ignore-install-cost
                        :req (req (and (ice? target)

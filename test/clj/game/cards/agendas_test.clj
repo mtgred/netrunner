@@ -1134,6 +1134,16 @@
         (click-card state :corp "Domestic Sleepers")
         (is (zero? (:agenda-point (get-corp))) "Domestic Sleepers is worth 0 points after losing the agenda counter"))))
 
+(deftest elivagar-bifurcation
+  (do-game
+    (new-game {:corp {:hand ["Élivágar Bifurcation" "Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [iwall (get-ice state :hq 0)]
+      (rez state :corp iwall)
+      (play-and-score state "Élivágar Bifurcation")
+      (click-card state :corp (refresh iwall))
+      (is (not (rezzed? (refresh iwall))) "ice wall was derezzed"))))
+
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
   (do-game
