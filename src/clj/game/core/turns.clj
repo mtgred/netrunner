@@ -4,7 +4,7 @@
     [game.core.board :refer [all-active all-active-installed all-installed]]
     [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
     [game.core.drawing :refer [draw]]
-    [game.core.effects :refer [unregister-floating-effects]]
+    [game.core.effects :refer [unregister-floating-effects any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
@@ -97,7 +97,7 @@
     (cond (and (= side :runner) (neg? (hand-size state side)))
           (do (flatline state)
               (effect-completed state side eid))
-          (get-in @state [side :register :skip-discard])
+          (any-effects state side :skip-discard)
           (do
             (system-msg state side "skips their discard step this turn")
             (effect-completed state side eid))
