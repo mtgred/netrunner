@@ -2285,6 +2285,24 @@
                    [3 3 "Gain 7 [Credits]" 7 0]
                    [3 3 "Do 7 meat damage" 0 7]]))))
 
+(deftest midnight-3-arcology
+  (do-game
+    (new-game {:corp {:hand ["Midnight-3 Arcology" (qty "Hedge Fund" 5)]
+                      :deck ["NGO Front" "Vanilla" "Chiyashi"]}})
+    (changes-val-macro
+      2 (count (:hand (get-corp)))
+      "drew net 2 when scoring midnight-3 arcology"
+      (play-and-score state "Midnight-3 Arcology"))
+    (take-credits state :corp)
+    (is (no-prompt? state :corp) "no prompt to discard")
+    (is (= 8 (count (:hand (get-corp)))) "8 cards in hand")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-card state :corp "NGO Front")
+    (click-card state :corp "Vanilla")
+    (click-card state :corp "Chiyashi")
+    (is (no-prompt? state :corp) "discards completed")))
+
 (deftest napd-contract
   ;; NAPD Contract
   (do-game

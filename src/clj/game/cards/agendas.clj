@@ -1061,6 +1061,13 @@
                              (do (system-msg state side "does not use Meteor Mining")
                                  (effect-completed state side eid))))}})
 
+(defcard "Midnight-3 Arcology"
+  {:on-score {:async true
+              :msg "Draw 3 cards and skip their discard step this turn"
+              :effect (req
+                        (swap! state assoc-in [:corp :register :skip-discard] true)
+                        (draw state :corp eid 3))}})
+
 (defcard "NAPD Contract"
   {:steal-cost-bonus (req [:credit 4])
    :advancement-requirement (req (count-bad-pub state))})

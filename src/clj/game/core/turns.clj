@@ -97,6 +97,10 @@
     (cond (and (= side :runner) (neg? (hand-size state side)))
           (do (flatline state)
               (effect-completed state side eid))
+          (get-in @state [side :register :skip-discard])
+          (do
+            (system-msg state side "skips their discard step this turn")
+            (effect-completed state side eid))
           (> cur-hand-size max-hand-size)
           (continue-ability
             state side
