@@ -1655,6 +1655,28 @@
           (is (= "Fairchild" (:title (get-ice state :hq 1)))
               "Fairchild is now installed in the outermost position protecting HQ")))))
 
+(deftest echo
+  (do-game
+    (new-game {:corp {:deck [(qty "Echo" 3)] :credits 15}})
+    (play-from-hand state :corp "Echo" "HQ")
+    (play-from-hand state :corp "Echo" "HQ")
+    (play-from-hand state :corp "Echo" "HQ")
+    (let [e1 (get-ice state :hq 0)
+          e2 (get-ice state :hq 1)
+          e3 (get-ice state :hq 2)]
+      (rez state :corp e1)
+      (is (= 1 (get-counters (refresh e1) :power)) "Placed 1 counter on rezzed Echo")
+      (is (= 0 (get-counters (refresh e2) :power)) "Placed 0 counter on unrezzed Echo")
+      (rez state :corp e2)
+      (is (= 2 (get-counters (refresh e1) :power)) "Placed 2 counters on rezzed Echo")
+      (is (= 1 (get-counters (refresh e2) :power)) "Placed 1 counter on rezzed Echo")
+      (is (= 0 (get-counters (refresh e3) :power)) "Placed 0 counter on unrezzed Echo")
+      (rez state :corp e3)
+      (is (= 3 (get-counters (refresh e1) :power)) "Placed 3 counters on rezzed Echo")
+      (is (= 2 (get-counters (refresh e2) :power)) "Placed 2 counter on rezzed Echo")
+      (is (= 1 (get-counters (refresh e3) :power)) "Placed 1 counter on unrezzed Echo")
+      (is (= 3 (count (:subroutines (refresh e1)))) "Should have 3 subroutine"))))
+
 (deftest endless-eula-runner-side-ability
     ;; Runner side ability
     (do-game
