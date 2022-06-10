@@ -613,6 +613,8 @@
 (defcard "Élivágar Bifurcation"
   {:on-score
    {:interactive (req true)
+    :waiting-prompt "Corp to make a decision"
+    :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
     :cancel-effect {:msg "decline to derez a card"}
     :effect (effect (derez target))}})
