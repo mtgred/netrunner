@@ -6428,6 +6428,26 @@
       (advance state tyrant 2)
       (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
 
+(deftest vasilisa
+  ;; Vasilisa
+  (do-game
+    (new-game {:corp {:hand ["Vasilisa" "NGO Front"]}})
+    (play-from-hand state :corp "Vasilisa" "HQ")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [vas (get-ice state :hq 0)
+          ngo (get-content state :remote1 0)]
+      (rez state :corp vas)
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-corp))
+        "paid 1c to place a token on ngo front"
+        (click-card state :corp (refresh ngo))
+        (is (= 1 (get-counters (refresh ngo) :advancement)) "ngo has a counter"))
+      (card-subroutine state :corp (refresh vas) 0)
+      (is (= 1 (count-tags state)) "Runner took 1 tag"))))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game

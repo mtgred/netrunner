@@ -3509,6 +3509,15 @@
 (defcard "Vanilla"
   {:subroutines [end-the-run]})
 
+(defcard "Vasilisa"
+  {:on-encounter {:cost [:credit 1]
+                  :choices {:card can-be-advanced?}
+                  :prompt "Place an advancement token on a card that can be advanced"
+                  :waiting-prompt "Corp to make a place an advancement token"
+                  :msg (msg "place 1 advancement token on " (card-str state target))
+                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+   :subroutines [(give-tags 1)]})
+
 (defcard "Veritas"
   {:subroutines [{:label "Corp gains 2 [Credits]"
                   :msg "gain 2 [Credits]"
