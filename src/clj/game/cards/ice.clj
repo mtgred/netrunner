@@ -3510,12 +3510,20 @@
   {:subroutines [end-the-run]})
 
 (defcard "Vasilisa"
-  {:on-encounter {:cost [:credit 1]
-                  :choices {:card can-be-advanced?}
-                  :prompt "Place an advancement token on a card that can be advanced"
-                  :waiting-prompt "Corp to make a place an advancement token"
-                  :msg (msg "place 1 advancement token on " (card-str state target))
-                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+  {:on-encounter
+   {:optional {:prompt "Place an advancement counter?"
+               :waiting-prompt "Corp to use Vasilisa"
+               :req (req (and (can-pay? state side eid card nil [:credit 1])
+                              (some #(or (not (rezzed? %))
+                                         (can-be-advanced? %))
+                                    (all-installed state :corp))))
+               :yes-ability {:cost [:credit 1]
+                             :choices {:card can-be-advanced?}
+                             :prompt "Place an advancement token on a card that can be advanced"
+                             :msg (msg "place 1 advancement token on " (card-str state target))
+                             :effect (effect (add-prop target :advance-counter 1 {:placed true}))
+                             :cancel-effect (effect (system-msg state side "declines to use Vasilisa"))}
+               :no-ability {:msg "declines to use Vasilisa"}}}
    :subroutines [(give-tags 1)]})
 
 (defcard "Veritas"

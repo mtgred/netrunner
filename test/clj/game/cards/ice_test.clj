@@ -6443,6 +6443,7 @@
       (changes-val-macro
         -1 (:credit (get-corp))
         "paid 1c to place a token on ngo front"
+        (click-prompt state :corp "Yes")
         (click-card state :corp (refresh ngo))
         (is (= 1 (get-counters (refresh ngo) :advancement)) "ngo has a counter"))
       (card-subroutine state :corp (refresh vas) 0)
