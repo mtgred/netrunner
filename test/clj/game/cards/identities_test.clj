@@ -688,6 +688,17 @@
       (click-card state :corp (find-card "Urban Renewal" (:hand (get-corp))))
       (is (= "Urban Renewal" (:title (get-content state :remote1 0))) "Asa Group can install an asset in a remote")))
 
+(deftest asa-group-security-through-vigilance-asa-group-should-not-allow-installing-assets-on-central-servers
+    ;; Asa Group should not allow installing assets on central servers
+    (do-game
+      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                        :deck ["Pup" "PAD Campaign" "Ben Musashi"]}})
+      (play-from-hand state :corp "Pup" "HQ")
+      (click-card state :corp (find-card "PAD Campaign" (:hand (get-corp))))
+      (is (empty? (get-content state :hq)) "Asa Group did not install asset on central server with its ability")
+      (click-card state :corp (find-card "Ben Musashi" (:hand (get-corp))))
+      (is (= "Ben Musashi" (:title (get-content state :hq 0))) "Asa Group can install an upgrade in a central server")))
+
 (deftest asa-group-security-through-vigilance-asa-group-ordering-correct-when-playing-mirrormorph
     ;; Asa Group ordering correct when playing Mirrormorph
     (do-game
