@@ -368,6 +368,11 @@
   {:constant-effects [(runner-hand-size+ -2)]
    :on-trash executive-trash-effect})
 
+(defcard "Chekist Scion"
+  (advance-ambush 0 {:msg (msg "give the Runner " (inc (get-counters (get-card state card) :advancement)) " tags")
+                     :async true
+                     :effect (effect (gain-tags :corp eid (inc (get-counters (get-card state card) :advancement))))}))
+
 (defcard "Chief Slee"
   {:events [{:event :end-of-encounter
              :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))

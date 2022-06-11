@@ -677,6 +677,17 @@
       (is (= ["Bacterial Programming"] (mapv :title (get-scored state :runner))) "Runner shouldn't score Chairman Hiro")
       (is (= ["Chairman Hiro"] (mapv :title (:discard (get-corp)))) "Chairman Hiro should be in Archives")))
 
+(deftest chekist-scion
+  ;; Chekist Scion
+  (do-game
+   (new-game {:corp {:deck ["Chekist Scion"]}})
+   (play-from-hand state :corp "Chekist Scion" "New remote")
+   (advance state (get-content state :remote1 0) 2)
+   (take-credits state :corp)
+   (run-empty-server state "Server 1")
+   (click-prompt state :corp "Yes")
+   (is (= 3 (count-tags state)) "Chekist scion should give 3 tags")))
+
 (deftest chief-slee
   ;; Chief Slee
   (do-game
