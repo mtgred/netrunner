@@ -3686,6 +3686,32 @@
       (run-continue state)
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall is trashed")))
 
+(deftest knifed-should-not-work-like-hippo-issue-6382
+    ;; Can trash ice even if an ice with the same subtype has been broken during a previous run. Issue #6382
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck ["Knifed" "Corroder"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (run-jack-out state)
+      (play-from-hand state :runner "Knifed")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue-until state :approach-ice)
+      (is (find-card "Ice Wall" (:discard (get-corp))) "Ice Wall is trashed")))
+
 (deftest knifed-can-only-trash-a-single-ice-per-run-issue-4791
     ;; Can only trash a single ice per run. Issue #4791
     (do-game
