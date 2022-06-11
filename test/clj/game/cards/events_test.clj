@@ -4654,6 +4654,26 @@
       (play-from-hand state :runner "Peace in Our Time")
       (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits")))
 
+(deftest pinhole-threading
+  (do-game
+    ;;can't access in same server, can't steal/trash agenda
+    (new-game {:runner {:hand ["Imp" "Pinhole Threading"]}
+               :corp {:hand ["Project Beale" "PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (play-from-hand state :runner "Pinhole Threading")
+    (click-prompt state :runner "Server 1")
+    (run-continue state)
+    (click-card state :runner "Project Beale")
+    ;; note: Imp does not check to see if the card can be trashed
+    ;;       the ability should fizzle though -nbkelly
+    (is (= ["[Imp] Hosted virus counter: Trash card" "No action"]
+           (mapv :value (:choices (prompt-map :runner)))))
+    (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
+    (is (= 0 (count (:discard (get-corp)))) "Beale was not trashed")))
+
 (deftest planned-assault
   ;; Planned Assault
   (do-game
