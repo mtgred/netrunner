@@ -19,7 +19,7 @@
                             (every? :broken (:subroutines target))
                             (let [pred #(and (has-subtype? (first %) subtype)
                                              (every? :broken (:subroutines (first %))))]
-                              (first-event? state side :subroutines-broken pred))))
+                              (first-run-event? state side :subroutines-broken pred))))
              :msg (msg "trash " (card-str state target))
              :effect (effect (trash eid target nil))}]})
 
