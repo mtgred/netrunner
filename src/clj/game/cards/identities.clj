@@ -221,6 +221,7 @@
                                :choices {:card #(and (in-hand? %)
                                                      (corp? %)
                                                      (corp-installable-type? %)
+                                                     (or (is-remote? z) (not (asset? %)))
                                                      (not (agenda? %)))}
                                :async true
                                :effect (effect (corp-install eid target (zone->name z) nil))}
