@@ -5484,6 +5484,20 @@
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (is (= 5 (:credit (get-corp))) "Gained 1 credit for new server created"))))
 
+(deftest ubiquitous-vig
+  ;; Ubiquitous Vig
+  (do-game
+    (new-game {:corp {:hand ["Ubiquitous Vig"]}})
+    (play-from-hand state :corp "Ubiquitous Vig" "New remote")
+    (let [vig (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh vig)})
+      (core/advance state :corp {:card (refresh vig)})
+      (rez state :corp vig)
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (+ 2 credits) (:credit (get-corp))) "Should gain 2 credits at start of turn from Vig")))))
+
 (deftest urban-renewal
   ;; Urban renewal meat damage
   (do-game

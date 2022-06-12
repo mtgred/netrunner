@@ -2316,6 +2316,17 @@
              :async true
              :effect (effect (gain-credits eid 1))}]})
 
+(defcard "Ubiquitous Vig"
+  (let [ability {:msg (msg "gain " (get-counters card :advancement)  " [Credits]")
+                 :label "Gain 1 [Credits] for each advancement counter (start of turn)"
+                 :once :per-turn
+                 :async true
+                 :effect (effect (gain-credits eid (get-counters card :advancement)))}]
+    {:derezzed-events [corp-rez-toast]
+     :advanceable :always
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (defcard "Urban Renewal"
   {:on-rez {:effect (effect (add-counter card :power 3))}
    :derezzed-events [corp-rez-toast]
