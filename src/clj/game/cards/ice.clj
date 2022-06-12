@@ -2420,6 +2420,22 @@
                                  :effect (req (apply swap-installed state side targets))})
                               card nil))}]})
 
+(defcard "Mestnichestvo"
+  {:advanceable :always
+   :on-encounter
+   {:optional {:prompt "Remove an advancement counter to make the Runner lose 3 [Credits]?"
+               :req (req (pos? (get-counters (get-card state card) :advancement)))
+               :yes-ability {:async true
+                             :msg (msg "spend 1 advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
+                             :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
+                                             (lose-credits :runner eid 3))}
+               :no-ability {:msg "decline to make the runner lose 3 [Credits]"}}}
+   :subroutines [{:label "The Runner loses 3 [Credits]"
+                  :msg "force the Runner to lose 3 [Credits]"
+                  :async true
+                  :effect (effect (lose-credits :runner eid 3))}
+                 end-the-run]})
+
 (defcard "Mganga"
   {:subroutines [(do-psi {:async true
                           :label "do 2 net damage"

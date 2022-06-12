@@ -4006,6 +4006,28 @@
     (is (= 4 (get-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
     (is (= 1 (get-strength (get-ice state :rd 0))) "R&D at 0 strength")))
 
+(deftest mestnichestvo
+  (do-game
+    (new-game {:corp {:hand ["Mestnichestvo"] :credits 10}})
+    (play-from-hand state :corp "Mestnichestvo" "HQ")
+    (let [mes (get-ice state :hq 0)]
+      (core/advance state :corp {:card (refresh mes)})
+      (take-credits state :corp)
+      (run-on state :hq)
+      (rez state :corp (refresh mes))
+      (run-continue state)
+      (changes-val-macro
+        -3 (:credit (get-runner))
+        "Runner lost 3 from encounter effect"
+        (is (= 1 (get-counters (refresh mes) :advancement)) "Starts with 1 counter")
+        (click-prompt state :corp "Yes")
+        (is (= 0 (get-counters (refresh mes) :advancement)) "Spend a counter for the ability"))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner loses remaining credits from subroutines"
+        (fire-subs state (refresh mes))))
+    (is (not (:run @state)) "Run ended")))
+
 (deftest metamorph-with-two-installed-ice
     ;; with two installed ice
     (do-game
