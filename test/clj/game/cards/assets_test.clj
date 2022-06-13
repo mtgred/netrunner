@@ -1456,6 +1456,28 @@
                 (is (= (- 4 number) (:credit (get-runner)))))))]
     (doall (map dlcd-test [0 1 2 3 4]))))
 
+(deftest drago-ivanov
+  (do-game
+    (new-game {:corp {:hand ["Drago Ivanov"] :credits 10}})
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "Drago Ivanov" "New remote")
+    (let [drago (get-content state :remote1 0)]
+      (advance state (refresh drago) 4)
+      (is (= 4 (get-counters (refresh drago) :advancement)))
+      (rez state :corp (refresh drago))
+      (changes-val-macro
+        1 (count-tags state)
+        "Drago tagged the runner"
+        (card-ability state :corp (refresh drago) 0)
+        (is (= 2 (get-counters (refresh drago) :advancement))))
+      (take-credits state :corp)
+      (changes-val-macro
+        0 (count-tags state)
+        "Drago cannot be used on the runners turn"
+        (card-ability state :corp (refresh drago) 0)
+        (is (= 2 (get-counters (refresh drago) :advancement)))))))
+
+
 (deftest drudge-work
   ;; Drudge Work - Shuffle agenda from HQ or Archives into R&D, and gain credits = to agenda points
   ;; TODO: do some Noah magic on this test to test several agendas from several locations

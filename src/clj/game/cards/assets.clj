@@ -661,6 +661,14 @@
                        " by " (get-counters card :power) " [Credits]")
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
 
+(defcard "Drago Ivanov"
+  {:advanceable :always
+   :abilities [{:cost [:advancement 2]
+                :req (req (= :corp (:active-player @state)))
+                :msg "give the runner a tag"
+                :async true
+                :effect (effect (gain-tags :corp eid 1))}]})
+
 (defcard "Drudge Work"
   {:on-rez {:effect (effect (add-counter card :power 3))}
    :events [(trash-on-empty :power)]
