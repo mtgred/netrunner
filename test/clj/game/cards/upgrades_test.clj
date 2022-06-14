@@ -2146,6 +2146,88 @@
       ;; 1 click to play program, 1 for run, 1 of Mason
       (is (= 1 (:click (get-runner)))))))
 
+(deftest mavirus-purge-ability
+    ;; Purge ability
+    (do-game
+      (new-game {:corp {:deck [(qty "Mavirus" 3)]}
+                 :runner {:hand ["Cache" "Medium" "Sure Gamble" "Sure Gamble"]}})
+      (play-from-hand state :corp "Mavirus" "HQ")
+      (take-credits state :corp 2)
+      ;; runner's turn
+      ;; install cache and medium
+      (play-from-hand state :runner "Cache")
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
+            cache (find-card "Cache" (get-program state))
+            mav (get-content state :hq 0)]
+        (is (= 3 (virus-counters cache)))
+        (play-from-hand state :runner "Medium")
+        (take-credits state :runner 2)
+        (rez state :corp mav)
+        (card-ability state :corp mav 0)
+        ;; nothing in hq content
+        (is (empty? (get-content state :hq)) "CVS was trashed")
+        ;; no cards trashed from grip
+        (is (= 2 (count (:hand (get-runner)))) "No cards trashed by Mavirus")
+        ;; purged counters
+        (is (zero? (virus-counters cache))
+            "Cache has no counters")
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
+            "Medium has no counters"))))
+
+(deftest mavirus-purge-on-access-rezzed
+    ;; Purge on access
+    (do-game
+      (new-game {:corp {:deck [(qty "Mavirus" 3)]}
+                 :runner {:hand ["Cache" "Medium" "Sure Gamble" "Sure Gamble"]}})
+      (play-from-hand state :corp "Mavirus" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp 2)
+      ;; runner's turn
+      ;; install cache and medium
+      (play-from-hand state :runner "Cache")
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
+            cache (find-card "Cache" (get-program state))]
+        (is (= 3 (virus-counters cache)))
+        (play-from-hand state :runner "Medium")
+        (run-empty-server state "Server 1")
+        ;; corp now has optional prompt to trigger virus purge
+        (is (= 2 (count (:hand (get-runner)))) "No damage dealt yet")
+        (click-prompt state :corp "Yes")
+        (is (= 1 (count (:hand (get-runner)))) "1 damage dealt with Mavirus")
+        ;; runner has prompt to trash Mavirus
+        (click-prompt state :runner "Pay 0 [Credits] to trash")
+        ;; purged counters
+        (is (zero? (virus-counters cache))
+            "Cache has no counters")
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
+            "Medium has no counters"))))
+
+(deftest mavirus-purge-on-access-unrezzed
+    ;; Purge on access
+    (do-game
+      (new-game {:corp {:deck [(qty "Mavirus" 3)]}
+                 :runner {:hand ["Cache" "Medium" "Sure Gamble" "Sure Gamble"]}})
+      (play-from-hand state :corp "Mavirus" "New remote")
+      (take-credits state :corp 2)
+      ;; runner's turn
+      ;; install cache and medium
+      (play-from-hand state :runner "Cache")
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
+            cache (find-card "Cache" (get-program state))]
+        (is (= 3 (virus-counters cache)))
+        (play-from-hand state :runner "Medium")
+        (run-empty-server state "Server 1")
+        ;; corp now has optional prompt to trigger virus purge
+        (is (= 2 (count (:hand (get-runner)))) "No damage dealt yet")
+        (click-prompt state :corp "Yes")
+        (is (= 2 (count (:hand (get-runner)))) "No damage dealt (mav unrezzed)")
+        ;; runner has prompt to trash Mavirus
+        (click-prompt state :runner "Pay 0 [Credits] to trash")
+        ;; purged counters
+        (is (zero? (virus-counters cache))
+            "Cache has no counters")
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
+            "Medium has no counters"))))
 
 (deftest midori
   ;; Midori
