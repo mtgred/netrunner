@@ -270,7 +270,7 @@
         ;; match strength
         can-pump (fn [ability]
                    (when (and (:heap-breaker-pump ability)
-                              (not (any-effects state side :prevent-paid-ability true? current-ice [card ability 0])))
+                              (not (any-effects state side :prevent-paid-ability true? card [ability])))
                      ((:req ability (req true)) state side eid card nil)))
         breaker-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
         pump-strength-at-once (when breaker-ability
@@ -373,7 +373,7 @@
           ;; break all subs
           can-break (fn [ability]
                       (when (and (:break-req ability)
-                                 (not (any-effects state side :prevent-paid-ability true? current-ice [card ability 0])))
+                                 (not (any-effects state side :prevent-paid-ability true? card [ability])))
                         ((:break-req ability) state side eid card nil)))
           break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
           break-cost-req (or (:cost-req break-ability) identity)

@@ -2271,7 +2271,7 @@
    :leave-play (effect (remove-icon card))
    :constant-effects [{:type :prevent-paid-ability
                        :req (req
-                              (let [[break-card break-ability _] (take-last 3 targets)]
+                              (let [[break-card break-ability] targets]
                                 (and
                                   (same-card? current-ice (get-in card [:special :trieste-target]))
                                   (runner? break-card)
