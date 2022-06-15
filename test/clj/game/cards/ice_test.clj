@@ -811,6 +811,25 @@
       (run-jack-out state)
       (is (= 1 (count-tags state)) "Run unsuccessful; Runner kept 1 tag"))))
 
+(deftest bathynomus
+  ;; Crick - Strength boost when protecting Archives; installs a card from Archives
+  (do-game
+    (new-game {:corp {:hand [(qty "Bathynomus" 2)]}
+               :runner {:hand [(qty "Sure Gamble" 4)]}})
+    (play-from-hand state :corp "Bathynomus" "HQ")
+    (play-from-hand state :corp "Bathynomus" "Archives")
+    (take-credits state :corp)
+    (let [ba1 (get-ice state :hq 0)
+          ba2 (get-ice state :archives 0)]
+      (rez state :corp ba1)
+      (rez state :corp ba2)
+      (is (= 1 (get-strength (refresh ba1))) "Normal strength over HQ")
+      (is (= 4 (get-strength (refresh ba2))) "+3 strength over Archives")
+      (run-on state "Archives")
+      (run-continue state)
+      (card-subroutine state :corp ba2 0)
+      (is (= 3 (count (:discard (get-runner)))) "Runner suffered 2 net damage"))))
+
 (deftest blockchain-face-up-transactions
     ;; Face up transactions
     (do-game

@@ -686,6 +686,10 @@
 (defcard "Bastion"
   {:subroutines [end-the-run]})
 
+(defcard "Bathynomus"
+  {:subroutines [(do-net-damage 3)]
+   :strength-bonus (req (if (= (second (get-zone card)) :archives) 3 0))})
+
 (defcard "Battlement"
   {:subroutines [end-the-run
                  end-the-run]})
