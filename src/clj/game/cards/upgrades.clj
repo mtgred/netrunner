@@ -920,7 +920,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:waiting-prompt "Corp to choose an option"
-             :prompt "Purge virus counters with Mavirus"
+             :prompt "Purge virus counters with Mavirus?"
              :yes-ability {:msg (msg "purge virus counters")
                            :async true
                            :effect (req (purge state side)
