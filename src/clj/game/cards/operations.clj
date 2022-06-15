@@ -1402,7 +1402,8 @@
               :max 2}
     :msg (msg (if (= 2 (count targets))
                 "install 2 cards from HQ in new remote servers, and place two advancements on each of them"
-                "install a card from HQ in a new remote server, and place two advancements on it."))
+                "install a card from HQ in a new remote server, and place two advancements on it"))
+    :async true
     :effect (req (doseq [target-card targets]
                    (wait-for (corp-install state side target-card "New remote" nil)
                              (let [installed-card async-result]
@@ -1420,7 +1421,8 @@
                                  (fn [state _ card]
                                    (if (same-card? card installed-card)
                                      ((constantly false) (toast state :corp "Cannot score due to Mitosis." "Warning"))
-                                     true)))))))}})
+                                     true))))))
+                 (effect-completed state side eid))}})
 
 (defcard "Mushin No Shin"
   {:on-play
