@@ -5854,6 +5854,29 @@
     (click-prompt state :runner "HQ")
     (is (:run @state) "Run should be initiated")))
 
+(deftest steelskin-scarring
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
+    (damage state :corp :net 1)
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards from steelskin"))
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}
+               :corp {:hand ["Kala Ghoda Real TV"]}})
+    (core/move state :runner (find-card "Steelskin Scarring" (:hand (get-runner))) :deck {:front true})
+    (core/fake-checkpoint state)
+    (is (= "Steelskin Scarring" (:title (first (:deck (get-runner))))) "Steelskin is ontop of the stack")
+    (play-from-hand state :corp "Kala Ghoda Real TV" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (card-ability state :corp (get-content state :remote1 0) 1)
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards when steelskin gets trashed from stack"))
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      2 (count (:hand (get-runner)))
+      "Drew 3 (+2 net cards) with steelskin"
+      (play-from-hand state :runner "Steelskin Scarring"))))
+
 (deftest stimhack
   ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run
   (do-game

@@ -2951,6 +2951,18 @@
                               :effect (effect (make-run eid target))}
                              card nil)))}})
 
+(defcard "Steelskin Scarring"
+  {:on-play {:async true
+             :effect (effect (draw eid 3))}
+   :on-trash {:when-inactive true
+              :interactive (req true)
+              :async true
+              :req (req (let [zone (first (:zone (:card context)))]
+                          (or (= :hand zone)
+                              (= :deck zone))))
+              :msg "draw 2 cards"
+              :effect (effect (draw :runner eid 2))}})
+
 (defcard "Stimhack"
   {:makes-run true
    :on-play {:prompt "Choose a server"
