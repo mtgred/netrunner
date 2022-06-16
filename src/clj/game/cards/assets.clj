@@ -1281,6 +1281,58 @@
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
 
+(defcard "Moon Pool"
+  (letfn [(moon-pool-place-advancements
+            [x] {:async true
+                 :prompt (msg "Place an advancement counter on an installed card (" x " remaining)")
+                 :choices {:card #(installed? %)}
+                 :msg (msg "place an advancement counter on " (card-str state target))
+                 :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
+                                        (if (> x 1)
+                                          (continue-ability
+                                            state side
+                                            (moon-pool-place-advancements (dec x))
+                                            card nil)
+                                          (effect-completed state side eid))))
+                 :cancel-effect (effect (system-msg "declines to use Moon Pool to place an advancement counter")
+                                        (effect-completed eid))})]
+    (let [moon-pool-reveal-ability
+          {:prompt "Reveal up to 2 facedown cards from Archives and shuffle them into R&D"
+           :async true
+           :choices {:card #(and (corp? %)
+                                 (in-discard? %)
+                                 (not (faceup? %)))
+                     :max 2}
+           :msg (msg "to reveal " (string/join " and " (map :title targets)) " from Archives and shuffle them into R&D")
+           :effect (req (wait-for (reveal state side targets)
+                                  (doseq [c targets]
+                                    (move state side c :deck))
+                                  (shuffle! state side :deck)
+                                  (let [agenda-count (count (filter agenda? targets))]
+                                    (if (pos? agenda-count)
+                                      (continue-ability
+                                        state side
+                                        (moon-pool-place-advancements agenda-count)
+                                        card nil)
+                                      (effect-completed state side eid)))))
+           :cancel-effect (effect (system-msg "declines to use Moon Pool to reveal any cards from Archives")
+                                  (effect-completed eid))}]
+      {:abilities [{:prompt "Trash up to 2 cards from HQ"
+                    :label "Trash up to 2 cards from HQ"
+                    :cost [:remove-from-game]
+                    :async true
+                    :choices {:card #(and (corp? %)
+                                          (in-hand? %))
+                              :max 2}
+                    :msg (msg "trash " (count targets) " cards from HQ ")
+                    :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
+                                           (continue-ability
+                                             state side
+                                             moon-pool-reveal-ability
+                                             card nil)))
+                    :cancel-effect (effect (system-msg "declines to use Moon Pool to trash cards from HQ")
+                                           (continue-ability moon-pool-reveal-ability card nil))}]})))
+
 (defcard "Mr. Stone"
   {:events [{:event :runner-gain-tag
              :async true

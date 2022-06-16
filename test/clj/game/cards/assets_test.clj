@@ -3071,6 +3071,37 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
+(deftest moon-pool
+  ;; Moon Pool - trash 2 from hq, reveal and shuffle 2, place an advancement for agendas revealed
+  (do-game
+    (new-game {:corp {:hand [(qty "Moon Pool" 2) "Hostile Takeover" "PAD Campaign" "Project Atlas"
+                             "House of Knives"] :credits 10}})
+    (play-from-hand state :corp "Moon Pool" "New remote")
+    (play-from-hand state :corp "Moon Pool" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp "PAD Campaign")
+    (click-card state :corp "Project Atlas")
+    (is (= 2 (count (:discard (get-corp)))) "Two cards trashed")
+    (click-card state :corp "PAD Campaign")
+    (click-prompt state :corp "Done")
+    (is (no-prompt? state :corp) "No more prompt for moon pool")
+    (is (= 1 (count (:discard (get-corp)))))
+    (is (= 1 (count (:deck (get-corp)))))
+    (card-ability state :corp (get-content state :remote2 0) 0)
+    (click-card state :corp "House of Knives")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "House of Knives")
+    (click-card state :corp "Project Atlas")
+    (is (= 0 (count (:discard (get-corp)))) "All cards shuffled back")
+    (is (= 3 (count (:deck (get-corp)))))
+    (click-card state :corp "Hostile Takeover")
+    (click-card state :corp "Hostile Takeover")
+    (score state :corp (get-content state :remote3 0))
+    (is (= 1 (count (:scored (get-corp)))) "Hostile was scored")))
+
 (deftest mr-stone
   ;; Mr Stone
   (do-game
