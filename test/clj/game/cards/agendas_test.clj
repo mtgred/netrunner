@@ -3262,6 +3262,21 @@
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
 
+(deftest regenesis
+  ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
+  ;; and add it to score area
+  (do-game
+    (new-game {:corp {:deck [(qty "Regenesis" 2) "Hansei Review" "Obokata Protocol"]}})
+    (play-from-hand state :corp "Hansei Review")
+    (click-card state :corp "Obokata Protocol")
+    (play-and-score state "Regenesis")
+    (is (no-prompt? state :corp) "No prompt because we trashed at least one card")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Obokata Protocol")
+    (is (= 5 (:agenda-point (get-corp))) "3+1+1 agenda points from obo + regen + regen")))
+
 (deftest remastered-edition
   ;; Remastered Edition
   (do-game
