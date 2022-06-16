@@ -578,11 +578,9 @@
       (score state :corp (refresh blood))
       (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 4)")
       (damage state :corp :net 1)
-      (core/fake-checkpoint state)
       (score state :corp (refresh blood))
       (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 3)")
       (damage state :corp :net 1)
-      (core/fake-checkpoint state)
       (score state :corp (refresh blood))
       (is (= 2 (:agenda-point (get-corp))) "Scored regenesis when runner had 2 cards"))))
 
