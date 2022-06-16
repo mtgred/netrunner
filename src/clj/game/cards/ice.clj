@@ -1996,6 +1996,16 @@
                         :effect (req (wait-for (trash state side target {:cause :subroutine})
                                                (trash state side eid card {:cause :subroutine}))))]})
 
+(defcard "Ivik"
+  {:subroutines [(do-net-damage 2)
+                 end-the-run]
+   :rez-cost-bonus (req (- (reduce (fn [c server]
+                                  (+ c (count (filter #(and (has-subtype? % "Code Gate")
+                                                            (rezzed? %))
+                                                      (:ices server)))))
+                                0
+                                (flatten (seq (:servers corp))))))})
+
 (defcard "Janus 1.0"
   {:subroutines [(do-brain-damage 1)
                  (do-brain-damage 1)
