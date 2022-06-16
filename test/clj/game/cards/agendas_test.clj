@@ -568,6 +568,24 @@
     (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
     (is (= 2 (count-bad-pub state)) "Should gain 1 bad publicity")))
 
+(deftest blood-in-the-water
+  (do-game
+    (new-game {:corp {:hand ["Blood in the Water"]}
+               :runner {:hand [(qty "Sure Gamble" 4)]}})
+    (play-from-hand state :corp "Blood in the Water" "New remote")
+    (let [blood (get-content state :remote1 0)]
+      (core/add-prop state :corp blood :advance-counter 2)
+      (score state :corp (refresh blood))
+      (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 4)")
+      (damage state :corp :net 1)
+      (score state :corp (refresh blood))
+      (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 3)")
+      (damage state :corp :net 1)
+      (is (= 2 (count (:hand (get-runner)))))
+      (is (= 2 (get-counters (refresh blood) :advancement)))
+      (score state :corp (refresh blood))
+      (is (= 2 (:agenda-point (get-corp))) "Scored regenesis when runner had 2 cards"))))
+
 (deftest brain-rewiring
   ;; Brain Rewiring
   (do-game

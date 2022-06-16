@@ -324,6 +324,9 @@
       :async true
       :effect (effect (continue-ability (:on-score (card-def target)) target nil))}}}})
 
+(defcard "Blood in the Water"
+  {:advancement-requirement (req (count (:hand runner)))})
+
 (defcard "Brain Rewiring"
   {:on-score
    {:optional
