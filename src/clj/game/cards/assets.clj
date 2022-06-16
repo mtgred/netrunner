@@ -273,6 +273,25 @@
   {:on-rez {:effect (effect (lock-zone (:cid card) :runner :discard))}
    :leave-play (effect (release-zone (:cid card) :runner :discard))})
 
+(defcard "Bladderwort"
+  (let [ability {:msg "gain 1 [Credits]"
+                 :label "Gain 1 [Credits] (start of turn)"
+                 :once :per-turn
+                 :interactive (req true)
+                 :async true
+                 :effect (req (wait-for (gain-credits state side 1)
+                                        (if (<= (:credit (:corp @state)) 4)
+                                          (continue-ability
+                                            state side
+                                            {:msg "do 1 net damage"
+                                             :async true
+                                             :effect (effect (damage eid :net 1 {:card card}))}
+                                            card nil)
+                                          (effect-completed state side eid))))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (defcard "Brain-Taping Warehouse"
   {:constant-effects [{:type :rez-cost
                        :req (req (and (ice? target)

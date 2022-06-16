@@ -457,6 +457,33 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
       (is (= 1 (count (:scored (get-runner)))))))
 
+(deftest bladderwort
+  ;; Bladderwort: turn starts, gain 1. Then if you have 4c or less, deal 1 net damage
+  (do-game
+    (new-game {:corp {:deck ["Bladderwort"]} :runner {:hand (qty "Sure Gamble" 5)}})
+    (play-from-hand state :corp "Bladderwort" "New remote")
+    (let [wort (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (rez state :corp wort)
+      ;; set corp to 3c -> should fire the damage
+      (core/gain state :corp :credit (- (:credit (get-corp))))
+      (core/gain state :corp :credit 3)
+      (is (= 3 (:credit (get-corp))) "3 credits should let bladderwort fire")
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "gained 1c at start of turn"
+        (take-credits state :runner))
+      (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage from bladderwort")
+      (take-credits state :corp)
+      (core/gain state :corp :credit (- (:credit (get-corp))))
+      (core/gain state :corp :credit 4)
+      (is (= 4 (:credit (get-corp))) "4 credits should stop bladderwort firing")
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "gained 1c at start of turn"
+        (take-credits state :runner))
+      (is (= 1 (count (:discard (get-runner)))) "Didn't deal additional damage"))))
+
 (deftest brain-taping-warehouse
   ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ice by 1 for each unspent Runner click
   (do-game
