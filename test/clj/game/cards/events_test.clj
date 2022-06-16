@@ -5558,6 +5558,22 @@
     (is (no-prompt? state :runner) "Enigma should be trashed")
     (is (= "Enigma" (-> (get-corp) :discard first :title)) "Enigma should be trashed")))
 
+(deftest running-hot
+  ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
+  (do-game
+    (new-game {:runner {:deck ["Running Hot"
+                               "Feedback Filter"
+                               (qty "Sure Gamble" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (play-from-hand state :runner "Running Hot")
+    (is (no-prompt? state :runner)
+        "Feedback Filter brain damage prevention opportunity not given")
+    (is (= 5 (:click (get-runner))) "Runner gained 2 clicks from Running Hot")
+    (is (= 2 (count (:discard (get-runner)))) "Runner discarded 1 card from damage")
+    (is (= 4 (hand-size :runner)) "Runner handsize decreased by 1")
+    (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
+
 (deftest running-interference
   ;; Running Interference
   (do-game

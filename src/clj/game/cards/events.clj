@@ -2738,6 +2738,14 @@
                                    :effect (effect (trash eid target nil))})
                                 card nil)))}]}))
 
+(defcard "Running Hot"
+  {:on-play
+   {:msg "gain [Click][Click][Click]"
+    :additional-cost [:brain 1]
+    :async true
+    :effect (effect (gain-clicks 3)
+                    (effect-completed eid))}})
+
 (defcard "Running Interference"
   {:makes-run true
    :on-play {:prompt "Choose a server"
