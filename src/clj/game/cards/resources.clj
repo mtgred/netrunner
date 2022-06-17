@@ -3004,6 +3004,35 @@
                  (ttw-bounce "R&D" :rd)
                  (ttw-bounce "HQ" :hq)]}))
 
+(defcard "The Twinning"
+  {:events [{:event :spent-credits-from-card
+             :req (req (and
+                         (installed? target)
+                         (first-event? state side :spent-credits-from-card #(installed? (first %)))))
+             :async true
+             :effect (req (add-counter state :runner card :power 1 {:placed true})
+                          (effect-completed state side eid))}
+            {:event :breach-server
+             :async true
+             :req (req (and (or (= :rd target)
+                                (= :hq target))
+                            (< 0 (get-counters card :power))))
+             :effect (req
+                       (let [target-server target]
+                         (continue-ability
+                           state side
+                           {:req (req (< 0 (get-counters card :power)))
+                            :prompt (msg (format "Choose how many additional %s accesses to make with The Twinning" (if (= :rd target) "R&D" "HQ")))
+                            :choices {:number (req (min 2 (get-counters card :power)))
+                                      :default (req (min 2 (get-counters card :power)))}
+                            :msg (msg "access " target " additional cards from "
+                                      (if (= :rd target-server) "R&D" "HQ"))
+                            :async true
+                            :effect (effect (access-bonus target-server (max 0 target))
+                                            (add-counter :runner card :power (- target) {:placed true})
+                                            (effect-completed eid))}
+                           card nil)))}]})
+
 (defcard "Theophilius Bagbiter"
   {:constant-effects [(runner-hand-size+ (req (:credit runner)))]
    :on-install {:async true

@@ -6187,6 +6187,46 @@
         (click-prompt state :runner "0")
         (is (= 4 (count-tags state)) "Bouncing enables Hard-Hitting News"))))
 
+(deftest the-twinning
+  ;; First time each turn you spend credits from an installed card, place 1 power counter
+  ;; on breach hq/r&d - spend up to 2 counters to access that many more cards
+  (do-game
+    (new-game {:runner {:hand ["The Twinning" "Sahasrara" "Cache" "Cache"] :credits 10}
+               :corp {:hand [(qty "Hedge Fund" 4)] :deck [(qty "Hedge Fund" 4)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Twinning")
+    (play-from-hand state :runner "Sahasrara")
+    (let [twin (get-resource state 0)]
+      (changes-val-macro
+        1 (get-counters (refresh twin) :power)
+        "1 counter for first spend"
+        (play-from-hand state :runner "Cache")
+        (click-card state :runner "Sahasrara"))
+      (changes-val-macro
+        0 (get-counters (refresh twin) :power)
+        "no counter for second spend"
+        (play-from-hand state :runner "Cache")
+        (click-card state :runner "Sahasrara"))
+      (take-credits state :corp)
+      (core/add-counter state :runner (refresh twin) :power 3)
+      (run-empty-server state :hq)
+      (changes-val-macro
+        -2 (get-counters (refresh twin) :power)
+        "spent 2 counters on HQ"
+        (click-prompt state :runner "2"))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (run-empty-server state :rd)
+      (changes-val-macro
+        -2 (get-counters (refresh twin) :power)
+        "spent 2 counters on R&D"
+        (click-prompt state :runner "2"))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No prompt left over"))))
+
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
   (do-game
