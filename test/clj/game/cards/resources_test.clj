@@ -3866,7 +3866,7 @@
       (let [oca (get-resource state 0)]
         (card-ability state :runner oca 0)
         (click-card state :runner "The Class Act")
-        (click-card state :runner (last (:hand (get-runner))))
+        (click-card state :runner (last (:set-aside (get-runner))))
         (is (= 1 (count (:hand (get-runner)))))
         (take-credits state :runner)
         (is (= 5 (count (:hand (get-runner)))) "Draw 4 cards from The Class Act")
@@ -5219,7 +5219,7 @@
         (is (seq (:prompt (get-runner))) "Runner should have The Class Act prompt")
         (is (= "Choose 1 card to add to the bottom of the stack" (-> (prompt-map :runner) :msg))
             "Runner gets The Class Act's power on Corp's turn")
-        (click-card state :runner (find-card "Diesel" (:hand (get-runner))))
+        (click-card state :runner (find-card "Diesel" (:set-aside (get-runner))))
         (play-from-hand state :runner "Diesel")
         (is (= "The Class Act" (-> (prompt-map :runner) :card :title)) "Runner gets The Class Act's power on Runner's turn"))))
 
@@ -5667,7 +5667,7 @@
      (click-draw state :runner)
      (is (seq (:prompt (get-runner))) "The Class Act is prompting the runner to choose")
      (is (seq (:prompt (get-corp))) "The Class Act is insisting the corp waits")
-     (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+     (click-card state :runner (find-card "Sure Gamble" (:set-aside (get-runner))))
      (is (no-prompt? state :runner) "The Class Act is done prompting the runner to choose")
      (is (no-prompt? state :corp) "The Class Act is not insisting the corp waits")
      (is (= 1 (count (:deck (get-runner)))) "1 card put back")))
@@ -5687,7 +5687,7 @@
      (click-prompt state :runner "John Masanori") ; runner should be prompted for which to trigger first
      (is (= 2 (count (:prompt (get-runner)))) "The Class Act is prompting the runner to choose, but Paragon prompt is not open yet")
      (is (seq (:prompt (get-corp))) "The Class Act is insisting the corp waits")
-     (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+     (click-card state :runner (find-card "Sure Gamble" (:set-aside (get-runner))))
      (is (= 2 (count (:deck (get-runner)))) "The Class Act put a card back")
      (is (changes-credits (get-runner) 1
                           (do (click-prompt state :runner "Yes") ; runner prompted to trigger Paragon

@@ -2693,7 +2693,7 @@
       (card-subroutine state :corp harv 0)
       (is (= "The Class Act" (-> (prompt-map :runner) :card :title)) "The Class Act prompt showing")
       (is (= 2 (count (:prompt (get-runner)))) "Harvester prompt not open yet")
-      (click-card state :runner (last (:hand (get-runner))))
+      (click-card state :runner (last (:set-aside (get-runner))))
       (is (= 7 (count (:hand (get-runner)))) "Runner bottomed Class Act draw")
       (is (= "Harvester" (-> (prompt-map :runner) :card :title)) "Harvester prompt showing")
       (click-card state :runner (last (:hand (get-runner))))
