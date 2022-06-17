@@ -392,6 +392,19 @@
                                   (cbi-choice from '() (count from) from)))
                               card nil))}})]}))
 
+(defcard "Chastushka"
+  {:makes-run true
+   :on-play {:req (req hq-runnable)
+             :async true
+             :effect (effect (make-run eid :hq card))}
+   :events [(successful-run-replace-breach
+              {:target-server :hq
+               :this-card-run true
+               :mandatory true
+               :ability
+               {:async true
+                :effect (effect (continue-ability (sabotage-ability 4) card nil))}})]})
+
 (defcard "Code Siphon"
   (letfn [(rd-ice [state]
             (* -3 (count (get-in @state [:corp :servers :rd :ices]))))]

@@ -994,6 +994,15 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
+(deftest chastushka
+  ;; Chastushka - run hq, replace breach with sabotage 4
+  (do-game
+    (new-game {:runner {:deck ["Chastushka"]}
+               :corp {:hand [(qty "Hedge Fund" 5)] :deck [(qty "Hedge Fund" 2)]}})
+    (take-credits state :corp)
+    (play-run-event state "Chastushka" :hq)
+    (is (last-log-contains? state "uses Chastushka to sabotage 4") "Sabotage happened")))
+
 (deftest code-siphon
   ;; Code Siphon
   (do-game
