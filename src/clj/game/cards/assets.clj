@@ -1714,20 +1714,20 @@
                     :effect
                     (effect
                       (continue-ability
-                        (let [hq-card target
-                              t (:type hq-card)]
+                        (let [set-aside-card target
+                              t (:type set-aside-card)]
                           {:show-discard true
-                           :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title hq-card))
+                           :prompt (msg "Choose an " t " in Archives to reveal and swap into HQ for " (:title set-aside-card))
                            :choices {:card #(and (corp? %)
                                                  (= (:type %) t)
                                                  (in-discard? %))}
-                           :msg (msg "lose [Click], reveal " (:title hq-card)
+                           :msg (msg "lose [Click], reveal " (:title set-aside-card)
                                      " from HQ, and swap it for " (:title target)
                                      " from Archives")
                            :async true
                            :effect (req (wait-for
-                                          (reveal state side hq-card target)
-                                          (swap-cards state side hq-card target)
+                                          (reveal state side set-aside-card target)
+                                          (swap-set-aside-cards state side set-aside-card target)
                                           (effect-completed state side eid)))})
                         card nil))}
                    card nil))}}}]})
