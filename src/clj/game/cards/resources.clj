@@ -244,17 +244,14 @@
                                    (effect-completed state side eid))))}]})
 
 (defcard "August Ivanovsky"
-  (letfn [(is-virus-program [card]
-            (and (program? card)
-                 (has-subtype? card "Virus")))]
   {:events [{:event :runner-install
-             :req (req (and (is-virus-program (:card context))
-                            (first-event? state side :runner-install #(is-virus-program (:card (first %))))))
+             :req (req (and (virus-program? (:card context))
+                            (first-event? state side :runner-install #(virus-program? (:card (first %))))))
              :async true
              :effect (effect
                        (continue-ability
                          (sabotage-ability 1)
-                         card nil))}]}))
+                         card nil))}]})
 
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
