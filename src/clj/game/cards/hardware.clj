@@ -875,6 +875,13 @@
                                (:effects @state)))
                       (update-breaker-strength state side host)))})
 
+(defcard "Ghosttongue"
+  {:on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}
+   :constant-effects [{:type :play-cost
+                       :req (req (event? target))
+                       :value -1}]})
+
 (defcard "GPI Net Tap"
   {:abilities [{:req (req (and (= :approach-ice (:phase run))
                                (ice? current-ice)

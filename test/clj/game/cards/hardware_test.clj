@@ -1996,6 +1996,17 @@
       (run-jack-out state)
       (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength"))))
 
+(deftest ghosttongue
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 2) "Ghosttongue"] :credits 6}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ghosttongue")
+    (is (= 1 (:brain-damage (get-runner))) "1 brain from install")
+    (changes-val-macro
+      5 (:credit (get-runner))
+      "net +5c for sure gamble"
+      (play-from-hand state :runner "Sure Gamble"))))
+
 (deftest gpi-net-tap
   (do-game
    (new-game {:runner {:hand ["GPI Net Tap"]}
