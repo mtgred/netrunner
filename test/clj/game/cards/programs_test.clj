@@ -637,18 +637,15 @@
       (changes-val-macro
         1 (get-strength (refresh vege))
         "Gained 1str from brain damage"
-        (damage state :runner :brain 1)
-        (core/fake-checkpoint state))
+        (damage state :runner :brain 1))
       (changes-val-macro
         1 (get-strength (refresh vege))
         "Gained 1str from brain damage"
-        (damage state :runner :brain 1)
-        (core/fake-checkpoint state))
+        (damage state :runner :brain 1))
       (changes-val-macro
         1 (get-strength (refresh vege))
         "Gained 1str from brain damage"
-        (damage state :runner :brain 1)
-        (core/fake-checkpoint state))
+        (damage state :runner :brain 1))
       (is (= 6 (get-strength (refresh vege)))))))
 
 (deftest berserker
