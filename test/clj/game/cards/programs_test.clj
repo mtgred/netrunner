@@ -626,6 +626,31 @@
         (is (= (+ 3 credits) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll"))
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
+(deftest begemot
+  (do-game
+    (new-game {:runner {:hand ["Begemot" (qty "Sure Gamble" 4)] :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Begemot")
+    (is (= 3 (count (:hand (get-runner)))) "suffed 1 brain, 3 cards in hand")
+    (let [vege (get-program state 0)]
+      (is (= 3 (get-strength (refresh vege))))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1)
+        (core/fake-checkpoint state))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1)
+        (core/fake-checkpoint state))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1)
+        (core/fake-checkpoint state))
+      (is (= 6 (get-strength (refresh vege)))))))
+
 (deftest berserker
   ;; Berserker
   (do-game

@@ -474,6 +474,12 @@
   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")
                                 (strength-pump 1 1 :end-of-run)]}))
 
+(defcard "Begemot"
+  (auto-icebreaker {:on-install {:async true
+                                 :effect (effect (damage eid :brain 1 {:card card}))}
+                    :abilities [(break-sub 1 0 "Barrier")]
+                    :strength-bonus (req (:brain-damage runner))}))
+
 (defcard "Berserker"
   (auto-icebreaker {:events [{:event :encounter-ice
                               :req (req (has-subtype? (:ice context) "Barrier"))
