@@ -1050,6 +1050,16 @@
                                                             " power counters on Mâché"))
                                 (add-counter state side card :power cost))))}]}))
 
+(defcard "Marrow"
+  {:constant-effects [(mu+ 1)
+                      (runner-hand-size+ 3)]
+   :on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}
+   :events [{:event :agenda-scored
+             :async true
+             :interactive (req true)
+             :effect (effect (continue-ability (sabotage-ability 1) card nil))}]})
+
 (defcard "Masterwork (v37)"
   {:constant-effects [(mu+ 1)]
    :events [{:event :run

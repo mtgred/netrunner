@@ -2573,6 +2573,18 @@
         (click-card state :runner (refresh pad))
         (is (zero? (get-counters (refresh mache) :power)) "Mache should gain no counters from a trash outside of an access"))))
 
+(deftest marrow
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 2) "Marrow"]}
+               :corp {:hand [(qty "Hedge Fund" 2) "Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Marrow")
+    (is (= 1 (:brain-damage (get-runner))) "1 from marrow install")
+    (is (= 7 (hand-size :runner)) "Max hand size is 7 (5 + 3 - 1)")
+    (take-credits state :runner)
+    (play-and-score state "Hostile Takeover")
+    (is (last-log-contains? state "uses Marrow to sabotage 1") "Sabotage happened")))
+
 (deftest masterwork-v37
   ;; Masterwork (v37)
   (do-game
