@@ -190,6 +190,21 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest august-ivanovsky
+  ;; First time each turn you install a virus program, resist 1
+  (do-game
+    (new-game {:corp {:hand [(qty "Hedge Fund" 5)]}
+               :runner {:hand [(qty "Cache" 3) "August Ivanovsky"] :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cache")
+    (play-from-hand state :runner "August Ivanovsky")
+    (play-from-hand state :runner "Cache")
+    (is (no-prompt? state :corp) "No promp to resist")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cache")
+    (is (last-log-contains? state "uses August Ivanovsky to sabotage 1") "Sabotage happened")))
+
 (deftest baklan-bochkin-gaining-power-counters-each-run
     ;; Gaining power counters each run.
     (do-game
