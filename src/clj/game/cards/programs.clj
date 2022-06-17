@@ -577,7 +577,7 @@
                :async true
                :effect (req (let [cards (->> corp-currently-drawing
                                              (shuffle)
-                                             (keep #(find-cid (:cid %) (:hand corp)))
+                                             (keep #(find-cid (:cid %) (:set-aside corp)))
                                              (take target))]
                               (wait-for
                                 (pay state side (make-eid state eid) card [:credit (* 2 target)])
