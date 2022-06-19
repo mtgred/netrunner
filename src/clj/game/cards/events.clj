@@ -401,9 +401,7 @@
               {:target-server :hq
                :this-card-run true
                :mandatory true
-               :ability
-               {:async true
-                :effect (effect (continue-ability (sabotage-ability 4) card nil))}})]})
+               :ability (sabotage-ability 4)})]})
 
 (defcard "Code Siphon"
   (letfn [(rd-ice [state]
