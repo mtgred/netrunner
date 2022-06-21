@@ -358,6 +358,12 @@
   [state side]
   (merge-costs (get-in @state [:bonus :access-cost])))
 
+(defn- refused-access-cost
+  "The runner refused to pay (or could not pay) to access"
+  [state side eid]
+  (swap! state dissoc :access)
+  (effect-completed state side eid))
+
 (defn- access-pay
   "Force the runner to pay any costs to access this card, if any, before proceeding with access."
   [state side eid card title args]
@@ -385,11 +391,11 @@
            :choices choices
            :effect (req (if (or (= "OK" target)
                                 (= "No action" target))
-                          (access-end state side eid accessed-card)
+                          (refused-access-cost state side eid)
                           (wait-for (pay state side accessed-card cost)
                                     (if-let [payment-str (:msg async-result)]
                                       (access-trigger-events state side eid accessed-card title (assoc args :cost-msg payment-str))
-                                      (access-end state side eid accessed-card)))))})
+                                      (refused-access-cost state side eid)))))})
         nil nil)
       ;; There are no access costs
       :else
