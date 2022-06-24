@@ -2,18 +2,26 @@ version: '3.7'
 
 services:
   server:
-    entrypoint: lein repl :headless :port 44867
-    network_mode: host
+    entrypoint: lein repl :headless :host 0.0.0.0 :port 44867
+    ports:
+      - 1042:1042
+      - 44867:44867
     volumes:
       - "./data:/usr/src/app/data"
       - "./docs:/usr/src/app/docs"
-      - "./resources:/usr/src/app/resources"
+      - "./resources/public:/usr/src/app/resources/public"
+      - "./resources/dev.edn:/usr/src/app/resources/dev.edn"
+      - "./resources/logback.xml:/usr/src/app/resources/logback.xml"
       - "./src:/usr/src/app/src"
       - "./target:/usr/src/app/target"
       - "./test:/usr/src/app/test"
+      - "./docker/docker-prod.edn:/usr/src/app/resources/prod.edn" # Override server configs
     depends_on:
       - database
+    links:
+      - database:mongo
     build:
+      dockerfile: docker/Dockerfile
       context: .
 
   database:
@@ -36,6 +44,7 @@ services:
     ports:
       - 9630:9630
     build:
+      dockerfile: docker/Dockerfile
       context: .
 
   css:
@@ -43,4 +52,5 @@ services:
     volumes:
       - "./:/usr/src/app"
     build:
+      dockerfile: docker/Dockerfile
       context: .
