@@ -13,7 +13,6 @@ services:
       - "./resources/dev.edn:/usr/src/app/resources/dev.edn"
       - "./resources/logback.xml:/usr/src/app/resources/logback.xml"
       - "./src:/usr/src/app/src"
-      - "./target:/usr/src/app/target"
       - "./test:/usr/src/app/test"
       - "./docker/docker-prod.edn:/usr/src/app/resources/prod.edn" # Override server configs
     depends_on:
@@ -38,7 +37,6 @@ services:
       - "./docs:/usr/src/app/docs"
       - "./resources:/usr/src/app/resources"
       - "./src:/usr/src/app/src"
-      - "./target:/usr/src/app/target"
       - "./test:/usr/src/app/test"
       - "./shadow-cljs.edn:/usr/src/app/shadow-cljs.edn"
     ports:
@@ -50,7 +48,8 @@ services:
   css:
     entrypoint: npm run css:watch
     volumes:
-      - "./:/usr/src/app"
+      - "./src:/usr/src/app/src"
+      - "./resources:/usr/src/app/resources"
     build:
       dockerfile: docker/Dockerfile
       context: .
