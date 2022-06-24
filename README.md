@@ -74,7 +74,7 @@ and open [http://localhost:1042/](http://localhost:1042/).
 
 *Before building, comment out `:aot [web.core]` in [`project.clj`](project.clj) (see [this issue](https://github.com/mtgred/netrunner/issues/6397)).*
 
-You'll need to install [Docker](https://docs.docker.com/get-docker/) and [Docker-Compose](https://docs.docker.com/compose/install/). After that, just run `$ docker-compose up` in the project directory (or do the GUI-equivalent of this). If this fails because it "couldn't fetch dependencies", try again, it was just a networking error.
+You'll need to install [Docker](https://docs.docker.com/get-docker/) and [Docker-Compose](https://docs.docker.com/compose/install/). After that, just run `$ docker-compose up --build` in the project directory (or do the GUI-equivalent of this). If this fails because it "couldn't fetch dependencies", try again, it was just a networking error.
 
 It can take a while. You'll see lots of messages, so just wait until you see something like `netrunner-server-1 | nREPL server started on port 44867`. After that, you can visit [http://localhost:1042/](http://localhost:1042/) and the server should be running.
 
