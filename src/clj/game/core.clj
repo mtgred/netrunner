@@ -66,7 +66,7 @@
 (defmacro expose-vars
   "Surrounds a import-vars call with an anonymous function to get arround the 64kb limit on the method size in the JVM" 
   [symbols]
-  `((fn ~[] (import-vars ~symbols))))
+  `((fn [] (import-vars ~symbols))))
 
 (expose-vars
   [game.core.access
