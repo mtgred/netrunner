@@ -667,7 +667,7 @@
                                        (access-card state side (first cards))
                                        (effect-completed state side eid)))}
                         {:prompt "Select a card to access"
-                         :waiting-prompt "Runner to access a card"
+                         :waiting-prompt "Runner to make a decision"
                          :not-distinct true
                          :choices cards
                          :async true
@@ -1725,7 +1725,8 @@
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]
                           {:async true
-                           :prompt "Which of the revealed cards would you like to access (first card is on top)?"
+                           :prompt "Select a card to access"
+                           :waiting-prompt "Runner to make a decision"
                            :not-distinct true
                            :choices revealed
                            :req (req (not= (:max-access run) 0))

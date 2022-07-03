@@ -1645,9 +1645,9 @@
           run-end-trigger {:event :run-ends
                            :duration :end-of-run
                            :effect (effect (enable-server (first (:server target))))}]
-      {:abilities [{:label "Run a remote server."
+      {:abilities [{:label "Run a remote server"
                     :cost [:trash-can :click 1 :brain 1]
-                    :prompt "Choose a remote server to run with Light the Fire"
+                    :prompt "Choose a remote server"
                     :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
                     :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
                     :makes-run true
