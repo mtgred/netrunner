@@ -1011,6 +1011,7 @@
 (defcard "MirrorMorph: Endless Iteration"
   (let [mm-clear {:prompt "Manually fix Mirrormorph"
                   :msg (msg "manually clear Mirrormorph flags")
+                  :label "Manually fix Mirrormorph"
                   :effect (effect
                            (update! (assoc-in card [:special :mm-actions] []))
                            (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
