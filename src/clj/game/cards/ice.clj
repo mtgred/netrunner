@@ -877,7 +877,7 @@
             (if (pos? n)
               (wait-for (mill state :corp :runner 2)
                         (system-msg state side "uses Chiyashi to trash the top 2 cards of the Stack")
-                        (chiyashi-auto-trash state side eid (- n 1)))
+                        (chiyashi-auto-trash state side eid (dec n)))
               (effect-completed state side eid)))]
     {:events [{:event :subroutines-broken
                :req (req (and (same-card? card (first targets))
