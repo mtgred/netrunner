@@ -37,6 +37,7 @@
   (swap! app-state assoc-in [:options :lobby-sounds] (:lobby-sounds @s))
   (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
   (swap! app-state assoc-in [:options :background] (:background @s))
+  (swap! app-state assoc-in [:options :custom-bg-url] (:custom-bg-url @s))
   (swap! app-state assoc-in [:options :card-back] (:card-back @s))
   (swap! app-state assoc-in [:options :card-zoom] (:card-zoom @s))
   (swap! app-state assoc-in [:options :pin-zoom] (:pin-zoom @s))
@@ -54,6 +55,7 @@
   (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
   (.setItem js/localStorage "sounds" (:sounds @s))
   (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
+  (.setItem js/localStorage "custom_bg_url" (:custom-bg-url @s))
   (.setItem js/localStorage "sounds_volume" (:volume @s))
   (.setItem js/localStorage "log-width" (:log-width @s))
   (.setItem js/localStorage "log-top" (:log-top @s))
@@ -370,6 +372,7 @@
                                 {:name "Push Your Luck"  :ref "push-your-luck-bg"}
                                 {:name "Apex"            :ref "apex-bg"}
                                 {:name "Worlds 2020"     :ref "worlds2020"}
+                                {:name "Custom BG"       :ref "custom-bg"}
                                 {:name "Monochrome"      :ref "monochrome-bg"}]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
@@ -377,7 +380,13 @@
                                       :value (:ref option)
                                       :on-change #(swap! s assoc-in [:background] (.. % -target -value))
                                       :checked (= (:background @s) (:ref option))}]
-                      (:name option)]]))]
+                      (:name option)]]))
+           [:h4 "Custom background URL"]
+           (let [custom-bg-url (r/atom (:custom-bg-url @s))]
+             [:div [:input {:type "text"
+                            :on-change #(do (swap! s assoc-in [:custom-bg-url] (.. % -target -value))
+                                            (reset! custom-bg-url (.. % -target -value)))
+                            :value @custom-bg-url}]])]
 
           [:section
            [:h3  (tr [:settings.card-backs "Card backs"])]
@@ -510,6 +519,7 @@
         scroll-top (atom 0)
         state (r/atom {:flash-message ""
                        :background (get-in @app-state [:options :background])
+                       :custom-bg-url (get-in @app-state [:options :custom-bg-url])
                        :card-back (get-in @app-state [:options :card-back])
                        :card-zoom (get-in @app-state [:options :card-zoom])
                        :pin-zoom (get-in @app-state [:options :pin-zoom])
