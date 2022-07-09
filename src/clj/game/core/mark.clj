@@ -14,7 +14,7 @@
 
 (defn identify-mark
   [state]
-  (let [new-mark (nth '(:hq :rd :archives) (rand-int 3))]
+  (let [new-mark (nth [:hq :rd :archives] (rand-int 3))]
     (set-mark state new-mark)
     (system-msg state :runner (str "identifies their mark to be " (central->name new-mark)))))
 
