@@ -16,8 +16,6 @@ Hosted at [http://www.jinteki.net](http://www.jinteki.net). [Example of gameplay
 
 *(There's a [docker](#using-docker) section down there!)*
 
-*Before building, comment out `:aot [web.core]` in [`project.clj`](project.clj) (see [this issue](https://github.com/mtgred/netrunner/issues/6397)).*
-
 Install [Leiningen](https://leiningen.org/),
 [NodeJS](https://nodejs.org/en/download/package-manager/#macos) and
 [MongoDB](https://docs.mongodb.com/manual/installation/).
@@ -71,8 +69,6 @@ Finally, launch the webserver and the Clojure REPL:
 and open [http://localhost:1042/](http://localhost:1042/).
 
 ### Using Docker
-
-*Before building, comment out `:aot [web.core]` in [`project.clj`](project.clj) (see [this issue](https://github.com/mtgred/netrunner/issues/6397)).*
 
 You'll need to install [Docker](https://docs.docker.com/get-docker/) and [Docker-Compose](https://docs.docker.com/compose/install/). After that, just run `$ docker-compose up --build` in the project directory (or do the GUI-equivalent of this). If this fails because it "couldn't fetch dependencies", try again, it was just a networking error.
 
