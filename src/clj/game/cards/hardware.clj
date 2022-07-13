@@ -601,6 +601,17 @@
                                                      (toast state :corp "Cannot rez ice the rest of this run due to EMP Device"))
                                                     true))))}]))}]})
 
+(defcard "Endurance"
+  {:data {:counter {:power 3}}
+   :constant-effects [(mu+ 2)]
+   :events [{:event :successful-run
+             :req (req (first-event? state :runner :successful-run))
+             :silent (req true)
+             :msg "place 1 power counter on itself"
+             :async true
+             :effect (effect (add-counter eid card :power 1 nil))}]
+   :abilities [(break-sub [:power 2] 2 "All")]})
+
 (defcard "Feedback Filter"
   {:interactions {:prevent [{:type #{:net :brain}
                              :req (req true)}]}
@@ -1898,17 +1909,6 @@
                       {:type :hand-size
                        :req (req (= :runner side))
                        :value 1}]})
-
-(defcard "The Endurance"
-  {:data {:counter {:power 3}}
-   :constant-effects [(mu+ 2)]
-   :events [{:event :successful-run
-             :req (req (first-event? state :runner :successful-run))
-             :silent (req true)
-             :msg "place 1 power counter on itself"
-             :async true
-             :effect (effect (add-counter eid card :power 1 nil))}]
-   :abilities [(break-sub [:power 2] 2 "All")]})
 
 (defcard "The Gauntlet"
   {:constant-effects [(mu+ 2)]

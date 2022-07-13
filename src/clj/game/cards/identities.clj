@@ -437,7 +437,7 @@
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
 
-(defcard "Esa Afontov: Eco-Insurrectionist"
+(defcard "Esâ Afontov: Eco-Insurrectionist"
   (letfn
     [(check-brain [targets]
        (let [context (first targets)]
@@ -448,11 +448,18 @@
                               (first-event? state :runner :damage check-brain)))
                :async true
                :effect (req
-                         (continue-ability
-                           state side
-                           (sabotage-ability 2)
-                           card nil))}]}))
-
+                         (wait-for (resolve-ability
+                                     state side
+                                     {:optional
+                                      {:prompt "Draw 1 card?"
+                                       :yes-ability {:async true
+                                                     :msg "draw 1 card"
+                                                     :effect (effect (draw eid 1))}}}
+                                     card nil)
+                                   (continue-ability
+                                     state side
+                                     (sabotage-ability 2)
+                                     card nil)))}]}))
 
 (defcard "Exile: Streethawk"
   {:flags {:runner-install-draw true}
