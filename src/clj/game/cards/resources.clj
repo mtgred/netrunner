@@ -243,7 +243,7 @@
                                (do (flip-faceup state side target)
                                    (effect-completed state side eid))))}]})
 
-(defcard "August Ivanovsky"
+(defcard "Avgustina Ivanovskaya"
   {:events [{:event :runner-install
              :req (req (and (virus-program? (:card context))
                             (first-event? state side :runner-install #(virus-program? (:card (first %))))))
