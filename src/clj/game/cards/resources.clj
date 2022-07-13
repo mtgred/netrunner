@@ -2634,7 +2634,7 @@
                                 (gain-clicks state side 1)
                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})
 
-(defcard "Stoneship Library"
+(defcard "Stoneship Chart Room"
   {:abilities [{:label "Draw 2 cards"
                 :msg "draw 2 cards"
                 :cost [:trash-can]

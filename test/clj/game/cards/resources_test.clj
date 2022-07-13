@@ -5198,20 +5198,20 @@
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
       (is (= 4 (:click (get-runner))) "Didn't gain extra click"))))
 
-(deftest stoneship-library
+(deftest stoneship-chart-room
   ;; Stoneship Library - Trash to draw 2, trash to charge
   (do-game
-    (new-game {:runner {:hand ["Stoneship Library"] :deck [(qty "Sure Gamble" 5)]}})
+    (new-game {:runner {:hand ["Stoneship Chart Room"] :deck [(qty "Sure Gamble" 5)]}})
     (take-credits state :corp)
-    (play-from-hand state :runner "Stoneship Library")
+    (play-from-hand state :runner "Stoneship Chart Room")
     (changes-val-macro
       2 (count (:hand (get-runner)))
       "Drew 2 card with stoneship"
       (card-ability state :runner (get-resource state 0) 0)))
   (do-game
-    (new-game {:runner {:hand ["Stoneship Library" "Earthrise Hotel"]}})
+    (new-game {:runner {:hand ["Stoneship Chart Room" "Earthrise Hotel"]}})
     (take-credits state :corp)
-    (play-from-hand state :runner "Stoneship Library")
+    (play-from-hand state :runner "Stoneship Chart Room")
     (card-ability state :runner (get-resource state 0) 1)
     (is (= 0 (count (:discard (get-runner)))) "Stoneship not discarded")
     (is (no-prompt? state :runner) "No prompt because stoneship wasn't used")
