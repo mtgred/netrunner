@@ -463,16 +463,16 @@
 ;; Card definitions
 
 (defcard "Anemone"
-  {:on-rez {:optional {:prompt "trash a card from HQ to do 2 net damage?"
+  {:on-rez {:optional {:prompt "Trash a card from HQ to do 2 net damage?"
                        :req (req (and (< 0 (count (:hand corp)))
                                       run
                                       this-server))
-                       :waiting-prompt "Corp to resolve Anemone"
+                       :waiting-prompt "Corp to choose an option"
                        :yes-ability {:msg "do 2 net damage"
                                      :cost [:trash-from-hand 1]
                                      :async true
                                      :effect (effect (damage eid :net 2 {:card card}))}
-                       :no-ability {:msg "decline to deal 2 net damage"}}}
+                       :no-ability {:effect (effect (system-msg :corp "declines to use Anemone to do 2 net damage"))}}}
    :subroutines [(do-net-damage 1)]})
 
 (defcard "Ansel 1.0"
@@ -1613,11 +1613,11 @@
                  end-the-run]   
    :on-rez {:req (req (and run this-server
                            (->> (get-all-installed state) (remove #(same-card? card %)) (filter rezzed?) (count) (pos?))))
-            :prompt "Derez another card to prevent the runner using printed abilities on bioroid ice this turn?"
+            :prompt "Derez another card to prevent the runner from using printed abilities on bioroid ice this turn?"
             :choices {:req (req (and (installed? target)
                                      (rezzed? target)
                                      (not (same-card? card target))))}
-            :waiting-prompt "Corp to resolve Hákarl 1.0"
+            :waiting-prompt "Corp to choose an option"
             :effect (effect (derez target)
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
                             (register-floating-effect
