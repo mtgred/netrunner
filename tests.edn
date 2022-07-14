@@ -1,0 +1,16 @@
+#meta-merge
+[{:kaocha/tests [{:kaocha.testable/id :all
+                  :kaocha.testable/type :kaocha.type/clojure.test
+                  :kaocha.filter/focus-meta ^:replace [:kaocha/focus]
+                  :kaocha.filter/skip-meta ^:replace [:kaocha/skip]
+                  :kaocha/ns-patterns ["-test$"]
+                  :kaocha/source-paths ["src"]
+                  :kaocha/test-paths ["test"]}]
+  :kaocha/color? true
+  :kaocha/fail-fast? false
+  :kaocha/reporter [kaocha.report.progress/report]
+  :kaocha/plugins [:kaocha.plugin/print-invocations :kaocha.plugin/profiling]
+  :kaocha.plugin.capture-output/capture-output? true
+  :kaocha.plugin.profiling/count 3
+  :kaocha.plugin.randomize/randomize? true}
+ #include "tests-user.edn"]

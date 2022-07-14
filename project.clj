@@ -83,6 +83,7 @@
                                   [rewrite-clj "1.0.699-alpha"]
                                   [criterium "0.4.6"]
                                   [integrant/repl "0.3.2"]
+                                  [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.16.8"]]
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "test/clj" "src/css"]
                    :resource-paths ["target"]
@@ -93,6 +94,7 @@
                               "-XX:+DebugNonSafepoints"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
+            "kaocha" ["run" "-m" "kaocha.runner"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "load-generator" ["run" "-m" "tasks.load-generator/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]

@@ -5305,7 +5305,8 @@
         (card-ability state :runner sp 0)
         (click-prompt state :runner (find-card "Gordian Blade" (:hosted sp)))
         (is (second-last-log-contains? state "are trashed as a result") "The two hosted cards are logged"))))
-(deftest-pending street-peddler-trash-while-choosing-card
+
+(deftest ^:kaocha/pending street-peddler-trash-while-choosing-card
   ;; Street Peddler - trashing Street Peddler while choosing which card to
   ;; discard should dismiss the choice prompt. Issue #587.
   (do-game
@@ -5580,7 +5581,8 @@
         (core/add-counter state :runner (refresh the-back) :power 2)
         (card-ability state :runner (refresh the-back) 1)
         (is (no-prompt? state :runner) "The Back prompt did not come up"))))
-(deftest-pending the-back-automated
+
+(deftest ^:kaocha/pending the-back-automated
   ;; TODO: Enable this once card is fully implemented
   (testing "Basic test"
     (do-game
