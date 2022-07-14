@@ -1757,6 +1757,7 @@
                    (abs))))]
     {:constant-effects [(mu+ 2)]
      :events [{:event :encounter-ice
+               :interactive (req true)
                :optional
                {:prompt "Use Şifr?"
                 :once :per-turn

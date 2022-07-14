@@ -3973,6 +3973,22 @@
       (click-card state :runner "Şifr")
       (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength"))))
 
+(deftest sifr-works-with-chisel
+  (do-game
+    (new-game {:runner {:hand ["Şifr" "Chisel"] :credits 10}
+               :corp {:hand ["Assassin"] :credits 10}})
+    (play-from-hand state :corp "Assassin")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chisel")
+    (click-card state :runner "Assassin")
+    (play-from-hand state :runner "Şifr")
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "Şifr")
+    (click-prompt state :runner "Chisel")
+    (is (= 1 (count (:discard (get-corp)))) "Trashed Assassin")))
+
 (deftest silencer-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
