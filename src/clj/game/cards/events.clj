@@ -222,7 +222,8 @@
     :msg (msg "increase the rez cost of the first unrezzed piece of ice approached by " target " [Credits]")
     :effect (effect
               (continue-ability
-                (let [bribery-x target]
+               (let [bribery-x target
+                     eid (assoc eid :x-cost true)]
                   {:prompt "Choose a server"
                    :choices (req runnable-servers)
                    :async true
@@ -267,12 +268,13 @@
                             :let [cost (rez-cost state side ice)]]
                         (when (can-pay? state side eid card nil [:credit cost])
                           [(:cid ice) cost]))))]
-           (continue-ability
-             state side
-             {:prompt "How many [Credits]?"
-              :choices :credit
-              :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
-              :effect (effect (continue-ability
+           (let [eid (assoc eid :x-cost true)]
+             (continue-ability
+              state side
+              {:prompt "How many [Credits]?"
+               :choices :credit
+               :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
+               :effect (effect (continue-ability
                                 {:choices {:card #(and (rezzed? %)
                                                        (some (fn [c] (and (= (first c)
                                                                              (:cid %))
@@ -281,7 +283,7 @@
                                  :msg (msg "derez " (card-str state target))
                                  :effect (effect (derez target))}
                                 card nil))}
-             card nil)))}})
+              card nil))))}})
 
 (defcard "Build Script"
   {:on-play
