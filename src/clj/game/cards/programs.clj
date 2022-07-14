@@ -170,10 +170,8 @@
   [first-qty first-type second-qty second-type]
   {:cost [:credit 2]
    :req (req (and (active-encounter? state)
-                  (or (and (has-subtype? current-ice first-type)
-                           (<= first-qty (count (remove :broken (:subroutines current-ice)))))
-                      (and (has-subtype? current-ice second-type)
-                           (<= second-qty (count (remove :broken (:subroutines current-ice))))))))
+                  (or (has-subtype? current-ice first-type)
+                      (has-subtype? current-ice second-type))))
    :label (str "break "
                (quantify first-qty (str first-type " subroutine")) " or "
                (quantify second-qty (str second-type " subroutine")))
