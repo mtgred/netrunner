@@ -125,6 +125,42 @@
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (no-prompt? state :runner) "No Aeneas Informant prompt")))
 
+(deftest aeneas-informant-does-not-trigger-on-gagarin-issue-#6392
+  ;; Aeneas Informant & Gagarin
+  (do-game
+    (new-game {:runner {:hand ["Aeneas Informant" "Theophilius Bagbiter"]}
+               :corp {:hand ["Rashida Jaheem"] :id "Gagarin Deep Space: Expanding the Horizon"}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (core/gain-clicks state :runner 1)
+    (play-from-hand state :runner "Aeneas Informant")
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "did not spent or lose any credits"
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No prompt to use informant")
+      (is (not (:run @state)) "Run over"))
+    ;; using autoresolve
+    (let [informant (get-resource state 0)]
+      (card-ability state :runner informant 0)
+      (click-prompt state :runner "Always"))
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "did not spent or lose any credits with autoresolve on"
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action"))
+    ;;can't pay (instead of refusing)
+    (play-from-hand state :runner "Theophilius Bagbiter")
+    (is (zero? (:credit (get-runner))))
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "did not spent or lose any credits with autoresolve on"
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "OK"))
+    ))
+
 (deftest aeneas-informant-triggers-on-cards-moved-to-rfg
     ;; Aeneas Informant & Salsette Slums - Runner gains credits from cards moved to RFG
     (do-game
