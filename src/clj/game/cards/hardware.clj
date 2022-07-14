@@ -131,7 +131,7 @@
 (defcard "Bookmark"
   {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :msg "host up to 3 cards from their Grip facedown"
                 :choices {:max 3
                           :card #(and (runner? %)
@@ -343,8 +343,9 @@
                 :choices {:card #(and (event? %)
                                       (in-hand? %))}
                 :msg (msg "play " (:title target))
-                :effect (effect (update! (dissoc (get-card state card) :comet-event))
-                                (play-instant eid target nil))}]})
+                :effect (req (let [eid (assoc eid :source-type :play)]
+                               (update! state :runner (dissoc (get-card state card) :comet-event))
+                               (play-instant state side eid target nil)))}]})
 
 (defcard "Cortez Chip"
   {:abilities [{:prompt "Choose a piece of ice"
@@ -616,12 +617,16 @@
                 :effect (effect (damage-prevent :brain 2))}]})
 
 (defcard "Flame-out"
-  (let [turn-end {:async true
-                  :effect (req (unregister-events state :runner card)
-                               (if-let [hosted (first (:hosted card))]
-                                 (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))
-                                     (trash state side eid hosted {:cause-card card}))
-                                 (effect-completed state side eid)))}]
+  (let [register-flame-effect
+        (fn [state card]
+          (update! state :runner (assoc-in (get-card state card) [:special :flame-out-trigger] true)))
+        maybe-turn-end {:async true
+                        :req (req (:flame-out-trigger (:special (get-card state card))))
+                        :effect (req (update! state side (assoc-in (get-card state card) [:special :flame-out-trigger] nil))
+                                     (if-let [hosted (first (:hosted card))]
+                                       (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))
+                                           (trash state side eid hosted {:cause-card card}))
+                                       (effect-completed state side eid)))}]
     {:implementation "Credit usage restriction not enforced"
      :data {:counter {:credit 9}}
      :abilities [{:label "Take 1 [Credits] from Flame-out"
@@ -630,10 +635,7 @@
                   :async true
                   :effect (req (add-counter state side card :credit -1)
                                (system-msg state :runner "takes 1 [Credits] from Flame-out")
-                               (register-events
-                                 state :runner (get-card state card)
-                                 [(assoc turn-end :event :runner-turn-ends)
-                                  (assoc turn-end :event :corp-turn-ends)])
+                               (register-flame-effect state card)
                                (gain-credits state :runner eid 1))}
                  {:label "Take all [Credits] from Flame-out"
                   :req (req (and (not-empty (:hosted card))
@@ -642,10 +644,7 @@
                   :effect (req (let [credits (get-counters card :credit)]
                                  (update! state :runner (dissoc-in card [:counter :credit]))
                                  (system-msg state :runner (str "takes " credits " [Credits] from Flame-out"))
-                                 (register-events
-                                   state :runner (get-card state card)
-                                   [(assoc turn-end :event :runner-turn-ends)
-                                    (assoc turn-end :event :corp-turn-ends)])
+                                 (register-flame-effect state card)
                                  (gain-credits state :runner eid credits)))}
                  {:label "Install a program on Flame-out"
                   :req (req (empty? (:hosted card)))
@@ -669,17 +668,14 @@
      :events [{:event :card-moved
                :req (req (= (:cid target) (get-in (get-card state card) [:special :flame-out])))
                :effect (effect (update! (dissoc-in card [:special :flame-out])))}
-              {:event :runner-turn-ends}
-              {:event :corp-turn-ends}]
+              (assoc maybe-turn-end :event :runner-turn-ends)
+              (assoc maybe-turn-end :event :corp-turn-ends)]
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (same-card? card (:host target))
                                                  (pos? (get-counters card :credit))))
                                   :custom-amount 1
                                   :custom (req (add-counter state side card :credit -1)
-                                               (register-events
-                                                 state side (get-card state card)
-                                                 [(assoc turn-end :event :runner-turn-ends)
-                                                  (assoc turn-end :event :corp-turn-ends)])
+                                               (register-flame-effect state card)
                                                (effect-completed state side (make-result eid 1)))
                                   :type :custom}}}))
 
@@ -767,16 +763,16 @@
                        (doseq [c shuffle-back]
                          (move state side c :deck))
                        (shuffle! state side :deck))})
-          (shuffle-next [set-aside target to-shuffle]
-            (let [set-aside (remove-once #(= % target) set-aside)
+          (shuffle-next [set-aside-cards target to-shuffle]
+            (let [set-aside-cards (remove-once #(= % target) set-aside-cards)
                   to-shuffle (if target
                                (concat to-shuffle [target])
                                [])
                   finished? (or (= 3 (count to-shuffle))
-                                (empty? set-aside))]
+                                (empty? set-aside-cards))]
               {:prompt (msg (if finished?
-                              (str "Removing: " (if (not-empty set-aside)
-                                                  (string/join ", " (map :title set-aside))
+                              (str "Removing: " (if (not-empty set-aside-cards)
+                                                  (string/join ", " (map :title set-aside-cards))
                                                   "nothing")
                                    "[br]Shuffling: " (if (not-empty to-shuffle)
                                                        (string/join ", " (map :title to-shuffle))
@@ -788,51 +784,52 @@
                :not-distinct true ; show cards separately
                :choices (req (if finished?
                                ["Done" "Start over"]
-                               (seq set-aside)))
+                               (seq set-aside-cards)))
                :effect (req (if finished?
                               (if (= "Done" target)
                                 (continue-ability state side
-                                                  (shuffle-end set-aside to-shuffle)
+                                                  (shuffle-end set-aside-cards to-shuffle)
                                                   card nil)
                                 (continue-ability state side
-                                                  (shuffle-next (sort-by :title (concat set-aside to-shuffle)) nil nil)
+                                                  (shuffle-next (sort-by :title (concat set-aside-cards to-shuffle)) nil nil)
                                                   card nil))
                               (continue-ability state side
-                                                (shuffle-next set-aside target to-shuffle)
+                                                (shuffle-next set-aside-cards target to-shuffle)
                                                 card nil)))}))]
     {:abilities [{:label "Install a card from the top of the stack"
                   :cost [:trash-can]
                   :msg "install a card from the top of the stack"
                   :async true
                   :waiting-prompt "Runner to make a decision"
-                  :effect (req (let [set-aside (sort-by :title (take 6 (:deck runner)))]
-                                 (wait-for
-                                   (resolve-ability state side
-                                                    {:prompt (msg "The set aside cards are: " (string/join ", " (map :title set-aside)))
-                                                     :choices ["OK"]}
-                                                    card nil)
-                                   (continue-ability
-                                     state side
-                                     {:prompt "Choose a card to install"
-                                      :async true
-                                      :choices (req (concat
-                                                      (filter #(and (or (program? %)
-                                                                        (and (resource? %)
-                                                                             (has-subtype? % "Virtual")))
-                                                                    (can-pay? state side
-                                                                              (assoc eid :source card :source-type :runner-install)
-                                                                              % nil [:credit (install-cost state side % {:cost-bonus -2})]))
-                                                              set-aside)
-                                                      ["No action"]))
-                                      :cancel-effect (effect (continue-ability (shuffle-next set-aside nil nil) card nil))
-                                      :effect (req (if (= "No action" target)
-                                                     (continue-ability state side (shuffle-next set-aside nil nil) card nil)
-                                                     (let [to-install target
-                                                           set-aside (remove-once #(= % target) set-aside)
-                                                           new-eid (assoc eid :source card :source-type :runner-install)]
-                                                       (wait-for (runner-install state side new-eid target {:cost-bonus -2})
-                                                                 (continue-ability state side (shuffle-next set-aside nil nil) card nil)))))}
-                                     card nil))))}]}))
+                  :effect (req (set-aside state side eid (take 6 (:deck runner)))
+                               (let [set-aside-cards (sort-by :title (get-set-aside state side eid))]
+                                 (wait-for (resolve-ability state side
+                                                            {:async true
+                                                             :prompt (msg "The set aside cards are: " (string/join ", " (map :title set-aside-cards)))
+                                                             :choices ["OK"]}
+                                                            card nil)
+                                           (continue-ability
+                                             state side
+                                             {:prompt "Choose a card to install"
+                                              :async true
+                                              :choices (req (concat
+                                                              (filter #(and (or (program? %)
+                                                                                (and (resource? %)
+                                                                                     (has-subtype? % "Virtual")))
+                                                                            (can-pay? state side
+                                                                                      (assoc eid :source card :source-type :runner-install)
+                                                                                      % nil [:credit (install-cost state side % {:cost-bonus -2})]))
+                                                                      set-aside-cards)
+                                                              ["No action"]))
+                                              :cancel-effect (effect (continue-ability (shuffle-next set-aside-cards nil nil) card nil))
+                                              :effect (req (if (= "No action" target)
+                                                             (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)
+                                                             (let [to-install target
+                                                                   set-aside-cards (remove-once #(= % target) set-aside-cards)
+                                                                   new-eid (assoc eid :source card :source-type :runner-install)]
+                                                               (wait-for (runner-install state side new-eid target {:cost-bonus -2})
+                                                                         (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)))))}
+                                             card nil))))}]}))
 
 (defcard "Gebrselassie"
   {:abilities [{:msg "host itself on an installed non-AI icebreaker"
@@ -1045,7 +1042,7 @@
     {:abilities [{:label "Draw 1 card"
                   :msg "draw 1 card"
                   :cost [:power 3]
-                  :keep-open :while-3-power-tokens-left
+                  :keep-menu-open :while-3-power-tokens-left
                   :async true
                   :effect (effect (draw :runner eid 1))}]
      :events [{:event :runner-trash
@@ -1255,6 +1252,7 @@
                       (runner-hand-size+ (req (count-tags state)))]
    :events [{:event :run-ends
              :once :per-turn
+             :interactive (req true) ;;interact with other run-ends effects which modify the deck (ie boomerang)
              :req (req (and (:successful target)
                             (#{:rd :hq} (target-server target))
                             (first-event? state side :run-ends
@@ -1439,7 +1437,11 @@
 
 (defcard "Prepaid VoicePAD"
   {:recurring 1
-   :interactions {:pay-credits {:req (req (= :play (:source-type eid)))
+   :interactions {:pay-credits {:req (req (and
+                                           (event? target)
+                                           (or (= 0 (count (:cost-paid eid)))
+                                               (:x-cost eid))
+                                           (= :play (:source-type eid))))
                                 :type :recurring}}})
 
 (defcard "Prognostic Q-Loop"
@@ -1763,6 +1765,7 @@
                    (abs))))]
     {:constant-effects [(mu+ 2)]
      :events [{:event :encounter-ice
+               :interactive (req true)
                :optional
                {:prompt "Use Şifr?"
                 :once :per-turn
@@ -2047,7 +2050,7 @@
 
 (defcard "Window"
   {:abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :msg "draw 1 card from the bottom of their Stack"
                 :effect (effect (move (last (:deck runner)) :hand))}]})
 

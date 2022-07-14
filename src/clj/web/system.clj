@@ -25,7 +25,7 @@
    [time-literals.data-readers]
    [time-literals.read-write]
    [web.angel-arena :as angel-arena]
-   [web.versions :refer [frontend-version]]
+   [web.versions :refer [frontend-version banned-msg]]
    [web.api :refer [make-app make-dev-app]]
    [web.app-state :as app-state]
    [web.game]
@@ -89,6 +89,16 @@
 
 (defmethod ig/init-key :web/email [_ settings]
   settings)
+
+(defmethod ig/init-key :web/banned-msg [_ {initial :initial
+                                           {:keys [db]} :mongo}]
+  (if-let [config (mc/find-one-as-map db "config" nil)]
+    (do (reset! banned-msg (:banned-msg config))
+        config)
+    (do (doto db
+          (mc/create "config" nil)
+          (mc/insert-and-return "config" {:banned-msg initial}))
+        (reset! banned-msg initial))))
 
 (defmethod ig/init-key :frontend/version [_ {initial :initial
                                              {:keys [db]} :mongo}]

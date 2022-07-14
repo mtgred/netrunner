@@ -12,7 +12,7 @@
    [game.core.engine :refer [resolve-ability trigger-event]]
    [game.core.flags :refer [is-scored?]]
    [game.core.hosting :refer [host]]
-   [game.core.identities :refer [disable-identity]]
+   [game.core.identities :refer [disable-identity disable-card enable-card]]
    [game.core.initializing :refer [card-init deactivate make-card]]
    [game.core.installing :refer [corp-install runner-install]]
    [game.core.moving :refer [move swap-ice swap-installed trash]]
@@ -20,7 +20,7 @@
    [game.core.prompts :refer [show-prompt]]
    [game.core.props :refer [set-prop]]
    [game.core.psi :refer [psi-game]]
-   [game.core.rezzing :refer [rez]]
+   [game.core.rezzing :refer [rez derez]]
    [game.core.runs :refer [end-run get-current-encounter jack-out]]
    [game.core.say :refer [system-msg system-say unsafe-say]]
    [game.core.set-up :refer [build-card]]
@@ -256,6 +256,22 @@
       (catch Exception ex
         (toast state side (str card-name " isn't a real card"))))))
 
+(defn command-reload-id
+  [state side]
+  (let [card-name (:title (get-in @state [side :identity]))]
+    (try
+      (let [s-card (server-card card-name)
+            card (when (and s-card (same-side? (:side s-card) side))
+                   (build-card s-card))]
+        (if card
+          (let [new-id (-> card :title server-card make-card (assoc :zone [:identity] :type "Identity"))]
+            (disable-identity state side)
+            (swap! state assoc-in [side :identity] new-id)
+            (card-init state side new-id {:resolve-effect true :init-data true}))
+          (toast state side (str card-name " isn't a valid card"))))
+      (catch Exception ex
+        (toast state side (str card-name " isn't a real card"))))))
+
 (defn command-replace-id
   [state side args]
   (let [card-name (string/join " " args)]
@@ -291,6 +307,16 @@
                       :effect (effect (host target h1 nil))})
                    nil nil))}
       nil nil)))
+
+(defn command-derez
+  [state side]
+  (when (= :corp side)
+    (resolve-ability
+     state side
+     {:prompt "Choose a card to derez"
+      :choices {:card #(rezzed? %)}
+      :effect (effect (derez target))}
+     nil nil)))
 
 (defn command-trash
   [state side]
@@ -328,6 +354,7 @@
         "/counter"    #(command-counter %1 %2 args)
         "/credit"     #(swap! %1 assoc-in [%2 :credit] (constrain-value value 0 1000))
         "/deck"       #(toast %1 %2 "/deck number takes the format #n")
+        "/derez"      command-derez
         "/discard"    #(toast %1 %2 "/discard number takes the format #n")
         "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
         "/draw"       #(draw %1 %2 (make-eid %1) (constrain-value value 0 1000))
@@ -376,7 +403,9 @@
                                                     (map->Card {:title "/psi command" :side %2})
                                                     {:equal  {:msg "resolve equal bets effect"}
                                                       :not-equal {:msg "resolve unequal bets effect"}}))
+        "/reload-id"  command-reload-id
         "/replace-id" #(command-replace-id %1 %2 args)
+    :async true
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
                                           {:choices {:card (fn [t] (same-side? (:side t) %2))}
@@ -384,6 +413,14 @@
                                            :effect (effect (rez eid target {:ignore-cost :all-costs :force true}))}
                                           (map->Card {:title "/rez command"}) nil))
         "/rez-all"    #(when (= %2 :corp) (command-rezall %1 %2))
+        "/rez-free"   #(when (= %2 :corp)
+                          (resolve-ability %1 %2
+                                          {:choices {:card (fn [t] (same-side? (:side t) %2))}
+                                           :async true
+                                           :effect (effect (disable-card target)
+                                                           (rez eid target {:ignore-cost :all-costs :force true})
+                                                           (enable-card (get-card state target)))}
+                                          (map->Card {:title "/rez command"}) nil))
         "/rfg"        #(resolve-ability %1 %2
                                         {:prompt "Choose a card to remove from the game"
                                          :effect (req (let [c (deactivate %1 %2 target)]
@@ -392,6 +429,13 @@
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
         "/save-replay" command-save-replay
+        "/show-hand" #(resolve-ability %1 %2
+                                         {:effect (effect (system-msg (str
+                                                                       (if (= :corp %2)
+                                                                         "shows cards from HQ: "
+                                                                         "shows cards from the Grip: ")
+                                                                       (string/join ", " (sort (map :title (:hand (if (= side :corp) corp runner))))))))}
+                                         nil nil)
         "/summon"     #(command-summon %1 %2 args)
         "/swap-ice"   #(when (= %2 :corp)
                           (resolve-ability

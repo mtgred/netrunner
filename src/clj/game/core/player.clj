@@ -16,6 +16,9 @@
    scored
    rfg
    play-area
+   current
+   set-aside
+   set-aside-tracking
    servers
    click
    click-per-turn
@@ -45,7 +48,7 @@
      :deck deck
      :deck-id deck-id
      :hand []
-     :discard [] :scored [] :rfg [] :play-area []
+     :discard [] :scored [] :rfg [] :play-area [] :current [] :set-aside [] :set-aside-tracking {}
      :servers (map->Servers {:hq {:content [] :ices []}
                              :rd {:content [] :ices []}
                              :archives {:content [] :ices []}})
@@ -71,6 +74,9 @@
    scored
    rfg
    play-area
+   current
+   set-aside
+   set-aside-tracking
    rig
    toast
    click
@@ -107,7 +113,7 @@
      :deck deck
      :deck-id deck-id
      :hand []
-     :discard [] :scored [] :rfg [] :play-area []
+     :discard [] :scored [] :rfg [] :play-area [] :current [] :set-aside [] :set-aside-tracking {}
      :rig (map->Rig {:facedown [] :hardware [] :program [] :resource []})
      :toast []
      :click 0 :click-per-turn 4

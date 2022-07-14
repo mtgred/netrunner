@@ -1,7 +1,7 @@
 (ns nr.deckbuilder
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
-   [cljs.core.async :refer [<! >! chan put! timeout] :as async]
+   [cljs.core.async :refer [<! >! chan put! timeout close! go-loop] :as async]
    [clojure.string :refer [join lower-case split split-lines] :as s]
    [jinteki.cards :refer [all-cards] :as cards]
    [jinteki.utils :refer [INFINITY str->int] :as utils]
@@ -1010,34 +1010,46 @@
 (defn deck-builder
   "Make the deckbuilder view"
   []
-  (r/with-let [s (r/atom {:edit false
-                          :old-deck nil
-                          :deck nil
-                          :side-filter all-sides-filter
-                          :faction-filter all-factions-filter
-                          :format-filter all-formats-filter})
-               decks (r/cursor app-state [:decks])
-               user (r/cursor app-state [:user])
-               decks-loaded (r/cursor app-state [:decks-loaded])
-               scroll-top (atom 0)]
+  (let [s (r/atom {:edit false
+                   :old-deck nil
+                   :deck nil
+                   :side-filter all-sides-filter
+                   :faction-filter all-factions-filter
+                   :format-filter all-formats-filter})
+        decks (r/cursor app-state [:decks])
+        user (r/cursor app-state [:user])
+        decks-loaded (r/cursor app-state [:decks-loaded])
+        scroll-top (atom 0)]
+    (r/create-class
+      {:display-name "deck-builder"
+       :component-did-mount
+       (fn [_comp]
+         (go-loop [card (<! zoom-channel)]
+                  (when-not (= :exit card)
+                    (swap! s assoc :zoom card)
+                    (recur (<! zoom-channel))))
 
-    (go (while true
-          (let [card (<! zoom-channel)]
-            (swap! s assoc :zoom card))))
-    (go (while true
-          (let [deck (<! select-channel)]
-            (end-delete s)
-            (set-deck-on-state s deck))))
+         (go-loop [deck (<! select-channel)]
+                  (when-not (= :exit deck)
+                    (end-delete s)
+                    (set-deck-on-state s deck)
+                    (recur (<! select-channel)))))
 
-    (fn []
-      [:div.container
-       [:div.deckbuilder-bg]
-       [:div.deckbuilder.blue-shade.panel
-        [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
-                        :class (class-for-state s)}
-         [list-panel s user decks decks-loaded scroll-top]
-         [selected-panel s]
-         [edit-panel s]]]])))
+       :component-will-unmount
+       (fn [_comp]
+         (put! zoom-channel :exit)
+         (put! select-channel :exit))
+
+       :reagent-render
+       (fn []
+         [:div.container
+          [:div.deckbuilder-bg]
+          [:div.deckbuilder.blue-shade.panel
+           [:div.viewport {:ref #(swap! db-dom assoc :viewport %)
+                           :class (class-for-state s)}
+            [list-panel s user decks decks-loaded scroll-top]
+            [selected-panel s]
+            [edit-panel s]]]])})))
 
 (go (let [cards (<! cards-channel)
           json (:json (<! (GET (str "/data/decks"))))

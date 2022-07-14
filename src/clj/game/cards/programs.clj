@@ -170,10 +170,8 @@
   [first-qty first-type second-qty second-type]
   {:cost [:credit 2]
    :req (req (and (active-encounter? state)
-                  (or (and (has-subtype? current-ice first-type)
-                           (<= first-qty (count (remove :broken (:subroutines current-ice)))))
-                      (and (has-subtype? current-ice second-type)
-                           (<= second-qty (count (remove :broken (:subroutines current-ice))))))))
+                  (or (has-subtype? current-ice first-type)
+                      (has-subtype? current-ice second-type))))
    :label (str "break "
                (quantify first-qty (str first-type " subroutine")) " or "
                (quantify second-qty (str second-type " subroutine")))
@@ -417,17 +415,15 @@
              :msg "gain 1 [Credits]"}]})
 
 (defcard "Aumakua"
-  (auto-icebreaker {:implementation "Place counters manually for access outside of a run or cards that replace access like Ash"
-                    ; We would need a :once :per-access key to make this work for Gang Sign etc.
+  (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
                                 {:label "Place a virus counter"
                                  :msg "manually place a virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
                     :strength-bonus (req (get-virus-counters state card))
-                    :events [{:event :run-ends
-                              :req (req (and (not (or (:did-trash target)
-                                                      (:did-steal target)))
-                                             (:did-access target)))
+                    :events [{:event :end-breach-server
+                              :req (req (not (or (:did-steal target)
+                                                 (:did-trash target))))
                               :effect (effect (add-counter card :virus 1))}
                              {:event :expose
                               :effect (effect (add-counter card :virus 1))}]}))
@@ -577,7 +573,7 @@
                :async true
                :effect (req (let [cards (->> corp-currently-drawing
                                              (shuffle)
-                                             (keep #(find-cid (:cid %) (:hand corp)))
+                                             (keep #(find-cid (:cid %) (:set-aside corp)))
                                              (take target))]
                               (wait-for
                                 (pay state side (make-eid state eid) card [:credit (* 2 target)])
@@ -832,7 +828,7 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "All")
                                 (strength-pump 1 1)
                                 {:cost [:click 1]
-                                 :keep-open :while-clicks-left
+                                 :keep-menu-open :while-clicks-left
                                  :msg "place 1 virus counter"
                                  :effect (effect (add-counter card :virus 1))}]
                     :events [{:event :end-of-encounter
@@ -871,7 +867,7 @@
                                  (wait-for (reveal state side from)
                                            (continue-ability state side (custsec-host from) card nil))))}
      :abilities [{:cost [:click 1]
-                  :keep-open :while-clicks-left
+                  :keep-menu-open :while-clicks-left
                   :label "Install a hosted program"
                   :prompt "Choose a program to install"
                   :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install)
@@ -1069,7 +1065,7 @@
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
                 :cost [:click 1 :credit 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (move target :hand))}
@@ -1365,7 +1361,7 @@
               (assoc e :event :corp-trash)]
      :abilities [{:async true
                   :cost [:click 1 :virus 1]
-                  :keep-open :while-virus-tokens-left
+                  :keep-menu-open :while-virus-tokens-left
                   :msg "force the Corp to trash the top card of R&D"
                   :effect (effect (mill :corp eid :corp 1))}]}))
 
@@ -1391,7 +1387,7 @@
              :silent (req true)
              :effect (effect (add-counter card :virus 1))}]
    :abilities [{:cost [:click 1 :virus 2]
-                :keep-open :while-2-virus-tokens-left
+                :keep-menu-open :while-2-virus-tokens-left
                 :req (req (pos? (count (:hand corp))))
                 :msg "force the Corp to trash 1 card from HQ"
                 :async true
@@ -1470,6 +1466,7 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 1 1)]
                     :events [{:event :pass-ice
+                              :interactive (req true)
                               :req (req (and (all-subs-broken-by-card? (:ice context) card)
                                              (first-event? state side :end-of-encounter
                                                            (fn [targets]
@@ -1555,6 +1552,7 @@
   {:hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :pass-ice
+             :interactive (req true)
              :req (req (same-card? (:ice context) (:host card)))
              :msg "gain 2 [Credits]"
              :async true
@@ -1628,7 +1626,7 @@
 
 (defcard "Magnum Opus"
   {:abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :async true
                 :effect (effect (gain-credits eid 2))
                 :msg "gain 2 [Credits]"}]})
@@ -2015,7 +2013,7 @@
                                   card
                                   (let [ice current-ice]
                                     {:type :gain-subtype
-                                     :duration :end-of-run
+                                     :duration :end-of-encounter
                                      :req (req (same-card? target ice))
                                      :value target})))}]})
 
@@ -2270,7 +2268,7 @@
   {:abilities [{:label "Install and host a program from Grip"
                 :async true
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :prompt "Choose a program to install on Scheherazade from your grip"
                 :choices {:req (req (and (program? target)
                                       (runner-can-install? state side target false)

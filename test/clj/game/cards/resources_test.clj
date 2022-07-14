@@ -125,6 +125,42 @@
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (no-prompt? state :runner) "No Aeneas Informant prompt")))
 
+(deftest aeneas-informant-does-not-trigger-on-gagarin-issue-#6392
+  ;; Aeneas Informant & Gagarin
+  (do-game
+    (new-game {:runner {:hand ["Aeneas Informant" "Theophilius Bagbiter"]}
+               :corp {:hand ["Rashida Jaheem"] :id "Gagarin Deep Space: Expanding the Horizon"}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (core/gain-clicks state :runner 1)
+    (play-from-hand state :runner "Aeneas Informant")
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "did not spent or lose any credits"
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No prompt to use informant")
+      (is (not (:run @state)) "Run over"))
+    ;; using autoresolve
+    (let [informant (get-resource state 0)]
+      (card-ability state :runner informant 0)
+      (click-prompt state :runner "Always"))
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "did not spent or lose any credits with autoresolve on"
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "No action"))
+    ;;can't pay (instead of refusing)
+    (play-from-hand state :runner "Theophilius Bagbiter")
+    (is (zero? (:credit (get-runner))))
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "did not spent or lose any credits with autoresolve on"
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "OK"))
+    ))
+
 (deftest aeneas-informant-triggers-on-cards-moved-to-rfg
     ;; Aeneas Informant & Salsette Slums - Runner gains credits from cards moved to RFG
     (do-game
@@ -3197,6 +3233,21 @@
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
+(deftest lewi-guilherme-lovegood-interaction-#3345
+  ;; hand size does not persist while blanked by Dr. Lovegood
+  (do-game
+   (new-game {:runner {:hand ["Lewi Guilherme" "Dr. Lovegood"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Lewi Guilherme")
+   (is (= 4 (hand-size :corp)) "-1 hand size from lewi")
+   (play-from-hand state :runner "Dr. Lovegood")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (click-prompt state :runner "Dr. Lovegood")
+   (click-card state :runner "Lewi Guilherme")
+   (is (= 5 (hand-size :corp)) "-1 hand size from lewi")
+   (is (no-prompt? state :runner) "No more prompt to activate")))
+
 (deftest liberated-account
   ;; Liberated Account
   (do-game
@@ -3344,6 +3395,25 @@
    (run-continue-until state :success)
    (is (= 3 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 2")
    (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
+(deftest light-the-fire-reduced-service-issue-#6340
+  ;; github issue #6340
+  (do-game
+    ;; can afford to pay 8 - pay 8 before the run initiates
+    (new-game {:corp {:hand ["Reduced Service"]} :credits 10
+               :runner {:hand ["Light the Fire!" "Sure Gamble"]
+                        :credits 12}})
+    (play-from-hand state :corp "Reduced Service" "New remote")
+    (let [rs (get-content state :remote1 0)]
+      (rez state :corp rs)
+      (click-prompt state :corp "4")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Light the Fire!")
+      (card-ability state :runner (get-resource state 0) 0)
+      (changes-val-macro
+       -8 (:credit (get-runner))
+       "Spent 8 credits to make a run on the server"
+       (click-prompt state :runner "Server 1")))))
 
 (deftest logic-bomb
   ;; Logic Bomb
@@ -3866,7 +3936,7 @@
       (let [oca (get-resource state 0)]
         (card-ability state :runner oca 0)
         (click-card state :runner "The Class Act")
-        (click-card state :runner (last (:hand (get-runner))))
+        (click-card state :runner (last (:set-aside (get-runner))))
         (is (= 1 (count (:hand (get-runner)))))
         (take-credits state :runner)
         (is (= 5 (count (:hand (get-runner)))) "Draw 4 cards from The Class Act")
@@ -5219,7 +5289,7 @@
         (is (seq (:prompt (get-runner))) "Runner should have The Class Act prompt")
         (is (= "Choose 1 card to add to the bottom of the stack" (-> (prompt-map :runner) :msg))
             "Runner gets The Class Act's power on Corp's turn")
-        (click-card state :runner (find-card "Diesel" (:hand (get-runner))))
+        (click-card state :runner (find-card "Diesel" (:set-aside (get-runner))))
         (play-from-hand state :runner "Diesel")
         (is (= "The Class Act" (-> (prompt-map :runner) :card :title)) "Runner gets The Class Act's power on Runner's turn"))))
 
@@ -5667,7 +5737,7 @@
      (click-draw state :runner)
      (is (seq (:prompt (get-runner))) "The Class Act is prompting the runner to choose")
      (is (seq (:prompt (get-corp))) "The Class Act is insisting the corp waits")
-     (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+     (click-card state :runner (find-card "Sure Gamble" (:set-aside (get-runner))))
      (is (no-prompt? state :runner) "The Class Act is done prompting the runner to choose")
      (is (no-prompt? state :corp) "The Class Act is not insisting the corp waits")
      (is (= 1 (count (:deck (get-runner)))) "1 card put back")))
@@ -5687,7 +5757,7 @@
      (click-prompt state :runner "John Masanori") ; runner should be prompted for which to trigger first
      (is (= 2 (count (:prompt (get-runner)))) "The Class Act is prompting the runner to choose, but Paragon prompt is not open yet")
      (is (seq (:prompt (get-corp))) "The Class Act is insisting the corp waits")
-     (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+     (click-card state :runner (find-card "Sure Gamble" (:set-aside (get-runner))))
      (is (= 2 (count (:deck (get-runner)))) "The Class Act put a card back")
      (is (changes-credits (get-runner) 1
                           (do (click-prompt state :runner "Yes") ; runner prompted to trigger Paragon

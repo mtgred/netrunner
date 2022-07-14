@@ -213,14 +213,11 @@
                                 z (butlast (get-zone installed-card))]
                             (continue-ability
                               state side
-                              {:prompt (str "Choose a "
-                                            (if (is-remote? z)
-                                              "non-agenda"
-                                              "piece of ice")
-                                            " in HQ to install")
+                              {:prompt "Choose a non-agenda card in HQ to install"
                                :choices {:card #(and (in-hand? %)
                                                      (corp? %)
                                                      (corp-installable-type? %)
+                                                     (or (is-remote? z) (not (asset? %)))
                                                      (not (agenda? %)))}
                                :async true
                                :effect (effect (corp-install eid target (zone->name z) nil))}
@@ -579,18 +576,30 @@
    :effect (effect (update-all-ice))})
 
 (defcard "Harishchandra Ent.: Where You're the Star"
-  {:events [{:event :tags-changed
-             :effect (req (if (is-tagged? state)
-                            (when-not (get-in @state [:runner :openhand])
-                              (system-msg state :corp (str "uses " (get-title card) " to reveal the Runner's hand"))
+  (letfn [(format-grip [runner]
+            (if (pos? (count (:hand runner)))
+              (string/join ", " (map :title (sort-by :title (:hand runner))))
+              "no cards"))]
+    {:events [{:event :post-runner-draw
+               :req (req (is-tagged? state))
+               :msg (msg "see that the Runner drew: "
+                         (string/join ", " (map :title runner-currently-drawing)))}
+              {:event :tags-changed
+               :effect (req (if (is-tagged? state)
+                              (when-not (get-in @state [:runner :openhand])
+                                (system-msg state :corp (str "uses " (get-title card) " make the Runner play with their grip revealed"))
+                                (system-msg state :corp (str "uses " (get-title card) " to see that the Runner currently has "
+                                                             (format-grip runner) " in their grip"))
                               (reveal-hand state :runner))
                             (when (get-in @state [:runner :openhand])
-                              (system-msg state :corp (str "uses " (get-title card) " to hide the Runner's hand"))
+                              (system-msg state :corp (str "uses " (get-title card) " stop making the Runner play with their grip revealed"))
+                              (system-msg state :corp (str "uses " (get-title card) " to see that the Runner had "
+                                                           (format-grip runner) " in their grip before it was concealed"))
                               (conceal-hand state :runner))))}]
    :effect (req (when (is-tagged? state)
                   (reveal-hand state :runner)))
    :leave-play (req (when (is-tagged? state)
-                      (conceal-hand state :runner)))})
+                      (conceal-hand state :runner)))}))
 
 (defcard "Harmony Medtech: Biomedical Pioneer"
   {:effect (effect (lose :agenda-point-req 1)
@@ -680,7 +689,7 @@
 (defcard "Hyoubu Institute: Absolute Clarity"
   {:events [{:event :corp-reveal
              :once :per-turn
-             :req (req (first-event? state side :corp-reveal))
+             :req (req (first-event? state side :corp-reveal #(pos? (count %))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]
@@ -1000,7 +1009,13 @@
      :abilities [ability]}))
 
 (defcard "MirrorMorph: Endless Iteration"
-  (let [mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
+  (let [mm-clear {:prompt "Manually fix Mirrormorph"
+                  :msg "manually clear Mirrormorph flags"
+                  :label "Manually fix Mirrormorph"
+                  :effect (effect
+                           (update! (assoc-in card [:special :mm-actions] []))
+                           (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
+        mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
                     :choices ["Gain [Click]" "Gain 1 [Credits]"]
                     :msg (msg (decapitalize target))
                     :once :per-turn
@@ -1012,7 +1027,7 @@
                                        (effect-completed state side eid))
                                    (gain-credits state side eid 1)))}]
     {:implementation "Does not work with terminal Operations"
-     :abilities [mm-ability]
+     :abilities [mm-ability mm-clear]
      :events [{:event :corp-spent-click
                :async true
                :effect (req (let [cid (first target)
@@ -1032,8 +1047,14 @@
                                        (= 3 (count (distinct actions))))
                                 (continue-ability state side mm-ability (get-card state card) nil)
                                 (effect-completed state side eid))))}
+              {:event :runner-turn-begins
+               :effect (effect
+                        (update! (assoc-in card [:special :mm-actions] []))
+                        (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
               {:event :corp-turn-ends
-               :effect (effect (update! (assoc-in card [:special :mm-actions] [])))}]
+               :effect (effect
+                        (update! (assoc-in card [:special :mm-actions] []))
+                        (update! (assoc-in (get-card state card) [:special :mm-click] false)))}]
      :constant-effects [{:type :prevent-paid-ability
                          :req (req (and (get-in card [:special :mm-click])
                                         (let [cid (:cid target)
@@ -1169,9 +1190,28 @@
 (defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created
              :req (req (first-event? state :corp :server-created))
-             :msg "draw 1 card"
              :async true
-             :effect (effect (draw :corp eid 1))}]})
+             :msg "draw 1 card"
+             :effect (req
+                      (if-not (some #(= % :deck) (:zone target))
+                        (draw state :corp eid 1)
+                        (do
+                          ;; Register the draw to go off when the card is finished installing -
+                          ;;  this is after the checkpoint when it should go off, but is needed to
+                          ;;  fix the interaction between architect (and any future install from R&D
+                          ;;  cards) and NEH, where the card would get drawn before the install,
+                          ;;  fizzling it in a confusing manner. Because we only do it in this
+                          ;;  special case, there should be no gameplay implications. -nbkelly, 2022
+                          (register-events
+                           state side
+                           card
+                           [{:event :corp-install
+                             :interactive (req true)
+                             :duration (req true)
+                             :unregister-once-resolved true
+                             :async true
+                             :effect (effect (draw :corp eid 1))}])
+                          (effect-completed state side eid))))}]})
 
 (defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice

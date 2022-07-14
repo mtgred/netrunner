@@ -106,6 +106,8 @@
        ["/:id" {:delete admin/news-delete-handler}]]
       ["/version" {:get admin/version-handler
                    :put admin/version-update-handler}]
+      ["/banned" {:get admin/banned-message-handler
+                   :put admin/banned-message-update-handler}]
       ["/features" {:get admin/features-handler
                     :put admin/features-update-handler}]]]
     {:reitit.middleware/registry

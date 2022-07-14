@@ -5,8 +5,21 @@
             [clojure.string :as string]
             [clojure.set :as set]))
 
-;; Card definitions
 
+(defn- lockdown
+  ;; Helper function for lockdowns. Enforces the "cannot play if there's another active lockdown"
+  ;; restriction, and handles the card staying in the play area/trashing at the start of the corp
+  ;; turn.
+  [cardfn]
+  (let [untrashed (assoc cardfn :on-play (conj {:trash-after-resolving false
+                                                :req (req (not (some #(has-subtype? % "Lockdown")
+                                                                     (:play-area corp))))}
+                                               (:on-play cardfn)))]
+    (update untrashed :events conj {:event :corp-turn-begins
+                                    :async true
+                                    :effect (effect (trash eid card nil))})))
+
+;; Card definitions
 (defcard "24/7 News Cycle"
   {:on-play
    {:req (req (pos? (count (:scored corp))))
@@ -104,15 +117,12 @@
   {:on-play (corp-recur)})
 
 (defcard "Argus Crackdown"
-  {:on-play {:trash-after-resolving false}
-   :events [{:event :successful-run
+  (lockdown
+  {:events [{:event :successful-run
              :req (req (not-empty run-ices))
              :msg "deal 2 meat damage"
              :async true
-             :effect (effect (damage eid :meat 2 {:card card}))}
-            {:event :corp-turn-begins
-             :async true
-             :effect (effect (trash eid card nil))}]})
+             :effect (effect (damage eid :meat 2 {:card card}))}]}))
 
 (defcard "Ark Lockdown"
   {:on-play
@@ -1083,20 +1093,17 @@
     :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Hyoubu Precog Manifold"
-  {:on-play {:trash-after-resolving false
-             :prompt "Choose a server"
-             :choices (req servers)
-             :msg (msg "choose " target)
-             :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))}
-   :events [{:event :successful-run
-             :psi {:req (req (= (zone->name (get-in @state [:run :server]))
-                                (get-in card [:special :hyoubu-precog-target])))
-                   :not-equal {:msg "end the run"
-                               :async true
-                               :effect (effect (end-run eid card))}}}
-            {:event :corp-turn-begins
-             :async true
-             :effect (effect (trash eid card nil))}]})
+  (lockdown
+   {:on-play {:prompt "Choose a server"
+              :choices (req servers)
+              :msg (msg "choose " target)
+              :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))}
+    :events [{:event :successful-run
+              :psi {:req (req (= (zone->name (get-in @state [:run :server]))
+                                 (get-in card [:special :hyoubu-precog-target])))
+                    :not-equal {:msg "end the run"
+                                :async true
+                                :effect (effect (end-run eid card))}}}]}))
 
 (defcard "Interns"
   {:on-play
@@ -1355,23 +1362,28 @@
                              (add-prop state side installed-card :advance-counter 3 {:placed true})
                              (register-persistent-flag!
                                state side
-                               card :can-rez
+                               installed-card :can-rez
                                (fn [state _ card]
                                  (if (same-card? card installed-card)
                                    ((constantly false) (toast state :corp "Cannot rez due to Mushin No Shin." "warning"))
                                    true)))
                              (register-turn-flag!
                                state side
-                               card :can-score
+                               installed-card :can-score
                                (fn [state _ card]
                                  (if (same-card? card installed-card)
                                    ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
                                    true)))
-                             (effect-completed state side eid))))}
-   :events [{:event :corp-turn-begins
-             :duration :until-corp-turn-begins
-             :async true
-             :effect (req (clear-persistent-flag! state :corp card :can-rez))}]})
+                             (register-events
+                              state side installed-card
+                              [{:event :corp-turn-begins
+                                :duration :until-corp-turn-begins
+                                :unregister-once-resolved true
+                                :async true
+                                :effect (req
+                                         (clear-persistent-flag! state :corp installed-card :can-rez)
+                                         (effect-completed state side eid))}])
+                             (effect-completed state side eid))))}})
 
 (defcard "Mutate"
   {:on-play
@@ -1405,13 +1417,10 @@
                                        (effect-completed state side eid))))))))}})
 
 (defcard "NAPD Cordon"
-  {:on-play {:trash-after-resolving false}
-   :events [{:event :pre-steal-cost
-             :effect (req (let [counter (get-counters target :advancement)]
-                            (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))] {:source card :source-type :ability})))}
-            {:event :corp-turn-begins
-             :async true
-             :effect (effect (trash eid card nil))}]})
+  (lockdown
+   {:events [{:event :pre-steal-cost
+              :effect (req (let [counter (get-counters target :advancement)]
+                             (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))] {:source card :source-type :ability})))}]}))
 
 (defcard "Neural EMP"
   {:on-play
@@ -1427,18 +1436,16 @@
     :effect (effect (damage eid :net (:scored-agenda corp-reg 0) {:card card}))}})
 
 (defcard "NEXT Activation Command"
-  {:on-play {:trash-after-resolving false}
-   :constant-effects [{:type :ice-strength
-                       :value 2}
-                      {:type :prevent-paid-ability
-                       :req (req (let [target-card (first targets)
-                                       ability (second targets)]
-                                   (and (not (has-subtype? target-card "Icebreaker"))
-                                        (:break ability))))
-                       :value true}]
-   :events [{:event :corp-turn-begins
-             :async true
-             :effect (effect (trash eid card nil))}]})
+  (lockdown
+   {:constant-effects [{:type :ice-strength
+                        :value 2}
+                       {:type :prevent-paid-ability
+                        :req (req (let [target-card (first targets)
+                                        ability (second targets)]
+                                    (and (not (has-subtype? target-card "Icebreaker"))
+                                         (:break ability))))
+                        :value true}]}))
+
 
 (defcard "O₂ Shortage"
   {:on-play
@@ -2379,21 +2386,18 @@
     :effect (effect (gain-credits eid (count (:hand runner))))}})
 
 (defcard "SYNC Rerouting"
-  {:on-play {:trash-after-resolving false}
-   :events [{:event :run
-             :async true
-             :msg (msg "force the Runner to " (decapitalize target))
-             :player :runner
-             :prompt "Pay 4 [Credits] or take 1 tag?"
-             :choices ["Pay 4 [Credits]" "Take 1 tag"]
-             :effect (req (if (= target "Pay 4 [Credits]")
-                            (wait-for (pay state :runner (make-eid state eid) card :credit 4)
-                                      (system-msg state :runner (:msg async-result))
-                                      (effect-completed state side eid))
-                            (gain-tags state :corp eid 1 nil)))}
-            {:event :corp-turn-begins
-             :async true
-             :effect (effect (trash eid card nil))}]})
+  (lockdown
+   {:events [{:event :run
+              :async true
+              :msg (msg "force the Runner to " (decapitalize target))
+              :player :runner
+              :prompt "Pay 4 [Credits] or take 1 tag?"
+              :choices ["Pay 4 [Credits]" "Take 1 tag"]
+              :effect (req (if (= target "Pay 4 [Credits]")
+                             (wait-for (pay state :runner (make-eid state eid) card :credit 4)
+                                       (system-msg state :runner (:msg async-result))
+                                       (effect-completed state side eid))
+                             (gain-tags state :corp eid 1 nil)))}]}))
 
 (defcard "Targeted Marketing"
   (let [gaincr {:req (req (= (:title (:card context)) (get-in card [:special :marketing-target])))
