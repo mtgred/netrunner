@@ -1168,6 +1168,49 @@
         (take-credits state :runner)
         (is (not (rezzed? (refresh ch))))))))
 
+(deftest chiyashi-auto-trash
+  (do-game
+    (new-game {:corp {:hand [(qty "Chiyashi" 2)] :credits 30}
+               :runner {:hand ["Crypsis" "Corroder" "Hippo"] :deck [(qty "Sure Gamble" 50)] :credits 50}})
+    (play-from-hand state :corp "Chiyashi" "HQ")
+    (play-from-hand state :corp "Chiyashi" "R&D")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :rd 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Crypsis")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Hippo")
+    (core/gain state :runner :click 100)
+    (let [corroder (get-program state 1)
+          crypsis (get-program state 0)]
+      ;; the ice is trashed before the 'trash 2' text on chiyashi
+      ;; is active, so it does not fire for the last subroutine
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro
+        +4 (count (:discard (get-runner)))
+        "milled 4 with Chiyashi (2 + 2, ice trashed before third mill)"
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (core/continue state :corp nil)
+        (click-prompt state :runner "Yes")
+        (run-jack-out state))
+      (run-on state "R&D")
+      (run-continue state)
+      (changes-val-macro
+        +7 (count (:discard (get-runner)))
+        "milled 6 with Chiyashi, and trashed crypsis"
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh crypsis)})
+        (core/continue state :corp nil)
+        (run-jack-out state))
+      (run-on state "R&D")
+      (run-continue state)
+      (changes-val-macro
+        0 (count (:discard (get-runner)))
+        "milled 0 with Chiyashi, no AI is installed"
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+        (core/continue state :corp nil)
+        (run-jack-out state)))))
+
 (deftest chrysalis
   ;; Chrysalis
   (do-game
@@ -2693,7 +2736,7 @@
       (card-subroutine state :corp harv 0)
       (is (= "The Class Act" (-> (prompt-map :runner) :card :title)) "The Class Act prompt showing")
       (is (= 2 (count (:prompt (get-runner)))) "Harvester prompt not open yet")
-      (click-card state :runner (last (:hand (get-runner))))
+      (click-card state :runner (last (:set-aside (get-runner))))
       (is (= 7 (count (:hand (get-runner)))) "Runner bottomed Class Act draw")
       (is (= "Harvester" (-> (prompt-map :runner) :card :title)) "Harvester prompt showing")
       (click-card state :runner (last (:hand (get-runner))))

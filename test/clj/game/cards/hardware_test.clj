@@ -1826,11 +1826,12 @@
       (click-prompt state :runner "OK")
       (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
       (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
-      (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+      (is (= 0 (count (:deck (get-runner)))) "0 cards in deck")
+      (is (= 6 (count (:set-aside (get-runner)))) "6 cards set-aside")
       (changes-val-macro -1 (:credit (get-runner))
                          "Paid 1c to install DDoS"
                          (click-prompt state :runner "DDoS"))
-      (is (= 5 (count (:deck (get-runner)))) "5 cards remain in deck")
+      (is (= 5 (count (:set-aside (get-runner)))) "5 cards remain set-aside")
       (click-prompt state :runner "Au Revoir")
       (click-prompt state :runner "Clone Chip")
       (click-prompt state :runner "Equivocation")
@@ -1920,7 +1921,7 @@
         (click-prompt state :runner "OK")
         (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
         (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
-        (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+        (is (= 6 (count (:set-aside (get-runner)))) "6 cards in deck")
         (click-prompt state :runner "DDoS")
         (click-card state :runner pp)
         (is (= 0 (:credit (get-runner))) "DDoS installed with 2c discount using only Paladin Poemu credits")
@@ -1952,7 +1953,7 @@
       (click-prompt state :runner "OK")
       (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
       (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
-      (is (= 6 (count (:deck (get-runner)))) "6 cards in deck")
+      (is (= 6 (count (:set-aside (get-runner)))) "6 cards in deck")
       (click-prompt state :runner "DDoS")
       (is (= "DDoS" (:title (get-resource state 0))) "DDoS is installed")))
 
@@ -2635,10 +2636,10 @@
       (is (= 5 (count (:hand (get-runner)))) "Starts with 5 cards in hand")
       (is (= "Street Peddler" (:title (:card (prompt-map :runner)))))
       (click-prompt state :runner "Clone Chip")
-      (is (= 7 (count (:hand (get-runner)))) "Geist's draw triggers The Class Act")
+      (is (= 2 (count (:set-aside (get-runner)))) "Geist's draw triggers The Class Act")
       (is (= "The Class Act" (:title (:card (prompt-map :runner)))))
-      ;; click the drawn card, which is last in the hand
-      (click-card state :runner (last (:hand (get-runner))))
+      ;; click the drawn card, which is last in the set-aside zone
+      (click-card state :runner (last (:set-aside (get-runner))))
       (is (= 6 (count (:hand (get-runner)))) "Geist draw finishes")
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Masterwork (v37)")
@@ -3849,8 +3850,8 @@
       (play-from-hand state :runner "Respirocytes")
       (play-from-hand state :runner "Respirocytes")
       (is (= 2 (count (:discard (get-runner)))) "2 damage done")
-      (is (= ["Acacia" "Bankroll"] (map :title (:hand (get-runner)))) "First Respirocytes triggers The Class Act")
-      (is (= 2 (count (:hand (get-runner)))) "Runner hasn't drawn anything yet")
+      (is (= ["Acacia" "Bankroll"] (map :title (:set-aside (get-runner)))) "First Respirocytes triggers The Class Act")
+      (is (= 2 (count (:set-aside (get-runner)))) "Runner hasn't drawn anything yet")
       (click-card state :runner "Acacia")
       (is (= ["Bankroll" "Cache"] (->> (get-runner) :hand (map :title)))
           "Acacia is on the bottom of the deck so Runner drew Cache")))
@@ -3972,6 +3973,22 @@
       (is (seq (:prompt (get-runner))) "Modded choice prompt exists")
       (click-card state :runner "Şifr")
       (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength"))))
+
+(deftest sifr-works-with-chisel
+  (do-game
+    (new-game {:runner {:hand ["Şifr" "Chisel"] :credits 10}
+               :corp {:hand ["Assassin"] :credits 10}})
+    (play-from-hand state :corp "Assassin")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chisel")
+    (click-card state :runner "Assassin")
+    (play-from-hand state :runner "Şifr")
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "Şifr")
+    (click-prompt state :runner "Chisel")
+    (is (= 1 (count (:discard (get-corp)))) "Trashed Assassin")))
 
 (deftest silencer-pay-credits-prompt
     ;; Pay-credits prompt

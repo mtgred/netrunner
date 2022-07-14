@@ -1664,7 +1664,7 @@
     (is (= 4 (:agenda-point (get-runner))) "Runner scored two agendas")))
 
 (deftest deep-dive-strongbox-ikawah-bellona
-  (do-game 
+  (do-game
     (new-game {:corp {:hand ["Strongbox" "Ikawah Project" "Bellona" "Fire Wall"]}
 	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
     (draw state :corp)
@@ -1675,7 +1675,7 @@
     (rez state :corp (get-content state :rd 0))
     (take-credits state :corp)
     (core/gain state :runner :click 96)
-    (core/gain state :runner :credit 95)    
+    (core/gain state :runner :credit 95)
     ;;run the three centrals
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
@@ -1683,19 +1683,19 @@
     (click-prompt state :runner "No action")
     (click-prompt state :runner "No action")
     (run-empty-server state "HQ")
-    ;;play from hand, and attempt to steal ikawah - this should cost us 2 clicks and 2 credits
+    ;;play from hand, and attempt to steal ikawah - this should cost us 1 click and 2 credits
     (play-from-hand state :runner "Deep Dive")
     (click-prompt state :runner "Bellona")
     (click-prompt state :runner "Pay to steal")
     ;;runner should now have 95 clicks and 93 credits
-    (is (= 95 (:click (get-runner))) "Should have spent +1 click to steal bellona")
+    (is (= 96 (:click (get-runner))) "Should NOT have spent +1 click to steal bellona")
     (is (= 93 (:credit (get-runner))) "Should have spent +5 credits to steal bellona")
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Ikawah Project")
     (click-prompt state :runner "Pay to steal")
-    ;;runner should now have 92 clicks and 91 credits
-    (is (= 92 (:click (get-runner))) "Should have spent +1 click to steal bellona")
-    (is (= 91 (:credit (get-runner))) "Should have spent +5 credits to steal bellona")))
+    ;;runner should now have 94 clicks and 91 credits
+    (is (= 94 (:click (get-runner))) "Should have spent +1 click to steal Ikawah")
+    (is (= 91 (:credit (get-runner))) "Should have spent +2 credits to steal Ikawah")))
 
 (deftest deja-vu
   ;; Deja Vu - recur one non-virus or two virus cards

@@ -904,15 +904,20 @@
    :subroutines [end-the-run]})
 
 (defcard "Chiyashi"
-  {:implementation "Trash effect when using an AI to break is activated manually"
-   :abilities [{:async true
-                :label "Trash the top 2 cards of the Runner's Stack"
-                :req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
-                :msg (msg (str "trash " (string/join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
-                :effect (effect (mill :corp eid :runner 2))}]
-   :subroutines [(do-net-damage 2)
-                 (do-net-damage 2)
-                 end-the-run]})
+  (letfn [(chiyashi-auto-trash [state side eid n]
+            (if (pos? n)
+              (wait-for (mill state :corp :runner 2)
+                        (system-msg state side "uses Chiyashi to trash the top 2 cards of the Stack")
+                        (chiyashi-auto-trash state side eid (dec n)))
+              (effect-completed state side eid)))]
+    {:events [{:event :subroutines-broken
+               :req (req (and (same-card? card (first targets))
+                              (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner)))))
+               :async true
+               :effect (effect (chiyashi-auto-trash :corp eid (count (second targets))))}]
+     :subroutines [(do-net-damage 2)
+                   (do-net-damage 2)
+                   end-the-run]}))
 
 (defcard "Chrysalis"
   {:flags {:rd-reveal (req true)}
