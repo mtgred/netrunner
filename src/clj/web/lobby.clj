@@ -58,7 +58,8 @@
 (defn send-lobby-ting [lobby]
   (when lobby
     (doseq [[uid ev] (lobby-ting lobby)]
-      (ws/chsk-send! uid ev))))
+      (when uid
+        (ws/chsk-send! uid ev)))))
 
 (defn- filter-lobby-user
   "Only take keys that are useful in the lobby from a user map"
@@ -183,12 +184,17 @@
 (defn broadcast-lobby-list
   "Sends the lobby list to all users or a given list of users.
   Filters the list per each users block list."
-  ([] (broadcast-lobby-list (app-state/get-users)))
+  ([]
+   (let [user-cache (:users @app-state/app-state)
+         uids (ws/connected-uids)
+         users (map #(get user-cache %) uids)]
+     (broadcast-lobby-list users)))
   ([users]
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
    (let [lobbies (app-state/get-lobbies)]
      (doseq [[uid ev] (prepare-lobby-list lobbies users)]
-       (ws/chsk-send! uid ev)))))
+       (when uid
+         (ws/chsk-send! uid ev))))))
 
 (defn prepare-lobby-state [lobby]
   (let [lobby-state (lobby-summary lobby true)]
@@ -199,7 +205,8 @@
 (defn send-lobby-state [lobby]
   (when lobby
     (doseq [[uid ev] (prepare-lobby-state lobby)]
-      (ws/chsk-send! uid ev))))
+      (when uid
+        (ws/chsk-send! uid ev)))))
 
 (defn register-lobby
   [lobbies lobby uid]
@@ -226,7 +233,8 @@
       (broadcast-lobby-list))))
 
 (defn clear-lobby-state [uid]
-  (ws/chsk-send! uid [:lobby/state]))
+  (when uid
+    (ws/chsk-send! uid [:lobby/state])))
 
 (defn send-lobby-list [uid]
   (when uid
@@ -504,7 +512,7 @@
   (let [first-player (first (:players lobby))]
     (cond
       (not= (:uid first-player) uid) lobby
-      (some? side) (update-in lobby [:players 0] change-side side)
+      (some? side) (update lobby :players (fn [x] (mapv #(change-side % side) x)))
       :else (update lobby :players #(mapv swap-side %)))))
 
 (defn handle-swap-sides [lobbies gameid uid side swap-message]
@@ -584,7 +592,8 @@
           (when started
             (stats/game-finished db lobby)
             (doseq [uid uids]
-              (ws/chsk-send! uid [:game/timeout gameid])))
+              (when uid
+                (ws/chsk-send! uid [:game/timeout gameid]))))
           (close-lobby! db lobby)
           (doseq [uid uids]
             (send-lobby-list uid)))))

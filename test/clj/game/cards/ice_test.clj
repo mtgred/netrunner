@@ -6577,3 +6577,56 @@
       (play-from-hand state :runner "Corroder")
       (is (zero? (get-strength (refresh wrap)))
           "Wraparound 0 strength after Corroder installed"))))
+
+(deftest zed-1.0
+  ;; zed 1.0 - only does brain damage if the runner spends a click to break a sub
+  (do-game
+   (new-game {:corp {:hand ["Zed 1.0"]}})
+   (play-from-hand state :corp "Zed 1.0" "HQ")
+   (let [zed (get-ice state :hq 0)]
+     (rez state :corp zed)
+     (take-credits state :corp)
+     (run-on state :hq)
+     (run-continue state)
+     (card-side-ability state :runner zed 0)
+     (click-prompt state :runner "Do 1 brain damage")
+     (fire-subs state zed)
+     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")))
+  (do-game
+   (new-game {:corp {:hand ["Zed 1.0"]}})
+   (play-from-hand state :corp "Zed 1.0" "HQ")
+   (let [zed (get-ice state :hq 0)]
+     (rez state :corp zed)
+     (take-credits state :corp)
+     (run-on state :hq)
+     (run-continue state)
+     (fire-subs state zed)
+     (is (= 0 (:brain-damage (get-runner))) "Runner took 0 brain damage"))))
+
+(deftest zed-2.0
+  ;; zed 2.0 - only does brain damage if the runner spends a click to break a sub
+  (do-game
+   (new-game {:corp {:hand ["Zed 2.0"] :credits 10}})
+   (play-from-hand state :corp "Zed 2.0" "HQ")
+   (let [zed (get-ice state :hq 0)]
+     (rez state :corp zed)
+     (take-credits state :corp)
+     (run-on state :hq)
+     (run-continue state)
+     (card-side-ability state :runner zed 0)
+     (click-prompt state :runner "Trash a piece of hardware")
+     (click-prompt state :runner "Trash a piece of hardware")
+     (fire-subs state zed)
+     (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")))
+  (do-game
+   (new-game {:corp {:hand ["Zed 2.0"] :credits 10}})
+   (play-from-hand state :corp "Zed 2.0" "HQ")
+   (let [zed (get-ice state :hq 0)]
+     (rez state :corp zed)
+     (take-credits state :corp)
+     (run-on state :hq)
+     (run-continue state)
+     (fire-subs state zed)
+     (click-prompt state :corp "Done")
+     (click-prompt state :corp "Done")
+     (is (= 0 (:brain-damage (get-runner))) "Runner took 0 brain damage"))))

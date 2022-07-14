@@ -45,6 +45,17 @@
   (go (let [response (<! (PUT "/admin/version" {:version msg} :json))]
         (update-version-response response))))
 
+(defn- update-banned-response [response]
+  (if (= 200 (:status response))
+    (do
+      (go (swap! admin-state assoc :banned (:json (<! (GET "/admin/banned")))))
+      (non-game-toast "Updated banned message" "success" nil))
+    (non-game-toast "Failed to update banned message" "error" nil)))
+
+(defn- update-banned-item [msg]
+  (go (let [response (<! (PUT "/admin/banned" {:banned msg} :json))]
+        (update-banned-response response))))
+
 (defn- update-announce-response [response]
   (if (sente/cb-success? response)
     (case response
@@ -109,6 +120,23 @@
                :value (:version-msg @s "")
                :on-change #(swap! s assoc :version-msg (-> % .-target .-value))}]
       (let [msg (:version-msg @s "")
+            disabled (s/blank? msg)]
+        [:button {:disabled disabled
+                  :class (if disabled "disabled" "")}
+         "Update"])]
+
+     [:br]
+     [:h3 "Update banned user login failure message"]
+     [:form.msg-box {:on-submit #(let [msg (:banned @s)]
+                                   (.preventDefault %)
+                                   (when-not (s/blank? msg)
+                                     (update-banned-item msg)
+                                     (swap! s assoc :banned "")))}
+      [:input {:type "text"
+               :placeholder "Type something...."
+               :value (:banned @s "")
+               :on-change #(swap! s assoc :banned (-> % .-target .-value))}]
+      (let [msg (:banned @s "")
             disabled (s/blank? msg)]
         [:button {:disabled disabled
                   :class (if disabled "disabled" "")}

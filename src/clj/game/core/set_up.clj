@@ -11,7 +11,7 @@
    [game.core.initializing :refer [card-init make-card]]
    [game.core.player :refer [new-corp new-runner]]
    [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
-   [game.core.say :refer [system-msg system-say]]
+   [game.core.say :refer [system-msg system-say implementation-msg]]
    [game.core.shuffling :refer [shuffle-into-deck]]
    [game.core.state :refer [new-state]]
    [game.macros :refer [wait-for]]
@@ -134,7 +134,9 @@
       (swap! state assoc :log (into [] messages))
       (system-say state nil "[hr]"))
     (card-init state :corp corp-identity)
+    (implementation-msg state corp-identity)
     (card-init state :runner runner-identity)
+    (implementation-msg state runner-identity)
     (create-basic-action-cards state)
     (fake-checkpoint state)
     (wait-for (trigger-event-sync state :corp :pre-start-game nil)

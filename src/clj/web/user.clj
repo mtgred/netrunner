@@ -9,6 +9,22 @@
    :isadmin :ismoderator :tournament-organizer
    :special :options :stats :has-api-keys :banned])
 
+(defn character-length [^String username] (.codePointCount username 0 (count username)))
+
+(def url-invalid-char-pattern      #"://")
+(def end-html-invalid-char-pattern #"</")
+(def patterns-username
+  [url-invalid-char-pattern
+  end-html-invalid-char-pattern])
+
+(defn within-char-limit-username? [username] (<= (character-length username) 20))
+
+(defn valid-username?
+  "Validate a username"
+  [username]
+  (and (within-char-limit-username? username)
+       (not (some #(re-find % username) patterns-username))))
+
 (defn create-user
   "Create a new user map."
   [username password email & {:keys [isadmin]}]

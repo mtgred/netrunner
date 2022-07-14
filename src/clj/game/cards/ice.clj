@@ -54,11 +54,18 @@
   (let [cards (map :card (gather-events state side :pre-tag nil))]
     (pos? (count (filter #(card-flag? % :forced-to-avoid-tag true) cards)))))
 
+;;; Break abilities on ice should only occur when encountering that ice
+(defn currently-encountering-card
+  [card state]
+  (same-card? (:ice (get-current-encounter state)) card))
+
 ;;; Runner abilites for breaking subs
 (defn bioroid-break
   ([cost qty] (bioroid-break cost qty nil))
   ([cost qty args]
-   (break-sub [:lose-click cost] qty nil args)))
+   (break-sub [:lose-click cost] qty nil
+              (assoc args :req (req (currently-encountering-card card state))))))
+
 
 ;;; General subroutines
 (def end-the-run
@@ -303,6 +310,30 @@
   {:advanceable :always
    :subroutines (vec abilities)
    :rez-cost-bonus (req (* -3 (get-counters card :advancement)))})
+
+;;; For Zed 1.0 and 2.0
+(defn spent-click-to-break-sub
+  "Checks if the runner has spent(lost) a click to break a subroutine this run"
+  [state run]
+  (let [all-cards (get-all-cards state)
+        events (:events run)
+        breaks (filter #(= :subroutines-broken (first %)) events)
+        cards (vec (map #(first (second %)) breaks))
+        subs (map #(:subroutines %) cards)
+        broken-subs (map #(filter :broken %) subs)
+        breakers (mapcat #(map :breaker %) broken-subs)
+        ;; this is the list of every breaker the runner used to
+        ;; break a subroutine this run. If we check that it has a
+        ;; 'lose-click' break ability, we should be safe most of the
+        ;; time. This can only be: adjusted matrix, ABR, and corp cards
+        ;; If Adjusted Matrix ever gets correctly implemented, there will be
+        ;; a minor edge case here if the runner uses a non-click break ab on a
+        ;; card hosting adjusted matrix -nbkelly, 2022
+        actual-breakers (map #(find-cid % all-cards) breakers)
+        abs (mapcat #(if (= (:side %) "Runner") (:abilities %) (:runner-abilities %)) actual-breakers)
+        costs (map :break-cost abs)
+        clicks (filter #(some #{:lose-click} %) costs)]
+    (not-empty clicks)))
 
 ;;; For Grail ice
 (defn grail-in-hand
@@ -1286,7 +1317,9 @@
 (defcard "F2P"
   {:subroutines [add-runner-card-to-grip
                  (give-tags 1)]
-   :runner-abilities [(break-sub [:credit 2] 1 nil {:req (req (not tagged))})]})
+   :runner-abilities [(break-sub [:credit 2] 1 nil
+                                 {:req (req (and (not tagged)
+                                                 (currently-encountering-card card state)))})]})
 
 (defcard "Fairchild"
   {:subroutines [(end-the-run-unless-runner-pays 4)
@@ -2480,7 +2513,7 @@
 (defcard "Negotiator"
   {:subroutines [(gain-credits-sub 2)
                  trash-program-sub]
-   :runner-abilities [(break-sub [:credit 2] 1)]})
+   :runner-abilities [(break-sub [:credit 2] 1 "All" {:req (req (currently-encountering-card card state))})]})
 
 (defcard "Nerine 2.0"
   (let [sub {:label "Do 1 brain damage and Corp may draw 1 card"
@@ -3005,7 +3038,8 @@
                                       (when (pos? (count from))
                                         (reorder-choice :corp :runner from '() (count from) from)))
                                     card nil))}
-                 {:optional
+                 {:label "The runner breaches R&D unless the corp pays 1 [Credit]"
+                  :optional
                   {:prompt "Pay 1 [Credits] to keep the Runner from breaching R&D?"
                    :yes-ability {:cost [:credit 1]
                                  :msg "keep the Runner from breaching R&D"}
@@ -3199,7 +3233,8 @@
   (constellation-ice trash-hardware-sub))
 
 (defcard "Thimblerig"
-  (let [ability {:optional
+  (let [ability {:interactive (req run)
+                 :optional
                  {:req (req (and (<= 2 (count (filter ice? (all-installed state :corp))))
                                  (if run (same-card? (:ice context) card) true)))
                   :prompt "Swap Thimblerig with another ice?"
@@ -3561,14 +3596,27 @@
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"
-  {:implementation "Restriction on having spent [click] is not implemented"
-   :subroutines [(do-brain-damage 1)
-                 (do-brain-damage 1)]
+  {:subroutines [{:label "Do 1 brain damage"
+                  :async true
+                  :effect (req (if (spent-click-to-break-sub state run)
+                                 (continue-ability state side (do-brain-damage 1) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                     (effect-completed state side eid))))}
+                 {:label "Do 1 brain damage"
+                  :async true
+                  :effect (req (if (spent-click-to-break-sub state run)
+                                 (continue-ability state side (do-brain-damage 1) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                     (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Zed 2.0"
-  {:implementation "Restriction on having spent [click] is not implemented"
-   :subroutines [trash-hardware-sub
+  {:subroutines [trash-hardware-sub
                  trash-hardware-sub
-                 (do-brain-damage 2)]
+                 {:label "Do 1 brain damage"
+                  :async true
+                  :effect (req (if (spent-click-to-break-sub state run)
+                                 (continue-ability state side (do-brain-damage 2) card nil)
+                                 (do (system-msg state side "does not do brain damage with Zed 2.0")
+                                     (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 2 2)]})
