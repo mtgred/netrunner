@@ -21,7 +21,7 @@
               {:async true
                :effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
                                               (number-of-virus-counters state))]
-                              (wait-for (trash state side card nil)
+                              (wait-for (trash state side card {:cause-card card})
                                         (system-msg state side (str "trashes Acacia and gains " counters " [Credit]"))
                                         (gain-credits state side eid counters))))}}}]})
 
@@ -100,7 +100,7 @@
             {:event :unsuccessful-run
              :async true
              :msg "trash itself"
-             :effect (effect (trash eid card))}]})
+             :effect (effect (trash eid card {:cause-card card}))}]})
 
 (defcard "Blackguard"
   {:constant-effects [(mu+ 2)]
@@ -170,6 +170,7 @@
                  :effect
                  (req (wait-for
                         (trash state side (make-eid state eid) card {:cause :ability-cost
+                                                                     :cause-card card
                                                                      :unpreventable true})
                         (continue-ability
                           state :runner
@@ -259,7 +260,8 @@
                                    installed-card-names (keep :title (all-active-installed state :runner))
                                    overlap (clj-set/intersection (set trashed-card-names)
                                                                  (set installed-card-names))]
-                               (wait-for (trash-cards state side targets {:unpreventable true})
+                               (wait-for (trash-cards state side targets {:unpreventable true
+                                                                          :cause-card card})
                                          (let [trashed-cards async-result]
                                            (wait-for (draw state side (count (filter overlap trashed-card-names)))
                                                      (system-msg state side
@@ -280,7 +282,8 @@
      :msg (msg "trash " (:title target) " at no cost")
      :once :per-turn
      :async true
-     :effect (effect (trash eid (assoc target :seen true) {:accessed true}))}}})
+     :effect (effect (trash eid (assoc target :seen true) {:accessed true
+                                                           :cause-card card}))}}})
 
 (defcard "Chop Bot 3000"
   {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
@@ -290,7 +293,7 @@
                                       (installed? %))
                           :not-self true}
                 :async true
-                :effect (req (wait-for (trash state :runner target nil)
+                :effect (req (wait-for (trash state :runner target {:cause-card card})
                                        (continue-ability
                                          state side
                                          (let [trash-str (str "uses Chop Bot 3000 to trash " (:title target))
@@ -622,7 +625,7 @@
                         :effect (req (update! state side (assoc-in (get-card state card) [:special :flame-out-trigger] nil))
                                      (if-let [hosted (first (:hosted card))]
                                        (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))
-                                           (trash state side eid hosted nil))
+                                           (trash state side eid hosted {:cause-card card}))
                                        (effect-completed state side eid)))}]
     {:implementation "Credit usage restriction not enforced"
      :data {:counter {:credit 9}}
@@ -917,7 +920,8 @@
               :yes-ability
               {:async true
                :msg "force the Corp to lose 3 [Credits]"
-               :effect (req (wait-for (trash state :runner card {:unpreventable true})
+               :effect (req (wait-for (trash state :runner card {:unpreventable true
+                                                                 :cause-card card})
                                       (lose-credits state :corp eid 3)))}}}]})
 
 (defcard "Hippo"
@@ -938,7 +942,7 @@
                 {:async true
                  :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
                                  (move card :rfg)
-                                 (trash eid target nil))}}}]}))
+                                 (trash eid target {:cause-card card}))}}}]}))
 
 (defcard "HQ Interface"
   {:events [(breach-access-bonus :hq 1)]})
@@ -1099,7 +1103,7 @@
                                 card-seen? (same-card? target card-to-trash)
                                 card-to-trash (if card-seen? (assoc card-to-trash :seen true)
                                                 card-to-trash)]
-                            (trash state :corp eid card-to-trash nil)))}]})
+                            (trash state :corp eid card-to-trash {:cause-card card :cause :forced-to-trash})))}]})
 
 (defcard "Maya"
   {:constant-effects [(mu+ 2)]
@@ -1372,7 +1376,8 @@
                          :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
                                    (:title targetcard) " by 2 [Credits]")
                          ; provide 2 credits
-                         :effect (req (wait-for (trash state side target {:unpreventable true})
+                         :effect (req (wait-for (trash state side target {:unpreventable true
+                                                                          :cause-card card})
                                                 (register-once state side patchwork-ability patchwork)
                                                 (effect-completed state side (make-result eid 2))))
                          ; provide 0 credits
@@ -1490,7 +1495,7 @@
                     :req (req (and (installed? (:card target))
                                    (program? (:card target))))
                     :msg "trash itself"
-                    :effect (effect (trash eid card nil))}]
+                    :effect (effect (trash eid card {:cause-card card}))}]
              [(assoc e :event :runner-trash)
               (assoc e :event :corp-trash)])})
 
@@ -1609,7 +1614,8 @@
                                         (add-counter state side (get-card state card) :power 1)
                                         (if (= 3 (get-counters (get-card state card) :power))
                                           (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
-                                              (trash state side eid card {:unpreventable true}))
+                                              (trash state side eid card {:unpreventable true
+                                                                          :cause-card card}))
                                           (effect-completed state side eid))))}
         event {:req (req (zero? (count (:hand runner))))
                :async true
@@ -1720,7 +1726,8 @@
                        " and access " (quantify (quot (count targets) 2) "additional card"))
              :async true
              :effect (req (let [bonus (quot (count targets) 2)]
-                            (wait-for (trash-cards state side targets {:unpreventable true})
+                            (wait-for (trash-cards state side targets {:unpreventable true
+                                                                       :cause-card card})
                                       (register-events
                                         state side card
                                         [(breach-access-bonus kw bonus {:duration :end-of-run})])
@@ -2027,7 +2034,7 @@
                                (has-subtype? % "Sysop")))}
      :async true
      :msg (msg "trash " (:title target))
-     :effect (effect (trash eid target nil))}]})
+     :effect (effect (trash eid target {:cause-card card}))}]})
 
 (defcard "Vigil"
   (let [ability {:req (req (and (:runner-phase-12 @state)

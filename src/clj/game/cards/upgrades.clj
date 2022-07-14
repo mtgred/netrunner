@@ -122,7 +122,7 @@
                                             :duration :end-of-run
                                             :async true
                                             :req (req (get-card state ice))
-                                            :effect (effect (trash eid (get-card state ice) nil))}])
+                                            :effect (effect (trash eid (get-card state ice) {:cause-card card}))}])
                                         (force-ice-encounter state side eid ice))))}
               :no-ability {:effect (effect (system-msg :corp (str "declines to use Awakening Center")))}}}]})
 
@@ -180,7 +180,7 @@
                      :unsuccessful
                      {:async true
                       :msg "trash itself"
-                      :effect (effect (trash eid card nil))}}}]})
+                      :effect (effect (trash eid card {:cause-card card}))}}}]})
 
 (defcard "Bio Vault"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -211,7 +211,7 @@
                                   (system-msg state :corp
                                               (str "gains 5 [Credits] and draws 1 card. "
                                                    "Black Level Clearance is trashed"))
-                                  (trash state :corp eid card nil))))))}]})
+                                  (trash state :corp eid card {:cause-card card}))))))}]})
 
 (defcard "Breaker Bay Grid"
   {:constant-effects [{:type :rez-cost
@@ -321,7 +321,7 @@
                                (rezzed? (get-in (:ices (card->server state card)) [(:position run)]))))
                 :async true
                 :effect (req (wait-for
-                               (trash state :corp (make-eid state eid) card nil)
+                               (trash state :corp (make-eid state eid) card {:cause-card card})
                                (swap! state update-in [:run :position] inc)
                                (set-next-phase state :approach-ice)
                                (update-all-ice state side)
@@ -546,7 +546,7 @@
                                (rezzed? target)
                                (protecting-same-server? card target)))}
       :msg (msg "force the Runner to encounter " (card-str state target))
-      :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true})
+      :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true :cause-card card})
                              (force-ice-encounter state side eid target)))}
      :no-ability {:effect (effect (system-msg :corp (str "declines to use Ganked!")))}}}})
 
@@ -649,7 +649,7 @@
                                              :async true
                                              :choices {:max 1
                                                        :card #(is-scored? state side %)}
-                                             :effect (req (wait-for (trash state side target {:unpreventable true})
+                                             :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card :cause :forced-to-trash})
                                                                     (system-msg state :runner (str "trashes " (:title target)
                                                                                                    " as an additional cost to initiate a run"))
                                                                     (effect-completed state side eid)))}
@@ -795,7 +795,7 @@
                                       (program? %))}
                 :cost [:tag 1 :trash-can]
                 :async true
-                :effect (effect (trash eid target nil))}]})
+                :effect (effect (trash eid target {:cause-card card}))}]})
 
 (defcard "Khondi Plaza"
   {:recurring (req (count (get-remotes state)))
@@ -829,7 +829,7 @@
                      :yes-ability
                      {:async true
                       :msg "force the Runner to approach outermost piece of ice"
-                      :effect (req (wait-for (trash state side (make-eid state eid) card {:unpreventable true})
+                      :effect (req (wait-for (trash state side (make-eid state eid) card {:unpreventable true :cause-card card})
                                              (redirect-run state side (zone->name (second (get-zone card))) :approach-ice)
                                              (continue-ability state :runner (offer-jack-out) card nil)))}}}}}]
    :abilities [(set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
@@ -1096,7 +1096,7 @@
              :async true
              :msg "trash itself"
              :effect (req (enable-run-on-server state card (second (get-zone card)))
-                          (trash state :corp eid card nil))}]
+                          (trash state :corp eid card {:cause-card card}))}]
    :leave-play (req (enable-run-on-server state card (second (get-zone card))))})
 
 (defcard "Old Hollywood Grid"
@@ -1289,7 +1289,7 @@
                 :label "Trace X - Do 3 net damage"
                 :effect (req (let [serv (card->server state card)
                                    cards (concat (:ices serv) (:content serv))]
-                               (wait-for (trash-cards state side cards nil)
+                               (wait-for (trash-cards state side cards {:cause-card card})
                                          (continue-ability
                                            state side
                                            {:trace
@@ -1418,7 +1418,7 @@
                :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
                :effect (req (wait-for
                               (reveal state side target)
-                              (wait-for (trash state side (make-eid state eid) (assoc target :seen true))
+                              (wait-for (trash state side (make-eid state eid) (assoc target :seen true) {:cause-card card})
                                         (force-ice-encounter state side eid current-ice))))}}}]})
 
 (defcard "Tori Hanzō"
@@ -1526,7 +1526,7 @@
                        :card #(and (runner? %)
                                    (installed? %))}
              :msg (msg "force the Runner to trash " (string/join ", " (map :title targets)))
-             :effect (req (wait-for (trash-cards state :runner targets {:unpreventable true})
+             :effect (req (wait-for (trash-cards state :runner targets {:unpreventable true :cause-card card :cause :forced-to-trash})
                                     (effect-completed state side eid)))})
           (ability []
             {:trace {:base 4
@@ -1572,6 +1572,6 @@
                             :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
                             :choices {:card #(has-subtype? % "Icebreaker")}
                             :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
-                            :effect (req (wait-for (trash state side card nil)
+                            :effect (req (wait-for (trash state side card {:cause-card card})
                                                    (move state :runner target :deck)
                                                    (effect-completed state side eid)))}}}]})

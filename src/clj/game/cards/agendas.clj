@@ -50,7 +50,7 @@
                           (resource? %))}
     :msg (msg "trash " (card-str state target))
     :async true
-    :effect (effect (trash eid target))}})
+    :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Accelerated Beta Test"
   (letfn [(abt [titles choices]
@@ -59,7 +59,7 @@
              :choices (concat (filter ice? choices) ["Done"])
              :effect (req (if (= target "Done")
                             (do (unregister-events state side card)
-                                (trash-cards state side eid choices {:unpreventable true}))
+                                (trash-cards state side eid choices {:unpreventable true :cause-card card}))
                             (wait-for (corp-install state side target nil
                                                     {:ignore-all-cost true
                                                      :install-state :rezzed-no-cost})
@@ -68,7 +68,7 @@
                                           ;; Shuffle ends the ability
                                           (get-in (get-card state card) [:special :shuffle-occurred])
                                           (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true}))
+                                              (trash-cards state side eid choices {:unpreventable true :cause-card card}))
                                           ;; There are still ice left
                                           (seq (filter ice? choices))
                                           (continue-ability
@@ -76,14 +76,14 @@
                                           ;; Trash what's left
                                           :else
                                           (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true})))))))})
+                                              (trash-cards state side eid choices {:unpreventable true :cause-card card})))))))})
           (suffer [titles choices]
             {:prompt (str "The top 3 cards of R&D: " titles
                           ". None are ice. Say goodbye!")
              :choices ["I have no regrets"]
              :async true
              :effect (effect (system-msg (str "trashes " (quantify (count choices) "card")))
-                             (trash-cards eid choices {:unpreventable true}))})]
+                             (trash-cards eid choices {:unpreventable true :cause-card card}))})]
     {:on-score
      {:interactive (req true)
       :optional
@@ -232,7 +232,7 @@
              :prompt "Choose a card to move to HQ"
              :choices (conj (vec remaining) "Done")
              :effect (req (if (= "Done" target)
-                            (wait-for (trash-cards state :corp to-trash {:unpreventable true})
+                            (wait-for (trash-cards state :corp to-trash {:unpreventable true :cause-card card})
                                       (doseq [h to-hq]
                                         (move state :corp h :hand))
                                       (if (seq remaining)
@@ -403,7 +403,7 @@
     :msg (msg "trash " (:title target))
     :interactive (req true)
     :async true
-    :effect (effect (trash eid target {:unpreventable true}))}})
+    :effect (effect (trash eid target {:unpreventable true :cause-card card}))}})
 
 (defcard "Chronos Project"
   {:on-score
@@ -973,7 +973,7 @@
     :cancel-effect (req (system-msg state :corp "declines to use Longevity Serum to trash any cards from HQ")
                         (shuffle-into-rd-effect state side eid card 3)
                         (effect-completed state side eid))
-    :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+    :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
 
 (defcard "Luminal Transubstantiation"
@@ -1157,7 +1157,7 @@
       :effect (req (let [resources (filter #(or (has-subtype? % "Job")
                                                 (has-subtype? % "Connection"))
                                            (all-active-installed state :runner))]
-                     (trash-cards state side eid resources)))}}}})
+                     (trash-cards state side eid resources {:cause-card card})))}}}})
 
 (defcard "Personality Profiles"
   (let [pp {:req (req (pos? (count (:hand runner))))
@@ -1165,7 +1165,7 @@
             :effect (req (let [c (first (shuffle (:hand runner)))]
                            (system-msg state side (str "uses Personality Profiles to force the Runner to trash "
                                                        (:title c) " from their Grip at random"))
-                           (trash state side eid c nil)))}]
+                           (trash state side eid c {:cause-card card})))}]
     {:events [(assoc pp :event :searched-stack)
               (assoc pp
                      :event :runner-install
@@ -1232,7 +1232,7 @@
                                       (installed? %))}
                 :msg (msg "force the Runner to trash " (trash-count-str (:card context)) " and take 1 bad publicity")
                 :async true
-                :effect (req (wait-for (trash-cards state side targets)
+                :effect (req (wait-for (trash-cards state side targets {:cause-card card :cause :forced-to-trash})
                                        (system-msg state side (str "trashes " (string/join ", " (map :title targets))))
                                        (gain-bad-publicity state :corp eid 1)))}}))
 
@@ -1523,7 +1523,7 @@
                         :all true}
               :msg (msg "trash " (:title target))
               :async true
-              :effect (effect (trash eid target))}})
+              :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Self-Destruct Chips"
   {:move-zone (req (when (and (in-scored? card)
@@ -1613,7 +1613,10 @@
                                    (do (system-msg state :corp "declines to trash a card for Standoff")
                                        (clear-wait-prompt state :runner)
                                        (effect-completed state :corp eid))))
-             :effect (req (wait-for (trash state side target {:unpreventable true})
+             :effect (req (wait-for (trash state side target
+                                           (if (= side :corp)
+                                             {:unpreventable true :cause-card card}
+                                             {:unpreventable true :cause-card card :cause :forced-to-trash}))
                                     (system-msg state side (str "trashes " (card-str state target) " for Standoff"))
                                     (clear-wait-prompt state (other-side side))
                                     (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))

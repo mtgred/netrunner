@@ -2747,7 +2747,7 @@
              :req (req (and (same-card? card target)
                             (empty? (remove :broken (:subroutines target)))))
              :async true
-             :effect (effect (trash :corp eid card {:cause :effect}))}]
+             :effect (effect (trash :corp eid card {:cause-card card :cause :effect}))}]
    :subroutines [end-the-run]})
 
 (defcard "Peeping Tom"
@@ -2904,7 +2904,7 @@
                                              (system-msg state :corp "trashes a card from HQ")
                                              (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
-                           (wait-for (trash state :corp (make-eid state eid) card nil)
+                           (wait-for (trash state :corp (make-eid state eid) card {:cause-card card})
                                      (encounter-ends state side eid))))}]}))
 
 (defcard "Sagittarius"
