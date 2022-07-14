@@ -48,6 +48,7 @@
     [game.core.runs]
     [game.core.say]
     [game.core.servers]
+    [game.core.set-aside]
     [game.core.set-up]
     [game.core.shuffling]
     [game.core.state]
@@ -201,6 +202,7 @@
    in-play-area?
    in-rd-root?
    in-root?
+   in-set-aside?
    in-scored?
    in-server?
    installed?
@@ -747,6 +749,14 @@
    zone->name
    zone->sort-key
    zones->sorted-names])
+
+(expose-vars
+  [game.core.set-aside
+   set-aside
+   set-aside-for-me
+   add-to-set-aside
+   swap-set-aside-cards
+   get-set-aside])
 
 (expose-vars
   [game.core.set-up

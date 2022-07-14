@@ -1738,17 +1738,23 @@
                 :keep-menu-open :while-clicks-left
                 :msg "draw 2 cards"
                 :async true
-                :effect (effect (register-events
-                                  card
-                                  [{:event :runner-draw
-                                    :unregister-once-resolved true
-                                    :waiting-prompt "Runner to make a decision"
-                                    :prompt "Choose 1 card to add to the bottom of the Stack"
-                                    :choices {:req (req (and (in-hand? target)
-                                                             (some #(same-card? target %) runner-currently-drawing)))}
-                                    :msg "add 1 card to the bottom of the Stack"
-                                    :effect (effect (move target :deck))}])
-                                (draw eid 2))}]})
+                ;; there's no event for when a draw gets prevented, so this will leave a floating
+                ;; eid for later draws - we need to unregister the events after the draw to get
+                ;; around this (see Genetics Pavilion) - nbkelly, 2022
+                :effect (req (register-events
+                               state side
+                               card
+                               [{:event :runner-draw
+                                 :unregister-once-resolved true
+                                 :duration :end-of-turn
+                                 :waiting-prompt "Runner to make a decision"
+                                 :prompt "Choose 1 card to add to the bottom of the Stack"
+                                 :choices {:req (req (some #(same-card? target %) runner-currently-drawing))}
+                                 :msg "add 1 card to the bottom of the Stack"
+                                 :effect (effect (move target :deck))}])
+                                (wait-for (draw state side 2)
+                                          (unregister-events state side card)
+                                          (effect-completed state side eid)))}]})
 
 (defcard "Muertos Gang Member"
   {:on-install {:player :corp

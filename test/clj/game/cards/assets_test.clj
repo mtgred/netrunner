@@ -1060,12 +1060,12 @@
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
       (take-credits state :runner)
-      (is (= 5 (count (:hand (get-corp)))) "Drew an additional 3 cards with 3 DBS")
+      (is (= 4 (count (:set-aside (get-corp)))) "Drew an additional 3 cards with 3 DBS")
       (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
       (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp)))) ;invalid target
-      (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
-      (click-card state :corp (find-card "Product Placement" (:hand (get-corp))))
-      (click-card state :corp (find-card "Breaking News" (:hand (get-corp))))
+      (click-card state :corp (find-card "Resistor" (:set-aside (get-corp))))
+      (click-card state :corp (find-card "Product Placement" (:set-aside (get-corp))))
+      (click-card state :corp (find-card "Breaking News" (:set-aside (get-corp))))
       (is (no-prompt? state :runner) "Runner prompt cleared")
       (is (= 2 (count (:hand (get-corp)))))
       (is (= "Hedge Fund" (:title (first (:hand (get-corp))))))
@@ -1096,8 +1096,8 @@
         ;; Use first Sensie
         (is (= 1 (count (:hand (get-corp)))))
         (card-ability state :corp sensie1 0)
-        (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
-        (click-card state :corp (find-card "Resistor" (:hand (get-corp)))) ; DBS target
+        (is (= 4 (count (:set-aside (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
+        (click-card state :corp (find-card "Resistor" (:set-aside (get-corp)))) ; DBS target
         (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; Sensie target
         (is (= 3 (count (:hand (get-corp)))))
         (is (= "Hedge Fund" (:title (last (:deck (get-corp))))) "Hedge Fund last card in deck")
@@ -1139,9 +1139,9 @@
       (take-credits state :corp)
       (is (empty? (:hand (get-corp))) "Corp hand is empty")
       (play-from-hand state :runner "Fisk Investment Seminar")
-      (is (= 4 (count (:hand (get-corp)))) "Drew an additional card from FIS")
+      (is (= 4 (count (:set-aside (get-corp)))) "Drew an additional card from FIS")
       (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
-      (click-card state :corp (find-card "Resistor" (:hand (get-corp))))
+      (click-card state :corp (find-card "Resistor" (:set-aside (get-corp))))
       (is (no-prompt? state :runner) "Runner prompt cleared")
       (is (= 3 (count (:hand (get-corp)))))))
 
@@ -1160,7 +1160,7 @@
       (card-ability state :corp (get-content state :remote2 0) 0)
       (click-prompt state :corp "Yes")
       (is (nil? (get-content state :remote2 0)) "Rashida is trashed")
-      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-card state :corp (find-card "Hedge Fund" (:set-aside (get-corp))))
       (end-phase-12 state :corp)
       (is (no-prompt? state :corp) "DBS doesn't trigger on mandatory draw")))
 
@@ -2085,8 +2085,8 @@
         (is (zero? (count (:hand (get-runner)))))
         ; use Mr. Li with 2 draws allowed
         (card-ability state :runner mrli 0)
-        (is (= 2 (count (:hand (get-runner)))))
-        (click-card state :runner (first (:hand (get-runner))))
+        (is (= 2 (count (:set-aside (get-runner)))))
+        (click-card state :runner (first (:set-aside (get-runner))))
         (is (= 1 (count (:hand (get-runner)))))
         ; use Mr. Li with 0 draws allowed
         (card-ability state :runner mrli 0)
@@ -2098,11 +2098,11 @@
         (is (= 2 (count (:hand (get-runner)))))
         ; use Mr. Li with 1 draw allowed - should draw 1, then insist it's put back
         (card-ability state :runner mrli 0)
-        (is (= 3 (count (:hand (get-runner)))))
+        (is (= 1 (count (:set-aside (get-runner)))))
         (click-card state :runner (first (:hand (get-runner)))) ; will fail
         (click-card state :runner (second (:hand (get-runner)))) ; will fail
-        (is (= 3 (count (:hand (get-runner)))) "Clicking invalid cards caused no discards")
-        (click-card state :runner (second (rest (:hand (get-runner)))))
+        (is (= 2 (count (:hand (get-runner)))) "Clicking invalid cards caused no discards")
+        (click-card state :runner (first (:set-aside (get-runner))))
         (is (= 2 (count (:hand (get-runner)))) "Clicking the single valid card did"))))
 
 (deftest genetics-pavilion-no-cards-in-stack-but-draw-effects-4192
@@ -3919,7 +3919,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (click-prompt state :corp "Yes")
-      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (click-card state :corp (find-card "Ice Wall" (:set-aside (get-corp))))
       (click-card state :corp (find-card "Fire Wall" (:discard (get-corp))))
       (is (= "Fire Wall" (-> (get-corp) :hand first :title)))
       (is (= "Ice Wall" (-> (get-corp) :discard first :title)))

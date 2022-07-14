@@ -263,7 +263,9 @@
             :yes-ability
             {:async true
              :effect (req (let [c (take 7 (:deck corp))]
-                            (when (:access @state)
+                            (when (and
+                                   (:access @state)
+                                   (:run @state))
                               (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                             (continue-ability state :corp (trash-step c '()) card nil)))}}}]
       {:on-score arrange-rd
