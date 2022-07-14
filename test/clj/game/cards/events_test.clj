@@ -3686,6 +3686,32 @@
       (run-continue state)
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall is trashed")))
 
+(deftest knifed-should-not-work-like-hippo-issue-6382
+    ;; Can trash ice even if an ice with the same subtype has been broken during a previous run. Issue #6382
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck ["Knifed" "Corroder"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (run-jack-out state)
+      (play-from-hand state :runner "Knifed")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue-until state :approach-ice)
+      (is (find-card "Ice Wall" (:discard (get-corp))) "Ice Wall is trashed")))
+
 (deftest knifed-can-only-trash-a-single-ice-per-run-issue-4791
     ;; Can only trash a single ice per run. Issue #4791
     (do-game
@@ -4627,6 +4653,26 @@
       (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
       (play-from-hand state :runner "Peace in Our Time")
       (is (= 5 (:credit (get-runner))) "Runner cannot play Peace in Our time, still has 5 credits")))
+
+(deftest pinhole-threading
+  (do-game
+    ;;can't access in same server, can't steal/trash agenda
+    (new-game {:runner {:hand ["Imp" "Pinhole Threading"]}
+               :corp {:hand ["Project Beale" "PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (play-from-hand state :runner "Pinhole Threading")
+    (click-prompt state :runner "Server 1")
+    (run-continue state)
+    (click-card state :runner "Project Beale")
+    ;; note: Imp does not check to see if the card can be trashed
+    ;;       the ability should fizzle though -nbkelly
+    (is (= ["[Imp] Hosted virus counter: Trash card" "No action"]
+           (mapv :value (:choices (prompt-map :runner)))))
+    (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
+    (is (= 0 (count (:discard (get-corp)))) "Beale was not trashed")))
 
 (deftest planned-assault
   ;; Planned Assault

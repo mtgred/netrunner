@@ -9,12 +9,13 @@
 
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
-  (let [{:keys [ch-recv send-fn]}
+  (let [{:keys [chsk ch-recv send-fn]}
         (sente/make-channel-socket-client!
           "/chsk"
           ?csrf-token
           {:type :auto
            :wrap-recv-evs? false})]
+    (def chsk chsk)
     (def ch-chsk ch-recv)
     (defn ws-send!
       ([ev] (send-fn ev))
@@ -39,6 +40,9 @@
 
 (defmethod event-msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
 (defmethod event-msg-handler :chsk/ws-ping [_])
+
+(defmethod event-msg-handler :system/force-disconnect [_]
+  (sente/chsk-reconnect! chsk))
 
 (defn resync []
   (ws-send! [:game/resync {:gameid (current-gameid app-state)}]))

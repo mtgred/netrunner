@@ -3197,6 +3197,21 @@
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
+(deftest lewi-guilherme-lovegood-interaction-#3345
+  ;; hand size does not persist while blanked by Dr. Lovegood
+  (do-game
+   (new-game {:runner {:hand ["Lewi Guilherme" "Dr. Lovegood"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Lewi Guilherme")
+   (is (= 4 (hand-size :corp)) "-1 hand size from lewi")
+   (play-from-hand state :runner "Dr. Lovegood")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (click-prompt state :runner "Dr. Lovegood")
+   (click-card state :runner "Lewi Guilherme")
+   (is (= 5 (hand-size :corp)) "-1 hand size from lewi")
+   (is (no-prompt? state :runner) "No more prompt to activate")))
+
 (deftest liberated-account
   ;; Liberated Account
   (do-game
@@ -3344,6 +3359,25 @@
    (run-continue-until state :success)
    (is (= 3 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 2")
    (is (= 1 (count (:hand (get-runner)))) "Lost no card from Grip to Hokusai Grid")))
+
+(deftest light-the-fire-reduced-service-issue-#6340
+  ;; github issue #6340
+  (do-game
+    ;; can afford to pay 8 - pay 8 before the run initiates
+    (new-game {:corp {:hand ["Reduced Service"]} :credits 10
+               :runner {:hand ["Light the Fire!" "Sure Gamble"]
+                        :credits 12}})
+    (play-from-hand state :corp "Reduced Service" "New remote")
+    (let [rs (get-content state :remote1 0)]
+      (rez state :corp rs)
+      (click-prompt state :corp "4")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Light the Fire!")
+      (card-ability state :runner (get-resource state 0) 0)
+      (changes-val-macro
+       -8 (:credit (get-runner))
+       "Spent 8 credits to make a run on the server"
+       (click-prompt state :runner "Server 1")))))
 
 (deftest logic-bomb
   ;; Logic Bomb

@@ -19,7 +19,7 @@
                             (every? :broken (:subroutines target))
                             (let [pred #(and (has-subtype? (first %) subtype)
                                              (every? :broken (:subroutines (first %))))]
-                              (first-event? state side :subroutines-broken pred))))
+                              (first-run-event? state side :subroutines-broken pred))))
              :msg (msg "trash " (card-str state target))
              :effect (effect (trash eid target nil))}]})
 
@@ -38,9 +38,11 @@
                 :msg (msg "force the Corp to lose " (min 5 (:credit corp))
                           " [Credits], gain " (* 2 (min 5 (:credit corp)))
                           " [Credits] and take 2 tags")
-                :effect (req (wait-for (gain-tags state :runner 2)
-                                       (wait-for (gain-credits state :runner (* 2 (min 5 (:credit corp))))
-                                                 (lose-credits state :corp eid (min 5 (:credit corp))))))}})]})
+                :effect (req (let [creds-lost (min 5 (:credit corp))]
+                               (wait-for
+                                (lose-credits state :corp creds-lost)
+                                (wait-for (gain-tags state :runner 2)
+                                          (gain-credits state :runner eid (* 2 creds-lost))))))}})]})
 
 (defcard "Always Have a Backup Plan"
   {:makes-run true
@@ -220,7 +222,8 @@
     :msg (msg "increase the rez cost of the first unrezzed piece of ice approached by " target " [Credits]")
     :effect (effect
               (continue-ability
-                (let [bribery-x target]
+               (let [bribery-x target
+                     eid (assoc eid :x-cost true)]
                   {:prompt "Choose a server"
                    :choices (req runnable-servers)
                    :async true
@@ -265,12 +268,13 @@
                             :let [cost (rez-cost state side ice)]]
                         (when (can-pay? state side eid card nil [:credit cost])
                           [(:cid ice) cost]))))]
-           (continue-ability
-             state side
-             {:prompt "How many [Credits]?"
-              :choices :credit
-              :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
-              :effect (effect (continue-ability
+           (let [eid (assoc eid :x-cost true)]
+             (continue-ability
+              state side
+              {:prompt "How many [Credits]?"
+               :choices :credit
+               :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
+               :effect (effect (continue-ability
                                 {:choices {:card #(and (rezzed? %)
                                                        (some (fn [c] (and (= (first c)
                                                                              (:cid %))
@@ -279,7 +283,7 @@
                                  :msg (msg "derez " (card-str state target))
                                  :effect (effect (derez target))}
                                 card nil))}
-             card nil)))}})
+              card nil))))}})
 
 (defcard "Build Script"
   {:on-play
@@ -2184,7 +2188,9 @@
         ashes-recur (fn ashes-recur []
                       {:optional
                        {:req (req (not (zone-locked? state :runner :discard)))
-                        :prompt "Remove Out of the Ashes from the game to make a run?"
+                        :prompt (req (str "Remove Out of the Ashes from the game to make a run? ("
+                                          (count (filter #(= "Out of the Ashes" (:title %)) (:discard runner)))
+                                          " available)"))
                         :yes-ability
                         {:async true
                          :msg "removes Out of the Ashes from the game to make a run"
@@ -2241,6 +2247,43 @@
     :effect (req (wait-for (gain-credits state :runner 10)
                            (register-turn-flag! state side card :can-run nil)
                            (gain-credits state :corp eid 5)))}})
+
+(defcard "Pinhole Threading"
+  {:makes-run true
+   :on-play {:prompt "Choose a server"
+             :choices (req runnable-servers)
+             :async true
+             :effect (effect (make-run eid target card))}
+   :events [(successful-run-replace-breach
+              {:mandatory true
+               :this-card-run true
+               :ability
+               {:prompt "Select a card to access in the root of another server"
+                :choices {:req (req (and (not= (first (:server (:run @state)))
+                                               (second (get-zone (get-nested-host target))))
+                                         (= (last (get-zone (get-nested-host target)))
+                                            :content)))}
+                :async true
+                :waiting-prompt "Runner to choose an option"
+                :effect (req (if (agenda? target)
+                               (let [protected-card target]
+                                 ;; Prevent the runner from stealing or trashing agendas
+                                 ;; we can't just register a run flag, because there may be another
+                                 ;; breach after this (ie ganked into kitsune),
+                                 ;; so we have to clear the flags after this access.
+                                 (register-run-flag!
+                                   state side
+                                   card :can-steal
+                                   (fn [_ _ c] (not (same-card? c protected-card))))
+                                 (register-run-flag!
+                                   state side
+                                   card :can-trash
+                                   (fn [_ _ c] (not (same-card? c protected-card))))
+                                 (wait-for (access-card state side protected-card)
+                                           (clear-run-flag! state side card :can-steal)
+                                           (clear-run-flag! state side card :can-trash)
+                                           (effect-completed state side eid)))
+                               (access-card state side eid target)))}})]})
 
 (defcard "Planned Assault"
   {:on-play

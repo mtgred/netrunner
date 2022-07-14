@@ -64,7 +64,12 @@
     [game.macros]
     [potemkin :refer [import-vars]]))
 
-(import-vars
+(defmacro expose-vars
+  "Surrounds a import-vars call with an anonymous function to get arround the 64kb limit on the method size in the JVM" 
+  [symbols]
+  `((fn [] (import-vars ~symbols))))
+
+(expose-vars
   [game.core.access
    access-bonus
    access-bonus-count
@@ -99,7 +104,7 @@
    steal-cost-bonus
    turn-archives-faceup])
 
-(import-vars
+(expose-vars
   [game.core.actions
    advance
    click-advance
@@ -129,19 +134,19 @@
    trash-resource
    view-deck])
 
-(import-vars
+(expose-vars
   [game.core.agendas
    update-advancement-requirement
    update-all-advancement-requirements
    update-all-agenda-points])
 
-(import-vars
+(expose-vars
   [game.core.bad-publicity
    bad-publicity-prevent
    gain-bad-publicity
    lose-bad-publicity])
 
-(import-vars
+(expose-vars
   [game.core.board
    all-active
    all-active-installed
@@ -160,7 +165,7 @@
    server->zone
    server-list])
 
-(import-vars
+(expose-vars
   [game.core.card
    active?
    agenda?
@@ -216,20 +221,20 @@
    upgrade?
    virus-program?])
 
-(import-vars
+(expose-vars
   [game.core.card-defs
    card-def
    defcard-impl])
 
-(import-vars
+(expose-vars
   [game.core.change-vals
    change])
 
-(import-vars
+(expose-vars
   [game.core.checkpoint
    fake-checkpoint])
 
-(import-vars
+(expose-vars
   [game.core.commands
    command-adv-counter
    command-counter
@@ -237,7 +242,7 @@
    command-undo-turn
    parse-command])
 
-(import-vars
+(expose-vars
   [game.core.cost-fns
    break-sub-ability-cost
    card-ability-cost
@@ -255,11 +260,11 @@
    score-additional-cost-bonus
    trash-cost])
 
-(import-vars
+(expose-vars
   [game.core.costs
    total-available-credits])
 
-(import-vars
+(expose-vars
   [game.core.damage
    chosen-damage
    corp-can-choose-damage?
@@ -271,7 +276,7 @@
    enable-runner-damage-choice
    runner-can-choose-damage?])
 
-(import-vars
+(expose-vars
   [game.core.def-helpers
    breach-access-bonus
    combine-abilities
@@ -286,12 +291,12 @@
    trash-on-empty
    corp-recur])
 
-(import-vars
+(expose-vars
   [game.core.diffs
    public-states
    public-diffs])
 
-(import-vars
+(expose-vars
   [game.core.drawing
    draw
    draw-bonus
@@ -299,7 +304,7 @@
    max-draw
    remaining-draws])
 
-(import-vars
+(expose-vars
   [game.core.effects
    any-effects
    gather-effects
@@ -313,7 +318,7 @@
    unregister-effects-for-card
    unregister-floating-effects])
 
-(import-vars
+(expose-vars
   [game.core.eid
    complete-with-result
    effect-completed
@@ -322,7 +327,7 @@
    make-result
    register-effect-completed])
 
-(import-vars
+(expose-vars
   [game.core.engine
    ability-as-handler
    can-trigger?
@@ -354,7 +359,7 @@
    unregister-suppress
    unregister-suppress-by-uuid])
 
-(import-vars
+(expose-vars
   [game.core.events
    event-count
    first-event?
@@ -374,19 +379,19 @@
    second-event?
    turn-events])
 
-(import-vars
+(expose-vars
   [game.core.expose
    expose
    expose-prevent])
 
-(import-vars
+(expose-vars
   [game.core.finding
    find-card
    find-cid
    find-latest
    get-scoring-owner])
 
-(import-vars
+(expose-vars
   [game.core.flags
    ab-can-prevent?
    any-flag-fn?
@@ -436,7 +441,7 @@
    when-scored?
    zone-locked?])
 
-(import-vars
+(expose-vars
   [game.core.gaining
    base-mod-size
    deduct
@@ -449,7 +454,7 @@
    safe-inc-n
    sub->0])
 
-(import-vars
+(expose-vars
   [game.core.hand-size
    corp-hand-size+
    hand-size
@@ -458,12 +463,12 @@
    sum-hand-size-effects
    update-hand-size])
 
-(import-vars
+(expose-vars
   [game.core.hosting
    host
    remove-from-host])
 
-(import-vars
+(expose-vars
   [game.core.ice
    add-extra-sub!
    add-sub
@@ -517,14 +522,14 @@
    update-ice-in-server
    update-ice-strength])
 
-(import-vars
+(expose-vars
   [game.core.identities
    disable-card
    disable-identity
    enable-card
    enable-identity])
 
-(import-vars
+(expose-vars
   [game.core.initializing
    ability-init
    card-init
@@ -535,7 +540,7 @@
    update-ability-cost-str
    update-all-card-labels])
 
-(import-vars
+(expose-vars
   [game.core.installing
    corp-can-pay-and-install?
    corp-install
@@ -548,13 +553,13 @@
    runner-can-pay-and-install?
    runner-install])
 
-(import-vars
+(expose-vars
   [game.core.link
    get-link
    link+
    update-link])
 
-(import-vars
+(expose-vars
   [game.core.memory
    available-mu
    caissa-mu+
@@ -562,7 +567,7 @@
    update-mu
    virus-mu+])
 
-(import-vars
+(expose-vars
   [game.core.moving
    add-to-currently-drawing
    as-agenda
@@ -583,14 +588,14 @@
    trash-prevent
    uninstall])
 
-(import-vars
+(expose-vars
   [game.core.optional
    get-autoresolve
    never?
    optional-ability
    set-autoresolve])
 
-(import-vars
+(expose-vars
   [game.core.payment
    add-cost-label-to-ability
    build-cost-label
@@ -609,23 +614,23 @@
    payable?
    value])
 
-(import-vars
+(expose-vars
   [game.core.play-instants
    can-play-instant?
    play-instant
    play-instant-costs])
 
-(import-vars
+(expose-vars
   [game.core.pick-counters
    pick-credit-providing-cards
    pick-virus-counters-to-spend])
 
-(import-vars
+(expose-vars
   [game.core.process-actions
    command-parser
    process-action])
 
-(import-vars
+(expose-vars
   [game.core.props
    add-counter
    add-icon
@@ -633,19 +638,19 @@
    remove-icon
    set-prop])
 
-(import-vars
+(expose-vars
   [game.core.player
    map->Corp
    map->Runner
    new-corp
    new-runner])
 
-(import-vars
+(expose-vars
   [game.core.prompt-state
    add-to-prompt-queue
    remove-from-prompt-queue])
 
-(import-vars
+(expose-vars
   [game.core.prompts
    cancellable
    choice-parser
@@ -659,27 +664,27 @@
    show-trace-prompt
    show-wait-prompt])
 
-(import-vars
+(expose-vars
   [game.core.psi
    psi-game])
 
-(import-vars
+(expose-vars
   [game.core.purging
    purge])
 
-(import-vars
+(expose-vars
   [game.core.revealing
    conceal-hand
    reveal
    reveal-hand])
 
-(import-vars
+(expose-vars
   [game.core.rezzing
    derez
    get-rez-cost
    rez])
 
-(import-vars
+(expose-vars
   [game.core.runs
    add-run-effect
    bypass-ice
@@ -711,7 +716,7 @@
    total-cards-accessed
    total-run-cost])
 
-(import-vars
+(expose-vars
   [game.core.say
    enforce-msg
    indicate-action
@@ -720,9 +725,10 @@
    play-sfx
    say
    system-msg
+   implementation-msg
    system-say])
 
-(import-vars
+(expose-vars
   [game.core.servers
    central->name
    central->zone
@@ -744,7 +750,7 @@
    zone->sort-key
    zones->sorted-names])
 
-(import-vars
+(expose-vars
   [game.core.set-aside
    set-aside
    set-aside-for-me
@@ -752,7 +758,7 @@
    swap-set-aside-cards
    get-set-aside])
 
-(import-vars
+(expose-vars
   [game.core.set-up
    build-card
    create-deck
@@ -760,62 +766,62 @@
    keep-hand
    mulligan])
 
-(import-vars
+(expose-vars
   [game.core.shuffling
    shuffle!
    shuffle-deck
    shuffle-into-deck
    shuffle-into-rd-effect])
 
-(import-vars
+(expose-vars
   [game.core.state
    make-rid
    map->State
    new-state])
 
-(import-vars
+(expose-vars
   [game.core.subtypes
    update-all-subtypes])
 
-(import-vars
+(expose-vars
   [game.core.tags
    gain-tags
    lose-tags
    tag-prevent])
 
-(import-vars
+(expose-vars
   [game.core.to-string
    card-str])
 
-(import-vars
+(expose-vars
   [game.core.toasts
    show-error-toast
    toast])
 
-(import-vars
+(expose-vars
   [game.core.trace
    init-trace
    init-trace-bonus])
 
-(import-vars
+(expose-vars
   [game.core.turns
    end-phase-12
    end-turn
    start-turn])
 
-(import-vars
+(expose-vars
   [game.core.update
    update!
    update-hosted!])
 
-(import-vars
+(expose-vars
   [game.core.virus
    count-virus-programs
    get-virus-counters
    number-of-virus-counters
    number-of-runner-virus-counters])
 
-(import-vars
+(expose-vars
   [game.core.winning
    check-win-by-agenda
    clear-win
@@ -824,7 +830,7 @@
    win
    win-decked])
 
-(import-vars
+(expose-vars
   [game.macros
    continue-ability
    effect
@@ -832,3 +838,4 @@
    req
    wait-for
    when-let*])
+

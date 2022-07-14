@@ -20,7 +20,7 @@
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
     [game.core.runs :refer [continue total-run-cost]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
@@ -143,14 +143,15 @@
           (:number choices))
       (if (number? choice)
         (do (remove-from-prompt-queue state side prompt)
-            (wait-for (maybe-pay state side card choices choice)
-                      (when (:counter choices)
-                        ;; :Counter prompts deduct counters from the card
-                        (add-counter state side card (:counter choices) (- choice)))
-                      ;; trigger the prompt's effect function
-                      (when effect
-                        (effect (or choice card)))
-                      (finish-prompt state side prompt card)))
+            (let [eid (make-eid state (:eid prompt))]
+              (wait-for (maybe-pay state side eid card choices choice)
+                        (when (:counter choices)
+                          ;; :Counter prompts deduct counters from the card
+                          (add-counter state side card (:counter choices) (- choice)))
+                        ;; trigger the prompt's effect function
+                        (when effect
+                          (effect (or choice card)))
+                        (finish-prompt state side prompt card))))
         (prompt-error "in an integer prompt" prompt args))
 
       ;; List of card titles for auto-completion
@@ -558,6 +559,7 @@
         points (get-agenda-points c)]
     (system-msg state :corp (str "scores " (:title c)
                                  " and gains " (quantify points "agenda point")))
+    (implementation-msg state card)
     (set-prop state :corp (get-card state c) :advance-counter 0)
     (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
     (play-sfx state side "agenda-score")

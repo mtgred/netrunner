@@ -84,7 +84,7 @@
   (let [am {:msg "place 2 power counters on itself"
             :effect (effect (add-counter card :power 2))}]
     {:abilities [{:cost [:power 1]
-                  :keep-open :while-power-tokens-left
+                  :keep-menu-open :while-power-tokens-left
                   :msg "remove 1 tag and draw 1 card"
                   :async true
                   :effect (req (wait-for (lose-tags state side 1)
@@ -193,7 +193,7 @@
                 :effect (effect (add-counter card :power target))}
    :events [(trash-on-empty :power)]
    :abilities [{:cost [:power 1]
-                :keep-open :while-power-tokens-left
+                :keep-menu-open :while-power-tokens-left
                 :msg "look at the top card of Stack"
                 :optional
                 {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
@@ -205,7 +205,7 @@
   {:data {:counter {:credit 12}}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :label "gain 2 [Credits]"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -227,7 +227,7 @@
 (defcard "Assimilator"
   {:abilities [{:label "Turn a facedown card faceup"
                 :cost [:click 2]
-                :keep-open :while-2-clicks-left
+                :keep-menu-open :while-2-clicks-left
                 :prompt "Choose a facedown installed card"
                 :choices {:card #(and (facedown? %)
                                       (installed? %)
@@ -369,7 +369,7 @@
 
 (defcard "Blockade Runner"
   {:abilities [{:cost [:click 2]
-                :keep-open :while-2-clicks-left
+                :keep-menu-open :while-2-clicks-left
                 :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
                 :async true
                 :effect (req (wait-for (draw state side 3)
@@ -471,12 +471,12 @@
 
 (defcard "Chatterjee University"
   {:abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :label "Place 1 power counter"
                 :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}
                {:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :label "Install a program from your Grip"
                 :prompt "Choose a program to install from your Grip"
                 :choices
@@ -803,7 +803,7 @@
    :abilities [{:async true
                 :req (req tagged)
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :effect (req (mill state :corp eid :corp 1))
                 :msg "force the Corp to trash the top card of R&D"}]})
 
@@ -979,7 +979,7 @@
 
 (defcard "Duggar's"
   {:abilities [{:cost [:click 4]
-                :keep-open :while-4-clicks-left
+                :keep-menu-open :while-4-clicks-left
                 :async true
                 :effect (effect (draw eid 10))
                 :msg "draw 10 cards"}]})
@@ -1124,7 +1124,18 @@
              :msg (msg "reveal that they drew: "
                        (string/join ", " (map :title runner-currently-drawing)))
              :async true
-             :effect (effect (reveal eid runner-currently-drawing))}
+             :effect (req (let [current-draws runner-currently-drawing]
+                            (reveal state side eid current-draws)
+                            ;; If the corp wants explicit reveals from FTT, then show a prompt with
+                            ;; the card names in it
+                            (when  (= (get-in (get-card state card) [:special :explicit-reveal])
+                                      :yes)
+                              (continue-ability
+                               state :corp
+                               {:prompt (msg "The runner reveals that they drew "
+                                             (string/join ", " (map :title current-draws)))
+                                :choices ["OK"]}
+                               card nil))))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1135,7 +1146,15 @@
                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                       :msg "look at the top card of R&D"
                                       :choices ["OK"]}}}]
-   :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]})
+   :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]
+   :corp-abilities [{:label (str "Explicitly reveal cards")
+                     :prompt (str "Explicitly reveal runner draws due to Find the Truth?")
+                     :choices ["Yes" "No"]
+                     :effect (effect (update! (assoc-in card [:special :explicit-reveal](keyword (string/lower-case target))))
+                                     (toast (str "From now on, Find the Truth will "
+                                                 (when (= target "No") "Not")
+                                                 "explicitly reveal cards the runner draws")
+                                            "info"))}]})
 
 (defcard "First Responders"
   {:abilities [{:cost [:credit 2]
@@ -1503,7 +1522,7 @@
                               (reorder-choice :runner :corp to-bottom '() (count to-bottom) to-bottom "bottom"))
                             card nil))})]
     {:abilities [{:cost [:click 1]
-                  :keep-open :while-clicks-left
+                  :keep-menu-open :while-clicks-left
                   :label "reveal cards"
                   :msg (msg "reveal 4 cards: " (string/join ", " (map :title (take 4 (:deck runner)))))
                   :async true
@@ -1538,7 +1557,7 @@
 (defcard "Liberated Account"
   {:data {:counter {:credit 16}}
    :abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :label "gain 4 [Credits]"
                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -1614,7 +1633,7 @@
                                        (when (and (some #{:content} (:zone second-card))
                                                   (some #{server} (:zone second-card)))
                                          (disable-card state :corp second-card))
-                                       ;; disable cards that have left the server
+                                       ;; enable cards that have left the server
                                        (when (and (some #{:content} (:zone first-card))
                                                   (not (some #{server} (:zone first-card)))
                                                   (some #{server} (:zone second-card)))
@@ -1624,12 +1643,12 @@
                                                   (some #{server} (:zone first-card)))
                                          (enable-card state :corp second-card))))}
           run-end-trigger {:event :run-ends
-                           :duration :end-of-run 
+                           :duration :end-of-run
                            :effect (effect (enable-server (first (:server target))))}]
       {:abilities [{:label "Run a remote server."
                     :cost [:trash-can :click 1 :brain 1]
                     :prompt "Choose a remote server to run with Light the Fire"
-                    :choices (req (filter #(can-run-server? state %) remotes))
+                    :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
                     :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
                     :makes-run true
                     :async true
@@ -1639,8 +1658,8 @@
                                                            ;post-redirect-trigger
                                                            corp-install-trigger
                                                            swap-trigger])
-                                    (disable-server (second (server->zone state target)))
-                                    (make-run eid target card))}]})))
+                                    (make-run eid target card)
+                                    (disable-server (second (server->zone state target))))}]})))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
@@ -1659,7 +1678,7 @@
   {:abilities [{:async true
                 :label "Install a non-virus program on London Library"
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :prompt "Choose a non-virus program to install on London Library from your grip"
                 :choices {:card #(and (program? %)
                                       (not (has-subtype? % "Virus"))
@@ -1668,7 +1687,7 @@
                 :effect (effect (runner-install eid target {:host-card card :ignore-install-cost true}))}
                {:label "Add a program hosted on London Library to your Grip"
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :choices {:req (req (same-card? card (:host target)))}
                 :msg (msg "add " (:title target) " to their Grip")
                 :effect (effect (move target :hand))}]
@@ -1716,7 +1735,7 @@
 
 (defcard "Mr. Li"
   {:abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :msg "draw 2 cards"
                 :async true
                 ;; there's no event for when a draw gets prevented, so this will leave a floating
@@ -1765,7 +1784,11 @@
 (defcard "Mystic Maemi"
   (companion-builder
     ;; companion-builder: pay-credits-req
-    (req (= :play (:source-type eid)))
+   (req (and
+         (event? target)
+         (or (= 0 (count (:cost-paid eid)))
+             (:x-cost eid))
+         (= :play (:source-type eid))))
     ;; companion-builder: turn-ends-ability
     {:prompt "Trash 1 card from your grip at random or trash Mystic Maemi?"
      :choices (req (if (can-pay? state :runner
@@ -2051,7 +2074,7 @@
 (defcard "Paule's Café"
   {:abilities [{:label "Host a program or piece of hardware"
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :choices {:card #(and (#{"Program" "Hardware"} (:type %))
                                       (in-hand? %)
                                       (runner? %))}
@@ -2115,7 +2138,7 @@
      :abilities [{:async true
                   :label "Host a program or piece of hardware"
                   :cost [:click 1]
-                  :keep-open :while-clicks-left
+                  :keep-menu-open :while-clicks-left
                   :prompt "Choose a card to host on Personal Workshop"
                   :choices {:card #(and (or (program? %)
                                             (hardware? %))
@@ -2287,7 +2310,7 @@
   {:data {:counter {:credit 18}}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 2]
-                :keep-open :while-2-clicks-left
+                :keep-menu-open :while-2-clicks-left
                 :msg "gain 6 [Credits] and take 1 tag"
                 :async true
                 :effect (req (let [credits (min 6 (get-counters card :credit))]
@@ -2932,7 +2955,7 @@
     {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
      :abilities [{:label "Host a resource or piece of hardware"
                   :cost [:click 1]
-                  :keep-open :while-clicks-left
+                  :keep-menu-open :while-clicks-left
                   :prompt "Choose a card to host on The Supplier"
                   :choices {:card #(and (or (hardware? %)
                                             (resource? %))
@@ -3058,7 +3081,7 @@
                 :label "search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
-                :keep-open :while-2-clicks-left
+                :keep-menu-open :while-2-clicks-left
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (move target :hand))}]})

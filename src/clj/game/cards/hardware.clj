@@ -131,7 +131,7 @@
 (defcard "Bookmark"
   {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :msg "host up to 3 cards from their Grip facedown"
                 :choices {:max 3
                           :card #(and (runner? %)
@@ -340,8 +340,9 @@
                 :choices {:card #(and (event? %)
                                       (in-hand? %))}
                 :msg (msg "play " (:title target))
-                :effect (effect (update! (dissoc (get-card state card) :comet-event))
-                                (play-instant eid target nil))}]})
+                :effect (req (let [eid (assoc eid :source-type :play)]
+                               (update! state :runner (dissoc (get-card state card) :comet-event))
+                               (play-instant state side eid target nil)))}]})
 
 (defcard "Cortez Chip"
   {:abilities [{:prompt "Choose a piece of ice"
@@ -613,12 +614,16 @@
                 :effect (effect (damage-prevent :brain 2))}]})
 
 (defcard "Flame-out"
-  (let [turn-end {:async true
-                  :effect (req (unregister-events state :runner card)
-                               (if-let [hosted (first (:hosted card))]
-                                 (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))
-                                     (trash state side eid hosted nil))
-                                 (effect-completed state side eid)))}]
+  (let [register-flame-effect
+        (fn [state card]
+          (update! state :runner (assoc-in (get-card state card) [:special :flame-out-trigger] true)))
+        maybe-turn-end {:async true
+                        :req (req (:flame-out-trigger (:special (get-card state card))))
+                        :effect (req (update! state side (assoc-in (get-card state card) [:special :flame-out-trigger] nil))
+                                     (if-let [hosted (first (:hosted card))]
+                                       (do (system-msg state :runner (str "trashes " (:title hosted) " from Flame-out"))
+                                           (trash state side eid hosted nil))
+                                       (effect-completed state side eid)))}]
     {:implementation "Credit usage restriction not enforced"
      :data {:counter {:credit 9}}
      :abilities [{:label "Take 1 [Credits] from Flame-out"
@@ -627,10 +632,7 @@
                   :async true
                   :effect (req (add-counter state side card :credit -1)
                                (system-msg state :runner "takes 1 [Credits] from Flame-out")
-                               (register-events
-                                 state :runner (get-card state card)
-                                 [(assoc turn-end :event :runner-turn-ends)
-                                  (assoc turn-end :event :corp-turn-ends)])
+                               (register-flame-effect state card)
                                (gain-credits state :runner eid 1))}
                  {:label "Take all [Credits] from Flame-out"
                   :req (req (and (not-empty (:hosted card))
@@ -639,10 +641,7 @@
                   :effect (req (let [credits (get-counters card :credit)]
                                  (update! state :runner (dissoc-in card [:counter :credit]))
                                  (system-msg state :runner (str "takes " credits " [Credits] from Flame-out"))
-                                 (register-events
-                                   state :runner (get-card state card)
-                                   [(assoc turn-end :event :runner-turn-ends)
-                                    (assoc turn-end :event :corp-turn-ends)])
+                                 (register-flame-effect state card)
                                  (gain-credits state :runner eid credits)))}
                  {:label "Install a program on Flame-out"
                   :req (req (empty? (:hosted card)))
@@ -666,17 +665,14 @@
      :events [{:event :card-moved
                :req (req (= (:cid target) (get-in (get-card state card) [:special :flame-out])))
                :effect (effect (update! (dissoc-in card [:special :flame-out])))}
-              {:event :runner-turn-ends}
-              {:event :corp-turn-ends}]
+              (assoc maybe-turn-end :event :runner-turn-ends)
+              (assoc maybe-turn-end :event :corp-turn-ends)]
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (same-card? card (:host target))
                                                  (pos? (get-counters card :credit))))
                                   :custom-amount 1
                                   :custom (req (add-counter state side card :credit -1)
-                                               (register-events
-                                                 state side (get-card state card)
-                                                 [(assoc turn-end :event :runner-turn-ends)
-                                                  (assoc turn-end :event :corp-turn-ends)])
+                                               (register-flame-effect state card)
                                                (effect-completed state side (make-result eid 1)))
                                   :type :custom}}}))
 
@@ -1042,7 +1038,7 @@
     {:abilities [{:label "Draw 1 card"
                   :msg "draw 1 card"
                   :cost [:power 3]
-                  :keep-open :while-3-power-tokens-left
+                  :keep-menu-open :while-3-power-tokens-left
                   :async true
                   :effect (effect (draw :runner eid 1))}]
      :events [{:event :runner-trash
@@ -1252,6 +1248,7 @@
                       (runner-hand-size+ (req (count-tags state)))]
    :events [{:event :run-ends
              :once :per-turn
+             :interactive (req true) ;;interact with other run-ends effects which modify the deck (ie boomerang)
              :req (req (and (:successful target)
                             (#{:rd :hq} (target-server target))
                             (first-event? state side :run-ends
@@ -1435,7 +1432,11 @@
 
 (defcard "Prepaid VoicePAD"
   {:recurring 1
-   :interactions {:pay-credits {:req (req (= :play (:source-type eid)))
+   :interactions {:pay-credits {:req (req (and
+                                           (event? target)
+                                           (or (= 0 (count (:cost-paid eid)))
+                                               (:x-cost eid))
+                                           (= :play (:source-type eid))))
                                 :type :recurring}}})
 
 (defcard "Prognostic Q-Loop"
@@ -1757,6 +1758,7 @@
                    (abs))))]
     {:constant-effects [(mu+ 2)]
      :events [{:event :encounter-ice
+               :interactive (req true)
                :optional
                {:prompt "Use Şifr?"
                 :once :per-turn
@@ -2041,7 +2043,7 @@
 
 (defcard "Window"
   {:abilities [{:cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :msg "draw 1 card from the bottom of their Stack"
                 :effect (effect (move (last (:deck runner)) :hand))}]})
 
