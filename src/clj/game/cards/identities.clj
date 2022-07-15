@@ -1337,7 +1337,7 @@
              :msg "gain [Click]"
              :effect (effect (gain-clicks 1))}]})
 
-(defcard "Ob Superheavy Logistics: Matter Made Easy"
+(defcard "Ob Superheavy Logistics: Extract. Export. Excel."
   ;; note - we ensure the card can be installed (asset/upgrade/ice) - condition counters (like patch)
   ;;   are very questionable, and somebody on rules would need to say something to convince me they
   ;;   would be valid targets --nbkelly
