@@ -3978,7 +3978,7 @@
   (do-game
     (new-game {:runner {:hand ["Şifr" "Chisel"] :credits 10}
                :corp {:hand ["Assassin"] :credits 10}})
-    (play-from-hand state :corp "Assassin")
+    (play-from-hand state :corp "Assassin" "HQ")
     (rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
     (play-from-hand state :runner "Chisel")
@@ -3987,7 +3987,7 @@
     (run-on state :hq)
     (run-continue state)
     (click-prompt state :runner "Şifr")
-    (click-prompt state :runner "Chisel")
+    (click-prompt state :runner "Yes")
     (is (= 1 (count (:discard (get-corp)))) "Trashed Assassin")))
 
 (deftest silencer-pay-credits-prompt
