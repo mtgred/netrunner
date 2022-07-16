@@ -10,7 +10,11 @@
   :kaocha/fail-fast? false
   :kaocha/reporter #profile {:default kaocha.report.progress/report
                              :ci kaocha.report/documentation}
-  :kaocha/plugins [:kaocha.plugin/print-invocations :kaocha.plugin/profiling]
+  :kaocha/plugins [:kaocha.plugin/randomize
+                   :kaocha.plugin/filter
+                   :kaocha.plugin/capture-output
+                   :kaocha.plugin/profiling
+                   :kaocha.plugin/print-invocations]
   :kaocha.plugin.capture-output/capture-output? true
   :kaocha.plugin.profiling/count 3
   :kaocha.plugin.randomize/randomize? true}
