@@ -14,7 +14,7 @@ jobs:
           key: lein-deps-{{ checksum "project.clj" }}
       - run: lein deps
       - run: lein fetch --no-db --no-card-images
-      - run: bin/kaocha --profile :ci
+      - run: lein kaocha --profile :ci
       - save_cache:
           paths:
             - ~/.m2
