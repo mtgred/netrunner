@@ -1242,11 +1242,16 @@
                          :optional
                          {:req (req (and (same-card? ice (:ice context))
                                          (can-pay? state :runner eid (:ice context) nil [:credit (count (:subroutines (get-card state ice)))])))
-                          :prompt (str "Pay " (count (:subroutines (get-card state ice)))
+                          :prompt (msg "Pay " (count (:subroutines (get-card state ice)))
                                        " [Credits] to bypass " (:title ice) "?")
-                          :yes-ability {:cost [:credit (count (:subroutines (get-card state ice)))]
-                                        :msg (msg "bypass " (:title (:ice context)))
-                                        :effect (req (bypass-ice state))}}}])))}
+                          :yes-ability {:async true
+                                        :effect (req (wait-for
+                                                       (pay state side (make-eid state eid) card [:credit (count (:subroutines (get-card state ice)))])
+                                                       (let [payment-str (:msg async-result)
+                                                             msg-ab {:msg (str "bypass " (:title (:ice context)))}]
+                                                         (print-msg state side msg-ab card nil payment-str))
+                                                       (bypass-ice state)
+                                                       (effect-completed state side eid)))}}}])))}
      :leave-play (req (remove-icon state side card))
      :abilities [(break-sub 1 1 "Sentry")
                  (strength-pump 2 1)]}))
@@ -2630,7 +2635,7 @@
              :async true
              :msg (str "name " chosen-subtype)
              :effect (req (wait-for (expose state side target)
-                                    (if (has-subtype? async-result chosen-subtype)
+                                    (when (has-subtype? async-result chosen-subtype)
                                       (do (move state :corp async-result :hand)
                                           (system-msg state :runner
                                                       (str "add " (:title async-result) " to HQ"))))
