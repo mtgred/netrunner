@@ -30,6 +30,7 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.installing]
+    [game.core.link]
     [game.core.memory]
     [game.core.moving]
     [game.core.optional]
@@ -65,7 +66,7 @@
     [potemkin :refer [import-vars]]))
 
 (defmacro expose-vars
-  "Surrounds a import-vars call with an anonymous function to get arround the 64kb limit on the method size in the JVM" 
+  "Surrounds a import-vars call with an anonymous function to get arround the 64kb limit on the method size in the JVM"
   [symbols]
   `((fn [] (import-vars ~symbols))))
 
@@ -97,7 +98,6 @@
    no-trash-or-steal
    num-cards-central
    num-cards-to-access
-   root-content
    set-only-card-to-access
    steal
    steal-cost
@@ -604,7 +604,6 @@
    can-pay?
    cost->string
    cost-name
-   cost-ranks
    cost-target
    cost-targets
    cost-value
