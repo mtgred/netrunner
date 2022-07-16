@@ -1775,24 +1775,25 @@
              :msg "place 1 advancement token on itself"
              :effect (effect (add-counter card :advancement 1))}]
    :abilities [{:label "Move advancement tokens to another card"
-                :async true
                 :trash-icon true
-                :prompt "Choose a card that can be advanced"
-                :choices {:card can-be-advanced?}
-                :effect (effect
-                          (continue-ability
-                            (let [move-to target]
-                              {:async true
-                               :prompt "Move how many advancement tokens?"
-                               :choices {:number (req (get-counters card :advancement))
-                                         :default (req (get-counters card :advancement))}
-                               :cost [:trash-can]
-                               :effect (effect (add-counter move-to :advancement target {:placed true})
-                                               (system-msg (str "trashes Reconstruction Contract to move "
-                                                                (quantify target "advancement token")
-                                                                " to " (card-str state move-to)))
-                                               (effect-completed eid))})
-                            card nil))}]})
+                :cost [:trash-can]
+                :async true
+                :prompt "Move how many advancement tokens?"
+                :choices {:number (req (get-counters card :advancement))
+                          :default (req (get-counters card :advancement))}
+                :effect (req (let [num-counters target]
+                               (system-msg state side (str "c: " num-counters))
+                               ;;(wait-for (trash state side card {:cause :ability-cost
+                               ;;                                  :unpreventable true})
+                                         (continue-ability
+                                           state side
+                                           {:async true
+                                            :prompt "Choose a card that can be advanced"
+                                            :choices {:card can-be-advanced?}
+                                            :effect (effect (add-counter target :advancement num-counters {:placed true})
+                                                            (system-msg (str "trashed Reconstruction Contract to move " (quantify num-counters "advancement token") " to " (card-str state target)))
+                                                            (effect-completed eid))}
+                                           card nil)))}]})
 
 (defcard "Refuge Campaign"
   (let [ability {:msg "gain 2 [Credits]"
