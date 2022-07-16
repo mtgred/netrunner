@@ -16,9 +16,6 @@
   :omit-source true
   :main web.core
 
-  :eftest {:report eftest.report.pretty/report
-           :fail-fast? false}
-
   :repl-options {:timeout 180000
                  :init-ns dev.user
                  :init (do (use 'web.core) (go))}
@@ -74,9 +71,6 @@
                  [metosin/reitit "0.5.15"]
                  [metosin/malli "0.7.0"]]
 
-  :plugins [[lein-eftest "0.5.9"]
-            [cider/cider-nrepl "0.27.3"]]
-
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.4"]
                                   [cider/piggieback "0.5.3"]
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
@@ -85,6 +79,7 @@
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.16.8"]]
+                   :plugins [[cider/cider-nrepl "0.27.3"]]
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "test/clj" "src/css"]
                    :resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]

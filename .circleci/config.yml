@@ -13,7 +13,8 @@ jobs:
       - restore_cache:
           key: lein-deps-{{ checksum "project.clj" }}
       - run: lein deps
-      - run: lein do fetch --no-db --no-card-images, eftest
+      - run: lein fetch --no-db --no-card-images
+      - run: lein kaocha
       - save_cache:
           paths:
             - ~/.m2
