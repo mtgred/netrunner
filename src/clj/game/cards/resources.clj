@@ -1605,7 +1605,6 @@
               (enable-card state :corp c)))]
     (let [successful-run-trigger {:event :successful-run
                                   :duration :end-of-run
-                                  :mandatory true
                                   :async true
                                   :req (req (is-remote? (:server run)))
                                   :effect (effect (trash-cards eid (:content run-server)))
