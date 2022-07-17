@@ -416,7 +416,7 @@
    (is (= 0 (count (:discard (get-corp)))) "Did not trashed PAD Campaign")
    (is (= 0 (count (:scored (get-corp)))) "Azef Protocol not scored")))
 
-(deftest-pending azef-protocol-cant-target-self
+(deftest ^:kaocha/pending azef-protocol-cant-target-self
   ;; Azef Protocol can't trash itself to pay its cost
   (do-game
    (new-game {:corp {:hand ["Azef Protocol", "PAD Campaign"]}
@@ -1408,8 +1408,8 @@
             dbs (get-content state :remote1 0)]
         (rez state :corp dbs)
         (card-ability state :corp fs 0)
-        (is (= (count (:hand (get-corp))) 3) "Drew 3 cards with DBS")
-        (click-card state :corp (find-card "Chiyashi" (:hand (get-corp))))
+        (is (= (count (:set-aside (get-corp))) 3) "Drew 3 cards with DBS")
+        (click-card state :corp (find-card "Chiyashi" (:set-aside (get-corp))))
         (is (= "Chiyashi" (:title (last (:deck (get-corp))))) "Chiyashi at the bottom")
         (click-card state :corp (find-card "Brainstorm" (:hand (get-corp))))
         (is (= "Brainstorm" (:title (first (:deck (get-corp))))) "Brainstorm now on top"))))
@@ -4237,8 +4237,8 @@
         (is (= :this-turn (:installed (get-resource state 1))))
         (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
         (take-credits state :corp)
-        (is (= 5 (count (:hand (get-runner)))) "Runner takes damage before resolving The Class Act")
-        (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+        (is (= 5 (count (:set-aside (get-runner)))) "Runner takes damage before resolving The Class Act")
+        (click-card state :runner (find-card "Sure Gamble" (:set-aside (get-runner))))
         (is (= 4 (count (:hand (get-runner)))) "Runner draws from The Class Act after taking damage")))
     (testing "Scored on the runner's turn"
       (do-game
@@ -4257,9 +4257,9 @@
         (click-prompt state :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
         (take-credits state :runner)
-        (is (= 5 (count (:hand (get-runner)))) "Runner doesn't take the damage until after resolving The Class Act")
-        (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
-        (is (= 5 (count (:hand (get-runner)))) "Runner takes damage at end of turn"))))
+        (is (= 3 (count (:set-aside (get-runner)))) "Runner doesn't take the damage until after resolving The Class Act")
+        (click-card state :runner (find-card "Sure Gamble" (:set-aside (get-runner))))
+        (is (= 0 (count (:hand (get-runner)))) "Runner takes damage at end of turn"))))
 
 (deftest voting-machine-initiative-voting-machine-initiative
     ;; Voting Machine Initiative

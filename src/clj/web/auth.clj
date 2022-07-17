@@ -12,8 +12,9 @@
    [ring.util.response :refer [redirect]]
    [web.app-state :as app-state]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
-   [web.user :refer [active-user? create-user user-keys]]
-   [web.utils :refer [response]])
+   [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
+   [web.utils :refer [response]]
+   [web.versions :refer [banned-msg]])
   (:import
    java.security.SecureRandom))
 
@@ -67,8 +68,8 @@
   [{db :system/db
     {:keys [username password confirm-password email]} :params}]
   (cond
-    (< 20 (count username))
-    (response 401 {:message "Usernames are limited to 20 characters"})
+    (not (valid-username? username))
+    (response 401 {:message "Username is not valid"})
 
     (not= password confirm-password)
     (response 401 {:message "Passwords must match"})
@@ -98,16 +99,17 @@
   [{db :system/db
     auth :system/auth
     {:keys [username password]} :params}]
-  (let [user (find-non-banned-user db {:username username})]
-    (if (and user
-             (password/check password (:password user)))
+  (let [user (mc/find-one-as-map db "users" {:username username})]
+    (cond
+      (and user (:banned user)) (response 403 {:error (or @banned-msg "Account Locked")})
+      (and user (password/check password (:password user)))
       (do (mc/update db "users"
                      {:username username}
                      {"$set" {:last-connection (inst/now)}})
           (assoc (response 200 {:message "ok"})
                  :cookies {"session" (merge {:value (create-token auth user)}
                                             (:cookie auth))}))
-      (response 401 {:error "Invalid login or password"}))))
+      :else (response 401 {:error "Invalid login or password"}))))
 
 (defn logout-handler [_]
   (assoc (response 200 {:message "ok"})
@@ -203,14 +205,14 @@
     email-settings :system/email
     {:keys [email]} :params
     headers         :headers}]
-  (if (find-non-banned-user db {:email email})
+  (if-let [user (find-non-banned-user db {:email email})]
     (let [code (set-password-reset-code! db email)
           msg (mail/send-message
                 email-settings
                 {:from    "support@jinteki.net"
                  :to      email
                  :subject "Jinteki Password Reset"
-                 :body    (str "You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n"
+                 :body    (str "You are receiving this because you (or someone else) have requested the reset of the password for your account " (user :username) ".\n\n"
                                "Please click on the following link, or paste this into your browser to complete the process:\n\n"
                                "http://" (headers "host") "/reset/" code "\n\n"
                                "If you did not request this, please ignore this email and your password will remain unchanged.\n")})]

@@ -40,10 +40,6 @@
                                                               "nil") " ]") choices#)) "\n")))]
      ~@body))
 
-(defmacro deftest-pending [name & _body]
-  (let [message (str "\n" name " is pending")]
-    `(clojure.test/deftest- ~name (println ~message))))
-
 (defmacro changes-val-macro [change-amt val-form msg & body-form]
   `(let [start-val# ~val-form]
      (do ~@body-form)

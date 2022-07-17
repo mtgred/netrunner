@@ -1,7 +1,7 @@
 (ns web.ws
   (:require
    [clojure.core.async :refer [<! >! chan go timeout]]
-   [web.app-state :refer [register-user!]]
+   [web.app-state :refer [register-user! deregister-user!]]
    [web.user :refer [active-user?]]
    [taoensso.sente :as sente]
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
@@ -11,10 +11,11 @@
                     {:user-id-fn (fn [ring-req]
                                    (or (-> ring-req :session :uid)
                                        (:client-id ring-req)))})
-      {:keys [ch-recv send-fn
+      {:keys [ch-recv send-fn connected-uids
               ajax-post-fn ajax-get-or-ws-handshake-fn]} chsk-server]
   (defonce handshake-handler ajax-get-or-ws-handshake-fn)
   (defonce post-handler ajax-post-fn)
+  (defonce connected-sockets connected-uids)
   (defonce ch-chsk ch-recv)
   (defn chsk-send! [uid ev] (send-fn uid ev)))
 
@@ -28,6 +29,8 @@
 ;; buffer size of roughly half the 1024 core.async limit
 (def buffer-size 500)
 (def websocket-buffer (chan buffer-size))
+
+(defn connected-uids [] (seq (:any @connected-sockets)))
 
 (defonce ratelimiter
   (go (while true
@@ -61,6 +64,7 @@
     (?reply-fn {:msg "Unhandled event"})))
 
 (defmethod -msg-handler :chsk/ws-ping [_])
+;; NOTE - :chsk/uidport-close is handled in game.clj
 (defmethod -msg-handler :chsk/uidport-open
   [{uid :uid
     {user :user} :ring-req}]

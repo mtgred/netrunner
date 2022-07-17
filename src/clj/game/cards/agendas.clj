@@ -50,7 +50,7 @@
                           (resource? %))}
     :msg (msg "trash " (card-str state target))
     :async true
-    :effect (effect (trash eid target))}})
+    :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Accelerated Beta Test"
   (letfn [(abt [titles choices]
@@ -59,7 +59,7 @@
              :choices (concat (filter ice? choices) ["Done"])
              :effect (req (if (= target "Done")
                             (do (unregister-events state side card)
-                                (trash-cards state side eid choices {:unpreventable true}))
+                                (trash-cards state side eid choices {:unpreventable true :cause-card card}))
                             (wait-for (corp-install state side target nil
                                                     {:ignore-all-cost true
                                                      :install-state :rezzed-no-cost})
@@ -68,7 +68,7 @@
                                           ;; Shuffle ends the ability
                                           (get-in (get-card state card) [:special :shuffle-occurred])
                                           (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true}))
+                                              (trash-cards state side eid choices {:unpreventable true :cause-card card}))
                                           ;; There are still ice left
                                           (seq (filter ice? choices))
                                           (continue-ability
@@ -76,14 +76,14 @@
                                           ;; Trash what's left
                                           :else
                                           (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true})))))))})
+                                              (trash-cards state side eid choices {:unpreventable true :cause-card card})))))))})
           (suffer [titles choices]
             {:prompt (str "The top 3 cards of R&D: " titles
                           ". None are ice. Say goodbye!")
              :choices ["I have no regrets"]
              :async true
              :effect (effect (system-msg (str "trashes " (quantify (count choices) "card")))
-                             (trash-cards eid choices {:unpreventable true}))})]
+                             (trash-cards eid choices {:unpreventable true :cause-card card}))})]
     {:on-score
      {:interactive (req true)
       :optional
@@ -232,7 +232,7 @@
              :prompt "Choose a card to move to HQ"
              :choices (conj (vec remaining) "Done")
              :effect (req (if (= "Done" target)
-                            (wait-for (trash-cards state :corp to-trash {:unpreventable true})
+                            (wait-for (trash-cards state :corp to-trash {:unpreventable true :cause-card card})
                                       (doseq [h to-hq]
                                         (move state :corp h :hand))
                                       (if (seq remaining)
@@ -263,7 +263,9 @@
             :yes-ability
             {:async true
              :effect (req (let [c (take 7 (:deck corp))]
-                            (when (:access @state)
+                            (when (and
+                                   (:access @state)
+                                   (:run @state))
                               (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                             (continue-ability state :corp (trash-step c '()) card nil)))}}}]
       {:on-score arrange-rd
@@ -401,7 +403,7 @@
     :msg (msg "trash " (:title target))
     :interactive (req true)
     :async true
-    :effect (effect (trash eid target {:unpreventable true}))}})
+    :effect (effect (trash eid target {:unpreventable true :cause-card card}))}})
 
 (defcard "Chronos Project"
   {:on-score
@@ -630,7 +632,7 @@
                                   (fn [state side card]
                                     ((constantly false)
                                      (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
-                :keep-open :while-agenda-tokens-left
+                :keep-menu-open :while-agenda-tokens-left
                 :msg "gain [Click][Click]"}]})
 
 (defcard "Elective Upgrade"
@@ -658,7 +660,7 @@
               :interactive (req true)}
    :abilities [{:cost [:click 1 :agenda 1]
                 :msg "draw 5 cards"
-                :keep-open :while-agenda-tokens-left
+                :keep-menu-open :while-agenda-tokens-left
                 :async true
                 :effect (effect (draw eid 5))}]})
 
@@ -741,7 +743,7 @@
    :abilities [{:cost [:click 1 :agenda 1]
                 :msg "gain 7 [Credits] and take 1 bad publicity"
                 :async true
-                :keep-open :while-agenda-tokens-left
+                :keep-menu-open :while-agenda-tokens-left
                 :effect (req (wait-for (gain-credits state side 7)
                                        (gain-bad-publicity state side eid 1)))}]})
 
@@ -749,7 +751,7 @@
   {:abilities [{:cost [:click 2]
                 :msg "gain 3 [Credits]"
                 :async true
-                :keep-open :while-2-clicks-left
+                :keep-menu-open :while-2-clicks-left
                 :effect (effect (gain-credits eid 3))}]})
 
 (defcard "Glenn Station"
@@ -781,14 +783,14 @@
 (defcard "Government Contracts"
   {:abilities [{:cost [:click 2]
                 :async true
-                :keep-open :while-2-clicks-left
+                :keep-menu-open :while-2-clicks-left
                 :effect (effect (gain-credits eid 4))
                 :msg "gain 4 [Credits]"}]})
 
 (defcard "Government Takeover"
   {:abilities [{:cost [:click 1]
                 :async true
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :effect (effect (gain-credits eid 3))
                 :msg "gain 3 [Credits]"}]})
 
@@ -847,7 +849,7 @@
                 :label "gain credits"
                 :msg (msg "gain " (:credit runner) " [Credits]")
                 :async true
-                :keep-open :while-agenda-tokens-left
+                :keep-menu-open :while-agenda-tokens-left
                 :effect (effect (gain-credits eid (:credit runner)))}]})
 
 (defcard "Hollywood Renovation"
@@ -971,7 +973,7 @@
     :cancel-effect (req (system-msg state :corp "declines to use Longevity Serum to trash any cards from HQ")
                         (shuffle-into-rd-effect state side eid card 3)
                         (effect-completed state side eid))
-    :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+    :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
 
 (defcard "Luminal Transubstantiation"
@@ -1155,7 +1157,7 @@
       :effect (req (let [resources (filter #(or (has-subtype? % "Job")
                                                 (has-subtype? % "Connection"))
                                            (all-active-installed state :runner))]
-                     (trash-cards state side eid resources)))}}}})
+                     (trash-cards state side eid resources {:cause-card card})))}}}})
 
 (defcard "Personality Profiles"
   (let [pp {:req (req (pos? (count (:hand runner))))
@@ -1163,7 +1165,7 @@
             :effect (req (let [c (first (shuffle (:hand runner)))]
                            (system-msg state side (str "uses Personality Profiles to force the Runner to trash "
                                                        (:title c) " from their Grip at random"))
-                           (trash state side eid c nil)))}]
+                           (trash state side eid c {:cause-card card})))}]
     {:events [(assoc pp :event :searched-stack)
               (assoc pp
                      :event :runner-install
@@ -1199,7 +1201,7 @@
 (defcard "Private Security Force"
   {:abilities [{:req (req tagged)
                 :cost [:click 1]
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :effect (effect (damage eid :meat 1 {:card card}))
                 :msg "do 1 meat damage"}]})
 
@@ -1230,7 +1232,7 @@
                                       (installed? %))}
                 :msg (msg "force the Runner to trash " (trash-count-str (:card context)) " and take 1 bad publicity")
                 :async true
-                :effect (req (wait-for (trash-cards state side targets)
+                :effect (req (wait-for (trash-cards state side targets {:cause-card card :cause :forced-to-trash})
                                        (system-msg state side (str "trashes " (string/join ", " (map :title targets))))
                                        (gain-bad-publicity state :corp eid 1)))}}))
 
@@ -1238,7 +1240,7 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda (max 0 (- (get-counters (:card context) :advancement) 3))))}
    :abilities [{:cost [:agenda 1]
-                :keep-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
+                :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                 :prompt "Choose a card"
                 :label "Search R&D and add 1 card to HQ"
                 ;; we need the req or the prompt will still show
@@ -1270,7 +1272,7 @@
                 :choices {:card #(and (ice? %)
                                       (rezzed? %))}
                 :cost [:agenda 1]
-                :keep-open :while-agenda-tokens-left
+                :keep-menu-open :while-agenda-tokens-left
                 :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
                           "after all its other subroutines for the remainder of the run")
                 :effect  (effect (add-extra-sub! (get-card state target)
@@ -1307,7 +1309,7 @@
    :abilities [(into
                  (corp-recur)
                  {:cost [:agenda 1]
-                  :keep-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
+                  :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                   :req (req (pos? (get-counters card :agenda)))})]})
 
 (defcard "Project Wotan"
@@ -1325,7 +1327,7 @@
                                (has-subtype? current-ice "Bioroid")
                                (= :approach-ice (:phase run))))
                 :cost [:agenda 1]
-                :keep-open :while-agenda-tokens-left
+                :keep-menu-open :while-agenda-tokens-left
                 :msg (str "make the approached piece of Bioroid ice gain \"[Subroutine] End the run\""
                           "after all its other subroutines for the remainder of this run")
                 :effect  (effect (add-extra-sub! (get-card state current-ice)
@@ -1367,7 +1369,7 @@
      :abilities [{:async true
                   :waiting-prompt "Corp to make a decision"
                   :cost [:agenda 1]
-                  :keep-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
+                  :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                   :label "swap card in HQ with installed card"
                   :req (req run)
                   :effect (effect (continue-ability (choose-card (:server run)) card nil))}]}))
@@ -1448,7 +1450,7 @@
    :abilities [{:cost [:agenda 1]
                 :msg (msg "place 1 advancement token on " (card-str state target))
                 :label "place 1 advancement token"
-                :keep-open :while-agenda-tokens-left
+                :keep-menu-open :while-agenda-tokens-left
                 :choices {:card installed?}
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
@@ -1505,7 +1507,7 @@
 (defcard "Restructured Datapool"
   {:abilities [{:cost [:click 1]
                 :label "give runner 1 tag"
-                :keep-open :while-clicks-left
+                :keep-menu-open :while-clicks-left
                 :trace {:base 2
                         :successful {:msg "give the Runner 1 tag"
                                      :async true
@@ -1521,7 +1523,7 @@
                         :all true}
               :msg (msg "trash " (:title target))
               :async true
-              :effect (effect (trash eid target))}})
+              :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Self-Destruct Chips"
   {:move-zone (req (when (and (in-scored? card)
@@ -1611,7 +1613,10 @@
                                    (do (system-msg state :corp "declines to trash a card for Standoff")
                                        (clear-wait-prompt state :runner)
                                        (effect-completed state :corp eid))))
-             :effect (req (wait-for (trash state side target {:unpreventable true})
+             :effect (req (wait-for (trash state side target
+                                           (if (= side :corp)
+                                             {:unpreventable true :cause-card card}
+                                             {:unpreventable true :cause-card card :cause :forced-to-trash}))
                                     (system-msg state side (str "trashes " (card-str state target) " for Standoff"))
                                     (clear-wait-prompt state (other-side side))
                                     (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
@@ -1697,7 +1702,7 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 1))}
    :abilities [{:cost [:agenda 1]
-                :keep-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
+                :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                 :label "Install a piece of ice in any position, ignoring all costs"
                 :prompt "Choose a piece of ice to install"
                 :show-discard true

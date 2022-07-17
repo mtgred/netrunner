@@ -146,7 +146,7 @@
                   (not (pos? (get-counters card counter-type)))))
    :async true
    :effect (effect (system-msg (str "trashes " (:title card)))
-                   (trash eid card {:unpreventable true}))})
+                   (trash eid card {:unpreventable true :source-card card}))})
 
 (defn make-recurring-ability
   [ability]

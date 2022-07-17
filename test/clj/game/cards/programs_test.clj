@@ -537,6 +537,39 @@
       (run-empty-server state "Server 1")
       (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash")))
 
+(deftest aumakua-gang-sign-interaction
+  ;; Gang sign should give turtle counters
+  (do-game
+   (new-game {:corp {:hand ["Hostile Takeover" "NGO Front"]}
+              :runner {:hand ["Aumakua" (qty "Gang Sign" 2)]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Aumakua")
+   (play-from-hand state :runner "Gang Sign")
+   (play-from-hand state :runner "Gang Sign")
+   (take-credits state :runner)
+   (play-and-score state "Hostile Takeover")
+   (click-prompt state :runner "Gang Sign")
+   (click-prompt state :runner "No action")
+   (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter from the first breach")
+   (click-prompt state :runner "Pay 1 [Credits] to trash")
+   (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gained no virus counter from the second breach")))
+
+(deftest aumakua-divide-and-conquer
+  ;; divide and conquer should proc turtle for each access
+  (do-game
+   (new-game {:corp {:discard ["Hostile Takeover"] :deck ["Ice Wall"] :hand ["Ice Wall"]}
+              :runner {:hand ["Aumakua" "Sure Gamble" "Divide and Conquer"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Sure Gamble")
+   (play-from-hand state :runner "Aumakua")
+   (play-run-event state "Divide and Conquer" :archives)
+   (click-prompt state :runner "Steal")
+   (is (= 0 (get-counters (get-program state 0) :virus)) "Aumakua gained no virus counter")
+   (click-prompt state :runner "No action")
+   (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter")
+   (click-prompt state :runner "No action")
+   (is (= 2 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter")))
+
 (deftest baba-yaga
   ;; Baba Yaga
   (do-game
@@ -1804,18 +1837,12 @@
     (core/move state :runner (find-card "Cleaver" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Deuces Wild" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Encore" (:deck (get-runner))) :deck)
-    (is (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam"))
-    (is (= (:title (nth (-> @state :runner :deck) 1)) "Bravado"))
-    (is (= (:title (nth (-> @state :runner :deck) 2)) "Cleaver"))
-    (is (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild"))
-    (is (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))
-    ;; Stack is now from top to bottom: A B C D E
-    (play-from-hand state :runner "Customized Secretary")
-    (click-prompt state :runner "Cleaver")
-    (is (not (and (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam")
-              (= (:title (nth (-> @state :runner :deck) 1)) "Bravado")
-              (= (:title (nth (-> @state :runner :deck) 2)) "Deuces Wild")
-              (= (:title (nth (-> @state :runner :deck) 3)) "Encore"))))))
+    (changes-val-macro
+      1
+      (count (core/turn-events state :corp :runner-shuffle-deck))
+      "Runner stack is not shufled"
+      (play-from-hand state :runner "Customized Secretary")
+      (click-prompt state :runner "Cleaver"))))
 
 (deftest customized-secretary-shuffles-stack-when-no-program-is-hosted
   ;; Customized Secretary - shuffles the stack when no program is hosted
@@ -5297,7 +5324,7 @@
      (run-on state "HQ")
      (rez state :corp anansi)
      (run-continue state)
-     ;; boost/break     
+     ;; boost/break
      (changes-val-macro
        -4 (:credit (get-runner))
        "Spent 4 credits matching Anansi strength"
@@ -5335,7 +5362,7 @@
        (click-prompt state :runner "Do 1 net damage")
        (click-prompt state :runner "Rearrange the top 5 cards of R&D")
        (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
-     (run-continue state :movement)     
+     (run-continue state :movement)
      (run-jack-out state)
      (is (= 0 (count (:discard (get-runner)))) "0 cards in discard"))))
 
@@ -5371,7 +5398,7 @@
        "One card added to discard"
        (card-ability state :runner revolver 1)
        (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
-     (run-continue state :movement)     
+     (run-continue state :movement)
      (run-jack-out state)
      (is (= 1 (count (:discard (get-runner)))) "1 cards (revolver) in discard"))))
 
@@ -5594,17 +5621,19 @@
   ;; Savant
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Cobra" "Enigma"]
+                      :hand ["Cobra" "Enigma" "Quandary"]
                       :credits 10}
                :runner {:deck ["Savant" "Box-E"]
                         :credits 20}})
     (play-from-hand state :corp "Cobra" "HQ")
+    (play-from-hand state :corp "Quandary" "R&D")
     (play-from-hand state :corp "Enigma" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Savant")
     (let [savant (get-program state 0)
           cobra (get-ice state :hq 0)
-          enigma (get-ice state :rd 0)]
+          quandary (get-ice state :rd 0)
+          enigma (get-ice state :rd 1)]
       (is (= 2 (core/available-mu state)))
       (is (= 3 (get-strength (refresh savant))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
@@ -5625,7 +5654,15 @@
       (card-ability state :runner (refresh savant) 0)
       (click-prompt state :runner "Force the Runner to lose 1 [Click]")
       (click-prompt state :runner "End the run")
-      (is (:broken (first (:subroutines (refresh enigma)))) "Broke a code gate subroutine"))))
+      (is (:broken (first (:subroutines (refresh enigma)))) "Broke code gate first subroutine")
+      (is (:broken (last (:subroutines (refresh enigma)))) "Broke code gate second subroutine")
+      (run-continue state :movement)
+      (run-continue state :approach-ice)
+      (rez state :corp quandary)
+      (run-continue state)
+      (card-ability state :runner (refresh savant) 0)
+      (click-prompt state :runner "End the run")
+      (is (:broken (first (:subroutines (refresh quandary)))) "Broke a code gate subroutine on a single-sub ice"))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program

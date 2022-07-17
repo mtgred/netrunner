@@ -854,7 +854,7 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
-(deftest-pending digital-rights-management
+(deftest ^:kaocha/pending digital-rights-management
   ;; Cannot score Agenda installed after playing DRM
   (do-game
     (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
@@ -2537,6 +2537,18 @@
     (is (zero? (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
+(deftest next-activation-command-lockdowns-restriction
+  ;; Can't play if there's an active lockdown
+  (do-game
+   (new-game {:corp {:hand ["NEXT Activation Command" "NEXT Activation Command"]}})
+   (is (= 0 (count (:play-area (get-corp)))) "Play area is empty")
+   (is (= 0 (count (:discard (get-corp)))) "Discard is empty")
+   (play-from-hand state :corp "NEXT Activation Command")
+   (is (= 1 (count (:play-area (get-corp)))) "NAC in play area")
+   (play-from-hand state :corp "NEXT Activation Command")
+   (is (= 1 (count (:play-area (get-corp)))) "ONLY one NAC in play area")
+   (is (= 0 (count (:discard (get-corp)))) "Discard is empty")))
 
 (deftest next-activation-command-get-trashed-at-start-of-next-corp-turn
     ;; Get trashed at start of next Corp turn

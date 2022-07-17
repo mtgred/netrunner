@@ -115,7 +115,7 @@
                    (let [s [(if (keyword? server) server (last (server->zone state server)))]
                          ices (get-in @state (concat [:corp :servers] s [:ices]))
                          n (count ices)]
-                     (when click-run
+                     (when (not-empty payment-str)
                        (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
                                                       (zone->name (unknown->kw server))
                                                       (when ignore-costs ", ignoring all costs"))))

@@ -939,6 +939,22 @@
        (is (= 3 (:click (get-runner))) "No extra cost to run HQ")
        (is (= 2 (:credit (get-runner))) "No extra cost to run HQ"))))
 
+(deftest cold-site-server-run-event
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Cold Site Server"]}
+               :runner {:deck ["Dirty Laundry"]}})
+     (core/gain state :corp :credit 10 :click 10)
+     (play-from-hand state :corp "Cold Site Server" "HQ")
+     (let [css (get-content state :hq 0)]
+       (rez state :corp (refresh css))
+       (card-ability state :corp css 0))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Dirty Laundry")
+     (click-prompt state :runner "HQ")
+     (is (second-last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to play Dirty Laundry."))
+     (is (last-log-contains? state "Runner spends \\[Click\\] and pays 1 \\[Credits\\] to make a run on HQ."))))
+
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ice
   (do-game
@@ -2468,6 +2484,66 @@
       (is (zero? (count (:discard (get-corp)))) "No cards trashed from HQ")
       (is (not (:run @state)) "Run ended after Embezzle completed - no accesses from Mwanza")
       (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza")))
+
+(deftest mwanza-city-grid-multiple-breaches-correctness
+  ;; Test that mwanza acts correctly when we breach multiple times in a run
+  (do-game
+   (new-game {:corp {:hand ["Mwanza City Grid" "Shiro"]
+                     :deck ["Advanced Assembly Lines" "Biotic Labor" "Caduceus"
+                            "Death and Taxes" "Economic Warfare"]}
+              :runner {:hand ["Kongamato"]}})
+   (play-from-hand state :corp "Mwanza City Grid" "R&D")
+   (play-from-hand state :corp "Shiro" "R&D")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Kongamato")
+   (rez state :corp (get-content state :rd 0))
+   (let [shiro (get-ice state :rd 0)]
+     (rez state :corp shiro)
+     (run-on state "R&D")
+     (run-continue state)
+     (card-ability state :runner (get-resource state 0) 0)
+     (fire-subs state (refresh shiro))
+     (click-prompt state :corp "No")
+     ;;first access - we should only see 4 cards
+     (is (:breach @state) "Currently breaching")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (changes-val-macro
+      +8 (:credit (get-corp))
+      "Gained 6c from Mwanza City Grid"
+      (click-prompt state :runner "No action")
+      (is (not (:breach @state)) "Not currently breaching"))
+     ;; continue until access
+     (run-continue state :movement)
+     (run-continue state :success)
+     (is (:breach @state) "Currently breaching (for real)")
+     (click-prompt state :runner "Mwanza City Grid")
+     (click-prompt state :runner "No action")
+     ;; plus four cards from deck
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (click-prompt state :runner "No action")
+     (changes-val-macro
+      +10 (:credit (get-corp))
+      "Five cards accessed, +10 credits"
+      (click-prompt state :runner "No action")
+      (is (not (:breach @state)) "Not currently breaching")))))
+
+(deftest mwanza-city-grid-salsette-slums
+  (do-game
+   (new-game {:corp {:hand ["Mwanza City Grid"]}
+              :runner {:hand ["Salsette Slums"] :credits 10}})
+   (play-from-hand state :corp "Mwanza City Grid" "HQ")
+   (rez state :corp (get-content state :hq 0))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Salsette Slums")
+   (run-on state "HQ")
+   (run-continue state)
+   (changes-val-macro
+    +2 (:credit (get-corp))
+    "Corp gained +2, even after mwanza was RFG'd"
+    (click-prompt state :runner "[Salsette Slums] Remove card from game"))))
 
 (deftest mwanza-city-grid-interaction-with-kitsune
     ;; Regression test for #3469
