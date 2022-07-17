@@ -390,6 +390,7 @@
    :end-turn
    :gameid
    :log
+   :mark
    :options
    :psi
    :reason

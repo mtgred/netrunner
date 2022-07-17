@@ -368,12 +368,23 @@
    :subroutines [ability resolve-grail]})
 
 ;;; For NEXT ice
+(defn subtype-ice-count
+  "Counts number of rezzed pieces of ice with the given subtype"
+  [corp subtype]
+  (let [servers (flatten (seq (:servers corp)))
+        rezzed-ice? #(and (rezzed? %) (has-subtype? % subtype))]
+    (reduce (fn [c server] (+ c (count (filter rezzed-ice? (:ices server))))) 0 servers)))
+
 (defn next-ice-count
   "Counts number of rezzed pieces of NEXT ice - for use with NEXT Bronze and NEXT Gold"
   [corp]
-  (let [servers (flatten (seq (:servers corp)))
-        rezzed-next? #(and (rezzed? %) (has-subtype? % "NEXT"))]
-    (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
+  (subtype-ice-count corp "NEXT"))
+
+;;; For Harmonic ice
+(defn harmonic-ice-count
+  "Counts the number of rezzed pieces of Harmonic ice - for use with Wave and others"
+  [corp]
+  (subtype-ice-count corp "Harmonic"))
 
 ;;; For Morph ice
 (defn morph-ice
@@ -685,6 +696,10 @@
 
 (defcard "Bastion"
   {:subroutines [end-the-run]})
+
+(defcard "Bathynomus"
+  {:subroutines [(do-net-damage 3)]
+   :strength-bonus (req (if (protecting-archives? card) 3 0))})
 
 (defcard "Battlement"
   {:subroutines [end-the-run
@@ -1190,6 +1205,15 @@
   {:subroutines [(corp-recur)
                  (install-from-hq-or-archives-sub {:ignore-all-cost true})]})
 
+(defcard "Echo"
+  {:events [{:event :rez
+             :req (req (and (has-subtype? (:card context) "Harmonic")
+                            (ice? (:card context))))
+             :effect (effect (add-counter card :power 1))}
+            {:event :counter-added
+             :req (req (same-card? card target))
+             :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}]})
+
 (defcard "Eli 1.0"
   {:subroutines [end-the-run
                  end-the-run]
@@ -1291,6 +1315,20 @@
 (defcard "Enigma"
   {:subroutines [runner-loses-click
                  end-the-run]})
+
+(defcard "Envelopment"
+  (let [subs-effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))]
+    {:on-rez {:effect (effect (add-counter card :power 4))}
+     :events [{:event :corp-turn-begins
+               :req (req (pos? (get-counters card :power)))
+               :effect (effect (add-counter card :power -1))}
+              {:event :counter-added
+               :req (req (same-card? card target))
+               :effect subs-effect}]
+     :subroutines [{:label "Trash this ice"
+                    :async true
+                    :msg (msg "trash " (:title card))
+                    :effect (effect (trash eid card {:cause :subroutine}))}]}))
 
 (defcard "Envelope"
   {:subroutines [(do-net-damage 1)
@@ -2281,6 +2319,10 @@
                  end-the-run]
    :runner-abilities [(bioroid-break 1 1)]})
 
+(defcard "Maskirovka"
+  {:subroutines [(gain-credits-sub 2)
+                 end-the-run]})
+
 (defcard "Masvingo"
   (let [subs-effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))
         ability {:req (req (same-card? card target))
@@ -3149,6 +3191,26 @@
                  end-the-run
                  end-the-run]})
 
+(defcard "Stavka"
+  {:on-rez {:optional {:prompt "Trash another card to give Stavka +5 strength?"
+                       :waiting-prompt "Corp to make a decision"
+                       :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
+                                           card nil
+                                           [:trash-other-installed 1]))
+                       :yes-ability {:prompt "Select another card to trash"
+                                     :cost [:trash-other-installed 1]
+                                     :msg "give itself +5 strength for the remainder of the run"
+                                     :waiting-prompt "corp to trash a card"
+                                     :effect (effect (register-floating-effect
+                                                      card
+                                                      {:type :ice-strength
+                                                       :duration :end-of-run
+                                                       :req (req (same-card? target card))
+                                                       :value 5})
+                                                     (update-ice-strength card))}}}
+   :subroutines [trash-program-sub
+                 trash-program-sub]})
+
 (defcard "Surveyor"
   (let [x (req (* 2 (count (:ices (card->server state card)))))]
     {:strength-bonus x
@@ -3452,6 +3514,23 @@
 (defcard "Vanilla"
   {:subroutines [end-the-run]})
 
+(defcard "Vasilisa"
+  {:on-encounter
+   {:optional {:prompt "Place an advancement counter?"
+               :waiting-prompt "Corp to use Vasilisa"
+               :req (req (and (can-pay? state side eid card nil [:credit 1])
+                              (some #(or (not (rezzed? %))
+                                         (can-be-advanced? %))
+                                    (all-installed state :corp))))
+               :yes-ability {:cost [:credit 1]
+                             :choices {:card can-be-advanced?}
+                             :prompt "Place an advancement token on a card that can be advanced"
+                             :msg (msg "place 1 advancement token on " (card-str state target))
+                             :effect (effect (add-prop target :advance-counter 1 {:placed true}))
+                             :cancel-effect (effect (system-msg state side "declines to use Vasilisa"))}
+               :no-ability {:msg "declines to use Vasilisa"}}}
+   :subroutines [(give-tags 1)]})
+
 (defcard "Veritas"
   {:subroutines [{:label "Corp gains 2 [Credits]"
                   :msg "gain 2 [Credits]"
@@ -3516,6 +3595,23 @@
                   :cancel-effect (effect (system-msg "cancels the effect of Watchtower"))
                   :effect (effect (shuffle! :deck)
                                   (move target :hand))}]})
+
+(defcard "Wave"
+  {:on-rez
+   {:optional {:prompt "Search R&D for a piece of ice?"
+               :req (req (and run this-server))
+               :yes-ability {:prompt "Choose a card"
+                             :msg (msg "reveal they added " (:title target) " to HQ from R&D")
+                             :choices (req (cancellable (filter #(ice? %) (:deck corp)) :sorted))
+                             :cancel-effect (effect (system-msg "uses Wave to shuffle R&D")
+                                                    (shuffle! :deck))
+                             :effect (effect (shuffle! :deck)
+                                             (move target :hand))}
+               :no-ability {:msg "decline to search for a piece of ice"}}}
+   :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
+                  :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
+                  :async true
+                  :effect (req (gain-credits state :corp eid (harmonic-ice-count corp)))}]})
 
 (defcard "Weir"
   {:subroutines [runner-loses-click

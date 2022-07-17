@@ -394,6 +394,17 @@
                                   (cbi-choice from '() (count from) from)))
                               card nil))}})]}))
 
+(defcard "Chastushka"
+  {:makes-run true
+   :on-play {:req (req hq-runnable)
+             :async true
+             :effect (effect (make-run eid :hq card))}
+   :events [(successful-run-replace-breach
+              {:target-server :hq
+               :this-card-run true
+               :mandatory true
+               :ability (sabotage-ability 4)})]})
+
 (defcard "Code Siphon"
   (letfn [(rd-ice [state]
             (* -3 (count (get-in @state [:corp :servers :rd :ices]))))]
@@ -2659,6 +2670,28 @@
                          choices (map str valid-amounts)]
                      (continue-ability state side (runner-choice choices) card nil)))}}))
 
+(defcard "Rigging Up"
+  {:on-play
+   {:prompt "Choose a program or piece of hardware to install from your Grip"
+    :choices {:req (req (and (or (hardware? target)
+                                 (program? target))
+                             (in-hand? target)
+                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                       [:credit (install-cost state side target {:cost-bonus -3})])))}
+    :async true
+    :effect (req (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install}) target {:cost-bonus -3})
+                           (let [rig-target async-result]
+                             (continue-ability
+                               state side
+                               {:optional
+                                {:prompt (str "Charge " (:title rig-target) "?")
+                                 :req (req (can-charge state side rig-target))
+                                 :yes-ability
+                                 {:async true
+                                  :effect (effect (charge-card eid rig-target))
+                                  :msg (msg "charge " (:title rig-target))}}}
+                               card nil))))}})
+
 (defcard "Rip Deal"
   (let [add-cards-from-heap
         {:optional
@@ -2751,6 +2784,14 @@
                                              :all true}
                                    :effect (effect (trash eid target {:cause-card card}))})
                                 card nil)))}]}))
+
+(defcard "Running Hot"
+  {:on-play
+   {:msg "gain [Click][Click][Click]"
+    :additional-cost [:brain 1]
+    :async true
+    :effect (effect (gain-clicks 3)
+                    (effect-completed eid))}})
 
 (defcard "Running Interference"
   {:makes-run true
@@ -2924,6 +2965,18 @@
                               :async true
                               :effect (effect (make-run eid target))}
                              card nil)))}})
+
+(defcard "Steelskin Scarring"
+  {:on-play {:async true
+             :effect (effect (draw eid 3))}
+   :on-trash {:when-inactive true
+              :interactive (req true)
+              :async true
+              :req (req (let [zone (first (:zone (:card context)))]
+                          (or (= :hand zone)
+                              (= :deck zone))))
+              :msg "draw 2 cards"
+              :effect (effect (draw :runner eid 2))}})
 
 (defcard "Stimhack"
   {:makes-run true

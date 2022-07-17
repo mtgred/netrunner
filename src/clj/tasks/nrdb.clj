@@ -16,7 +16,7 @@
     [tasks.setup :refer [connect disconnect]]))
 
 (def ^:const edn-base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
-(def ^:const jnet-image-url "https://jinteki.net/img/cards/en/default/stock/")
+(def ^:const jnet-image-url "https://static.nrdbassets.com/v1/large/")
 
 (defn download-edn-data
   [localpath]
@@ -42,7 +42,7 @@
   "Download a single card image from NRDB"
   [{:keys [code title]}]
   (binding [org.httpkit.client/*default-client* sni-client/default-client]
-    (let [url (str jnet-image-url code ".png")]
+    (let [url (str jnet-image-url code ".jpg")]
       (println "Downloading: " title "\t\t(" url ")")
       (http/get url {:as :byte-array :timeout 120000 :insecure? true}
                 (fn [{:keys [status body error]}]

@@ -1794,6 +1794,16 @@
                                                (effect-completed eid))})
                             card nil))}]})
 
+(defcard "Refuge Campaign"
+  (let [ability {:msg "gain 2 [Credits]"
+                 :label "Gain 2 [Credits] (start of turn)"
+                 :once :per-turn
+                 :async true
+                 :effect (effect (gain-credits eid 2))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (defcard "Regolith Mining License"
   {:data {:counter {:credit 15}}
    :events [(trash-on-empty :credit)]
@@ -2115,6 +2125,23 @@
                             (gain-credits state :corp eid 2)
                             (effect-completed state side eid)))}]})
 
+(defcard "Svyatogor Excavator"
+  (let [ability {:async true
+                 :label "trash a card to gain 3 [Credits]"
+                 :once :per-turn
+                 :req (req (>= (count (all-installed state :corp)) 2))
+                 :choices {:req (req (and (corp? target)
+                                          (installed? target)
+                                          (not (same-card? target card))))}
+                 :msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                 :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
+                                        (gain-credits state side eid 3)))}]
+    {:flags {:corp-phase-12 (req (>= (count (all-installed state :corp)) 2))}
+     :events [(assoc ability
+                     :event :corp-turn-begins
+                     :interactive (req true))]
+     :abilities [ability]}))
+
 (defcard "Synth DNA Modification"
   {:implementation "Manual fire once subroutine is broken"
    :abilities [{:msg "do 1 net damage"
@@ -2260,11 +2287,45 @@
                       moved-card nil)))}
     "Swap Toshiyuki Sakai with an agenda or asset from HQ?"))
 
+(defcard "Trieste Model Bioroids"
+  {:on-rez {:msg (msg "prevent " (card-str state target)
+                      " from being broken by runner card abilities")
+            :choices {:card #(and (ice? %)
+                                  (rezzed? %)
+                                  (has-subtype? % "Bioroid"))}
+            :effect (effect (add-icon card target "T" "red")
+                            (update! (assoc-in (get-card state card) [:special :trieste-target] target)))}
+   :leave-play (effect (remove-icon card))
+   :constant-effects [{:type :prevent-paid-ability
+                       :req (req
+                              (let [[break-card break-ability] targets]
+                                (and
+                                  (same-card? current-ice (get-in card [:special :trieste-target]))
+                                  (runner? break-card)
+                                  (or (not (identity? break-card))
+                                      (fake-identity? break-card))
+                                  (or (contains? break-ability :break)
+                                      (contains? break-ability :breaks)
+                                      (contains? break-ability :heap-breaker-break)
+                                      (contains? break-ability :break-cost)))))
+                       :value true}]})
+
 (defcard "Turtlebacks"
   {:events [{:event :server-created
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})
+
+(defcard "Ubiquitous Vig"
+  (let [ability {:msg (msg "gain " (get-counters card :advancement)  " [Credits]")
+                 :label "Gain 1 [Credits] for each advancement counter (start of turn)"
+                 :once :per-turn
+                 :async true
+                 :effect (effect (gain-credits eid (get-counters card :advancement)))}]
+    {:derezzed-events [corp-rez-toast]
+     :advanceable :always
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "Urban Renewal"
   {:on-rez {:effect (effect (add-counter card :power 3))}

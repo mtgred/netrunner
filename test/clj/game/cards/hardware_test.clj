@@ -1568,6 +1568,26 @@
         "Pays 3 credit for second install"
         (play-from-hand state :runner "Aumakua"))))
 
+(deftest endurance
+  ;; Endurance
+  (do-game
+    (new-game {:runner {:hand ["Endurance"] :credits 10}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Endurance")
+    (let [end (get-hardware state 0)]
+      (is (= 3 (get-counters (refresh end) :power)) "starts with 3 counters")
+      (run-on state :hq)
+      (run-continue state)
+      (card-ability state :runner (refresh end) 0)
+      (click-prompt state :runner "End the run")
+      (is (= 1 (get-counters (refresh end) :power)) "spend 2 counters to break")
+      (run-continue state)
+      (run-continue state)
+      (is (= 2 (get-counters (refresh end) :power)) "gained 1 counter from a successful run"))))
+
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
   (do-game
@@ -2573,6 +2593,18 @@
         (card-ability state :runner polop 0)
         (click-card state :runner (refresh pad))
         (is (zero? (get-counters (refresh mache) :power)) "Mache should gain no counters from a trash outside of an access"))))
+
+(deftest marrow
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 2) "Marrow"]}
+               :corp {:hand [(qty "Hedge Fund" 2) "Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Marrow")
+    (is (= 1 (:brain-damage (get-runner))) "1 from marrow install")
+    (is (= 7 (hand-size :runner)) "Max hand size is 7 (5 + 3 - 1)")
+    (take-credits state :runner)
+    (play-and-score state "Hostile Takeover")
+    (is (last-log-contains? state "uses Marrow to sabotage 1") "Sabotage happened")))
 
 (deftest masterwork-v37
   ;; Masterwork (v37)
@@ -4715,6 +4747,41 @@
     (take-credits state :corp)
     (is (not= (count (:hand (get-corp))) (hand-size :corp)) "Corp hand below max")
     (is (= 1 (count (:hand (get-runner)))) "No card drawn")))
+
+(deftest virtuoso
+  ;; Virtuoso - mark start of turn, +1 mu, hq mark -> +1, otherwise breach hq after run
+  (do-game
+    (new-game {:corp {:deck ["Hedge Fund"] :hand ["IPO" "IPO"]}
+               :runner {:hand ["Virtuoso"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (is (= 5 (core/available-mu state)))
+    (is (nil? (:mark @state)) "No mark identified")
+    ;; breach +1 when hq marked
+    (core/set-mark state :hq)
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner))
+    ;; only works once/turn
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner)))
+  (do-game
+    (new-game {:corp {:deck ["Hedge Fund"] :hand ["Rashida Jaheem"]}
+               :runner {:hand ["Virtuoso"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (is (nil? (:mark @state)) "No mark identified")
+    ;; when marj rd/archives, breach hq after run ends
+    (core/set-mark state :rd)
+    (run-on state :rd)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (no-prompt? state :runner))))
 
 (deftest zamba
   ;; Zamba - Whenever corp card is exposed you may gain 1 credit

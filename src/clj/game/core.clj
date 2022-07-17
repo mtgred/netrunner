@@ -8,6 +8,7 @@
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
+    [game.core.charge]
     [game.core.checkpoint]
     [game.core.commands]
     [game.core.cost-fns]
@@ -31,6 +32,7 @@
     [game.core.initializing]
     [game.core.installing]
     [game.core.link]
+    [game.core.mark]
     [game.core.memory]
     [game.core.moving]
     [game.core.optional]
@@ -47,6 +49,7 @@
     [game.core.revealing]
     [game.core.rezzing]
     [game.core.runs]
+    [game.core.sabotage]
     [game.core.say]
     [game.core.servers]
     [game.core.set-aside]
@@ -229,6 +232,12 @@
 (expose-vars
   [game.core.change-vals
    change])
+
+(expose-vars
+  [game.core.charge
+   can-charge
+   charge-ability
+   charge-card])
 
 (expose-vars
   [game.core.checkpoint
@@ -561,6 +570,13 @@
    update-link])
 
 (expose-vars
+  [game.core.mark
+   set-mark
+   is-mark?
+   identify-mark
+   identify-mark-ability])
+
+(expose-vars
   [game.core.memory
    available-mu
    caissa-mu+
@@ -715,6 +731,11 @@
    toggle-auto-no-action
    total-cards-accessed
    total-run-cost])
+
+
+(expose-vars
+  [game.core.sabotage
+   sabotage-ability])
 
 (expose-vars
   [game.core.say

@@ -363,6 +363,20 @@
         (should-not-place token-astro hand-ice-wall " in hand")
         (should-place token-astro installed-ice-wall " that is installed")))))
 
+(deftest artificial-cryptocrash
+  ;; Offworld Office
+  (do-game
+    (new-game {:corp {:hand [(qty "Artificial Cryptocrash" 2)]}
+               :runner {:credits 9}})
+    (changes-val-macro
+      -7 (:credit (get-runner))
+      "Runner loses 7 from cryptocrash"
+      (play-and-score state "Artificial Cryptocrash"))
+    (changes-val-macro
+      -2 (:credit (get-runner))
+      "Runner loses (all) 2 from cryptocrash"
+      (play-and-score state "Artificial Cryptocrash"))))
+
 (deftest award-bait
   ;; Award Bait
   (do-game
@@ -2270,6 +2284,24 @@
                    [3 3 "No action" 0 0]
                    [3 3 "Gain 7 [Credits]" 7 0]
                    [3 3 "Do 7 meat damage" 0 7]]))))
+
+(deftest midnight-3-arcology
+  (do-game
+    (new-game {:corp {:hand ["Midnight-3 Arcology" (qty "Hedge Fund" 5)]
+                      :deck ["NGO Front" "Vanilla" "Chiyashi"]}})
+    (changes-val-macro
+      2 (count (:hand (get-corp)))
+      "drew net 2 when scoring midnight-3 arcology"
+      (play-and-score state "Midnight-3 Arcology"))
+    (take-credits state :corp)
+    (is (no-prompt? state :corp) "no prompt to discard")
+    (is (= 8 (count (:hand (get-corp)))) "8 cards in hand")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-card state :corp "NGO Front")
+    (click-card state :corp "Vanilla")
+    (click-card state :corp "Chiyashi")
+    (is (no-prompt? state :corp) "discards completed")))
 
 (deftest napd-contract
   ;; NAPD Contract

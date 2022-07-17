@@ -4022,6 +4022,18 @@
       (is (= 2 (count (:discard (get-runner)))))
       (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract doesn't get advancement token for net damage"))))
 
+(deftest refuge-campaign
+  ;; PAD Campaign
+  (do-game
+    (new-game {:corp {:deck ["Refuge Campaign"]}})
+    (play-from-hand state :corp "Refuge Campaign" "New remote")
+    (let [ref (get-content state :remote1 0)]
+      (rez state :corp ref)
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (+ 2 credits) (:credit (get-corp))) "Should gain 1 credit at start of turn from PAD Campaign")))))
+
 (deftest regolith-mining-license
   ;; Regolith Mining License
   (do-game
@@ -4808,6 +4820,46 @@
       (is (= 2 (count (:discard (get-runner))))
           "Runner should take 1 net damage from Synth DNA Modification after Data Mine subroutine"))))
 
+(deftest syvatogor-excavator-manual-use
+  ;; Svyatogor Excavator - Manual use
+  (do-game
+   (new-game {:corp {:hand ["Svyatogor Excavator" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "Svyatogor Excavator" "New remote")
+   (let [se (get-content state :remote2 0)
+         pad (get-content state :remote1 0)]
+     (rez state :corp (refresh se))
+     (changes-val-macro
+      3 (:credit (get-corp))
+      "gained 3c from ~"
+      (card-ability state :corp se 0)
+      (click-card state :corp pad))
+     (card-ability state :corp se 0)
+     (is (not= :select (:prompt-type (prompt-map :corp))) "~ has already been used this turn"))
+   (let [se (get-content state :remote2 0)
+         pad (get-in @state [:corp :discard 0])]
+     (is (not= pad nil) "PAD should be in Heap")
+     (is (not= se nil) "~ should still be installed"))))
+
+(deftest syvatogor-excavator-triggered-at-start-of-turn
+  ;; Syvatogor Excavator - Triggered at start of turn
+  (do-game
+   (new-game {:corp {:hand ["Svyatogor Excavator" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "Svyatogor Excavator" "New remote")
+   (let [se (get-content state :remote2 0)
+         pad (get-content state :remote1 0)]
+     (rez state :corp (refresh se))
+     (rez state :corp (refresh pad))
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (card-ability state :corp se 0)
+     (changes-val-macro
+      3 (:credit (get-corp))
+      "~ sells PAD Campaign before it triggers so only 3 credits gained"
+      (click-card state :corp (refresh pad)))
+     (is (= (refresh pad) nil) "PAD Campaign should be in Heap"))))
+
 (deftest team-sponsorship-install-from-hq
     ;; Install from HQ
     (do-game
@@ -5232,6 +5284,191 @@
         (click-prompt state :corp "Yes") ; pay 1c to fire Junebug
         (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage")))))
 
+(deftest trieste-model-bioroids-basic-tests
+  ;; Trieste Model Bioroids: on rez, pick a rezzed bioroid ice.
+  ;;                         That ice cannot be broken with runner card abilities
+  (do-game
+    (new-game {:corp {:hand ["Trieste Model Bioroids" "Eli 1.0"] :credits 10}
+               :runner {:hand ["Corroder"] :credits 10}})
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (play-from-hand state :corp "Trieste Model Bioroids" "Server 1")
+    (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
+    (click-card state :corp "Eli 1.0")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (run-on state :remote1)
+    (run-continue state)
+    (let [prog (get-program state 0)
+          ice (get-ice state :remote1 0)]
+      ;;try auto-breaking
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "spent no money not breaking"
+        (core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh prog)})
+        (is (= 2 (count (remove :broken (:subroutines (refresh ice))))) "No subs broken"))
+      ;;auto-pump to match strength
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "spent 2c matching strength"
+        (core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump" :card (refresh prog)}))
+      ;; still can't break subs
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Didn't spent money breaking"
+        (card-ability state :runner prog 0)
+        (is (no-prompt? state :runner) "No prompt to break"))
+      ;; Break using Eli
+      (card-side-ability state :runner ice 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "End the run")
+      (is (empty (remove :broken (:subroutines (refresh ice)))) "No subs broken"))))
+
+(deftest trieste-model-bioroids-odd-breakers
+  ;; savant/etc utae, and any other cards where issues pop up
+  (do-game
+    (new-game {:corp {:hand ["Trieste Model Bioroids" "Viktor 1.0"]
+                      :credits 50}
+               :runner {:hand ["Sage" "Utae" "Keiko"] :credits 99}})
+    (play-from-hand state :corp "Viktor 1.0" "New remote")
+    (play-from-hand state :corp "Trieste Model Bioroids" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Keiko")
+    (play-from-hand state :runner "Utae")
+    (play-from-hand state :runner "Sage")
+    (let [code-gate (get-ice state :remote1 0)
+          utae (get-program state 0)
+          sage (get-program state 1)]
+      (rez state :corp code-gate)
+      (rez state :corp (get-content state :remote1 0))
+      (click-card state :corp (refresh code-gate))
+      (is (= 3 (get-strength (refresh sage))) "+3 strength for 3 unused MU")
+      (run-on state :remote1)
+      (run-continue state)
+      ;;test sage
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Spent no money on sage"
+        (card-ability state :runner (refresh sage) 0)
+        (is (no-prompt? state :runner)))
+      ;;test utae
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Spent 2c matching strength with Utae"
+        (card-ability state :runner (refresh utae) 2)
+        (card-ability state :runner (refresh utae) 2))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Spend no money breaking with utae"
+        (card-ability state :runner utae 0)
+        (is (no-prompt? state :runner))))))
+
+(deftest trieste-model-bioroids-conspiracy-breaker-interactions
+  (do-game
+    (new-game {:corp {:hand [(qty "Trieste Model Bioroids" 3) "Eli 1.0" "Viktor 1.0" "Ichi 1.0"]
+                      :credits 50}
+               :runner {:discard ["Paperclip" "Black Orchestra" "MKUltra"] :credits 99}})
+    (core/gain state :corp :click 6)
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (play-from-hand state :corp "Trieste Model Bioroids" "Server 1")
+    (play-from-hand state :corp "Viktor 1.0" "New remote")
+    (play-from-hand state :corp "Trieste Model Bioroids" "Server 2")
+    (play-from-hand state :corp "Ichi 1.0" "New remote")
+    (play-from-hand state :corp "Trieste Model Bioroids" "Server 3")
+    (let [barrier (get-ice state :remote1 0)
+          code-gate (get-ice state :remote2 0)
+          sentry (get-ice state :remote3 0)]
+      (rez state :corp barrier)
+      (rez state :corp (get-content state :remote1 0))
+      (click-card state :corp (refresh barrier))
+      (rez state :corp code-gate)
+      (rez state :corp (get-content state :remote2 0))
+      (click-card state :corp (refresh code-gate))
+      (rez state :corp sentry)
+      (rez state :corp (get-content state :remote3 0))
+      (click-card state :corp (refresh sentry))
+      (take-credits state :corp)
+      ;; test paperclip
+      (run-on state :remote1)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (let [fracter (get-program state 0)]
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "spent no money not breaking with Paperclip"
+          (core/play-dynamic-ability state :runner
+                                     {:dynamic "auto-pump-and-break" :card (refresh fracter)})
+          (is (= 2 (count (remove :broken (:subroutines (refresh barrier))))) "No subs broken"))
+        (run-continue state)
+        (run-jack-out state))
+      ;; test blorch
+      (run-on state :remote2)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (let [decoder (get-program state 1)]
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "spent no money not breaking with Black Orchestra"
+          (core/play-dynamic-ability state :runner
+                                     {:dynamic "auto-pump-and-break" :card (refresh decoder)})
+          (is (= 2 (count (remove :broken (:subroutines (refresh code-gate))))) "No subs broken"))
+        (run-continue state)
+        (run-jack-out state))
+      ;; test mkultra
+      (run-on state :remote3)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (let [killer (get-program state 2)]
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "spent no money not breaking with MKUltra"
+          (core/play-dynamic-ability state :runner
+                                     {:dynamic "auto-pump-and-break" :card (refresh killer)})
+          (is (= 3 (count (remove :broken (:subroutines (refresh sentry))))) "No subs broken"))
+        (run-continue state)
+        (run-jack-out state)))))
+
+(deftest trieste-model-bioroids-quetzal-can-still-break
+  ;; Quetzal is not a card
+  (do-game
+    (new-game {:corp {:hand ["Trieste Model Bioroids" "Eli 1.0"] :credits 10}
+               :runner {:id "Quetzal: Free Spirit"}})
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (play-from-hand state :corp "Trieste Model Bioroids" "Server 1")
+    (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
+    (click-card state :corp "Eli 1.0")
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (run-continue state)
+    (let [q (get-in @state [:runner :identity])]
+      (card-ability state :runner q 0)
+      (click-prompt state :runner "End the run")
+      (is (= 1 (count (remove :broken (:subroutines (refresh (get-ice state :remote1 0))))))
+          "Quetzal breaks a subroutine, because she is not a card"))))
+
+(deftest trieste-model-bioroids-dj-fenris-can't-break
+  ;; DJ Fenris with quetzal abilities is still a card
+  (do-game
+    (new-game {:corp {:hand ["Trieste Model Bioroids" "Eli 1.0"] :credits 10}
+               :runner {:hand ["DJ Fenris"]}})
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (play-from-hand state :corp "Trieste Model Bioroids" "Server 1")
+    (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
+    (click-card state :corp "Eli 1.0")
+    (take-credits state :corp)
+    (play-from-hand state :runner "DJ Fenris")
+    (click-prompt state :runner "Quetzal: Free Spirit")
+    (run-on state :remote1)
+    (run-continue state)
+    (let [dj (get-resource state 0)
+          q (first (:hosted (refresh dj)))]
+      (card-ability state :runner q 0)
+      (is (no-prompt? state :runner) "No prompt because we can't break"))))
+
 (deftest turtlebacks
   ;; Turtlebacks - Gain 1 credit for every new server created
   (do-game
@@ -5246,6 +5483,20 @@
       (is (= 4 (:credit (get-corp))) "No credit gained for install into existing server")
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (is (= 5 (:credit (get-corp))) "Gained 1 credit for new server created"))))
+
+(deftest ubiquitous-vig
+  ;; Ubiquitous Vig
+  (do-game
+    (new-game {:corp {:hand ["Ubiquitous Vig"]}})
+    (play-from-hand state :corp "Ubiquitous Vig" "New remote")
+    (let [vig (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh vig)})
+      (core/advance state :corp {:card (refresh vig)})
+      (rez state :corp vig)
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (+ 2 credits) (:credit (get-corp))) "Should gain 2 credits at start of turn from Vig")))))
 
 (deftest urban-renewal
   ;; Urban renewal meat damage

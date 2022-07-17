@@ -837,6 +837,25 @@
       (run-jack-out state)
       (is (= 1 (count-tags state)) "Run unsuccessful; Runner kept 1 tag"))))
 
+(deftest bathynomus
+  ;; Crick - Strength boost when protecting Archives; installs a card from Archives
+  (do-game
+    (new-game {:corp {:hand [(qty "Bathynomus" 2)]}
+               :runner {:hand [(qty "Sure Gamble" 4)]}})
+    (play-from-hand state :corp "Bathynomus" "HQ")
+    (play-from-hand state :corp "Bathynomus" "Archives")
+    (take-credits state :corp)
+    (let [ba1 (get-ice state :hq 0)
+          ba2 (get-ice state :archives 0)]
+      (rez state :corp ba1)
+      (rez state :corp ba2)
+      (is (= 1 (get-strength (refresh ba1))) "Normal strength over HQ")
+      (is (= 4 (get-strength (refresh ba2))) "+3 strength over Archives")
+      (run-on state "Archives")
+      (run-continue state)
+      (card-subroutine state :corp ba2 0)
+      (is (= 3 (count (:discard (get-runner)))) "Runner suffered 2 net damage"))))
+
 (deftest blockchain-face-up-transactions
   ;; Face up transactions
   (do-game
@@ -1705,6 +1724,28 @@
         (is (= "Fairchild" (:title (get-ice state :hq 1)))
             "Fairchild is now installed in the outermost position protecting HQ")))))
 
+(deftest echo
+  (do-game
+    (new-game {:corp {:deck [(qty "Echo" 3)] :credits 15}})
+    (play-from-hand state :corp "Echo" "HQ")
+    (play-from-hand state :corp "Echo" "HQ")
+    (play-from-hand state :corp "Echo" "HQ")
+    (let [e1 (get-ice state :hq 0)
+          e2 (get-ice state :hq 1)
+          e3 (get-ice state :hq 2)]
+      (rez state :corp e1)
+      (is (= 1 (get-counters (refresh e1) :power)) "Placed 1 counter on rezzed Echo")
+      (is (= 0 (get-counters (refresh e2) :power)) "Placed 0 counter on unrezzed Echo")
+      (rez state :corp e2)
+      (is (= 2 (get-counters (refresh e1) :power)) "Placed 2 counters on rezzed Echo")
+      (is (= 1 (get-counters (refresh e2) :power)) "Placed 1 counter on rezzed Echo")
+      (is (= 0 (get-counters (refresh e3) :power)) "Placed 0 counter on unrezzed Echo")
+      (rez state :corp e3)
+      (is (= 3 (get-counters (refresh e1) :power)) "Placed 3 counters on rezzed Echo")
+      (is (= 2 (get-counters (refresh e2) :power)) "Placed 2 counter on rezzed Echo")
+      (is (= 1 (get-counters (refresh e3) :power)) "Placed 1 counter on unrezzed Echo")
+      (is (= 3 (count (:subroutines (refresh e1)))) "Should have 3 subroutine"))))
+
 (deftest endless-eula-runner-side-ability
   ;; Runner side ability
   (do-game
@@ -1800,6 +1841,49 @@
       (is (:run @state) "Run still ongoing")
       (card-subroutine state :corp envl 1)
       (is (not (:run @state)) "Run ended"))))
+
+(deftest envelopment
+  ;; Envelopment
+  (do-game
+   (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+   (play-from-hand state :corp "Envelopment" "HQ")
+   (let [env (get-ice state :hq 0)]
+     (letfn [(subs-test [env n]
+               ;; n power counters, n+1 subs, advance game state by a turn
+               (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
+               (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
+                   "one more sub than power counters")
+               (take-credits state :corp)
+               (take-credits state :runner))]
+       (rez state :corp env)
+       ;; starts with 4 counters
+       (subs-test env 4)
+       (subs-test env 3)
+       (subs-test env 2)
+       (subs-test env 1)
+       (subs-test env 0)
+       (take-credits state :corp)
+       (run-on state :hq)
+       (run-continue state)
+       (fire-subs state (refresh env))
+       (is (= 1 (count (:discard (get-corp)))) "Envelopment was trashed")))))
+
+(deftest envelopment-etr-does-not-trash
+  (do-game
+   (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+   (play-from-hand state :corp "Envelopment" "HQ")
+   (let [env (get-ice state :hq 0)
+         n 4]
+     (rez state :corp env)
+     (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
+     (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
+         "one more sub than power counters")
+     (take-credits state :corp)
+     (run-on state :hq)
+     (run-continue state)
+     (fire-subs state (refresh env)))
+   (is (empty? (:discard (get-corp))))
+   (is (not (:run @state)) "Run ended")))
 
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
@@ -3860,6 +3944,21 @@
       (run-jack-out state)
       (is (= 1 (count (:subroutines (refresh iw)))) "Ice Wall's subroutines reset after the run ends"))))
 
+(deftest maskirovka
+  (do-game
+   (new-game {:corp {:hand ["Maskirovka"]}})
+   (play-from-hand state :corp "Maskirovka" "HQ")
+   (take-credits state :corp)
+   (run-on state :hq)
+   (let [money (get-ice state :hq 0)]
+     (rez state :corp (refresh money))
+     (run-continue state)
+     (changes-val-macro
+      2 (:credit (get-corp))
+      "gained 2c from Maskirovka"
+      (fire-subs state (refresh money))
+      (is (not (:run @state)) "Run ended")))))
+
 (deftest masvingo
   ;; Masvingo
   (do-game
@@ -5716,6 +5815,30 @@
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
 
+(deftest stavka
+  (do-game
+   (new-game {:corp {:hand ["Stavka" "Prisec"] :credits 10}
+              :runner {:hand ["Rezeki" "Rezeki"]}})
+   (play-from-hand state :corp "Stavka" "HQ")
+   (play-from-hand state :corp "Prisec" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Rezeki")
+   (play-from-hand state :runner "Rezeki")
+   (run-on state :hq)
+   (let [sta (get-ice state :hq 0)]
+     (rez state :corp sta)
+     (changes-val-macro
+      5 (get-strength (refresh sta))
+      "Stavka gains 5str"
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Prisec"))
+     (run-continue state)
+     (fire-subs state (refresh sta))
+     (click-card state :corp (get-program state 0))
+     (click-card state :corp (get-program state 0)))
+   (is (= 2 (count (:discard (get-runner)))) "Both rezekis trashed")
+   (is (= 1 (count (:discard (get-corp)))) "Prisec trashed")))
+
 (deftest surveyor
   ;; Surveyor ice strength
   (do-game
@@ -6371,6 +6494,27 @@
       (advance state tyrant 2)
       (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
 
+(deftest vasilisa
+  ;; Vasilisa
+  (do-game
+    (new-game {:corp {:hand ["Vasilisa" "NGO Front"]}})
+    (play-from-hand state :corp "Vasilisa" "HQ")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [vas (get-ice state :hq 0)
+          ngo (get-content state :remote1 0)]
+      (rez state :corp vas)
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-corp))
+        "paid 1c to place a token on ngo front"
+        (click-prompt state :corp "Yes")
+        (click-card state :corp (refresh ngo))
+        (is (= 1 (get-counters (refresh ngo) :advancement)) "ngo has a counter"))
+      (card-subroutine state :corp (refresh vas) 0)
+      (is (= 1 (count-tags state)) "Runner took 1 tag"))))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
@@ -6388,6 +6532,26 @@
       (is (not (find-card "Ubax" (:discard (get-runner)))) "Ubax not trashed")
       (is (not (find-card "Caldera" (:discard (get-runner)))) "Caldera not trashed")
       (is (= 2 (count (:discard (get-runner)))) "2 cards trashed"))))
+
+(deftest wave
+  ;; Wave - on rez vs. server, search R&D for an ice. Gain 1c for each rezzed harmonic ice.
+  (do-game
+    (new-game {:corp {:hand ["Wave" "Wave"] :deck ["Ice Wall"] :credits 10}})
+    (play-from-hand state :corp "Wave" "HQ")
+    (play-from-hand state :corp "Wave" "R&D")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (rez state :corp (get-ice state :rd 0))
+    (is (no-prompt? state :corp) "No prompt to search from ice on another server")
+    (rez state :corp (get-ice state :hq 0))
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Ice Wall")
+    (is (find-card "Ice Wall" (:hand (get-corp))))
+    (run-continue state)
+    (changes-val-macro
+      2 (:credit (get-corp))
+      "gained 2c from wave"
+      (card-subroutine state :corp (get-ice state :hq 0) 0))))
 
 (deftest wendigo
   ;; Morph ice gain and lose subtypes from normal advancements and placed advancements

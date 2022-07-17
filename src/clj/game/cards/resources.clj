@@ -243,6 +243,16 @@
                                (do (flip-faceup state side target)
                                    (effect-completed state side eid))))}]})
 
+(defcard "Avgustina Ivanovskaya"
+  {:events [{:event :runner-install
+             :req (req (and (virus-program? (:card context))
+                            (first-event? state side :runner-install #(virus-program? (:card (first %))))))
+             :async true
+             :effect (effect
+                       (continue-ability
+                         (sabotage-ability 1)
+                         card nil))}]})
+
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))

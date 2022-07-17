@@ -994,6 +994,15 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
+(deftest chastushka
+  ;; Chastushka - run hq, replace breach with sabotage 4
+  (do-game
+    (new-game {:runner {:deck ["Chastushka"]}
+               :corp {:hand [(qty "Hedge Fund" 5)] :deck [(qty "Hedge Fund" 2)]}})
+    (take-credits state :corp)
+    (play-run-event state "Chastushka" :hq)
+    (is (last-log-contains? state "uses Chastushka to sabotage 4") "Sabotage happened")))
+
 (deftest code-siphon
   ;; Code Siphon
   (do-game
@@ -5368,6 +5377,32 @@
       (play-from-hand state :runner "Rigged Results")
       (is (= ["0" "1"] (prompt-buttons :runner)) "Runner can't choose 2 because of Government Investigations")))
 
+(deftest rigging-up
+  ;; Rigging Up - Modded, but you may charge
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "D4v1d"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigging Up")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "Yes")
+    (is (= 4 (get-counters (get-program state 0) :power)) "Rigging up gave +1 counter"))
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "D4v1d"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigging Up")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "No")
+    (is (= 3 (get-counters (get-program state 0) :power)) "Rigging up gave no extra counters"))
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "Maw"]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "saved 3 credits with Rigging up"
+      (play-from-hand state :runner "Rigging Up")
+      (click-card state :runner "Maw")
+      (is (no-prompt? state :runner) "No prompt because maw cannot be charged"))))
+
 (deftest rip-deal
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval
   (do-game
@@ -5557,6 +5592,22 @@
     (click-card state :runner "Enigma")
     (is (no-prompt? state :runner) "Enigma should be trashed")
     (is (= "Enigma" (-> (get-corp) :discard first :title)) "Enigma should be trashed")))
+
+(deftest running-hot
+  ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
+  (do-game
+    (new-game {:runner {:deck ["Running Hot"
+                               "Feedback Filter"
+                               (qty "Sure Gamble" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (play-from-hand state :runner "Running Hot")
+    (is (no-prompt? state :runner)
+        "Feedback Filter brain damage prevention opportunity not given")
+    (is (= 5 (:click (get-runner))) "Runner gained 2 clicks from Running Hot")
+    (is (= 2 (count (:discard (get-runner)))) "Runner discarded 1 card from damage")
+    (is (= 4 (hand-size :runner)) "Runner handsize decreased by 1")
+    (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
 (deftest running-interference
   ;; Running Interference
@@ -5802,6 +5853,29 @@
     (is (last-log-contains? state "Runner exposes Hostile Takeover"))
     (click-prompt state :runner "HQ")
     (is (:run @state) "Run should be initiated")))
+
+(deftest steelskin-scarring
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
+    (damage state :corp :net 1)
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards from steelskin"))
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}
+               :corp {:hand ["Kala Ghoda Real TV"]}})
+    (core/move state :runner (find-card "Steelskin Scarring" (:hand (get-runner))) :deck {:front true})
+    (core/fake-checkpoint state)
+    (is (= "Steelskin Scarring" (:title (first (:deck (get-runner))))) "Steelskin is ontop of the stack")
+    (play-from-hand state :corp "Kala Ghoda Real TV" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (card-ability state :corp (get-content state :remote1 0) 1)
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards when steelskin gets trashed from stack"))
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      2 (count (:hand (get-runner)))
+      "Drew 3 (+2 net cards) with steelskin"
+      (play-from-hand state :runner "Steelskin Scarring"))))
 
 (deftest stimhack
   ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run

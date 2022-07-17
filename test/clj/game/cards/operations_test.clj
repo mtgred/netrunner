@@ -1410,6 +1410,36 @@
       (is (= 3 (:click (get-corp))))
       (is (= 3 (:click-per-turn (get-corp))))))
 
+(deftest extract-full-test
+  ;; trash a card to gain 9
+  (do-game
+   (new-game {:corp {:hand ["Extract" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (changes-val-macro
+    +6 (:credit (get-corp))
+    "Gains net 6 credits from Extract"
+    (play-from-hand state :corp "Extract")
+    (click-card state :corp "PAD Campaign"))
+   (is (= 2 (count (:discard (get-corp)))) "PAD and Extract trashed"))
+  ;; skip trash to gain 6
+  (do-game
+   (new-game {:corp {:hand ["Extract" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (changes-val-macro
+    +3 (:credit (get-corp))
+    "Gains net 6 credits from Extract"
+    (play-from-hand state :corp "Extract")
+    (click-prompt state :corp "Done"))
+   (is (= 1 (count (:discard (get-corp)))) "Extract trashed, but not PAD"))
+  ;; nothing to trash, gain 6
+  (do-game
+   (new-game {:corp {:hand ["Extract"]}})
+   (changes-val-macro
+    +3 (:credit (get-corp))
+    "Gained net 3c from Extract"
+    (play-from-hand state :corp "Extract"))
+   (is (no-prompt? state :corp) "No prompt because there are no cards to trash!")))
+
 (deftest fast-break
   ;; Fast Break
   (do-game
@@ -2491,6 +2521,30 @@
       (is (rezzed? (get-ice state :remote1 0)) "Enigma is rezzed")
       (is (second-last-log-contains? state "Hedge Fund") "Skipped card name was logged")
       (is (second-last-log-contains? state "Enigma") "Installed card name was logged")))
+
+(deftest mutually-assured-destruction-test
+  ;;"Mutually Assured Destruction"
+  ;; trash x installed rezzed cards to give the runner x tags
+  ;; triple
+  (do-game
+   (new-game {:corp {:hand [(qty "PAD Campaign" 3) "Mutually Assured Destruction"]
+                     :credits 15}})
+   (core/gain state :corp :click 5)
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (rez state :corp (get-content state :remote2 0))
+   (rez state :corp (get-content state :remote3 0))
+   (changes-val-macro
+    -3 (:click (get-corp))
+    "Spent 3 clicks to go MAD"
+    (play-from-hand state :corp "Mutually Assured Destruction")
+    (click-card state :corp (get-content state :remote1 0))
+    (click-card state :corp (get-content state :remote2 0))
+    (click-prompt state :corp "Done"))
+   (is (= 2 (count-tags state)) "Runner should have two tags from MAD")
+   (is (= 3 (count (:discard (get-corp)))) "MAD + 2 cards in discard")))
 
 (deftest napd-cordon
   ;; NAPD Cordon
@@ -4500,6 +4554,56 @@
     (click-prompt state :runner "0")
     (click-card state :corp (get-program state 0))
     (is (= 1 (-> (get-runner) :discard count)) "Wyrm should be in heap after Runner loses Trojan Horse trace")))
+
+(deftest trust-operation-happy
+  (do-game
+   (new-game {:corp {:hand ["Trust Operation"]
+                     :discard ["Archer"]}
+              :runner {:hand ["Daily Casts"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Daily Casts")
+   (take-credits state :runner)
+   ;;can't play unless runner is tagged
+   (play-from-hand state :corp "Trust Operation")
+   (is (and (no-prompt? state :corp)
+            (= 1 (count (:hand (get-corp))))) "Trust Operation not played")
+   (gain-tags state :runner 1)
+   (play-from-hand state :corp "Trust Operation")
+   (click-card state :corp "Daily Casts")
+   (is (= 1 (count (:discard (get-runner)))) "Daily casts was trashed")
+   (click-card state :corp "Archer")
+   (click-prompt state :corp "HQ")
+   (let [archer (get-ice state :hq 0)]
+     (is (rezzed? (refresh archer)) "Archer is rezzed"))))
+
+(deftest trust-operation-no-trash
+  ;; decline to trash a card
+  (do-game
+   (new-game {:corp {:hand ["Trust Operation"]
+                     :discard ["Archer"]}
+              :runner {:hand ["Daily Casts"]}})
+   (take-credits state :corp)
+   (play-from-hand state :runner "Daily Casts")
+   (take-credits state :runner)
+   (gain-tags state :runner 1)
+   (play-from-hand state :corp "Trust Operation")
+   (click-prompt state :corp "Done")
+   (is (= 0 (count (:discard (get-runner)))) "Daily casts was not trashed")
+   (click-card state :corp "Archer")
+   (click-prompt state :corp "HQ")
+   (let [archer (get-ice state :hq 0)]
+     (is (rezzed? (refresh archer)) "Archer is rezzed")))
+  ;; no card to trash
+  (do-game
+   (new-game {:corp {:hand ["Trust Operation"]
+                     :discard ["Archer"]}})
+   (gain-tags state :runner 1)
+   (play-from-hand state :corp "Trust Operation")
+   (click-prompt state :corp "Done")
+   (click-card state :corp "Archer")
+   (click-prompt state :corp "HQ")
+   (let [archer (get-ice state :hq 0)]
+     (is (rezzed? (refresh archer)) "Archer is rezzed"))))
 
 (deftest ultraviolet-clearance
   ;; Ultraviolet Clearance - Only allow agenda to be installed in remote servers
