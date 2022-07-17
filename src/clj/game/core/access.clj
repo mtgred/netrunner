@@ -482,7 +482,6 @@
   (let [current-available (set (map :cid (root-content state (first server))))
         already-accessed (clj-set/intersection already-accessed current-available)
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
-
         available (root-content state (first server) already-accessed-fn)]
     (when (and (seq available) (must-continue? state already-accessed-fn access-amount args))
       (if (= 1 (count available))

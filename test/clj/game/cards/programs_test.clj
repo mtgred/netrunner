@@ -1837,18 +1837,12 @@
     (core/move state :runner (find-card "Cleaver" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Deuces Wild" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Encore" (:deck (get-runner))) :deck)
-    (is (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam"))
-    (is (= (:title (nth (-> @state :runner :deck) 1)) "Bravado"))
-    (is (= (:title (nth (-> @state :runner :deck) 2)) "Cleaver"))
-    (is (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild"))
-    (is (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))
-    ;; Stack is now from top to bottom: A B C D E
-    (play-from-hand state :runner "Customized Secretary")
-    (click-prompt state :runner "Cleaver")
-    (is (not (and (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam")
-              (= (:title (nth (-> @state :runner :deck) 1)) "Bravado")
-              (= (:title (nth (-> @state :runner :deck) 2)) "Deuces Wild")
-              (= (:title (nth (-> @state :runner :deck) 3)) "Encore"))))))
+    (changes-val-macro
+      1
+      (count (core/turn-events state :corp :runner-shuffle-deck))
+      "Runner stack is not shufled"
+      (play-from-hand state :runner "Customized Secretary")
+      (click-prompt state :runner "Cleaver"))))
 
 (deftest customized-secretary-shuffles-stack-when-no-program-is-hosted
   ;; Customized Secretary - shuffles the stack when no program is hosted
@@ -5330,7 +5324,7 @@
      (run-on state "HQ")
      (rez state :corp anansi)
      (run-continue state)
-     ;; boost/break     
+     ;; boost/break
      (changes-val-macro
        -4 (:credit (get-runner))
        "Spent 4 credits matching Anansi strength"
@@ -5368,7 +5362,7 @@
        (click-prompt state :runner "Do 1 net damage")
        (click-prompt state :runner "Rearrange the top 5 cards of R&D")
        (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
-     (run-continue state :movement)     
+     (run-continue state :movement)
      (run-jack-out state)
      (is (= 0 (count (:discard (get-runner)))) "0 cards in discard"))))
 
@@ -5404,7 +5398,7 @@
        "One card added to discard"
        (card-ability state :runner revolver 1)
        (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
-     (run-continue state :movement)     
+     (run-continue state :movement)
      (run-jack-out state)
      (is (= 1 (count (:discard (get-runner)))) "1 cards (revolver) in discard"))))
 

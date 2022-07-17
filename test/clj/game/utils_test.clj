@@ -1,6 +1,7 @@
 (ns game.utils-test
   (:require
     [clojure.test :refer :all]
+    [clojure.string :as str]
     [game.core :as core]
     [game.utils :as utils :refer [same-card? side-str]]))
 
@@ -161,20 +162,27 @@
   [state side choice & args]
   `(error-wrapper (click-prompt-impl ~state ~side ~choice ~@args)))
 
+(defn escape-log-string [s]
+  ; (str/escape s {\[ "\\[" \] "\\]"})
+  s)
+
 (defn last-log-contains?
   [state content]
-  (some? (re-find (re-pattern content)
-                  (-> @state :log last :text))))
+  (->> (-> @state :log last :text)
+       (re-find (re-pattern (escape-log-string content)))
+       some?))
 
 (defn second-last-log-contains?
   [state content]
-  (some? (re-find (re-pattern content)
-                  (-> @state :log butlast last :text))))
+  (->> (-> @state :log butlast last :text)
+       (re-find (re-pattern (escape-log-string content)))
+       some?))
 
 (defn last-n-log-contains?
   [state n content]
-  (some? (re-find (re-pattern content)
-                  (:text (nth (-> @state :log reverse) n)))))
+  (->> (-> @state :log reverse (nth n) :text)
+       (re-find (re-pattern (escape-log-string content)))
+       some?))
 
 (defmethod assert-expr 'last-log-contains?
   [msg form]

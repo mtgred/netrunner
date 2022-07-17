@@ -295,7 +295,7 @@
     (do-ability state side ability card targets)
     (effect-completed state side eid)))
 
-(defn- print-msg
+(defn print-msg
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
