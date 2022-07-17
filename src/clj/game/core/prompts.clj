@@ -5,6 +5,7 @@
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [when-let*]]
+    [game.utils :refer [pluralize]]
     [medley.core :refer [find-first]]))
 
 (defn choice-parser
@@ -114,14 +115,17 @@
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
   As with prompt!, the preferred method for showing a select prompt is through resolve-ability."
   ([state side card ability update! resolve-ability args]
-   ;; if :max is a function, call it and assoc its return value as the new :max number of cards
+   ;; if :max or :min are a function, call them and assoc its return value as the new :max / :min number of cards
    ;; that can be selected.
    (letfn [(wrap-function [args kw]
              (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
      (let [targets (:targets args)
            ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card targets) %))
+           ability (update-in ability [:choices :min] #(if (fn? %) (% state side (make-eid state) card targets) %))
            all (get-in ability [:choices :all])
-           m (get-in ability [:choices :max])]
+           ability (if all (update-in ability [:choices] dissoc :min) ability) ; ignore :min if :all is set
+           min-choices (get-in ability [:choices :min])
+           max-choices (get-in ability [:choices :max])]
        (swap! state update-in [side :selected]
               #(conj (vec %) {:ability (-> ability
                                            (dissoc :choices :waiting-prompt)
@@ -130,24 +134,45 @@
                               :card (get-in ability [:choices :card])
                               :req (get-in ability [:choices :req])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
-                              :max m
+                              :max max-choices
                               :all all}))
        (show-prompt state side (:eid ability)
                     card
                     (if-let [message (:prompt ability)]
                       message
-                      (if m
-                        (str "Choose " (if all "" "up to ") m " targets for " (:title card))
-                        (str "Choose a target for " (:title card))))
+                      (str
+                        "Choose"
+                        (when min-choices
+                          (str " at least " min-choices))
+                        (when (and min-choices max-choices)
+                          " and")
+                        (when max-choices
+                          (str (if all "" " up to")
+                               " " max-choices))
+                        (if max-choices
+                          (str " " (pluralize "target" max-choices))
+                          (if min-choices
+                            (str " " (pluralize "target" min-choices))
+                            " a target"))
+                        " for " (:title card)))
                     (if all ["Hide"] ["Done"])
                     (if all
                       (fn [_]
-                        (toast state side (str "You must choose " m))
+                        ; "Hide" was selected. Show toast and reapply select prompt. This allows players to access
+                        ; prompts that lie "beneath" the current select prompt.
+                        (toast state side (str "You must choose " max-choices " " (pluralize "card" max-choices)))
                         (show-select state side card ability update! resolve-ability args))
                       (fn [_]
-                        (resolve-select state side card
-                                        (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
-                                        update! resolve-ability)))
+                        (let [selected (get-in @state [side :selected 0] [])
+                              cards (map #(dissoc % :selected) (:cards selected))]
+                          ; check for :min. If not enough cards are selected, show toast and stay in select prompt
+                          (if (and min-choices (< (count cards) min-choices))
+                            (do
+                              (toast state side (str "You must choose at least " min-choices " " (pluralize "card" min-choices)))
+                              (show-select state side card ability update! resolve-ability args))
+                            (resolve-select state side card
+                                            (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
+                                            update! resolve-ability)))))
                     (-> args
                         (assoc :prompt-type :select
                                :show-discard (:show-discard ability))

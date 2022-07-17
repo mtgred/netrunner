@@ -104,7 +104,10 @@
 ;       :all -- boolean
 ;         Optional. Changes the select prompt from optional (can click "Done" to not select anything) to
 ;         mandatory. When :max is also set to true, enforces selecting the specified number of cards.
-;       :max -- integer
+;       :min -- integer or 5-fn
+;         Optional. Changes the select to only show "Done" button after this number of cards have been
+;         selected. Only used if :all is not set.
+;       :max -- integer or 5-fn
 ;         Optional. Changes the select from to resolving after selecting a single card to
 ;         resolving when either a number of cards (as set by :max) have been selected or a number
 ;         of cards less than that set by :max are selected and the "Done" button has been clicked.

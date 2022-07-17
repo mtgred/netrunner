@@ -22,6 +22,7 @@
    loser
    losing-deck-id
    losing-user
+   mark
    options
    per-run
    per-turn
@@ -64,6 +65,7 @@
      :end-turn true
      :format (keyword fmt)
      :history []
+     :mark nil
      :room room
      :rid 1 :turn 0 :eid 0
      :sfx [] :sfx-current-id 0

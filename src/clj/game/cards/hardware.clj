@@ -605,6 +605,17 @@
                                                      (toast state :corp "Cannot rez ice the rest of this run due to EMP Device"))
                                                     true))))}]))}]})
 
+(defcard "Endurance"
+  {:data {:counter {:power 3}}
+   :constant-effects [(mu+ 2)]
+   :events [{:event :successful-run
+             :req (req (first-event? state :runner :successful-run))
+             :silent (req true)
+             :msg "place 1 power counter on itself"
+             :async true
+             :effect (effect (add-counter eid card :power 1 nil))}]
+   :abilities [(break-sub [:power 2] 2 "All")]})
+
 (defcard "Feedback Filter"
   {:interactions {:prevent [{:type #{:net :brain}
                              :req (req true)}]}
@@ -1055,6 +1066,16 @@
                                 (system-msg state side (str "places " cost
                                                             " power counters on Mâché"))
                                 (add-counter state side card :power cost))))}]}))
+
+(defcard "Marrow"
+  {:constant-effects [(mu+ 1)
+                      (runner-hand-size+ 3)]
+   :on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}
+   :events [{:event :agenda-scored
+             :async true
+             :interactive (req true)
+             :effect (effect (continue-ability (sabotage-ability 1) card nil))}]})
 
 (defcard "Masterwork (v37)"
   {:constant-effects [(mu+ 1)]
@@ -2047,6 +2068,32 @@
     {:constant-effects [(mu+ 1)]
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
+
+(defcard "Virtuoso"
+  {:constant-effects [(mu+ 1)]
+   :events [(assoc identify-mark-ability :event :runner-turn-begins)
+            {:event :successful-run
+             :req (req (and (:marked-server target)
+                            (first-event? state side :successful-run #(:marked-server (first %)))))
+             :async true
+             :effect (req (if (= :hq (first (:server target)))
+                            (do
+                              (system-msg state side (str "uses " (:title card) " to access 1 additional card from HQ this run"))
+                              (register-events
+                                  state side
+                                  card [(breach-access-bonus :hq 1 {:duration :end-of-run})])
+                                (effect-completed state side eid))
+                            (do (system-msg state side (str "will use " (:title card) " to breach HQ when this run ends"))
+                                (register-events
+                                  state side
+                                  card
+                                  [{:event :run-ends
+                                    :duration :end-of-run
+                                    :async true
+                                    :interactive (req true)
+                                    :msg (msg "breach HQ")
+                                    :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}])
+                                (effect-completed state side eid))))}]})
 
 (defcard "Window"
   {:abilities [{:cost [:click 1]

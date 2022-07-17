@@ -311,6 +311,14 @@
              :async true
              :effect (effect (lose-tags eid 1))}]})
 
+(defcard "Captain Padma Isbister: Intrepid Explorer"
+  {:events [{:event :run
+             :once :per-turn
+             :async true
+             :req (req (and (= (:server target) [:rd])
+                            (first-event? state side :run #(= [:rd] (:server (first %))))))
+             :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+
 (defcard "Cerebral Imaging: Infinite Frontiers"
   {:constant-effects [(corp-hand-size+ (req (:credit corp)))]
    :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
@@ -428,6 +436,30 @@
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
+
+(defcard "Esâ Afontov: Eco-Insurrectionist"
+  (letfn
+    [(check-brain [targets]
+       (let [context (first targets)]
+         (and (pos? (:amount context))
+              (= :brain (:damage-type context)))))]
+    {:events [{:event :damage
+               :req (req (and (check-brain targets)
+                              (first-event? state :runner :damage check-brain)))
+               :async true
+               :effect (req
+                         (wait-for (resolve-ability
+                                     state side
+                                     {:optional
+                                      {:prompt "Draw 1 card?"
+                                       :yes-ability {:async true
+                                                     :msg "draw 1 card"
+                                                     :effect (effect (draw eid 1))}}}
+                                     card nil)
+                                   (continue-ability
+                                     state side
+                                     (sabotage-ability 2)
+                                     card nil)))}]}))
 
 (defcard "Exile: Streethawk"
   {:flags {:runner-install-draw true}
@@ -1297,6 +1329,111 @@
                                (update-all-ice)
                                (trash eid target {:unpreventable true}))}}}]})
 
+(defcard "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
+  {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+            {:event :successful-run
+             :interactive (req true)
+             :req (req (and (:marked-server target)
+                            (first-event? state side :successful-run #(:marked-server (first %)))))
+             :msg "gain [Click]"
+             :effect (effect (gain-clicks 1))}]})
+
+(defcard "Ob Superheavy Logistics: Extract. Export. Excel."
+  ;; note - we ensure the card can be installed (asset/upgrade/ice) - condition counters (like patch)
+  ;;   are very questionable, and somebody on rules would need to say something to convince me they
+  ;;   would be valid targets --nbkelly
+  ;; If you install a card with an additional cost, you can (or should be able to) refuse to pay it
+  ;;  and have the card not be rezzed (additionally, you wouldn't need to reveal it)
+  ;; A lot of abilities/cards will need to be adjusted (most of them don't have a cause when they
+  ;;  call the (trash-cards) function - this makes it tough to tell who/what trashed the cards.)
+  ;;  to update these cards, just add {:cause card} into the keys pass with (trash-card)
+  ;;  At the moment, the source (or cause) of the trash must be a corp-card, a subroutine,
+  ;;  or it must be an ability cost.
+  (letfn [(resolve-install [target]
+            (req ;; if it has an additional cost, the rez needs to be optional
+              (shuffle! state side :deck)
+              (system-msg state side (str "shuffles R&D"))
+              (let [add-costs (rez-additional-cost-bonus state side target)
+                    inst-target target]
+                (if (pos? (count add-costs))
+                  (if (can-pay? state side (:title inst-target) add-costs)
+                    (continue-ability
+                      state side
+                      {:optional
+                       {:prompt (str "Rez " (:title inst-target) ", paying additional costs?")
+                        :yes-ability {:msg (msg "to rez "(:title inst-target)
+                                                ", paying additional costs")
+                                      :async true
+                                      :effect (req (corp-install state side eid inst-target nil
+                                                                 {:ignore-all-cost true
+                                                                  :install-state :rezzed-no-rez-cost}))}
+                        :no-ability {:msg "install a card ignoring all credit costs"
+                                     :effect (req (corp-install state side eid inst-target nil
+                                                                {:ignore-all-cost true}))}}}
+                      card nil)
+                    ;; It might be worth having a fake prompt here - at the very least, this prevents
+                    ;; the corp from accidentally revealing the card they select
+                    (continue-ability
+                      state side
+                      {:msg (msg "install a card without paying additional costs to rez")
+                       :async true
+                       :effect (req (corp-install state side eid inst-target nil
+                                                  {:ignore-all-cost true}))}
+                      card nil))
+                  (wait-for (reveal state side inst-target)
+                            (corp-install state side eid (get-card state inst-target) nil
+                                          {:ignore-all-cost true
+                                           :install-state :rezzed-no-rez-cost}))))))
+          ;; Identify that the card wasn't just dragged to the discard, and that it was trashed
+          ;; by the corporation.
+          ;; This requires that any (trash-cards ..) or (trash ..) fns use {:source card}
+          ;; to be compatable. Updating those functions is quite quick, just make sure it actually
+          ;; is the corporation doing it.
+          (trash-cause [eid target context]
+            (let [cause (:cause target)
+                  cause-card (:cause-card target)]
+              (cond
+                (corp? (:source eid))   (str "trashed by " (:title (:source eid)))
+                (= :ability-cost cause) "trashed as an ability-cost"
+                (= :subroutine cause)   "trashed by an ice subroutine"
+                (and (corp? cause-card) (not= cause :opponent-trashes)) "trashed by a corp card"
+                (and (runner? cause-card) (= cause :forced-to-trash)) "forced to trash by runner"
+                :else nil)))
+          ;; prompts to install an x-cost card (handles validation)
+          (ob-ability [target-cost]
+            {:optional
+             {:prompt (str "Install a " target-cost "-cost card from your deck?")
+              :once :per-turn
+              :req (req (>= target-cost 0))
+              :yes-ability
+              {:msg (msg "to search R&D for a " (str target-cost) "-cost card")
+               :async true
+               :effect (effect (continue-ability
+                                 {:prompt "Choose a card to install and rez"
+                                  :choices (req (conj (filter #(and (= target-cost (:cost %))
+                                                                    (or (asset? %)
+                                                                        (upgrade? %)
+                                                                        (ice? %)))
+                                                              (vec (sort-by :title (:deck corp))))
+                                                      "No install"))
+                                  :async true
+                                  :effect (resolve-install target)}
+                                 card nil))}}})]
+    {:events [{:event :corp-trash
+               :req (req (and
+                           (installed? (:card context))
+                           (rezzed? (:card context))
+                           (some? (trash-cause eid target context))
+                           (not (used-this-turn? (:cid card) state))))
+               :async true
+               :interactive (req true)
+               :waiting "Corp to make a decision"
+               :effect (req (let [target-cost (dec (:cost (:card target)))]
+                              (continue-ability
+                                state side
+                                (ob-ability target-cost)
+                                card nil)))}]}))
+
 (defcard "Omar Keung: Conspiracy Theorist"
   {:abilities [{:cost [:click 1]
                 :msg "make a run on Archives"
@@ -1325,6 +1462,16 @@
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
+
+(defcard "Pravdivost Consulting: Political Solutions"
+  {:events [{:event :successful-run
+             :req (req (first-event? state side :successful-run))
+             :interactive (req true)
+             :waiting-prompt "Corp to make a decision"
+             :prompt "Choose a card to place 1 advancement token on"
+             :choices {:card can-be-advanced?}
+             :msg (msg "place 1 advancement token on " (card-str state target))
+             :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Quetzal: Free Spirit"
   {:abilities [(assoc (break-sub nil 1 "Barrier" {:repeatable false}) :once :per-turn)]})
