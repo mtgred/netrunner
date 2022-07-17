@@ -1603,12 +1603,12 @@
           (enable-server [state side server]
             (doseq [c (select-targets state server)]
               (enable-card state :corp c)))]
-    (let [breach-ability (successful-run-replace-breach
-                          {:mandatory true
-                           :duration :end-of-run
-                           :ability {:async true
-                                     :msg "trash all cards in the server at no cost"
-                                     :effect (effect (trash-cards eid (:content run-server) {:cause-card card}))}})
+    (let [successful-run-trigger {:event :successful-run
+                                  :duration :end-of-run
+                                  :async true
+                                  :req (req (is-remote? (:server run)))
+                                  :effect (effect (trash-cards eid (:content run-server)))
+                                  :msg "trash all cards in the server for no cost"}
           pre-redirect-trigger {:event :pre-redirect-server
                                 :duration :end-of-run
                                 :effect (effect (enable-server (first target))
@@ -1652,7 +1652,7 @@
                     :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
                     :makes-run true
                     :async true
-                    :effect (effect (register-events card [breach-ability
+                    :effect (effect (register-events card [successful-run-trigger
                                                            run-end-trigger
                                                            pre-redirect-trigger
                                                            ;post-redirect-trigger
