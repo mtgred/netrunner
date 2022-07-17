@@ -1610,7 +1610,7 @@
 (defcard "Hákarl 1.0"
   {:runner-abilities [(bioroid-break 1 1)]
    :subroutines [(do-brain-damage 1)
-                 end-the-run]   
+                 end-the-run]
    :on-rez {:req (req (and run this-server
                            (->> (get-all-installed state) (remove #(same-card? card %)) (filter rezzed?) (count) (pos?))))
             :prompt "Derez another card to prevent the runner from using printed abilities on bioroid ice this turn?"
