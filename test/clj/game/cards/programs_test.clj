@@ -1837,18 +1837,12 @@
     (core/move state :runner (find-card "Cleaver" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Deuces Wild" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Encore" (:deck (get-runner))) :deck)
-    (is (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam"))
-    (is (= (:title (nth (-> @state :runner :deck) 1)) "Bravado"))
-    (is (= (:title (nth (-> @state :runner :deck) 2)) "Cleaver"))
-    (is (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild"))
-    (is (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))
-    ;; Stack is now from top to bottom: A B C D E
-    (play-from-hand state :runner "Customized Secretary")
-    (click-prompt state :runner "Cleaver")
-    (is (not (and (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam")
-              (= (:title (nth (-> @state :runner :deck) 1)) "Bravado")
-              (= (:title (nth (-> @state :runner :deck) 2)) "Deuces Wild")
-              (= (:title (nth (-> @state :runner :deck) 3)) "Encore"))))))
+    (changes-val-macro
+      1
+      (count (core/turn-events state :corp :runner-shuffle-deck))
+      "Runner stack is not shufled"
+      (play-from-hand state :runner "Customized Secretary")
+      (click-prompt state :runner "Cleaver"))))
 
 (deftest customized-secretary-shuffles-stack-when-no-program-is-hosted
   ;; Customized Secretary - shuffles the stack when no program is hosted
