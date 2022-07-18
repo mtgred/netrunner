@@ -2092,7 +2092,7 @@
                                     :async true
                                     :interactive (req true)
                                     :msg (msg "breach HQ")
-                                    :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}])
+                                    :effect (req (breach-server state :runner eid [:hq] nil))}])
                                 (effect-completed state side eid))))}]})
 
 (defcard "Window"
