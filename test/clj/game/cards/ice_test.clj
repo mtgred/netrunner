@@ -6857,6 +6857,23 @@
       (run-continue state)
       (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ"))))
 
+(deftest winchester-2-subs-when-moved-with-tao
+  ;; 2 subs when moved with Thimblerig
+  (do-game
+    (new-game {:corp {:deck ["Winchester" "Thimblerig" "Merger"]}
+               :runner {:id "Tāo Salonga: Telepresence Magician"}})
+    (play-from-hand state :corp "Winchester" "HQ")
+    (play-from-hand state :corp "Thimblerig" "R&D")
+    (let [thim (get-ice state :rd 0)
+          win (get-ice state :hq 0)]
+      (rez state :corp thim)
+      (rez state :corp win)
+      (play-and-score state "Merger")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Winchester")
+      (click-card state :runner "Thimblerig")
+      (is (= 2 (count (:subroutines (get-ice state :rd 0))))))))
+
 (deftest woodcutter
   ;; Woodcutter
   (do-game
