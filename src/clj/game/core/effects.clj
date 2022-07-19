@@ -84,8 +84,7 @@
   ([state side eid effect-type targets]
    (->> (gather-effects state side effect-type)
         (map #(update-effect-card state %))
-        (filter (effect-pred state side eid targets))
-        (into []))))
+        (filterv (effect-pred state side eid targets)))))
 
 (defn get-effect-value
   "Returns a function that returns the value of a given effect. If the :value is an fn,
@@ -106,8 +105,7 @@
    (let [eid (make-eid state)
          targets (cons card targets)]
      (->> (get-effect-maps state side eid effect-type targets)
-          (map (get-effect-value state side eid targets))
-          (into [])))))
+          (mapv (get-effect-value state side eid targets))))))
 
 (defn sum-effects
   "Sums the results from get-effects."

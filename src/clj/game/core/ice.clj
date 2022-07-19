@@ -239,7 +239,8 @@
 (defn breakable-subroutines-choice
   "Takes an ice, returns the breakable subroutines for a choices prompt"
   [state side eid card ice]
-  (when-not (any-effects state side :cannot-break-subs-on-ice true? ice)
+  (when-not (any-effects state side :cannot-break-subs-on-ice true? {:ice ice
+                                                                     :icebreaker card})
     (for [sub (remove #(or (:broken %)
                            (not (if (fn? (:breakable %))
                                   ((:breakable %) state side eid ice [card])

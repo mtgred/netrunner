@@ -1978,7 +1978,7 @@
                                  (let [encountered-ice (:ice context)]
                                    {:type :cannot-break-subs-on-ice
                                     :duration :end-of-encounter
-                                    :req (req (same-card? encountered-ice target))
+                                    :req (req (same-card? encountered-ice (:ice context)))
                                     :value true})))}]))}
     {:msg "prevent the Runner from jacking out until after the next piece of ice"
      :effect
@@ -3338,17 +3338,19 @@
                :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]}))
 
 (defcard "Swordsman"
-  (let [breakable-fn (req (when-not (has-subtype? target "AI") :unrestricted))]
-    {:subroutines [{:async true
-                    :breakable breakable-fn
-                    :prompt "Choose an AI program to trash"
-                    :msg (msg "trash " (:title target))
-                    :label "Trash an AI program"
-                    :choices {:card #(and (installed? %)
-                                          (program? %)
-                                          (has-subtype? % "AI"))}
-                    :effect (effect (trash eid target {:cause :subroutine}))}
-                   (assoc (do-net-damage 1) :breakable breakable-fn)]}))
+  {:constant-effects [{:type :cannot-break-subs-on-ice
+                       :req (req (and (same-card? card (:ice context))
+                                      (has-subtype? (:icebreaker context) "AI")))
+                       :value true}]
+   :subroutines [{:async true
+                  :prompt "Choose an AI program to trash"
+                  :msg (msg "trash " (:title target))
+                  :label "Trash an AI program"
+                  :choices {:card #(and (installed? %)
+                                        (program? %)
+                                        (has-subtype? % "AI"))}
+                  :effect (effect (trash eid target {:cause :subroutine}))}
+                 (do-net-damage 1)]})
 
 (defcard "SYNC BRE"
   {:subroutines [(tag-trace 4)
