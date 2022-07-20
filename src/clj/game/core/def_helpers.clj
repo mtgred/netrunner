@@ -2,7 +2,6 @@
   (:require
     [game.core.access :refer [access-bonus]]
     [game.core.card :refer [corp? get-card get-counters has-subtype? in-discard? faceup?]]
-    [game.core.card-defs :refer [defcard-impl]]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
@@ -230,7 +229,7 @@
 
 (defmacro defcard
   [title ability]
-  `(defmethod ~'defcard-impl ~title [~'_]
+  `(defmethod game.core.card-defs/defcard-impl ~title [~'_]
      (if-let [cached-ability# (get card-defs-cache ~title)]
        cached-ability#
        (let [ability# (add-default-abilities ~title ~ability)]
