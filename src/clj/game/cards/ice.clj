@@ -2453,7 +2453,7 @@
 
 (defcard "Meru Mati"
   {:subroutines [end-the-run]
-   :constant-effects (strength-bonus (req (protecting-hq? card)) 3)})
+   :constant-effects [(strength-bonus (req (protecting-hq? card)) 3)]})
 
 (defcard "Metamorph"
   {:subroutines [{:label "Swap two pieces of ice or swap two installed non-ice"
