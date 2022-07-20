@@ -1,4 +1,4 @@
-(ns dev.nr
+(ns nr.dev
   (:require
     [nr.main :as main]
     [devtools.core :as devtools]))
