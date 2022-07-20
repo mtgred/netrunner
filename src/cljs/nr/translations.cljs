@@ -143,6 +143,8 @@
      :confirm-delete "Confirm Delete"
      :edit "Edit"
      :delete "Delete"
+     :copy "Copy"
+     :deck-copy-suffix "copy"
      :clear-stats "Clear Stats"
      :create-game "Create Game"
      :deck-name "Deck name"
