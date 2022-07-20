@@ -5,4 +5,4 @@
         :devtools {:watch-dir "resources/public/css"
                    :repl-init-ns nr.dev}
         :dev {:modules {:main {:entries [nr.dev]}}}
-        :release {:modules {:main {:entries [nr.prod]}}}}}}
+        :release {:modules {:main {:entries [prod.nr]}}}}}}
