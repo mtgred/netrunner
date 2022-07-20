@@ -2269,8 +2269,10 @@
                                   card nil)))}]}))
 
 (defcard "Lotus Field"
-  {:subroutines [end-the-run]
-   :flags {:cannot-lower-strength true}})
+  {:constant-effects [{:type :cannot-lower-strength
+                       :req (req (same-card? card (:ice context)))
+                       :value true}]
+   :subroutines [end-the-run]})
 
 (defcard "Lycan"
   (morph-ice "Sentry" "Code Gate" trash-program-sub))
@@ -3096,8 +3098,10 @@
    :subroutines [end-the-run]})
 
 (defcard "Self-Adapting Code Wall"
-  {:subroutines [end-the-run]
-   :flags {:cannot-lower-strength true}})
+  {:constant-effects [{:type :cannot-lower-strength
+                       :req (req (same-card? card (:ice context)))
+                       :value true}]
+   :subroutines [end-the-run]})
 
 (defcard "Sensei"
   {:subroutines [{:label "Give encountered ice \"End the run\""

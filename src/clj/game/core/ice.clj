@@ -318,9 +318,9 @@
 (defn sum-ice-strength-effects
   "Sums the results from get-effects."
   [state side ice]
-  (let [can-lower? (not (card-flag? ice :cannot-lower-strength true))]
-    (->> (get-effects state side ice :ice-strength nil)
-         (filter #(and % (or can-lower? (pos? %))))
+  (let [can-lower? (not (any-effects state side :cannot-lower-strength true? {:ice ice}))]
+    (->> (get-effects state side ice :ice-strength)
+         (filter #(and (number? %) (or can-lower? (pos? %))))
          (reduce +))))
 
 (defn ice-strength
