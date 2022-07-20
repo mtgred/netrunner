@@ -3536,13 +3536,15 @@
                  (do-net-damage 1)]})
 
 (defcard "Turing"
-  (let [breakable-fn (req (when-not (has-subtype? target "AI") :unrestricted))]
-    {:subroutines [(assoc (end-the-run-unless-runner
-                            "spends [Click][Click][Click]"
-                            "spend [Click][Click][Click]"
-                            (runner-pays [:click 3]))
-                          :breakable breakable-fn)]
-     :strength-bonus (req (if (is-remote? (second (get-zone card))) 3 0))}))
+  {:constant-effects [{:type :cannot-break-subs-on-ice
+                       :req (req (and (same-card? card (:ice context))
+                                      (has-subtype? (:icebreaker context) "AI")))
+                       :value true}]
+   :subroutines [(end-the-run-unless-runner
+                   "spends [Click][Click][Click]"
+                   "spend [Click][Click][Click]"
+                   (runner-pays [:click 3]))]
+   :strength-bonus (req (if (is-remote? (second (get-zone card))) 3 0))})
 
 (defcard "Turnpike"
   {:on-encounter {:msg "force the Runner to lose 1 [Credits]"
