@@ -77,7 +77,7 @@
                                   [criterium "0.4.6"]
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
-                                  [thheller/shadow-cljs "2.16.8"]]
+                                  [thheller/shadow-cljs "2.19.6"]]
                    :plugins [[cider/cider-nrepl "0.27.3"]]
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "src/css"
                                   "dev/src/clj" "dev/src/cljs"
