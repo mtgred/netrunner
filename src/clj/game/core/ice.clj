@@ -315,6 +315,18 @@
     (when-let [pump-fn (:pump-bonus ability)]
       (pump-fn state side (make-eid state) card targets)))))
 
+(defn strength-bonus
+  "Use in :constant-effect vectors to give the current ice or program a conditional strength bonus"
+  ([bonus]
+   {:type :ice-strength
+    :req (req (same-card? card target))
+    :value bonus})
+  ([req-fn bonus]
+   {:type :ice-strength
+    :req (req (and (same-card? card target)
+                   (req-fn state side eid card targets)))
+    :value bonus}))
+
 (defn sum-ice-strength-effects
   "Sums the results from get-effects."
   [state side ice]
