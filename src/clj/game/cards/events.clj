@@ -12,6 +12,7 @@
                            event? facedown? get-card get-counters
                            get-nested-host get-title get-zone hardware? has-subtype? ice? in-discard? in-hand?
                            installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
+   [game.core.charge :refer [can-charge charge-ability charge-card]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
@@ -28,8 +29,8 @@
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [any-flag-fn? can-run-server?
-                            clear-all-flags-for-card! clear-turn-flag! in-corp-scored?
-                            prevent-run-on-server register-run-flag! register-turn-flag! zone-locked? clear-run-flag!]]
+                            clear-all-flags-for-card! clear-run-flag! clear-turn-flag!
+                            in-corp-scored? prevent-run-on-server register-run-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size]]
@@ -42,6 +43,7 @@
    [game.core.installing :refer [install-as-condition-counter
                                  runner-can-install? runner-install]]
    [game.core.link :refer [get-link]]
+   [game.core.mark :refer [identify-mark-ability]]
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-facedown forfeit mill move
                              swap-ice trash trash-cards]]
@@ -54,9 +56,11 @@
    [game.core.runs :refer [bypass-ice gain-next-run-credits make-run
                            prevent-access successful-run-replace-breach
                            total-cards-accessed]]
+   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name
                               zones->sorted-names]]
+   [game.core.set-aside :refer [get-set-aside set-aside]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
    [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
    [game.core.to-string :refer [card-str]]
@@ -66,10 +70,7 @@
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]
-   [jinteki.validator :refer [legal?]]
-   [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.set-aside :refer [set-aside get-set-aside]]
-   [game.core.charge :refer [can-charge charge-card]]))
+   [jinteki.validator :refer [legal?]]))
 
 (defn- cutlery
   [subtype]

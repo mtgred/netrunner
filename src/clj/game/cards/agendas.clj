@@ -4,7 +4,8 @@
    [clojure.string :as str]
    [game.core.access :refer [steal-cost-bonus]]
    [game.core.actions :refer [score]]
-   [game.core.agendas :refer [update-all-agenda-points]]
+   [game.core.agendas :refer [update-all-advancement-requirements
+                              update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed
                             all-installed-runner-type get-remote-names server->zone]]
@@ -30,6 +31,7 @@
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice]]
+   [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-list
                                  corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-ice

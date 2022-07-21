@@ -10,7 +10,9 @@
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
                            ice? in-discard? in-hand? in-play-area? installed? is-type? operation? program?
                            resource? rezzed? runner? upgrade?]]
-   [game.core.cost-fns :refer [install-cost play-cost rez-cost rez-additional-cost-bonus]]
+   [game.core.charge :refer [charge-ability]]
+   [game.core.cost-fns :refer [install-cost play-cost
+                               rez-additional-cost-bonus rez-cost]]
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
    [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
@@ -22,8 +24,9 @@
                              first-successful-run-on-server? no-event? not-last-turn? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-latest]]
-   [game.core.flags :refer [card-flag? enable-run-on-server
-                            prevent-run-on-server register-turn-flag! zone-locked? register-persistent-flag! clear-persistent-flag!]]
+   [game.core.flags :refer [card-flag? clear-persistent-flag!
+                            enable-run-on-server prevent-run-on-server
+                            register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
    [game.core.hosting :refer [host]]
@@ -31,6 +34,7 @@
    [game.core.initializing :refer [make-card]]
    [game.core.installing :refer [corp-install runner-install]]
    [game.core.link :refer [link+ update-link]]
+   [game.core.mark :refer [identify-mark-ability]]
    [game.core.memory :refer [mu+]]
    [game.core.moving :refer [mill move swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
@@ -43,6 +47,7 @@
    [game.core.rezzing :refer [rez]]
    [game.core.runs :refer [get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
+   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
@@ -54,10 +59,7 @@
    [game.core.virus :refer [number-of-runner-virus-counters]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
-   [jinteki.utils :refer :all]
-   [game.core.charge :refer [charge-ability]]
-   [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.mark :refer [identify-mark-ability]]))
+   [jinteki.utils :refer :all]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target

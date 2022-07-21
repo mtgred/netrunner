@@ -15,6 +15,7 @@
                            get-counters get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
                            installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.charge :refer [can-charge charge-ability]]
    [game.core.cost-fns :refer [has-trash-ability? install-cost rez-cost
                                trash-cost]]
    [game.core.costs :refer [total-available-credits]]
@@ -26,14 +27,14 @@
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay prompt! register-events
                              register-once register-suppress resolve-ability
-                             trigger-event trigger-event-sync unregister-suppress-by-uuid unregister-events]]
+                             trigger-event trigger-event-sync unregister-events unregister-suppress-by-uuid]]
    [game.core.events :refer [event-count first-event?
                              first-installed-trash-own? first-run-event?
                              first-successful-run-on-server? get-turn-damage no-event? second-event? turn-events]]
    [game.core.expose :refer [expose]]
-   [game.core.flags :refer [card-flag? clear-persistent-flag! has-flag?
-                            in-corp-scored? register-persistent-flag!
-                            register-turn-flag! zone-locked? can-run-server?]]
+   [game.core.flags :refer [can-run-server? card-flag? clear-persistent-flag!
+                            has-flag? in-corp-scored?
+                            register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size runner-hand-size+]]
@@ -46,6 +47,7 @@
    [game.core.installing :refer [install-locked? runner-can-install?
                                  runner-install]]
    [game.core.link :refer [get-link link+]]
+   [game.core.mark :refer [identify-mark-ability]]
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-faceup forfeit mill move
                              remove-from-currently-drawing trash trash-cards
@@ -61,6 +63,7 @@
    [game.core.runs :refer [bypass-ice gain-run-credits get-current-encounter
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
+   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg system-say]]
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? target-server unknown->kw
@@ -76,8 +79,7 @@
    [game.utils :refer :all]
    [jinteki.utils :refer :all]
    [jinteki.validator :refer [legal?]]
-   [medley.core :refer [find-first]]
-   [game.core.sabotage :refer [sabotage-ability]]))
+   [medley.core :refer [find-first]]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"

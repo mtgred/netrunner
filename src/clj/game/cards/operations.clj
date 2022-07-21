@@ -3,7 +3,7 @@
    [clojure.set :as set]
    [clojure.string :as str]
    [game.core.access :refer [access-card steal-cost-bonus]]
-   [game.core.actions :refer [advance]]
+   [game.core.actions :refer [advance score]]
    [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed
                             get-all-installed get-remote-names get-remotes
@@ -25,7 +25,7 @@
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
                              turn-events]]
-   [game.core.flags :refer [clear-persistent-flag! in-corp-scored?
+   [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
                             in-runner-scored? is-scored? prevent-jack-out
                             register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks

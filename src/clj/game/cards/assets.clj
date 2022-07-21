@@ -12,10 +12,10 @@
    [game.core.board :refer [all-active-installed all-installed
                             installable-servers]]
    [game.core.card :refer [agenda? asset? can-be-advanced? corp? event?
-                           fake-identity? get-advancement-requirement
+                           faceup? fake-identity? get-advancement-requirement
                            get-agenda-points get-card get-counters get-zone hardware? has-subtype? ice? identity?
-                           in-deck? in-discard? in-hand? in-server? installed? is-type? operation? program?
-                           resource? rezzed? runner? upgrade?]]
+                           in-deck? in-discard? in-hand? in-server? installed? is-type? operation?
+                           program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
@@ -1371,7 +1371,7 @@
                                  (in-discard? %)
                                  (not (faceup? %)))
                      :max 2}
-           :msg (msg "to reveal " (string/join " and " (map :title targets)) " from Archives and shuffle them into R&D")
+           :msg (msg "to reveal " (str/join " and " (map :title targets)) " from Archives and shuffle them into R&D")
            :effect (req (wait-for (reveal state side targets)
                                   (doseq [c targets]
                                     (move state side c :deck))

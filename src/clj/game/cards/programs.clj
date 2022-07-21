@@ -11,7 +11,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
    [game.core.costs :refer [total-available-credits]]
-   [game.core.damage :refer [damage-prevent]]
+   [game.core.damage :refer [damage-prevent damage]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect
