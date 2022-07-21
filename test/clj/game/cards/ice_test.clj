@@ -3279,6 +3279,19 @@
       (is (= 4 (count (:discard (get-runner)))) "Cache trashed")
       (is (= 1 (count (:discard (get-corp)))) "It's a Trap trashed"))))
 
+(deftest ivik
+  (do-game
+    (new-game {:corp {:hand [(qty "Mind Game" 2) "Ivik"] :credits 50}})
+    (play-from-hand state :corp "Ivik" "New remote")
+    (play-from-hand state :corp "Mind Game" "New remote")
+    (play-from-hand state :corp "Mind Game" "New remote")
+    (rez state :corp (get-ice state :remote2 0))
+    (rez state :corp (get-ice state :remote3 0))
+    (changes-val-macro
+      -5 (:credit (get-corp))
+      "7 - 2 = 5 credits"
+      (rez state :corp (get-ice state :remote1 0)))))
+
 (deftest jua-encounter-effect-prevent-runner-from-installing-cards-for-the-rest-of-the-turn
   ;; Encounter effect - Prevent Runner from installing cards for the rest of the turn
   (do-game
@@ -4102,6 +4115,28 @@
     (rez state :corp (get-ice state :rd 0))
     (is (= 4 (get-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
     (is (= 1 (get-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+
+(deftest mestnichestvo
+  (do-game
+    (new-game {:corp {:hand ["Mestnichestvo"] :credits 10}})
+    (play-from-hand state :corp "Mestnichestvo" "HQ")
+    (let [mes (get-ice state :hq 0)]
+      (core/advance state :corp {:card (refresh mes)})
+      (take-credits state :corp)
+      (run-on state :hq)
+      (rez state :corp (refresh mes))
+      (run-continue state)
+      (changes-val-macro
+        -3 (:credit (get-runner))
+        "Runner lost 3 from encounter effect"
+        (is (= 1 (get-counters (refresh mes) :advancement)) "Starts with 1 counter")
+        (click-prompt state :corp "Yes")
+        (is (= 0 (get-counters (refresh mes) :advancement)) "Spend a counter for the ability"))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner loses remaining credits from subroutines"
+        (fire-subs state (refresh mes))))
+    (is (not (:run @state)) "Run ended")))
 
 (deftest metamorph-with-two-installed-ice
   ;; with two installed ice

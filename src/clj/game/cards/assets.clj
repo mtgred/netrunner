@@ -273,6 +273,25 @@
   {:on-rez {:effect (effect (lock-zone (:cid card) :runner :discard))}
    :leave-play (effect (release-zone (:cid card) :runner :discard))})
 
+(defcard "Bladderwort"
+  (let [ability {:msg "gain 1 [Credits]"
+                 :label "Gain 1 [Credits] (start of turn)"
+                 :once :per-turn
+                 :interactive (req true)
+                 :async true
+                 :effect (req (wait-for (gain-credits state side 1)
+                                        (if (<= (:credit (:corp @state)) 4)
+                                          (continue-ability
+                                            state side
+                                            {:msg "do 1 net damage"
+                                             :async true
+                                             :effect (effect (damage eid :net 1 {:card card}))}
+                                            card nil)
+                                          (effect-completed state side eid))))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (defcard "Brain-Taping Warehouse"
   {:constant-effects [{:type :rez-cost
                        :req (req (and (ice? target)
@@ -348,6 +367,11 @@
 (defcard "Chairman Hiro"
   {:constant-effects [(runner-hand-size+ -2)]
    :on-trash executive-trash-effect})
+
+(defcard "Chekist Scion"
+  (advance-ambush 0 {:msg (msg "give the Runner " (inc (get-counters (get-card state card) :advancement)) " tags")
+                     :async true
+                     :effect (effect (gain-tags :corp eid (inc (get-counters (get-card state card) :advancement))))}))
 
 (defcard "Chief Slee"
   {:events [{:event :end-of-encounter
@@ -636,6 +660,14 @@
              :msg (msg "increase the install cost of " (:title (:card context))
                        " by " (get-counters card :power) " [Credits]")
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
+
+(defcard "Drago Ivanov"
+  {:advanceable :always
+   :abilities [{:cost [:advancement 2]
+                :req (req (= :corp (:active-player @state)))
+                :msg "give the runner a tag"
+                :async true
+                :effect (effect (gain-tags :corp eid 1))}]})
 
 (defcard "Drudge Work"
   {:on-rez {:effect (effect (add-counter card :power 3))}
@@ -1261,6 +1293,58 @@
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
+
+(defcard "Moon Pool"
+  (letfn [(moon-pool-place-advancements
+            [x] {:async true
+                 :prompt (msg "Place an advancement counter on an installed card (" x " remaining)")
+                 :choices {:card #(installed? %)}
+                 :msg (msg "place an advancement counter on " (card-str state target))
+                 :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
+                                        (if (> x 1)
+                                          (continue-ability
+                                            state side
+                                            (moon-pool-place-advancements (dec x))
+                                            card nil)
+                                          (effect-completed state side eid))))
+                 :cancel-effect (effect (system-msg "declines to use Moon Pool to place an advancement counter")
+                                        (effect-completed eid))})]
+    (let [moon-pool-reveal-ability
+          {:prompt "Reveal up to 2 facedown cards from Archives and shuffle them into R&D"
+           :async true
+           :choices {:card #(and (corp? %)
+                                 (in-discard? %)
+                                 (not (faceup? %)))
+                     :max 2}
+           :msg (msg "to reveal " (string/join " and " (map :title targets)) " from Archives and shuffle them into R&D")
+           :effect (req (wait-for (reveal state side targets)
+                                  (doseq [c targets]
+                                    (move state side c :deck))
+                                  (shuffle! state side :deck)
+                                  (let [agenda-count (count (filter agenda? targets))]
+                                    (if (pos? agenda-count)
+                                      (continue-ability
+                                        state side
+                                        (moon-pool-place-advancements agenda-count)
+                                        card nil)
+                                      (effect-completed state side eid)))))
+           :cancel-effect (effect (system-msg "declines to use Moon Pool to reveal any cards from Archives")
+                                  (effect-completed eid))}]
+      {:abilities [{:prompt "Trash up to 2 cards from HQ"
+                    :label "Trash up to 2 cards from HQ"
+                    :cost [:remove-from-game]
+                    :async true
+                    :choices {:card #(and (corp? %)
+                                          (in-hand? %))
+                              :max 2}
+                    :msg (msg "trash " (count targets) " cards from HQ ")
+                    :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
+                                           (continue-ability
+                                             state side
+                                             moon-pool-reveal-ability
+                                             card nil)))
+                    :cancel-effect (effect (system-msg "declines to use Moon Pool to trash cards from HQ")
+                                           (continue-ability moon-pool-reveal-ability card nil))}]})))
 
 (defcard "Mr. Stone"
   {:events [{:event :runner-gain-tag

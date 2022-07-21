@@ -2001,6 +2001,11 @@
                         :effect (req (wait-for (trash state side target {:cause :subroutine})
                                                (trash state side eid card {:cause :subroutine}))))]})
 
+(defcard "Ivik"
+  {:subroutines [(do-net-damage 2)
+                 end-the-run]
+   :rez-cost-bonus (req (- (subtype-ice-count corp "Code Gate")))})
+
 (defcard "Janus 1.0"
   {:subroutines [(do-brain-damage 1)
                  (do-brain-damage 1)
@@ -2419,6 +2424,22 @@
                                            " and " (card-str state (second targets)))
                                  :effect (req (apply swap-installed state side targets))})
                               card nil))}]})
+
+(defcard "Mestnichestvo"
+  {:advanceable :always
+   :on-encounter
+   {:optional {:prompt "Remove an advancement counter to make the Runner lose 3 [Credits]?"
+               :req (req (pos? (get-counters (get-card state card) :advancement)))
+               :yes-ability {:async true
+                             :msg (msg "spend 1 advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
+                             :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
+                                             (lose-credits :runner eid 3))}
+               :no-ability {:msg "decline to make the runner lose 3 [Credits]"}}}
+   :subroutines [{:label "The Runner loses 3 [Credits]"
+                  :msg "force the Runner to lose 3 [Credits]"
+                  :async true
+                  :effect (effect (lose-credits :runner eid 3))}
+                 end-the-run]})
 
 (defcard "Mganga"
   {:subroutines [(do-psi {:async true

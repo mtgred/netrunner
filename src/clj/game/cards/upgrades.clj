@@ -916,6 +916,31 @@
              :msg "force the Runner to lose [Click]"
              :effect (effect (lose-clicks :runner 1))}]})
 
+(defcard "Mavirus"
+  {:flags {:rd-reveal (req true)}
+   :access {:optional
+            {:waiting-prompt "Corp to choose an option"
+             :prompt "Purge virus counters with Mavirus?"
+             :yes-ability {:msg (msg "purge virus counters")
+                           :async true
+                           :effect (req (purge state side)
+                                        (if (rezzed? card)
+                                          (do
+                                            (system-msg state side "uses Mavirus to do 1 net damage")
+                                            (damage state side eid :net 1 {:card card}))
+                                          (effect-completed state side eid)))}
+             :no-ability {:msg (msg "decline to purge virus counters")
+                          :async true
+                          :effect (req (if (rezzed? card)
+                                         (do
+                                           (system-msg state side "uses Mavirus to do 1 net damage")
+                                           (damage state side eid :net 1 {:card card}))
+                                         (effect-completed state side eid)))}}}
+   :abilities [{:label "Purge virus counters"
+                :msg "purge virus counters"
+                :cost [:trash-can]
+                :effect (effect (purge))}]})
+
 (defcard "Midori"
   {:events [{:event :approach-ice
              :optional

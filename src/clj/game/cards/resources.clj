@@ -253,6 +253,27 @@
                          (sabotage-ability 1)
                          card nil))}]})
 
+(defcard "Backstitching"
+  ;; only fire the event for one backstitching per encounter (otherwise you have to press no 3x)
+  (letfn [(is-min-index [state card]
+            (let [stitches (filterv #(= (:title card) (:title %))
+                                    (all-active-installed state :runner))
+                  ordered (sort-by :index stitches)]
+              (= (:index (first ordered)) (:index card))))]
+    {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+              {:event :encounter-ice
+               :async true
+               :interactive (req true)
+               :optional
+               {:prompt (msg "Trash backstitching to bypass " (:title current-ice) "?")
+                :req (req (and (is-min-index state card)
+                               (= (:mark @state) (first (:server run)))))
+                :yes-ability {:msg (msg (format "trash %s and bypass %s" (:title card) (:title current-ice)))
+                              :async true
+                              :effect (req (wait-for (trash state side card {:cause-card card :cause :runner-ability})
+                                                     (bypass-ice state)
+                                                     (effect-completed state side eid)))}}}]}))
+
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))
@@ -790,6 +811,14 @@
      :events [(assoc ability :event :runner-turn-begins)
               (trash-on-empty :credit)]}))
 
+(defcard "Daeg, First Net-Cat"
+  (let [ability {:async true
+                 :interactive (req true)
+                 :msg "charge"
+                 :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]
+    {:events [(assoc ability :event :agenda-scored)
+              (assoc ability :event :agenda-stolen)]}))
+
 (defcard "Data Dealer"
   {:abilities [{:cost [:click 1 :forfeit]
                 :async true
@@ -1048,6 +1077,23 @@
                             (system-msg state :runner (str "uses Enhanced Vision to force the Corp to reveal " (:title target)))
                             (reveal state :corp eid target)))
              :req (req (genetics-trigger? state side :successful-run))}]})
+
+(defcard "Environmental Testing"
+  {:events [{:event :runner-install
+             :silent (req true)
+             :req (req (and (or (hardware? (:card context))
+                                (program? (:card context)))
+                            (not (:facedown? context))))
+             :async true
+             :msg "place 1 power counter on Environmental Testing"
+             :effect (req (add-counter state :runner eid card :power 1 nil))}
+            {:event :counter-added
+             :async true
+             :req (req (<= 4 (get-counters (get-card state card) :power)))
+             :msg "trash itself and gain 9 [Credit]"
+             :effect (req (wait-for (trash state side card {:unpreventable :true
+                                                            :cause-card card})
+                                    (gain-credits state side eid 9)))}]})
 
 (defcard "Fall Guy"
   {:interactions {:prevent [{:type #{:trash-resource}
@@ -1890,6 +1936,18 @@
                 :msg "avoid 1 tag"
                 :effect (effect (tag-prevent :runner eid 1))}]})
 
+(defcard "No Free Lunch"
+  {:abilities [{:label "Gain 3 [Credits]"
+                :msg "gain 3 [Credits]"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (gain-credits eid 3))}
+               {:label "Remove 1 tag"
+                :msg "remove 1 tag"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (lose-tags :runner eid 1))}]})
+
 (defcard "No One Home"
   (letfn [(first-chance? [state side]
             (< (+ (event-count state side :pre-tag)
@@ -2587,6 +2645,18 @@
                                 (gain-clicks state side 1)
                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})
 
+(defcard "Stoneship Chart Room"
+  {:abilities [{:label "Draw 2 cards"
+                :msg "draw 2 cards"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (draw :runner eid 2))}
+               {:label "Charge a card"
+                :req (req (can-charge state side))
+                :cost [:trash-can]
+                :async true
+                :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+
 (defcard "Street Magic"
   (letfn [(runner-break [unbroken-subs]
             {:prompt "Resolve a subroutine"
@@ -3014,6 +3084,35 @@
                  (ttw-ab "HQ" :hq)
                  (ttw-bounce "R&D" :rd)
                  (ttw-bounce "HQ" :hq)]}))
+
+(defcard "The Twinning"
+  {:events [{:event :spent-credits-from-card
+             :req (req (and
+                         (installed? target)
+                         (first-event? state side :spent-credits-from-card #(installed? (first %)))))
+             :async true
+             :effect (req (add-counter state :runner card :power 1 {:placed true})
+                          (effect-completed state side eid))}
+            {:event :breach-server
+             :async true
+             :req (req (and (or (= :rd target)
+                                (= :hq target))
+                            (< 0 (get-counters card :power))))
+             :effect (req
+                       (let [target-server target]
+                         (continue-ability
+                           state side
+                           {:req (req (< 0 (get-counters card :power)))
+                            :prompt (msg (format "Choose how many additional %s accesses to make with The Twinning" (if (= :rd target) "R&D" "HQ")))
+                            :choices {:number (req (min 2 (get-counters card :power)))
+                                      :default (req (min 2 (get-counters card :power)))}
+                            :msg (msg "access " target " additional cards from "
+                                      (if (= :rd target-server) "R&D" "HQ"))
+                            :async true
+                            :effect (effect (access-bonus target-server (max 0 target))
+                                            (add-counter :runner card :power (- target) {:placed true})
+                                            (effect-completed eid))}
+                           card nil)))}]})
 
 (defcard "Theophilius Bagbiter"
   {:constant-effects [(runner-hand-size+ (req (:credit runner)))]

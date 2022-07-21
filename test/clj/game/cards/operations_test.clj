@@ -355,6 +355,17 @@
         (click-card state :corp "NGO Front")
         (is (= (+ credits 9) (:credit (get-corp))) "Corp should gain 3 * 3 credits"))))
 
+(deftest backroom-machinations
+  (do-game
+    (new-game {:corp {:hand ["Backroom Machinations"]}})
+    (play-from-hand state :corp "Backroom Machinations")
+    (is (= 1 (count (:hand (get-corp)))) "Card not played because Runner has no tags")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Backroom Machinations")
+    (is (zero? (count-tags state)) "Runner should lose 1 tag")
+    (is (= 1 (:agenda-point (get-corp))) "Corp gained 1 points")
+    (is (= 1 (count (get-scored state :corp))) "Corp has backroom in score area")))
+
 (deftest bad-times
   ;; Bad Times
   (do-game
@@ -433,6 +444,41 @@
     (gain-tags state :runner 1)
     (play-from-hand state :corp "Big Brother")
     (is (= 3 (count-tags state)) "Runner gained 2 tags")))
+
+(deftest big-deal-happy-path
+  ;; Big Deal - terminal, place 4 advancement tokens, may score if able
+  (do-game
+    (new-game {:corp {:hand ["SDS Drone Deployment" "Big Deal"] :credits 20}})
+    (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+    (core/advance state :corp {:card (get-content state :remote1 0)})
+    (play-from-hand state :corp "Big Deal")
+    (click-card state :corp "SDS Drone Deployment")
+    (is (= 5 (get-counters (get-content state :remote1 0) :advancement)))
+    (click-prompt state :corp "Yes")
+    (is (= 3 (:agenda-point (get-corp))) "Corp scored 3 points")
+    (is (no-prompt? state :corp))))
+
+(deftest big-deal-non-agenda
+  ;; Big Deal - can't score non-agendas
+  (do-game
+    (new-game {:corp {:hand ["NGO Front" "Big Deal"] :credits 20}})
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "Big Deal")
+    (click-card state :corp "NGO Front")
+    (is (zero? (:click (get-corp))))
+    (is (= 4 (get-counters (get-content state :remote1 0) :advancement)))
+    (is (no-prompt? state :corp))))
+
+(deftest big-deal-not-enough-advancements
+  ;; Big Deal - no prompt if requirements not met
+  (do-game
+    (new-game {:corp {:hand ["SDS Drone Deployment" "Big Deal"] :credits 20}})
+    (play-from-hand state :corp "SDS Drone Deployment" "New remote")
+    (play-from-hand state :corp "Big Deal")
+    (click-card state :corp "SDS Drone Deployment")
+    (is (zero? (:click (get-corp))))
+    (is (= 4 (get-counters (get-content state :remote1 0) :advancement)))
+    (is (no-prompt? state :corp))))
 
 (deftest bioroid-efficiency-research
   ;; Eli 1.0
@@ -2443,6 +2489,30 @@
       (click-prompt state :corp "0") ; default trace
       (click-prompt state :runner "0") ; Runner won't match
       (is (= 6 (count-tags state)) "Runner took 6 tags"))))
+
+(deftest mitosis
+  ;; Mitosis - Install up to 2 cards in new remotes, placing 2 advancements on each
+  ;; prevent rez/score of those cards the rest of the turn
+  (do-game
+    (new-game {:corp {:deck [(qty "Mitosis" 2) "Ronin" "Clone Retirement"]}})
+    (play-from-hand state :corp "Mitosis")
+    (click-card state :corp (find-card "Ronin" (:hand (get-corp))))
+    (click-card state :corp (find-card "Clone Retirement" (:hand (get-corp))))
+    (let [ronin (get-content state :remote1 0)
+          clone (get-content state :remote2 0)]
+      (is (= 2 (get-counters (refresh ronin) :advancement)) "2 advancements placed on Ronin")
+      (is (= 2 (get-counters (refresh clone) :advancement)) "2 advancements placed on Ronin")
+      (rez state :corp (refresh ronin))
+      (is (not (rezzed? (refresh ronin))) "Ronin did not rez")
+      (score state :corp (refresh clone))
+      (is (empty? (:scored (get-corp))) "Clone Retirement not scored")
+      (is (zero? (:agenda-point (get-corp))))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (rez state :corp (refresh ronin))
+      (is (rezzed? (refresh ronin)) "Ronin now rezzed")
+      (score state :corp (refresh clone))
+      (is (= 1 (:agenda-point (get-corp))) "Clone Retirement was able to be scored"))))
 
 (deftest mushin-no-shin
   ;; Mushin No Shin - Add 3 advancements to a card; prevent rez/score of that card the rest of the turn

@@ -208,6 +208,12 @@
     :effect (req (wait-for (gain-credits state side (* 3 (get-counters target :advancement)))
                            (trash state side eid target {:cause-card card})))}})
 
+(defcard "Backroom Machinations"
+  {:on-play
+   {:additional-cost [:tag 1]
+    :msg "add it to their score area as an agenda worth 1 agenda point"
+    :effect (req (as-agenda state :corp card 1))}})
+
 (defcard "Bad Times"
   {:implementation "Any required program trashing is manual"
    :on-play {:req (req tagged)
@@ -279,6 +285,26 @@
     :msg "give the Runner 2 tags"
     :async true
     :effect (effect (gain-tags :corp eid 2))}})
+
+(defcard "Big Deal"
+  {:on-play
+   {:req (req (pos? (count (all-installed state :corp))))
+    :prompt "Choose a card on which to place 4 advancement counters"
+    :async true
+    :choices {:card #(and (corp? %)
+                          (installed? %))}
+    :msg (msg "place 4 advancement counters on " (card-str state target))
+    :effect (req (wait-for (add-prop state :corp target :advance-counter 4 {:placed true})
+                           (let [card-to-score target]
+                             (continue-ability
+                               state side
+                               {:optional
+                                {:req (req (can-score? state side (get-card state card-to-score)))
+                                 :prompt (str "Score " (:title card-to-score) "?")
+                                 :yes-ability {:async true
+                                               :effect (effect (score eid (get-card state card-to-score)))}
+                                 :no-ability {:msg "decline to score the card"}}}
+                               card nil))))}})
 
 (defcard "Bioroid Efficiency Research"
   {:on-play {:req (req (some #(and (ice? %)
@@ -1372,6 +1398,40 @@
                   :effect (effect (system-msg
                                     (str "gives the Runner " (- target (second targets)) " tags"))
                                   (gain-tags eid (- target (second targets))))}}}})
+
+(defcard "Mitosis"
+  (letfn [(mitosis-ability [state side card eid target-cards]
+            (wait-for (corp-install state side (first target-cards) "New remote" nil)
+                      (let [installed-card async-result]
+                        (add-prop state side installed-card :advance-counter 2 {:placed true})
+                        (register-turn-flag!
+                          state side
+                          card :can-rez
+                          (fn [state _ card]
+                            (if (same-card? card installed-card)
+                              ((constantly false) (toast state :corp "Cannot rez due to Mitosis." "Warning"))
+                              true)))
+                        (register-turn-flag!
+                          state side
+                          card :can-score
+                          (fn [state _ card]
+                            (if (same-card? card installed-card)
+                              ((constantly false) (toast state :corp "Cannot score due to Mitosis." "Warning"))
+                              true)))
+                        (if (seq (rest target-cards))
+                          (mitosis-ability state side card eid (rest target-cards))
+                          (effect-completed state side eid)))))]
+    {:on-play
+     {:prompt "Select cards to install in new remotes"
+      :choices {:card #(and (not (operation? %))
+                            (corp? %)
+                            (in-hand? %))
+                :max 2}
+      :msg (msg (if (= 2 (count targets))
+                  "install 2 cards from HQ in new remote servers, and place two advancements on each of them"
+                  "install a card from HQ in a new remote server, and place two advancements on it"))
+      :async true
+      :effect (req (mitosis-ability state side card eid targets))}}))
 
 (defcard "Mushin No Shin"
   {:on-play
