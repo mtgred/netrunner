@@ -241,6 +241,20 @@
     (play-from-hand state :runner "Cache")
     (is (last-log-contains? state "uses Avgustina Ivanovskaya to sabotage 1") "Sabotage happened")))
 
+(deftest backstitching
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Backstitching"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (core/set-mark state :hq)
+    (play-from-hand state :runner "Backstitching")
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
+
 (deftest baklan-bochkin-gaining-power-counters-each-run
     ;; Gaining power counters each run.
     (do-game
@@ -1254,6 +1268,36 @@
       (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder."))))
 
+(deftest daeg-first-net-cat
+  ;; Daeg, First Net-Cat - charge on score/steal
+  (do-game
+    (new-game {:runner {:hand ["Daeg, First Net-Cat" "Earthrise Hotel"]}
+               :corp {:hand ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Earthrise Hotel")
+    (play-from-hand state :runner "Daeg, First Net-Cat")
+    (take-credits state :runner)
+    (let [hotel (get-resource state 0)]
+      (play-and-score state "Hostile Takeover")
+      (changes-val-macro
+        1 (get-counters (refresh hotel) :power)
+        "charge added 1 counter"
+        (click-card state :runner "Earthrise Hotel"))))
+  (do-game
+    (new-game {:runner {:hand ["Daeg, First Net-Cat" "Earthrise Hotel"]}
+               :corp {:hand ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Earthrise Hotel")
+    (play-from-hand state :runner "Daeg, First Net-Cat")
+    (let [hotel (get-resource state 0)]
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (changes-val-macro
+        1 (get-counters (refresh hotel) :power)
+        "charge added 1 counter"
+        (click-card state :runner "Earthrise Hotel")))))
+
+
 (deftest daily-casts
   ;; Daily Casts
   ;; Play and tick through all turns of daily casts
@@ -1973,6 +2017,34 @@
         1 (:credit (get-corp))
         "Corp gains 1 from Enhanced Vision forced reveal"
         (run-empty-server state "Archives"))))
+
+(deftest environmental-testing
+  ;; Pops at 4 power counters
+  (do-game
+    (new-game {:runner {:hand ["Environmental Testing" (qty "Spy Camera" 2) (qty "Marjanah" 2)]}})
+    (take-credits state :corp)
+    (core/gain-clicks state :runner 5)
+    (play-from-hand state :runner "Environmental Testing")
+    (let [env (get-resource state 0)]
+      (is (= 0 (get-counters (refresh env) :power)) "starts at 0 counters")
+      (changes-val-macro
+        1 (get-counters (refresh env) :power)
+        "+1 from hardware"
+        (play-from-hand state :runner "Spy Camera"))
+      (changes-val-macro
+        1 (get-counters (refresh env) :power)
+        "+1 from hardware"
+        (play-from-hand state :runner "Spy Camera"))
+      (changes-val-macro
+        1 (get-counters (refresh env) :power)
+        "+1 from program"
+        (play-from-hand state :runner "Marjanah"))
+      (changes-val-macro
+        9 (:credit (get-runner))
+        "Env Testing pops for 9c"
+        (play-from-hand state :runner "Marjanah")
+        (is (find-card "Environmental Testing" (:discard (get-runner)))
+            "Env. Testing was trashed")))))
 
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
@@ -3837,6 +3909,29 @@
         (is (= 10 (:credit (get-runner))) "10 credits siphoned")
         (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
+(deftest no-free-lunch-gain-credits
+  (do-game
+    (new-game {:runner {:deck ["No Free Lunch"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "No Free Lunch")
+    (changes-val-macro
+      3 (:credit (get-runner))
+      "gained 3 for lunch"
+      (card-ability state :runner (get-resource state 0) 0))
+    (is (= 1 (count (:discard (get-runner)))) "Free lunch trashed")))
+
+(deftest no-free-lunch-remove-tag
+  (do-game
+    (new-game {:runner {:hand ["No Free Lunch" "Rogue Trading"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rogue Trading")
+    (play-from-hand state :runner "No Free Lunch")
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (= 1 (count-tags state)) "+1 tag from Rogue Trading")
+    (card-ability state :runner (get-resource state 1) 1)
+    (is (= 0 (count-tags state)) "-1 tag from Free Lunch")
+    (is (= 1 (count (:discard (get-runner)))) "Free lunch trashed")))
+
 (deftest no-one-home
   ;; Prevent first tag or net damage of the turn if you beat trace0, then trash
   (do-game
@@ -5139,6 +5234,28 @@
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
       (is (= 4 (:click (get-runner))) "Didn't gain extra click"))))
 
+(deftest stoneship-chart-room
+  ;; Stoneship Library - Trash to draw 2, trash to charge
+  (do-game
+    (new-game {:runner {:hand ["Stoneship Chart Room"] :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Stoneship Chart Room")
+    (changes-val-macro
+      2 (count (:hand (get-runner)))
+      "Drew 2 card with stoneship"
+      (card-ability state :runner (get-resource state 0) 0)))
+  (do-game
+    (new-game {:runner {:hand ["Stoneship Chart Room" "Earthrise Hotel"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Stoneship Chart Room")
+    (card-ability state :runner (get-resource state 0) 1)
+    (is (= 0 (count (:discard (get-runner)))) "Stoneship not discarded")
+    (is (no-prompt? state :runner) "No prompt because stoneship wasn't used")
+    (play-from-hand state :runner "Earthrise Hotel")
+    (card-ability state :runner (get-resource state 0) 1)
+    (click-card state :runner "Earthrise Hotel")
+    (is (= 4 (get-counters (get-resource state 0) :power)) "earthrise hotel was charged")))
+
 (deftest street-magic
   ;; Street Magic
   (do-game
@@ -6224,6 +6341,46 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 4 (count-tags state)) "Bouncing enables Hard-Hitting News"))))
+
+(deftest the-twinning
+  ;; First time each turn you spend credits from an installed card, place 1 power counter
+  ;; on breach hq/r&d - spend up to 2 counters to access that many more cards
+  (do-game
+    (new-game {:runner {:hand ["The Twinning" "Sahasrara" "Cache" "Cache"] :credits 10}
+               :corp {:hand [(qty "Hedge Fund" 4)] :deck [(qty "Hedge Fund" 4)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Twinning")
+    (play-from-hand state :runner "Sahasrara")
+    (let [twin (get-resource state 0)]
+      (changes-val-macro
+        1 (get-counters (refresh twin) :power)
+        "1 counter for first spend"
+        (play-from-hand state :runner "Cache")
+        (click-card state :runner "Sahasrara"))
+      (changes-val-macro
+        0 (get-counters (refresh twin) :power)
+        "no counter for second spend"
+        (play-from-hand state :runner "Cache")
+        (click-card state :runner "Sahasrara"))
+      (take-credits state :corp)
+      (core/add-counter state :runner (refresh twin) :power 3)
+      (run-empty-server state :hq)
+      (changes-val-macro
+        -2 (get-counters (refresh twin) :power)
+        "spent 2 counters on HQ"
+        (click-prompt state :runner "2"))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (run-empty-server state :rd)
+      (changes-val-macro
+        -2 (get-counters (refresh twin) :power)
+        "spent 2 counters on R&D"
+        (click-prompt state :runner "2"))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "No prompt left over"))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool

@@ -376,6 +376,9 @@
       :async true
       :effect (effect (continue-ability (:on-score (card-def target)) target nil))}}}})
 
+(defcard "Blood in the Water"
+  {:advancement-requirement (req (count (:hand runner)))})
+
 (defcard "Brain Rewiring"
   {:on-score
    {:optional
@@ -661,6 +664,15 @@
    :abilities [{:cost [:click 3]
                 :msg "place 1 agenda counter on Domestic Sleepers"
                 :effect (effect (add-agenda-point-counters card 1))}]})
+
+(defcard "Élivágar Bifurcation"
+  {:on-score
+   {:interactive (req true)
+    :waiting-prompt "Corp to make a decision"
+    :prompt "Choose a card to derez"
+    :choices {:card #(rezzed? %)}
+    :cancel-effect {:msg "decline to derez a card"}
+    :effect (effect (derez target))}})
 
 (defcard "Eden Fragment"
   {:constant-effects [{:type :ignore-install-cost
@@ -1510,6 +1522,25 @@
                                  (continue-ability state :corp (corp-choice from '() from) card nil)
                                  (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
                                      (effect-completed state side eid)))))}}))
+
+(defcard "Regenesis"
+  {:on-score {:req (req (and (some #(not (faceup? %)) (:discard corp))
+                             (no-event? state side :card-moved #(= [:discard] (:zone (second %))))))
+              ;; we want a prompt even if there are no valid targets,
+              ;; to make sure we don't give away hidden info
+              :prompt "Select a face-down agenda in Archives?"
+              :choices {:card #(and (agenda? %)
+                                    (in-discard? %)
+                                    (not (faceup? %)))}
+              :show-discard true
+              :msg (msg "reveal " (:title (first targets)) " and add it to their score area")
+              :effect (req (let [c (move state :corp target :scored)]
+                             (card-init state :corp c {:resolve-effect false
+                                                       :init-data true}))
+                           (update-all-advancement-requirements state)
+                           (update-all-agenda-points state)
+                           (check-win-by-agenda state side))
+              :cancel-effect (effect (system-msg "declines to use Regensis to reveal an Agenda"))}})
 
 (defcard "Remastered Edition"
   {:on-score {:effect (effect (add-counter card :agenda 1))

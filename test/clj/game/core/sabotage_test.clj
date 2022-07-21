@@ -1,4 +1,4 @@
-(ns game.core.borealis-test
+(ns game.core.sabotage-test
   (:require [game.core :as core]
             [game.core.eid :as eid]
             [game.core.sabotage :as s]
@@ -8,7 +8,7 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest sabotage
+(deftest sabotage-test
   (testing "Choosing only from HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 15)]}})
@@ -108,23 +108,3 @@
       (is (= 0 (count (:hand (get-corp)))) "HQ is empty")
       (is (= 0 (count (:deck (get-corp)))) "R&D is empty")
       (is (= 7 (count (:discard (get-corp)))) "Archives has 7 cards"))))
-
-(deftest mark
-  (testing "Identifying a mark"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 15)]}})
-      (is (nil? (:mark @state)) "No mark identified")
-      (take-credits state :corp)
-      (is (nil? (:mark @state)) "Still no mark identified")
-      (core/resolve-ability state :runner (eid/make-eid state)
-                            m/identify-mark-ability (:identity (get-runner)) nil)
-      (is (some? (:mark @state)) "Mark identified")
-      (click-credit state :runner)
-      (core/resolve-ability state :runner (eid/make-eid state)
-                            m/identify-mark-ability (:identity (get-runner)) nil)
-      (is (not (last-log-contains? state "identified")) "No new mark identified")
-      (take-credits state :runner)
-      (is (nil? (:mark @state)) "Mark reset at end of turn")
-      (core/resolve-ability state :runner (eid/make-eid state)
-                            m/identify-mark-ability (:identity (get-runner)) nil)
-      (is (some? (:mark @state)) "Mark identified in Corp turn"))))

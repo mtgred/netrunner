@@ -371,7 +371,8 @@
                              (runner? %)
                              (corp? %)))}
      :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed card")
@@ -396,12 +397,13 @@
     {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
      :choices {:all true
                :max (value cost)
-               :card #(and (installed? %)                           
+               :card #(and (installed? %)
                            (if (= side :runner)
                              (runner? %)
                              (corp? %)))}
      :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed card")
@@ -428,7 +430,8 @@
                :max (value cost)
                :card (every-pred installed? hardware? (complement facedown?))}
      :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed piece")
@@ -456,7 +459,8 @@
                :max (value cost)
                :card (every-pred installed? program? (complement facedown?))}
      :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed program")
@@ -483,7 +487,8 @@
                :max (value cost)
                :card (every-pred installed? resource? (complement facedown?))}
      :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed resource")
@@ -513,7 +518,8 @@
                                  #(has-subtype? % "Connection")
                                  (complement facedown?))}
      :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed connection resource")
@@ -540,7 +546,8 @@
                :max (value cost)
                :card (every-pred installed? rezzed? ice?)}
      :async true
-     :effect (req (wait-for (trash-cards state side targets {:unpreventable true})
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed rezzed ice" "")

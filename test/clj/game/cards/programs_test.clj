@@ -626,6 +626,28 @@
         (is (= (+ 3 credits) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll"))
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
+(deftest begemot
+  (do-game
+    (new-game {:runner {:hand ["Begemot" (qty "Sure Gamble" 4)] :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Begemot")
+    (is (= 3 (count (:hand (get-runner)))) "suffed 1 brain, 3 cards in hand")
+    (let [vege (get-program state 0)]
+      (is (= 3 (get-strength (refresh vege))))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1))
+      (is (= 6 (get-strength (refresh vege)))))))
+
 (deftest berserker
   ;; Berserker
   (do-game
@@ -1406,6 +1428,34 @@
         (click-prompt state :runner "Yes")
         (is (nil? (refresh iw)) "Ice Wall should be trashed")
         (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
+
+(deftest cats-cradle
+  ;; cats cradle: 1str decoder, 1/1 break, code gates cost 1 more
+  (do-game
+    (new-game {:corp {:hand [(qty "Enigma" 2)] :credits 20}
+               :runner {:hand [(qty "Cat's Cradle" 2)] :credits 20}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cat's Cradle")
+    (changes-val-macro
+      -4 (:credit (get-corp))
+      "Enigma costs 3 + 1 to rez"
+      (rez state :corp (get-ice state :hq 0)))
+    (play-from-hand state :runner "Cat's Cradle")
+    (changes-val-macro
+      -5 (:credit (get-corp))
+      "Enigma costs 3 + 2 to rez"
+      (rez state :corp (get-ice state :hq 1)))
+    (run-on state :hq)
+    (run-continue state)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "3c to break enigma"
+      (card-ability state :runner (get-program state 0) 1)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Force the Runner to lose 1 [Click]"))))
 
 (deftest cleaver
   ;; Cleaver
@@ -3120,6 +3170,24 @@
         (changes-val-macro 0 (get-strength houdini)
           "Strength has not been changed"
           (card-ability state :runner houdini 1)))))
+
+(deftest hyperbaric
+  ;; Hyperbaric - I can't believe it's not Study Guide
+  ;; Starts with a counter, 2c to add a power counter; +1 strength per counter
+  (do-game
+    (new-game {:runner {:deck ["Hyperbaric" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Hyperbaric")
+    (let [sg (get-program state 0)]
+      (card-ability state :runner sg 1)
+      (is (= 4 (:credit (get-runner))) "Paid 2c")
+      (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
+      (is (= 2 (get-strength (refresh sg))) "2 strength")
+      (card-ability state :runner sg 1)
+      (is (= 2 (:credit (get-runner))) "Paid 2c")
+      (is (= 3 (get-counters (refresh sg) :power)) "Has 3 power counters")
+      (is (= 3 (get-strength (refresh sg))) "3 strength"))))
 
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks
@@ -5291,6 +5359,29 @@
         ;; Trash Hivemind
         (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
         (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
+
+(deftest propeller
+  ;; counter: +2 str, 0 str start, 1c: break barrier
+  (do-game
+    (new-game {:runner {:hand ["Propeller"] :credits 10}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Propeller")
+    (let [prop (get-program state 0)]
+      (run-on state :hq)
+      (run-continue state)
+      (changes-val-macro
+        -1 (get-counters (refresh prop) :power)
+        "Spent 1 power counter to boost"
+        (card-ability state :runner prop 1)
+        (is (= 2 (get-strength (refresh prop))) "At strength 2 after boost"))
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Spent 1 credit to break"
+        (card-ability state :runner prop 0)
+        (click-prompt state :runner "End the run")))))
 
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn

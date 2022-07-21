@@ -457,6 +457,33 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
       (is (= 1 (count (:scored (get-runner)))))))
 
+(deftest bladderwort
+  ;; Bladderwort: turn starts, gain 1. Then if you have 4c or less, deal 1 net damage
+  (do-game
+    (new-game {:corp {:deck ["Bladderwort"]} :runner {:hand (qty "Sure Gamble" 5)}})
+    (play-from-hand state :corp "Bladderwort" "New remote")
+    (let [wort (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (rez state :corp wort)
+      ;; set corp to 3c -> should fire the damage
+      (core/gain state :corp :credit (- (:credit (get-corp))))
+      (core/gain state :corp :credit 3)
+      (is (= 3 (:credit (get-corp))) "3 credits should let bladderwort fire")
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "gained 1c at start of turn"
+        (take-credits state :runner))
+      (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage from bladderwort")
+      (take-credits state :corp)
+      (core/gain state :corp :credit (- (:credit (get-corp))))
+      (core/gain state :corp :credit 4)
+      (is (= 4 (:credit (get-corp))) "4 credits should stop bladderwort firing")
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "gained 1c at start of turn"
+        (take-credits state :runner))
+      (is (= 1 (count (:discard (get-runner)))) "Didn't deal additional damage"))))
+
 (deftest brain-taping-warehouse
   ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ice by 1 for each unspent Runner click
   (do-game
@@ -649,6 +676,17 @@
       (click-prompt state :corp "Done")
       (is (= ["Bacterial Programming"] (mapv :title (get-scored state :runner))) "Runner shouldn't score Chairman Hiro")
       (is (= ["Chairman Hiro"] (mapv :title (:discard (get-corp)))) "Chairman Hiro should be in Archives")))
+
+(deftest chekist-scion
+  ;; Chekist Scion
+  (do-game
+   (new-game {:corp {:deck ["Chekist Scion"]}})
+   (play-from-hand state :corp "Chekist Scion" "New remote")
+   (advance state (get-content state :remote1 0) 2)
+   (take-credits state :corp)
+   (run-empty-server state "Server 1")
+   (click-prompt state :corp "Yes")
+   (is (= 3 (count-tags state)) "Chekist scion should give 3 tags")))
 
 (deftest chief-slee
   ;; Chief Slee
@@ -1417,6 +1455,28 @@
                 (play-from-hand state :runner "Cache")
                 (is (= (- 4 number) (:credit (get-runner)))))))]
     (doall (map dlcd-test [0 1 2 3 4]))))
+
+(deftest drago-ivanov
+  (do-game
+    (new-game {:corp {:hand ["Drago Ivanov"] :credits 10}})
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "Drago Ivanov" "New remote")
+    (let [drago (get-content state :remote1 0)]
+      (advance state (refresh drago) 4)
+      (is (= 4 (get-counters (refresh drago) :advancement)))
+      (rez state :corp (refresh drago))
+      (changes-val-macro
+        1 (count-tags state)
+        "Drago tagged the runner"
+        (card-ability state :corp (refresh drago) 0)
+        (is (= 2 (get-counters (refresh drago) :advancement))))
+      (take-credits state :corp)
+      (changes-val-macro
+        0 (count-tags state)
+        "Drago cannot be used on the runners turn"
+        (card-ability state :corp (refresh drago) 0)
+        (is (= 2 (get-counters (refresh drago) :advancement)))))))
+
 
 (deftest drudge-work
   ;; Drudge Work - Shuffle agenda from HQ or Archives into R&D, and gain credits = to agenda points
@@ -3043,6 +3103,37 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
+
+(deftest moon-pool
+  ;; Moon Pool - trash 2 from hq, reveal and shuffle 2, place an advancement for agendas revealed
+  (do-game
+    (new-game {:corp {:hand [(qty "Moon Pool" 2) "Hostile Takeover" "PAD Campaign" "Project Atlas"
+                             "House of Knives"] :credits 10}})
+    (play-from-hand state :corp "Moon Pool" "New remote")
+    (play-from-hand state :corp "Moon Pool" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp "PAD Campaign")
+    (click-card state :corp "Project Atlas")
+    (is (= 2 (count (:discard (get-corp)))) "Two cards trashed")
+    (click-card state :corp "PAD Campaign")
+    (click-prompt state :corp "Done")
+    (is (no-prompt? state :corp) "No more prompt for moon pool")
+    (is (= 1 (count (:discard (get-corp)))))
+    (is (= 1 (count (:deck (get-corp)))))
+    (card-ability state :corp (get-content state :remote2 0) 0)
+    (click-card state :corp "House of Knives")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "House of Knives")
+    (click-card state :corp "Project Atlas")
+    (is (= 0 (count (:discard (get-corp)))) "All cards shuffled back")
+    (is (= 3 (count (:deck (get-corp)))))
+    (click-card state :corp "Hostile Takeover")
+    (click-card state :corp "Hostile Takeover")
+    (score state :corp (get-content state :remote3 0))
+    (is (= 1 (count (:scored (get-corp)))) "Hostile was scored")))
 
 (deftest mr-stone
   ;; Mr Stone

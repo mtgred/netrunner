@@ -568,6 +568,22 @@
     (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
     (is (= 2 (count-bad-pub state)) "Should gain 1 bad publicity")))
 
+(deftest blood-in-the-water
+  (do-game
+    (new-game {:corp {:hand ["Blood in the Water"]}
+               :runner {:hand [(qty "Sure Gamble" 4)]}})
+    (play-from-hand state :corp "Blood in the Water" "New remote")
+    (let [blood (get-content state :remote1 0)]
+      (core/add-prop state :corp blood :advance-counter 2)
+      (score state :corp (refresh blood))
+      (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 4)")
+      (damage state :corp :net 1)
+      (score state :corp (refresh blood))
+      (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 3)")
+      (damage state :corp :net 1)
+      (score state :corp (refresh blood))
+      (is (= 2 (:agenda-point (get-corp))) "Scored regenesis when runner had 2 cards"))))
+
 (deftest brain-rewiring
   ;; Brain Rewiring
   (do-game
@@ -1133,6 +1149,16 @@
         (card-ability state :corp yale 1)
         (click-card state :corp "Domestic Sleepers")
         (is (zero? (:agenda-point (get-corp))) "Domestic Sleepers is worth 0 points after losing the agenda counter"))))
+
+(deftest elivagar-bifurcation
+  (do-game
+    (new-game {:corp {:hand ["Élivágar Bifurcation" "Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [iwall (get-ice state :hq 0)]
+      (rez state :corp iwall)
+      (play-and-score state "Élivágar Bifurcation")
+      (click-card state :corp (refresh iwall))
+      (is (not (rezzed? (refresh iwall))) "ice wall was derezzed"))))
 
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
@@ -3235,6 +3261,21 @@
       (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
+
+(deftest regenesis
+  ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
+  ;; and add it to score area
+  (do-game
+    (new-game {:corp {:deck [(qty "Regenesis" 2) "Hansei Review" "Obokata Protocol"]}})
+    (play-from-hand state :corp "Hansei Review")
+    (click-card state :corp "Obokata Protocol")
+    (play-and-score state "Regenesis")
+    (is (no-prompt? state :corp) "No prompt because we trashed at least one card")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Obokata Protocol")
+    (is (= 5 (:agenda-point (get-corp))) "3+1+1 agenda points from obo + regen + regen")))
 
 (deftest remastered-edition
   ;; Remastered Edition

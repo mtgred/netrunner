@@ -2017,6 +2017,17 @@
       (run-jack-out state)
       (is (= 5 (get-strength (refresh cor))) "Corroder still has 5 strength"))))
 
+(deftest ghosttongue
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 2) "Ghosttongue"] :credits 6}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ghosttongue")
+    (is (= 1 (:brain-damage (get-runner))) "1 brain from install")
+    (changes-val-macro
+      5 (:credit (get-runner))
+      "net +5c for sure gamble"
+      (play-from-hand state :runner "Sure Gamble"))))
+
 (deftest gpi-net-tap
   (do-game
    (new-game {:runner {:hand ["GPI Net Tap"]}
@@ -3159,6 +3170,44 @@
                                "Used 1 credit from Omni-drive"
                                (card-ability state :runner inti 1)
                                (click-card state :runner omni))))))
+
+(deftest pan-weave-happy
+  ;; PAN-Weave - 1 meat on install, once/turn siphon 1 credit on hq run
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 2) "PAN-Weave"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "PAN-Weave")
+    (is (= 1 (count (:discard (get-runner)))) "1 damage done")
+    (changes-val-macro
+      1 (:credit (get-runner))
+      "gained 1c from pan-weave"
+      (changes-val-macro
+        -1 (:credit (get-corp))
+        "lost 1c from pan-weave"
+        (run-on state :hq)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (is (no-prompt? state :runner))))))
+
+(deftest pan-weave-no-credits
+  ;; PAN-Weave - 1 meat on install, once/turn siphon 1 credit on hq run
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 2) "PAN-Weave"]}})
+    (take-credits state :corp)
+    (core/lose state :corp :credit 8)
+    (is (= 0 (:credit (get-corp))))
+    (play-from-hand state :runner "PAN-Weave")
+    (is (= 1 (count (:discard (get-runner)))) "1 damage done")
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "gained 0c from pan-weave"
+      (changes-val-macro
+        0 (:credit (get-corp))
+        "still on 0c"
+        (run-on state :hq)
+        (run-continue state)
+        (click-prompt state :runner "No action")
+        (is (no-prompt? state :runner))))))
 
 (deftest pantograph-trigger-on-steal
   ;; Pantograph - Gain 1 credit and may install a card on steal

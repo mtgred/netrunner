@@ -1697,13 +1697,57 @@
         (card-subroutine state :corp drafter 1)
         (is (= :select (prompt-type :corp)))
         (click-card state :corp "Wotan")
-        (changes-val-macro
-          0 (:credit (get-corp))
-          "Costs no credits to install a second ice on HQ"
-          (click-prompt state :corp "HQ"))
-        (is (= "Wotan" (:title (get-ice state :hq 1)))
-            "Wotan is now installed in the outermost position protecting HQ"))))
-  (testing "from HQ"
+          (changes-val-macro
+            0 (:credit (get-corp))
+            "Costs no credits to install a second ice on HQ"
+            (click-prompt state :corp "HQ"))
+          (is (= "Wotan" (:title (get-ice state :hq 1)))
+              "Wotan is now installed in the outermost position protecting HQ"))))
+    (testing "from HQ"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Drafter" "Fairchild"]
+                          :discard ["Wotan"]}})
+        (play-from-hand state :corp "Drafter" "HQ")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (let [drafter (get-ice state :hq 0)]
+          (rez state :corp (get-ice state :hq 0))
+          (run-continue state)
+          (card-subroutine state :corp drafter 1)
+          (is (= :select (prompt-type :corp)))
+          (click-card state :corp "Fairchild")
+          (changes-val-macro
+            0 (:credit (get-corp))
+            "Costs no credits to install a second ice on HQ"
+            (click-prompt state :corp "HQ"))
+          (is (= "Fairchild" (:title (get-ice state :hq 1)))
+              "Fairchild is now installed in the outermost position protecting HQ")))))
+
+(deftest echo
+  (do-game
+    (new-game {:corp {:deck [(qty "Echo" 3)] :credits 15}})
+    (play-from-hand state :corp "Echo" "HQ")
+    (play-from-hand state :corp "Echo" "HQ")
+    (play-from-hand state :corp "Echo" "HQ")
+    (let [e1 (get-ice state :hq 0)
+          e2 (get-ice state :hq 1)
+          e3 (get-ice state :hq 2)]
+      (rez state :corp e1)
+      (is (= 1 (get-counters (refresh e1) :power)) "Placed 1 counter on rezzed Echo")
+      (is (= 0 (get-counters (refresh e2) :power)) "Placed 0 counter on unrezzed Echo")
+      (rez state :corp e2)
+      (is (= 2 (get-counters (refresh e1) :power)) "Placed 2 counters on rezzed Echo")
+      (is (= 1 (get-counters (refresh e2) :power)) "Placed 1 counter on rezzed Echo")
+      (is (= 0 (get-counters (refresh e3) :power)) "Placed 0 counter on unrezzed Echo")
+      (rez state :corp e3)
+      (is (= 3 (get-counters (refresh e1) :power)) "Placed 3 counters on rezzed Echo")
+      (is (= 2 (get-counters (refresh e2) :power)) "Placed 2 counter on rezzed Echo")
+      (is (= 1 (get-counters (refresh e3) :power)) "Placed 1 counter on unrezzed Echo")
+      (is (= 3 (count (:subroutines (refresh e1)))) "Should have 3 subroutine"))))
+
+(deftest endless-eula-runner-side-ability
+    ;; Runner side ability
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Drafter" "Fairchild"]
@@ -1722,7 +1766,7 @@
           "Costs no credits to install a second ice on HQ"
           (click-prompt state :corp "HQ"))
         (is (= "Fairchild" (:title (get-ice state :hq 1)))
-            "Fairchild is now installed in the outermost position protecting HQ")))))
+            "Fairchild is now installed in the outermost position protecting HQ"))))
 
 (deftest echo
   (do-game
@@ -3235,6 +3279,19 @@
       (is (= 4 (count (:discard (get-runner)))) "Cache trashed")
       (is (= 1 (count (:discard (get-corp)))) "It's a Trap trashed"))))
 
+(deftest ivik
+  (do-game
+    (new-game {:corp {:hand [(qty "Mind Game" 2) "Ivik"] :credits 50}})
+    (play-from-hand state :corp "Ivik" "New remote")
+    (play-from-hand state :corp "Mind Game" "New remote")
+    (play-from-hand state :corp "Mind Game" "New remote")
+    (rez state :corp (get-ice state :remote2 0))
+    (rez state :corp (get-ice state :remote3 0))
+    (changes-val-macro
+      -5 (:credit (get-corp))
+      "7 - 2 = 5 credits"
+      (rez state :corp (get-ice state :remote1 0)))))
+
 (deftest jua-encounter-effect-prevent-runner-from-installing-cards-for-the-rest-of-the-turn
   ;; Encounter effect - Prevent Runner from installing cards for the rest of the turn
   (do-game
@@ -4058,6 +4115,28 @@
     (rez state :corp (get-ice state :rd 0))
     (is (= 4 (get-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
     (is (= 1 (get-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+
+(deftest mestnichestvo
+  (do-game
+    (new-game {:corp {:hand ["Mestnichestvo"] :credits 10}})
+    (play-from-hand state :corp "Mestnichestvo" "HQ")
+    (let [mes (get-ice state :hq 0)]
+      (core/advance state :corp {:card (refresh mes)})
+      (take-credits state :corp)
+      (run-on state :hq)
+      (rez state :corp (refresh mes))
+      (run-continue state)
+      (changes-val-macro
+        -3 (:credit (get-runner))
+        "Runner lost 3 from encounter effect"
+        (is (= 1 (get-counters (refresh mes) :advancement)) "Starts with 1 counter")
+        (click-prompt state :corp "Yes")
+        (is (= 0 (get-counters (refresh mes) :advancement)) "Spend a counter for the ability"))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner loses remaining credits from subroutines"
+        (fire-subs state (refresh mes))))
+    (is (not (:run @state)) "Run ended")))
 
 (deftest metamorph-with-two-installed-ice
   ;; with two installed ice

@@ -949,6 +949,13 @@
                                (:effects @state)))
                       (update-breaker-strength state side host)))})
 
+(defcard "Ghosttongue"
+  {:on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}
+   :constant-effects [{:type :play-cost
+                       :req (req (event? target))
+                       :value -1}]})
+
 (defcard "GPI Net Tap"
   {:abilities [{:req (req (and (= :approach-ice (:phase run))
                                (ice? current-ice)
@@ -1369,6 +1376,22 @@
                                                (program? target)
                                                (same-card? card (:host target))))
                                 :type :recurring}}})
+
+(defcard "PAN-Weave"
+  {:on-install {:async true
+                :msg "suffer 1 meat damage"
+                :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
+   :events [{:event :successful-run
+             :req (req (and
+                         (= :hq (first (:server target)))
+                         (first-event? state side :successful-run #(= :hq (first (:server (first %)))))))
+             :msg (msg "force the Corp to lose 1 [Credits]")
+             :async true
+             :effect (req (if (pos? (:credit corp))
+                            (wait-for (lose-credits state :corp 1)
+                                      (system-msg state side (str "uses " (:title card) " to gain 1 [Credits]"))
+                                      (gain-credits state :runner eid 1))
+                            (effect-completed state side eid)))}]})
 
 (defcard "Pantograph"
   (let [install-ability
@@ -2152,7 +2175,7 @@
                                     :async true
                                     :interactive (req true)
                                     :msg (msg "breach HQ")
-                                    :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}])
+                                    :effect (req (breach-server state :runner eid [:hq] nil))}])
                                 (effect-completed state side eid))))}]})
 
 (defcard "Window"
