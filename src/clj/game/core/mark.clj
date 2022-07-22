@@ -2,6 +2,7 @@
   (:require
     [game.core.say :refer [system-msg]]
     [game.core.servers :refer [central->name]]
+    [game.core.update :refer [update!]]
     [game.macros :refer [req]]))
 
 (defn set-mark
@@ -19,5 +20,5 @@
     (system-msg state :runner (str "identifies their mark to be " (central->name new-mark)))))
 
 (def identify-mark-ability
-  {:req (req (nil? (:mark @state)))
-   :effect (req (identify-mark state))})
+  {:effect (req (when (nil? (:mark @state)) (identify-mark state))
+                (update! state :runner (assoc card :card-target (:mark @state))))})
