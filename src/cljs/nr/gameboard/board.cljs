@@ -887,7 +887,7 @@
        ; deck-count is only sent to live games and does not exist in the replay
        (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
          [:div.deck-container (drop-area title {})
-          [:div.blue-shade.deck {:on-click (when (= render-side player-side)
+          [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
                                              #(let [popup-display (-> (content-ref @board-dom) .-style .-display)]
                                                 (if (or (empty? popup-display)
                                                         (= "none" popup-display))
@@ -2058,7 +2058,7 @@
 
                [:div.leftpane
                 [:div.opponent
-                 [hand-view op-side op-hand op-hand-size op-hand-count (atom nil) (= @side :spectator) "opponent"]]
+                 [hand-view op-side op-hand op-hand-size op-hand-count (atom nil) (= @side :spectator)]]
 
                 [:div.inner-leftpane
                  [audio-component sfx]
@@ -2098,7 +2098,7 @@
                                   :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
-                 [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true "me"]]]]
+                 [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
               (when (:replay @game-state)
                 [:div.bottompane
                  [replay-panel]])])))})))

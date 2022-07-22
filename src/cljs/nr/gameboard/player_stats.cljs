@@ -4,18 +4,20 @@
    [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
    [nr.gameboard.actions :refer [send-command]]
-   [nr.gameboard.state :refer [game-state]]
+   [nr.gameboard.state :refer [game-state not-spectator?]]
    [nr.translations :refer [tr tr-pronouns]]))
 
 (defn stat-controls
   "Create an overlay to increase/decrease a player attribute (e.g. credits)."
   ([key content] (stat-controls key 1 -1 content))
   ([key increment decrement content]
-   [:div.stat-controls
-    content
-    [:div.controls
-     [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
-     [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]]))
+   (if (not-spectator?)
+     [:div.stat-controls
+      content
+      [:div.controls
+       [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
+       [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]]]
+     content)))
 
 (defn- stat-controls-for-side
   [side]
