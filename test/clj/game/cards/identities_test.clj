@@ -2,6 +2,7 @@
   (:require [game.core :as core]
             [game.core.servers :refer [zone->name]]
             [game.core.card :refer :all]
+            [game.core.mark :refer [is-mark?]]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -3525,6 +3526,22 @@
       1 (:click (get-runner))
       "gained 1 click from running the mark"
       (run-continue state))))
+
+(deftest nyusha-sable-sintashta-with-virtuoso
+  ;; Multiple cards setting a mark are idempotent
+  (do-game
+    (new-game {:runner {:id "Nyusha \"Sable\" Sintashta: Symphonic Prodigy" :hand ["Virtuoso"]}
+               :corp {:deck [(qty "Hedge Fund" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [virt (get-hardware state 0)
+          sable (get-in @state [:runner :identity])]
+      (is (= true (is-mark? state (:card-target virt))))
+      (is (= true (is-mark? state (:card-target sable))))
+      (is (last-log-contains? state "identifies their mark"))
+      (is (not (second-last-log-contains? state "identifies their mark"))))))
 
 (deftest ob-logistics-basic-test
   ;; The ability works, and it works once per turn - depends on Extract to be correct
