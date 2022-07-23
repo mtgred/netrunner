@@ -810,17 +810,14 @@
                                   (when (not-empty ices)
                                     (choose-ice ices grids))
                                   card nil))
-                              ;; else, if it's the runner's turn, show a fake prompt so the runner can't infer that ice weren't drawn
-                              (= :runner (:active-player @state))
+                              ;; else show a fake prompt so the runner can't infer that ice weren't drawn
+                              :else
                               (continue-ability
                                 state :corp
                                 {:prompt "You did not draw any ice to use with Jinja City Grid"
                                  :choices ["Carry on!"]
                                  :prompt-type :bogus}
-                                card nil)
-                              ;; otherwise, we done
-                              :else
-                              (effect-completed state side eid)))}
+                                card nil)))}
               {:event :post-corp-draw
                :effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw]))}]}))
 
