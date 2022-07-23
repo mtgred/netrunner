@@ -29,9 +29,9 @@
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [hand-size]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-sub add-sub! break-sub remove-sub! remove-subs!
-                          resolve-subroutine set-current-ice strength-bonus
-                          unbroken-subroutines-choice update-all-ice update-all-icebreakers
+   [game.core.ice :refer [add-sub add-sub! break-sub ice-strength-bonus
+                          remove-sub! remove-subs! resolve-subroutine
+                          set-current-ice unbroken-subroutines-choice update-all-ice update-all-icebreakers
                           update-ice-strength]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-list
@@ -359,7 +359,7 @@
   [subroutines]
   {:advanceable :always
    :subroutines subroutines
-   :constant-effects [(strength-bonus (req (get-counters card :advancement)))]})
+   :constant-effects [(ice-strength-bonus (req (get-counters card :advancement)))]})
 
 (defn space-ice
   "Creates data for Space ice with specified abilities."
@@ -592,7 +592,7 @@
                     :effect (effect (add-prop target :advance-counter 1 {:placed true})
                                     (gain-credits eid 1))}
                    (assoc end-the-run :breakable breakable-fn)]
-     :constant-effects [(strength-bonus
+     :constant-effects [(ice-strength-bonus
                           (req (<= 3 (get-counters card :advancement)))
                           3)]}))
 
@@ -758,7 +758,7 @@
 
 (defcard "Bathynomus"
   {:subroutines [(do-net-damage 3)]
-   :constant-effects [(strength-bonus (req (protecting-archives? card)) 3)]})
+   :constant-effects [(ice-strength-bonus (req (protecting-archives? card)) 3)]})
 
 (defcard "Battlement"
   {:subroutines [end-the-run
@@ -1083,7 +1083,7 @@
                         :label "The Runner trashes 1 program")
                  runner-loses-click
                  end-the-run]
-   :constant-effects [(strength-bonus
+   :constant-effects [(ice-strength-bonus
                         (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
                         3)]})
 
@@ -1102,13 +1102,13 @@
                                         (corp? %))}
                   :msg (msg (corp-install-msg target))
                   :effect (effect (corp-install eid target nil nil))}]
-   :constant-effects [(strength-bonus (req (protecting-archives? card)) 3)]})
+   :constant-effects [(ice-strength-bonus (req (protecting-archives? card)) 3)]})
 
 (defcard "Curtain Wall"
   {:subroutines [end-the-run
                  end-the-run
                  end-the-run]
-   :constant-effects [(strength-bonus
+   :constant-effects [(ice-strength-bonus
                         (req (let [ices (:ices (card->server state card))]
                                (same-card? card (last ices))))
                         4)]
@@ -1257,7 +1257,7 @@
             :msg (msg "place " (quantify target "power counter"))
             :effect (effect (add-counter card :power target)
                             (update-ice-strength card))}
-   :constant-effects [(strength-bonus (req (get-counters card :power)))]
+   :constant-effects [(ice-strength-bonus (req (get-counters card :power)))]
    :subroutines [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"
                                    :msg "give the Runner 1 tag and end the run"
                                    :async true
@@ -1655,7 +1655,7 @@
                              :label "Draw cards, reveal and shuffle agendas"
                              :effect (req (wait-for (resolve-ability state side draw-ab card nil)
                                                     (continue-ability state side reveal-and-shuffle card nil)))}]
-    {:constant-effects [(strength-bonus (req (= :this-turn (:rezzed card))) 6)]
+    {:constant-effects [(ice-strength-bonus (req (= :this-turn (:rezzed card))) 6)]
      :subroutines [draw-reveal-shuffle
                    end-the-run]}))
 
@@ -1691,7 +1691,7 @@
 
 (defcard "Gutenberg"
   {:subroutines [(tag-trace 7)]
-   :constant-effects [(strength-bonus (req (protecting-rd? card)) 3)]})
+   :constant-effects [(ice-strength-bonus (req (protecting-rd? card)) 3)]})
 
 (defcard "Gyri Labyrinth"
   {:subroutines [{:req (req run)
@@ -1742,8 +1742,8 @@
                   :effect (effect (clear-wait-prompt :runner)
                                   (trash eid target {:cause :subroutine}))}
                  end-the-run]
-   :constant-effects [(strength-bonus (req (- (count (filter #(has-subtype? % "Icebreaker")
-                                                             (all-active-installed state :runner))))))]})
+   :constant-effects [(ice-strength-bonus (req (- (count (filter #(has-subtype? % "Icebreaker")
+                                                                 (all-active-installed state :runner))))))]})
 
 (defcard "Hailstorm"
   {:subroutines [{:label  "Remove a card in the Heap from the game"
@@ -2039,7 +2039,7 @@
 
 (defcard "IQ"
   {:subroutines [end-the-run]
-   :constant-effects [(strength-bonus (req (count (:hand corp))))]
+   :constant-effects [(ice-strength-bonus (req (count (:hand corp))))]
    :rez-cost-bonus (req (count (:hand corp)))
    :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))})
 
@@ -2453,7 +2453,7 @@
 
 (defcard "Meru Mati"
   {:subroutines [end-the-run]
-   :constant-effects [(strength-bonus (req (protecting-hq? card)) 3)]})
+   :constant-effects [(ice-strength-bonus (req (protecting-hq? card)) 3)]})
 
 (defcard "Metamorph"
   {:subroutines [{:label "Swap two pieces of ice or swap two installed non-ice"
@@ -2688,7 +2688,7 @@
 
 (defcard "NEXT Bronze"
   {:subroutines [end-the-run]
-   :constant-effects [(strength-bonus (req (next-ice-count corp)))]})
+   :constant-effects [(ice-strength-bonus (req (next-ice-count corp)))]})
 
 (defcard "NEXT Diamond"
   {:rez-cost-bonus (req (- (next-ice-count corp)))
@@ -2865,7 +2865,7 @@
                  end-the-run-if-tagged]})
 
 (defcard "Palisade"
-  {:constant-effects [(strength-bonus (req (not (protecting-a-central? card))) 2)]
+  {:constant-effects [(ice-strength-bonus (req (not (protecting-a-central? card))) 2)]
    :subroutines [end-the-run]})
 
 (defcard "Paper Wall"
@@ -2901,7 +2901,7 @@
    :subroutines [(give-tags 1)
                  end-the-run
                  end-the-run]
-   :constant-effects [(strength-bonus (req (wonder-sub card 3)) 5)]})
+   :constant-effects [(ice-strength-bonus (req (wonder-sub card 3)) 5)]})
 
 (defcard "Ping"
   {:on-rez {:req (req (and run this-server))
@@ -2937,7 +2937,7 @@
                   :effect (effect (add-counter card :power 1)
                                   (update-all-ice))}
    :subroutines [end-the-run]
-   :constant-effects [(strength-bonus (req (get-counters card :power)))]})
+   :constant-effects [(ice-strength-bonus (req (get-counters card :power)))]})
 
 (defcard "Rainbow"
   {:subroutines [end-the-run]})
@@ -2961,7 +2961,7 @@
                                   (update-all-ice))}]})
 
 (defcard "Resistor"
-  {:constant-effects [(strength-bonus (req (count-tags state)))]
+  {:constant-effects [(ice-strength-bonus (req (count-tags state)))]
    :subroutines [(trace-ability 4 end-the-run)]})
 
 (defcard "Rime"
@@ -3080,7 +3080,7 @@
 
 (defcard "Sandstone"
   {:subroutines [end-the-run]
-   :constant-effects [(strength-bonus (req (- (get-counters card :virus))))]
+   :constant-effects [(ice-strength-bonus (req (- (get-counters card :virus))))]
    :on-encounter {:msg "place 1 virus counter on Sandstone"
                   :effect (effect (add-counter card :virus 1)
                                   (update-ice-strength (get-card state card)))}})
@@ -3103,7 +3103,7 @@
                    sub]}))
 
 (defcard "Seidr Adaptive Barrier"
-  {:constant-effects [(strength-bonus (req (count (:ices (card->server state card)))))]
+  {:constant-effects [(ice-strength-bonus (req (count (:ices (card->server state card)))))]
    :subroutines [end-the-run]})
 
 (defcard "Self-Adapting Code Wall"
@@ -3299,7 +3299,7 @@
 
 (defcard "Surveyor"
   (let [x (req (* 2 (count (:ices (card->server state card)))))]
-    {:constant-effects [(strength-bonus x)]
+    {:constant-effects [(ice-strength-bonus x)]
      :subroutines [{:label "Trace X - Give the Runner 2 tags"
                     :trace {:base x
                             :label "Give the Runner 2 tags"
@@ -3553,7 +3553,7 @@
                        :req (req (and (same-card? card (:ice context))
                                       (has-subtype? (:icebreaker context) "AI")))
                        :value true}
-                      (strength-bonus (req (not (protecting-a-central? card))) 3)]
+                      (ice-strength-bonus (req (not (protecting-a-central? card))) 3)]
    :subroutines [(end-the-run-unless-runner
                    "spends [Click][Click][Click]"
                    "spend [Click][Click][Click]"
@@ -3775,7 +3775,7 @@
 
 (defcard "Wraparound"
   {:subroutines [end-the-run]
-   :constant-effects [(strength-bonus
+   :constant-effects [(ice-strength-bonus
                         (req (not-any? #(has-subtype? % "Fracter") (all-active-installed state :runner)))
                         7)]})
 

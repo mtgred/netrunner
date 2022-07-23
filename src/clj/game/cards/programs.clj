@@ -29,8 +29,8 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [all-subs-broken-by-card? all-subs-broken?
                           any-subs-broken-by-card? auto-icebreaker break-sub
-                          break-subroutine! break-subroutines-msg dont-resolve-subroutine! get-strength ice-strength
-                          pump pump-ice set-current-ice strength-bonus strength-pump
+                          break-subroutine! break-subroutines-msg breaker-strength-bonus dont-resolve-subroutine!
+                          get-strength ice-strength pump pump-ice set-current-ice strength-pump
                           unbroken-subroutines-choice update-breaker-strength]]
    [game.core.initializing :refer [ability-init card-init]]
    [game.core.installing :refer [install-locked? runner-can-install?
@@ -214,7 +214,7 @@
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [abilities]
   (auto-icebreaker {:abilities abilities
-                    :constant-effects [(strength-bonus (req (available-mu state)))]}))
+                    :constant-effects [(breaker-strength-bonus (req (available-mu state)))]}))
 
 (defn- break-multiple-types
   "Single ability to break multiple types of ice
@@ -337,8 +337,8 @@
   (auto-icebreaker
     (cloud-icebreaker
       {:abilities [(break-sub [:trash-can] 3 ice-type)]
-       :constant-effects [(strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
-                                                              (all-active-installed state :runner)))))]})))
+       :constant-effects [(breaker-strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
+                                                                      (all-active-installed state :runner)))))]})))
 
 (defn- global-sec-breaker
   "No MU with 2+ link, break any number of subs for 2, pump 2 for 3
@@ -461,7 +461,7 @@
                 :msg (msg "add " (cost-value eid :x-credits) " power counters")
                 :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
    :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
-   :constant-effects [(strength-bonus (req (get-counters card :power)))]})
+   :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))]})
 
 (defcard "Au Revoir"
   {:events [{:event :jack-out
@@ -475,7 +475,7 @@
                                 {:label "Place a virus counter"
                                  :msg "manually place a virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
-                    :constant-effects [(strength-bonus (req (get-virus-counters state card)))]
+                    :constant-effects [(breaker-strength-bonus (req (get-virus-counters state card)))]
                     :events [{:event :end-breach-server
                               :req (req (not (or (:did-steal target)
                                                  (:did-trash target))))
@@ -530,7 +530,7 @@
   (auto-icebreaker {:on-install {:async true
                                  :effect (effect (damage eid :brain 1 {:card card}))}
                     :abilities [(break-sub 1 0 "Barrier")]
-                    :constant-effects [(strength-bonus (req (:brain-damage runner)))]}))
+                    :constant-effects [(breaker-strength-bonus (req (:brain-damage runner)))]}))
 
 (defcard "Berserker"
   (auto-icebreaker {:events [{:event :encounter-ice
@@ -880,7 +880,7 @@
 
 (defcard "Cradle"
   (auto-icebreaker {:abilities [(break-sub 2 0 "Code Gate")]
-                    :constant-effects [(strength-bonus (req (- (count (:hand runner)))))]}))
+                    :constant-effects [(breaker-strength-bonus (req (- (count (:hand runner)))))]}))
 
 (defcard "Creeper"
   (cloud-icebreaker
@@ -988,7 +988,7 @@
                                  :msg "place 1 virus counter"
                                  :req (req (:runner-phase-12 @state))
                                  :effect (effect (add-counter card :virus 1))}]
-                    :constant-effects [(strength-bonus (req (get-virus-counters state card)))]}))
+                    :constant-effects [(breaker-strength-bonus (req (get-virus-counters state card)))]}))
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
@@ -1171,9 +1171,9 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Echelon"
-  (auto-icebreaker {:constant-effects [(strength-bonus (req (count (filter #(and (program? %)
-                                                                                 (has-subtype? % "Icebreaker"))
-                                                                           (all-active-installed state :runner)))))]
+  (auto-icebreaker {:constant-effects [(breaker-strength-bonus (req (count (filter #(and (program? %)
+                                                                                         (has-subtype? % "Icebreaker"))
+                                                                                   (all-active-installed state :runner)))))]
                     :abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 3 2)]}))
 
@@ -1360,7 +1360,7 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Gauss"
-  (auto-icebreaker {:constant-effects [(strength-bonus (req (= :this-turn (installed? card))) 3)]
+  (auto-icebreaker {:constant-effects [(breaker-strength-bonus (req (= :this-turn (installed? card))) 3)]
                     :abilities [(break-sub 1 1 "Barrier")
                                 (strength-pump 2 2)]}))
 
@@ -1503,7 +1503,7 @@
                                  :msg "place 1 power counter"
                                  :async true
                                  :effect (effect (add-counter eid card :power 1 nil))}]
-                    :constant-effects [(strength-bonus (req (get-counters card :power)))]}))
+                    :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))]}))
 
 (defcard "Hyperdriver"
   {:flags {:runner-phase-12 (req true)}
@@ -1780,7 +1780,7 @@
 
 (defcard "Maven"
   (auto-icebreaker {:abilities [(break-sub 2 1)]
-                    :constant-effects [(strength-bonus (req (count (filter program? (all-active-installed state :runner)))))]}))
+                    :constant-effects [(breaker-strength-bonus (req (count (filter program? (all-active-installed state :runner)))))]}))
 
 (defcard "Mayfly"
   (auto-icebreaker
@@ -1852,7 +1852,7 @@
   (virus-breaker "Sentry"))
 
 (defcard "Na'Not'K"
-  (auto-icebreaker {:constant-effects [(strength-bonus (req (count run-ices)))]
+  (auto-icebreaker {:constant-effects [(breaker-strength-bonus (req (count run-ices)))]
                     :abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 3 2)]}))
 
@@ -1882,7 +1882,7 @@
 
 (defcard "Nfr"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")]
-                    :constant-effects [(strength-bonus (req (get-counters card :power)))]
+                    :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))]
                     :events [{:event :end-of-encounter
                               :req (req (all-subs-broken-by-card? (:ice context) card))
                               :msg "place 1 power counter on itself"
@@ -2207,7 +2207,7 @@
                                  :msg "remove one power counter"
                                  :label "Remove 1 power counter"
                                  :effect (effect (add-counter card :power -1))}]
-                    :constant-effects [(strength-bonus (req (get-counters card :power)))
+                    :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))
                                        {:type :used-mu
                                         :duration :constant
                                         :value (req (get-counters card :power))}]}))
@@ -2494,11 +2494,11 @@
                                 {:cost [:credit 2]
                                  :msg "place 1 power counter"
                                  :effect (effect (add-counter card :power 1))}]
-                    :constant-effects [(strength-bonus (req (get-counters card :power)))]}))
+                    :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))]}))
 
 (defcard "Sūnya"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Sentry")]
-                    :constant-effects [(strength-bonus (req (get-counters card :power)))]
+                    :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))]
                     :events [{:event :end-of-encounter
                               :req (req (all-subs-broken-by-card? (:ice context) card))
                               :msg "place 1 power counter on itself"
