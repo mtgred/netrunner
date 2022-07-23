@@ -21,4 +21,4 @@
 
 (def identify-mark-ability
   {:effect (req (when (nil? (:mark @state)) (identify-mark state))
-                (update! state :runner (assoc card :card-target (:mark @state))))})
+                (update! state :runner (assoc card :card-target (central->name (:mark @state)))))})

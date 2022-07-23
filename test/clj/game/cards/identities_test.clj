@@ -1,6 +1,6 @@
 (ns game.cards.identities-test
   (:require [game.core :as core]
-            [game.core.servers :refer [zone->name]]
+            [game.core.servers :refer [unknown->kw zone->name]]
             [game.core.card :refer :all]
             [game.core.mark :refer [is-mark?]]
             [game.utils :as utils]
@@ -3538,8 +3538,8 @@
     (take-credits state :corp)
     (let [virt (get-hardware state 0)
           sable (get-in @state [:runner :identity])]
-      (is (= true (is-mark? state (:card-target virt))))
-      (is (= true (is-mark? state (:card-target sable))))
+      (is (= true (is-mark? state (unknown->kw (:card-target virt)))))
+      (is (= true (is-mark? state (unknown->kw (:card-target sable)))))
       (is (last-log-contains? state "identifies their mark"))
       (is (not (second-last-log-contains? state "identifies their mark"))))))
 
