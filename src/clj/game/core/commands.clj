@@ -22,6 +22,7 @@
    [game.core.psi :refer [psi-game]]
    [game.core.rezzing :refer [rez derez]]
    [game.core.runs :refer [end-run get-current-encounter jack-out]]
+   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg system-say unsafe-say]]
    [game.core.set-up :refer [build-card]]
    [game.core.to-string :refer [card-str]]
@@ -428,6 +429,12 @@
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
+        "/sabotage"   #(when (= %2 :runner)
+                          (resolve-ability
+                            %1 %2
+                            {:async true
+                             :effect (effect (continue-ability (sabotage-ability (constrain-value value 0 1000)) nil nil))}
+                            nil nil))
         "/save-replay" command-save-replay
         "/show-hand" #(resolve-ability %1 %2
                                          {:effect (effect (system-msg (str
