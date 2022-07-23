@@ -21,7 +21,9 @@
 (defn download-edn-data
   [localpath]
   (if localpath
-    ((comp edn/read-string slurp) (str localpath "/edn/raw_data.edn"))
+    (-> (str localpath "/edn/raw_data.edn")
+        (slurp)
+        (edn/read-string))
     (let [{:keys [status body error]} @(http/get edn-base-url)]
       (cond
         error (throw (Exception. (str "Failed to download file " error)))

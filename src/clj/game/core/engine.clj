@@ -377,20 +377,18 @@
   ;; Ensure that any costs can be paid
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             ;; If the cost can be and is paid, perform the ablity
-            (let [payment-str (:msg async-result)
-                  cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
-              (if payment-str
-                (wait-for (checkpoint state side (make-eid state eid) nil)
-                          (let [ability (assoc-in ability [:eid :cost-paid] cost-paid)]
-                            ;; Print the message
-                            (print-msg state side ability card targets payment-str)
-                            ;; Trigger the effect
-                            (register-once state side ability card)
-                            (do-effect state side ability (ugly-counter-hack card cost) targets)
-                            ;; If the ability isn't async, complete it
-                            (when-not async
-                              (effect-completed state side eid))))
-                (effect-completed state side eid)))))
+            (if-let [payment-str (:msg async-result)]
+              (let [cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
+                    ability (assoc-in ability [:eid :cost-paid] cost-paid)]
+                ;; Print the message
+                (print-msg state side ability card targets payment-str)
+                ;; Trigger the effect
+                (register-once state side ability card)
+                (do-effect state side ability (ugly-counter-hack card cost) targets)
+                ;; If the ability isn't async, complete it
+                (when-not async
+                  (effect-completed state side eid)))
+              (effect-completed state side eid))))
 
 (defn- do-choices
   "Handle a choices ability"

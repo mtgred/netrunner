@@ -6090,6 +6090,32 @@
       (is (= "Alpha" (:title (first (:discard (get-runner)))))
           "Alpha is trashed because it's an AI"))))
 
+(deftest swordsman-innate-ability-can-t-be-copied
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Loki" "Swordsman"]
+                      :credits 100}
+               :runner {:hand ["Alpha"]
+                        :credits 100}})
+    (play-from-hand state :corp "Loki" "R&D")
+    (play-from-hand state :corp "Swordsman" "HQ")
+    (rez state :corp (get-ice state :rd 0))
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Alpha")
+    (run-on state "R&D")
+    (run-continue state :encounter-ice)
+    (click-card state :corp (get-ice state :hq 0))
+    (let [alpha (get-program state 0)]
+      (card-ability state :runner alpha 1)
+      (card-ability state :runner alpha 1)
+      (card-ability state :runner alpha 0)
+      (is (= ["Trash an AI program"
+              "Do 1 net damage"
+              "End the run unless the Runner shuffles their Grip into the Stack"
+              "Done"]
+             (prompt-buttons :runner))))))
+
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
   ;; Thimblerig does not open a prompt if it's the only piece of ice
   (do-game
@@ -6830,6 +6856,23 @@
       (run-on state :hq)
       (run-continue state)
       (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ"))))
+
+(deftest winchester-2-subs-when-moved-with-tao
+  ;; 2 subs when moved with Thimblerig
+  (do-game
+    (new-game {:corp {:deck ["Winchester" "Thimblerig" "Merger"]}
+               :runner {:id "Tāo Salonga: Telepresence Magician"}})
+    (play-from-hand state :corp "Winchester" "HQ")
+    (play-from-hand state :corp "Thimblerig" "R&D")
+    (let [thim (get-ice state :rd 0)
+          win (get-ice state :hq 0)]
+      (rez state :corp thim)
+      (rez state :corp win)
+      (play-and-score state "Merger")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Winchester")
+      (click-card state :runner "Thimblerig")
+      (is (= 2 (count (:subroutines (get-ice state :rd 0))))))))
 
 (deftest woodcutter
   ;; Woodcutter

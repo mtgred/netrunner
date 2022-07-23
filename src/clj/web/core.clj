@@ -1,7 +1,7 @@
 (ns web.core
   (:require
-    [web.system :refer [start stop]]
-    [monger.collection :as mc])
+   [monger.collection :as mc]
+   [web.system :refer [start stop]])
   (:gen-class :main true))
 
 (defn -main [& _args]
