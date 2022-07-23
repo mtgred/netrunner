@@ -315,7 +315,7 @@
     (when-let [pump-fn (:pump-bonus ability)]
       (pump-fn state side (make-eid state) card targets)))))
 
-(defn strength-bonus
+(defn ice-strength-bonus
   "Use in :constant-effect vectors to give the current ice or program a conditional strength bonus"
   ([bonus]
    {:type :ice-strength
@@ -403,6 +403,18 @@
             (strfun state side (make-eid state) card nil))
           (sum-effects state side card :breaker-strength)]
          (reduce (fnil + 0 0)))))
+
+(defn breaker-strength-bonus
+  "Use in :constant-effect vectors to give the current ice or program a conditional strength bonus"
+  ([bonus]
+   {:type :breaker-strength
+    :req (req (same-card? card target))
+    :value bonus})
+  ([req-fn bonus]
+   {:type :breaker-strength
+    :req (req (and (same-card? card target)
+                   (req-fn state side eid card targets)))
+    :value bonus}))
 
 (defn update-breaker-strength
   "Updates a breaker's current strength by triggering updates and applying their effects."
