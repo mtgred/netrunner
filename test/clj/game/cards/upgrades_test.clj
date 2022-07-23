@@ -1773,8 +1773,8 @@
       (is (= 3 (:credit (get-corp))) "Charged to install ice")
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 pieces of ice protecting Remote1")))
 
-(deftest jinja-city-grid-drawing-non-ice-on-runner-s-turn
-    ;; Drawing non-ice on runner's turn
+(deftest jinja-city-grid-drawing-non-ice
+    ;; Drawing non-ice cards shows bogus prompt to the Runner
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
                         :hand ["Jinja City Grid"]}
@@ -1782,6 +1782,10 @@
                           :deck ["Eden Shard"]}})
       (play-from-hand state :corp "Jinja City Grid" "HQ")
       (rez state :corp (get-content state :hq 0))
+      (click-draw state :corp)
+      (is (= :waiting (prompt-type :runner)) "Runner has wait prompt")
+      (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")
+      (click-prompt state :corp "Carry on!")
       (take-credits state :corp)
       (run-empty-server state :rd)
       (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
