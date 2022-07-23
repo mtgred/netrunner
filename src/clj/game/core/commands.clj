@@ -6,6 +6,7 @@
                            has-subtype? ice? in-hand? installed? map->Card rezzed?
                            runner?]]
    [game.core.change-vals :refer [change]]
+   [game.core.charge :refer [charge-card]]
    [game.core.damage :refer [damage]]
    [game.core.drawing :refer [draw]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -348,6 +349,11 @@
                                                                           ": " (get-card state target))))
                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/card-info command"}) nil)
+        "/charge"     #(resolve-ability %1 %2
+                                        {:prompt "Choose an installed card to charge"
+                                         :effect (req (charge-card %1 %2 (make-eid state) target))
+                                         :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                        (map->Card {:title "/charge command"}) nil)
         "/clear-win"  clear-win
         "/click"      #(swap! %1 assoc-in [%2 :click] (constrain-value value 0 1000))
         "/close-prompt" command-close-prompt

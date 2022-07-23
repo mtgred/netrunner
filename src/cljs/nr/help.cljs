@@ -15,6 +15,9 @@
    {:name "/card-info"
     :usage "/card-info"
     :help "display debug info about a card (player's own cards only)"}
+   {:name "/charge"
+    :usage "/charge"
+    :help "Charge an installed card"}
    {:name "/clear-win"
     :usage "/clear-win"
     :help "requests game to clear the current win state.  Requires both players to request it"}
