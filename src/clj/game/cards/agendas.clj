@@ -670,10 +670,12 @@
 (defcard "Élivágar Bifurcation"
   {:on-score
    {:interactive (req true)
+    :async true
     :waiting-prompt "Corp to make a decision"
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
-    :cancel-effect {:msg "decline to derez a card"}
+    :cancel-effect (effect (system-msg :runner "declines to use Élivágar Bifurcation to derez a card")
+                           (effect-completed eid))
     :effect (effect (derez target))}})
 
 (defcard "Eden Fragment"
