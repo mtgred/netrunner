@@ -2436,11 +2436,12 @@
                                (filter is-central?)
                                (remove (into #{} (:made-run runner-reg)))
                                not-empty))
-                :choices (req (->> runnable-servers
-                                   (map unknown->kw)
-                                   (filter is-central?)
-                                   (remove (into #{} (:made-run runner-reg)))
-                                   (map central->name)))
+                :choices (req (cancellable
+                                (->> runnable-servers
+                                     (map unknown->kw)
+                                     (filter is-central?)
+                                     (remove (into #{} (:made-run runner-reg)))
+                                     (map central->name))))
                 :msg "make a run on central server"
                 :makes-run true
                 :async true
