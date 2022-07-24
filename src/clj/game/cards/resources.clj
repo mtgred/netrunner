@@ -210,9 +210,9 @@
                  :label "trash a card to gain 3 [Credits]"
                  :once :per-turn
                  :req (req (>= (count (all-installed state :runner)) 2))
-                 :choices {:req (req (and (runner? target)
-                                          (installed? target)
-                                          (not (same-card? target card))))}
+                 :choices {:not-self true
+                           :req (req (and (runner? target)
+                                          (installed? target)))}
                  :msg (msg "trash " (:title target) " and gain 3 [Credits]")
                  :cancel-effect (req (system-msg state :runner "declines to use Aesop's Pawnshop")
                                      (effect-completed state side eid))

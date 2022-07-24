@@ -931,8 +931,8 @@
              :effect (req (let [n (if (>= (get-counters (get-card state card) :advancement) 6) 2 1)]
                             (continue-ability
                               state side
-                              {:choices {:card #(and (not (same-card? % card))
-                                                     (can-be-advanced? %))}
+                              {:choices {:not-self true
+                                         :card #(can-be-advanced? %)}
                                :msg (msg "place " (quantify n "advancement token")
                                          " on " (card-str state target))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))}
