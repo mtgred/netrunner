@@ -1320,7 +1320,7 @@
                            (continue-ability
                              state side
                              {:prompt "Choose a card to install"
-                              :req (req (not-empty (filter #(corp-installable-type? %) (:hand corp))))
+                              :req (req (not-empty (filter corp-installable-type? (:hand corp))))
                               :choices {:card #(and (corp? %)
                                                     (corp-installable-type? %)
                                                     (in-hand? %))}
