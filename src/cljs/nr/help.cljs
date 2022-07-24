@@ -121,6 +121,10 @@
     :has-args :required
     :usage "/roll n"
     :help "Roll an n-sided die"}
+   {:name "/sabotage"
+    :has-args :required
+    :usage "/sabotage n"
+    :help "Sabotage n cards"}
    {:name "/save-replay"
     :usage "/save-replay"
     :help "Save a replay of the game"}

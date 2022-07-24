@@ -177,6 +177,15 @@
         (core/command-parser state :runner {:user user :text "/roll 99999999999999999999999999999999999999999999"})
         (is (second-last-log-contains? state "rolls a 1000 sided die") "Correct message, very large number"))))
 
+  (testing "/sabotage"
+    (let [user {:username "Runner"}]
+      (do-game
+        (new-game {:corp {:hand [(qty "Hedge Fund" 5)] :deck [(qty "IPO" 5)]}})
+        (core/command-parser state :runner {:user user :text "/sabotage 2"})
+        (click-card state :corp (nth (:hand (get-corp)) 0))
+        (click-prompt state :corp "Done")
+        (is (= 2 (count (:discard (get-corp)))) "Archives has 2 card"))))
+
   (testing "/summon"
     (let [user {:username "Runner"}]
       (testing "Add card with short title"
