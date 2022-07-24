@@ -166,6 +166,13 @@
           (core/command-parser state :runner {:user user :text "/memory 99999999999999999999999999999999999999999999"})
           (is (= 1000 (:used (:memory (get-runner)))) "runner has 1000 memory"))))
 
+  (testing "/mark"
+      (let [user {:username "Runner"}]
+        (do-game
+          (new-game)
+          (core/command-parser state :runner {:user user :text "/mark"})
+          (is (some? (:mark @state)) "Mark identified"))))
+
   (testing "/roll"
     (let [user {:username "Corp"}]
       (do-game

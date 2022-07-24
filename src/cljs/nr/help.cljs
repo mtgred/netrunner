@@ -78,6 +78,9 @@
     :has-args :required
     :usage "/link n"
     :help "Set your link to n"}
+   {:name "/mark"
+    :usage "/mark"
+    :help "Identify your mark"}
    {:name "/memory"
     :has-args :required
     :usage "/memory n"

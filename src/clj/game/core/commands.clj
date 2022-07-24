@@ -15,6 +15,7 @@
    [game.core.identities :refer [disable-identity disable-card enable-card]]
    [game.core.initializing :refer [card-init deactivate make-card]]
    [game.core.installing :refer [corp-install runner-install]]
+   [game.core.mark :refer [identify-mark]]
    [game.core.moving :refer [move swap-ice swap-installed trash]]
    [game.core.prompt-state :refer [remove-from-prompt-queue]]
    [game.core.prompts :refer [show-prompt]]
@@ -378,6 +379,7 @@
         "/link"       (fn [state side]
                         (when (= side :runner)
                           (swap! state assoc-in [:runner :link] (constrain-value value 0 1000))))
+        "/mark"       #(when (= %2 :runner) (identify-mark %1))
         "/memory"     (fn [state side]
                         (when (= side :runner)
                           (swap! state assoc-in [:runner :memory :used] (constrain-value value -1000 1000))))
