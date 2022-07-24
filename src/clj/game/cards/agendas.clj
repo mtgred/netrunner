@@ -670,7 +670,6 @@
 (defcard "Élivágar Bifurcation"
   {:on-score
    {:interactive (req true)
-    :async true
     :waiting-prompt "Corp to make a decision"
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
