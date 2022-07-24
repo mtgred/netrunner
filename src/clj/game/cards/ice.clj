@@ -3283,10 +3283,9 @@
                        :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
                                            card nil
                                            [:trash-other-installed 1]))
-                       :yes-ability {:prompt "Select another card to trash"
+                       :yes-ability {:prompt "Select another installed card to trash"
                                      :cost [:trash-other-installed 1]
                                      :msg "give itself +5 strength for the remainder of the run"
-                                     :waiting-prompt "corp to trash a card"
                                      :effect (effect (register-floating-effect
                                                       card
                                                       {:type :ice-strength
