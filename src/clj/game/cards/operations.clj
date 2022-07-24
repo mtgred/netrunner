@@ -762,17 +762,23 @@
                      (gain-credits state side eid 6)
                      (continue-ability
                       state side
-                      {:prompt "Choose a card to trash"
-                       :async true
-                       :choices {:card #(and (installed? %)
-                                             (corp? %))}
-                       :cancel-effect (effect (system-msg "declines to trash a card"))
-                       :msg "uses Extract to gain 3 [Credit]"
-                       :effect (req (wait-for (trash state side target {:cause-card card})
-                                              (gain-credits state side eid 3)))}
+                      {:optional
+                        {:async true
+                         :waiting-prompt "Corp to make a decision"
+                         :prompt "Trash 1 of your installed card?"
+                         :yes-ability
+                         {:prompt "Choose 1 of your installed card to trash"
+                          :choices {:card #(and (installed? %)
+                                                (corp? %))}
+                          :msg "gain 3 [Credit]"
+                          :async true
+                          :effect (req (wait-for (trash state side target {:cause-card card})
+                                                (gain-credits state side eid 3)))}
+                         :no-ability
+                         {:msg "declines to use Extract"}}}
                       card nil))
                    ;; no cards to trash -> skip prompt, no info is given away
-                   (do (system-msg state side "uses extract to gain 6 [credit]")
+                   (do (system-msg state side "uses Extract to gain 6 [Credit]")
                        (gain-credits state side eid 6))))}})
 
 (defcard "Fast Break"
