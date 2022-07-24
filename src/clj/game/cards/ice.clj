@@ -3692,13 +3692,15 @@
    {:optional {:prompt "Search R&D for a piece of ice?"
                :req (req (and run this-server))
                :yes-ability {:prompt "Choose a card"
+                             :async true
                              :msg (msg "reveal they added " (:title target) " to HQ from R&D")
                              :choices (req (cancellable (filter #(ice? %) (:deck corp)) :sorted))
                              :cancel-effect (effect (system-msg "uses Wave to shuffle R&D")
                                                     (shuffle! :deck))
-                             :effect (effect (shuffle! :deck)
-                                             (reveal eid target)
-                                             (move target :hand))}
+                             :effect (req (wait-for (reveal state side target)
+                                                    (shuffle! state side :deck)
+                                                    (move state side target :hand)
+                                                    (effect-completed state side eid)))}
                :no-ability {:msg "decline to search for a piece of ice"}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
