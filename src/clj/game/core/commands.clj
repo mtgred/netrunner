@@ -351,7 +351,8 @@
                                         (map->Card {:title "/card-info command"}) nil)
         "/charge"     #(resolve-ability %1 %2
                                         {:prompt "Choose an installed card to charge"
-                                         :effect (req (charge-card %1 %2 (make-eid state) target))
+                                         :async true
+                                         :effect (req (charge-card %1 %2 eid target))
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/charge command"}) nil)
         "/clear-win"  clear-win
