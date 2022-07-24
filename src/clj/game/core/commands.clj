@@ -429,12 +429,7 @@
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
-        "/sabotage"   #(when (= %2 :runner)
-                          (resolve-ability
-                            %1 %2
-                            {:async true
-                             :effect (effect (continue-ability (sabotage-ability (constrain-value value 0 1000)) nil nil))}
-                            nil nil))
+        "/sabotage"   #(when (= %2 :runner) (resolve-ability %1 %2 (sabotage-ability (constrain-value value 0 1000)) nil nil))
         "/save-replay" command-save-replay
         "/show-hand" #(resolve-ability %1 %2
                                          {:effect (effect (system-msg (str
