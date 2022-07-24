@@ -345,6 +345,7 @@
   {:on-play
    {:req (req (pos? (count (all-installed state :corp))))
     :prompt "Choose a card on which to place 4 advancement counters"
+    :rfg-instead-of-trashing true
     :async true
     :choices {:card #(and (corp? %)
                           (installed? %))}
