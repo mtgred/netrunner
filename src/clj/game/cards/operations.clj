@@ -345,6 +345,7 @@
   {:on-play
    {:req (req (pos? (count (all-installed state :corp))))
     :prompt "Choose a card on which to place 4 advancement counters"
+    :rfg-instead-of-trashing true
     :async true
     :choices {:card #(and (corp? %)
                           (installed? %))}
@@ -359,8 +360,7 @@
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
                                  :no-ability {:msg "decline to score the card"}}}
-                               card nil)
-                               (update! state side (assoc card :rfg-instead-of-trashing true)))))}})
+                               card nil))))}})
 
 (defcard "Bioroid Efficiency Research"
   {:on-play {:req (req (some #(and (ice? %)
