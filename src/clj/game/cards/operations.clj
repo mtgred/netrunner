@@ -756,30 +756,21 @@
   ;; doesn't check to see the card is actually trashed (it's not a cost, so may be prevented?)
   {:on-play
    {:async true
-    :effect (req (if (not-empty (all-installed state :corp))
-                   (do
-                     (system-msg state side "uses Extract to gain 6 [Credit]")
-                     (gain-credits state side eid 6)
-                     (continue-ability
-                      state side
-                      {:optional
-                        {:async true
-                         :waiting-prompt "Corp to make a decision"
-                         :prompt "Trash 1 of your installed card?"
-                         :yes-ability
-                         {:prompt "Choose 1 of your installed card to trash"
-                          :choices {:card #(and (installed? %)
-                                                (corp? %))}
-                          :msg "gain 3 [Credit]"
-                          :async true
-                          :effect (req (wait-for (trash state side target {:cause-card card})
-                                                (gain-credits state side eid 3)))}
-                         :no-ability
-                         {:msg "declines to use Extract"}}}
-                      card nil))
-                   ;; no cards to trash -> skip prompt, no info is given away
-                   (do (system-msg state side "uses Extract to gain 6 [Credit]")
-                       (gain-credits state side eid 6))))}})
+    :msg "gain 6 [Credit]"
+    :effect (req (wait-for (gain-credits state side 6)
+                           (continue-ability
+                             state side
+                             {:prompt "Choose an installed card to trash"
+                              :req (req (not-empty (all-installed state :corp)))
+                              :choices {:card #(and (installed? %)
+                                                    (corp? %))}
+                              :async true
+                              :msg "gain 3 [Credit]"
+                              :cancel-effect (effect (system-msg "declines to use Extract to trash an installed card")
+                                                     (effect-completed eid))
+                              :effect (req (wait-for (trash state side target {:cause-card card})
+                                                     (gain-credits state side eid 3)))}
+                             card nil)))}})
 
 (defcard "Fast Break"
   {:on-play

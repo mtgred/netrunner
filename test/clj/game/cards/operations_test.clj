@@ -1465,7 +1465,6 @@
     +6 (:credit (get-corp))
     "Gains net 6 credits from Extract"
     (play-from-hand state :corp "Extract")
-    (click-prompt state :corp "Yes")
     (click-card state :corp "PAD Campaign"))
    (is (= 2 (count (:discard (get-corp)))) "PAD and Extract trashed"))
   ;; skip trash to gain 6
@@ -1476,7 +1475,7 @@
     +3 (:credit (get-corp))
     "Gains net 3 credits from Extract"
     (play-from-hand state :corp "Extract")
-    (click-prompt state :corp "No"))
+    (click-prompt state :corp "Done"))
    (is (= 1 (count (:discard (get-corp)))) "Extract trashed, but not PAD"))
   ;; nothing to trash, gain 6
   (do-game
