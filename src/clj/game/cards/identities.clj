@@ -1522,13 +1522,19 @@
 
 (defcard "Pravdivost Consulting: Political Solutions"
   {:events [{:event :successful-run
-             :req (req (first-event? state side :successful-run))
-             :interactive (req true)
-             :waiting-prompt "Corp to make a decision"
-             :prompt "Choose a card to place 1 advancement token on"
-             :choices {:card can-be-advanced?}
-             :msg (msg "place 1 advancement token on " (card-str state target))
-             :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
+             :optional {:req (req (first-event? state side :successful-run))
+                        :autoresolve (get-autoresolve :auto-pravdivost)
+                        :prompt "Place 1 advancement counter on a card that can be advanced?"
+                        :yes-ability {:interactive (req true)
+                                      :waiting-prompt "Corp to make a decision"
+                                      :prompt "Choose a card to place 1 advancement token on"
+                                      :choices {:card can-be-advanced?}
+                                      :msg (msg "place 1 advancement token on " (card-str state target))
+                                      :cancel-effect (effect (system-msg "declines to use Pravdivost Consulting"))
+                                      :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}
+                        :no-ability {:effect (effect (system-msg "declines to use Pravdivost Consulting"))}
+                        }}]
+   :abilities [(set-autoresolve :auto-pravdivost "Pravdivost Consulting: Political Solutions")]})
 
 (defcard "Quetzal: Free Spirit"
   {:abilities [(assoc (break-sub nil 1 "Barrier" {:repeatable false}) :once :per-turn)]})
