@@ -8,7 +8,7 @@
    [game.core.board :refer [all-active-installed all-installed
                             get-all-installed get-remote-names get-remotes
                             installable-servers server->zone]]
-   [game.core.card :refer [agenda? asset? can-be-advanced? card-index corp?
+   [game.core.card :refer [agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
                            event? facedown? faceup? get-advancement-requirement
                            get-card get-counters get-zone hardware? has-subtype? ice? identity? in-discard?
                            in-hand? installed? is-type? operation? program? resource? rezzed? runner?
@@ -1319,13 +1319,15 @@
     :effect (req (wait-for (gain-credits state side 4)
                            (continue-ability
                              state side
-                             {:player :corp
-                              :prompt "Choose a card to install"
+                             {:prompt "Choose a card to install"
+                              :req (req (not-empty (filter #(corp-installable-type? %) (:hand corp))))
                               :choices {:card #(and (corp? %)
-                                                    (not (operation? %))
+                                                    (corp-installable-type? %)
                                                     (in-hand? %))}
                               :async true
                               :msg (msg (corp-install-msg target))
+                              :cancel-effect (effect (system-msg "declines to use Lateral Growth to install a card")
+                                                     (effect-completed eid))
                               :effect (effect (corp-install eid target nil nil))}
                              card nil)))}})
 

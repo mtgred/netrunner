@@ -2303,6 +2303,14 @@
         "Breaking News installed by Lateral Growth")
     (is (= 7 (:credit (get-corp))))))
 
+(deftest lateral-growth-no-installable-cards
+  (do-game
+    (new-game {:corp {:deck ["Lateral Growth" "Hedge Fund"]}})
+    (is (= 5 (:credit (get-corp))))
+    (play-from-hand state :corp "Lateral Growth")
+    (is (no-prompt? state :corp) "Corp should have no prompt")
+    (is (= 7 (:credit (get-corp))))))
+
 (deftest liquidation
   ;; Marilyn Campaign
   (do-game
