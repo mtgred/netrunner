@@ -1474,7 +1474,7 @@
    (play-from-hand state :corp "PAD Campaign" "New remote")
    (changes-val-macro
     +3 (:credit (get-corp))
-    "Gains net 6 credits from Extract"
+    "Gains net 3 credits from Extract"
     (play-from-hand state :corp "Extract")
     (click-prompt state :corp "Done"))
    (is (= 1 (count (:discard (get-corp)))) "Extract trashed, but not PAD"))
@@ -2302,6 +2302,14 @@
     (click-prompt state :corp "New remote")
     (is (= "Breaking News" (:title (get-content state :remote1 0)))
         "Breaking News installed by Lateral Growth")
+    (is (= 7 (:credit (get-corp))))))
+
+(deftest lateral-growth-no-installable-cards
+  (do-game
+    (new-game {:corp {:deck ["Lateral Growth" "Hedge Fund"]}})
+    (is (= 5 (:credit (get-corp))))
+    (play-from-hand state :corp "Lateral Growth")
+    (is (no-prompt? state :corp) "Corp should have no prompt")
     (is (= 7 (:credit (get-corp))))))
 
 (deftest liquidation

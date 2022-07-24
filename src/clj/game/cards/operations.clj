@@ -8,7 +8,7 @@
    [game.core.board :refer [all-active-installed all-installed
                             get-all-installed get-remote-names get-remotes
                             installable-servers server->zone]]
-   [game.core.card :refer [agenda? asset? can-be-advanced? card-index corp?
+   [game.core.card :refer [agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
                            event? facedown? faceup? get-advancement-requirement
                            get-card get-counters get-zone hardware? has-subtype? ice? identity? in-discard?
                            in-hand? installed? is-type? operation? program? resource? rezzed? runner?
@@ -757,24 +757,22 @@
   ;; doesn't check to see the card is actually trashed (it's not a cost, so may be prevented?)
   {:on-play
    {:async true
-    :effect (req (if (not-empty (all-installed state :corp))
-                   (do
-                     (system-msg state side "uses Extract to gain 6 [Credit]")
-                     (gain-credits state side eid 6)
-                     (continue-ability
-                      state side
-                      {:prompt "Choose a card to trash"
-                       :async true
-                       :choices {:card #(and (installed? %)
-                                             (corp? %))}
-                       :cancel-effect (effect (system-msg "declines to trash a card"))
-                       :msg "uses Extract to gain 3 [Credit]"
-                       :effect (req (wait-for (trash state side target {:cause-card card})
-                                              (gain-credits state side eid 3)))}
-                      card nil))
-                   ;; no cards to trash -> skip prompt, no info is given away
-                   (do (system-msg state side "uses extract to gain 6 [credit]")
-                       (gain-credits state side eid 6))))}})
+    :msg "gain 6 [Credit]"
+    :effect (req (wait-for (gain-credits state side 6)
+                           (continue-ability
+                             state side
+                             {:prompt "Choose an installed card to trash"
+                              :req (req (not-empty (all-installed state :corp)))
+                              :choices {:card #(and (installed? %)
+                                                    (corp? %))}
+                              :async true
+                              :waiting-prompt "Corp to make a decision"
+                              :msg "gain 3 [Credit]"
+                              :cancel-effect (effect (system-msg "declines to use Extract to trash an installed card")
+                                                     (effect-completed eid))
+                              :effect (req (wait-for (trash state side target {:cause-card card})
+                                                     (gain-credits state side eid 3)))}
+                             card nil)))}})
 
 (defcard "Fast Break"
   {:on-play
@@ -1324,13 +1322,15 @@
     :effect (req (wait-for (gain-credits state side 4)
                            (continue-ability
                              state side
-                             {:player :corp
-                              :prompt "Choose a card to install"
+                             {:prompt "Choose a card to install"
+                              :req (req (not-empty (filter corp-installable-type? (:hand corp))))
                               :choices {:card #(and (corp? %)
-                                                    (not (operation? %))
+                                                    (corp-installable-type? %)
                                                     (in-hand? %))}
                               :async true
                               :msg (msg (corp-install-msg target))
+                              :cancel-effect (effect (system-msg "declines to use Lateral Growth to install a card")
+                                                     (effect-completed eid))
                               :effect (effect (corp-install eid target nil nil))}
                              card nil)))}})
 
