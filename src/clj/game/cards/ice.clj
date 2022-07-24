@@ -2251,7 +2251,7 @@
                                                    (system-msg state :runner "shuffles their Grip into their Stack"))}
                                      :no-ability
                                      {:async true
-                                      :effect (effect (system-msg :runner "declines to shuffle their Grip into their Stack. Loki ends the run")
+                                      :effect (effect (system-msg :runner "declines to shuffle their Grip into their Stack")
                                                       (end-run eid card))}}}
                                    card nil)))}]})
 

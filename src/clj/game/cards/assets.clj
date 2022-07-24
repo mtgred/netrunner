@@ -1383,7 +1383,7 @@
                                         (moon-pool-place-advancements agenda-count)
                                         card nil)
                                       (effect-completed state side eid)))))
-           :cancel-effect (effect (system-msg "declines to use Moon Pool to reveal any cards from Archives")
+           :cancel-effect (effect (system-msg "declines to use Moon Pool to reveal any cards in Archives")
                                   (effect-completed eid))}]
       {:abilities [{:prompt "Trash up to 2 cards from HQ"
                     :label "Trash up to 2 cards from HQ"
@@ -1398,7 +1398,7 @@
                                              state side
                                              moon-pool-reveal-ability
                                              card nil)))
-                    :cancel-effect (effect (system-msg "declines to use Moon Pool to trash cards from HQ")
+                    :cancel-effect (effect (system-msg "declines to use Moon Pool to trash any cards from HQ")
                                            (continue-ability moon-pool-reveal-ability card nil))}]})))
 
 (defcard "Mr. Stone"

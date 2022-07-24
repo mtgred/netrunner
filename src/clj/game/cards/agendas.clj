@@ -1542,7 +1542,7 @@
                            (update-all-advancement-requirements state)
                            (update-all-agenda-points state)
                            (check-win-by-agenda state side))
-              :cancel-effect (effect (system-msg "declines to use Regensis to reveal an Agenda"))}})
+              :cancel-effect (effect (system-msg "declines to use Regenesis to reveal an agenda in Archives"))}})
 
 (defcard "Remastered Edition"
   {:on-score {:effect (effect (add-counter card :agenda 1))

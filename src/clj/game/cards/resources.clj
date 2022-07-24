@@ -3374,7 +3374,7 @@
                                      :effect (effect (system-msg (str "draws " (:title (first (:deck corp)))))
                                                      (draw eid 1))}
                                     :no-ability
-                                    {:effect (effect (system-msg "declines to draw with Woman in the Red Dress"))}}}
+                                    {:effect (effect (system-msg "declines to use Woman in the Red Dress"))}}}
                                   card nil)))}]
     {:events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
