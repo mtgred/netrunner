@@ -1160,6 +1160,14 @@
       (click-card state :corp (refresh iwall))
       (is (not (rezzed? (refresh iwall))) "ice wall was derezzed"))))
 
+(deftest elivagar-bifurcation-declined
+  ;; Élivágar Bifurcation score effect is optional
+  (do-game
+    (new-game {:corp {:hand ["Élivágar Bifurcation"]}})
+    (play-and-score state "Élivágar Bifurcation")
+    (click-prompt state :corp "Done")
+    (is (no-prompt? state :corp))))
+
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
   (do-game
