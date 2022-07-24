@@ -6641,7 +6641,10 @@
 (deftest wave
   ;; Wave - on rez vs. server, search R&D for an ice. Gain 1c for each rezzed harmonic ice.
   (do-game
-    (new-game {:corp {:hand ["Wave" "Wave"] :deck ["Ice Wall"] :credits 10}})
+    (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                      :hand ["Wave" "Wave"]
+                      :deck ["Ice Wall"]
+                      :credits 10}})
     (play-from-hand state :corp "Wave" "HQ")
     (play-from-hand state :corp "Wave" "R&D")
     (take-credits state :corp)
@@ -6650,7 +6653,10 @@
     (is (no-prompt? state :corp) "No prompt to search from ice on another server")
     (rez state :corp (get-ice state :hq 0))
     (click-prompt state :corp "Yes")
-    (click-prompt state :corp "Ice Wall")
+    (changes-val-macro
+      1 (:credit (get-corp))
+      "gained 1c from Hyoubu Institute because of card been revealed"
+      (click-prompt state :corp "Ice Wall"))
     (is (find-card "Ice Wall" (:hand (get-corp))))
     (run-continue state)
     (changes-val-macro

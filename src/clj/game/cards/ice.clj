@@ -3697,6 +3697,7 @@
                              :cancel-effect (effect (system-msg "uses Wave to shuffle R&D")
                                                     (shuffle! :deck))
                              :effect (effect (shuffle! :deck)
+                                             (reveal eid target)
                                              (move target :hand))}
                :no-ability {:msg "decline to search for a piece of ice"}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
