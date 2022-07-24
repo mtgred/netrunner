@@ -366,7 +366,7 @@
      :choices {:all true
                :max (value cost)
                :card #(and (installed? %)
-                           (not (same-card? % card))
+                           (not (partial same-card? % card))
                            (if (= side :runner)
                              (runner? %)
                              (corp? %)))}

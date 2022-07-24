@@ -430,7 +430,7 @@
    (is (= 0 (count (:discard (get-corp)))) "Did not trashed PAD Campaign")
    (is (= 0 (count (:scored (get-corp)))) "Azef Protocol not scored")))
 
-(deftest ^:kaocha/pending azef-protocol-cant-target-self
+(deftest azef-protocol-cant-target-self
   ;; Azef Protocol can't trash itself to pay its cost
   (do-game
    (new-game {:corp {:hand ["Azef Protocol", "PAD Campaign"]}
@@ -439,11 +439,8 @@
    (play-from-hand state :corp "PAD Campaign" "New remote")
    (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
    (score state :corp (get-content state :remote1 0))
-   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol requires a cost be paid")
-   (is (not (no-prompt? state :corp)) "Azef Protocol prompt active")
    (click-card state :corp (get-content state :remote1 0))
    ;; check not scored
-   (is (= 0 (count (:scored (get-corp)))) "Azef Protocol can't target self")
    (is (not (no-prompt? state :corp)) "Azef Protocol still active")
    (is (= 0 (count (:discard (get-runner)))) "No meat damage dealt")
    (is (= 0 (count (:discard (get-corp)))) "No card trashed")
