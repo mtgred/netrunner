@@ -1583,10 +1583,10 @@
                 :prompt (msg "Choose an advanceable card in " (zone->name (second (get-zone card))))
                 :label "Place 2 advancement counters (once per turn)"
                 :msg (msg "place 2 advancement counter counters on " (card-str state target))
-                :choices {:req (req (and (installed? target)
+                :choices {:not-self true
+                          :req (req (and (installed? target)
                                          (can-be-advanced? target)
-                                         (in-same-server? card target)
-                                         (not (same-card? card target))))}
+                                         (in-same-server? card target)))}
                 :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
 
 (defcard "Warroid Tracker"

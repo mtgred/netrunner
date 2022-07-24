@@ -345,30 +345,35 @@
                                                            :cause-card card}))}}})
 
 (defcard "Chop Bot 3000"
-  {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
-   :abilities [{:req (req (:runner-phase-12 @state))
-                :label "trash and draw or remove tag"
-                :choices {:card #(and (runner? %)
-                                      (installed? %))
-                          :not-self true}
-                :async true
-                :effect (req (wait-for (trash state :runner target {:cause-card card})
-                                       (continue-ability
-                                         state side
-                                         (let [trash-str (str "uses Chop Bot 3000 to trash " (:title target))
-                                               deck (pos? (count (:deck runner)))
-                                               tags (pos? (count-real-tags state))]
-                                           {:req (req (or deck tags))
-                                            :prompt "Draw 1 card or remove 1 tag"
-                                            :choices [(when deck "Draw 1 card")
-                                                      (when tags "Remove 1 tag")]
-                                            :async true
-                                            :effect (req (if (= target "Draw 1 card")
-                                                           (do (system-msg state :runner (str trash-str " and draw 1 card"))
-                                                               (draw state :runner eid 1))
-                                                           (do (system-msg state :runner (str trash-str " and remove 1 tag"))
-                                                               (lose-tags state :runner eid 1))))})
-                                         card nil)))}]})
+  (let [ability {:req (req (>= (count (all-installed state :runner)) 2))
+                 :label "trash and draw or remove tag"
+                 :once :per-turn
+                 :choices {:card #(and (runner? %)
+                                       (installed? %))
+                           :not-self true}
+                 :async true
+                 :effect (req (wait-for (trash state :runner target {:unpreventable true :cause-card card})
+                                        (continue-ability
+                                          state side
+                                          (let [trash-str (str "uses Chop Bot 3000 to trash " (:title target))
+                                                deck (pos? (count (:deck runner)))
+                                                tags (pos? (count-real-tags state))]
+                                            {:req (req (or deck tags))
+                                             :prompt "Draw 1 card or remove 1 tag"
+                                             :choices [(when deck "Draw 1 card")
+                                                       (when tags "Remove 1 tag")]
+                                             :async true
+                                             :effect (req (if (= target "Draw 1 card")
+                                                            (do (system-msg state :runner (str trash-str " and draw 1 card"))
+                                                                (draw state :runner eid 1))
+                                                            (do (system-msg state :runner (str trash-str " and remove 1 tag"))
+                                                                (lose-tags state :runner eid 1))))})
+                                          card nil)))}]
+    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
+     :events [(assoc ability
+                     :event :runner-turn-begins
+                     :interactive (req true))]
+     :abilities [ability]}))
 
 (defcard "Clone Chip"
   {:abilities [{:prompt "Choose a program to install from your Heap"
