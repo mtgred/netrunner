@@ -359,7 +359,8 @@
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
                                  :no-ability {:msg "decline to score the card"}}}
-                               card nil))))}})
+                               card nil)
+                               (update! state side (assoc card :rfg-instead-of-trashing true)))))}})
 
 (defcard "Bioroid Efficiency Research"
   {:on-play {:req (req (some #(and (ice? %)

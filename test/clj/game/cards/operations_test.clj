@@ -456,6 +456,7 @@
     (is (= 5 (get-counters (get-content state :remote1 0) :advancement)))
     (click-prompt state :corp "Yes")
     (is (= 3 (:agenda-point (get-corp))) "Corp scored 3 points")
+    (is (zero? (count (:discard (get-corp)))) "Big Deal removed from the game")
     (is (no-prompt? state :corp))))
 
 (deftest big-deal-non-agenda
