@@ -42,8 +42,6 @@
       (let [prev-cards-in-rd (-> (get-corp) :deck count)
             prev-cards-in-hq (-> (get-corp) :hand count)]
         (click-prompt state :corp "Done")
-        (println (prompt-fmt :corp))
-        (println (clojure.string/join "\n" (map :text (:log @state))))
         (is (= (- prev-cards-in-rd 3)
                (-> (get-corp) :deck count))
             "3 cards from R&D trashed")
