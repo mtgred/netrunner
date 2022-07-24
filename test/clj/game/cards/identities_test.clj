@@ -3754,6 +3754,7 @@
     (take-credits state :corp)
     (run-on state :hq)
     (run-continue state)
+    (click-prompt state :corp "Yes")
     ;; fake prompt, doesn't give away that PAD cannot be advanced
     (click-prompt state :corp "Done")))
 
@@ -3765,6 +3766,7 @@
     (take-credits state :corp)
     (run-on state :hq)
     (run-continue state)
+    (click-prompt state :corp "Yes")
     (click-card state :corp "NGO Front")
     (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "NGO was advanced")))
 
