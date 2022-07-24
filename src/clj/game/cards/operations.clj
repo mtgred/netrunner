@@ -1291,7 +1291,8 @@
                                (update! state side (assoc-in c [:seen] false)))
                              (shuffle! state :corp :discard)
                              (continue-ability state side install-abi card nil)))
-      :cancel-effect (req (doseq [c (:discard (:corp @state))]
+      :cancel-effect (req (system-msg state :corp "declines to use Kakurenbo to trash any cards from HQ")
+                          (doseq [c (:discard (:corp @state))]
                             (update! state side (assoc-in c [:seen] false)))
                           (shuffle! state :corp :discard)
                           (continue-ability state side install-abi card nil))}}))

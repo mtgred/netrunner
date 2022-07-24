@@ -601,7 +601,7 @@
       :msg (msg "force the Runner to encounter " (card-str state target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true :cause-card card})
                              (force-ice-encounter state side eid target)))}
-     :no-ability {:effect (effect (system-msg :corp (str "declines to use Ganked!")))}}}})
+     :no-ability {:effect (effect (system-msg "declines to use Ganked!"))}}}})
 
 (defcard "Georgia Emelyov"
   {:events [{:event :unsuccessful-run
@@ -979,9 +979,9 @@
                                             (system-msg state side "uses Mavirus to do 1 net damage")
                                             (damage state side eid :net 1 {:card card}))
                                           (effect-completed state side eid)))}
-             :no-ability {:msg (msg "decline to purge virus counters")
-                          :async true
-                          :effect (req (if (rezzed? card)
+             :no-ability {:async true
+                          :effect (req (system-msg state side "declines to use Mavirus to purge virus counters")
+                                       (if (rezzed? card)
                                          (do
                                            (system-msg state side "uses Mavirus to do 1 net damage")
                                            (damage state side eid :net 1 {:card card}))

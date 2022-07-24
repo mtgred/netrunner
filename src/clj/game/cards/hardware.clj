@@ -175,7 +175,7 @@
                               (continue-ability
                                 state side
                                 {:optional
-                                 {:waiting-prompt (str "Corp to decide if they will rez " cname)
+                                 {:waiting-prompt "Corp to make a decision"
                                   :prompt (msg (build-cost-string [:credit cost])
                                                ", plus " (str/lower-case (build-cost-string additional-costs))
                                                " as an additional cost to rez " cname "?")
@@ -1991,7 +1991,7 @@
               :yes-ability {:msg "gain 2 [Credits]"
                             :async true
                             :effect (effect (gain-credits eid 2))}
-              :no-ability {:effect (effect (system-msg "declines to use Supercorridor to gain 2 [Credits]"))}}}]
+              :no-ability {:effect (effect (system-msg "declines to use Supercorridor"))}}}]
    :abilities [(set-autoresolve :auto-fire "Supercorridor")]})
 
 (defcard "Swift"
