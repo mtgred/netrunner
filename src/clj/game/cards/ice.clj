@@ -1719,6 +1719,8 @@
                                      (rezzed? target)
                                      (not (same-card? card target))))}
             :waiting-prompt "Corp to choose an option"
+            :cancel-effect (effect (system-msg "declines to use Hákarl 1.0 to derez another card")
+                                   (effect-completed eid))
             :effect (effect (derez target)
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
                             (register-floating-effect

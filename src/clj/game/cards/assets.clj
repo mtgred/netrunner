@@ -2192,6 +2192,7 @@
             {:req (req (not (in-discard? card)))
              :waiting-prompt "Corp to choose an option"
              :prompt "Pay 4 [Credits] to use Snare! ability?"
+             :no-ability {:effect (effect (system-msg "declines to use Snare!"))}
              :yes-ability {:async true
                            :cost [:credit 4]
                            :msg "do 3 net damage and give the Runner 1 tag"
@@ -2272,6 +2273,8 @@
                                           (installed? target)
                                           (not (same-card? target card))))}
                  :msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                 :cancel-effect (req (system-msg state :corp "declines to use Svyatogor Excavator")
+                                     (effect-completed state side eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                         (gain-credits state side eid 3)))}]
     {:flags {:corp-phase-12 (req (>= (count (all-installed state :corp)) 2))}

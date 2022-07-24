@@ -214,6 +214,8 @@
                                           (installed? target)
                                           (not (same-card? target card))))}
                  :msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                 :cancel-effect (req (system-msg state :runner "declines to use Aesop's Pawnshop")
+                                     (effect-completed state side eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                         (gain-credits state side eid 3)))}]
     {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
