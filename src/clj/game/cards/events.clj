@@ -801,12 +801,12 @@
                    (let [top-8 (sort-by :title (get-set-aside state :corp eid))]
                      (wait-for
                       (resolve-ability state side (deep-dive-access top-8) card nil)
-                      (if (and (pos? (count async-result))
-                               (pos? (:click runner)))
+                      (if (pos? (count async-result))
                         (wait-for (resolve-ability
                                    state side
                                    {:optional
                                     {:prompt "Pay [Click] to access another card?"
+                                     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:lose-click 1]))
                                      :no-ability {:msg "decline to access another card"}
                                      :yes-ability
                                      {:async true
