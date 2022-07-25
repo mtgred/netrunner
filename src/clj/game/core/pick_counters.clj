@@ -81,6 +81,11 @@
   (req (update! state side (assoc-in card [:counter counter-type] (dec (get-counters card counter-type))))
        (complete-with-result state side eid 1)))
 
+(defn- not-cost-reduction-payment-cards
+  "Returns cards which do not have the :cost-reduction tag"
+  [cards]
+  (filter #(not (-> (card-def %) :interactions :pay-credits :cost-reduction)) cards))
+
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
   ([provider-func outereid] (pick-credit-providing-cards provider-func outereid nil 0 (hash-map)))
@@ -111,7 +116,7 @@
                                            (when (and card-strs remainder-str)
                                              " from their credit pool"))]
                           (lose state side :credit remainder)
-                          (let [cards (map :card (vals selected-cards))]
+                          (let [cards (not-cost-reduction-payment-cards (map :card (vals selected-cards)))]
                             (wait-for (trigger-spend-credits-from-cards state side cards)
                                       ; Now we trigger all of the :counter-added events we'd neglected previously
                                       (pick-counter-triggers state side eid selected-cards selected-cards target-count message))))
