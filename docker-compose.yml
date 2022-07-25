@@ -8,6 +8,7 @@ services:
       - 44867:44867
     volumes:
       - "./data:/usr/src/app/data"
+      - "./dev:/usr/src/app/dev"
       - "./docs:/usr/src/app/docs"
       - "./resources/public:/usr/src/app/resources/public"
       - "./resources/dev.edn:/usr/src/app/resources/dev.edn"
