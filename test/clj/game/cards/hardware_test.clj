@@ -3398,7 +3398,7 @@
       (is (= 0 (get-counters (refresh twinning) :power)) "Twinning should not have gained a counter"))))
 
 (deftest pennyshaver
-  ;; Pennyshaver - Prevent meat damage
+  ;; Pennyshaver - Place credits on successful run and take credits from Pennyshaver
   (do-game
       (new-game {:corp {:deck ["Hedge Fund"]}
                  :runner {:deck ["Pennyshaver"]}})
