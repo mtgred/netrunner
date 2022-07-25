@@ -3375,6 +3375,7 @@
       (new-game {:runner {:deck ["Patchwork" "Sure Gamble" "Film Critic"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Patchwork")
+      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
       (play-from-hand state :runner "Film Critic")
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
