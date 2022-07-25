@@ -8,8 +8,8 @@ services:
       - 44867:44867
     volumes:
       - "./data:/usr/src/app/data"
-      - "./docs:/usr/src/app/docs"
       - "./dev:/usr/src/app/dev"
+      - "./docs:/usr/src/app/docs"
       - "./resources/public:/usr/src/app/resources/public"
       - "./resources/dev.edn:/usr/src/app/resources/dev.edn"
       - "./resources/logback.xml:/usr/src/app/resources/logback.xml"
