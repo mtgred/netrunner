@@ -1467,12 +1467,12 @@
                :async true
                :effect (effect (continue-ability
                                  {:prompt "Choose a card to install and rez"
-                                  :choices (req (conj (filter #(and (= target-cost (:cost %))
+                                  :choices {:max 1
+                                            :req (req (filter #(and (= target-cost (:cost %))
                                                                     (or (asset? %)
                                                                         (upgrade? %)
                                                                         (ice? %)))
-                                                              (vec (sort-by :title (:deck corp))))
-                                                      "No install"))
+                                                              (vec (sort-by :title (:deck corp)))))}
                                   :async true
                                   :effect (resolve-install target)}
                                  card nil))}}})]
