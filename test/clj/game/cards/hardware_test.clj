@@ -3375,12 +3375,26 @@
       (new-game {:runner {:deck ["Patchwork" "Sure Gamble" "Film Critic"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Patchwork")
-      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
       (play-from-hand state :runner "Film Critic")
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
       (is (= 1 (:credit (get-runner))) "Runner should still have 1c")
       (is (get-resource state 0) "Installed Film Critic")))
+
+(deftest patchwork-shouldn-t-trigger-credits-spent-from-cards-effects-issue-6462
+  ;; Patchwork shouldn't count for "spend credits from an installed card" type effects
+  (do-game
+    (new-game {:runner {:deck ["Patchwork" "Paperclip" "Sure Gamble" "The Twinning"] :credits 10 }})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Twinning")
+    (play-from-hand state :runner "Patchwork")
+    (let [patchwork (get-hardware state 0)
+          twinning (get-resource state 0)
+          paperclip (find-card "Paperclip" (:hand (get-runner)))]
+      (play-from-hand state :runner "Sure Gamble")
+      (click-card state :runner patchwork)
+      (click-card state :runner paperclip)
+      (is (= 0 (get-counters (refresh twinning) :power) "Twinning should not have gained a counter")))))
 
 (deftest pennyshaver
   ;; Pennyshaver - Prevent meat damage
