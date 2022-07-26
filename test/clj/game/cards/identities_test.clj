@@ -3645,8 +3645,8 @@
    (play-from-hand state :corp "Extract")
    (click-card state :corp (get-content state :remote1 0))
    (click-prompt state :corp "Yes")
-   (is (= ["Done"] (prompt-buttons :corp)) "Sole option available is Done")
-   (click-prompt state :corp "Done")))
+   (is (= ["No install"] (prompt-buttons :corp)) "Sole option available is Done")
+   (click-prompt state :corp "No install")))
 
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
