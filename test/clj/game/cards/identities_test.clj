@@ -3634,6 +3634,20 @@
    (is (= "Corporate Town" (:title (get-content state :remote3 0))) "Installed C. Town in remote")
    (is (rezzed? (get-content state :remote3 0)) "rezzed C. Town")))
 
+(deftest ob-logistics-fail-to-find
+  ;; If no cards in R&D match the search cost, ability can be declined
+  (do-game
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["Extract" "PAD Campaign"]
+                     :deck ["Anoetic Void"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote1 0))
+   (click-prompt state :corp "Yes")
+   (is (= ["Done"] (prompt-buttons :corp)) "Sole option available is Done")
+   (click-prompt state :corp "Done")))
+
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
     (do-game
