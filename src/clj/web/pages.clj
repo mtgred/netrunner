@@ -6,13 +6,13 @@
    [monger.collection :as mc]
    [monger.operators :refer :all]
    [ring.middleware.anti-forgery :as anti-forgery]
-   [web.utils :refer [response]]
+   [web.utils :refer [response html-response]]
    [web.versions :refer [frontend-version]]))
 
 (defn index-page
   ([request] (index-page request nil nil))
   ([{user :user server-mode :system/server-mode} og replay-id]
-   (response
+   (html-response
      200
      (hiccup/html5
        [:head
@@ -60,7 +60,7 @@
   (if (mc/find-one-as-map db "users"
                           {:resetPasswordToken token
                            :resetPasswordExpires {"$gt" (inst/now)}})
-    (response
+    (html-response
       200
       (hiccup/html5
         [:head
