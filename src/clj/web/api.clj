@@ -6,6 +6,7 @@
    [reitit.ring :as ring]
    [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
    [ring.middleware.cors :refer [wrap-cors]]
+   [ring.middleware.content-type :refer [wrap-content-type]]
    [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
    [ring.middleware.keyword-params :refer [wrap-keyword-params]]
    [ring.middleware.params :refer [wrap-params]]
@@ -167,6 +168,7 @@
 (defn make-middleware [system]
   {:middleware [wrap-return-favicon
                 wrap-session
+                wrap-content-type
                 ;; Removed to allow reset password flow to work
                 ;; wrap-anti-forgery
                 wrap-params
