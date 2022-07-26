@@ -1646,6 +1646,29 @@
     (is (= 0 (count (:deck (get-corp)))))
     (is (= 2 (count (:discard (get-corp)))))))
 
+(deftest deep-dive-ikawah-cost-for-second-card
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3) "Ikawah Project" "Project Vitruvius"]}
+	       :runner {:hand ["Deep Dive"]}})
+    (draw state :corp)
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Ikawah Project" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Project Vitruvius" (:hand (get-corp))) :deck)
+    ;;R&D is now: Hedge Fund, Ikawah Project, Project Vitruvius
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    ;;run the three centrals
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "Ikawah Project")
+    (click-prompt state :runner "Pay to steal")
+    (is (no-prompt? state :runner) 
+        "Runner shouldn't be given the option to access the second card since he spent the last click to steal Ikawah")))
+
 (deftest deep-dive-basic-functionality
   (do-game
     (new-game {:corp {:hand ["Ansel 1.0" "Better Citizen Program" "Chiyashi" 
