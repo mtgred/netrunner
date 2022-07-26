@@ -50,8 +50,9 @@
   mode)
 
 (defmethod ig/init-key :mongodb/connection [_ opts]
-  (let [{:keys [address port name]} opts]
-    (mg/connect-via-uri (str "mongodb://" address ":" port "/" name))))
+  (let [{:keys [address port name connection-string]} opts
+        connection (or connection-string (str "mongodb://" address ":" port "/" name))]
+    (mg/connect-via-uri connection)))
 
 (defmethod ig/halt-key! :mongodb/connection [_ {:keys [conn]}]
   (mg/disconnect conn))
