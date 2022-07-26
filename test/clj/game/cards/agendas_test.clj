@@ -1162,7 +1162,7 @@
 
 (deftest elivagar-bifurcation-declined
   ;; Élivágar Bifurcation score effect is optional
-(do-game
+  (do-game
     (new-game {:corp {:hand ["Élivágar Bifurcation"]}})
     (play-and-score state "Élivágar Bifurcation")
     (click-prompt state :corp "Done")
