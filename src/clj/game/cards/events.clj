@@ -1772,6 +1772,7 @@
    :events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
+             :duration :end-of-run
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
 
