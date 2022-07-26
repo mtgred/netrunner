@@ -1529,7 +1529,7 @@
 (defcard "Regenesis"
   {:on-score {:req (req (and (some #(not (faceup? %)) (:discard corp))
                              (no-event? state side :card-moved #(and (= [:discard] (:zone (second %)))
-                                                                      (= "Corp" (:side (second %)))))))
+                                                                     (corp? (second %))))))
               ;; we want a prompt even if there are no valid targets,
               ;; to make sure we don't give away hidden info
               :prompt "Select a face-down agenda in Archives?"
