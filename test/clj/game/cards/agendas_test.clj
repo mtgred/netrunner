@@ -1162,7 +1162,7 @@
 
 (deftest elivagar-bifurcation-declined
   ;; Élivágar Bifurcation score effect is optional
-  (do-game
+(do-game
     (new-game {:corp {:hand ["Élivágar Bifurcation"]}})
     (play-and-score state "Élivágar Bifurcation")
     (click-prompt state :corp "Done")
@@ -3284,6 +3284,23 @@
     (play-and-score state "Regenesis")
     (click-card state :corp "Obokata Protocol")
     (is (= 5 (:agenda-point (get-corp))) "3+1+1 agenda points from obo + regen + regen")))
+
+(deftest regenesis-extra-score-not-prevented-by-runner-discard
+  (do-game
+    (new-game {:corp {:deck ["Bio-Ethics Association" (qty "Regenesis" 6)]
+                      :hand ["Bio-Ethics Association"]
+                      :discard ["Obokata Protocol"]}
+               :runner {:deck [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Bio-Ethics Association" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 1 (count (:discard (get-runner)))))
+    (play-and-score state "Regenesis")
+    (prompt-is-card? state :corp (get-content state :scored-area 0))
+    (prompt-is-type? state :corp :choice)
+    (click-card state :corp "Obokata Protocol")
+    (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
 
 (deftest remastered-edition
   ;; Remastered Edition
