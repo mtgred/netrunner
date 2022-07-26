@@ -111,7 +111,9 @@
                                            (when (and card-strs remainder-str)
                                              " from their credit pool"))]
                           (lose state side :credit remainder)
-                          (let [cards (map :card (vals selected-cards))]
+                          (let [cards (->> (vals selected-cards)
+                                          (map :card)
+                                          (remove #(-> (card-def %) :interactions :pay-credits :cost-reduction)))]
                             (wait-for (trigger-spend-credits-from-cards state side cards)
                                       ; Now we trigger all of the :counter-added events we'd neglected previously
                                       (pick-counter-triggers state side eid selected-cards selected-cards target-count message))))

@@ -1493,7 +1493,8 @@
                          ; provide 0 credits
                          :cancel-effect (effect (effect-completed (make-result eid 0)))}
                         card nil)))
-       :type :custom}}}))
+       :type :custom
+       :cost-reduction true}}}))
 
 (defcard "Pennyshaver"
   {:constant-effects [(mu+ 1)]
