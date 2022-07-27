@@ -3618,7 +3618,8 @@
                              :prompt "Place an advancement token on a card that can be advanced"
                              :msg (msg "place 1 advancement token on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
-                             :cancel-effect (effect (system-msg "declines to use Vasilisa"))}
+                             :cancel-effect (effect (system-msg "declines to use Vasilisa")
+                                                    (effect-completed eid))}
                :no-ability {:msg "declines to use Vasilisa"}}}
    :subroutines [(give-tags 1)]})
 

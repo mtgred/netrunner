@@ -55,3 +55,4 @@ tags.temp.tmp
 
 .lsp/
 .shadow-cljs/
+tests-user.edn

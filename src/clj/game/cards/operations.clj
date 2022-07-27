@@ -2722,7 +2722,8 @@
                  :async true
                  :cancel-effect (effect (system-msg "declines to use Trust Operation to install a card")
                                         (effect-completed eid))
-                 :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}]
+                 :effect (effect (corp-install eid target nil {:ignore-all-cost true
+                                                               :install-state :rezzed-no-cost}))}]
     {:on-play {:req (req tagged)
                :msg (msg "trash " (:title target))
                :prompt "Choose a resource to trash"

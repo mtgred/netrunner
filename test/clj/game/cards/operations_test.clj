@@ -4636,53 +4636,58 @@
 
 (deftest trust-operation-happy
   (do-game
-   (new-game {:corp {:hand ["Trust Operation"]
-                     :discard ["Archer"]}
-              :runner {:hand ["Daily Casts"]}})
-   (take-credits state :corp)
-   (play-from-hand state :runner "Daily Casts")
-   (take-credits state :runner)
-   ;;can't play unless runner is tagged
-   (play-from-hand state :corp "Trust Operation")
-   (is (and (no-prompt? state :corp)
-            (= 1 (count (:hand (get-corp))))) "Trust Operation not played")
-   (gain-tags state :runner 1)
-   (play-from-hand state :corp "Trust Operation")
-   (click-card state :corp "Daily Casts")
-   (is (= 1 (count (:discard (get-runner)))) "Daily casts was trashed")
-   (click-card state :corp "Archer")
-   (click-prompt state :corp "HQ")
-   (let [archer (get-ice state :hq 0)]
-     (is (rezzed? (refresh archer)) "Archer is rezzed"))))
+    (new-game {:corp {:hand ["Trust Operation" "Ice Wall"]
+                      :discard ["Archer"]}
+               :runner {:hand ["Daily Casts"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daily Casts")
+    (take-credits state :runner)
+    ;;can't play unless runner is tagged
+    (play-from-hand state :corp "Trust Operation")
+    (is (no-prompt? state :corp))
+    (is (= 1 (count (:hand (get-corp)))) "Trust Operation not played")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Trust Operation")
+    (click-card state :corp "Daily Casts")
+    (is (= 1 (count (:discard (get-runner)))) "Daily casts was trashed")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Spends nothing to install and rez Archer"
+      (click-card state :corp "Archer")
+      (click-prompt state :corp "HQ")
+      (let [archer (get-ice state :hq 1)]
+        (is (rezzed? (refresh archer)) "Archer is rezzed")))))
 
-(deftest trust-operation-no-trash
+(deftest trust-operation-decline-to-trash
   ;; decline to trash a card
   (do-game
-   (new-game {:corp {:hand ["Trust Operation"]
-                     :discard ["Archer"]}
-              :runner {:hand ["Daily Casts"]}})
-   (take-credits state :corp)
-   (play-from-hand state :runner "Daily Casts")
-   (take-credits state :runner)
-   (gain-tags state :runner 1)
-   (play-from-hand state :corp "Trust Operation")
-   (click-prompt state :corp "Done")
-   (is (= 0 (count (:discard (get-runner)))) "Daily casts was not trashed")
-   (click-card state :corp "Archer")
-   (click-prompt state :corp "HQ")
-   (let [archer (get-ice state :hq 0)]
-     (is (rezzed? (refresh archer)) "Archer is rezzed")))
-  ;; no card to trash
+    (new-game {:corp {:hand ["Trust Operation"]
+                      :discard ["Archer"]}
+               :runner {:hand ["Daily Casts"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daily Casts")
+    (take-credits state :runner)
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Trust Operation")
+    (click-prompt state :corp "Done")
+    (is (= 0 (count (:discard (get-runner)))) "Daily casts was not trashed")
+    (click-card state :corp "Archer")
+    (click-prompt state :corp "HQ")
+    (let [archer (get-ice state :hq 0)]
+      (is (rezzed? (refresh archer)) "Archer is rezzed"))))
+
+(deftest trust-operation-no-card-to-trash
   (do-game
-   (new-game {:corp {:hand ["Trust Operation"]
-                     :discard ["Archer"]}})
-   (gain-tags state :runner 1)
-   (play-from-hand state :corp "Trust Operation")
-   (click-prompt state :corp "Done")
-   (click-card state :corp "Archer")
-   (click-prompt state :corp "HQ")
-   (let [archer (get-ice state :hq 0)]
-     (is (rezzed? (refresh archer)) "Archer is rezzed"))))
+    (new-game {:corp {:hand ["Trust Operation"]
+                      :discard ["Archer"]}})
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Trust Operation")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Archer")
+    (click-prompt state :corp "HQ")
+    (let [archer (get-ice state :hq 0)]
+      (is (rezzed? (refresh archer)) "Archer is rezzed"))))
 
 (deftest ultraviolet-clearance
   ;; Ultraviolet Clearance - Only allow agenda to be installed in remote servers
