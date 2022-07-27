@@ -767,7 +767,7 @@
                                                     (corp? %))}
                               :async true
                               :waiting-prompt "Corp to make a decision"
-                              :msg "gain 3 [Credit]"
+                              :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
                               :cancel-effect (effect (system-msg "declines to use Extract to trash an installed card")
                                                      (effect-completed eid))
                               :effect (req (wait-for (trash state side target {:cause-card card})

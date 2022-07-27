@@ -1457,7 +1457,7 @@
       (is (= 3 (:click (get-corp))))
       (is (= 3 (:click-per-turn (get-corp))))))
 
-(deftest extract-full-test
+(deftest extract-trash-to-gain-9
   ;; trash a card to gain 9
   (do-game
    (new-game {:corp {:hand ["Extract" "PAD Campaign"]}})
@@ -1467,7 +1467,9 @@
     "Gains net 6 credits from Extract"
     (play-from-hand state :corp "Extract")
     (click-card state :corp "PAD Campaign"))
-   (is (= 2 (count (:discard (get-corp)))) "PAD and Extract trashed"))
+   (is (= 2 (count (:discard (get-corp)))) "PAD and Extract trashed")))
+
+(deftest extract-skip-trash
   ;; skip trash to gain 6
   (do-game
    (new-game {:corp {:hand ["Extract" "PAD Campaign"]}})
@@ -1477,7 +1479,9 @@
     "Gains net 3 credits from Extract"
     (play-from-hand state :corp "Extract")
     (click-prompt state :corp "Done"))
-   (is (= 1 (count (:discard (get-corp)))) "Extract trashed, but not PAD"))
+   (is (= 1 (count (:discard (get-corp)))) "Extract trashed, but not PAD")))
+
+(deftest extract-nothing-to-trash
   ;; nothing to trash, gain 6
   (do-game
    (new-game {:corp {:hand ["Extract"]}})
@@ -1486,6 +1490,14 @@
     "Gained net 3c from Extract"
     (play-from-hand state :corp "Extract"))
    (is (no-prompt? state :corp) "No prompt because there are no cards to trash!")))
+
+(deftest extract-log-card-str
+  (do-game
+   (new-game {:corp {:hand ["Extract" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "PAD Campaign")
+   (is (last-log-contains? state "trash a card in Server 1"))))
 
 (deftest fast-break
   ;; Fast Break
