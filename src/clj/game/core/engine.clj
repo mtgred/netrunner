@@ -995,10 +995,10 @@
     (effect-completed state nil eid)))
 
 (defn unregister-expired-durations
-  [state _ eid duration context-maps]
+  [state _ eid durations context-maps]
   (wait-for (trash-when-expired state nil (make-eid state eid) context-maps)
             (unregister-floating-events state nil :pending)
-            (when duration
+            (doseq [duration durations]
               (unregister-floating-effects state nil duration)
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
@@ -1006,12 +1006,12 @@
 (defn checkpoint
   ([state eid] (checkpoint state nil eid nil))
   ([state _ eid] (checkpoint state nil eid nil))
-  ([state _ eid {:keys [duration] :as args}]
+  ([state _ eid {:keys [duration durations] :as args}]
    ;; a: Any ability that has met its condition creates the appropriate instances of itself and marks them as pending
    (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid args)]
      ;; b: Any ability with a duration that has passed is removed from the game state
      (wait-for
-       (unregister-expired-durations state nil (make-eid state eid) duration context-maps)
+       (unregister-expired-durations state nil (make-eid state eid) (conj durations duration) context-maps)
        ;; c: Check winning or tying by agenda points
        (check-win-by-agenda state)
        ;; d: uniqueness check
