@@ -4951,6 +4951,23 @@
       (click-card state :corp (refresh pad)))
      (is (= (refresh pad) nil) "PAD Campaign should be in Heap"))))
 
+(deftest syvatogor-excavator-card-str-6471
+  (do-game
+   (new-game {:corp {:hand ["Svyatogor Excavator" "PAD Campaign"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (play-from-hand state :corp "Svyatogor Excavator" "New remote")
+   (let [pad (get-content state :remote1 0)
+         se (get-content state :remote2 0)]
+     (rez state :corp (refresh se))
+     (take-credits state :corp)
+     (take-credits state :runner)
+     (card-ability state :corp se 0)
+     (changes-val-macro
+      3 (:credit (get-corp))
+      "~ sells PAD Campaign before it triggers so only 3 credits gained"
+      (click-card state :corp (refresh pad)))
+     (is (last-log-contains? state "trash a card in Server 1")))))
+
 (deftest team-sponsorship-install-from-hq
     ;; Install from HQ
     (do-game

@@ -3362,7 +3362,7 @@
    (click-prompt state :runner "Server 1")
    (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
    (is (= 1 (:brain-damage (get-runner))))
-   (rez state :corp (refresh (get-content state :remote1 0)))   
+   (rez state :corp (refresh (get-content state :remote1 0)))
    (changes-val-macro 0 (:credit (get-runner))
                       "Did not spend credits to trash"
                       (run-continue state)
@@ -3388,7 +3388,7 @@
    (run-empty-server state "Server 1")
    (click-prompt state :runner "No action")
    (is (= 0 (count (:hand (get-runner)))) "Lost card from Grip to Hokusai Grid")))
-   
+
 (deftest light-the-fire-card-installed
   ;; Light the fire - effect applies if the corporation installs a card mid run
   (do-game
@@ -3402,7 +3402,7 @@
    (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
    (let [crick (get-ice state :remote1 0)]
      (rez state :corp crick)
-     (run-continue state)     
+     (run-continue state)
      (card-subroutine state :corp crick 0)
      (click-card state :corp "Hokusai Grid")
      (click-prompt state :corp "Server 1"))
@@ -3429,11 +3429,11 @@
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
-   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")   
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
    (rez state :corp (refresh (get-content state :remote1 0)))
    (rez state :corp (refresh (get-content state :remote2 0)))
    (let [meta (get-ice state :remote1 0)]
-     (rez state :corp meta)   
+     (rez state :corp meta)
      (run-continue state)
      (fire-subs state (get-ice state :remote1 0))
      (click-prompt state :corp "Swap two non-ice")
@@ -3442,7 +3442,7 @@
      ;; hokusai is now in server 1, ngo in server 2
      (changes-val-macro 5 (:credit (get-corp))
                         "NGO Front reactivated"
-                        (card-ability state :corp (refresh (get-content state :remote2 0)) 0)))     
+                        (card-ability state :corp (refresh (get-content state :remote2 0)) 0)))
    (run-continue state :movement)
    (run-continue-until state :success)
    (is (= 2 (count (:discard (get-corp)))) "Hokusai grid trashed from Server 1")
@@ -3471,7 +3471,7 @@
          hoku (get-content state :remote2 0)]
      (rez state :corp (refresh ngo))
      (rez state :corp (refresh hoku))
-     (rez state :corp sand)        
+     (rez state :corp sand)
      (run-continue state)
      (fire-subs state (refresh sand))
      (click-prompt state :corp "Server 2")
@@ -4273,11 +4273,12 @@
         (card-ability state :runner sac 0)
         (click-prompt state :runner "Done")
         (take-credits state :corp)
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used Poemu to install Corroder for free"
-                           (play-from-hand state :runner "Corroder")
-                           (click-card state :runner pp)
-                           (click-card state :runner pp))
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Used Poemu to install Corroder for free"
+          (play-from-hand state :runner "Corroder")
+          (click-card state :runner pp)
+          (click-card state :runner pp))
         (play-from-hand state :runner "Hernando Cortez")
         (is (no-prompt? state :runner) "No pay-credits prompt on the install of a Connection"))))
 

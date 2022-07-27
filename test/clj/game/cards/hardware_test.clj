@@ -1518,6 +1518,26 @@
       (click-prompt state :runner "No action")
       (is (not (:run @state)))))
 
+(deftest ^:kaocha/pending doppelganger-inside-job
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Doppelgänger" "Inside Job"]
+                        :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Doppelgänger")
+    (play-from-hand state :runner "Inside Job")
+    (click-prompt state :runner "HQ")
+    (run-continue state :movement)
+    (run-continue state)
+    (is (not (:run @state)) "Between the two runs")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "HQ")
+    (is (:run @state) "New run started")
+    (is (= [:hq] (:server (:run @state))) "Running on R&D")
+    (run-continue state)))
+
 (deftest dorm-computer
   ;; make a run and avoid all tags for the remainder of the run
   (do-game

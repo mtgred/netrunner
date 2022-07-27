@@ -1406,41 +1406,48 @@
   ;;  to update these cards, just add {:cause card} into the keys pass with (trash-card)
   ;;  At the moment, the source (or cause) of the trash must be a corp-card, a subroutine,
   ;;  or it must be an ability cost.
-  (letfn [(resolve-install [target]
-            (req ;; if it has an additional cost, the rez needs to be optional
+  (letfn [(resolve-install []
+            (req
               (shuffle! state side :deck)
-              (system-msg state side (str "shuffles R&D"))
-              (let [add-costs (rez-additional-cost-bonus state side target)
-                    inst-target target]
-                (if (pos? (count add-costs))
-                  (if (can-pay? state side (:title inst-target) add-costs)
+              (system-msg state side "shuffles R&D")
+              ;; if it has an additional cost, the rez needs to be optional
+              (if (= "No install" target)
+                (effect-completed state side eid)
+                (let [add-costs (rez-additional-cost-bonus state side target)
+                      inst-target target]
+                  (cond
+                    (and (pos? (count add-costs))
+                         (can-pay? state side (:title inst-target) add-costs))
                     (continue-ability
                       state side
                       {:optional
                        {:prompt (str "Rez " (:title inst-target) ", paying additional costs?")
-                        :yes-ability {:msg (msg "to rez "(:title inst-target)
+                        :yes-ability {:msg (msg "to rez " (:title inst-target)
                                                 ", paying additional costs")
                                       :async true
                                       :effect (req (corp-install state side eid inst-target nil
                                                                  {:ignore-all-cost true
                                                                   :install-state :rezzed-no-rez-cost}))}
                         :no-ability {:msg "install a card ignoring all credit costs"
+                                     :async true
                                      :effect (req (corp-install state side eid inst-target nil
                                                                 {:ignore-all-cost true}))}}}
                       card nil)
                     ;; It might be worth having a fake prompt here - at the very least, this prevents
                     ;; the corp from accidentally revealing the card they select
+                    (pos? (count add-costs))
                     (continue-ability
                       state side
-                      {:msg (msg "install a card without paying additional costs to rez")
+                      {:msg "install a card without paying additional costs to rez"
                        :async true
                        :effect (req (corp-install state side eid inst-target nil
                                                   {:ignore-all-cost true}))}
-                      card nil))
-                  (wait-for (reveal state side inst-target)
-                            (corp-install state side eid (get-card state inst-target) nil
-                                          {:ignore-all-cost true
-                                           :install-state :rezzed-no-rez-cost}))))))
+                      card nil)
+                    :else
+                    (wait-for (reveal state side inst-target)
+                              (corp-install state side eid (get-card state inst-target) nil
+                                            {:ignore-all-cost true
+                                             :install-state :rezzed-no-rez-cost})))))))
           ;; Identify that the card wasn't just dragged to the discard, and that it was trashed
           ;; by the corporation.
           ;; This requires that any (trash-cards ..) or (trash ..) fns use {:source card}
@@ -1449,13 +1456,12 @@
           (trash-cause [eid target]
             (let [cause (:cause target)
                   cause-card (:cause-card target)]
-              (cond
-                (corp? (:source eid))   (str "trashed by " (:title (:source eid)))
-                (= :ability-cost cause) "trashed as an ability-cost"
-                (= :subroutine cause)   "trashed by an ice subroutine"
-                (and (corp? cause-card) (not= cause :opponent-trashes)) "trashed by a corp card"
-                (and (runner? cause-card) (= cause :forced-to-trash)) "forced to trash by runner"
-                :else nil)))
+              (or
+                (corp? (:source eid))
+                (= :ability-cost cause)
+                (= :subroutine cause)
+                (and (corp? cause-card) (not= cause :opponent-trashes))
+                (and (runner? cause-card) (= cause :forced-to-trash)))))
           ;; prompts to install an x-cost card (handles validation)
           (ob-ability [target-cost]
             {:optional
@@ -1467,14 +1473,14 @@
                :async true
                :effect (effect (continue-ability
                                  {:prompt "Choose a card to install and rez"
-                                  :choices {:max 1
-                                            :req (req (filter #(and (= target-cost (:cost %))
+                                  :choices (req (conj (filter #(and (= target-cost (:cost %))
                                                                     (or (asset? %)
                                                                         (upgrade? %)
                                                                         (ice? %)))
-                                                              (vec (sort-by :title (:deck corp)))))}
+                                                              (vec (sort-by :title (:deck corp))))
+                                                      "No install"))
                                   :async true
-                                  :effect (resolve-install target)}
+                                  :effect (resolve-install)}
                                  card nil))}}})]
     {:events [{:event :corp-trash
                :req (req (and
