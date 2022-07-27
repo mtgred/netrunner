@@ -2272,7 +2272,7 @@
                  :choices {:not-self true
                            :req (req (and (corp? target)
                                           (installed? target)))}
-                 :msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                 :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
                  :cancel-effect (req (system-msg state :corp "declines to use Svyatogor Excavator")
                                      (effect-completed state side eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
