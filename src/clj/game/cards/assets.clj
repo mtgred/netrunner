@@ -1371,7 +1371,7 @@
                                  (in-discard? %)
                                  (not (faceup? %)))
                      :max 2}
-           :msg (msg "to reveal " (str/join " and " (map :title targets)) " from Archives and shuffle them into R&D")
+           :msg (msg "reveal " (str/join " and " (map :title targets)) " from Archives and shuffle them into R&D")
            :effect (req (wait-for (reveal state side targets)
                                   (doseq [c targets]
                                     (move state side c :deck))
