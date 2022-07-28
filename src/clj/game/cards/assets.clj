@@ -1384,8 +1384,8 @@
                                         card nil)
                                       (effect-completed state side eid)))))
            :cancel-effect (effect (system-msg "declines to use Moon Pool to reveal any cards in Archives")
-                                  (effect-completed eid))}]
-      (let [moon-pool-discard-ability
+                                  (effect-completed eid))}
+          moon-pool-discard-ability
             {:prompt "Trash up to 2 cards from HQ"
              :choices {:card #(and (corp? %)
                                    (in-hand? %))
@@ -1399,13 +1399,12 @@
                                       card nil)))
              :cancel-effect (effect (system-msg "declines to use Moon Pool to trash any cards from HQ")
                                     (continue-ability moon-pool-reveal-ability card nil))}]
-        {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
-                      :cost [:remove-from-game]
-                      :async true
-                      :effect (effect (continue-ability
-                                        moon-pool-discard-ability
-                                        card nil))}]}))))
-
+      {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
+                    :cost [:remove-from-game]
+                    :async true
+                    :effect (effect (continue-ability
+                                      moon-pool-discard-ability
+                                      card nil))}]})))
 
 (defcard "Mr. Stone"
   {:events [{:event :runner-gain-tag
