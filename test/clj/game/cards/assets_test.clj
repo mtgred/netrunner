@@ -3133,7 +3133,9 @@
     (click-card state :corp "Hostile Takeover")
     (click-card state :corp "Hostile Takeover")
     (score state :corp (get-content state :remote3 0))
-    (is (= 1 (count (:scored (get-corp)))) "Hostile was scored")))
+    (is (= 1 (count (:scored (get-corp)))) "Hostile was scored")
+    (is (find-card "Moon Pool" (:rfg (get-corp))) "Moon Pool is rfg'd")
+    (is (nil? (get-content state :remote1 0)))))
 
 (deftest moon-pool-rfg-when-no-cards-trashed-from-hq
   (do-game
@@ -3148,7 +3150,8 @@
       (click-card state :corp "Longevity Serum")
       (click-prompt state :corp "Done")
       (no-prompt? state :corp)
-      (is (in-rfg? moon-pool)))))
+      (is (find-card "Moon Pool" (:rfg (get-corp))) "Moon Pool is rfg'd")
+      (is (nil? (get-content state :remote1 0))))))
 
 (deftest mr-stone
   ;; Mr Stone
