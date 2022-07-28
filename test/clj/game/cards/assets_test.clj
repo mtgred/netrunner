@@ -3135,6 +3135,21 @@
     (score state :corp (get-content state :remote3 0))
     (is (= 1 (count (:scored (get-corp)))) "Hostile was scored")))
 
+(deftest moon-pool-rfg-when-no-cards-trashed-from-hq
+  (do-game
+    (new-game {:corp {:hand ["Moon Pool", (qty "Hedge Fund" 3)]
+                      :discard ["Longevity Serum"]}})
+    (play-from-hand state :corp "Moon Pool" "New remote")
+    (let [moon-pool (get-content state :remote1 0)]
+      (rez state :corp moon-pool)
+      (card-ability state :corp moon-pool 0)
+      (prompt-is-card? state :corp :moon-pool)
+      (click-prompt state :corp "Done")
+      (click-card state :corp "Longevity Serum")
+      (click-prompt state :corp "Done")
+      (no-prompt? state :corp)
+      (is (in-rfg? moon-pool)))))
+
 (deftest mr-stone
   ;; Mr Stone
   (do-game
