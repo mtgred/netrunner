@@ -1390,6 +1390,7 @@
              :choices {:card #(and (corp? %)
                                    (in-hand? %))
                        :max 2}
+             :async true
              :msg (msg "trash " (count targets) " cards from HQ ")
              :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
                                     (continue-ability
