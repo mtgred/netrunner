@@ -1483,11 +1483,13 @@
                                   :effect (resolve-install)}
                                  card nil))}}})]
     {:events [{:event :corp-trash
-               :req (req (and
-                           (installed? (:card context))
-                           (rezzed? (:card context))
-                           (some? (trash-cause eid target))
-                           (not (used-this-turn? (:cid card) state))))
+               :req (req (let [trashed-card (:card context)]
+                           (and
+                             (installed? trashed-card)
+                             (rezzed? trashed-card)
+                             (not (nil? (:cost trashed-card)))
+                             (some? (trash-cause eid target))
+                             (not (used-this-turn? (:cid card) state)))))
                :async true
                :interactive (req true)
                :waiting "Corp to make a decision"

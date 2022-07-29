@@ -3648,6 +3648,16 @@
    (is (= ["No install"] (prompt-buttons :corp)) "Sole option available is Done")
    (click-prompt state :corp "No install")))
 
+(deftest ob-logistics-no-trigger-when-trashed-card-has-no-cost
+  (do-game
+    (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                      :hand ["Extract", "Oaktown Renovation"]
+                      :deck ["Anoetic Void"]}})
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (play-from-hand state :corp "Extract")
+    (click-card state :corp (get-content state :remote1 0))
+    (no-prompt? state :corp)))
+
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
     (do-game
