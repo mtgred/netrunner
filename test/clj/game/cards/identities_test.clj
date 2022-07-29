@@ -3543,7 +3543,7 @@
       (is (last-log-contains? state "identifies their mark"))
       (is (not (second-last-log-contains? state "identifies their mark"))))))
 
-(deftest ob-logistics-basic-test
+(deftest ob-superheavy-logistics-basic-test
   ;; The ability works, and it works once per turn - depends on Extract to be correct
   (do-game
    (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
@@ -3576,8 +3576,8 @@
    (click-card state :corp (get-content state :remote3 0))
    (is (no-prompt? state :corp) "No prompt to use Ob again")))
 
-(deftest ob-logistics-additional-costs
-  ;; ob-logistics doesn't waive additional costs to rez (ie corp. town)
+(deftest ob-superheavy-logistics-additional-costs
+  ;; doesn't waive additional costs to rez (ie corp. town)
   (do-game
    ;; can't pay cost
    (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
@@ -3634,7 +3634,7 @@
    (is (= "Corporate Town" (:title (get-content state :remote3 0))) "Installed C. Town in remote")
    (is (rezzed? (get-content state :remote3 0)) "rezzed C. Town")))
 
-(deftest ob-logistics-fail-to-find
+(deftest ob-superheavy-logistics-fail-to-find
   ;; If no cards in R&D match the search cost, ability can be declined
   (do-game
    (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
@@ -3647,6 +3647,19 @@
    (click-prompt state :corp "Yes")
    (is (= ["No install"] (prompt-buttons :corp)) "Sole option available is Done")
    (click-prompt state :corp "No install")))
+
+(deftest ob-superheavy-logistics-public-agendas
+  ;; If no cards in R&D match the search cost, ability can be declined
+  (do-game
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["Oaktown Renovation" "Extract"]
+                     :deck ["Anoetic Void"]}})
+   (play-from-hand state :corp "Oaktown Renovation" "New remote")
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "Oaktown Renovation")
+   (is (empty? (:prompt (get-corp))))
+   (is (find-card "Oaktown Renovation" (:discard (get-corp))))
+   ))
 
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn

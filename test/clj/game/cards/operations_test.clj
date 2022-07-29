@@ -561,7 +561,7 @@
       (click-card state :corp (find-card "Improved Tracers" (:hand (get-corp))))
       (click-prompt state :corp "New remote")
       (let [imptrac (get-content state :remote1 0)]
-        (is (rezzed? (refresh imptrac)) "Improved Tracers is faceup")
+        (is (faceup? (refresh imptrac)) "Improved Tracers is faceup")
         (is (= 4 (get-strength (refresh hunter))) "Hunter hasn't gained strength")
         (play-from-hand state :corp "Casting Call")
         (click-card state :corp (find-card "Oaktown Renovation" (:hand (get-corp))))

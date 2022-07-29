@@ -549,7 +549,7 @@
   {:on-play
    {:prompt "Choose a faceup card"
     :choices {:card #(or (and (corp? %)
-                              (rezzed? %))
+                              (faceup? %))
                          (and (runner? %)
                               (or (installed? %)
                                   (:host %))

@@ -158,7 +158,7 @@
    (click-prompt state :corp "Enigma")
    (is (changes-credits (get-corp) 0
                         (click-prompt state :corp "New remote")))
-   (is (rezzed? (get-ice state :remote2 0)) "Enigma was installed and rezzed, both at no cost")
+   (is (faceup? (get-ice state :remote2 0)) "Enigma was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Cancel")
@@ -168,13 +168,13 @@
    (click-prompt state :corp "Rashida Jaheem")
    (is (changes-credits (get-corp) 0
                         (click-prompt state :corp "Server 2")))
-   (is (rezzed? (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
+   (is (faceup? (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Oaktown Renovation")
    (click-prompt state :corp "New remote")
    (is (= "Oaktown Renovation" (:title (get-content state :remote6 0))) "Oaktown Renovation was installed")
-   (is (rezzed? (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
+   (is (faceup? (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
@@ -422,7 +422,7 @@
     (do-game
    (new-game {:corp {:hand ["Azef Protocol", "PAD Campaign"]}
               :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
-   (play-from-hand state :corp "Azef Protocol" "New remote")   
+   (play-from-hand state :corp "Azef Protocol" "New remote")
    (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
    (score state :corp (get-content state :remote1 0))
    (is (= 0 (count (:scored (get-corp)))) "Azef Protocol requires a cost be paid")
@@ -2477,7 +2477,7 @@
     (core/gain state :corp :click 3)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (let [oak (get-content state :remote1 0)]
-      (is (rezzed? (refresh oak)) "Oaktown installed face up")
+      (is (faceup? (refresh oak)) "Oaktown installed face up")
       (advance state oak)
       (is (= 6 (:credit (get-corp))) "Spent 1 credit to advance, gained 2 credits from Oaktown")
       (play-from-hand state :corp "Shipment from SanSan")
