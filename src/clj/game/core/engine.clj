@@ -1000,7 +1000,8 @@
   [state _ eid durations context-maps]
   (wait-for (trash-when-expired state nil (make-eid state eid) context-maps)
             (unregister-floating-events state nil :pending)
-            (doseq [duration durations]
+            (doseq [duration durations
+                    :when duration]
               (unregister-floating-effects state nil duration)
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
