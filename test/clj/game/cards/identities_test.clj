@@ -3657,9 +3657,8 @@
    (play-from-hand state :corp "Oaktown Renovation" "New remote")
    (play-from-hand state :corp "Extract")
    (click-card state :corp "Oaktown Renovation")
-   (is (empty? (:prompt (get-corp))))
-   (is (find-card "Oaktown Renovation" (:discard (get-corp))))
-   ))
+   (is (empty? (:prompt (get-corp))) "No Ob prompt")
+   (is (find-card "Oaktown Renovation" (:discard (get-corp))) "Oaktown is trashed")))
 
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
