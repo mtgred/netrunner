@@ -1808,7 +1808,7 @@
   (let [all [{:msg "gain 4 [Credits]"
               :async true
               :effect (effect (gain-credits eid 4))}
-             {:msg "install a program from R&D"
+             {:msg "install a program from your stack"
               :async true
               :effect (effect (continue-ability
                                 {:prompt "Choose a program to install"
