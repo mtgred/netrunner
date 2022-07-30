@@ -7,9 +7,9 @@
    [cljs.core.async :refer [<! chan put!] :as async]
    [clojure.string :as s :refer [capitalize ends-with? join lower-case split
                            starts-with?]]
-   [game.core.card :refer [asset? condition-counter? corp? faceup?
-                           get-counters get-title has-subtype? ice? operation? rezzed?
-                           same-card?]]
+   [game.core.card :refer [active? asset? corp? facedown? faceup?
+                           get-counters get-title has-subtype? ice? rezzed?
+                           same-card? operation? condition-counter?]]
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [add-cost-to-label is-tagged? select-non-nil-keys
                           str->int] :as utils]
@@ -535,48 +535,6 @@
                  (:fired sub) "✅")]])
        subroutines)]))
 
-;; TODO (2020-10-08): We're using json as the transport layer for server-client
-;; communication, so every non-key keyword is converted to a string, which blows.
-;; Until this is changed, it's better to redefine this stuff in here and just not
-;; worry about it.
-
-;; TODO (2021-04-24): If this ever gets fixed, remember to change functions in
-;; button-pane as well.
-(letfn
-  [(is-type?  [card value] (= value (:type card)))
-   (identity? [card] (or (is-type? card "Fake-Identity")
-                         (is-type? card "Identity")))
-   (get-nested-host [card] (if (:host card)
-                             (recur (:host card))
-                             card))
-   (get-zone [card] (:zone (get-nested-host card)))
-   (in-play-area? [card] (= (get-zone card) ["play-area"]))
-   (in-set-aside? [card] (= (get-zone card) ["set-aside"]))
-   (in-current? [card] (= (get-zone card) ["current"]))
-   (in-scored? [card] (= (get-zone card) ["scored"]))
-   (corp? [card] (= (:side card) "Corp"))
-   (installed? [card] (or (:installed card)
-                          (= "servers" (first (get-zone card)))))
-   (rezzed? [card] (:rezzed card))
-   (runner? [card] (= (:side card) "Runner"))
-   (condition-counter? [card] (is-type? card "Condition"))
-   (facedown? [card] (or (when (not (condition-counter? card))
-                           (= (get-zone card) ["rig" "facedown"]))
-                         (:facedown card)))]
-  (defn active?
-    "Checks if the card is active and should receive game events/triggers."
-    [card]
-    (or (identity? card)
-        (in-play-area? card)
-        (in-current? card)
-        (in-scored? card)
-        (and (corp? card)
-             (installed? card)
-             (rezzed? card))
-        (and (runner? card)
-             (installed? card)
-             (not (facedown? card))))))
-
 (defn card-abilities [card abilities subroutines]
   (let [actions (action-list card)]
     (when (and (= (:cid card) (:source @card-menu))
@@ -649,13 +607,13 @@
                        (:fired sub) "✅")]]))
            subroutines)])])))
 
-(defn face-down?
+(defn draw-facedown?
   "Returns true if the installed card should be drawn face down."
   [{:keys [facedown host] :as card}]
   (if (corp? card)
     (and (not (operation? card))
          (not (condition-counter? card))
-         (not (rezzed? card))
+         (not (faceup? card))
          (not= (:side host) "Runner"))
     facedown))
 
@@ -753,7 +711,7 @@
 
           (doall
            (for [card hosted]
-             (let [flipped (face-down? card)]
+             (let [flipped (draw-facedown? card)]
                ^{:key (:cid card)}
                [card-view card flipped]))))])]))
 
@@ -762,12 +720,12 @@
   (doall (apply concat (for [cards distinct-cards] ; apply concat for one-level flattening
                          (let [hosting (remove #(zero? (count (:hosted %))) cards) ; There are hosted cards on these
                                others (filter #(zero? (count (:hosted %))) cards)
-                               facedowns (filter face-down? others)
-                               others (remove face-down? others)]
+                               facedowns (filter draw-facedown? others)
+                               others (remove draw-facedown? others)]
                            [; Hosting
                             (for [c hosting]
                               ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
-                                                [card-view c (face-down? c)]])
+                                                [card-view c (draw-facedown? c)]])
                             ; Facedown
                             (for [c facedowns]
                               ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
@@ -776,7 +734,7 @@
                             (when (not-empty others)
                               (if (= 1 (count others))
                                 (let [c (first others)
-                                      flipped (face-down? c)]
+                                      flipped (draw-facedown? c)]
                                   ^{:key (:cid c)}
                                   [:div.card-wrapper {:class (when (playable? c) "playable")}
                                    [card-view c flipped]])
@@ -787,7 +745,7 @@
   [:div.stacked
    (doall
      (for [c cards]
-       (let [flipped (face-down? c)]
+       (let [flipped (draw-facedown? c)]
          ^{:key (:cid c)} [:div.card-wrapper {:class (when (playable? c) "playable")}
                            [card-view c flipped]])))])
 
@@ -935,8 +893,7 @@
 (defn discard-view-corp [player-side discard]
   (let [s (r/atom {})]
     (fn [player-side discard]
-      (let [faceup? #(or (:seen %) (:rezzed %))
-            draw-card #(if (faceup? %1)
+      (let [draw-card #(if (faceup? %1)
                          [card-view %1 nil %2]
                          (if (or (= player-side :corp)
                                  (spectator-view-hidden?))
@@ -1063,7 +1020,7 @@
         (doall
           (for [card content]
             (let [is-first (= card (first content))
-                  flipped (not (:rezzed card))]
+                  flipped (not (faceup? card))]
               [:div.server-card {:key (:cid card)
                                  :class (str (when central-view "central ")
                                              (when (or central-view
@@ -1103,7 +1060,7 @@
       [:div.stacked
        (doall (for [card content]
                 (let [is-first (= card (first content))
-                      flipped (not (:rezzed card))]
+                      flipped (not (faceup? card))]
                   [:div.server-card {:key (:cid card)
                                      :class (str (when (and (< 1 (count content)) (not is-first))
                                                    "shift"))}

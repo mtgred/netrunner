@@ -5,7 +5,7 @@
     [clj-uuid :as uuid]
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes]]
-    [game.core.card :refer [active? facedown? get-card get-cid get-title installed? in-discard? in-hand? rezzed?]]
+    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title installed? in-discard? in-hand? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -600,6 +600,8 @@
                          (not (rezzed? card)))
           :facedown (and (installed? card)
                          (facedown? card))
+          :faceup (and (installed? card)
+                       (faceup? card))
           :hosted (:host card)
           :inactive (not (active? card))
           :in-location (or (and (contains? location :discard)
@@ -998,7 +1000,8 @@
   [state _ eid durations context-maps]
   (wait-for (trash-when-expired state nil (make-eid state eid) context-maps)
             (unregister-floating-events state nil :pending)
-            (doseq [duration durations]
+            (doseq [duration durations
+                    :when duration]
               (unregister-floating-effects state nil duration)
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))

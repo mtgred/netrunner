@@ -8,7 +8,7 @@
    [game.core.board :refer [all-active all-active-installed all-installed]]
    [game.core.card :refer [corp? event? facedown? get-card get-counters
                            get-zone hardware? has-subtype? ice? in-deck? in-discard?
-                           in-hand? installed? program? resource? rezzed? runner? virus-program?]]
+                           in-hand? installed? program? resource? rezzed? runner? virus-program? faceup?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [all-stealth install-cost
                                rez-additional-cost-bonus rez-cost trash-cost]]
@@ -1687,8 +1687,8 @@
               {:target-server :archives
                :ability
                {:prompt "Choose one faceup card to add to the top of R&D"
-                :req (req (seq (filter :seen (:discard corp))))
-                :choices (req (filter :seen (:discard corp)))
+                :req (req (seq (filter faceup? (:discard corp))))
+                :choices (req (filter faceup? (:discard corp)))
                 :msg (msg "add " (:title target) " to the top of R&D")
                 :effect (effect (move :corp target :deck {:front true}))}})]})
 

@@ -926,6 +926,7 @@
 (defcard "Hollywood Renovation"
   {:install-state :face-up
    :events [{:event :advance
+             :condition :faceup
              :async true
              :req (req (same-card? card target))
              :effect (req (let [n (if (>= (get-counters (get-card state card) :advancement) 6) 2 1)]
@@ -1161,6 +1162,7 @@
 (defcard "New Construction"
   {:install-state :face-up
    :events [{:event :advance
+             :condition :faceup
              :optional
              {:req (req (same-card? card target))
               :prompt "Install a card from HQ in a new remote?"
@@ -1207,6 +1209,7 @@
 (defcard "Oaktown Renovation"
   {:install-state :face-up
    :events [{:event :advance
+             :condition :faceup
              :req (req (same-card? card target))
              :msg (msg "gain " (if (>= (get-counters (get-card state card) :advancement) 5) "3" "2") " [Credits]")
              :async true
@@ -1864,6 +1867,7 @@
   (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]
     {:install-state :face-up
      :events [{:event :advance
+               :condition :faceup
                :async true
                :req (req (same-card? card target))
                :msg (msg (if (pos? (count (:deck runner)))

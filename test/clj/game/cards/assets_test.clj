@@ -3677,7 +3677,7 @@
       (click-prompt state :corp "New remote")
       (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
           "Oaktown Renovation installed by Political Dealings")
-      (is (rezzed? (get-content state :remote3 0))
+      (is (faceup? (get-content state :remote3 0))
           "Oaktown Renovation installed face up")))
 
 (deftest prana-condenser

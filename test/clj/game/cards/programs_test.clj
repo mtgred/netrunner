@@ -3547,7 +3547,7 @@
           {:type :gain-subtype
            :req (req (utils/same-card? ice target))
            :value "Code Gate"}))
-      (run-continue state)
+      (run-continue state :encounter-ice)
       (let [inv (get-program state 0)]
         (card-ability state :runner (refresh inv) 1)
         (card-ability state :runner (refresh inv) 0)
