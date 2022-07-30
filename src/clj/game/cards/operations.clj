@@ -549,8 +549,8 @@
   {:on-play
    {:prompt "Choose a faceup card"
     :choices {:card #(or (and (corp? %)
-                               (installed? %)
-                               (faceup? %))
+                              (installed? %)
+                              (faceup? %))
                          (and (runner? %)
                               (or (installed? %)
                                   (:host %))
