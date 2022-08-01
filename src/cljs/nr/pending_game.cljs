@@ -75,6 +75,9 @@
                       (swap! app-state assoc :editing false :current-game nil))))}
    (tr [:lobby.leave "Leave"])])
 
+(defn- current-side? [players side]
+  (= side (-> players first :side)))
+
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
     (if (< 1 (count @players))
@@ -85,12 +88,16 @@
         (tr [:lobby.swap "Swap sides"])
         [:b.caret]]
        (into
-         [:ul.dropdown-menu.blue-shade]
-         (for [side ["Any Side" "Corp" "Runner"]]
-           [:a.block-link
-            {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
-                                                   :side side}])}
-            [:li (tr-side side)]]))])))
+        [:ul.dropdown-menu.blue-shade]
+        (for [side ["Any Side" "Corp" "Runner"]]
+          (if (current-side? @players side)
+            [:a.block-link
+             {:style {:color "grey" :cursor "default"} :disabled true}
+             [:li (tr-side side)]]
+            [:a.block-link
+             {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                    :side side}])}
+             [:li (tr-side side)]])))])))
 
 (defn button-bar [user gameid players]
   [:div.button-bar

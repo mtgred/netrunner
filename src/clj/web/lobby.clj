@@ -523,21 +523,17 @@
         (->> (assoc lobbies gameid)))
     lobbies))
 
-(defn- player-swap-text [players]
-  (apply
-   str
-   (map #(str (-> % :user :username) " is now " (-> % :side) ". ")
-        players)))
+(defn swap-text [players current-side]
+  (let [[player1 player2] (mapv swap-side players)
+        player1-username (-> player1 :user :username)
+        player2-username (-> player2 :user :username)]
+    (str player1-username " has swapped sides. "
+         (if (= current-side "Any Side")
+           "Waiting for opponent."
+           (str player1-username " is now " (:side player1) ". "))
+         (when player2
+           (str player2-username " is now " (:side player2) ".")))))
 
-(defn swap-text [players side]
-  (let [[{player-1-side :side
-          {player-1-username :username} :user}] players]
-    (str
-     player-1-username " has swapped sides. "
-     (cond
-       (= side "Any Side") "Waiting for oppenent."
-       (= side player-1-side) (player-swap-text players)
-       :else (player-swap-text (mapv swap-side players))))))
 
 (defmethod ws/-msg-handler :lobby/swap
   [{{user :user} :ring-req
