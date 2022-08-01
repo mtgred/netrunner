@@ -1,7 +1,5 @@
 # Android: Netrunner in the browser
 
-[![Build status](https://circleci.com/gh/mtgred/netrunner/tree/master.svg?style=shield)](https://circleci.com/gh/mtgred/netrunner)
-
 Hosted at [http://www.jinteki.net](http://www.jinteki.net). [Example of gameplay](https://www.youtube.com/watch?v=cnWudnpeY2c).
 
 ![screenshot](http://i.imgur.com/xkxOMHc.jpg)
