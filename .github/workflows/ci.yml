@@ -12,10 +12,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Fetch cards
-        run: lein fetch --no-db --no-card-images
-      - name: Run tests
-        run: lein kaocha --profile :ci
       - name: Cache
         uses: actions/cache@v3.0.5
         with:
@@ -27,3 +23,7 @@ jobs:
           key: lein-deps-{{ checksum "project.clj" }}
           # An ordered list of keys to use for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
           restore-keys: lein-deps-{{ checksum "project.clj" }}
+      - name: Fetch cards
+        run: lein fetch --no-db --no-card-images
+      - name: Run tests
+        run: lein kaocha --profile :ci
