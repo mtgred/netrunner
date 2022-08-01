@@ -3537,7 +3537,7 @@
     (dotimes [n 12]
       (run-continue state))
     (click-prompt state :runner "Gain 4 [Credits]")
-    (click-prompt state :runner "Install a program from R&D")
+    (click-prompt state :runner "Install a program from your stack")
     (click-prompt state :runner "D4v1d")
     (click-prompt state :runner "Charge a card")
     (click-card state :runner "D4v1d")
