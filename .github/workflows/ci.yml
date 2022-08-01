@@ -12,8 +12,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies
-        run: lein deps
       - name: Fetch cards
         run: lein fetch --no-db --no-card-images
       - name: Run tests
