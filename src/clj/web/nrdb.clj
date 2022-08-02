@@ -16,8 +16,7 @@
                 (subs input (count nrdb-readable-url))
                 input)
         [id] (str/split input #"/")]
-    (when (uuid/uuidable? id)
-      id)))
+      id))
 
 (defn- lookup-card [db id]
   (or (mc/find-one-as-map db "cards" {:code id})
