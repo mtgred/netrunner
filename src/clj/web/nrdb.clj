@@ -27,7 +27,7 @@
   (fn [m k v]
     (let [card (lookup-card db (name k))]
       (if card
-        (if (= "identity" (:type card))
+        (if (= "Identity" (:type card))
           (assoc m :identity {:title (:title card) :side (:side card)})
           (update m :cards #(conj % {:card (:title card) :qty v})))
         m))))
