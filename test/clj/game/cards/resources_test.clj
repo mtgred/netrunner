@@ -3185,7 +3185,6 @@
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Took 1 tag")))
 
-
 (deftest kasi-string
   ;; Kasi String
   (do-game
@@ -3200,6 +3199,24 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
       (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")))
+
+(deftest kasi-string-charged-becomes-an-agenda
+  ;; Kasi String charged up to 4 becomes an agenda
+  (do-game
+      (new-game {:corp {:deck ["NGO Front" "15 Minutes"]}
+                 :runner {:deck ["Kasi String" "Daeg, First Net-Cat"]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :click 1)
+      (play-from-hand state :runner "Kasi String")
+      (play-from-hand state :runner "Daeg, First Net-Cat")
+      (dotimes [_ 3]
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "No action"))
+      (take-credits state :runner)
+      (play-and-score state "15 Minutes")
+      (click-card state :runner "Kasi String")
+      (is (= 1 (count (:scored (get-runner)))) "Kasi String moved to score area")))
 
 (deftest kasi-string-no-counter-when-stealing-agenda
     ;; No counter when stealing agenda
