@@ -1563,6 +1563,7 @@
                           (not (agenda? %)))
                     (all-installed state :corp)))
     :prompt "Choose any number of rezzed cards to trash"
+    :interactive (req true)
     :choices {:max (req (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
               :card #(and (rezzed? %)
                           (not (agenda? %)))}
