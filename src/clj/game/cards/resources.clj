@@ -1600,6 +1600,7 @@
               :waiting-prompt "Runner to choose an option"
               :prompt "Place 1 power counter on Kasi String?"
               :yes-ability {:msg "place a power counter on itself"
+                            :async true
                             :effect (req (add-counter state side eid card :power 1 {:placed true}))}
               :no-ability {:effect (effect (system-msg "declines to use Kasi String"))}}}
             {:event :counter-added
