@@ -495,10 +495,11 @@
 ;;    characteristics, and is trashed.
 
 (defn convert-to-condition-counter
-  [{:keys [cid code side title zone]}]
+  [{:keys [cid code side title zone implementation]}]
   (map->Card
     {:cid cid
      :code code
+     :implementation implementation
      :printed-title title
      :side side
      :type "Counter"
