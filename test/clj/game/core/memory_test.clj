@@ -73,150 +73,151 @@
                                        :used 1}}})]
     (is (= -1 (core/available-mu state)) "subtracts :used from :available")))
 
-(deftest build-new-mu
-  (testing "non-virus card mu:"
-    (do-game
-      (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
-      (is (= {:only-for {:caissa {:available 0
-                                  :used 0}
-                         :virus {:available 0
-                                 :used 0}}
-              :available 4
-              :used 0}
-             (memory/build-new-mu state))
-          "starting values should be 4 available, 0 used"))
-    (testing "using mu"
-      (do-game
-        (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
-        (core/register-floating-effect
-          state :runner (find-card "Corroder" (:hand (get-runner)))
-          {:type :used-mu
-           :value 1})
-        (is (= {:only-for {:caissa {:available 0
-                                    :used 0}
-                           :virus {:available 0
-                                   :used 0}}
-                :available 4
-                :used 1}
-               (memory/build-new-mu state))
-            "should increase :used"))
-      (testing "when greater than :available"
-        (do-game
-          (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
-          (core/register-floating-effect
-            state :runner (find-card "Corroder" (:hand (get-runner)))
-            {:type :used-mu
-             :value 5})
-          (is (= {:only-for {:caissa {:available 0
-                                      :used 0}
-                             :virus {:available 0
-                                     :used 0}}
-                  :available 4
-                  :used 5}
-                 (memory/build-new-mu state))
-              "should increase :used")))
-      (testing "increasing available mu"
-        (do-game
-          (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
-          (core/register-floating-effect
-            state :runner (find-card "Sure Gamble" (:hand (get-runner)))
-            (core/mu+ 2))
-          (is (= {:only-for {:caissa {:available 0
-                                      :used 0}
-                             :virus {:available 0
-                                     :used 0}}
-                  :available 6
-                  :used 0}
-                 (memory/build-new-mu state))
-              "should increase :available")))))
-  (testing "virus mu:"
-    (testing "available virus mu:"
-      (testing "increasing available virus mu"
-        (do-game
-          (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-          (core/register-floating-effect
-            state :runner (find-card "Sure Gamble" (:hand (get-runner)))
-            (core/virus-mu+ 2))
-          (is (= {:only-for {:caissa {:available 0
-                                      :used 0}
-                             :virus {:available 2
-                                     :used 0}}
-                  :available 4
-                  :used 0}
-                 (memory/build-new-mu state))
-              "should increase :available-virus, not :available")))
-      (testing "increasing available virus mu with available non-virus mu"
-        (do-game
-          (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-          (core/register-floating-effect
-            state :runner (find-card "Sure Gamble" (:hand (get-runner)))
-            (core/mu+ 2))
-          (core/register-floating-effect
-            state :runner (find-card "Sure Gamble" (:hand (get-runner)))
-            (core/virus-mu+ 2))
-          (is (= {:only-for {:caissa {:available 0
-                                      :used 0}
-                             :virus {:available 2
-                                     :used 0}}
-                  :available 6
-                  :used 0}
-                 (memory/build-new-mu state))
-              "should increase :available-virus, not :available"))))
-    (testing "virus card mu:"
-      (testing "virus card mu:"
-        (testing "with no available virus mu:"
-          (testing "using virus card mu"
-            (do-game
-              (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-              (core/register-floating-effect
-                state :runner (find-card "Cache" (:hand (get-runner)))
-                {:type :used-mu
-                 :value 2})
-              (is (= {:only-for {:caissa {:available 0
-                                          :used 0}
-                                 :virus {:available 0
-                                         :used 2}}
-                      :available 4
-                      :used 2}
-                     (memory/build-new-mu state))
-                  "should increase :used"))))
-        (testing "with available virus mu:"
-          (testing "using virus card mu"
-            (do-game
-              (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-              (core/register-floating-effect
-                state :runner (find-card "Sure Gamble" (:hand (get-runner)))
-                (core/virus-mu+ 2))
-              (core/register-floating-effect
-                state :runner (find-card "Cache" (:hand (get-runner)))
-                {:type :used-mu
-                 :value 2})
-              (is (= {:only-for {:caissa {:available 0
-                                          :used 0}
-                                 :virus {:available 2
-                                         :used 2}}
-                      :available 4
-                      :used 0}
-                     (memory/build-new-mu state))
-                  "should increase :used-virus")))
-          (testing "using more virus card mu than available virus mu"
-            (do-game
-              (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-              (core/register-floating-effect
-                state :runner (find-card "Sure Gamble" (:hand (get-runner)))
-                (core/virus-mu+ 2))
-              (core/register-floating-effect
-                state :runner (find-card "Cache" (:hand (get-runner)))
-                {:type :used-mu
-                 :value 3})
-              (is (= {:only-for {:caissa {:available 0
-                                          :used 0}
-                                 :virus {:available 2
-                                         :used 3}}
-                      :available 4
-                      :used 1}
-                     (memory/build-new-mu state))
-                  "should increase :used-virus"))))))))
+(deftest build-new-mu-init-test
+  (do-game
+    (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 0
+                               :used 0}}
+            :available 4
+            :used 0}
+           (memory/build-new-mu state))
+        "starting values should be 4 available, 0 used")))
+
+(deftest build-new-mu-using-mu-test
+  (do-game
+    (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Corroder" (:hand (get-runner)))
+      {:type :used-mu
+       :value 1})
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 0
+                               :used 0}}
+            :available 4
+            :used 1}
+           (memory/build-new-mu state))
+        "should increase :used")))
+
+(deftest build-new-mu-greater-than-available-test
+  (do-game
+    (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Corroder" (:hand (get-runner)))
+      {:type :used-mu
+       :value 5})
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 0
+                               :used 0}}
+            :available 4
+            :used 5}
+           (memory/build-new-mu state))
+        "should increase :used")))
+
+(deftest build-new-mu-increasing-available-mu-test
+  (do-game
+    (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Sure Gamble" (:hand (get-runner)))
+      (core/mu+ 2))
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 0
+                               :used 0}}
+            :available 6
+            :used 0}
+           (memory/build-new-mu state))
+        "should increase :available")))
+
+(deftest build-new-mu-virus-increasing-available-virus-mu-test
+  (do-game
+    (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Sure Gamble" (:hand (get-runner)))
+      (core/virus-mu+ 2))
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 2
+                               :used 0}}
+            :available 4
+            :used 0}
+           (memory/build-new-mu state))
+        "should increase :available-virus, not :available")))
+
+(deftest build-new-mu-virus-increasing-available-non-virus-mu-test
+  (do-game
+    (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Sure Gamble" (:hand (get-runner)))
+      (core/mu+ 2))
+    (core/register-floating-effect
+      state :runner (find-card "Sure Gamble" (:hand (get-runner)))
+      (core/virus-mu+ 2))
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 2
+                               :used 0}}
+            :available 6
+            :used 0}
+           (memory/build-new-mu state))
+        "should increase :available-virus, not :available")))
+
+(deftest build-new-mu-virus-no-available-virus-mu-test
+  (do-game
+    (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Cache" (:hand (get-runner)))
+      {:type :used-mu
+       :value 2})
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 0
+                               :used 2}}
+            :available 4
+            :used 2}
+           (memory/build-new-mu state))
+        "should increase :used")))
+
+(deftest build-new-mu-virus-using-virus-mu-test
+  (do-game
+    (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Sure Gamble" (:hand (get-runner)))
+      (core/virus-mu+ 2))
+    (core/register-floating-effect
+      state :runner (find-card "Cache" (:hand (get-runner)))
+      {:type :used-mu
+       :value 2})
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 2
+                               :used 2}}
+            :available 4
+            :used 0}
+           (memory/build-new-mu state))
+        "should increase :used-virus")))
+
+(deftest build-new-mu-virus-using-more-than-available-test
+  (do-game
+    (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
+    (core/register-floating-effect
+      state :runner (find-card "Sure Gamble" (:hand (get-runner)))
+      (core/virus-mu+ 2))
+    (core/register-floating-effect
+      state :runner (find-card "Cache" (:hand (get-runner)))
+      {:type :used-mu
+       :value 3})
+    (is (= {:only-for {:caissa {:available 0
+                                :used 0}
+                       :virus {:available 2
+                               :used 3}}
+            :available 4
+            :used 1}
+           (memory/build-new-mu state))
+        "should increase :used-virus")))
 
 (deftest update-mu
   (do-game
