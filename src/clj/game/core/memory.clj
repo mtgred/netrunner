@@ -1,10 +1,45 @@
 (ns game.core.memory
   (:require
-    [game.core.card :refer [get-card has-subtype? program? virus-program?]]
-    [game.core.effects :refer [get-effects get-effect-maps get-effect-value sum-effects]]
-    [game.core.eid :refer [make-eid]]
-    [game.core.toasts :refer [toast]]
-    [cond-plus.core :refer [cond+]]))
+   [cond-plus.core :refer [cond+]]
+   [game.core.card :refer [has-subtype? virus-program? program?]]
+   [game.core.effects :refer [get-effect-maps get-effect-value get-effects]]
+   [game.core.toasts :refer [toast]]))
+
+(defn mu+
+  "For use in :constant-effects and register-floating-effect.
+  Returns an effect map for :available-mu.
+  Takes either the mu value or a :req 5-fn and the value.
+  If :value is a function, it must return [:regular N] where N is a number."
+  ([value] (mu+ (constantly true) value))
+  ([req value]
+   {:type :available-mu
+    :req req
+    :value (cond+
+             [(or (vector? value) (fn? value)) value]
+             [(number? value) [:regular value]]
+             [:else (throw (Exception. (str "mu+ needs a vector, number, or function: " value)))])}))
+
+(defn virus-mu+
+  "For use in :constant-effects and register-floating-effect.
+  Returns an effect map for :available-mu
+  Takes either the mu value or a :req 5-fn and the value.
+  If :value is a function, it must return [:virus N] where N is a number."
+  ([value] (virus-mu+ (constantly true) value))
+  ([req value] (mu+ req (cond+
+                          [(or (vector? value) (fn? value)) value]
+                          [(number? value) [:virus value]]
+                          [:else (throw (Exception. (str "virus-mu+ needs a vector, number, or function: " value)))]))))
+
+(defn caissa-mu+
+  "For use in :constant-effects and register-floating-effect.
+  Returns an effect map for :available-mu.
+  Takes either the mu value or a :req 5-fn and the value.
+  If :value is a function, it must return [:caissa N] where N is a number."
+  ([value] (caissa-mu+ (constantly true) value))
+  ([req value] (mu+ req (cond+
+                          [(or (vector? value) (fn? value)) value]
+                          [(number? value) [:caissa value]]
+                          [:else (throw (Exception. (str "caissa-mu+ needs a vector, number, or function: " value)))]))))
 
 (defn available-mu
   "Returns the available MU the runner has"
@@ -35,20 +70,28 @@
     mu-list))
 
 (defn- merge-used-memory
+  "Convert the list of used-mu-effects to a map saying how much each type is used:
+  1. Create a zero'd map of the mu-type keywords
+  2. For each of the used mu effects, check which of the mu types it might use
+  3. Increment relevant mu type"
   [state used-mu-effects]
-  (let [effect-value-fn (get-effect-value state :runner)]
+  (let [effect-value-fn (get-effect-value state :runner)
+        initial-used-mu (zipmap (conj (keys type-preds) :regular) (repeat 0))]
     (reduce
       (fn [acc effect]
         (loop [type-preds type-preds]
           (let [[mu-type pred] (first type-preds)]
             (cond+
+              ;; If we've looped through and mu-type is now `nil`, increment regular
               [(nil? mu-type)
                (update acc :regular (fnil + 0 0) (effect-value-fn effect))]
+              ;; Otherwise, check the pred against the card
               [(pred (:card effect))
                (update acc mu-type (fnil + 0 0) (effect-value-fn effect))]
+              ;; Loop it up
               [:else
                (recur (next type-preds))]))))
-      (zipmap (conj (keys type-preds) :regular) (repeat 0))
+      initial-used-mu
       used-mu-effects)))
 
 (defn subtract-used-from-available
@@ -95,39 +138,3 @@
          (toast state :runner "You have exceeded your memory units!"))
        (swap! state update-in [:runner :memory] merge new-mu))
      changed?)))
-
-(defn mu+
-  "For use in :constant-effects and register-floating-effect.
-  Returns an effect map for :available-mu.
-  Takes either the mu value or a :req 5-fn and the value.
-  If :value is a function, it must return [:regular N] where N is a number."
-  ([value] (mu+ (constantly true) value))
-  ([req value]
-   {:type :available-mu
-    :req req
-    :value (cond+
-             [(or (vector? value) (fn? value)) value]
-             [(number? value) [:regular value]]
-             [:else (throw (Exception. (str "mu+ needs a vector, number, or function: " value)))])}))
-
-(defn virus-mu+
-  "For use in :constant-effects and register-floating-effect.
-  Returns an effect map for :available-mu
-  Takes either the mu value or a :req 5-fn and the value.
-  If :value is a function, it must return [:virus N] where N is a number."
-  ([value] (virus-mu+ (constantly true) value))
-  ([req value] (mu+ req (cond+
-                          [(or (vector? value) (fn? value)) value]
-                          [(number? value) [:virus value]]
-                          [:else (throw (Exception. (str "virus-mu+ needs a vector, number, or function: " value)))]))))
-
-(defn caissa-mu+
-  "For use in :constant-effects and register-floating-effect.
-  Returns an effect map for :available-mu.
-  Takes either the mu value or a :req 5-fn and the value.
-  If :value is a function, it must return [:caissa N] where N is a number."
-  ([value] (caissa-mu+ (constantly true) value))
-  ([req value] (mu+ req (cond+
-                          [(or (vector? value) (fn? value)) value]
-                          [(number? value) [:caissa value]]
-                          [:else (throw (Exception. (str "caissa-mu+ needs a vector, number, or function: " value)))]))))
