@@ -2,8 +2,8 @@
   (:require
     [cond-plus.core :refer [cond+]]
     [game.core.agendas :refer [update-advancement-requirement]]
-    [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone]]
-    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? program? resource? rezzed?]]
+    [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone all-installed-runner-type]]
+    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? program? resource? rezzed? installed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
@@ -13,8 +13,8 @@
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
-    [game.core.memory :refer [sufficient-mu?]]
-    [game.core.moving :refer [move trash]]
+    [game.core.memory :refer [sufficient-mu? update-mu]]
+    [game.core.moving :refer [move trash trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
@@ -286,10 +286,6 @@
     (cond
       ;; Can always install a card facedown
       facedown true
-      ;; MU limits
-      (and (program? card)
-           (not (sufficient-mu? state card)))
-      :memoryunits
       ;; Console check
       (and (has-subtype? card "Console")
            (some #(has-subtype? % "Console") (all-active-installed state :runner)))
@@ -313,8 +309,6 @@
          reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
          title (:title card)]
      (case reason
-       :memoryunits
-       (reason-toast (str "Not enough MU to install " title))
        :unique
        (reason-toast (str "Cannot install a second copy of " title " since it is unique."
                           " Please trash currently installed copy first"))
@@ -405,22 +399,36 @@
 (defn runner-install-pay
   [state side eid card {:keys [facedown] :as args}]
   (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))]
-    (if (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
-      (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})]
-        (wait-for (pay state side (make-eid state eid) card costs)
-                  (if-let [payment-str (:msg async-result)]
-                    (runner-install-continue
-                      state side eid
-                      played-card (assoc args
-                                         :previous-zone (:zone card)
-                                         :payment-str payment-str))
-                    (let [returned-card (move state :runner played-card (:zone card) {:suppress-event true})]
-                      (update! state :runner
-                               (assoc returned-card
-                                      :cid (:cid card)
-                                      :previous-zone (:previous-zone card)))
-                      (effect-completed state side eid)))))
-      (effect-completed state side eid))))
+    (if-not (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
+      (effect-completed state side eid)
+      (if (and (program? card)
+               (not (sufficient-mu? state card)))
+        (continue-ability
+          state side
+          {:prompt (format "Insufficient MU to install %s. Trash installed programs?" (:title card))
+           :choices {:max (count (all-installed-runner-type state :program))
+                     :card #(and (installed? %)
+                                 (program? %))}
+           :async true
+           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:game-trash true})
+                                  (update-mu state)
+                                  (runner-install-pay state side eid card args)))
+           :cancel-effect (effect (effect-completed eid))}
+          card nil)
+        (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})]
+          (wait-for (pay state side (make-eid state eid) card costs)
+                    (if-let [payment-str (:msg async-result)]
+                      (runner-install-continue
+                        state side eid
+                        played-card (assoc args
+                                           :previous-zone (:zone card)
+                                           :payment-str payment-str))
+                      (let [returned-card (move state :runner played-card (:zone card) {:suppress-event true})]
+                        (update! state :runner
+                                 (assoc returned-card
+                                        :cid (:cid card)
+                                        :previous-zone (:previous-zone card)))
+                        (effect-completed state side eid)))))))))
 
 (defn runner-install
   "Installs specified runner card if able"
