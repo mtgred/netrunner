@@ -138,3 +138,16 @@
          (toast state :runner "You have exceeded your memory units!"))
        (swap! state update-in [:runner :memory] merge new-mu))
      changed?)))
+
+(defn sufficient-mu?
+  "Will installing this card put the runner over their memory limit?"
+  [state card]
+  (when (program? card)
+    (let [mu-cost (:memoryunits card)
+          _ (assert (integer? mu-cost) (format "MU cost of %s is not an integer" (:title card)))
+          available-mu (get-available-mu state)
+          used-mu-effects (conj (get-effect-maps state :runner :used-mu)
+                                {:type :used-mu :value mu-cost})
+          used-mu (merge-used-memory state used-mu-effects)
+          total-used (subtract-used-from-available available-mu used-mu)]
+      (not (neg? total-used)))))

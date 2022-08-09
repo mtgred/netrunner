@@ -3,7 +3,7 @@
     [cond-plus.core :refer [cond+]]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone]]
-    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? resource? rezzed?]]
+    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? program? resource? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
@@ -13,6 +13,7 @@
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
+    [game.core.memory :refer [sufficient-mu?]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
     [game.core.rezzing :refer [rez]]
@@ -285,6 +286,10 @@
     (cond
       ;; Can always install a card facedown
       facedown true
+      ;; MU limits
+      (and (program? card)
+           (not (sufficient-mu? state card)))
+      :memoryunits
       ;; Console check
       (and (has-subtype? card "Console")
            (some #(has-subtype? % "Console") (all-active-installed state :runner)))
@@ -308,6 +313,8 @@
          reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
          title (:title card)]
      (case reason
+       :memoryunits
+       (reason-toast (str "Not enough MU to install " title))
        :unique
        (reason-toast (str "Cannot install a second copy of " title " since it is unique."
                           " Please trash currently installed copy first"))
