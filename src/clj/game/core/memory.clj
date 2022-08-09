@@ -94,7 +94,7 @@
       initial-used-mu
       used-mu-effects)))
 
-(defn subtract-used-from-available
+(defn combine-used-mu
   [available-mu used-mu]
   (reduce
     (fn [total-used mu-type]
@@ -114,15 +114,13 @@
   [state]
   (let [mu-list (get-available-mu state)
         available-mu (merge-available-memory mu-list)
-
         used-mu-effects (get-effect-maps state :runner :used-mu)
         used-mu (merge-used-memory state used-mu-effects)
-
         only-for (into {} (for [mu-type (keys type-preds)]
                             [mu-type {:available (get available-mu mu-type)
                                       :used (get used-mu mu-type)}]))
         total-available (:regular available-mu)
-        total-used (subtract-used-from-available available-mu used-mu)]
+        total-used (combine-used-mu available-mu used-mu)]
     {:only-for only-for
      :available total-available
      :used total-used}))
@@ -134,7 +132,7 @@
          new-mu (build-new-mu state)
          changed? (not= old-mu new-mu)]
      (when changed?
-       (when (neg? (:used new-mu))
+       (when (neg? (- (:available new-mu) (:used new-mu)))
          (toast state :runner "You have exceeded your memory units!"))
        (swap! state update-in [:runner :memory] merge new-mu))
      changed?)))
@@ -144,10 +142,14 @@
   [state card]
   (when (program? card)
     (let [mu-cost (:memoryunits card)
-          _ (assert (integer? mu-cost) (format "MU cost of %s is not an integer" (:title card)))
-          available-mu (get-available-mu state)
+          mu-list (get-available-mu state)
+          available-mu (merge-available-memory mu-list)
           used-mu-effects (conj (get-effect-maps state :runner :used-mu)
-                                {:type :used-mu :value mu-cost})
+                                {:type :used-mu
+                                 :duration :constant
+                                 :card card
+                                 :value mu-cost})
           used-mu (merge-used-memory state used-mu-effects)
-          total-used (subtract-used-from-available available-mu used-mu)]
-      (not (neg? total-used)))))
+          total-available (:regular available-mu)
+          total-used (combine-used-mu available-mu used-mu)]
+      (<= 0 (- total-available total-used)))))
