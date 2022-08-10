@@ -1,7 +1,7 @@
 (ns game.core.turns
   (:require
     [game.core.agendas :refer [update-all-advancement-requirements]]
-    [game.core.board :refer [all-active all-active-installed all-installed]]
+    [game.core.board :refer [all-active all-active-installed all-installed all-installed-and-scored]]
     [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
     [game.core.drawing :refer [draw]]
     [game.core.effects :refer [unregister-floating-effects any-effects]]
@@ -62,7 +62,7 @@
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
-  (doseq [c (filter :new (all-installed state side))]
+  (doseq [c (filter :new (all-installed-and-scored state side))]
     (update! state side (dissoc c :new)))
 
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
