@@ -3178,7 +3178,7 @@
                          (continue-ability
                            state side
                            {:req (req (< 0 (get-counters card :power)))
-                            :prompt (msg (format "Choose how many additional %s accesses to make with The Twinning" (if (= :rd target) "R&D" "HQ")))
+                            :prompt (msg (format "Choose how many additional %s accesses to make with The Twinning" (if (= :rd target-server) "R&D" "HQ")))
                             :choices {:number (req (min 2 (get-counters card :power)))
                                       :default (req (min 2 (get-counters card :power)))}
                             :msg (msg "access " target " additional cards from "
