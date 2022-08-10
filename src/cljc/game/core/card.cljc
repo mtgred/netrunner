@@ -475,13 +475,14 @@
 ;;    forfeit, the card is immediately trashed. See rule 8.2.5.
 
 (defn convert-to-agenda
-  [{:keys [cid code host hosted side title zone]} n]
+  [{:keys [cid code host hosted side title zone implementation]} n]
   (map->Card
     {:agendapoints n
      :cid cid
      :code code
      :host host
      :hosted hosted
+     :implementation implementation
      :printed-title title
      :side side
      :type "Agenda"
@@ -495,10 +496,11 @@
 ;;    characteristics, and is trashed.
 
 (defn convert-to-condition-counter
-  [{:keys [cid code side title zone]}]
+  [{:keys [cid code side title zone implementation]}]
   (map->Card
     {:cid cid
      :code code
+     :implementation implementation
      :printed-title title
      :side side
      :type "Counter"
