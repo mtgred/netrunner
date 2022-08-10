@@ -16,8 +16,7 @@
                 (subs input (count nrdb-readable-url))
                 input)
         [id] (str/split input #"/")]
-    (when (uuid/uuidable? id)
-      id)))
+      id))
 
 (defn- lookup-card [db id]
   (or (mc/find-one-as-map db "cards" {:code id})
@@ -27,7 +26,7 @@
   (fn [m k v]
     (let [card (lookup-card db (name k))]
       (if card
-        (if (= "identity" (:type card))
+        (if (= "Identity" (:type card))
           (assoc m :identity {:title (:title card) :side (:side card)})
           (update m :cards #(conj % {:card (:title card) :qty v})))
         m))))
