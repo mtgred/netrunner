@@ -159,7 +159,7 @@
     (response 404 {:message "Account not found"})))
 
 (defn profile-keys []
-  [:background :pronouns :language :show-alt-art :blocked-users
+  [:background :pronouns :language :show-alt-art :blocked-users :emotes
    :alt-arts :card-resolution :deckstats :gamestats :card-zoom
    :pin-zoom :card-back :stacked-cards :sides-overlap])
 

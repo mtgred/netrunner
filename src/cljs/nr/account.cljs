@@ -49,6 +49,7 @@
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
   (swap! app-state assoc-in [:options :log-top] (:log-top @s))
   (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
+  (swap! app-state assoc-in [:options :emotes] (:emotes @s))
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
   (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
@@ -66,25 +67,42 @@
   (.setItem js/localStorage "pin-zoom" (:pin-zoom @s))
   (post-options url (partial post-response s)))
 
-(defn add-user-to-block-list
+(defn- add-to-account-list
+  [s input-key account-list-key]
+  (let [account-list-item (input-key @s)
+        current-account-list (or (account-list-key @s) [])]
+    (swap! s assoc-in [input-key] "")
+    (when (and (not (s/blank? account-list-item))
+               (= -1 (.indexOf current-account-list account-list-item)))
+      (swap! s assoc-in [account-list-key] (conj current-account-list account-list-item)))))
+
+(defn- add-user-to-block-list
   [user s]
   (let [blocked-user (:block-user-input @s)
-        my-user-name (:username user)
-        current-blocked-list (:blocked-users @s)]
-    (swap! s assoc-in [:block-user-input] "")
-    (when (and (not (s/blank? blocked-user))
-               (not= my-user-name blocked-user)
-               (= -1 (.indexOf current-blocked-list blocked-user)))
-      (swap! s assoc-in [:blocked-users] (conj current-blocked-list blocked-user)))))
+        my-user-name (:username user)]
+    (when (not= my-user-name blocked-user))
+      (add-to-account-list s :block-user-input :blocked-users)))
 
-(defn remove-user-from-block-list
-  [evt s]
+(defn- add-emote-to-emote-list
+  [user s]
+  (add-to-account-list s :add-emote-input :emotes))
+
+(defn- remove-from-list
+  [evt s list-key]
   (let [currElt (.-currentTarget evt)
         next-sib (gdom/getNextElementSibling currElt)
         user-name (gdom/getTextContent next-sib)
-        current-blocked-list (:blocked-users @s)]
+        current-blocked-list (list-key @s)]
     (when user-name
-      (swap! s assoc-in [:blocked-users] (vec (remove #(= % user-name) current-blocked-list))))))
+      (swap! s assoc-in [list-key] (vec (remove #(= % user-name) current-blocked-list))))))
+
+(defn- remove-user-from-block-list
+  [evt s]
+  (remove-from-list evt s :blocked-users))
+
+(defn- remove-emote-from-emote-list
+  [evt s]
+  (remove-from-list evt s :emotes))
 
 (defn- all-alt-art-types
   []
@@ -235,6 +253,49 @@
      [:button {:on-click #(do (.preventDefault %)
                               (create-api-key s))}
       (tr [:settings.create-api-key "Create API Key"])]]))
+
+(defn- account-list-box [user s placeholder button-label input-key account-list-key fadd fremove]
+  [:<>
+   [:div
+    [:input {:on-change #(swap! s assoc-in [input-key] (-> % .-target .-value))
+             :on-key-down (fn [e]
+                            (when (= e.keyCode 13)
+                              (.preventDefault e)
+                              (fadd user s)))
+             :ref (name input-key)
+             :value (input-key @s)
+             :type "text" :placeholder placeholder}]
+    [:button.block-user-btn {:type "button"
+                             :name (str (name input-key)  "-button")
+                             :on-click #(fadd user s)}
+     button-label]]
+   (doall (for [bu (account-list-key @s)]
+            [:div.line {:key bu}
+             [:button.small.unblock-user {:type "button"
+                                          :on-click #(fremove % s)} "X" ]
+             [:span.blocked-user-name (str "  " bu)]]))])
+
+(defn- blocked-users [user s]
+  [:section
+   [:h3 (tr [:settings.blocked "Blocked users"])]
+   (account-list-box user s
+                     (tr [:settings.user-name "User name"])
+                     (tr [:settings.block "Block user"])
+                     :block-user-input :blocked-users
+                     add-user-to-block-list
+                     remove-user-from-block-list)
+   ])
+
+(defn- emotes [user s]
+  [:section
+   [:h3 (tr [:settings.emotes "Emotes"])]
+   (account-list-box user s
+                     (tr [:settings.:emote "Emote"])
+                     (tr [:settings.add-emote "Add emote"])
+                     :add-emote-input :emotes
+                     add-emote-to-emote-list
+                     remove-emote-from-emote-list)
+   ])
 
 (defn account-content [_ _ scroll-top]
   (r/create-class
@@ -478,27 +539,8 @@
                    :on-click #(clear-card-art s)}
                   (tr [:settings.reset "Reset All to Official Art"])])]])]
 
-         [:section
-          [:h3 (tr [:settings.blocked "Blocked users"])]
-          [:div
-           [:input {:on-change #(swap! s assoc-in [:block-user-input] (-> % .-target .-value))
-                    :on-key-down (fn [e]
-                                   (when (= e.keyCode 13)
-                                     (.preventDefault e)
-                                     (add-user-to-block-list user s)))
-                    :ref "block-user-input"
-                    :value (:block-user-input @s)
-                    :type "text" :placeholder (tr [:settings.user-name "User name"])}]
-           [:button.block-user-btn {:type "button"
-                                    :name "block-user-button"
-                                    :on-click #(add-user-to-block-list user s)}
-            (tr [:settings.block "Block user"])]]
-          (doall (for [bu (:blocked-users @s)]
-                   [:div.line {:key bu}
-                    [:button.small.unblock-user {:type "button"
-                                                 :on-click #(remove-user-from-block-list % s)} "X" ]
-                    [:span.blocked-user-name (str "  " bu)]]))]
-
+         (blocked-users user s)
+         (emotes user s)
      [api-keys s]
 
      [:section
@@ -530,7 +572,8 @@
                        :log-top (get-in @app-state [:options :log-top])
                        :gamestats (get-in @app-state [:options :gamestats])
                        :deckstats (get-in @app-state [:options :deckstats])
-                       :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
+                       :blocked-users (sort (get-in @app-state [:options :blocked-users]))
+                       :emotes (sort (get-in @app-state [:options :emotes]))})]
 
     (go (let [response (<! (GET "/profile/email"))]
           (when (= 200 (:status response))
