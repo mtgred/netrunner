@@ -85,6 +85,7 @@
                    :resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
+                              "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5010"
                               "-XX:+UnlockDiagnosticVMOptions"
                               "-XX:-OmitStackTraceInFastThrow"
                               "-XX:+DebugNonSafepoints"]}}
