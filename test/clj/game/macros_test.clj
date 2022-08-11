@@ -6,6 +6,14 @@
             [clojure.string :refer [join]]
             [game.utils-test :refer :all]))
 
+(defn refresh [_])
+(defn prompt-map [_])
+(defn prompt-type [_])
+(defn prompt-buttons [_])
+(defn prompt-titles [_])
+(defn prompt-fmt [_])
+(defn print-prompts [])
+
 (defmacro do-game [s & body]
   `(let [~'state ~s
          ~'get-corp (fn [] (:corp @~'state))
@@ -37,7 +45,10 @@
                                (join "\n" (map #(str "[ " (or (get-in % [:value :title])
                                                               (:value %)
                                                               %
-                                                              "nil") " ]") choices#)) "\n")))]
+                                                              "nil") " ]") choices#)))))
+         ~'print-prompts (fn []
+                           (println (~'prompt-fmt :corp))
+                           (println (~'prompt-fmt :runner)))]
      ~@body))
 
 (defmacro changes-val-macro [change-amt val-form msg & body-form]

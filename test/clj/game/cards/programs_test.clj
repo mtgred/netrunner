@@ -1046,6 +1046,7 @@
     (click-prompt state :runner "No action")
     (play-from-hand state :runner "Bug")
     (take-credits state :runner)
+    (click-prompt state :runner "No")
     (play-from-hand state :corp "Anonymous Tip")
     (changes-val-macro
       -6 (:credit (get-runner))
@@ -1417,8 +1418,8 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Chisel")
-      (play-from-hand state :runner "Devil Charm")
       (click-card state :runner "Ice Wall")
+      (play-from-hand state :runner "Devil Charm")
       (let [iw (get-ice state :hq 0)
             chisel (first (:hosted (refresh iw)))]
         (run-on state "HQ")
@@ -2349,25 +2350,31 @@
 (deftest diwan
   ;; Diwan - Full test
   (do-game
-    (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Fire Wall" 3) (qty "Crisium Grid" 2)]}
+    (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Fire Wall" 3) (qty "Crisium Grid" 2)]
+                      :hand []}
                :runner {:deck ["Diwan"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Diwan")
     (click-prompt state :runner "HQ")
     (take-credits state :runner)
     (is (= 8 (:credit (get-corp))) "8 credits for corp at start of second turn")
+    (starting-hand state :corp ["Ice Wall"])
     (play-from-hand state :corp "Ice Wall" "R&D")
     (is (= 8 (:credit (get-corp))) "Diwan did not charge extra for install on another server")
+    (starting-hand state :corp ["Ice Wall"])
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (= 7 (:credit (get-corp))) "Diwan charged 1cr to install ice protecting the named server")
+    (starting-hand state :corp ["Crisium Grid"])
     (play-from-hand state :corp "Crisium Grid" "HQ")
     (is (= 6 (:credit (get-corp))) "Diwan charged to install another upgrade in root of HQ")
     (take-credits state :corp)
     (take-credits state :runner)
+    (starting-hand state :corp ["Ice Wall"])
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (= 4 (:credit (get-corp))) "Diwan charged 1cr + 1cr to install a second ice protecting the named server")
     (core/gain state :corp :click 1)
     (core/purge state :corp)
+    (starting-hand state :corp ["Fire Wall"])
     (play-from-hand state :corp "Fire Wall" "HQ") ; 2cr cost from normal install cost
     (is (= "Diwan" (-> (get-runner) :discard first :title)) "Diwan was trashed from purge")
     (is (= 2 (:credit (get-corp))) "No charge for installs after Diwan purged")))

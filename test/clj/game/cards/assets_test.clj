@@ -2558,17 +2558,19 @@
       (do-game
         (new-game {:corp {:deck ["Jeeves Model Bioroids"]
                           :credits 10}
-                   :runner {:deck [(qty "Ghost Runner" 3)]}})
+                   :runner {:deck [(qty "Ghost Runner" 3)]
+                            :credits 10}})
         (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
         (rez state :corp (get-content state :remote1 0))
         (take-credits state :corp)
-        (dotimes [_ 3] (play-from-hand state :runner "Ghost Runner"))
+        (dotimes [_ 3]
+          (play-from-hand state :runner "Ghost Runner"))
         (take-credits state :runner)
         (gain-tags state :runner 1)
-        (dotimes [n 3]
+        (dotimes [_ 3]
           (trash-resource state)
-          (click-card state :corp (get-resource state 0))
-          (is (= (inc n) (count (:discard (get-runner)))) "Correct number of cards in Runner discard"))
+          (click-card state :corp (get-resource state 0)))
+        (is (= 3 (count (:discard (get-runner)))) "Correct number of cards in Runner discard")
         (is (= 1 (:click (get-corp))) "Jeeves triggered"))))
 
 (deftest jeeves-model-bioroids-cases-where-jeeves-should-not-trigger

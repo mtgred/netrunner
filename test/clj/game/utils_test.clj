@@ -1,7 +1,6 @@
 (ns game.utils-test
   (:require
     [clojure.test :refer :all]
-    [clojure.string :as str]
     [game.core :as core]
     [game.utils :as utils :refer [same-card? side-str]]))
 
@@ -13,32 +12,40 @@
                 pred# (:pred (ex-data ex#))
                 values# (:values (ex-data ex#))
                 result# (:result (ex-data ex#))]
-            (do-report {:type :fail :message msg#
-                        :expected form# :actual (list '~'not (cons pred# values#))})
+            (do-report {:type :fail
+                        :message msg#
+                        :expected form#
+                        :actual (list '~'not (cons pred# values#))})
             result#))))
 
 (defn is'-predicate
   [msg form]
   (let [pred (first form)
-         args (rest form)]
-     `(let [values# (list ~@args)
-            result# (apply ~pred values#)]
-        (if result#
-          (do-report {:type :pass, :message ~msg,
-                      :expected '~form, :actual (cons ~pred values#)})
-          (throw (ex-info ~msg {:form '~form
-                                :pred '~pred
-                                :values values#
-                                :result result#}))))))
+        args (rest form)]
+    `(let [values# (list ~@args)
+           result# (apply ~pred values#)]
+       (if result#
+         (do-report {:type :pass
+                     :message ~msg
+                     :expected '~form
+                     :actual result#})
+         (throw (ex-info ~msg {:form '~form
+                               :pred '~pred
+                               :values values#
+                               :result result#}))))))
 
 (defn is'-any
   [msg form]
   `(let [value# ~form]
      (if value#
-       (do-report {:type :pass, :message ~msg,
-                   :expected '~form, :actual value#})
-       (do-report {:type :fail, :message ~msg,
-                   :expected '~form, :actual value#}))
+       (do-report {:type :pass
+                   :message ~msg
+                   :expected '~form
+                   :actual value#})
+       (do-report {:type :fail
+                   :message ~msg
+                   :expected '~form
+                   :actual value#}))
      value#))
 
 (defmacro is'
@@ -123,7 +130,7 @@
         (let [parsed-number (Integer/parseInt choice)]
           (when-not (core/process-action "choice" state side {:choice parsed-number})
             (is' (not true) (str "Parsed number " parsed-number " is incorrect somehow"))))
-        (catch Exception e
+        (catch Exception _
           (is' (number? (Integer/parseInt choice)) (expect-type "number string" choice))))
 
       (= :trace (:prompt-type prompt))
@@ -135,7 +142,7 @@
             (is' (<= int-choice (:choices prompt))
                  (str (side-str side) " expected to pay [ "
                       int-choice " ] to trace but couldn't afford it."))))
-        (catch Exception e
+        (catch Exception _
           (is' (number? (Integer/parseInt choice))
                (expect-type "number string" choice))))
 
@@ -154,8 +161,8 @@
         (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
           (is' (= choice (mapv :value choices))
                (str (side-str side) " expected to click [ "
-                    (if (string? choice) choice (:title choice ""))
-                    " ] but couldn't find it. Current prompt is: " prompt)))))))
+                    (pr-str (if (string? choice) choice (:title choice "")))
+                    " ] but couldn't find it. Current prompt is: " (pr-str prompt))))))))
 
 (defmacro click-prompt
   "Clicks a button in a prompt. {choice} is a string or map only, no numbers."

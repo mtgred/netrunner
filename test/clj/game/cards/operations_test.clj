@@ -2501,15 +2501,14 @@
     (play-from-hand state :corp "Breaking News" "New remote")
     (take-credits state :corp)
     (is (= 7 (:credit (get-corp))))
-    (let [bn (get-content state :remote1 0)]
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Steal")
-      (is (= 1 (:agenda-point (get-runner))) "Stole Breaking News")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Midseason Replacements")
-      (click-prompt state :corp "0") ; default trace
-      (click-prompt state :runner "0") ; Runner won't match
-      (is (= 6 (count-tags state)) "Runner took 6 tags"))))
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))) "Stole Breaking News")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Midseason Replacements")
+    (click-prompt state :corp "0") ; default trace
+    (click-prompt state :runner "0") ; Runner won't match
+    (is (= 6 (count-tags state)) "Runner took 6 tags")))
 
 (deftest mitosis
   ;; Mitosis - Install up to 2 cards in new remotes, placing 2 advancements on each
@@ -3491,6 +3490,7 @@
     (do-game
       (new-game {:corp {:deck ["Standoff" "Hostile Takeover" "Sacrifice"]}})
       (play-and-score state "Standoff")
+      (click-prompt state :runner "Done")
       (core/gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Sacrifice")
       (is (= 2 (count (:hand (get-corp)))) "Can not play Sacrifice with no 1+ agenda in score area")
@@ -4638,6 +4638,8 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Wyrm")
     (run-empty-server state :remote1)
+    (click-prompt state :runner "No action")
+    (print-prompts)
     (take-credits state :runner)
     (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
     (play-from-hand state :corp "Trojan Horse")

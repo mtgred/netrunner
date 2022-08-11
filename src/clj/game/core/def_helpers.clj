@@ -17,7 +17,8 @@
     [game.macros :refer [continue-ability effect req wait-for msg]]
     [game.utils :refer [remove-once same-card? server-card to-keyword]]
     [jinteki.utils :refer [other-side]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [game.core.card-defs :as card-defs]))
 
 (defn combine-abilities
   "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
@@ -229,7 +230,7 @@
 
 (defmacro defcard
   [title ability]
-  `(defmethod game.core.card-defs/defcard-impl ~title [~'_]
+  `(defmethod card-defs/defcard-impl ~title [~'_]
      (if-let [cached-ability# (get card-defs-cache ~title)]
        cached-ability#
        (let [ability# (add-default-abilities ~title ~ability)]

@@ -520,8 +520,7 @@
    (new-game {:runner {:deck ["Bloo Moose"] :discard ["Sure Gamble"]}})
    (take-credits state :corp)
    (play-from-hand state :runner "Bloo Moose")
-   (let [orig-credits (:credit (get-runner))
-         bm (get-resource state 0)]
+   (let [bm (get-resource state 0)]
      (card-ability state :runner bm 0)
      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
      (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
@@ -3903,10 +3902,9 @@
       (take-credits state :corp 2)
       (play-from-hand state :runner "New Angeles City Hall")
       (play-from-hand state :runner "Dummy Box")
-      (let [nach (get-resource state 0)]
-        (run-empty-server state "Server 1")
-        (click-prompt state :runner "Steal")
-        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
 (deftest new-angeles-city-hall-don-t-gain-siphon-credits-until-opportunity-to-avoid-tags-has-passed
     ;; don't gain Siphon credits until opportunity to avoid tags has passed
@@ -4645,10 +4643,9 @@
           (click-prompt state :runner "No action"))
         (click-prompt state :runner "Yes")
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
-      (let [credits (:credit (get-runner))]
-        (run-empty-server state "HQ")
-        (click-prompt state :runner "No action")
-        (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed"))
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed")
       (take-credits state :runner)
       (take-credits state :corp)
       (let [credits (:credit (get-runner))]
