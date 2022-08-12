@@ -20,8 +20,8 @@
 
 (defn is'-predicate
   [msg form]
-  (let [pred (first form)
-        args (rest form)]
+  (let [[pred & args] form
+        uses-state? (= 'state (first args))]
     `(let [values# (list ~@args)
            result# (apply ~pred values#)]
        (if result#
@@ -31,7 +31,9 @@
                      :actual result#})
          (throw (ex-info ~msg {:form '~form
                                :pred '~pred
-                               :values values#
+                               :values (if ~uses-state?
+                                         '~(cons 'state (next args))
+                                         values#)
                                :result result#}))))))
 
 (defn is'-any

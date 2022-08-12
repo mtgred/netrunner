@@ -45,9 +45,10 @@
                                (join "\n" (map #(str "[ " (or (get-in % [:value :title])
                                                               (:value %)
                                                               %
-                                                              "nil") " ]") choices#)))))
+                                                              "nil") " ]") choices#))
+                               "\n")))
          ~'print-prompts (fn []
-                           (println (~'prompt-fmt :corp))
+                           (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
      ~@body))
 

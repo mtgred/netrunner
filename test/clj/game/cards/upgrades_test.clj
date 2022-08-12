@@ -1891,6 +1891,7 @@
           (click-card state :corp remote-mvt)
           (is (not (no-prompt? state :corp)) "Clicking a card in a different remote does not clear the prompt")
           (is (zero? (get-counters (refresh remote-mvt) :advancement)) "Clicking a card in a different remote does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Mumbad Virtual Tour" "HQ")
         (let [[central-mvt] (get-content state :hq)]
           (take-credits state :corp)
@@ -1898,6 +1899,7 @@
           (click-card state :corp central-mvt)
           (is (not (no-prompt? state :corp)) "Clicking a card in a central does not clear the prompt")
           (is (zero? (get-counters (refresh central-mvt) :advancement)) "Clicking a card in a central does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Vanilla" "Server 1")
         (let [[vanilla] (get-ice state :remote1)]
           (take-credits state :corp)
@@ -1905,6 +1907,7 @@
           (click-card state :corp vanilla)
           (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Vanilla" "Server 2")
         (let [[remote-vanilla] (get-ice state :remote2)]
           (take-credits state :corp)
@@ -1912,6 +1915,7 @@
           (click-card state :corp remote-vanilla)
           (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Vanilla" "HQ")
         (let [[central-vanilla] (get-ice state :hq)]
           (take-credits state :corp)
@@ -2774,6 +2778,7 @@
       (click-prompt state :runner "Card from deck")
       (is (= "You accessed Beanstalk Royalties." (:msg (prompt-map :runner)))
           "Runner accesses switched card")
+      (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (find-card "Accelerated Beta Test" (:hand (get-corp))))
       (is (find-card "Beanstalk Royalties" (:deck (get-corp))))

@@ -9,7 +9,8 @@
 (deftest click-count
   (testing "clicks gained"
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand []}
                  :runner {:deck [(qty "Sure Gamble" 10)]}})
       (take-credits state :corp)
       (take-credits state :runner)
