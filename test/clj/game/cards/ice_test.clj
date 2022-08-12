@@ -1699,32 +1699,32 @@
         (card-subroutine state :corp drafter 1)
         (is (= :select (prompt-type :corp)))
         (click-card state :corp "Wotan")
-        (changes-val-macro
-          0 (:credit (get-corp))
-          "Costs no credits to install a second ice on HQ"
-          (click-prompt state :corp "HQ"))
-        (is (= "Wotan" (:title (get-ice state :hq 1)))
-            "Wotan is now installed in the outermost position protecting HQ"))))
-  (testing "from HQ"
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Drafter" "Fairchild"]
-                        :discard ["Wotan"]}})
-      (play-from-hand state :corp "Drafter" "HQ")
-      (take-credits state :corp)
-      (run-on state "HQ")
-      (let [drafter (get-ice state :hq 0)]
-        (rez state :corp (get-ice state :hq 0))
-        (run-continue state)
-        (card-subroutine state :corp drafter 1)
-        (is (= :select (prompt-type :corp)))
-        (click-card state :corp "Fairchild")
-        (changes-val-macro
-          0 (:credit (get-corp))
-          "Costs no credits to install a second ice on HQ"
-          (click-prompt state :corp "HQ"))
-        (is (= "Fairchild" (:title (get-ice state :hq 1)))
-            "Fairchild is now installed in the outermost position protecting HQ")))))
+          (changes-val-macro
+            0 (:credit (get-corp))
+            "Costs no credits to install a second ice on HQ"
+            (click-prompt state :corp "HQ"))
+          (is (= "Wotan" (:title (get-ice state :hq 1)))
+              "Wotan is now installed in the outermost position protecting HQ"))))
+    (testing "from HQ"
+      (do-game
+        (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                          :hand ["Drafter" "Fairchild"]
+                          :discard ["Wotan"]}})
+        (play-from-hand state :corp "Drafter" "HQ")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (let [drafter (get-ice state :hq 0)]
+          (rez state :corp (get-ice state :hq 0))
+          (run-continue state)
+          (card-subroutine state :corp drafter 1)
+          (is (= :select (prompt-type :corp)))
+          (click-card state :corp "Fairchild")
+          (changes-val-macro
+            0 (:credit (get-corp))
+            "Costs no credits to install a second ice on HQ"
+            (click-prompt state :corp "HQ"))
+          (is (= "Fairchild" (:title (get-ice state :hq 1)))
+              "Fairchild is now installed in the outermost position protecting HQ")))))
 
 (deftest echo
   (do-game
@@ -1847,45 +1847,45 @@
 (deftest envelopment
   ;; Envelopment
   (do-game
-    (new-game {:corp {:hand ["Envelopment"] :credits 10}})
-    (play-from-hand state :corp "Envelopment" "HQ")
-    (let [env (get-ice state :hq 0)]
-      (letfn [(subs-test [env n]
-                ;; n power counters, n+1 subs, advance game state by a turn
-                (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
-                (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
-                    "one more sub than power counters")
-                (take-credits state :corp)
-                (take-credits state :runner))]
-        (rez state :corp env)
-        ;; starts with 4 counters
-        (subs-test env 4)
-        (subs-test env 3)
-        (subs-test env 2)
-        (subs-test env 1)
-        (subs-test env 0)
-        (take-credits state :corp)
-        (run-on state :hq)
-        (run-continue state)
-        (fire-subs state (refresh env))
-        (is (= 1 (count (:discard (get-corp)))) "Envelopment was trashed")))))
+   (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+   (play-from-hand state :corp "Envelopment" "HQ")
+   (let [env (get-ice state :hq 0)]
+     (letfn [(subs-test [env n]
+               ;; n power counters, n+1 subs, advance game state by a turn
+               (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
+               (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
+                   "one more sub than power counters")
+               (take-credits state :corp)
+               (take-credits state :runner))]
+       (rez state :corp env)
+       ;; starts with 4 counters
+       (subs-test env 4)
+       (subs-test env 3)
+       (subs-test env 2)
+       (subs-test env 1)
+       (subs-test env 0)
+       (take-credits state :corp)
+       (run-on state :hq)
+       (run-continue state)
+       (fire-subs state (refresh env))
+       (is (= 1 (count (:discard (get-corp)))) "Envelopment was trashed")))))
 
 (deftest envelopment-etr-does-not-trash
   (do-game
-    (new-game {:corp {:hand ["Envelopment"] :credits 10}})
-    (play-from-hand state :corp "Envelopment" "HQ")
-    (let [env (get-ice state :hq 0)
-          n 4]
-      (rez state :corp env)
-      (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
-      (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
-          "one more sub than power counters")
-      (take-credits state :corp)
-      (run-on state :hq)
-      (run-continue state)
-      (fire-subs state (refresh env)))
-    (is (empty? (:discard (get-corp))))
-    (is (not (:run @state)) "Run ended")))
+   (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+   (play-from-hand state :corp "Envelopment" "HQ")
+   (let [env (get-ice state :hq 0)
+         n 4]
+     (rez state :corp env)
+     (is (= n (get-counters (refresh env) :power)) (str "Envelopment has "n" power counters"))
+     (is (= (inc (get-counters (refresh env) :power)) (count (:subroutines (refresh env))))
+         "one more sub than power counters")
+     (take-credits state :corp)
+     (run-on state :hq)
+     (run-continue state)
+     (fire-subs state (refresh env)))
+   (is (empty? (:discard (get-corp))))
+   (is (not (:run @state)) "Run ended")))
 
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
@@ -3961,18 +3961,18 @@
 
 (deftest maskirovka
   (do-game
-    (new-game {:corp {:hand ["Maskirovka"]}})
-    (play-from-hand state :corp "Maskirovka" "HQ")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (let [money (get-ice state :hq 0)]
-      (rez state :corp (refresh money))
-      (run-continue state)
-      (changes-val-macro
-        2 (:credit (get-corp))
-        "gained 2c from Maskirovka"
-        (fire-subs state (refresh money))
-        (is (not (:run @state)) "Run ended")))))
+   (new-game {:corp {:hand ["Maskirovka"]}})
+   (play-from-hand state :corp "Maskirovka" "HQ")
+   (take-credits state :corp)
+   (run-on state :hq)
+   (let [money (get-ice state :hq 0)]
+     (rez state :corp (refresh money))
+     (run-continue state)
+     (changes-val-macro
+      2 (:credit (get-corp))
+      "gained 2c from Maskirovka"
+      (fire-subs state (refresh money))
+      (is (not (:run @state)) "Run ended")))))
 
 (deftest masvingo
   ;; Masvingo
@@ -5854,27 +5854,27 @@
 
 (deftest stavka
   (do-game
-    (new-game {:corp {:hand ["Stavka" "Prisec"] :credits 10}
-               :runner {:hand ["Rezeki" "Rezeki"]}})
-    (play-from-hand state :corp "Stavka" "HQ")
-    (play-from-hand state :corp "Prisec" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Rezeki")
-    (play-from-hand state :runner "Rezeki")
-    (run-on state :hq)
-    (let [sta (get-ice state :hq 0)]
-      (rez state :corp sta)
-      (changes-val-macro
-        5 (get-strength (refresh sta))
-        "Stavka gains 5str"
-        (click-prompt state :corp "Yes")
-        (click-card state :corp "Prisec"))
-      (run-continue state)
-      (fire-subs state (refresh sta))
-      (click-card state :corp (get-program state 0))
-      (click-card state :corp (get-program state 0)))
-    (is (= 2 (count (:discard (get-runner)))) "Both rezekis trashed")
-    (is (= 1 (count (:discard (get-corp)))) "Prisec trashed")))
+   (new-game {:corp {:hand ["Stavka" "Prisec"] :credits 10}
+              :runner {:hand ["Rezeki" "Rezeki"]}})
+   (play-from-hand state :corp "Stavka" "HQ")
+   (play-from-hand state :corp "Prisec" "HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Rezeki")
+   (play-from-hand state :runner "Rezeki")
+   (run-on state :hq)
+   (let [sta (get-ice state :hq 0)]
+     (rez state :corp sta)
+     (changes-val-macro
+      5 (get-strength (refresh sta))
+      "Stavka gains 5str"
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Prisec"))
+     (run-continue state)
+     (fire-subs state (refresh sta))
+     (click-card state :corp (get-program state 0))
+     (click-card state :corp (get-program state 0)))
+   (is (= 2 (count (:discard (get-runner)))) "Both rezekis trashed")
+   (is (= 1 (count (:discard (get-corp)))) "Prisec trashed")))
 
 (deftest surveyor
   ;; Surveyor ice strength

@@ -84,7 +84,7 @@
 (defn expect-type
   [type-name choice]
   (str "Expected a " type-name ", received [ " choice
-       " ] of type " (type choice) "."))
+                                            " ] of type " (type choice) "."))
 
 (defn click-card-impl
   [state side card]
@@ -102,7 +102,7 @@
             (core/process-action "select" state side {:card (first matching-cards)})
             (is' (= 1 (count matching-cards))
                  (str "Expected to click card [ " card
-                      " ] but found " (count matching-cards)
+                                               " ] but found " (count matching-cards)
                       " matching cards. Current prompt is: " prompt)))))
       ;; Prompt isn't a select so click-card shouldn't be used
       (not (prompt-is-type? state side :select))
@@ -143,7 +143,7 @@
                          (core/process-action "choice" state side {:choice int-choice}))
             (is' (<= int-choice (:choices prompt))
                  (str (side-str side) " expected to pay [ "
-                      int-choice " ] to trace but couldn't afford it."))))
+                                                         int-choice " ] to trace but couldn't afford it."))))
         (catch Exception _
           (is' (number? (Integer/parseInt choice))
                (expect-type "number string" choice))))
@@ -163,8 +163,8 @@
         (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
           (is' (= choice (mapv :value choices))
                (str (side-str side) " expected to click [ "
-                    (pr-str (if (string? choice) choice (:title choice "")))
-                    " ] but couldn't find it. Current prompt is: " (pr-str prompt))))))))
+                                                         (pr-str (if (string? choice) choice (:title choice "")))
+                                                         " ] but couldn't find it. Current prompt is: " (pr-str prompt))))))))
 
 (defmacro click-prompt
   "Clicks a button in a prompt. {choice} is a string or map only, no numbers."
@@ -269,8 +269,8 @@
          prompt-type# (-> @state# side# :prompt :prompt-type)
          found# ~form]
      (do-report
-      {:type (if found# :pass :fail)
-       :actual (select-keys (first prompt#) [:msg :prompt-type])
-       :expected "No prompt or :prompt-type of :run"
-       :message ~msg})
+       {:type (if found# :pass :fail)
+        :actual (select-keys (first prompt#) [:msg :prompt-type])
+        :expected "No prompt or :prompt-type of :run"
+        :message ~msg})
      found#))

@@ -180,20 +180,27 @@
 (defn card-ability-impl
   [state side card ability & targets]
   (let [card (get-card state card)
-        ability (cond
-                  (number? ability) ability
-                  (string? ability) (some #(when (= (:label (second %)) ability) (first %)) (map-indexed vector (:abilities card)))
-                  :else -1)
-        has-ability? (and (number? ability)
-                          (nth (:abilities card) ability nil))
+        abilities (:abilities card)
+        ab-idx (cond
+                 (number? ability) ability
+                 (string? ability) (some #(when (= (:label (second %)) ability) (first %))
+                                         (map-indexed vector abilities))
+                 :else -1)
+        has-ability? (and (number? ab-idx)
+                          (nth abilities ab-idx nil))
         playable? (or (active? card)
-                      (:autoresolve (nth (:abilities card) ability nil)))]
-    (is' has-ability? (str (:title card) " has ability #" ability))
-    (is' playable? (str (:title card) " is active or ability #" ability " is an auto resolve toggle"))
-    (when (and has-ability? playable?)
-      (core/process-action "ability" state side {:card card
-                                                 :ability ability
-                                                 :targets (first targets)}))))
+                      (:autoresolve (nth abilities ab-idx nil)))
+        cost (core/card-ability-cost state side has-ability? card nil)
+        can-pay? (core/can-pay? state side nil cost)]
+    (is' has-ability? (str (:title card) " doesn't have ability #" ab-idx))
+    (is' playable? (str (:title card) " isn't active or ability #" ab-idx " isn't an auto resolve toggle"))
+    (is' can-pay? (format "%s can't pay for ability #%s on card %s"
+                          (utils/side-str side) ab-idx (:title card)))
+    (when (and has-ability? playable? can-pay?)
+      (is' (core/process-action "ability" state side {:card card
+                                                      :ability ab-idx
+                                                      :targets (first targets)}))
+      true)))
 
 (defmacro card-ability
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before

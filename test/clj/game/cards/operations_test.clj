@@ -2501,13 +2501,13 @@
     (play-from-hand state :corp "Breaking News" "New remote")
     (take-credits state :corp)
     (is (= 7 (:credit (get-corp))))
-    (run-empty-server state "Server 1")
-    (click-prompt state :runner "Steal")
-    (is (= 1 (:agenda-point (get-runner))) "Stole Breaking News")
-    (take-credits state :runner)
-    (play-from-hand state :corp "Midseason Replacements")
-    (click-prompt state :corp "0") ; default trace
-    (click-prompt state :runner "0") ; Runner won't match
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Stole Breaking News")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Midseason Replacements")
+      (click-prompt state :corp "0") ; default trace
+      (click-prompt state :runner "0") ; Runner won't match
     (is (= 6 (count-tags state)) "Runner took 6 tags")))
 
 (deftest mitosis
@@ -4639,7 +4639,6 @@
     (play-from-hand state :runner "Wyrm")
     (run-empty-server state :remote1)
     (click-prompt state :runner "No action")
-    (print-prompts)
     (take-credits state :runner)
     (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
     (play-from-hand state :corp "Trojan Horse")
