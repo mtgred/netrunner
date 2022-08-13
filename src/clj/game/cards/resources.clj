@@ -1965,12 +1965,16 @@
                             (do (system-msg state :runner (str "places 1 [Credits] on Net Mercur"))
                                 (add-counter state :runner card :credit 1)
                                 (effect-completed state side eid))))}]
-   ; Normally this should be (req true), but having pay-credits prompts on
-   ; literally every interaction would get tiresome. Therefore Net Mercur will
-   ; only ask for payments during a run, traces, psi games, and prevention abilities
-   :interactions {:pay-credits {:req (req (or run
-                                              (#{:psi :trace} (:source-type eid))
-                                              (#{:net :meat :brain :tag} (get-in @state [:prevent :current]))))
+   ;; Normally this should be (req true), but having pay-credits prompts on
+   ;; literally every interaction would get tiresome. Therefore Net Mercur will
+   ;; only ask for payments during a run, traces, psi games, and prevention abilities
+   ;; with the release of twinning, net mercur should always ask when spending credits on
+   ;; the opponents turn
+   :interactions {:pay-credits {:req (req (or
+                                            run
+                                            (= :corp (:active-player @state))
+                                            (#{:psi :trace} (:source-type eid))
+                                            (#{:net :meat :brain :tag} (get-in @state [:prevent :current]))))
                                 :type :credit}}})
 
 (defcard "Network Exchange"
