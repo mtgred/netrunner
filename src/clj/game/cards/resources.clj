@@ -2618,6 +2618,7 @@
   (let [ability {:prompt "Choose a server for Security Testing"
                  :label "target a server"
                  :choices (req (conj servers "No server"))
+                 :interactive (req true)
                  :msg (msg "target " target)
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
