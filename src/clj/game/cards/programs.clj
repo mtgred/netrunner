@@ -104,16 +104,30 @@
                             (can-pay? state :runner (assoc eid :source card :source-type :runner-install) card nil [:credit (install-cost state side card)])))
              :effect (effect
                        (continue-ability
-                         {:optional
-                          {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))
-                                          (not (get-in @state [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)]))))
-                           :player :runner
-                           :prompt (str "Install " title "?")
-                           :yes-ability {:async true
-                                         :effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install) card nil))}
-                           ;; Add a register to note that the player was already asked about installing,
-                           ;; to prevent multiple copies from prompting multiple times.
-                           :no-ability {:effect (req (swap! state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}}}
+                         {:req (req (and (not-any? #(and (= title (:title %))
+                                                         (get-in % [:special :heap-breaker-dont-install]))
+                                                   (all-active-installed state :runner))
+                                         (not (get-in @state [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)]))))
+                          :prompt (str "Install " title " from the heap?")
+                          :choices (req ["Yes"
+                                         "No"
+                                         (when (pos? (count (filter #(= title (:title %)) (all-active-installed state :runner))))
+                                           (str "Don't ask again while " title " is installed"))])
+                          :async true
+                          :effect (req
+                                    (continue-ability
+                                      state side
+                                      (cond
+                                        (= target "Yes") {:async true
+                                                          :effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install) card nil))}
+                                        ;; Add a register to note that the player was already asked about installing,
+                                        ;; to prevent multiple copies from prompting multiple times.
+                                        (= target "No") {:effect (req (swap! state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}
+                                        ;; mark that we never want to install this heap breaker while another copy is installed
+                                        :else {:effect (req
+                                                         (let [heap-breakers (filter #(= title (:title %)) (all-active-installed state :runner))]
+                                                           (vec (map #(update! state side (assoc-in % [:special :heap-breaker-dont-install] :true)) heap-breakers))))})
+                                      card targets))}
                          card targets))}]})
 
 (defn- pump-and-break

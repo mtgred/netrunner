@@ -789,7 +789,7 @@
         (trash-from-hand state :runner "Black Orchestra")
         (run-empty-server state :hq)
         (click-prompt state :corp "Yes")
-        (is (= "Install Black Orchestra?" (:msg (prompt-map :runner))) "Prompted to install Black Orchestra")
+        (is (= "Install Black Orchestra from the heap?" (:msg (prompt-map :runner))) "Prompted to install Black Orchestra")
         (click-prompt state :runner "Yes")
         (let [bo (get-program state 0)]
           (is (installed? bo) "Black Orchestra is installed")
@@ -4688,7 +4688,7 @@
   ;; Paperclip - prompt to install on encounter, but not if another is installed
   (do-game
       (new-game {:corp {:deck ["Vanilla"]}
-                 :runner {:deck [(qty "Paperclip" 2)]
+                 :runner {:deck [(qty "Paperclip" 3)]
                           :credits 10}})
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
@@ -4700,9 +4700,11 @@
       (run-continue-until state :success)
       (is (not (:run @state)) "Run ended")
       (trash-from-hand state :runner "Paperclip")
+      (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
       (run-continue state)
-      (is (no-prompt? state :runner) "No prompt to install second Paperclip")))
+      (click-prompt state :runner "No")
+      (is (no-prompt? state :runner) "No prompt to install third Paperclip")))
 
 (deftest paperclip-firing-on-facedown-ice-shouldn-t-crash
     ;; firing on facedown ice shouldn't crash
