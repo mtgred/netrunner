@@ -3170,6 +3170,7 @@
                          (installed? target)
                          (first-event? state side :spent-credits-from-card #(installed? (first %)))))
              :async true
+             :msg (msg "place a power counter on " (:title card))
              :effect (req (add-counter state :runner card :power 1 {:placed true})
                           (effect-completed state side eid))}
             {:event :breach-server
