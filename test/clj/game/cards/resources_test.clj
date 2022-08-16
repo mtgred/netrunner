@@ -6365,6 +6365,37 @@
         (click-prompt state :runner "0")
         (is (= 4 (count-tags state)) "Bouncing enables Hard-Hitting News"))))
 
+(deftest the-twinning-net-mercur-corp-turn
+  (do-game
+    (new-game {:runner {:hand ["The Twinning" "Net Mercur", "Mantle", "Corroder" "Spec Work"] :credits 15}
+               :corp {:hand [(qty "Hedge Fund" 4)] :deck [(qty "Hedge Fund" 4)]}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Net Mercur")
+    (play-from-hand state :runner "Mantle")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "The Twinning")
+    (let [corr (get-program state 1)
+          mantle (get-program state 0)]
+      (run-on state :hq)
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Used 1 credit from mantle"
+                         (card-ability state :runner corr 1)
+                         (click-card state :runner mantle)
+                         (click-prompt state :runner "Place 1 [Credits]"))
+      (run-jack-out state)
+      (play-from-hand state :runner "Spec Work")
+      (click-card state :runner "Mantle")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Hedge Fund")
+      (let [twin (get-resource state 1)]
+        (changes-val-macro
+          1 (get-counters (refresh twin) :power)
+          "1 counter for spending on the corp turn"
+          (card-ability state :runner corr 1)
+          (click-card state :runner "Net Mercur"))))
+  ))
+
 (deftest the-twinning
   ;; First time each turn you spend credits from an installed card, place 1 power counter
   ;; on breach hq/r&d - spend up to 2 counters to access that many more cards
