@@ -1590,20 +1590,24 @@
      :abilities [ability]}))
 
 (defcard "Kasi String"
-  {:implementation "Places counters automatically"
-   :events [{:event :run-ends
-             :req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
-                            (not (:did-steal target))
-                            (:did-access target)
-                            (is-remote? (:server target))))
-             :msg (msg (if (<= 3 (get-counters card :power))
-                         "add itself to their score area as an agenda worth 1 agenda point"
-                         "place a power counter on itself"))
-             :async true
-             :effect (req (if (<= 3 (get-counters card :power))
-                            (do (as-agenda state :runner card 1)
-                                (effect-completed state side eid))
-                            (add-counter state side eid card :power 1 {:placed true})))}]})
+  {:events [{:event :run-ends
+             :optional
+             {:req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
+                             (not (:did-steal target))
+                             (:did-access target)
+                             (is-remote? (:server target))))
+              :autoresolve (get-autoresolve :auto-kasistring)
+              :waiting-prompt "Runner to choose an option"
+              :prompt "Place 1 power counter on Kasi String?"
+              :yes-ability {:msg "place a power counter on itself"
+                            :async true
+                            :effect (req (add-counter state side eid card :power 1 {:placed true}))}
+              :no-ability {:effect (effect (system-msg "declines to use Kasi String"))}}}
+            {:event :counter-added
+             :req (req (<= 4 (get-counters (get-card state card) :power)))
+             :msg "add itself to their score area as an agenda worth 1 agenda point"
+             :effect (req (as-agenda state :runner card 1))}]
+   :abilities [(set-autoresolve :auto-kasistring "Kasi String")]})
 
 (defcard "Kati Jones"
   {:abilities [{:cost [:click 1]

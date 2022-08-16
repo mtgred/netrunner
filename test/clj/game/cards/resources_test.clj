@@ -3185,7 +3185,6 @@
     (take-credits state :runner)
     (is (= 1 (count-tags state)) "Took 1 tag")))
 
-
 (deftest kasi-string
   ;; Kasi String
   (do-game
@@ -3194,12 +3193,38 @@
       (play-from-hand state :corp "NGO Front" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Kasi String")
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on itself")
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")))
+      ;; using autoresolve
+      (let [kasi (get-resource state 0)]
+        (card-ability state :runner kasi 0)
+        (click-prompt state :runner "Always")
+        (dotimes [_ 4]
+          (run-empty-server state "Server 1")
+          (click-prompt state :runner "No action")
+          (take-credits state :runner)
+          (take-credits state :corp))
+        (is (= 1 (count (:scored (get-runner)))) "Kasi String moved to score area"))))
+
+(deftest kasi-string-when-charged-becomes-an-agenda
+  ;; Kasi String becomes an agenda when charged up to 4 counters
+  (do-game
+      (new-game {:corp {:deck ["NGO Front" "15 Minutes"]}
+                 :runner {:deck ["Kasi String" "Daeg, First Net-Cat"]}})
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Daeg, First Net-Cat")
+      (play-from-hand state :runner "Kasi String")
+      (let [kasi (get-resource state 1)]
+        (dotimes [_ 3]
+          (run-empty-server state "Server 1")
+          (click-prompt state :runner "No action")
+          (click-prompt state :runner "Yes")
+          (take-credits state :runner)
+          (take-credits state :corp)))
+      (take-credits state :runner)
+      (play-and-score state "15 Minutes")
+      ;; Make Daeg charge Kasi String
+      (click-card state :runner "Kasi String")
+      (is (= 1 (count (:scored (get-runner)))) "Kasi String moved to score area")))
 
 (deftest kasi-string-no-counter-when-stealing-agenda
     ;; No counter when stealing agenda
@@ -3211,7 +3236,8 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
-      (is (= 0 (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on itself")))
+      (is (no-prompt? state :runner) "No Kasi String prompt")
+      (is (zero? (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on itself")))
 
 (deftest kasi-string-triggers-only-on-remote-server
     ;; Triggers only on remote server
@@ -3221,26 +3247,16 @@
       (play-from-hand state :corp "NGO Front" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Kasi String")
-      (run-empty-server state "Server 1")
+      (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
-      (is (= 1 (get-counters (get-resource state 0) :power))
+      (is (zero? (get-counters (get-resource state 0) :power))
           "Kasi String should have 0 power counter on itself - no trigger on HQ")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (is (= 2 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "No action")
-      (is (= 3 (get-counters (get-resource state 0) :power)) "Kasi String should still have 1 power counter on itself")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "No action")
-      (is (= 1 (count (:scored (get-runner)))) "Kasi String moved to score area")
-      (is (= 1 (:agenda-point (get-runner))) "Kasi String scored for 1 agenda point")))
+      (click-prompt state :runner "Yes")
+      (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on itself")))
 
 (deftest kati-jones
   ;; Kati Jones - Click to store and take
