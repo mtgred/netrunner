@@ -38,20 +38,20 @@
                                                       [(keyword fmt) :legal]
                                                       false))))]
         (doall
-          (for [deck (->> @decks
-                          (filter same-side?)
-                          (filter #(legal? % fmt))
-                          (sort-by :date)
-                          (reverse))]
-            [:div.deckline {:key (:_id deck)
-                            :on-click #(select-deck deck)}
-             [:img {:src (image-url (:identity deck))
-                    :alt (get-in deck [:identity :title] "")}]
-             [:div.float-right [deck-format-status-span deck fmt true]]
-             [:h4 (:name deck)]
-             [:div.float-right
-              (format-date-time mdy-formatter (:date deck))]
-             [:p (get-in deck [:identity :title])]])))]]))
+         (for [deck (->> @decks
+                         (filter same-side?)
+                         (filter #(legal? % fmt))
+                         (sort-by :date)
+                         (reverse))]
+           [:div.deckline {:key (:_id deck)
+                           :on-click #(select-deck deck)}
+            [:img {:src (image-url (:identity deck))
+                   :alt (get-in deck [:identity :title] "")}]
+            [:div.float-right [deck-format-status-span deck fmt true]]
+            [:h4 (:name deck)]
+            [:div.float-right
+             (format-date-time mdy-formatter (:date deck))]
+            [:p (get-in deck [:identity :title])]])))]]))
 
 (defn- first-user?
   "Is this user the first user in the game?"
@@ -60,9 +60,9 @@
 
 (defn start-button [user gameid players]
   (when (first-user? @players @user)
-     [cond-button (tr [:lobby.start "Start"])
-      (every? :deck @players)
-      #(ws/ws-send! [:game/start {:gameid @gameid}])]))
+    [cond-button (tr [:lobby.start "Start"])
+     (every? :deck @players)
+     #(ws/ws-send! [:game/start {:gameid @gameid}])]))
 
 (defn leave-button [gameid]
   [:button
@@ -85,12 +85,15 @@
         (tr [:lobby.swap "Swap sides"])
         [:b.caret]]
        (into
-         [:ul.dropdown-menu.blue-shade]
-         (for [side ["Any Side" "Corp" "Runner"]]
-           [:a.block-link
-            {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
-                                                   :side side}])}
-            [:li (tr-side side)]]))])))
+        [:ul.dropdown-menu.blue-shade]
+        (for [side ["Any Side" "Corp" "Runner"]]
+          (let [is-player-side (= side (-> @players first :side))]
+            [:a.block-link
+             (if is-player-side
+               {:style {:color "grey" :cursor "default"} :disabled true}
+               {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid
+                                                      :side side}])})
+             [:li (tr-side side)]])))])))
 
 (defn button-bar [user gameid players]
   [:div.button-bar
@@ -120,9 +123,9 @@
   [:<>
    [:h3 (tr [:lobby.players "Players"])]
    (into
-     [:div.players]
-     (map (fn [player] [player-item user current-game player])
-          @players))])
+    [:div.players]
+    (map (fn [player] [player-item user current-game player])
+         @players))])
 
 (defn options-list [current-game]
   (let [{:keys [allow-spectator api-access password
@@ -169,7 +172,7 @@
                create-game-deck (r/cursor app-state [:create-game-deck])]
     (when-let [cd @create-game-deck]
       (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
-                                 :deck-id(:_id cd)}]
+                                 :deck-id (:_id cd)}]
                    8000
                    #(when (sente/cb-error? %)
                       (non-game-toast "Cannot select that deck" "error")))
