@@ -1486,7 +1486,7 @@
                :req (req (and
                            (installed? (:card context))
                            (rezzed? (:card context))
-                           (some? (trash-cause eid target))
+                           (trash-cause eid target)
                            (not (used-this-turn? (:cid card) state))))
                :async true
                :interactive (req true)
