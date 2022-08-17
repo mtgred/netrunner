@@ -1,9 +1,9 @@
 (ns web.game-api
-  (:require [web.mongodb :refer [->object-id]]
+  (:require [monger.collection :as mc]
+            [web.app-state :as app-state]
             [web.decks :as decks]
-            [web.lobby :as lobby]
-            [web.utils :refer [response]]
-            [monger.collection :as mc]))
+            [web.mongodb :refer [->object-id]]
+            [web.utils :refer [response]]))
 
 (defn- make-link [host path] (str host path))
 
@@ -41,7 +41,7 @@
           api-record (mc/find-one-as-map db "api-keys" {:api-key api-uuid} ["username"])
           username (:username api-record)]
       (if username
-        (let [game {} ; (lobby/game-for-username username)
+        (let [game (app-state/uid-player->lobby username)
               allow-access (:api-access game)]
           (if (and game allow-access)
             (action username game ctx)
