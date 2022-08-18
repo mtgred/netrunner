@@ -34,21 +34,22 @@
                                :values (if ~uses-state?
                                          '~(cons 'state (next args))
                                          values#)
-                               :result result#}))))))
+                               :result result#})))
+       result#)))
 
 (defn is'-any
   [msg form]
-  `(let [value# ~form]
-     (if value#
+  `(let [result# ~form]
+     (if result#
        (do-report {:type :pass
                    :message ~msg
                    :expected '~form
-                   :actual value#})
-       (do-report {:type :fail
-                   :message ~msg
-                   :expected '~form
-                   :actual value#}))
-     value#))
+                   :actual result#})
+       (throw (ex-info ~msg {:form '~form
+                             :pred '~'identity
+                             :values (list result#)
+                             :result result#})))
+     result#))
 
 (defmacro is'
   ([form] `(is' ~form nil))
