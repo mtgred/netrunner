@@ -1,0 +1,55 @@
+version: '3.7'
+
+services:
+  server:
+    entrypoint: lein repl :headless :host 0.0.0.0 :port 44867
+    ports:
+      - 1042:1042
+      - 44867:44867
+    volumes:
+      - "./data:/usr/src/app/data"
+      - "./dev:/usr/src/app/dev"
+      - "./docs:/usr/src/app/docs"
+      - "./resources/public:/usr/src/app/resources/public"
+      - "./resources/dev.edn:/usr/src/app/resources/dev.edn"
+      - "./resources/logback.xml:/usr/src/app/resources/logback.xml"
+      - "./src:/usr/src/app/src"
+      - "./test:/usr/src/app/test"
+      - "./docker/docker-prod.edn:/usr/src/app/resources/prod.edn" # Override server configs
+    depends_on:
+      - database
+    links:
+      - database:mongo
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+
+  database:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+
+  cljs:
+    entrypoint: npm run cljs:watch
+    volumes:
+      - "./data:/usr/src/app/data"
+      - "./docs:/usr/src/app/docs"
+      - "./resources:/usr/src/app/resources"
+      - "./src:/usr/src/app/src"
+      - "./test:/usr/src/app/test"
+      - "./shadow-cljs.edn:/usr/src/app/shadow-cljs.edn"
+    ports:
+      - 9630:9630
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+
+  css:
+    entrypoint: npm run css:watch
+    volumes:
+      - "./src:/usr/src/app/src"
+      - "./resources:/usr/src/app/resources"
+    build:
+      dockerfile: docker/Dockerfile
+      context: .

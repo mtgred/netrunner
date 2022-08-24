@@ -939,6 +939,22 @@
        (is (= 3 (:click (get-runner))) "No extra cost to run HQ")
        (is (= 2 (:credit (get-runner))) "No extra cost to run HQ"))))
 
+(deftest cold-site-server-run-event
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Cold Site Server"]}
+               :runner {:deck ["Dirty Laundry"]}})
+     (core/gain state :corp :credit 10 :click 10)
+     (play-from-hand state :corp "Cold Site Server" "HQ")
+     (let [css (get-content state :hq 0)]
+       (rez state :corp (refresh css))
+       (card-ability state :corp css 0))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Dirty Laundry")
+     (click-prompt state :runner "HQ")
+     (is (second-last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to play Dirty Laundry."))
+     (is (last-log-contains? state "Runner spends \\[Click\\] and pays 1 \\[Credits\\] to make a run on HQ."))))
+
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ice
   (do-game
@@ -1757,8 +1773,8 @@
       (is (= 3 (:credit (get-corp))) "Charged to install ice")
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 pieces of ice protecting Remote1")))
 
-(deftest jinja-city-grid-drawing-non-ice-on-runner-s-turn
-    ;; Drawing non-ice on runner's turn
+(deftest jinja-city-grid-drawing-non-ice
+    ;; Drawing non-ice cards shows bogus prompt to the Runner
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
                         :hand ["Jinja City Grid"]}
@@ -1766,6 +1782,10 @@
                           :deck ["Eden Shard"]}})
       (play-from-hand state :corp "Jinja City Grid" "HQ")
       (rez state :corp (get-content state :hq 0))
+      (click-draw state :corp)
+      (is (= :waiting (prompt-type :runner)) "Runner has wait prompt")
+      (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")
+      (click-prompt state :corp "Carry on!")
       (take-credits state :corp)
       (run-empty-server state :rd)
       (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
@@ -2146,6 +2166,88 @@
       ;; 1 click to play program, 1 for run, 1 of Mason
       (is (= 1 (:click (get-runner)))))))
 
+(deftest mavirus-purge-ability
+    ;; Purge ability
+    (do-game
+      (new-game {:corp {:deck [(qty "Mavirus" 3)]}
+                 :runner {:hand ["Cache" "Medium" "Sure Gamble" "Sure Gamble"]}})
+      (play-from-hand state :corp "Mavirus" "HQ")
+      (take-credits state :corp 2)
+      ;; runner's turn
+      ;; install cache and medium
+      (play-from-hand state :runner "Cache")
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
+            cache (find-card "Cache" (get-program state))
+            mav (get-content state :hq 0)]
+        (is (= 3 (virus-counters cache)))
+        (play-from-hand state :runner "Medium")
+        (take-credits state :runner 2)
+        (rez state :corp mav)
+        (card-ability state :corp mav 0)
+        ;; nothing in hq content
+        (is (empty? (get-content state :hq)) "CVS was trashed")
+        ;; no cards trashed from grip
+        (is (= 2 (count (:hand (get-runner)))) "No cards trashed by Mavirus")
+        ;; purged counters
+        (is (zero? (virus-counters cache))
+            "Cache has no counters")
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
+            "Medium has no counters"))))
+
+(deftest mavirus-purge-on-access-rezzed
+    ;; Purge on access
+    (do-game
+      (new-game {:corp {:deck [(qty "Mavirus" 3)]}
+                 :runner {:hand ["Cache" "Medium" "Sure Gamble" "Sure Gamble"]}})
+      (play-from-hand state :corp "Mavirus" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp 2)
+      ;; runner's turn
+      ;; install cache and medium
+      (play-from-hand state :runner "Cache")
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
+            cache (find-card "Cache" (get-program state))]
+        (is (= 3 (virus-counters cache)))
+        (play-from-hand state :runner "Medium")
+        (run-empty-server state "Server 1")
+        ;; corp now has optional prompt to trigger virus purge
+        (is (= 2 (count (:hand (get-runner)))) "No damage dealt yet")
+        (click-prompt state :corp "Yes")
+        (is (= 1 (count (:hand (get-runner)))) "1 damage dealt with Mavirus")
+        ;; runner has prompt to trash Mavirus
+        (click-prompt state :runner "Pay 0 [Credits] to trash")
+        ;; purged counters
+        (is (zero? (virus-counters cache))
+            "Cache has no counters")
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
+            "Medium has no counters"))))
+
+(deftest mavirus-purge-on-access-unrezzed
+    ;; Purge on access
+    (do-game
+      (new-game {:corp {:deck [(qty "Mavirus" 3)]}
+                 :runner {:hand ["Cache" "Medium" "Sure Gamble" "Sure Gamble"]}})
+      (play-from-hand state :corp "Mavirus" "New remote")
+      (take-credits state :corp 2)
+      ;; runner's turn
+      ;; install cache and medium
+      (play-from-hand state :runner "Cache")
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
+            cache (find-card "Cache" (get-program state))]
+        (is (= 3 (virus-counters cache)))
+        (play-from-hand state :runner "Medium")
+        (run-empty-server state "Server 1")
+        ;; corp now has optional prompt to trigger virus purge
+        (is (= 2 (count (:hand (get-runner)))) "No damage dealt yet")
+        (click-prompt state :corp "Yes")
+        (is (= 2 (count (:hand (get-runner)))) "No damage dealt (mav unrezzed)")
+        ;; runner has prompt to trash Mavirus
+        (click-prompt state :runner "Pay 0 [Credits] to trash")
+        ;; purged counters
+        (is (zero? (virus-counters cache))
+            "Cache has no counters")
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
+            "Medium has no counters"))))
 
 (deftest midori
   ;; Midori

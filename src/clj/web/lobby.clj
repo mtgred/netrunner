@@ -154,7 +154,7 @@
               players-blocked-user?
               (-> (mapcat get-blocked-list (map :user (:players lobby)))
                   (set)
-                  (contains? (:username user)))]
+                  (contains? (str/lower-case (:username user))))]
           (not (or user-blocked-players? players-blocked-user?))))
       lobbies)))
 
@@ -523,13 +523,17 @@
         (->> (assoc lobbies gameid)))
     lobbies))
 
-(defn swap-text [players]
+(defn swap-text [players current-side]
   (let [[player1 player2] (mapv swap-side players)
         player1-username (-> player1 :user :username)
         player2-username (-> player2 :user :username)]
     (str player1-username " has swapped sides. "
-         player1-username " is now " (:side player1) ". "
-         player2-username " is now " (:side player2) ".")))
+         (if (= current-side "Any Side")
+           "Waiting for opponent."
+           (str player1-username " is now " (:side player1) ". "))
+         (when player2
+           (str player2-username " is now " (:side player2) ".")))))
+
 
 (defmethod ws/-msg-handler :lobby/swap
   [{{user :user} :ring-req
@@ -538,7 +542,7 @@
   (let [lobby (app-state/get-lobby gameid)]
     (when (and lobby (first-player? uid lobby))
       (let [swap-message (core/make-message {:user user
-                                             :text (swap-text (:players lobby))})
+                                             :text (swap-text (:players lobby) side)})
             new-app-state (swap! app-state/app-state
                                  update :lobbies
                                  #(-> %

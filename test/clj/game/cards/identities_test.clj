@@ -1,6 +1,8 @@
 (ns game.cards.identities-test
   (:require [game.core :as core]
+            [game.core.servers :refer [unknown->kw zone->name]]
             [game.core.card :refer :all]
+            [game.core.mark :refer [is-mark?]]
             [game.utils :as utils]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
@@ -716,7 +718,7 @@
         (click-card state :corp marilyn)
         (click-prompt state :corp "New remote")
         (is (= "Marilyn Campaign" (:title (get-content state :remote1 0))) "Marilyn is installed as first card")
-        (is (= "Choose a non-agenda in HQ to install" (:msg (prompt-map :corp))))
+        (is (= "Choose a non-agenda card in HQ to install" (:msg (prompt-map :corp))))
         (click-card state :corp herrings)
         (is (= "Red Herrings" (:title (get-content state :remote1 1))) "Red Herrings is installed in Server 1")
         (click-card state :corp vitruvius)
@@ -816,6 +818,28 @@
       (is (find-card "Reduced Service" (:hand (get-corp))) "Reduced Service is now in HQ"))
     (play-from-hand state :corp "Reduced Service" "New remote")
     (is (zero? (get-counters (get-content state :remote2 0) :power)) "Reduced Service should have 0 counters on itself after reinstall")))
+
+(deftest captain-padma-isbister-intrepid-explorer
+  (do-game
+    (new-game {:runner {:id "Captain Padma Isbister: Intrepid Explorer"
+                        :hand ["Earthrise Hotel"]}})
+    (take-credits state :corp)
+    (run-on state :rd)
+    (is (no-prompt? state :runner) "no prompt to charge (no targets)")
+    (run-jack-out state)
+    (play-from-hand state :runner "Earthrise Hotel")
+    (run-on state :rd)
+    (is (no-prompt? state :runner) "no prompt to charge (chance already missed)")
+    (run-jack-out state)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (changes-val-macro
+      +1 (get-counters (get-resource state 0) :power)
+      "Gained 1 power counter from charging hotel"
+      (run-on state :rd)
+      (is (not (no-prompt? state :runner)) "prompt to charge")
+      (click-card state :runner "Earthrise Hotel"))
+    (run-jack-out state)))
 
 (deftest cerebral-imaging-infinite-frontiers
   ;; Cerebral Imaging - Maximum hand size equal to credits
@@ -1160,6 +1184,32 @@
       (take-credits state :corp)
       (run-empty-server state "HQ")
       (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge Fund at no cost."))))
+
+(deftest esa-afontov-eco-insurrectionist
+  (testing "happy path"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                          :hand [(qty "Amped Up" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Amped Up")
+      (click-prompt state :runner "Yes")
+      (is (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2") "Sabotage happened")
+      (is (prompt-is-type? state :corp :select) "Corp has sabotage prompt")))
+  (testing "Does not trigger on second time"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                          :hand [(qty "Amped Up" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Amped Up")
+      (click-prompt state :runner "Yes")
+      (is (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2") "Sabotage happened")
+      (play-from-hand state :runner "Amped Up")
+      (is (not (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2")) "Sabotage did not happen")
+      (is (empty (:prompt (get-corp))) "no Corp prompt"))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net-pay-credits-prompt
     ;; Pay-credits prompt
@@ -3465,6 +3515,151 @@
       (is (= "Trash a card in grip to lower ice strength by 2?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")))
 
+(deftest nyusha-sable-sintashta
+  ;; Nyusha "Sable" Sintashta start of turn: mark server. First successful run on mark: gain click
+  (do-game
+    (new-game {:runner {:id "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"}
+               :corp {:hand ["Hedge Fund"] :deck ["Hedge Fund"] :discard ["Hedge Fund"]}})
+    (take-credits state :corp)
+    (run-on state (zone->name (:mark @state)))
+    (changes-val-macro
+      1 (:click (get-runner))
+      "gained 1 click from running the mark"
+      (run-continue state))))
+
+(deftest nyusha-sable-sintashta-with-virtuoso
+  ;; Multiple cards setting a mark are idempotent
+  (do-game
+    (new-game {:runner {:id "Nyusha \"Sable\" Sintashta: Symphonic Prodigy" :hand ["Virtuoso"]}
+               :corp {:deck [(qty "Hedge Fund" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [virt (get-hardware state 0)
+          sable (get-in @state [:runner :identity])]
+      (is (= true (is-mark? state (unknown->kw (:card-target virt)))))
+      (is (= true (is-mark? state (unknown->kw (:card-target sable)))))
+      (is (last-log-contains? state "identifies their mark"))
+      (is (not (second-last-log-contains? state "identifies their mark"))))))
+
+(deftest ob-superheavy-logistics-basic-test
+  ;; The ability works, and it works once per turn - depends on Extract to be correct
+  (do-game
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand [(qty "Extract" 3) (qty "Launch Campaign" 2) "PAD Campaign"]
+                     :deck [(qty "Prisec" 2) "Anoetic Void" "Ice Wall"]
+                     :credits 10}})
+   (core/gain state :corp :click 10)
+   ;; launch campaign is 1 cost, and can summon prisec
+   (play-from-hand state :corp "Launch Campaign" "New remote")
+   (play-from-hand state :corp "Launch Campaign" "New remote")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (rez state :corp (get-content state :remote2 0))
+   (rez state :corp (get-content state :remote3 0))
+   ;; decline to use
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote1 0))
+   (click-prompt state :corp "No")
+   (is (no-prompt? state :corp) "No further prompt for Ob")
+   ;; pull prisec
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote2 0))
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Prisec")
+   (click-prompt state :corp "New remote")
+   (is (= "Prisec" (:title (get-content state :remote4 0))) "Installed Prisec in remote")
+   (is (rezzed? (get-content state :remote4 0)) "Prisec is rezzed")
+   ;; ability can't be used again
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote3 0))
+   (is (no-prompt? state :corp) "No prompt to use Ob again")))
+
+(deftest ob-superheavy-logistics-additional-costs
+  ;; doesn't waive additional costs to rez (ie corp. town)
+  (do-game
+   ;; can't pay cost
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["Extract" "PAD Campaign"]
+                     :deck ["Corporate Town"]
+                     :credits 10}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "PAD Campaign")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Corporate Town")
+   (click-prompt state :corp "New remote")
+   (is (no-prompt? state :corp) "No prompt to rez")
+   (is (= "Corporate Town" (:title (get-content state :remote2 0))) "Installed C. Town in remote")
+   (is (not (rezzed? (get-content state :remote2 0))) "Did not rez C. Town"))
+  (do-game
+   ;; refuse to pay cost
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["Extract" "PAD Campaign" "Hostile Takeover"]
+                     :deck ["Corporate Town"]
+                     :credits 10}})
+   (core/gain state :corp :click 10)
+   (play-and-score state "Hostile Takeover")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote2 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "PAD Campaign")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Corporate Town")
+   (click-prompt state :corp "No")
+   (click-prompt state :corp "New remote")
+   (is (no-prompt? state :corp) "No prompt to rez")
+   (is (= "Corporate Town" (:title (get-content state :remote3 0))) "Installed C. Town in remote")
+   (is (not (rezzed? (get-content state :remote3 0))) "Did not rez C. Town"))
+  (do-game
+   ;; pay additional cost to rez
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["Extract" "PAD Campaign" "Hostile Takeover"]
+                     :deck ["Corporate Town"]
+                     :credits 10}})
+   (core/gain state :corp :click 10)
+   (play-and-score state "Hostile Takeover")
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote2 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "PAD Campaign")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "Corporate Town")
+   (click-prompt state :corp "Yes")
+   (click-prompt state :corp "New remote")
+   (click-card state :corp "Hostile Takeover")
+   (is (no-prompt? state :corp) "No prompt to rez")
+   (is (= "Corporate Town" (:title (get-content state :remote3 0))) "Installed C. Town in remote")
+   (is (rezzed? (get-content state :remote3 0)) "rezzed C. Town")))
+
+(deftest ob-superheavy-logistics-fail-to-find
+  ;; If no cards in R&D match the search cost, ability can be declined
+  (do-game
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["Extract" "PAD Campaign"]
+                     :deck ["Anoetic Void"]}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp (get-content state :remote1 0))
+   (click-prompt state :corp "Yes")
+   (is (= ["No install"] (prompt-buttons :corp)) "Sole option available is Done")
+   (click-prompt state :corp "No install")))
+
+(deftest ob-superheavy-logistics-public-agendas
+  ;; If no cards in R&D match the search cost, ability can be declined
+  (do-game
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["Oaktown Renovation" "Extract"]
+                     :deck ["Anoetic Void"]}})
+   (play-from-hand state :corp "Oaktown Renovation" "New remote")
+   (play-from-hand state :corp "Extract")
+   (click-card state :corp "Oaktown Renovation")
+   (is (empty? (:prompt (get-corp))) "No Ob prompt")
+   (is (find-card "Oaktown Renovation" (:discard (get-corp))) "Oaktown is trashed")))
+
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
     (do-game
@@ -3575,6 +3770,31 @@
         (run-continue state)
         (is (no-prompt? state :corp))
         (is (no-prompt? state :runner)))))
+
+(deftest pravdivost-consulting-fake-prompt
+  ;; Pravdivost Consulting: Political Solutions
+  (do-game
+    (new-game {:corp {:id "Pravdivost Consulting: Political Solutions"
+                      :hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :corp "Yes")
+    ;; fake prompt, doesn't give away that PAD cannot be advanced
+    (click-prompt state :corp "Done")))
+
+(deftest pravdivost-consulting-happy-path
+  (do-game
+    (new-game {:corp {:id "Pravdivost Consulting: Political Solutions"
+                      :hand ["NGO Front"]}})
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "NGO Front")
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "NGO was advanced")))
 
 (deftest quetzal-free-spirit
   ;; Quetzal

@@ -964,6 +964,34 @@
       (rez state :corp (refresh pad))
       (is (rezzed? (refresh pad)) "Rez prevention of asset ended"))))
 
+(deftest carpe-diem-no-mark
+  ;; Carpe Diem - identify mark. Gain 4. You may run mark.
+  (do-game
+    (new-game {:runner {:hand ["Carpe Diem"]}})
+    (take-credits state :corp)
+    (is (nil? (:mark @state)) "No mark identified")
+    (changes-val-macro
+      3 (:credit (get-runner))
+      "gained 3c  net from carpe diem"
+      (play-from-hand state :runner "Carpe Diem"))
+    (click-prompt state :runner "Yes")
+    (is (= (first (:server (get-run))) (:mark @state)))
+    (run-jack-out state)))
+
+(deftest carpe-diem-hq-marked
+  ;; Carpe Diem - identify mark. Gain 4. You may run mark.
+  (do-game
+    (new-game {:runner {:hand ["Carpe Diem"]}})
+    (take-credits state :corp)
+    (is (nil? (:mark @state)) "No mark identified")
+    (core/set-mark state :hq)
+    (changes-val-macro
+      3 (:credit (get-runner))
+      "gained 3c  net from carpe diem"
+      (play-from-hand state :runner "Carpe Diem"))
+    (click-prompt state :runner "Yes")
+    (is (= [:hq] (:server (get-run))) "Ran the correct server")))
+
 (deftest cbi-raid
   ;; CBI Raid - Full test
   (do-game
@@ -993,6 +1021,15 @@
     (is (= "Quandary" (:title (second (rest (:deck (get-corp)))))))
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
+
+(deftest chastushka
+  ;; Chastushka - run hq, replace breach with sabotage 4
+  (do-game
+    (new-game {:runner {:deck ["Chastushka"]}
+               :corp {:hand [(qty "Hedge Fund" 5)] :deck [(qty "Hedge Fund" 2)]}})
+    (take-credits state :corp)
+    (play-run-event state "Chastushka" :hq)
+    (is (last-log-contains? state "uses Chastushka to sabotage 4") "Sabotage happened")))
 
 (deftest code-siphon
   ;; Code Siphon
@@ -1609,6 +1646,29 @@
     (is (= 0 (count (:deck (get-corp)))))
     (is (= 2 (count (:discard (get-corp)))))))
 
+(deftest deep-dive-ikawah-cost-for-second-card
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3) "Ikawah Project" "Project Vitruvius"]}
+	       :runner {:hand ["Deep Dive"]}})
+    (draw state :corp)
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Ikawah Project" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Project Vitruvius" (:hand (get-corp))) :deck)
+    ;;R&D is now: Hedge Fund, Ikawah Project, Project Vitruvius
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    ;;run the three centrals
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "Ikawah Project")
+    (click-prompt state :runner "Pay to steal")
+    (is (no-prompt? state :runner) 
+        "Runner shouldn't be given the option to access the second card since he spent the last click to steal Ikawah")))
+
 (deftest deep-dive-basic-functionality
   (do-game
     (new-game {:corp {:hand ["Ansel 1.0" "Better Citizen Program" "Chiyashi" 
@@ -1664,7 +1724,7 @@
     (is (= 4 (:agenda-point (get-runner))) "Runner scored two agendas")))
 
 (deftest deep-dive-strongbox-ikawah-bellona
-  (do-game 
+  (do-game
     (new-game {:corp {:hand ["Strongbox" "Ikawah Project" "Bellona" "Fire Wall"]}
 	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
     (draw state :corp)
@@ -1675,7 +1735,7 @@
     (rez state :corp (get-content state :rd 0))
     (take-credits state :corp)
     (core/gain state :runner :click 96)
-    (core/gain state :runner :credit 95)    
+    (core/gain state :runner :credit 95)
     ;;run the three centrals
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
@@ -1683,19 +1743,19 @@
     (click-prompt state :runner "No action")
     (click-prompt state :runner "No action")
     (run-empty-server state "HQ")
-    ;;play from hand, and attempt to steal ikawah - this should cost us 2 clicks and 2 credits
+    ;;play from hand, and attempt to steal ikawah - this should cost us 1 click and 2 credits
     (play-from-hand state :runner "Deep Dive")
     (click-prompt state :runner "Bellona")
     (click-prompt state :runner "Pay to steal")
     ;;runner should now have 95 clicks and 93 credits
-    (is (= 95 (:click (get-runner))) "Should have spent +1 click to steal bellona")
+    (is (= 96 (:click (get-runner))) "Should NOT have spent +1 click to steal bellona")
     (is (= 93 (:credit (get-runner))) "Should have spent +5 credits to steal bellona")
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Ikawah Project")
     (click-prompt state :runner "Pay to steal")
-    ;;runner should now have 92 clicks and 91 credits
-    (is (= 92 (:click (get-runner))) "Should have spent +1 click to steal bellona")
-    (is (= 91 (:credit (get-runner))) "Should have spent +5 credits to steal bellona")))
+    ;;runner should now have 94 clicks and 91 credits
+    (is (= 94 (:click (get-runner))) "Should have spent +1 click to steal Ikawah")
+    (is (= 91 (:credit (get-runner))) "Should have spent +2 credits to steal Ikawah")))
 
 (deftest deja-vu
   ;; Deja Vu - recur one non-virus or two virus cards
@@ -3438,6 +3498,51 @@
       (play-from-hand state :runner "Interdiction")
       (rez state :corp jackson)
       (is (not (rezzed? (refresh jackson))) "Jackson is not rezzed"))))
+
+(deftest into-the-depths
+  ;; Into the depths
+  (do-game
+    ;; Didn't pass any ice
+    (new-game {:runner {:hand ["Into the Depths"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (click-prompt state :runner "No action"))
+  (do-game
+    ;; Passed 1 ice
+    (new-game {:runner {:hand ["Into the Depths"]}
+               :corp {:hand [(qty "Ice Wall" 5)] :credits 50}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "Gain 4 [Credits]")
+    (click-prompt state :runner "No action"))
+  (do-game
+    ;; Passed 4 ice
+    (new-game {:runner {:hand ["Into the Depths"] :deck ["D4v1d"]}
+               :corp {:hand [(qty "Ice Wall" 5)] :credits 50}})
+    (core/gain state :corp :click 2)
+    (doseq [n [0 1 2 3]]
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (rez state :corp (get-ice state :hq n)))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (dotimes [n 12]
+      (run-continue state))
+    (click-prompt state :runner "Gain 4 [Credits]")
+    (click-prompt state :runner "Install a program from your stack")
+    (click-prompt state :runner "D4v1d")
+    (click-prompt state :runner "Charge a card")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "No action")
+    (is (= 4 (get-counters (get-program state 0) :power)) "4 counters on david")))
 
 (deftest isolation
   ;; Isolation - A resource must be trashed, gain 7c
@@ -5368,6 +5473,32 @@
       (play-from-hand state :runner "Rigged Results")
       (is (= ["0" "1"] (prompt-buttons :runner)) "Runner can't choose 2 because of Government Investigations")))
 
+(deftest rigging-up
+  ;; Rigging Up - Modded, but you may charge
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "D4v1d"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigging Up")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "Yes")
+    (is (= 4 (get-counters (get-program state 0) :power)) "Rigging up gave +1 counter"))
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "D4v1d"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigging Up")
+    (click-card state :runner "D4v1d")
+    (click-prompt state :runner "No")
+    (is (= 3 (get-counters (get-program state 0) :power)) "Rigging up gave no extra counters"))
+  (do-game
+    (new-game {:runner {:hand ["Rigging Up" "Maw"]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "saved 3 credits with Rigging up"
+      (play-from-hand state :runner "Rigging Up")
+      (click-card state :runner "Maw")
+      (is (no-prompt? state :runner) "No prompt because maw cannot be charged"))))
+
 (deftest rip-deal
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval
   (do-game
@@ -5557,6 +5688,22 @@
     (click-card state :runner "Enigma")
     (is (no-prompt? state :runner) "Enigma should be trashed")
     (is (= "Enigma" (-> (get-corp) :discard first :title)) "Enigma should be trashed")))
+
+(deftest running-hot
+  ;; Amped Up - Gain 3 clicks and take 1 unpreventable brain damage
+  (do-game
+    (new-game {:runner {:deck ["Running Hot"
+                               "Feedback Filter"
+                               (qty "Sure Gamble" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (play-from-hand state :runner "Running Hot")
+    (is (no-prompt? state :runner)
+        "Feedback Filter brain damage prevention opportunity not given")
+    (is (= 5 (:click (get-runner))) "Runner gained 2 clicks from Running Hot")
+    (is (= 2 (count (:discard (get-runner)))) "Runner discarded 1 card from damage")
+    (is (= 4 (hand-size :runner)) "Runner handsize decreased by 1")
+    (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
 
 (deftest running-interference
   ;; Running Interference
@@ -5802,6 +5949,29 @@
     (is (last-log-contains? state "Runner exposes Hostile Takeover"))
     (click-prompt state :runner "HQ")
     (is (:run @state) "Run should be initiated")))
+
+(deftest steelskin-scarring
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
+    (damage state :corp :net 1)
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards from steelskin"))
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}
+               :corp {:hand ["Kala Ghoda Real TV"]}})
+    (core/move state :runner (find-card "Steelskin Scarring" (:hand (get-runner))) :deck {:front true})
+    (core/fake-checkpoint state)
+    (is (= "Steelskin Scarring" (:title (first (:deck (get-runner))))) "Steelskin is ontop of the stack")
+    (play-from-hand state :corp "Kala Ghoda Real TV" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (card-ability state :corp (get-content state :remote1 0) 1)
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards when steelskin gets trashed from stack"))
+  (do-game
+    (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      2 (count (:hand (get-runner)))
+      "Drew 3 (+2 net cards) with steelskin"
+      (play-from-hand state :runner "Steelskin Scarring"))))
 
 (deftest stimhack
   ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run

@@ -16,12 +16,9 @@
   :omit-source true
   :main web.core
 
-  :eftest {:report eftest.report.pretty/report
-           :fail-fast? false}
-
   :repl-options {:timeout 180000
-                 :init-ns dev.user
-                 :init (do (use 'web.core) (go))}
+                 :init-ns web.dev
+                 :init (go)}
 
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/clojurescript "1.10.891"
@@ -71,11 +68,7 @@
                  [integrant "0.8.0"]
                  [cljc.java-time "0.1.18"]
                  [time-literals "0.1.5"]
-                 [metosin/reitit "0.5.15"]
-                 [metosin/malli "0.7.0"]]
-
-  :plugins [[lein-eftest "0.5.9"]
-            [cider/cider-nrepl "0.27.3"]]
+                 [metosin/reitit "0.5.18"]]
 
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.4"]
                                   [cider/piggieback "0.5.3"]
@@ -83,16 +76,22 @@
                                   [rewrite-clj "1.0.699-alpha"]
                                   [criterium "0.4.6"]
                                   [integrant/repl "0.3.2"]
+                                  [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.16.8"]]
-                   :source-paths ["src/clj" "src/cljs" "src/cljc" "test/clj" "src/css"]
+                   :plugins [[cider/cider-nrepl "0.27.3"]]
+                   :source-paths ["src/clj" "src/cljs" "src/cljc" "src/css"
+                                  "dev/src/clj" "dev/src/cljs"
+                                  "test/clj"]
                    :resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
+                              "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5010"
                               "-XX:+UnlockDiagnosticVMOptions"
                               "-XX:-OmitStackTraceInFastThrow"
                               "-XX:+DebugNonSafepoints"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
+            "kaocha" ["run" "-m" "kaocha.runner"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "load-generator" ["run" "-m" "tasks.load-generator/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]

@@ -1,0 +1,29 @@
+name: Clojure CI
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache
+        uses: actions/cache@v3.0.5
+        with:
+          # A list of files, directories, and wildcard patterns to cache and restore
+          path: |
+            ~/.m2
+            ~/.lein
+          # An explicit key for restoring and saving the cache
+          key: lein-deps-{{ checksum "project.clj" }}
+          # An ordered list of keys to use for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
+          restore-keys: lein-deps-{{ checksum "project.clj" }}
+      - name: Fetch cards
+        run: lein fetch --no-db --no-card-images
+      - name: Run tests
+        run: lein kaocha --profile :ci

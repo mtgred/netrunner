@@ -22,6 +22,9 @@
 (defn response [status-code msg]
   (resp/status (resp/response msg) status-code))
 
+(defn html-response [status-code msg]
+  (resp/status (resp/content-type (resp/response msg) "text/html") status-code))
+
 (defn json-response [status-code msg]
   (resp/status (resp/content-type (resp/response msg) "application/json") status-code))
 

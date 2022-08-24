@@ -1,32 +1,17 @@
-FROM clojure:lein-alpine as builder
+FROM clojure
 
-RUN apk --no-cache add \
-    git \
-    nodejs \
-    nodejs-npm
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
 
-RUN npm install -g bower stylus
+RUN chmod -R 777 /root/
 
-WORKDIR /netrunner
-COPY . .
-RUN bower --allow-root install
-RUN stylus src/css -o resources/public/css/
+# Install npm+dependencies
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install nodejs
+COPY package.json /usr/src/app/
+COPY package-lock.json /usr/src/app/
+RUN npm ci
+
+# Install clojure dependencies
+COPY project.clj /usr/src/app/
 RUN lein deps
-RUN lein cljsbuild once prod
-RUN lein uberjar
-
-
-FROM openjdk:8-alpine
-
-WORKDIR /netrunner
-COPY --from=builder /netrunner/target/netrunner-standalone.jar .
-COPY --from=builder /netrunner/dev.edn .
-WORKDIR /netrunner/resources
-COPY --from=builder /netrunner/resources .
-WORKDIR /netrunner/data
-COPY --from=builder /netrunner/data .
-WORKDIR /netrunner/src
-COPY --from=builder /netrunner/src .
-
-WORKDIR /netrunner
-ENTRYPOINT ["java", "-jar", "netrunner-standalone.jar"]

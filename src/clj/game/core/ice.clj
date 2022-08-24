@@ -239,7 +239,8 @@
 (defn breakable-subroutines-choice
   "Takes an ice, returns the breakable subroutines for a choices prompt"
   [state side eid card ice]
-  (when-not (any-effects state side :cannot-break-subs-on-ice true? ice)
+  (when-not (any-effects state side :cannot-break-subs-on-ice true? {:ice ice
+                                                                     :icebreaker card})
     (for [sub (remove #(or (:broken %)
                            (not (if (fn? (:breakable %))
                                   ((:breakable %) state side eid ice [card])
@@ -314,12 +315,24 @@
     (when-let [pump-fn (:pump-bonus ability)]
       (pump-fn state side (make-eid state) card targets)))))
 
+(defn ice-strength-bonus
+  "Use in :constant-effect vectors to give the current ice or program a conditional strength bonus"
+  ([bonus]
+   {:type :ice-strength
+    :req (req (same-card? card target))
+    :value bonus})
+  ([req-fn bonus]
+   {:type :ice-strength
+    :req (req (and (same-card? card target)
+                   (req-fn state side eid card targets)))
+    :value bonus}))
+
 (defn sum-ice-strength-effects
   "Sums the results from get-effects."
   [state side ice]
-  (let [can-lower? (not (card-flag? ice :cannot-lower-strength true))]
-    (->> (get-effects state side ice :ice-strength nil)
-         (filter #(and % (or can-lower? (pos? %))))
+  (let [can-lower? (not (any-effects state side :cannot-lower-strength true? {:ice ice}))]
+    (->> (get-effects state side ice :ice-strength)
+         (filter #(and (number? %) (or can-lower? (pos? %))))
          (reduce +))))
 
 (defn ice-strength
@@ -390,6 +403,18 @@
             (strfun state side (make-eid state) card nil))
           (sum-effects state side card :breaker-strength)]
          (reduce (fnil + 0 0)))))
+
+(defn breaker-strength-bonus
+  "Use in :constant-effect vectors to give the current ice or program a conditional strength bonus"
+  ([bonus]
+   {:type :breaker-strength
+    :req (req (same-card? card target))
+    :value bonus})
+  ([req-fn bonus]
+   {:type :breaker-strength
+    :req (req (and (same-card? card target)
+                   (req-fn state side eid card targets)))
+    :value bonus}))
 
 (defn update-breaker-strength
   "Updates a breaker's current strength by triggering updates and applying their effects."

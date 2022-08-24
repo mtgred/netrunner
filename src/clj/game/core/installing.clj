@@ -168,16 +168,15 @@
                     (rez state side eid moved-card {:no-msg no-msg})
                     ;; "Face-up" cards
                     :face-up
-                    (if (:install-state cdef)
-                      (do (card-init state side
-                                     (assoc (get-card state moved-card) :rezzed true :seen true)
-                                     {:resolve-effect false
-                                      :init-data true})
-                          (wait-for (checkpoint state nil (make-eid state eid))
-                                    (complete-with-result state side eid (get-card state moved-card))))
-                      (do (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))
-                          (wait-for (checkpoint state nil (make-eid state eid))
-                                    (complete-with-result state side eid (get-card state moved-card)))))
+                    (let [moved-card (-> (get-card state moved-card)
+                                         (assoc :seen true)
+                                         (cond-> (not (agenda? card)) (assoc :rezzed true)))
+                          moved-card (if (:install-state cdef)
+                                       (card-init state side moved-card {:resolve-effect false
+                                                                         :init-data true})
+                                       (update! state side moved-card))]
+                      (wait-for (checkpoint state nil (make-eid state eid))
+                                (complete-with-result state side eid (get-card state moved-card))))
                     ;; All other cards
                     (wait-for (checkpoint state nil (make-eid state eid))
                               (when-let [dre (:derezzed-events cdef)]

@@ -636,7 +636,8 @@
 
 (defn damage
   [state side dmg-type qty]
-  (core/damage state side (core/make-eid state) dmg-type qty nil))
+  (core/damage state side (core/make-eid state) dmg-type qty nil)
+  (core/fake-checkpoint state))
 
 (defn move
   [state side card location]

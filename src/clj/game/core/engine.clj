@@ -5,7 +5,7 @@
     [clj-uuid :as uuid]
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes]]
-    [game.core.card :refer [active? facedown? get-card get-cid get-title installed? in-discard? in-hand? rezzed?]]
+    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title installed? in-discard? in-hand? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -104,7 +104,10 @@
 ;       :all -- boolean
 ;         Optional. Changes the select prompt from optional (can click "Done" to not select anything) to
 ;         mandatory. When :max is also set to true, enforces selecting the specified number of cards.
-;       :max -- integer
+;       :min -- integer or 5-fn
+;         Optional. Changes the select to only show "Done" button after this number of cards have been
+;         selected. Only used if :all is not set.
+;       :max -- integer or 5-fn
 ;         Optional. Changes the select from to resolving after selecting a single card to
 ;         resolving when either a number of cards (as set by :max) have been selected or a number
 ;         of cards less than that set by :max are selected and the "Done" button has been clicked.
@@ -295,7 +298,7 @@
     (do-ability state side ability card targets)
     (effect-completed state side eid)))
 
-(defn- print-msg
+(defn print-msg
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
@@ -374,20 +377,18 @@
   ;; Ensure that any costs can be paid
   (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
             ;; If the cost can be and is paid, perform the ablity
-            (let [payment-str (:msg async-result)
-                  cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
-              (if payment-str
-                (wait-for (checkpoint state side (make-eid state eid) nil)
-                          (let [ability (assoc-in ability [:eid :cost-paid] cost-paid)]
-                            ;; Print the message
-                            (print-msg state side ability card targets payment-str)
-                            ;; Trigger the effect
-                            (register-once state side ability card)
-                            (do-effect state side ability (ugly-counter-hack card cost) targets)
-                            ;; If the ability isn't async, complete it
-                            (when-not async
-                              (effect-completed state side eid))))
-                (effect-completed state side eid)))))
+            (if-let [payment-str (:msg async-result)]
+              (let [cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
+                    ability (assoc-in ability [:eid :cost-paid] cost-paid)]
+                ;; Print the message
+                (print-msg state side ability card targets payment-str)
+                ;; Trigger the effect
+                (register-once state side ability card)
+                (do-effect state side ability (ugly-counter-hack card cost) targets)
+                ;; If the ability isn't async, complete it
+                (when-not async
+                  (effect-completed state side eid)))
+              (effect-completed state side eid))))
 
 (defn- do-choices
   "Handle a choices ability"
@@ -599,6 +600,8 @@
                          (not (rezzed? card)))
           :facedown (and (installed? card)
                          (facedown? card))
+          :faceup (and (installed? card)
+                       (faceup? card))
           :hosted (:host card)
           :inactive (not (active? card))
           :in-location (or (and (contains? location :discard)
@@ -994,10 +997,11 @@
     (effect-completed state nil eid)))
 
 (defn unregister-expired-durations
-  [state _ eid duration context-maps]
+  [state _ eid durations context-maps]
   (wait-for (trash-when-expired state nil (make-eid state eid) context-maps)
             (unregister-floating-events state nil :pending)
-            (when duration
+            (doseq [duration durations
+                    :when duration]
               (unregister-floating-effects state nil duration)
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
@@ -1005,12 +1009,12 @@
 (defn checkpoint
   ([state eid] (checkpoint state nil eid nil))
   ([state _ eid] (checkpoint state nil eid nil))
-  ([state _ eid {:keys [duration] :as args}]
+  ([state _ eid {:keys [duration durations] :as args}]
    ;; a: Any ability that has met its condition creates the appropriate instances of itself and marks them as pending
    (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid args)]
      ;; b: Any ability with a duration that has passed is removed from the game state
      (wait-for
-       (unregister-expired-durations state nil (make-eid state eid) duration context-maps)
+       (unregister-expired-durations state nil (make-eid state eid) (conj durations duration) context-maps)
        ;; c: Check winning or tying by agenda points
        (check-win-by-agenda state)
        ;; d: uniqueness check

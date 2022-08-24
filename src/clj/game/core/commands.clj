@@ -6,6 +6,7 @@
                            has-subtype? ice? in-hand? installed? map->Card rezzed?
                            runner?]]
    [game.core.change-vals :refer [change]]
+   [game.core.charge :refer [charge-card]]
    [game.core.damage :refer [damage]]
    [game.core.drawing :refer [draw]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -15,6 +16,7 @@
    [game.core.identities :refer [disable-identity disable-card enable-card]]
    [game.core.initializing :refer [card-init deactivate make-card]]
    [game.core.installing :refer [corp-install runner-install]]
+   [game.core.mark :refer [identify-mark]]
    [game.core.moving :refer [move swap-ice swap-installed trash]]
    [game.core.prompt-state :refer [remove-from-prompt-queue]]
    [game.core.prompts :refer [show-prompt]]
@@ -22,6 +24,7 @@
    [game.core.psi :refer [psi-game]]
    [game.core.rezzing :refer [rez derez]]
    [game.core.runs :refer [end-run get-current-encounter jack-out]]
+   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg system-say unsafe-say]]
    [game.core.set-up :refer [build-card]]
    [game.core.to-string :refer [card-str]]
@@ -348,6 +351,12 @@
                                                                           ": " (get-card state target))))
                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/card-info command"}) nil)
+        "/charge"     #(resolve-ability %1 %2
+                                        {:prompt "Choose an installed card to charge"
+                                         :async true
+                                         :effect (req (charge-card %1 %2 eid target))
+                                         :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                        (map->Card {:title "/charge command"}) nil)
         "/clear-win"  clear-win
         "/click"      #(swap! %1 assoc-in [%2 :click] (constrain-value value 0 1000))
         "/close-prompt" command-close-prompt
@@ -377,6 +386,7 @@
         "/link"       (fn [state side]
                         (when (= side :runner)
                           (swap! state assoc-in [:runner :link] (constrain-value value 0 1000))))
+        "/mark"       #(when (= %2 :runner) (identify-mark %1))
         "/memory"     (fn [state side]
                         (when (= side :runner)
                           (swap! state assoc-in [:runner :memory :used] (constrain-value value -1000 1000))))
@@ -428,6 +438,7 @@
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/rfg command"}) nil)
         "/roll"       #(command-roll %1 %2 value)
+        "/sabotage"   #(when (= %2 :runner) (resolve-ability %1 %2 (sabotage-ability (constrain-value value 0 1000)) nil nil))
         "/save-replay" command-save-replay
         "/show-hand" #(resolve-ability %1 %2
                                          {:effect (effect (system-msg (str

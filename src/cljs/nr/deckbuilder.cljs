@@ -1,24 +1,25 @@
 (ns nr.deckbuilder
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
-   [cljs.core.async :refer [<! >! chan put! timeout close! go-loop] :as async]
-   [clojure.string :refer [join lower-case split split-lines] :as s]
-   [jinteki.cards :refer [all-cards] :as cards]
-   [jinteki.utils :refer [INFINITY str->int] :as utils]
-   [jinteki.validator :as validator]
-   [nr.ajax :refer [DELETE GET POST PUT]]
-   [nr.appstate :refer [app-state]]
-   [nr.auth :refer [authenticated] :as auth]
-   [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
-   [nr.deck-status :refer [deck-status-span]]
-   [nr.translations :refer [tr tr-faction tr-format tr-side tr-type]]
-   [nr.utils :refer [alliance-dots banned-span cond-button
-                     deck-points-card-span dots-html format->slug format-date-time
-                     influence-dot influence-dots mdy-formatter non-game-toast num->percent
-                     restricted-span rotated-span set-scroll-top slug->format store-scroll-top]]
-   [nr.ws :as ws]
-   [reagent-modals.modals :as reagent-modals]
-   [reagent.core :as r]))
+    [cljs.core.async :refer [<! >! chan put! timeout close! go-loop] :as async]
+    [clojure.string :refer [join lower-case split split-lines] :as s]
+    [jinteki.cards :refer [all-cards] :as cards]
+    [jinteki.utils :refer [INFINITY str->int] :as utils]
+    [jinteki.validator :as validator]
+    [nr.ajax :refer [DELETE GET POST PUT]]
+    [nr.appstate :refer [app-state]]
+    [nr.auth :refer [authenticated] :as auth]
+    [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
+    [nr.deck-status :refer [deck-status-span]]
+    [nr.translations :refer [tr tr-faction tr-format tr-side tr-type]]
+    [nr.utils :refer [alliance-dots banned-span cond-button
+                      deck-points-card-span dots-html format->slug format-date-time
+                      influence-dot influence-dots mdy-formatter non-game-toast num->percent
+                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top]]
+    [nr.ws :as ws]
+    [reagent-modals.modals :as reagent-modals]
+    [reagent.core :as r]
+    [clojure.string :as str]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
@@ -274,19 +275,34 @@
         add-deck (partial add-deck-name all-titles)]
     (map add-deck cards)))
 
-(defn new-deck [s side]
+(defn new-deck
+  ([s side] (new-deck s side "New Deck" "standard" [] nil))
+  ([s side name format cards id]
   (let [old-deck (:deck @s)
-        id (->> (side-identities side)
-                (sort-by :title)
-                first)]
-    (set-deck-on-state s {:name "New deck"
-                          :cards []
+        identities (->> (side-identities side)
+                        (sort-by :title))
+        id (or id (first identities))]
+    (set-deck-on-state s {:name name
+                          :cards cards
+                          :parsed? true
                           :identity id
-                          :format "standard"
+                          :format format
                           :_id (.getTime (js/Date.))
                           :new true})
     (edit-deck s)
-    (swap! s assoc :old-deck old-deck)))
+    (swap! s assoc :old-deck old-deck))))
+
+(defn name-copy [deck]
+  (let [deckname (:name deck)
+        suffix (tr [:deck-builder.deck-copy-suffix "copy"])
+        pattern (re-pattern (str "(.*)\\-" suffix "(\\d*)$"))]
+    (if-let [[_ basename num] (re-find pattern deckname)]
+      (str basename "-" suffix (if (str/blank? num) 1 (-> num str->int inc)))
+      (str deckname "-" suffix))))
+
+(defn copy-deck [s]
+  (let [deck (:deck @s)]
+    (new-deck s (:side (:identity deck)) (name-copy deck) (:format deck) (:cards deck) (:identity deck))))
 
 (defn- send-import [s]
   (ws/ws-send! [:decks/import {:input (:msg @s)}])
@@ -793,6 +809,12 @@
    [:button {:on-click #(handle-delete s)} (tr [:deck-builder.confirm-delete "Confirm Delete"])]
    [:button {:on-click #(end-delete s)} (tr [:deck-builder.cancel "Cancel"])]])
 
+(defn- reset-deck-filters [state]
+  (swap! state assoc
+         :side-filter all-sides-filter
+         :faction-filter all-factions-filter
+         :format-filter all-formats-filter))
+
 (defn view-buttons
   [s deck]
   [:div.button-bar
@@ -800,6 +822,7 @@
     (not (:locked deck))
     #(edit-deck s)]
    [:button {:on-click #(delete-deck s)} (tr [:deck-builder.delete "Delete"])]
+   [:button {:on-click #(do (reset-deck-filters s) (copy-deck s))} (tr [:deck-builder.copy "Copy"])]
    (when (and (:stats deck)
               (not= "none" (get-in @app-state [:options :deckstats])))
      [:button {:on-click #(clear-deck-stats s)}
@@ -923,12 +946,6 @@
    [:div
     [:h3 (tr [:deck-builder.notes "Notes"])]]
    [notes-textbox s]])
-
-(defn- reset-deck-filters [state]
-  (swap! state assoc
-         :side-filter all-sides-filter
-         :faction-filter all-factions-filter
-         :format-filter all-formats-filter))
 
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar

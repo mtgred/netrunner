@@ -23,15 +23,17 @@
    [org.httpkit.server :refer [run-server server-stop!]]
    [taoensso.sente :as sente]
    [time-literals.data-readers]
-   [time-literals.read-write]
+   [time-literals.read-write :as read-write]
    [web.angel-arena :as angel-arena]
-   [web.versions :refer [frontend-version banned-msg]]
    [web.api :refer [make-app make-dev-app]]
    [web.app-state :as app-state]
    [web.game]
    [web.lobby :as lobby]
    [web.utils :refer [tick]]
+   [web.versions :refer [banned-msg frontend-version]]
    [web.ws :refer [ch-chsk event-msg-handler]]))
+
+(read-write/print-time-literals-clj!)
 
 (defmethod aero/reader 'ig/ref
   [_ _ value]
@@ -48,8 +50,9 @@
   mode)
 
 (defmethod ig/init-key :mongodb/connection [_ opts]
-  (let [{:keys [address port name]} opts]
-    (mg/connect-via-uri (str "mongodb://" address ":" port "/" name))))
+  (let [{:keys [address port name connection-string]} opts
+        connection (or connection-string (str "mongodb://" address ":" port "/" name))]
+    (mg/connect-via-uri connection)))
 
 (defmethod ig/halt-key! :mongodb/connection [_ {:keys [conn]}]
   (mg/disconnect conn))

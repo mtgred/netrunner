@@ -626,6 +626,28 @@
         (is (= (+ 3 credits) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll"))
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
+(deftest begemot
+  (do-game
+    (new-game {:runner {:hand ["Begemot" (qty "Sure Gamble" 4)] :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Begemot")
+    (is (= 3 (count (:hand (get-runner)))) "suffed 1 brain, 3 cards in hand")
+    (let [vege (get-program state 0)]
+      (is (= 3 (get-strength (refresh vege))))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1))
+      (changes-val-macro
+        1 (get-strength (refresh vege))
+        "Gained 1str from brain damage"
+        (damage state :runner :brain 1))
+      (is (= 6 (get-strength (refresh vege)))))))
+
 (deftest berserker
   ;; Berserker
   (do-game
@@ -767,7 +789,7 @@
         (trash-from-hand state :runner "Black Orchestra")
         (run-empty-server state :hq)
         (click-prompt state :corp "Yes")
-        (is (= "Install Black Orchestra?" (:msg (prompt-map :runner))) "Prompted to install Black Orchestra")
+        (is (= "Install Black Orchestra from the heap?" (:msg (prompt-map :runner))) "Prompted to install Black Orchestra")
         (click-prompt state :runner "Yes")
         (let [bo (get-program state 0)]
           (is (installed? bo) "Black Orchestra is installed")
@@ -1148,6 +1170,29 @@
       (is (= 1 (:credit (get-runner))) "No credits spent to break")
       (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
+(deftest cezve
+  ;; 2 recurring credits for runs on central servers
+  (do-game
+    (new-game {:runner {:hand ["Sure Gamble" "Cezve" "Marjanah"] :credits 10}
+               :corp {:hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Cezve")
+    (play-from-hand state :runner "Sure Gamble")
+    (is (no-prompt? state :runner) "No prompt outside of run")
+    (play-from-hand state :runner "Marjanah")
+    (run-on state :remote1)
+    (let [mar (get-program state 1)]
+      (card-ability state :runner (refresh mar) 1)
+      (is (no-prompt? state :runner) "no prompt on remote run")
+      (run-jack-out state)
+      (run-on state :hq)
+      (card-ability state :runner (refresh mar) 1)
+      (is (not (no-prompt? state :runner)) "prompt to spend credits")
+      (click-card state :runner (get-program state 0))
+      (is (no-prompt? state :runner) "credit spent"))))
+
 (deftest chakana-gain-counters-on-r-d-runs
     ;; gain counters on r&d runs
     (do-game
@@ -1383,6 +1428,34 @@
         (click-prompt state :runner "Yes")
         (is (nil? (refresh iw)) "Ice Wall should be trashed")
         (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
+
+(deftest cats-cradle
+  ;; cats cradle: 1str decoder, 1/1 break, code gates cost 1 more
+  (do-game
+    (new-game {:corp {:hand [(qty "Enigma" 2)] :credits 20}
+               :runner {:hand [(qty "Cat's Cradle" 2)] :credits 20}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cat's Cradle")
+    (changes-val-macro
+      -4 (:credit (get-corp))
+      "Enigma costs 3 + 1 to rez"
+      (rez state :corp (get-ice state :hq 0)))
+    (play-from-hand state :runner "Cat's Cradle")
+    (changes-val-macro
+      -5 (:credit (get-corp))
+      "Enigma costs 3 + 2 to rez"
+      (rez state :corp (get-ice state :hq 1)))
+    (run-on state :hq)
+    (run-continue state)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "3c to break enigma"
+      (card-ability state :runner (get-program state 0) 1)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Force the Runner to lose 1 [Click]"))))
 
 (deftest cleaver
   ;; Cleaver
@@ -1837,18 +1910,12 @@
     (core/move state :runner (find-card "Cleaver" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Deuces Wild" (:deck (get-runner))) :deck)
     (core/move state :runner (find-card "Encore" (:deck (get-runner))) :deck)
-    (is (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam"))
-    (is (= (:title (nth (-> @state :runner :deck) 1)) "Bravado"))
-    (is (= (:title (nth (-> @state :runner :deck) 2)) "Cleaver"))
-    (is (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild"))
-    (is (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))
-    ;; Stack is now from top to bottom: A B C D E
-    (play-from-hand state :runner "Customized Secretary")
-    (click-prompt state :runner "Cleaver")
-    (is (not (and (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam")
-              (= (:title (nth (-> @state :runner :deck) 1)) "Bravado")
-              (= (:title (nth (-> @state :runner :deck) 2)) "Deuces Wild")
-              (= (:title (nth (-> @state :runner :deck) 3)) "Encore"))))))
+    (changes-val-macro
+      1
+      (count (core/turn-events state :corp :runner-shuffle-deck))
+      "Runner stack is not shufled"
+      (play-from-hand state :runner "Customized Secretary")
+      (click-prompt state :runner "Cleaver"))))
 
 (deftest customized-secretary-shuffles-stack-when-no-program-is-hosted
   ;; Customized Secretary - shuffles the stack when no program is hosted
@@ -3104,6 +3171,24 @@
           "Strength has not been changed"
           (card-ability state :runner houdini 1)))))
 
+(deftest hyperbaric
+  ;; Hyperbaric - I can't believe it's not Study Guide
+  ;; Starts with a counter, 2c to add a power counter; +1 strength per counter
+  (do-game
+    (new-game {:runner {:deck ["Hyperbaric" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Hyperbaric")
+    (let [sg (get-program state 0)]
+      (card-ability state :runner sg 1)
+      (is (= 4 (:credit (get-runner))) "Paid 2c")
+      (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
+      (is (= 2 (get-strength (refresh sg))) "2 strength")
+      (card-ability state :runner sg 1)
+      (is (= 2 (:credit (get-runner))) "Paid 2c")
+      (is (= 3 (get-counters (refresh sg) :power)) "Has 3 power counters")
+      (is (= 3 (get-strength (refresh sg))) "3 strength"))))
+
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks
   (do-game
@@ -3462,7 +3547,7 @@
           {:type :gain-subtype
            :req (req (utils/same-card? ice target))
            :value "Code Gate"}))
-      (run-continue state)
+      (run-continue state :encounter-ice)
       (let [inv (get-program state 0)]
         (card-ability state :runner (refresh inv) 1)
         (card-ability state :runner (refresh inv) 0)
@@ -4603,7 +4688,7 @@
   ;; Paperclip - prompt to install on encounter, but not if another is installed
   (do-game
       (new-game {:corp {:deck ["Vanilla"]}
-                 :runner {:deck [(qty "Paperclip" 2)]
+                 :runner {:deck [(qty "Paperclip" 3)]
                           :credits 10}})
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
@@ -4615,9 +4700,11 @@
       (run-continue-until state :success)
       (is (not (:run @state)) "Run ended")
       (trash-from-hand state :runner "Paperclip")
+      (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
       (run-continue state)
-      (is (no-prompt? state :runner) "No prompt to install second Paperclip")))
+      (click-prompt state :runner "No")
+      (is (no-prompt? state :runner) "No prompt to install third Paperclip")))
 
 (deftest paperclip-firing-on-facedown-ice-shouldn-t-crash
     ;; firing on facedown ice shouldn't crash
@@ -5275,6 +5362,29 @@
         (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
         (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
 
+(deftest propeller
+  ;; counter: +2 str, 0 str start, 1c: break barrier
+  (do-game
+    (new-game {:runner {:hand ["Propeller"] :credits 10}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Propeller")
+    (let [prop (get-program state 0)]
+      (run-on state :hq)
+      (run-continue state)
+      (changes-val-macro
+        -1 (get-counters (refresh prop) :power)
+        "Spent 1 power counter to boost"
+        (card-ability state :runner prop 1)
+        (is (= 2 (get-strength (refresh prop))) "At strength 2 after boost"))
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Spent 1 credit to break"
+        (card-ability state :runner prop 0)
+        (click-prompt state :runner "End the run")))))
+
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
   (do-game
@@ -5330,7 +5440,7 @@
      (run-on state "HQ")
      (rez state :corp anansi)
      (run-continue state)
-     ;; boost/break     
+     ;; boost/break
      (changes-val-macro
        -4 (:credit (get-runner))
        "Spent 4 credits matching Anansi strength"
@@ -5368,7 +5478,7 @@
        (click-prompt state :runner "Do 1 net damage")
        (click-prompt state :runner "Rearrange the top 5 cards of R&D")
        (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
-     (run-continue state :movement)     
+     (run-continue state :movement)
      (run-jack-out state)
      (is (= 0 (count (:discard (get-runner)))) "0 cards in discard"))))
 
@@ -5404,7 +5514,7 @@
        "One card added to discard"
        (card-ability state :runner revolver 1)
        (click-prompt state :runner "Draw 1 card, runner draws 1 card"))
-     (run-continue state :movement)     
+     (run-continue state :movement)
      (run-jack-out state)
      (is (= 1 (count (:discard (get-runner)))) "1 cards (revolver) in discard"))))
 
@@ -5627,17 +5737,19 @@
   ;; Savant
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Cobra" "Enigma"]
+                      :hand ["Cobra" "Enigma" "Quandary"]
                       :credits 10}
                :runner {:deck ["Savant" "Box-E"]
                         :credits 20}})
     (play-from-hand state :corp "Cobra" "HQ")
+    (play-from-hand state :corp "Quandary" "R&D")
     (play-from-hand state :corp "Enigma" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Savant")
     (let [savant (get-program state 0)
           cobra (get-ice state :hq 0)
-          enigma (get-ice state :rd 0)]
+          quandary (get-ice state :rd 0)
+          enigma (get-ice state :rd 1)]
       (is (= 2 (core/available-mu state)))
       (is (= 3 (get-strength (refresh savant))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
@@ -5658,7 +5770,15 @@
       (card-ability state :runner (refresh savant) 0)
       (click-prompt state :runner "Force the Runner to lose 1 [Click]")
       (click-prompt state :runner "End the run")
-      (is (:broken (first (:subroutines (refresh enigma)))) "Broke a code gate subroutine"))))
+      (is (:broken (first (:subroutines (refresh enigma)))) "Broke code gate first subroutine")
+      (is (:broken (last (:subroutines (refresh enigma)))) "Broke code gate second subroutine")
+      (run-continue state :movement)
+      (run-continue state :approach-ice)
+      (rez state :corp quandary)
+      (run-continue state)
+      (card-ability state :runner (refresh savant) 0)
+      (click-prompt state :runner "End the run")
+      (is (:broken (first (:subroutines (refresh quandary)))) "Broke a code gate subroutine on a single-sub ice"))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program

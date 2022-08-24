@@ -1,7 +1,5 @@
 # Android: Netrunner in the browser
 
-[![Build status](https://circleci.com/gh/mtgred/netrunner/tree/master.svg?style=shield)](https://circleci.com/gh/mtgred/netrunner)
-
 Hosted at [http://www.jinteki.net](http://www.jinteki.net). [Example of gameplay](https://www.youtube.com/watch?v=cnWudnpeY2c).
 
 ![screenshot](http://i.imgur.com/xkxOMHc.jpg)
@@ -13,6 +11,8 @@ Hosted at [http://www.jinteki.net](http://www.jinteki.net). [Example of gameplay
 ## Development
 
 ### Quickstart
+
+*(There's a [docker](#using-docker) section down there!)*
 
 Install [Leiningen](https://leiningen.org/),
 [NodeJS](https://nodejs.org/en/download/package-manager/#macos) and
@@ -66,6 +66,27 @@ Finally, launch the webserver and the Clojure REPL:
 
 and open [http://localhost:1042/](http://localhost:1042/).
 
+### Using Docker
+
+You'll need to install [Docker](https://docs.docker.com/get-docker/) and [Docker-Compose](https://docs.docker.com/compose/install/). After that, just run `$ docker-compose up --build` in the project directory (or do the GUI-equivalent of this). If this fails because it "couldn't fetch dependencies", try again, it was just a networking error.
+
+It can take a while. You'll see lots of messages, so just wait until you see something like `netrunner-server-1 | nREPL server started on port 44867`. After that, you can visit [http://localhost:1042/](http://localhost:1042/) and the server should be running.
+
+While coding clojure it's important to have a REPL connection going. The server's REPL is configured to always run on port `44867`, so you can connect using `$ lein repl :connect nrepl://localhost:44867` (or the program of your preference, like your code editor).
+
+Now, let's populate the database and create indexes. First, let's open a terminal inside the server container: `$ docker exec -it netrunner-server-1 /bin/bash`. Now, inside this new therminal, we'll run these two commands: *The `--no-card-images` is optional, and removing it causes the card images to be downloaded, which can be slower.*
+
+```
+ $ lein fetch --no-card-images
+    1648 cards imported
+
+ $ lein create-indexes
+    Indexes successfully created.
+```
+
+After this, just restart the server by running `(restart)` in the REPL.
+
+To do testing, you run them inside the container: `$ docker exec -it netrunner-server-1 /bin/bash` and then `$ lein test`.
 ### Tests
 
 To run all tests:

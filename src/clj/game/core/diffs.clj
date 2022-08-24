@@ -211,6 +211,7 @@
    :rfg
    :play-area
    :current
+   :set-aside
    :click
    :credit
    :toast
@@ -230,6 +231,7 @@
       (update :play-area cards-summary state side)
       (update :rfg cards-summary state side)
       (update :scored cards-summary state side)
+      (update :set-aside cards-summary state side)
       (update :prompt-state prompt-summary same-side?)
       (select-non-nil-keys (into player-keys additional-keys))))
 
@@ -388,6 +390,7 @@
    :end-turn
    :gameid
    :log
+   :mark
    :options
    :psi
    :reason

@@ -1,7 +1,28 @@
 (ns game.cards.basic
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]))
+  (:require
+   [game.core.agendas :refer [update-advancement-requirement]]
+   [game.core.board :refer [all-active-installed installable-servers]]
+   [game.core.card :refer [agenda? asset? event? get-card hardware? ice?
+                           in-hand? operation? program? resource? upgrade?]]
+   [game.core.def-helpers :refer [defcard]]
+   [game.core.drawing :refer [draw]]
+   [game.core.eid :refer [effect-completed]]
+   [game.core.engine :refer [trigger-event]]
+   [game.core.flags :refer [can-advance? untrashable-while-resources?]]
+   [game.core.gaining :refer [gain-credits]]
+   [game.core.installing :refer [corp-can-pay-and-install? corp-install
+                                 runner-can-pay-and-install? runner-install]]
+   [game.core.moving :refer [trash]]
+   [game.core.play-instants :refer [can-play-instant? play-instant]]
+   [game.core.props :refer [add-prop]]
+   [game.core.purging :refer [purge]]
+   [game.core.runs :refer [make-run]]
+   [game.core.say :refer [play-sfx]]
+   [game.core.tags :refer [lose-tags]]
+   [game.core.to-string :refer [card-str]]
+   [game.macros :refer [effect msg req wait-for]]
+   [game.utils :refer :all]
+   [jinteki.utils :refer :all]))
 
 ;; Card definitions
 

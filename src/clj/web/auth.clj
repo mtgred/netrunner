@@ -68,11 +68,8 @@
   [{db :system/db
     {:keys [username password confirm-password email]} :params}]
   (cond
-    (within-char-limit-username? username)
-    (response 401 {:message "Usernames are limited to 20 characters"})
-
-    (= (valid-username? username) false)
-    (response 401 {:message "Username contain invalid characters."})
+    (not (valid-username? username))
+    (response 401 {:message "Username is not valid"})
 
     (not= password confirm-password)
     (response 401 {:message "Passwords must match"})

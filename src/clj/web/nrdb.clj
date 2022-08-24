@@ -1,30 +1,26 @@
 (ns web.nrdb
   (:require [cheshire.core :as json]
-            [clojure.string :refer [split includes?]]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [org.httpkit.client :as http]))
+            [org.httpkit.client :as http]
+            [clj-uuid :as uuid]
+            [clojure.string :as str]))
 
 (def nrdb-decklist-url "https://netrunnerdb.com/api/2.0/public/decklist/")
 (def nrdb-readable-url "https://netrunnerdb.com/en/decklist/")
 
-(defn- take-numbers [coll v]
-  (if (re-matches #"^\d+$" v)
-    (conj coll v)
-    coll))
-
 (defn- parse-input
   "Want to handle an NRDB URL or just a deck id number"
   [input]
-  (if (includes? input "/")
-    (let [chunks (split input #"/")]
-      (first (reduce take-numbers `() chunks)))
-    (re-find #"\d+$" input)))
+  (let [input (if (str/starts-with? input nrdb-readable-url)
+                (subs input (count nrdb-readable-url))
+                input)
+        [id] (str/split input #"/")]
+      id))
 
 (defn- lookup-card [db id]
-  (if-let [c (mc/find-one-as-map db "cards" {:code id})]
-    c
-    (mc/find-one-as-map db "cards" {:previous-versions {$elemMatch {:code id}}})))
+  (or (mc/find-one-as-map db "cards" {:code id})
+      (mc/find-one-as-map db "cards" {:previous-versions {$elemMatch {:code id}}})))
 
 (defn- reduce-card [db]
   (fn [m k v]
@@ -36,13 +32,13 @@
         m))))
 
 (defn- parse-cards
-  "Returns a map with the identity and the cards in a deck separated"
+  "returns a map with the identity and the cards in a deck separated"
   [db cards]
   (reduce-kv (reduce-card db) {:identity nil :cards []} cards))
 
 (defn- parse-nrdb-deck [db deck]
   (merge {:name (:name deck)
-          :notes (str "Imported from " nrdb-readable-url (:id deck))}
+          :notes (str "imported from " nrdb-readable-url (:id deck))}
          (parse-cards db (:cards deck))))
 
 (defn- parse-response [db body]
@@ -55,11 +51,11 @@
 
 (defn download-public-decklist
   [db input]
-  (let [deck-id (parse-input input)
-        url (str nrdb-decklist-url deck-id)
-        data (http/get url)
-        {:keys [status body error]} @data]
-    (cond
-      error (throw (Exception. (str "Failed to download deck " error)))
-      (= 200 status) (parse-response db body)
-      :else (throw (Exception. (str "Failed to download deck, status " status))))))
+  (when-let [deck-id (parse-input input)]
+    (let [url (str nrdb-decklist-url deck-id)
+          data (http/get url)
+          {:keys [status body error]} @data]
+      (cond
+        error (throw (Exception. (str "Failed to download deck " error)))
+        (= 200 status) (parse-response db body)
+        :else (throw (Exception. (str "Failed to download deck, status " status)))))))

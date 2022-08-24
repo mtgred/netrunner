@@ -18,11 +18,13 @@
        (some #(= uid (:uid %)) (into (:players lobby) (:spectators lobby))))
      (vals lobbies))))
 
-(defn uid-player->lobby [lobbies uid]
-  (find-first
-    (fn [lobby]
-      (some #(= uid (:uid %)) (:players lobby)))
-    (vals lobbies)))
+(defn uid-player->lobby
+  ([uid] (uid-player->lobby (:lobbies @app-state) uid))
+  ([lobbies uid]
+    (find-first
+      (fn [lobby]
+        (some #(= uid (:uid %)) (:players lobby)))
+      (vals lobbies))))
 
 (defn get-users []
   (vals (:users @app-state)))

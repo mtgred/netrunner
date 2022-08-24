@@ -6,7 +6,7 @@
 		"cljs:build": "shadow-cljs compile app",
 		"cljs:watch": "shadow-cljs watch app",
 		"cljs:release": "shadow-cljs release app",
-		"release": "npm run release:css && npm run release:cljs"
+		"release": "npm run css:release && npm run cljs:release"
 	},
 	"devDependencies": {
 		"shadow-cljs": "^2.16.8",

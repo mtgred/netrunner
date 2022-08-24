@@ -19,7 +19,7 @@
     installed-card))
 
 (defn get-all-cards
-  "Every single card in the game. All cards in the hand, deck, discard, play-area,
+  "Every single card in the game. All cards in the hand, deck, discard, play-area, set-aside,
   score zone, currents, and removed from the game. And all cards that are installed and hosted"
   [state]
   (let [installed-corp (corp-servers-cards state)
@@ -27,7 +27,7 @@
         corp (:corp @state)
         runner (:runner @state)
         cards-in-zones (for [side [corp runner]
-                             zone [:deck :hand :discard :current :scored :play-area :rfg]
+                             zone [:deck :hand :discard :current :scored :play-area :rfg :set-aside]
                              card (zone side)]
                          card)
         identities (list (:identity corp) (:identity runner))]
@@ -79,6 +79,13 @@
   (if (= side :runner)
     (all-installed-runner state)
     (all-installed-corp state)))
+
+(defn all-installed-and-scored
+  "Returns a vector of all installed cards for the given side, including those hosted on other cards,
+   but not including 'inactive hosting' like Personal Workshop, and the cards in the given side's scored area."
+  [state side]
+  (concat (all-installed state side)
+          (-> @state side :scored)))
 
 (defn get-all-installed
   "Returns a list of all installed cards"

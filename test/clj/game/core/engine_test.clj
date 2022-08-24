@@ -39,8 +39,7 @@
         event-4 {:event :test-event-2
                  :condition :test-condition
                  :effect (fn [state _ _ _ targets]
-                           (swap! state update :order conj [:test-event-2 targets]))}
-        ]
+                           (swap! state update :order conj [:test-event-2 targets]))}]
     (testing "it works"
       (reset! state @start)
       (do-game
@@ -167,5 +166,4 @@
         (play-from-hand state :runner "Scrubbed")
         (take-credits state :runner)
         (play-from-hand state :corp "Cerebral Static")
-        (is (not (find-card "Scrubbed" (:current (get-runner)))))))
-    ))
+        (is (not (find-card "Scrubbed" (:current (get-runner)))))))))
