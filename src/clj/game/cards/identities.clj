@@ -1720,6 +1720,7 @@
                              (<= 2 (count (:discard runner)))
                              (not (zone-locked? state :runner :discard))))
               :prompt "Use Steve Cambridge ability?"
+              :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:interactive (req true)
                :async true
@@ -1747,7 +1748,8 @@
                                                                 [c2 c1])]
                                            (move state :runner chosen :rfg)
                                            (move state :runner other :hand)))})
-                         card nil))}}}]})
+                         card nil))}}}]
+   :abilities [(set-autoresolve :auto-fire "Steve Cambridge")]})
 
 (defcard "Strategic Innovations: Future Forward"
   {:events [{:event :pre-start-game
