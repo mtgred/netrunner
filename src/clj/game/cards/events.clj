@@ -1977,9 +1977,13 @@
    {:req (req (pos? (+ (count (:deck runner)) (count (:discard runner)))))
     :rfg-instead-of-trashing true
     :async true
-    :effect (req (let [mill-count (min 3 (count (:deck runner)))]
+    :effect (req (let [mill-count (min 3 (count (:deck runner)))
+                       top-n-msg (seq (take mill-count (:deck runner)))]
                    (wait-for (mill state :runner :runner mill-count)
-                             (system-msg state :runner (str "trashes the top " (quantify mill-count "card") " of their stack"))
+                             (system-msg state :runner (if top-n-msg 
+                                                         (str "trashes the top " mill-count " cards of their stack: "
+                                                           (str (str/join ", " (map :title top-n-msg)) " from the top of their stack"))
+                                                         "trashes no cards from the top of their stack"))
                              (let [heap-count (min 3 (count (get-in @state [:runner :discard])))]
                                (continue-ability
                                  state side
