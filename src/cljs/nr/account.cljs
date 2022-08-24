@@ -361,32 +361,35 @@
             [log-width-option s]
             [log-top-option s]]]
 
-          [:section
-           [:h3  (tr [:settings.background "Game board background"])]
-           (doall (for [option [{:name "The Root"        :ref "lobby-bg"}
-                                {:name "Freelancer"      :ref "freelancer-bg"}
-                                {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
-                                {:name "Traffic Jam"     :ref "traffic-jam-bg"}
-                                {:name "Rumor Mill"      :ref "rumor-mill-bg"}
-                                {:name "Find The Truth"  :ref "find-the-truth-bg"}
-                                {:name "Push Your Luck"  :ref "push-your-luck-bg"}
-                                {:name "Apex"            :ref "apex-bg"}
-                                {:name "Worlds 2020"     :ref "worlds2020"}
-                                {:name "Custom BG"       :ref "custom-bg"}
-                                {:name "Monochrome"      :ref "monochrome-bg"}]]
-                    [:div.radio {:key (:name option)}
-                     [:label [:input {:type "radio"
-                                      :name "background"
-                                      :value (:ref option)
-                                      :on-change #(swap! s assoc-in [:background] (.. % -target -value))
-                                      :checked (= (:background @s) (:ref option))}]
-                      (:name option)]]))
-           [:h4 "Custom background URL"]
-           (let [custom-bg-url (r/atom (:custom-bg-url @s))]
+          (let [custom-bg-selected (= (:background @s) "custom-bg" )
+                custom-bg-url (r/atom (:custom-bg-url @s))]
+            [:section
+             [:h3  (tr [:settings.background "Game board background"])]
+             (doall (for [option [{:name "The Root"        :ref "lobby-bg"}
+                                  {:name "Freelancer"      :ref "freelancer-bg"}
+                                  {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
+                                  {:name "Traffic Jam"     :ref "traffic-jam-bg"}
+                                  {:name "Rumor Mill"      :ref "rumor-mill-bg"}
+                                  {:name "Find The Truth"  :ref "find-the-truth-bg"}
+                                  {:name "Push Your Luck"  :ref "push-your-luck-bg"}
+                                  {:name "Apex"            :ref "apex-bg"}
+                                  {:name "Worlds 2020"     :ref "worlds2020"}
+                                  {:name "Monochrome"      :ref "monochrome-bg"}
+                                  {:name (str "Custom BG" (when custom-bg-selected " (input URL below)"))
+                                   :ref "custom-bg"}]]
+                      [:div.radio {:key (:name option)}
+                       [:label [:input {:type "radio"
+                                        :name "background"
+                                        :value (:ref option)
+                                        :on-change #(swap! s assoc-in [:background] (.. % -target -value))
+                                        :checked (= (:background @s) (:ref option))}]
+                        (:name option)]]))
+
              [:div [:input {:type "text"
+                            :hidden (not custom-bg-selected)
                             :on-change #(do (swap! s assoc-in [:custom-bg-url] (.. % -target -value))
                                             (reset! custom-bg-url (.. % -target -value)))
-                            :value @custom-bg-url}]])]
+                            :value @custom-bg-url}]]])
 
           [:section
            [:h3  (tr [:settings.card-backs "Card backs"])]

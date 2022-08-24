@@ -1999,7 +1999,8 @@
                                  :spectator @background)
                                @background)
                          :style (if (= @background "custom-bg")
-                                  {:background (str "url(\"" @custom-bg-url "\")")}
+                                  {:background (str "url(\"" @custom-bg-url "\")")
+                                   :background-size "cover"}
                                   {})}]
 
                [:div.right-pane
