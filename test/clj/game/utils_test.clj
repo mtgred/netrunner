@@ -103,7 +103,7 @@
             (core/process-action "select" state side {:card (first matching-cards)})
             (is' (= 1 (count matching-cards))
                  (str "Expected to click card [ " card
-                                               " ] but found " (count matching-cards)
+                      " ] but found " (count matching-cards)
                       " matching cards. Current prompt is: " prompt)))))
       ;; Prompt isn't a select so click-card shouldn't be used
       (not (prompt-is-type? state side :select))
@@ -144,7 +144,7 @@
                          (core/process-action "choice" state side {:choice int-choice}))
             (is' (<= int-choice (:choices prompt))
                  (str (side-str side) " expected to pay [ "
-                                                         int-choice " ] to trace but couldn't afford it."))))
+                      int-choice " ] to trace but couldn't afford it."))))
         (catch Exception _
           (is' (number? (Integer/parseInt choice))
                (expect-type "number string" choice))))
@@ -164,8 +164,8 @@
         (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
           (is' (= choice (mapv :value choices))
                (str (side-str side) " expected to click [ "
-                                                         (pr-str (if (string? choice) choice (:title choice "")))
-                                                         " ] but couldn't find it. Current prompt is: " (pr-str prompt))))))))
+                    (pr-str (if (string? choice) choice (:title choice "")))
+                    " ] but couldn't find it. Current prompt is: " (pr-str prompt))))))))
 
 (defmacro click-prompt
   "Clicks a button in a prompt. {choice} is a string or map only, no numbers."

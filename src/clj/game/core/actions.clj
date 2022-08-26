@@ -30,7 +30,7 @@
 
 ;;; Neutral actions
 (defn- do-play-ability [state side card ability ability-idx targets]
-  (let [cost (card-ability-cost state side ability card targets)]
+  (let [cost (seq (card-ability-cost state side ability card targets))]
     (when (or (nil? cost)
               (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
       (when-let [activatemsg (:activatemsg ability)]
@@ -582,7 +582,7 @@
            cost (merge-costs (mapv first additional-costs))
            cost-strs (build-cost-string cost)
            can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)]
-       (cond         
+       (cond
          (string/blank? cost-strs) (resolve-score state side eid card)
          (not can-pay) (effect-completed state side eid)
          :else (wait-for (pay state side (make-eid state
@@ -594,4 +594,3 @@
                              (do
                                (system-msg state side (str (:msg payment-result) " to score " (:title card)))
                                (resolve-score state side eid card))))))))))
-         

@@ -1881,23 +1881,9 @@
                         :hand ["Customized Secretary"]
                         :credits 50}})
     (take-credits state :corp)
-    (core/move state :runner (find-card "Aniccam" (:deck (get-runner))) :deck)
-    (core/move state :runner (find-card "Bravado" (:deck (get-runner))) :deck)
-    (core/move state :runner (find-card "Creative Commission" (:deck (get-runner))) :deck)
-    (core/move state :runner (find-card "Deuces Wild" (:deck (get-runner))) :deck)
-    (core/move state :runner (find-card "Encore" (:deck (get-runner))) :deck)
-    (is (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam"))
-    (is (= (:title (nth (-> @state :runner :deck) 1)) "Bravado"))
-    (is (= (:title (nth (-> @state :runner :deck) 2)) "Creative Commission"))
-    (is (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild"))
-    (is (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))
-    ;; Stack is now from top to bottom: A B C D E
-    (play-from-hand state :runner "Customized Secretary")
-    (is (not (and (= (:title (nth (-> @state :runner :deck) 0)) "Aniccam")
-              (= (:title (nth (-> @state :runner :deck) 1)) "Bravado")
-              (= (:title (nth (-> @state :runner :deck) 2)) "Creative Commission")
-              (= (:title (nth (-> @state :runner :deck) 3)) "Deuces Wild")
-              (= (:title (nth (-> @state :runner :deck) 4)) "Encore"))))))
+    (is (changes-val
+          1 (count (core/turn-events state :runner :runner-shuffle-deck))
+          (play-from-hand state :runner "Customized Secretary")))))
 
 (deftest customized-secretary-shuffles-stack-when-last-program-is-hosted
   ;; Customized Secretary - shuffles the stack when last program is hosted

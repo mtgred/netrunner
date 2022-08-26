@@ -1,23 +1,24 @@
 (ns game.core.engine
   (:require
-    [clojure.stacktrace :refer [print-stack-trace]]
-    [clojure.string :as string]
-    [clj-uuid :as uuid]
-    [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes]]
-    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title installed? in-discard? in-hand? rezzed?]]
-    [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
-    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs handler]]
-    [game.core.prompt-state :refer [add-to-prompt-queue]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
-    [game.core.say :refer [system-msg]]
-    [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-win-by-agenda]]
-    [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in distinct-by in-coll? server-cards remove-once same-card? side-str to-keyword]]
-    [jinteki.utils :refer [other-side]]))
+   [clj-uuid :as uuid]
+   [clojure.stacktrace :refer [print-stack-trace]]
+   [clojure.string :as str]
+   [cond-plus.core :refer [cond+]]
+   [game.core.board :refer [clear-empty-remotes all-installed-runner-type]]
+   [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.payment :refer [build-spend-msg can-pay? handler merge-costs]]
+   [game.core.prompt-state :refer [add-to-prompt-queue]]
+   [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
+   [game.core.say :refer [system-msg]]
+   [game.core.update :refer [update!]]
+   [game.core.winning :refer [check-win-by-agenda]]
+   [game.macros :refer [continue-ability req wait-for]]
+   [game.utils :refer [dissoc-in distinct-by in-coll? remove-once same-card? server-cards side-str to-keyword]]
+   [jinteki.utils :refer [other-side]]
+   [game.core.memory :refer [update-mu]]))
 
 ;; resolve-ability docs
 
@@ -338,8 +339,6 @@
         (update-in card counter - counter-amount))
       card)))
 
-(declare checkpoint)
-
 (defn merge-costs-paid
   ([cost-paid]
    (into {} (map (fn [[k {:keys [type value targets]}]]
@@ -361,9 +360,22 @@
   ([cost-paid1 cost-paid2 & costs-paid]
    (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
 
+(defn- do-paid-ability [state side {:keys [eid cost] :as ability} card targets async-result]
+  (let [payment-str (:msg async-result)
+        cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
+        ability (assoc-in ability [:eid :cost-paid] cost-paid)]
+    ;; Print the message
+    (print-msg state side ability card targets payment-str)
+    ;; Trigger the effect
+    (register-once state side ability card)
+    (do-effect state side ability (ugly-counter-hack card cost) targets)
+    ;; If the ability isn't async, complete it
+    (when-not (:async ability)
+      (effect-completed state side eid))))
+
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [async eid cost player waiting-prompt] :as ability} card targets]
+  [state side {:keys [eid cost player waiting-prompt] :as ability} card targets]
   (when waiting-prompt
     (add-to-prompt-queue
       state (cond
@@ -374,21 +386,14 @@
        :card card
        :prompt-type :waiting
        :msg (str "Waiting for " waiting-prompt)}))
-  ;; Ensure that any costs can be paid
-  (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
-            ;; If the cost can be and is paid, perform the ablity
-            (if-let [payment-str (:msg async-result)]
-              (let [cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
-                    ability (assoc-in ability [:eid :cost-paid] cost-paid)]
-                ;; Print the message
-                (print-msg state side ability card targets payment-str)
-                ;; Trigger the effect
-                (register-once state side ability card)
-                (do-effect state side ability (ugly-counter-hack card cost) targets)
-                ;; If the ability isn't async, complete it
-                (when-not async
-                  (effect-completed state side eid)))
-              (effect-completed state side eid))))
+  (if (seq cost)
+    ;; Ensure that any costs can be paid
+    (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
+              (if (:msg async-result)
+                ;; If the cost can be and is paid, perform the ablity
+                (do-paid-ability state side ability card targets async-result)
+                (effect-completed state side eid)))
+    (do-paid-ability state side ability card targets {:msg ""})))
 
 (defn- do-choices
   "Handle a choices ability"
@@ -979,6 +984,13 @@
                           (effect-completed state nil eid))))
     (effect-completed state nil eid)))
 
+;; Movement multimethod
+
+(defmulti move* (fn [_state _side _eid action _cards _args] action))
+
+(defmethod move* :default [_state _side _eid action _cards _args]
+  (throw (ex-info "Wrong move action called" {:action action})))
+
 ;; CHECKPOINT
 (defn internal-trash-cards
   [state _ eid maps]
@@ -1006,7 +1018,32 @@
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
 
+(defn check-restrictions
+  [state _ eid]
+  ;; memory limit check
+  (update-mu state)
+  (let [{:keys [available used]} (-> @state :runner :memory)
+        available-mu (- available used)]
+    (wait-for
+      (resolve-ability
+        state :runner
+        (make-eid state eid)
+        (when (neg? available-mu)
+          {:prompt (format "Insufficient MU. Trash %s MU of installed programs." (- available-mu))
+           :choices {:max (count (all-installed-runner-type state :program))
+                     :card #(and (installed? %)
+                                 (program? %))}
+           :async true
+           :effect (req (wait-for (move* state side (make-eid state eid) :trash-cards targets {:game-trash true})
+                                  (update-mu state)
+                                  (effect-completed state side eid)))})
+        nil nil)
+      (effect-completed state nil eid))))
+
 (defn checkpoint
+  "10.3. Checkpoints: A CHECKPOINT is a process wherein objects that have entered an
+  illegal state are corrected, expired effects are removed, and other important
+  conditions are checked."
   ([state eid] (checkpoint state nil eid nil))
   ([state _ eid] (checkpoint state nil eid nil))
   ([state _ eid {:keys [duration durations] :as args}]
@@ -1018,21 +1055,17 @@
        ;; c: Check winning or tying by agenda points
        (check-win-by-agenda state)
        ;; d: uniqueness check
-       ;; unimplemented
        ;; e: restrictions on card abilities or game rules, MU
-       ;; unimplemented
-       ;; f: stuff on agendas moved from score zone
-       ;; unimplemented
-       ;; g: stuff on installed cards that were trashed
-       ;; unimplemented
-       ;; h: empty servers
-       (clear-empty-remotes state)
-       ;; i: card counters/agendas become cards again
-       ;; unimplemented
-       ;; j: counters in discard are returned to the bank
-       ;; unimplemented
-       ;; 10.3.2: reaction window
-       (trigger-pending-abilities state eid handlers args)))))
+       (wait-for
+         (check-restrictions state nil (make-eid state eid))
+         ;; f: stuff on agendas moved from score zone
+         ;; g: stuff on installed cards that were trashed
+         ;; h: empty servers
+         (clear-empty-remotes state)
+         ;; i: card counters/agendas become cards again
+         ;; j: counters in discard are returned to the bank
+         ;; 10.3.2: reaction window
+         (trigger-pending-abilities state eid handlers args))))))
 
 (defn end-of-phase-checkpoint
   ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
@@ -1053,7 +1086,7 @@
 (defn- sentence-join
   [strings]
   (if (<= (count strings) 2)
-    (string/join " and " strings)
+    (str/join " and " strings)
     (str (apply str (interpose ", " (butlast strings))) ", and " (last strings))))
 
 (defn pay
@@ -1061,8 +1094,10 @@
   [state side eid card & args]
   (let [args (flatten args)
         raw-costs (remove map? args)
-        actions (filter map? args)]
-    (if-let [costs (can-pay? state side eid card (:title card) raw-costs)]
+        actions (filter map? args)
+        costs (can-pay? state side eid card (:title card) raw-costs)]
+    (if (nil? costs)
+      (complete-with-result state side eid nil)
       (wait-for (pay-next state side (make-eid state eid) costs card actions [])
                 (let [payment-result async-result]
                   (wait-for (checkpoint state nil (make-eid state eid) nil)
@@ -1076,5 +1111,4 @@
                                                (reduce
                                                  (fn [acc cost]
                                                    (assoc acc (:type cost) cost))
-                                                 {}))}))))
-      (complete-with-result state side eid nil))))
+                                                 {}))})))))))

@@ -7,7 +7,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event unregister-events]]
+    [game.core.engine :as engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event unregister-events]]
     [game.core.finding :refer [get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed?]]
     [game.core.hosting :refer [remove-from-host]]
@@ -39,8 +39,6 @@
       (uninstall-effect state side (make-eid state) card nil)))
   card))
 
-(declare trash)
-
 (defn- get-moved-card
   "Get the moved cards with correct abilities and keys hooked up / removed etc."
   [state side {:keys [zone host installed] :as card} to]
@@ -53,12 +51,13 @@
         to-installed (#{:servers :rig} (first dest))
         from-installed (#{:servers :rig} src-zone)
         trash-hosted (fn [h]
-                       (trash state side
-                              (make-eid state)
-                              (update h :zone #(map to-keyword %))
-                              {:unpreventable true
-                               :host-trashed true
-                               :game-trash true})
+                       (engine/move* state side
+                                    (make-eid state)
+                                    :trash
+                                    (update h :zone #(map to-keyword %))
+                                    {:unpreventable true
+                                     :host-trashed true
+                                     :game-trash true})
                        ())
         update-hosted (fn [h]
                         (let [newz (flatten (list dest))
@@ -238,6 +237,9 @@
                (reset-card state side moved-card))
              (get-card state moved-card))))))))
 
+(defmethod engine/move* :move [state side _eid _action card args]
+  (move state side card (:to args) args))
+
 (defn move-zone
   "Moves all cards from one zone to another, as in Chronos Project."
   [state side server to]
@@ -406,9 +408,15 @@
                      (effect-completed state nil eid)
                      (checkpoint state nil eid nil))))))))
 
+(defmethod engine/move* :trash-cards [state side eid _action cards args]
+  (trash-cards state side eid cards args))
+
 (defn trash
   ([state side eid card] (trash-cards state side eid [card] nil))
   ([state side eid card args] (trash-cards state side eid [card] args)))
+
+(defmethod engine/move* :trash [state side eid _action card args]
+  (trash-cards state side eid [card] args))
 
 (defn mill
   "Force the discard of n cards from the deck by trashing them"

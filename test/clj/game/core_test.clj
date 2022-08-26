@@ -177,16 +177,16 @@
      state)))
 
 ;;; Card related functions
- (defn card-ability-impl
-   [state side card ability & targets]
-   (let [card (get-card state card)
+(defn card-ability-impl
+  [state side card ability & targets]
+  (let [card (get-card state card)
         ability (cond
                   (number? ability) ability
                   (string? ability) (some #(when (= (:label (second %)) ability) (first %)) (map-indexed vector (:abilities card)))
                   :else -1)
         has-ability? (and (number? ability)
                           (nth (:abilities card) ability nil))
-         playable? (or (active? card)
+        playable? (or (active? card)
                       (:autoresolve (nth (:abilities card) ability nil)))]
     (is' has-ability? (str (:title card) " has ability #" ability))
     (is' playable? (str (:title card) " is active or ability #" ability " is an auto resolve toggle"))

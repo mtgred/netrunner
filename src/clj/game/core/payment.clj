@@ -84,7 +84,7 @@
     (some #(card-flag? % flag true) (all-active-installed state side))))
 
 (defn can-pay?
-  "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
+  "Returns nil if the player cannot pay the cost args, or a truthy map otherwise.
   If title is specified a toast will be generated if the player is unable to pay
   explaining which cost they were unable to pay."
   ([state side title args] (can-pay? state side (make-eid state) nil title args))
@@ -101,7 +101,7 @@
                  costs)
        costs
        (do (when title (toast state side (str "Unable to pay for " title ".")))
-           false)))))
+           nil)))))
 
 (defn cost-targets
   [eid cost-type]
