@@ -6,13 +6,25 @@
             [clojure.string :refer [join]]
             [game.utils-test :refer :all]))
 
-(defn refresh [_])
-(defn prompt-map [_])
-(defn prompt-type [_])
-(defn prompt-buttons [_])
-(defn prompt-titles [_])
-(defn prompt-fmt [_])
-(defn print-prompts [])
+(defn- dont-use-me [s]
+  `(throw (ex-info (str ~s " should only be used in do-game") {})))
+
+(defmacro refresh [_]
+  (dont-use-me "refresh"))
+(defmacro prompt-map [_]
+  (dont-use-me "prompt-map"))
+(defmacro prompt-type [_]
+  (dont-use-me "prompt-type"))
+(defmacro prompt-buttons [_]
+  (dont-use-me "prompt-buttons"))
+(defmacro prompt-titles [_]
+  (dont-use-me "prompt-titles"))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro prompt-fmt [_]
+  (dont-use-me "prompt-fmt"))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro print-prompts []
+  (dont-use-me "print-prompts"))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s

@@ -93,14 +93,14 @@
                {:label "Trash 1 resource if the Runner is tagged"
                 :cost [:click 1 :credit 2]
                 :async true
-                :req (req (prn :tagged tagged) tagged)
+                :req (req tagged)
                 :prompt "Choose a resource to trash"
                 :msg (msg "trash " (:title target))
-                :choices {:req (req (prn :choices) (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
+                :choices {:req (req (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
                                              (> (count (filter resource? (all-active-installed state :runner))) 1))
                                       (and (resource? target) (not (untrashable-while-resources? target)))
                                       (resource? target)))}
-                :effect (req (prn :effect (:title target)) (trash state side eid target nil))}
+                :effect (effect (trash eid target nil))}
                {:label "Purge virus counters"
                 :cost [:click 3]
                 :msg "purge all virus counters"
