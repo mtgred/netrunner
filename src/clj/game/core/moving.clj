@@ -198,7 +198,7 @@
            (let [pos-to-move-to (cond index index
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
-             (swap! state update-in (cons side dest) #(into [] (insert-nth pos-to-move-to moved-card %))))
+             (swap! state update-in (cons side dest) #(vec (insert-nth pos-to-move-to moved-card %))))
            (when (seq zone)
              (update-installed-card-indices state side zone))
            (update-installed-card-indices state side dest)

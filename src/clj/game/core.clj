@@ -177,6 +177,7 @@
    can-be-advanced?
    card-index
    condition-counter?
+   console?
    corp-installable-type?
    corp?
    event?

@@ -10,7 +10,8 @@
             [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
             [game.macros :refer [wait-for]]
             [jinteki.cards :refer [all-cards]]
-            [jinteki.utils :as jutils]))
+            [jinteki.utils :as jutils]
+            [clojure.string :as str]))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -680,3 +681,9 @@
   ([state side n] (draw state side n nil))
   ([state side n args]
    (core/draw state side (core/make-eid state) n args)))
+
+(defn print-log [state]
+  (->> (:log @state)
+       (map :text)
+       (str/join " ")
+       (prn)))

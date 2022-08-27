@@ -4,15 +4,15 @@
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as str]
     [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes all-installed-runner-type]]
-    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program?]]
+    [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-installed]]
+    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? handler merge-costs]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
-    [game.core.say :refer [system-msg]]
+    [game.core.say :refer [system-msg system-say]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
@@ -1018,6 +1018,23 @@
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
 
+(defn check-consoles
+  "d. If 2 or more unique (◆) cards with the same name are active, for each such name,
+  all of those cards except the one that became active most recently are trashed. If 2
+  or more console cards are installed under the control of the same player, for each
+  such player, all of those cards except the one that became active most recently are
+  trashed."
+  [state _ eid]
+  (let [consoles (->> (get-in @state [:runner :rig :hardware])
+                      (filter console?))]
+    (if (< 1 (count consoles))
+      (wait-for (move* state nil (make-eid state eid) :trash-cards (butlast consoles) {:game-trash true
+                                                                                       :unpreventable true})
+                (doseq [card (butlast consoles)]
+                  (system-say state :runner (str (:title card) " is trashed."))
+                (effect-completed state nil eid)))
+      (effect-completed state nil eid))))
+
 (defn check-restrictions
   [state _ eid]
   ;; memory limit check
@@ -1054,18 +1071,20 @@
        (unregister-expired-durations state nil (make-eid state eid) (conj durations duration) context-maps)
        ;; c: Check winning or tying by agenda points
        (check-win-by-agenda state)
-       ;; d: uniqueness check
-       ;; e: restrictions on card abilities or game rules, MU
+       ;; d: uniqueness/console check
        (wait-for
-         (check-restrictions state nil (make-eid state eid))
-         ;; f: stuff on agendas moved from score zone
-         ;; g: stuff on installed cards that were trashed
-         ;; h: empty servers
-         (clear-empty-remotes state)
-         ;; i: card counters/agendas become cards again
-         ;; j: counters in discard are returned to the bank
-         ;; 10.3.2: reaction window
-         (trigger-pending-abilities state eid handlers args))))))
+         (check-consoles state nil)
+         ;; e: restrictions on card abilities or game rules, MU
+         (wait-for
+           (check-restrictions state nil (make-eid state eid))
+           ;; f: stuff on agendas moved from score zone
+           ;; g: stuff on installed cards that were trashed
+           ;; h: empty servers
+           (clear-empty-remotes state)
+           ;; i: card counters/agendas become cards again
+           ;; j: counters in discard are returned to the bank
+           ;; 10.3.2: reaction window
+           (trigger-pending-abilities state eid handlers args)))))))
 
 (defn end-of-phase-checkpoint
   ([state _ eid event] (end-of-phase-checkpoint state nil eid event nil))
