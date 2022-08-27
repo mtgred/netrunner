@@ -431,13 +431,12 @@
        (prompt! state s card prompt cs ab args)))))
 
 ;;; Prompts
-(defn prompt!
+(defn- prompt!
   "Shows a prompt with the given message and choices. The given ability will be resolved
   when the user resolves the prompt. Cards should generally not call this function directly; they
   should use resolve-ability to resolve a map containing prompt data.
 
   Please refer to the documentation at the top of resolve_ability.clj for a full description."
-  ([state side card message choices ability] (prompt! state side card message choices ability nil))
   ([state side card message choices ability args]
    (let [f #(resolve-ability state side ability card [%])]
      (show-prompt state side (:eid ability) card message choices f
