@@ -802,7 +802,7 @@
                  :choices {:card virus-program?}
                  :effect (req (add-counter state :runner card :virus -1)
                               (add-counter state :runner target :virus 1))}]
-    {:abilities [(set-autoresolve :auto-fire "Friday Chip")]
+    {:abilities [(set-autoresolve :auto-fire "Friday Chip placing virus counters on itself")]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-trash
                :once-per-instance true

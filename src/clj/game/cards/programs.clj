@@ -802,7 +802,7 @@
                 :makes-run true
                 :async true
                 :effect (req (make-run state side eid :rd card))}
-               (set-autoresolve :auto-place-counter "Conduit")]})
+               (set-autoresolve :auto-place-counter "Conduit placing virus counters on itself")]})
 
 (defcard "Consume"
   {:events [{:event :runner-trash
@@ -836,7 +836,7 @@
                             (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                                  (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
-               (set-autoresolve :auto-place-counter "adding virus counters")]})
+               (set-autoresolve :auto-place-counter "Consume placing virus counters on itself")]})
 
 (defcard "Copycat"
   {:abilities [{:async true
@@ -2553,7 +2553,7 @@
   {:events [{:event :subroutines-broken
              :optional {:req (req (all-subs-broken? target))
                         :prompt "Place 1 power counter on Takobi?"
-                        :autoresolve (get-autoresolve :auto-fire)
+                        :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability
                         {:msg "place 1 power counter on itself"
                          :effect (effect (add-counter card :power 1))}}}]
@@ -2566,7 +2566,7 @@
                                       (installed? %))}
                 :msg (msg "give +3 strength to " (:title target))
                 :effect (effect (pump target 3))}
-               (set-autoresolve :auto-fire "Takobi")]})
+               (set-autoresolve :auto-place-counter "Takobi placing power counters on itself")]})
 
 (defcard "Tapwrm"
   (let [ability {:label "Gain [Credits] (start of turn)"
@@ -2652,7 +2652,7 @@
                            (can-host? %))}
      :on-install {:async true
                   :effect trash-if-5}
-     :abilities [(set-autoresolve :auto-place-counter "place virus counter on Trypano")]
+     :abilities [(set-autoresolve :auto-place-counter "Trypano placing virus counters on itself")]
      :events [{:event :runner-turn-begins
                :optional
                {:prompt "Place a virus counter on Trypano?"

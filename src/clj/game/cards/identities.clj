@@ -416,7 +416,7 @@
                           :effect (req (chosen-damage state :corp target))}
                          card nil))}
               :no-ability
-              {:effect (req (system-msg state :corp "declines to use Chronos Protocol"))}}}]})
+              {:effect (req (system-msg state :corp "declines to use Chronos Protocol: Selective Mind-mapping"))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:constant-effects [(hand-size+ -1)]})
@@ -655,7 +655,7 @@
              :optional {:prompt "Add card from Archives to HQ?"
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability (corp-recur)}}]
-   :abilities [(set-autoresolve :auto-fire "add card from Archives to HQ")]})
+   :abilities [(set-autoresolve :auto-fire "Haas-Bioroid: Precision Design")]})
 
 (defcard "Haas-Bioroid: Stronger Together"
   {:constant-effects [{:type :ice-strength
@@ -1036,7 +1036,7 @@
                             :async true
                             :effect (effect (draw :corp eid 1))}
               :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}]
-   :abilities [(set-autoresolve :auto-fire "force Corp draw")]})
+   :abilities [(set-autoresolve :auto-fire "Laramy Fisk: Savvy Investor")]})
 
 (defcard "Lat: Ethical Freelancer"
   {:events [{:event :runner-turn-ends
@@ -1252,7 +1252,7 @@
                        {:msg "give the Runner 1 tag"
                         :async true
                         :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}}}]
-   :abilities [(set-autoresolve :auto-fire "CtM")]})
+   :abilities [(set-autoresolve :auto-fire "NBN: Controlling the Message")]})
 
 (defcard "NBN: Making News"
   {:recurring 2
@@ -1710,7 +1710,7 @@
                                              " on " (card-str state target))
                                    :effect (effect (add-prop target :advance-counter agenda-points {:placed true}))}
                                   card nil)))}}}]
-     :abilities [(set-autoresolve :auto-fire "SSO")]}))
+     :abilities [(set-autoresolve :auto-fire "SSO Industries: Fueling Innovation")]}))
 
 (defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run

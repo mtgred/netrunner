@@ -1569,7 +1569,7 @@
                                  (do (system-msg state :runner "chooses to end the run")
                                      (end-run state :corp eid card))
                                  (damage state :runner eid :net 2 {:card card :unpreventable true})))}]
-   :abilities [(set-autoresolve :auto-fire "Formicary")]})
+   :abilities [(set-autoresolve :auto-fire "Formicary rezzing and moving itself on approach")]})
 
 (defcard "Free Lunch"
   {:abilities [{:cost [:power 1]

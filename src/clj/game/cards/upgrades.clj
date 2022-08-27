@@ -882,7 +882,7 @@
                       :effect (req (wait-for (trash state side (make-eid state eid) card {:unpreventable true :cause-card card})
                                              (redirect-run state side (zone->name (second (get-zone card))) :approach-ice)
                                              (continue-ability state :runner (offer-jack-out) card nil)))}}}}}]
-   :abilities [(set-autoresolve :auto-fire "Fire Letheia Nisei?")]})
+   :abilities [(set-autoresolve :auto-fire "Letheia Nisei")]})
 
 (defcard "Malapert Data Vault"
   {:events [{:event :agenda-scored

@@ -1687,7 +1687,7 @@
     {:flags {:has-events-when-stolen true}
      :on-score {:effect add-credits
                 :interactive (req true)}
-     :abilities [(set-autoresolve :auto-fire "whether to take credits off SSL")]
+     :abilities [(set-autoresolve :auto-fire "SSL Endorsement")]
      :stolen {:effect add-credits}
      :events [{:event :corp-turn-begins
                :optional

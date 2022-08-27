@@ -240,7 +240,7 @@
                :interactive (req true)
                :async true
                :effect (effect (continue-ability (senai-ability (:card context)) card nil))}]
-     :abilities [(set-autoresolve :auto-fire "whether to fire Amani Senai")]}))
+     :abilities [(set-autoresolve :auto-fire "Amani Senai")]}))
 
 (defcard "Anson Rose"
   (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
@@ -1276,7 +1276,7 @@
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :on-rez {:effect (req (add-counter state side card :credit 8))}
-     :abilities [(set-autoresolve :auto-reshuffle "Marilyn reshuffle")]
+     :abilities [(set-autoresolve :auto-reshuffle "Marilyn Campaign's shuffling itself back into R&D")]
      :on-trash {:interactive (req true)
                 :optional
                 {:waiting-prompt "Corp to choose an option"
