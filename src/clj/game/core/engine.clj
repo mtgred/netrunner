@@ -1,24 +1,24 @@
 (ns game.core.engine
   (:require
-   [clj-uuid :as uuid]
-   [clojure.stacktrace :refer [print-stack-trace]]
-   [clojure.string :as str]
-   [cond-plus.core :refer [cond+]]
-   [game.core.board :refer [clear-empty-remotes all-installed-runner-type]]
-   [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program?]]
-   [game.core.card-defs :refer [card-def]]
-   [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
-   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-   [game.core.payment :refer [build-spend-msg can-pay? handler merge-costs]]
-   [game.core.prompt-state :refer [add-to-prompt-queue]]
-   [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
-   [game.core.say :refer [system-msg]]
-   [game.core.update :refer [update!]]
-   [game.core.winning :refer [check-win-by-agenda]]
-   [game.macros :refer [continue-ability req wait-for]]
-   [game.utils :refer [dissoc-in distinct-by in-coll? remove-once same-card? server-cards side-str to-keyword]]
-   [jinteki.utils :refer [other-side]]
-   [game.core.memory :refer [update-mu]]))
+    [clj-uuid :as uuid]
+    [clojure.stacktrace :refer [print-stack-trace]]
+    [clojure.string :as str]
+    [cond-plus.core :refer [cond+]]
+    [game.core.board :refer [clear-empty-remotes all-installed-runner-type]]
+    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+    [game.core.payment :refer [build-spend-msg can-pay? handler merge-costs]]
+    [game.core.prompt-state :refer [add-to-prompt-queue]]
+    [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
+    [game.core.say :refer [system-msg]]
+    [game.core.update :refer [update!]]
+    [game.core.winning :refer [check-win-by-agenda]]
+    [game.macros :refer [continue-ability req wait-for]]
+    [game.utils :refer [dissoc-in distinct-by in-coll? remove-once same-card? server-cards side-str to-keyword]]
+    [jinteki.utils :refer [other-side]]
+    [game.core.memory :refer [update-mu]]))
 
 ;; resolve-ability docs
 

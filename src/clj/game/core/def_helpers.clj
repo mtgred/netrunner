@@ -1,24 +1,24 @@
 (ns game.core.def-helpers
   (:require
-   [clojure.string :as str]
-   [game.core.access :refer [access-bonus]]
-   [game.core.card :refer [corp? faceup? get-card get-counters has-subtype? in-discard?]]
-   [game.core.card-defs :as card-defs]
-   [game.core.damage :refer [damage]]
-   [game.core.eid :refer [effect-completed]]
-   [game.core.engine :refer [resolve-ability trigger-event-sync]]
-   [game.core.gaining :refer [gain-credits]]
-   [game.core.moving :refer [move trash]]
-   [game.core.play-instants :refer [async-rfg]]
-   [game.core.prompts :refer [clear-wait-prompt]]
-   [game.core.props :refer [add-counter]]
-   [game.core.runs :refer [jack-out]]
-   [game.core.say :refer [system-msg system-say]]
-   [game.core.to-string :refer [card-str]]
-   [game.core.toasts :refer [toast]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
-   [game.utils :refer [remove-once same-card? server-card to-keyword]]
-   [jinteki.utils :refer [other-side]]))
+    [clojure.string :as str]
+    [game.core.access :refer [access-bonus]]
+    [game.core.card :refer [corp? faceup? get-card get-counters has-subtype? in-discard?]]
+    [game.core.card-defs :as card-defs]
+    [game.core.damage :refer [damage]]
+    [game.core.eid :refer [effect-completed]]
+    [game.core.engine :refer [resolve-ability trigger-event-sync]]
+    [game.core.gaining :refer [gain-credits]]
+    [game.core.moving :refer [move trash]]
+    [game.core.play-instants :refer [async-rfg]]
+    [game.core.prompts :refer [clear-wait-prompt]]
+    [game.core.props :refer [add-counter]]
+    [game.core.runs :refer [jack-out]]
+    [game.core.say :refer [system-msg system-say]]
+    [game.core.to-string :refer [card-str]]
+    [game.core.toasts :refer [toast]]
+    [game.macros :refer [continue-ability effect msg req wait-for]]
+    [game.utils :refer [remove-once same-card? server-card to-keyword]]
+    [jinteki.utils :refer [other-side]]))
 
 (defn combine-abilities
   "Combines two or more abilities to a single one. Labels are joined together with a period between parts."

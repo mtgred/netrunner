@@ -3287,7 +3287,7 @@
 
 (deftest regenesis-extra-score-not-prevented-by-runner-discard
   (do-game
-    (new-game {:corp {:deck ["Bio-Ethics Association" (qty "Regenesis" 6)]
+    (new-game {:corp {:deck [(qty "Regenesis" 6)]
                       :hand ["Bio-Ethics Association"]
                       :discard ["Obokata Protocol"]}
                :runner {:deck [(qty "Sure Gamble" 5)]}})
