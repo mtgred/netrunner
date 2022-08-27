@@ -194,7 +194,7 @@
 (defcard "Aeneas Informant"
   {:events [{:event :post-access-card
              :optional
-             {:autoresolve (get-autoresolve :auto-reveal-and-gain)
+             {:autoresolve (get-autoresolve :auto-fire)
               :req (req (and (:trash (second targets))
                              (not (in-discard? target))))
               :prompt "Use Aeneas Informant?"
@@ -203,7 +203,7 @@
                                              (str " and reveal " (:title target)))))
                             :async true
                             :effect (effect (gain-credits eid 1))}}}]
-   :abilities [(set-autoresolve :auto-reveal-and-gain "Aeneas Informant")]})
+   :abilities [(set-autoresolve :auto-fire "Aeneas Informant")]})
 
 (defcard "Aesop's Pawnshop"
   (let [ability {:async true
@@ -687,10 +687,10 @@
              :interactive (req true)
              :optional {:prompt "Place a virus counter?"
                         :req (req (has-subtype? (:card context) "Virus"))
-                        :autoresolve (get-autoresolve :auto-cookbook)
+                        :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:msg (msg "place 1 virus counter on " (card-str state (:card context)))
                                       :effect (effect (add-counter (:card context) :virus 1))}}}]
-   :abilities [(set-autoresolve :auto-cookbook "Cookbook's 'Place virus counter' ability")]})
+   :abilities [(set-autoresolve :auto-fire "Cookbook's 'Place virus counter' ability")]})
 
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
@@ -3335,7 +3335,7 @@
 (defcard "Whistleblower"
   {:events [{:event :successful-run
              :optional
-             {:autoresolve (get-autoresolve :auto-name-agenda)
+             {:autoresolve (get-autoresolve :auto-fire)
               :prompt "Trash Whistleblower to name an agenda?"
               :yes-ability
               {:async true
@@ -3355,7 +3355,7 @@
                                      :req (req (= (:title target) named-agenda))
                                      :effect (effect (steal eid target))}]))
                                (trash eid card {:unpreventable true :cause-card card}))}}}]
-   :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
+   :abilities [(set-autoresolve :auto-fire "Whistleblower's ability")]})
 
 (defcard "Wireless Net Pavilion"
   {:constant-effects [{:type :card-ability-additional-cost

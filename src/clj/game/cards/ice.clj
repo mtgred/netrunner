@@ -1543,7 +1543,7 @@
      :interactive (req true)
      :optional
      {:prompt "Rez Formicary?"
-      :autoresolve (get-autoresolve :auto-formicary)
+      :autoresolve (get-autoresolve :auto-fire)
       :req (req (and (can-rez? state side card)
                      (can-pay? state side eid card nil (get-rez-cost state side card nil))))
       :yes-ability
@@ -1569,7 +1569,7 @@
                                  (do (system-msg state :runner "chooses to end the run")
                                      (end-run state :corp eid card))
                                  (damage state :runner eid :net 2 {:card card :unpreventable true})))}]
-   :abilities [(set-autoresolve :auto-formicary "Formicary")]})
+   :abilities [(set-autoresolve :auto-fire "Formicary")]})
 
 (defcard "Free Lunch"
   {:abilities [{:cost [:power 1]

@@ -802,8 +802,7 @@
                  :choices {:card virus-program?}
                  :effect (req (add-counter state :runner card :virus -1)
                               (add-counter state :runner target :virus 1))}]
-    {:abilities [(set-autoresolve :auto-accept "Friday Chip")]
-     :on-install {:effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))}
+    {:abilities [(set-autoresolve :auto-fire "Friday Chip")]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-trash
                :once-per-instance true
@@ -812,7 +811,7 @@
                :effect (req (let [amt-trashed (count (filter #(corp? (:card %)) targets))
                                   sing-ab {:optional
                                            {:prompt "Place a virus counter on Friday Chip?"
-                                            :autoresolve (get-autoresolve :auto-accept)
+                                            :autoresolve (get-autoresolve :auto-fire)
                                             :yes-ability {:effect (effect (system-msg
                                                                             :runner
                                                                             "places 1 virus counter on Friday Chip")
@@ -1065,14 +1064,14 @@
              :optional {:req (req (and (first-event? state :runner :successful-run)
                                        (pos? (count-virus-programs state))))
                         :prompt "Place a virus counter?"
-                        :autoresolve (get-autoresolve :auto-add)
+                        :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:prompt "Choose an installed virus program to add a virus counter to"
                                       :choices {:card #(and (installed? %)
                                                             (has-subtype? % "Virus")
                                                             (program? %))}
                                       :msg (msg "place 1 virus counter on " (:title target))
                                       :effect (effect (add-counter target :virus 1))}}}]
-   :abilities [(set-autoresolve :auto-add "Knobkierie")]})
+   :abilities [(set-autoresolve :auto-fire "Knobkierie")]})
 
 (defcard "Lemuria Codecracker"
   {:abilities [{:cost [:click 1 :credit 1]

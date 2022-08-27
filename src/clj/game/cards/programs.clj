@@ -1914,11 +1914,11 @@
                              (= target :rd)))
               :waiting-prompt "Runner to choose an option"
               :prompt "Spend a power counter on Nyashia to access 1 additional card?"
-              :autoresolve (get-autoresolve :auto-nyashia)
+              :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "access 1 additional card from R&D"
                             :effect (effect (access-bonus :rd 1)
                                             (add-counter card :power -1))}}}]
-   :abilities [(set-autoresolve :auto-nyashia "Nyashia")]})
+   :abilities [(set-autoresolve :auto-fire "Nyashia")]})
 
 (defcard "Odore"
   (auto-icebreaker {:abilities [(break-sub 2 0 "Sentry"
@@ -2553,7 +2553,7 @@
   {:events [{:event :subroutines-broken
              :optional {:req (req (all-subs-broken? target))
                         :prompt "Place 1 power counter on Takobi?"
-                        :autoresolve (get-autoresolve :auto-takobi)
+                        :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability
                         {:msg "place 1 power counter on itself"
                          :effect (effect (add-counter card :power 1))}}}]
@@ -2566,7 +2566,7 @@
                                       (installed? %))}
                 :msg (msg "give +3 strength to " (:title target))
                 :effect (effect (pump target 3))}
-               (set-autoresolve :auto-takobi "Takobi")]})
+               (set-autoresolve :auto-fire "Takobi")]})
 
 (defcard "Tapwrm"
   (let [ability {:label "Gain [Credits] (start of turn)"
