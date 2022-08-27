@@ -3,7 +3,7 @@
    [clojure.pprint :as pprint]
    [clojure.set :as set]
    [clojure.string :as str]
-   [game.core.access :refer [access-card]]
+   [game.core.access :refer [access-card installed-access-trigger]]
    [game.core.actions :refer [score]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
@@ -63,23 +63,7 @@
    [jinteki.utils :refer :all]))
 
 ;;; Asset-specific helpers
-(defn installed-access-trigger
-  "Effect for triggering ambush on access.
-  Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
-  ([cost ability]
-   (let [ab (if (pos? cost) (assoc ability :cost [:credit cost]) ability)
-         prompt (if (pos? cost)
-                  (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
-                  (req (str "Use " (:title card) " ability?")))]
-     (installed-access-trigger cost ab prompt)))
-  ([cost ability prompt]
-   {:access {:optional
-             {:req (req (and installed (>= (:credit corp) cost)))
-              :waiting-prompt (:waiting-prompt ability)
-              :prompt prompt
-              :yes-ability (dissoc ability :waiting-prompt)}}}))
-
-(defn advance-ambush
+(defn- advance-ambush
   "Creates advanceable ambush structure with specified ability for specified cost"
   ([cost ability] (assoc (installed-access-trigger cost ability) :advanceable :always))
   ([cost ability prompt] (assoc (installed-access-trigger cost ability prompt) :advanceable :always)))
