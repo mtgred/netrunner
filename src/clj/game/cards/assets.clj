@@ -1527,6 +1527,7 @@
 (defcard "Net Analytics"
   (let [ability {:optional
                  {:player :corp
+                  :autoresolve (get-autoresolve :auto-fire)
                   :waiting-prompt "Corp to choose an option"
                   :prompt "Draw from Net Analytics?"
                   :yes-ability
@@ -1537,7 +1538,8 @@
                   (assoc-in [:optional :req] (req (= side :runner))))
               (-> ability
                   (assoc :event :runner-prevent)
-                  (assoc-in [:optional :req] (req (seq (filter #(some #{:tag} %) targets)))))]}))
+                  (assoc-in [:optional :req] (req (seq (filter #(some #{:tag} %) targets)))))]
+     :abilities [(set-autoresolve :auto-fire "Net Analytics")]}))
 
 (defcard "Net Police"
   {:recurring (req (get-link state))
