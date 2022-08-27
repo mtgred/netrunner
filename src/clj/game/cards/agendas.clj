@@ -344,6 +344,7 @@
                              (no-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))))
               :waiting-prompt "Corp to choose an option"
               :prompt "Give the runner 1 tag?"
+              :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:async true
                :msg "give the Runner a tag for playing a run event"
@@ -361,7 +362,8 @@
               :yes-ability
               {:async true
                :msg "give the Runner a tag for installing an icebreaker"
-               :effect (effect (gain-tags :corp eid 1))}}}]})
+               :effect (effect (gain-tags :corp eid 1))}}}]
+   :abilities [(set-autoresolve :auto-fire "Better Citizen Program")]})
 
 (defcard "Bifrost Array"
   {:on-score
