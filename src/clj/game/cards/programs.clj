@@ -787,7 +787,7 @@
                              (= :rd (target-server context))))
               :player :runner
               :waiting-prompt "Runner to choose an option"
-              :autoresolve (get-autoresolve :auto-conduit)
+              :autoresolve (get-autoresolve :auto-place-counter)
               :prompt "Use Conduit?"
               :yes-ability {:msg "place 1 virus counter on itself"
                             :effect (effect (add-counter card :virus 1))}
@@ -802,7 +802,7 @@
                 :makes-run true
                 :async true
                 :effect (req (make-run state side eid :rd card))}
-               (set-autoresolve :auto-conduit "Conduit")]})
+               (set-autoresolve :auto-place-counter "Conduit")]})
 
 (defcard "Consume"
   {:events [{:event :runner-trash
@@ -811,7 +811,7 @@
              :req (req (some #(corp? (:card %)) targets))
              :effect (req (let [amt-trashed (count (filter #(corp? (:card %)) targets))
                                 sing-ab {:optional {:prompt "Place a virus counter on Consume?"
-                                                    :autoresolve (get-autoresolve :auto-accept)
+                                                    :autoresolve (get-autoresolve :auto-place-counter)
                                                     :yes-ability {:effect (effect (add-counter :runner card :virus 1))
                                                                   :msg "place 1 virus counter on Consume"}}}
                                 mult-ab {:prompt "Place virus counters on Consume?"
@@ -836,7 +836,7 @@
                             (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                                  (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
-               (set-autoresolve :auto-accept "adding virus counters")]})
+               (set-autoresolve :auto-place-counter "adding virus counters")]})
 
 (defcard "Copycat"
   {:abilities [{:async true
@@ -2652,11 +2652,11 @@
                            (can-host? %))}
      :on-install {:async true
                   :effect trash-if-5}
-     :abilities [(set-autoresolve :auto-accept "place virus counter on Trypano")]
+     :abilities [(set-autoresolve :auto-place-counter "place virus counter on Trypano")]
      :events [{:event :runner-turn-begins
                :optional
                {:prompt "Place a virus counter on Trypano?"
-                :autoresolve (get-autoresolve :auto-accept)
+                :autoresolve (get-autoresolve :auto-place-counter)
                 :yes-ability {:msg "place a virus counter on itself"
                               :effect (req (add-counter state side card :virus 1))}}}
               {:event :counter-added

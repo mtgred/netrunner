@@ -826,7 +826,7 @@
              :silent (req true)
              :optional {:prompt "Place a virus counter on Crypt?"
                         :req (req (= :archives (target-server context)))
-                        :autoresolve (get-autoresolve :auto-add)
+                        :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability {:msg "place a virus counter on itself"
                                       :effect (effect (add-counter card :virus 1))}}}]
    :abilities [{:async true
@@ -840,7 +840,7 @@
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
-               (set-autoresolve :auto-add "placing virus counters on Crypt")]})
+               (set-autoresolve :auto-place-counter "placing virus counters on Crypt")]})
 
 (defcard "Cybertrooper Talut"
   {:constant-effects [(link+ 1)]
@@ -1596,7 +1596,7 @@
                              (not (:did-steal target))
                              (:did-access target)
                              (is-remote? (:server target))))
-              :autoresolve (get-autoresolve :auto-kasistring)
+              :autoresolve (get-autoresolve :auto-place-counter)
               :waiting-prompt "Runner to choose an option"
               :prompt "Place 1 power counter on Kasi String?"
               :yes-ability {:msg "place a power counter on itself"
@@ -1607,7 +1607,7 @@
              :req (req (<= 4 (get-counters (get-card state card) :power)))
              :msg "add itself to their score area as an agenda worth 1 agenda point"
              :effect (req (as-agenda state :runner card 1))}]
-   :abilities [(set-autoresolve :auto-kasistring "Kasi String")]})
+   :abilities [(set-autoresolve :auto-place-counter "Kasi String")]})
 
 (defcard "Kati Jones"
   {:abilities [{:cost [:click 1]
