@@ -18,7 +18,7 @@
                               unregister-effects-for-card]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [ability-as-handler dissoc-req not-used-once? pay
-                             print-msg prompt! register-events register-once
+                             print-msg register-events register-once
                              trigger-event trigger-event-simult unregister-events]]
    [game.core.events :refer [first-event? first-installed-trash?
                              first-successful-run-on-server? turn-events]]
@@ -1051,9 +1051,12 @@
              :effect (effect (add-counter card :virus 1))
              :req (req (= :rd (target-server context)))}
             {:event :runner-turn-begins
-             :req (req (>= (get-virus-counters state card) 3)) :msg "look at the top card of R&D"
-             :effect (effect (prompt! card (str "The top card of R&D is "
-                                                (:title (first (:deck corp)))) ["OK"] {}))}]})
+             :req (req (>= (get-virus-counters state card) 3))
+             :msg "look at the top card of R&D"
+             :effect (effect (continue-ability
+                               {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                                :choices ["OK"]}
+                               card nil))}]})
 
 (defcard "Demara"
   (trash-to-bypass (break-sub 2 2 "Barrier")

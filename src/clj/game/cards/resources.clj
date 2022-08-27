@@ -25,7 +25,7 @@
    [game.core.drawing :refer [draw draw-bonus first-time-draw-bonus]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-   [game.core.engine :refer [not-used-once? pay prompt! register-events
+   [game.core.engine :refer [not-used-once? pay register-events
                              register-once register-suppress resolve-ability
                              trigger-event trigger-event-sync unregister-events unregister-suppress-by-uuid]]
    [game.core.events :refer [event-count first-event?
@@ -1326,8 +1326,10 @@
    :flags {:runner-phase-12 (req true)}
    :abilities [{:msg "lose [Click] and look at the top card of R&D"
                 :once :per-turn
-                :effect (effect (prompt! card (str "The top card of R&D is "
-                                                   (:title (first (:deck corp)))) ["OK"] {}))}]
+                :effect (effect (continue-ability
+                                  {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                                   :choices ["OK"]}
+                                  card nil))}]
    :events [{:event :runner-turn-begins
              :req (req (get-in @state [:per-turn (:cid card)]))
              :effect (effect (lose-clicks 1))}]})
@@ -1857,11 +1859,13 @@
 
 (defcard "Motivation"
   (let [ability {:msg "look at the top card of their Stack"
-                 :label "Look at the top card of Stack (start of turn)"
+                 :label "Look at the top card of your Stack (start of turn)"
                  :once :per-turn
                  :req (req (:runner-phase-12 @state))
-                 :effect (effect (prompt! card (str "The top card of your Stack is "
-                                                    (:title (first (:deck runner)))) ["OK"] {}))}]
+                 :effect (effect (continue-ability
+                                   {:prompt (req (->> runner :deck first :title (str "The top card of your Stack is ")))
+                                    :choices ["OK"]}
+                                   card nil))}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner)))}
      :events [(assoc ability :event :runner-turn-begins)]
