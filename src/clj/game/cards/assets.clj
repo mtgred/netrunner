@@ -618,6 +618,7 @@
                  :effect (effect (continue-ability
                                    {:optional
                                     {:prompt "Use CSR Campaign to draw 1 card?"
+                                     :autoresolve (get-autoresolve :auto-fire)
                                      :yes-ability {:async true
                                                    :msg "draw 1 card"
                                                    :effect (effect (draw eid 1))}}}
@@ -625,7 +626,7 @@
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
-     :abilities [ability]}))
+     :abilities [ability (set-autoresolve :auto-fire "CSR Campaign")]}))
 
 (defcard "Cybernetics Court"
   {:constant-effects [(corp-hand-size+ 4)]})
