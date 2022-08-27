@@ -348,7 +348,6 @@
    not-used-once?
    pay
    print-msg
-   prompt!
    queue-event
    register-ability-type
    register-default-events
