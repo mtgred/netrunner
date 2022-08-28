@@ -3051,13 +3051,13 @@
         maybe-spend-2 {:event :runner-turn-begins
                        :interactive (req true)
                        :optional
-                       {:prompt "Spend 2 virus counters on The Nihilist?"
+                       {:prompt "Spend 2 virus counters?"
                         :yes-ability
                         {:req (req (<= 2 (number-of-runner-virus-counters state)))
                          :async true
                          :effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
                                                 (if (:number async-result)
-                                                  (do (system-msg state side (str "spends " (:msg async-result) " on The Nihilist"))
+                                                  (do (system-msg state side (str "spends " (:msg async-result)))
                                                       (continue-ability state side corp-choice card nil))
                                                   (effect-completed state side eid))))}}}]
     {:events [maybe-spend-2
