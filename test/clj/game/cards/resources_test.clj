@@ -68,7 +68,7 @@
       (play-from-hand state :runner "Adjusted Chronotype")
       (take-credits state :runner)
       (play-from-hand state :corp "Riot Suppression")
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Get 3 fewer [Click] on the next turn")
       (take-credits state :corp)
       (is (= 1 (:click (get-runner))) "Runner still has 3 fewer clicks following turn")))
 

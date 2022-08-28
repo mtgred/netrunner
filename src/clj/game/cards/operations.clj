@@ -2112,17 +2112,18 @@
 (defcard "Riot Suppression"
   {:on-play
    {:rfg-instead-of-trashing true
-    :optional
-    {:req (req (last-turn? state :runner :trashed-card))
-     :waiting-prompt "Runner to choose an option"
-     :prompt "Take 1 brain damage to prevent having 3 fewer clicks next turn?"
-     :player :runner
-     :yes-ability
-     {:async true
-      :effect (effect (system-msg "suffers 1 brain damage to prevent losing 3[Click] to Riot Suppression")
-                      (damage eid :brain 1 {:card card}))}
-     :no-ability {:msg "give the Runner 3 fewer [Click] next turn"
-                  :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0)))}}}})
+    :req (req (last-turn? state :runner :trashed-card))
+    :player :runner
+    :async true
+    :waiting-prompt "Runner to choose an option"
+    :prompt "Choose one"
+    :msg (msg "force the Runner to " (decapitalize target))
+    :choices ["Suffer 1 brain damage" "Get 3 fewer [Click] on the next turn"]
+    :effect (req (if (= target "Suffer 1 brain damage")
+                   (do (damage state :runner eid :brain 1 {:card card})
+                       (effect-completed state side eid))
+                   (do (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
+                       (effect-completed state side eid))))}})
 
 (defcard "Rolling Brownout"
   {:on-play {:msg "increase the play cost of operations and events by 1 [Credits]"}
