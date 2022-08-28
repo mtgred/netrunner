@@ -2131,7 +2131,7 @@
           (take-credits state :corp)
           (take-credits state :runner))
         (let [credits (:credit (get-runner))]
-          (click-prompt state :runner "Trash")
+          (click-prompt state :runner "Trash Fencer Fueno")
           (is (= credits (:credit (get-runner))) "Didn't pay to trash Fencer")
           (is (nil? (refresh ff)) "Fencer not installed")
           (is (find-card "Fencer Fueno" (:discard (get-runner))) "Fencer trashed")))))
@@ -3713,8 +3713,7 @@
         (take-credits state :runner)
         (changes-val-macro -1 (count (:hand (get-runner)))
                            "Trashed one card from grip"
-                           (click-prompt state :runner "Card from grip"))
-        (is (last-log-contains? state "Runner trashes 1 card randomly from the grip to avoid trashing Mystic Maemi"))
+                           (click-prompt state :runner "Trash a random card from your Grip"))
         (take-credits state :corp)
         (play-from-hand state :runner "Sure Gamble")
         (changes-val-macro 5 (:credit (get-runner))
@@ -3723,8 +3722,8 @@
                            (click-prompt state :runner "Done"))
         (take-credits state :runner)
         (changes-val-macro 1 (count (:discard (get-runner)))
-                           "Trashed Maemi"
-                           (click-prompt state :runner "Trash")))))
+                           "Trashed Mystic Maemi"
+                           (click-prompt state :runner "Trash Mystic Maemi")))))
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
@@ -6565,7 +6564,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (let [tags (count-tags state)]
-          (click-prompt state :runner "Trash")
+          (click-prompt state :runner "Trash Trickster Taka")
           (is (= tags (count-tags state)) "Didn't pay to trash Taka")
           (is (nil? (refresh tt)) "Taka not installed")
           (is (find-card "Trickster Taka" (:discard (get-runner))) "Taka trashed")))))

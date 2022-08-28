@@ -1189,18 +1189,19 @@
     ;; companion-builder: pay-credits-req
     (req (:successful run))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
-     :choices (req (if (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
-                     ["Pay 1 [Credits]" "Trash"]
-                     ["Trash"]))
+    {:prompt "Choose one"
+     :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
+                      "Pay 1 [Credits]")
+                    "Trash Fencer Fueno"])
      :player :runner
+     :msg (req (if (= target "Trash Fencer Fueno")
+                 "to trash itself"
+                (msg "to " (decapitalize target))))
      :async true
-     :effect (req (if (= target "Trash")
-                    (do (system-msg state :runner "trashes Fencer Fueno")
-                        (trash state :runner eid card {:cause-card card}))
-                    (wait-for (pay state :runner (make-eid state eid) card :credit 1)
-                              (system-msg state :runner (str (:msg async-result) " to avoid trashing Fencer Fueno"))
-                              (effect-completed state side eid))))}
+     :effect (req (if (= target "Trash Fencer Fueno")
+                    (trash state :runner eid card {:cause-card card})
+                    (do (pay state :runner (make-eid state eid) card :credit 1)
+                        (effect-completed state side eid))))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -1924,22 +1925,23 @@
              (:x-cost eid))
          (= :play (:source-type eid))))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Trash 1 card from your grip at random or trash Mystic Maemi?"
-     :choices (req (if (can-pay? state :runner
+    {:prompt "Choose one"
+     :choices (req [(when (can-pay? state :runner
                                  (assoc eid :source card :source-type :ability)
                                  card nil :randomly-trash-from-hand 1)
-                     ["Card from grip" "Trash"]
-                     ["Trash"]))
+                       "Trash a random card from the grip")
+                     "Trash Mystic Maemi"])
      :player :runner
+     :msg (req (if (= target "Trash Mystic Maemi")
+                "to trash itself"
+                (msg "to " (decapitalize target))))
      :async true
-     :effect (req (if (= target "Trash")
-                    (do (system-msg state :runner "trashes Mystic Maemi")
-                        (trash state :runner eid card {:cause-card card}))
-                    (wait-for (pay state :runner
-                                   (make-eid state {:source card :source-type :ability})
-                                   card [:randomly-trash-from-hand 1])
-                              (system-msg state :runner (build-spend-msg (:msg async-result) "avoid trashing Mystic Maemi"))
-                              (effect-completed state side eid))))}
+     :effect (req (if (= target "Trash Mystic Maemi")
+                    (trash state :runner eid card {:cause-card card})
+                    (do (pay state :runner
+                             (make-eid state {:source card :source-type :ability})
+                             card [:randomly-trash-from-hand 1])
+                        (effect-completed state side eid))))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -2168,16 +2170,14 @@
     (req (and (= :runner-install (:source-type eid))
               (not (has-subtype? target "Connection"))))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Choose an installed card to trash for Paladin Poemu"
+    {:prompt "Choose an installed card to trash"
      :choices {:all true
                :card #(and (installed? %)
                            (runner? %))}
      :player :runner
+     :msg (msg "to trash " (:title target))
      :async true
-     :effect (effect (system-msg (str "trashes " (:title target)
-                                      (when-not (same-card? card target)
-                                        " instead of trashing Paladin Poemu")))
-                     (trash eid target {:cause :runner-ability :cause-card card}))}
+     :effect (effect (trash eid target {:cause :runner-ability :cause-card card}))}
     ;; companion-builder: ability
     {:req (req (pos? (get-counters (get-card state card) :credit)))
      :msg "take 1 [Credits]"
@@ -3252,17 +3252,16 @@
               (program? target)
               run))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Take 1 tag or trash Trickster Taka?"
-     :choices ["Take 1 tag" "Trash"]
+    {:prompt "Choose one"
+     :choices ["Take 1 tag" "Trash Trickster Taka"]
      :player :runner
+     :msg (req (if (= target "Trash Trickster Taka")
+                "to trash itself"
+                (msg "to " (decapitalize target))))
      :async true
-     :effect (req (if (= target "Trash")
-                    (do
-                      (system-msg state :runner "trashes Trickster Taka")
-                      (trash state :runner eid card {:cause-card card}))
-                    (do
-                      (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
-                      (gain-tags state :runner eid 1))))}
+     :effect (req (if (= target "Trash Trickster Taka")
+                    (trash state :runner eid card {:cause-card card})
+                    (gain-tags state :runner eid 1)))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     run
