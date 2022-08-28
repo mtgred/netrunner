@@ -1252,7 +1252,7 @@
                  {:target-server :hq
                   :duration :end-of-run
                   :ability
-                  {:msg (msg "reveal all of the cards cards in HQ: "
+                  {:msg (msg "reveal all cards in HQ: "
                              (str/join ", " (map :title (:hand corp))))
                    :async true
                    :effect (effect (reveal eid (:hand corp)))}})]
