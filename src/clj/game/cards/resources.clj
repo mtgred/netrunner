@@ -1356,21 +1356,18 @@
                             [{:event :pre-resolve-damage
                               :unregister-once-resolved true
                               :async true
-                              :effect (req (if (< (:credit runner) 4)
-                                             (trash state side eid card {:cause :runner-ability :cause-card card})
-                                             (continue-ability
-                                               state :runner
-                                               {:optional
-                                                {:prompt "Pay 4 [Credits] to prevent trashing Guru Davinder?"
-                                                 :player :runner
-                                                 :yes-ability
-                                                 {:async true
-                                                  :effect (effect (system-msg (str "pays 4 [Credits] to prevent Guru Davinder "
-                                                                                   "from being trashed"))
-                                                                  (lose-credits :runner eid 4))}
-                                                 :no-ability {:async true
-                                                              :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}}}
-                                               card nil)))}]))}]})
+                              :msg (if (= target "Trash Guru Davinder")
+                                         "to trash itself"
+                                         (msg "to " (decapitalize target)))
+                              :prompt "Choose one"
+                              :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 4)
+                                               "Pay 4 [Credits]")
+                                             "Trash Guru Davinder"])
+                              :effect (req (if (= target "Trash Guru Davinder")
+                                              (trash state :runner eid card {:cause :runner-ability :cause-card card})
+                                              (do (pay state :runner (make-eid state eid) card :credit 4)
+                                                  (effect-completed state side eid))))}]))}]})
+
 
 (defcard "Hades Shard"
   (shard-constructor "Hades Shard" :archives "breach Archives"

@@ -2619,7 +2619,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "Suffer 2 meat damage")
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Pay 4 [Credits]")
       (is (not (get-run)))))
 
 (deftest guru-davinder-trash-does-not-trigger-dummy-box
@@ -2636,7 +2636,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "Suffer 2 meat damage")
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Trash Guru Davinder")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
 (deftest hard-at-work
