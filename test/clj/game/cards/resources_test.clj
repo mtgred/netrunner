@@ -6005,7 +6005,7 @@
        (is (= 2 (get-counters (refresh cache1) :virus)) "Cache 1 spent 1")
        (is (not (no-prompt? state :runner)) "Runner is waiting for Corp to pick their Nihilist poison")
        (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
-       (click-prompt state :corp "Yes")  ; mill 1
+       (click-prompt state :corp "Trash the top card of R&D")  ; mill 1
        (is (= 1 (count (:discard (get-corp)))) "1 card milled")
        (is (no-prompt? state :runner) "Runner is done waiting for Corp to pick their Nihilist poison")
        (is (no-prompt? state :corp) "No more Corp prompts")
@@ -6021,7 +6021,7 @@
        (is (= 0 (count (:hand (get-runner)))) "Runner has no cards in hand")
        (is (= 1 (count (:discard (get-corp)))) "1 card in discard")
        (is (not (no-prompt? state :runner)) "Runner is waiting for Corp to pick their Nihilist poison")
-       (click-prompt state :corp "No")  ; don't mill 1
+       (click-prompt state :corp "The Runner draws 2 cards")  ; don't mill 1
        (is (= 2 (count (:hand (get-runner)))) "Runner drew 2 cards")
        (is (= 1 (count (:discard (get-corp)))) "No extra cards milled")
        (is (no-prompt? state :runner) "Runner done waiting for Corp to pick their Nihilist poison")

@@ -3039,16 +3039,19 @@
                                 (make-run eid target card))}]})
 
 (defcard "The Nihilist"
-  (let [corp-choice {:optional
-                     {:player :corp
-                      :waiting-prompt "Corp to choose an option"
-                      :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
-                      :yes-ability {:async true
-                                    :effect (effect (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
-                                                    (mill :corp eid :corp 1))}
-                      :no-ability {:async true
-                                   :msg "draw 2 cards"
-                                   :effect (effect (draw :runner eid 2))}}}
+  (let [corp-choice {:player :corp
+                     :waiting-prompt "Corp to choose an option"
+                     :prompt "Choose one"
+                     :choices (req [(when-not (empty? (:deck corp))
+                                      "Trash the top card of R&D")
+                                    "The Runner draws 2 cards"])
+                     :async true
+                     :msg (req (if (= target "The Runner draws 2 cards")
+                                "draw 2 cards"
+                                (msg "to force the Corp to " (decapitalize target))))
+                     :effect (req (if (= target "The Runner draws 2 cards")
+                                    (draw state :runner eid 2)
+                                    (mill state :corp eid :corp 1)))}
         maybe-spend-2 {:event :runner-turn-begins
                        :interactive (req true)
                        :optional
