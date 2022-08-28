@@ -4412,11 +4412,14 @@
       (gain-tags state :runner 1)
       (take-credits state :runner)
       (play-from-hand state :corp "The All-Seeing I")
-      (click-prompt state :runner "Done")
-      (click-prompt state :runner "Done")
-      (let  [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
+      (is (= "Prevent the trashing of Off-Campus Apartment?"
+             (:msg (prompt-map :runner))))
+      (let [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
         (card-ability state :runner fall-guy 0))
-      (click-prompt state :runner "Done") ;; This assumes hosted cards get put in trash-list before host
+      (click-prompt state :runner "Done")
+      (is (= "Prevent the trashing of Fall Guy?"
+             (:msg (prompt-map :runner))))
+      (click-prompt state :runner "Done")
       (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
       (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
 
