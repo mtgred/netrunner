@@ -131,7 +131,7 @@
                                                (effect-completed state side eid)))}}}
                                      card targets)))}}}
                  card targets))}]
-   :abilities [(set-autoresolve :auto-fire "419")]})
+   :abilities [(set-autoresolve :auto-fire "419: Amoral Scammer")]})
 
 (defcard "Acme Consulting: The Truth You Need"
   (letfn [(outermost? [state ice]
