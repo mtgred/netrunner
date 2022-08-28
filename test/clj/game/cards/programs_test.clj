@@ -2669,7 +2669,7 @@
     (is (= "Choose a breach replacement ability" (:msg (prompt-map :runner)))
         "Replacement effect is optional")
     (click-prompt state :runner "Expert Schedule Analyzer")
-    (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all of the cards cards in HQ:")
+    (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all cards in HQ:")
         "All of HQ is revealed correctly")))
 
 (deftest faerie-trash-after-encounter-is-over-not-before
