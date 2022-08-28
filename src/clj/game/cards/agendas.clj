@@ -296,8 +296,8 @@
                                       (if (seq remaining)
                                         (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
                                         (do (system-msg state :corp
-                                                        (str "uses Bacterial Programming to add " (count to-hq)
-                                                             " cards to HQ, discard " (count to-trash)
+                                                        (str "uses Bacterial Programming to add " (quantify (count to-hq) "card")
+                                                             " to HQ, discard " (count to-trash)
                                                              ", and arrange the top cards of R&D"))
                                             (effect-completed state :corp eid))))
                             (continue-ability state :corp (hq-step
@@ -398,8 +398,8 @@
                          (doseq [c from]
                            (move state :runner c :deck))
                          (system-msg state side (str "uses Brain Rewiring to pay " target
-                                                     " [Credits] and add " target
-                                                     " cards from the Runner's Grip"
+                                                     " [Credits] and add " (quantify target "card")
+                                                     " from the Runner's Grip"
                                                      " to the bottom of their Stack."
                                                      " The Runner draws 1 card"))
                          (draw state :runner eid 1)))
@@ -1310,7 +1310,7 @@
                 :req (req (and (< 4 (get-counters (:card context) :advancement))
                                (pos? (count (all-installed state :runner)))))
                 :waiting-prompt "Runner to make a decision"
-                :prompt (msg "Choose " (trash-count-str (:card context)) " installed cards to trash")
+                :prompt (msg "Choose " (quantify (trash-count-str (:card context)) "installed card") " to trash")
                 :choices {:max (req (min (- (get-counters (:card context) :advancement) 4)
                                          (count (all-installed state :runner))))
                           :card #(and (runner? %)
@@ -1495,9 +1495,9 @@
              :choices ["Done" "Start over"]
              :async true
              :msg (req (let [n (count chosen)]
-                         (str "add " n " cards from HQ to the bottom of R&D and draw " n " cards."
-                              " The Runner randomly adds " (if (<= n (count (:hand runner))) n 0)
-                              " cards from their Grip to the bottom of the Stack")))
+                         (str "add " (quantify n "card") " from HQ to the bottom of R&D and draw " (quantify n "card")
+                              ". The Runner randomly adds " (quantify (min n (count (:hand runner))) "card")
+                              " from their Grip to the bottom of the Stack")))
              :effect (req (let [n (count chosen)]
                             (if (= target "Done")
                               (do (doseq [c (reverse chosen)] (move state :corp c :deck))

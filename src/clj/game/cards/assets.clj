@@ -425,7 +425,7 @@
    :on-trash executive-trash-effect})
 
 (defcard "Chekist Scion"
-  (advance-ambush 0 {:msg (msg "give the Runner " (inc (get-counters (get-card state card) :advancement)) " tags")
+  (advance-ambush 0 {:msg (msg "give the Runner " (quantify (inc (get-counters (get-card state card) :advancement)) "tag"))
                      :async true
                      :effect (effect (gain-tags :corp eid (inc (get-counters (get-card state card) :advancement))))}))
 
@@ -811,8 +811,8 @@
                 :async true
                 :effect (req (let [counters (get-counters card :power)
                                    credits (* 2 counters)]
-                               (system-msg state side (str "uses Estelle Moon to draw " counters
-                                                           " cards and gain " credits " [Credits]"))
+                               (system-msg state side (str "uses Estelle Moon to draw " (quantify counters "card")
+                                                           " and gain " credits " [Credits]"))
                                (wait-for (draw state side counters)
                                          (gain-credits state side eid credits))))}]})
 
@@ -1391,7 +1391,7 @@
                                    (in-hand? %))
                        :max 2}
              :async true
-             :msg (msg "trash " (count targets) " cards from HQ ")
+             :msg (msg "trash " (quantify (count targets) "card") " from HQ")
              :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
                                     (continue-ability
                                       state side
@@ -1462,9 +1462,7 @@
                 :prompt (msg (let [mus (count (filter #(and (= "10019" (:code %))
                                                             (rezzed? %))
                                                       (all-installed state :corp)))]
-                               (str "Choose "
-                                    (if (> mus 1) "a card " (str mus " cards "))
-                                    "in Archives to shuffle into R&D")))
+                               (str "Choose " (quantify mus "card") " in Archives to shuffle into R&D")))
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))
                           :max (req (count (filter #(and (= "10019" (:code %))

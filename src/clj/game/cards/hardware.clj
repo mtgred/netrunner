@@ -1352,7 +1352,7 @@
                             (first-event? state side :run-ends
                                           #(and (:successful (first %))
                                                 (#{:rd :hq} (target-server (first %)))))))
-             :msg (msg "draw " (total-cards-accessed target) " cards")
+             :msg (msg "draw " (quantify (total-cards-accessed target) "card"))
              :async true
              :effect (effect (draw eid (total-cards-accessed target)))}]})
 
@@ -2067,7 +2067,7 @@
                               (if (< (count hand) dmg)
                                 {:effect (effect (chosen-damage :runner hand))}
                                 {:waiting-prompt "Runner to make a decision"
-                                 :prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage")
+                                 :prompt (msg "Choose " (quantify dmg "card") " to trash for the " (name dtype) " damage")
                                  :choices {:max dmg
                                            :all true
                                            :card #(and (in-hand? %)

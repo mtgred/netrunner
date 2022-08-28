@@ -78,7 +78,7 @@
                                prevent-msg (if prevent
                                              (str "avoids "
                                                   (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                                  (if (< 1 prevent) " tags" " tag"))
+                                                  (quantify prevent "tag"))
                                              "will not avoid tags")]
                            (system-msg state :runner prevent-msg)
                            (clear-wait-prompt state :corp)
