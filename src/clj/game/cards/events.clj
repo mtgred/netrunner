@@ -916,8 +916,8 @@
              :effect (req (let [installed-cards (filter #(get-in % [:special :diana-installed]) (all-active-installed state :runner))]
                             (if (seq installed-cards)
                               (do
-                                (system-msg state :runner (str "trashes " (count installed-cards)
-                                                               " cards (" (str/join ", " (map :title installed-cards))
+                                (system-msg state :runner (str "trashes " (quantify (count installed-cards) "card")
+                                                               " (" (str/join ", " (map :title installed-cards))
                                                                           ") at the end of the run from Diana's Hunt"))
                                 (trash-cards state :runner eid installed-cards {:unpreventable true
                                                                                 :cause-card card}))
@@ -1298,8 +1298,8 @@
                                                           (same-card? :title card %))
                                               :max n}
                                     :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
-                                              " forcing the Corp to trash " (count targets)
-                                              " additional cards from the top of R&D")
+                                              " forcing the Corp to trash " (quantify (count targets) "additional card")
+                                              " from the top of R&D")
                                     :effect (req (wait-for
                                                    (reveal state :runner targets)
                                                    (mill state :corp eid :corp (count targets))))})
@@ -1423,7 +1423,7 @@
 
 (defcard "Game Day"
   {:on-play
-   {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
+   {:msg (msg "draw " (quantify (- (hand-size state :runner) (count (:hand runner))) "card"))
     :async true
     :effect (effect (draw eid (- (hand-size state :runner) (count (:hand runner)))))}})
 
@@ -1478,7 +1478,7 @@
 (defcard "Harmony AR Therapy"
   (letfn [(choose-end [to-shuffle]
             (let [to-shuffle (sort to-shuffle)]
-              {:msg (msg "shuffle " (count to-shuffle)" cards back into the stack: " (str/join ", " to-shuffle))
+              {:msg (msg "shuffle " (quantify (count to-shuffle) "card") " back into the stack: " (str/join ", " to-shuffle))
                :effect (req (doseq [c-title to-shuffle]
                               (let [c (some #(when (= (:title %) c-title) %) (:discard runner))]
                                 (move state side c :deck)))
@@ -1703,7 +1703,7 @@
            :req (req (<= 1 (count (:hand corp))))
            :async true
            :waiting-prompt "Corp to make a decision"
-           :prompt (msg "Choose up to " (dec (count (:hand corp))) " cards for the first pile")
+           :prompt (msg "Choose up to " (quantify (dec (count (:hand corp))) "card") " for the first pile")
            :choices {:card #(and (in-hand? %)
                                  (corp? %))
                      :max (req (dec (count (:hand corp))))}
@@ -2162,7 +2162,7 @@
   (letfn [(count-clan [state] (count (filter #(and (has-subtype? % "Clan") (resource? %))
                                              (all-active-installed state :runner))))]
     {:on-play
-     {:msg (msg "draw " (count-clan state) " cards and gain " (count-tags state) " [Credits]")
+     {:msg (msg "draw " (quantify (count-clan state) "card") " and gain " (count-tags state) " [Credits]")
       :async true
       :effect (req (wait-for (draw state side (count-clan state))
                              (gain-credits state side eid (count-tags state))))}}))
@@ -3416,7 +3416,7 @@
               {:target-server :hq
                :this-card-run true
                :ability
-               {:msg (msg "force the Corp to discard " target " cards from HQ at random")
+               {:msg (msg "force the Corp to discard " (quantify target "card") " from HQ at random")
                 :prompt "How many [Click] do you want to spend?"
                 :choices (req (map str (range 0 (inc (:click runner)))))
                 :async true

@@ -1341,7 +1341,7 @@
                                       (effect-completed state side eid)))}]
      :abilities [{:req (req (:fill-hq card))
                   :label "draw remaining cards"
-                  :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
+                  :msg (msg "draw " (quantify (- 5 (count (:hand corp))) "card"))
                   :async true
                   :effect (req (wait-for (draw state side (- 5 (count (:hand corp))) {:suppress-event true})
                                          (update! state side (dissoc card :fill-hq))

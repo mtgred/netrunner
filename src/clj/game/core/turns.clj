@@ -27,7 +27,7 @@
         hand (if (= side :runner) "their Grip" "HQ")
         cards (count (get-in @state [side :hand]))
         credits (get-in @state [side :credit])
-        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " cards " cards in " hand)]
+        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn end-phase-12

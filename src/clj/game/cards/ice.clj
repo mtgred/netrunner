@@ -1165,7 +1165,7 @@
                                            :all true
                                            :card #(and (in-hand? %)
                                                        (runner? %))}
-                                 :msg (msg "add " n " cards from their Grip to the top of the Stack")
+                                 :msg (msg "add " (quantify n "card") " from their Grip to the top of the Stack")
                                  :effect (req (doseq [c targets]
                                                 (move state :runner c :deck {:front true})))})
                               card nil))}
@@ -1615,7 +1615,7 @@
                  :choices {:number (req 3)
                            :max (req 3)
                            :default (req 1)}
-                 :msg (msg "draw " target " cards")
+                 :msg (msg "draw " (quantify target "card"))
                  :effect (effect (draw eid target))}
         reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
                             :show-discard true
@@ -1765,7 +1765,7 @@
                                       state :runner
                                       (let [delta (- (count (get-in @state [:runner :hand])) (hand-size state :runner))]
                                         (when (pos? delta)
-                                          {:prompt (msg "Choose " delta " cards to discard")
+                                          {:prompt (msg "Choose " (quantify delta "card") " to discard")
                                            :player :runner
                                            :choices {:max delta
                                                      :card #(in-hand? %)}
@@ -2595,7 +2595,7 @@
              :prompt "Take net damage or trash cards from the stack?"
              :choices (req [(str "Take " net-dmg " net damage")
                             (when (<= mill-cnt (count (:deck runner)))
-                              (str "Trash the top " mill-cnt " cards of the stack"))])
+                              (str "Trash the top " (quantify mill-cnt "card") " of the stack"))])
              :async true
              :effect (req (if (= target (str "Take " net-dmg " net damage"))
                             (do (system-msg state :corp
@@ -2744,7 +2744,7 @@
 (defcard "NEXT Sapphire"
   {:subroutines [{:label "Draw up to X cards"
                   :prompt "Draw how many cards?"
-                  :msg (msg "draw " target " cards")
+                  :msg (msg "draw " (quantify target "card"))
                   :choices {:number (req (next-ice-count corp))
                             :default (req 1)}
                   :async true
@@ -2774,7 +2774,7 @@
                                  (move state :corp c :deck))
                                (shuffle! state :corp :deck))
                   :cancel-effect (effect (shuffle! :corp :deck))
-                  :msg (msg "shuffle " (count targets) " cards from HQ into R&D")}]})
+                  :msg (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")}]})
 
 (defcard "NEXT Silver"
   {:events [{:event :rez

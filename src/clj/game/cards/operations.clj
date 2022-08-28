@@ -786,7 +786,7 @@
                      :choices {:number (req X)
                                :max (req X)
                                :default (req 1)}
-                     :msg (msg "draw " target " cards")
+                     :msg (msg "draw " (quantify target "card"))
                      :effect (effect (draw eid target))}
                install-cards (fn install-cards
                                [server n]
@@ -1284,7 +1284,7 @@
       :choices {:max (req (count (:hand corp)))
                 :card #(and (corp? %)
                             (in-hand? %))}
-      :msg (msg "trash " (count targets) " cards in HQ")
+      :msg (msg "trash " (quantify (count targets) "card") " in HQ")
       :async true
       :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                              (doseq [c (:discard (:corp @state))]
@@ -1454,7 +1454,7 @@
      :successful {:msg "give the Runner X tags"
                   :async true
                   :effect (effect (system-msg
-                                    (str "gives the Runner " (- target (second targets)) " tags"))
+                                    (str "gives the Runner " (quantify (- target (second targets)) "tag")))
                                   (gain-tags eid (- target (second targets))))}}}})
 
 (defcard "Mitosis"
@@ -1710,7 +1710,7 @@
                                       (all-active-installed state :runner)))))
     :prompt "Trash how many cards from the top R&D?"
     :choices {:number (req (count (:deck corp)))}
-    :msg (msg "trash " target " cards from the top of R&D")
+    :msg (msg "trash " (quantify target "card") " from the top of R&D")
     :async true
     :effect (req (wait-for (mill state :corp :corp target)
                            (continue-ability
@@ -2283,7 +2283,7 @@
               :card #(and (corp? %)
                           (installed? %)
                           (can-be-advanced? %))}
-    :msg (msg "place 1 advancement token on " (count targets) " cards")
+    :msg (msg "place 1 advancement token on " (quantify (count targets) "card"))
     :effect (req (doseq [t targets]
                    (add-prop state :corp t :advance-counter 1 {:placed true})))}})
 
@@ -2373,7 +2373,7 @@
     :choices {:max (req (count (:hand corp)))
               :card #(and (corp? %)
                           (in-hand? %))}
-    :msg (msg "shuffle " (count targets) " cards in HQ into R&D and draw " (count targets) " cards")
+    :msg (msg "shuffle " (quantify (count targets) "card") " in HQ into R&D and draw " (quantify (count targets) "card"))
     :async true
     :effect (req (doseq [c targets]
                    (move state side c :deck))

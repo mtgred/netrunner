@@ -513,7 +513,7 @@
                 :effect (effect (add-counter card :power target))}
    :events [{:event :runner-turn-ends
              :req (req (zero? (count (:hand runner))))
-             :msg (msg "draw " (get-counters card :power) " cards. Bug Out Bag is trashed")
+             :msg (msg "draw " (quantify (get-counters card :power) "card"))
              :async true
              :effect (req (wait-for (draw state side (get-counters card :power))
                                     (trash state side eid card {:cause-card card})))}]})
@@ -2596,8 +2596,8 @@
               :yes-ability {:async true
                             :cost [:trash-can]
                             :msg (msg "force the Corp to trash the top "
-                                      (get-turn-damage state :runner)
-                                      " cards of R&D and trash itself")
+                                      (quantify (get-turn-damage state :runner) "card")
+                                      " of R&D and trash itself")
                             :effect (effect (mill :corp eid :corp (get-turn-damage state :runner)))}}}]})
 
 (defcard "Same Old Thing"
@@ -2806,7 +2806,7 @@
                 :async true
                 :cost [:trash-can]
                 :effect (effect (draw eid (count-bad-pub state)))
-                :msg (msg "draw " (count-bad-pub state) " cards")}]
+                :msg (msg "draw " (quantify (count-bad-pub state) "card"))}]
    :events [{:event :play-operation
              :optional
              {:req (req (or (has-subtype? (:card context) "Black Ops")
@@ -3188,7 +3188,7 @@
                             :prompt (msg (format "Choose how many additional %s accesses to make with The Twinning" (if (= :rd target-server) "R&D" "HQ")))
                             :choices {:number (req (min 2 (get-counters card :power)))
                                       :default (req (min 2 (get-counters card :power)))}
-                            :msg (msg "access " target " additional cards from "
+                            :msg (msg "access " (quantify target "additional card") " from "
                                       (if (= :rd target-server) "R&D" "HQ"))
                             :async true
                             :effect (effect (access-bonus target-server (max 0 target))

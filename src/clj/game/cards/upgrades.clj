@@ -480,7 +480,7 @@
                           :card #(and (corp? %)
                                       (not (:seen %))
                                       (in-discard? %))}
-                :msg (msg "add " (count targets) " facedown cards in Archives to HQ")
+                :msg (msg "add " (quantify (count targets) "facedown card") " in Archives to HQ")
                 :effect (req (doseq [c targets]
                                (move state side c :hand)))}]})
 
