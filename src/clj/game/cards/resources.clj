@@ -194,7 +194,7 @@
 (defcard "Aeneas Informant"
   {:events [{:event :post-access-card
              :optional
-             {:autoresolve (get-autoresolve :auto-reveal-and-gain)
+             {:autoresolve (get-autoresolve :auto-fire)
               :req (req (and (:trash (second targets))
                              (not (in-discard? target))))
               :prompt "Use Aeneas Informant?"
@@ -203,7 +203,7 @@
                                              (str " and reveal " (:title target)))))
                             :async true
                             :effect (effect (gain-credits eid 1))}}}]
-   :abilities [(set-autoresolve :auto-reveal-and-gain "Aeneas Informant")]})
+   :abilities [(set-autoresolve :auto-fire "Aeneas Informant")]})
 
 (defcard "Aesop's Pawnshop"
   (let [ability {:async true
@@ -684,10 +684,10 @@
              :interactive (req true)
              :optional {:prompt "Place a virus counter?"
                         :req (req (has-subtype? (:card context) "Virus"))
-                        :autoresolve (get-autoresolve :auto-cookbook)
+                        :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:msg (msg "place 1 virus counter on " (card-str state (:card context)))
                                       :effect (effect (add-counter (:card context) :virus 1))}}}]
-   :abilities [(set-autoresolve :auto-cookbook "Cookbook's 'Place virus counter' ability")]})
+   :abilities [(set-autoresolve :auto-fire "Cookbook")]})
 
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
@@ -823,7 +823,7 @@
              :silent (req true)
              :optional {:prompt "Place a virus counter on Crypt?"
                         :req (req (= :archives (target-server context)))
-                        :autoresolve (get-autoresolve :auto-add)
+                        :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability {:msg "place a virus counter on itself"
                                       :effect (effect (add-counter card :virus 1))}}}]
    :abilities [{:async true
@@ -837,7 +837,7 @@
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
-               (set-autoresolve :auto-add "placing virus counters on Crypt")]})
+               (set-autoresolve :auto-place-counter "Crypt placing virus counters on itself")]})
 
 (defcard "Cybertrooper Talut"
   {:constant-effects [(link+ 1)]
@@ -1273,7 +1273,7 @@
                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                       :msg "look at the top card of R&D"
                                       :choices ["OK"]}}}]
-   :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]
+   :abilities [(set-autoresolve :auto-peek "Find the Truth looking at the top card of R&D")]
    :corp-abilities [{:label (str "Explicitly reveal cards")
                      :prompt (str "Explicitly reveal runner draws due to Find the Truth?")
                      :choices ["Yes" "No"]
@@ -1593,7 +1593,7 @@
                              (not (:did-steal target))
                              (:did-access target)
                              (is-remote? (:server target))))
-              :autoresolve (get-autoresolve :auto-kasistring)
+              :autoresolve (get-autoresolve :auto-place-counter)
               :waiting-prompt "Runner to choose an option"
               :prompt "Place 1 power counter on Kasi String?"
               :yes-ability {:msg "place a power counter on itself"
@@ -1604,7 +1604,7 @@
              :req (req (<= 4 (get-counters (get-card state card) :power)))
              :msg "add itself to their score area as an agenda worth 1 agenda point"
              :effect (req (as-agenda state :runner card 1))}]
-   :abilities [(set-autoresolve :auto-kasistring "Kasi String")]})
+   :abilities [(set-autoresolve :auto-place-counter "Kasi String placing power counters on itself")]})
 
 (defcard "Kati Jones"
   {:abilities [{:cost [:click 1]
@@ -3332,7 +3332,7 @@
 (defcard "Whistleblower"
   {:events [{:event :successful-run
              :optional
-             {:autoresolve (get-autoresolve :auto-name-agenda)
+             {:autoresolve (get-autoresolve :auto-fire)
               :prompt "Trash Whistleblower to name an agenda?"
               :yes-ability
               {:async true
@@ -3352,7 +3352,7 @@
                                      :req (req (= (:title target) named-agenda))
                                      :effect (effect (steal eid target))}]))
                                (trash eid card {:unpreventable true :cause-card card}))}}}]
-   :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
+   :abilities [(set-autoresolve :auto-fire "Whistleblower")]})
 
 (defcard "Wireless Net Pavilion"
   {:constant-effects [{:type :card-ability-additional-cost

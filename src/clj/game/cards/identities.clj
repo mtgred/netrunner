@@ -102,7 +102,7 @@
                  {:optional
                   {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
                    :player :runner
-                   :autoresolve (get-autoresolve :auto-419)
+                   :autoresolve (get-autoresolve :auto-fire)
                    :no-ability {:effect (req (clear-wait-prompt state :corp))}
                    :yes-ability
                    {:async true
@@ -131,7 +131,7 @@
                                                (effect-completed state side eid)))}}}
                                      card targets)))}}}
                  card targets))}]
-   :abilities [(set-autoresolve :auto-419 "419")]})
+   :abilities [(set-autoresolve :auto-fire "419")]})
 
 (defcard "Acme Consulting: The Truth You Need"
   (letfn [(outermost? [state ice]
@@ -416,7 +416,7 @@
                           :effect (req (chosen-damage state :corp target))}
                          card nil))}
               :no-ability
-              {:effect (req (system-msg state :corp "declines to use Chronos Protocol"))}}}]})
+              {:effect (req (system-msg state :corp "declines to use Chronos Protocol: Selective Mind-mapping"))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:constant-effects [(hand-size+ -1)]})
@@ -653,9 +653,9 @@
    :events [{:event :agenda-scored
              :interactive (req true)
              :optional {:prompt "Add card from Archives to HQ?"
-                        :autoresolve (get-autoresolve :auto-precision-design)
+                        :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability (corp-recur)}}]
-   :abilities [(set-autoresolve :auto-precision-design "add card from Archives to HQ")]})
+   :abilities [(set-autoresolve :auto-fire "Haas-Bioroid: Precision Design")]})
 
 (defcard "Haas-Bioroid: Stronger Together"
   {:constant-effects [{:type :ice-strength
@@ -1022,32 +1022,32 @@
 (defcard "Laramy Fisk: Savvy Investor"
   {:events [{:event :successful-run
              :async true
-             :interactive (get-autoresolve :auto-fisk (complement never?))
-             :silent (get-autoresolve :auto-fisk never?)
+             :interactive (get-autoresolve :auto-fire (complement never?))
+             :silent (get-autoresolve :auto-fire never?)
              :optional
              {:req (req (and (is-central? (:server context))
                              (first-event? state side :successful-run
                                            (fn [targets]
                                              (let [context (first targets)]
                                                (is-central? (:server context)))))))
-              :autoresolve (get-autoresolve :auto-fisk)
+              :autoresolve (get-autoresolve :auto-fire)
               :prompt "Force the Corp to draw a card?"
               :yes-ability {:msg "force the Corp to draw 1 card"
                             :async true
                             :effect (effect (draw :corp eid 1))}
               :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}]
-   :abilities [(set-autoresolve :auto-fisk "force Corp draw")]})
+   :abilities [(set-autoresolve :auto-fire "Laramy Fisk: Savvy Investor")]})
 
 (defcard "Lat: Ethical Freelancer"
   {:events [{:event :runner-turn-ends
              :optional {:req (req (= (count (:hand runner)) (count (:hand corp))))
-                        :autoresolve (get-autoresolve :auto-lat)
+                        :autoresolve (get-autoresolve :auto-fire)
                         :prompt "Draw 1 card?"
                         :yes-ability {:async true
                                       :msg "draw 1 card"
                                       :effect (effect (draw :runner eid 1))}
                         :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}]
-   :abilities [(set-autoresolve :auto-lat "Lat: Ethical Freelancer")]})
+   :abilities [(set-autoresolve :auto-fire "Lat: Ethical Freelancer")]})
 
 (defcard "Leela Patel: Trained Pragmatist"
   (let [leela {:interactive (req true)
@@ -1245,14 +1245,14 @@
                                                    targets)))))
               :waiting-prompt "Corp to make a decision"
               :prompt "Trace the Runner with NBN: Controlling the Message?"
-              :autoresolve (get-autoresolve :auto-ctm)
+              :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:trace {:base 4
                        :successful
                        {:msg "give the Runner 1 tag"
                         :async true
                         :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}}}]
-   :abilities [(set-autoresolve :auto-ctm "CtM")]})
+   :abilities [(set-autoresolve :auto-fire "NBN: Controlling the Message")]})
 
 (defcard "NBN: Making News"
   {:recurring 2
@@ -1694,7 +1694,7 @@
                                (not-empty (ice-with-no-advancement-tokens state))))
                 :waiting-prompt "Corp to make a decision"
                 :prompt "Place advancement tokens?"
-                :autoresolve (get-autoresolve :auto-sso)
+                :autoresolve (get-autoresolve :auto-fire)
                 :yes-ability
                 {:async true
                  :effect (req (let [agendas (installed-faceup-agendas state)
@@ -1710,7 +1710,7 @@
                                              " on " (card-str state target))
                                    :effect (effect (add-prop target :advance-counter agenda-points {:placed true}))}
                                   card nil)))}}}]
-     :abilities [(set-autoresolve :auto-sso "SSO")]}))
+     :abilities [(set-autoresolve :auto-fire "SSO Industries: Fueling Innovation")]}))
 
 (defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
