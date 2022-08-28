@@ -4,6 +4,7 @@
     [game.core.board :refer [all-active]]
     [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
+    [game.core.costs :refer [total-available-credits]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -339,7 +340,7 @@
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
    {:access {:optional
-             {:req (req (and installed (>= (:credit corp) cost)))
+             {:req (req (and installed (>= (total-available-credits state :corp eid card) cost)))
               :waiting-prompt (:waiting-prompt ability)
               :prompt prompt
               :yes-ability (dissoc ability :waiting-prompt)}}}))
