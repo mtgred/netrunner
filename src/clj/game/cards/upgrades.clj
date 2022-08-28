@@ -726,18 +726,17 @@
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
    :access {:interactive (req true)
-            :optional
-            {:player :runner
-             :waiting-prompt "Runner to choose an option"
-             :prompt "Take 1 tag to prevent Corp from removing 1 bad publicity?"
-             :yes-ability
-             {:async true
-              :effect (effect (system-msg "takes 1 tag to prevent Corp from removing 1 bad publicity")
-                              (gain-tags eid 1 {:unpreventable true}))}
-             :no-ability
-             {:msg "remove 1 bad publicity"
-              :effect (effect (lose-bad-publicity :corp 1)
-                              (effect-completed eid))}}}})
+            :player :runner
+            :async true
+            :waiting-prompt "Runner to choose an option"
+            :msg (req (if (= target "The Corp removes 1 bad publicity")
+                       "to remove 1 bad publicity"
+                       (msg "force the Runner to " (decapitalize target))))
+            :prompt "Choose one"
+            :choices ["Take 1 tag" "The Corp removes 1 bad publicity"]
+            :effect (req (if (= target "Take 1 tag")
+                           (gain-tags state side eid 1 {:unpreventable true})
+                           (lose-bad-publicity state :corp 1)))}})
 
 (defcard "Intake"
   {:flags {:rd-reveal (req true)}
