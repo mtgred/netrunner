@@ -1601,8 +1601,7 @@
                        :card #(and (runner? %)
                                    (installed? %))}
              :msg (msg "force the Runner to trash " (str/join ", " (map :title targets)))
-             :effect (req (wait-for (trash-cards state :runner targets {:unpreventable true :cause-card card :cause :forced-to-trash})
-                                    (effect-completed state side eid)))})
+             :effect (req (trash-cards state :runner eid targets {:unpreventable true :cause-card card :cause :forced-to-trash}))})
           (ability []
             {:trace {:base 4
                      :successful

@@ -18,6 +18,7 @@
       (core/resolve-ability state :runner (eid/make-eid state)
                             m/identify-mark-ability (:identity (get-runner)) nil)
       (is (some? (:mark @state)) "Mark identified")
+      (click-card state :corp (first (:hand (get-corp))))
       (click-credit state :runner)
       (core/resolve-ability state :runner (eid/make-eid state)
                             m/identify-mark-ability (:identity (get-runner)) nil)

@@ -27,7 +27,7 @@
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay prompt! register-events
                              register-once register-suppress resolve-ability
-                             trigger-event trigger-event-sync unregister-events unregister-suppress-by-uuid]]
+                             trigger-event trigger-event-sync unregister-events unregister-suppress-by-uuid checkpoint]]
    [game.core.events :refer [event-count first-event?
                              first-installed-trash-own? first-run-event?
                              first-successful-run-on-server? get-turn-damage no-event? second-event? turn-events]]
@@ -308,14 +308,11 @@
                                       (runner? %))}
                 :async true
                 :msg (msg "turn " (:title target) " faceup")
-                :effect (req (if (or (event? target)
-                                     (and (has-subtype? target "Console")
-                                          (some #(has-subtype? % "Console") (all-active-installed state :runner))))
-                               ;; Consoles and events are immediately unpreventably trashed.
+                :effect (req (if (event? target)
                                (trash state side eid target {:unpreventable true})
                                ;; Other cards are moved to rig and have events wired.
                                (do (flip-faceup state side target)
-                                   (effect-completed state side eid))))}]})
+                                   (checkpoint state nil eid))))}]})
 
 (defcard "Avgustina Ivanovskaya"
   {:events [{:event :runner-install

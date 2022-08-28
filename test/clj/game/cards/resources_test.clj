@@ -520,8 +520,7 @@
    (new-game {:runner {:deck ["Bloo Moose"] :discard ["Sure Gamble"]}})
    (take-credits state :corp)
    (play-from-hand state :runner "Bloo Moose")
-   (let [orig-credits (:credit (get-runner))
-         bm (get-resource state 0)]
+        (let [bm (get-resource state 0)]
      (card-ability state :runner bm 0)
      (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
      (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
@@ -1248,6 +1247,7 @@
       (is (changes-credits (get-runner) 1
                            (take-credits state :corp)))
       (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
       (take-credits state :runner)
       (play-from-hand state :corp "SEA Source")
       (click-prompt state :corp "0")
@@ -3213,13 +3213,12 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Daeg, First Net-Cat")
       (play-from-hand state :runner "Kasi String")
-      (let [kasi (get-resource state 1)]
-        (dotimes [_ 3]
-          (run-empty-server state "Server 1")
-          (click-prompt state :runner "No action")
-          (click-prompt state :runner "Yes")
-          (take-credits state :runner)
-          (take-credits state :corp)))
+      (dotimes [_ 3]
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Yes")
+        (take-credits state :runner)
+        (take-credits state :corp))
       (take-credits state :runner)
       (play-and-score state "15 Minutes")
       ;; Make Daeg charge Kasi String
@@ -3236,8 +3235,7 @@
       (play-from-hand state :runner "Kasi String")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
-      (is (no-prompt? state :runner) "No Kasi String prompt")
-      (is (zero? (get-counters (get-resource state 0) :power)) "Kasi String should have 0 power counter on itself")))
+      (is (no-prompt? state :runner) "Kasi String shouldn't display a prompt")))
 
 (deftest kasi-string-triggers-only-on-remote-server
     ;; Triggers only on remote server
@@ -3903,10 +3901,9 @@
       (take-credits state :corp 2)
       (play-from-hand state :runner "New Angeles City Hall")
       (play-from-hand state :runner "Dummy Box")
-      (let [nach (get-resource state 0)]
         (run-empty-server state "Server 1")
         (click-prompt state :runner "Steal")
-        (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
+    (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
 (deftest new-angeles-city-hall-don-t-gain-siphon-credits-until-opportunity-to-avoid-tags-has-passed
     ;; don't gain Siphon credits until opportunity to avoid tags has passed
@@ -4468,8 +4465,9 @@
       (changes-val-macro
         -2 (:credit (get-runner))
         "No cost reduction after run on R&D"
-        (play-from-hand state :runner "Penumbral Toolkit"))
+      (play-from-hand state :runner "Penumbral Toolkit"))
       (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
       (changes-val-macro
         0 (:credit (get-runner))
         "Cost reduction after run on HQ"
@@ -4645,10 +4643,9 @@
           (click-prompt state :runner "No action"))
         (click-prompt state :runner "Yes")
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
-      (let [credits (:credit (get-runner))]
         (run-empty-server state "HQ")
         (click-prompt state :runner "No action")
-        (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed"))
+    (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed")
       (take-credits state :runner)
       (take-credits state :corp)
       (let [credits (:credit (get-runner))]

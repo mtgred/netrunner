@@ -393,6 +393,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
                  :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
       (take-credits state :corp)
+      (click-card state :corp (first (:hand (get-corp))))
       (play-from-hand state :runner "Bookmark")
       (let [bm (get-hardware state 0)]
         (card-ability state :runner bm 0)
@@ -409,8 +410,9 @@
     ;; Trash ability
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}
-                 :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
+                :runner {:hand ["Bookmark" "Sure Gamble" "Daily Casts" "Brain Chip"]}})
       (take-credits state :corp)
+      (click-card state :corp (first (:hand (get-corp))))
       (play-from-hand state :runner "Bookmark")
       (let [bm (get-hardware state 0)]
         (card-ability state :runner bm 0)

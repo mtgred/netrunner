@@ -285,6 +285,11 @@
   (and (program? card)
        (has-subtype? card "Virus")))
 
+(defn console?
+  [card]
+  (and (hardware? card)
+       (has-subtype? card "Console")))
+
 (defn corp-installable-type?
   "Is the card of an acceptable type to be installed in a server"
   [card]

@@ -1891,6 +1891,7 @@
           (click-card state :corp remote-mvt)
           (is (not (no-prompt? state :corp)) "Clicking a card in a different remote does not clear the prompt")
           (is (zero? (get-counters (refresh remote-mvt) :advancement)) "Clicking a card in a different remote does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Mumbad Virtual Tour" "HQ")
         (let [[central-mvt] (get-content state :hq)]
           (take-credits state :corp)
@@ -1898,6 +1899,7 @@
           (click-card state :corp central-mvt)
           (is (not (no-prompt? state :corp)) "Clicking a card in a central does not clear the prompt")
           (is (zero? (get-counters (refresh central-mvt) :advancement)) "Clicking a card in a central does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Vanilla" "Server 1")
         (let [[vanilla] (get-ice state :remote1)]
           (take-credits state :corp)
@@ -1905,6 +1907,7 @@
           (click-card state :corp vanilla)
           (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Vanilla" "Server 2")
         (let [[remote-vanilla] (get-ice state :remote2)]
           (take-credits state :corp)
@@ -1912,6 +1915,7 @@
           (click-card state :corp remote-vanilla)
           (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
+        (click-prompt state :corp "Done")
         (play-from-hand state :corp "Vanilla" "HQ")
         (let [[central-vanilla] (get-ice state :hq)]
           (take-credits state :corp)
@@ -2774,6 +2778,7 @@
       (click-prompt state :runner "Card from deck")
       (is (= "You accessed Beanstalk Royalties." (:msg (prompt-map :runner)))
           "Runner accesses switched card")
+      (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (find-card "Accelerated Beta Test" (:hand (get-corp))))
       (is (find-card "Beanstalk Royalties" (:deck (get-corp))))
@@ -4068,14 +4073,14 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Warroid Tracker" "PAD Campaign"]
                         :credits 15}
-                 :runner {:hand ["Singularity" (qty "Self-modifying Code" 5)]
-                          :credits 15}})
+                 :runner {:hand ["Singularity" (qty "Akamatsu Mem Chip" 5)]
+                          :credits 100}})
       (play-from-hand state :corp "Warroid Tracker" "New remote")
       (play-from-hand state :corp "PAD Campaign" "Remote 1")
       (take-credits state :corp)
       (core/gain state :runner :click 10)
       (dotimes [_ 5]
-        (play-from-hand state :runner "Self-modifying Code"))
+        (play-from-hand state :runner "Akamatsu Mem Chip"))
       (rez state :corp (get-content state :remote1 0))
       (play-from-hand state :runner "Singularity")
       (click-prompt state :runner "Server 1")
@@ -4083,8 +4088,8 @@
       (is (= 2 (-> (get-corp) :discard count)) "Corp has both cards in discard")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0") ; Corp wins trace
-      (click-card state :runner (get-program state 0))
-      (click-card state :runner (get-program state 1))
+      (click-card state :runner (get-hardware state 0))
+      (click-card-impl state :runner (get-hardware state 1))
       (is (no-prompt? state :corp) "Warroid Tracker can't trash anything else")
       (is (= 3 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards")))
 

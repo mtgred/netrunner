@@ -216,8 +216,9 @@
     ;; No tag on empty server
     (do-game
       (new-game {:corp {:id "Acme Consulting: The Truth You Need"
-                        :deck ["Vanilla" (qty "Hedge Fund" 5)]}})
+                      :deck ["Vanilla" (qty "Hedge Fund" 5)]}})
       (take-credits state :corp)
+      (click-card state :corp (first (:hand (get-corp))))
       (run-on state :archives)
       (is (not (is-tagged? state)) "No ice to encounter")))
 
@@ -1205,8 +1206,13 @@
                           :hand [(qty "Amped Up" 5)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Amped Up")
+      (is (= "Draw 1 card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
+      (is (= "Choose up to 2 cards to trash from HQ. Remainder will be trashed from top of R&D."
+             (:msg (prompt-map :corp))))
       (is (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2") "Sabotage happened")
+      (click-card state :corp (first (:hand (get-corp))))
+      (click-prompt state :corp "Done")
       (play-from-hand state :runner "Amped Up")
       (is (not (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2")) "Sabotage did not happen")
       (is (empty (:prompt (get-corp))) "no Corp prompt"))))
@@ -2900,10 +2906,13 @@
         (let [mcaap (get-content state :remote1 0)]
           (rez state :corp mcaap)
           (card-ability state :corp mcaap 0)
-          (dotimes [_ 2]
-            (take-credits state :corp)
-            (take-credits state :runner)
-            (card-ability state :corp mcaap 0))
+          (take-credits state :corp)
+          (click-prompt state :corp "Gain 1 [Credits]")
+          (take-credits state :runner)
+          (card-ability state :corp mcaap 0)
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (card-ability state :corp mcaap 0)
           (click-credit state :corp)
           (card-ability state :corp mcaap 1)
           (changes-val-macro 1 (:credit (get-corp))
@@ -3404,11 +3413,12 @@
       (is (= 5 (count (:deck (get-corp)))) "Corp deck should contain 5 cards")
       (take-credits state :corp)
       (is (zero? (count (:discard (get-corp)))) "Archives started empty")
+      (click-card state :corp (first (:hand (get-corp))))
       (play-from-hand state :runner "Datasucker")
-      (is (= 1 (count (:discard (get-corp)))) "Playing virus should cause card to be trashed from R&D")
+      (is (= 2 (count (:discard (get-corp)))) "Playing virus should cause card to be trashed from R&D")
       (is (= 4 (count (:deck (get-corp)))) "Card trashed to Archives by Noise should come from R&D")
       (play-from-hand state :runner "Sure Gamble")
-      (is (= 1 (count (:discard (get-corp)))) "Playing non-virus should not cause card to be trashed from R&D")
+      (is (= 2 (count (:discard (get-corp)))) "Playing non-virus should not cause card to be trashed from R&D")
       (click-draw state :runner)
       (play-from-hand state :runner "Clone Chip")
       (play-from-hand state :runner "Clone Chip")
@@ -3422,7 +3432,7 @@
         (let [ds (get-program state 1)]
           (is (not (nil? ds)))
           (is (= (:title ds) "Cache"))))
-      (is (= 2 (count (:discard (get-corp)))) "Playing virus via Clone Chip on corp's turn should trigger Noise ability")
+    (is (= 3 (count (:discard (get-corp)))) "Playing virus via Clone Chip on corp's turn should trigger Noise ability")
       (is (= 2 (count (:deck (get-corp)))) "Card trashed to Archives by Noise should come from R&D")
       ;; playing non-virus via Clone Chip on Corp's turn should NOT trigger Noise ability
       (let [chip-2 (get-hardware state 0)]
@@ -3431,7 +3441,7 @@
         (let [ss (get-program state 2)]
           (is (not (nil? ss)))
           (is (= (:title ss) "Sharpshooter"))))
-      (is (= 2 (count (:discard (get-corp)))) "Playing non-virus via Clone Chip on corp's turn should not trigger Noise ability")))
+    (is (= 3 (count (:discard (get-corp)))) "Playing non-virus via Clone Chip on corp's turn should not trigger Noise ability")))
 
 (deftest noise-hacker-extraordinaire-noise-ar-enhanced-security-issue-5345
     ;; Noise + AR-Enhanced Security. Issue #5345
@@ -4251,7 +4261,8 @@
     (gain-tags state :runner 1)
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (swap! state assoc-in [:corp :credit] 0)
-    (changes-val-macro 0 (:credit (get-runner))
+    (changes-val-macro
+      0 (:credit (get-runner))
                        "Paid 0c to trash resource"
                        (trash-resource state)
                        (click-card state :corp (get-resource state 0)))

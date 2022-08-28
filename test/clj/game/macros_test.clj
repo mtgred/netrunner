@@ -6,6 +6,26 @@
             [clojure.string :refer [join]]
             [game.utils-test :refer :all]))
 
+(defn- dont-use-me [s]
+  `(throw (ex-info (str ~s " should only be used in do-game") {})))
+
+(defmacro refresh [_]
+  (dont-use-me "refresh"))
+(defmacro prompt-map [_]
+  (dont-use-me "prompt-map"))
+(defmacro prompt-type [_]
+  (dont-use-me "prompt-type"))
+(defmacro prompt-buttons [_]
+  (dont-use-me "prompt-buttons"))
+(defmacro prompt-titles [_]
+  (dont-use-me "prompt-titles"))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro prompt-fmt [_]
+  (dont-use-me "prompt-fmt"))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro print-prompts []
+  (dont-use-me "print-prompts"))
+
 (defmacro do-game [s & body]
   `(let [~'state ~s
          ~'get-corp (fn [] (:corp @~'state))
@@ -37,7 +57,11 @@
                                (join "\n" (map #(str "[ " (or (get-in % [:value :title])
                                                               (:value %)
                                                               %
-                                                              "nil") " ]") choices#)) "\n")))]
+                                                              "nil") " ]") choices#))
+                               "\n")))
+         ~'print-prompts (fn []
+                           (print (~'prompt-fmt :corp))
+                           (println (~'prompt-fmt :runner)))]
      ~@body))
 
 (defmacro changes-val-macro [change-amt val-form msg & body-form]

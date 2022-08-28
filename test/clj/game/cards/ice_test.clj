@@ -1207,9 +1207,11 @@
     (testing "derezzes at the end of the turn"
       (do-game state
         (rez state :corp (refresh ch))
+        (click-prompt state :corp "Barrier")
         (take-credits state :corp)
         (is (not (rezzed? (refresh ch))))
         (rez state :corp (refresh ch))
+        (click-prompt state :corp "Barrier")
         (take-credits state :runner)
         (is (not (rezzed? (refresh ch))))))))
 
@@ -1723,50 +1725,6 @@
             (click-prompt state :corp "HQ"))
           (is (= "Fairchild" (:title (get-ice state :hq 1)))
               "Fairchild is now installed in the outermost position protecting HQ")))))
-
-(deftest echo
-  (do-game
-    (new-game {:corp {:deck [(qty "Echo" 3)] :credits 15}})
-    (play-from-hand state :corp "Echo" "HQ")
-    (play-from-hand state :corp "Echo" "HQ")
-    (play-from-hand state :corp "Echo" "HQ")
-    (let [e1 (get-ice state :hq 0)
-          e2 (get-ice state :hq 1)
-          e3 (get-ice state :hq 2)]
-      (rez state :corp e1)
-      (is (= 1 (get-counters (refresh e1) :power)) "Placed 1 counter on rezzed Echo")
-      (is (= 0 (get-counters (refresh e2) :power)) "Placed 0 counter on unrezzed Echo")
-      (rez state :corp e2)
-      (is (= 2 (get-counters (refresh e1) :power)) "Placed 2 counters on rezzed Echo")
-      (is (= 1 (get-counters (refresh e2) :power)) "Placed 1 counter on rezzed Echo")
-      (is (= 0 (get-counters (refresh e3) :power)) "Placed 0 counter on unrezzed Echo")
-      (rez state :corp e3)
-      (is (= 3 (get-counters (refresh e1) :power)) "Placed 3 counters on rezzed Echo")
-      (is (= 2 (get-counters (refresh e2) :power)) "Placed 2 counter on rezzed Echo")
-      (is (= 1 (get-counters (refresh e3) :power)) "Placed 1 counter on unrezzed Echo")
-      (is (= 3 (count (:subroutines (refresh e1)))) "Should have 3 subroutine"))))
-
-(deftest endless-eula-runner-side-ability
-    ;; Runner side ability
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Drafter" "Fairchild"]
-                        :discard ["Wotan"]}})
-      (play-from-hand state :corp "Drafter" "HQ")
-      (take-credits state :corp)
-      (run-on state "HQ")
-      (let [drafter (get-ice state :hq 0)]
-        (rez state :corp (get-ice state :hq 0))
-        (run-continue state)
-        (card-subroutine state :corp drafter 1)
-        (is (= :select (prompt-type :corp)))
-        (click-card state :corp "Fairchild")
-        (changes-val-macro
-          0 (:credit (get-corp))
-          "Costs no credits to install a second ice on HQ"
-          (click-prompt state :corp "HQ"))
-        (is (= "Fairchild" (:title (get-ice state :hq 1)))
-            "Fairchild is now installed in the outermost position protecting HQ"))))
 
 (deftest echo
   (do-game

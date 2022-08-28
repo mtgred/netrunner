@@ -167,3 +167,64 @@
         (take-credits state :runner)
         (play-from-hand state :corp "Cerebral Static")
         (is (not (find-card "Scrubbed" (:current (get-runner)))))))))
+
+(deftest trash-existing-programs-test
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                      :deck [(qty "Hedge Fund" 100)]}
+               :runner {:hand ["Endless Hunger" "Corroder" "Akamatsu Mem Chip"]
+                        :credits 100}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Akamatsu Mem Chip")
+    (play-from-hand state :runner "Endless Hunger")
+    (play-from-hand state :runner "Corroder")
+    (trash state :runner (get-hardware state 0))
+    (click-card state :runner (get-program state 1))
+    (click-prompt state :runner "Done")
+    (is (= "Endless Hunger" (:title (get-program state 0))))
+    (is (find-card "Corroder" (:discard (get-runner))))))
+
+(deftest trash-existing-programs-not-enough-test
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                      :deck [(qty "Hedge Fund" 100)]}
+               :runner {:hand ["Endless Hunger" "Corroder" "Dagger" "Box-E"]
+                        :credits 100}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 100)
+    (play-from-hand state :runner "Box-E")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Dagger")
+    (play-from-hand state :runner "Endless Hunger")
+    (trash state :runner (get-hardware state 0))
+    (is (= "Insufficient MU. Trash 2 MU of installed programs."
+           (:msg (prompt-map :runner))))
+    (click-card state :runner (get-program state 0))
+    (click-prompt state :runner "Done")
+    (is (= "Insufficient MU. Trash 1 MU of installed programs."
+           (:msg (prompt-map :runner))))
+    (click-card state :runner (get-program state 0))
+    (click-prompt state :runner "Done")
+    (is (= "Endless Hunger" (:title (get-program state 0))))
+    (is (find-card "Corroder" (:discard (get-runner))))
+    (is (find-card "Dagger" (:discard (get-runner))))))
+
+(deftest trash-previous-consoles-test
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                      :deck [(qty "Hedge Fund" 100)]}
+               :runner {:hand ["Mirror" "Assimilator" "Hunting Grounds"]
+                        :deck [(qty "Box-E" 5)]
+                        :credits 100}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 100)
+    (play-from-hand state :runner "Mirror")
+    (play-from-hand state :runner "Assimilator")
+    (play-from-hand state :runner "Hunting Grounds")
+    (card-ability state :runner (get-resource state 1) 1)
+    (is (= 3 (count (get-runner-facedown state))))
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (= "Choose a facedown installed card" (:msg (prompt-map :runner))))
+    (click-card state :runner (get-runner-facedown state 0))
+    (is (last-log-contains? state "Mirror is trashed."))
+    (is (find-card "Mirror" (:discard (get-runner))))))

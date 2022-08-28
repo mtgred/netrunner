@@ -10,7 +10,8 @@
             [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
             [game.macros :refer [wait-for]]
             [jinteki.cards :refer [all-cards]]
-            [jinteki.utils :as jutils]))
+            [jinteki.utils :as jutils]
+            [clojure.string :as str]))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -53,25 +54,22 @@
   (doseq [ctitle cards]
     (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
-(defn take-credits
+(defn ensure-no-prompts [state]
+  (is' (no-prompt? state :corp) "Corp has prompts open")
+  (is' (no-prompt? state :runner) "Runner has prompts open"))
+
+(defmacro take-credits
   "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
   If all clicks are used up, end turn and start the opponent's turn."
-  [state side & n]
-  (let [other (if (= side :corp) :runner :corp)]
-    (dotimes [_ (or (first n) (get-in @state [side :click]))]
-      (core/process-action "credit" state side nil))
-    (when (zero? (get-in @state [side :click]))
-      (core/process-action "end-turn" state side nil)
-      (core/process-action "start-turn" state other nil))))
-
-(defmacro start-turn
-  [state side]
-  `(do (is (and (empty? (get-in @~state [:corp :prompt]))
-                (empty? (get-in @~state [:runner :prompt]))) "Players have prompts open")
-       (when (and (empty? (get-in @~state [:corp :prompt]))
-                  (empty? (get-in @~state [:runner :prompt])))
-         (core/process-action "start-turn" ~state ~side nil))))
-
+  ([state side] `(take-credits ~state ~side nil))
+  ([state side n]
+   `(let [other# (if (= ~side :corp) :runner :corp)]
+      (error-wrapper (ensure-no-prompts ~state))
+      (dotimes [_# (or ~n (get-in @~state [~side :click]))]
+        (core/process-action "credit" ~state ~side nil))
+      (when (zero? (get-in @~state [~side :click]))
+        (core/process-action "end-turn" ~state ~side nil)
+        (core/process-action "start-turn" ~state other# nil)))))
 
 ;; Deck construction helpers
 (defn qty [card amt]
@@ -196,7 +194,8 @@
     (when (and has-ability? playable?)
       (core/process-action "ability" state side {:card card
                                                  :ability ability
-                                                 :targets (first targets)}))))
+                                                 :targets (first targets)})
+      true)))
 
 (defmacro card-ability
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before
@@ -318,23 +317,26 @@
    (get-in @state [side :rfg pos])))
 
 (defn play-from-hand-impl
-  [state side title & server]
+  [state side title server]
   (let [card (find-card title (get-in @state [side :hand]))]
+    (ensure-no-prompts state)
     (is' (some? card) (str title " is in the hand"))
     (when (some? card)
-      (core/process-action "play" state side {:card card :server (first server)})
+      (is' (core/process-action "play" state side {:card card :server server}))
       true)))
 
 (defmacro play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
   the server to install into with a string."
-  [state side title & server]
-  `(error-wrapper (play-from-hand-impl ~state ~side ~title ~@server)))
+  ([state side title] `(play-from-hand ~state ~side ~title nil))
+  ([state side title server]
+   `(error-wrapper (play-from-hand-impl ~state ~side ~title ~server))))
 
 ;;; Run functions
 (defn run-on-impl
   [state server]
   (let [run (:run @state)]
+    (ensure-no-prompts state)
     (is' (not run) "There is no existing run")
     (is' (pos? (get-in @state [:runner :click])) "Runner can make a run")
     (when (and (not run) (pos? (get-in @state [:runner :click])))
@@ -364,8 +366,7 @@
   ([state phase]
    (let [encounter (core/get-current-encounter state)]
      (is' (some? encounter) "There is an encounter happening")
-     (is' (no-prompt? state :runner) "No open prompts for the runner")
-     (is' (no-prompt? state :corp) "No open prompts for the corp")
+     (ensure-no-prompts state)
      (is' (not (:no-action encounter)) "No player has pressed continue yet")
      (when (and (some? encounter)
                 (no-prompt? state :runner)
@@ -388,8 +389,7 @@
      (encounter-continue-impl state)
      (let [run (:run @state)]
        (is' (some? run) "There is a run happening")
-       (is' (no-prompt? state :runner) "No open prompts for the runner")
-       (is' (no-prompt? state :corp) "No open prompts for the corp")
+       (ensure-no-prompts state)
        (is' (not (:no-action run)) "No player has pressed continue yet")
        (is' (not= :success (:phase run))
             "The run has not reached the server yet")
@@ -475,6 +475,7 @@
 
 (defn play-run-event-impl
   [state card server]
+  (ensure-no-prompts state)
   (when (play-from-hand state :runner card)
     (is' (:run @state) "There is a run happening")
     (is' (= [server] (get-in @state [:run :server])) "Correct server is run")
@@ -532,21 +533,33 @@
   [state side]
   `(error-wrapper (end-phase-12-impl ~state ~side)))
 
-(defn click-draw
+(defn click-draw-impl
   [state side]
+  (ensure-no-prompts state)
   (core/process-action "draw" state side nil))
 
-(defn click-credit
+(defmacro click-draw
   [state side]
+  `(error-wrapper (click-draw-impl ~state ~side)))
+
+(defn click-credit-impl
+  [state side]
+  (ensure-no-prompts state)
   (core/process-action "credit" state side nil))
+
+(defmacro click-credit
+  [state side]
+  `(error-wrapper (click-credit-impl ~state ~side)))
 
 (defn click-advance-impl
   [state side card]
   (let [card (get-card state card)]
+    (ensure-no-prompts state)
     (is' (some? card) (str (:title card) " exists"))
     (is' (installed? card) (str (:title card) " is installed"))
     (when (and (some? card) (installed? card))
-      (core/process-action "advance" state side {:card card}))))
+      (is' (core/process-action "advance" state side {:card card}))
+      true)))
 
 (defmacro click-advance
   [state side card]
@@ -557,7 +570,8 @@
   (let [card (get-card state card)]
     (is' (some? card) (str (:title card) " exists"))
     (when (some? card)
-      (core/process-action "trash" state side {:card card}))))
+      (is' (core/process-action "trash" state side {:card card}))
+      true)))
 
 (defmacro trash
   [state side card]
@@ -567,6 +581,7 @@
   [state card]
   (let [card (get-card state card)
         advancementcost (:advancementcost card)]
+    (ensure-no-prompts state)
     (is' (some? card) (str (:title card) " exists"))
     (when (some? card)
       (core/gain state :corp :click advancementcost :credit advancementcost)
@@ -576,7 +591,8 @@
       (is' (= advancementcost (get-counters (get-card state card) :advancement)))
       (when (= advancementcost (get-counters (get-card state card) :advancement))
         (core/process-action "score" state :corp {:card card})
-        (is (find-card (:title card) (get-scored state :corp)))))))
+        (is' (find-card (:title card) (get-scored state :corp)))
+        true))))
 
 (defmacro score-agenda
   "Take clicks and credits needed to advance and score the given agenda."
@@ -618,21 +634,37 @@
   [state side card]
   `(error-wrapper (trash-card-impl ~state ~side ~card)))
 
-(defn trash-resource
+(defn trash-resource-impl
   "Click-trash a resource as the corp"
   [state]
-  (core/process-action "trash-resource" state :corp nil))
+  (ensure-no-prompts state)
+  (let [card (get-card state (get-in @state [:corp :basic-action-card]))
+        abilities (:abilities card)
+        ab (nth abilities 5)
+        cost (core/card-ability-cost state :corp ab card nil)]
+    (is' (core/can-pay? state :corp nil cost)))
+  (is' (core/process-action "trash-resource" state :corp nil))
+  true)
+
+(defmacro trash-resource
+  [state]
+  `(error-wrapper (trash-resource-impl ~state)))
 
 (defn accessing
   "Checks to see if the runner has a prompt accessing the given card title"
   [state title]
   (= title (-> @state :runner :prompt first :card :title)))
 
-(defn play-and-score
+(defn play-and-score-impl
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
   [state title]
+  (ensure-no-prompts state)
   (when (play-from-hand state :corp title "New remote")
     (score-agenda state :corp (get-content state (keyword (str "remote" (dec (:rid @state)))) 0))))
+
+(defmacro play-and-score
+  [state title]
+  `(error-wrapper (play-and-score-impl ~state ~title)))
 
 (defn damage
   [state side dmg-type qty]
@@ -649,3 +681,9 @@
   ([state side n] (draw state side n nil))
   ([state side n args]
    (core/draw state side (core/make-eid state) n args)))
+
+(defn print-log [state]
+  (->> (:log @state)
+       (map :text)
+       (str/join " ")
+       (prn)))

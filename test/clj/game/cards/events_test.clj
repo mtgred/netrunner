@@ -1113,7 +1113,7 @@
                            (click-card state :runner cr))
         (run-continue state)
         (click-card state :runner refr)
-        (is (= 2 (count (:discard (get-runner)))) "Cold Read and Refractor in discard"))))    
+        (is (= 2 (count (:discard (get-runner)))) "Cold Read and Refractor in discard"))))
 
 (deftest ^{:card-title "compile"}
   compile-test
@@ -1575,24 +1575,24 @@
     (is (no-prompt? state :runner) "No more accesses after 3")))
 
 (deftest deep-dive-single-card
-  ;;there is only a single card to access - the runner doesn't see a menu, 
-  ;; or get offered to spend a click. 
+  ;;there is only a single card to access - the runner doesn't see a menu,
+  ;; or get offered to spend a click.
   (do-game
-    (new-game {:corp {:deck ["Fire Wall" "Brainstorm" "Chiyashi" 
-    	      	     	     "DNA Tracker" "Excalibur" "PAD Campaign"]}
-	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+    (new-game {:corp {:deck ["Fire Wall" "Brainstorm" "Chiyashi"
+                             "DNA Tracker" "Excalibur" "PAD Campaign"]}
+               :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
     (draw state :corp)
     (core/move state :corp (find-card "PAD Campaign" (:hand (get-corp))) :deck)
     (take-credits state :corp)
     ;; R&D is now: Pad Campaign
     (core/gain state :runner :click 1)
-    (core/gain state :runner :credit 100)    
+    (core/gain state :runner :credit 100)
     ;;run the three centrals
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
     (click-prompt state :runner "No action")
     (run-empty-server state "HQ")
-    (click-prompt state :runner "No action")    
+    (click-prompt state :runner "No action")
     (play-from-hand state :runner "Deep Dive")
     (click-prompt state :runner "No action")
     (is (no-prompt? state :runner) "Access not completed or offered second access")
@@ -1604,9 +1604,9 @@
 
 (deftest deep-dive-two-cards
   (do-game
-    (new-game {:corp {:hand ["Fire Wall" "Brainstorm" "Chiyashi" 
-    	      	     	     "DNA Tracker" "Marilyn Campaign" "PAD Campaign"]}
-	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+    (new-game {:corp {:hand ["Fire Wall" "Brainstorm" "Chiyashi"
+                             "DNA Tracker" "Marilyn Campaign" "PAD Campaign"]}
+               :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
     (draw state :corp)
     (core/move state :corp (find-card "PAD Campaign" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Marilyn Campaign" (:hand (get-corp))) :deck)
@@ -1615,19 +1615,19 @@
     ;;R&D is now: PAD Campaign, Marilyn Campaign
     (take-credits state :corp)
     (core/gain state :runner :click 96)
-    (core/gain state :runner :credit 100)    
+    (core/gain state :runner :credit 100)
     ;;run the three centrals
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
     (click-prompt state :runner "No action")
     (run-empty-server state "HQ")
-    (click-prompt state :runner "No action")  
-    ;;access pad campaign, do not trash it, then refuse the second access  
+    (click-prompt state :runner "No action")
+    ;;access pad campaign, do not trash it, then refuse the second access
     (play-from-hand state :runner "Deep Dive")
     (click-prompt state :runner "PAD Campaign")
     (click-prompt state :runner "No action")
     (click-prompt state :runner "No")
-    (is (no-prompt? state :runner) 
+    (is (no-prompt? state :runner)
         "Runner shouldn't be given the option to access from an empty R&D")
     (is (no-prompt? state :corp)
         "Corporation player shouldn't be waiting on prompts")
@@ -1638,7 +1638,7 @@
     (click-prompt state :runner "Pay 3 [Credits] to trash")
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Pay 4 [Credits] to trash")
-    (is (no-prompt? state :runner) 
+    (is (no-prompt? state :runner)
         "Runner should not be waiting on a prompt")
     (is (no-prompt? state :corp)
         "Corporation player shouldn't be waiting on prompts (again)")
@@ -1649,7 +1649,7 @@
 (deftest deep-dive-ikawah-cost-for-second-card
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 3) "Ikawah Project" "Project Vitruvius"]}
-	       :runner {:hand ["Deep Dive"]}})
+               :runner {:hand ["Deep Dive"]}})
     (draw state :corp)
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Ikawah Project" (:hand (get-corp))) :deck)
@@ -1666,16 +1666,16 @@
     (play-from-hand state :runner "Deep Dive")
     (click-prompt state :runner "Ikawah Project")
     (click-prompt state :runner "Pay to steal")
-    (is (no-prompt? state :runner) 
+    (is (no-prompt? state :runner)
         "Runner shouldn't be given the option to access the second card since he spent the last click to steal Ikawah")))
 
 (deftest deep-dive-basic-functionality
   (do-game
-    (new-game {:corp {:hand ["Ansel 1.0" "Better Citizen Program" "Chiyashi" 
-    	      	     	     "Dedicated Technician Team"
-    	      	     	     "Efficiency Committee" "Friends in High Places" "Gyri Labyrinth"
-			     "Heimdall 1.0" "Ichi 1.0" "Janus 1.0"]}
- 	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+    (new-game {:corp {:hand ["Ansel 1.0" "Better Citizen Program" "Chiyashi"
+                             "Dedicated Technician Team"
+                             "Efficiency Committee" "Friends in High Places" "Gyri Labyrinth"
+                             "Heimdall 1.0" "Ichi 1.0" "Janus 1.0"]}
+               :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
     (draw state :corp)
     (core/move state :corp (find-card "Ansel 1.0" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Better Citizen Program" (:hand (get-corp))) :deck)
@@ -1686,7 +1686,7 @@
     (core/move state :corp (find-card "Gyri Labyrinth" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Heimdall 1.0" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Ichi 1.0" (:hand (get-corp))) :deck)
-    (core/move state :corp (find-card "Janus 1.0" (:hand (get-corp))) :deck)    
+    (core/move state :corp (find-card "Janus 1.0" (:hand (get-corp))) :deck)
     (is (= (:title (nth (-> @state :corp :deck) 0)) "Ansel 1.0"))
     (is (= (:title (nth (-> @state :corp :deck) 1)) "Better Citizen Program"))
     (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
@@ -1700,7 +1700,7 @@
     ;;R&D is now: A B C D E F G H I J
     (take-credits state :corp)
     (core/gain state :runner :click 96)
-    (core/gain state :runner :credit 100)    
+    (core/gain state :runner :credit 100)
     ;;run the three centrals
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
@@ -1710,11 +1710,11 @@
     (play-from-hand state :runner "Deep Dive")
     (click-prompt state :runner "Better Citizen Program")
     (click-prompt state :runner "Steal")
-    (click-prompt state :runner "Yes")    
+    (click-prompt state :runner "Yes")
     (click-prompt state :runner "Efficiency Committee")
     (click-prompt state :runner "Steal")
     (is (last-log-contains? state "Corp shuffles R&D"))
-    (is (no-prompt? state :runner) 
+    (is (no-prompt? state :runner)
         "Runner should not be waiting on a prompt")
     (is (no-prompt? state :corp)
         "Corporation player shouldn't be waiting on prompts")
@@ -1726,7 +1726,7 @@
 (deftest deep-dive-strongbox-ikawah-bellona
   (do-game
     (new-game {:corp {:hand ["Strongbox" "Ikawah Project" "Bellona" "Fire Wall"]}
-	       :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
+               :runner {:hand ["Deep Dive" "Deep Dive" "Deep Dive"]}})
     (draw state :corp)
     (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Ikawah Project" (:hand (get-corp))) :deck)
@@ -2832,10 +2832,10 @@
     (is (= 1 (count (:scored (get-runner)))) "Freedom Through Equality not moved from Peddler to score area")
     (take-credits state :runner)
     (take-credits state :corp)
-    (run-empty-server state "Server 2")
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "\"Freedom Through Equality\"")
     (play-from-hand state :runner "\"Freedom Through Equality\"")
+    (run-empty-server state "Server 2")
     (click-prompt state :runner "Steal")
     (is (= 3 (count (:scored (get-runner)))) "Freedom Through Equality moved to score area")
     (is (= 5 (:agenda-point (get-runner))) "Freedom Through Equality for 1 agenda point")))
@@ -3534,7 +3534,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Into the Depths")
     (click-prompt state :runner "HQ")
-    (dotimes [n 12]
+    (dotimes [_ 12]
       (run-continue state))
     (click-prompt state :runner "Gain 4 [Credits]")
     (click-prompt state :runner "Install a program from your stack")
@@ -4264,6 +4264,7 @@
       "Couldn't play Mining Accident without running a central first"
       (play-from-hand state :runner "Mining Accident"))
     (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")
     (changes-val-macro
       1 (count-bad-pub state)
       "Corp took 1 BP"
@@ -6300,7 +6301,7 @@
                :runner {:deck ["Kati Jones" "The Price of Freedom"]}})
     (play-from-hand state :corp "NAPD Contract" "New remote")
     (take-credits state :corp)
-    (is (= 7 (:credit (get-corp))) "Corp has 7 credits (play NAPD + 2 clicks for credit")
+    (is (= 7 (:credit (get-corp))) "Corp has 7 credits (play NAPD + 2 clicks for credit)")
     (play-from-hand state :runner "The Price of Freedom")
     (is (= 2 (count (get-in @state [:runner :hand]))) "The Price of Freedom could not be played because no connection is installed")
     (is (zero? (count (get-in (get-runner) [:rig :resource]))) "Kati Jones is not installed")

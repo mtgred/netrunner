@@ -9,7 +9,7 @@
   :kaocha/color? true
   :kaocha/fail-fast? false
   :kaocha/reporter #profile {:default kaocha.report.progress/report
-                             :ci kaocha.report/documentation}
+                             :ci kaocha.report/result}
   :kaocha/plugins [:kaocha.plugin/randomize
                    :kaocha.plugin/filter
                    :kaocha.plugin/capture-output

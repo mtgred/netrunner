@@ -47,7 +47,7 @@
     (loop [installed (transient [])
            unchecked (into installed-cards hosted-on-corp-cards)]
       (if (empty? unchecked)
-        (reverse (persistent! installed))
+        (persistent! installed)
         (let [[card & remaining] unchecked]
           (recur
             (if (and (runner? card)
@@ -63,7 +63,7 @@
     (loop [installed (transient [])
            unchecked (into installed-cards hosted-on-runner-cards)]
       (if (empty? unchecked)
-        (reverse (persistent! installed))
+        (persistent! installed)
         (let [[card & remaining] unchecked]
           (recur
             (if (and (corp? card)
