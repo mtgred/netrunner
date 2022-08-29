@@ -1898,7 +1898,8 @@
         runner (r/cursor game-state [:runner])
         active-player (r/cursor game-state [:active-player])
         zoom-card (r/cursor app-state [:zoom])
-        background (r/cursor app-state [:options :background])]
+        background (r/cursor app-state [:options :background])
+        custom-bg-url (r/cursor app-state [:options :custom-bg-url])]
 
     (go (while true
           (let [zoom (<! zoom-channel)]
@@ -1996,7 +1997,11 @@
                                  :runner (get-in @game-state [:runner :user :options :background] "lobby-bg")
                                  :corp (get-in @game-state [:corp :user :options :background] "lobby-bg")
                                  :spectator @background)
-                               @background)}]
+                               @background)
+                         :style (if (= @background "custom-bg")
+                                  {:background (str "url(\"" @custom-bg-url "\")")
+                                   :background-size "cover"}
+                                  {})}]
 
                [:div.right-pane
                 [card-zoom-view zoom-card]
