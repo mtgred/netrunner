@@ -157,7 +157,7 @@
   {:player :runner
    :async true
    :label (str "End the run unless the Runner pays " amount " [Credits]")
-   :prompt (str "Choose one")
+   :prompt "Choose one"
    :choices ["End the run"
              (str "Pay " amount " [Credits]")]
    :effect (req (if (= "End the run" target)
@@ -170,7 +170,7 @@
   [amount]
   {:async true
    :label (str "End the run unless the Corp pays " amount " [Credits]")
-   :prompt (str "Choose one")
+   :prompt "Choose one"
    :choices ["End the run"
              (str "Pay " amount " [Credits]")]
    :effect (req (if (= "End the run" target)
@@ -185,7 +185,7 @@
   {:player :runner
    :async true
    :label (str "End the run unless the Runner " label)
-   :prompt (str "Choose one")
+   :prompt "Choose one"
    :choices ["End the run"
              (capitalize prompt)]
    :effect (req (if (= "End the run" target)
@@ -2999,7 +2999,7 @@
                               (let [top-cards (take 3 (:deck corp))
                                     top-names (map :title top-cards)]
                                 {:waiting-prompt "Corp to make a decision"
-                                 :prompt (str "Top 3 cards of R&D: " (str/join ", " top-names))
+                                 :prompt (str "The top cards of R&D are: " (str/join ", " top-names))
                                  :choices ["Arrange cards" "Shuffle R&D"]
                                  :async true
                                  :effect

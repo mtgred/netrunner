@@ -472,12 +472,12 @@
 (defcard "Blockade Runner"
   {:abilities [{:cost [:click 2]
                 :keep-menu-open :while-2-clicks-left
-                :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
+                :msg "draw 3 cards and shuffle 1 card from the grip back into the stack"
                 :async true
                 :effect (req (wait-for (draw state side 3)
                                        (continue-ability
                                          state side
-                                         {:prompt "Choose a card in your Grip to shuffle back into your Stack"
+                                         {:prompt "Choose a card in the grip to shuffle back into the stack"
                                           :choices {:card #(and (in-hand? %)
                                                                 (runner? %))}
                                           :effect (effect (move target :deck)
@@ -1067,7 +1067,7 @@
   {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-active-installed state :runner)))}
    :abilities [{:label "Lose 1 [Credits] (start of turn)"
                 :msg (msg (if (zero? (get-in @state [:runner :credit]))
-                            "lose 0 [Credits] (runner has no credits to lose)"
+                            "lose 0 [Credits] (Runner has no credits to lose)"
                             "lose 1 [Credits]"))
                 :req (req (:runner-phase-12 @state))
                 :once :per-turn
@@ -1075,13 +1075,13 @@
                 :effect (effect (lose-credits eid 1))}]
    :events [{:event :corp-turn-begins
              :msg (msg "draw " (if (zero? (count (get-in @state [:runner :deck])))
-                                 "no cards (Runner's stack is empty)"
+                                 "no cards (the stack is empty)"
                                  "1 card"))
              :async true
              :effect (effect (draw :runner eid 1))}
             {:event :runner-turn-begins
              :msg (msg "lose " (if (zero? (get-in @state [:runner :credit]))
-                                 "0 [Credits] (runner has no credits to lose)"
+                                 "0 [Credits] (Runner has no credits to lose)"
                                  "1 [Credits]"))
              :once :per-turn
              :async true
@@ -1809,16 +1809,16 @@
 
 (defcard "London Library"
   {:abilities [{:async true
-                :label "Install a non-virus program on London Library"
+                :label "Install and host a non-virus program"
                 :cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :prompt "Choose a non-virus program to install on London Library from your grip"
+                :prompt "Choose a non-virus program in the grip"
                 :choices {:card #(and (program? %)
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
-                :msg (msg "host " (:title target))
+                :msg (msg "install and host " (:title target))
                 :effect (effect (runner-install eid target {:host-card card :ignore-install-cost true}))}
-               {:label "Add a hosted program to your Grip"
+               {:label "Add a hosted program to the grip"
                 :cost [:click 1]
                 :keep-menu-open :while-clicks-left
                 :choices {:req (req (same-card? card (:host target)))}
@@ -2064,17 +2064,17 @@
 (defcard "Off-Campus Apartment"
   {:flags {:runner-install-draw true}
    :abilities [{:async true
-                :label "Install and host a connection on Off-Campus Apartment"
+                :label "Install and host a connection"
                 :cost [:click 1]
-                :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
+                :prompt "Choose a connection in the grip"
                 :choices {:req (req (and (has-subtype? target "Connection")
                                          (can-pay? state side (assoc eid :source card :source-type :runner-install)
                                                    target nil [:credit (install-cost state side target)])
                                          (in-hand? target)))}
-                :msg (msg "host " (:title target) " and draw 1 card")
+                :msg (msg "install and host " (:title target) " and draw 1 card")
                 :effect (effect (runner-install eid target {:host-card card}))}
                {:label "Host an installed connection (manual)"
-                :prompt "Choose an installed connection to host"
+                :prompt "Choose an installed connection"
                 :choices {:card #(and (has-subtype? % "Connection")
                                       (installed? %))}
                 :msg (msg "host " (:title target) " and draw 1 card")
@@ -2282,7 +2282,7 @@
   (let [remove-counter
         {:async true
          :req (req (seq (:hosted card)))
-         :msg (msg "remove 1 counter from " (:title target))
+         :msg (msg "remove 1 power counter from " (:title target))
          :choices {:card #(:host %)}
          :effect (req (do (add-counter state side target :power -1)
                           (if (pos? (get-counters (get-card state target) :power))
@@ -2293,7 +2293,7 @@
                   :label "Host a program or piece of hardware"
                   :cost [:click 1]
                   :keep-menu-open :while-clicks-left
-                  :prompt "Choose a card in your Grip to host"
+                  :prompt "Choose a program or piece of hardware in the grip"
                   :choices {:card #(and (or (program? %)
                                             (hardware? %))
                                         (in-hand? %)
@@ -2303,12 +2303,12 @@
                                  (do (host state side card
                                            (assoc target :counter {:power (:cost target)}))
                                      (effect-completed state side eid))))
-                  :msg (msg "host " (:title target) "")}
+                  :msg (msg "install and host " (:title target))}
                  (assoc remove-counter
-                        :label "Remove 1 counter from a hosted card"
+                        :label "Remove 1 power counter from a hosted card"
                         :cost [:credit 1])
                  {:async true
-                  :label "X [Credit]: Remove counters from a hosted card"
+                  :label "Remove power counters from a hosted card"
                   :choices {:card #(:host %)}
                   :req (req (seq (:hosted card)))
                   :effect (effect
@@ -2316,7 +2316,7 @@
                               (let [paydowntarget target
                                     num-counters (get-counters (get-card state paydowntarget) :power)]
                                 {:async true
-                                 :prompt "How many counters to remove?"
+                                 :prompt "How many power counters to remove?"
                                  :choices {:number (req (min num-counters
                                                              (total-available-credits state :runner eid card)))}
                                  :effect (req (wait-for
@@ -2324,7 +2324,7 @@
                                                 (if-let [payment-str (:msg async-result)]
                                                   (do (system-msg state side
                                                                   (str (build-spend-msg payment-str "use") (:title card)
-                                                                       " to remove " (quantify target "counter")
+                                                                       " to remove " (quantify target "power counter")
                                                                        " from " (:title paydowntarget)))
                                                       (if (= num-counters target)
                                                         (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true})
@@ -2613,7 +2613,7 @@
                 :cost [:click 2 :trash-can]
                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (pos? (count (filter event? (:discard runner))))))
-                :prompt "Choose an event in your heap"
+                :prompt "Choose an event in the heap"
                 :msg (msg "play " (:title target))
                 :show-discard true
                 :choices {:card #(and (event? %)
@@ -3125,12 +3125,12 @@
      :abilities [{:label "Host a resource or piece of hardware"
                   :cost [:click 1]
                   :keep-menu-open :while-clicks-left
-                  :prompt "Choose a card in your Grip to host"
+                  :prompt "Choose a card in the grip"
                   :choices {:card #(and (or (hardware? %)
                                             (resource? %))
                                         (in-hand? %))}
                   :effect (effect (host card target))
-                  :msg (msg "host " (:title target))}
+                  :msg (msg "install and host " (:title target))}
                  ability]
      ; A card installed by The Supplier is ineligible to receive the turn-begins event for this turn.
      :suppress [{:event :runner-turn-begins
@@ -3215,7 +3215,7 @@
                             (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                  (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
         ability {:async true
-                 :prompt "Choose a card in your Grip to install"
+                 :prompt "Choose a card in the grip"
                  :choices
                  {:req (req (and (runner? target)
                                  (in-hand? target)

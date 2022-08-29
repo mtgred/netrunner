@@ -1179,12 +1179,12 @@
   {:events [{:event :runner-install
              :req (req (first-event? state side :runner-install))
              :player :runner
-             :prompt "Choose a card from your Grip to trash"
+             :prompt "Choose a card from your grip to trash"
              :choices {:card #(and (runner? %)
                                    (in-hand? %))}
              :async true
              :msg (msg "force the Runner to trash"
-                       (:title target) " from their Grip")
+                       (:title target) " from their grip")
              :effect (effect (trash :runner eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))}]})
 
 (defcard "Hunter Seeker"

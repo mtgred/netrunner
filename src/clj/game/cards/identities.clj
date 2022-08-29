@@ -1367,10 +1367,10 @@
   {:events [{:event :encounter-ice
              :optional
              {:req (req (pos? (count (:hand runner))))
-              :prompt "Trash a card in you Grip to lower the strength of encountered ice by 2?"
+              :prompt "Trash a card in your grip to lower the strength of encountered ice by 2?"
               :once :per-turn
               :yes-ability
-              {:prompt "Choose a card in your Grip to trash"
+              {:prompt "Choose a card in your grip to trash"
                :choices {:card in-hand?}
                :msg (msg "trash " (:title target)
                          " and lower the strength of " (:title current-ice)
@@ -1717,12 +1717,12 @@
                              (first-successful-run-on-server? state :hq)
                              (<= 2 (count (:discard runner)))
                              (not (zone-locked? state :runner :discard))))
-              :prompt "Choose 2 cards in your Heap?"
+              :prompt "Choose 2 cards in your heap?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:interactive (req true)
                :async true
-               :prompt "Choose 2 cards in your Heap"
+               :prompt "Choose 2 cards in your heap"
                :show-discard true
                :choices {:max 2
                          :all true

@@ -578,8 +578,8 @@
                             (protecting-same-server? card target)))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
-                           (str "trash " (str/join ", " (map :title (take 2 deck))) " from the Runner's Stack")
-                           "trash no cards from the Runner's Stack (it is empty)")))
+                           (str "trash " (str/join ", " (map :title (take 2 deck))) " from the stack")
+                           "trash no cards from the stack (it is empty)")))
              :async true
              :effect (effect (mill :corp eid :runner 2))}]})
 

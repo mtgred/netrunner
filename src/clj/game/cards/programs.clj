@@ -503,15 +503,15 @@
 
 (defcard "Baba Yaga"
   (let [host-click {:cost [:click 1]
-                    :label "Install a non-AI icebreaker on Baba Yaga"
-                    :prompt "Choose a non-AI icebreaker in your Grip to install on Baba Yaga"
+                    :label "Install and host a non-AI icebreaker on Baba Yaga"
+                    :prompt "Choose a non-AI icebreaker in the grip"
                     :choices {:card #(and (has-subtype? % "Icebreaker")
                                           (not (has-subtype? % "AI"))
                                           (in-hand? %))}
                     :async true
                     :effect (effect (runner-install eid target {:host-card card}))}
         host-free {:label "Host an installed non-AI icebreaker (manual)"
-                   :prompt "Choose an installed non-AI icebreaker to host"
+                   :prompt "Choose an installed non-AI icebreaker"
                    :choices {:card #(and (has-subtype? % "Icebreaker")
                                          (not (has-subtype? % "AI"))
                                          (installed? %))}
@@ -950,7 +950,7 @@
                                                     card nil))))}))]
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-                  :msg (msg "reveal the top cards of their Stack: " (str/join ", " (map :title (take 5 (:deck runner)))))
+                  :msg (msg "reveal the top cards of the stack: " (str/join ", " (map :title (take 5 (:deck runner)))))
                   :waiting-prompt "Runner to make a decision"
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -1078,15 +1078,15 @@
                                                      [:credit (install-cost state side % {:cost-bonus -1})]))
                                      (:hand runner))))
                 :cost [:click 1]
-                :label "Install a program on Dhegdheer"
-                :prompt "Choose a program in your Grip to install on Dhegdheer"
+                :label "Install and host a program"
+                :prompt "Choose a program in the grip"
                 :choices
                 {:req (req (and (program? target)
                                 (runner-can-install? state side target false)
                                 (in-hand? target)
                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                           [:credit (install-cost state side target {:cost-bonus -1})])))}
-                :msg (msg (str "host " (:title target)
+                :msg (msg (str "install and host " (:title target)
                                (when (-> target :cost pos?)
                                  ", lowering its cost by 1 [Credit]")))
                 :async true
@@ -1097,7 +1097,7 @@
                                                         :cost-bonus -1}))}
                {:label "Host an installed program with [Credit] discount (manual)"
                 :req (req (nil? (get-in card [:special :dheg-prog])))
-                :prompt "Choose an installed program to host with [Credit] discount"
+                :prompt "Choose an installed program"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg (str "host " (:title target)
@@ -1114,7 +1114,7 @@
                                          (effect-completed state side eid))))}
                {:label "Host an installed program (manual)"
                 :req (req (nil? (get-in card [:special :dheg-prog])))
-                :prompt "Choose an installed program to host"
+                :prompt "Choose an installed program"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg (str "host " (:title target)))
@@ -1150,7 +1150,7 @@
                                               :cause-card card}))}]})
 
 (defcard "Djinn"
-  {:abilities [{:label "Search your Stack for a virus program and add it to your Grip"
+  {:abilities [{:label "Search the stack for a virus program and add it to your Grip"
                 :prompt "Choose a Virus"
                 :msg (msg "add " (:title target) " to their Grip")
                 :choices (req (cancellable (filter #(and (program? %)
@@ -1161,7 +1161,7 @@
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (move target :hand))}
-               {:label "Install a non-Icebreaker program on Djinn"
+               {:label "Install and host a non-Icebreaker program"
                 :cost [:click 1]
                 :prompt "Choose a non-Icebreaker program in your grip"
                 :choices {:req (req (and (program? target)
@@ -1171,7 +1171,7 @@
                 :msg (msg "install and host " (:title target))
                 :async true
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed non-Icebreaker program on Djinn"
+               {:label "Host an installed non-Icebreaker program (manual)"
                 :prompt "Choose an installed non-Icebreaker program"
                 :choices {:card #(and (program? %)
                                       (not (has-subtype? % "Icebreaker"))
@@ -1531,8 +1531,8 @@
                 :msg "gain [Click][Click][Click]"}]})
 
 (defcard "Ika"
-  (auto-icebreaker {:abilities [{:label "Host Ika on a piece of ice"
-                                 :prompt "Host Ika on a piece of ice"
+  (auto-icebreaker {:abilities [{:label "Host on a piece of ice"
+                                 :prompt "Choose a piece of ice"
                                  :cost [:credit 2]
                                  :choices {:card #(and (ice? %)
                                                        (installed? %)
@@ -1634,7 +1634,7 @@
                                      icepos (card-index state (get-card state (:host k)))]
                                  (continue-ability
                                    state side
-                                   {:prompt (msg "Host on a piece of ice"
+                                   {:prompt (msg "Choose a piece of ice"
                                                  (when hosted " not before or after the current host ice"))
                                     :cost [:click 1]
                                     :choices {:card #(if hosted
@@ -1692,17 +1692,17 @@
                 :effect (effect (pump-ice current-ice -1))}]})
 
 (defcard "Leprechaun"
-  {:abilities [{:label "Install a program on Leprechaun"
+  {:abilities [{:label "Install and host a program"
                 :cost [:click 1]
-                :prompt "Choose a program in your Grip to install on Leprechaun"
+                :prompt "Choose a program in the grip"
                 :choices {:req (req (and (program? target)
                                          (runner-can-install? state side target false)
                                          (in-hand? target)))}
-                :msg (msg "host " (:title target))
+                :msg (msg "install and host " (:title target))
                 :async true
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed program (manual)"
-                :prompt "Choose an installed program to host"
+                :prompt "Choose an installed program"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg "host " (:title target))
@@ -2059,15 +2059,15 @@
   {:implementation "All abilities are manual"
    :abilities [{:label "Host on the outermost piece of ice of a central server"
                 :cost [:click 1]
-                :prompt "Host on the outermost piece of ice of a central server"
+                :prompt "Choose the outermost piece of ice of a central server"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
                                       (is-central? (second (get-zone %))))}
                 :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
-               {:label "Advance to next piece of ice"
-                :prompt "Choose the next innermost piece of ice to host Pawn on"
+               {:label "Host on the next innermost piece of ice"
+                :prompt "Choose the next innermost piece of ice"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
@@ -2075,13 +2075,13 @@
                 :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:req (req (not (zone-locked? state :runner :discard)))
-                :label "Trash Pawn and install a Caïssa from your Grip or Heap, ignoring all costs"
+                :label "Trash to install a Caïssa program from the grip or heap, ignoring all costs"
                 :async true
                 :effect (req (let [this-pawn (:cid card)]
                                (wait-for (trash state side card nil)
                                          (continue-ability
                                            state side
-                                           {:prompt "Choose a Caïssa program to install from your Grip or Heap"
+                                           {:prompt "Choose a Caïssa program to install from the grip or heap"
                                             :show-discard true
                                             :choices {:card #(and (has-subtype? % "Caïssa")
                                                                   (not= (:cid %) this-pawn)
@@ -2142,7 +2142,7 @@
                                 (continue-ability
                                   (let [fired-subs (count (filter :fired (:subroutines (:ice context))))]
                                     {:optional
-                                     {:prompt (str "Trash the top card of your Stack to trash " (quantify fired-subs "card") " from R&D?")
+                                     {:prompt (str "Trash the top card of the stack to trash " (quantify fired-subs "card") " from R&D?")
                                       :yes-ability
                                       {:async true
                                        :msg (msg (str "trash " (:title (first (:deck runner)))
@@ -2178,19 +2178,19 @@
              :effect (effect (add-counter :runner card :virus 2))}]})
 
 (defcard "Progenitor"
-  {:abilities [{:label "Install a virus program on Progenitor"
+  {:abilities [{:label "Install and host a virus program"
                 :req (req (empty? (:hosted card)))
                 :cost [:click 1]
-                :prompt "Choose a Virus program to install on Progenitor"
+                :prompt "Choose a virus program"
                 :choices {:card #(and (program? %)
                                       (has-subtype? % "Virus")
                                       (in-hand? %))}
-                :msg (msg "host " (:title target))
+                :msg (msg "install and host " (:title target))
                 :async true
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed virus (manual)"
                 :req (req (empty? (:hosted card)))
-                :prompt "Choose an installed virus program to host"
+                :prompt "Choose an installed virus program"
                 :choices {:card #(and (program? %)
                                       (has-subtype? % "Virus")
                                       (installed? %))}
@@ -2306,7 +2306,7 @@
 
 (defcard "Rook"
   {:abilities [{:cost [:click 1]
-                :label "move to another ice"
+                :label "Host on another ice"
                 :async true
                 :effect (req (let [r (get-card state card)
                                    hosted? (ice? (:host r))
@@ -2314,9 +2314,9 @@
                                (continue-ability
                                  state side
                                  {:prompt (if hosted?
-                                            (msg "Host Rook on a piece of ice protecting this server or at position "
+                                            (msg "Choose a piece of ice protecting this server or at position "
                                                  icepos " of a different server")
-                                            (msg "Host Rook on a piece of ice protecting any server"))
+                                            (msg "Choose a piece of ice protecting any server"))
                                   :choices {:card #(if hosted?
                                                      (and (or (= (get-zone %) (get-zone (:host r)))
                                                               (= (card-index state %) icepos))
@@ -2374,21 +2374,21 @@
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]})
 
 (defcard "Scheherazade"
-  {:abilities [{:label "Install and host a program from Grip"
+  {:abilities [{:label "Install and host a program from the grip"
                 :async true
                 :cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :prompt "Choose a program to install on Scheherazade from your grip"
+                :prompt "Choose a program in the grip"
                 :choices {:req (req (and (program? target)
                                       (runner-can-install? state side target false)
                                       (in-hand? target)))}
-                :msg (msg "host " (:title target) " and gain 1 [Credits]")
+                :msg (msg "install and host " (:title target) " and gain 1 [Credits]")
                 :effect (req (wait-for (gain-credits state side 1)
                                        (runner-install state side
                                                        (assoc eid :source card :source-type :runner-install)
                                                        target {:host-card card})))}
                {:label "Host an installed program (manual)"
-                :prompt "Choose a program to host"
+                :prompt "Choose an installed program"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg "host " (:title target) " and gain 1 [Credits]")

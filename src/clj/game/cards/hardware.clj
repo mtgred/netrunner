@@ -481,14 +481,14 @@
    :events [{:event :runner-install
              :optional
              {:req (req (has-subtype? (:card context) "Caïssa"))
-              :prompt "Trigger the [Click] ability of the just-installed Caïssa card?"
+              :prompt "Trigger the [Click] ability of the just-installed Caïssa program?"
               :yes-ability
               {:async true
                :effect (effect
                          (continue-ability
                            (let [cid (:cid (:card context))]
                              {:async true
-                              :prompt "Choose the just-installed Caïssa card"
+                              :prompt "Choose the just-installed Caïssa program"
                               :choices {:card #(= cid (:cid %))}
                               :msg (msg "trigger the [Click] ability of " (:title target)
                                         " without spending [Click]")
@@ -537,10 +537,10 @@
                                (update-all-ice))}}}]})
 
 (defcard "Dinosaurus"
-  {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
+  {:abilities [{:label "Install and host a non-AI icebreaker"
                 :req (req (empty? (:hosted card)))
                 :cost [:click 1]
-                :prompt "Choose a non-AI icebreaker in your Grip to install on Dinosaurus"
+                :prompt "Choose a non-AI icebreaker in the grip"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (in-hand? %))}
@@ -548,7 +548,7 @@
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed non-AI icebreaker (manual)"
                 :req (req (empty? (:hosted card)))
-                :prompt "Choose an installed non-AI icebreaker to host"
+                :prompt "Choose an installed non-AI icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
@@ -704,27 +704,27 @@
                                        (effect-completed state side eid)))}]
     {:implementation "Credit usage restriction not enforced"
      :data {:counter {:credit 9}}
-     :abilities [{:label "Take 1 [Credits] from Flame-out"
+     :abilities [{:label "Take 1 hosted [Credits]"
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
                   :async true
                   :effect (req (add-counter state side card :credit -1)
-                               (system-msg state :runner "takes 1 [Credits] from Flame-out")
+                               (system-msg state :runner "takes 1 hosted [Credits] from Flame-out")
                                (register-flame-effect state card)
                                (gain-credits state :runner eid 1))}
-                 {:label "Take all [Credits] from Flame-out"
+                 {:label "Take all hosted [Credits]"
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
                   :async true
                   :effect (req (let [credits (get-counters card :credit)]
                                  (update! state :runner (dissoc-in card [:counter :credit]))
-                                 (system-msg state :runner (str "takes " credits " [Credits] from Flame-out"))
+                                 (system-msg state :runner (str "takes " credits " hosted [Credits] from Flame-out"))
                                  (register-flame-effect state card)
                                  (gain-credits state :runner eid credits)))}
-                 {:label "Install a program on Flame-out"
+                 {:label "Install and host a program"
                   :req (req (empty? (:hosted card)))
                   :cost [:click 1]
-                  :prompt "Choose a program in your Grip to install on Flame-out"
+                  :prompt "Choose a program in the grip"
                   :choices {:card #(and (program? %)
                                         (in-hand? %))}
                   :async true
@@ -732,7 +732,7 @@
                                   (runner-install eid target {:host-card card}))}
                  {:label "Host an installed program (manual)"
                   :req (req (empty? (:hosted card)))
-                  :prompt "Choose an installed program to host"
+                  :prompt "Choose an installed program"
                   :choices {:card #(and (program? %)
                                         (installed? %))}
                   :msg (msg "host " (:title target))
@@ -1309,19 +1309,19 @@
 
 (defcard "NetChip"
   {:abilities [{:async true
-                :label "Install a program on NetChip"
+                :label "Install and host a program"
                 :req (req (empty? (:hosted card)))
                 :effect (effect
                           (continue-ability
                             (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                               {:async true
                                :cost [:click 1]
-                               :prompt "Choose a program in your Grip to install on NetChip"
+                               :prompt "Choose a program in the grip"
                                :choices {:card #(and (program? %)
                                                      (runner-can-install? state side % false)
                                                      (<= (:memoryunits %) n)
                                                      (in-hand? %))}
-                               :msg (msg "host " (:title target))
+                               :msg (msg "install and host " (:title target))
                                :effect (effect (runner-install eid target {:host-card card :no-mu true}))})
                             card nil))}
                {:async true
@@ -1330,7 +1330,7 @@
                 :effect (effect
                           (continue-ability
                             (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                              {:prompt "Choose an installed program to host"
+                              {:prompt "Choose an installed program"
                                :choices {:card #(and (program? %)
                                                      (<= (:memoryunits %) n)
                                                      (installed? %))}
@@ -1358,17 +1358,17 @@
 (defcard "Omni-drive"
   {:recurring 1
    :abilities [{:async true
-                :label "Install and host a program of 1[mu] or less on Omni-drive"
+                :label "Install and host a program of 1[mu] or less"
                 :req (req (empty? (:hosted card)))
                 :cost [:click 1]
-                :prompt "Choose a program of 1[mu] or less to install on Omni-drive from your grip"
+                :prompt "Choose a program of 1[mu] or less in the grip"
                 :choices {:card #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
-                :msg (msg "host " (:title target))
+                :msg (msg "install and host " (:title target))
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed program of 1[mu] or less (manual)"
-                :prompt "Choose an installed program of 1[mu] or less to host"
+                :prompt "Choose an installed program of 1[mu] or less"
                 :choices {:card #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (installed? %))}
@@ -1434,9 +1434,9 @@
               :player :runner
               :autoresolve (get-autoresolve :auto-fire)
               :waiting-prompt "Runner to make a decision"
-              :prompt "Gain 1 [Credit] and look at the top card of your Stack?"
+              :prompt "Gain 1 [Credit] and look at the top card of the stack?"
               :yes-ability
-              {:msg "gain 1 [Credit] and look at the top card of their Stack"
+              {:msg "gain 1 [Credit] and look at the top card of the stack"
                :async true
                :effect
                (req
@@ -1445,12 +1445,12 @@
                              state :runner
                              {:player :runner
                               :optional
-                              {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of your Stack?")
+                              {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of the stack?")
                                :yes-ability
-                               {:msg "add the top card of their Stack to the bottom"
+                               {:msg "add the top card of the stack to the bottom"
                                 :effect (effect (move :runner (first (:deck runner)) :deck))}
                                :no-ability
-                               {:effect (effect (system-msg "does not add the top card of the their Stack to the bottom"))}}}
+                               {:effect (effect (system-msg "does not add the top card of the the stack to the bottom"))}}}
                              card nil)))}
               :no-ability {:effect (effect (system-msg "declines to use Paragon"))}}}]
    :abilities [(set-autoresolve :auto-fire "Paragon")]})
@@ -1562,19 +1562,19 @@
                                        (pos? (count (:deck runner)))))
                         :autoresolve (get-autoresolve :auto-fire)
                         :player :runner
-                        :prompt "Look at top 2 cards of your Stack?"
+                        :prompt "Look at top 2 cards of the stack?"
                         :yes-ability
-                        {:msg "look at the top 2 cards of their Stack"
+                        {:msg "look at the top 2 cards of the stack"
                          :choices ["OK"]
-                         :prompt (msg "The top 2 cards of your Stack are "
+                         :prompt (msg "The top 2 cards of the stack are "
                                       (str/join ", " (map :title (take 2 (:deck runner))))
                                       ".")}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
-               {:label "Reveal and install top card of your Stack"
+               {:label "Reveal and install top card of the stack"
                 :once :per-turn
                 :cost [:credit 1]
                 :req (req (pos? (count (:deck runner))))
-                :msg (msg "reveal the top card of their Stack: " (:title (first (:deck runner))))
+                :msg (msg "reveal the top card of the stack: " (:title (first (:deck runner))))
                 :async true
                 :effect
                 (req
@@ -1708,10 +1708,10 @@
                :interactive (req (hardware-and-in-deck? (:card context) runner))
                :silent (req (not (hardware-and-in-deck? (:card context) runner)))
                :optional
-               {:prompt "Search your Stack for another copy to add to your Grip?"
+               {:prompt "Search the stack for another copy to add to your grip?"
                 :req (req (hardware-and-in-deck? (:card context) runner))
                 :yes-ability
-                {:msg (msg "add a copy of " (:title (:card context)) " to their Grip")
+                {:msg (msg "add a copy of " (:title (:card context)) " to their grip")
                  :effect (effect (trigger-event :searched-stack nil)
                            (shuffle! :deck)
                            (move (some #(when (= (:title %) (:title (:card context))) %) (:deck runner)) :hand))}}}]}))

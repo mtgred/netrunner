@@ -1875,8 +1875,8 @@
                :msg (msg (if (pos? (count (:deck runner)))
                            (str "trash "
                                 (str/join ", " (map :title (take (adv4? state card) (:deck runner))))
-                                " from the Runner's stack")
-                           "trash no cards from the Runner's stack (it is empty)"))
+                                " from the stack")
+                           "trash no cards from the stack (it is empty)"))
                :effect (effect (mill :corp eid :runner (adv4? state card)))}]}))
 
 (defcard "Unorthodox Predictions"
