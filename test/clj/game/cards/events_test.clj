@@ -3868,6 +3868,10 @@
       (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
       (is (= 3 (count (:deck (get-runner)))) "Starts with 3 cards in deck")
       (play-from-hand state :runner "Labor Rights")
+      (is (last-log-contains? state "Runner trashes the top 3 cards of their stack"))
+      (is (last-log-contains? state "Lawyer Up"))
+      (is (last-log-contains? state "Sure Gamble"))
+      (is (last-log-contains? state "Knifed"))
       (is (empty? (:deck (get-runner))) "Milled 3 cards")
       (is (= 3 (count (:discard (get-runner)))) "4 cards in deck - 3x trashed")
       (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
@@ -3880,17 +3884,21 @@
 (deftest labor-rights-less-than-3-cards
     ;; Less than 3 cards
     (do-game
-      (new-game {:runner {:hand ["Labor Rights"] :deck ["Sure Gamble"]}})
+      (new-game {:runner {:hand [(qty "Labor Rights" 2)] :deck ["Sure Gamble"]}})
       (take-credits state :corp)
       (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
       (is (= 1 (count (:deck (get-runner)))) "Starts with 1 card in deck")
       (play-from-hand state :runner "Labor Rights")
+      (is (last-log-contains? state "Runner trashes the top 1 cards of their stack"))
       (is (empty? (:deck (get-runner))) "Milled 1 cards")
       (is (= 1 (count (:discard (get-runner)))) "2 cards in deck - 1x trashed")
       (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
       (is (empty? (:deck (get-runner))) "No cards in deck")
-      (is (= 1 (count (:hand (get-runner)))) "1 card in hand")
-      (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
+      (is (= 2 (count (:hand (get-runner)))) "2 cards in hand")
+      (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Labor Rights")
+      (is (last-log-contains? state "Runner trashes no cards"))))
 
 (deftest labor-rights-heap-locked
     ;; Heap Locked
