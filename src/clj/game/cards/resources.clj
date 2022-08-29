@@ -1855,18 +1855,21 @@
    :events [(trash-on-empty :credit)]})
 
 (defcard "Motivation"
-  (let [ability {:msg "look at the top card of their Stack"
-                 :label "Look at the top card of your Stack (start of turn)"
-                 :once :per-turn
+  (let [ability {:label "Look at the top card of your Stack (start of turn)"
                  :req (req (:runner-phase-12 @state))
-                 :effect (effect (continue-ability
-                                   {:prompt (req (->> runner :deck first :title (str "The top card of your Stack is ")))
-                                    :choices ["OK"]}
-                                   card nil))}]
+                 :once :per-turn
+                 :optional
+                 {:waiting-prompt "Runner to choose an option"
+                  :prompt "Look at the top card of your Stack?"
+                  :autoresolve (get-autoresolve :auto-fire)
+                  :yes-ability
+                  {:prompt (req (->> runner :deck first :title (str "The top card of your Stack is ")))
+                   :msg "look at the top card of their Stack"
+                   :choices ["OK"]}}}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner)))}
      :events [(assoc ability :event :runner-turn-begins)]
-     :abilities [ability]}))
+     :abilities [ability (set-autoresolve :auto-fire "Motivation")]}))
 
 (defcard "Mr. Li"
   {:abilities [{:cost [:click 1]

@@ -1685,13 +1685,11 @@
              :req (req (is-central? (target-server context)))
              :msg "place 1 virus counter on itself"
              :effect (req (add-counter state side card :virus 1))}]
-   :autoresolve (get-autoresolve :auto-fire)
    :abilities [{:cost [:virus 1]
                 :label "Give -1 strength to current piece of ice"
                 :req (req (active-encounter? state))
                 :msg (msg "give -1 strength to " (:title current-ice))
-                :effect (effect (pump-ice current-ice -1))}
-               (set-autoresolve :auto-fire "Leech")]})
+                :effect (effect (pump-ice current-ice -1))}]})
 
 (defcard "Leprechaun"
   {:abilities [{:label "Install a program on Leprechaun"

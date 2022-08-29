@@ -601,6 +601,7 @@
                  :effect (effect (continue-ability
                                    {:optional
                                     {:prompt "Use CSR Campaign to draw 1 card?"
+                                     :autoresolve (get-autoresolve :auto-fire)
                                      :yes-ability {:async true
                                                    :msg "draw 1 card"
                                                    :effect (effect (draw eid 1))}}}
@@ -608,7 +609,7 @@
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
-     :abilities [ability]}))
+     :abilities [ability (set-autoresolve :auto-fire "CSR Campaign")]}))
 
 (defcard "Cybernetics Court"
   {:constant-effects [(corp-hand-size+ 4)]})
@@ -1512,6 +1513,7 @@
 (defcard "Net Analytics"
   (let [ability {:optional
                  {:player :corp
+                  :autoresolve (get-autoresolve :auto-fire)
                   :waiting-prompt "Corp to choose an option"
                   :prompt "Draw from Net Analytics?"
                   :yes-ability
@@ -1522,7 +1524,8 @@
                   (assoc-in [:optional :req] (req (= side :runner))))
               (-> ability
                   (assoc :event :runner-prevent)
-                  (assoc-in [:optional :req] (req (seq (filter #(some #{:tag} %) targets)))))]}))
+                  (assoc-in [:optional :req] (req (seq (filter #(some #{:tag} %) targets)))))]
+     :abilities [(set-autoresolve :auto-fire "Net Analytics")]}))
 
 (defcard "Net Police"
   {:recurring (req (get-link state))
