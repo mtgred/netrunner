@@ -674,7 +674,8 @@
    :constant-effects [(mu+ 2)]
    :events [{:event :successful-run
              :req (req (first-event? state :runner :successful-run))
-             :silent (req true)
+             ;; Specifically non-silent on ItD runs because then order of Endurance trigger and ItD charge matters
+             :silent (req (not= "Into the Depths" (-> @state :run :source-event :title)))
              :msg "place 1 power counter on itself"
              :async true
              :effect (effect (add-counter eid card :power 1 nil))}]
