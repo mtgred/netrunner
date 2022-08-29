@@ -1476,7 +1476,7 @@
    :access {:req (req tagged)
             :player :runner
             :interactive (req true)
-            :prompt "Quantum Predictive Model was added to the corp's score area"
+            :prompt "Quantum Predictive Model will be added to the Corp's score area"
             :choices ["OK"]
             :msg "add itself to their score area and gain 1 agenda point"
             :effect (effect (move :corp card :scored {:force true})
