@@ -1783,7 +1783,7 @@
       (run-continue state)
       (card-ability state :runner mass-driver 1)
       (card-ability state :runner mass-driver 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "End the run")
       (run-continue-until state :approach-ice eula)
       (rez state :corp eula)

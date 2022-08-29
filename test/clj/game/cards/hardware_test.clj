@@ -318,7 +318,7 @@
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
 
 (deftest autoscripter
-  ;; Autoscripter - gain 1 [Click] first time Runner installs program from Grip during their turn.
+  ;; Autoscripter - gain [Click] first time Runner installs program from Grip during their turn.
   ;; Trash if unsuccessful run
   (do-game
     (new-game {:runner {:deck ["Autoscripter" (qty "Inti" 3) "Clone Chip"]}

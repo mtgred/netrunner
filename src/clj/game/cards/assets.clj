@@ -1975,7 +1975,7 @@
                  :once-per-instance false
                  :req (req (and (corp? (:card target))
                                 (pos? (:click runner))))
-                 :msg "force the runner to lose 1 [Click]"
+                 :msg "force the runner to lose [Click]"
                  :effect (effect (lose-clicks :runner 1))}]
     {:events [ability]
      :on-trash ability}))
@@ -2543,7 +2543,7 @@
      :abilities [ability]}))
 
 (defcard "Warden Fatuma"
-  (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose 1 [Click], if able"}]
+  (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose [Click], if able"}]
     (letfn [(all-rezzed-bios [state]
               (filter #(and (ice? %)
                             (has-subtype? % "Bioroid")
@@ -2560,7 +2560,7 @@
                 :effect (req (update-all state (partial add-one (:cid card))))}
        :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
                      (update-all state (partial remove-one (:cid card))))
-       :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
+       :sub-effect {:msg "force the Runner to lose [Click], if able"
                     :effect (req (lose-clicks state :runner 1))}
        :events [{:event :rez
                  :req (req (and (ice? (:card context))

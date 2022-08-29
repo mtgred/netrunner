@@ -2157,7 +2157,7 @@
              :req (req this-card-run)
              :effect (req (prevent-run-on-server state card (first (:server target)))
                           (when (:successful target)
-                            (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
+                            (system-msg state :runner "gains [Click] and adds Marathon to their grip")
                             (gain-clicks state :runner 1)
                             (move state :runner card :hand)
                             (unregister-events state side card)))}]})

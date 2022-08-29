@@ -5939,7 +5939,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue state)
     (card-ability state :runner (get-program state 0) 0)
-    (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+    (click-prompt state :runner "Force the Runner to lose [Click]")
     (click-prompt state :runner "End the run")
     (run-continue state)
     (run-continue state)

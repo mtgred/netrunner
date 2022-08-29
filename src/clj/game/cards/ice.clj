@@ -259,8 +259,8 @@
 
 (def runner-loses-click
   ; Runner loses a click effect
-  {:label "Force the Runner to lose 1 [Click]"
-   :msg "force the Runner to lose 1 [Click] if able"
+  {:label "Force the Runner to lose [Click]"
+   :msg "force the Runner to lose [Click], if able"
    :effect (effect (lose-clicks :runner 1))})
 
 (defn runner-loses-credits
