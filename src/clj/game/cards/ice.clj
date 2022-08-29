@@ -157,7 +157,7 @@
   {:player :runner
    :async true
    :label (str "End the run unless the Runner pays " amount " [Credits]")
-   :prompt (str "End the run or pay " amount " [Credits]?")
+   :prompt (str "Choose one")
    :choices ["End the run"
              (str "Pay " amount " [Credits]")]
    :effect (req (if (= "End the run" target)
@@ -170,7 +170,7 @@
   [amount]
   {:async true
    :label (str "End the run unless the Corp pays " amount " [Credits]")
-   :prompt (str "End the run or pay " amount " [Credits]?")
+   :prompt (str "Choose one")
    :choices ["End the run"
              (str "Pay " amount " [Credits]")]
    :effect (req (if (= "End the run" target)
@@ -185,7 +185,7 @@
   {:player :runner
    :async true
    :label (str "End the run unless the Runner " label)
-   :prompt (str "End the run or " prompt "?")
+   :prompt (str "Choose one")
    :choices ["End the run"
              (capitalize prompt)]
    :effect (req (if (= "End the run" target)
@@ -796,7 +796,7 @@
                                  (continue-ability
                                    state :runner
                                    {:waiting-prompt "Runner to choose an option"
-                                    :prompt "Trash 1 program or trash top 2 cards of the Stack?"
+                                    :prompt "Choose one"
                                     :choices (req [(when (seq (filter program? (all-active-installed state :runner)))
                                                      "Trash 1 program")
                                                    (when (<= 1 (count (:deck runner)))
@@ -1400,7 +1400,7 @@
 (defcard "Errand Boy"
   (let [sub {:async true
              :label "Draw a card or gain 1 [Credits]"
-             :prompt "Choose one:"
+             :prompt "Choose one"
              :choices ["Gain 1 [Credits]" "Draw 1 card"]
              :msg (req (if (= target "Gain 1 [Credits]")
                          "gain 1 [Credits]"
@@ -1542,7 +1542,7 @@
    [{:event :approach-server
      :interactive (req true)
      :optional
-     {:prompt "Rez Formicary?"
+     {:prompt "Rez and move Formicary to protect the approched server?"
       :autoresolve (get-autoresolve :auto-fire)
       :req (req (and (can-rez? state side card)
                      (can-pay? state side eid card nil (get-rez-cost state side card nil))))
@@ -1563,8 +1563,8 @@
    :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
                   :player :runner
                   :async true
-                  :prompt "Suffer 2 net damage or end the run?"
-                  :choices ["2 net damage" "End the run"]
+                  :prompt "Choose one"
+                  :choices ["Suffer 2 net damage" "End the run"]
                   :effect (req (if (= target "End the run")
                                  (do (system-msg state :runner "chooses to end the run")
                                      (end-run state :corp eid card))
@@ -1857,7 +1857,7 @@
                                   (trash eid target {:cause :subroutine}))}]})
 
 (defcard "Hortum"
-  (letfn [(hort [n] {:prompt "Choose a card to add to HQ with Hortum"
+  (letfn [(hort [n] {:prompt "Choose a card to add to HQ"
                      :async true
                      :choices (req (cancellable (:deck corp) :sorted))
                      :msg "add 1 card to HQ from R&D"
@@ -2242,7 +2242,7 @@
                                    state :runner
                                    {:optional
                                     {:waiting-prompt "Runner to choose an option"
-                                     :prompt "Reshuffle your Grip into the Stack?"
+                                     :prompt "Shuffle your Grip into the Stack?"
                                      :player :runner
                                      :yes-ability
                                      {:effect (req (doseq [c (:hand runner)]
@@ -2342,7 +2342,7 @@
                                          {:req (req (some #(some program? (:hosted %))
                                                           (remove-once #(same-card? % magnet)
                                                                        (filter ice? (all-installed state corp)))))
-                                          :prompt "Choose a Program to host on Magnet"
+                                          :prompt "Choose a Program to host"
                                           :msg (msg "host " (card-str state target))
                                           :choices {:card #(and (program? %)
                                                                 (ice? (:host %))
@@ -2493,13 +2493,13 @@
 (defcard "Mestnichestvo"
   {:advanceable :always
    :on-encounter
-   {:optional {:prompt "Remove an advancement counter to make the Runner lose 3 [Credits]?"
+   {:optional {:prompt "Remove a hosted advancement counter to make the Runner lose 3 [Credits]?"
                :req (req (pos? (get-counters (get-card state card) :advancement)))
                :yes-ability {:async true
-                             :msg (msg "spend 1 advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
+                             :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
                              :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
                                              (lose-credits :runner eid 3))}
-               :no-ability {:msg "decline to make the runner lose 3 [Credits]"}}}
+               :no-ability {:msg "decline to spend 1 hosted advancement counter"}}}
    :subroutines [{:label "The Runner loses 3 [Credits]"
                   :msg "force the Runner to lose 3 [Credits]"
                   :async true
@@ -2592,7 +2592,7 @@
             {:label (str "Do " net-dmg " net damage")
              :player :runner
              :waiting-prompt "Runner to choose an option"
-             :prompt "Take net damage or trash cards from the stack?"
+             :prompt "Choose one"
              :choices (req [(str "Take " net-dmg " net damage")
                             (when (<= mill-cnt (count (:deck runner)))
                               (str "Trash the top " (quantify mill-cnt "card") " of the stack"))])
@@ -2919,8 +2919,8 @@
 (defcard "Pup"
   (let [sub {:player :runner
              :async true
-             :label (str "Do 1 net damage unless the Runner pays 1 [Credits]")
-             :prompt (str "Suffer 1 net damage or pay 1 [Credits]?")
+             :label "Do 1 net damage unless the Runner pays 1 [Credits]"
+             :prompt "Choose one"
              :choices ["Suffer 1 net damage"
                        "Pay 1 [Credits]"]
              :effect (req (if (= "Suffer 1 net damage" target)
@@ -3333,14 +3333,14 @@
   (let [sub {:player :runner
              :async true
              :label "Trash a program"
-             :prompt "Let Corp trash 1 program or pay 3 [Credits]?"
-             :choices ["Corp trash"
+             :prompt "Choose one"
+             :choices ["The Corp trashes a program"
                        "Pay 3 [Credits]"]
-             :effect (req (if (= "Corp trash" target)
-                            (continue-ability state :corp trash-program-sub card nil)
+             :effect (req (if (= "Pay 3 [Credits]" target)
                             (wait-for (pay state :runner (make-eid state eid) card [:credit 3])
                                       (system-msg state :runner (:msg async-result))
-                                      (effect-completed state side eid))))}
+                                      (effect-completed state side eid))
+                            (continue-ability state :corp trash-program-sub card nil)))}
         ability {:req (req (same-card? card target))
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
     {:advanceable :always
@@ -3608,7 +3608,7 @@
 (defcard "Vasilisa"
   {:on-encounter
    {:optional {:prompt "Place an advancement counter?"
-               :waiting-prompt "Corp to use Vasilisa"
+               :waiting-prompt "Corp to make a decision"
                :req (req (and (can-pay? state side eid card nil [:credit 1])
                               (some #(or (not (rezzed? %))
                                          (can-be-advanced? %))

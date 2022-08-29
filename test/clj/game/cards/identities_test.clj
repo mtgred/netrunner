@@ -3516,13 +3516,13 @@
       (run-on state "HQ")
       (run-continue state)
       (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Null ability")
-      (is (= "Trash a card in grip to lower ice strength by 2?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :runner)) "Null: Whistleblower prompt")
       (click-prompt state :runner "No")
       (fire-subs state (get-ice state :hq 0))
       (run-on state "HQ")
       (run-continue state)
       (is (prompt-is-type? state :corp :waiting) "Corp should now be again waiting on Runner for Null ability")
-      (is (= "Trash a card in grip to lower ice strength by 2?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :runner)) "Null: Whistleblower prompt")
       (click-prompt state :runner "Yes")))
 
 (deftest nyusha-sable-sintashta

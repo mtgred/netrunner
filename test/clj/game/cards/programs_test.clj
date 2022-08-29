@@ -1729,7 +1729,7 @@
       (play-from-hand state :runner "Hivemind")
       (run-on state "HQ")
       (run-continue-until state :success)
-      (is (= "Use Cordyceps to swap ice?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :runner)) "Cordyceps prompt")
       (click-prompt state :runner "Yes")
       (is (= "Choose ice protecting this server" (:msg (prompt-map :runner))))
       (is (= :select (prompt-type :runner)))
@@ -5579,7 +5579,7 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "2")
       (click-prompt state :runner "Unrezzed upgrade")
-      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+      (is (= "Choose one" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
 (deftest rng-key-works-when-running-a-different-server-first-5292
     ;; Works when running a different server first #5292
@@ -5595,7 +5595,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "5")
-      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+      (is (= "Choose one" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
 (deftest rng-key-works-after-running-vs-crisium-grid-3772
     ;; Works after running vs Crisium Grid #3772
@@ -5616,7 +5616,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "5")
-      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+      (is (= "Choose one" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
 (deftest sadyojata-swap-ability
     ;; Swap ability
@@ -6019,7 +6019,7 @@
       (let [snitch (get-program state 0)]
         (run-on state "R&D")
         (is (prompt-is-card? state :runner snitch) "Option to expose")
-        (is (= "Use Snitch to expose approached ice?" (:msg (prompt-map :runner))))
+        (is (= "Expose approached ice?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
         (is (= "Jack out?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes"))))

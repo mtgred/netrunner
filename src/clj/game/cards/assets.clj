@@ -205,7 +205,7 @@
 (defcard "Amani Senai"
   (letfn [(senai-ability [agenda]
             {:interactive (req true)
-             :optional {:prompt "Trace with Amani Senai?"
+             :optional {:prompt "Initiate a trace?"
                         :player :corp
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:trace {:base (get-advancement-requirement agenda)
@@ -243,9 +243,9 @@
                                 state side
                                 {:optional
                                  {:waiting-prompt "Corp to make a decision"
-                                  :prompt (str "Move advancement tokens from Anson Rose to " icename "?")
+                                  :prompt (str "Move advancement tokens to " icename "?")
                                   :yes-ability
-                                  {:prompt "Choose how many advancement tokens to remove from Anson Rose"
+                                  {:prompt "How many advancement tokens?"
                                    :choices {:number (req (get-counters card :advancement))}
                                    :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
                                                    (add-prop :corp card :advance-counter (- target) {:placed true})
@@ -364,7 +364,7 @@
                 :effect (effect (add-counter card :credit target)
                                 (lose-credits eid target))
                 :msg (msg "move " target " [Credit] to C.I. Fund")}
-               {:label "Take all credits from C.I. Fund"
+               {:label "Take all hosted credits"
                 :cost [:credit 2 :trash-can]
                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                 :async true
@@ -429,7 +429,7 @@
    :flags {:runner-phase-12 (req (pos? (:credit runner)))}
    :events [{:event :runner-turn-begins
              :player :runner
-             :prompt "Pay 1 [Credits] or take 1 tag"
+             :prompt "Choose one"
              :choices (req [(when (pos? (:credit runner))
                               "Pay 1 [Credits]")
                             "Take 1 tag"])
@@ -600,7 +600,7 @@
                  :interactive (req true)
                  :effect (effect (continue-ability
                                    {:optional
-                                    {:prompt "Use CSR Campaign to draw 1 card?"
+                                    {:prompt "Draw 1 card?"
                                      :autoresolve (get-autoresolve :auto-fire)
                                      :yes-ability {:async true
                                                    :msg "draw 1 card"
@@ -893,7 +893,7 @@
                 :effect (effect (corp-install eid target card nil))}
                {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
                 :req (req (< (count (:hosted card)) 2))
-                :prompt "Choose an installed asset or agenda to host on Full Immersion RecStudio"
+                :prompt "Choose an installed asset or agenda to host"
                 :choices {:card #(and (or (asset? %) (agenda? %))
                                       (installed? %)
                                       (corp? %))}
@@ -1314,7 +1314,7 @@
                                                 :effect (effect (lose-clicks :runner 1))}])
                              (add-counter state side card :power 1))}
                {:cost [:click 1 :power 3 :trash-can]
-                :msg "gain 4 [Click] and trash itself"
+                :msg "gain 4 [Click]"
                 :effect (effect (gain-clicks 4))}]})
 
 (defcard "Melange Mining Corp."
@@ -1480,7 +1480,7 @@
               {:req (req (= :runner side))
                :player :corp
                :waiting-prompt "Corp to choose an option"
-               :prompt "Gain 2 [credits]?"
+               :prompt "Gain 2 [Credits]?"
                :yes-ability
                {:msg "gain 2 [Credits]"
                 :async true
@@ -1515,7 +1515,7 @@
                  {:player :corp
                   :autoresolve (get-autoresolve :auto-fire)
                   :waiting-prompt "Corp to choose an option"
-                  :prompt "Draw from Net Analytics?"
+                  :prompt "Draw 1 card?"
                   :yes-ability
                   {:msg "draw a card"
                    :effect (effect (draw :corp eid 1))}}}]
@@ -1555,7 +1555,7 @@
             :effect (effect (continue-ability
                               {:player :runner
                                :async true
-                               :prompt "Take 2 tags or add News Team to your score area as an agenda worth -1 agenda point?"
+                               :prompt "Choose one"
                                :choices ["Take 2 tags" "Add News Team to score area"]
                                :effect (req (if (= target "Add News Team to score area")
                                               (do (system-msg state :runner (str "adds " (:title card)
@@ -1742,7 +1742,7 @@
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :label "gain credits"
+                :label "Take hosted credits"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :async true
                 :effect (req (let [credits (min 2 (get-counters card :credit))]
@@ -1949,7 +1949,7 @@
                 :effect (effect (lose-credits :runner eid (* 4 (get-counters card :advancement))))}]})
 
 (defcard "Rex Campaign"
-  (let [payout-ab {:prompt "Remove 1 bad publicity or gain 5 [Credits]?"
+  (let [payout-ab {:prompt "Choose one"
                    :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
                    :msg (msg (if (= target "Remove 1 bad publicity")
                                "remove 1 bad publicity" "gain 5 [Credits]"))
@@ -2021,7 +2021,7 @@
    :leave-play (effect (update-all-ice))})
 
 (defcard "Sealed Vault"
-  {:abilities [{:label "Store any number of credits on Sealed Vault"
+  {:abilities [{:label "Store any number of credits"
                 :cost [:credit 1]
                 :prompt "How many credits do you want to move?"
                 :choices {:number (req (- (:credit corp) 1))}
@@ -2039,7 +2039,7 @@
                {:label "Move any number of credits to your credit pool"
                 :prompt "How many credits do you want to move?"
                 :choices {:counter :credit}
-                :msg (msg "trash itself and gain " target " [Credits]")
+                :msg (msg "gain " target " [Credits]")
                 :cost [:trash-can]
                 :async true
                 :effect (effect (gain-credits eid target))}]})
@@ -2127,9 +2127,9 @@
    {:optional
     {:req (req (not (in-deck? card)))
      :waiting-prompt "Corp to make a decision"
-     :prompt "Pay [Credits] to use Shi.Kyū?"
+     :prompt "Pay credits to use Shi.Kyū ability?"
      :yes-ability
-     {:prompt "How many [Credits] for Shi.Kyū?"
+     {:prompt "How many credits do you want to pay?"
       :choices :credit
       :msg (msg "attempt to do " target " net damage")
       :async true
@@ -2137,7 +2137,7 @@
                 (continue-ability
                   (let [dmg target]
                     {:player :runner
-                     :prompt (str "Take " dmg " net damage or add Shi.Kyū to your score area as an agenda worth -1 agenda point?")
+                     :prompt "Choose one"
                      :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
                      :async true
                      :effect (req (if (= target "Add Shi.Kyū to score area")
@@ -2188,7 +2188,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:waiting-prompt "Corp to make a decision"
-             :prompt "Place 1 advancement token with Space Camp?"
+             :prompt "Place 1 advancement token on a card that can be advanced?"
              :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
                            :prompt "Choose a card to place an advancement token on"
                            :choices {:card can-be-advanced?}

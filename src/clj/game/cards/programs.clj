@@ -510,8 +510,8 @@
                                           (in-hand? %))}
                     :async true
                     :effect (effect (runner-install eid target {:host-card card}))}
-        host-free {:label "Host an installed non-AI icebreaker on Baba Yaga"
-                   :prompt "Choose an installed non-AI icebreaker to host on Baba Yaga"
+        host-free {:label "Host an installed non-AI icebreaker (manual)"
+                   :prompt "Choose an installed non-AI icebreaker to host"
                    :choices {:card #(and (has-subtype? % "Icebreaker")
                                          (not (has-subtype? % "AI"))
                                          (installed? %))}
@@ -528,7 +528,7 @@
              :req (req (not (= "Jak Sinclair" (get-in run [:source-card :title])))) ;; TODO: dirty hack
              :msg "place 1 [Credit] on itself"
              :effect (effect (add-counter card :credit 1))}]
-   :abilities [{:label "Take all credits from Bankroll"
+   :abilities [{:label "Take all hosted credits"
                 :async true
                 ;; Cannot trash unless there are counters (so game state changes)
                 :req (req (pos? (get-counters card :credit)))
@@ -555,13 +555,13 @@
 
 (defcard "Bishop"
   {:abilities [{:cost [:click 1]
-                :label "move to another ice"
+                :label "Host on another piece of ice"
                 :effect (req (let [b (get-card state card)
                                    hosted? (ice? (:host b))
                                    remote? (is-remote? (second (get-zone (:host b))))]
                                (continue-ability
                                  state side
-                                 {:prompt (msg "Host Bishop on a piece of ice protecting "
+                                 {:prompt (msg "Choose a piece of ice protecting "
                                                (if hosted? (if remote? "a central" "a remote") "any") " server")
                                   :choices {:card #(if hosted?
                                                      (and (if remote?
@@ -638,11 +638,11 @@
   {:req (req (some #{:hq} (:successful-run runner-reg)))
    :events [{:event :corp-draw
              :optional
-             {:prompt "Use Bug?"
+             {:prompt "Pay credits to reveal drawn card?"
               :req (req (< 1 (total-available-credits state :runner eid card)))
               :yes-ability
               {:prompt "How many cards do you want to reveal for 2 [Credits] each?"
-               :waiting-promt "Runner to use Bug"
+               :waiting-promt "Runner to make a decision"
                :choices {:number (req (min (:count context)
                                            (quot (total-available-credits state :runner eid card) 2)))}
                :async true
@@ -788,7 +788,7 @@
               :player :runner
               :waiting-prompt "Runner to choose an option"
               :autoresolve (get-autoresolve :auto-place-counter)
-              :prompt "Use Conduit?"
+              :prompt "Place 1 virus counter on Conduit?"
               :yes-ability {:msg "place 1 virus counter on itself"
                             :effect (effect (add-counter card :virus 1))}
               :no-ability {:effect (effect (system-msg "declines to use Conduit to place a virus counter on itself"))}}}
@@ -865,7 +865,7 @@
                              (not-empty run-ices)
                              (<= 2 (count (filter ice? (all-installed state :corp))))))
               :once :per-turn
-              :prompt "Use Cordyceps to swap ice?"
+              :prompt "Swap 2 pieces of ice?"
               :yes-ability
               {:prompt "Choose ice protecting this server"
                :choices {:req (req (and (installed? target)
@@ -1095,9 +1095,9 @@
                                                 target {:host-card (get-card state card)
                                                         :no-mu true
                                                         :cost-bonus -1}))}
-               {:label "Host an installed program on Dhegdheer with [Credit] discount"
+               {:label "Host an installed program with [Credit] discount (manual)"
                 :req (req (nil? (get-in card [:special :dheg-prog])))
-                :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
+                :prompt "Choose an installed program to host with [Credit] discount"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg (str "host " (:title target)
@@ -1112,9 +1112,9 @@
                                          (update! state side (assoc-in (get-card state card) [:special :dheg-prog] (:cid target)))
                                          (update-breaker-strength state side target)
                                          (effect-completed state side eid))))}
-               {:label "Host an installed program on Dhegdheer"
+               {:label "Host an installed program (manual)"
                 :req (req (nil? (get-in card [:special :dheg-prog])))
-                :prompt "Choose an installed program to host on Dhegdheer"
+                :prompt "Choose an installed program to host"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg (str "host " (:title target)))
@@ -1131,13 +1131,13 @@
      :optional
      {:player :runner
       :waiting-prompt "Runner to choose an option"
-      :prompt "Use Disrupter's ability?"
+      :prompt "Trash Disrupter to reduce the base trace strength to 0?"
       :yes-ability
       {:cost [:trash-can]
        :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]})
 
 (defcard "Diwan"
-  {:on-install {:prompt "Choose the server that this copy of Diwan is targeting:"
+  {:on-install {:prompt "Choose a server"
                 :choices (req servers)
                 :effect (effect (update! (assoc card :card-target target)))}
    :constant-effects [{:type :install-cost
@@ -1280,10 +1280,10 @@
   {:events [{:event :pass-ice
              :optional
              {:req (req (not (rezzed? (:ice context))))
-              :prompt "Trash False Echo?"
+              :prompt "Trash False Echo to make the Corp rez the passed piece of ice or add it to HQ?"
               :yes-ability
               {:async true
-               :msg "trash itself to make the Corp rez the passed piece of ice or add it to HQ"
+               :msg "make the Corp rez the passed piece of ice or add it to HQ"
                :effect
                (req (wait-for
                       (trash state side card nil)
@@ -1298,7 +1298,7 @@
                                            ["Add to HQ"]))
                            :effect (req (if (= target "Rez")
                                           (rez state side eid ice)
-                                          (do (system-msg state :corp "chooses to add the passed piece of ice to HQ")
+                                          (do (system-msg state :corp "adds the passed piece of ice to HQ")
                                               (move state :corp ice :hand)
                                               (effect-completed state side eid))))})
                         card target)))}}}]})
@@ -1409,7 +1409,7 @@
 
 (defcard "Gorman Drip v1"
   {:abilities [{:cost [:click 1 :trash-can]
-                :label "gain credits"
+                :label "Gain credits"
                 :async true
                 :effect (effect (gain-credits eid (get-virus-counters state card)))
                 :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]
@@ -1501,8 +1501,8 @@
 (defcard "Hivemind"
   {:data {:counter {:virus 1}}
    :abilities [{:req (req (pos? (get-counters card :virus)))
-                :label "move hosted virus counters"
-                :prompt "Move a virus counter to which card?"
+                :label "Move hosted virus counters"
+                :prompt "Choose a Virus card to move hosted virus counters to"
                 :choices {:card #(has-subtype? % "Virus")
                           :not-self true}
                 :msg (msg "manually move a virus counter from Hivemind to " (:title target))
@@ -1627,14 +1627,14 @@
 (defcard "Knight"
   (let [knight-req (req (and (same-card? current-ice (get-nested-host card))
                              (<= (get-strength current-ice) (get-strength card))))]
-    {:abilities [{:label "Host Knight on a piece of ice"
+    {:abilities [{:label "Host on a piece of ice"
                   :async true
                   :effect (req (let [k (get-card state card)
                                      hosted (ice? (:host k))
                                      icepos (card-index state (get-card state (:host k)))]
                                  (continue-ability
                                    state side
-                                   {:prompt (msg "Host Knight on a piece of ice"
+                                   {:prompt (msg "Host on a piece of ice"
                                                  (when hosted " not before or after the current host ice"))
                                     :cost [:click 1]
                                     :choices {:card #(if hosted
@@ -1701,8 +1701,8 @@
                 :msg (msg "host " (:title target))
                 :async true
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed program on Leprechaun"
-                :prompt "Choose an installed program to host on Leprechaun"
+               {:label "Host an installed program (manual)"
+                :prompt "Choose an installed program to host"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg "host " (:title target))
@@ -1751,7 +1751,7 @@
 (defcard "Mammon"
   (auto-icebreaker {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
                     :abilities [{:label "Place X power counters"
-                                 :prompt "How many power counters to place on Mammon?"
+                                 :prompt "How many credits do you want to spend?"
                                  :once :per-turn
                                  :cost [:x-credits]
                                  :req (req (:runner-phase-12 @state))
@@ -1823,7 +1823,7 @@
              :req (req (= target :rd))
              :effect (effect (continue-ability
                                {:req (req (< 1 (get-virus-counters state card)))
-                                :prompt "Choose how many additional R&D accesses to make with Medium"
+                                :prompt "How many additional cards from R&D do you want to access?"
                                 :choices {:number (req (dec (get-virus-counters state card)))
                                           :default (req (dec (get-virus-counters state card)))}
                                 :msg (msg "access " (quantify target "additional card") " from R&D")
@@ -1880,7 +1880,7 @@
              :req (req (= target :hq))
              :effect (effect (continue-ability
                                {:req (req (< 1 (get-virus-counters state card)))
-                                :prompt "Choose how many additional HQ accesses to make with Nerve Agent"
+                                :prompt "How many additional cards from HQ do you want to access?"
                                 :choices {:number (req (dec (get-virus-counters state card)))
                                           :default (req (dec (get-virus-counters state card)))}
                                 :msg (msg "access " (quantify target "additional card") " from HQ")
@@ -1914,7 +1914,7 @@
              {:req (req (and (pos? (get-counters card :power))
                              (= target :rd)))
               :waiting-prompt "Runner to choose an option"
-              :prompt "Spend a power counter on Nyashia to access 1 additional card?"
+              :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "access 1 additional card from R&D"
                             :effect (effect (access-bonus :rd 1)
@@ -2057,9 +2057,9 @@
 
 (defcard "Pawn"
   {:implementation "All abilities are manual"
-   :abilities [{:label "Host Pawn on the outermost piece of ice of a central server"
+   :abilities [{:label "Host on the outermost piece of ice of a central server"
                 :cost [:click 1]
-                :prompt "Host Pawn on the outermost piece of ice of a central server"
+                :prompt "Host on the outermost piece of ice of a central server"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
@@ -2067,7 +2067,7 @@
                 :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:label "Advance to next piece of ice"
-                :prompt "Choose the next innermost piece of ice to host Pawn on it"
+                :prompt "Choose the next innermost piece of ice to host Pawn on"
                 :choices {:card #(and (ice? %)
                                       (can-host? %)
                                       (= (last (get-zone %)) :ices)
@@ -2142,7 +2142,7 @@
                                 (continue-ability
                                   (let [fired-subs (count (filter :fired (:subroutines (:ice context))))]
                                     {:optional
-                                     {:prompt (str "Use Persephone to trash " (quantify fired-subs "card") " from R&D?")
+                                     {:prompt (str "Trash the top card of your Stack to trash " (quantify fired-subs "card") " from R&D?")
                                       :yes-ability
                                       {:async true
                                        :msg (msg (str "trash " (:title (first (:deck runner)))
@@ -2166,7 +2166,7 @@
                                 (strength-pump 2 1 :end-of-run)]}))
 
 (defcard "Plague"
-  {:on-install {:prompt "Choose a server for Plague"
+  {:on-install {:prompt "Choose a server"
                 :choices (req servers)
                 :msg (msg "target " target)
                 :req (req (not (:card-target card)))
@@ -2174,7 +2174,7 @@
    :events [{:event :successful-run
              :req (req (= (zone->name (:server context))
                           (:card-target (get-card state card))))
-             :msg "gain 2 virus counters"
+             :msg "place 2 virus counters on itself"
              :effect (effect (add-counter :runner card :virus 2))}]})
 
 (defcard "Progenitor"
@@ -2188,9 +2188,9 @@
                 :msg (msg "host " (:title target))
                 :async true
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed virus on Progenitor"
+               {:label "Host an installed virus (manual)"
                 :req (req (empty? (:hosted card)))
-                :prompt "Choose an installed virus program to host on Progenitor"
+                :prompt "Choose an installed virus program to host"
                 :choices {:card #(and (program? %)
                                       (has-subtype? % "Virus")
                                       (installed? %))}
@@ -2267,7 +2267,7 @@
                               (let [guess (get-in card [:special :rng-guess])]
                                 (when (or (= guess (:cost target))
                                           (= guess (get-advancement-requirement target)))
-                                  {:prompt "Choose RNG Key reward"
+                                  {:prompt "Choose one"
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
                                    :async true
                                    :msg (msg (if (= target "Draw 2 cards")
@@ -2296,7 +2296,7 @@
                                              (fn [targets]
                                                (let [context (first targets)]
                                                  (#{:hq :rd} (target-server context)))))))
-                :prompt "Fire RNG Key?"
+                :prompt "Name a number?"
                 :autoresolve (get-autoresolve :auto-fire)
                 :yes-ability {:prompt "Guess a number"
                               :choices {:number (req (highest-cost state card))}
@@ -2387,8 +2387,8 @@
                                        (runner-install state side
                                                        (assoc eid :source card :source-type :runner-install)
                                                        target {:host-card card})))}
-               {:label "Host an installed program"
-                :prompt "Choose a program to host on Scheherazade"
+               {:label "Host an installed program (manual)"
+                :prompt "Choose a program to host"
                 :choices {:card #(and (program? %)
                                       (installed? %))}
                 :msg (msg "host " (:title target) " and gain 1 [Credits]")
@@ -2448,7 +2448,7 @@
   {:events [{:event :approach-ice
              :optional
              {:req (req (not (rezzed? (:ice context))))
-              :prompt "Use Snitch to expose approached ice?"
+              :prompt "Expose approached ice?"
               :yes-ability
               {:async true
                :msg "expose the approached ice"

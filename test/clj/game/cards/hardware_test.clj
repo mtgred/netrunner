@@ -4071,7 +4071,7 @@
       (run-on state "HQ")
       (run-continue state)
       (is (= 2 (:position (:run @state))))
-      (is (= "Use Şifr?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :corp)) "Şifr prompt")
       (click-prompt state :runner "Yes")
       (is (zero? (get-strength (refresh ip))))
       (run-continue-until state :encounter-ice)

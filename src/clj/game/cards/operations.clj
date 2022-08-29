@@ -82,7 +82,7 @@
     :async true
     :effect (effect
               (continue-ability
-                {:prompt "Choose an agenda in your score area to trigger its \"when scored\" ability"
+                {:prompt "Choose an agenda in your score area"
                  :choices {:card #(and (agenda? %)
                                        (when-scored? %)
                                        (is-scored? state :corp %))}
@@ -450,10 +450,10 @@
   {:on-play
    {:psi {:req (req (last-turn? state :runner :successful-run))
           :not-equal {:player :runner
-                      :prompt "Take 1 tag or 1 brain damage?"
-                      :choices ["1 tag" "1 brain damage"]
+                      :prompt "Choose one"
+                      :choices ["Take 1 tag" "Suffer 1 brain damage"]
                       :msg (msg "give the Runner " target)
-                      :effect (req (if (= target "1 tag")
+                      :effect (req (if (= target "Take 1 tag")
                                      (gain-tags state :runner eid 1)
                                      (damage state side eid :brain 1 {:card card})))}}}})
 
@@ -829,7 +829,7 @@
                       (pos? (count-resources state))))
        :player :runner
        :waiting-prompt "Runner to choose an option"
-       :prompt "Trash a resource to prevent Financial Collapse?"
+       :prompt "Trash a resource?"
        :yes-ability
        {:prompt "Choose a resource to trash"
         :choices {:card #(and (resource? %)
@@ -907,7 +907,7 @@
     :effect (effect (trash-cards :runner eid targets {:cause-card card}))}})
 
 (defcard "Friends in High Places"
-  (let [fhelper (fn fhp [n] {:prompt "Choose a card in Archives to install with Friends in High Places"
+  (let [fhelper (fn fhp [n] {:prompt "Choose a card in Archives to install"
                              :async true
                              :show-discard true
                              :choices {:card #(and (corp? %)
@@ -933,7 +933,7 @@
             ;; if current > total, this ability will auto-resolve and finish the chain of async methods.
             (when (<= current total)
               {:async true
-               :prompt (str "Choice " current " of " total ": Gain 2 [Credits] or draw 2 cards? ")
+               :prompt (str "Choose one. Choice " current " of " total)
                :choices ["Gain 2 [Credits]" "Draw 2 cards"]
                :msg (msg (str/lower-case target))
                :effect (req (if (= target "Gain 2 [Credits]")
@@ -1036,7 +1036,7 @@
                {:player :runner
                 :async true
                 :waiting-prompt "Runner to choose an option"
-                :prompt "Access card? (If not, add Hangeki to your score area worth -1 agenda point)"
+                :prompt "Access card?"
                 :yes-ability
                 {:async true
                  :effect (req (wait-for (access-card state side target)
@@ -1179,7 +1179,7 @@
   {:events [{:event :runner-install
              :req (req (first-event? state side :runner-install))
              :player :runner
-             :prompt "Choose a card from your Grip to trash for Housekeeping"
+             :prompt "Choose a card from your Grip to trash"
              :choices {:card #(and (runner? %)
                                    (in-hand? %))}
              :async true
@@ -1848,7 +1848,7 @@
     :player :runner
     :msg (msg "force the Runner to " (decapitalize target))
     :waiting-prompt "Runner to choose an option"
-    :prompt "Pick one"
+    :prompt "Choose one"
     :choices (req ["Take 1 tag"
                    (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) :credit 8)
                      "Pay 8 [Credits]")])
@@ -2078,7 +2078,7 @@
 
 (defcard "Reverse Infection"
   {:on-play
-   {:prompt "Choose one:"
+   {:prompt "Choose one"
     :choices ["Purge virus counters"
               "Gain 2 [Credits]"]
     :async true
@@ -2291,7 +2291,7 @@
   (letfn [(shelper [n]
             (when (< n 3)
               {:async true
-               :prompt "Choose a card to install with Shipment from MirrorMorph"
+               :prompt "Choose a card to install"
                :choices {:card #(and (corp? %)
                                      (not (operation? %))
                                      (in-hand? %))}
@@ -2476,7 +2476,7 @@
              {:req (req (not-last-turn? state :runner :made-run))
               :prompt "Add Subliminal Messaging to HQ?"
               :yes-ability
-              {:msg "add Subliminal Messaging to HQ"
+              {:msg "add itself to HQ"
                :async true
                :effect (req (wait-for (reveal state side (make-eid state eid) card))
                             (move state side card :hand)
@@ -2547,7 +2547,7 @@
               :async true
               :msg (msg "force the Runner to " (decapitalize target))
               :player :runner
-              :prompt "Pay 4 [Credits] or take 1 tag?"
+              :prompt "Choose one"
               :choices ["Pay 4 [Credits]" "Take 1 tag"]
               :effect (req (if (= target "Pay 4 [Credits]")
                              (wait-for (pay state :runner (make-eid state eid) card :credit 4)
@@ -2808,15 +2808,15 @@
                       wake card]
                   {:player :runner
                    :waiting-prompt "Runner to choose an option"
-                   :prompt (str "Trash " (:title chosen) " or suffer 4 meat damage?")
-                   :choices [(str "Trash " (:title chosen))
-                             "4 meat damage"]
+                   :prompt "Choose one"
+                   :choices [(str "Trash " (card-str state chosen))
+                             "Suffer 4 meat damage"]
                    :async true
-                   :effect (req (if (= target "4 meat damage")
-                                  (do (system-msg state side "chooses to suffer meat damage")
+                   :effect (req (if (= target "Suffer 4 meat damage")
+                                  (do (system-msg state side "suffers 4 meat damage")
                                       (damage state side eid :meat 4 {:card wake
                                                                       :unboostable true}))
-                                  (do (system-msg state side (str "chooses to trash " (:title chosen)))
+                                  (do (system-msg state side (str "trashes " (card-str state chosen)))
                                       (trash state side eid chosen {:cause-card card :cause :forced-to-trash}))))})
                 card nil))}})
 

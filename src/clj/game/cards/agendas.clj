@@ -164,7 +164,7 @@
      :once :per-turn
      :async true
      :waiting-prompt "Corp to choose an option"
-     :prompt "Use Advanced Concept Hopper to draw 1 card or gain 1 [Credits]?"
+     :prompt "Choose one"
      :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
      :effect (req (case target
                     "Gain 1 [Credits]"
@@ -586,7 +586,7 @@
 
 (defcard "Cyberdex Sandbox"
   {:on-score {:optional
-              {:prompt "Purge virus counters with Cyberdex Sandbox?"
+              {:prompt "Purge virus counters?"
                :yes-ability {:msg "purge virus counters"
                              :effect (effect (purge))}}}
    :events [{:event :purge
@@ -741,7 +741,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:waiting-prompt "Corp to choose an option"
-             :prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
+             :prompt "Gain 5 [Credits]?"
              :yes-ability
              {:msg "gain 5 [Credits]"
               :async true
@@ -828,19 +828,19 @@
                 :effect (effect (gain-credits eid 3))}]})
 
 (defcard "Glenn Station"
-  {:abilities [{:label "Host a card from HQ on Glenn Station"
+  {:abilities [{:label "Host a card from HQ"
                 :req (req (and (not-empty (:hand corp))
                                (empty? (filter corp? (:hosted card)))))
                 :cost [:click 1]
                 :msg "host a card from HQ"
-                :prompt "Choose a card to host on Glenn Station"
+                :prompt "Choose a card to host"
                 :choices {:card #(and (corp? %) (in-hand? %))}
                 :effect (effect (host card target {:facedown true}))}
-               {:label "Add a card on Glenn Station to HQ"
+               {:label "Add a hosted card to HQ"
                 :req (req (not-empty (filter corp? (:hosted card))))
                 :cost [:click 1]
                 :msg "add a hosted card to HQ"
-                :prompt "Choose a card on Glenn Station"
+                :prompt "Choose a hosted card"
                 :choices {:all true
                           :req (req (let [hosted-corp-cards
                                           (->> (:hosted card)
@@ -868,7 +868,7 @@
                 :msg "gain 3 [Credits]"}]})
 
 (defcard "Graft"
-  (letfn [(graft [n] {:prompt "Choose a card to add to HQ with Graft"
+  (letfn [(graft [n] {:prompt "Choose a card to add to HQ"
                       :async true
                       :choices (req (cancellable (:deck corp) :sorted))
                       :msg (msg "add " (:title target) " to HQ from R&D")
@@ -973,7 +973,7 @@
     :effect (req (wait-for (resolve-ability
                              state side
                              {:optional
-                              {:prompt "Take 1 bad publicity from Illicit Sales?"
+                              {:prompt "Take 1 bad publicity?"
                                :yes-ability {:msg "take 1 bad publicity"
                                              :effect (effect (gain-bad-publicity :corp 1))}}}
                              card nil)
@@ -1116,7 +1116,7 @@
 (defcard "Meteor Mining"
   {:on-score {:interactive (req true)
               :async true
-              :prompt "Use Meteor Mining?"
+              :prompt "Choose one"
               :choices (req (if (< (count-tags state) 2)
                               ["Gain 7 [Credits]" "No action"]
                               ["Gain 7 [Credits]" "Do 7 meat damage" "No action"]))
@@ -1193,7 +1193,7 @@
                           (has-subtype? % "NEXT"))
                     (all-installed state :corp))
           {:optional
-           {:prompt "Do 1 brain damage with NEXT Wave 2?"
+           {:prompt "Do 1 brain damage?"
             :yes-ability {:msg "do 1 brain damage"
                           :async true
                           :effect (effect (damage eid :brain 1 {:card card}))}}})
@@ -1695,7 +1695,7 @@
                :optional
                {:req (req (pos? (get-counters card :credit)))
                 :once :per-turn
-                :prompt "Gain 3 [Credits] from SSL Endorsement?"
+                :prompt "Gain 3 [Credits]?"
                 :autoresolve (get-autoresolve :auto-fire)
                 :yes-ability
                 {:async true
@@ -1708,7 +1708,7 @@
 (defcard "Standoff"
   (letfn [(stand [side]
             {:async true
-             :prompt "Choose one of your installed cards to trash due to Standoff"
+             :prompt "Choose one of your installed cards to trash"
              :choices {:card #(and (installed? %)
                                    (same-side? side (:side %)))}
              :cancel-effect (req (if (= side :runner)
@@ -1881,7 +1881,7 @@
 
 (defcard "Unorthodox Predictions"
   {:implementation "Prevention of subroutine breaking is not enforced"
-   :on-score {:prompt "Choose an ice type for Unorthodox Predictions"
+   :on-score {:prompt "Choose an ice type"
               :choices ["Barrier" "Code Gate" "Sentry"]
               :msg (msg "prevent subroutines on " target " ice from being broken until next turn.")}})
 
@@ -1921,9 +1921,9 @@
              {:player :corp
               :req (req (pos? (get-counters card :agenda)))
               :waiting-prompt "Corp to choose an option"
-              :prompt "Use Voting Machine Initiative to make the Runner lose 1 [Click]?"
+              :prompt "Make the Runner lose [Click]?"
               :yes-ability
-              {:msg "make the Runner lose 1 [Click]"
+              {:msg "make the Runner lose [Click]"
                :effect (effect (lose-clicks :runner 1)
                                (add-counter card :agenda -1))}}}]})
 

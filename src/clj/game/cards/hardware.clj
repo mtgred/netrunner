@@ -76,7 +76,7 @@
              :optional
              {:player :runner
               :waiting-prompt "Runner to choose an option"
-              :prompt "Use Acacia?"
+              :prompt "Trash Acacia to gain 1 [Credits] for each virus counter been removed?"
               :yes-ability
               {:async true
                :effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
@@ -128,7 +128,7 @@
                   (continue-ability
                     state side
                     {:optional
-                     {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
+                     {:prompt "Remove a card from the game instead of accessing it?"
                       :yes-ability {:prompt "Choose a card in Archives to remove from the game instead of accessing"
                                     :choices (req (:discard corp))
                                     :msg (msg "remove " (:title target) " from the game")
@@ -359,7 +359,7 @@
                                                 deck (pos? (count (:deck runner)))
                                                 tags (pos? (count-real-tags state))]
                                             {:req (req (or deck tags))
-                                             :prompt "Draw 1 card or remove 1 tag"
+                                             :prompt "Choose one"
                                              :choices [(when deck "Draw 1 card")
                                                        (when tags "Remove 1 tag")]
                                              :async true
@@ -481,14 +481,14 @@
    :events [{:event :runner-install
              :optional
              {:req (req (has-subtype? (:card context) "Caïssa"))
-              :prompt "Use Deep Red?"
+              :prompt "Trigger the [Click] ability of the just-installed Caïssa card?"
               :yes-ability
               {:async true
                :effect (effect
                          (continue-ability
                            (let [cid (:cid (:card context))]
                              {:async true
-                              :prompt "Choose the just-installed Caïssa to have Deep Red trigger its [Click] ability"
+                              :prompt "Choose the just-installed Caïssa card"
                               :choices {:card #(= cid (:cid %))}
                               :msg (msg "trigger the [Click] ability of " (:title target)
                                         " without spending [Click]")
@@ -523,7 +523,7 @@
   {:events [{:event :encounter-ice
              :interactive (req true)
              :optional
-             {:prompt "Remove this card from the game: give encountered ice -6 strength?"
+             {:prompt "Remove Devil Charm from the game to give encountered ice -6 strength?"
               :yes-ability
               {:msg (msg "give -6 strength to " (card-str state (:ice context)) " for the remainder of the run")
                :cost [:remove-from-game]
@@ -546,9 +546,9 @@
                                       (in-hand? %))}
                 :async true
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed non-AI icebreaker on Dinosaurus"
+               {:label "Host an installed non-AI icebreaker (manual)"
                 :req (req (empty? (:hosted card)))
-                :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
+                :prompt "Choose an installed non-AI icebreaker to host"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
@@ -581,7 +581,7 @@
              {:req (req (and (:successful target)
                              (:dopp-active (get-card state card))))
               :player :runner
-              :prompt "Use Doppelgänger to run again?"
+              :prompt "Make another run?"
               :yes-ability {:prompt "Choose a server"
                             :async true
                             :choices (req runnable-servers)
@@ -730,9 +730,9 @@
                   :async true
                   :effect (effect (update! (assoc-in (get-card state card) [:special :flame-out] (:cid target)))
                                   (runner-install eid target {:host-card card}))}
-                 {:label "Host an installed program on Flame-out"
+                 {:label "Host an installed program (manual)"
                   :req (req (empty? (:hosted card)))
-                  :prompt "Choose an installed program to host on Flame-out"
+                  :prompt "Choose an installed program to host"
                   :choices {:card #(and (program? %)
                                         (installed? %))}
                   :msg (msg "host " (:title target))
@@ -759,7 +759,7 @@
              :optional
              {:req (req (= :runner (:active-player @state)))
               :waiting-prompt "Runner to choose an option"
-              :prompt "Use Flip Switch to reduce base trace strength to 0?"
+              :prompt "Trash Flip Switch to reduce the base trace strength to 0?"
               :player :runner
               :yes-ability {:msg "reduce the base trace strength to 0"
                             :cost [:trash-can]
@@ -1325,12 +1325,12 @@
                                :effect (effect (runner-install eid target {:host-card card :no-mu true}))})
                             card nil))}
                {:async true
-                :label "Host an installed program on NetChip"
+                :label "Host an installed program (manual)"
                 :req (req (empty? (:hosted card)))
                 :effect (effect
                           (continue-ability
                             (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                              {:prompt "Choose an installed program to host on NetChip"
+                              {:prompt "Choose an installed program to host"
                                :choices {:card #(and (program? %)
                                                      (<= (:memoryunits %) n)
                                                      (installed? %))}
@@ -1367,8 +1367,8 @@
                                       (in-hand? %))}
                 :msg (msg "host " (:title target))
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed program of 1[mu] or less on Omni-drive"
-                :prompt "Choose an installed program of 1[mu] or less to host on Omni-drive"
+               {:label "Host an installed program of 1[mu] or less (manual)"
+                :prompt "Choose an installed program of 1[mu] or less to host"
                 :choices {:card #(and (program? %)
                                       (<= (:memoryunits %) 1)
                                       (installed? %))}
@@ -1434,7 +1434,7 @@
               :player :runner
               :autoresolve (get-autoresolve :auto-fire)
               :waiting-prompt "Runner to make a decision"
-              :prompt "Use Paragon?"
+              :prompt "Gain 1 [Credit] and look at the top card of your Stack?"
               :yes-ability
               {:msg "gain 1 [Credit] and look at the top card of Stack"
                :async true
@@ -1452,7 +1452,7 @@
                                :no-ability
                                {:effect (effect (system-msg "does not add the top card of the Stack to the bottom"))}}}
                              card nil)))}
-              :no-ability {:effect (effect (system-msg "does not gain 1 [Credit] and look at the top card of the Stack"))}}}]
+              :no-ability {:effect (effect (system-msg "declines to use Paragon"))}}}]
    :abilities [(set-autoresolve :auto-fire "Paragon")]})
 
 (defcard "Patchwork"
@@ -1708,7 +1708,7 @@
                :interactive (req (hardware-and-in-deck? (:card context) runner))
                :silent (req (not (hardware-and-in-deck? (:card context) runner)))
                :optional
-               {:prompt "Use Replicator to add a copy?"
+               {:prompt "Search your Stack for another copy to add to your Grip?"
                 :req (req (hardware-and-in-deck? (:card context) runner))
                 :yes-ability
                 {:msg (msg "add a copy of " (:title (:card context)) " to their Grip")
@@ -1769,7 +1769,7 @@
                 :label "derez ice"
                 :once :per-turn
                 :async true
-                :prompt "How many [Credits]?"
+                :prompt "How many credits do you want to spend?"
                 :choices :credit
                 :effect (effect (system-msg (str "spends a [Click] and " target " [Credit] on Rubicon Switch"))
                                 (continue-ability
@@ -1827,7 +1827,7 @@
 
 (defcard "Severnius Stim Implant"
   (letfn [(implant-fn [srv kw]
-            {:prompt "Choose at least 2 cards in your Grip to trash with Severnius Stim Implant"
+            {:prompt "Choose at least 2 cards in your Grip to trash"
              :cost [:click 1]
              :choices {:max (req (count (:hand runner)))
                        :card #(and (runner? %)
@@ -1844,7 +1844,7 @@
                                       (make-run state side eid srv card))))})]
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
                   :label "run a server"
-                  :prompt "Choose a server to run with Severnius Stim Implant"
+                  :prompt "Choose one"
                   :choices ["HQ" "R&D"]
                   :async true
                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]}))
@@ -1877,10 +1877,10 @@
      :events [{:event :encounter-ice
                :interactive (req true)
                :optional
-               {:prompt "Use Şifr?"
+               {:prompt "Lower your maximum hand size by 1 to reduce the strength of encountered ice to 0?"
                 :once :per-turn
                 :yes-ability
-                {:msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
+                {:msg (msg "lower their maximum hand size by 1 and reduce the strength of " (:title current-ice) " to 0")
                  :effect (effect
                            (register-floating-effect
                              card
@@ -1993,7 +1993,7 @@
              :optional
              {:req (req (= (:credit runner) (:credit corp)))
               :waiting-prompt "Runner to choose an option"
-              :prompt "Gain credits from Supercorridor?"
+              :prompt "Gain 2 [Credits]?"
               :player :runner
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "gain 2 [Credits]"
