@@ -114,7 +114,7 @@
                                      state side
                                      {:optional
                                       {:waiting-prompt "Corp to choose an option"
-                                       :prompt "Pay 1 [Credits] to prevent exposure of installed card?"
+                                       :prompt (req (str "Pay 1 [Credits] to prevent exposing " (card-str state (:card context)) "?"))
                                        :player :corp
                                        :no-ability
                                        {:async true
@@ -126,8 +126,8 @@
                                                (pay state :corp (make-eid state eid) card [:credit 1])
                                                (system-msg state :corp
                                                            (str (:msg async-result)
-                                                                " to prevent "
-                                                                " card from being exposed"))
+                                                                " to prevent exposing "
+                                                                (card-str state (:card context))))
                                                (effect-completed state side eid)))}}}
                                      card targets)))}}}
                  card targets))}]
