@@ -24,7 +24,7 @@
                               remaining-draws]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-   [game.core.engine :refer [pay prompt! register-events resolve-ability]]
+   [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current prevent-draw
@@ -1094,8 +1094,10 @@
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
    :abilities [{:msg "look at the top card of the Runner's Stack"
-                :effect (effect (prompt! card (str "The top card of the Runner's Stack is "
-                                                   (:title (first (:deck runner)))) ["OK"] {}))}
+                :effect (effect (continue-ability
+                                  {:prompt (req (->> runner :deck first :title (str "The top card of the Runner's Stack is ")))
+                                   :choices ["OK"]}
+                                  card nil))}
                {:async true
                 :label "Trash the top card of the Runner's Stack"
                 :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
