@@ -113,7 +113,7 @@
 
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
-  As with prompt!, the preferred method for showing a select prompt is through resolve-ability."
+  The preferred method for showing a select prompt is through resolve-ability."
   ([state side card ability update! resolve-ability args]
    ;; if :max or :min are a function, call them and assoc its return value as the new :max / :min number of cards
    ;; that can be selected.

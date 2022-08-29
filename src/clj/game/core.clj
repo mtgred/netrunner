@@ -94,6 +94,7 @@
    get-all-content
    get-all-hosted
    get-only-card-to-access
+   installed-access-trigger
    interactions
    max-access
    msg-handle-access
@@ -349,7 +350,6 @@
    not-used-once?
    pay
    print-msg
-   prompt!
    queue-event
    register-ability-type
    register-default-events

@@ -20,7 +20,7 @@
    [game.core.effects :refer [register-floating-effect
                               unregister-effects-for-card unregister-floating-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
-   [game.core.engine :refer [can-trigger? prompt! register-events
+   [game.core.engine :refer [can-trigger? register-events
                              register-once resolve-ability trigger-event
                              unregister-floating-events]]
    [game.core.events :refer [event-count first-event? first-trash? no-event?
@@ -1979,7 +1979,10 @@
                {:label "Look at the top card of R&D"
                 :msg "look at the top card of R&D"
                 :cost [:trash-can]
-                :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {}))}]})
+                :effect (effect (continue-ability
+                                  {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                                   :choices ["OK"]}
+                                  card nil))}]})
 
 (defcard "Supercorridor"
   {:constant-effects [(mu+ 2)
