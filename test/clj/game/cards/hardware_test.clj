@@ -3486,7 +3486,7 @@
       (play-from-hand state :runner "Prognostic Q-Loop")
       (run-on state :hq)
       (click-prompt state :runner "Yes")
-      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))
+      (is (= "The top 2 cards of your Stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))
       (click-prompt state :runner "OK")
       (card-ability state :runner (get-hardware state 0) 1)
       (click-prompt state :runner "Yes")
@@ -3553,7 +3553,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Prognostic Q-Loop")
         (card-ability state :runner (get-hardware state 0) 1)
-        (is (last-log-contains? state "reveal the top card of the stack: Au Revoir") "Correctly prints the revealed card")))
+        (is (last-log-contains? state "reveal the top card of their Stack: Au Revoir") "Correctly prints the revealed card")))
     (testing "when the revealed card is not a hardware"
       (do-game
         (new-game {:runner {:deck ["Sure Gamble"]
@@ -3561,7 +3561,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Prognostic Q-Loop")
         (card-ability state :runner (get-hardware state 0) 1)
-        (is (last-log-contains? state "reveal the top card of the stack: Sure Gamble") "Correctly prints the revealed card"))))
+        (is (last-log-contains? state "reveal the top card of their Stack: Sure Gamble") "Correctly prints the revealed card"))))
 
 (deftest prognostic-q-loop-doesn-t-fire-with-an-empty-deck
     ;; Doesn't fire with an empty deck
@@ -3587,7 +3587,7 @@
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Prognostic Q-Loop")
       (click-prompt state :runner "Yes")
-      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))))
+      (is (= "The top 2 cards of your Stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-are-the-correct-cards-shown-if-another-start-of-run-trigger-draws-a-card-issue-4973
     ;; Are the correct cards shown if another start of run trigger draws a card. Issue #4973
@@ -3609,10 +3609,10 @@
       (click-prompt state :runner "Yes")
       (click-card state :runner "Spy Camera")
       (is (= 1 (count (:hand (get-runner)))) "Runner should draw a card for playing a hardware")
-      (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
+      (is (= "Look at top 2 cards of your Stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
-      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))))
+      (is (= "The top 2 cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-works-with-paladin-poemu-5304
     ;; Works with Paladin Poemu #5304

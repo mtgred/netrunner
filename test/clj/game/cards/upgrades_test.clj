@@ -1788,7 +1788,7 @@
       (click-prompt state :corp "Carry on!")
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
+      (is (= "Force the Corp to draw 1 card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (= :waiting (prompt-type :runner)) "Runner has wait prompt")
       (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")

@@ -527,7 +527,7 @@
                             :effect (effect
                                       (continue-ability
                                         {:optional
-                                         {:prompt "Pay 1 [Credit] to place a power counter on Embolus?"
+                                         {:prompt "Pay 1 [Credit] to place 1 power counter on Embolus?"
                                           :yes-ability {:effect (effect (add-counter card :power 1))
                                                         :cost [:credit 1]
                                                         :msg "place a power counter on itself"}}}
@@ -578,8 +578,8 @@
                             (protecting-same-server? card target)))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
-                           (str "trash " (str/join ", " (map :title (take 2 deck))) " from the Stack")
-                           "trash the top 2 cards from their Stack - but the Stack is empty")))
+                           (str "trash " (str/join ", " (map :title (take 2 deck))) " from the Runner's Stack")
+                           "trash no cards from the Runner's Stack (it is empty)")))
              :async true
              :effect (effect (mill :corp eid :runner 2))}]})
 

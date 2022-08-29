@@ -1374,7 +1374,7 @@
     (effect
       (continue-ability
         (let [top-ten (take 10 (:deck runner))]
-          {:prompt (str "The top 10 cards of the stack are " (str/join ", " (map :title top-ten)) ".")
+          {:prompt (str "The top cards of the stack are " (str/join ", " (map :title top-ten)) ".")
            :choices ["OK"]
            :async true
            :effect
@@ -2698,7 +2698,7 @@
                  :ability
                  {:req (req (not (zone-locked? state :runner :discard)))
                   :async true
-                  :prompt "Choose up to five cards to install"
+                  :prompt "Choose up to 5 cards to install"
                   :show-discard true
                   :choices {:max 5
                             :card #(and (in-discard? %)

@@ -105,7 +105,7 @@
                                       (let [cards (filterv #(not (same-card? % target)) cards)]
                                         (continue-ability state side (ad state side eid card cards) card nil))))}))]
     {:on-play
-     {:prompt (msg "The top 3 cards of R&D are " (str/join ", " (map :title (take 3 (:deck corp)))) ".")
+     {:prompt (msg "The top cards of R&D are " (str/join ", " (map :title (take 3 (:deck corp)))) ".")
       :choices ["OK"]
       :async true
       :effect (effect (continue-ability (ad state side eid card (take 3 (:deck corp))) card nil))}}))
@@ -2263,7 +2263,7 @@
 (defcard "Self-Growth Program"
   {:on-play
    {:req (req tagged)
-    :prompt "Choose two installed Runner cards"
+    :prompt "Choose 2 installed Runner cards"
     :choices {:card #(and (installed? %)
                           (runner? %))
               :max 2}

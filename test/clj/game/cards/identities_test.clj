@@ -2543,7 +2543,7 @@
                           :deck ["Eden Shard"]}})
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
+      (is (= "Force the Corp to draw 1 card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (= "Choose a breach replacement ability" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Eden Shard") ; Eden Shard's replacement ability

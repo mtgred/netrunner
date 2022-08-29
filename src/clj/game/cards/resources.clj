@@ -682,7 +682,7 @@
 (defcard "Cookbook"
   {:events [{:event :runner-install
              :interactive (req true)
-             :optional {:prompt "Place a virus counter?"
+             :optional {:prompt "Place 1 virus counter?"
                         :req (req (has-subtype? (:card context) "Virus"))
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:msg (msg "place 1 virus counter on " (card-str state (:card context)))
@@ -821,10 +821,10 @@
 (defcard "Crypt"
   {:events [{:event :successful-run
              :silent (req true)
-             :optional {:prompt "Place a virus counter on Crypt?"
+             :optional {:prompt "Place 1 virus counter on Crypt?"
                         :req (req (= :archives (target-server context)))
                         :autoresolve (get-autoresolve :auto-place-counter)
-                        :yes-ability {:msg "place a virus counter on itself"
+                        :yes-ability {:msg "place 1 virus counter on itself"
                                       :effect (effect (add-counter card :virus 1))}}}]
    :abilities [{:async true
                 :label "Install a virus program from the stack"
@@ -1075,7 +1075,7 @@
                 :effect (effect (lose-credits eid 1))}]
    :events [{:event :corp-turn-begins
              :msg (msg "draw " (if (zero? (count (get-in @state [:runner :deck])))
-                                 "0 cards (runner's stack is empty)"
+                                 "no cards (Runner's stack is empty)"
                                  "1 card"))
              :async true
              :effect (effect (draw :runner eid 1))}
@@ -1598,7 +1598,7 @@
               :autoresolve (get-autoresolve :auto-place-counter)
               :waiting-prompt "Runner to choose an option"
               :prompt "Place 1 power counter on Kasi String?"
-              :yes-ability {:msg "place a power counter on itself"
+              :yes-ability {:msg "place 1 power counter on itself"
                             :async true
                             :effect (req (add-counter state side eid card :power 1 {:placed true}))}
               :no-ability {:effect (effect (system-msg "declines to use Kasi String"))}}}
@@ -2569,7 +2569,7 @@
    :events [{:event :runner-turn-ends
              :async true
              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
-                            (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
+                            (do (system-msg state :runner (str "uses " (:title card) " to draw 1 card"))
                                 (draw state :runner eid 1))
                             (effect-completed state :runner eid)))}]})
 

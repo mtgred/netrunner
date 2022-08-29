@@ -100,7 +100,7 @@
              (effect
                (continue-ability
                  {:optional
-                  {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
+                  {:prompt "Expose installed card unless the Corp pays 1 [Credits]?"
                    :player :runner
                    :autoresolve (get-autoresolve :auto-fire)
                    :no-ability {:effect (req (clear-wait-prompt state :corp))}
@@ -259,7 +259,7 @@
              :async true
              :interactive (req true)
              :req (req (and (= side :runner) (= :ability-cost (:cause target))))
-             :msg "draw a card"
+             :msg "draw 1 card"
              :effect (effect (draw eid 1))}]})
 
 (defcard "Asa Group: Security Through Vigilance"
@@ -524,7 +524,7 @@
              :async true
              :req (req (and (program? (:card context))
                             (some #{:discard} (:previous-zone (:card context)))))
-             :msg "draw a card"
+             :msg "draw 1 card"
              :effect (effect (draw eid 1))}]})
 
 (defcard "Freedom Khumalo: Crypto-Anarchist"
@@ -1031,7 +1031,7 @@
                                              (let [context (first targets)]
                                                (is-central? (:server context)))))))
               :autoresolve (get-autoresolve :auto-fire)
-              :prompt "Force the Corp to draw a card?"
+              :prompt "Force the Corp to draw 1 card?"
               :yes-ability {:msg "force the Corp to draw 1 card"
                             :async true
                             :effect (effect (draw :corp eid 1))}
@@ -1817,7 +1817,7 @@
           :prompt "Swap 2 pieces of ice?"
           :waiting-prompt "Runner to make a decision"
           :yes-ability
-          {:prompt "Choose 2 ice"
+          {:prompt "Choose 2 pieces of ice"
            :choices {:req (req (and (installed? target)
                                     (ice? target)))
                      :max 2

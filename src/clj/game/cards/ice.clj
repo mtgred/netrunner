@@ -1139,8 +1139,8 @@
     {:subroutines [(trace-ability
                      2
                      {:async true
-                      :label "Look at the top of the stack"
-                      :msg "look at top X cards of the stack"
+                      :label "Look at the top cards of the stack"
+                      :msg "look at top cards of the stack"
                       :waiting-prompt "Corp to make a decision"
                       :effect (req (let [c (- target (second targets))
                                          from (take c (:deck runner))]
@@ -2480,7 +2480,7 @@
                                  :msg (msg "swap the positions of " (card-str state (first targets))
                                            " and " (card-str state (second targets)))
                                  :effect (req (apply swap-ice state side targets))}
-                                {:prompt "Choose the two cards to swap"
+                                {:prompt "Choose 2 cards to swap"
                                  :choices {:card #(and (installed? %)
                                                        (not (ice? %)))
                                            :max 2

@@ -1715,7 +1715,7 @@
                                    (wait-for (draw state :corp 1)
                                              (clear-wait-prompt state :corp)
                                              (system-msg state :runner "declines to trash a card for Standoff")
-                                             (system-msg state :corp "draws a card and gains 5 [Credits] from Standoff")
+                                             (system-msg state :corp "uses Standoff to draw 1 card and gain 5 [Credits]")
                                              (gain-credits state :corp eid 5))
                                    (do (system-msg state :corp "declines to trash a card for Standoff")
                                        (clear-wait-prompt state :runner)
@@ -1876,7 +1876,7 @@
                            (str "trash "
                                 (str/join ", " (map :title (take (adv4? state card) (:deck runner))))
                                 " from the Runner's stack")
-                           "trash from the Runner's stack but it is empty"))
+                           "trash no cards from the Runner's stack (it is empty)"))
                :effect (effect (mill :corp eid :runner (adv4? state card)))}]}))
 
 (defcard "Unorthodox Predictions"

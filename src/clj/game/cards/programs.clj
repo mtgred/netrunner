@@ -487,7 +487,7 @@
   (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
                                 {:label "Place a virus counter"
-                                 :msg "manually place a virus counter on itself"
+                                 :msg "manually place 1 virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
                     :constant-effects [(breaker-strength-bonus (req (get-virus-counters state card)))]
                     :events [{:event :end-breach-server
@@ -791,7 +791,7 @@
               :prompt "Place 1 virus counter on Conduit?"
               :yes-ability {:msg "place 1 virus counter on itself"
                             :effect (effect (add-counter card :virus 1))}
-              :no-ability {:effect (effect (system-msg "declines to use Conduit to place a virus counter on itself"))}}}
+              :no-ability {:effect (effect (system-msg "declines to use Conduit to place 1 virus counter on itself"))}}}
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
@@ -810,7 +810,7 @@
              :async true
              :req (req (some #(corp? (:card %)) targets))
              :effect (req (let [amt-trashed (count (filter #(corp? (:card %)) targets))
-                                sing-ab {:optional {:prompt "Place a virus counter on Consume?"
+                                sing-ab {:optional {:prompt "Place 1 virus counter on Consume?"
                                                     :autoresolve (get-autoresolve :auto-place-counter)
                                                     :yes-ability {:effect (effect (add-counter :runner card :virus 1))
                                                                   :msg "place 1 virus counter on Consume"}}}
@@ -950,7 +950,7 @@
                                                     card nil))))}))]
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-                  :msg (msg "reveal the top 5 cards of their Stack: " (str/join ", " (map :title (take 5 (:deck runner)))))
+                  :msg (msg "reveal the top cards of their Stack: " (str/join ", " (map :title (take 5 (:deck runner)))))
                   :waiting-prompt "Runner to make a decision"
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -2656,9 +2656,9 @@
      :abilities [(set-autoresolve :auto-place-counter "Trypano placing virus counters on itself")]
      :events [{:event :runner-turn-begins
                :optional
-               {:prompt "Place a virus counter on Trypano?"
+               {:prompt "Place 1 virus counter on Trypano?"
                 :autoresolve (get-autoresolve :auto-place-counter)
-                :yes-ability {:msg "place a virus counter on itself"
+                :yes-ability {:msg "place 1 virus counter on itself"
                               :effect (req (add-counter state side card :virus 1))}}}
               {:event :counter-added
                :async true

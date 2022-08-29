@@ -460,7 +460,7 @@
              :once :per-turn
              :req (req (and (<= 2 (:position target))
                             (first-event? state side :run #(<= 2 (:position (first %))))))
-             :msg "draw two cards"
+             :msg "draw 2 cards"
              :async true
              :effect (effect (draw eid 2))}]})
 
@@ -1436,7 +1436,7 @@
               :waiting-prompt "Runner to make a decision"
               :prompt "Gain 1 [Credit] and look at the top card of your Stack?"
               :yes-ability
-              {:msg "gain 1 [Credit] and look at the top card of Stack"
+              {:msg "gain 1 [Credit] and look at the top card of their Stack"
                :async true
                :effect
                (req
@@ -1445,12 +1445,12 @@
                              state :runner
                              {:player :runner
                               :optional
-                              {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
+                              {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of your Stack?")
                                :yes-ability
-                               {:msg "add the top card of Stack to the bottom"
+                               {:msg "add the top card of their Stack to the bottom"
                                 :effect (effect (move :runner (first (:deck runner)) :deck))}
                                :no-ability
-                               {:effect (effect (system-msg "does not add the top card of the Stack to the bottom"))}}}
+                               {:effect (effect (system-msg "does not add the top card of the their Stack to the bottom"))}}}
                              card nil)))}
               :no-ability {:effect (effect (system-msg "declines to use Paragon"))}}}]
    :abilities [(set-autoresolve :auto-fire "Paragon")]})
@@ -1562,19 +1562,19 @@
                                        (pos? (count (:deck runner)))))
                         :autoresolve (get-autoresolve :auto-fire)
                         :player :runner
-                        :prompt "Look at top 2 cards of the stack?"
+                        :prompt "Look at top 2 cards of your Stack?"
                         :yes-ability
-                        {:msg "look at the top 2 cards of the stack"
+                        {:msg "look at the top 2 cards of their Stack"
                          :choices ["OK"]
-                         :prompt (msg "The top two cards of your Stack are "
+                         :prompt (msg "The top 2 cards of your Stack are "
                                       (str/join ", " (map :title (take 2 (:deck runner))))
                                       ".")}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
-               {:label "Reveal and install top card of stack"
+               {:label "Reveal and install top card of your Stack"
                 :once :per-turn
                 :cost [:credit 1]
                 :req (req (pos? (count (:deck runner))))
-                :msg (msg "reveal the top card of the stack: " (:title (first (:deck runner))))
+                :msg (msg "reveal the top card of their Stack: " (:title (first (:deck runner))))
                 :async true
                 :effect
                 (req

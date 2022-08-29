@@ -1517,7 +1517,7 @@
                   :waiting-prompt "Corp to choose an option"
                   :prompt "Draw 1 card?"
                   :yes-ability
-                  {:msg "draw a card"
+                  {:msg "draw 1 card"
                    :effect (effect (draw :corp eid 1))}}}]
     {:events [(-> ability
                   (assoc :event :runner-lose-tag)
@@ -1610,7 +1610,7 @@
                          (str "reveal and draw "
                               (-> corp :deck first :title)
                               " from R&D")
-                         "reveal and draw from R&D but it is empty"))
+                         "reveal and draw no cards from R&D (it is empty)"))
              :async true
              :effect (req (wait-for
                             (reveal state side (-> corp :deck first))

@@ -1148,7 +1148,7 @@
       (play-from-hand state :runner "Crypt")
       (let [crypt (get-resource state 0)]
         (run-empty-server state "Archives")
-        (is (= "Place a virus counter on Crypt?" (:msg (prompt-map :runner))))
+        (is (= "Place 1 virus counter on Crypt?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
         (is (= 1 (get-counters (refresh crypt) :virus)))
         (run-empty-server state "R&D")
@@ -3161,7 +3161,7 @@
      (click-prompt state :runner "Paragon") ; runner should be prompted for which to trigger first
      (is (= "Gain 1 [Credit] and look at the top card of your Stack?" (:msg (prompt-map :runner))) "Paragon prompt 1")
      (click-prompt state :runner "Yes")
-     (is (= "Add Easy Mark to bottom of Stack?" (:msg (prompt-map :runner))) "Paragon prompt")
+     (is (= "Add Easy Mark to bottom of your Stack?" (:msg (prompt-map :runner))) "Paragon prompt")
      (changes-val-macro 1 (count (:hand (get-runner)))
                         "Clicking prompt causes Masanori to resolve"
                         (click-prompt state :runner "Yes"))
