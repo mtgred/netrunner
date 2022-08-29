@@ -2830,28 +2830,26 @@
                                         (installed? %)
                                         (not (ice? %)))}
                   :effect (req (let [c target
-                                     title (if (:rezzed c)
-                                             (:title c)
-                                             "selected unrezzed card")]
+                                     title (card-str state target)]
                                  (add-counter state side c :advancement 3)
                                  (continue-ability
                                    state side
                                    {:player :runner
                                     :async true
                                     :waiting-prompt "Runner to choose an option"
-                                    :prompt (str "Access " title " or pay 3 [Credits]?")
-                                    :choices ["Access card"
+                                    :prompt "Choose one"
+                                    :choices [(str "Access " title)
                                               (when (>= (:credit runner) 3)
                                                 "Pay 3 [Credits]")]
                                     :msg (msg "force the Runner to "
-                                              (if (= target "Access card")
-                                                (str "access " title)
-                                                "pay 3 [Credits]"))
-                                    :effect (req (if (= target "Access card")
-                                                   (access-card state :runner eid c)
+                                              (if (= target "Pay 3 [Credits]")
+                                                "pay 3 [Credits]"
+                                                (str "access " title)))
+                                    :effect (req (if (= target "Pay 3 [Credits]")
                                                    (wait-for (pay state :runner (make-eid state eid) card :credit 3)
                                                              (system-msg state :runner (:msg async-result))
-                                                             (effect-completed state side eid))))}
+                                                             (effect-completed state side eid))
+                                                   (access-card state :runner eid c)))}
                                    card nil)))}]})
 
 (defcard "Owl"
