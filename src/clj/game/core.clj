@@ -94,6 +94,7 @@
    get-all-content
    get-all-hosted
    get-only-card-to-access
+   installed-access-trigger
    interactions
    max-access
    msg-handle-access

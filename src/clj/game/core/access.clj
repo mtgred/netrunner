@@ -4,6 +4,7 @@
     [game.core.board :refer [all-active]]
     [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
+    [game.core.costs :refer [total-available-credits]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -327,6 +328,22 @@
   (when-let [acc (:access cdef)]
     (assoc (ability-as-handler card acc)
            :condition :accessed)))
+
+(defn installed-access-trigger
+  "Effect for triggering ambush on access.
+  Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
+  ([cost ability]
+   (let [ab (if (pos? cost) (assoc ability :cost [:credit cost]) ability)
+         prompt (if (pos? cost)
+                  (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
+                  (req (str "Use " (:title card) " ability?")))]
+     (installed-access-trigger cost ab prompt)))
+  ([cost ability prompt]
+   {:access {:optional
+             {:req (req (and installed (>= (total-available-credits state :corp eid card) cost)))
+              :waiting-prompt (:waiting-prompt ability)
+              :prompt prompt
+              :yes-ability (dissoc ability :waiting-prompt)}}}))
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."

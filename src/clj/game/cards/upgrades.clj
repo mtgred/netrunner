@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [cond-plus.core :refer [cond+]]
    [game.core.access :refer [access-bonus set-only-card-to-access
+                             installed-access-trigger
                              steal-cost-bonus]]
    [game.core.bad-publicity :refer [lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
@@ -1263,16 +1264,13 @@
              :msg "prevent the Runner from jacking out unless they trash an installed program"}]})
 
 (defcard "Prisec"
-  {:access {:optional
-            {:req (req (installed? card))
-             :waiting-prompt "Corp to choose an option"
-             :prompt "Pay 2 [Credits] to use Prisec ability?"
-             :yes-ability
-             {:cost [:credit 2]
-              :msg "do 1 meat damage and give the Runner 1 tag"
-              :async true
-              :effect (req (wait-for (damage state side :meat 1 {:card card})
-                                     (gain-tags state :corp eid 1)))}}}})
+  (installed-access-trigger
+    2
+    {:waiting-prompt "Corp to choose an option"
+     :msg "do 1 meat damage and give the Runner 1 tag"
+     :async true
+     :effect (req (wait-for (damage state side :meat 1 {:card card})
+                            (gain-tags state :corp eid 1)))}))
 
 (defcard "Product Placement"
   {:flags {:rd-reveal (req true)}

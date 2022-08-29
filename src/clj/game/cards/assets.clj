@@ -3,7 +3,7 @@
    [clojure.pprint :as pprint]
    [clojure.set :as set]
    [clojure.string :as str]
-   [game.core.access :refer [access-card]]
+   [game.core.access :refer [access-card installed-access-trigger]]
    [game.core.actions :refer [score]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
@@ -63,23 +63,7 @@
    [jinteki.utils :refer :all]))
 
 ;;; Asset-specific helpers
-(defn installed-access-trigger
-  "Effect for triggering ambush on access.
-  Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
-  ([cost ability]
-   (let [ab (if (pos? cost) (assoc ability :cost [:credit cost]) ability)
-         prompt (if (pos? cost)
-                  (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
-                  (req (str "Use " (:title card) " ability?")))]
-     (installed-access-trigger cost ab prompt)))
-  ([cost ability prompt]
-   {:access {:optional
-             {:req (req (and installed (>= (:credit corp) cost)))
-              :waiting-prompt (:waiting-prompt ability)
-              :prompt prompt
-              :yes-ability (dissoc ability :waiting-prompt)}}}))
-
-(defn advance-ambush
+(defn- advance-ambush
   "Creates advanceable ambush structure with specified ability for specified cost"
   ([cost ability] (assoc (installed-access-trigger cost ability) :advanceable :always))
   ([cost ability prompt] (assoc (installed-access-trigger cost ability prompt) :advanceable :always)))
@@ -135,7 +119,6 @@
   (advance-ambush 2 {:req (req (pos? (get-counters (get-card state card) :advancement)))
                      :waiting-prompt "Corp to make a decision"
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "program") " to trash")
-                     :cost [:credit 2]
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (program? %))}
@@ -1545,24 +1528,20 @@
                                 :type :recurring}}})
 
 (defcard "Neurostasis"
-  (advance-ambush 3 {:req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :waiting-prompt "Corp to make a decision"
-                     :async true
-                     :effect (req (let [cnt (get-counters (get-card state card) :advancement)]
-                                    (continue-ability
-                                      state side
-                                      {:prompt (msg "Choose " (quantify cnt "installed card") " to shuffle into the stack")
-                                       :player :corp
-                                       :cost [:credit 3]
-                                       :choices {:card #(and (installed? %)
-                                                             (runner? %))
-                                                 :max cnt}
-                                       :msg (msg "shuffle " (str/join ", " (map :title targets)) " into the stack")
-                                       :effect (req (doseq [c targets]
-                                                      (move state :runner c :deck))
-                                                    (shuffle! state :runner :deck))}
-                                      card nil)))}
-                  "Pay 3 [Credits] to use Neurostasis ability?"))
+  (advance-ambush
+    3
+    {:req (req (pos? (get-counters (get-card state card) :advancement)))
+     :waiting-prompt "Corp to make a decision"
+     :async true
+     :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "installed card") " to shuffle into the stack")
+     :choices {:card #(and (installed? %)
+                           (runner? %))
+               :max (req (get-counters (get-card state card) :advancement))}
+     :msg (msg "shuffle " (str/join ", " (map :title targets)) " into the stack")
+     :effect (req (doseq [c targets]
+                    (move state :runner c :deck))
+                  (shuffle! state :runner :deck)
+                  (effect-completed state side eid))}))
 
 (defcard "News Team"
   {:flags {:rd-reveal (req true)}
@@ -1709,8 +1688,7 @@
                               (in-hand? target)))}
      :msg (msg "score " (:title target))
      :async true
-     :effect (effect (score eid target {:no-req true}))}
-    "Score an Agenda from HQ?"))
+     :effect (effect (score eid target {:no-req true}))}))
 
 (defcard "Political Dealings"
   (letfn [(pdhelper [agendas]
@@ -2134,7 +2112,6 @@
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
                      :msg (msg "trash " (str/join ", " (map :title targets)))
-                     :cost [:credit 1]
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (hardware? %))}
@@ -2428,8 +2405,7 @@
                        {:prompt "Access the newly installed card?"
                         :yes-ability {:async true
                                       :effect (effect (access-card eid (get-card state moved-target)))}}}
-                      moved-card nil)))}
-    "Swap Toshiyuki Sakai with an agenda or asset from HQ?"))
+                      moved-card nil)))}))
 
 (defcard "Trieste Model Bioroids"
   {:on-rez {:msg (msg "prevent " (card-str state target)
