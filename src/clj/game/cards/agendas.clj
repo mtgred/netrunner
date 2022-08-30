@@ -978,7 +978,7 @@
                                              :effect (effect (gain-bad-publicity :corp 1))}}}
                              card nil)
                            (let [n (* 3 (count-bad-pub state))]
-                             (system-msg state side (str "gains " n " [Credits]"))
+                             (system-msg state side (str "uses Illicit Sales to gain " n " [Credits]"))
                              (gain-credits state side eid n))))}})
 
 (defcard "Improved Protein Source"
