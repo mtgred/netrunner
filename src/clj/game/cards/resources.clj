@@ -969,10 +969,10 @@
                   :choices (req (eligible-cards runner))
                   :effect (effect (move target :hand))
                   :msg (msg "add " (:title target) " to grip")}
-                 {:label "Place a power counter"
+                 {:label "Place 1 power counter"
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
-                  :msg "manually place a power counter on itself"}]
+                  :msg "manually place 1 power counter on itself"}]
      :events (let [prog-or-hw (fn [targets]
                                 (some #(or (program? (:card %))
                                            (hardware? (:card %)))

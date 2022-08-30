@@ -3605,7 +3605,7 @@
 
 (defcard "Vasilisa"
   {:on-encounter
-   {:optional {:prompt "Place an advancement counter?"
+   {:optional {:prompt "Place 1 advancement counter?"
                :waiting-prompt "Corp to make a decision"
                :req (req (and (can-pay? state side eid card nil [:credit 1])
                               (some #(or (not (rezzed? %))

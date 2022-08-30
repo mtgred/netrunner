@@ -315,7 +315,7 @@
                                                       (same-server? card %)))
                                         count
                                         pos?))
-                 :label "place an advancement counter (start of turn)"
+                 :label "place 1 advancement counter (start of turn)"
                  :async true
                  :effect
                  (effect
@@ -523,14 +523,14 @@
 (defcard "Embolus"
   (let [maybe-gain-counter {:once :per-turn
                             :async true
-                            :label "Place a power counter on Embolus (start of turn)"
+                            :label "Place 1 power counter (start of turn)"
                             :effect (effect
                                       (continue-ability
                                         {:optional
                                          {:prompt "Pay 1 [Credit] to place 1 power counter on Embolus?"
                                           :yes-ability {:effect (effect (add-counter card :power 1))
                                                         :cost [:credit 1]
-                                                        :msg "place a power counter on itself"}}}
+                                                        :msg "place 1 power counter on itself"}}}
                                         card nil))}
         etr {:req (req this-server)
              :cost [:power 1]
@@ -857,8 +857,8 @@
 
 (defcard "La Costa Grid"
   (let [ability {:prompt (msg "Choose a card in " (zone->name (second (get-zone card))))
-                 :label "place an advancement counter (start of turn)"
-                 :msg (msg "place an advancement token on " (card-str state target))
+                 :label "place 1 advancement counter (start of turn)"
+                 :msg (msg "place 1 advancement counter on " (card-str state target))
                  :choices {:req (req (and (installed? target)
                                           (in-same-server? card target)))}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
@@ -1159,7 +1159,7 @@
              :req (req (and (same-server? card target)
                             (= 1 (count (filter #(= (second (get-zone %)) (second (get-zone card)))
                                                 (map first (turn-events state side :advance)))))))
-             :msg (msg "place an additional advancement token on " (card-str state target))
+             :msg (msg "place 1 additional advancement token on " (card-str state target))
              :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Off the Grid"
@@ -1303,7 +1303,7 @@
    :events [{:event :successful-run
              :req (req (and (pos? (get-counters card :power))
                             (is-central? (:server context))))
-             :msg "remove a hosted power counter"
+             :msg "remove 1 hosted power counter"
              :effect (effect (add-counter card :power -1))}]
    :on-rez {:waiting-prompt "Corp to make a decision"
             :prompt "How many credits do you want to pay?"

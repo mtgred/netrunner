@@ -1340,7 +1340,7 @@
             [x] {:async true
                  :prompt (msg "Place an advancement counter on an installed card (" x " remaining)")
                  :choices {:card #(installed? %)}
-                 :msg (msg "place an advancement counter on " (card-str state target))
+                 :msg (msg "place 1 advancement counter on " (card-str state target))
                  :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
                                         (if (> x 1)
                                           (continue-ability

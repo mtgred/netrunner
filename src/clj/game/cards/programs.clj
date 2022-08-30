@@ -486,7 +486,7 @@
 (defcard "Aumakua"
   (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
-                                {:label "Place a virus counter"
+                                {:label "Place 1 virus counter"
                                  :msg "manually place 1 virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
                     :constant-effects [(breaker-strength-bonus (req (get-virus-counters state card)))]
@@ -2215,11 +2215,11 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 2 1)
                                 {:cost [:click 1]
-                                 :msg "place one power counter"
+                                 :msg "place 1 power counter"
                                  :label "Place 1 power counter"
                                  :effect (effect (add-counter card :power 1))}
                                 {:cost [:click 1]
-                                 :msg "remove one power counter"
+                                 :msg "remove 1 power counter"
                                  :label "Remove 1 power counter"
                                  :effect (effect (add-counter card :power -1))}]
                     :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))

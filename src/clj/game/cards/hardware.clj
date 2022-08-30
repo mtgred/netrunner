@@ -1063,9 +1063,9 @@
              :interactive (req true)
              :optional {:req (req (and (first-event? state :runner :successful-run)
                                        (pos? (count-virus-programs state))))
-                        :prompt "Place a virus counter?"
+                        :prompt "Place 1 virus counter?"
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:prompt "Choose an installed virus program to add a virus counter to"
+                        :yes-ability {:prompt "Choose an installed virus program to place 1 virus counter to"
                                       :choices {:card #(and (installed? %)
                                                             (has-subtype? % "Virus")
                                                             (program? %))}

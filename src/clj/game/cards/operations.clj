@@ -241,7 +241,7 @@
                :async true
                :choices {:card can-be-advanced?
                          :all true}
-               :msg (msg "place an advancement token on " (card-str state target))
+               :msg (msg "place 1 advancement token on " (card-str state target))
                :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
                             (continue-ability state side (audacity (inc n)) card nil))}))]
     {:on-play
