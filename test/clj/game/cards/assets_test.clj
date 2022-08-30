@@ -2729,7 +2729,7 @@
         (is (= 3 (:agenda-point (get-corp))) "Gained 3 agenda points")
         (take-credits state :corp)
         (run-empty-server state "HQ")
-        (is (= "Choose a card to place 1 advancement token on" (:msg (prompt-map :corp))) "Puppet Master event fired"))))
+        (is (= "Choose a card that can be advanced to place 1 advancement token on" (:msg (prompt-map :corp))) "Puppet Master event fired"))))
 
 (deftest lakshmi-smartfabrics
   ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ
