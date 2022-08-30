@@ -1338,7 +1338,7 @@
 (defcard "Moon Pool"
   (letfn [(moon-pool-place-advancements
             [x] {:async true
-                 :prompt (msg "Place an advancement counter on an installed card (" x " remaining)")
+                 :prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
                  :choices {:card #(installed? %)}
                  :msg (msg "place 1 advancement counter on " (card-str state target))
                  :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
@@ -1348,7 +1348,7 @@
                                             (moon-pool-place-advancements (dec x))
                                             card nil)
                                           (effect-completed state side eid))))
-                 :cancel-effect (effect (system-msg "declines to use Moon Pool to place an advancement counter")
+                 :cancel-effect (effect (system-msg "declines to use Moon Pool to place advancement counters")
                                         (effect-completed eid))})]
     (let [moon-pool-reveal-ability
           {:prompt "Reveal up to 2 facedown cards from Archives and shuffle them into R&D"

@@ -843,7 +843,7 @@
              (effect
                (continue-ability
                  (let [p (inc (get-agenda-points (:card context)))]
-                   {:prompt (str "Choose a card to place advancement tokens on with " (:title card))
+                   {:prompt "Choose a card to place advancement tokens on"
                     :choices {:card #(and (installed? %)
                                           (corp? %))}
                     :msg (msg "place " (quantify p "advancement token")
