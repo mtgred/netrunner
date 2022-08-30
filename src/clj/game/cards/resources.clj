@@ -621,7 +621,7 @@
              :req (req (pos? (:amount context)))
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:label "Trash 1 random card from HQ for each power counter"
+   :abilities [{:label "Trash 1 random card from HQ for each hosted power counter"
                 :async true
                 :req (req (pos? (get-counters card :power)))
                 :cost [:trash-can]
@@ -1460,7 +1460,7 @@
    :abilities [{:async true
                 :effect (effect (add-counter card :credit -1)
                                 (gain-credits eid 1))
-                :msg "take 1 [Credits] to install programs"}]
+                :msg "take 1 hosted [Credits] to install programs"}]
    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
                                                (program? target)))
                                 :type :credit}}})

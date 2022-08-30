@@ -790,7 +790,7 @@
                             (is-remote? (second (get-zone (:card context))))))
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
+   :abilities [{:label "Draw 1 card and gain 2 [Credits] for each hosted power counter"
                 :cost [:trash-can]
                 :async true
                 :effect (req (let [counters (get-counters card :power)
@@ -1209,10 +1209,10 @@
 
 (defcard "Long-Term Investment"
   {:derezzed-events [corp-rez-toast]
-   :abilities [{:label "Move any number of credits to your credit pool"
+   :abilities [{:label "Move any number of hosted credits to your credit pool"
                 :req (req (>= (get-counters card :credit) 8))
                 :cost [:click 1]
-                :prompt "How many credits do you want to take?"
+                :prompt "How many hosted credits do you want to take?"
                 :choices {:counter :credit}
                 :msg (msg "gain " target " [Credits]")
                 :async true
@@ -1504,7 +1504,7 @@
                   :cost [:credit 2]
                   :msg "place 2 power counters on itself"
                   :effect (effect (add-counter card :power 2))}
-                 {:label "Gain 2 [Credits] for each power counter"
+                 {:label "Gain 2 [Credits] for each hosted power counter"
                   :cost [:click 1 :trash-can]
                   :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                   :async true
@@ -1899,11 +1899,11 @@
                             (= :meat (:damage-type context))))
              :msg "place 1 advancement token on itself"
              :effect (effect (add-counter card :advancement 1))}]
-   :abilities [{:label "Move advancement tokens to another card"
+   :abilities [{:label "Move hosted advancement tokens to another card"
                 :trash-icon true
                 :cost [:trash-can]
                 :async true
-                :prompt "Move how many advancement tokens?"
+                :prompt "Move how many hosted advancement tokens?"
                 :choices {:number (req (get-counters card :advancement))
                           :default (req (get-counters card :advancement))}
                 :effect (req (let [num-counters target]
@@ -1913,7 +1913,7 @@
                                   :prompt "Choose a card that can be advanced"
                                   :choices {:card can-be-advanced?}
                                   :effect (effect (add-counter target :advancement num-counters {:placed true})
-                                                  (system-msg (str "trashed Reconstruction Contract to move " (quantify num-counters "advancement token") " to " (card-str state target)))
+                                                  (system-msg (str "uses Reconstruction Contract to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
                                                   (effect-completed eid))}
                                  card nil)))}]})
 
