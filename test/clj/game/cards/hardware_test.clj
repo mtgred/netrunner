@@ -318,7 +318,7 @@
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
 
 (deftest autoscripter
-  ;; Autoscripter - gain 1 [Click] first time Runner installs program from Grip during their turn.
+  ;; Autoscripter - gain [Click] first time Runner installs program from Grip during their turn.
   ;; Trash if unsuccessful run
   (do-game
     (new-game {:runner {:deck ["Autoscripter" (qty "Inti" 3) "Clone Chip"]}
@@ -3486,7 +3486,7 @@
       (play-from-hand state :runner "Prognostic Q-Loop")
       (run-on state :hq)
       (click-prompt state :runner "Yes")
-      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))
+      (is (= "The top 2 cards of the stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))
       (click-prompt state :runner "OK")
       (card-ability state :runner (get-hardware state 0) 1)
       (click-prompt state :runner "Yes")
@@ -3587,7 +3587,7 @@
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Prognostic Q-Loop")
       (click-prompt state :runner "Yes")
-      (is (= "The top two cards of your Stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))))
+      (is (= "The top 2 cards of the stack are Au Revoir, Bankroll." (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-are-the-correct-cards-shown-if-another-start-of-run-trigger-draws-a-card-issue-4973
     ;; Are the correct cards shown if another start of run trigger draws a card. Issue #4973
@@ -3612,7 +3612,7 @@
       (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
-      (is (= "The top two cards of your Stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))))
+      (is (= "The top 2 cards of the stack are Bankroll, Clone Chip." (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-works-with-paladin-poemu-5304
     ;; Works with Paladin Poemu #5304
@@ -4071,7 +4071,7 @@
       (run-on state "HQ")
       (run-continue state)
       (is (= 2 (:position (:run @state))))
-      (is (= "Use Şifr?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :corp)) "Şifr prompt")
       (click-prompt state :runner "Yes")
       (is (zero? (get-strength (refresh ip))))
       (run-continue-until state :encounter-ice)

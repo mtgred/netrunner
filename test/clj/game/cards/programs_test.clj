@@ -305,7 +305,7 @@
       (is (= 4 (:credit (get-corp))))
       (run-continue state)
       (card-ability state :runner (refresh amina) 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "Done")
       (run-continue state)
       (is (= 4 (:credit (get-corp))) "Corp did not lose 1c because not all subs were broken")
@@ -313,7 +313,7 @@
       (run-on state :hq)
       (run-continue state)
       (card-ability state :runner (refresh amina) 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "End the run")
       (run-continue state)
       (is (= 3 (:credit (get-corp))) "Corp lost 1 credit")
@@ -321,7 +321,7 @@
       (run-on state :hq)
       (run-continue state)
       (card-ability state :runner (refresh amina) 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "End the run")
       (run-continue state)
       (is (= 3 (:credit (get-corp))) "Ability only once per turn"))))
@@ -343,14 +343,14 @@
         (rez state :corp (refresh enima))
         (run-continue state)
         (card-ability state :runner (refresh amina) 0)
-        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "Force the Runner to lose [Click]")
         (click-prompt state :runner "End the run")
         (run-continue state :movement)
         (run-jack-out state)
         (run-on state :hq)
         (run-continue state)
         (card-ability state :runner (refresh yog) 0)
-        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "Force the Runner to lose [Click]")
         (changes-val-macro
           0 (:credit (get-corp))
           "No credit gain from Amina"
@@ -1086,7 +1086,7 @@
           -1 (:credit (get-runner))
           "Runner spends 1 credits to break with Buzzsaw"
           (card-ability state :runner buzzsaw 0)
-          (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+          (click-prompt state :runner "Force the Runner to lose [Click]")
           (click-prompt state :runner "End the run"))
         (is (every? :broken (:subroutines (refresh enigma))) "Buzzsaw breaks 2 subs at once")))))
 
@@ -1166,7 +1166,7 @@
       (is (= 2 (get-strength (refresh rex))) "At strength 2 after boost")
       ;; break
       (card-ability state :runner rex 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "End the run")
       (is (= 1 (:credit (get-runner))) "No credits spent to break")
       (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
@@ -1324,7 +1324,7 @@
         (run-on state :hq)
         (run-continue state)
         (card-ability state :runner (get-program state 0) 0)
-        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "Force the Runner to lose [Click]")
         (click-prompt state :runner "End the run")
         (is (no-prompt? state :runner) "Broke all subroutines on Engima")
         (run-continue state :movement)
@@ -1456,7 +1456,7 @@
       (card-ability state :runner (get-program state 0) 1)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "End the run")
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]"))))
+      (click-prompt state :runner "Force the Runner to lose [Click]"))))
 
 (deftest cleaver
   ;; Cleaver
@@ -1729,7 +1729,7 @@
       (play-from-hand state :runner "Hivemind")
       (run-on state "HQ")
       (run-continue-until state :success)
-      (is (= "Use Cordyceps to swap ice?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :runner)) "Cordyceps prompt")
       (click-prompt state :runner "Yes")
       (is (= "Choose ice protecting this server" (:msg (prompt-map :runner))))
       (is (= :select (prompt-type :runner)))
@@ -2013,7 +2013,7 @@
             (card-ability state :runner daiv 1)
             (click-prompt state :runner "Done")
             (card-ability state :runner daiv 0)
-            (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+            (click-prompt state :runner "Force the Runner to lose [Click]")
             (click-prompt state :runner "End the run")
             (is (str/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
             (click-card state :runner cl1)
@@ -2043,7 +2043,7 @@
                            (card-ability state :runner daiv 1)
                            (click-prompt state :runner "Done")
                            (card-ability state :runner daiv 0)
-                           (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+                           (click-prompt state :runner "Force the Runner to lose [Click]")
                            (click-prompt state :runner "End the run")
                            (is (no-prompt? state :runner) "We are incapable of paying")
                            (is (= 0 (count (filter :broken (:subroutines (refresh enig))))) "No subroutines were broken")))))
@@ -3764,7 +3764,7 @@
         (card-ability state :runner ankusa 1)
         (card-ability state :runner ankusa 1)
         (card-ability state :runner ankusa 0)
-        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "Force the Runner to lose [Click]")
         (click-prompt state :runner "End the run")
         (is (nil? (get-ice state :hq 0)) "Enigma has been returned to HQ")
         (is (find-card "Enigma" (:hand (get-corp))) "Enigma has been returned to HQ")
@@ -4106,7 +4106,7 @@
         (run-continue state)
         (card-ability state :runner mass-driver 1)
         (card-ability state :runner mass-driver 0)
-        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "Force the Runner to lose [Click]")
         (click-prompt state :runner "End the run")
         (run-continue-until state :approach-ice eula)
         (rez state :corp eula)
@@ -4138,7 +4138,7 @@
         (run-continue state)
         (card-ability state :runner mass-driver 1)
         (card-ability state :runner mass-driver 0)
-        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "Force the Runner to lose [Click]")
         (click-prompt state :runner "End the run")
         (run-continue-until state :approach-ice eula)
         (is (= 1 (count (:discard (get-corp)))) "Enigma is trashed")
@@ -5579,7 +5579,7 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "2")
       (click-prompt state :runner "Unrezzed upgrade")
-      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+      (is (= "Choose one" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
 (deftest rng-key-works-when-running-a-different-server-first-5292
     ;; Works when running a different server first #5292
@@ -5595,7 +5595,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "5")
-      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+      (is (= "Choose one" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
 (deftest rng-key-works-after-running-vs-crisium-grid-3772
     ;; Works after running vs Crisium Grid #3772
@@ -5616,7 +5616,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "5")
-      (is (= "Choose RNG Key reward" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
+      (is (= "Choose one" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
 (deftest sadyojata-swap-ability
     ;; Swap ability
@@ -5702,7 +5702,7 @@
       (rez state :corp engima)
       (run-continue state)
       (card-ability state :runner (refresh sage) 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "Done")
       (is (:broken (first (:subroutines (refresh engima)))) "Broke a code gate subroutine"))))
 
@@ -5754,7 +5754,7 @@
       (rez state :corp enigma)
       (run-continue state)
       (card-ability state :runner (refresh savant) 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "End the run")
       (is (:broken (first (:subroutines (refresh enigma)))) "Broke code gate first subroutine")
       (is (:broken (last (:subroutines (refresh enigma)))) "Broke code gate second subroutine")
@@ -6019,7 +6019,7 @@
       (let [snitch (get-program state 0)]
         (run-on state "R&D")
         (is (prompt-is-card? state :runner snitch) "Option to expose")
-        (is (= "Use Snitch to expose approached ice?" (:msg (prompt-map :runner))))
+        (is (= "Expose approached ice?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
         (is (= "Jack out?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes"))))
@@ -6701,7 +6701,7 @@
       (let [credits (:credit (get-runner))]
         (card-ability state :runner utae 0)
         (click-prompt state :runner "2")
-        (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+        (click-prompt state :runner "Force the Runner to lose [Click]")
         (click-prompt state :runner "End the run")
         (is (= (- credits 2) (:credit (get-runner))) "Spent 2 credits"))
       (let [credits (:credit (get-runner))]

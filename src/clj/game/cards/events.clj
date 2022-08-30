@@ -337,7 +337,7 @@
                eid (assoc eid :x-cost true)]
            (continue-ability
              state side
-             {:prompt "How many [Credits]?"
+             {:prompt "How many credits do you want to spend?"
               :choices :credit
               :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
               :async true
@@ -1374,7 +1374,7 @@
     (effect
       (continue-ability
         (let [top-ten (take 10 (:deck runner))]
-          {:prompt (str "The top 10 cards of the stack are " (str/join ", " (map :title top-ten)) ".")
+          {:prompt (str "The top cards of the stack are " (str/join ", " (map :title top-ten)) ".")
            :choices ["OK"]
            :async true
            :effect
@@ -1615,7 +1615,7 @@
              :interactive (req (or (has-subtype? (:card context) "Cybernetic")
                                    (first-event? state side :runner-install)))
              :async true
-             :prompt "What to get from In the Groove?"
+             :prompt "Choose one"
              :choices ["Draw 1 card" "Gain 1 [Credits]"]
              :msg (msg (str/lower-case target))
              :effect (req (if (= target "Draw 1 card")
@@ -1658,7 +1658,7 @@
 
 (defcard "Infiltration"
   {:on-play
-   {:prompt "Gain 2 [Credits] or expose a card?"
+   {:prompt "Choose one"
     :choices ["Gain 2 [Credits]" "Expose a card"]
     :async true
     :effect (effect (continue-ability
@@ -2157,7 +2157,7 @@
              :req (req this-card-run)
              :effect (req (prevent-run-on-server state card (first (:server target)))
                           (when (:successful target)
-                            (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
+                            (system-msg state :runner "gains [Click] and adds Marathon to their grip")
                             (gain-clicks state :runner 1)
                             (move state :runner card :hand)
                             (unregister-events state side card)))}]})
@@ -2201,7 +2201,7 @@
     :msg "make the Corp pay 5 [Credits] or take 1 bad publicity"
     :waiting-prompt "Corp to choose an option"
     :player :corp
-    :prompt "Pay 5 [Credits] or take 1 Bad Publicity?"
+    :prompt "Choose one"
     :choices (req [(when (can-pay? state :corp eid card "Mining Accident" :credit 5)
                      "Pay 5 [Credits]")
                    "Take 1 Bad Publicity"])
@@ -2314,7 +2314,7 @@
 (defcard "Office Supplies"
   {:on-play
    {:play-cost-bonus (req (- (get-link state)))
-    :prompt "Gain 4 [Credits] or draw 4 cards?"
+    :prompt "Choose one"
     :choices ["Gain 4 [Credits]" "Draw 4 cards"]
     :msg (msg (if (= target "Gain 4 [Credits]")
                 "gain 4 [Credits]"
@@ -2326,7 +2326,7 @@
 
 (defcard "On the Lam"
   {:on-play {:req (req (some resource? (all-active-installed state :runner)))
-             :prompt "Choose a resource to host On the Lam"
+             :prompt "Choose a resource to host On the Lam on"
              :choices {:card #(and (resource? %)
                                    (installed? %))}
              :async true
@@ -2533,7 +2533,7 @@
                  (let [ice (:ice context)]
                    (if (pos? (get-strength ice))
                      {:optional
-                      {:prompt (str "Use Prey to trash " (quantify (get-strength ice) "card")
+                      {:prompt (str "Trash " (quantify (get-strength ice) "installed card")
                                     " to trash " (:title ice) "?")
                        :once :per-run
                        :yes-ability
@@ -2542,7 +2542,7 @@
                         :msg (msg "trash " (card-str state ice))
                         :effect (effect (trash eid ice {:cause-card card}))}}}
                      {:optional
-                      {:prompt (str "Use Prey to trash " (:title ice) "?")
+                      {:prompt (str "Trash " (:title ice) "?")
                        :once :per-run
                        :yes-ability
                        {:async true
@@ -2698,7 +2698,7 @@
                  :ability
                  {:req (req (not (zone-locked? state :runner :discard)))
                   :async true
-                  :prompt "Choose up to five cards to install"
+                  :prompt "Choose up to 5 cards to install"
                   :show-discard true
                   :choices {:max 5
                             :card #(and (in-discard? %)
@@ -3161,7 +3161,7 @@
   {:on-play
    {:player :corp
     :waiting-prompt "Corp to choose an option"
-    :prompt "Discard 2 cards or draw 4 cards?"
+    :prompt "Choose one"
     :choices (req [(when (<= 2 (count (:hand corp)))
                      "Discard 2")
                    "Draw 4"])

@@ -676,7 +676,7 @@
           (take-credits state :corp)
           (run-empty-server state :hq)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 0 [Credits] or end the run?" (:msg (prompt-map :runner))))
+            (is (= "Choose one" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 0 [Credits]")
             (is (= credits (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -694,7 +694,7 @@
           (run-continue state)
           (run-continue state)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 0 [Credits] or end the run?" (:msg (prompt-map :runner))))
+            (is (= "Choose one" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 0 [Credits]")
             (is (= credits (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -714,7 +714,7 @@
           (run-continue state)
           (run-continue state)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 2 [Credits] or end the run?" (:msg (prompt-map :runner))))
+            (is (= "Choose one" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 2 [Credits]")
             (is (= (- credits 2) (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -737,7 +737,7 @@
           (run-on state :hq)
           (run-continue-until state :success)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 4 [Credits] or end the run?" (:msg (prompt-map :runner))))
+            (is (= "Choose one" (:msg (prompt-map :runner))))
             (click-prompt state :runner "Pay 4 [Credits]")
             (is (= (- credits 4) (:credit (get-runner))))
             (is (:run @state) "Run hasn't ended")))))
@@ -763,7 +763,7 @@
           (run-on state :hq)
           (run-continue-until state :success)
           (let [credits (:credit (get-runner))]
-            (is (= "Pay 6 [Credits] or end the run?" (:msg (prompt-map :runner))))
+            (is (= "Choose one" (:msg (prompt-map :runner))))
             (is (= ["End the run"] (prompt-buttons :runner)))
             (click-prompt state :runner "End the run")
             (is (= credits (:credit (get-runner))))
@@ -1788,7 +1788,7 @@
       (click-prompt state :corp "Carry on!")
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
+      (is (= "Force the Corp to draw 1 card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (= :waiting (prompt-type :runner)) "Runner has wait prompt")
       (is (= :bogus (prompt-type :corp)) "Corp has a bogus prompt to fake out the runner")
@@ -2803,7 +2803,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "RNG Key")
       (run-empty-server state "HQ")
-      (is (= "Fire RNG Key?" (:msg (prompt-map :runner))))
+      (is (= "Name a number?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (= "Guess a number" (:msg (prompt-map :runner))))
       (click-prompt state :runner "3")
@@ -3649,7 +3649,7 @@
     (click-prompt state :corp "0") ; trace
     (click-prompt state :runner "0")
     (is (= 1 (:brain-damage (get-runner))) "Runner starts with 1 brain damage")
-    (click-prompt state :runner "Take 1 brain damage")
+    (click-prompt state :runner "Suffer 1 brain damage")
     (is (= 2 (:brain-damage (get-runner))) "Runner took 1 brain damage")
     (click-prompt state :runner "No action") ; don't trash
     (run-on state "HQ")

@@ -100,7 +100,7 @@
              (effect
                (continue-ability
                  {:optional
-                  {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
+                  {:prompt "Expose installed card unless the Corp pays 1 [Credits]?"
                    :player :runner
                    :autoresolve (get-autoresolve :auto-fire)
                    :no-ability {:effect (req (clear-wait-prompt state :corp))}
@@ -243,12 +243,12 @@
 
 (defcard "Argus Security: Protection Guaranteed"
   {:events [{:event :agenda-stolen
-             :prompt "Take 1 tag or suffer 2 meat damage?"
+             :prompt "Choose one"
              :async true
-             :choices ["1 tag" "2 meat damage"]
+             :choices ["Take 1 tag" "Suffer 2 meat damage"]
              :player :runner
              :msg "make the Runner take 1 tag or suffer 2 meat damage"
-             :effect (req (if (= target "1 tag")
+             :effect (req (if (= target "Take 1 tag")
                             (do (system-msg state side "chooses to take 1 tag")
                                 (gain-tags state :runner eid 1))
                             (do (system-msg state side "chooses to suffer 2 meat damage")
@@ -259,7 +259,7 @@
              :async true
              :interactive (req true)
              :req (req (and (= side :runner) (= :ability-cost (:cause target))))
-             :msg "draw a card"
+             :msg "draw 1 card"
              :effect (effect (draw eid 1))}]})
 
 (defcard "Asa Group: Security Through Vigilance"
@@ -401,7 +401,7 @@
                              (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage)))
                              (pos? (count (:hand runner)))))
               :waiting-prompt "Corp to make a decision"
-              :prompt "Use Chronos Protocol to choose the first card trashed?"
+              :prompt "Choose the first card to trash?"
               :yes-ability
               {:async true
                :msg (msg "look at the Runner's Grip ( "
@@ -524,7 +524,7 @@
              :async true
              :req (req (and (program? (:card context))
                             (some #{:discard} (:previous-zone (:card context)))))
-             :msg "draw a card"
+             :msg "draw 1 card"
              :effect (effect (draw eid 1))}]})
 
 (defcard "Freedom Khumalo: Crypto-Anarchist"
@@ -1031,7 +1031,7 @@
                                              (let [context (first targets)]
                                                (is-central? (:server context)))))))
               :autoresolve (get-autoresolve :auto-fire)
-              :prompt "Force the Corp to draw a card?"
+              :prompt "Force the Corp to draw 1 card?"
               :yes-ability {:msg "force the Corp to draw 1 card"
                             :async true
                             :effect (effect (draw :corp eid 1))}
@@ -1244,7 +1244,7 @@
                                                          (corp? (:card %)))
                                                    targets)))))
               :waiting-prompt "Corp to make a decision"
-              :prompt "Trace the Runner with NBN: Controlling the Message?"
+              :prompt "Initiate a trace with strength 4?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:trace {:base 4
@@ -1265,7 +1265,7 @@
              :player :corp
              :async true
              :waiting-prompt "Corp to choose an option"
-             :prompt "Choose option"
+             :prompt "Choose one"
              :choices ["Gain 2 [Credits]" "Draw 2 cards"]
              :msg (msg (decapitalize target))
              :effect (req
@@ -1367,13 +1367,13 @@
   {:events [{:event :encounter-ice
              :optional
              {:req (req (pos? (count (:hand runner))))
-              :prompt "Trash a card in grip to lower ice strength by 2?"
+              :prompt "Trash a card in your grip to lower the strength of encountered ice by 2?"
               :once :per-turn
               :yes-ability
-              {:prompt "Choose a card in your Grip to trash"
+              {:prompt "Choose a card in your grip to trash"
                :choices {:card in-hand?}
                :msg (msg "trash " (:title target)
-                         " and reduce the strength of " (:title current-ice)
+                         " and lower the strength of " (:title current-ice)
                          " by 2 for the remainder of the run")
                :async true
                :effect (effect (register-floating-effect
@@ -1659,7 +1659,7 @@
              :msg "make the Runner lose 1 [Credits] by rezzing an Advertisement"}]})
 
 (defcard "Sportsmetal: Go Big or Go Home"
-  (let [ab {:prompt "Gain 2 [Credits] or draw 2 cards?"
+  (let [ab {:prompt "Choose one"
             :player :corp
             :choices ["Gain 2 [Credits]" "Draw 2 cards"]
             :msg (msg (if (= target "Gain 2 [Credits]")
@@ -1717,12 +1717,12 @@
                              (first-successful-run-on-server? state :hq)
                              (<= 2 (count (:discard runner)))
                              (not (zone-locked? state :runner :discard))))
-              :prompt "Use Steve Cambridge ability?"
+              :prompt "Choose 2 cards in your heap?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:interactive (req true)
                :async true
-               :prompt "Choose 2 cards in your Heap"
+               :prompt "Choose 2 cards in your heap"
                :show-discard true
                :choices {:max 2
                          :all true
@@ -1814,10 +1814,10 @@
         {:interactive (req true)
          :optional
          {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
-          :prompt "Swap ice with Tāo Salonga's ability?"
-          :waiting-prompt "the Runner to swap ice."
+          :prompt "Swap 2 pieces of ice?"
+          :waiting-prompt "Runner to make a decision"
           :yes-ability
-          {:prompt "Choose 2 ice"
+          {:prompt "Choose 2 pieces of ice"
            :choices {:req (req (and (installed? target)
                                     (ice? target)))
                      :max 2

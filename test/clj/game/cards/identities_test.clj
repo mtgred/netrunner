@@ -2543,7 +2543,7 @@
                           :deck ["Eden Shard"]}})
       (take-credits state :corp)
       (run-empty-server state :rd)
-      (is (= "Force the Corp to draw a card?" (:msg (prompt-map :runner))))
+      (is (= "Force the Corp to draw 1 card?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (= "Choose a breach replacement ability" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Eden Shard") ; Eden Shard's replacement ability
@@ -3516,13 +3516,13 @@
       (run-on state "HQ")
       (run-continue state)
       (is (prompt-is-type? state :corp :waiting) "Corp should now be waiting on Runner for Null ability")
-      (is (= "Trash a card in grip to lower ice strength by 2?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :runner)) "Null: Whistleblower prompt")
       (click-prompt state :runner "No")
       (fire-subs state (get-ice state :hq 0))
       (run-on state "HQ")
       (run-continue state)
       (is (prompt-is-type? state :corp :waiting) "Corp should now be again waiting on Runner for Null ability")
-      (is (= "Trash a card in grip to lower ice strength by 2?" (:msg (prompt-map :runner))))
+      (is (not (no-prompt? state :runner)) "Null: Whistleblower prompt")
       (click-prompt state :runner "Yes")))
 
 (deftest nyusha-sable-sintashta

@@ -112,7 +112,7 @@
 
 (defcard "Arella Salvatore"
   (let [select-ability
-        {:prompt "Choose a card to install with Arella Salvatore"
+        {:prompt "Choose a card in HQ to install"
          :choices {:card #(and (corp-installable-type? %)
                                (in-hand? %)
                                (corp? %))}
@@ -148,7 +148,7 @@
   {:can-host (req (ice? target))
    :abilities [{:label "Host a piece of Bioroid ice"
                 :cost [:click 1]
-                :prompt "Choose a piece of Bioroid ice to host on Awakening Center"
+                :prompt "Choose a piece of Bioroid ice in HQ to host"
                 :choices {:card #(and (ice? %)
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
@@ -252,7 +252,7 @@
              :interactive (req true)
              :player :runner
              :req (req this-server)
-             :prompt "Take 1 brain damage or jack out?"
+             :prompt "Choose one"
              :choices ["Take 1 brain damage" "Jack out"]
              :effect (req (if (= target "Take 1 brain damage")
                             (damage state :runner eid :brain 1 {:card card})
@@ -346,7 +346,7 @@
                      {:async true
                       :player :runner
                       :waiting-prompt "Runner to choose an option"
-                      :prompt (str "Pay " cost " [Credits] or end the run?")
+                      :prompt "Choose one"
                       :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
                                   (str "Pay " cost " [Credits]"))
                                 "End the run"]
@@ -422,7 +422,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:waiting-prompt "Corp to choose an option"
-             :prompt "Purge virus counters with Cyberdex Virus Suite?"
+             :prompt "Purge virus counters?"
              :yes-ability {:msg "purge virus counters"
                            :effect (effect (purge))}}}
    :abilities [{:label "Purge virus counters"
@@ -502,7 +502,7 @@
     {:flags {:rd-reveal (req true)}
      :access {:optional
               {:waiting-prompt "Corp to make a decision"
-               :prompt "Use Disposable HQ to add cards to the bottom of R&D?"
+               :prompt "Add cards from HQ to the bottom of R&D?"
                :yes-ability
                {:async true
                 :msg "add cards in HQ to the bottom of R&D"
@@ -527,10 +527,10 @@
                             :effect (effect
                                       (continue-ability
                                         {:optional
-                                         {:prompt "Pay 1 [Credit] to place a power counter on Embolus?"
+                                         {:prompt "Pay 1 [Credit] to place 1 power counter on Embolus?"
                                           :yes-ability {:effect (effect (add-counter card :power 1))
                                                         :cost [:credit 1]
-                                                        :msg "place a power counter on Embolus"}}}
+                                                        :msg "place a power counter on itself"}}}
                                         card nil))}
         etr {:req (req this-server)
              :cost [:power 1]
@@ -578,8 +578,8 @@
                             (protecting-same-server? card target)))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
-                           (str "trash " (str/join ", " (map :title (take 2 deck))) " from the Stack")
-                           "trash the top 2 cards from their Stack - but the Stack is empty")))
+                           (str "trash " (str/join ", " (map :title (take 2 deck))) " from the stack")
+                           "trash no cards from the stack (it is empty)")))
              :async true
              :effect (effect (mill :corp eid :runner 2))}]})
 
@@ -638,8 +638,8 @@
                                c-pay-str (capitalize pay-str)]
                            {:player :runner
                             :async true
-                            :waiting-prompt (str "Runner to " pay-str " or end the run")
-                            :prompt (msg "You must " pay-str " or end the run")
+                            :waiting-prompt "Runner to choose an option"
+                            :prompt "Choose one"
                             :choices [(when (>= credits cost)
                                         c-pay-str)
                                       "End the run"]
@@ -815,7 +815,7 @@
                               :else
                               (continue-ability
                                 state :corp
-                                {:prompt "You did not draw any ice to use with Jinja City Grid"
+                                {:prompt "You did not draw any ice"
                                  :choices ["Carry on!"]
                                  :prompt-type :bogus}
                                 card nil)))}
@@ -875,11 +875,11 @@
                    :not-equal
                    {:optional
                     {:waiting-prompt "Corp to choose an option"
-                     :prompt "Trash to force re-approach outer ice?"
+                     :prompt "Trash Letheia Nisei to force the Runner to approach the outermost piece of ice?"
                      :autoresolve (get-autoresolve :auto-fire)
                      :yes-ability
                      {:async true
-                      :msg "force the Runner to approach outermost piece of ice"
+                      :msg "force the Runner to approach the outermost piece of ice"
                       :effect (req (wait-for (trash state side (make-eid state eid) card {:unpreventable true :cause-card card})
                                              (redirect-run state side (zone->name (second (get-zone card))) :approach-ice)
                                              (continue-ability state :runner (offer-jack-out) card nil)))}}}}}]
@@ -951,7 +951,7 @@
                        :effect (effect
                                  (continue-ability
                                    (let [ice target]
-                                     {:prompt "Choose the subroutine"
+                                     {:prompt "Choose a subroutine"
                                       :choices (req (unbroken-subroutines-choice ice))
                                       :msg (msg "resolve the subroutine (\"[subroutine] "
                                                                                         target "\") from " (:title ice))
@@ -971,7 +971,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:waiting-prompt "Corp to choose an option"
-             :prompt "Purge virus counters with Mavirus?"
+             :prompt "Purge virus counters?"
              :yes-ability {:msg (msg "purge virus counters")
                            :async true
                            :effect (req (purge state side)
@@ -1432,7 +1432,7 @@
                                            (can-pay? state side (assoc eid :source card :source-type :rez) % nil
                                                      [:credit (install-cost state side % {:cost-bonus -2})]))
                                      (all-installed state :corp)))))
-              :prompt "Rez another card with Surat City Grid?"
+              :prompt "Rez another card paying 2 [Credits] less?"
               :yes-ability {:prompt "Choose a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
                                                      (not (agenda? target))
@@ -1459,17 +1459,17 @@
                                       (continue-ability
                                         state :runner
                                         {:waiting-prompt "Runner to choose an option"
-                                         :prompt "Lose [Click][Click] or take 1 brain damage?"
+                                         :prompt "Choose one"
                                          :player :runner
-                                         :choices ["Lose [Click][Click]" "Take 1 brain damage"]
+                                         :choices ["Lose [Click][Click]" "Suffer 1 brain damage"]
                                          :async true
                                          :effect
-                                         (req (if (str/starts-with? target "Take")
+                                         (req (if (str/starts-with? target "Suffer")
                                                 (do
-                                                  (system-msg state side (str "chooses to take 1 brain damage"))
+                                                  (system-msg state side (str "suffers 1 brain damage"))
                                                   (damage state side eid :brain 1 {:card tempus}))
                                                 (do
-                                                  (system-msg state side "chooses to lose [Click][Click]")
+                                                  (system-msg state side "loses [Click][Click]")
                                                   (lose-clicks state :runner 2)
                                                   (effect-completed state side eid))))}
                                         card nil))))}}}})
@@ -1507,7 +1507,7 @@
                                                       (= :corp s))))
                              (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 2])))
               :waiting-prompt "Corp to choose an option"
-              :prompt "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?"
+              :prompt "Pay 2 [Credits] to do 1 brain damage?"
               :player :corp
               :yes-ability
               {:async true
@@ -1539,7 +1539,7 @@
                                 (upgrade? (:card context)))
                             (in-same-server? card (:card context))
                             (first-event? state :corp :corp-install #(in-same-server? card (:card (first %))))))
-             :prompt (msg "Use " (:title card) " to gain 2 [Credits] or draw 1 card?")
+             :prompt "Choose one"
              :choices ["Gain 2 [Credits]" "Draw 1 card"]
              :msg (msg (decapitalize target))
              :async true
@@ -1590,7 +1590,7 @@
 (defcard "Warroid Tracker"
   (letfn [(wt [n]
             {:waiting-prompt "Runner to make a decision"
-             :prompt "Choose an installed card to trash due to Warroid Tracker"
+             :prompt "Choose an installed card to trash"
              :async true
              :interactive (req true)
              :player :runner
@@ -1639,7 +1639,7 @@
              {:req (req (and this-server
                              (some #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
               :waiting-prompt "Corp to make a decision"
-              :prompt "Trash Will-o'-the-Wisp?"
+              :prompt "Trash Will-o'-the-Wisp to choose an icebreaker?"
               :yes-ability {:async true
                             :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
                             :choices {:card #(has-subtype? % "Icebreaker")}

@@ -95,7 +95,7 @@
       (new-game {:runner {:hand ["Bankroll"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Bankroll")
-      (is (= "[trash]: Take all credits from Bankroll" (generate-label (get-program state 0))))))
+      (is (= "[trash]: Take all hosted credits" (generate-label (get-program state 0))))))
   (testing "x credits"
     (do-game
       (new-game {:runner {:hand ["Misdirection"]}})

@@ -1783,7 +1783,7 @@
       (run-continue state)
       (card-ability state :runner mass-driver 1)
       (card-ability state :runner mass-driver 0)
-      (click-prompt state :runner "Force the Runner to lose 1 [Click]")
+      (click-prompt state :runner "Force the Runner to lose [Click]")
       (click-prompt state :runner "End the run")
       (run-continue-until state :approach-ice eula)
       (rez state :corp eula)
@@ -2082,7 +2082,7 @@
       (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
       (is (= 1 (get-in @state [:run :position])) "Now encountering Formicary")
       (card-subroutine state :corp (get-ice state :hq 0) 0)
-      (click-prompt state :runner "2 net damage") ; take 2 net
+      (click-prompt state :runner "Suffer 2 net damage") ; take 2 net
       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
       (run-continue-until state :success)
       (click-prompt state :corp "No")
@@ -5989,8 +5989,8 @@
       (rez state :corp (refresh swarm))
       (run-continue state)
       (fire-subs state (refresh swarm))
-      (is (= ["Corp trash" "Pay 3 [Credits]"] (prompt-buttons :runner)))
-      (click-prompt state :runner "Corp trash")
+      (is (= ["The Corp trashes a program" "Pay 3 [Credits]"] (prompt-buttons :runner)))
+      (click-prompt state :runner "The Corp trashes a program")
       (click-card state :corp "Corroder")
       (is (find-card "Corroder" (:discard (get-runner))))
       (changes-val-macro
