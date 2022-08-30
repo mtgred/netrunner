@@ -2621,7 +2621,7 @@
                   {:choices {:card #(and (is-remote? (second (get-zone %)))
                                          (= (last (get-zone %)) :content)
                                          (not (:rezzed %)))}
-                   :msg (msg "place " (quantify c "advancement token") " on a card and gain " (* 2 c) " [Credits]")
+                   :msg (msg "place " (quantify c "advancement token") " on " (card-str state target) " and gain " (* 2 c) " [Credits]")
                    :async true
                    :effect (req (wait-for (gain-credits state side (* 2 c))
                                           (add-prop state :corp target :advance-counter c {:placed true})

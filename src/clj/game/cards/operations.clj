@@ -359,7 +359,7 @@
                                  :prompt (str "Score " (:title card-to-score) "?")
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
-                                 :no-ability {:msg "decline to score the card"}}}
+                                 :no-ability {:msg (str "decline to score " (card-str state card-to-score))}}}
                                card nil))))}})
 
 (defcard "Bioroid Efficiency Research"
