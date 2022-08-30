@@ -3613,7 +3613,7 @@
                                     (all-installed state :corp))))
                :yes-ability {:cost [:credit 1]
                              :choices {:card can-be-advanced?}
-                             :prompt "Place an advancement token on a card that can be advanced"
+                             :prompt "Choose a card that can be advanced to place 1 advancement token on"
                              :msg (msg "place 1 advancement token on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
                              :cancel-effect (effect (system-msg "declines to use Vasilisa")
