@@ -2204,12 +2204,12 @@
     :prompt "Choose one"
     :choices (req [(when (can-pay? state :corp eid card "Mining Accident" :credit 5)
                      "Pay 5 [Credits]")
-                   "Take 1 Bad Publicity"])
+                   "Take 1 bad publicity"])
     :async true
     :effect (req (if (= target "Pay 5 [Credits]")
-                   (do (system-msg state side "pays 5 [Credits] from Mining Accident")
+                   (do (system-msg state side "pays 5 [Credits]")
                        (lose-credits state :corp eid 5))
-                   (do (system-msg state side "takes 1 bad publicity from Mining Accident")
+                   (do (system-msg state side "takes 1 bad publicity")
                        (gain-bad-publicity state :corp 1)
                        (effect-completed state side eid))))}})
 
