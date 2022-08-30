@@ -2798,7 +2798,7 @@
 
 (defcard "Oduduwa"
   {:on-encounter
-   {:msg "place 1 advancement counter on Oduduwa"
+   {:msg "place 1 advancement counter on itself"
     :async true
     :effect (effect (add-prop card :advance-counter 1 {:placed true})
                     (continue-ability
@@ -3081,7 +3081,7 @@
 (defcard "Sandstone"
   {:subroutines [end-the-run]
    :constant-effects [(ice-strength-bonus (req (- (get-counters card :virus))))]
-   :on-encounter {:msg "place 1 virus counter on Sandstone"
+   :on-encounter {:msg "place 1 virus counter on itself"
                   :effect (effect (add-counter card :virus 1)
                                   (update-ice-strength (get-card state card)))}})
 

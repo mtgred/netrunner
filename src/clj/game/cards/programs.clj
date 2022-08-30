@@ -733,7 +733,7 @@
              :req (req (same-card? (:ice context) (:host card)))
              :async true
              :effect (req (if (pos? (ice-strength state side (:ice context)))
-                            (do (system-msg state side "places 1 virus counter on Chisel")
+                            (do (system-msg state side "uses Chisel to place 1 virus counter on itself")
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
                             (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
@@ -923,8 +923,8 @@
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg (if (can-pay? state side eid card nil [:virus 1])
-                                          "remove a virus token from Crypsis"
-                                          "trash Crypsis"))
+                                          "remove 1 virus counter from itself"
+                                          "trash itself"))
                               :async true
                               :effect (req (wait-for (pay state :runner (make-eid state eid) card [:virus 1])
                                                      (if-let [payment-str (:msg async-result)]

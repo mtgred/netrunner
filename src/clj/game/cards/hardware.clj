@@ -814,15 +814,15 @@
                                             :autoresolve (get-autoresolve :auto-fire)
                                             :yes-ability {:effect (effect (system-msg
                                                                             :runner
-                                                                            "places 1 virus counter on Friday Chip")
+                                                                            "uses Friday Chip to place 1 virus counter on itself")
                                                                           (add-counter :runner card :virus 1))}}}
                                   mult-ab {:prompt "Place virus counters on Friday Chip?"
                                            :choices {:number (req amt-trashed)
                                                      :default (req amt-trashed)}
                                            :effect (effect (system-msg :runner
-                                                                       (str "places "
+                                                                       (str "uses Friday Chip to place "
                                                                             (quantify target "virus counter")
-                                                                            " on Friday Chip"))
+                                                                            " on itself"))
                                                            (add-counter :runner card :virus target))}
                                   ab (if (> amt-trashed 1) mult-ab sing-ab)]
                               (continue-ability state side ab card targets)))}]}))
@@ -1135,8 +1135,8 @@
                :effect (req (let [target (some #(when (pred %) (:card %)) targets)
                                   cost (trash-cost state side target)]
                               (when cost
-                                (system-msg state side (str "places " cost
-                                                            " power counters on Mâché"))
+                                (system-msg state side (str "uses Mâché to place " cost
+                                                            " power counters on itself"))
                                 (add-counter state side card :power cost))))}]}))
 
 (defcard "Marrow"

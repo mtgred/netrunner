@@ -666,7 +666,7 @@
 (defcard "Domestic Sleepers"
   {:agendapoints-corp (req (if (pos? (get-counters card :agenda)) 1 0))
    :abilities [{:cost [:click 3]
-                :msg "place 1 agenda counter on Domestic Sleepers"
+                :msg "place 1 agenda counter on itself"
                 :effect (effect (add-agenda-point-counters card 1))}]})
 
 (defcard "Élivágar Bifurcation"

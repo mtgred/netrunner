@@ -398,7 +398,7 @@
              :effect (effect (add-counter card :power (- (get-counters card :power))))}]
    :abilities [{:cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :msg "place 1 power counter on Cold Site Server"
+                :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Corporate Troubleshooter"
@@ -1311,8 +1311,9 @@
             :async true
             :effect (req (let [spent (str->int target)]
                            (add-counter state :corp card :power spent)
-                           (system-msg state :corp (str "places " (quantify spent "power counter")
-                                                        " on Reduced Service"))
+                           (system-msg state :corp (str "uses Reduced Service to place "
+                                                        (quantify spent "power counter")
+                                                        " on itself"))
                            (lose-credits state :corp eid spent)))}})
 
 (defcard "Research Station"

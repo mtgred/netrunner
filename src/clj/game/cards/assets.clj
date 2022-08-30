@@ -370,7 +370,7 @@
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :corp-turn-begins
-             :msg "place 2 [Credits] on C.I. Fund"
+             :msg "place 2 [Credits] on itself"
              :req (req (>= (get-counters card :credit) 6))
              :effect (effect (add-counter card :credit 2))}]})
 
@@ -416,7 +416,7 @@
   {:events [{:event :end-of-encounter
              :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))
              :msg (req (let [unbroken-count (count (remove :broken (:subroutines (:ice context))))]
-                        (str "place " (quantify unbroken-count "power counter") " on Chief Slee")))
+                        (str "place " (quantify unbroken-count "power counter") " on itself")))
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:cost [:click 1 :power 5]
                 :keep-menu-open :while-5-power-tokens-left
