@@ -397,7 +397,7 @@
   {:events
    [{:event :runner-turn-begins
      :optional
-     {:prompt (msg "Pay 2 [Credits] to gain [Click]")
+     {:prompt (msg "Pay 2 [Credits] to gain [Click]?")
       :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]))
       :player :runner
       :yes-ability {:cost [:credit 2]
