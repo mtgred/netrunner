@@ -1581,7 +1581,7 @@
                 :once :per-turn
                 :prompt (msg "Choose an advanceable card in " (zone->name (second (get-zone card))))
                 :label "Place 2 advancement counters (once per turn)"
-                :msg (msg "place 2 advancement counter counters on " (card-str state target))
+                :msg (msg "place 2 advancement counters on " (card-str state target))
                 :choices {:not-self true
                           :req (req (and (installed? target)
                                          (can-be-advanced? target)
