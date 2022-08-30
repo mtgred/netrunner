@@ -325,10 +325,10 @@
                                               (same-server? card %)))
                                 count
                                 pos?)
-                       {:prompt (str "Place 1 advancement token on an ice protecting " (zone->name (second (get-zone card))))
+                       {:prompt (str "Place 1 advancement counter on an ice protecting " (zone->name (second (get-zone card))))
                         :choices {:card #(and (ice? %)
                                               (same-server? % card))}
-                        :msg (msg "place an advancement token on " (card-str state target))
+                        :msg (msg "place 1 advancement counter on " (card-str state target))
                         :effect (effect (add-prop target :advance-counter 1 {:placed true}))})
                      card nil))}]
     {:events [(assoc ability :event :corp-turn-begins)

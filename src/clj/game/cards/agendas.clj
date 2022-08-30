@@ -259,7 +259,7 @@
               :silent (req true)}
    :abilities [{:cost [:agenda 1]
                 :label "place 1 advancement counter"
-                :msg (msg "place 1 advancement token on " (card-str state target))
+                :msg (msg "place 1 advancement counter on " (card-str state target))
                 :choices {:card can-be-advanced?}
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
@@ -766,11 +766,11 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 3))}
    :abilities [{:cost [:agenda 1]
-                :label "place 1 advancement counter"
+                :label "Place 1 advancement counter"
                 :choices {:card #(and (ice? %)
                                       (can-be-advanced? %))}
                 :req (req (pos? (get-counters card :agenda)))
-                :msg (msg "place 1 advancement token on " (card-str state target))
+                :msg (msg "place 1 advancement counter on " (card-str state target))
                 :once :per-turn
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
