@@ -261,7 +261,7 @@
    :abilities [(assoc (break-sub [:lose-click 2] 1 "All" {:req (req true)}) :once :per-turn)]})
 
 (defcard "Angel Arena"
-  {:on-install {:prompt "How many power counters?"
+  {:on-install {:prompt "How many credits do you want to spend?"
                 :choices :credit
                 :msg (msg "place " (quantify target "power counter") " on itself")
                 :effect (effect (add-counter card :power target))}
@@ -507,7 +507,7 @@
                       (runner-hand-size+ 1)]})
 
 (defcard "Bug Out Bag"
-  {:on-install {:prompt "How many power counters?"
+  {:on-install {:prompt "How many credits do you want to spend?"
                 :choices :credit
                 :msg (msg "place " (quantify target "power counter") " on itself")
                 :effect (effect (add-counter card :power target))}

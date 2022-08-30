@@ -1797,7 +1797,7 @@
 (defcard "Psychographics"
   {:on-play
    {:req (req tagged)
-    :prompt "Choose a value for X"
+    :prompt "How many credits do you want to spend?"
     :choices {:number (req (count-tags state))}
     :async true
     :effect (req (let [c target]
