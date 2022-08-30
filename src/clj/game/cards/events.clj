@@ -2269,7 +2269,7 @@
                                  (can-pay? state side (assoc eid :source card :source-type :runner-install) icebreaker nil
                                            [:credit (install-cost state side icebreaker)]))
                           {:optional
-                           {:prompt "Do you want to install it?"
+                           {:prompt (str "Install " (:title icebreaker) "?")
                             :yes-ability
                             {:async true
                              :msg (msg " install " (:title icebreaker))
