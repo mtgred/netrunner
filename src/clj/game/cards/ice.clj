@@ -2822,9 +2822,9 @@
 
 (defcard "Otoroshi"
   {:subroutines [{:async true
-                  :label "Place 3 advancement tokens on installed card"
-                  :msg "place 3 advancement tokens on installed card"
-                  :prompt "Choose an installed Corp card"
+                  :label "Place 3 advancement tokens on an installed card"
+                  :msg "place 3 advancement tokens on an installed card"
+                  :prompt "Choose an installed card in the root of a remote server"
                   :req (req (some (complement ice?) (all-installed state :corp)))
                   :choices {:card #(and (corp? %)
                                         (installed? %)

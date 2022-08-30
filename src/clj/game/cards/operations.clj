@@ -237,7 +237,7 @@
 (defcard "Audacity"
   (letfn [(audacity [n]
             (when (< n 2)
-              {:prompt "Choose a card on which to place an advancement"
+              {:prompt "Choose a card to place advancements tokens on"
                :async true
                :choices {:card can-be-advanced?
                          :all true}
