@@ -1897,7 +1897,7 @@
 
 (defcard "Veterans Program"
   {:on-score {:interactive (req true)
-              :msg "lose 2 bad publicity"
+              :msg "remove 2 bad publicity"
               :effect (effect (lose-bad-publicity 2))}})
 
 (defcard "Viral Weaponization"
