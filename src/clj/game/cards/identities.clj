@@ -1536,7 +1536,7 @@
              :choices {:card can-be-advanced?}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))
-             :cancel-effect (effect (system-msg "declines to use Pravdivost Consulting")
+             :cancel-effect (effect (system-msg "declines to use Pravdivost Consulting: Political Solutions")
                                     (effect-completed eid))}]})
 
 (defcard "Quetzal: Free Spirit"
