@@ -4,7 +4,6 @@
     [game.core.board :refer [all-active]]
     [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.costs :refer [total-available-credits]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
     [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -163,8 +162,8 @@
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
   for example [:credit 2 :click 1]."
-  ([state side costs] (steal-cost-bonus state side costs nil))
-  ([state side costs source]
+  ([state _ costs] (steal-cost-bonus state nil costs nil))
+  ([state _ costs source]
     (swap! state update-in [:bonus :steal-cost] #(conj % [costs source]))))
 
 (defn steal-cost
@@ -339,11 +338,12 @@
                   (req (str "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
-   {:access {:optional
-             {:req (req (and installed (>= (total-available-credits state :corp eid card) cost)))
-              :waiting-prompt (:waiting-prompt ability)
-              :prompt prompt
-              :yes-ability (dissoc ability :waiting-prompt)}}}))
+   (let [cost (if (number? cost) [:credit cost] cost)]
+     {:access {:optional
+               {:req (req (and installed (can-pay? state :corp eid card nil cost)))
+                :waiting-prompt (:waiting-prompt ability)
+                :prompt prompt
+                :yes-ability (dissoc ability :waiting-prompt)}}})))
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
@@ -377,12 +377,12 @@
 (defn access-cost-bonus
   "Applies a cost to the next access. costs can be a vector of [:key value] pairs,
   for example [:credit 2 :click 1]."
-  [state side costs]
+  [state _ costs]
   (swap! state update-in [:bonus :access-cost] #(merge-costs (concat % costs))))
 
 (defn access-cost
   "Gets a vector of costs for accessing the given card."
-  [state side]
+  [state _]
   (merge-costs (get-in @state [:bonus :access-cost])))
 
 (defn- refused-access-cost
@@ -450,7 +450,7 @@
              (access-pay state side eid card title args))))
 
 (defn set-only-card-to-access
-  [state side card]
+  [state _ card]
   (swap! state assoc-in [:run :only-card-to-access] card))
 
 (defn get-only-card-to-access
@@ -476,7 +476,7 @@
 
 ;;; Methods for allowing user-controlled multi-access in servers.
 (defmulti must-continue?
-  (fn [state already-accessed-fn amount-access args]
+  (fn [_state _already-accessed-fn _amount-access args]
     (get-server-type (first (:server args)))))
 
 (defmethod must-continue? :remote
@@ -526,7 +526,7 @@
 
 (defmulti choose-access
   ;; choose-access implements game prompts allowing the runner to choose the order of access
-  (fn [access-amount server args]
+  (fn [_access-amount server _args]
     (get-server-type (first server))))
 
 (defmethod choose-access :remote
@@ -568,7 +568,7 @@
     (f (get-in @state [:corp :deck]))))
 
 (defmethod must-continue? :rd
-  [state already-accessed-fn access-amount {:keys [no-root] :as args}]
+  [state already-accessed-fn access-amount {:keys [no-root]}]
   (let [max-access (:max-access (:run @state))
         total-mod (:total-mod access-amount 0)
         limit-reached? (when max-access
@@ -748,7 +748,7 @@
                     (effect-completed state side eid))))})
 
 (defmethod must-continue? :hq
-  [state already-accessed-fn access-amount {:keys [no-root] :as args}]
+  [state already-accessed-fn access-amount {:keys [no-root]}]
   (let [max-access (:max-access (:run @state))
         total-mod (:total-mod access-amount 0)
         limit-reached? (when max-access
@@ -1008,7 +1008,7 @@
               (get-in @state [:corp :discard]))))
 
 (defmethod must-continue? :archives
-  [state already-accessed-fn access-amount {:keys [no-root] :as args}]
+  [state already-accessed-fn access-amount {:keys [no-root]}]
   (let [max-access (:max-access (:run @state))
         total-mod (:total-mod access-amount 0)
         limit-reached? (when max-access
@@ -1308,7 +1308,7 @@
 (defn breach-server
   "Starts the breach routines for the run's server."
   ([state side eid server] (breach-server state side eid server nil))
-  ([state side eid server {:keys [no-root access-first] :as args}]
+  ([state side eid server args]
    (system-msg state side (str "breaches " (zone->name server)))
    (wait-for (trigger-event-sync state side :breach-server (first server))
              (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
