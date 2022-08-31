@@ -159,19 +159,19 @@
 (declare cards-summary)
 
 (defn card-summary [card state side]
-  (if (not (is-public? card side))
-    (-> (cond-> card
-          (:host card) (-> (dissoc-in [:host :hosted])
-                           (update :host card-summary state side))
-          (:hosted card) (update :hosted cards-summary state side))
-        (private-card))
+  (if (is-public? card side)
     (-> (cond-> card
           (:host card) (-> (dissoc-in [:host :hosted])
                            (update :host card-summary state side))
           (:hosted card) (update :hosted cards-summary state side))
         (playable? state side)
         (card-abilities-summary state side)
-        (select-non-nil-keys card-keys))))
+        (select-non-nil-keys card-keys))
+    (-> (cond-> card
+          (:host card) (-> (dissoc-in [:host :hosted])
+                           (update :host card-summary state side))
+          (:hosted card) (update :hosted cards-summary state side))
+        (private-card))))
 
 (defn cards-summary [cards state side]
   (when (seq cards)

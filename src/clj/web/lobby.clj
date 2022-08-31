@@ -154,7 +154,7 @@
               players-blocked-user?
               (-> (mapcat get-blocked-list (map :user (:players lobby)))
                   (set)
-                  (contains? (str/lower-case (:username user))))]
+                  (contains? (str/lower-case (:username user ""))))]
           (not (or user-blocked-players? players-blocked-user?))))
       lobbies)))
 
