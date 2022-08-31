@@ -674,7 +674,6 @@
    :constant-effects [(mu+ 2)]
    :events [{:event :successful-run
              :req (req (first-event? state :runner :successful-run))
-             :silent (req true)
              :msg "place 1 power counter on itself"
              :async true
              :effect (effect (add-counter eid card :power 1 nil))}]
