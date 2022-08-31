@@ -609,13 +609,13 @@
 
 (defn draw-facedown?
   "Returns true if the installed card should be drawn face down."
-  [{:keys [facedown host] :as card}]
-  (if (corp? card)
-    (and (not (operation? card))
-         (not (condition-counter? card))
-         (not (faceup? card))
-         (not= (:side host) "Runner"))
-    facedown))
+  [{:keys [host] :as card}]
+  (or (facedown? card)
+      (and (corp? card)
+           (not (or (operation? card)
+                    (condition-counter? card)
+                    (faceup? card)
+                    (= (:side host) "Runner"))))))
 
 (defn card-view
   [{:keys [zone code type abilities counter

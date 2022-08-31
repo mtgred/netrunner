@@ -316,7 +316,7 @@
 (defn facedown?
   "Checks if the specified card is facedown."
   [card]
-  (or (when (not (condition-counter? card))
+  (or (when-not (condition-counter? card)
         (= (get-zone card) #?(:clj [:rig :facedown]
                               :cljs ["rig" "facedown"])))
       (:facedown card)))
@@ -456,7 +456,8 @@
                   (not (in-set-aside? card)))
              (and (or (installed? card)
                       (:host card))
-                  (not (facedown? card)))
+                  (or (faceup? card)
+                      (not (facedown? card))))
              (in-discard? card))
          ;; public corp cards:
          ;; * installed and rezzed
@@ -467,7 +468,7 @@
                       (:host card))
                   (or (operation? card)
                       (condition-counter? card)
-                      (rezzed? card)))
+                      (faceup? card)))
              (and (in-discard? card)
                   (faceup? card)))))))
 
