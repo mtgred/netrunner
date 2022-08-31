@@ -1951,8 +1951,7 @@
 (defcard "Rex Campaign"
   (let [payout-ab {:prompt "Choose one"
                    :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                   :msg (msg (if (= target "Remove 1 bad publicity")
-                               "remove 1 bad publicity" "gain 5 [Credits]"))
+                   :msg (msg "to " (decapitalize target))
                    :async true
                    :effect (req (if (= target "Remove 1 bad publicity")
                                   (lose-bad-publicity state side eid 1)

@@ -350,9 +350,10 @@
                       :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
                                   (str "Pay " cost " [Credits]"))
                                 "End the run"]
-                      :msg (msg (if (= target "End the run")
-                                  "end the run"
-                                  (str "force the runner to pay " cost " [Credits]")))
+                      :msg (req (msg (if (= target "End the run")
+                                       "to "
+                                       "to force the Runner to ")
+                                     (decapitalize target)))
                       :effect (req (if (= target "End the run")
                                      (end-run state side eid card)
                                      (wait-for (pay state :runner (make-eid state eid) card :credit cost)

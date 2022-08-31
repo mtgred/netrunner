@@ -1662,9 +1662,7 @@
   (let [ab {:prompt "Choose one"
             :player :corp
             :choices ["Gain 2 [Credits]" "Draw 2 cards"]
-            :msg (msg (if (= target "Gain 2 [Credits]")
-                        "gain 2 [Credits]"
-                        "draw 2 cards"))
+            :msg (msg "to " (decapitalize target))
             :async true
             :interactive (req true)
             :effect (req (if (= target "Gain 2 [Credits]")
