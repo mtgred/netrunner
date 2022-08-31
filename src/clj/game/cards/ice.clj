@@ -2798,7 +2798,7 @@
 
 (defcard "Oduduwa"
   {:on-encounter
-   {:msg "place 1 advancement counter on Oduduwa"
+   {:msg "place 1 advancement counter on itself"
     :async true
     :effect (effect (add-prop card :advance-counter 1 {:placed true})
                     (continue-ability
@@ -2822,9 +2822,9 @@
 
 (defcard "Otoroshi"
   {:subroutines [{:async true
-                  :label "Place 3 advancement tokens on installed card"
-                  :msg "place 3 advancement tokens on installed card"
-                  :prompt "Choose an installed Corp card"
+                  :label "Place 3 advancement tokens on an installed card"
+                  :msg "place 3 advancement tokens on an installed card"
+                  :prompt "Choose an installed card in the root of a remote server"
                   :req (req (some (complement ice?) (all-installed state :corp)))
                   :choices {:card #(and (corp? %)
                                         (installed? %)
@@ -3081,7 +3081,7 @@
 (defcard "Sandstone"
   {:subroutines [end-the-run]
    :constant-effects [(ice-strength-bonus (req (- (get-counters card :virus))))]
-   :on-encounter {:msg "place 1 virus counter on Sandstone"
+   :on-encounter {:msg "place 1 virus counter on itself"
                   :effect (effect (add-counter card :virus 1)
                                   (update-ice-strength (get-card state card)))}})
 
@@ -3605,7 +3605,7 @@
 
 (defcard "Vasilisa"
   {:on-encounter
-   {:optional {:prompt "Place an advancement counter?"
+   {:optional {:prompt "Place 1 advancement counter?"
                :waiting-prompt "Corp to make a decision"
                :req (req (and (can-pay? state side eid card nil [:credit 1])
                               (some #(or (not (rezzed? %))
@@ -3613,8 +3613,8 @@
                                     (all-installed state :corp))))
                :yes-ability {:cost [:credit 1]
                              :choices {:card can-be-advanced?}
-                             :prompt "Place an advancement token on a card that can be advanced"
-                             :msg (msg "place 1 advancement token on " (card-str state target))
+                             :prompt "Choose a card that can be advanced to place 1 advancement counter on"
+                             :msg (msg "place 1 advancement counter on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
                              :cancel-effect (effect (system-msg "declines to use Vasilisa")
                                                     (effect-completed eid))}
@@ -3787,7 +3787,7 @@
                   :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move (first (:deck corp)) :deck))}
-                             :no-ability {:effect (effect (system-msg :corp (str "does not use Yagura to move the top card of R&D to the bottom")))}}}
+                             :no-ability {:effect (effect (system-msg :corp (str "declines to use Yagura to move the top card of R&D to the bottom")))}}}
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"

@@ -4277,7 +4277,7 @@
       1 (count-bad-pub state)
       "Corp took 1 BP"
       (play-from-hand state :runner "Mining Accident")
-      (click-prompt state :corp "Take 1 Bad Publicity"))
+      (click-prompt state :corp "Take 1 bad publicity"))
     (changes-val-macro
       -5 (:credit (get-corp))
       "Corp paid 5c"
@@ -4288,7 +4288,7 @@
       "Corp took 1 BP without getting a prompt"
       (play-from-hand state :runner "Mining Accident")
       (is (= 1 (count (prompt-buttons :corp))) "No option to pay credits if corp is below 5c")
-      (click-prompt state :corp "Take 1 Bad Publicity"))))
+      (click-prompt state :corp "Take 1 bad publicity"))))
 
 (deftest mobius-second-run-triggered
     ;; Second run triggered

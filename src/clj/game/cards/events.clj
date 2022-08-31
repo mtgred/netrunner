@@ -2204,12 +2204,12 @@
     :prompt "Choose one"
     :choices (req [(when (can-pay? state :corp eid card "Mining Accident" :credit 5)
                      "Pay 5 [Credits]")
-                   "Take 1 Bad Publicity"])
+                   "Take 1 bad publicity"])
     :async true
     :effect (req (if (= target "Pay 5 [Credits]")
-                   (do (system-msg state side "pays 5 [Credits] from Mining Accident")
+                   (do (system-msg state side "pays 5 [Credits]")
                        (lose-credits state :corp eid 5))
-                   (do (system-msg state side "takes 1 bad publicity from Mining Accident")
+                   (do (system-msg state side "takes 1 bad publicity")
                        (gain-bad-publicity state :corp 1)
                        (effect-completed state side eid))))}})
 
@@ -2269,7 +2269,7 @@
                                  (can-pay? state side (assoc eid :source card :source-type :runner-install) icebreaker nil
                                            [:credit (install-cost state side icebreaker)]))
                           {:optional
-                           {:prompt "Do you want to install it?"
+                           {:prompt (str "Install " (:title icebreaker) "?")
                             :yes-ability
                             {:async true
                              :msg (msg " install " (:title icebreaker))
@@ -2621,7 +2621,7 @@
                   {:choices {:card #(and (is-remote? (second (get-zone %)))
                                          (= (last (get-zone %)) :content)
                                          (not (:rezzed %)))}
-                   :msg (msg "place " (quantify c "advancement token") " on a card and gain " (* 2 c) " [Credits]")
+                   :msg (msg "place " (quantify c "advancement token") " on " (card-str state target) " and gain " (* 2 c) " [Credits]")
                    :async true
                    :effect (req (wait-for (gain-credits state side (* 2 c))
                                           (add-prop state :corp target :advance-counter c {:placed true})

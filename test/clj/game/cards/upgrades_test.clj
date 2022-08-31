@@ -647,7 +647,7 @@
         (take-credits state :runner)
         (let [enigma (get-ice state :hq 0)]
           (is (zero? (get-counters (refresh enigma) :advancement)) "Enigma has 0 counters to start")
-          (is (= "Place 1 advancement token on an ice protecting HQ" (:msg (prompt-map :corp))) "Correct server in prompt title")
+          (is (= "Place 1 advancement counter on an ice protecting HQ" (:msg (prompt-map :corp))) "Correct server in prompt title")
           (click-card state :corp enigma)
           (is (= 1 (get-counters (refresh enigma) :advancement)) "Enigma has 1 counter"))))
     (testing "1 ice in another server"
@@ -787,10 +787,10 @@
           (take-credits state :corp)
           (take-credits state :runner)
           (click-prompt state :corp cg1)
-          (is (= (:msg (prompt-map :corp)) "Place 1 advancement token on an ice protecting HQ")
+          (is (= (:msg (prompt-map :corp)) "Place 1 advancement counter on an ice protecting HQ")
               "Correct server in prompt title (HQ)")
           (click-card state :corp iw1)
-          (is (= (:msg (prompt-map :corp)) "Place 1 advancement token on an ice protecting Server 1")
+          (is (= (:msg (prompt-map :corp)) "Place 1 advancement counter on an ice protecting Server 1")
               "Correct server in prompt title (Server 1)")
           (click-card state :corp iw2)))))
 

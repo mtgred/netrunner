@@ -259,7 +259,7 @@
               :silent (req true)}
    :abilities [{:cost [:agenda 1]
                 :label "place 1 advancement counter"
-                :msg (msg "place 1 advancement token on " (card-str state target))
+                :msg (msg "place 1 advancement counter on " (card-str state target))
                 :choices {:card can-be-advanced?}
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
@@ -666,7 +666,7 @@
 (defcard "Domestic Sleepers"
   {:agendapoints-corp (req (if (pos? (get-counters card :agenda)) 1 0))
    :abilities [{:cost [:click 3]
-                :msg "place 1 agenda counter on Domestic Sleepers"
+                :msg "place 1 agenda counter on itself"
                 :effect (effect (add-agenda-point-counters card 1))}]})
 
 (defcard "Élivágar Bifurcation"
@@ -766,11 +766,11 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 3))}
    :abilities [{:cost [:agenda 1]
-                :label "place 1 advancement counter"
+                :label "Place 1 advancement counter"
                 :choices {:card #(and (ice? %)
                                       (can-be-advanced? %))}
                 :req (req (pos? (get-counters card :agenda)))
-                :msg (msg "place 1 advancement token on " (card-str state target))
+                :msg (msg "place 1 advancement counter on " (card-str state target))
                 :once :per-turn
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
@@ -978,7 +978,7 @@
                                              :effect (effect (gain-bad-publicity :corp 1))}}}
                              card nil)
                            (let [n (* 3 (count-bad-pub state))]
-                             (system-msg state side (str "gains " n " [Credits] from Illicit Sales"))
+                             (system-msg state side (str "uses Illicit Sales to gain " n " [Credits]"))
                              (gain-credits state side eid n))))}})
 
 (defcard "Improved Protein Source"
@@ -1466,7 +1466,7 @@
              :player :corp
              :interactive (req true)
              :waiting-prompt "Corp to make a decision"
-             :prompt "Choose a card to place 1 advancement token on"
+             :prompt "Choose a card that can be advanced to place 1 advancement token on"
              :choices {:card can-be-advanced?}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
@@ -1897,7 +1897,7 @@
 
 (defcard "Veterans Program"
   {:on-score {:interactive (req true)
-              :msg "lose 2 bad publicity"
+              :msg "remove 2 bad publicity"
               :effect (effect (lose-bad-publicity 2))}})
 
 (defcard "Viral Weaponization"

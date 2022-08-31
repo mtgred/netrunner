@@ -843,7 +843,7 @@
              (effect
                (continue-ability
                  (let [p (inc (get-agenda-points (:card context)))]
-                   {:prompt (str "Choose a card to place advancement tokens on with " (:title card))
+                   {:prompt "Choose a card to place advancement tokens on"
                     :choices {:card #(and (installed? %)
                                           (corp? %))}
                     :msg (msg "place " (quantify p "advancement token")
@@ -1532,11 +1532,11 @@
              :interactive (req true)
              :async true
              :waiting-prompt "Corp to make a decision"
-             :prompt "Choose a card to place 1 advancement token on"
+             :prompt "Choose a card that can be advanced to place 1 advancement token on"
              :choices {:card #(and (installed? %) (can-be-advanced? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))
-             :cancel-effect (effect (system-msg "declines to use Pravdivost Consulting")
+             :cancel-effect (effect (system-msg "declines to use Pravdivost Consulting: Political Solutions")
                                     (effect-completed eid))}]})
 
 (defcard "Quetzal: Free Spirit"

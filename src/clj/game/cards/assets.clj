@@ -228,7 +228,7 @@
 (defcard "Anson Rose"
   (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
                  :once :per-turn
-                 :msg "place 1 advancement counter on itself"
+                 :msg "place 1 advancement token on itself"
                  :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
@@ -370,7 +370,7 @@
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :corp-turn-begins
-             :msg "place 2 [Credits] on C.I. Fund"
+             :msg "place 2 [Credits] on itself"
              :req (req (>= (get-counters card :credit) 6))
              :effect (effect (add-counter card :credit 2))}]})
 
@@ -416,7 +416,7 @@
   {:events [{:event :end-of-encounter
              :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))
              :msg (req (let [unbroken-count (count (remove :broken (:subroutines (:ice context))))]
-                        (str "place " (quantify unbroken-count "power counter") " on Chief Slee")))
+                        (str "place " (quantify unbroken-count "power counter") " on itself")))
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:cost [:click 1 :power 5]
                 :keep-menu-open :while-5-power-tokens-left
@@ -790,7 +790,7 @@
                             (is-remote? (second (get-zone (:card context))))))
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
+   :abilities [{:label "Draw 1 card and gain 2 [Credits] for each hosted power counter"
                 :cost [:trash-can]
                 :async true
                 :effect (req (let [counters (get-counters card :power)
@@ -1209,10 +1209,10 @@
 
 (defcard "Long-Term Investment"
   {:derezzed-events [corp-rez-toast]
-   :abilities [{:label "Move any number of credits to your credit pool"
+   :abilities [{:label "Move any number of hosted credits to your credit pool"
                 :req (req (>= (get-counters card :credit) 8))
                 :cost [:click 1]
-                :prompt "How many credits do you want to take?"
+                :prompt "How many hosted credits do you want to take?"
                 :choices {:counter :credit}
                 :msg (msg "gain " target " [Credits]")
                 :async true
@@ -1338,9 +1338,9 @@
 (defcard "Moon Pool"
   (letfn [(moon-pool-place-advancements
             [x] {:async true
-                 :prompt (msg "Place an advancement counter on an installed card (" x " remaining)")
+                 :prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
                  :choices {:card #(installed? %)}
-                 :msg (msg "place an advancement counter on " (card-str state target))
+                 :msg (msg "place 1 advancement counter on " (card-str state target))
                  :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
                                         (if (> x 1)
                                           (continue-ability
@@ -1348,7 +1348,7 @@
                                             (moon-pool-place-advancements (dec x))
                                             card nil)
                                           (effect-completed state side eid))))
-                 :cancel-effect (effect (system-msg "declines to use Moon Pool to place an advancement counter")
+                 :cancel-effect (effect (system-msg "declines to use Moon Pool to place advancement counters")
                                         (effect-completed eid))})]
     (let [moon-pool-reveal-ability
           {:prompt "Reveal up to 2 facedown cards from Archives and shuffle them into R&D"
@@ -1504,7 +1504,7 @@
                   :cost [:credit 2]
                   :msg "place 2 power counters on itself"
                   :effect (effect (add-counter card :power 2))}
-                 {:label "Gain 2 [Credits] for each power counter"
+                 {:label "Gain 2 [Credits] for each hosted power counter"
                   :cost [:click 1 :trash-can]
                   :msg (msg "gain " (* 2 (get-counters card :power)) " [Credits]")
                   :async true
@@ -1899,11 +1899,11 @@
                             (= :meat (:damage-type context))))
              :msg "place 1 advancement token on itself"
              :effect (effect (add-counter card :advancement 1))}]
-   :abilities [{:label "Move advancement tokens to another card"
+   :abilities [{:label "Move hosted advancement tokens to another card"
                 :trash-icon true
                 :cost [:trash-can]
                 :async true
-                :prompt "Move how many advancement tokens?"
+                :prompt "Move how many hosted advancement tokens?"
                 :choices {:number (req (get-counters card :advancement))
                           :default (req (get-counters card :advancement))}
                 :effect (req (let [num-counters target]
@@ -1913,7 +1913,7 @@
                                   :prompt "Choose a card that can be advanced"
                                   :choices {:card can-be-advanced?}
                                   :effect (effect (add-counter target :advancement num-counters {:placed true})
-                                                  (system-msg (str "trashed Reconstruction Contract to move " (quantify num-counters "advancement token") " to " (card-str state target)))
+                                                  (system-msg (str "uses Reconstruction Contract to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
                                                   (effect-completed eid))}
                                  card nil)))}]})
 
@@ -2510,7 +2510,7 @@
               :effect (effect (draw eid 1))}
              {:label "place 1 advancement token on a piece of ice"
               :msg (msg "place 1 advancement token on " (card-str state target))
-              :prompt "Choose a piece of ice on which to place an advancement"
+              :prompt "Choose a piece of ice to place 1 advancement token on"
               :async true
               :choices {:card #(and (ice? %)
                                     (installed? %))}

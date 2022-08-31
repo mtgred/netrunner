@@ -237,11 +237,11 @@
 (defcard "Audacity"
   (letfn [(audacity [n]
             (when (< n 2)
-              {:prompt "Choose a card on which to place an advancement"
+              {:prompt "Choose a card to place advancements tokens on"
                :async true
                :choices {:card can-be-advanced?
                          :all true}
-               :msg (msg "place an advancement token on " (card-str state target))
+               :msg (msg "place 1 advancement token on " (card-str state target))
                :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
                             (continue-ability state side (audacity (inc n)) card nil))}))]
     {:on-play
@@ -359,7 +359,7 @@
                                  :prompt (str "Score " (:title card-to-score) "?")
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
-                                 :no-ability {:msg "decline to score the card"}}}
+                                 :no-ability {:msg (str "decline to score " (card-str state card-to-score))}}}
                                card nil))))}})
 
 (defcard "Bioroid Efficiency Research"
@@ -1797,7 +1797,7 @@
 (defcard "Psychographics"
   {:on-play
    {:req (req tagged)
-    :prompt "Choose a value for X"
+    :prompt "How many credits do you want to spend?"
     :choices {:number (req (count-tags state))}
     :async true
     :effect (req (let [c target]

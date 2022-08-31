@@ -261,9 +261,9 @@
    :abilities [(assoc (break-sub [:lose-click 2] 1 "All" {:req (req true)}) :once :per-turn)]})
 
 (defcard "Angel Arena"
-  {:on-install {:prompt "How many power counters?"
+  {:on-install {:prompt "How many credits do you want to spend?"
                 :choices :credit
-                :msg (msg "place " (quantify target "power counter"))
+                :msg (msg "place " (quantify target "power counter") " on itself")
                 :effect (effect (add-counter card :power target))}
    :events [(trash-on-empty :power)]
    :abilities [{:cost [:power 1]
@@ -348,7 +348,7 @@
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))
-             :msg (msg "places 1 power counter on " (:title card))
+             :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Derez a piece of ice currently being encountered"
                 :msg "derez a piece of ice currently being encountered and take 1 tag"
@@ -507,9 +507,9 @@
                       (runner-hand-size+ 1)]})
 
 (defcard "Bug Out Bag"
-  {:on-install {:prompt "How many power counters?"
+  {:on-install {:prompt "How many credits do you want to spend?"
                 :choices :credit
-                :msg (msg "place " (quantify target "power counter"))
+                :msg (msg "place " (quantify target "power counter") " on itself")
                 :effect (effect (add-counter card :power target))}
    :events [{:event :runner-turn-ends
              :req (req (zero? (count (:hand runner))))
@@ -621,7 +621,7 @@
              :req (req (pos? (:amount context)))
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:label "Trash 1 random card from HQ for each power counter"
+   :abilities [{:label "Trash 1 random card from HQ for each hosted power counter"
                 :async true
                 :req (req (pos? (get-counters card :power)))
                 :cost [:trash-can]
@@ -969,10 +969,10 @@
                   :choices (req (eligible-cards runner))
                   :effect (effect (move target :hand))
                   :msg (msg "add " (:title target) " to grip")}
-                 {:label "Place a power counter"
+                 {:label "Place 1 power counter"
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
-                  :msg "manually place a power counter on itself"}]
+                  :msg "manually place 1 power counter on itself"}]
      :events (let [prog-or-hw (fn [targets]
                                 (some #(or (program? (:card %))
                                            (hardware? (:card %)))
@@ -1156,7 +1156,7 @@
                                 (program? (:card context)))
                             (not (:facedown? context))))
              :async true
-             :msg "place 1 power counter on Environmental Testing"
+             :msg "place 1 power counter on itself"
              :effect (req (add-counter state :runner eid card :power 1 nil))}
             {:event :counter-added
              :async true
@@ -1455,12 +1455,12 @@
   {:implementation "Credit use restriction is not enforced"
    :events [{:event :rez
              :req (req (ice? (:card context)))
-             :msg "place 1 [Credits] on Ice Analyzer"
+             :msg "place 1 [Credits] on itself"
              :effect (effect (add-counter :runner card :credit 1))}]
    :abilities [{:async true
                 :effect (effect (add-counter card :credit -1)
                                 (gain-credits eid 1))
-                :msg "take 1 [Credits] to install programs"}]
+                :msg "take 1 hosted [Credits] to install programs"}]
    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
                                                (program? target)))
                                 :type :credit}}})
@@ -1970,7 +1970,7 @@
              :effect (req (if (= target "Draw 1 card")
                             (do (system-msg state :runner (str "uses Net Mercur to draw 1 card"))
                                 (draw state side eid 1))
-                            (do (system-msg state :runner (str "places 1 [Credits] on Net Mercur"))
+                            (do (system-msg state :runner (str "uses Net Mercur to place 1 [Credits] on itself"))
                                 (add-counter state :runner card :credit 1)
                                 (effect-completed state side eid))))}]
    ;; Normally this should be (req true), but having pay-credits prompts on
@@ -3165,7 +3165,7 @@
                :effect (req (when (and (not (:agenda-stolen card))
                                        (#{:hq :rd} (target-server target)))
                               (add-counter state side card :power 1)
-                              (system-msg state :runner (str "places a power counter on " (:title card))))
+                              (system-msg state :runner (str "uses " (:title card) " to place 1 power counter on itself")))
                          (update! state side (dissoc (get-card state card) :agenda-stolen)))
                :silent (req true)}]
      :abilities [(ttw-ab "R&D" :rd)
@@ -3179,7 +3179,7 @@
                          (installed? target)
                          (first-event? state side :spent-credits-from-card #(installed? (first %)))))
              :async true
-             :msg (msg "place a power counter on " (:title card))
+             :msg "place a power counter on itself"
              :effect (req (add-counter state :runner card :power 1 {:placed true})
                           (effect-completed state side eid))}
             {:event :breach-server

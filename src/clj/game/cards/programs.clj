@@ -397,7 +397,7 @@
   {:events
    [{:event :runner-turn-begins
      :optional
-     {:prompt (msg "Pay 2 [Credits] to gain [Click]")
+     {:prompt (msg "Pay 2 [Credits] to gain [Click]?")
       :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]))
       :player :runner
       :yes-ability {:cost [:credit 2]
@@ -486,7 +486,7 @@
 (defcard "Aumakua"
   (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
-                                {:label "Place a virus counter"
+                                {:label "Place 1 virus counter"
                                  :msg "manually place 1 virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
                     :constant-effects [(breaker-strength-bonus (req (get-virus-counters state card)))]
@@ -733,7 +733,7 @@
              :req (req (same-card? (:ice context) (:host card)))
              :async true
              :effect (req (if (pos? (ice-strength state side (:ice context)))
-                            (do (system-msg state side "places 1 virus counter on Chisel")
+                            (do (system-msg state side "uses Chisel to place 1 virus counter on itself")
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
                             (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
@@ -923,8 +923,8 @@
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :msg (msg (if (can-pay? state side eid card nil [:virus 1])
-                                          "remove a virus token from Crypsis"
-                                          "trash Crypsis"))
+                                          "remove 1 virus counter from itself"
+                                          "trash itself"))
                               :async true
                               :effect (req (wait-for (pay state :runner (make-eid state eid) card [:virus 1])
                                                      (if-let [payment-str (:msg async-result)]
@@ -2215,11 +2215,11 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 2 1)
                                 {:cost [:click 1]
-                                 :msg "place one power counter"
+                                 :msg "place 1 power counter"
                                  :label "Place 1 power counter"
                                  :effect (effect (add-counter card :power 1))}
                                 {:cost [:click 1]
-                                 :msg "remove one power counter"
+                                 :msg "remove 1 power counter"
                                  :label "Remove 1 power counter"
                                  :effect (effect (add-counter card :power -1))}]
                     :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))

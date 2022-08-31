@@ -813,15 +813,15 @@
                                             :autoresolve (get-autoresolve :auto-fire)
                                             :yes-ability {:effect (effect (system-msg
                                                                             :runner
-                                                                            "places 1 virus counter on Friday Chip")
+                                                                            "uses Friday Chip to place 1 virus counter on itself")
                                                                           (add-counter :runner card :virus 1))}}}
                                   mult-ab {:prompt "Place virus counters on Friday Chip?"
                                            :choices {:number (req amt-trashed)
                                                      :default (req amt-trashed)}
                                            :effect (effect (system-msg :runner
-                                                                       (str "places "
+                                                                       (str "uses Friday Chip to place "
                                                                             (quantify target "virus counter")
-                                                                            " on Friday Chip"))
+                                                                            " on itself"))
                                                            (add-counter :runner card :virus target))}
                                   ab (if (> amt-trashed 1) mult-ab sing-ab)]
                               (continue-ability state side ab card targets)))}]}))
@@ -1062,9 +1062,9 @@
              :interactive (req true)
              :optional {:req (req (and (first-event? state :runner :successful-run)
                                        (pos? (count-virus-programs state))))
-                        :prompt "Place a virus counter?"
+                        :prompt "Place 1 virus counter?"
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:prompt "Choose an installed virus program to add a virus counter to"
+                        :yes-ability {:prompt "Choose an installed virus program to place 1 virus counter to"
                                       :choices {:card #(and (installed? %)
                                                             (has-subtype? % "Virus")
                                                             (program? %))}
@@ -1134,8 +1134,8 @@
                :effect (req (let [target (some #(when (pred %) (:card %)) targets)
                                   cost (trash-cost state side target)]
                               (when cost
-                                (system-msg state side (str "places " cost
-                                                            " power counters on Mâché"))
+                                (system-msg state side (str "uses Mâché to place " cost
+                                                            " power counters on itself"))
                                 (add-counter state side card :power cost))))}]}))
 
 (defcard "Marrow"
@@ -1525,7 +1525,7 @@
                             :async true
                             :effect (req (wait-for (draw state :runner 1)
                                                    (draw state :corp eid 1)))}
-              :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
+              :no-ability {:effect (req (system-msg state side (str "declines to use Polyhistor"))
                                         (effect-completed state side eid))}}}]
     {:constant-effects [(mu+ 1)
                         (link+ 1)]
