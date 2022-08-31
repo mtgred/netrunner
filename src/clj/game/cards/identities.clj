@@ -1533,9 +1533,9 @@
              :async true
              :waiting-prompt "Corp to make a decision"
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
-             :choices {:card can-be-advanced?}
+             :choices {:card #(and (installed? %) (can-be-advanced? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
-             :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))
+             :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))
              :cancel-effect (effect (system-msg "declines to use Pravdivost Consulting: Political Solutions")
                                     (effect-completed eid))}]})
 
