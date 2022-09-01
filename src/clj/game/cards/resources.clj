@@ -2785,8 +2785,7 @@
                                                           (runner-can-install? state side (get-card state %) nil)
                                                           (can-pay? state side (assoc eid :source card :source-type :runner-install) (get-card state %) nil [:credit (install-cost state side (get-card state %) {:cost-bonus -1})])) (:hosted card))))))
                 :effect (req (set-aside state side eid (:hosted card))
-                             (let [set-aside-eid eid
-                                   set-aside-cards (get-set-aside state side set-aside-eid)]
+                             (let [set-aside-cards (get-set-aside state side eid)]
                                (wait-for (trash state side card {:cause :ability-cost :cause-card card})
                                          (system-msg state side "trashed")
                                          (continue-ability
@@ -2794,42 +2793,16 @@
                                            {:prompt "Choose a set-aside card to install (paying 1 less)"
                                             :waiting-prompt "Runner to make a decision"
                                             :not-distinct true
-                                            ;;:async true
+                                            :async true
                                             :choices (req (filter #(and (not (event? %))
                                                                         (runner-can-install? state side % nil)
                                                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -1})])) set-aside-cards))
                                             :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
                                                       (str/join ", " (map :title (remove-once #(same-card? % target) set-aside-cards)))
                                                       "are trashed as a result")
-                                            :effect (req (wait-for (runner-install state side (assoc eid :source card :source-type :runner-install) target {:cost-bonus -1})
-                                                                   ;; not sure why - trash cards causes a stack overflow here?
-                                                                   (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true})))}
-                                           card nil)
-                                         )))}]})
-
-(defcard "Street Peddler 2"
-  {:on-install {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-                :effect (req (doseq [c (take 3 (:deck runner))]
-                               (host state side (get-card state card) c {:facedown true})))}
-   :abilities [{:async true
-                :label "install a hosted card"
-                :trash-icon true
-                :req (req (not (install-locked? state side)))
-                :prompt "Choose a hosted card to install"
-                :choices (req (cancellable
-                                (filter #(let [target (dissoc % :facedown)]
-                                           (and (not (event? target))
-                                                (runner-can-install? state side target nil)
-                                                (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                          [:credit (install-cost state side target {:cost-bonus -1})])))
-                                        (:hosted card))))
-                :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                          (str/join ", " (map :title (remove-once #(same-card? % target) (:hosted card))))
-                          " are trashed as a result")
-                :effect (req (let [card (update! state side (update card :hosted (fn [coll] (remove-once #(same-card? % target) coll))))]
-                               (wait-for (trash state side card {:cause :ability-cost :cause-card card})
-                                         (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                                         (dissoc target :facedown) {:cost-bonus -1}))))}]})
+                                            :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
+                                                                   (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
+                                           card nil))))}]})
 
 (defcard "Symmetrical Visage"
   {:events [{:event :runner-click-draw
