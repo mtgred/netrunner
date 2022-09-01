@@ -901,7 +901,7 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
-(deftest ^:kaocha/pending digital-rights-management
+(deftest ^:kaocha/pending digital-rights-management-cannot-score-agenda-installed-after-playing
   ;; Cannot score Agenda installed after playing DRM
   (do-game
     (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]

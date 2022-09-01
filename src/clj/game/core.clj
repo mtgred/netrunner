@@ -223,6 +223,7 @@
    resource?
    rezzed?
    runner?
+   unique?
    upgrade?
    virus-program?])
 

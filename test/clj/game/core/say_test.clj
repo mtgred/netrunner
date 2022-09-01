@@ -273,20 +273,18 @@
 
   (testing "/unique"
     (let [user {:username "Runner"}]
-      (testing "Works with Wireless Net Pavillion"
-        (do-game
-          (new-game {:runner {:hand [(qty "Wireless Net Pavilion" 2)]}})
-          (take-credits state :corp)
-          (let [wnp1 (nth (:hand (get-runner)) 0)
-                wnp2 (nth (:hand (get-runner)) 1)]
-            (core/play state :runner {:card wnp1})
-            (core/play state :runner {:card wnp2})
-            (is (= 1 (count (:hand (get-runner)))) "Second WNP was not installed")
-            (is (:uniqueness wnp2) "WNP is unique")
-            (core/command-parser state :runner {:user user :text "/unique"})
-            (is (last-log-contains? state "\\[!\\]Runner uses a command: /unique") "Correct message")
-            (click-card state :runner wnp2)
-            (is (not (:uniqueness (refresh wnp2))) "WNP is not unique anymore")
-            (is (last-log-contains? state "Runner uses /unique command to make Wireless Net Pavilion not unique\\.") "Correct message")
-            (core/play state :runner {:card wnp2})
-            (is (zero? (count (:hand (get-runner)))) "Both cards have been installed")))))))
+      (do-game
+        (new-game {:runner {:hand [(qty "Wireless Net Pavilion" 2)]
+                            :credit 100}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Wireless Net Pavilion")
+        (let [wnp1 (get-resource state 0)]
+          (core/command-parser state :runner {:user user :text "/unique"})
+          (is (last-log-contains? state "\\[!\\]Runner uses a command: /unique") "Correct message")
+          (click-card state :runner wnp1)
+          (is (not (unique? (refresh wnp1))) "WNP is not unique anymore")
+          (is (last-log-contains? state "Runner uses /unique command to make Wireless Net Pavilion not unique\\.") "Correct message")
+          (play-from-hand state :runner "Wireless Net Pavilion")
+          (is (zero? (count (:hand (get-runner)))) "Both cards have been installed")
+          (is (= 2 (count (get-resource state))))
+          (is (every? #(= "Wireless Net Pavilion" (:title %)) (get-resource state))))))))
