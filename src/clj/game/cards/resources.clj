@@ -1663,20 +1663,19 @@
 (defcard "Lewi Guilherme"
   (let [ability {:label "lose 1 [Credits] or trash"
                  :interactive (req true)
-                 :optional
-                 {:prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
-                  :once :per-turn
-                  :yes-ability
-                  {:async true
-                   :effect (req (if (pos? (:credit runner))
-                                  (do (system-msg state side "pays 1 [Credits] to keep Lewi Guilherme")
-                                      (lose-credits state side eid 1))
-                                  (do (system-msg state side "must trash Lewi Guilherme")
-                                      (trash state side eid card {:cause-card card}))))}
-                  :no-ability
-                  {:async true
-                   :effect (effect (system-msg "chooses to trash Lewi Guilherme")
-                                   (trash eid card {:cause-card card}))}}}]
+                 :async true
+                 :prompt "Choose one"
+                 :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
+                                  "Pay 1 [Credits]")
+                                "Trash Lewi Guilherme"])
+                 :player :runner
+                 :msg (req (if (= target "Trash Lewi Guilherme")
+                            "to trash itself"
+                            (msg "to " (decapitalize target))))
+                 :effect (req (if (= target "Trash Lewi Guilherme")
+                                (trash state :runner eid card {:cause-card card})
+                                (do (pay state :runner (make-eid state eid) card :credit 1)
+                                    (effect-completed state side eid))))}]
     {:flags {:drip-economy true ;; for Drug Dealer
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                        (all-active-installed state :runner)))))}

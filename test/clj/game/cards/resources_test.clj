@@ -3319,11 +3319,11 @@
     (core/lose state :runner :credit 6)
     (is (= 2 (:credit (get-runner))) "Credits are 2")
     (take-credits state :corp)
-    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Pay 1 [Credits]")
     (is (= 1 (:credit (get-runner))) "Lost a credit from Lewi")
     (take-credits state :runner)
     (take-credits state :corp)
-    (click-prompt state :runner "No")
+    (click-prompt state :runner "Trash Lewi Guilherme")
     (is (= 1 (count (:discard (get-runner)))) "First Lewi trashed")
     (is (= 5 (hand-size :corp)) "Corp hand size normal again")
     (play-from-hand state :runner "Lewi Guilherme")
@@ -3331,7 +3331,8 @@
     (core/lose state :runner :credit 8)
     (is (zero? (:credit (get-runner))) "Credits are 0")
     (take-credits state :corp)
-    (click-prompt state :runner "Yes")
+    (is (= ["Trash Lewi Guilherme"] (prompt-buttons :runner)) "Runner has no longer the option to lose credits")
+    (click-prompt state :runner "Trash Lewi Guilherme")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
 (deftest lewi-guilherme-lovegood-interaction-#3345
