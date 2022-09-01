@@ -1607,25 +1607,20 @@
 (defcard "O₂ Shortage"
   {:on-play
    {:async true
-    :effect (req (if (empty? (:hand runner))
-                   (do (gain-clicks state :corp 2)
-                       (system-msg state side "uses O₂ Shortage to gain [Click][Click]")
-                       (effect-completed state side eid))
-                   (continue-ability
-                     state side
-                     {:optional
-                      {:waiting-prompt "Runner to make a decision"
-                       :prompt "Trash 1 random card from your Grip?"
-                       :player :runner
-                       :yes-ability {:async true
-                                     :effect (req (let [c (take 1 (shuffle (:hand runner)))]
-                                                    (system-msg state :corp
-                                                                (str "uses O₂ Shortage to trash "
-                                                                     (:title (first c)) " from the Runner's Grip"))
-                                                    (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash})))}
-                       :no-ability {:msg "gain [Click][Click]"
-                                    :effect (effect (gain-clicks :corp 2))}}}
-                     card nil)))}})
+    :player :runner
+    :waiting-prompt "Runner to make a decision"
+    :prompt "Choose one"
+    :choices (req [(when-not (empty? (:hand runner))
+                     "Trash 1 random card from the grip")
+                   "The Corp gains [Click][Click]"])
+    :msg (req (if (= target "The Corp gains [Click][Click]")
+                 "gain [Click][Click]"
+                 (msg "to force the Runner to " (decapitalize target))))
+    :effect (req (if (= target "The Corp gains [Click][Click]")
+                   (gain-clicks state :corp 2)
+                   (do (let [c (take 1 (shuffle (:hand runner)))]
+                         (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash})
+                         (effect-completed state side eid)))))}})
 
 (defcard "Observe and Destroy"
   {:on-play

@@ -2761,14 +2761,19 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand [(qty "O₂ Shortage" 2)]
                       :credits 10}
-               :runner {:hand [(qty "Sure Gamble" 2)]}})
+               :runner {:hand ["Sure Gamble"]}})
     (play-from-hand state :corp "O₂ Shortage")
-    (click-prompt state :runner "Yes")
-    (is (= 1 (count (:discard (get-runner)))) "Runner should discard a single card")
+    (changes-val-macro
+      -1 (count (:hand (get-runner)))
+      "Runner discarded a single card"
+      (click-prompt state :runner "Trash 1 random card from the grip"))
     (play-from-hand state :corp "O₂ Shortage")
-    (let [clicks (:click (get-corp))]
-      (click-prompt state :runner "No")
-      (is (= (+ 2 clicks) (:click (get-corp))) "Corp should gain 2 clicks"))))
+    (is (= ["The Corp gains [Click][Click]"] (prompt-buttons :runner)) "Runner has no longer the option to trash from the grip")
+    (changes-val-macro
+      2 (:click (get-corp))
+      "Corp gained 2 clicks"
+      (click-prompt state :runner "The Corp gains [Click][Click]"))
+    (is (no-prompt? state :runner) "Runner should have no more prompt")))
 
 (deftest observe-and-destroy
   ;; Observe and Destroy
