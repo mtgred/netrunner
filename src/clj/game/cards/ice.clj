@@ -1565,8 +1565,12 @@
                   :async true
                   :prompt "Choose one"
                   :choices ["Suffer 2 net damage" "End the run"]
+                  :msg (req (msg (if (= target "End the run")
+                                   "to "
+                                   "to force the Runner to ")
+                                 (decapitalize target)))
                   :effect (req (if (= target "End the run")
-                                 (do (system-msg state :runner "chooses to end the run")
+                                 (do (system-msg state :corp "uses Formicary to end the run")
                                      (end-run state :corp eid card))
                                  (damage state :runner eid :net 2 {:card card :unpreventable true})))}]
    :abilities [(set-autoresolve :auto-fire "Formicary rezzing and moving itself on approach")]})
