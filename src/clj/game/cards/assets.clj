@@ -2186,13 +2186,14 @@
 
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
-   :access {:optional
-            {:waiting-prompt "Corp to make a decision"
-             :prompt "Place 1 advancement token on a card that can be advanced?"
-             :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
-                           :prompt "Choose a card to place an advancement token on"
-                           :choices {:card can-be-advanced?}
-                           :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
+   :access {:async true
+            :msg (msg "place 1 advancement token on " (card-str state target))
+            :prompt "Choose a card to place 1 advancement token on"
+            :choices {:card can-be-advanced?}
+            :effect (effect (add-prop target :advance-counter 1 {:placed true})
+                            (effect-completed eid))
+            :cancel-effect (effect (system-msg "declines to use Space Camp")
+                                   (effect-completed eid))}})
 
 (defcard "Spin Doctor"
   {:on-rez {:async true

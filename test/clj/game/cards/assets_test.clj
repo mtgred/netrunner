@@ -4656,7 +4656,6 @@
       (run-empty-server state :archives)
       (click-prompt state :runner "News Team")
       (click-prompt state :runner "Take 2 tags")
-      (click-prompt state :corp "Yes")
       (click-card state :corp (get-content state :remote1 0))
       (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Agenda advanced once from Space Camp")
       (is (= 2 (count-tags state)) "Runner has 2 tags")
