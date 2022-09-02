@@ -2503,7 +2503,7 @@
                              :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
                              :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
                                              (lose-credits :runner eid 3))}
-               :no-ability {:msg "decline to spend 1 hosted advancement counter"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Mestnichestvo to spend 1 hosted advancement counter"))}}}
    :subroutines [{:label "The Runner loses 3 [Credits]"
                   :msg "force the Runner to lose 3 [Credits]"
                   :async true
@@ -3624,7 +3624,7 @@
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
                              :cancel-effect (effect (system-msg "declines to use Vasilisa")
                                                     (effect-completed eid))}
-               :no-ability {:msg "declines to use Vasilisa"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Vasililsa"))}}}
    :subroutines [(give-tags 1)]})
 
 (defcard "Veritas"
@@ -3706,7 +3706,7 @@
                                                     (shuffle! state side :deck)
                                                     (move state side target :hand)
                                                     (effect-completed state side eid)))}
-               :no-ability {:msg "decline to search for a piece of ice"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Wave"))}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
                   :async true
@@ -3793,7 +3793,7 @@
                   :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move (first (:deck corp)) :deck))}
-                             :no-ability {:effect (effect (system-msg :corp (str "declines to use Yagura to move the top card of R&D to the bottom")))}}}
+                             :no-ability {:effect (effect (system-msg :corp "declines to use Yagura to move the top card of R&D to the bottom"))}}}
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"

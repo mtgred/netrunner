@@ -178,7 +178,8 @@
                                             :req (req (get-card state ice))
                                             :effect (effect (trash eid (get-card state ice) {:cause-card card}))}])
                                         (force-ice-encounter state side eid ice))))}
-              :no-ability {:effect (effect (system-msg :corp (str "declines to use Awakening Center")))}}}]})
+              :no-ability
+              {:effect (effect (system-msg "declines to use Awakening Center"))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -695,7 +696,7 @@
          :choices ["Trash 1 scored agenda" "End the run"]
          :async true
          :effect (req (if (= target "End the run")
-                        (do (system-msg state :runner (str "declines to pay the additional cost from Hired Help"))
+                        (do (system-msg state :runner "declines to pay the additional cost from Hired Help")
                             (end-run state side eid card))
                         (if (seq (:scored runner))
                           (continue-ability state :runner
@@ -784,7 +785,7 @@
           (choose-ice [ices grids]
             (when (seq ices)
               {:async true
-               :prompt "Choose an ice to reveal and install, or None to decline"
+               :prompt "Choose an ice to reveal and install"
                :choices (conj (mapv :title ices) "None")
                :effect
                (effect (continue-ability
@@ -901,7 +902,10 @@
                               (reveal state side target)
                               (shuffle! state side :deck)
                               (move state side target :hand)
-                              (effect-completed state side eid)))}}}]})
+                              (effect-completed state side eid)))}
+              :no-ability
+              {:effect (effect (system-msg "declines to use Malapert Data Vault")
+                               (effect-completed state side eid))}}}]})
 
 (defcard "Manegarm Skunkworks"
   {:events [{:event :approach-server

@@ -1525,7 +1525,7 @@
                             :async true
                             :effect (req (wait-for (draw state :runner 1)
                                                    (draw state :corp eid 1)))}
-              :no-ability {:effect (req (system-msg state side (str "declines to use Polyhistor"))
+              :no-ability {:effect (req (system-msg state side "declines to use Polyhistor")
                                         (effect-completed state side eid))}}}]
     {:constant-effects [(mu+ 1)
                         (link+ 1)]
