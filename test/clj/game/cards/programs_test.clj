@@ -1563,7 +1563,6 @@
         (is (:run @state) "Run initiated")
         (run-continue state :success)
         (click-prompt state :runner "Knobkierie")
-        (click-prompt state :runner "Yes")
         (click-card state :runner (refresh conduit))
         (is (= 1 (core/access-bonus-count state :runner :rd)) "Runner should access 1 additional card"))))
 
@@ -1582,7 +1581,6 @@
         (is (:run @state) "Run initiated")
         (run-continue state :success)
         (click-prompt state :runner "Conduit")
-        (click-prompt state :runner "Yes")
         (click-card state :runner (refresh conduit))
         (is (= 0 (core/access-bonus-count state :runner :rd)) "Runner should not access additional cards"))))
 

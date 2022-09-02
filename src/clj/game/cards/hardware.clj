@@ -1059,18 +1059,19 @@
 (defcard "Knobkierie"
   {:constant-effects [(virus-mu+ 3)]
    :events [{:event :successful-run
+             :req (req (and (first-event? state :runner :successful-run)
+                            (pos? (count-virus-programs state))))
              :interactive (req true)
-             :optional {:req (req (and (first-event? state :runner :successful-run)
-                                       (pos? (count-virus-programs state))))
-                        :prompt "Place 1 virus counter?"
-                        :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:prompt "Choose an installed virus program to place 1 virus counter to"
-                                      :choices {:card #(and (installed? %)
-                                                            (has-subtype? % "Virus")
-                                                            (program? %))}
-                                      :msg (msg "place 1 virus counter on " (:title target))
-                                      :effect (effect (add-counter target :virus 1))}}}]
-   :abilities [(set-autoresolve :auto-fire "Knobkierie")]})
+             :prompt "Choose an installed virus program to place 1 virus counter on"
+             :choices {:card #(and (installed? %)
+                                   (has-subtype? % "Virus")
+                                   (program? %))}
+             :async true
+             :msg (msg "place 1 virus counter on " (:title target))
+             :effect (effect (add-counter target :virus 1)
+                             (effect-completed eid))
+             :cancel-effect (effect (system-msg "declines to use Knobkierie")
+                                    (effect-completed eid))}]})
 
 (defcard "Lemuria Codecracker"
   {:abilities [{:cost [:click 1 :credit 1]

@@ -2421,7 +2421,6 @@
       (let [hv (find-card "Hivemind" (get-program state))]
         (is (= 1 (get-counters (refresh hv) :virus)) "Hivemind starts with 1 virus counters")
         (run-empty-server state "HQ")
-        (click-prompt state :runner "Yes") ; gain virus counter
         (click-card state :runner (find-card "Hivemind" (get-program state)))
         (click-prompt state :runner "No action")
         (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind gains a counter on successful run")
@@ -2446,7 +2445,6 @@
       (run-continue state :success)
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))) "Runner has simult prompt")
       (click-prompt state :runner "Knobkierie")
-      (click-prompt state :runner "Yes")
       (click-card state :runner "Cordyceps")
       (click-prompt state :runner "Yes")
       (click-card state :runner "Enigma")
