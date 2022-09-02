@@ -652,10 +652,10 @@
   {:constant-effects [(corp-hand-size+ 1)]
    :events [{:event :agenda-scored
              :interactive (req true)
-             :optional {:prompt "Add card from Archives to HQ?"
-                        :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability (corp-recur)}}]
-   :abilities [(set-autoresolve :auto-fire "Haas-Bioroid: Precision Design")]})
+             :async true
+             :effect (effect (continue-ability (corp-recur) card nil))
+             :cancel-effect (effect (system-msg "declines to use Haas-Bioroid: Precision Design")
+                                    (effect-completed eid))}]})
 
 (defcard "Haas-Bioroid: Stronger Together"
   {:constant-effects [{:type :ice-strength

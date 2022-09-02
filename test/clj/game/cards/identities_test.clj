@@ -1825,7 +1825,6 @@
       (is (= 6 (hand-size :corp)) "Max hand size is 6")
       (play-and-score state "Project Vitruvius")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives")
-      (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp)))) ; Ability target
       (is (= 0 (count (:discard (get-corp)))) "0 card in archives")))
 
