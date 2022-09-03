@@ -472,6 +472,8 @@
         "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (constrain-value value 0 1000))
         "/take-brain" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (constrain-value value 0 1000)
                                                     {:card (map->Card {:title "/damage command" :side %2})}))
+        "/take-core" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (constrain-value value 0 1000)
+                                                    {:card (map->Card {:title "/damage command" :side %2})}))
         "/take-meat"  #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :meat  (constrain-value value 0 1000)
                                                     {:card (map->Card {:title "/damage command" :side %2})}))
         "/take-net"   #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :net   (constrain-value value 0 1000)

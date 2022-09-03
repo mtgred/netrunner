@@ -94,7 +94,7 @@
                        (when show-tagged [:div.warning "!"])]))
          (ctrl
           :brain-damage
-          [:div (str brain-damage " " (tr [:game.brain-damage "Brain Damage"]))])]))))
+          [:div (str brain-damage " " (tr [:game.brain-damage "Core Damage"]))])]))))
 
 (defmethod stats-area "Corp" [corp]
   (let [ctrl (stat-controls-for-side :corp)]

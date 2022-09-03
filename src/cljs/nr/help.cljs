@@ -155,6 +155,10 @@
     :has-args :required
     :usage "/take-brain n"
     :help "Take n brain damage (Runner only)"}
+   {:name "/take-core"
+    :has-args :required
+    :usage "/take-core n"
+    :help "Take n core damage (Runner only)"}
    {:name "/take-meat"
     :has-args :required
     :usage "/take-meat n"
