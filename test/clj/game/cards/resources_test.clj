@@ -5459,23 +5459,6 @@
         (click-prompt state :runner (find-card "Gordian Blade" (:hosted sp)))
         (is (second-last-log-contains? state "are trashed as a result") "The two hosted cards are logged"))))
 
-(deftest ^:kaocha/pending street-peddler-trash-while-choosing-card
-  ;; Street Peddler - trashing Street Peddler while choosing which card to
-  ;; discard should dismiss the choice prompt. Issue #587.
-  (do-game
-    (new-game {:runner {:deck ["Street Peddler"
-                               "Gordian Blade"
-                               "Torch"
-                               (qty "Sure Gamble" 2)]}})
-    (take-credits state :corp)
-    (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
-    (play-from-hand state :runner "Street Peddler")
-    (let [street-peddler (get-resource state 0)]
-      (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
-      (card-ability state :runner street-peddler 0)
-      (trash-card state :runner street-peddler)
-      (is (zero? (count (prompt-buttons :runner)))))))
-
 (deftest symmetrical-visage
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
   (do-game
