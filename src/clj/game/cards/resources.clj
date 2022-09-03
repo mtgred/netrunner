@@ -44,7 +44,7 @@
                           update-all-icebreakers update-breaker-strength]]
    [game.core.identities :refer [disable-card enable-card]]
    [game.core.initializing :refer [card-init make-card]]
-   [game.core.installing :refer [install-locked? runner-can-install?
+   [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
                                  runner-install]]
    [game.core.link :refer [get-link link+]]
    [game.core.mark :refer [identify-mark-ability]]
@@ -2782,8 +2782,7 @@
                 :req (req (and (not (install-locked? state side))
                                (pos? (count (:hosted card)))
                                (pos? (count (filter #(and (not (event? (get-card state %)))
-                                                          (runner-can-install? state side (get-card state %) nil)
-                                                          (can-pay? state side (assoc eid :source card :source-type :runner-install) (get-card state %) nil [:credit (install-cost state side (get-card state %) {:cost-bonus -1})])) (:hosted card))))))
+                                                          (runner-can-pay-and-install? state side (assoc eid :source card :source-type :runner-install) (get-card state %) {:cost-bonus -1})) (:hosted card))))))
                 :effect (req (set-aside state side eid (:hosted card))
                              (let [set-aside-cards (get-set-aside state side eid)]
                                (wait-for (trash state side card {:cause :ability-cost :cause-card card})
