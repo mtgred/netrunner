@@ -893,9 +893,9 @@
                                                                                       (assoc eid :source card :source-type :runner-install)
                                                                                       % nil [:credit (install-cost state side % {:cost-bonus -2})]))
                                                                       set-aside-cards)
-                                                              ["No action"]))
+                                                              ["No install"]))
                                               :cancel-effect (effect (continue-ability (shuffle-next set-aside-cards nil nil) card nil))
-                                              :effect (req (if (= "No action" target)
+                                              :effect (req (if (= "No install" target)
                                                              (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)
                                                              (let [set-aside-cards (remove-once #(= % target) set-aside-cards)
                                                                    new-eid (assoc eid :source card :source-type :runner-install)]
