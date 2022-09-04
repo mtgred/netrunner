@@ -927,7 +927,7 @@
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [:else
-                             (system-msg state :corp "ends the run")
+                             (system-msg state :corp "uses Manegarm Skunkworks to end the run")
                              (end-run state :corp eid card)]))}]})
 
 (defcard "Manta Grid"
