@@ -3684,8 +3684,7 @@
     (card-ability state :corp (get-content state :remote1 0) 0)
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Yes")
-    ;; if rashida gets changed, this will be 'second-last'
-    (is (last-log-contains? state "shuffle") "Ob superheavy should shuffle R&D")))
+    (is (second-last-log-contains? state "shuffle") "Ob superheavy should shuffle R&D")))
 
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
