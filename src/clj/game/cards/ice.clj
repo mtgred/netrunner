@@ -49,7 +49,7 @@
    [game.core.runs :refer [bypass-ice continue encounter-ends end-run
                            force-ice-encounter get-current-encounter prevent-access
                            redirect-run set-next-phase]]
-   [game.core.say :refer [system-msg system-say]]
+   [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name protecting-same-server?
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
@@ -1230,17 +1230,9 @@
                         [(nil? trashed-card)
                          (effect-completed state side eid)]
                         [(odd? (:cost trashed-card))
-                         (system-say
-                           state :corp
-                           (str (:title trashed-card)
-                                " has an odd cost so Corp uses Diviner to end the run."))
+                         (system-msg state :corp "uses Diviner to end the run")
                          (end-run state :corp eid card)]
-                        [:else
-                         (system-say
-                           state :corp
-                           (str (:title trashed-card)
-                                " has an even cost so Corp does not use Diviner to end the run."))
-                         (effect-completed state side eid)]))))}]})
+                        [:else (effect-completed state side eid)]))))}]})
 
 (defcard "DNA Tracker"
   (let [sub {:msg "do 1 net damage and make the Runner lose 2 [Credits]"
