@@ -1220,7 +1220,7 @@
 (defcard "Film Critic"
   (letfn [(get-agenda [card] (first (filter agenda? (:hosted card))))
           (host-agenda? [agenda]
-            {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
+            {:optional {:prompt (str "Host " (:title agenda) " on Film Critic?")
                         :yes-ability {:effect (req (host state side card agenda)
                                                    (swap! state dissoc :access))
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
