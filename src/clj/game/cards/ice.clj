@@ -1186,21 +1186,23 @@
                   :choices ["Take 1 tag" "End the run"]
                   :async true
                   :effect (req (if (= target "Take 1 tag")
-                                 (do (system-msg state :runner "chooses to take 1 tag")
+                                 (do (system-msg state :runner "takes 1 tag on encountering Data Raven")
                                      (gain-tags state :runner eid 1))
-                                 (do (system-msg state :runner "ends the run")
+                                 (do (system-msg state :corp "uses Data Raven to end the run")
                                      (end-run state :runner eid card))))}
    :subroutines [(trace-ability 3 add-power-counter)]})
 
 (defcard "Data Ward"
   {:on-encounter {:player :runner
+                  :msg "force the Runner to take 1 tag or pay 3 [Credits]"
                   :prompt "Choose one"
-                  :choices ["Pay 3 [Credits]" "Take 1 tag"]
+                  :choices (req [(when (can-pay? state :runner eid card "Data Ward" :credit 3)  
+                                   "Pay 3 [Credits]")
+                                 "Take 1 tag"])
                   :async true
                   :effect (req (if (= target "Pay 3 [Credits]")
                                  (wait-for (pay state :runner (make-eid state eid) card :credit 3)
-                                           (when-let [payment-str (:msg async-result)]
-                                             (system-msg state :runner payment-str))
+                                           (system-msg state :runner (str (:msg async-result) " on encountering Data Ward"))
                                            (effect-completed state side eid))
                                  (do (system-msg state :runner "takes 1 tag on encountering Data Ward")
                                      (gain-tags state :runner eid 1))))}
@@ -1589,21 +1591,23 @@
                                  "End the run"])
                   :async true
                   :effect (req (if (= target "Take 1 tag")
-                                 (do (system-msg state :runner "chooses to take 1 tag")
+                                 (do (system-msg state :runner "takes 1 tag on encountering Funhouse")
                                      (gain-tags state :runner eid 1 {:unpreventable true}))
-                                 (do (system-msg state :runner "ends the run")
+                                 (do (system-msg state :corp "uses Funhouse to end the run")
                                      (end-run state :runner eid card))))}
    :subroutines [{:player :runner
                   :async true
                   :label "Give the Runner 1 tag unless they pay 4 [Credits]"
-                  :prompt "Take 1 tag or pay 4 [Credits]"
+                  :prompt "Choose one"
                   :choices (req ["Take 1 tag"
                                  (when (can-pay? state :runner eid card "Funhouse" :credit 4)
                                    "Pay 4 [Credits]")])
                   :effect (effect (continue-ability
                                     (if (= "Take 1 tag" target)
                                       (give-tags 1)
-                                      (runner-pays [:credit 4]))
+                                      (wait-for (pay state :runner (make-eid state eid) card :credit 4)
+                                                (system-msg state :runner (:msg async-result))
+                                                (effect-completed state side eid)))
                                     card nil))}]})
 
 (defcard "Galahad"
@@ -3482,11 +3486,12 @@
 
 (defcard "Tollbooth"
   {:on-encounter {:async true
+                  :msg "force the Runner to pay 3 [Credits] or end the run"
                   :effect (req (wait-for (pay state :runner (make-eid state eid) card [:credit 3])
                                          (if (:cost-paid async-result)
-                                           (do (system-msg state :runner (str (:msg async-result) " when encountering Tollbooth"))
+                                           (do (system-msg state :runner (str (:msg async-result) " on encountering Tollbooth"))
                                                (effect-completed state side eid))
-                                           (do (system-msg state :runner "ends the run, as the Runner can't pay 3 [Credits] when encountering Tollbooth")
+                                           (do (system-msg state :corp "uses Tollbooth to end the run")
                                                (end-run state :corp eid card)))))}
    :subroutines [end-the-run]})
 
