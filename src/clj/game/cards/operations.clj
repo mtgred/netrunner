@@ -2751,8 +2751,9 @@
                         :choices {:card #(and (in-hand? %)
                                               (corp? %)
                                               (not (operation? %)))}
-                        :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
-                        :cancel-effect (req (effect-completed state side eid))
+                        :msg (msg (corp-install-msg target))
+                        :cancel-effect (effect (system-msg "declines to use Ultraviolet Clearance to install a card")
+                                               (effect-completed eid))
                         :async true
                         :effect (effect (corp-install eid target nil nil))}
                        card nil))))}})
