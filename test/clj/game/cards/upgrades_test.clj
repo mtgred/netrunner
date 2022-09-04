@@ -1956,10 +1956,10 @@
       (take-credits state :runner)
       (is (= "Choose a card in Server 2" (:msg (prompt-map :corp))))
       (click-card state :corp "Project Beale")
-      (last-log-contains? state "La Costa Grid to place an advancement token on a card in Server 2")
+      (is (last-n-log-contains? state 2 "La Costa Grid to place 1 advancement counter on a card in Server 2"))
       (is (= "Choose 1 card to add to the bottom of R&D" (:msg (prompt-map :corp))))
       (click-card state :corp "Ice Wall")
-      (last-log-contains? state "Daily Business Show to add 1 card to the bottom of R&D")
+      (is (last-log-contains? state "Daily Business Show to add"))
       (is (no-prompt? state :corp))
       (is (no-prompt? state :runner))))
 
