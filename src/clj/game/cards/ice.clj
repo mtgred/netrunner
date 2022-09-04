@@ -1283,9 +1283,11 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Eli 2.0"
-  {:subroutines [{:async true
-                  :msg "draw 1 card"
-                  :effect (effect (draw eid 1))}
+  {:subroutines [{:optional
+                  {:prompt "Draw 1 card?"
+                   :msg "draw 1 card"
+                   :yes-ability {:async true
+                                 :effect (effect (draw eid 1))}}}
                  end-the-run
                  end-the-run]
    :runner-abilities [(bioroid-break 2 2)]})
@@ -3373,9 +3375,11 @@
 
 (defcard "Tapestry"
   {:subroutines [runner-loses-click
-                 {:async true
-                  :msg "draw 1 card"
-                  :effect (effect (draw eid 1))}
+                 {:optional
+                  {:prompt "Draw 1 card?"
+                   :msg "draw 1 card"
+                   :yes-ability {:async true
+                                 :effect (effect (draw eid 1))}}}
                  {:req (req (pos? (count (:hand corp))))
                   :prompt "Choose a card in HQ to move to the top of R&D"
                   :choices {:card #(and (in-hand? %)
