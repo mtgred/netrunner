@@ -613,9 +613,9 @@
       (play-from-hand state :corp "Cerebral Cast")
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
-      (click-prompt state :runner "Suffer 1 brain damage")
-      (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
-      (is (zero? (count-tags state)) "Runner took no tags from brain damage choice")
+      (click-prompt state :runner "Suffer 1 core damage")
+      (is (= 1 (count (:discard (get-runner)))) "Runner took a core damage")
+      (is (zero? (count-tags state)) "Runner took no tags from core damage choice")
       (play-from-hand state :corp "Cerebral Cast")
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
@@ -883,7 +883,7 @@
       (is (= "Underway Renovation" (:title (get-scored state :corp 1)))))))
 
 (deftest defective-brainchips
-  ;; Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn
+  ;; Defective Brainchips - Do 1 add'l core damage the first time Runner takes some each turn
   (do-game
     (new-game {:corp {:deck ["Defective Brainchips" "Viktor 1.0"]}
                :runner {:deck [(qty "Sure Gamble" 2) (qty "Shiv" 2)]}})
@@ -895,10 +895,10 @@
       (rez state :corp vik)
       (run-continue state)
       (card-subroutine state :corp vik 0)
-      (is (= 2 (count (:discard (get-runner)))) "2 cards lost to brain damage")
+      (is (= 2 (count (:discard (get-runner)))) "2 cards lost to core damage")
       (is (= 2 (:brain-damage (get-runner))) "Brainchips dealt 1 additional brain dmg")
       (card-subroutine state :corp vik 0)
-      (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
+      (is (= 3 (count (:discard (get-runner)))) "2 cards lost to core damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
 (deftest ^:kaocha/pending digital-rights-management
@@ -2280,17 +2280,17 @@
     (new-game {:corp {:deck ["Kill Switch" (qty "Hostile Takeover" 2)]}})
     (play-from-hand state :corp "Kill Switch")
     (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+    (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 core damage")
     (play-and-score state "Hostile Takeover")
     (click-prompt state :corp "Hostile Takeover")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
-    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Kill Switch after Corp scores an agenda")
+    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 core damage from Kill Switch after Corp scores an agenda")
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
-    (is (= 2 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Kill Switch after accecssing an agenda")))
+    (is (= 2 (:brain-damage (get-runner))) "Runner should get 1 core damage from Kill Switch after accecssing an agenda")))
 
 (deftest lag-time
   (do-game
@@ -3353,7 +3353,7 @@
       (is (last-log-contains? state "Corp uses Reverse Infection to purge 9 virus counters and trash 3 cards from the top of the stack.") "Should write correct log")))
 
 (deftest riot-suppression-take-1-brain-damage
-    ;; Take 1 brain damage
+    ;; Take 1 core damage
     (do-game
       (new-game {:corp {:deck ["Riot Suppression" "Adonis Campaign"]}})
       (play-from-hand state :corp "Adonis Campaign" "New remote")
@@ -3363,10 +3363,10 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Riot Suppression")
       (is (empty? (:discard (get-runner))) "Runner discard is empty")
-      (is (zero? (:brain-damage (get-runner))) "Runner starts with no brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner starts with no core damage")
       (click-prompt state :runner "Yes")
-      (is (= 1 (count (:discard (get-runner)))) "1 card lost to brain damage")
-      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+      (is (= 1 (count (:discard (get-runner)))) "1 card lost to core damage")
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")
       (is (= 1 (count (:discard (get-corp)))) "No corp cards trashed")
       (is (= 1 (count (:rfg (get-corp)))) "Riot Suppestion removed from game")
       (take-credits state :corp)
@@ -3383,10 +3383,10 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Riot Suppression")
       (is (empty? (:discard (get-runner))) "Runner discard is empty")
-      (is (zero? (:brain-damage (get-runner))) "Runner starts with no brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner starts with no core damage")
       (click-prompt state :runner "No")
       (is (empty? (:discard (get-runner))) "Runner discard statys empty")
-      (is (zero? (:brain-damage (get-runner))) "Runner takes no brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner takes no core damage")
       (is (= 1 (count (:discard (get-corp)))) "No corp cards trashed")
       (is (= 1 (count (:rfg (get-corp)))) "Riot Suppestion removed from game")
       (take-credits state :corp)
@@ -4875,8 +4875,8 @@
           "Wetwork Refit is hosted on Eli 1.0")
       (is (= 3 (count (:subroutines (refresh eli))))
           "Eli 1.0 has 2 different subroutines")
-      (is (= "[Wetwork Refit] Do 1 brain damage" (:label (first (:subroutines (refresh eli)))))
-          "Eli 1.0 has a brain damage subroutine as his first subroutine")
+      (is (= "[Wetwork Refit] Do 1 core damage" (:label (first (:subroutines (refresh eli)))))
+          "Eli 1.0 has a core damage subroutine as his first subroutine")
       (core/move state :corp (first (:hosted (refresh eli))) :hand)
       (is (empty? (:hosted (refresh eli))) "No cards are hosted on Eli 1.0")
       (is (= 2 (count (:subroutines (refresh eli))))

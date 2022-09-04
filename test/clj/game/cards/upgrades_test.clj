@@ -472,7 +472,7 @@
       (is (= 1 (count (:discard (get-corp)))) "Bio Vault trashed"))))
 
 (deftest black-level-clearance-taking-brain-damage
-    ;; taking brain damage
+    ;; taking core damage
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Black Level Clearance"]}})
@@ -483,7 +483,7 @@
       (changes-val-macro
         0 (:credit (get-corp))
         "Corp gains 0 credits"
-        (click-prompt state :runner "Take 1 brain damage"))
+        (click-prompt state :runner "Take 1 core damage"))
       (is (get-run) "Run has ended")
       (is (get-content state :remote1) "Black Level Clearance has not been trashed")))
 
@@ -3398,7 +3398,7 @@
       (is (= 5 (:strength (get-prompt state :runner))) "3 base, +2 of upgrade"))))
 
 (deftest ryon-knight
-  ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining
+  ;; Ryon Knight - Trash during run to do 1 core damage if Runner has no clicks remaining
   (do-game
     (new-game {:corp {:deck ["Ryon Knight"]}})
     (play-from-hand state :corp "Ryon Knight" "HQ")
@@ -3415,7 +3415,7 @@
       (run-on state :hq)
       (card-ability state :corp ryon 0)
       (is (zero? (:click (get-runner))))
-      (is (= 1 (:brain-damage (get-runner))) "Did 1 brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Did 1 core damage")
       (is (= 1 (count (:discard (get-corp)))) "Ryon trashed"))))
 
 (deftest sansan-city-grid
@@ -3616,7 +3616,7 @@
         (is (= (:cid scg2) (-> (prompt-map :corp) :card :cid)) "SCG did trigger for ice protecting HQ")))))
 
 (deftest tempus
-  ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 brain damage
+  ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 core damage
   (do-game
     (new-game {:corp {:deck [(qty "Tempus" 3)]}
                :runner {:deck [(qty "Sure Gamble" 3)]}})
@@ -3634,23 +3634,23 @@
     (run-on state "Server 1")
     (run-continue state)
     (click-prompt state :corp "0") ; trace
-    (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
+    (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 core damage")
     (click-prompt state :runner "0")
-    (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+    (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
     (take-credits state :runner)
     (take-credits state :corp)
     (run-on state "Archives")
     (run-continue state)
-    (is (= 1 (:brain-damage (get-runner))) "Runner takes no brain damage")
+    (is (= 1 (:brain-damage (get-runner))) "Runner takes no core damage")
     (is (= 3 (:click (get-runner))) "Runner loses no clicks")
     (run-on state "HQ")
     (run-continue state)
     (click-prompt state :corp "0") ; trace
     (click-prompt state :runner "0")
-    (is (= 1 (:brain-damage (get-runner))) "Runner starts with 1 brain damage")
-    (click-prompt state :runner "Suffer 1 brain damage")
-    (is (= 2 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+    (is (= 1 (:brain-damage (get-runner))) "Runner starts with 1 core damage")
+    (click-prompt state :runner "Suffer 1 core damage")
+    (is (= 2 (:brain-damage (get-runner))) "Runner took 1 core damage")
     (click-prompt state :runner "No action") ; don't trash
     (run-on state "HQ")
     (run-continue state)
@@ -3690,7 +3690,7 @@
       (is (= 1 (count (:discard (get-corp)))) "The copy of Quicksand was trashed"))))
 
 (deftest tori-hanzo
-  ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
+  ;; Tori Hanzō - Pay to do 1 core damage instead of net damage
   (do-game
       (new-game {:corp {:deck ["Pup" "Tori Hanzō"]}
                  :runner {:deck [(qty "Sure Gamble" 3) "Net Shield"]}})
@@ -3722,7 +3722,7 @@
         (click-prompt state :runner "Suffer 1 net damage")
         (click-prompt state :runner "Done")
         (click-prompt state :corp "Yes")
-        (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 2 (count (:discard (get-runner)))) "1 core damage suffered")
         (is (= 1 (:brain-damage (get-runner)))))))
 
 (deftest tori-hanzo-with-hokusai-grid-issue-2702
@@ -3748,7 +3748,7 @@
         (run-empty-server state "Archives")
         (click-prompt state :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
         (is (= 2 (count (:discard (get-runner)))))
-        (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
+        (is (= 1 (:brain-damage (get-runner))) "1 core damage suffered")
         (click-prompt state :runner "Hokusai Grid")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
@@ -3771,7 +3771,7 @@
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
         (click-prompt state :corp "Yes") ; pay 2c to replace 1 net with 1 brain
-        (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 1 (count (:discard (get-runner)))) "1 core damage suffered")
         (is (= 1 (:brain-damage (get-runner))))
         (run-continue state :movement)
         (run-jack-out state)

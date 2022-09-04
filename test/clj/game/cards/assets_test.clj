@@ -629,7 +629,7 @@
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes") ; choose to do the optional ability
-      (is (= 2 (:brain-damage (get-runner))) "Runner takes 2 brain damage"))))
+      (is (= 2 (:brain-damage (get-runner))) "Runner takes 2 core damage"))))
 
 (deftest chairman-hiro
   ;; Chairman Hiro - Reduce Runner max hand size; add as 2 agenda points if Runner trashes him
@@ -1587,11 +1587,11 @@
     (run-continue-until state :success)
     (click-prompt state :corp "Yes")
     (click-prompt state :runner "Pay 0 [Credits] to trash")
-    (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
+    (is (= 2 (:brain-damage (get-runner))) "Runner took 2 core damage")
     (run-empty-server state "Server 2")
     (click-prompt state :corp "Yes")
     (click-prompt state :runner "Pay 0 [Credits] to trash")
-    (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no piece of ice protected Edge of World")))
+    (is (= 2 (:brain-damage (get-runner))) "Runner did not take core damage when no piece of ice protected Edge of World")))
 
 (deftest eliza-s-toybox
   ;; Eliza's Toybox - Rez a card ignoring all costs
@@ -2665,7 +2665,7 @@
       (is (= 2 (:base (prompt-map :corp))) "Base Trace should be up to 2")
       (click-prompt state :corp "1")
       (click-prompt state :runner "0")
-      (is (= 1 (:brain-damage (get-runner))) "Trace succeeded so runner should take 1 brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Trace succeeded so runner should take 1 core damage")
       (is (= 1 (-> (get-runner) :discard count)) "Trace succeeded so runner should discard card from damage")
       (is (= 1 (-> (get-corp) :discard count)) "Kuwinda should be in Archives")
       (is (= "Kuwinda K4H1U3" (-> (get-corp) :discard first :title)) "Kuwinda should be in Archives")

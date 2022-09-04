@@ -204,7 +204,7 @@
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
 
 (deftest aniccam-the-effect-triggers-on-brain-damage
-    ;; The effect triggers on brain damage
+    ;; The effect triggers on core damage
     (do-game
       (new-game {:runner {:hand ["Aniccam" "Sure Gamble"]
                           :deck ["Corroder"]}})
@@ -940,7 +940,7 @@
       (is (not (no-prompt? state :runner)))))
 
 (deftest buffer-drive-the-effect-triggers-on-brain-damage
-    ;; The effect triggers on brain damage
+    ;; The effect triggers on core damage
     (do-game
       (new-game {:runner {:hand [(qty "Buffer Drive" 3)]}})
       (take-credits state :corp)
@@ -1611,7 +1611,7 @@
       (is (= 2 (get-counters (refresh end) :power)) "gained 1 counter from a successful run"))))
 
 (deftest feedback-filter
-  ;; Feedback Filter - Prevent net and brain damage
+  ;; Feedback Filter - Prevent net and core damage
   (do-game
     (new-game {:corp {:deck ["Data Mine"
                              "Cerebral Overwriter"
@@ -1641,7 +1641,7 @@
         (card-ability state :runner ff 1)
         (click-prompt state :runner "Done")
         (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash Overwriter for 0
-        (is (= 1 (:brain-damage (get-runner))) "2 of the 3 brain damage prevented")
+        (is (= 1 (:brain-damage (get-runner))) "2 of the 3 core damage prevented")
         (is (= 2 (count (:hand (get-runner)))))
         (is (empty? (get-hardware state)) "Feedback Filter trashed")))))
 
@@ -3738,7 +3738,7 @@
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
 
 (deftest ramujan-reliant-550-bmi
-  ;; Prevent up to X net or brain damage.
+  ;; Prevent up to X net or core damage.
   (do-game
       (new-game {:corp {:deck ["Data Mine" "Snare!"]}
                  :runner {:deck [(qty "Sure Gamble" 5)]
@@ -3777,7 +3777,7 @@
           (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented")))))
 
 (deftest ramujan-reliant-550-bmi-prevent-up-to-x-net-or-brain-damage-empty-stack
-    ;; Prevent up to X net or brain damage. Empty stack
+    ;; Prevent up to X net or core damage. Empty stack
     (do-game
       (new-game {:corp {:deck ["Data Mine"]}
                  :runner {:deck ["Ramujan-reliant 550 BMI" "Sure Gamble"]}})
@@ -3870,7 +3870,7 @@
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd4 0)
       (click-prompt state :runner "1")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took no brain damage"))))
+      (is (= 2 (count (:hand (get-runner)))) "Runner took no core damage"))))
 
 (deftest record-reconstructor
   ;; Record Reconstructor
@@ -4285,7 +4285,7 @@
           "Runner has ability target prompt")))
 
 (deftest spinal-modem
-  ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run
+  ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 core damage on successful trace during run
   (do-game
       (new-game {:corp {:deck ["Caduceus"]}
                  :runner {:deck ["Spinal Modem" "Sure Gamble"]}})
@@ -4302,7 +4302,7 @@
         (card-subroutine state :corp cad 0)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
+        (is (= 1 (:brain-damage (get-runner))) "Took 1 core damage")
         (is (= 1 (count (:discard (get-runner)))))
         (is (= 4 (hand-size :runner)) "Reduced hand size"))))
 

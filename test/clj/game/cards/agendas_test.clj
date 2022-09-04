@@ -2428,23 +2428,23 @@
   ;; NEXT Wave 2
   (do-game
       (new-game {:corp {:deck [(qty "NEXT Wave 2" 2) "NEXT Bronze"]}})
-      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 core damage")
       (play-from-hand state :corp "NEXT Bronze" "HQ")
       (let [nxbr (get-ice state :hq 0)]
         (rez state :corp nxbr))
       (play-and-score state "NEXT Wave 2")
       (click-prompt state :corp "No")
-      (is (zero? (:brain-damage (get-runner))) "Runner should stay at 0 brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner should stay at 0 core damage")
       (play-and-score state "NEXT Wave 2")
       (click-prompt state :corp "Yes")
-      (is (= 1 (:brain-damage (get-runner))) "Runner should gain 1 brain damage")))
+      (is (= 1 (:brain-damage (get-runner))) "Runner should gain 1 core damage")))
 
 (deftest next-wave-2-stealing-doesn-t-do-anything
     ;; Stealing doesn't do anything
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["NEXT Wave 2" "NEXT Bronze"]}})
-      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 core damage")
       (play-from-hand state :corp "NEXT Bronze" "HQ")
       (let [nxbr (get-ice state :hq 0)]
         (rez state :corp nxbr))
@@ -2454,7 +2454,7 @@
       (run-continue state)
       (run-continue state)
       (click-prompt state :runner "Steal")
-      (is (zero? (:brain-damage (get-runner))) "Runner should still have 0 brain damage")))
+      (is (zero? (:brain-damage (get-runner))) "Runner should still have 0 core damage")))
 
 (deftest nisei-mk-ii
   ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
@@ -3627,7 +3627,7 @@
       (is (not (rezzed? (refresh ash))) "Ash should be derezzed"))))
 
 (deftest sentinel-defense-program
-  ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented
+  ;; Sentinel Defense Program - Doesn't fire if core damage is prevented
   (do-game
     (new-game {:corp {:deck ["Sentinel Defense Program" "Viktor 1.0"]}
                :runner {:deck ["Feedback Filter" (qty "Sure Gamble" 3)]}})
@@ -3641,13 +3641,13 @@
       (rez state :corp viktor)
       (run-continue state)
       (card-subroutine state :corp viktor 0)
-      (click-prompt state :runner "Done")  ;; Don't prevent the brain damage
+      (click-prompt state :runner "Done")  ;; Don't prevent the core damage
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 1 (:brain-damage (get-runner))))
       (click-prompt state :runner "Done")  ;; So we take the net, but don't prevent it either
       (is (= 2 (count (:discard (get-runner)))))
       (card-subroutine state :corp viktor 0)
-      (card-ability state :runner ff 1)  ;; Prevent the brain damage this time
+      (card-ability state :runner ff 1)  ;; Prevent the core damage this time
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 

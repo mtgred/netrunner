@@ -1992,7 +1992,7 @@
       (click-card state :runner "Clone Chip")
       (is (empty? (get-hardware state)) "Sac Con trashed")
       (card-subroutine state :corp fairchild 2)
-      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage"))))
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage"))))
 
 (deftest fairchild-3-0
   ;; Fairchild 3.0
@@ -2033,7 +2033,7 @@
       (run-continue state)
       (is (= 1 (count-bad-pub state)) "Gained 1 bad pub")
       (card-subroutine state :corp fen 0)
-      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 4 (hand-size :runner))))))
 
@@ -2714,7 +2714,7 @@
       (is (no-prompt? state :runner) "No prompt to break hakarl")
       (fire-subs state (refresh hakarl))
       (is (nil? (:run @state)))
-      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")
       (run-on state "Server 1")
       ;; effect lasts all turn
       (rez state :corp eli)
@@ -2729,12 +2729,12 @@
       (run-continue state)
       (card-side-ability state :runner hakarl 0)
       (is (not (no-prompt? state :runner)) "Runner prompted to break hakarl")
-      (click-prompt state :runner "Do 1 brain damage")
+      (click-prompt state :runner "Do 1 core damage")
       (click-prompt state :runner "End the run")
       (is (= 1 (:click (get-runner))) "Runner spent clicks breaking hakarl")
       (is (not (nil? (:run @state))))
       (fire-subs state (refresh hakarl))
-      (is (= 1 (:brain-damage (get-runner))) "Runner did not take any extra brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Runner did not take any extra core damage")
       (is (not (nil? (:run @state)))))))
 
 (deftest hakarl-1-0-wrong-server
@@ -3388,9 +3388,9 @@
       (rez state :corp kamali)
       (run-continue state)
       (card-subroutine state :corp kamali 0)
-      (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
-      (click-prompt state :runner "Take 1 brain damage")
-      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 core damage")
+      (click-prompt state :runner "Take 1 core damage")
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")
       (card-subroutine state :corp kamali 1)
       (is (empty? (:discard (get-runner))) "Runner starts with no discarded cards")
       (click-prompt state :runner "Trash an installed piece of hardware")
@@ -6535,7 +6535,7 @@
       (run-continue state)
       (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
       (card-side-ability state :runner tyr 0)
-      (click-prompt state :runner "Do 2 brain damage")
+      (click-prompt state :runner "Do 2 core damage")
       (click-prompt state :runner "Trash an installed Runner card. Gain 3 [Credits]")
       (click-prompt state :runner "End the run")
       (is (= 0 (:click (get-runner))) "Runner has no clicks left")
@@ -6895,7 +6895,7 @@
           "Wraparound 0 strength after Corroder installed"))))
 
 (deftest zed-1.0
-  ;; zed 1.0 - only does brain damage if the runner spends a click to break a sub
+  ;; zed 1.0 - only does core damage if the runner spends a click to break a sub
   (do-game
     (new-game {:corp {:hand ["Zed 1.0"]}})
     (play-from-hand state :corp "Zed 1.0" "HQ")
@@ -6905,9 +6905,9 @@
       (run-on state :hq)
       (run-continue state)
       (card-side-ability state :runner zed 0)
-      (click-prompt state :runner "Do 1 brain damage")
+      (click-prompt state :runner "Do 1 core damage")
       (fire-subs state zed)
-      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")))
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")))
   (do-game
     (new-game {:corp {:hand ["Zed 1.0"]}})
     (play-from-hand state :corp "Zed 1.0" "HQ")
@@ -6917,10 +6917,10 @@
       (run-on state :hq)
       (run-continue state)
       (fire-subs state zed)
-      (is (= 0 (:brain-damage (get-runner))) "Runner took 0 brain damage"))))
+      (is (= 0 (:brain-damage (get-runner))) "Runner took 0 core damage"))))
 
 (deftest zed-2.0
-  ;; zed 2.0 - only does brain damage if the runner spends a click to break a sub
+  ;; zed 2.0 - only does core damage if the runner spends a click to break a sub
   (do-game
     (new-game {:corp {:hand ["Zed 2.0"] :credits 10}})
     (play-from-hand state :corp "Zed 2.0" "HQ")
@@ -6933,7 +6933,7 @@
       (click-prompt state :runner "Trash a piece of hardware")
       (click-prompt state :runner "Trash a piece of hardware")
       (fire-subs state zed)
-      (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")))
+      (is (= 2 (:brain-damage (get-runner))) "Runner took 2 core damage")))
   (do-game
     (new-game {:corp {:hand ["Zed 2.0"] :credits 10}})
     (play-from-hand state :corp "Zed 2.0" "HQ")
@@ -6945,4 +6945,4 @@
       (fire-subs state zed)
       (click-prompt state :corp "Done")
       (click-prompt state :corp "Done")
-      (is (= 0 (:brain-damage (get-runner))) "Runner took 0 brain damage"))))
+      (is (= 0 (:brain-damage (get-runner))) "Runner took 0 core damage"))))

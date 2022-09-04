@@ -276,7 +276,7 @@
       (rez state :corp (refresh zed1))
       (run-continue state)
       (card-ability state :runner (refresh alias) 0)
-      (click-prompt state :runner "Do 1 brain damage")
+      (click-prompt state :runner "Do 1 core damage")
       (click-prompt state :runner "Done")
       (is (= 1 (count (filter :broken (:subroutines (refresh zed1))))) "The subroutine is broken")
       (run-continue state :movement)
@@ -636,15 +636,15 @@
       (is (= 3 (get-strength (refresh vege))))
       (changes-val-macro
         1 (get-strength (refresh vege))
-        "Gained 1str from brain damage"
+        "Gained 1str from core damage"
         (damage state :runner :brain 1))
       (changes-val-macro
         1 (get-strength (refresh vege))
-        "Gained 1str from brain damage"
+        "Gained 1str from core damage"
         (damage state :runner :brain 1))
       (changes-val-macro
         1 (get-strength (refresh vege))
-        "Gained 1str from brain damage"
+        "Gained 1str from core damage"
         (damage state :runner :brain 1))
       (is (= 6 (get-strength (refresh vege)))))))
 
@@ -3045,9 +3045,9 @@
       (run-on state "HQ")
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
-      (click-prompt state :runner "Do 1 brain damage or end the run")
+      (click-prompt state :runner "Do 1 core damage or end the run")
       (is (= 1 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broke all but one subroutine")
-      (is (= "Do 1 brain damage or end the run" (:label (first (remove :broken (:subroutines (get-ice state :hq 0)))))) "Broke all but selected sub")
+      (is (= "Do 1 core damage or end the run" (:label (first (remove :broken (:subroutines (get-ice state :hq 0)))))) "Broke all but selected sub")
       (is (nil? (refresh (get-program state 0))) "Grappling Hook is now trashed")))
 
 (deftest grappling-hook-interaction-with-news-hound-4988
@@ -3435,7 +3435,7 @@
       (let [inv (get-program state 0)]
         (card-ability state :runner (refresh inv) 1)
         (card-ability state :runner (refresh inv) 0)
-        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "Do 1 core damage")
         (click-prompt state :runner "End the run")
         (run-continue state)
         (click-prompt state :runner "Yes")
@@ -3469,7 +3469,7 @@
             inv (get-program state 2)]
         (card-ability state :runner (refresh inv) 1)
         (card-ability state :runner (refresh inv) 0)
-        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "Do 1 core damage")
         (click-prompt state :runner "End the run")
         (run-continue state)
         (click-prompt state :runner "No")
@@ -3478,7 +3478,7 @@
         (run-on state "HQ")
         (run-continue state)
         (card-ability state :runner (refresh maven) 0)
-        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "Do 1 core damage")
         (click-prompt state :runner "End the run")
         (run-continue state)
         (is (not (prompt-is-card? state :runner inv)) "Prompt shouldn't be Inversificator")
@@ -3503,7 +3503,7 @@
       (let [inv (get-program state 0)]
         (card-ability state :runner (refresh inv) 1)
         (card-ability state :runner (refresh inv) 0)
-        (click-prompt state :runner "Do 1 brain damage")
+        (click-prompt state :runner "Do 1 core damage")
         (click-prompt state :runner "End the run")
         (run-continue state)
         (click-prompt state :runner "No")
@@ -5666,7 +5666,7 @@
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
       (is (seq (:prompt (get-runner))) "Have a break prompt")
-      (click-prompt state :runner "Trace 4 - Do 1 brain damage")
+      (click-prompt state :runner "Trace 4 - Do 1 core damage")
       (is (:broken (first (:subroutines (get-ice state :rd 0))))
           "The break ability worked")))
 
