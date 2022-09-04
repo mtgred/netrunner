@@ -1687,28 +1687,25 @@
             (->> (all-installed state :corp)
                  (filter selectable-ice?)))]
     {:events [{:event :corp-turn-ends
-               :optional
-               {:req (req (and (not-empty (installed-faceup-agendas state))
-                               (not-empty (ice-with-no-advancement-tokens state))))
-                :waiting-prompt "Corp to make a decision"
-                :prompt "Place advancement tokens?"
-                :autoresolve (get-autoresolve :auto-fire)
-                :yes-ability
-                {:async true
-                 :effect (req (let [agendas (installed-faceup-agendas state)
-                                    agenda-points (->> agendas
-                                                       (map :agendapoints)
-                                                       (reduce +))]
-                                (continue-ability
-                                  state side
-                                  {:prompt (str "Choose a piece of ice with no advancement tokens to place "
-                                                (quantify agenda-points "advancement token") " on")
-                                   :choices {:card #(selectable-ice? %)}
-                                   :msg (msg "place " (quantify agenda-points "advancement token")
-                                             " on " (card-str state target))
-                                   :effect (effect (add-prop target :advance-counter agenda-points {:placed true}))}
-                                  card nil)))}}}]
-     :abilities [(set-autoresolve :auto-fire "SSO Industries: Fueling Innovation")]}))
+               :req (req (and (not-empty (installed-faceup-agendas state))
+                              (not-empty (ice-with-no-advancement-tokens state))))
+               :waiting-prompt "Corp to make a decision"
+               :async true
+               :effect (req (let [agendas (installed-faceup-agendas state)
+                                 agenda-points (->> agendas
+                                                     (map :agendapoints)
+                                                     (reduce +))]
+                             (continue-ability
+                               state side
+                               {:prompt (str "Choose a piece of ice with no advancement tokens to place "
+                                             (quantify agenda-points "advancement token") " on")
+                                 :choices {:card #(selectable-ice? %)}
+                                 :msg (msg "place " (quantify agenda-points "advancement token")
+                                           " on " (card-str state target))
+                                 :effect (effect (add-prop target :advance-counter agenda-points {:placed true}))}
+                               card nil)))
+               :cancel-effect (effect (system-msg "declines to use SSO Industries: Fueling Innovation")
+                                      (effect-completed eid))}]}))
 
 (defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
