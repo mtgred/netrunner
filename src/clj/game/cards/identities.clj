@@ -1308,19 +1308,19 @@
                                                    :once :per-turn}))}]})
 
 (defcard "New Angeles Sol: Your News"
-  (let [nasol {:optional
-               {:prompt "Play a Current?"
-                :player :corp
-                :req (req (some #(has-subtype? % "Current") (concat (:hand corp) (:discard corp) (:current corp))))
-                :yes-ability {:prompt "Choose a Current to play from HQ or Archives"
-                              :show-discard true
-                              :async true
-                              :choices {:card #(and (has-subtype? % "Current")
-                                                    (corp? %)
-                                                    (or (in-hand? %)
-                                                        (in-discard? %)))}
-                              :msg (msg "play a current from " (name-zone "Corp" (get-zone target)))
-                              :effect (effect (play-instant eid target))}}}]
+  (let [nasol {:async true
+               :req (req (some #(has-subtype? % "Current") (concat (:hand corp) (:discard corp) (:current corp))))
+               :prompt "Choose a Current in HQ or Archives"
+               :waiting-prompt "Corp to make a decision"
+               :show-discard true
+               :choices {:card #(and (has-subtype? % "Current")
+                                     (corp? %)
+                                     (or (in-hand? %)
+                                         (in-discard? %)))}
+               :msg (msg "play a Current from " (name-zone "Corp" (get-zone target)))
+               :effect (effect (play-instant eid target))
+               :cancel-effect (effect (system-msg "declines to use New Angeles Sol: Your News")
+                                      (effect-completed eid))}]
     {:events [(assoc nasol :event :agenda-scored)
               (assoc nasol :event :agenda-stolen)]}))
 

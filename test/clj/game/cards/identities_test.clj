@@ -3352,7 +3352,6 @@
     (run-empty-server state :remote1)
     (is (= 7 (:credit (get-corp))) "Corp gained 1cr from successful run")
     (click-prompt state :runner "Steal")
-    (click-prompt state :corp "Yes")
     (is (find-card "Paywall Implementation" (:discard (get-corp))) "Paywall trashed before Sol triggers")
     (click-card state :corp (find-card "Paywall Implementation" (:hand (get-corp))))
     (is (not (:run @state)) "Run ended")
