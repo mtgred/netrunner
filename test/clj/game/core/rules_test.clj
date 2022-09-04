@@ -567,32 +567,30 @@
 (deftest autoresolve-ensure-autoresolve-does-not-break-prompts-with-a-req
     ;; Ensure autoresolve does not break prompts with a :req
     (do-game
-     (new-game {:corp {:id "SSO Industries: Fueling Innovation"
-                       :deck ["Underway Renovation" (qty "Ice Wall" 3)]}})
-     (letfn [(toggle-sso [setting]
-               (card-ability state :corp (get-in @state [:corp :identity]) 0)
+     (new-game {:corp {:hand ["Net Analytics" "Daily Business Show"]
+                       :deck [(qty "Hedge Fund" 5)]}})
+     (play-from-hand state :corp "Net Analytics" "New remote")
+     (play-from-hand state :corp "Daily Business Show" "New remote")
+     (rez state :corp (get-content state :remote1 0))
+     (rez state :corp (get-content state :remote2 0))
+     (take-credits state :corp)
+     (letfn [(toggle-net-analytics [setting]
+               (card-ability state :corp (get-content state :remote1 0) 0)
                (click-prompt state :corp setting))]
-       (toggle-sso "Always")
-       (play-from-hand state :corp "Underway Renovation" "New remote")
-       (take-credits state :corp)
+       (toggle-net-analytics "Always")
+       (gain-tags state :runner 3)
+       (remove-tag state :runner)
+       (is (not-empty (:prompt (get-runner))) "Net Analytics autoresolved: Runner is waiting for Corp to use DBS")
+       (click-card state :corp (find-card "Hedge Fund" (:set-aside (get-corp))))
+       (remove-tag state :runner)
        (is (no-prompt? state :corp) "No prompts displaying, as conditions are not satisfied")
        (take-credits state :runner)
-       (play-from-hand state :corp "Ice Wall" "New remote")
-       (toggle-sso "Never")
+       (toggle-net-analytics "Never")
+       ;; DBS prompt at the beginning of the turn
+       (click-card state :corp (find-card "Hedge Fund" (:set-aside (get-corp))))
        (take-credits state :corp)
-       (is (no-prompt? state :corp) "No prompts displaying, as conditions are not satisfied")
-       (take-credits state :runner)
-       (toggle-sso "Always")
-       (take-credits state :corp)
-       (is (= "Choose a piece of ice with no advancement tokens to place 1 advancement token on"
-              (-> @state :corp :prompt first :msg))
-           "SSO autoresolved first prompt")
-       (click-card state :corp (get-ice state :remote2 0))
-       (is (= 1 (get-counters (get-ice state :remote2 0) :advancement)) "A token was added")
-       (is (no-prompt? state :corp) "No prompt displaying")
-       (take-credits state :runner)
-       (take-credits state :corp)
-       (is (no-prompt? state :corp) "No prompt displaying, as conditions are not met"))))
+       (remove-tag state :runner)
+       (is (no-prompt? state :corp) "No prompts displaying, as conditions are not satisfied"))))
 
 (deftest autoresolve-ctm-autoresolve
     ;; CtM autoresolve
