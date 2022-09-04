@@ -765,7 +765,7 @@
                    (swap! state assoc-in [:corp :register :cannot-score] agendas)))}
    :events [{:event :purge
              :async true
-             :msg (msg "trash itself")
+             :msg "trash itself"
              :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
                           (trash state :runner eid card {:cause :purge
                                                          :cause-card card}))}
@@ -1147,7 +1147,7 @@
                        :value 1}]
    :events [{:event :purge
              :async true
-             :msg (msg "trash itself")
+             :msg "trash itself"
              :effect (req (trash state :runner eid card {:cause :purge
                                                          :cause-card card}))}]})
 
@@ -1249,7 +1249,7 @@
   {:events [(breach-access-bonus :rd 1)
             {:event :purge
              :async true
-             :msg (msg "trash itself")
+             :msg "trash itself"
              :effect (req (trash state :runner eid card {:cause :purge
                                                          :cause-card card}))}]})
 
@@ -1605,7 +1605,7 @@
              :effect (effect (gain-credits :runner eid 1))}
             {:event :purge
              :async true
-             :msg (msg "trash itself")
+             :msg "trash itself"
              :effect (req (trash state :runner eid card {:cause :purge :cause-card card}))}]})
 
 (defcard "Keyhole"
@@ -1681,7 +1681,7 @@
              :effect (effect (lose-credits :corp eid 1))}
             {:event :purge
              :async true
-             :msg (msg "trash itself")
+             :msg "trash itself"
              :effect (req (trash state :runner eid card {:cause :purge
                                                          :cause-card card}))}]})
 
@@ -2587,7 +2587,7 @@
      :events [(assoc ability :event :runner-turn-begins)
               {:event :purge
                :async true
-               :msg (msg "trash itself")
+               :msg "trash itself"
                :effect (req (trash state :runner eid card {:cause :purge :cause-card card}))}]}))
 
 (defcard "Torch"

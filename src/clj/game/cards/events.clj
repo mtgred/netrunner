@@ -2476,7 +2476,7 @@
    :events [{:event :purge
              :condition :hosted
              :async true
-             :msg (msg "trash itself")
+             :msg "trash itself"
              :effect (req (wait-for (trash state :runner card {:cause :purge
                                                                :cause-card card})
                                     (update-all-agenda-points state side)
