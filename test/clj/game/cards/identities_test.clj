@@ -4194,7 +4194,6 @@
                           :discard ["Sure Gamble" "Easy Mark"]}})
       (take-credits state :corp)
       (run-empty-server state :hq)
-      (click-prompt state :runner "Yes")
       (click-card state :runner "Sure Gamble")
       (click-card state :runner "Easy Mark")
       (click-prompt state :corp "Sure Gamble")

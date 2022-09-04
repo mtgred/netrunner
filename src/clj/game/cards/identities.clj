@@ -1709,23 +1709,19 @@
 
 (defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
-             :optional
-             {:req (req (and (= :hq (target-server context))
-                             (first-successful-run-on-server? state :hq)
-                             (<= 2 (count (:discard runner)))
-                             (not (zone-locked? state :runner :discard))))
-              :prompt "Choose 2 cards in your heap?"
-              :autoresolve (get-autoresolve :auto-fire)
-              :yes-ability
-              {:interactive (req true)
-               :async true
-               :prompt "Choose 2 cards in your heap"
-               :show-discard true
-               :choices {:max 2
-                         :all true
-                         :card #(and (in-discard? %)
-                                     (runner? %))}
-               :effect
+             :req (req (and (= :hq (target-server context))
+                            (first-successful-run-on-server? state :hq)
+                            (<= 2 (count (:discard runner)))
+                            (not (zone-locked? state :runner :discard))))
+             :async true
+             :interactive (req true)
+             :prompt "Choose 2 cards in your heap"
+             :show-discard true
+             :choices {:max 2
+                       :all true
+                       :card #(and (in-discard? %)
+                                   (runner? %))}
+             :effect
                (effect (continue-ability
                          (let [c1 (first targets)
                                c2 (second targets)]
@@ -1743,8 +1739,9 @@
                                                                 [c2 c1])]
                                            (move state :runner chosen :rfg)
                                            (move state :runner other :hand)))})
-                         card nil))}}}]
-   :abilities [(set-autoresolve :auto-fire "Steve Cambridge")]})
+                         card nil))
+             :cancel-effect (effect (system-msg "declines to use Steve Cambridge: Master Grifter")
+                                    (effect-completed eid))}]})
 
 (defcard "Strategic Innovations: Future Forward"
   {:events [{:event :pre-start-game
