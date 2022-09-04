@@ -3528,17 +3528,19 @@
 
 (defcard "Troll"
   {:on-encounter
-   (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
+   (trace-ability 2 {:msg "force the Runner to spend [Click] or end the run"
                      :player :runner
                      :prompt "Choose one"
-                     :choices ["Lose [Click]" "End the run"]
+                     :choices (req [(when (can-pay? state :runner eid card nil [:click 1])
+                                      "Spend [Click]")
+                                    "End the run"])
                      :async true
-                     :effect (req (if (and (= target "Lose [Click]")
+                     :effect (req (if (and (= target "Spend [Click]")
                                            (can-pay? state :runner eid card nil [:click 1]))
-                                    (do (system-msg state :runner "loses [Click]")
-                                        (lose-clicks state :runner 1)
-                                        (effect-completed state :runner eid))
-                                    (do (system-msg state :corp "ends the run")
+                                    (wait-for (pay state side (make-eid state eid) card :click 1)
+                                              (system-msg state side (:msg async-result))
+                                              (effect-completed state :runner eid))
+                                    (do (system-msg state :corp "uses Troll to end the run")
                                         (end-run state :corp eid card))))})})
 
 (defcard "Tsurugi"
