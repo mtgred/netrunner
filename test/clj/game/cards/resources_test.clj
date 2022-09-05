@@ -3713,7 +3713,7 @@
         (take-credits state :runner)
         (changes-val-macro -1 (count (:hand (get-runner)))
                            "Trashed one card from grip"
-                           (click-prompt state :runner "Trash a random card from your Grip"))
+                           (click-prompt state :runner "Trash a random card from the grip"))
         (take-credits state :corp)
         (play-from-hand state :runner "Sure Gamble")
         (changes-val-macro 5 (:credit (get-runner))
