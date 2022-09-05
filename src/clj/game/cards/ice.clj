@@ -1286,10 +1286,12 @@
   {:subroutines [{:optional
                   {:prompt "Draw 1 card?"
                    :msg "draw 1 card"
+                   :autoresolve (get-autoresolve :auto-fire)
                    :yes-ability {:async true
                                  :effect (effect (draw eid 1))}}}
                  end-the-run
                  end-the-run]
+   :abilities [(set-autoresolve :auto-fire "Eli 2.0 drawing cards")]
    :runner-abilities [(bioroid-break 2 2)]})
 
 (defcard "Endless EULA"
@@ -3378,6 +3380,7 @@
                  {:optional
                   {:prompt "Draw 1 card?"
                    :msg "draw 1 card"
+                   :autoresolve (get-autoresolve :auto-fire)
                    :yes-ability {:async true
                                  :effect (effect (draw eid 1))}}}
                  {:req (req (pos? (count (:hand corp))))
@@ -3385,7 +3388,8 @@
                   :choices {:card #(and (in-hand? %)
                                         (corp? %))}
                   :msg "add 1 card in HQ to the top of R&D"
-                  :effect (effect (move target :deck {:front true}))}]})
+                  :effect (effect (move target :deck {:front true}))}]
+  :abilities [(set-autoresolve :auto-fire "Tapestry drawing cards")]})
 
 (defcard "Taurus"
   (constellation-ice trash-hardware-sub))
