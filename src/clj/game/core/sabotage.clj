@@ -62,7 +62,7 @@
                                         (continue-ability state side
                                                           (choosing-ab forced-hq)
                                                           card nil))))}]
-    {:req (req (> n 0))
+    {:req (req (pos? n))
      :msg (msg "sabotage " n)
      :async true
      :effect (req (continue-ability state side check-forcing-ab card targets))}))
