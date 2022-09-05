@@ -1743,8 +1743,10 @@
     (run-empty-server state "HQ")
     ;;steal bacterial, then later, jumon
     (play-from-hand state :runner "Deep Dive")
+    (is (not (:run @state)))
     (click-prompt state :runner "Bacterial Programming")
     (click-prompt state :runner "Steal")
+    (is (not (:run @state)))
     ;; resolve bacterial
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Done")
@@ -1757,13 +1759,15 @@
     (click-prompt state :corp "Hedge Fund")
     (click-prompt state :corp "Hedge Fund")
     (click-prompt state :corp "Done")
+    (is (not (:run @state)))
     ;; should be able to continue to stealing jumon
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Jumon")
     (click-prompt state :runner "Steal")
     ;; these should be failing here, but pass?
     (is (no-prompt? state :corp) "No lingering prompt from bacterial")
-    (is (no-prompt? state :runner) "No lingering prompt from bacterial")))
+    (is (no-prompt? state :runner) "No lingering prompt from bacterial")
+    (is (not (:run @state)))))
 
 (deftest deep-dive-degree-mill
   (do-game
@@ -1786,19 +1790,18 @@
     ;;steal bacterial, then later, jumon
     (play-from-hand state :runner "PAD Tap")
     (play-from-hand state :runner "Daily Casts")
+    (is (= nil (:phase (get-run))) "There is no run")
     (play-from-hand state :runner "Deep Dive")
     (click-prompt state :runner "Degree Mill")
     (click-prompt state :runner "Pay to steal")
+    (is (not (:run @state)))
     (click-card state :runner "PAD Tap")
     (click-card state :runner "Daily Casts")
+    (is (not (:run @state)))
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Jumon")
     (click-prompt state :runner "Steal")
-    ;; these should be failing here, but pass?
-    (is (no-prompt? state :runner) "No lingering prompt from degree mill")
-    (is (no-prompt? state :corp) "No lingering prompt from degree mill")
-    ;;(is (= :encounter-ice (:phase (get-run))) "Run not has bypassed Ice Wall")
-    ))
+    (is (not (:run @state)))))
 
 (deftest deep-dive-strongbox-ikawah-bellona
   (do-game
