@@ -235,18 +235,15 @@
              card nil)))}})
 
 (defcard "Audacity"
-  (letfn [(audacity
-             [x] {:prompt (msg "Choose a card that can be advanced to place advancement counters on (" x " remaining)")
-                  :async true
-                  :choices {:card can-be-advanced?
-                            :all true}
-                  :msg (msg "place 1 advancement counter on " (card-str state target))
-                  :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
+  (letfn [(audacity [x]
+            {:prompt (msg "Choose a card that can be advanced to place advancement counters on (" x " remaining)")
+             :async true
+             :choices {:card can-be-advanced?
+                       :all true}
+             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
                                     (if (> x 1)
-                                      (continue-ability
-                                        state side
-                                        (audacity (dec x))
-                                        card nil)
+                                      (continue-ability state side (audacity (dec x)) card nil)
                                       (effect-completed state side eid))))})]
     {:on-play
      {:req (req (and (<= 3 (count (:hand corp)))
