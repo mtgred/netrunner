@@ -9,9 +9,9 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
-   [nr.translations :refer [tr]]
+   [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
-                     set-scroll-top store-scroll-top]]
+                     set-scroll-top slug->format store-scroll-top]]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
 
@@ -34,6 +34,7 @@
   (swap! app-state assoc-in [:options :pronouns] (:pronouns @s))
   (swap! app-state assoc-in [:options :language] (:language @s))
   (swap! app-state assoc-in [:options :sounds] (:sounds @s))
+  (swap! app-state assoc-in [:options :default-format] (:default-format @s))
   (swap! app-state assoc-in [:options :lobby-sounds] (:lobby-sounds @s))
   (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
   (swap! app-state assoc-in [:options :background] (:background @s))
@@ -54,6 +55,7 @@
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
   (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
   (.setItem js/localStorage "sounds" (:sounds @s))
+  (.setItem js/localStorage "default-format" (:default-format @s))
   (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
   (.setItem js/localStorage "custom_bg_url" (:custom-bg-url @s))
   (.setItem js/localStorage "sounds_volume" (:volume @s))
@@ -315,6 +317,17 @@
                      :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
+
+        [:section
+         [:h3 (tr [:lobby.format "Default game format"])]
+         [:select.format
+          {:value (or (:default-format @s) "standard")
+           :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
+          (doall
+           (for [[k v] slug->format]
+             ^{:key k}
+             [:option {:value k} (tr-format v)]))]]
+
           [:section
            [:h3 (tr [:settings.layout-options "Layout options"])]
            [:div

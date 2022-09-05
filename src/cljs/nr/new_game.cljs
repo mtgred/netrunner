@@ -1,11 +1,11 @@
 (ns nr.new-game
-  (:require
-   [jinteki.utils :refer [str->int]]
-   [nr.auth :refer [authenticated] :as auth]
-   [nr.translations :refer [tr tr-format tr-side]]
-   [nr.utils :refer [slug->format]]
-   [nr.ws :as ws]
-   [reagent.core :as r]))
+  (:require [jinteki.utils :refer [str->int]]
+            [nr.auth :refer [authenticated] :as auth]
+            [nr.translations :refer [tr tr-format tr-side]]
+            [nr.utils :refer [slug->format]]
+            [nr.ws :as ws]
+            [reagent.core :as r]
+            [nr.appstate :refer [app-state]]))
 
 (def new-game-keys
   [:allow-spectator
@@ -21,17 +21,17 @@
 
 (defn create-game [state lobby-state options]
   (authenticated
-    (fn [_]
-      (cond
-        (empty? (:title @state))
-        (swap! state assoc :flash-message (tr [:lobby.title-error "Please fill a game title."]))
-        (and (:protected @options)
-             (empty? (:password @options)))
-        (swap! state assoc :flash-message (tr [:lobby.password-error "Please fill a password."]))
-        :else
-        (let [new-game (select-keys (merge @state @options) new-game-keys)]
-          (swap! lobby-state assoc :editing false)
-          (ws/ws-send! [:lobby/create new-game]))))))
+   (fn [_]
+     (cond
+       (empty? (:title @state))
+       (swap! state assoc :flash-message (tr [:lobby.title-error "Please fill a game title."]))
+       (and (:protected @options)
+            (empty? (:password @options)))
+       (swap! state assoc :flash-message (tr [:lobby.password-error "Please fill a password."]))
+       :else
+       (let [new-game (select-keys (merge @state @options) new-game-keys)]
+         (swap! lobby-state assoc :editing false)
+         (ws/ws-send! [:lobby/create new-game]))))))
 
 (defn button-bar [state lobby-state options]
   [:div.button-bar
@@ -56,16 +56,16 @@
   [:section
    [:h3 (tr [:lobby.side "Side"])]
    (doall
-     (for [option ["Any Side" "Corp" "Runner"]]
-       ^{:key option}
-       [:p
-        [:label [:input
-                 {:type "radio"
-                  :name "side"
-                  :value option
-                  :on-change #(reset! side-state (.. % -target -value))
-                  :checked (= @side-state option)}]
-         (tr-side option)]]))])
+    (for [option ["Any Side" "Corp" "Runner"]]
+      ^{:key option}
+      [:p
+       [:label [:input
+                {:type "radio"
+                 :name "side"
+                 :value option
+                 :on-change #(reset! side-state (.. % -target -value))
+                 :checked (= @side-state option)}]
+        (tr-side option)]]))])
 
 (defn format-section [fmt-state]
   [:section
@@ -74,16 +74,16 @@
     {:value (or @fmt-state "standard")
      :on-change #(reset! fmt-state (.. % -target -value))}
     (doall
-      (for [[k v] slug->format]
-        ^{:key k}
-        [:option {:value k} (tr-format v)]))]])
+     (for [[k v] slug->format]
+       ^{:key k}
+       [:option {:value k} (tr-format v)]))]])
 
 (defn allow-spectators [options]
   [:p
-    [:label
-     [:input {:type "checkbox" :checked (:allow-spectator @options)
-              :on-change #(swap! options assoc :allow-spectator (.. % -target -checked))}]
-     (tr [:lobby.spectators "Allow spectators"])]])
+   [:label
+    [:input {:type "checkbox" :checked (:allow-spectator @options)
+             :on-change #(swap! options assoc :allow-spectator (.. % -target -checked))}]
+    (tr [:lobby.spectators "Allow spectators"])]])
 
 (defn toggle-hidden-info [options]
   [:<>
@@ -183,7 +183,7 @@
 
 (defn create-new-game [lobby-state user]
   (r/with-let [state (r/atom {:flash-message ""
-                              :format "standard"
+                              :format (or (get-in @app-state [:options :default-format]) "standard")
                               :room (:room @lobby-state)
                               :side "Any Side"
                               :title (str (:username @user) "'s game")})
@@ -200,6 +200,7 @@
                fmt (r/cursor state [:format])
                flash-message (r/cursor state [:flash-message])]
     (fn [lobby-state user]
+      ;; (js-debugger)
       [:div
        [button-bar state lobby-state options]
        (when-let [message @flash-message]
