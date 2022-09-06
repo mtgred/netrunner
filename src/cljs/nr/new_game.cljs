@@ -1,6 +1,7 @@
 (ns nr.new-game
   (:require
    [jinteki.utils :refer [str->int]]
+   [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.translations :refer [tr tr-format tr-side]]
    [nr.utils :refer [slug->format]]
@@ -183,7 +184,7 @@
 
 (defn create-new-game [lobby-state user]
   (r/with-let [state (r/atom {:flash-message ""
-                              :format "standard"
+                              :format (or (get-in @app-state [:options :default-format]) "standard")
                               :room (:room @lobby-state)
                               :side "Any Side"
                               :title (str (:username @user) "'s game")})

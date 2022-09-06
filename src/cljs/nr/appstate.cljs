@@ -33,6 +33,7 @@
                             :pin-zoom (get-local-value "pin-zoom" false)
                             :pronouns "none"
                             :language "en"
+                            :default-format (get-local-value "default-format" "standard")
                             :show-alt-art true
                             :card-resolution "default"
                             :player-stats-icons (= (get-local-value "player-stats-icons" "true") "true")
