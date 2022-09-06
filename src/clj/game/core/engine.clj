@@ -4,8 +4,8 @@
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as str]
     [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-installed]]
-    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console?]]
+    [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
+    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -18,7 +18,8 @@
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in distinct-by in-coll? remove-once same-card? server-cards side-str to-keyword]]
     [jinteki.utils :refer [other-side]]
-    [game.core.memory :refer [update-mu]]))
+    [game.core.memory :refer [update-mu]]
+    [game.core.to-string :refer [card-str]]))
 
 ;; resolve-ability docs
 
@@ -1017,21 +1018,46 @@
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
 
-(defn check-consoles
+(defn get-old-uniques
+  [state side]
+  (some->> (all-active-installed state side)
+           (filter unique?)
+           (group-by :title)
+           (reduce-kv
+             (fn [acc _title cards]
+               (if (< 1 (count cards))
+                 (conj! acc (butlast cards))
+                 acc))
+             (transient []))
+           persistent!
+           seq
+           (apply concat)))
+
+(defn check-unique-and-consoles
   "d. If 2 or more unique (◆) cards with the same name are active, for each such name,
   all of those cards except the one that became active most recently are trashed. If 2
   or more console cards are installed under the control of the same player, for each
   such player, all of those cards except the one that became active most recently are
   trashed."
   [state _ eid]
-  (let [consoles (->> (get-in @state [:runner :rig :hardware])
-                      (filter console?))]
-    (if (< 1 (count consoles))
-      (wait-for (move* state nil (make-eid state eid) :trash-cards (butlast consoles) {:game-trash true
-                                                                                       :unpreventable true})
-                (doseq [card (butlast consoles)]
-                  (system-say state :runner (str (:title card) " is trashed."))
-                (effect-completed state nil eid)))
+  (let [corp-uniques (get-old-uniques state :corp)
+        runner-uniques (get-old-uniques state :runner)
+        consoles (->> (get-in @state [:runner :rig :hardware])
+                      (filter console?))
+        consoles (when (< 1 (count consoles))
+                   (butlast consoles))
+        cards-to-trash (-> (concat corp-uniques runner-uniques consoles)
+                           distinct
+                           seq)]
+    (if cards-to-trash
+      (wait-for (move* state nil (make-eid state eid)
+                       :trash-cards cards-to-trash
+                       {:game-trash true
+                        :unpreventable true})
+                (doseq [card cards-to-trash]
+                  (system-say state (to-keyword (:side card))
+                              (str (card-str state card) " is trashed."))
+                  (effect-completed state nil eid)))
       (effect-completed state nil eid))))
 
 (defn check-restrictions
@@ -1072,7 +1098,7 @@
        (check-win-by-agenda state)
        ;; d: uniqueness/console check
        (wait-for
-         (check-consoles state nil)
+         (check-unique-and-consoles state nil)
          ;; e: restrictions on card abilities or game rules, MU
          (wait-for
            (check-restrictions state nil (make-eid state eid))
