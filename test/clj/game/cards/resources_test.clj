@@ -4040,7 +4040,7 @@
         (click-prompt state :runner "Street Peddler")
         (let [ped1 (first (:hosted (refresh oca)))]
           (card-ability state :runner ped1 0)
-          (click-prompt state :runner (second (prompt-buttons :runner))) ; choose Street Peddler
+          (click-prompt state :runner (last (prompt-buttons :runner))) ; choose Street Peddler
           (card-ability state :runner (refresh oca) 1)
           (click-card state :runner (get-resource state 1))
           (let [ped2 (first (:hosted (refresh oca)))]
@@ -5320,8 +5320,9 @@
       (play-from-hand state :runner "Street Peddler")
       (let [sp (get-resource state 0)]
         (card-ability state :runner sp 0)
-        (is (= ["Cancel"] (prompt-buttons :runner)) "1 cancel option on Street Peddler")
-        (click-prompt state :runner "Cancel") ; choose to install Gordian
+        (is (no-prompt? state :runner) "no valid targets")
+        ;(is (= ["Cancel"] (prompt-buttons :runner)) "1 cancel option on Street Peddler")
+        ;(click-prompt state :runner "Cancel") ; choose to install Gordian
         (is (zero? (count (get-program state)))
             "Gordian Blade was not installed")
         (is (and (:installed (refresh sp))
@@ -5342,8 +5343,8 @@
         ;; should still be able to afford Gordian w/ Kate discount
         (core/lose state :runner :credit 3)
         (card-ability state :runner sp 0)
-        (is (= 2 (count (prompt-buttons :runner)))
-            "Only 1 choice (plus Cancel) to install off Peddler")
+        (is (= 1 (count (prompt-buttons :runner)))
+            "Only 1 choice off Peddler")
         (click-prompt state :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
         (is (= "Gordian Blade" (:title (get-program state 0)))
             "Gordian Blade was installed")
@@ -5457,23 +5458,6 @@
         (card-ability state :runner sp 0)
         (click-prompt state :runner (find-card "Gordian Blade" (:hosted sp)))
         (is (second-last-log-contains? state "are trashed as a result") "The two hosted cards are logged"))))
-
-(deftest ^:kaocha/pending street-peddler-trash-while-choosing-card
-  ;; Street Peddler - trashing Street Peddler while choosing which card to
-  ;; discard should dismiss the choice prompt. Issue #587.
-  (do-game
-    (new-game {:runner {:deck ["Street Peddler"
-                               "Gordian Blade"
-                               "Torch"
-                               (qty "Sure Gamble" 2)]}})
-    (take-credits state :corp)
-    (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
-    (play-from-hand state :runner "Street Peddler")
-    (let [street-peddler (get-resource state 0)]
-      (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
-      (card-ability state :runner street-peddler 0)
-      (trash-card state :runner street-peddler)
-      (is (zero? (count (prompt-buttons :runner)))))))
 
 (deftest symmetrical-visage
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
