@@ -3838,7 +3838,6 @@
       ; Recon Drone ability won't fire as we are not accessing HOK
       (card-ability state :runner rd2 0)
       (is (nil? (:number (:choices (prompt-map :runner)))) "No choice to prevent damage from HOK")
-      (click-prompt state :runner "Done")
       (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
       (click-prompt state :corp "No")
       (click-prompt state :runner "No action")
