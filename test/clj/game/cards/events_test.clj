@@ -671,6 +671,26 @@
                            ;; Trashed Ice Wall does not count
                            (run-continue state)))))
 
+(deftest bravado-self-trashing-ice-is-not-counted
+    ;; Self-trashing ice (e.g. traps) is not counted
+    (do-game
+      (new-game {:corp {:hand ["Aimor"]}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Aimor" "HQ")
+      (take-credits state :corp)
+      (let [aimor (get-ice state :hq 0)]
+        (play-from-hand state :runner "Bravado")
+        (click-prompt state :runner "HQ")
+        (rez state :corp aimor)
+        (run-continue state)
+        (fire-subs state (refresh aimor))
+        (is (= 1 (count (:discard (get-corp)))) "Aimor was trashed")
+        (run-continue state)
+        (changes-val-macro 6 (:credit (get-runner))
+                           "Gained 6 credits from Bravado"
+                           ;; Trashed Aimor does not count
+                           (run-continue state)))))
+
 (deftest bravado-also-gaining-credits-on-unsuccessful-runs
     ;; Also gaining credits on unsuccessful runs
     (do-game
