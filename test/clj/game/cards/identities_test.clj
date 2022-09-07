@@ -620,6 +620,21 @@
       (click-card state :runner (find-card "Heartbeat" (:hand (get-runner))))
       (is (= 1 (count (get-runner-facedown state))) "2nd console installed facedown")))
 
+(deftest apex-invasive-predator-allow-facedown-install-of-program-when-over-mu
+    ;; Allow facedown install of a program when MU is full
+    (do-game
+      (new-game {:runner {:id "Apex: Invasive Predator"
+                          :deck [(qty "Endless Hunger" 2)]}})
+      (take-credits state :corp)
+      (end-phase-12 state :runner)
+      (click-prompt state :runner "Done")
+      (play-from-hand state :runner "Endless Hunger")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (end-phase-12 state :runner)
+      (click-card state :runner (find-card "Endless Hunger" (:hand (get-runner))))
+      (is (= 1 (count (get-runner-facedown state))) "Endless Hunger installed facedown")))
+
 (deftest apex-invasive-predator-don-t-fire-events-when-installed-facedown-issue-4085
     ;; Don't fire events when installed facedown. Issue #4085
     (do-game

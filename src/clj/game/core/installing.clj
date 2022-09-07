@@ -388,6 +388,7 @@
     (if-not (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
       (effect-completed state side eid)
       (if (and (program? card)
+               (not facedown)
                (not (sufficient-mu? state card)))
         (continue-ability
           state side
