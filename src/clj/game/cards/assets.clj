@@ -1867,9 +1867,9 @@
                    (continue-ability
                      {:optional
                       {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
+                       :msg "to trash itself"
                        :yes-ability
                        {:async true
-                        ;:msg "gain 3 [Credits] and draw 3 cards"
                         :effect (req (wait-for
                                        (trash state side card {:cause-card card})
                                        (system-msg state side (str "uses " (:title card) " to gain 3 [Credits] and draw 3 cards"))
