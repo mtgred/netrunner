@@ -2193,9 +2193,6 @@
                   :choices {:card #(and (installed? %)
                                         (hardware? %))}
                   :effect (req (wait-for (trash state side target {:cause :subroutine})
-                                         (when current-ice
-                                           (continue state :corp nil)
-                                           (continue state :runner nil))
                                          (trash state side eid card {:cause :subroutine})))}]})
 
 (defcard "Lancelot"
@@ -3267,9 +3264,6 @@
                   :msg "gains 5 [Credits] and trashes Special Offer"
                   :async true
                   :effect (req (wait-for (gain-credits state :corp 5)
-                                         (when current-ice
-                                           (continue state :corp nil)
-                                           (continue state :runner nil))
                                          (trash state side eid card {:cause :subroutine})))}]})
 
 (defcard "Spiderweb"
@@ -3586,9 +3580,6 @@
                   :async true
                   :effect (req (if tagged
                                  (wait-for (lose-credits state :runner (make-eid state eid) :all)
-                                           (when current-ice
-                                             (continue state :corp nil)
-                                             (continue state :runner nil))
                                            (trash state side eid card {:cause :subroutine}))
                                  (lose-credits state :runner eid 1)))}]})
 
@@ -3736,9 +3727,6 @@
                   :msg "prevent the Runner from jacking out"
                   :async true
                   :effect (req (prevent-jack-out state side)
-                               (when current-ice
-                                 (continue state :corp nil)
-                                 (continue state :runner nil))
                                (trash state side eid card {:cause :subroutine}))}]})
 
 (defcard "Whitespace"
