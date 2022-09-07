@@ -1935,7 +1935,7 @@
      :async true
      :effect (req (if (= target "Trash Mystic Maemi")
                     (trash state :runner eid card {:cause-card card})
-                    (pay state :runner eid card [:randomly-trash-from-hand 1])))}
+                    (pay state :runner (assoc eid :source card :source-type :ability) card [:randomly-trash-from-hand 1])))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
