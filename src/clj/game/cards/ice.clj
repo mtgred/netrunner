@@ -575,7 +575,6 @@
                                                 (str/join ", " (map :title (take 3 (:deck runner))))
                                                 " from the Runner's Stack"))
                                (wait-for (mill state :corp :runner 3)
-                                         (system-msg state side (str "trashes Aimor"))
                                          (trash state side eid card {:cause :subroutine})))}]})
 
 (defcard "Akhet"
@@ -3065,7 +3064,7 @@
                   :label "Move Sand Storm and the run to another server"
                   :prompt "Choose another server and redirect the run to its outermost position"
                   :choices (req (remove #{(zone->name (:server (:run @state)))} (cancellable servers)))
-                  :msg (msg "move Sand Storm and the run. The Runner is now running on " target ". Sand Storm is trashed")
+                  :msg (msg "move itself and the run on " target)
                   :effect (req (let [moved-ice (move state side card (conj (server->zone state target) :ices))]
                                  (redirect-run state side target)
                                  (wait-for (trash state side (make-eid state eid) moved-ice {:unpreventable true :cause :subroutine})
