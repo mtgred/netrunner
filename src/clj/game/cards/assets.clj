@@ -1872,10 +1872,10 @@
                        {:async true
                         :effect (req (wait-for
                                        (trash state side card {:cause-card card})
-                                       (system-msg state side (str "uses " (:title card) " to gain 3 [Credits] and draw 3 cards"))
                                        (wait-for
                                          (gain-credits state side 3)
-                                         (draw state side eid 3))))}}}
+                                         (draw state side eid 3)
+                                         (system-msg state side (str "uses " (:title card) " to gain 3 [Credits] and draw 3 cards")))))}}}
                      card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
