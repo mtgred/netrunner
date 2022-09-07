@@ -1671,7 +1671,9 @@
   (letfn [(eventmap [s]
             (into {} (reverse (get s :turn-events))))]
     {:interactions {:prevent [{:type #{:net :brain :meat}
-                               :req (req (:access @state))}]}
+                               :req (req (and (:access @state)
+                                              (= (:cid (second (:pre-damage (eventmap @state))))
+                                                 (:cid (first (:pre-access-card (eventmap @state)))))))}]}
      :abilities [{:cost [:x-credits :trash-can]
                   :label "prevent damage"
                   :req (req (and (:access @state)

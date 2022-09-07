@@ -373,7 +373,7 @@
   [state side card type target args]
   (->> (get-card-prevention card type)
        (map #(ab-can-prevent? state side card (:req %) target args))
-       (some #(-> % false? not))))
+       (some identity)))
 
 (defn cards-can-prevent?
   "Checks if any cards in a list can prevent this type"
