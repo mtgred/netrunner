@@ -1723,6 +1723,86 @@
     (is (= 0 (count (:discard (get-corp)))))
     (is (= 4 (:agenda-point (get-runner))) "Runner scored two agendas")))
 
+(deftest deep-dive-bacterial-programming
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund" "Bacterial Programming" "Jumon"]
+                      :deck [(qty "Hedge Fund" 16)]}
+               :runner  {:hand ["Deep Dive"]}})
+    (core/move state :corp (find-card "Bacterial Programming" (:hand (get-corp))) :deck {:front true})
+    (core/move state :corp (find-card "Jumon" (:hand (get-corp))) :deck {:front true})
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck {:front true})
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Hedge Fund"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Jumon"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Bacterial Programming"))
+    (take-credits state :corp)
+    (core/gain state :runner :click 96)
+    (core/gain state :runner :credit 100)
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    ;;steal bacterial, then later, jumon
+    (play-from-hand state :runner "Deep Dive")
+    (is (not (:run @state)))
+    (click-prompt state :runner "Bacterial Programming")
+    (click-prompt state :runner "Steal")
+    (is (not (:run @state)))
+    ;; resolve bacterial
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Hedge Fund")
+    (click-prompt state :corp "Hedge Fund")
+    (click-prompt state :corp "Hedge Fund")
+    (click-prompt state :corp "Hedge Fund")
+    (click-prompt state :corp "Hedge Fund")
+    (click-prompt state :corp "Hedge Fund")
+    (click-prompt state :corp "Hedge Fund")
+    (click-prompt state :corp "Done")
+    (is (not (:run @state)))
+    ;; should be able to continue to stealing jumon
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Jumon")
+    (click-prompt state :runner "Steal")
+    ;; these should be failing here, but pass?
+    (is (no-prompt? state :corp) "No lingering prompt from bacterial")
+    (is (no-prompt? state :runner) "No lingering prompt from bacterial")
+    (is (not (:run @state)))))
+
+(deftest deep-dive-degree-mill
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund" "Degree Mill" "Jumon"]
+                      :deck [(qty "Hedge Fund" 16)]}
+               :runner  {:hand ["Deep Dive" "PAD Tap" "Daily Casts"]}})
+    (core/move state :corp (find-card "Degree Mill" (:hand (get-corp))) :deck {:front true})
+    (core/move state :corp (find-card "Jumon" (:hand (get-corp))) :deck {:front true})
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck {:front true})
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Hedge Fund"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Jumon"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Degree Mill"))
+    (take-credits state :corp)
+    (core/gain state :runner :click 96)
+    (core/gain state :runner :credit 100)
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (click-prompt state :runner "No action")
+    (run-empty-server state "HQ")
+    ;;steal bacterial, then later, jumon
+    (play-from-hand state :runner "PAD Tap")
+    (play-from-hand state :runner "Daily Casts")
+    (is (= nil (:phase (get-run))) "There is no run")
+    (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "Degree Mill")
+    (click-prompt state :runner "Pay to steal")
+    (is (not (:run @state)))
+    (click-card state :runner "PAD Tap")
+    (click-card state :runner "Daily Casts")
+    (is (not (:run @state)))
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Jumon")
+    (click-prompt state :runner "Steal")
+    (is (not (:run @state)))))
+
 (deftest deep-dive-strongbox-ikawah-bellona
   (do-game
     (new-game {:corp {:hand ["Strongbox" "Ikawah Project" "Bellona" "Fire Wall"]}

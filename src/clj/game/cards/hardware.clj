@@ -893,9 +893,9 @@
                                                                                       (assoc eid :source card :source-type :runner-install)
                                                                                       % nil [:credit (install-cost state side % {:cost-bonus -2})]))
                                                                       set-aside-cards)
-                                                              ["No action"]))
+                                                              ["No install"]))
                                               :cancel-effect (effect (continue-ability (shuffle-next set-aside-cards nil nil) card nil))
-                                              :effect (req (if (= "No action" target)
+                                              :effect (req (if (= "No install" target)
                                                              (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)
                                                              (let [set-aside-cards (remove-once #(= % target) set-aside-cards)
                                                                    new-eid (assoc eid :source card :source-type :runner-install)]
@@ -1525,7 +1525,7 @@
                             :async true
                             :effect (req (wait-for (draw state :runner 1)
                                                    (draw state :corp eid 1)))}
-              :no-ability {:effect (req (system-msg state side (str "declines to use Polyhistor"))
+              :no-ability {:effect (req (system-msg state side "declines to use Polyhistor")
                                         (effect-completed state side eid))}}}]
     {:constant-effects [(mu+ 1)
                         (link+ 1)]
@@ -1671,7 +1671,9 @@
   (letfn [(eventmap [s]
             (into {} (reverse (get s :turn-events))))]
     {:interactions {:prevent [{:type #{:net :brain :meat}
-                               :req (req (:access @state))}]}
+                               :req (req (and (:access @state)
+                                              (= (:cid (second (:pre-damage (eventmap @state))))
+                                                 (:cid (first (:pre-access-card (eventmap @state)))))))}]}
      :abilities [{:cost [:x-credits :trash-can]
                   :label "prevent damage"
                   :req (req (and (:access @state)

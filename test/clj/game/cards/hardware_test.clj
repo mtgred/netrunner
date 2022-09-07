@@ -1930,8 +1930,8 @@
       (play-from-hand state :runner "Gachapon")
       (card-ability state :runner (get-hardware state 0) 0)
       (click-prompt state :runner "OK")
-      (is (= ["No action"] (prompt-buttons :runner)) "Runner can't choose ineligable cards")
-      (click-prompt state :runner "No action")
+      (is (= ["No install"] (prompt-buttons :runner)) "Runner can't choose ineligable cards")
+      (click-prompt state :runner "No install")
       (click-prompt state :runner "Acacia")
       (click-prompt state :runner "Blackmail")
       (click-prompt state :runner "Capstone")
@@ -2486,6 +2486,28 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner lp)))))
 
+(deftest lucky-charm-requires-hq-run
+  (do-game
+    (new-game {:runner {:hand ["Lucky Charm"]}
+               :corp {:hand ["Vanilla"]}})
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (take-credits state :corp)
+    (let [vanilla (get-ice state :rd 0)]
+      (rez state :corp (refresh vanilla))
+      (play-from-hand state :runner "Lucky Charm")
+      (run-on state "R&D")
+      (run-continue state)
+      (card-subroutine state :corp (refresh vanilla) 0)
+      (is (= nil (:run @state)) "no run")
+      (is (no-prompt? state :runner) "no charm prompt")
+      (run-empty-server state "HQ")
+      (is (no-prompt? state :runner))
+      (run-on state "R&D")
+      (run-continue state :encounter-ice)
+      (card-subroutine state :corp (refresh vanilla) 0)
+      (is (:run @state) "Run not ended yet")
+      (is (seq (:prompt (get-runner))) "Runner prompted to ETR"))))
+
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
     ;; No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction
     (do-game
@@ -2697,14 +2719,14 @@
       (click-prompt state :runner "Hayley Kaplan: Universal Scholar")
       (play-from-hand state :runner "The Class Act")
       (take-credits state :runner)
-      (card-ability state :runner (get-resource state 0) 0)
       (is (= 5 (count (:hand (get-runner)))) "Starts with 5 cards in hand")
-      (is (= "Street Peddler" (:title (:card (prompt-map :runner)))))
-      (click-prompt state :runner "Clone Chip")
-      (is (= 2 (count (:set-aside (get-runner)))) "Geist's draw triggers The Class Act")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 5 (count (:set-aside (get-runner)))) "Geist's draw triggers The Class Act, and street peddler has three set-aside cards")
       (is (= "The Class Act" (:title (:card (prompt-map :runner)))))
       ;; click the drawn card, which is last in the set-aside zone
       (click-card state :runner (last (:set-aside (get-runner))))
+      (is (= "Street Peddler" (:title (:card (prompt-map :runner)))))
+      (click-prompt state :runner "Clone Chip")
       (is (= 6 (count (:hand (get-runner)))) "Geist draw finishes")
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Masterwork (v37)")
@@ -3838,7 +3860,6 @@
       ; Recon Drone ability won't fire as we are not accessing HOK
       (card-ability state :runner rd2 0)
       (is (nil? (:number (:choices (prompt-map :runner)))) "No choice to prevent damage from HOK")
-      (click-prompt state :runner "Done")
       (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
       (click-prompt state :corp "No")
       (click-prompt state :runner "No action")

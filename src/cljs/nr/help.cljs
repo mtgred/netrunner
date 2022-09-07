@@ -167,6 +167,9 @@
     :has-args :required
     :usage "/trace n"
     :help "Start a trace with base strength n (Corp only)"}
+   {:name "/trash"
+    :usage "/trash"
+    :help "Trash an installed card"}
    {:name "/undo-click"
     :usage "/undo-click"
     :help "Resets the game back to start of the click.  One click only retained. Only allowed for active player"}

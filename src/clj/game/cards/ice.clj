@@ -49,7 +49,7 @@
    [game.core.runs :refer [bypass-ice continue encounter-ends end-run
                            force-ice-encounter get-current-encounter prevent-access
                            redirect-run set-next-phase]]
-   [game.core.say :refer [system-msg system-say]]
+   [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name protecting-same-server?
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
@@ -1186,21 +1186,23 @@
                   :choices ["Take 1 tag" "End the run"]
                   :async true
                   :effect (req (if (= target "Take 1 tag")
-                                 (do (system-msg state :runner "chooses to take 1 tag")
+                                 (do (system-msg state :runner "takes 1 tag on encountering Data Raven")
                                      (gain-tags state :runner eid 1))
-                                 (do (system-msg state :runner "ends the run")
+                                 (do (system-msg state :corp "uses Data Raven to end the run")
                                      (end-run state :runner eid card))))}
    :subroutines [(trace-ability 3 add-power-counter)]})
 
 (defcard "Data Ward"
   {:on-encounter {:player :runner
+                  :msg "force the Runner to take 1 tag or pay 3 [Credits]"
                   :prompt "Choose one"
-                  :choices ["Pay 3 [Credits]" "Take 1 tag"]
+                  :choices (req [(when (can-pay? state :runner eid card "Data Ward" :credit 3)  
+                                   "Pay 3 [Credits]")
+                                 "Take 1 tag"])
                   :async true
                   :effect (req (if (= target "Pay 3 [Credits]")
                                  (wait-for (pay state :runner (make-eid state eid) card :credit 3)
-                                           (when-let [payment-str (:msg async-result)]
-                                             (system-msg state :runner payment-str))
+                                           (system-msg state :runner (str (:msg async-result) " on encountering Data Ward"))
                                            (effect-completed state side eid))
                                  (do (system-msg state :runner "takes 1 tag on encountering Data Ward")
                                      (gain-tags state :runner eid 1))))}
@@ -1230,17 +1232,9 @@
                         [(nil? trashed-card)
                          (effect-completed state side eid)]
                         [(odd? (:cost trashed-card))
-                         (system-say
-                           state :corp
-                           (str (:title trashed-card)
-                                " has an odd cost so Corp uses Diviner to end the run."))
+                         (system-msg state :corp "uses Diviner to end the run")
                          (end-run state :corp eid card)]
-                        [:else
-                         (system-say
-                           state :corp
-                           (str (:title trashed-card)
-                                " has an even cost so Corp does not use Diviner to end the run."))
-                         (effect-completed state side eid)]))))}]})
+                        [:else (effect-completed state side eid)]))))}]})
 
 (defcard "DNA Tracker"
   (let [sub {:msg "do 1 net damage and make the Runner lose 2 [Credits]"
@@ -1283,11 +1277,15 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Eli 2.0"
-  {:subroutines [{:async true
-                  :msg "draw 1 card"
-                  :effect (effect (draw eid 1))}
+  {:subroutines [{:optional
+                  {:prompt "Draw 1 card?"
+                   :msg "draw 1 card"
+                   :autoresolve (get-autoresolve :auto-fire)
+                   :yes-ability {:async true
+                                 :effect (effect (draw eid 1))}}}
                  end-the-run
                  end-the-run]
+   :abilities [(set-autoresolve :auto-fire "Eli 2.0 drawing cards")]
    :runner-abilities [(bioroid-break 2 2)]})
 
 (defcard "Endless EULA"
@@ -1565,8 +1563,12 @@
                   :async true
                   :prompt "Choose one"
                   :choices ["Suffer 2 net damage" "End the run"]
+                  :msg (req (msg (if (= target "End the run")
+                                   "to "
+                                   "to force the Runner to ")
+                                 (decapitalize target)))
                   :effect (req (if (= target "End the run")
-                                 (do (system-msg state :runner "chooses to end the run")
+                                 (do (system-msg state :corp "uses Formicary to end the run")
                                      (end-run state :corp eid card))
                                  (damage state :runner eid :net 2 {:card card :unpreventable true})))}]
    :abilities [(set-autoresolve :auto-fire "Formicary rezzing and moving itself on approach")]})
@@ -1589,21 +1591,23 @@
                                  "End the run"])
                   :async true
                   :effect (req (if (= target "Take 1 tag")
-                                 (do (system-msg state :runner "chooses to take 1 tag")
+                                 (do (system-msg state :runner "takes 1 tag on encountering Funhouse")
                                      (gain-tags state :runner eid 1 {:unpreventable true}))
-                                 (do (system-msg state :runner "ends the run")
+                                 (do (system-msg state :corp "uses Funhouse to end the run")
                                      (end-run state :runner eid card))))}
    :subroutines [{:player :runner
                   :async true
                   :label "Give the Runner 1 tag unless they pay 4 [Credits]"
-                  :prompt "Take 1 tag or pay 4 [Credits]"
+                  :prompt "Choose one"
                   :choices (req ["Take 1 tag"
                                  (when (can-pay? state :runner eid card "Funhouse" :credit 4)
                                    "Pay 4 [Credits]")])
                   :effect (effect (continue-ability
                                     (if (= "Take 1 tag" target)
                                       (give-tags 1)
-                                      (runner-pays [:credit 4]))
+                                      (wait-for (pay state :runner (make-eid state eid) card :credit 4)
+                                                (system-msg state :runner (:msg async-result))
+                                                (effect-completed state side eid)))
                                     card nil))}]})
 
 (defcard "Galahad"
@@ -2499,7 +2503,7 @@
                              :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
                              :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
                                              (lose-credits :runner eid 3))}
-               :no-ability {:msg "decline to spend 1 hosted advancement counter"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Mestnichestvo to spend 1 hosted advancement counter"))}}}
    :subroutines [{:label "The Runner loses 3 [Credits]"
                   :msg "force the Runner to lose 3 [Credits]"
                   :async true
@@ -2706,7 +2710,7 @@
 
 (defcard "NEXT Gold"
   (letfn [(trash-programs [cnt state side card eid]
-            (if (> cnt 0)
+            (if (pos? cnt)
               (wait-for (resolve-ability state side trash-program-sub card nil)
                         (trash-programs (dec cnt) state side card eid))
               (effect-completed state side eid)))]
@@ -3373,15 +3377,19 @@
 
 (defcard "Tapestry"
   {:subroutines [runner-loses-click
-                 {:async true
-                  :msg "draw 1 card"
-                  :effect (effect (draw eid 1))}
+                 {:optional
+                  {:prompt "Draw 1 card?"
+                   :msg "draw 1 card"
+                   :autoresolve (get-autoresolve :auto-fire)
+                   :yes-ability {:async true
+                                 :effect (effect (draw eid 1))}}}
                  {:req (req (pos? (count (:hand corp))))
                   :prompt "Choose a card in HQ to move to the top of R&D"
                   :choices {:card #(and (in-hand? %)
                                         (corp? %))}
                   :msg "add 1 card in HQ to the top of R&D"
-                  :effect (effect (move target :deck {:front true}))}]})
+                  :effect (effect (move target :deck {:front true}))}]
+  :abilities [(set-autoresolve :auto-fire "Tapestry drawing cards")]})
 
 (defcard "Taurus"
   (constellation-ice trash-hardware-sub))
@@ -3482,11 +3490,12 @@
 
 (defcard "Tollbooth"
   {:on-encounter {:async true
+                  :msg "force the Runner to pay 3 [Credits] or end the run"
                   :effect (req (wait-for (pay state :runner (make-eid state eid) card [:credit 3])
                                          (if (:cost-paid async-result)
-                                           (do (system-msg state :runner (str (:msg async-result) " when encountering Tollbooth"))
+                                           (do (system-msg state :runner (str (:msg async-result) " on encountering Tollbooth"))
                                                (effect-completed state side eid))
-                                           (do (system-msg state :runner "ends the run, as the Runner can't pay 3 [Credits] when encountering Tollbooth")
+                                           (do (system-msg state :corp "uses Tollbooth to end the run")
                                                (end-run state :corp eid card)))))}
    :subroutines [end-the-run]})
 
@@ -3528,17 +3537,19 @@
 
 (defcard "Troll"
   {:on-encounter
-   (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
+   (trace-ability 2 {:msg "force the Runner to spend [Click] or end the run"
                      :player :runner
                      :prompt "Choose one"
-                     :choices ["Lose [Click]" "End the run"]
+                     :choices (req [(when (can-pay? state :runner eid card nil [:click 1])
+                                      "Spend [Click]")
+                                    "End the run"])
                      :async true
-                     :effect (req (if (and (= target "Lose [Click]")
+                     :effect (req (if (and (= target "Spend [Click]")
                                            (can-pay? state :runner eid card nil [:click 1]))
-                                    (do (system-msg state :runner "loses [Click]")
-                                        (lose-clicks state :runner 1)
-                                        (effect-completed state :runner eid))
-                                    (do (system-msg state :corp "ends the run")
+                                    (wait-for (pay state side (make-eid state eid) card :click 1)
+                                              (system-msg state side (:msg async-result))
+                                              (effect-completed state :runner eid))
+                                    (do (system-msg state :corp "uses Troll to end the run")
                                         (end-run state :corp eid card))))})})
 
 (defcard "Tsurugi"
@@ -3618,7 +3629,7 @@
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
                              :cancel-effect (effect (system-msg "declines to use Vasilisa")
                                                     (effect-completed eid))}
-               :no-ability {:msg "declines to use Vasilisa"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Vasililsa"))}}}
    :subroutines [(give-tags 1)]})
 
 (defcard "Veritas"
@@ -3700,7 +3711,7 @@
                                                     (shuffle! state side :deck)
                                                     (move state side target :hand)
                                                     (effect-completed state side eid)))}
-               :no-ability {:msg "decline to search for a piece of ice"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Wave"))}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
                   :async true
@@ -3787,7 +3798,7 @@
                   :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move (first (:deck corp)) :deck))}
-                             :no-ability {:effect (effect (system-msg :corp (str "declines to use Yagura to move the top card of R&D to the bottom")))}}}
+                             :no-ability {:effect (effect (system-msg :corp "declines to use Yagura to move the top card of R&D to the bottom"))}}}
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"

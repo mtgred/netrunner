@@ -2,7 +2,7 @@
   (:require
     [cond-plus.core :refer [cond+]]
     [game.core.agendas :refer [update-advancement-requirement]]
-    [game.core.board :refer [all-active-installed all-installed get-remotes in-play? installable-servers server->zone all-installed-runner-type]]
+    [game.core.board :refer [all-installed get-remotes installable-servers server->zone all-installed-runner-type]]
     [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? program? resource? rezzed? installed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
@@ -276,24 +276,15 @@
   "Checks if the specified card can be installed.
    Checks uniqueness of card and installed console.
    Returns true if there are no problems
-   Returns :console if Console check fails
-   Returns :unique if uniqueness check fails
    Returns :req if card-def :req check fails
    !! NB: This should only be used in a check with `true?` as all return values are truthy"
   [state side card facedown]
-  (let [card-req (:req (card-def card))
-        uniqueness (:uniqueness card)]
+  (let [card-req (:req (card-def card))]
     (cond
       ;; Can always install a card facedown
       facedown true
-      ;; Console check
-      (and (has-subtype? card "Console")
-           (some #(has-subtype? % "Console") (all-active-installed state :runner)))
-      :console
       ;; Installing not locked
       (install-locked? state :runner) :lock-install
-      ;; Uniqueness check
-      (and uniqueness (in-play? state card)) :unique
       ;; Req check
       (and card-req (not (card-req state side (make-eid state) card nil))) :req
       ;; The card's zone is locked
@@ -309,13 +300,8 @@
          reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
          title (:title card)]
      (case reason
-       :unique
-       (reason-toast (str "Cannot install a second copy of " title " since it is unique."
-                          " Please trash currently installed copy first"))
        :lock-install
        (reason-toast (str "Unable to install " title " since installing is currently locked"))
-       :console
-       (reason-toast (str "Unable to install " title ": an installed console prevents the installation of a replacement"))
        :req
        (reason-toast (str "Installation requirements are not fulfilled for " title))
        :locked-zone

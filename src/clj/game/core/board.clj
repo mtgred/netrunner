@@ -127,7 +127,8 @@
   (->> (concat [(-> @state side :identity)]
                (all-active-installed state side)
                (-> @state side :current)
-               (filter (if (= :corp side) operation? event?) (-> @state side :play-area))
+               (filter (if (= :corp side) operation? event?)
+                       (-> @state side :play-area))
                (when (= side :corp)
                  (-> @state :corp :scored)))
        (filter identity)

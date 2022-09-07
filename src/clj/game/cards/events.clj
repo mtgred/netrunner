@@ -430,7 +430,7 @@
                                  state side
                                  {:optional
                                   {:prompt (str "Run on " (zone->name marked-server) "?")
-                                   :no-ability {:msg (str "decline to make a run on " (zone->name marked-server))}
+                                   :no-ability {:effect (effect (system-msg (str "declines to use Carpe Diem to make a run on " (zone->name marked-server))))}
                                    :yes-ability {:msg (str "make a run on " (zone->name marked-server))
                                                  :async true
                                                  :effect (effect (make-run eid marked-server))}}}
@@ -569,10 +569,12 @@
                :interactive (req true)
                :effect (req (let [compile-installed (first (filterv #(get-in % [:special :compile-installed])
                                                                     (all-active-installed state :runner)))]
-                              (when (some? compile-installed)
-                                (system-msg state :runner (str "moved " (:title compile-installed)
-                                                               " to the bottom of the Stack"))
-                                (move state :runner compile-installed :deck))))}]}))
+                              (if (some? compile-installed)
+                                (do (system-msg state :runner (str "moved " (:title compile-installed)
+                                                                   " to the bottom of the Stack"))
+                                    (move state :runner compile-installed :deck)
+                                    (effect-completed state side eid))
+                                (effect-completed state side eid))))}]}))
 
 (defcard "Contaminate"
   {:on-play
@@ -807,7 +809,8 @@
                                    {:optional
                                     {:prompt "Pay [Click] to access another card?"
                                      :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:lose-click 1]))
-                                     :no-ability {:msg "decline to access another card"}
+                                     :no-ability
+                                     {:effect (effect (system-msg "declines to use Deep Dive to access another card"))}
                                      :yes-ability
                                      {:async true
                                       :cost [:lose-click 1]
@@ -2476,8 +2479,9 @@
    :events [{:event :purge
              :condition :hosted
              :async true
-             :effect (req (wait-for (trash state side card {:cause :purge
-                                                            :cause-card card})
+             :msg "trash itself"
+             :effect (req (wait-for (trash state :runner card {:cause :purge
+                                                               :cause-card card})
                                     (update-all-agenda-points state side)
                                     (effect-completed state side eid)))}
             (successful-run-replace-breach

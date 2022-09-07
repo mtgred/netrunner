@@ -290,6 +290,10 @@
   (and (hardware? card)
        (has-subtype? card "Console")))
 
+(defn unique?
+  [card]
+  (:uniqueness card))
+
 (defn corp-installable-type?
   "Is the card of an acceptable type to be installed in a server"
   [card]

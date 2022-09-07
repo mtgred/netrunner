@@ -27,36 +27,44 @@
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
       (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
-(deftest runner-installing-uniques
-  ;; Installing a copy of an active unique Runner card is prevented
+(deftest installing-second-unique-trashes-first-unique-test
   (do-game
-    (new-game {:runner {:deck [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
-                               "Off-Campus Apartment" (qty "Hivemind" 2)]}})
+    (new-game {:runner {:hand [(qty "Kati Jones" 2)]
+                        :credits 100}})
     (take-credits state :corp)
-    (core/gain state :runner :click 1 :memory 2)
-    (draw state :runner 2)
+    (play-from-hand state :runner "Kati Jones")
+    (play-from-hand state :runner "Kati Jones")
+    (is (find-card "Kati Jones" (get-resource state)))
+    (is (last-log-contains? state "Kati Jones is trashed."))))
+
+(deftest installing-second-unique-on-off-campus-apartment-trashes-first-test
+  (do-game
+    (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
+                        :credits 100}})
+    (take-credits state :corp)
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
-    (play-from-hand state :runner "Scheherazade")
-    (let [oca (get-resource state 1)
-          scheh (get-program state 0)]
-      (card-ability state :runner scheh 0)
-      (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= "Hivemind" (:title (first (:hosted (refresh scheh))))) "Hivemind hosted on Scheherazade")
-      (play-from-hand state :runner "Kati Jones")
-      (is (= 1 (:click (get-runner))) "Not charged a click")
-      (is (= 2 (count (get-resource state))) "2nd copy of Kati couldn't install")
+    (let [oca (get-resource state 1)]
       (card-ability state :runner oca 0)
       (click-card state :runner (find-card "Kati Jones" (:hand (get-runner))))
-      (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
-      (is (= 1 (:click (get-runner))) "Not charged a click")
-      (click-prompt state :runner "Done")
-      (play-from-hand state :runner "Hivemind")
-      (is (= 1 (count (get-program state))) "2nd copy of Hivemind couldn't install")
+      (is (find-card "Kati Jones" (:hosted (refresh oca))))
+      (is (= "Kati Jones" (:title (get-discarded state :runner))))
+      (is (last-log-contains? state "Kati Jones is trashed.")))))
+
+(deftest installing-second-hivemind-trashes-hosted-hivemind-test
+  (do-game
+    (new-game {:runner {:hand ["Scheherazade" (qty "Hivemind" 2)]
+                        :credits 100}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Scheherazade")
+    (let [scheh (get-program state 0)]
       (card-ability state :runner scheh 0)
       (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
-      (is (= 1 (:click (get-runner))) "Not charged a click"))))
+      (is (find-card "Hivemind" (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade")
+      (play-from-hand state :runner "Hivemind")
+      (is (= "Hivemind" (:title (get-discarded state :runner))))
+      (is (last-log-contains? state "Hivemind hosted on Scheherazade is trashed."))
+      (is (empty? (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade"))))
 
 (deftest deactivate-program
   ;; deactivate - Program; ensure MU are restored

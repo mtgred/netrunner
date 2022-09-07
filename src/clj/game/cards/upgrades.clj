@@ -178,7 +178,8 @@
                                             :req (req (get-card state ice))
                                             :effect (effect (trash eid (get-card state ice) {:cause-card card}))}])
                                         (force-ice-encounter state side eid ice))))}
-              :no-ability {:effect (effect (system-msg :corp (str "declines to use Awakening Center")))}}}]})
+              :no-ability
+              {:effect (effect (system-msg "declines to use Awakening Center"))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -629,26 +630,23 @@
              :interactive (req true)
              :async true
              :req (req this-server)
-             :msg "force the Runner to pay or end the run"
-             :effect (effect
+             :msg "force the Runner to pay credits or end the run"
+             :effect (effect 
                        (continue-ability
-                         (let [credits (total-available-credits state :runner eid card)
-                               cost (* 2 (count (:scored runner)))
-                               pay-str (str "pay " cost " [Credits]")
-                               c-pay-str (capitalize pay-str)]
-                           {:player :runner
-                            :async true
-                            :waiting-prompt "Runner to choose an option"
-                            :prompt "Choose one"
-                            :choices [(when (>= credits cost)
-                                        c-pay-str)
-                                      "End the run"]
-                            :effect (req (if (= c-pay-str target)
-                                           (wait-for (pay state :runner (make-eid state eid) card :credit cost)
-                                                     (system-msg state :runner (:msg async-result))
-                                                     (effect-completed state side eid))
-                                           (do (system-msg state :corp "ends the run")
-                                               (end-run state :corp eid card))))})
+                         (let [credit-cost (* 2 (count (:scored runner)))]
+                            {:player :runner
+                             :async true
+                             :waiting-prompt "Runner to choose an option"
+                             :prompt "Choose one"
+                             :choices [(when (can-pay? state :runner eid card "Giordano Memorial Field" :credit credit-cost)  
+                                         (str "Pay " credit-cost " [Credits]"))
+                                       "End the run"]
+                             :effect (req (if (= "End the run" target)
+                                            (do (system-msg state :corp "uses Giordano Memorial Field to end the run")
+                                                (end-run state :corp eid card))
+                                            (wait-for (pay state :runner (make-eid state eid) card :credit credit-cost)
+                                                      (system-msg state :runner (:msg async-result))
+                                                      (effect-completed state side eid))))})
                          card nil))}]})
 
 (defcard "Heinlein Grid"
@@ -695,7 +693,7 @@
          :choices ["Trash 1 scored agenda" "End the run"]
          :async true
          :effect (req (if (= target "End the run")
-                        (do (system-msg state :runner (str "declines to pay the additional cost from Hired Help"))
+                        (do (system-msg state :runner "declines to pay the additional cost from Hired Help")
                             (end-run state side eid card))
                         (if (seq (:scored runner))
                           (continue-ability state :runner
@@ -784,7 +782,7 @@
           (choose-ice [ices grids]
             (when (seq ices)
               {:async true
-               :prompt "Choose an ice to reveal and install, or None to decline"
+               :prompt "Choose an ice to reveal and install"
                :choices (conj (mapv :title ices) "None")
                :effect
                (effect (continue-ability
@@ -901,7 +899,10 @@
                               (reveal state side target)
                               (shuffle! state side :deck)
                               (move state side target :hand)
-                              (effect-completed state side eid)))}}}]})
+                              (effect-completed state side eid)))}
+              :no-ability
+              {:effect (effect (system-msg "declines to use Malapert Data Vault")
+                               (effect-completed state side eid))}}}]})
 
 (defcard "Manegarm Skunkworks"
   {:events [{:event :approach-server
@@ -927,7 +928,7 @@
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [:else
-                             (system-msg state :corp "ends the run")
+                             (system-msg state :corp "uses Manegarm Skunkworks to end the run")
                              (end-run state :corp eid card)]))}]})
 
 (defcard "Manta Grid"

@@ -85,7 +85,9 @@
                (and (= dest "bottom") (= target "Done"))
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat (drop (count chosen) %) (reverse chosen))))
-                   (when (and (= :corp reorder-side) (:access @state))
+                   (when (and (= :corp reorder-side)
+                              (:run @state)
+                              (:access @state))
                      (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                    (clear-wait-prompt state wait-side)
                    (effect-completed state side eid))
@@ -93,7 +95,9 @@
                (= target "Done")
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat chosen (drop (count chosen) %))))
-                   (when (and (= :corp reorder-side) (:access @state))
+                   (when (and (= :corp reorder-side)
+                              (:run @state)
+                              (:access @state))
                      (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                    (clear-wait-prompt state wait-side)
                    (effect-completed state side eid))

@@ -91,7 +91,7 @@
            updated-deck (update-deck deck)
            status (calculate-deck-status updated-deck)
            deck-hash (hash-deck updated-deck)]
-       (if (> (count (:cards deck)) 0)
+       (if-not (empty? (:cards deck))
          {:deck deck
           :deck-hash deck-hash
           :status status}

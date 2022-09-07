@@ -228,3 +228,15 @@
     (click-card state :runner (get-runner-facedown state 0))
     (is (last-log-contains? state "Mirror is trashed."))
     (is (find-card "Mirror" (:discard (get-runner))))))
+
+(deftest install-second-console-trashes-first
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                      :deck [(qty "Hedge Fund" 100)]}
+               :runner {:hand ["Mirror" "Box-E"]
+                        :credits 100}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mirror")
+    (play-from-hand state :runner "Box-E")
+    (is (= "Box-E" (:title (get-hardware state 0))))
+    (is (last-log-contains? state "Mirror is trashed."))))

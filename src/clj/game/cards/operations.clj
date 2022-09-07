@@ -235,22 +235,23 @@
              card nil)))}})
 
 (defcard "Audacity"
-  (letfn [(audacity [n]
-            (when (< n 2)
-              {:prompt "Choose a card to place advancements tokens on"
-               :async true
-               :choices {:card can-be-advanced?
-                         :all true}
-               :msg (msg "place 1 advancement token on " (card-str state target))
-               :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
-                            (continue-ability state side (audacity (inc n)) card nil))}))]
+  (letfn [(audacity [x]
+            {:prompt (msg "Choose a card that can be advanced to place advancement counters on (" x " remaining)")
+             :async true
+             :choices {:card can-be-advanced?
+                       :all true}
+             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
+                                    (if (> x 1)
+                                      (continue-ability state side (audacity (dec x)) card nil)
+                                      (effect-completed state side eid))))})]
     {:on-play
      {:req (req (and (<= 3 (count (:hand corp)))
                      (some can-be-advanced? (all-installed state :corp))))
       :async true
       :msg "trash all cards in HQ"
       :effect (req (wait-for (trash-cards state side (:hand corp) {:unpreventable true :cause-card card})
-                             (continue-ability state side (audacity 0) card nil)))}}))
+                             (continue-ability state side (audacity 2) card nil)))}}))
 
 (defcard "Back Channels"
   {:on-play
@@ -359,7 +360,7 @@
                                  :prompt (str "Score " (:title card-to-score) "?")
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
-                                 :no-ability {:msg (str "decline to score " (card-str state card-to-score))}}}
+                                 :no-ability {:effect (effect (system-msg (str "declines to use Big Deal to score " (card-str state card-to-score))))}}}
                                card nil))))}})
 
 (defcard "Bioroid Efficiency Research"
@@ -2751,8 +2752,9 @@
                         :choices {:card #(and (in-hand? %)
                                               (corp? %)
                                               (not (operation? %)))}
-                        :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
-                        :cancel-effect (req (effect-completed state side eid))
+                        :msg (msg (corp-install-msg target))
+                        :cancel-effect (effect (system-msg "declines to use Ultraviolet Clearance to install a card")
+                                               (effect-completed eid))
                         :async true
                         :effect (effect (corp-install eid target nil nil))}
                        card nil))))}})
