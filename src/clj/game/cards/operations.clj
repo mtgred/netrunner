@@ -235,22 +235,23 @@
              card nil)))}})
 
 (defcard "Audacity"
-  (letfn [(audacity [n]
-            (when (< n 2)
-              {:prompt "Choose a card to place advancements tokens on"
-               :async true
-               :choices {:card can-be-advanced?
-                         :all true}
-               :msg (msg "place 1 advancement token on " (card-str state target))
-               :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
-                            (continue-ability state side (audacity (inc n)) card nil))}))]
+  (letfn [(audacity [x]
+            {:prompt (msg "Choose a card that can be advanced to place advancement counters on (" x " remaining)")
+             :async true
+             :choices {:card can-be-advanced?
+                       :all true}
+             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
+                                    (if (> x 1)
+                                      (continue-ability state side (audacity (dec x)) card nil)
+                                      (effect-completed state side eid))))})]
     {:on-play
      {:req (req (and (<= 3 (count (:hand corp)))
                      (some can-be-advanced? (all-installed state :corp))))
       :async true
       :msg "trash all cards in HQ"
       :effect (req (wait-for (trash-cards state side (:hand corp) {:unpreventable true :cause-card card})
-                             (continue-ability state side (audacity 0) card nil)))}}))
+                             (continue-ability state side (audacity 2) card nil)))}}))
 
 (defcard "Back Channels"
   {:on-play

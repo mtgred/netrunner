@@ -2710,7 +2710,7 @@
 
 (defcard "NEXT Gold"
   (letfn [(trash-programs [cnt state side card eid]
-            (if (> cnt 0)
+            (if (pos? cnt)
               (wait-for (resolve-ability state side trash-program-sub card nil)
                         (trash-programs (dec cnt) state side card eid))
               (effect-completed state side eid)))]
