@@ -2486,6 +2486,28 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner lp)))))
 
+(deftest lucky-charm-requires-hq-run
+  (do-game
+    (new-game {:runner {:hand ["Lucky Charm"]}
+               :corp {:hand ["Vanilla"]}})
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (take-credits state :corp)
+    (let [vanilla (get-ice state :rd 0)]
+      (rez state :corp (refresh vanilla))
+      (play-from-hand state :runner "Lucky Charm")
+      (run-on state "R&D")
+      (run-continue state)
+      (card-subroutine state :corp (refresh vanilla) 0)
+      (is (= nil (:run @state)) "no run")
+      (is (no-prompt? state :runner) "no charm prompt")
+      (run-empty-server state "HQ")
+      (is (no-prompt? state :runner))
+      (run-on state "R&D")
+      (run-continue state :encounter-ice)
+      (card-subroutine state :corp (refresh vanilla) 0)
+      (is (:run @state) "Run not ended yet")
+      (is (seq (:prompt (get-runner))) "Runner prompted to ETR"))))
+
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
     ;; No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction
     (do-game
