@@ -1705,12 +1705,12 @@
     (take-credits state :corp)
     (run-empty-server state "R&D")
     (is (= 0 (count-tags state)))
-    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Take 1 tag")
     (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
     (run-empty-server state "Archives")
     (is (= 1 (count-bad-pub state)))
-    (click-prompt state :runner "No")
+    (click-prompt state :runner "The Corp removes 1 bad publicity")
     (is (= 0 (count-bad-pub state)) "Runner declines to take tag, Corp removes 1 BP")))
 
 (deftest intake

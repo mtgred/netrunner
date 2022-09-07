@@ -1608,25 +1608,20 @@
 (defcard "O₂ Shortage"
   {:on-play
    {:async true
-    :effect (req (if (empty? (:hand runner))
+    :player :runner
+    :waiting-prompt "Runner to make a decision"
+    :prompt "Choose one"
+    :choices (req [(when-not (empty? (:hand runner))
+                     "Trash 1 random card from the grip")
+                   "The Corp gains [Click][Click]"])
+    :msg (req (if (= target "The Corp gains [Click][Click]")
+                 "gain [Click][Click]"
+                 (msg "to force the Runner to " (decapitalize target))))
+    :effect (req (if (= target "The Corp gains [Click][Click]")
                    (do (gain-clicks state :corp 2)
-                       (system-msg state side "uses O₂ Shortage to gain [Click][Click]")
                        (effect-completed state side eid))
-                   (continue-ability
-                     state side
-                     {:optional
-                      {:waiting-prompt "Runner to make a decision"
-                       :prompt "Trash 1 random card from your Grip?"
-                       :player :runner
-                       :yes-ability {:async true
-                                     :effect (req (let [c (take 1 (shuffle (:hand runner)))]
-                                                    (system-msg state :corp
-                                                                (str "uses O₂ Shortage to trash "
-                                                                     (:title (first c)) " from the Runner's Grip"))
-                                                    (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash})))}
-                       :no-ability {:msg "gain [Click][Click]"
-                                    :effect (effect (gain-clicks :corp 2))}}}
-                     card nil)))}})
+                   (let [c (take 1 (shuffle (:hand runner)))]
+                     (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash}))))}})
 
 (defcard "Observe and Destroy"
   {:on-play
@@ -2113,17 +2108,17 @@
 (defcard "Riot Suppression"
   {:on-play
    {:rfg-instead-of-trashing true
-    :optional
-    {:req (req (last-turn? state :runner :trashed-card))
-     :waiting-prompt "Runner to choose an option"
-     :prompt "Take 1 brain damage to prevent having 3 fewer clicks next turn?"
-     :player :runner
-     :yes-ability
-     {:async true
-      :effect (effect (system-msg "suffers 1 brain damage to prevent losing 3[Click] to Riot Suppression")
-                      (damage eid :brain 1 {:card card}))}
-     :no-ability {:msg "give the Runner 3 fewer [Click] next turn"
-                  :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0)))}}}})
+    :req (req (last-turn? state :runner :trashed-card))
+    :player :runner
+    :async true
+    :waiting-prompt "Runner to choose an option"
+    :prompt "Choose one"
+    :msg (msg "force the Runner to " (decapitalize target))
+    :choices ["Suffer 1 brain damage" "Get 3 fewer [Click] on the next turn"]
+    :effect (req (if (= target "Suffer 1 brain damage")
+                   (damage state :runner eid :brain 1 {:card card})
+                   (do (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
+                       (effect-completed state side eid))))}})
 
 (defcard "Rolling Brownout"
   {:on-play {:msg "increase the play cost of operations and events by 1 [Credits]"}

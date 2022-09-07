@@ -68,7 +68,7 @@
       (play-from-hand state :runner "Adjusted Chronotype")
       (take-credits state :runner)
       (play-from-hand state :corp "Riot Suppression")
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Get 3 fewer [Click] on the next turn")
       (take-credits state :corp)
       (is (= 1 (:click (get-runner))) "Runner still has 3 fewer clicks following turn")))
 
@@ -2131,7 +2131,7 @@
           (take-credits state :corp)
           (take-credits state :runner))
         (let [credits (:credit (get-runner))]
-          (click-prompt state :runner "Trash")
+          (click-prompt state :runner "Trash Fencer Fueno")
           (is (= credits (:credit (get-runner))) "Didn't pay to trash Fencer")
           (is (nil? (refresh ff)) "Fencer not installed")
           (is (find-card "Fencer Fueno" (:discard (get-runner))) "Fencer trashed")))))
@@ -2619,7 +2619,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "Suffer 2 meat damage")
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Pay 4 [Credits]")
       (is (not (get-run)))))
 
 (deftest guru-davinder-trash-does-not-trigger-dummy-box
@@ -2636,7 +2636,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Steal")
       (click-prompt state :runner "Suffer 2 meat damage")
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "Trash Guru Davinder")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
 (deftest hard-at-work
@@ -3319,11 +3319,11 @@
     (core/lose state :runner :credit 6)
     (is (= 2 (:credit (get-runner))) "Credits are 2")
     (take-credits state :corp)
-    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Pay 1 [Credits]")
     (is (= 1 (:credit (get-runner))) "Lost a credit from Lewi")
     (take-credits state :runner)
     (take-credits state :corp)
-    (click-prompt state :runner "No")
+    (click-prompt state :runner "Trash Lewi Guilherme")
     (is (= 1 (count (:discard (get-runner)))) "First Lewi trashed")
     (is (= 5 (hand-size :corp)) "Corp hand size normal again")
     (play-from-hand state :runner "Lewi Guilherme")
@@ -3331,7 +3331,8 @@
     (core/lose state :runner :credit 8)
     (is (zero? (:credit (get-runner))) "Credits are 0")
     (take-credits state :corp)
-    (click-prompt state :runner "Yes")
+    (is (= ["Trash Lewi Guilherme"] (prompt-buttons :runner)) "Runner has no longer the option to lose credits")
+    (click-prompt state :runner "Trash Lewi Guilherme")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
 (deftest lewi-guilherme-lovegood-interaction-#3345
@@ -3712,8 +3713,7 @@
         (take-credits state :runner)
         (changes-val-macro -1 (count (:hand (get-runner)))
                            "Trashed one card from grip"
-                           (click-prompt state :runner "Card from grip"))
-        (is (last-log-contains? state "Runner trashes 1 card randomly from the grip to avoid trashing Mystic Maemi"))
+                           (click-prompt state :runner "Trash a random card from the grip"))
         (take-credits state :corp)
         (play-from-hand state :runner "Sure Gamble")
         (changes-val-macro 5 (:credit (get-runner))
@@ -3722,8 +3722,8 @@
                            (click-prompt state :runner "Done"))
         (take-credits state :runner)
         (changes-val-macro 1 (count (:discard (get-runner)))
-                           "Trashed Maemi"
-                           (click-prompt state :runner "Trash")))))
+                           "Trashed Mystic Maemi"
+                           (click-prompt state :runner "Trash Mystic Maemi")))))
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
@@ -5989,7 +5989,7 @@
        (is (= 2 (get-counters (refresh cache1) :virus)) "Cache 1 spent 1")
        (is (not (no-prompt? state :runner)) "Runner is waiting for Corp to pick their Nihilist poison")
        (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
-       (click-prompt state :corp "Yes")  ; mill 1
+       (click-prompt state :corp "Trash the top card of R&D")  ; mill 1
        (is (= 1 (count (:discard (get-corp)))) "1 card milled")
        (is (no-prompt? state :runner) "Runner is done waiting for Corp to pick their Nihilist poison")
        (is (no-prompt? state :corp) "No more Corp prompts")
@@ -6005,7 +6005,7 @@
        (is (= 0 (count (:hand (get-runner)))) "Runner has no cards in hand")
        (is (= 1 (count (:discard (get-corp)))) "1 card in discard")
        (is (not (no-prompt? state :runner)) "Runner is waiting for Corp to pick their Nihilist poison")
-       (click-prompt state :corp "No")  ; don't mill 1
+       (click-prompt state :corp "The Runner draws 2 cards")  ; don't mill 1
        (is (= 2 (count (:hand (get-runner)))) "Runner drew 2 cards")
        (is (= 1 (count (:discard (get-corp)))) "No extra cards milled")
        (is (no-prompt? state :runner) "Runner done waiting for Corp to pick their Nihilist poison")
@@ -6548,7 +6548,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (let [tags (count-tags state)]
-          (click-prompt state :runner "Trash")
+          (click-prompt state :runner "Trash Trickster Taka")
           (is (= tags (count-tags state)) "Didn't pay to trash Taka")
           (is (nil? (refresh tt)) "Taka not installed")
           (is (find-card "Trickster Taka" (:discard (get-runner))) "Taka trashed")))))

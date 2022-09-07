@@ -2226,7 +2226,7 @@
                       :duration :end-of-run
                       :req (req (same-card? card target))
                       :value (:subtypes target)})
-                   (system-msg state :corp (str "chooses " (card-str state target) " for Loki's ability"))
+                   (system-msg state :corp (str "uses Loki to choose " (card-str state target)))
                    (doseq [sub (:subroutines target)]
                      (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
                    (register-events
@@ -2236,28 +2236,24 @@
                          :unregister-once-resolved true
                          :req (req (get-card state card))
                          :effect (effect (remove-subs! (get-card state card) #(= cid (:from-cid %))))}]))))}
-   :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"
+   :subroutines [{:label "End the run unless the Runner shuffles the grip into the stack"
+                  :player :runner
                   :async true
-                  :effect (req (if (and (zero? (count (:hand runner)))
-                                        (< (count (:deck runner)) 2)) ; UFAQ 24
-                                 (do (system-msg state :corp (str "uses Loki to end the run"))
-                                     (end-run state side eid card))
-                                 (continue-ability
-                                   state :runner
-                                   {:optional
-                                    {:waiting-prompt "Runner to choose an option"
-                                     :prompt "Shuffle your Grip into the Stack?"
-                                     :player :runner
-                                     :yes-ability
-                                     {:effect (req (doseq [c (:hand runner)]
-                                                     (move state :runner c :deck))
-                                                   (shuffle! state :runner :deck)
-                                                   (system-msg state :runner "shuffles their Grip into their Stack"))}
-                                     :no-ability
-                                     {:async true
-                                      :effect (effect (system-msg :runner "declines to shuffle their Grip into their Stack")
-                                                      (end-run eid card))}}}
-                                   card nil)))}]})
+                  :prompt "Choose one"
+                  :choices (req [(when-not (and (zero? (count (:hand runner)))
+                                                (< (count (:deck runner)) 2)) ; UFAQ 24
+                                   "Shuffle the grip into the stack")
+                                 "End the run"])
+                  :msg (req (msg (if (= target "End the run")
+                                   "to "
+                                   "to force the Runner to ")
+                                 (decapitalize target)))
+                  :effect (req (if (= target "End the run")
+                                 (end-run state :corp eid card)
+                                 (do (doseq [c (:hand runner)]
+                                        (move state :runner c :deck))
+                                      (shuffle! state :runner :deck)
+                                      (effect-completed state side eid))))}]})
 
 (defcard "Loot Box"
   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))

@@ -351,9 +351,10 @@
                       :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
                                   (str "Pay " cost " [Credits]"))
                                 "End the run"]
-                      :msg (msg (if (= target "End the run")
-                                  "end the run"
-                                  (str "force the runner to pay " cost " [Credits]")))
+                      :msg (req (msg (if (= target "End the run")
+                                       "to "
+                                       "to force the Runner to ")
+                                     (decapitalize target)))
                       :effect (req (if (= target "End the run")
                                      (end-run state side eid card)
                                      (wait-for (pay state :runner (make-eid state eid) card :credit cost)
@@ -724,18 +725,18 @@
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
    :access {:interactive (req true)
-            :optional
-            {:player :runner
-             :waiting-prompt "Runner to choose an option"
-             :prompt "Take 1 tag to prevent Corp from removing 1 bad publicity?"
-             :yes-ability
-             {:async true
-              :effect (effect (system-msg "takes 1 tag to prevent Corp from removing 1 bad publicity")
-                              (gain-tags eid 1 {:unpreventable true}))}
-             :no-ability
-             {:msg "remove 1 bad publicity"
-              :effect (effect (lose-bad-publicity :corp 1)
-                              (effect-completed eid))}}}})
+            :player :runner
+            :async true
+            :waiting-prompt "Runner to choose an option"
+            :msg (req (if (= target "The Corp removes 1 bad publicity")
+                       "to remove 1 bad publicity"
+                       (msg "force the Runner to " (decapitalize target))))
+            :prompt "Choose one"
+            :choices ["Take 1 tag" "The Corp removes 1 bad publicity"]
+            :effect (req (if (= target "Take 1 tag")
+                           (gain-tags state side eid 1 {:unpreventable true})
+                           (do (lose-bad-publicity state :corp 1)
+                               (effect-completed state side eid))))}})
 
 (defcard "Intake"
   {:flags {:rd-reveal (req true)}

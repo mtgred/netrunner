@@ -1190,18 +1190,18 @@
     ;; companion-builder: pay-credits-req
     (req (:successful run))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
-     :choices (req (if (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
-                     ["Pay 1 [Credits]" "Trash"]
-                     ["Trash"]))
+    {:prompt "Choose one"
+     :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
+                      "Pay 1 [Credits]")
+                    "Trash Fencer Fueno"])
      :player :runner
+     :msg (req (if (= target "Trash Fencer Fueno")
+                 "to trash itself"
+                (msg "to " (decapitalize target))))
      :async true
-     :effect (req (if (= target "Trash")
-                    (do (system-msg state :runner "trashes Fencer Fueno")
-                        (trash state :runner eid card {:cause-card card}))
-                    (wait-for (pay state :runner (make-eid state eid) card :credit 1)
-                              (system-msg state :runner (str (:msg async-result) " to avoid trashing Fencer Fueno"))
-                              (effect-completed state side eid))))}
+     :effect (req (if (= target "Trash Fencer Fueno")
+                    (trash state :runner eid card {:cause-card card})
+                    (pay state :runner eid card :credit 1)))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -1357,21 +1357,17 @@
                             [{:event :pre-resolve-damage
                               :unregister-once-resolved true
                               :async true
-                              :effect (req (if (< (:credit runner) 4)
-                                             (trash state side eid card {:cause :runner-ability :cause-card card})
-                                             (continue-ability
-                                               state :runner
-                                               {:optional
-                                                {:prompt "Pay 4 [Credits] to prevent trashing Guru Davinder?"
-                                                 :player :runner
-                                                 :yes-ability
-                                                 {:async true
-                                                  :effect (effect (system-msg (str "pays 4 [Credits] to prevent Guru Davinder "
-                                                                                   "from being trashed"))
-                                                                  (lose-credits :runner eid 4))}
-                                                 :no-ability {:async true
-                                                              :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}}}
-                                               card nil)))}]))}]})
+                              :msg (if (= target "Trash Guru Davinder")
+                                         "to trash itself"
+                                         (msg "to " (decapitalize target)))
+                              :prompt "Choose one"
+                              :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 4)
+                                               "Pay 4 [Credits]")
+                                             "Trash Guru Davinder"])
+                              :effect (req (if (= target "Trash Guru Davinder")
+                                              (trash state :runner eid card {:cause :runner-ability :cause-card card})
+                                              (pay state :runner eid card :credit 4)))}]))}]})
+
 
 (defcard "Hades Shard"
   (shard-constructor "Hades Shard" :archives "breach Archives"
@@ -1667,20 +1663,18 @@
 (defcard "Lewi Guilherme"
   (let [ability {:label "lose 1 [Credits] or trash"
                  :interactive (req true)
-                 :optional
-                 {:prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
-                  :once :per-turn
-                  :yes-ability
-                  {:async true
-                   :effect (req (if (pos? (:credit runner))
-                                  (do (system-msg state side "pays 1 [Credits] to keep Lewi Guilherme")
-                                      (lose-credits state side eid 1))
-                                  (do (system-msg state side "must trash Lewi Guilherme")
-                                      (trash state side eid card {:cause-card card}))))}
-                  :no-ability
-                  {:async true
-                   :effect (effect (system-msg "chooses to trash Lewi Guilherme")
-                                   (trash eid card {:cause-card card}))}}}]
+                 :async true
+                 :prompt "Choose one"
+                 :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
+                                  "Pay 1 [Credits]")
+                                "Trash Lewi Guilherme"])
+                 :player :runner
+                 :msg (req (if (= target "Trash Lewi Guilherme")
+                            "to trash itself"
+                            (msg "to " (decapitalize target))))
+                 :effect (req (if (= target "Trash Lewi Guilherme")
+                                (trash state :runner eid card {:cause-card card})
+                                (pay state :runner eid card :credit 1)))}]
     {:flags {:drip-economy true ;; for Drug Dealer
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                        (all-active-installed state :runner)))))}
@@ -1928,22 +1922,20 @@
              (:x-cost eid))
          (= :play (:source-type eid))))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Trash 1 card from your grip at random or trash Mystic Maemi?"
-     :choices (req (if (can-pay? state :runner
+    {:prompt "Choose one"
+     :choices (req [(when (can-pay? state :runner
                                  (assoc eid :source card :source-type :ability)
                                  card nil :randomly-trash-from-hand 1)
-                     ["Card from grip" "Trash"]
-                     ["Trash"]))
+                       "Trash a random card from the grip")
+                     "Trash Mystic Maemi"])
      :player :runner
+     :msg (req (if (= target "Trash Mystic Maemi")
+                "to trash itself"
+                (msg "to " (decapitalize target))))
      :async true
-     :effect (req (if (= target "Trash")
-                    (do (system-msg state :runner "trashes Mystic Maemi")
-                        (trash state :runner eid card {:cause-card card}))
-                    (wait-for (pay state :runner
-                                   (make-eid state {:source card :source-type :ability})
-                                   card [:randomly-trash-from-hand 1])
-                              (system-msg state :runner (build-spend-msg (:msg async-result) "avoid trashing Mystic Maemi"))
-                              (effect-completed state side eid))))}
+     :effect (req (if (= target "Trash Mystic Maemi")
+                    (trash state :runner eid card {:cause-card card})
+                    (pay state :runner (assoc eid :source card :source-type :ability) card [:randomly-trash-from-hand 1])))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -2172,16 +2164,14 @@
     (req (and (= :runner-install (:source-type eid))
               (not (has-subtype? target "Connection"))))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Choose an installed card to trash for Paladin Poemu"
+    {:prompt "Choose an installed card to trash"
      :choices {:all true
                :card #(and (installed? %)
                            (runner? %))}
      :player :runner
+     :msg (msg "to trash " (:title target))
      :async true
-     :effect (effect (system-msg (str "trashes " (:title target)
-                                      (when-not (same-card? card target)
-                                        " instead of trashing Paladin Poemu")))
-                     (trash eid target {:cause :runner-ability :cause-card card}))}
+     :effect (effect (trash eid target {:cause :runner-ability :cause-card card}))}
     ;; companion-builder: ability
     {:req (req (pos? (get-counters (get-card state card) :credit)))
      :msg "take 1 [Credits]"
@@ -3050,16 +3040,19 @@
                                 (make-run eid target card))}]})
 
 (defcard "The Nihilist"
-  (let [corp-choice {:optional
-                     {:player :corp
-                      :waiting-prompt "Corp to choose an option"
-                      :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
-                      :yes-ability {:async true
-                                    :effect (effect (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
-                                                    (mill :corp eid :corp 1))}
-                      :no-ability {:async true
-                                   :msg "draw 2 cards"
-                                   :effect (effect (draw :runner eid 2))}}}
+  (let [corp-choice {:player :corp
+                     :waiting-prompt "Corp to choose an option"
+                     :prompt "Choose one"
+                     :choices (req [(when (seq (:deck corp))
+                                      "Trash the top card of R&D")
+                                    "The Runner draws 2 cards"])
+                     :async true
+                     :msg (req (if (= target "The Runner draws 2 cards")
+                                "draw 2 cards"
+                                (msg "to force the Corp to " (decapitalize target))))
+                     :effect (req (if (= target "The Runner draws 2 cards")
+                                    (draw state :runner eid 2)
+                                    (mill state :corp eid :corp 1)))}
         maybe-spend-2 {:event :runner-turn-begins
                        :interactive (req true)
                        :optional
@@ -3261,17 +3254,16 @@
               (program? target)
               run))
     ;; companion-builder: turn-ends-ability
-    {:prompt "Take 1 tag or trash Trickster Taka?"
-     :choices ["Take 1 tag" "Trash"]
+    {:prompt "Choose one"
+     :choices ["Take 1 tag" "Trash Trickster Taka"]
      :player :runner
+     :msg (req (if (= target "Trash Trickster Taka")
+                "to trash itself"
+                (msg "to " (decapitalize target))))
      :async true
-     :effect (req (if (= target "Trash")
-                    (do
-                      (system-msg state :runner "trashes Trickster Taka")
-                      (trash state :runner eid card {:cause-card card}))
-                    (do
-                      (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
-                      (gain-tags state :runner eid 1))))}
+     :effect (req (if (= target "Trash Trickster Taka")
+                    (trash state :runner eid card {:cause-card card})
+                    (gain-tags state :runner eid 1)))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     run

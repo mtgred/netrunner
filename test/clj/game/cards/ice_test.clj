@@ -3600,11 +3600,11 @@
     (run-on state "R&D")
     (run-continue state)
     (click-card state :corp "Karunā")
-    (is (last-log-contains? state "Corp chooses Karunā protecting HQ at position 0 for Loki's ability.")
+    (is (last-log-contains? state "Corp uses Loki to choose Karunā protecting HQ at position 0")
         "The message correctly prints")
     (is (= ["Do 2 net damage. The Runner may jack out."
             "Do 2 net damage"
-            "End the run unless the Runner shuffles their Grip into the Stack"]
+            "End the run unless the Runner shuffles the grip into the stack"]
            (map :label (:subroutines (get-ice state :rd 0))))
         "Loki gains all of Karunā's subroutines")
     (is (= #{"AP" "Sentry" "Bioroid"} (into #{} (:subtypes (get-ice state :rd 0)))))
@@ -3613,10 +3613,10 @@
     (is (= 2 (count (:discard (get-runner)))) "2 cards trashed")
     (click-prompt state :runner "No")
     (is (= 4 (count (:discard (get-runner)))) "4 cards trashed")
-    (click-prompt state :runner "No")
+    (click-prompt state :runner "End the run")
     (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
     (is (not (:run @state)) "Run is ended")
-    (is (= ["End the run unless the Runner shuffles their Grip into the Stack"]
+    (is (= ["End the run unless the Runner shuffles the grip into the stack"]
            (map :label (:subroutines (get-ice state :rd 0))))
         "Loki's subroutines revert to printed after the run ends")
     (is (= ["Bioroid"] (:subtypes (get-ice state :rd 0))))))
@@ -3634,7 +3634,7 @@
     (run-on state "R&D")
     (run-continue state)
     (fire-subs state (get-ice state :rd 0))
-    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Shuffle the grip into the stack")
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= 6 (count (:deck (get-runner)))) "Runner has 6 cards in stack")
     (is (:run @state) "Run is still live")))
@@ -3653,7 +3653,7 @@
     (run-on state "R&D")
     (run-continue state)
     (fire-subs state (get-ice state :rd 0))
-    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Shuffle the grip into the stack")
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= 3 (count (:deck (get-runner)))) "Runner has 3 card in stack")
     (is (:run @state) "Run is still live")))
@@ -3672,6 +3672,7 @@
     (run-on state "R&D")
     (run-continue state)
     (fire-subs state (get-ice state :rd 0))
+    (click-prompt state :runner "End the run")
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in stack")
     (is (not (:run @state)) "Run is ended")))
@@ -6070,7 +6071,7 @@
       (card-ability state :runner alpha 0)
       (is (= ["Trash an AI program"
               "Do 1 net damage"
-              "End the run unless the Runner shuffles their Grip into the Stack"
+              "End the run unless the Runner shuffles the grip into the stack"
               "Done"]
              (prompt-buttons :runner))))))
 
