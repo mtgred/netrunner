@@ -64,7 +64,7 @@
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg system-say]]
+   [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? target-server unknown->kw
                               zone->name zones->sorted-names]]
@@ -1221,7 +1221,7 @@
 (defcard "Film Critic"
   (letfn [(get-agenda [card] (first (filter agenda? (:hosted card))))
           (host-agenda? [agenda]
-            {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
+            {:optional {:prompt (str "Host " (:title agenda) " on Film Critic?")
                         :yes-ability {:effect (req (host state side card agenda)
                                                    (swap! state dissoc :access))
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
@@ -1911,8 +1911,7 @@
         :prompt "Choose a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
         :async true
-        :effect (effect (system-say (str (:title card) " allows the Corp to rez "
-                                         (:title target) " at no cost"))
+        :effect (effect (system-msg :corp (str "uses " (:title card) " to rez " (:title target) " at no cost"))
                         (rez eid target {:ignore-cost :rez-cost :no-msg true}))}
        card nil))
    :abilities [{:cost [:trash-can]

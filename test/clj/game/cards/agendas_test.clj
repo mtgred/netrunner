@@ -2832,7 +2832,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Film Critic")
       (run-empty-server state :hq)
-      (is (= "You access Project Vacheron. Host it on Film Critic?" (:msg (prompt-map :runner))))
+      (is (= "Host Project Vacheron on Film Critic?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes") ; host on Film Critic
       (card-ability state :runner (get-resource state 0) 0)
       ;; remove counters

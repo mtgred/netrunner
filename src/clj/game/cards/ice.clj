@@ -49,7 +49,7 @@
    [game.core.runs :refer [bypass-ice continue encounter-ends end-run
                            force-ice-encounter get-current-encounter prevent-access
                            redirect-run set-next-phase]]
-   [game.core.say :refer [system-msg system-say]]
+   [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name protecting-same-server?
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
@@ -1232,17 +1232,9 @@
                         [(nil? trashed-card)
                          (effect-completed state side eid)]
                         [(odd? (:cost trashed-card))
-                         (system-say
-                           state :corp
-                           (str (:title trashed-card)
-                                " has an odd cost so Corp uses Diviner to end the run."))
+                         (system-msg state :corp "uses Diviner to end the run")
                          (end-run state :corp eid card)]
-                        [:else
-                         (system-say
-                           state :corp
-                           (str (:title trashed-card)
-                                " has an even cost so Corp does not use Diviner to end the run."))
-                         (effect-completed state side eid)]))))}]})
+                        [:else (effect-completed state side eid)]))))}]})
 
 (defcard "DNA Tracker"
   (let [sub {:msg "do 1 net damage and make the Runner lose 2 [Credits]"
@@ -1571,8 +1563,12 @@
                   :async true
                   :prompt "Choose one"
                   :choices ["Suffer 2 net damage" "End the run"]
+                  :msg (req (msg (if (= target "End the run")
+                                   "to "
+                                   "to force the Runner to ")
+                                 (decapitalize target)))
                   :effect (req (if (= target "End the run")
-                                 (do (system-msg state :runner "chooses to end the run")
+                                 (do (system-msg state :corp "uses Formicary to end the run")
                                      (end-run state :corp eid card))
                                  (damage state :runner eid :net 2 {:card card :unpreventable true})))}]
    :abilities [(set-autoresolve :auto-fire "Formicary rezzing and moving itself on approach")]})
@@ -2507,7 +2503,7 @@
                              :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
                              :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
                                              (lose-credits :runner eid 3))}
-               :no-ability {:msg "decline to spend 1 hosted advancement counter"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Mestnichestvo to spend 1 hosted advancement counter"))}}}
    :subroutines [{:label "The Runner loses 3 [Credits]"
                   :msg "force the Runner to lose 3 [Credits]"
                   :async true
@@ -3541,17 +3537,19 @@
 
 (defcard "Troll"
   {:on-encounter
-   (trace-ability 2 {:msg "force the Runner to lose [Click] or end the run"
+   (trace-ability 2 {:msg "force the Runner to spend [Click] or end the run"
                      :player :runner
                      :prompt "Choose one"
-                     :choices ["Lose [Click]" "End the run"]
+                     :choices (req [(when (can-pay? state :runner eid card nil [:click 1])
+                                      "Spend [Click]")
+                                    "End the run"])
                      :async true
-                     :effect (req (if (and (= target "Lose [Click]")
+                     :effect (req (if (and (= target "Spend [Click]")
                                            (can-pay? state :runner eid card nil [:click 1]))
-                                    (do (system-msg state :runner "loses [Click]")
-                                        (lose-clicks state :runner 1)
-                                        (effect-completed state :runner eid))
-                                    (do (system-msg state :corp "ends the run")
+                                    (wait-for (pay state side (make-eid state eid) card :click 1)
+                                              (system-msg state side (:msg async-result))
+                                              (effect-completed state :runner eid))
+                                    (do (system-msg state :corp "uses Troll to end the run")
                                         (end-run state :corp eid card))))})})
 
 (defcard "Tsurugi"
@@ -3631,7 +3629,7 @@
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
                              :cancel-effect (effect (system-msg "declines to use Vasilisa")
                                                     (effect-completed eid))}
-               :no-ability {:msg "declines to use Vasilisa"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Vasililsa"))}}}
    :subroutines [(give-tags 1)]})
 
 (defcard "Veritas"
@@ -3713,7 +3711,7 @@
                                                     (shuffle! state side :deck)
                                                     (move state side target :hand)
                                                     (effect-completed state side eid)))}
-               :no-ability {:msg "decline to search for a piece of ice"}}}
+               :no-ability {:effect (effect (system-msg "declines to use Wave"))}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
                   :async true
@@ -3800,7 +3798,7 @@
                   :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move (first (:deck corp)) :deck))}
-                             :no-ability {:effect (effect (system-msg :corp (str "declines to use Yagura to move the top card of R&D to the bottom")))}}}
+                             :no-ability {:effect (effect (system-msg :corp "declines to use Yagura to move the top card of R&D to the bottom"))}}}
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"

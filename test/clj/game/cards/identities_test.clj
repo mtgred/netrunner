@@ -92,8 +92,7 @@
       (click-card state :corp "Ice Wall")
       (click-prompt state :runner "Yes")
       (click-prompt state :corp "No")
-      (let [log (-> @state :log last :text)]
-        (is (= log "Runner exposes PAD Campaign in Server 1.")))))
+      (is (last-log-contains? state "exposes PAD Campaign in Server 1") "Installed card was exposed")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-asa-group-double-install-runner-s-turn
     ;; 419 vs Asa Group double install, Runner's turn
@@ -112,8 +111,7 @@
       (click-prompt state :corp "New remote")
       (click-prompt state :runner "Yes")
       (click-prompt state :corp "No")
-      (let [log (-> @state :log last :text)]
-        (is (= log "Runner exposes PAD Campaign in Server 2.")))
+      (is (last-log-contains? state "exposes PAD Campaign in Server 2") "Installed card was exposed")
       (is (prompt-is-type? state :corp :select) "Corp should still have select prompt")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-interation-with-install-and-rez-effects-issue-4485
