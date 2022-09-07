@@ -737,7 +737,8 @@
             :choices ["Take 1 tag" "The Corp removes 1 bad publicity"]
             :effect (req (if (= target "Take 1 tag")
                            (gain-tags state side eid 1 {:unpreventable true})
-                           (lose-bad-publicity state :corp 1)))}})
+                           (do (lose-bad-publicity state :corp 1)
+                               (effect-completed state side eid))))}})
 
 (defcard "Intake"
   {:flags {:rd-reveal (req true)}

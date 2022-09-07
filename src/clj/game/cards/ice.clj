@@ -2248,7 +2248,8 @@
                                  (end-run state :corp eid card)
                                  (do (doseq [c (:hand runner)]
                                         (move state :runner c :deck))
-                                      (shuffle! state :runner :deck))))}]})
+                                      (shuffle! state :runner :deck)
+                                      (effect-completed state side eid))))}]})
 
 (defcard "Loot Box"
   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))

@@ -1200,8 +1200,7 @@
      :async true
      :effect (req (if (= target "Trash Fencer Fueno")
                     (trash state :runner eid card {:cause-card card})
-                    (do (pay state :runner (make-eid state eid) card :credit 1)
-                        (effect-completed state side eid))))}
+                    (pay state :runner eid card :credit 1)))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -1366,8 +1365,7 @@
                                              "Trash Guru Davinder"])
                               :effect (req (if (= target "Trash Guru Davinder")
                                               (trash state :runner eid card {:cause :runner-ability :cause-card card})
-                                              (do (pay state :runner (make-eid state eid) card :credit 4)
-                                                  (effect-completed state side eid))))}]))}]})
+                                              (pay state :runner eid card :credit 4)))}]))}]})
 
 
 (defcard "Hades Shard"
@@ -1675,8 +1673,7 @@
                             (msg "to " (decapitalize target))))
                  :effect (req (if (= target "Trash Lewi Guilherme")
                                 (trash state :runner eid card {:cause-card card})
-                                (do (pay state :runner (make-eid state eid) card :credit 1)
-                                    (effect-completed state side eid))))}]
+                                (pay state :runner eid card :credit 1)))}]
     {:flags {:drip-economy true ;; for Drug Dealer
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                        (all-active-installed state :runner)))))}
@@ -1938,10 +1935,7 @@
      :async true
      :effect (req (if (= target "Trash Mystic Maemi")
                     (trash state :runner eid card {:cause-card card})
-                    (do (pay state :runner
-                             (make-eid state {:source card :source-type :ability})
-                             card [:randomly-trash-from-hand 1])
-                        (effect-completed state side eid))))}
+                    (pay state :runner eid card [:randomly-trash-from-hand 1])))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -3041,7 +3035,7 @@
   (let [corp-choice {:player :corp
                      :waiting-prompt "Corp to choose an option"
                      :prompt "Choose one"
-                     :choices (req [(when-not (empty? (:deck corp))
+                     :choices (req [(when (seq (:deck corp))
                                       "Trash the top card of R&D")
                                     "The Runner draws 2 cards"])
                      :async true

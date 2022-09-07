@@ -1617,10 +1617,10 @@
                  "gain [Click][Click]"
                  (msg "to force the Runner to " (decapitalize target))))
     :effect (req (if (= target "The Corp gains [Click][Click]")
-                   (gain-clicks state :corp 2)
-                   (do (let [c (take 1 (shuffle (:hand runner)))]
-                         (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash})
-                         (effect-completed state side eid)))))}})
+                   (do (gain-clicks state :corp 2)
+                       (effect-completed state side eid))
+                   (let [c (take 1 (shuffle (:hand runner)))]
+                     (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash}))))}})
 
 (defcard "Observe and Destroy"
   {:on-play
@@ -2115,8 +2115,7 @@
     :msg (msg "force the Runner to " (decapitalize target))
     :choices ["Suffer 1 brain damage" "Get 3 fewer [Click] on the next turn"]
     :effect (req (if (= target "Suffer 1 brain damage")
-                   (do (damage state :runner eid :brain 1 {:card card})
-                       (effect-completed state side eid))
+                   (damage state :runner eid :brain 1 {:card card})
                    (do (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
                        (effect-completed state side eid))))}})
 
