@@ -569,10 +569,12 @@
                :interactive (req true)
                :effect (req (let [compile-installed (first (filterv #(get-in % [:special :compile-installed])
                                                                     (all-active-installed state :runner)))]
-                              (when (some? compile-installed)
-                                (system-msg state :runner (str "moved " (:title compile-installed)
-                                                               " to the bottom of the Stack"))
-                                (move state :runner compile-installed :deck))))}]}))
+                              (if (some? compile-installed)
+                                (do (system-msg state :runner (str "moved " (:title compile-installed)
+                                                                   " to the bottom of the Stack"))
+                                    (move state :runner compile-installed :deck)
+                                    (effect-completed state side eid))
+                                (effect-completed state side eid))))}]}))
 
 (defcard "Contaminate"
   {:on-play
