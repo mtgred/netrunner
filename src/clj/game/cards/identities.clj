@@ -1491,8 +1491,7 @@
                                  :effect (effect (shuffle! :corp :deck))}
                                 card nil)))}
               :no-ability
-              {:effect (effect (system-msg "declines to use Ob Superheavy Logistics: Extract. Export. Excel."))}
-              }})]
+              {:effect (effect (system-msg "declines to use Ob Superheavy Logistics: Extract. Export. Excel."))}}})]
     {:events [{:event :corp-trash
                :req (req (and
                            (installed? (:card context))
