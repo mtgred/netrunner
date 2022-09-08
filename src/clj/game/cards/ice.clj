@@ -569,13 +569,14 @@
 
 (defcard "Aimor"
   {:subroutines [{:async true
-                  :label "Trash the top 3 cards of the Stack. Trash Aimor."
+                  :label "Trash the top 3 cards of the stack"
                   :effect (req (system-msg state :corp
                                            (str "uses Aimor to trash "
                                                 (str/join ", " (map :title (take 3 (:deck runner))))
                                                 " from the top of the stack and trash itself"))
                                (wait-for (mill state :corp :runner 3)
-                                         (trash state side eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Akhet"
   (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
@@ -1175,7 +1176,8 @@
   {:subroutines [{:msg "do 1 net damage and trash itself"
                   :async true
                   :effect (req (wait-for (damage state :runner :net 1 {:card card})
-                                         (trash state :corp eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Data Raven"
   {:abilities [(power-counter-ability (give-tags 1))]
@@ -2067,7 +2069,8 @@
    :subroutines [(assoc runner-trash-installed-sub
                         :effect (req (wait-for (trash state side target {:cause :subroutine})
                                                (system-msg state :corp "uses It's a Trap! to trash itself")
-                                               (trash state side eid card {:cause :subroutine}))))]})
+                                               (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                               (encounter-ends state side eid))))]})
 
 (defcard "Ivik"
   {:subroutines [(do-net-damage 2)
@@ -2169,7 +2172,8 @@
                     :effect (req (wait-for (breach-server state :runner [:hq] {:no-root true
                                                                                :access-first target})
                                            (system-msg state :corp "uses Kitsune to trash itself")
-                                           (trash state side eid card {:cause :subroutine})))}}}]})
+                                           (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                           (encounter-ends state side eid)))}}}]})
 
 (defcard "Komainu"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-net-damage 1)))}
@@ -2195,7 +2199,8 @@
                   :choices {:card #(and (installed? %)
                                         (hardware? %))}
                   :effect (req (wait-for (trash state side target {:cause :subroutine})
-                                         (trash state side eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Lancelot"
   (grail-ice trash-program-sub))
@@ -2270,12 +2275,13 @@
                                    :prompt "Choose a card to add to the Grip"
                                    :choices (req (top-3 state))
                                    :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
-                                             " [Credits] and shuffle the Stack. Loot Box is trashed")
+                                             " [Credits], shuffle the Stack and trash itself")
                                    :async true
                                    :effect (req (move state :runner target :hand)
                                                 (wait-for (gain-credits state :corp (:cost target))
                                                           (shuffle! state :runner :deck)
-                                                          (trash state side eid card {:cause :subroutine})))}
+                                                          (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                                          (encounter-ends state side eid)))}
                                   card nil)))}]}))
 
 (defcard "Lotus Field"
@@ -2511,13 +2517,15 @@
                           :msg "do 2 net damage and trash itself"
                           :player :corp
                           :effect (req (wait-for (damage state :corp :net 2 {:card card})
-                                                 (trash state :corp eid card {:cause :subroutine})))}
+                                                 (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                                 (encounter-ends state side eid)))}
                          {:async true
                           :label "Do 1 net damage"
                           :msg "do 1 net damage and trash itself"
                           :player :corp
                           :effect (req (wait-for (damage state :corp :net 1 {:card card})
-                                                 (trash state :corp eid card {:cause :subroutine})))})]})
+                                                 (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                                 (encounter-ends state side eid)))})]})
 
 (defcard "Mind Game"
   {:subroutines [(do-psi {:label "Redirect the run to another server"
@@ -3032,6 +3040,7 @@
                                              (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
                            (wait-for (trash state :corp (make-eid state eid) card {:cause-card card})
+                                     (system-msg state :corp "uses Sadaka to trash itself")
                                      (encounter-ends state side eid))))}]}))
 
 (defcard "Sagittarius"
@@ -3268,7 +3277,8 @@
                   :msg "gain 5 [Credits] and trash itself"
                   :async true
                   :effect (req (wait-for (gain-credits state :corp 5)
-                                         (trash state side eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Spiderweb"
   {:subroutines [end-the-run
@@ -3580,12 +3590,12 @@
 
 (defcard "Universal Connectivity Fee"
   {:subroutines [{:label "Force the Runner to lose credits"
-                  :msg (msg "force the Runner to lose " (if tagged "all credits" "1 [Credits]"))
+                  :msg (msg "force the Runner to lose " (if tagged "all credits and trash itself" "1 [Credits]"))
                   :async true
                   :effect (req (if tagged
                                  (wait-for (lose-credits state :runner (make-eid state eid) :all)
-                                           (system-msg state :corp "uses Universal Connectivity Fee to trash itself")
-                                           (trash state side eid card {:cause :subroutine}))
+                                           (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                           (encounter-ends state side eid))
                                  (lose-credits state :runner eid 1)))}]})
 
 (defcard "Upayoga"
@@ -3732,7 +3742,8 @@
                   :msg "prevent the Runner from jacking out and trash itself"
                   :async true
                   :effect (req (prevent-jack-out state side)
-                               (trash state side eid card {:cause :subroutine}))}]})
+                               (wait-for (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Whitespace"
   {:subroutines [(runner-loses-credits 3)
