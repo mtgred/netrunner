@@ -685,7 +685,6 @@
         (run-continue state)
         (fire-subs state (refresh aimor))
         (is (= 1 (count (:discard (get-corp)))) "Aimor was trashed")
-        (run-continue state)
         (changes-val-macro 6 (:credit (get-runner))
                            "Gained 6 credits from Bravado"
                            ;; Trashed Aimor does not count
@@ -6717,7 +6716,6 @@
      (is (>= (:credit (get-runner)) 5) "Runner can trash MVT if they want to")
      (changes-val-macro 0 (:credit (get-runner))
                         "Server 1 MVT doesn't trigger"
-                        (run-continue state)
                         (run-continue state))
      (is (= 1 (count (get-in @state [:corp :rfg]))) "MVT was RFGed")
      (take-credits state :runner)

@@ -1911,7 +1911,7 @@
                            (has-subtype? % "Bioroid"))
                      (concat (:hand corp) (:discard corp))))
      :async true
-     :prompt "Install a piece of Bioroid ice from HQ or Archives?"
+     :prompt "Choose a piece of Bioroid ice in HQ or Archives to install"
      :show-discard true
      :choices {:card #(and (corp? %)
                            (or (in-hand? %)
@@ -1927,8 +1927,8 @@
                                 [{:event :run-ends
                                   :duration :end-of-run
                                   :async true
+                                  :msg (req (msg "derez " (:title new-ice) " and trash itself"))
                                   :effect (effect (derez new-ice)
-                                                  (system-msg state :corp "uses Howler to trash itself")
                                                   (trash eid card {:cause :subroutine}))}]))))}]})
 
 (defcard "Hudson 1.0"

@@ -2661,7 +2661,6 @@
         ;; Access 3 more cards from HQ
         (dotimes [_ 3]
           (click-prompt state :runner "No action"))
-        (run-continue state :movement)
         (run-jack-out state)
         (run-on state "R&D")
         (rez state :corp k-rd)
@@ -2674,7 +2673,6 @@
         ;; Access 3 more cards from HQ
         (dotimes [_ 3]
           (click-prompt state :runner "No action"))
-        (run-continue state :movement)
         (run-jack-out state)
         (is (= 2 (-> (get-corp) :discard count)) "Two Kitsunes trashed after resolving their subroutines"))))
 
