@@ -2247,6 +2247,18 @@
                                       (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
                        :value [:credit 2]}]})
 
+(defcard "Superdeep Borehole"
+  {:on-rez {:effect (req (add-counter state side card :bad-publicity 6))}
+   :events [{:event :corp-turn-begins
+             :msg (msg "take 1 bad publicity from " (:title card))
+             :async true
+             :effect (req (add-counter state side card :bad-publicity -1 nil)
+                          (wait-for (gain-bad-publicity state :corp 1)
+                                    (if (= 0 (get-counters (get-card state card) :bad-publicity))
+                                      (do (win state :corp "Superdeep Borehole extinction event")
+                                          (effect-completed state side eid))
+                                      (effect-completed state side eid))))}]})
+
 (defcard "Sundew"
   ; If this a run event then handle in :begin-run as we do not know the server
   ; being run on in :runner-spent-click.

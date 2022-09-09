@@ -331,7 +331,7 @@
         (->> cost
              (remove map?)
              merge-costs
-             (filter #(some #{:advancement :agenda :power :virus} %))
+             (filter #(some #{:advancement :agenda :power :virus :bad-publicity} %))
              first)]
     (if counter-type
       (let [counter (if (= :advancement counter-type)
