@@ -4935,6 +4935,40 @@
         (click-prompt state :runner "HQ")
         (is (= 10 (:credit (get-corp))) "Corp gained 2cr from Sundew"))))
 
+(deftest superdeep-borehole
+  (do-game
+    (new-game {:corp {:hand ["Superdeep Borehole"]
+                      :deck [(qty "Hedge Fund" 50)]}})
+    (play-from-hand state :corp "Superdeep Borehole" "New remote")
+    (take-credits state :corp)
+    (let [bore (get-content state :remote1 0)]
+      (rez state :corp (refresh bore))
+      ;;6 counters on superdeep
+      (is (= 6 (get-counters (refresh bore) :bad-publicity)) "6 bp counters")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;;6 counters on superdeep
+      (is (= 5 (get-counters (refresh bore) :bad-publicity)) "5 bp counters")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;;6 counters on superdeep
+      (is (= 4 (get-counters (refresh bore) :bad-publicity)) "4 bp counters")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;;6 counters on superdeep
+      (is (= 3 (get-counters (refresh bore) :bad-publicity)) "3 bp counters")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;;6 counters on superdeep
+      (is (= 2 (get-counters (refresh bore) :bad-publicity)) "2 bp counters")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;;6 counters on superdeep
+      (is (= 1 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
+      (take-credits state :runner)
+      (is (= 0 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
+      (is (= "Superdeep Borehole extinction event" (:reason @state)) "Win condition reports borehole"))))
+
 (deftest synth-dna-modification
   ;; Synth DNA Modification
   (do-game
