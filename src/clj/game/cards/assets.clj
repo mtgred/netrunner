@@ -2256,6 +2256,7 @@
                           (wait-for (gain-bad-publicity state :corp 1)
                                     (if (= 0 (get-counters (get-card state card) :bad-publicity))
                                       (do (win state :corp "Superdeep Borehole extinction event")
+                                          (system-msg state side "win the game")
                                           (effect-completed state side eid))
                                       (effect-completed state side eid))))}]})
 
