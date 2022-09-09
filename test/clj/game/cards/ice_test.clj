@@ -6103,6 +6103,7 @@
       (is (= "Pup" (:title (get-ice state :hq 1))) "Pup outermost ice on HQ")
       (take-credits state :corp)
       (take-credits state :runner)
+      (is (= "Swap Thimblerig protecting HQ at position 0 with another ice?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes")
       (click-card state :corp (refresh pup))
       (is (= "Pup" (:title (get-ice state :hq 0))) "Pup innermost ice on HQ after swap")
