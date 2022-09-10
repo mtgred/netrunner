@@ -770,12 +770,25 @@
   {:on-rez {:msg "remove 1 bad publicity"
             :effect (effect (lose-bad-publicity 1))}
    :abilities [{:cost [:click 1 :trash-can]
-                :label "Trash a location"
-                :msg (msg "trash " (:title target) " and take 1 bad publicity")
-                :choices {:card #(has-subtype? % "Location")}
+                :label "Trash a location and take 1 bad publicity"
                 :async true
-                :effect (req (wait-for (trash state side target {:cause-card card})
-                                       (gain-bad-publicity state :corp eid 1)))}]})
+                :effect (req (if (some #(has-subtype? % "Location") (all-installed state :runner))
+                               (continue-ability
+                                 state side
+                                 {:prompt "Trash a location and take 1 bad publicity"
+                                  :msg (msg "trash " (:title target) " and take 1 bad publicity")
+                                  :choices {:min 1
+                                            :card #(has-subtype? % "Location")}
+                                  :async true
+                                  :effect (req (wait-for (trash state side target {:cause-card card})
+                                                         (gain-bad-publicity state :corp eid 1)))}
+                                 card nil)
+                               (continue-ability
+                                 state side
+                                 {:msg "take 1 bad publicity"
+                                  :async true
+                                  :effect (effect (gain-bad-publicity eid 1))}
+                                 card nil)))}]})
 
 (defcard "Encryption Protocol"
   {:constant-effects [{:type :trash-cost
