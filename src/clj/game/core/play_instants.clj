@@ -1,12 +1,12 @@
 (ns game.core.play-instants
   (:require
-    [game.core.card :refer [has-subtype?]]
+    [game.core.card :refer [get-zone has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [checkpoint dissoc-req merge-costs-paid pay queue-event resolve-ability should-trigger? unregister-events]]
-    [game.core.flags :refer [can-run?]]
+    [game.core.flags :refer [can-run? zone-locked?]]
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
@@ -101,7 +101,7 @@
           ;; can pay all costs
           (can-pay? state side eid card nil costs)
           ;; The zone isn't locked
-          (empty? (get-in @state [side :locked (-> card :zone first)]))
+          (not (zone-locked? state side (first (get-zone card))))
           ;; This is a current, and currents can be played
           (not (and (has-subtype? card "Current")
                     (get-in @state [side :register :cannot-play-current])))

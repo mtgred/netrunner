@@ -2601,7 +2601,7 @@
   {:abilities [{:async true
                 :label "play an event in the heap"
                 :cost [:click 2 :trash-can]
-                :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                :req (req (and (not (zone-locked? state :runner :discard))
                                (pos? (count (filter event? (:discard runner))))))
                 :prompt "Choose an event in the heap"
                 :msg (msg "play " (:title target))

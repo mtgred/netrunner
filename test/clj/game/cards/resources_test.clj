@@ -1134,7 +1134,7 @@
       (run-empty-server state :archives)
       (run-empty-server state :archives)
       (take-credits state :runner)
-      (is (no-prompt? state :runner) "No install prompt if no runs")
+      (is (no-prompt? state :runner) "No install prompt when heap is locked")
       (is (seq (:discard (get-runner))) "Crowdfunding is in discard")
       (is (zero? (count (get-resource state))) "Crowdfunding not installed")))
 
