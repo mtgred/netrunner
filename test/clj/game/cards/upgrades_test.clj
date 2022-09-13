@@ -3875,6 +3875,24 @@
           "Runner gained 1 credit from PAD Tap"
           (click-prompt state :corp "Gain 2 [Credits]")))))
 
+(deftest tranquility-home-grid-interaction-with-adt-and-agendas-issue-#6588
+  ;;check tranquility fires at the right time when installing an agenda and failing to rez it
+  (do-game
+    (new-game {:corp {:deck [(qty "PAD Campaign" 3) (qty "Project Atlas" 2)]
+                      :hand ["Tranquility Home Grid" "Architect Deployment Test"]
+                      :credits 10}})
+    (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+    (play-from-hand state :corp "Architect Deployment Test" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (let [adt (get-content state :remote1 1)]
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (score-agenda state :corp (refresh adt))
+      (click-prompt state :corp "OK")
+      (click-prompt state :corp "Project Atlas")
+      (click-prompt state :corp "Server 1")
+      (click-prompt state :corp "Gain 2 [Credits]"))))
+
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game
