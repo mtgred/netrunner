@@ -901,7 +901,7 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
-(deftest ^:kaocha/pending digital-rights-management-cannot-score-agenda-installed-after-playing
+(deftest digital-rights-management-cannot-score-agenda-installed-after-playing
   ;; Cannot score Agenda installed after playing DRM
   (do-game
     (new-game {:corp {:hand [(qty "Digital Rights Management" 2) "Project Vitruvius" (qty "Hedge Fund" 2)]
@@ -909,9 +909,15 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "Digital Rights Management")
-    (click-prompt state :corp "None")
-    (play-and-score state "Project Vitruvius")
-    (is (= 0 (count (get-scored state :corp))) "Beale was not scored")))
+    (click-prompt state :corp "Project Beale")
+    (click-card state :corp "Project Vitruvius")
+    (click-prompt state :corp "New remote")
+    ;; note - score-agenda fails if it finds the card wasn't scored,
+    ;; so we have to do this the hard way
+    (let [vit (get-content state :remote1 0)]
+      (core/add-prop state :corp (refresh vit) :advance-counter 3)
+      (core/process-action "score" state :corp {:card (refresh vit)}))
+    (is (= 0 (count (get-scored state :corp))) "Vitruvius was not scored")))
 
 (deftest digital-rights-management-drm-only-searches-for-agendas-in-r-d
     ;; DRM only searches for Agendas in R&D
