@@ -3876,7 +3876,7 @@
           (click-prompt state :corp "Gain 2 [Credits]")))))
 
 (deftest tranquility-home-grid-interaction-with-adt-and-agendas-issue-#6588
-  ;;check tranquility fires at the right time when installing an agenda and failing to rez it
+  ;;check tranquility fires at the right time when installing an agenda and failing to rez it, issue #6588
   (do-game
     (new-game {:corp {:deck [(qty "PAD Campaign" 3) (qty "Project Atlas" 2)]
                       :hand ["Tranquility Home Grid" "Architect Deployment Test"]
