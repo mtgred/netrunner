@@ -3875,7 +3875,7 @@
           "Runner gained 1 credit from PAD Tap"
           (click-prompt state :corp "Gain 2 [Credits]")))))
 
-(deftest tranquility-home-grid-interaction-with-adt-and-agendas-issue-#6588
+(deftest tranquility-home-grid-interaction-with-adt-and-agendas
   ;;check tranquility fires at the right time when installing an agenda and failing to rez it, issue #6588
   (do-game
     (new-game {:corp {:deck [(qty "PAD Campaign" 3) (qty "Project Atlas" 2)]
