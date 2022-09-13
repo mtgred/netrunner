@@ -170,7 +170,7 @@
                     :rezzed
                     (if-not (agenda? moved-card)
                       (rez state side eid moved-card {:no-msg no-msg})
-                      (checkpoint state nil (make-eid state eid)))
+                      (checkpoint state nil eid))
                     ;; "Face-up" cards
                     :face-up
                     (let [moved-card (-> (get-card state moved-card)
