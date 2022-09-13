@@ -207,7 +207,7 @@
                        :async true
                        :effect (effect (corp-install eid target nil
                                                      {:ignore-all-cost true
-                                                      :install-state :rezzed-no-rez-cost}))
+                                                      :install-state :rezzed-no-cost}))
                        :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
                                               (effect-completed eid))}
                       card nil))}})
