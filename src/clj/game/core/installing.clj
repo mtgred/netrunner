@@ -161,7 +161,7 @@
                     (if-not (agenda? moved-card)
                       (rez state side eid moved-card {:ignore-cost :all-costs
                                                       :no-msg no-msg})
-                      (checkpoint state nil (make-eid state eid)))
+                      (checkpoint state nil eid))
                     ;; Ignore rez cost only
                     :rezzed-no-rez-cost
                     (rez state side eid moved-card {:ignore-cost :rez-costs
