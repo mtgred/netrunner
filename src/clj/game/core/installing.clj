@@ -158,15 +158,19 @@
                   (case install-state
                     ;; Ignore all costs
                     :rezzed-no-cost
-                    (rez state side eid moved-card {:ignore-cost :all-costs
-                                                    :no-msg no-msg})
+                    (if-not (agenda? moved-card)
+                      (rez state side eid moved-card {:ignore-cost :all-costs
+                                                      :no-msg no-msg})
+                      (checkpoint state nil eid))
                     ;; Ignore rez cost only
                     :rezzed-no-rez-cost
                     (rez state side eid moved-card {:ignore-cost :rez-costs
                                                     :no-msg no-msg})
                     ;; Pay costs
                     :rezzed
-                    (rez state side eid moved-card {:no-msg no-msg})
+                    (if-not (agenda? moved-card)
+                      (rez state side eid moved-card {:no-msg no-msg})
+                      (checkpoint state nil eid))
                     ;; "Face-up" cards
                     :face-up
                     (let [moved-card (-> (get-card state moved-card)
