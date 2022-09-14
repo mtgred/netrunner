@@ -1465,23 +1465,31 @@
           ;; prompts to install an x-cost card (handles validation)
           (ob-ability [target-cost]
             {:optional
-             {:prompt (str "Install a " target-cost "-cost card from your deck?")
+             {:prompt (if (>= target-cost 0)
+                        (str "Install a " target-cost "-cost card from your deck?")
+                        (str "Shuffle your deck (search for a " target-cost "-cost card from your deck?)"))
               :once :per-turn
-              :req (req (>= target-cost 0))
               :yes-ability
               {:msg (msg "to search R&D for a " (str target-cost) "-cost card")
                :async true
-               :effect (effect (continue-ability
-                                 {:prompt "Choose a card to install and rez"
-                                  :choices (req (conj (filter #(and (= target-cost (:cost %))
-                                                                    (or (asset? %)
-                                                                        (upgrade? %)
-                                                                        (ice? %)))
-                                                              (vec (sort-by :title (:deck corp))))
-                                                      "No install"))
-                                  :async true
-                                  :effect (resolve-install)}
-                                 card nil))}
+               :effect (req (if (>= target-cost 0)
+                              (continue-ability
+                                state side
+                                {:prompt "Choose a card to install and rez"
+                                 :choices (req (conj (filter #(and (= target-cost (:cost %))
+                                                                   (or (asset? %)
+                                                                       (upgrade? %)
+                                                                       (ice? %)))
+                                                             (vec (sort-by :title (:deck corp))))
+                                                     "No install"))
+                                 :async true
+                                 :effect (resolve-install)}
+                                card nil)
+                              (continue-ability
+                                state side
+                                {:msg "to shuffle R&D"
+                                 :effect (effect (shuffle! :corp :deck))}
+                                card nil)))}
               :no-ability
               {:effect (effect (system-msg "declines to use Ob Superheavy Logistics: Extract. Export. Excel."))}}})]
     {:events [{:event :corp-trash

@@ -3683,6 +3683,22 @@
    (is (empty? (:prompt (get-corp))) "No Ob prompt")
    (is (find-card "Oaktown Renovation" (:discard (get-corp))) "Oaktown is trashed")))
 
+(deftest ob-superheavy-logistics-shuffle-with-rashida
+  ;; you can search for -1 cost cards as an excuse to shuffle your deck
+  (do-game
+    (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                      :hand ["Rashida Jaheem"]
+                      :deck [(qty "Hedge Fund" 15)]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "Corp has opportunity to use Rashida")
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Yes")
+    (is (second-last-log-contains? state "shuffle") "Ob superheavy should shuffle R&D")))
+
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
     (do-game
