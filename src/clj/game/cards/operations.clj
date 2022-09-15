@@ -730,6 +730,13 @@
     :effect (req (wait-for (trash-cards state side (get-in @state [:corp :hand]) {:cause-card card})
                            (draw state side eid 5)))}})
 
+(defcard "End Of The Line"
+  {:on-play
+   {:additional-cost [:tag 1]
+    :msg "do 4 meat damage"
+    :async true
+    :effect (effect (damage eid :meat 4 {:card card}))}})
+
 (defcard "Enforced Curfew"
   {:on-play {:msg "reduce the Runner's maximum hand size by 1"}
    :constant-effects [(runner-hand-size+ -1)]})

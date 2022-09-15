@@ -1218,6 +1218,16 @@
     (play-from-hand state :corp "Election Day")
     (is (= 5 (count (:hand (get-corp)))) "Corp has now 5 cards due to Election Day")))
 
+(deftest end-of-the-line
+  ;; End of the Line
+  (do-game
+    (new-game {:corp {:deck ["End Of The Line"]}
+               :runner {:deck [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]}})
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "End Of The Line")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (is (zero? (count-tags state)) "Runner list a tag")))
+
 (deftest enforced-curfew
   ;; Hostile Takeover
   (do-game
