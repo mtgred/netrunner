@@ -1552,6 +1552,14 @@
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
 
+(defcard "Ampere: Cybernetics For Anyone"
+    ;; No special implementation
+  {})
+
+(defcard "Nova Initiumia: Catalyst & Impetus"
+      ;; No special implementation
+  {})
+
 (defcard "Pālanā Foods: Sustainable Growth"
   {:events [{:event :runner-draw
              :req (req (and (first-event? state :corp :runner-draw)
