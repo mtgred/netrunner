@@ -2269,11 +2269,12 @@
      :abilities [ability]}))
 
 (defcard "Synth DNA Modification"
-  {:implementation "Manual fire once subroutine is broken"
-   :abilities [{:msg "do 1 net damage"
-                :label "Do 1 net damage after AP subroutine broken"
-                :once :per-turn
-                :effect (effect (damage eid :net 1 {:card card}))}]})
+  {:events [{:event :subroutines-broken
+             :req (req (and (has-subtype? (first targets) "AP")
+                            (first-event? state side :subroutines-broken
+                                          (fn [targets] (has-subtype? (first targets) "AP")))))
+             :msg "do 1 net damage"
+             :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "Team Sponsorship"
   {:events [{:event :agenda-scored
