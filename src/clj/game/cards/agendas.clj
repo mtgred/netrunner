@@ -1576,6 +1576,10 @@
                            (check-win-by-agenda state side))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal an agenda in Archives")))}})
 
+
+(defcard "Regulatory Capture"
+  {:advancement-requirement (req (- (min 4 (count-bad-pub state))))})
+
 (defcard "Remastered Edition"
   {:on-score {:effect (effect (add-counter card :agenda 1))
               :silent (req true)}

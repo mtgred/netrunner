@@ -3309,6 +3309,7 @@
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
 
+
 (deftest regenesis
   ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
   ;; and add it to score area
@@ -3340,6 +3341,30 @@
     (prompt-is-type? state :corp :choice)
     (click-card state :corp "Obokata Protocol")
     (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
+
+(deftest regulatory-capture
+  ;; regulatory capture
+  (do-game
+    (new-game {:corp {:hand [(qty "Regulatory Capture" 2)] :credits 10}})
+    (play-from-hand state :corp "Regulatory Capture" "New remote")
+    (play-from-hand state :corp "Regulatory Capture" "New remote")
+    (let [r1 (get-content state :remote1 0)
+          r2 (get-content state :remote1 0)]
+      (core/add-prop state :corp (refresh r1) :advance-counter 4)
+      (core/add-prop state :corp (refresh r2) :advance-counter 1)
+      (score state :corp (refresh r1))
+      (is (some? (get-content state :remote1 0))
+          "Corp can't score with 4 advancements because of 0 BP")
+      (core/gain state :corp :bad-publicity 2)
+      (core/fake-checkpoint state)
+      (score state :corp (refresh r1))
+      (is (not (some? (get-content state :remote1 0)))
+          "Corp scored capture with 2 bp and 4 counters")
+      (core/gain state :corp :bad-publicity 3)
+      (core/fake-checkpoint state)
+      (score state :corp (refresh r2))
+      (is (some? (get-content state :remote2 0))
+          "Corp can't score with 1 advancements and 5 BP (max 4 counted)"))))
 
 (deftest remastered-edition
   ;; Remastered Edition
