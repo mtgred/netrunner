@@ -969,6 +969,18 @@
             :async true
             :effect (effect (lose-credits :runner eid 1))}})
 
+(defcard "Hostile Architecture"
+  (let [ability
+        {:event :runner-trash
+         :async true
+         :req (req (and (some #(corp? (:card %)) targets)
+                        (first-event? state side :runner-trash
+                                      (fn [targets] (some #(corp? (:card %)) targets)))))
+         :msg "do 2 meat damage"
+         :effect (effect (damage :corp eid :meat 2 {:card card}))}]
+    {:on-trash (assoc ability :req (req (= :runner side)))
+     :event [ability]}))
+
 (defcard "Hostile Infrastructure"
   (let [ability
         {:event :runner-trash

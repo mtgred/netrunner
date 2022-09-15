@@ -2288,6 +2288,38 @@
     (click-prompt state :runner "No action")
     (is (= 2 (:credit (get-runner))))))
 
+(deftest hostile-architecture-basic-behavior
+  (do-game
+    (new-game {:corp {:hand ["Hostile Architecture" (qty "Rashida Jaheem" 5)]}
+               :runner {:hand [(qty "Sure Gamble" 10)] :credits 10}})
+    (play-from-hand state :corp "Hostile Architecture" "New remote")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 2")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (= 0 (count (:discard (get-runner)))) "took 0 damage")
+    (rez state :corp (get-content state :remote1 0))
+    ;; only works on first trash
+    (run-empty-server state "Server 3")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (= 0 (count (:discard (get-runner)))) "took 0 damage")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    ;; actually functions
+    (run-empty-server state "Server 4")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (take-credits state :runner)
+    (is (= 2 (count (:discard (get-runner)))) "took 2 damage")
+    (take-credits state :corp)
+    ;; works on self trashed
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (is (= 4 (count (:discard (get-runner)))) "took 2 damage")))
+
+
 (deftest hostile-infrastructure-basic-behavior
     ;; Basic behavior
     (do-game
