@@ -4914,22 +4914,24 @@
 (deftest synth-dna-modification
   ;; Synth DNA Modification
   (do-game
-    (new-game {:corp {:deck ["Synth DNA Modification" "Data Mine"]}})
+    (new-game {:corp {:deck ["Synth DNA Modification" "Neural Katana"]}
+               :runner {:hand ["Bukhgalter" (qty "Sure Gamble" 4)] :credits 15}})
     (play-from-hand state :corp "Synth DNA Modification" "New remote")
-    (play-from-hand state :corp "Data Mine" "HQ")
+    (play-from-hand state :corp "Neural Katana" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bukhgalter")
     (let [dna (get-content state :remote1 0)
-          data (get-ice state :hq 0)]
+          data (get-ice state :hq 0)
+          buk (get-program state 0)]
       (rez state :corp dna)
       (rez state :corp data)
-      (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
-      (card-subroutine state :corp data 0)
-      (is (= 1 (count (:discard (get-runner)))) "Runner should take 1 net damage from Data Mine")
-      (is (= 1 (count (:discard (get-corp)))) "Data Mine should trash self after subroutine fires")
-      (card-ability state :corp dna 0)
-      (is (= 2 (count (:discard (get-runner))))
-          "Runner should take 1 net damage from Synth DNA Modification after Data Mine subroutine"))))
+      (card-ability state :runner (refresh buk) 1)
+      (card-ability state :runner (refresh buk) 1)
+      (card-ability state :runner (refresh buk) 0)
+      (click-prompt state :runner "Do 3 net damage")
+      (is (= 1 (count (:discard (get-runner)))) "Runner should take 1 net damage from Synth DNA"))))
 
 (deftest syvatogor-excavator-manual-use
   ;; Svyatogor Excavator - Manual use

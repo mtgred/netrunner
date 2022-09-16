@@ -2274,6 +2274,7 @@
                             (first-event? state side :subroutines-broken
                                           (fn [targets] (has-subtype? (first targets) "AP")))))
              :msg "do 1 net damage"
+             :async true
              :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "Team Sponsorship"
