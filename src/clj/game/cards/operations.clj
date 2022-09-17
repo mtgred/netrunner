@@ -573,19 +573,32 @@
              :effect (effect (damage-bonus :brain 1))}]})
 
 (defcard "Digital Rights Management"
-  {:implementation "Does not prevent scoring agendas installed later in the turn"
-   :on-play
+  {:on-play
    {:req (req (and (< 1 (:turn @state))
                    (not (some #{:hq} (:successful-run runner-reg-last)))))
     :prompt "Choose an Agenda"
-    ; ToDo: When floating triggers are implemented, this should be an effect that listens to :corp-install as Clot does
     :choices (req (conj (vec (filter agenda? (:deck corp))) "None"))
-    :msg (msg (if (not= "None" target)
-                (str "add " (:title target) " to HQ and shuffle R&D")
-                "shuffle R&D"))
+    :msg (msg (if (= "None" target)
+                "shuffle R&D"
+                (str "add " (:title target) " to HQ and shuffle R&D")))
     :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
                                   (swap! state assoc-in [:corp :register :cannot-score]
                                          (filter agenda? (all-installed state :corp)))
+                                  (register-events
+                                    state side card
+                                    [{:event :corp-install
+                                      :duration :until-corp-turn-begins
+                                      :async true
+                                      :req (req (agenda? (:card context)))
+                                      :effect (req
+                                                (register-turn-flag!
+                                                  state side
+                                                  (:card context) :can-score
+                                                  (fn [state _ card]
+                                                    (if (same-card? card (:card context))
+                                                      ((constantly false) (toast state :corp "Cannot score due to Digital Rights Management." "warning"))
+                                                      true)))
+                                                (effect-completed state side eid))}])
                                   (effect-completed state side eid))]
               (req (wait-for
                      (resolve-ability

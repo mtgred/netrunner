@@ -910,14 +910,17 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Digital Rights Management")
     (click-prompt state :corp "Project Beale")
-    (click-card state :corp "Project Vitruvius")
+    (click-prompt state :corp "Done")
+    (play-from-hand state :corp "Project Vitruvius")
     (click-prompt state :corp "New remote")
-    ;; note - score-agenda fails if it finds the card wasn't scored,
-    ;; so we have to do this the hard way
+    (core/gain state :corp :click 2)
     (let [vit (get-content state :remote1 0)]
-      (core/add-prop state :corp (refresh vit) :advance-counter 3)
-      (core/process-action "score" state :corp {:card (refresh vit)}))
-    (is (= 0 (count (get-scored state :corp))) "Vitruvius was not scored")))
+      (dotimes [_ 3] (core/advance state :corp {:card (refresh vit)}))
+      (score state :corp (refresh vit))
+      (is (= 0 (count (get-scored state :corp))) "Project Vitruvius was not scored")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (score state :corp (refresh vit)))))
 
 (deftest digital-rights-management-drm-only-searches-for-agendas-in-r-d
     ;; DRM only searches for Agendas in R&D
