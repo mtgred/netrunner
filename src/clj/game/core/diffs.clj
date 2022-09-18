@@ -53,7 +53,7 @@
              :source-info {:ability-idx ability-idx}}]
     (if (and (or (active? card)
                  (:autoresolve ability))
-             (can-pay? state side eid card (:title card) cost)
+             (can-pay? state side eid card nil cost)
              (can-trigger? state side eid ability card nil))
       (assoc ability :playable true)
       ability)))

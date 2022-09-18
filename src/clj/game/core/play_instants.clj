@@ -99,7 +99,7 @@
      (and ;; req is satisfied
           (should-trigger? state side eid card targets on-play)
           ;; can pay all costs
-          (can-pay? state side eid card (:title card) costs)
+          (can-pay? state side eid card nil costs)
           ;; The zone isn't locked
           (empty? (get-in @state [side :locked (-> card :zone first)]))
           ;; This is a current, and currents can be played

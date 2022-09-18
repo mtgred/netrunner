@@ -86,7 +86,7 @@
             ; Runner cannot trash (eg Trebuchet)
             can-trash (can-trash? state side c)
             can-pay (when trash-cost
-                      (can-pay? state :runner trash-eid card (:title card) [:credit trash-cost]))
+                      (can-pay? state :runner trash-eid card nil [:credit trash-cost]))
             trash-cost-str (when can-pay
                              [(str "Pay " trash-cost " [Credits] to trash")])
             ; Is the runner is forced to trash this card with only credits? (NAT)
@@ -340,7 +340,7 @@
   ([cost ability prompt]
    (let [cost (if (number? cost) [:credit cost] cost)]
      {:access {:optional
-               {:req (req (and installed (can-pay? state :corp eid card (:title card) cost)))
+               {:req (req (and installed (can-pay? state :corp eid card nil cost)))
                 :waiting-prompt (:waiting-prompt ability)
                 :prompt prompt
                 :yes-ability (dissoc ability :waiting-prompt)}}})))
