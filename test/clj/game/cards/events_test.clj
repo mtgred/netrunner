@@ -6150,7 +6150,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "SYN Attack")
       (let [hand (count (:hand (get-corp)))]
-        (click-prompt state :corp "Draw 4")
+        (click-prompt state :corp "Draw 4 cards")
         (is (= (+ hand 4) (count (:hand (get-corp)))) "Corp should draw 4 cards"))))
 
 (deftest syn-attack-and-corp-chooses-to-discard
@@ -6162,7 +6162,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "SYN Attack")
       (let [hand (count (:hand (get-corp)))]
-        (click-prompt state :corp "Discard 2")
+        (click-prompt state :corp "Discard 2 cards from HQ")
         (click-card state :corp (first (:hand (get-corp))))
         (click-card state :corp (second (:hand (get-corp))))
         (is (= (+ hand -2) (count (:hand (get-corp)))) "Corp should discard 2 cards"))))

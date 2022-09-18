@@ -3165,14 +3165,12 @@
     :waiting-prompt "Corp to choose an option"
     :prompt "Choose one"
     :choices (req [(when (<= 2 (count (:hand corp)))
-                     "Discard 2")
-                   "Draw 4"])
+                     "Discard 2 cards from HQ")
+                   "Draw 4 cards"])
     :async true
-    :effect (req (if (= target "Draw 4")
+    :msg (msg "force the corp to " (decapitalize target))
+    :effect (req (if (= target "Draw 4 cards")
                    (wait-for (draw state :corp 4)
-                             (system-msg state :corp
-                                         (str "uses SYN Attack to draw "
-                                              (quantify (count async-result) "card")))
                              (effect-completed state side eid))
                    (continue-ability
                      state :corp
@@ -3182,10 +3180,7 @@
                                 :card #(and (in-hand? %)
                                             (corp? %))}
                       :async true
-                      :effect (effect (system-msg :runner
-                                                  (str "uses SYN Attack to force the "
-                                                       "Corp to trash 2 cards from HQ"))
-                                      (trash-cards :corp eid targets {:unpreventable true
+                      :effect (effect (trash-cards :corp eid targets {:unpreventable true
                                                                       :cause-card card
                                                                       :cause :forced-to-trash}))}
                      card nil)))}})
