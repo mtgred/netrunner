@@ -62,8 +62,8 @@
       (click-prompt state :runner "Done")
       (is (:broken (first (:subroutines (refresh cobra)))) "Broke a sentry subroutine"))))
 
-(deftest afterimage
-  ;; Afterimage
+(deftest afterimage-requires-stealth-credits
+  ;; Afterimage requires stealth credits to bypass ice
   (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Rototurret"]
@@ -76,8 +76,8 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (click-prompt state :runner "Yes")
-      (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")))
+      (is (no-prompt? state :runner) "No bypass prompt")))
+      
 
 (deftest afterimage-can-only-be-used-once-per-turn-5032
     ;; Can only be used once per turn. #5032
@@ -85,15 +85,20 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Rototurret"]
                         :credits 10}
-                 :runner {:hand ["Afterimage"]
+                 :runner {:hand ["Afterimage" (qty "Mantle" 2)]
                           :credits 10}})
       (play-from-hand state :corp "Rototurret" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Afterimage")
+      (play-from-hand state :runner "Mantle")
+      (play-from-hand state :runner "Mantle")
+      (core/gain state :runner :click 1)
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
+      (click-card state :runner (get-program state 1))
+      (click-card state :runner (get-program state 2))
       (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")
       (run-jack-out state)
       (run-on state "HQ")
