@@ -1614,9 +1614,9 @@
     :choices (req [(when-not (empty? (:hand runner))
                      "Trash 1 random card from the grip")
                    "The Corp gains [Click][Click]"])
-    :msg (req (if (= target "The Corp gains [Click][Click]")
+    :msg (msg (if (= target "The Corp gains [Click][Click]")
                  "gain [Click][Click]"
-                 (msg "to force the Runner to " (decapitalize target))))
+                 (str "force the Runner to " (decapitalize target))))
     :effect (req (if (= target "The Corp gains [Click][Click]")
                    (do (gain-clicks state :corp 2)
                        (effect-completed state side eid))
