@@ -158,8 +158,9 @@
    :async true
    :label (str "End the run unless the Runner pays " amount " [Credits]")
    :prompt "Choose one"
-   :choices ["End the run"
-             (str "Pay " amount " [Credits]")]
+   :choices (req ["End the run"
+                  (when (can-pay? state :runner eid card nil [:credit amount])
+                    (str "Pay " amount " [Credits]"))])
    :effect (req (if (= "End the run" target)
                   (do (system-msg state :corp
                                   (str "uses " (:title card) " to end the run"))
@@ -171,8 +172,9 @@
   {:async true
    :label (str "End the run unless the Corp pays " amount " [Credits]")
    :prompt "Choose one"
-   :choices ["End the run"
-             (str "Pay " amount " [Credits]")]
+   :choices (req ["End the run"
+                  (when (can-pay? state :corp eid card nil [:credit amount])
+                    (str "Pay " amount " [Credits]"))])
    :effect (req (if (= "End the run" target)
                   (end-run state :corp eid card)
                   (wait-for (pay state :corp (make-eid state eid) card [:credit amount])
@@ -1196,7 +1198,7 @@
   {:on-encounter {:player :runner
                   :msg "force the Runner to take 1 tag or pay 3 [Credits]"
                   :prompt "Choose one"
-                  :choices (req [(when (can-pay? state :runner eid card "Data Ward" :credit 3)  
+                  :choices (req [(when (can-pay? state :runner eid card nil :credit 3)  
                                    "Pay 3 [Credits]")
                                  "Take 1 tag"])
                   :async true
@@ -1442,7 +1444,9 @@
              :msg "force the Runner to pay 1 [Credits] or trash an installed card"
              :player :runner
              :prompt "Choose one"
-             :choices ["Pay 1 [Credits]" "Trash an installed card"]
+             :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
+                              "Pay 1 [Credits]")
+                            "Trash an installed card"])
              :async true
              :effect (req (if (= target "Pay 1 [Credits]")
                             (wait-for (pay state side (make-eid state eid) card :credit 1)
@@ -1458,7 +1462,9 @@
              :msg "force the Runner to pay 2 [Credits] or trash an installed card"
              :player :runner
              :prompt "Choose one"
-             :choices ["Pay 2 [Credits]" "Trash an installed card"]
+             :choices (req [(when (can-pay? state :runner eid card nil [:credit 2])
+                              "Pay 2 [Credits]")
+                            "Trash an installed card"])
              :async true
              :effect (req (if (= target "Pay 2 [Credits]")
                             (wait-for (pay state side (make-eid state eid) card :credit 2)
@@ -1475,7 +1481,9 @@
              :msg "force the Runner to pay 3 [Credits] or trash an installed card"
              :player :runner
              :prompt "Choose one"
-             :choices ["Pay 3 [Credits]" "Trash an installed card"]
+             :choices (req [(when (can-pay? state :runner eid card nil [:credit 3])
+                              "Pay 3 [Credits]")
+                            "Trash an installed card"])
              :async true
              :effect (req (if (= target "Pay 3 [Credits]")
                             (wait-for (pay state side (make-eid state eid) card :credit 3)
@@ -1600,7 +1608,7 @@
                   :label "Give the Runner 1 tag unless they pay 4 [Credits]"
                   :prompt "Choose one"
                   :choices (req ["Take 1 tag"
-                                 (when (can-pay? state :runner eid card "Funhouse" :credit 4)
+                                 (when (can-pay? state :runner eid card nil :credit 4)
                                    "Pay 4 [Credits]")])
                   :effect (effect (continue-ability
                                     (if (= "Take 1 tag" target)
@@ -2839,7 +2847,7 @@
                                     :waiting-prompt "Runner to choose an option"
                                     :prompt "Choose one"
                                     :choices [(str "Access " title)
-                                              (when (>= (:credit runner) 3)
+                                              (when (can-pay? state :runner eid card nil [:credit 3])
                                                 "Pay 3 [Credits]")]
                                     :msg (msg "force the Runner to "
                                               (if (= target "Pay 3 [Credits]")
@@ -2919,8 +2927,9 @@
              :async true
              :label "Do 1 net damage unless the Runner pays 1 [Credits]"
              :prompt "Choose one"
-             :choices ["Suffer 1 net damage"
-                       "Pay 1 [Credits]"]
+             :choices (req ["Suffer 1 net damage"
+                            (when (can-pay? state :runner eid card nil [:credit 1])
+                              "Pay 1 [Credits]")])
              :effect (req (if (= "Suffer 1 net damage" target)
                             (continue-ability state :corp (do-net-damage 1) card nil)
                             (wait-for (pay state :runner (make-eid state eid) card [:credit 1])
@@ -3332,8 +3341,9 @@
              :async true
              :label "Trash a program"
              :prompt "Choose one"
-             :choices ["The Corp trashes a program"
-                       "Pay 3 [Credits]"]
+             :choices (req ["The Corp trashes a program"
+                            (when (can-pay? state :runner eid card nil [:credit 3])
+                              "Pay 3 [Credits]")])
              :effect (req (if (= "Pay 3 [Credits]" target)
                             (wait-for (pay state :runner (make-eid state eid) card [:credit 3])
                                       (system-msg state :runner (:msg async-result))

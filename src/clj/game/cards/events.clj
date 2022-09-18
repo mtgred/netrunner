@@ -2205,7 +2205,7 @@
     :waiting-prompt "Corp to choose an option"
     :player :corp
     :prompt "Choose one"
-    :choices (req [(when (can-pay? state :corp eid card "Mining Accident" :credit 5)
+    :choices (req [(when (can-pay? state :corp eid card nil :credit 5)
                      "Pay 5 [Credits]")
                    "Take 1 bad publicity"])
     :async true
