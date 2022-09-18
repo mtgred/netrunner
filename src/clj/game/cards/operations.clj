@@ -1842,7 +1842,9 @@
   {:on-play
    {:req (req (last-turn? state :runner :successful-run))
     :player :runner
-    :msg (msg "force the Runner to " (decapitalize target))
+    :msg (msg (if (= target "Pay 8 [Credits]")
+                (str "force the runner to " (decapitalize target))
+                "give the runner 1 tag"))
     :waiting-prompt "Runner to choose an option"
     :prompt "Choose one"
     :choices (req ["Take 1 tag"

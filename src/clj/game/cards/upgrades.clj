@@ -630,7 +630,6 @@
              :interactive (req true)
              :async true
              :req (req this-server)
-             :msg "force the Runner to pay credits or end the run"
              :effect (effect 
                        (continue-ability
                          (let [credit-cost (* 2 (count (:scored runner)))]
@@ -641,9 +640,11 @@
                              :choices [(when (can-pay? state :runner eid card "Giordano Memorial Field" :credit credit-cost)  
                                          (str "Pay " credit-cost " [Credits]"))
                                        "End the run"]
+                             :msg (msg (if (= "End the run" target)
+                                         (decapitalize target)
+                                         (str "force the runner to " (decapitalize target))))
                              :effect (req (if (= "End the run" target)
-                                            (do (system-msg state :corp "uses Giordano Memorial Field to end the run")
-                                                (end-run state :corp eid card))
+                                            (end-run state :corp eid card)
                                             (wait-for (pay state :runner (make-eid state eid) card :credit credit-cost)
                                                       (system-msg state :runner (:msg async-result))
                                                       (effect-completed state side eid))))})

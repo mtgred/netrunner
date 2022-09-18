@@ -2201,7 +2201,7 @@
   {:on-play
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :rfg-instead-of-trashing true
-    :msg "make the Corp pay 5 [Credits] or take 1 bad publicity"
+    :msg (msg "force the corp to " (decapitalize target))
     :waiting-prompt "Corp to choose an option"
     :player :corp
     :prompt "Choose one"
@@ -2210,10 +2210,10 @@
                    "Take 1 bad publicity"])
     :async true
     :effect (req (if (= target "Pay 5 [Credits]")
-                   (do (system-msg state side "pays 5 [Credits]")
-                       (lose-credits state :corp eid 5))
-                   (do (system-msg state side "takes 1 bad publicity")
-                       (gain-bad-publicity state :corp 1)
+                   (wait-for (pay state :corp (make-eid state eid) card :credit 5)
+                             (system-msg state :corp (:msg async-result))
+                             (effect-completed state side eid))
+                   (do (gain-bad-publicity state :corp 1)
                        (effect-completed state side eid))))}})
 
 (defcard "Möbius"
