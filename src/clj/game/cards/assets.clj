@@ -46,6 +46,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
+   [game.core.payment :refer [can-pay?]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.say :refer [system-msg]]
@@ -480,26 +481,22 @@
 
 (defcard "Clyde Van Rite"
   (let [ability {:async true
-                 :req (req (or (pos? (:credit runner))
-                               (pos? (count (:deck runner)))))
+                 :req (req (or (can-pay? state :runner eid card nil [:credit 1])
+                               (seq (:deck runner))))
                  :player :runner
                  :once :per-turn
-                 :prompt "Pay 1 [Credits] or trash the top card of the Stack"
-                 :choices (req [(when (pos? (:credit runner))
+                 :prompt "Choose one"
+                 :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                                   "Pay 1 [Credits]")
-                                (when (pos? (count (:deck runner)))
-                                  "Trash top card")])
-                 :label "make the Runner pay 1 [Credits] or trash the top card of the Stack (start of turn)"
-                 :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
-                 :effect (req (case target
-                                "Pay 1 [Credits]"
+                                (when (seq (:deck runner))
+                                  "Trash the top card of the stack")])
+                 :label "make the Runner pay 1 [Credits] or trash the top card of the stack (start of turn)"
+                 :msg (msg "force the Runner to " (decapitalize target))
+                 :effect (req (if (= target "Pay 1 [Credits]")
                                 (wait-for (pay state side (make-eid state eid) card :credit 1)
-                                          (when-let [payment-str (:msg async-result)]
-                                            (system-msg state side payment-str))
-                                          (effect-completed state side eid))
-                                "Trash top card"
-                                (do (system-msg state side "trashes the top card of the Stack")
-                                    (mill state :runner eid :runner 1))))}]
+                                  (system-msg state side (:msg async-result))
+                                  (effect-completed state side eid))
+                                (mill state :runner eid :runner 1)))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
