@@ -427,23 +427,22 @@
 
 (defcard "City Surveillance"
   {:derezzed-events [corp-rez-toast]
-   :flags {:runner-phase-12 (req (pos? (:credit runner)))}
+   :flags {:runner-phase-12 (req true)}
    :events [{:event :runner-turn-begins
              :player :runner
              :prompt "Choose one"
-             :choices (req [(when (pos? (:credit runner))
+             :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")
                             "Take 1 tag"])
-             :msg "make the Runner pay 1 [Credits] or take 1 tag"
+             :msg (msg (if (= target "Take 1 tag")
+                          "give the runner 1 tag"
+                          (str "force the runner to " (decapitalize target))))
              :async true
-             :effect (req (case target
-                            "Pay 1 [Credits]"
+             :effect (req (if (= target "Pay 1 [Credits]")
                             (wait-for (pay state :runner (make-eid state eid) card :credit 1)
-                                      (when-let [payment-str (:msg async-result)]
-                                        (system-msg state :runner payment-str))
+                                      (system-msg state :runner (:msg async-result))
                                       (effect-completed state side eid))
-                            (do (system-msg state :runner "takes 1 tag")
-                                (gain-tags state :corp eid 1))))}]})
+                            (gain-tags state :corp eid 1)))}]})
 
 (defcard "Clearinghouse"
   (let [ability {:once :per-turn
