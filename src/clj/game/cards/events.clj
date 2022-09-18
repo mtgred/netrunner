@@ -320,7 +320,7 @@
   {:on-play
    {:req (req (some #(and (ice? %)
                           (rezzed? %)
-                          (can-pay? state side eid card nil
+                          (can-pay? state side eid card (:title card)
                                     [:credit (rez-cost state side %)]))
                     (all-installed state :corp)))
     :async true
@@ -332,7 +332,7 @@
                             :when (and (ice? ice)
                                        (rezzed? ice))
                             :let [cost (rez-cost state side ice)]]
-                        (when (can-pay? state side eid card nil [:credit cost])
+                        (when (can-pay? state side eid card (:title card) [:credit cost])
                           [(:cid ice) cost]))))
                eid (assoc eid :x-cost true)]
            (continue-ability
@@ -625,7 +625,7 @@
                                          (and (operation? c)
                                               (play-cost state side c)))
                                 title (:title c)]
-                            (if (can-pay? state :corp eid card nil [:credit cost])
+                            (if (can-pay? state :corp eid card (:title card) [:credit cost])
                               (continue-ability
                                 state :corp
                                 {:optional
@@ -668,7 +668,7 @@
                      (if (seq (filter #(and (installed? %)
                                             (not (rezzed? %))
                                             (ice? %)
-                                            (can-pay? state side eid card nil
+                                            (can-pay? state side eid card (:title card)
                                                       [:credit (rez-cost state side %)]))
                                       (all-installed state :corp)))
                        {:optional
@@ -679,7 +679,7 @@
                                        :choices {:card #(and (installed? %)
                                                              (not (rezzed? %))
                                                              (ice? %)
-                                                             (can-pay? state side eid card nil
+                                                             (can-pay? state side eid card (:title card)
                                                                        [:credit (rez-cost state side %)]))}
                                        :effect (effect (rez :corp eid target))
                                        :cancel-effect
@@ -808,7 +808,7 @@
                                    state side
                                    {:optional
                                     {:prompt "Pay [Click] to access another card?"
-                                     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:lose-click 1]))
+                                     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) [:lose-click 1]))
                                      :no-ability
                                      {:effect (effect (system-msg "declines to use Deep Dive to access another card"))}
                                      :yes-ability
@@ -2205,7 +2205,7 @@
     :waiting-prompt "Corp to choose an option"
     :player :corp
     :prompt "Choose one"
-    :choices (req [(when (can-pay? state :corp eid card "Mining Accident" :credit 5)
+    :choices (req [(when (can-pay? state :corp eid card (:title card) :credit 5)
                      "Pay 5 [Credits]")
                    "Take 1 bad publicity"])
     :async true

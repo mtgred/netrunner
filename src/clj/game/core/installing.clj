@@ -218,7 +218,7 @@
   (let [slot (get-slot state card server (select-keys args [:host-card]))
         costs (corp-install-cost state side card server args)]
     (and (corp-can-install? state side card slot (select-keys args [:no-toast]))
-         (can-pay? state side eid card nil costs)
+         (can-pay? state side eid card (:title card) costs)
          ;; explicitly return true
          true)))
 
@@ -382,7 +382,7 @@
   [state side eid card {:keys [facedown] :as args}]
   (let [costs (runner-install-cost state side (assoc card :facedown facedown) args)]
     (and (runner-can-install? state side card args)
-         (can-pay? state side eid card nil costs)
+         (can-pay? state side eid card (:title card) costs)
          ;; explicitly return true
          true)))
 

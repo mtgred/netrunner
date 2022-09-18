@@ -258,7 +258,7 @@
      :events [{:event :encounter-ice
                :req (req (and (not-used-once? state {:once :per-turn} card)
                               (not (has-subtype? (:ice context) ice-type))
-                              (can-pay? state :runner eid card nil [:credit 2])))
+                              (can-pay? state :runner eid card (:title card) [:credit 2])))
                :async true
                :effect
                (effect
@@ -377,7 +377,7 @@
                               :interactive (req true)
                               :optional
                               {:req (req (and (has-subtype? (:ice context) "Sentry")
-                                              (can-pay? state :runner eid card nil [:credit 2])))
+                                              (can-pay? state :runner eid card (:title card) [:credit 2])))
                                :once :per-turn
                                :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)))
                                :yes-ability
@@ -862,7 +862,7 @@
              :interactive (req true)
              :optional
              {:req (req (and (is-central? (target-server context))
-                             (can-pay? state side eid card nil [:virus 1])
+                             (can-pay? state side eid card (:title card) [:virus 1])
                              (not-empty run-ices)
                              (<= 2 (count (filter ice? (all-installed state :corp))))))
               :once :per-turn
@@ -923,8 +923,8 @@
                                  :effect (effect (add-counter card :virus 1))}]
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
-                              :msg (msg (if (can-pay? state side eid card nil [:virus 1])
-                                          "remove 1 virus counter from itself"
+                              :msg (msg (if (can-pay? state side eid card (:title card) [:virus 1])
+                                          "remove 1 hosted virus counter"
                                           "trash itself"))
                               :async true
                               :effect (req (wait-for (pay state :runner (make-eid state eid) card [:virus 1])
@@ -1296,7 +1296,7 @@
                           {:async true
                            :prompt (msg "Rez " (:title ice) " or add it to HQ?")
                            :player :corp
-                           :choices (req (if (can-pay? state :runner eid card nil [:credit (rez-cost state side ice)])
+                           :choices (req (if (can-pay? state :runner eid card (:title card) [:credit (rez-cost state side ice)])
                                            ["Rez" "Add to HQ"]
                                            ["Add to HQ"]))
                            :effect (req (if (= target "Rez")

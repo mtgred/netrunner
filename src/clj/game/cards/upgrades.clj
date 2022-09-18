@@ -102,7 +102,7 @@
              :interactive (req true)
              :optional
              {:prompt "Pay 2 [Credits] and trash 2 cards from HQ to end the run?"
-              :req (req (and (can-pay? state side eid card nil [:credit 2 :trash-from-hand 2])
+              :req (req (and (can-pay? state side eid card (:title card) [:credit 2 :trash-from-hand 2])
                              this-server))
               :yes-ability
               {:async true
@@ -348,7 +348,7 @@
                       :player :runner
                       :waiting-prompt "Runner to choose an option"
                       :prompt "Choose one"
-                      :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
+                      :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) [:credit cost])
                                   (str "Pay " cost " [Credits]"))
                                 "End the run"]
                       :msg (req (msg (if (= target "End the run")
@@ -639,7 +639,7 @@
                              :async true
                              :waiting-prompt "Runner to choose an option"
                              :prompt "Choose one"
-                             :choices [(when (can-pay? state :runner eid card "Giordano Memorial Field" :credit credit-cost)  
+                             :choices [(when (can-pay? state :runner eid card (:title card) :credit credit-cost)  
                                          (str "Pay " credit-cost " [Credits]"))
                                        "End the run"]
                              :effect (req (if (= "End the run" target)
@@ -911,20 +911,20 @@
              :player :runner
              :prompt "Choose one"
              :req (req this-server)
-             :choices (req [(when (can-pay? state :runner eid card nil [:click 2])
+             :choices (req [(when (can-pay? state :runner eid card (:title card) [:click 2])
                               "Spend [Click][Click]")
-                            (when (can-pay? state :runner eid card nil [:credit 5])
+                            (when (can-pay? state :runner eid card (:title card) [:credit 5])
                               "Pay 5 [Credits]")
                             "End the run"])
              :async true
              :effect (req (cond+
                             [(and (= target "Spend [Click][Click]")
-                                  (can-pay? state :runner eid card nil [:click 2]))
+                                  (can-pay? state :runner eid card (:title card) [:click 2]))
                              (wait-for (pay state side (make-eid state eid) card :click 2)
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [(and (= target "Pay 5 [Credits]")
-                                  (can-pay? state :runner eid card nil [:credit 5]))
+                                  (can-pay? state :runner eid card (:title card) [:credit 5]))
                              (wait-for (pay state side (make-eid state eid) card :credit 5)
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
@@ -1508,7 +1508,7 @@
                                                (fn [[t s]]
                                                  (and (= :net t)
                                                       (= :corp s))))
-                             (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 2])))
+                             (can-pay? state :corp (assoc eid :source card :source-type :ability) card (:title card) [:credit 2])))
               :waiting-prompt "Corp to choose an option"
               :prompt "Pay 2 [Credits] to do 1 brain damage?"
               :player :corp

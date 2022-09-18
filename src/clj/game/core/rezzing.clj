@@ -113,7 +113,7 @@
                   (:install-rezzed (card-def card))))
        (if (and alternative-cost
                 (not ignore-cost)
-                (can-pay? state side eid card nil alternative-cost))
+                (can-pay? state side eid card (:title card) alternative-cost))
          (continue-ability
            state side
            {:optional

@@ -550,7 +550,7 @@
                                                         (fn [targets]
                                                           (let [context (first targets)]
                                                             (rezzed? (:ice context)))))
-                                      (can-pay? state :runner eid card nil
+                                      (can-pay? state :runner eid card (:title card)
                                                 [:credit (get-strength (:ice context))])))
                        :yes-ability
                        {:async true

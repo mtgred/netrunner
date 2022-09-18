@@ -106,7 +106,7 @@
                    :no-ability {:effect (req (clear-wait-prompt state :corp))}
                    :yes-ability
                    {:async true
-                    :effect (req (if (not (can-pay? state :corp eid card nil :credit 1))
+                    :effect (req (if (not (can-pay? state :corp eid card (:title card) :credit 1))
                                    (do
                                      (toast state :corp "Cannot afford to pay 1 [Credit] to block card exposure" "info")
                                      (expose state :runner eid (:card context)))
