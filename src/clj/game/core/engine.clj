@@ -390,7 +390,7 @@
   (if (seq cost)
     ;; Ensure that any costs can be paid
     (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
-              (if (:msg async-result)
+              (if (:cost-paid async-result)
                 ;; If the cost can be and is paid, perform the ablity
                 (do-paid-ability state side ability card targets async-result)
                 (effect-completed state side eid)))
