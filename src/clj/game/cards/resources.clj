@@ -3061,7 +3061,7 @@
                         {:req (req (<= 2 (number-of-runner-virus-counters state)))
                          :async true
                          :effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
-                                                (if (:number async-result)
+                                                (if (:msg async-result)
                                                   (do (system-msg state side (str "spends " (:msg async-result)))
                                                       (continue-ability state side corp-choice card nil))
                                                   (effect-completed state side eid))))}}}]
