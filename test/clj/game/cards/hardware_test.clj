@@ -4751,6 +4751,31 @@
                            (click-card state :runner tt)
                            (click-card state :runner tt)))))
 
+(deftest time-bomb
+  (do-game
+    (new-game {:runner {:hand ["Time Bomb"]}
+               :corp {:hand ["Hedge Fund" "IPO" "Restructure" "Beanstalk Royalties"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Time Bomb")
+    (is (= 1 (count (:hand (get-runner)))) "Time Bomb not played because of no run")
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Time Bomb")
+    (is (zero? (count (:hand (get-runner)))) "Able to play time bomb")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (= 2 (get-counters (get-hardware state 0) :power)))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (= 3 (get-counters (get-hardware state 0) :power)))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-card state :corp "Hedge Fund")
+    (click-card state :corp "IPO")
+    (click-card state :corp "Restructure")
+    (is (no-prompt? state :corp))
+  ))
+
 (deftest titanium-ribs
   ;; Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol
   (do-game
