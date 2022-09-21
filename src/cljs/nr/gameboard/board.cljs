@@ -621,7 +621,7 @@
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
            side facedown card-target icon new runner-abilities subroutines
-           corp-abilities]
+           subtype-target corp-abilities]
     :as card} flipped disable-click]
   (let [title (get-title card)]
     [:div.card-frame.menu-container
@@ -680,6 +680,7 @@
         [:div.darkbg.strength (or current-strength strength)])
       (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
       (when card-target [:div.darkbg.card-target card-target])
+      (when subtype-target [:div.darkbg.subtype-target subtype-target])
       (when (active? card)
         (let [server-card (get @all-cards title)]
           [:div.darkbg.additional-subtypes
