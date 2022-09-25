@@ -194,6 +194,7 @@
                 :implementation (card-implemented card)
                 :subroutines (subroutines-init (assoc card :cid cid) cdef)
                 :abilities (ability-init cdef)
+                :x-fn (:x-fn cdef)
                 :printed-title (:title card))
          (dissoc :setname :text :_id :influence :number :influencelimit
                  :image_url :factioncost :format :quantity)

@@ -7,7 +7,7 @@
    [game.core.board :refer [all-active-installed all-installed card->server
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index
-                           corp? faceup? get-card get-counters get-zone
+                           corp? faceup? get-card get-counters get-x-fn get-zone
                            hardware? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
                            program? protecting-a-central? protecting-archives? protecting-hq? protecting-rd?
                            resource? rezzed? runner?]]
@@ -3327,8 +3327,9 @@
                  trash-program-sub]})
 
 (defcard "Surveyor"
-  (let [x (req (* 2 (count (:ices (card->server state card)))))]
+  (let [x (req (or ((get-x-fn card) state side nil card nil) 0))]
     {:constant-effects [(ice-strength-bonus x)]
+     :x-fn (req (* 2 (count (:ices (card->server state card)))))
      :subroutines [{:label "Trace X - Give the Runner 2 tags"
                     :trace {:base x
                             :label "Give the Runner 2 tags"
