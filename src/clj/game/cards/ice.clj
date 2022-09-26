@@ -3126,11 +3126,13 @@
             :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Searchlight"
-  (let [sub {:label "Trace X - Give the Runner 1 tag"
-             :trace {:base (req (get-counters card :advancement))
+  (let [x (req ((get-x-fn card) state side nil card nil))
+        sub {:label "Trace X - Give the Runner 1 tag"
+             :trace {:base x
                      :label "Give the Runner 1 tag"
                      :successful (give-tags 1)}}]
-    {:advanceable :always
+    {:x-fn (req (get-counters card :advancement))
+     :advanceable :always
      :subroutines [sub
                    sub]}))
 
