@@ -3327,7 +3327,7 @@
                  trash-program-sub]})
 
 (defcard "Surveyor"
-  (let [x (req (or ((get-x-fn card) state side nil card nil) 0))]
+  (let [x (req ((get-x-fn card) state side nil card nil))]
     {:constant-effects [(ice-strength-bonus x)]
      :x-fn (req (* 2 (count (:ices (card->server state card)))))
      :subroutines [{:label "Trace X - Give the Runner 2 tags"

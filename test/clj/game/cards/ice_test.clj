@@ -5925,6 +5925,21 @@
       (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ice"))))
 
+(deftest surveyor-x-fn-test
+  (do-game
+    (new-game {:corp {:deck ["Surveyor"]}})
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Surveyor" "HQ")
+    (let [surv (get-ice state :hq 0)]
+      (rez state :corp surv)
+      (is (= 2 (get-strength (refresh surv))) "Surveyor has 2 strength for itself")
+      (core/disable-card state :corp (refresh surv))
+      (core/fake-checkpoint state)
+      (is (= 0 (get-strength (refresh surv))) "Surveyor has 0 strength while disabled")
+      (core/enable-card state :corp (refresh surv))
+      (core/fake-checkpoint state)
+      (is (= 2 (get-strength (refresh surv))) "Surveyor has 2 strength again"))))
+
 (deftest susanoo-no-mikoto
   ;;Susanoo-no-Mikoto
   (do-game
