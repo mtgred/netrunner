@@ -1618,6 +1618,21 @@
       (card-subroutine state :corp dp 1)
       (is (nil? (:run @state)) "Run has ended"))))
 
+(deftest datapike-cannot-pay
+  ;; Datapike - Runner cannot pay 2 credits
+  (do-game
+    (new-game {:corp {:deck ["Datapike"]}
+               :runner {:hand ["Professional Contacts"]}})
+    (play-from-hand state :corp "Datapike" "HQ")
+    (let [dp (get-ice state :hq 0)]
+      (rez state :corp dp)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Professional Contacts")
+      (run-on state "HQ")
+      (run-continue state)
+      (card-subroutine state :corp dp 0)
+      (is (nil? (:run @state)) "Run has ended"))))
+
 (deftest diviner
   ;; Diviner
   (do-game
@@ -6103,6 +6118,7 @@
       (is (= "Pup" (:title (get-ice state :hq 1))) "Pup outermost ice on HQ")
       (take-credits state :corp)
       (take-credits state :runner)
+      (is (= "Swap Thimblerig protecting HQ at position 0 with another ice?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes")
       (click-card state :corp (refresh pup))
       (is (= "Pup" (:title (get-ice state :hq 0))) "Pup innermost ice on HQ after swap")

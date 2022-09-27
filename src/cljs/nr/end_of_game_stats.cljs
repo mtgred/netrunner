@@ -19,7 +19,7 @@
    [(tr [:stats.credits-click "Credits by Click"]) (get-in s [:click :credit])]
    [(tr [:stats.cards-drawn "Cards Drawn"]) (get-in s [:gain :card])]
    [(tr [:stats.cards-click "Cards Drawn by Click"]) (get-in s [:click :draw])]
-   [(tr [:stats.tags-gained "Tags Gained"]) (get-in s [:gain :tag])]
+   [(tr [:stats.tags-gained "Tags Gained"]) (get-in s [:gain :tag :base])]
    [(tr [:stats.runs-made "Runs Made"]) (get-in s [:runs :started])]
    [(tr [:stats.cards-accessed "Cards Accessed"]) (get-in s [:access :cards])]])
 

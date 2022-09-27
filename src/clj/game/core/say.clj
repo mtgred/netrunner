@@ -9,7 +9,7 @@
   [{:keys [user text timestamp]
     :or {timestamp (inst/now)}}]
   {:user (if (= "__system__" user) user (select-keys user [:username :emailhash]))
-   :text (str/trim text)
+   :text (if (string? text) (str/trim text) text)
    :timestamp timestamp})
 
 (defn make-system-message

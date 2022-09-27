@@ -951,7 +951,8 @@
         (take-credits state :corp)
         (changes-val-macro -1 (:credit (get-runner))
                            "Paid 1c to run on HQ"
-                           (run-on state :hq))))
+                           (run-on state :hq))
+        (is (last-log-contains? state "spends \\[Click\\] and pays 1 \\[Credits\\] to make a run on HQ") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-front-side-flipping-costs-1-click
       ;; Flipping costs 1 click
@@ -994,8 +995,9 @@
         (take-credits state :corp)
         (core/gain state :runner :credit 10)
         (changes-val-macro -6 (:credit (get-runner))
-                           "Paid nothing to run on HQ"
-                           (run-on state :remote1))))
+                           "Paid 6c to run on remote server"
+                           (run-on state :remote1))
+        (is (last-log-contains? state "spends \\[Click\\] and pays 6 \\[Credits\\] to make a run on Server 1") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-flip-side-flip-back-on-successful-hq-run
       ;; Flip back on successful HQ run

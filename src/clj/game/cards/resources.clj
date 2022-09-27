@@ -1320,17 +1320,24 @@
                                 :type :credit}}})
 
 (defcard "Globalsec Security Clearance"
+  (let [ability {:once :per-turn
+                 :label "Lose [Click] and look at the top card of R&D (start of turn)"
+                 :req (req (:runner-phase-12 @state))
+                 :optional
+                 {:prompt "Lose [Click] to look at the top card of R&D?"
+                  :waiting-prompt "Runner to choose an option"
+                  :autoresolve (get-autoresolve :auto-fire)
+                  :yes-ability
+                  {:msg "lose [Click] and look at the top card of R&D"
+                   :prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                   :choices ["OK"]
+                   :effect (effect (lose-clicks 1))}}}]
   {:req (req (< 1 (get-link state)))
    :flags {:runner-phase-12 (req true)}
-   :abilities [{:msg "lose [Click] and look at the top card of R&D"
-                :once :per-turn
-                :effect (effect (continue-ability
-                                  {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
-                                   :choices ["OK"]}
-                                  card nil))}]
-   :events [{:event :runner-turn-begins
-             :req (req (get-in @state [:per-turn (:cid card)]))
-             :effect (effect (lose-clicks 1))}]})
+   :abilities [ability (set-autoresolve :auto-fire "Globalsec Security Clearance")]
+   :events [(assoc ability
+                   :event :runner-turn-begins
+                   :interactive (req true))]}))
 
 (defcard "Grifter"
   {:events [{:event :runner-turn-ends
@@ -2601,7 +2608,7 @@
   {:abilities [{:async true
                 :label "play an event in the heap"
                 :cost [:click 2 :trash-can]
-                :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                :req (req (and (not (zone-locked? state :runner :discard))
                                (pos? (count (filter event? (:discard runner))))))
                 :prompt "Choose an event in the heap"
                 :msg (msg "play " (:title target))
@@ -3047,9 +3054,9 @@
                                       "Trash the top card of R&D")
                                     "The Runner draws 2 cards"])
                      :async true
-                     :msg (req (if (= target "The Runner draws 2 cards")
+                     :msg (msg (if (= target "The Runner draws 2 cards")
                                 "draw 2 cards"
-                                (msg "to force the Corp to " (decapitalize target))))
+                                (str "force the Corp to " (decapitalize target))))
                      :effect (req (if (= target "The Runner draws 2 cards")
                                     (draw state :runner eid 2)
                                     (mill state :corp eid :corp 1)))}
@@ -3061,7 +3068,7 @@
                         {:req (req (<= 2 (number-of-runner-virus-counters state)))
                          :async true
                          :effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
-                                                (if (:number async-result)
+                                                (if (:msg async-result)
                                                   (do (system-msg state side (str "spends " (:msg async-result)))
                                                       (continue-ability state side corp-choice card nil))
                                                   (effect-completed state side eid))))}}}]

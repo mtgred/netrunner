@@ -764,7 +764,6 @@
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
         (run-continue state)
-        (run-continue state)
         (click-prompt state :runner "No action")
         (is (no-prompt? state :runner) "Runner done with run after 3 accesses")
         (is (not (:run @state)) "Run over"))))
@@ -1134,7 +1133,7 @@
       (run-empty-server state :archives)
       (run-empty-server state :archives)
       (take-credits state :runner)
-      (is (no-prompt? state :runner) "No install prompt if no runs")
+      (is (no-prompt? state :runner) "No install prompt when heap is locked")
       (is (seq (:discard (get-runner))) "Crowdfunding is in discard")
       (is (zero? (count (get-resource state))) "Crowdfunding not installed")))
 
@@ -2546,7 +2545,9 @@
     (is (:runner-phase-12 @state) "Runner in Step 1.2")
     (let [gsec (get-resource state 0)]
       (card-ability state :runner gsec 0)
+      (click-prompt state :runner "Yes")
       (is (= "The top card of R&D is Hedge Fund" (:msg (prompt-map :runner))) "GSec revealed Hedge Fund")
+      (click-prompt state :runner "OK")
       (end-phase-12 state :runner)
       (is (= 3 (:click (get-runner))) "Runner lost 1 click from Globalsec Security Clearance"))))
 
@@ -3964,7 +3965,6 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
-        (run-continue state)
         (run-continue state)
         (play-from-hand state :runner "No One Home")
         (take-credits state :runner)

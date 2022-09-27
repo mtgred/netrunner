@@ -9,7 +9,7 @@
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
-    [game.core.flags :refer [turn-flag?]]
+    [game.core.flags :refer [turn-flag? zone-locked?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
@@ -292,7 +292,7 @@
       ;; Req check
       (and card-req (not (card-req state side (make-eid state) card nil))) :req
       ;; The card's zone is locked
-      (get-in @state [side :locked (first (get-zone card))]) :locked-zone
+      (zone-locked? state side (first (get-zone card))) :locked-zone
       ;; Nothing preventing install
       :else true)))
 

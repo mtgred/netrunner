@@ -1427,6 +1427,7 @@
                                       :async true
                                       :effect (req (corp-install state side eid inst-target nil
                                                                  {:ignore-all-cost true
+                                                                  :no-warning true
                                                                   :install-state :rezzed-no-rez-cost}))}
                         :no-ability {:msg "install a card ignoring all credit costs"
                                      :async true
@@ -1434,19 +1435,21 @@
                                                                 {:ignore-all-cost true}))}}}
                       card nil)
                     ;; It might be worth having a fake prompt here - at the very least, this prevents
-                    ;; the corp from accidentally revealing the card they select
+                    ;; the corp from accidentally revealing that they can't pay for the card they select
                     (pos? (count add-costs))
                     (continue-ability
                       state side
                       {:msg "install a card without paying additional costs to rez"
                        :async true
                        :effect (req (corp-install state side eid inst-target nil
-                                                  {:ignore-all-cost true}))}
+                                                  {:ignore-all-cost true
+                                                   :no-warning true}))}
                       card nil)
                     :else
                     (wait-for (reveal state side inst-target)
                               (corp-install state side eid (get-card state inst-target) nil
                                             {:ignore-all-cost true
+                                             :no-warning true
                                              :install-state :rezzed-no-rez-cost})))))))
           ;; Identify that the card wasn't just dragged to the discard, and that it was trashed
           ;; by the corporation.

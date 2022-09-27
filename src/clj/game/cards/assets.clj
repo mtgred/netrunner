@@ -766,12 +766,25 @@
   {:on-rez {:msg "remove 1 bad publicity"
             :effect (effect (lose-bad-publicity 1))}
    :abilities [{:cost [:click 1 :trash-can]
-                :label "Trash a location"
-                :msg (msg "trash " (:title target) " and take 1 bad publicity")
-                :choices {:card #(has-subtype? % "Location")}
+                :label "Trash a location and take 1 bad publicity"
                 :async true
-                :effect (req (wait-for (trash state side target {:cause-card card})
-                                       (gain-bad-publicity state :corp eid 1)))}]})
+                :effect (req (if (some #(has-subtype? % "Location") (all-installed state :runner))
+                               (continue-ability
+                                 state side
+                                 {:prompt "Trash a location and take 1 bad publicity"
+                                  :msg (msg "trash " (:title target) " and take 1 bad publicity")
+                                  :choices {:min 1
+                                            :card #(has-subtype? % "Location")}
+                                  :async true
+                                  :effect (req (wait-for (trash state side target {:cause-card card})
+                                                         (gain-bad-publicity state :corp eid 1)))}
+                                 card nil)
+                               (continue-ability
+                                 state side
+                                 {:msg "take 1 bad publicity"
+                                  :async true
+                                  :effect (effect (gain-bad-publicity eid 1))}
+                                 card nil)))}]})
 
 (defcard "Encryption Protocol"
   {:constant-effects [{:type :trash-cost
@@ -1302,7 +1315,7 @@
 (defcard "MCA Austerity Policy"
   {:abilities [{:cost [:click 1]
                 :once :per-turn
-                :msg "to force the Runner to lose a [Click] next turn and place a power counter on itself"
+                :msg "force the Runner to lose a [Click] next turn and place a power counter on itself"
                 :effect (req (register-events state side card
                                               [{:event :runner-turn-begins
                                                 :unregister-once-resolved true
@@ -2266,11 +2279,13 @@
      :abilities [ability]}))
 
 (defcard "Synth DNA Modification"
-  {:implementation "Manual fire once subroutine is broken"
-   :abilities [{:msg "do 1 net damage"
-                :label "Do 1 net damage after AP subroutine broken"
-                :once :per-turn
-                :effect (effect (damage eid :net 1 {:card card}))}]})
+  {:events [{:event :subroutines-broken
+             :req (req (and (has-subtype? (first targets) "AP")
+                            (first-event? state side :subroutines-broken
+                                          (fn [targets] (has-subtype? (first targets) "AP")))))
+             :msg "do 1 net damage"
+             :async true
+             :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "Team Sponsorship"
   {:events [{:event :agenda-scored

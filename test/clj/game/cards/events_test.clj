@@ -671,6 +671,25 @@
                            ;; Trashed Ice Wall does not count
                            (run-continue state)))))
 
+(deftest bravado-self-trashing-ice-is-not-counted
+    ;; Self-trashing ice (e.g. traps) is not counted
+    (do-game
+      (new-game {:corp {:hand ["Aimor"]}
+                 :runner {:hand ["Bravado"]}})
+      (play-from-hand state :corp "Aimor" "HQ")
+      (take-credits state :corp)
+      (let [aimor (get-ice state :hq 0)]
+        (play-from-hand state :runner "Bravado")
+        (click-prompt state :runner "HQ")
+        (rez state :corp aimor)
+        (run-continue state)
+        (fire-subs state (refresh aimor))
+        (is (= 1 (count (:discard (get-corp)))) "Aimor was trashed")
+        (changes-val-macro 6 (:credit (get-runner))
+                           "Gained 6 credits from Bravado"
+                           ;; Trashed Aimor does not count
+                           (run-continue state)))))
+
 (deftest bravado-also-gaining-credits-on-unsuccessful-runs
     ;; Also gaining credits on unsuccessful runs
     (do-game
@@ -6150,7 +6169,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "SYN Attack")
       (let [hand (count (:hand (get-corp)))]
-        (click-prompt state :corp "Draw 4")
+        (click-prompt state :corp "Draw 4 cards")
         (is (= (+ hand 4) (count (:hand (get-corp)))) "Corp should draw 4 cards"))))
 
 (deftest syn-attack-and-corp-chooses-to-discard
@@ -6162,7 +6181,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "SYN Attack")
       (let [hand (count (:hand (get-corp)))]
-        (click-prompt state :corp "Discard 2")
+        (click-prompt state :corp "Discard 2 cards from HQ")
         (click-card state :corp (first (:hand (get-corp))))
         (click-card state :corp (second (:hand (get-corp))))
         (is (= (+ hand -2) (count (:hand (get-corp)))) "Corp should discard 2 cards"))))
@@ -6697,7 +6716,6 @@
      (is (>= (:credit (get-runner)) 5) "Runner can trash MVT if they want to")
      (changes-val-macro 0 (:credit (get-runner))
                         "Server 1 MVT doesn't trigger"
-                        (run-continue state)
                         (run-continue state))
      (is (= 1 (count (get-in @state [:corp :rfg]))) "MVT was RFGed")
      (take-credits state :runner)

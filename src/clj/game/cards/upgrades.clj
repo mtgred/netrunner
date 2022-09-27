@@ -351,10 +351,9 @@
                       :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit cost])
                                   (str "Pay " cost " [Credits]"))
                                 "End the run"]
-                      :msg (req (msg (if (= target "End the run")
-                                       "to "
-                                       "to force the Runner to ")
-                                     (decapitalize target)))
+                      :msg (msg (if (= target "End the run")
+                                  (decapitalize target)
+                                  (str "force the Runner to " (decapitalize target))))
                       :effect (req (if (= target "End the run")
                                      (end-run state side eid card)
                                      (wait-for (pay state :runner (make-eid state eid) card :credit cost)
@@ -631,7 +630,6 @@
              :interactive (req true)
              :async true
              :req (req this-server)
-             :msg "force the Runner to pay credits or end the run"
              :effect (effect 
                        (continue-ability
                          (let [credit-cost (* 2 (count (:scored runner)))]
@@ -642,9 +640,11 @@
                              :choices [(when (can-pay? state :runner eid card nil :credit credit-cost)  
                                          (str "Pay " credit-cost " [Credits]"))
                                        "End the run"]
+                             :msg (msg (if (= "End the run" target)
+                                         (decapitalize target)
+                                         (str "force the runner to " (decapitalize target))))
                              :effect (req (if (= "End the run" target)
-                                            (do (system-msg state :corp "uses Giordano Memorial Field to end the run")
-                                                (end-run state :corp eid card))
+                                            (end-run state :corp eid card)
                                             (wait-for (pay state :runner (make-eid state eid) card :credit credit-cost)
                                                       (system-msg state :runner (:msg async-result))
                                                       (effect-completed state side eid))))})
@@ -1608,7 +1608,7 @@
                      :successful
                      {:async true
                       :msg (msg (let [n (min 2 (count (all-installed state :runner)))]
-                                  (str "to force the runner to trash "
+                                  (str "force the runner to trash "
                                        (quantify n "installed card")
                                        (when (not (pos? n))
                                          "but there are no installed cards to trash"))))
