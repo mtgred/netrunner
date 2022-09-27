@@ -843,8 +843,8 @@
         (card-ability state :corp clyde 0)
         (is (zero? (:credit (get-runner))))
         (is (= 2 (count (:deck (get-runner)))))
-        (is (some #{"Trash top card"} (prompt-buttons :runner)))
-        (click-prompt state :runner "Trash top card")
+        (is (some #{"Trash the top card of the stack"} (prompt-buttons :runner)))
+        (click-prompt state :runner "Trash the top card of the stack")
         (is (zero? (:credit (get-runner))))
         (is (= 1 (count (:deck (get-runner))))))))
 
@@ -863,8 +863,8 @@
         (card-ability state :corp clyde 0)
         (is (= 9 (:credit (get-runner))))
         (is (= 2 (count (:deck (get-runner)))))
-        (is (some #{"Pay 1 [Credits]" "Trash top card"} (prompt-buttons :runner)))
-        (click-prompt state :runner "Trash top card")
+        (is (some #{"Pay 1 [Credits]" "Trash the top card of the stack"} (prompt-buttons :runner)))
+        (click-prompt state :runner "Trash the top card of the stack")
         (is (= 9 (:credit (get-runner))))
         (is (= 1 (count (:deck (get-runner))))))))
 

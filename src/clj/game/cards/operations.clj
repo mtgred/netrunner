@@ -2559,7 +2559,9 @@
               :msg (msg "force the Runner to " (decapitalize target))
               :player :runner
               :prompt "Choose one"
-              :choices ["Pay 4 [Credits]" "Take 1 tag"]
+              :choices (req [(when (can-pay? state :runner eid card nil [:credit 4])
+                               "Pay 4 [Credits]")
+                             "Take 1 tag"])
               :effect (req (if (= target "Pay 4 [Credits]")
                              (wait-for (pay state :runner (make-eid state eid) card :credit 4)
                                        (system-msg state :runner (:msg async-result))

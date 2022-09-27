@@ -637,7 +637,7 @@
                              :async true
                              :waiting-prompt "Runner to choose an option"
                              :prompt "Choose one"
-                             :choices [(when (can-pay? state :runner eid card "Giordano Memorial Field" :credit credit-cost)  
+                             :choices [(when (can-pay? state :runner eid card nil :credit credit-cost)  
                                          (str "Pay " credit-cost " [Credits]"))
                                        "End the run"]
                              :msg (msg (if (= "End the run" target)
