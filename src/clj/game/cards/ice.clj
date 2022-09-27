@@ -18,7 +18,7 @@
                                   do-brain-damage do-net-damage offer-jack-out
                                   reorder-choice]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [get-effects register-floating-effect]]
+   [game.core.effects :refer [get-effects register-floating-effect unregister-constant-effects]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [gather-events pay register-events resolve-ability
                              trigger-event unregister-events]]
@@ -2339,6 +2339,7 @@
   (letfn [(disable-hosted [state side c]
             (doseq [hc (:hosted (get-card state c))]
               (unregister-events state side hc)
+              (unregister-constant-effects state side hc)
               (update! state side (dissoc hc :abilities))))]
     {:on-rez {:async true
               :effect (req (let [magnet card]
