@@ -903,7 +903,7 @@
                               (effect-completed state side eid)))}
               :no-ability
               {:effect (effect (system-msg "declines to use Malapert Data Vault")
-                               (effect-completed state side eid))}}}]})
+                               (effect-completed eid))}}}]})
 
 (defcard "Manegarm Skunkworks"
   {:events [{:event :approach-server
