@@ -3403,7 +3403,7 @@
                  :optional
                  {:req (req (and (<= 2 (count (filter ice? (all-installed state :corp))))
                                  (if run (same-card? (:ice context) card) true)))
-                  :prompt "Swap Thimblerig with another ice?"
+                  :prompt (msg "Swap " (card-str state card) " with another ice?")
                   :yes-ability {:prompt "Choose a piece of ice to swap Thimblerig with"
                                 :choices {:card ice?
                                           :not-self true}
