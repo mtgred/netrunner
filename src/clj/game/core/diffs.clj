@@ -133,6 +133,7 @@
    :side
    :strength
    :subroutines
+   :subtype-target
    :subtypes
    :title
    :type

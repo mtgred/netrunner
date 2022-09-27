@@ -56,6 +56,7 @@
    strength
    subroutines
    subtype
+   subtype-target
    subtypes
    title
    trash
