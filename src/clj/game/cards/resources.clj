@@ -1320,17 +1320,24 @@
                                 :type :credit}}})
 
 (defcard "Globalsec Security Clearance"
+  (let [ability {:once :per-turn
+                 :label "Lose [Click] and look at the top card of R&D (start of turn)"
+                 :req (req (:runner-phase-12 @state))
+                 :optional
+                 {:prompt "Lose [Click] to look at the top card of R&D?"
+                  :waiting-prompt "Runner to choose an option"
+                  :autoresolve (get-autoresolve :auto-fire)
+                  :yes-ability
+                  {:msg "lose [Click] and look at the top card of R&D"
+                   :prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                   :choices ["OK"]
+                   :effect (effect (lose-clicks 1))}}}]
   {:req (req (< 1 (get-link state)))
    :flags {:runner-phase-12 (req true)}
-   :abilities [{:msg "lose [Click] and look at the top card of R&D"
-                :once :per-turn
-                :effect (effect (continue-ability
-                                  {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
-                                   :choices ["OK"]}
-                                  card nil))}]
-   :events [{:event :runner-turn-begins
-             :req (req (get-in @state [:per-turn (:cid card)]))
-             :effect (effect (lose-clicks 1))}]})
+   :abilities [ability (set-autoresolve :auto-fire "Globalsec Security Clearance")]
+   :events [(assoc ability
+                   :event :runner-turn-begins
+                   :interactive (req true))]}))
 
 (defcard "Grifter"
   {:events [{:event :runner-turn-ends
