@@ -1627,9 +1627,9 @@
     :choices (req [(when-not (empty? (:hand runner))
                      "Trash 1 random card from the grip")
                    "The Corp gains [Click][Click]"])
-    :msg (req (if (= target "The Corp gains [Click][Click]")
+    :msg (msg (if (= target "The Corp gains [Click][Click]")
                  "gain [Click][Click]"
-                 (msg "to force the Runner to " (decapitalize target))))
+                 (str "force the Runner to " (decapitalize target))))
     :effect (req (if (= target "The Corp gains [Click][Click]")
                    (do (gain-clicks state :corp 2)
                        (effect-completed state side eid))
@@ -1855,7 +1855,9 @@
   {:on-play
    {:req (req (last-turn? state :runner :successful-run))
     :player :runner
-    :msg (msg "force the Runner to " (decapitalize target))
+    :msg (msg (if (= target "Pay 8 [Credits]")
+                (str "force the runner to " (decapitalize target))
+                "give the runner 1 tag"))
     :waiting-prompt "Runner to choose an option"
     :prompt "Choose one"
     :choices (req ["Take 1 tag"

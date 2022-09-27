@@ -2201,7 +2201,7 @@
   {:on-play
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :rfg-instead-of-trashing true
-    :msg "make the Corp pay 5 [Credits] or take 1 bad publicity"
+    :msg (msg "force the corp to " (decapitalize target))
     :waiting-prompt "Corp to choose an option"
     :player :corp
     :prompt "Choose one"
@@ -2210,10 +2210,10 @@
                    "Take 1 bad publicity"])
     :async true
     :effect (req (if (= target "Pay 5 [Credits]")
-                   (do (system-msg state side "pays 5 [Credits]")
-                       (lose-credits state :corp eid 5))
-                   (do (system-msg state side "takes 1 bad publicity")
-                       (gain-bad-publicity state :corp 1)
+                   (wait-for (pay state :corp (make-eid state eid) card :credit 5)
+                             (system-msg state :corp (:msg async-result))
+                             (effect-completed state side eid))
+                   (do (gain-bad-publicity state :corp 1)
                        (effect-completed state side eid))))}})
 
 (defcard "Möbius"
@@ -3165,14 +3165,12 @@
     :waiting-prompt "Corp to choose an option"
     :prompt "Choose one"
     :choices (req [(when (<= 2 (count (:hand corp)))
-                     "Discard 2")
-                   "Draw 4"])
+                     "Discard 2 cards from HQ")
+                   "Draw 4 cards"])
     :async true
-    :effect (req (if (= target "Draw 4")
+    :msg (msg "force the corp to " (decapitalize target))
+    :effect (req (if (= target "Draw 4 cards")
                    (wait-for (draw state :corp 4)
-                             (system-msg state :corp
-                                         (str "uses SYN Attack to draw "
-                                              (quantify (count async-result) "card")))
                              (effect-completed state side eid))
                    (continue-ability
                      state :corp
@@ -3182,10 +3180,7 @@
                                 :card #(and (in-hand? %)
                                             (corp? %))}
                       :async true
-                      :effect (effect (system-msg :runner
-                                                  (str "uses SYN Attack to force the "
-                                                       "Corp to trash 2 cards from HQ"))
-                                      (trash-cards :corp eid targets {:unpreventable true
+                      :effect (effect (trash-cards :corp eid targets {:unpreventable true
                                                                       :cause-card card
                                                                       :cause :forced-to-trash}))}
                      card nil)))}})

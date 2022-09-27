@@ -1319,7 +1319,7 @@
 (defcard "MCA Austerity Policy"
   {:abilities [{:cost [:click 1]
                 :once :per-turn
-                :msg "to force the Runner to lose a [Click] next turn and place a power counter on itself"
+                :msg "force the Runner to lose a [Click] next turn and place a power counter on itself"
                 :effect (req (register-events state side card
                                               [{:event :runner-turn-begins
                                                 :unregister-once-resolved true

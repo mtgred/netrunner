@@ -3054,9 +3054,9 @@
                                       "Trash the top card of R&D")
                                     "The Runner draws 2 cards"])
                      :async true
-                     :msg (req (if (= target "The Runner draws 2 cards")
+                     :msg (msg (if (= target "The Runner draws 2 cards")
                                 "draw 2 cards"
-                                (msg "to force the Corp to " (decapitalize target))))
+                                (str "force the Corp to " (decapitalize target))))
                      :effect (req (if (= target "The Runner draws 2 cards")
                                     (draw state :runner eid 2)
                                     (mill state :corp eid :corp 1)))}
