@@ -2844,7 +2844,7 @@
     :effect (effect (add-prop card :advance-counter 1 {:placed true})
                     (continue-ability
                       (let [card (get-card state card)
-                            counters (get-counters card :advancement)]
+                            counters (x-fn state side eid card targets)]
                         {:optional
                          {:prompt (str "Place " (quantify counters "advancement counter") " on another ice?")
                           :yes-ability
@@ -2853,6 +2853,7 @@
                                      :not-self true}
                            :effect (effect (add-prop target :advance-counter counters {:placed true}))}}})
                       (get-card state card) nil))}
+   :x-fn (req (get-counters card :advancement))
    :subroutines [end-the-run
                  end-the-run]})
 
