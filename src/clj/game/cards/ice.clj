@@ -124,6 +124,13 @@
               (assoc args :req (req (currently-encountering-card card state))))))
 
 
+;;; Helper for x-fn cards
+(def x-fn
+  (req
+    (if-let [x-fn (and card (get-x-fn card))]
+      (x-fn state side eid card targets)
+      0)))
+
 ;;; General subroutines
 (def end-the-run
   "Basic ETR subroutine"
@@ -2742,13 +2749,14 @@
               (wait-for (resolve-ability state side trash-program-sub card nil)
                         (trash-programs (dec cnt) state side card eid))
               (effect-completed state side eid)))]
-    {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
-                    :msg (msg "do " (next-ice-count corp) " net damage")
-                    :effect (effect (damage eid :net (next-ice-count corp) {:card card}))}
-                   {:label "Trash 1 program for each rezzed NEXT ice"
+    {:x-fn (req (next-ice-count corp))
+     :subroutines [{:label "Do X net damage"
+                    :msg (msg "do " (x-fn state side eid card targets) " net damage")
+                    :effect (effect (damage eid :net (x-fn state side eid card targets) {:card card}))}
+                   {:label "Trash X programs"
                     :async true
                     :effect (req (trash-programs (min (count (filter program? (all-active-installed state :runner)))
-                                                      (next-ice-count corp))
+                                                      (x-fn state side eid card targets))
                                                  state side card eid))}]}))
 
 (defcard "NEXT Opal"
@@ -2774,10 +2782,11 @@
                :effect (effect (reset-variable-subs card (next-ice-count corp) sub))}]}))
 
 (defcard "NEXT Sapphire"
-  {:subroutines [{:label "Draw up to X cards"
-                  :prompt "How many cards do you want to draw?"
+  {:x-fn (req (next-ice-count corp))
+   :subroutines [{:label "Draw up to X cards"
+                  :prompt "Draw how many cards?"
                   :msg (msg "draw " (quantify target "card"))
-                  :choices {:number (req (next-ice-count corp))
+                  :choices {:number x-fn
                             :default (req 1)}
                   :async true
                   :effect (effect (draw eid target))}
@@ -2786,7 +2795,7 @@
                   :show-discard  true
                   :choices {:card #(and (corp? %)
                                         (in-discard? %))
-                            :max (req (next-ice-count corp))}
+                            :max x-fn}
                   :effect (req (doseq [c targets]
                                  (move state side c :hand)))
                   :msg (msg "add "
@@ -2801,7 +2810,7 @@
                   :prompt "Choose cards to shuffle into R&D"
                   :choices {:card #(and (corp? %)
                                         (in-hand? %))
-                            :max (req (next-ice-count corp))}
+                            :max x-fn}
                   :effect (req (doseq [c targets]
                                  (move state :corp c :deck))
                                (shuffle! state :corp :deck))
@@ -3329,17 +3338,16 @@
                  trash-program-sub]})
 
 (defcard "Surveyor"
-  (let [x (req ((get-x-fn card) state side nil card nil))]
-    {:constant-effects [(ice-strength-bonus x)]
-     :x-fn (req (* 2 (count (:ices (card->server state card)))))
-     :subroutines [{:label "Trace X - Give the Runner 2 tags"
-                    :trace {:base x
-                            :label "Give the Runner 2 tags"
-                            :successful (give-tags 2)}}
-                   {:label "Trace X - End the run"
-                    :trace {:base x
-                            :label "End the run"
-                            :successful end-the-run}}]}))
+  {:constant-effects [(ice-strength-bonus x-fn)]
+   :x-fn (req (* 2 (count (:ices (card->server state card)))))
+   :subroutines [{:label "Trace X - Give the Runner 2 tags"
+                  :trace {:base x-fn
+                          :label "Give the Runner 2 tags"
+                          :successful (give-tags 2)}}
+                 {:label "Trace X - End the run"
+                  :trace {:base x-fn
+                          :label "End the run"
+                          :successful end-the-run}}]})
 
 (defcard "Susanoo-no-Mikoto"
   {:subroutines [{:async true
