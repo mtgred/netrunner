@@ -373,11 +373,14 @@
                         1 "Sentry")]))
 
 (defcard "Afterimage"
-  (auto-icebreaker {:events [{:event :encounter-ice
+  (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
+                    :events [{:event :encounter-ice
                               :interactive (req true)
                               :optional
                               {:req (req (and (has-subtype? (:ice context) "Sentry")
-                                              (can-pay? state :runner eid card nil [:credit 2])))
+                                              (can-pay? state :runner eid card nil [:credit 2])
+                                              (some #(has-subtype? % "Stealth")
+                                                    (all-active state :runner))))
                                :once :per-turn
                                :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)))
                                :yes-ability
