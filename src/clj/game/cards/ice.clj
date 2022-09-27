@@ -569,14 +569,14 @@
 
 (defcard "Aimor"
   {:subroutines [{:async true
-                  :label "Trash the top 3 cards of the Stack. Trash Aimor."
+                  :label "Trash the top 3 cards of the stack"
                   :effect (req (system-msg state :corp
                                            (str "uses Aimor to trash "
                                                 (str/join ", " (map :title (take 3 (:deck runner))))
-                                                " from the Runner's Stack"))
+                                                " from the top of the stack and trash itself"))
                                (wait-for (mill state :corp :runner 3)
-                                         (system-msg state side (str "trashes Aimor"))
-                                         (trash state side eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Akhet"
   (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
@@ -1173,10 +1173,11 @@
                  end-the-run]})
 
 (defcard "Data Mine"
-  {:subroutines [{:msg "do 1 net damage"
+  {:subroutines [{:msg "do 1 net damage and trash itself"
                   :async true
                   :effect (req (wait-for (damage state :runner :net 1 {:card card})
-                                         (trash state :corp eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Data Raven"
   {:abilities [(power-counter-ability (give-tags 1))]
@@ -1910,7 +1911,7 @@
                            (has-subtype? % "Bioroid"))
                      (concat (:hand corp) (:discard corp))))
      :async true
-     :prompt "Install a piece of Bioroid ice from HQ or Archives?"
+     :prompt "Choose a piece of Bioroid ice in HQ or Archives to install"
      :show-discard true
      :choices {:card #(and (corp? %)
                            (or (in-hand? %)
@@ -1926,6 +1927,7 @@
                                 [{:event :run-ends
                                   :duration :end-of-run
                                   :async true
+                                  :msg (req (msg "derez " (:title new-ice) " and trash itself"))
                                   :effect (effect (derez new-ice)
                                                   (trash eid card {:cause :subroutine}))}]))))}]})
 
@@ -2066,7 +2068,9 @@
             :effect (effect (damage eid :net 2 {:card card}))}
    :subroutines [(assoc runner-trash-installed-sub
                         :effect (req (wait-for (trash state side target {:cause :subroutine})
-                                               (trash state side eid card {:cause :subroutine}))))]})
+                                               (system-msg state :corp "uses It's a Trap! to trash itself")
+                                               (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                               (encounter-ends state side eid))))]})
 
 (defcard "Ivik"
   {:subroutines [(do-net-damage 2)
@@ -2167,7 +2171,9 @@
                     :msg (msg "force the Runner to breach HQ and access " (:title target))
                     :effect (req (wait-for (breach-server state :runner [:hq] {:no-root true
                                                                                :access-first target})
-                                           (trash state side eid card {:cause :subroutine})))}}}]})
+                                           (system-msg state :corp "uses Kitsune to trash itself")
+                                           (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                           (encounter-ends state side eid)))}}}]})
 
 (defcard "Komainu"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-net-damage 1)))}
@@ -2188,15 +2194,13 @@
   {:subroutines [{:label "Force the Runner to trash an installed piece of hardware"
                   :player :runner
                   :async true
-                  :msg (msg "force the Runner to trash " (:title target))
+                  :msg (msg "force the Runner to trash " (:title target) " and trash itself")
                   :prompt "Choose a piece of hardware to trash"
                   :choices {:card #(and (installed? %)
                                         (hardware? %))}
                   :effect (req (wait-for (trash state side target {:cause :subroutine})
-                                         (when current-ice
-                                           (continue state :corp nil)
-                                           (continue state :runner nil))
-                                         (trash state side eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Lancelot"
   (grail-ice trash-program-sub))
@@ -2271,12 +2275,13 @@
                                    :prompt "Choose a card to add to the Grip"
                                    :choices (req (top-3 state))
                                    :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
-                                             " [Credits] and shuffle the Stack. Loot Box is trashed")
+                                             " [Credits], shuffle the Stack and trash itself")
                                    :async true
                                    :effect (req (move state :runner target :hand)
                                                 (wait-for (gain-credits state :corp (:cost target))
                                                           (shuffle! state :runner :deck)
-                                                          (trash state side eid card {:cause :subroutine})))}
+                                                          (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                                          (encounter-ends state side eid)))}
                                   card nil)))}]}))
 
 (defcard "Lotus Field"
@@ -2508,15 +2513,19 @@
 
 (defcard "Mganga"
   {:subroutines [(do-psi {:async true
-                          :label "do 2 net damage"
+                          :label "Do 2 net damage"
+                          :msg "do 2 net damage and trash itself"
                           :player :corp
                           :effect (req (wait-for (damage state :corp :net 2 {:card card})
-                                                 (trash state :corp eid card {:cause :subroutine})))}
+                                                 (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                                 (encounter-ends state side eid)))}
                          {:async true
-                          :label "do 1 net damage"
+                          :label "Do 1 net damage"
+                          :msg "do 1 net damage and trash itself"
                           :player :corp
                           :effect (req (wait-for (damage state :corp :net 1 {:card card})
-                                                 (trash state :corp eid card {:cause :subroutine})))})]})
+                                                 (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                                 (encounter-ends state side eid)))})]})
 
 (defcard "Mind Game"
   {:subroutines [(do-psi {:label "Redirect the run to another server"
@@ -3031,6 +3040,7 @@
                                              (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
                            (wait-for (trash state :corp (make-eid state eid) card {:cause-card card})
+                                     (system-msg state :corp "uses Sadaka to trash itself")
                                      (encounter-ends state side eid))))}]}))
 
 (defcard "Sagittarius"
@@ -3068,7 +3078,7 @@
                   :label "Move Sand Storm and the run to another server"
                   :prompt "Choose another server and redirect the run to its outermost position"
                   :choices (req (remove #{(zone->name (:server (:run @state)))} (cancellable servers)))
-                  :msg (msg "move Sand Storm and the run. The Runner is now running on " target ". Sand Storm is trashed")
+                  :msg (msg "move itself and the run on " target " and trash itself")
                   :effect (req (let [moved-ice (move state side card (conj (server->zone state target) :ices))]
                                  (redirect-run state side target)
                                  (wait-for (trash state side (make-eid state eid) moved-ice {:unpreventable true :cause :subroutine})
@@ -3264,13 +3274,11 @@
 
 (defcard "Special Offer"
   {:subroutines [{:label "Gain 5 [Credits] and trash Special Offer"
-                  :msg "gains 5 [Credits] and trashes Special Offer"
+                  :msg "gain 5 [Credits] and trash itself"
                   :async true
                   :effect (req (wait-for (gain-credits state :corp 5)
-                                         (when current-ice
-                                           (continue state :corp nil)
-                                           (continue state :runner nil))
-                                         (trash state side eid card {:cause :subroutine})))}]})
+                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Spiderweb"
   {:subroutines [end-the-run
@@ -3582,14 +3590,12 @@
 
 (defcard "Universal Connectivity Fee"
   {:subroutines [{:label "Force the Runner to lose credits"
-                  :msg (msg "force the Runner to lose " (if tagged "all credits" "1 [Credits]"))
+                  :msg (msg "force the Runner to lose " (if tagged "all credits and trash itself" "1 [Credits]"))
                   :async true
                   :effect (req (if tagged
                                  (wait-for (lose-credits state :runner (make-eid state eid) :all)
-                                           (when current-ice
-                                             (continue state :corp nil)
-                                             (continue state :runner nil))
-                                           (trash state side eid card {:cause :subroutine}))
+                                           (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                           (encounter-ends state side eid))
                                  (lose-credits state :runner eid 1)))}]})
 
 (defcard "Upayoga"
@@ -3733,13 +3739,11 @@
 
 (defcard "Whirlpool"
   {:subroutines [{:label "The Runner cannot jack out for the remainder of this run"
-                  :msg "prevent the Runner from jacking out"
+                  :msg "prevent the Runner from jacking out and trash itself"
                   :async true
                   :effect (req (prevent-jack-out state side)
-                               (when current-ice
-                                 (continue state :corp nil)
-                                 (continue state :runner nil))
-                               (trash state side eid card {:cause :subroutine}))}]})
+                               (wait-for (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                         (encounter-ends state side eid)))}]})
 
 (defcard "Whitespace"
   {:subroutines [(runner-loses-credits 3)

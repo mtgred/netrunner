@@ -1636,7 +1636,6 @@
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (is (= 4 (:credit (get-runner))))
         (run-continue state)
-        (run-continue state)
         (click-prompt state :corp "Yes") ; pay 3 to fire Overwriter
         (card-ability state :runner ff 1)
         (click-prompt state :runner "Done")
@@ -3783,7 +3782,6 @@
           (is (second-last-log-contains? state "Sure Gamble")
               "Ramujan did log trashed card names")
           (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
-          (run-continue state)
           (run-continue state)
           (click-prompt state :corp "No")
           (click-prompt state :runner "No action")
