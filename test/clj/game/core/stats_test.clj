@@ -35,6 +35,15 @@
       (is (= 17 (get-in @state [:stats :runner :gain :credit])) "Runner gained 17 credits")
       (is (= 5 (get-in @state [:stats :runner :spent :credit])) "Runner spent 5 credits"))))
 
+(deftest tags-count
+  (testing "tags gained"
+    (do-game
+      (new-game {:corp {:hand ["Breaking News"]}})
+      (play-and-score state "Breaking News")
+      (take-credits state :corp)
+      (remove-tag state :runner)
+      (is (= 2 (get-in @state [:stats :runner :gain :tag :base])) "Runner gained 2 tags"))))
+
 (deftest credits-from-cards
   (testing "Take from Liberated Account"
     (do-game
