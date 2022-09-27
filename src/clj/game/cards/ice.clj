@@ -1213,12 +1213,12 @@
                  end-the-run-if-tagged]})
 
 (defcard "Datapike"
-  {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
-                  :async true
+  {:subroutines [{:async true
                   :effect (req (wait-for (pay state :runner (make-eid state eid) card :credit 2)
-                                         (when-let [payment-str (:msg async-result)]
-                                           (system-msg state :runner payment-str))
-                                         (effect-completed state side eid)))}
+                                         (if (:cost-paid async-result)
+                                           (do (system-msg state :runner (:msg async-result))
+                                               (effect-completed state side eid))
+                                           (end-run state :corp eid card))))}
                  end-the-run]})
 
 (defcard "Diviner"
