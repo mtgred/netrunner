@@ -24,7 +24,7 @@
                              first-successful-run-on-server? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-host? card-flag? zone-locked?]]
+   [game.core.flags :refer [can-host? card-flag? lock-zone release-zone zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-credits]]
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [all-subs-broken-by-card? all-subs-broken?
@@ -1477,10 +1477,14 @@
 (defcard "Harbinger"
   {:on-trash
    {:req (req (not-any? #{:facedown :hand} (get-zone card)))
-    :effect (req (let [lock (get-in @state [:runner :locked :discard])]
-                   (swap! state assoc-in [:runner :locked] nil)
-                   (flip-facedown state side card)
-                   (swap! state assoc-in [:runner :locked] lock)))}})
+    :effect (req (if (zone-locked? state :runner :discard)
+                   (let [locks (get-in @state [:runner :locked :discard])]
+                     (doseq [lock locks]
+                       (release-zone state side lock :runner :discard))
+                     (flip-facedown state side card)
+                     (doseq [lock locks]
+                       (lock-zone state side lock :runner :discard)))
+                   (flip-facedown state side card)))}})
 
 (defcard "Hemorrhage"
   {:events [{:event :successful-run

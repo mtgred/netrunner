@@ -441,7 +441,15 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
-      (is (no-prompt? state :runner) "Paperclip prompt did not come up")))
+      (is (no-prompt? state :runner) "Paperclip prompt did not come up")
+      (fire-subs state (get-ice state :hq 0))
+      (core/gain state :runner :credit 3)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (run-on state "HQ")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count (get-program state))) "Paperclip installed")))
 
 (deftest blacklist-need-to-allow-steal-2426
     ;; Need to allow steal. #2426
