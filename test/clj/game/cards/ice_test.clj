@@ -990,6 +990,21 @@
       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is now installed at position 1")
       (is (= 3 (get-in @state [:run :position])) "Runner has been moved back to accomodate"))))
 
+(deftest bloop
+  ;; Bloop
+  (do-game
+    (new-game {:corp {:hand ["Bloop" "Echo"]}})
+    (play-from-hand state :corp "Bloop" "HQ")
+    (play-from-hand state :corp "Echo" "R&D")
+    (rez state :corp (get-ice state :hq 0))
+    (is (not (rezzed? (get-ice state :hq 0))) "did not rez bloop, couldn't pay the cost")
+    (is (no-prompt? state :corp))
+    (rez state :corp (get-ice state :rd 0))
+    (rez state :corp (get-ice state :hq 0))
+    (click-card state :corp (get-ice state :rd 0))
+    (is (not (rezzed? (get-ice state :rd 0))) "derezzed echo")
+    (is (rezzed? (get-ice state :hq 0)) "rezzed bloop")))
+
 (deftest border-control
   ;; Border Control
   (do-game
