@@ -364,6 +364,25 @@
 
 ;; Card definitions
 
+(defcard "Abaasy"
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
+                                (strength-pump 2 2)]
+                    :events [{:event :subroutines-broken
+                              :req (req (and (all-subs-broken-by-card? target card)
+                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
+                              :async true
+                              :effect (effect (continue-ability
+                                                {:prompt (str "Trash a card to draw a card?")
+                                                 :async true
+                                                 :choices {:card #(and (in-hand? %)
+                                                                       (runner? %))}
+                                                 :msg (msg "trash " (:title target) " to draw a card")
+                                                 :effect (req (wait-for (trash state side target {:unpreventable true
+                                                                                                  :cause-card card})
+                                                                        (draw state :runner eid 1)))
+                                                 :cancel-effect (effect (effect-completed eid))}
+                                                card nil))}]}))
+
 (defcard "Abagnale"
   (trash-to-bypass (break-sub 1 1 "Code Gate")
                    (strength-pump 2 2)))

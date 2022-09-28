@@ -9,6 +9,29 @@
             [clojure.string :as str]
             [clojure.test :refer :all]))
 
+(deftest abaasy
+  ;; Abaasy
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:hand ["Abaasy" "Dirty Laundry"]
+                        :deck ["Sure Gamble"]
+                        :credits 10}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Abaasy")
+    (run-on state "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state)
+    (card-ability state :runner (get-program state 0) 1)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "Force the Runner to lose [Click]")
+    (click-prompt state :runner "End the run")
+    (click-card state :runner "Dirty Laundry")
+    (is (no-prompt? state :runner))
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= 1 (count (:hand (get-runner)))))))
+
 (deftest abagnale
   ;; Abagnale
   (do-game
