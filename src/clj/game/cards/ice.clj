@@ -127,7 +127,7 @@
 ;;; Helper for x-fn cards
 (def x-fn
   (req
-    (if-let [x-fn (and (not (:disabled card)) (:x-fn card))]
+    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
       (x-fn state side eid card targets)
       0)))
 
@@ -3136,9 +3136,8 @@
             :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Searchlight"
-  (let [x (req ((get-x-fn card) state side nil card nil))
-        sub {:label "Trace X - Give the Runner 1 tag"
-             :trace {:base x
+  (let [sub {:label "Trace X - Give the Runner 1 tag"
+             :trace {:base x-fn
                      :label "Give the Runner 1 tag"
                      :successful (give-tags 1)}}]
     {:x-fn (req (get-counters card :advancement))
