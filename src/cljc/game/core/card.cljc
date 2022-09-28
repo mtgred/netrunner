@@ -371,11 +371,6 @@
       (and (is-type? card "Agenda")
            (installed? card))))
 
-(defn get-x-fn
-  [card]
-  (or (and (not (:disabled card)) (:x-fn card))
-      (fn [_ _ _ _ _] 0)))
-
 (defn get-counters
   "Get number of counters of specified type."
   [card counter]

@@ -7,7 +7,7 @@
    [game.core.board :refer [all-active-installed all-installed card->server
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index
-                           corp? faceup? get-card get-counters get-x-fn get-zone
+                           corp? faceup? get-card get-counters get-zone
                            hardware? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
                            program? protecting-a-central? protecting-archives? protecting-hq? protecting-rd?
                            resource? rezzed? runner?]]
@@ -127,7 +127,7 @@
 ;;; Helper for x-fn cards
 (def x-fn
   (req
-    (if-let [x-fn (and card (get-x-fn card))]
+    (if-let [x-fn (and (not (:disabled card)) (:x-fn card))]
       (x-fn state side eid card targets)
       0)))
 
