@@ -863,6 +863,12 @@
                                 {:ignore-all-cost true
                                  :index (max (dec run-position) 0)}))}]})
 
+(defcard "Bloop"
+  {:additional-cost [:derez-harmonic]
+   :subroutines [(do-brain-damage 1)
+                 trash-program-sub
+                 trash-program-sub]})
+
 (defcard "Border Control"
   {:abilities [{:label "End the run"
                 :msg "end the run"
