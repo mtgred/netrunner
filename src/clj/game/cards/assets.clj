@@ -20,7 +20,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
-                                  trash-on-empty]]
+                                  trash-on-empty x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [register-floating-effect]]
@@ -95,13 +95,6 @@
                   (:accessed target)))
    :msg "add itself to the Runner's score area as an agenda worth 2 agenda points"
    :effect (req (as-agenda state :runner card 2))})
-
-;;; Helper for x-fn cards
-(def x-fn
-  (req
-    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
-      (x-fn state side eid card targets)
-      0)))
 
 ;; Card definitions
 

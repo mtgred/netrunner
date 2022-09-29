@@ -16,7 +16,7 @@
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
                                   do-brain-damage do-net-damage offer-jack-out
-                                  reorder-choice]]
+                                  reorder-choice x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [get-effects register-floating-effect unregister-constant-effects]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -122,14 +122,6 @@
   ([cost qty args]
    (break-sub [:lose-click cost] qty nil
               (assoc args :req (req (currently-encountering-card card state))))))
-
-
-;;; Helper for x-fn cards
-(def x-fn
-  (req
-    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
-      (x-fn state side eid card targets)
-      0)))
 
 ;;; General subroutines
 (def end-the-run

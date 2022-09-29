@@ -15,7 +15,7 @@
    [game.core.damage :refer [chosen-damage damage damage-prevent
                              enable-runner-damage-choice runner-can-choose-damage?]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
-                                  reorder-choice trash-on-empty]]
+                                  reorder-choice trash-on-empty x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect
                               unregister-effects-for-card unregister-floating-effects]]
@@ -65,15 +65,6 @@
    [game.core.set-aside :refer [set-aside get-set-aside]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.mark :refer [identify-mark-ability]]))
-
-;; Helpers
-
-;;; Helper for x-fn cards
-(def x-fn
-  (req
-    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
-      (x-fn state side eid card targets)
-      0)))
 
 ;; Card definitions
 
