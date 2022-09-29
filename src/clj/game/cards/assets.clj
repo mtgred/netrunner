@@ -11,7 +11,7 @@
                                     lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed
                             installable-servers]]
-   [game.core.card :refer [agenda? asset? can-be-advanced? corp? event?
+   [game.core.card :refer [active? agenda? asset? can-be-advanced? corp? event?
                            faceup? fake-identity? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title
                            get-zone hardware? has-subtype? ice? identity?
@@ -95,6 +95,13 @@
                   (:accessed target)))
    :msg "add itself to the Runner's score area as an agenda worth 2 agenda points"
    :effect (req (as-agenda state :runner card 2))})
+
+;;; Helper for x-fn cards
+(def x-fn
+  (req
+    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
+      (x-fn state side eid card targets)
+      0)))
 
 ;; Card definitions
 
@@ -1116,10 +1123,11 @@
                 :effect (effect (mill :corp eid :runner 1))}]})
 
 (defcard "Kuwinda K4H1U3"
-  {:derezzed-events [corp-rez-toast]
+  {:x-fn (req (get-counters card :power))
+   :derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
    :abilities [{:label "Trace X - do 1 brain damage (start of turn)"
-                :trace {:base (req (get-counters card :power))
+                :trace {:base x-fn
                         :successful
                         {:async true
                          :msg "do 1 brain damage"
@@ -1540,7 +1548,9 @@
      :abilities [(set-autoresolve :auto-fire "Net Analytics")]}))
 
 (defcard "Net Police"
-  {:recurring (req (get-link state))
+  {:x-fn (req (count (filter #(has-subtype? % "Link")
+                             (all-active-installed state :runner))))
+   :recurring x-fn
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 
