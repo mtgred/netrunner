@@ -4,7 +4,7 @@
    [game.core.access :refer [access-bonus max-access]]
    [game.core.board :refer [all-active all-active-installed all-installed
                             card->server server->zone]]
-   [game.core.card :refer [agenda? asset? card-index corp? facedown? active?
+   [game.core.card :refer [active? agenda? asset? card-index corp? facedown?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone hardware? has-subtype?
                            ice? in-discard? in-hand? installed?

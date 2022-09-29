@@ -6,7 +6,7 @@
                              get-only-card-to-access]]
    [game.core.actions :refer [play-ability]]
    [game.core.board :refer [all-active all-active-installed all-installed]]
-   [game.core.card :refer [corp? event? facedown? get-card get-counters
+   [game.core.card :refer [active? corp? event? facedown? get-card get-counters
                            get-zone hardware? has-subtype? ice? in-deck? in-discard?
                            in-hand? installed? program? resource? rezzed? runner? virus-program? faceup?]]
    [game.core.card-defs :refer [card-def]]
@@ -65,6 +65,15 @@
    [game.core.set-aside :refer [set-aside get-set-aside]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.mark :refer [identify-mark-ability]]))
+
+;; Helpers
+
+;;; Helper for x-fn cards
+(def x-fn
+  (req
+    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
+      (x-fn state side eid card targets)
+      0)))
 
 ;; Card definitions
 
@@ -267,12 +276,12 @@
                 :effect (effect (damage eid :brain 1 {:card card}))}})
 
 (defcard "Brain Chip"
-  (let [runner-points (fn [s] (max (get-in @s [:runner :agenda-point] 0) 0))]
-    {:constant-effects [(mu+
-                          (req (pos? (runner-points state)))
-                          ;; [:regular N] is needed to make the mu system work
-                          (req [:regular (runner-points state)]))
-                        (runner-hand-size+ (req (runner-points state)))]}))
+  {:x-fn (req (max (get-in @state [:runner :agenda-point] 0) 0))
+   :constant-effects [(mu+
+                        (req (pos? (x-fn state side eid card targets)))
+                        ;; [:regular N] is needed to make the mu system work
+                        (req [:regular (x-fn state side eid card targets)]))
+                      (runner-hand-size+ x-fn)]})
 
 (defcard "Buffer Drive"
   (let [grip-or-stack-trash?
@@ -1174,8 +1183,9 @@
              :effect (effect (draw eid 1))}]})
 
 (defcard "Māui"
-  {:constant-effects [(mu+ 2)]
-   :recurring (req (count (get-in corp [:servers :hq :ices])))
+  {:x-fn (req (count (get-in corp [:servers :hq :ices])))
+   :constant-effects [(mu+ 2)]
+   :recurring x-fn
    :interactions {:pay-credits {:req (req (= [:hq] (get-in @state [:run :server])))
                                 :type :recurring}}})
 
