@@ -4,7 +4,7 @@
    [game.core.access :refer [access-bonus max-access]]
    [game.core.board :refer [all-active all-active-installed all-installed
                             card->server server->zone]]
-   [game.core.card :refer [agenda? asset? card-index corp? facedown?
+   [game.core.card :refer [agenda? asset? card-index corp? facedown? active?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone hardware? has-subtype?
                            ice? in-discard? in-hand? installed?
@@ -361,6 +361,13 @@
   [ice-type]
   (cloud-icebreaker (auto-icebreaker {:abilities [(break-sub 2 0 ice-type)
                                                   (strength-pump 2 3)]})))
+
+;;; Helper for x-fn cards
+(def x-fn
+  (req
+    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
+      (x-fn state side eid card targets)
+      0)))
 
 ;; Card definitions
 
@@ -1000,6 +1007,7 @@
 
 (defcard "Darwin"
   (auto-icebreaker {:flags {:runner-phase-12 (req true)}
+                    :x-fn (req (get-virus-counters state card))
                     :abilities [(break-sub 2 1)
                                 {:label "Place 1 virus counter (start of turn)"
                                  :once :per-turn
@@ -1007,7 +1015,7 @@
                                  :msg "place 1 virus counter"
                                  :req (req (:runner-phase-12 @state))
                                  :effect (effect (add-counter card :virus 1))}]
-                    :constant-effects [(breaker-strength-bonus (req (get-virus-counters state card)))]}))
+                    :constant-effects [(breaker-strength-bonus x-fn)]}))
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
@@ -2180,7 +2188,8 @@
                                   card nil))}]}))
 
 (defcard "Pheromones"
-  {:recurring (req (get-counters card :virus))
+  {:x-fn (req (get-counters card :virus))
+   :recurring x-fn
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :hq (target-server context)))
