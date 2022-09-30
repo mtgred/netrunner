@@ -2192,6 +2192,19 @@
       (click-prompt state :runner "1 [Credits]")
       (is (:run @state) "Run still going")))
 
+(deftest hypoxia
+  (do-game
+    (new-game {:corp {:hand ["Hypoxia" "Public Trail"]}})
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hypoxia")
+    (is (= 2 (count (:hand (get-corp)))) "not played, no tag")
+    (play-from-hand state :corp "Public Trail")
+    (click-prompt state :runner "Take 1 tag")
+    (play-from-hand state :corp "Hypoxia")
+    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Hypoxia")))
+
 (deftest interns
   ;; Fire Wall
   (do-game

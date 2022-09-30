@@ -1228,6 +1228,12 @@
                                 :async true
                                 :effect (effect (end-run eid card))}}}]}))
 
+(defcard "Hypoxia"
+  {:on-play {:req (req tagged)
+             :msg "do 1 core damage"
+             :async true
+             :effect (effect (damage :runner eid :brain 1 {:card card}))}})
+
 (defcard "Interns"
   {:on-play
    {:prompt "Choose a card to install from Archives or HQ"
