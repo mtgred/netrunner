@@ -235,7 +235,7 @@
 ;;; Helper for x-fn cards
 (def x-fn
   (req
-    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
+    (if-let [x-fn (and (not (:disabled card)) (:x-fn card))]
       (x-fn state side eid card targets)
       0)))
 

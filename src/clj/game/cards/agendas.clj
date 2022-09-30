@@ -16,7 +16,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
-                                  offer-jack-out reorder-choice]]
+                                  offer-jack-out reorder-choice x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -378,7 +378,8 @@
       :effect (effect (continue-ability (:on-score (card-def target)) target nil))}}}})
 
 (defcard "Blood in the Water"
-  {:advancement-requirement (req (count (:hand runner)))})
+  {:x-fn (req (count (:hand runner)))
+   :advancement-requirement x-fn})
 
 (defcard "Brain Rewiring"
   {:on-score
