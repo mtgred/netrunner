@@ -3464,6 +3464,20 @@
       (is (= "Government Takeover" (-> (get-corp) :discard first :title))
           "Corp discards card from hand from Maw")))
 
+(deftest nightmare-archive
+  ;; News Team - on access take 2 tags or take as agenda worth -1
+  (do-game
+      (new-game {:corp {:deck [(qty "Nightmare Archive" 2)]}})
+      (trash-from-hand state :corp "Nightmare Archive")
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (click-prompt state :runner "Take 1 Core Damage")
+      (is (= 1 (:brain-damage (get-runner))) "Runner takes 1 core damage")
+      (is (= 1 (count (:rfg (get-corp)))) "Nightmare Archive removed from game")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Add Nightmare Archive to score area")
+      (is (= 1 (count (:scored (get-runner)))) "Nightmare Archive added to Runner score area")))
+
 (deftest ngo-front
   ;; NGO Front - full test
   (do-game

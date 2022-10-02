@@ -1609,6 +1609,29 @@
      :abilities [ability]
      :events [(assoc ability :event :corp-turn-begins)]}))
 
+(defcard "Nightmare Archive"
+  {:flags {:rd-reveal (req true)}
+   :access {:async true
+            :msg "force the Runner take 1 core damage or add itself to their score area as an agenda worth -1 agenda point"
+            :effect (effect (continue-ability
+                              {:player :runner
+                               :async true
+                               :prompt "Choose one"
+                               :choices (req ["Take 1 Core Damage"
+                                              (str "Add "  (:title card) " to score area")])
+                               :effect (req (if (= target (str "Add " (:title card) " to score area"))
+                                              (do (system-msg state :runner (str "adds " (:title card)
+                                                                                 " to their score area as an agenda worth "
+                                                                                 (quantify -1 "agenda point")))
+                                                  (as-agenda state :runner card -1)
+                                                  (effect-completed state side eid))
+                                              (do (system-msg state :runner (str "takes 1 Core Damage" (:title card)))
+                                                  (damage state :corp nil :brain 1 {:card card})
+                                                  (move state :corp card :rfg)
+                                                  (effect-completed state side eid))))}
+                              card targets))}})
+
+
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw
              :interactive (req true)
