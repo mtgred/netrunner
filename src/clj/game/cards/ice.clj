@@ -2462,8 +2462,7 @@
                                  (do (system-msg state :runner "adds Meridian to their score area as an agenda worth -1 agenda points")
                                      (as-agenda state :runner card -1)
                                      (when current-ice
-                                       (continue state :corp nil)
-                                       (continue state :runner nil))
+                                       (encounter-ends state side eid))
                                      (effect-completed state side eid))))}]})
 
 (defcard "Merlin"

@@ -4076,6 +4076,7 @@
       (card-subroutine state :corp (refresh mer) 0)
       (click-prompt state :runner "Add Meridian to score area")
       (is (:run @state) "Run is still live")
+      (run-continue state)
       (is (= 1 (count (:scored (get-runner)))) "In runner score area")
       (is (= -1 (:agenda-point (get-runner))) "Worth -1 agenda points")
       (is (empty? (get-ice state :hq)) "ice uninstalled"))))
