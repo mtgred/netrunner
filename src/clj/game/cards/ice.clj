@@ -3057,6 +3057,21 @@
   {:on-encounter (gain-credits-sub 1)
    :subroutines [(end-the-run-unless-runner-pays 1)]})
 
+(defcard "Pulse"
+  {:on-rez {:req (req (and run this-server))
+            :msg "force the runner to lose [Click]"
+            :async true
+            :effect (effect (lose-clicks :runner 1)
+                            (effect-completed eid))}
+   :subroutines [{:label (str "Runner loses 1 [Credits] for each rezzed piece of Harmonic ice")
+                  :msg (msg "make the runner lose " (harmonic-ice-count corp) " [Credits]")
+                  :async true
+                  :effect (req (lose-credits state :runner eid (harmonic-ice-count corp)))}
+                 (end-the-run-unless-runner
+                   "loses [Click]"
+                   "lose [Click]"
+                   (runner-pays [:lose-click 1]))]})
+
 (defcard "Pup"
   (let [sub {:player :runner
              :async true
