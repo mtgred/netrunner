@@ -187,7 +187,7 @@
                  true))
      :once once
      :prompt "Jack out?"
-     :waiting-prompt "Runner to make a decison"
+     :waiting-prompt true
      :yes-ability {:async true
                    :effect (effect (system-msg :runner (str "uses " (:title card) " to jack out"))
                                    (jack-out eid))}

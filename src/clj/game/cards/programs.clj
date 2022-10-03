@@ -790,7 +790,7 @@
              {:req (req (and (:successful context)
                              (= :rd (target-server context))))
               :player :runner
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :autoresolve (get-autoresolve :auto-place-counter)
               :prompt "Place 1 virus counter on Conduit?"
               :yes-ability {:msg "place 1 virus counter on itself"
@@ -955,7 +955,7 @@
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
                   :msg (msg "reveal the top cards of the stack: " (str/join ", " (map :title (take 5 (:deck runner)))))
-                  :waiting-prompt "Runner to make a decision"
+                  :waiting-prompt true
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
                                            (continue-ability state side (custsec-host from) card nil))))}
@@ -1035,7 +1035,7 @@
                 :async true
                 :effect (effect
                           (continue-ability
-                            {:waiting-prompt "Runner to make a decision"
+                            {:waiting-prompt true
                              :prompt "Choose a card to install from your Grip"
                              :msg (msg "install " (:title target) " at no cost")
                              :choices {:req (req (and (in-hand? target)
@@ -1134,7 +1134,7 @@
      :trash-icon true
      :optional
      {:player :runner
-      :waiting-prompt "Runner to choose an option"
+      :waiting-prompt true
       :prompt "Trash Disrupter to reduce the base trace strength to 0?"
       :yes-ability
       {:cost [:trash-can]
@@ -1240,7 +1240,7 @@
                :req (req (= :rd (target-server context)))
                :async true
                :interactive (req true)
-               :waiting-prompt "Runner to make a decision"
+               :waiting-prompt true
                :effect (effect (continue-ability reveal card nil))}]}))
 
 (defcard "Euler"
@@ -1298,6 +1298,7 @@
                         (let [ice (:ice context)]
                           {:async true
                            :prompt (msg "Rez " (:title ice) " or add it to HQ?")
+                           :waiting-prompt true
                            :player :corp
                            :choices (req (if (can-pay? state :runner eid card nil [:credit (rez-cost state side ice)])
                                            ["Rez" "Add to HQ"]
@@ -1500,7 +1501,7 @@
                 :async true
                 :effect (req (continue-ability
                                state :corp
-                               {:waiting-prompt "Corp to make a decision"
+                               {:waiting-prompt true
                                 :prompt "Choose a card to trash"
                                 :choices (req (filter corp? (:hand corp)))
                                 :async true
@@ -1925,7 +1926,7 @@
              :optional
              {:req (req (and (pos? (get-counters card :power))
                              (= target :rd)))
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "access 1 additional card from R&D"
@@ -2280,6 +2281,7 @@
                                 (when (or (= guess (:cost target))
                                           (= guess (get-advancement-requirement target)))
                                   {:prompt "Choose one"
+                                   :waiting-prompt true
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
                                    :async true
                                    :msg (msg (decapitalize target))

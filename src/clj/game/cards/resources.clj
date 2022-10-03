@@ -130,9 +130,7 @@
               {:event :runner-turn-ends
                :req (req (<= 3 (get-counters (get-card state card) :credit)))
                :async true
-               :effect (effect (continue-ability
-                                 (assoc turn-ends-ability :waiting-prompt (str "Runner to use " (:title card)))
-                                 card targets))}]
+               :effect (effect (continue-ability turn-ends-ability card targets))}]
      :abilities [ability]}))
 
 (defn bitey-boi
@@ -709,7 +707,7 @@
                (continue-ability
                  {:optional
                   {:player :runner
-                   :waiting-prompt "Runner to choose an option"
+                   :waiting-prompt true
                    :prompt (msg "Trash Councilman and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
@@ -1001,7 +999,7 @@
                                                                   (legal? format :legal %))))
                                                 (sort-by :title)))
         fenris-effect {:async true
-                       :waiting-prompt "Runner to choose an option"
+                       :waiting-prompt true
                        :prompt "Choose a g-mod identity to host"
                        :choices (req (sorted-id-list runner (:format @state)))
                        :msg (msg "host " (:title target))
@@ -1191,6 +1189,7 @@
     (req (:successful run))
     ;; companion-builder: turn-ends-ability
     {:prompt "Choose one"
+     :waiting-prompt true
      :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
                       "Pay 1 [Credits]")
                     "Trash Fencer Fueno"])
@@ -1325,7 +1324,7 @@
                  :req (req (:runner-phase-12 @state))
                  :optional
                  {:prompt "Lose [Click] to look at the top card of R&D?"
-                  :waiting-prompt "Runner to choose an option"
+                  :waiting-prompt true
                   :autoresolve (get-autoresolve :auto-fire)
                   :yes-ability
                   {:msg "lose [Click] and look at the top card of R&D"
@@ -1368,6 +1367,7 @@
                                           "trash itself"
                                           (decapitalize target)))
                               :prompt "Choose one"
+                              :waiting-prompt true
                               :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 4)
                                                "Pay 4 [Credits]")
                                              "Trash Guru Davinder"])
@@ -1515,7 +1515,7 @@
              :interactive (req true)
              :optional
              {:req (req (= :runner (:scored-side (second targets))))
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt "Trash Jackpot!?"
               :yes-ability
               {:prompt "How many hosted credits do you want to take?"
@@ -1600,7 +1600,7 @@
                              (:did-access target)
                              (is-remote? (:server target))))
               :autoresolve (get-autoresolve :auto-place-counter)
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt "Place 1 power counter on Kasi String?"
               :yes-ability {:msg "place 1 power counter on itself"
                             :async true
@@ -1644,7 +1644,7 @@
 
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
-            {:waiting-prompt "Runner to make a decision"
+            {:waiting-prompt true
              :prompt "Choose a Program to keep"
              :choices (cons "None" (filter program? cards))
              :async true
@@ -1672,6 +1672,7 @@
                  :interactive (req true)
                  :async true
                  :prompt "Choose one"
+                 :waiting-prompt true
                  :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
                                   "Pay 1 [Credits]")
                                 "Trash Lewi Guilherme"])
@@ -1708,7 +1709,7 @@
                 (effect (continue-ability
                           (if (seq (:scored corp))
                             {:optional
-                             {:waiting-prompt "Corp to make a decision"
+                             {:waiting-prompt true
                               :prompt "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?"
                               :player :corp
                               :async true
@@ -1861,7 +1862,7 @@
                  :req (req (:runner-phase-12 @state))
                  :once :per-turn
                  :optional
-                 {:waiting-prompt "Runner to choose an option"
+                 {:waiting-prompt true
                   :prompt "Look at the top card of your Stack?"
                   :autoresolve (get-autoresolve :auto-fire)
                   :yes-ability
@@ -1887,7 +1888,7 @@
                                [{:event :runner-draw
                                  :unregister-once-resolved true
                                  :duration :end-of-turn
-                                 :waiting-prompt "Runner to make a decision"
+                                 :waiting-prompt true
                                  :prompt "Choose 1 card to add to the bottom of the Stack"
                                  :choices {:req (req (some #(same-card? target %) runner-currently-drawing))}
                                  :msg "add 1 card to the bottom of the Stack"
@@ -1898,7 +1899,7 @@
 
 (defcard "Muertos Gang Member"
   {:on-install {:player :corp
-                :waiting-prompt "Corp to make a decision"
+                :waiting-prompt true
                 :prompt "Choose a card to derez"
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
@@ -1908,7 +1909,7 @@
    (effect
      (continue-ability
        {:player :corp
-        :waiting-prompt "Corp to make a decision"
+        :waiting-prompt true
         :prompt "Choose a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
         :async true
@@ -1930,6 +1931,7 @@
          (= :play (:source-type eid))))
     ;; companion-builder: turn-ends-ability
     {:prompt "Choose one"
+     :waiting-prompt true
      :choices (req [(when (can-pay? state :runner
                                  (assoc eid :source card :source-type :ability)
                                  card nil :randomly-trash-from-hand 1)
@@ -1961,7 +1963,7 @@
    :events [{:event :spent-credits-from-card
              :req (req (and run (has-subtype? target "Stealth")))
              :once :per-run
-             :waiting-prompt "Runner to choose an option"
+             :waiting-prompt true
              :prompt "Choose one"
              :player :runner
              :choices ["Place 1 [Credits]" "Draw 1 card"]
@@ -2172,6 +2174,7 @@
               (not (has-subtype? target "Connection"))))
     ;; companion-builder: turn-ends-ability
     {:prompt "Choose an installed card to trash"
+     :waiting-prompt true
      :choices {:all true
                :card #(and (installed? %)
                            (runner? %))}
@@ -2473,7 +2476,7 @@
 (defcard "Rolodex"
   {:on-install {:async true
                 :msg "look at the top 5 cards of their Stack"
-                :waiting-prompt "Runner to make a decision"
+                :waiting-prompt true
                 :effect (effect (continue-ability
                                   (let [from (take 5 (:deck runner))]
                                     (when (pos? (count from))
@@ -2595,7 +2598,7 @@
   {:events [{:event :damage
              :trash-icon true
              :optional
-             {:waiting-prompt "Runner to choose an option"
+             {:waiting-prompt true
               :prompt "Trash Salvaged Vanadis Armory to force the Corp to trash the top cards of R&D?"
               :yes-ability {:async true
                             :cost [:trash-can]
@@ -2786,7 +2789,7 @@
                                          (continue-ability
                                            state side
                                            {:prompt "Choose a set-aside card to install (paying 1 less)"
-                                            :waiting-prompt "Runner to make a decision"
+                                            :waiting-prompt true
                                             :not-distinct true
                                             :async true
                                             :choices (req (filter #(and (not (event? %))
@@ -2823,7 +2826,7 @@
              :optional
              {:req (req (or (has-subtype? (:card context) "Black Ops")
                             (has-subtype? (:card context) "Gray Ops")))
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt "Give the Corp 1 bad publicity and take 1 tag?"
               :player :runner
               :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
@@ -2993,7 +2996,7 @@
                :effect
                (effect (continue-ability
                          (when-let [drawn runner-currently-drawing]
-                           {:waiting-prompt "Runner to make a decision"
+                           {:waiting-prompt true
                             :prompt "Choose 1 card to add to the bottom of the stack"
                             :choices {:card #(some (fn [c] (same-card? c %)) drawn)
                                       :all true}
@@ -3048,7 +3051,7 @@
 
 (defcard "The Nihilist"
   (let [corp-choice {:player :corp
-                     :waiting-prompt "Corp to choose an option"
+                     :waiting-prompt true
                      :prompt "Choose one"
                      :choices (req [(when (seq (:deck corp))
                                       "Trash the top card of R&D")
@@ -3262,6 +3265,7 @@
               run))
     ;; companion-builder: turn-ends-ability
     {:prompt "Choose one"
+     :waiting-prompt true
      :choices ["Take 1 tag" "Trash Trickster Taka"]
      :player :runner
      :msg (msg (if (= target "Trash Trickster Taka")
@@ -3389,7 +3393,7 @@
                                   state side
                                   {:optional
                                    {:player :corp
-                                    :waiting-prompt "Corp to choose an option"
+                                    :waiting-prompt true
                                     :prompt (msg "Draw " (:title (first (:deck corp))) "?")
                                     :yes-ability
                                     {:async true

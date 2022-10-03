@@ -118,7 +118,7 @@
 
 (defcard "Aggressive Secretary"
   (advance-ambush 2 {:req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :waiting-prompt "Corp to make a decision"
+                     :waiting-prompt true
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "program") " to trash")
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
@@ -133,7 +133,7 @@
                 :cost [:trash-can]
                 :effect (effect
                           (continue-ability
-                            {:waiting-prompt "Runner to make a decision"
+                            {:waiting-prompt true
                              :prompt "How many credits do you want to pay?"
                              :choices :credit
                              :player :runner
@@ -191,7 +191,7 @@
                                    "card")
                          " in HQ and Archives")
                   :async true
-                  :waiting-prompt "Corp to make a decision"
+                  :waiting-prompt true
                   :effect (req (let [total (min (count (:discard corp))
                                                 (count (:hand corp))
                                                 (get-counters card :advancement))]
@@ -243,7 +243,7 @@
                               (continue-ability
                                 state side
                                 {:optional
-                                 {:waiting-prompt "Corp to make a decision"
+                                 {:waiting-prompt true
                                   :prompt (str "Move advancement tokens to " icename "?")
                                   :yes-ability
                                   {:prompt "How many advancement tokens?"
@@ -384,7 +384,7 @@
    :on-trash {:interactive (req true)
               :optional
               {:req (req (= :runner side))
-               :waiting-prompt "Corp to choose an option"
+               :waiting-prompt true
                :prompt "Draw 2 cards?"
                :player :corp
                :yes-ability {:msg "draw 2 cards"
@@ -399,7 +399,7 @@
 
 (defcard "Cerebral Overwriter"
   (advance-ambush 3 {:async true
-                     :waiting-prompt "Corp to choose an option"
+                     :waiting-prompt true
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :msg (msg "do " (get-counters (get-card state card) :advancement) " brain damage")
                      :effect (effect (damage eid :brain (get-counters (get-card state card) :advancement) {:card card}))}))
@@ -431,6 +431,7 @@
    :events [{:event :runner-turn-begins
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")
                             "Take 1 tag"])
@@ -474,7 +475,7 @@
    :abilities [(into
                  (corp-recur operation?)
                  {:label "Add 1 operation from Archives to HQ"
-                  :waiting-prompt "Corp to make a decision"
+                  :waiting-prompt true
                   :prompt "Choose an operation in Archives to add to HQ"
                   :once :per-turn})]})
 
@@ -485,6 +486,7 @@
                  :player :runner
                  :once :per-turn
                  :prompt "Choose one"
+                 :waiting-prompt true
                  :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                                   "Pay 1 [Credits]")
                                 (when (seq (:deck runner))
@@ -532,7 +534,7 @@
                     (pos? it))))}
    :abilities [{:label "Move an advancement counter between 2 pieces of ice"
                 :once :per-turn
-                :waiting-prompt "Corp to make a decision"
+                :waiting-prompt true
                 :choices {:card #(and (ice? %)
                                       (get-counters % :advancement))}
                 :effect (effect
@@ -630,7 +632,7 @@
                             (continue-ability
                               state side
                               (when (seq drawn)
-                                {:waiting-prompt "Corp to make a decision"
+                                {:waiting-prompt true
                                  :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
                                  :choices {:max (min dbs (count drawn))
                                            :card #(some (fn [c] (same-card? c %)) drawn)
@@ -941,7 +943,7 @@
 
 (defcard "Ghost Branch"
   (advance-ambush 0 {:async true
-                     :waiting-prompt "Corp to choose an option"
+                     :waiting-prompt true
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :msg (msg "give the Runner " (quantify (get-counters (get-card state card) :advancement) "tag"))
                      :effect (effect (gain-tags :corp eid (get-counters (get-card state card) :advancement)))}))
@@ -1136,7 +1138,7 @@
                             (some #(and (agenda? %)
                                         (= counters (:agendapoints %)))
                                   (:hand corp))))
-                :waiting-prompt "Corp to make a decision"
+                :waiting-prompt true
                 :prompt "Choose an Agenda in HQ to move to score area"
                 :choices {:req (req (and (agenda? target)
                                          (= (:agendapoints target) (get-counters (get-card state card) :power))
@@ -1274,7 +1276,7 @@
      :abilities [(set-autoresolve :auto-reshuffle "Marilyn Campaign's shuffling itself back into R&D")]
      :on-trash {:interactive (req true)
                 :optional
-                {:waiting-prompt "Corp to choose an option"
+                {:waiting-prompt true
                  :prompt "Shuffle Marilyn Campaign into R&D?"
                  :autoresolve (get-autoresolve :auto-reshuffle)
                  :player :corp
@@ -1488,7 +1490,7 @@
    :on-trash {:optional
               {:req (req (= :runner side))
                :player :corp
-               :waiting-prompt "Corp to choose an option"
+               :waiting-prompt true
                :prompt "Gain 2 [Credits]?"
                :yes-ability
                {:msg "gain 2 [Credits]"
@@ -1523,7 +1525,7 @@
   (let [ability {:optional
                  {:player :corp
                   :autoresolve (get-autoresolve :auto-fire)
-                  :waiting-prompt "Corp to choose an option"
+                  :waiting-prompt true
                   :prompt "Draw 1 card?"
                   :yes-ability
                   {:msg "draw 1 card"
@@ -1545,7 +1547,7 @@
   (advance-ambush
     3
     {:req (req (pos? (get-counters (get-card state card) :advancement)))
-     :waiting-prompt "Corp to make a decision"
+     :waiting-prompt true
      :async true
      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "installed card") " to shuffle into the stack")
      :choices {:card #(and (installed? %)
@@ -1565,6 +1567,7 @@
                               {:player :runner
                                :async true
                                :prompt "Choose one"
+                               :waiting-prompt true
                                :choices ["Take 2 tags" "Add News Team to score area"]
                                :effect (req (if (= target "Add News Team to score area")
                                               (do (system-msg state :runner (str "adds " (:title card)
@@ -1694,7 +1697,7 @@
   (advance-ambush
     0
     {:req (req (pos? (get-counters (get-card state card) :advancement)))
-     :waiting-prompt "Corp to make a decision"
+     :waiting-prompt true
      :prompt "Choose an Agenda in HQ to score"
      :choices {:req (req (and (agenda? target)
                               (<= (get-advancement-requirement target)
@@ -1760,7 +1763,7 @@
 
 (defcard "Project Junebug"
   (advance-ambush 1 {:req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :waiting-prompt "Corp to choose an option"
+                     :waiting-prompt true
                      :msg (msg "do " (* 2 (get-counters (get-card state card) :advancement)) " net damage")
                      :async true
                      :effect (effect (damage eid :net (* 2 (get-counters (get-card state card) :advancement))
@@ -1959,6 +1962,7 @@
 
 (defcard "Rex Campaign"
   (let [payout-ab {:prompt "Choose one"
+                   :waiting-prompt true
                    :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
                    :msg (msg (decapitalize target))
                    :async true
@@ -2121,7 +2125,7 @@
 
 (defcard "Shattered Remains"
   (advance-ambush 1 {:async true
-                     :waiting-prompt "Corp to make a decision"
+                     :waiting-prompt true
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
                      :msg (msg "trash " (str/join ", " (map :title targets)))
@@ -2134,7 +2138,7 @@
   {:access
    {:optional
     {:req (req (not (in-deck? card)))
-     :waiting-prompt "Corp to make a decision"
+     :waiting-prompt true
      :prompt "Pay credits to use Shi.Kyū ability?"
      :yes-ability
      {:prompt "How many credits do you want to pay?"
@@ -2146,6 +2150,7 @@
                   (let [dmg target]
                     {:player :runner
                      :prompt "Choose one"
+                     :waiting-prompt true
                      :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
                      :async true
                      :effect (req (if (= target "Add Shi.Kyū to score area")
@@ -2183,7 +2188,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:req (req (not (in-discard? card)))
-             :waiting-prompt "Corp to choose an option"
+             :waiting-prompt true
              :prompt "Pay 4 [Credits] to use Snare! ability?"
              :no-ability {:effect (effect (system-msg "declines to use Snare!"))}
              :yes-ability {:async true
@@ -2195,7 +2200,7 @@
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
    :access {:optional
-            {:waiting-prompt "Corp to make a decision"
+            {:waiting-prompt true
              :prompt "Place 1 advancement token on a card that can be advanced?"
              :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
                            :prompt "Choose a card to place an advancement token on"
@@ -2351,7 +2356,7 @@
   (letfn [(derez-card [advancements & wait-msg]
             (when (pos? advancements)
               {:async true
-               :waiting-prompt (first wait-msg)
+               :waiting-prompt true
                :prompt "Derez a card"
                :choices {:card #(and (installed? %)
                                      (rezzed? %))}
@@ -2405,7 +2410,7 @@
   (advance-ambush
     0
     {:async true
-     :waiting-prompt "Corp to make a decision"
+     :waiting-prompt true
      :prompt "Choose an asset or agenda in HQ"
      :choices {:card #(and (or (agenda? %)
                                (asset? %))
@@ -2598,7 +2603,7 @@
                 :async true
                 :cost [:trash-from-hand 1]
                 :effect (effect (continue-ability
-                                  {:waiting-prompt "Corp to make a decision"
+                                  {:waiting-prompt true
                                    :prompt "Choose a card in Archives to add to the bottom of R&D"
                                    :show-discard true
                                    :choices {:card #(and (in-discard? %)

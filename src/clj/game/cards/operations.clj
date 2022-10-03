@@ -311,7 +311,7 @@
                      (wait-for
                        (resolve-ability
                          state :runner
-                         {:waiting-prompt "Runner to make a decision"
+                         {:waiting-prompt true
                           :prompt (msg "Choose any number of cards of type " t " to trash")
                           :choices {:max n
                                     :card #(and (installed? %)
@@ -452,6 +452,7 @@
    {:psi {:req (req (last-turn? state :runner :successful-run))
           :not-equal {:player :runner
                       :prompt "Choose one"
+                      :waiting-prompt true
                       :choices ["Take 1 tag" "Suffer 1 brain damage"]
                       :msg (msg "force the Runner to " (decapitalize target))
                       :effect (req (if (= target "Take 1 tag")
@@ -781,7 +782,7 @@
                               :choices {:card #(and (installed? %)
                                                     (corp? %))}
                               :async true
-                              :waiting-prompt "Corp to make a decision"
+                              :waiting-prompt true
                               :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
                               :cancel-effect (effect (system-msg "declines to use Extract to trash an installed card")
                                                      (effect-completed eid))
@@ -842,7 +843,7 @@
       {:req (req (and (<= 6 (:credit runner))
                       (pos? (count-resources state))))
        :player :runner
-       :waiting-prompt "Runner to choose an option"
+       :waiting-prompt true
        :prompt "Trash a resource?"
        :yes-ability
        {:prompt "Choose a resource to trash"
@@ -986,7 +987,7 @@
                                state :runner
                                {:async true
                                 :req (req (<= 3 (:credit runner)))
-                                :waiting-prompt "Runner to make a decision"
+                                :waiting-prompt true
                                 :prompt (msg "Prevent any " typemsg " from being trashed? Pay 3 [Credits] per card.")
                                 :choices {:max (req (min numtargets (quot (total-available-credits state :runner eid card) 3)))
                                           :card #(and (installed? %)
@@ -1049,7 +1050,7 @@
               {:optional
                {:player :runner
                 :async true
-                :waiting-prompt "Runner to choose an option"
+                :waiting-prompt true
                 :prompt "Access card?"
                 :yes-ability
                 {:async true
@@ -1113,7 +1114,7 @@
     {:on-play
      {:additional-cost [:trash-from-deck 1]
       :msg "trash the top card of R&D, draw 3 cards, and add 3 cards in HQ to the top of R&D"
-      :waiting-prompt "Corp to make a decision"
+      :waiting-prompt true
       :async true
       :effect (req (wait-for (draw state side 3)
                              (let [from (get-in @state [:corp :hand])]
@@ -1622,7 +1623,7 @@
   {:on-play
    {:async true
     :player :runner
-    :waiting-prompt "Runner to make a decision"
+    :waiting-prompt true
     :prompt "Choose one"
     :choices (req [(when-not (empty? (:hand runner))
                      "Trash 1 random card from the grip")
@@ -1737,7 +1738,7 @@
 (defcard "Precognition"
   {:on-play
    {:msg "rearrange the top 5 cards of R&D"
-    :waiting-prompt "Corp to make a decision"
+    :waiting-prompt true
     :async true
     :effect (effect (continue-ability
                       (let [from (take 5 (:deck corp))]
@@ -1753,6 +1754,7 @@
 (defcard "Predictive Planogram"
   {:on-play
    {:prompt "Choose one"
+    :waiting-prompt true
     :choices (req ["Gain 3 [Credits]"
                    "Draw 3 cards"
                    (when tagged
@@ -1844,7 +1846,7 @@
     {:on-play
      {:req (req (pos? (count (:deck corp))))
       :msg (msg "look at the top " (quantify (count (take 5 (:deck corp))) "card") " of R&D")
-      :waiting-prompt "Corp to make a decision"
+      :waiting-prompt true
       :async true
       :effect (effect (continue-ability
                         (let [top-5 (take 5 (:deck corp))]
@@ -1858,7 +1860,7 @@
     :msg (msg (if (= target "Pay 8 [Credits]")
                 (str "force the runner to " (decapitalize target))
                 "give the runner 1 tag"))
-    :waiting-prompt "Runner to choose an option"
+    :waiting-prompt true
     :prompt "Choose one"
     :choices (req ["Take 1 tag"
                    (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) :credit 8)
@@ -1973,7 +1975,7 @@
                                                (effect-completed state side eid)))
                                    (continue-ability state side (choice abis chose-once) card nil))))})]
     {:on-play
-     {:waiting-prompt "Corp to make a decision"
+     {:waiting-prompt true
       :async true
       :effect (effect (continue-ability (choice all false) card nil))}}))
 
@@ -2090,6 +2092,7 @@
 (defcard "Reverse Infection"
   {:on-play
    {:prompt "Choose one"
+    :waiting-prompt true
     :choices ["Purge virus counters"
               "Gain 2 [Credits]"]
     :async true
@@ -2126,7 +2129,7 @@
     :req (req (last-turn? state :runner :trashed-card))
     :player :runner
     :async true
-    :waiting-prompt "Runner to choose an option"
+    :waiting-prompt true
     :prompt "Choose one"
     :msg (msg "force the Runner to " (decapitalize target))
     :choices ["Suffer 1 brain damage" "Get 3 fewer [Click] on the next turn"]
@@ -2246,7 +2249,7 @@
 (defcard "Secure and Protect"
   {:on-play
    {:interactive (req true)
-    :waiting-prompt "Corp to make a decision"
+    :waiting-prompt true
     :async true
     :effect (req (if (seq (filter ice? (:deck corp)))
                    (continue-ability
@@ -2355,7 +2358,7 @@
    {:trace
     {:base 3
      :successful
-     {:waiting-prompt "Corp to make a decision"
+     {:waiting-prompt true
       :msg "trash a connection"
       :choices {:card #(has-subtype? % "Connection")}
       :async true
@@ -2365,7 +2368,7 @@
           (let [c target]
             {:optional
              {:player :runner
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt (str "Take 1 tag to prevent " (:title c) " from being trashed?")
               :yes-ability
               {:async true
@@ -2615,7 +2618,7 @@
               (continue-ability
                 (let [chosen target]
                   {:player :runner
-                   :waiting-prompt "Runner to choose an option"
+                   :waiting-prompt true
                    :prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
                    :choices [(str "Move " (:title chosen))
                              "Take 2 tags"]
@@ -2821,7 +2824,7 @@
                 (let [chosen target
                       wake card]
                   {:player :runner
-                   :waiting-prompt "Runner to choose an option"
+                   :waiting-prompt true
                    :prompt "Choose one"
                    :choices [(str "Trash " (card-str state chosen))
                              "Suffer 4 meat damage"]
