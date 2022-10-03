@@ -1452,30 +1452,19 @@
             :trace {:req (req (not (in-discard? card)))
                     :base 3
                     :successful
-                    {:msg "make the Runner choose between losing [Click][Click] or suffering 1 brain damage"
+                    {:waiting-prompt "Runner to choose an option"
+                     :prompt "Choose one"
+                     :player :runner
+                     :choices (req [(when (<= 2 (:click runner))
+                                      "Lose [Click][Click]")
+                                    "Suffer 1 brain damage"])
                      :async true
-                     :effect (req (let [tempus card]
-                                    (if (< (:click runner) 2)
-                                      (do
-                                        (system-msg state side "suffers 1 brain damage")
-                                        (damage state side eid :brain 1 {:card tempus}))
-                                      (continue-ability
-                                        state :runner
-                                        {:waiting-prompt "Runner to choose an option"
-                                         :prompt "Choose one"
-                                         :player :runner
-                                         :choices ["Lose [Click][Click]" "Suffer 1 brain damage"]
-                                         :async true
-                                         :effect
-                                         (req (if (str/starts-with? target "Suffer")
-                                                (do
-                                                  (system-msg state side (str "suffers 1 brain damage"))
-                                                  (damage state side eid :brain 1 {:card tempus}))
-                                                (do
-                                                  (system-msg state side "loses [Click][Click]")
-                                                  (lose-clicks state :runner 2)
-                                                  (effect-completed state side eid))))}
-                                        card nil))))}}}})
+                     :msg (msg "force the Runner to " (decapitalize target))
+                     :effect (req (if (and (= target "Lose [Click][Click]")
+                                           (<= 2 (:click runner)))
+                                    (do (lose-clicks state :runner 2)
+                                        (effect-completed state side eid))
+                                    (damage state side eid :brain 1 {:card card})))}}}})
 
 (defcard "The Twins"
   {:events [{:event :pass-ice
