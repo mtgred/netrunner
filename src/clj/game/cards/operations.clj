@@ -906,10 +906,9 @@
              :choices {:card #(and (installed? %)
                                    (or (has-subtype? % "Virtual")
                                        (has-subtype? % "Link")))}
-             :msg "trash 1 virtual resource or link"
+             :msg (msg "trash " (card-str state target))
              :async true
-             :effect (effect (system-msg (str "trashes " (:title target)))
-                             (trash eid target {:cause-card card}))}}}})
+             :effect (effect (trash eid target {:cause-card card}))}}}})
 
 (defcard "Freelancer"
   {:on-play
@@ -1259,16 +1258,15 @@
     {:on-play
      {:trace
       {:base 2
-       :successful {:msg "reveal the Runner's Grip and trash up to X resources or events"
-                    :async true
+       :successful {:async true
                     :effect (req (wait-for
                                    (reveal state side (:hand runner))
                                    (let [x (- target (second targets))]
                                      (system-msg
                                        state :corp
-                                       (str "reveals the Runner's Grip ( "
+                                       (str "uses Invasion of Privacy to reveal the Runner's Grip ( "
                                             (str/join ", " (map :title (sort-by :title (:hand runner))))
-                                            " ) and can trash up to " x " resources or events"))
+                                            " ) and trash up to " x " resources or events"))
                                      (continue-ability state side (iop (dec x)) card nil))))}
        :unsuccessful {:msg "take 1 bad publicity"
                       :async true
@@ -1835,7 +1833,7 @@
                :effect (req (if (or (= target "None")
                                     (ice? target)
                                     (operation? target))
-                              (do (system-msg state side "does not install an asset, agenda, or upgrade")
+                              (do (system-msg state side "declines to use Psychokinesis to install a card")
                                   (effect-completed state side eid))
                               (continue-ability state side (install-card target) card nil)))}))
           (install-card [chosen]

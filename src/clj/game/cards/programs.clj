@@ -6,7 +6,8 @@
                             card->server server->zone]]
    [game.core.card :refer [agenda? asset? card-index corp? facedown?
                            get-advancement-requirement get-card get-counters
-                           get-nested-host get-zone hardware? has-subtype? ice? in-discard? in-hand? installed?
+                           get-nested-host get-title get-zone hardware? has-subtype?
+                           ice? in-discard? in-hand? installed?
                            program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
@@ -1289,7 +1290,7 @@
               :prompt "Trash False Echo to make the Corp rez the passed piece of ice or add it to HQ?"
               :yes-ability
               {:async true
-               :msg "make the Corp rez the passed piece of ice or add it to HQ"
+               :msg "force the Corp to either rez the passed piece of ice or add it to HQ"
                :effect
                (req (wait-for
                       (trash state side card nil)
@@ -1297,13 +1298,13 @@
                         state side
                         (let [ice (:ice context)]
                           {:async true
-                           :prompt (msg "Rez " (:title ice) " or add it to HQ?")
+                           :prompt "Choose one"
                            :waiting-prompt true
                            :player :corp
-                           :choices (req (if (can-pay? state :runner eid card nil [:credit (rez-cost state side ice)])
-                                           ["Rez" "Add to HQ"]
-                                           ["Add to HQ"]))
-                           :effect (req (if (= target "Rez")
+                           :choices (req [(when (can-pay? state :runner eid card nil [:credit (rez-cost state side ice)])
+                                            (str "Rez " (get-title ice)))
+                                          (str "Add " (get-title ice) " to HQ")])
+                           :effect (req (if (= target (str "Rez " (get-title ice)))
                                           (rez state side eid ice)
                                           (do (system-msg state :corp "adds the passed piece of ice to HQ")
                                               (move state :corp ice :hand)

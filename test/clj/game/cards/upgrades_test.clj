@@ -1516,7 +1516,7 @@
         (click-card state :runner nm)
         (click-card state :runner nm)
         (click-card state :runner nm)
-        (click-prompt state :runner "Place 1 [Credits]")
+        (click-prompt state :runner "Place 1 [Credits] on Net Mercur")
         (click-prompt state :runner "No action"))))
 
 (deftest giordano-memorial-field-ending-the-run-doesn-t-mark-the-run-as-unsuccessful-issue-4223

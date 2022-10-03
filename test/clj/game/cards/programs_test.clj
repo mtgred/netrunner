@@ -2731,7 +2731,7 @@
       (run-on state "Archives")
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (click-prompt state :corp "Add to HQ")
+      (click-prompt state :corp "Add Ice Wall to HQ")
       (is (find-card "Ice Wall" (:hand (get-corp))) "Ice Wall added to HQ")
       (is (find-card "False Echo" (:discard (get-runner))) "False Echo trashed")))
 
@@ -2747,7 +2747,7 @@
       (run-on state "Archives")
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (click-prompt state :corp "Rez")
+      (click-prompt state :corp "Rez Ice Wall")
       (is (rezzed? (get-ice state :archives 0)) "Ice Wall rezzed")
       (is (find-card "False Echo" (:discard (get-runner))) "False Echo trashed")))
 

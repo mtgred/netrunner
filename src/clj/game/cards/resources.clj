@@ -1966,13 +1966,14 @@
              :waiting-prompt true
              :prompt "Choose one"
              :player :runner
-             :choices ["Place 1 [Credits]" "Draw 1 card"]
+             :choices ["Place 1 [Credits] on Net Mercur" "Draw 1 card"]
              :async true
+             :msg (msg (if (= target "Draw 1 card")
+                         (decapitalize target)
+                         "place 1 [Credits] on itself"))
              :effect (req (if (= target "Draw 1 card")
-                            (do (system-msg state :runner (str "uses Net Mercur to draw 1 card"))
-                                (draw state side eid 1))
-                            (do (system-msg state :runner (str "uses Net Mercur to place 1 [Credits] on itself"))
-                                (add-counter state :runner card :credit 1)
+                            (draw state side eid 1)
+                            (do (add-counter state :runner card :credit 1)
                                 (effect-completed state side eid))))}]
    ;; Normally this should be (req true), but having pay-credits prompts on
    ;; literally every interaction would get tiresome. Therefore Net Mercur will

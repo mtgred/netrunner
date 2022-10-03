@@ -236,7 +236,7 @@
    :abilities [{:cost [:agenda 1]
                 :req (req run)
                 :label "increase cost to break subroutines or jack out"
-                :msg "make the Runner trash a card from their grip to jack out or break subroutines for the remainder of the run"
+                :msg "make the Runner trash a card from the grip as an additional cost to jack out or break subroutines for the remainder of the run"
                 :effect (effect (register-floating-effect
                                   card
                                   {:type :break-sub-additional-cost

@@ -710,7 +710,7 @@
                                                                                                    " as an additional cost to initiate a run"))
                                                                     (effect-completed state side eid)))}
                                             card nil)
-                          (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
+                          (do (system-msg state :runner "cannot pay the additional cost from Hired Help")
                               (end-run state side eid card)))))}]
     {:events [{:event :run
                :async true
@@ -832,11 +832,12 @@
              :prompt "Choose one"
              :choices ["Take 1 tag" "End the run"]
              :async true
+             :msg (msg (if (= target "End the run")
+                         (decapitalize target)
+                         (str "force the Runner to " (decapitalize target))))
              :effect (req (if (= target "Take 1 tag")
-                            (do (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag"))
-                                (gain-tags state :runner eid 1))
-                            (do (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run"))
-                                (end-run state side eid card))))}]})
+                            (gain-tags state :runner eid 1)
+                            (end-run state side eid card)))}]})
 
 (defcard "Keegan Lane"
   {:abilities [{:req (req (and this-server
