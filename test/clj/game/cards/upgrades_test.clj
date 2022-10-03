@@ -3634,6 +3634,7 @@
     (click-prompt state :corp "0") ; trace
     (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
     (click-prompt state :runner "0")
+    (click-prompt state :runner "Suffer 1 brain damage")
     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
     (take-credits state :runner)
