@@ -708,7 +708,7 @@
                                                                                                    " as an additional cost to initiate a run"))
                                                                     (effect-completed state side eid)))}
                                             card nil)
-                          (do (system-msg state :runner (str "wants to pay the additional cost from Hired Help but has no scored agenda to trash"))
+                          (do (system-msg state :runner "cannot pay the additional cost from Hired Help")
                               (end-run state side eid card)))))}]
     {:events [{:event :run
                :async true
