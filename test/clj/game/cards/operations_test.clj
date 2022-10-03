@@ -1167,6 +1167,25 @@
     (play-from-hand state :corp "Economic Warfare")
     (is (= 3 (:credit (get-runner))) "Runner has 3 credits")))
 
+(deftest economic-warfare-ignoring-net-mercur-credits
+  ;; Economic Warfare should ignore Net Mercur credits
+  (do-game
+    (new-game {:corp {:hand ["Economic Warfare"]}
+               :runner {:hand ["Net Mercur" "Mantle" "Marjanah"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Marjanah")
+    (play-from-hand state :runner "Mantle")
+    (play-from-hand state :runner "Net Mercur")
+    (run-on state :archives)
+    (card-ability state :runner (get-program state 0) 1)
+    (click-card state :runner (get-program state 1))
+    (click-prompt state :runner "Place 1 [Credits]")
+    (run-continue state)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Economic Warfare")
+    (is (= 3 (:credit (get-runner))) "Runner has still 3 credits")))
+
 (deftest election-day
   (do-game
     (new-game {:corp {:deck [(qty "Election Day" 7)]}})
