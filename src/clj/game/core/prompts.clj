@@ -6,6 +6,7 @@
     [game.core.toasts :refer [toast]]
     [game.macros :refer [when-let*]]
     [game.utils :refer [pluralize]]
+    [jinteki.utils :refer [other-side]]
     [medley.core :refer [find-first]]))
 
 (defn choice-parser
@@ -49,7 +50,10 @@
            {:eid (select-keys eid [:eid])
             :card card
             :prompt-type :waiting
-            :msg (str "Waiting for " waiting-prompt)}))
+            :msg (str "Waiting for " 
+                      (if (true? waiting-prompt)
+                        (str (other-side side) " to make a decision")
+                        waiting-prompt))}))
        (add-to-prompt-queue state side newitem)))))
 
 (defn show-prompt-with-dice

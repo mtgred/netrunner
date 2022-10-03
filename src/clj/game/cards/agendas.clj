@@ -163,7 +163,7 @@
      :player :corp
      :once :per-turn
      :async true
-     :waiting-prompt "Corp to choose an option"
+     :waiting-prompt true
      :prompt "Choose one"
      :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
      :effect (req (case target
@@ -217,7 +217,7 @@
    {:player :runner
     :interactive (req true)
     :async true
-    :waiting-prompt "Runner to choose an option"
+    :waiting-prompt true
     :prompt "Choose Armed Intimidation score effect"
     :choices ["Suffer 5 meat damage" "Take 2 tags"]
     :effect (req (case target
@@ -267,7 +267,7 @@
   {:flags {:rd-reveal (req true)}
    :access {:async true
             :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
-            :waiting-prompt "Corp to choose an option"
+            :waiting-prompt true
             :prompt "How many advancement tokens?"
             :choices ["0" "1" "2"]
             :effect (effect (continue-ability
@@ -316,7 +316,7 @@
     (let [arrange-rd
           {:interactive (req true)
            :optional
-           {:waiting-prompt "Corp to make a decision"
+           {:waiting-prompt true
             :prompt "Arrange top 7 cards of R&D?"
             :yes-ability
             {:async true
@@ -342,7 +342,7 @@
               :req (req (and (has-subtype? (:card context) "Run")
                              (first-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))
                              (no-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))))
-              :waiting-prompt "Corp to choose an option"
+              :waiting-prompt true
               :prompt "Give the runner 1 tag?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
@@ -357,7 +357,7 @@
                              (has-subtype? (:card context) "Icebreaker")
                              (first-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))
                              (no-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))))
-              :waiting-prompt "Corp to choose an option"
+              :waiting-prompt true
               :prompt "Give the runner 1 tag?"
               :yes-ability
               {:async true
@@ -386,7 +386,7 @@
 (defcard "Brain Rewiring"
   {:on-score
    {:optional
-    {:waiting-prompt "Corp to make a decision"
+    {:waiting-prompt true
      :prompt "Pay credits to add random cards from Runner's Grip to the bottom of their Stack?"
      :yes-ability
      {:prompt "How many credits do you want to pay?"
@@ -652,7 +652,7 @@
                       (continue-ability
                         state side
                         {:optional
-                         {:waiting-prompt "Corp to choose an option"
+                         {:waiting-prompt true
                           :prompt prompt
                           :yes-ability
                           {:msg message
@@ -672,7 +672,7 @@
 (defcard "Élivágar Bifurcation"
   {:on-score
    {:interactive (req true)
-    :waiting-prompt "Corp to make a decision"
+    :waiting-prompt true
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
     :cancel-effect (effect (system-msg :runner "declines to use Élivágar Bifurcation to derez a card")
@@ -740,7 +740,7 @@
 (defcard "Explode-a-palooza"
   {:flags {:rd-reveal (req true)}
    :access {:optional
-            {:waiting-prompt "Corp to choose an option"
+            {:waiting-prompt true
              :prompt "Gain 5 [Credits]?"
              :yes-ability
              {:msg "gain 5 [Credits]"
@@ -782,7 +782,7 @@
                 :once :per-turn
                 :msg (msg "reveal " (:title (first (:deck corp))) " and draw 2 cards")
                 :async true
-                :waiting-prompt "Corp to make a decision"
+                :waiting-prompt true
                 :effect (req (wait-for
                                (reveal state side (first (:deck corp)))
                                (wait-for
@@ -1117,6 +1117,7 @@
   {:on-score {:interactive (req true)
               :async true
               :prompt "Choose one"
+              :waiting-prompt true
               :choices (req (if (< (count-tags state) 2)
                               ["Gain 7 [Credits]" "No action"]
                               ["Gain 7 [Credits]" "Do 7 meat damage" "No action"]))
@@ -1311,7 +1312,7 @@
                 :silent (req true)
                 :req (req (and (< 4 (get-counters (:card context) :advancement))
                                (pos? (count (all-installed state :runner)))))
-                :waiting-prompt "Runner to make a decision"
+                :waiting-prompt true
                 :prompt (msg "Choose " (quantify (trash-count-str (:card context)) "installed card") " to trash")
                 :choices {:max (req (min (- (get-counters (:card context) :advancement) 4)
                                          (count (all-installed state :runner))))
@@ -1454,7 +1455,7 @@
     {:on-score {:silent (req true)
                 :effect (effect (add-counter card :agenda (- (get-counters (:card context) :advancement) 3)))}
      :abilities [{:async true
-                  :waiting-prompt "Corp to make a decision"
+                  :waiting-prompt true
                   :cost [:agenda 1]
                   :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                   :label "swap card in HQ with installed card"
@@ -1465,7 +1466,7 @@
   {:events [{:event :successful-run
              :player :corp
              :interactive (req true)
-             :waiting-prompt "Corp to make a decision"
+             :waiting-prompt true
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
              :choices {:card can-be-advanced?}
              :msg (msg "place 1 advancement token on " (card-str state target))
@@ -1524,7 +1525,7 @@
                                 (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
                                     (effect-completed state side eid))))))})]
     {:on-score {:async true
-                :waiting-prompt "Corp to make a decision"
+                :waiting-prompt true
                 :effect (req (let [from (get-in @state [:corp :hand])]
                                (if (pos? (count from))
                                  (continue-ability state :corp (corp-choice from '() from) card nil)
@@ -1623,7 +1624,7 @@
 (defcard "SDS Drone Deployment"
   {:steal-cost-bonus (req [:program 1])
    :on-score {:req (req (seq (all-installed-runner-type state :program)))
-              :waiting-prompt "Corp to make a decision"
+              :waiting-prompt true
               :prompt "Choose a program to trash"
               :choices {:card #(and (installed? %)
                                     (program? %))
@@ -1920,7 +1921,7 @@
              :optional
              {:player :corp
               :req (req (pos? (get-counters card :agenda)))
-              :waiting-prompt "Corp to choose an option"
+              :waiting-prompt true
               :prompt "Make the Runner lose [Click]?"
               :yes-ability
               {:msg "make the Runner lose [Click]"

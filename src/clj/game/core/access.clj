@@ -806,7 +806,7 @@
                 state :corp
                 {:async true
                  :prompt (str "Choose a card in HQ for the Runner to access")
-                 :waiting-prompt "the Corp to choose a card in HQ to access"
+                 :waiting-prompt true
                  :choices {:all true
                            :card #(and (in-hand? %)
                                        (corp? %)
