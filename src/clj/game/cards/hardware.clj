@@ -1388,7 +1388,7 @@
              :req (req (and
                          (= :hq (first (:server target)))
                          (first-event? state side :successful-run #(= :hq (first (:server (first %)))))))
-             :msg (msg "force the Corp to lose 1 [Credits]")
+             :msg "force the Corp to lose 1 [Credits]"
              :async true
              :effect (req (if (pos? (:credit corp))
                             (wait-for (lose-credits state :corp 1)
