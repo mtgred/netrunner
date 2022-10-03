@@ -158,6 +158,7 @@
    :async true
    :label (str "End the run unless the Runner pays " amount " [Credits]")
    :prompt "Choose one"
+   :waiting-prompt true
    :choices (req ["End the run"
                   (when (can-pay? state :runner eid card nil [:credit amount])
                     (str "Pay " amount " [Credits]"))])
@@ -173,6 +174,7 @@
   {:async true
    :label (str "End the run unless the Corp pays " amount " [Credits]")
    :prompt "Choose one"
+   :waiting-prompt true
    :choices (req ["End the run"
                   (when (can-pay? state :corp eid card nil [:credit amount])
                     (str "Pay " amount " [Credits]"))])
@@ -190,6 +192,7 @@
    :async true
    :label (str "End the run unless the Runner " label)
    :prompt "Choose one"
+   :waiting-prompt true
    :choices ["End the run"
              (capitalize prompt)]
    :effect (req (if (= "End the run" target)
@@ -279,7 +282,7 @@
   "Add 1 installed Runner card to the grip"
   {:label "Add an installed Runner card to the grip"
    :req (req (not-empty (all-installed state :runner)))
-   :waiting-prompt "Corp to choose a target"
+   :waiting-prompt true
    :prompt "Choose a card"
    :choices {:card #(and (installed? %)
                          (runner? %))}
@@ -539,7 +542,7 @@
                        :req (req (and (< 0 (count (:hand corp)))
                                       run
                                       this-server))
-                       :waiting-prompt "Corp to choose an option"
+                       :waiting-prompt true
                        :yes-ability {:msg "do 2 net damage"
                                      :cost [:trash-from-hand 1]
                                      :async true
@@ -602,14 +605,14 @@
 
 (defcard "Anansi"
   (let [corp-draw {:optional
-                   {:waiting-prompt "Corp to choose an option"
+                   {:waiting-prompt true
                     :prompt "Draw 1 card?"
                     :yes-ability {:async true
                                   :msg "draw 1 card"
                                   :effect (effect (draw eid 1))}}}
         runner-draw {:player :runner
                      :optional
-                     {:waiting-prompt "Runner to choose an option"
+                     {:waiting-prompt true
                       :prompt "Pay 2 [Credits] to draw 1 card?"
                       :yes-ability
                       {:async true
@@ -622,7 +625,7 @@
                       :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}}}]
     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
                     :async true
-                    :waiting-prompt "Corp to make a decision"
+                    :waiting-prompt true
                     :effect (req (let [from (take 5 (:deck corp))]
                                    (continue-ability
                                      state side
@@ -644,7 +647,7 @@
    :access
    {:optional
     {:req (req (not (in-discard? card)))
-     :waiting-prompt "Corp to choose an option"
+     :waiting-prompt true
      :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
      :player :corp
      :yes-ability
@@ -732,6 +735,7 @@
 (defcard "Ballista"
   {:subroutines [{:label "Trash 1 program or end the run"
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices (req [(when (not-empty (filter program? (all-active-installed state :runner)))
                                    "Trash a program")
                                  "End the run"])
@@ -799,7 +803,7 @@
                                      (mill state :runner eid :runner 2))
                                  (continue-ability
                                    state :runner
-                                   {:waiting-prompt "Runner to choose an option"
+                                   {:waiting-prompt true
                                     :prompt "Choose one"
                                     :choices (req [(when (seq (filter program? (all-active-installed state :runner)))
                                                      "Trash 1 program")
@@ -1145,7 +1149,7 @@
                      {:async true
                       :label "Look at the top cards of the stack"
                       :msg "look at top cards of the stack"
-                      :waiting-prompt "Corp to make a decision"
+                      :waiting-prompt true
                       :effect (req (let [c (- target (second targets))
                                          from (take c (:deck runner))]
                                      (system-msg state :corp
@@ -1190,6 +1194,7 @@
                               (str "force the runner to " (decapitalize target) " on encountering it")))
                   :player :runner
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices ["Take 1 tag" "End the run"]
                   :async true
                   :effect (req (if (= target "Take 1 tag")
@@ -1201,6 +1206,7 @@
   {:on-encounter {:player :runner
                   :msg (msg "force the runner to " (decapitalize target) " on encountering it")
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices (req [(when (can-pay? state :runner eid card nil :credit 3)  
                                    "Pay 3 [Credits]")
                                  "Take 1 tag"])
@@ -1403,6 +1409,7 @@
   (let [sub {:async true
              :label "Draw a card or gain 1 [Credits]"
              :prompt "Choose one"
+             :waiting-prompt true
              :choices ["Gain 1 [Credits]" "Draw 1 card"]
              :msg (req (if (= target "Gain 1 [Credits]")
                          "gain 1 [Credits]"
@@ -1446,6 +1453,7 @@
              :msg (msg "force the Runner to " (decapitalize target))
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")
                             "Trash an installed card"])
@@ -1464,6 +1472,7 @@
              :msg (msg "force the Runner to " (decapitalize target))
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 2])
                               "Pay 2 [Credits]")
                             "Trash an installed card"])
@@ -1483,6 +1492,7 @@
              :msg (msg "force the Runner to " (decapitalize target))
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 3])
                               "Pay 3 [Credits]")
                             "Trash an installed card"])
@@ -1496,6 +1506,7 @@
                    sub
                    {:label "Do 1 brain damage or end the run"
                     :prompt "Choose one"
+                    :waiting-prompt true
                     :choices ["Do 1 brain damage" "End the run"]
                     :msg (msg (decapitalize target))
                     :async true
@@ -1572,6 +1583,7 @@
                   :player :runner
                   :async true
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices ["Suffer 2 net damage" "End the run"]
                   :msg (msg (if (= target "End the run")
                               (decapitalize target)
@@ -1596,6 +1608,7 @@
                               (decapitalize target)))
                   :player :runner
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices (req [(when-not (forced-to-avoid-tags? state side)
                                    "Take 1 tag")
                                  "End the run"])
@@ -1607,6 +1620,7 @@
                   :async true
                   :label "Give the Runner 1 tag unless they pay 4 [Credits]"
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices (req ["Take 1 tag"
                                  (when (can-pay? state :runner eid card nil :credit 4)
                                    "Pay 4 [Credits]")])
@@ -1733,7 +1747,7 @@
             :choices {:not-self true
                       :req (req (and (installed? target)
                                      (rezzed? target)))}
-            :waiting-prompt "Corp to choose an option"
+            :waiting-prompt true
             :cancel-effect (effect (system-msg "declines to use Hákarl 1.0 to derez another card")
                                    (effect-completed eid))
             :effect (effect (derez target)
@@ -2111,7 +2125,7 @@
                   :effect (effect (continue-ability
                                     (when (= 2 (count targets))
                                       {:player :runner
-                                       :waiting-prompt "Runner to make a decision"
+                                       :waiting-prompt true
                                        :prompt "Choose a card to move to the Stack"
                                        :choices {:card #(some (partial same-card? %) targets)}
                                        :effect (req (move state :runner target :deck {:front true})
@@ -2141,7 +2155,7 @@
           (sub-map [kind]
             {:player :runner
              :async true
-             :waiting-prompt "Runner to choose an option"
+             :waiting-prompt true
              :prompt "Choose one"
              :choices ["Take 1 brain damage" (str "Trash an installed " (better-name kind))]
              :msg (msg (if (= target "Take 1 brain damage")
@@ -2255,6 +2269,7 @@
                   :player :runner
                   :async true
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices (req [(when-not (and (zero? (count (:hand runner)))
                                                 (< (count (:deck runner)) 2)) ; UFAQ 24
                                    "Shuffle the grip into the stack")
@@ -2281,7 +2296,7 @@
                                 (reveal state side (top-3 state))
                                 (continue-ability
                                   state side
-                                  {:waiting-prompt "Corp to make a decision"
+                                  {:waiting-prompt true
                                    :prompt "Choose a card to add to the Grip"
                                    :choices (req (top-3 state))
                                    :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
@@ -2450,7 +2465,7 @@
 
 (defcard "Meridian"
   {:subroutines [{:label "Gain 4 [Credits] and end the run"
-                  :waiting-prompt "Runner to choose an option"
+                  :waiting-prompt true
                   :prompt "Choose one"
                   :choices ["End the run" "Add Meridian to score area"]
                   :player :runner
@@ -2477,6 +2492,7 @@
                   :msg "swap two pieces of ice or swap two installed non-ice"
                   :async true
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :req (req (or (<= 2 (count (filter ice? (all-installed state :corp))))
                                 (<= 2 (count (remove ice? (all-installed state :corp))))))
                   :choices (req [(when (<= 2 (count (filter ice? (all-installed state :corp))))
@@ -2542,7 +2558,7 @@
                           :async true
                           :player :corp
                           :prompt "Choose a server"
-                          :waiting-prompt "Corp to choose a server"
+                          :waiting-prompt true
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                           :msg (msg "redirect the run to " target
                                     " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
@@ -2610,7 +2626,7 @@
   (letfn [(net-or-trash [net-dmg mill-cnt]
             {:label (str "Do " net-dmg " net damage")
              :player :runner
-             :waiting-prompt "Runner to choose an option"
+             :waiting-prompt true
              :prompt "Choose one"
              :choices (req [(str "Take " net-dmg " net damage")
                             (when (<= mill-cnt (count (:deck runner)))
@@ -2855,7 +2871,7 @@
                                    state side
                                    {:player :runner
                                     :async true
-                                    :waiting-prompt "Runner to choose an option"
+                                    :waiting-prompt true
                                     :prompt "Choose one"
                                     :choices [(str "Access " title)
                                               (when (can-pay? state :runner eid card nil [:credit 3])
@@ -2935,6 +2951,7 @@
              :async true
              :label "Do 1 net damage unless the Runner pays 1 [Credits]"
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req ["Suffer 1 net damage"
                             (when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")])
@@ -3000,7 +3017,7 @@
   (let [maybe-draw-effect
         {:optional
          {:player :corp
-          :waiting-prompt "Corp to choose an option"
+          :waiting-prompt true
           :prompt "Draw 1 card?"
           :yes-ability
           {:async true
@@ -3013,7 +3030,7 @@
                     (effect (continue-ability
                               (let [top-cards (take 3 (:deck corp))
                                     top-names (map :title top-cards)]
-                                {:waiting-prompt "Corp to make a decision"
+                                {:waiting-prompt true
                                  :prompt (str "The top cards of R&D are: " (str/join ", " top-names))
                                  :choices ["Arrange cards" "Shuffle R&D"]
                                  :async true
@@ -3036,7 +3053,7 @@
                     (req (wait-for
                            (resolve-ability
                              state side
-                             {:waiting-prompt "Corp to make a decision"
+                             {:waiting-prompt true
                               :prompt "Choose a card in HQ to trash"
                               :choices (req (cancellable (:hand corp) :sorted))
                               :async true
@@ -3066,7 +3083,7 @@
                                         (do (system-msg state :corp "uses Saisentan to deal a second net damage")
                                             (damage state side eid :net 1 {:card card}))
                                         (effect-completed state side eid)))))}]
-    {:on-encounter {:waiting-prompt "Corp to choose an option"
+    {:on-encounter {:waiting-prompt true
                     :prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :msg (msg "choose the card type " target)
@@ -3183,7 +3200,7 @@
   {:subroutines [{:label "Rearrange the top 3 cards of R&D"
                   :msg "rearrange the top 3 cards of R&D"
                   :async true
-                  :waiting-prompt "Corp to make a decision"
+                  :waiting-prompt true
                   :effect (effect (continue-ability
                                     (let [from (take 3 (:deck corp))]
                                       (when (pos? (count from))
@@ -3295,7 +3312,7 @@
 
 (defcard "Stavka"
   {:on-rez {:optional {:prompt "Trash another card to give Stavka +5 strength?"
-                       :waiting-prompt "Corp to make a decision"
+                       :waiting-prompt true
                        :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
                                            card nil
                                            [:trash-other-installed 1]))
@@ -3348,6 +3365,7 @@
              :async true
              :label "Trash a program"
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req ["The Corp trashes a program"
                             (when (can-pay? state :runner eid card nil [:credit 3])
                               "Pay 3 [Credits]")])
@@ -3554,6 +3572,7 @@
                                  (decapitalize target)))
                      :player :runner
                      :prompt "Choose one"
+                     :waiting-prompt true
                      :choices (req [(when (can-pay? state :runner eid card nil [:click 1])
                                       "Spend [Click]")
                                     "End the run"])
@@ -3628,7 +3647,7 @@
 (defcard "Vasilisa"
   {:on-encounter
    {:optional {:prompt "Place 1 advancement counter?"
-               :waiting-prompt "Corp to make a decision"
+               :waiting-prompt true
                :req (req (and (can-pay? state side eid card nil [:credit 1])
                               (some #(or (not (rezzed? %))
                                          (can-be-advanced? %))

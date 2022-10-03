@@ -95,7 +95,7 @@
                             (pos? (:turn @state))
                             (not (rezzed? (:card context)))
                             (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :face-up} (:install-state context)))))
-             :waiting-prompt "Runner to choose an option"
+             :waiting-prompt true
              :effect
              (effect
                (continue-ability
@@ -113,7 +113,7 @@
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:waiting-prompt "Corp to choose an option"
+                                      {:waiting-prompt true
                                        :prompt (req (str "Pay 1 [Credits] to prevent exposing " (card-str state (:card context)) "?"))
                                        :player :corp
                                        :no-ability
@@ -147,7 +147,7 @@
   {:events [{:event :pre-start-game
              :req (req (= side :runner))
              :async true
-             :waiting-prompt "Runner to make a decision"
+             :waiting-prompt true
              :effect (req (let [directives (->> (server-cards)
                                                 (filter #(has-subtype? % "Directive"))
                                                 (map make-card)
@@ -203,7 +203,7 @@
              :req (req (and (= :archives (target-server context))
                             (first-successful-run-on-server? state :archives)
                             (not-empty (:hand corp))))
-             :waiting-prompt "Corp to make a decision"
+             :waiting-prompt true
              :prompt "Choose a card in HQ to discard"
              :player :corp
              :choices {:all true
@@ -244,6 +244,7 @@
 (defcard "Argus Security: Protection Guaranteed"
   {:events [{:event :agenda-stolen
              :prompt "Choose one"
+             :waiting-prompt true
              :async true
              :choices ["Take 1 tag" "Suffer 2 meat damage"]
              :player :runner
@@ -290,7 +291,7 @@
    :events [{:event :pre-start-game
              :req (req (= side :runner))
              :async true
-             :waiting-prompt "Runner to make a decision"
+             :waiting-prompt true
              :effect (req (doseq [c (take 6 (:deck runner))]
                             (move state side c :play-area))
                           (continue-ability
@@ -398,7 +399,7 @@
                              (pos? (last targets))
                              (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage)))
                              (pos? (count (:hand runner)))))
-              :waiting-prompt "Corp to make a decision"
+              :waiting-prompt true
               :prompt "Choose the first card to trash?"
               :yes-ability
               {:async true
@@ -535,7 +536,7 @@
                     (not (agenda? target))
                     (<= (play-cost state side target)
                         (number-of-runner-virus-counters state))))
-     :waiting-prompt "Runner to make a decision"
+     :waiting-prompt true
      :effect (req (let [accessed-card target
                         play-or-rez (:cost target)]
                     (if (zero? play-or-rez)
@@ -627,7 +628,7 @@
                                               (and (rezzed? ice)
                                                    (installed? ice)
                                                    (has-subtype? ice "Bioroid")))))))
-             :waiting-prompt "Corp to make a decision"
+             :waiting-prompt true
              :prompt "Choose a Bioroid to rez"
              :player :corp
              :choices
@@ -702,7 +703,7 @@
                             (not (:facedown context))))
              :once :per-turn
              :async true
-             :waiting-prompt "Runner to make a decision"
+             :waiting-prompt true
              :effect
              (effect (continue-ability
                        (let [itarget (:card context)
@@ -836,7 +837,7 @@
 (defcard "Jemison Astronautics: Sacrifice. Audacity. Success."
   {:events [{:event :corp-forfeit-agenda
              :async true
-             :waiting-prompt "Corp to make a decision"
+             :waiting-prompt true
              :effect
              (effect
                (continue-ability
@@ -1241,7 +1242,7 @@
                                              (some #(and (installed? (:card %))
                                                          (corp? (:card %)))
                                                    targets)))))
-              :waiting-prompt "Corp to make a decision"
+              :waiting-prompt true
               :prompt "Initiate a trace with strength 4?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
@@ -1262,7 +1263,7 @@
              :req (req (first-event? state :runner :runner-gain-tag))
              :player :corp
              :async true
-             :waiting-prompt "Corp to choose an option"
+             :waiting-prompt true
              :prompt "Choose one"
              :choices ["Gain 2 [Credits]" "Draw 2 cards"]
              :msg (msg (decapitalize target))
@@ -1542,7 +1543,7 @@
              :req (req (first-event? state side :successful-run))
              :interactive (req true)
              :async true
-             :waiting-prompt "Corp to make a decision"
+             :waiting-prompt true
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
              :choices {:card #(and (installed? %) (can-be-advanced? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
@@ -1654,7 +1655,7 @@
 (defcard "Skorpios Defense Systems: Persuasive Power"
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
    :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
-                :waiting-prompt "Corp to make a decision"
+                :waiting-prompt true
                 :prompt "Choose a card in the Runner's Heap that was just trashed"
                 :once :per-turn
                 :choices (req (cancellable (:discard runner)))
@@ -1671,6 +1672,7 @@
 
 (defcard "Sportsmetal: Go Big or Go Home"
   (let [ab {:prompt "Choose one"
+            :waiting-prompt true
             :player :corp
             :choices ["Gain 2 [Credits]" "Draw 2 cards"]
             :msg (msg (decapitalize target))
@@ -1699,7 +1701,7 @@
                :optional
                {:req (req (and (not-empty (installed-faceup-agendas state))
                                (not-empty (ice-with-no-advancement-tokens state))))
-                :waiting-prompt "Corp to make a decision"
+                :waiting-prompt true
                 :prompt "Place advancement tokens?"
                 :autoresolve (get-autoresolve :auto-fire)
                 :yes-ability
@@ -1741,7 +1743,7 @@
                (effect (continue-ability
                          (let [c1 (first targets)
                                c2 (second targets)]
-                           {:waiting-prompt "Corp to make a decision"
+                           {:waiting-prompt true
                             :prompt "Choose which card to remove from the game"
                             :player :corp
                             :choices [c1 c2]
@@ -1824,7 +1826,7 @@
          :optional
          {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
           :prompt "Swap 2 pieces of ice?"
-          :waiting-prompt "Runner to make a decision"
+          :waiting-prompt true
           :yes-ability
           {:prompt "Choose 2 pieces of ice"
            :choices {:req (req (and (installed? target)

@@ -30,7 +30,7 @@
    (charge-ability state side eid card 1))
   ([state side eid card n]
    (if (can-charge state side)
-     {:waiting-prompt (format "%s to charge a card" (if (= :runner side) "Runner" "Corp"))
+     {:waiting-prompt true
       :prompt (str "Select a card to charge")
       :choices {:card #(can-charge state side %)}
       :async true

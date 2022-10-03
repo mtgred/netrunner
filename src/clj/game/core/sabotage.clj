@@ -42,7 +42,7 @@
 (defn sabotage-ability
   [n]
   (let [choosing-ab (fn [forced-hq]
-                      {:waiting-prompt "Corp to choose an option"
+                      {:waiting-prompt true
                        :player :corp
                        :prompt (choosing-prompt-req n)
                        :choices {:min forced-hq

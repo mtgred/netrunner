@@ -75,7 +75,7 @@
             {:event :purge
              :optional
              {:player :runner
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt "Trash Acacia to gain 1 [Credits] for each virus counter been removed?"
               :yes-ability
               {:async true
@@ -175,7 +175,7 @@
                               (continue-ability
                                 state side
                                 {:optional
-                                 {:waiting-prompt "Corp to make a decision"
+                                 {:waiting-prompt true
                                   :prompt (msg (build-cost-string [:credit cost])
                                                ", plus " (decapitalize (build-cost-string additional-costs))
                                                " as an additional cost to rez " cname "?")
@@ -360,6 +360,7 @@
                                                 tags (pos? (count-real-tags state))]
                                             {:req (req (or deck tags))
                                              :prompt "Choose one"
+                                             :waiting-prompt true
                                              :choices [(when deck "Draw 1 card")
                                                        (when tags "Remove 1 tag")]
                                              :async true
@@ -757,7 +758,7 @@
   {:events [{:event :pre-init-trace
              :optional
              {:req (req (= :runner (:active-player @state)))
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt "Trash Flip Switch to reduce the base trace strength to 0?"
               :player :runner
               :yes-ability {:msg "reduce the base trace strength to 0"
@@ -873,7 +874,7 @@
                   :cost [:trash-can]
                   :msg "install a card from the top of the stack"
                   :async true
-                  :waiting-prompt "Runner to make a decision"
+                  :waiting-prompt true
                   :effect (req (set-aside state side eid (take 6 (:deck runner)))
                                (let [set-aside-cards (sort-by :title (get-set-aside state side eid))]
                                  (wait-for (resolve-ability state side
@@ -1400,7 +1401,7 @@
   (let [install-ability
         {:async true
          :prompt "Choose a card to install"
-         :waiting-prompt "Runner to make a decision"
+         :waiting-prompt true
          :player :runner
          :req (req (pos? (count (:hand runner))))
          :choices {:req (req (and (runner? target)
@@ -1432,7 +1433,7 @@
              {:req (req (first-event? state side :successful-run))
               :player :runner
               :autoresolve (get-autoresolve :auto-fire)
-              :waiting-prompt "Runner to make a decision"
+              :waiting-prompt true
               :prompt "Gain 1 [Credit] and look at the top card of the stack?"
               :yes-ability
               {:msg "gain 1 [Credit] and look at the top card of the stack"
@@ -1846,6 +1847,7 @@
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
                   :label "run a server"
                   :prompt "Choose one"
+                  :waiting-prompt true
                   :choices ["HQ" "R&D"]
                   :async true
                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]}))
@@ -1968,7 +1970,7 @@
                 :async true
                 :label "Look at the top X cards of your Stack"
                 :msg "look at the top X cards of their Stack and rearrange them"
-                :waiting-prompt "Runner to make a decision"
+                :waiting-prompt true
                 :effect (req (let [n (count (filter #(= (:title %) (:title card))
                                                     (all-active-installed state :runner)))
                                    from (take n (:deck runner))]
@@ -1993,7 +1995,7 @@
              :silent (get-autoresolve :auto-fire never?)
              :optional
              {:req (req (= (:credit runner) (:credit corp)))
-              :waiting-prompt "Runner to choose an option"
+              :waiting-prompt true
               :prompt "Gain 2 [Credits]?"
               :player :runner
               :autoresolve (get-autoresolve :auto-fire)
@@ -2069,7 +2071,7 @@
                               state :runner
                               (if (< (count hand) dmg)
                                 {:effect (effect (chosen-damage :runner hand))}
-                                {:waiting-prompt "Runner to make a decision"
+                                {:waiting-prompt true
                                  :prompt (msg "Choose " (quantify dmg "card") " to trash for the " (name dtype) " damage")
                                  :choices {:max dmg
                                            :all true
