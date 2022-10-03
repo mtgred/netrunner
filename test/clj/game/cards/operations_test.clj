@@ -1180,7 +1180,7 @@
     (run-on state :archives)
     (card-ability state :runner (get-program state 0) 1)
     (click-card state :runner (get-program state 1))
-    (click-prompt state :runner "Place 1 [Credits]")
+    (click-prompt state :runner "Place 1 [Credits] on Net Mercur")
     (run-continue state)
     (take-credits state :runner)
     (play-from-hand state :corp "Economic Warfare")

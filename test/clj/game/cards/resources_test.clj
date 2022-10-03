@@ -3744,7 +3744,7 @@
         (is (no-prompt? state :runner) "No Net Mercur prompt from stealth spent outside of run")
         (run-on state :hq)
         (card-ability state :runner sil 0)
-        (click-prompt state :runner "Place 1 [Credits]")
+        (click-prompt state :runner "Place 1 [Credits] on Net Mercur")
         (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur")
         (card-ability state :runner gr 0)
         (is (no-prompt? state :runner) "No Net Mercur prompt for 2nd stealth in run")
@@ -3771,7 +3771,7 @@
                            (run-on state :hq)
                            (card-ability state :runner refr 1)
                            (click-card state :runner cl))
-        (click-prompt state :runner "Place 1 [Credits]")
+        (click-prompt state :runner "Place 1 [Credits] on Net Mercur")
         (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur"))))
 
 (deftest net-mercur-prevention-prompt-issue-4464
@@ -6363,7 +6363,7 @@
                          "Used 1 credit from mantle"
                          (card-ability state :runner corr 1)
                          (click-card state :runner mantle)
-                         (click-prompt state :runner "Place 1 [Credits]"))
+                         (click-prompt state :runner "Place 1 [Credits] on Net Mercur"))
       (run-jack-out state)
       (play-from-hand state :runner "Spec Work")
       (click-card state :runner "Mantle")
@@ -6571,7 +6571,7 @@
         (card-ability state :runner tt 0)
         (is (= "Choose one" (-> (prompt-map :runner) :msg))
             "Net Mercur fires as Taka credits are stealth")
-        (click-prompt state :runner "Place 1 [Credits]"))))
+        (click-prompt state :runner "Place 1 [Credits] on Net Mercur"))))
 
 (deftest trickster-taka-pay-credits-prompt
     ;; Pay-credits prompt
