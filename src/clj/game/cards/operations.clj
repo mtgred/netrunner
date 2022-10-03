@@ -708,7 +708,7 @@
 (defcard "Economic Warfare"
   {:on-play
    {:req (req (and (last-turn? state :runner :successful-run)
-                   (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 4)))
+                   (>= (:credit runner) 4)))
     :msg "make the runner lose 4 [Credits]"
     :async true
     :effect (effect (lose-credits :runner eid 4))}})
