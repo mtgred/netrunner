@@ -1883,8 +1883,7 @@
                                        (trash state side card {:cause-card card})
                                        (wait-for
                                          (gain-credits state side 3)
-                                         (wait-for (draw state side 3)
-                                                   (effect-completed state side eid)))))}}}
+                                         (draw state side eid 3))))}}}
                      card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
