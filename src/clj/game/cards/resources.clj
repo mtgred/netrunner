@@ -1195,9 +1195,9 @@
                       "Pay 1 [Credits]")
                     "Trash Fencer Fueno"])
      :player :runner
-     :msg (req (if (= target "Trash Fencer Fueno")
-                 "to trash itself"
-                (msg "to " (decapitalize target))))
+     :msg (msg (if (= target "Trash Fencer Fueno")
+                 "trash itself"
+                 (decapitalize target)))
      :async true
      :effect (req (if (= target "Trash Fencer Fueno")
                     (trash state :runner eid card {:cause-card card})
@@ -1364,9 +1364,9 @@
                             [{:event :pre-resolve-damage
                               :unregister-once-resolved true
                               :async true
-                              :msg (if (= target "Trash Guru Davinder")
-                                         "to trash itself"
-                                         (msg "to " (decapitalize target)))
+                              :msg (msg (if (= target "Trash Guru Davinder")
+                                          "trash itself"
+                                          (decapitalize target)))
                               :prompt "Choose one"
                               :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 4)
                                                "Pay 4 [Credits]")
@@ -1676,9 +1676,9 @@
                                   "Pay 1 [Credits]")
                                 "Trash Lewi Guilherme"])
                  :player :runner
-                 :msg (req (if (= target "Trash Lewi Guilherme")
-                            "to trash itself"
-                            (msg "to " (decapitalize target))))
+                 :msg (msg (if (= target "Trash Lewi Guilherme")
+                             "trash itself"
+                             (decapitalize target)))
                  :effect (req (if (= target "Trash Lewi Guilherme")
                                 (trash state :runner eid card {:cause-card card})
                                 (pay state :runner eid card :credit 1)))}]
@@ -1936,9 +1936,9 @@
                        "Trash a random card from the grip")
                      "Trash Mystic Maemi"])
      :player :runner
-     :msg (req (if (= target "Trash Mystic Maemi")
-                "to trash itself"
-                (msg "to " (decapitalize target))))
+     :msg (msg (if (= target "Trash Mystic Maemi")
+                 "trash itself"
+                 (decapitalize target)))
      :async true
      :effect (req (if (= target "Trash Mystic Maemi")
                     (trash state :runner eid card {:cause-card card})
@@ -2176,7 +2176,7 @@
                :card #(and (installed? %)
                            (runner? %))}
      :player :runner
-     :msg (msg "to trash " (:title target))
+     :msg (msg "trash " (:title target))
      :async true
      :effect (effect (trash eid target {:cause :runner-ability :cause-card card}))}
     ;; companion-builder: ability
@@ -2534,7 +2534,7 @@
                                               (filter #(not (has-subtype? % "Virtual"))
                                                       (get-in runner [:rig :resource]))
                                               (:hand runner))]
-                            (str "to prevent all damage, trash "
+                            (str "prevent all damage, trash "
                                  (quantify (count cards) "card")
                                  " (" (str/join ", " (map :title cards)) "),"
                                  " lose " (quantify (:credit (:runner @state)) "credit")
@@ -3264,9 +3264,9 @@
     {:prompt "Choose one"
      :choices ["Take 1 tag" "Trash Trickster Taka"]
      :player :runner
-     :msg (req (if (= target "Trash Trickster Taka")
-                "to trash itself"
-                (msg "to " (decapitalize target))))
+     :msg (msg (if (= target "Trash Trickster Taka")
+                 "trash itself"
+                 (decapitalize target)))
      :async true
      :effect (req (if (= target "Trash Trickster Taka")
                     (trash state :runner eid card {:cause-card card})

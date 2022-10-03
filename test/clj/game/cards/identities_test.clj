@@ -3699,7 +3699,7 @@
     (card-ability state :corp (get-content state :remote1 0) 0)
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Yes")
-    (is (second-last-log-contains? state "shuffle") "Ob superheavy should shuffle R&D")))
+    (is (last-log-contains? state "shuffle") "Ob superheavy should shuffle R&D")))
 
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn

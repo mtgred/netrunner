@@ -1234,7 +1234,7 @@
   {:events [{:event :rez
              :req (req (ice? (:card context)))
              :async true
-             :msg "to give the Runner 1 tag"
+             :msg "give the Runner 1 tag"
              :effect (req (gain-tags state :runner eid 1))}]})
 
 (defcard "Malia Z0L0K4"
@@ -1876,7 +1876,7 @@
                    (continue-ability
                      {:optional
                       {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
-                       :msg "to trash itself"
+                       :msg "gain 3 [Credits] and draw 3 cards"
                        :yes-ability
                        {:async true
                         :effect (req (wait-for
@@ -1884,7 +1884,6 @@
                                        (wait-for
                                          (gain-credits state side 3)
                                          (wait-for (draw state side 3)
-                                                   (system-msg state side (str "uses " (:title card) " to gain 3 [Credits] and draw 3 cards"))
                                                    (effect-completed state side eid)))))}}}
                      card nil))}]
     {:derezzed-events [corp-rez-toast]
@@ -1962,7 +1961,7 @@
 (defcard "Rex Campaign"
   (let [payout-ab {:prompt "Choose one"
                    :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
-                   :msg (msg "to " (decapitalize target))
+                   :msg (msg (decapitalize target))
                    :async true
                    :effect (req (if (= target "Remove 1 bad publicity")
                                   (lose-bad-publicity state side eid 1)

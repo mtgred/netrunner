@@ -2282,7 +2282,7 @@
                                   {:prompt "Choose one"
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
                                    :async true
-                                   :msg (msg "to " (decapitalize target))
+                                   :msg (msg (decapitalize target))
                                    :effect (req (if (= target "Draw 2 cards")
                                                   (draw state :runner eid 2)
                                                   (gain-credits state :runner eid 3)))}))

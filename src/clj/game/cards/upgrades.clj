@@ -729,7 +729,7 @@
             :async true
             :waiting-prompt "Runner to choose an option"
             :msg (req (if (= target "The Corp removes 1 bad publicity")
-                       "to remove 1 bad publicity"
+                       "remove 1 bad publicity"
                        (msg "force the Runner to " (decapitalize target))))
             :prompt "Choose one"
             :choices ["Take 1 tag" "The Corp removes 1 bad publicity"]

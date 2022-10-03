@@ -2319,7 +2319,7 @@
    {:play-cost-bonus (req (- (get-link state)))
     :prompt "Choose one"
     :choices ["Gain 4 [Credits]" "Draw 4 cards"]
-    :msg (msg "to " (decapitalize target))
+    :msg (msg (decapitalize target))
     :async true
     :effect (req (if (= target "Gain 4 [Credits]")
                    (gain-credits state :runner eid 4)
