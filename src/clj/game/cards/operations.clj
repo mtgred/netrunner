@@ -1833,7 +1833,7 @@
                :effect (req (if (or (= target "None")
                                     (ice? target)
                                     (operation? target))
-                              (do (system-msg state side "does not install an asset, agenda, or upgrade")
+                              (do (system-msg state side "declines to use Psychokinesis to install a card")
                                   (effect-completed state side eid))
                               (continue-ability state side (install-card target) card nil)))}))
           (install-card [chosen]
