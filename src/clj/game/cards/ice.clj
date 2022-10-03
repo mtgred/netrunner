@@ -2307,8 +2307,8 @@
   {:subroutines [trash-program-sub
                  trash-program-sub
                  trash-hardware-sub
-                 {:label "Runner loses 3 [credit], if able. End the run."
-                  :msg "make the Runner lose 3 [credit] and end the run"
+                 {:label "Runner loses 3 [Credits], if able. End the run."
+                  :msg "make the Runner lose 3 [Credits] and end the run"
                   :async true
                   :effect (req (if (>= (:credit runner) 3)
                                  (wait-for (lose-credits state (make-eid state eid) :runner 3)
