@@ -271,8 +271,7 @@
     :effect (req (as-agenda state :corp card 1))}})
 
 (defcard "Bad Times"
-  {:implementation "Any required program trashing is manual"
-   :on-play {:req (req tagged)
+  {:on-play {:req (req tagged)
              :msg "force the Runner to lose 2[mu] until the end of the turn"
              :effect (req (register-floating-effect
                             state :corp card
