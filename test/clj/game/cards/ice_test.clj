@@ -6482,7 +6482,8 @@
       (run-continue state)
       (card-subroutine state :corp tsurugi 0)
       (is (seq (:prompt (get-corp))) "Corp is prompted to pay")
-      (is (no-prompt? state :runner) "Runner is not prompted to pay"))))
+      (is (= :waiting (prompt-type :runner))
+          "Runner has prompt to wait for Corp to use Tsurugi"))))
 
 (deftest turing-strength-boosted-when-protecting-a-remote-server
   ;; Strength boosted when protecting a remote server

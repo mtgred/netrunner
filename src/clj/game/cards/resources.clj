@@ -1191,6 +1191,7 @@
     (req (:successful run))
     ;; companion-builder: turn-ends-ability
     {:prompt "Choose one"
+     :waiting-prompt "Runner to choose an option"
      :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
                       "Pay 1 [Credits]")
                     "Trash Fencer Fueno"])
@@ -1368,6 +1369,7 @@
                                          "to trash itself"
                                          (msg "to " (decapitalize target)))
                               :prompt "Choose one"
+                              :waiting-prompt "Runner to choose an option"
                               :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 4)
                                                "Pay 4 [Credits]")
                                              "Trash Guru Davinder"])
@@ -1672,6 +1674,7 @@
                  :interactive (req true)
                  :async true
                  :prompt "Choose one"
+                 :waiting-prompt "Runner to choose an option"
                  :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
                                   "Pay 1 [Credits]")
                                 "Trash Lewi Guilherme"])
@@ -1930,6 +1933,7 @@
          (= :play (:source-type eid))))
     ;; companion-builder: turn-ends-ability
     {:prompt "Choose one"
+     :waiting-prompt "Runner to choose an option"
      :choices (req [(when (can-pay? state :runner
                                  (assoc eid :source card :source-type :ability)
                                  card nil :randomly-trash-from-hand 1)

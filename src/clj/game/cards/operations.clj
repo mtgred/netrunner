@@ -452,6 +452,7 @@
    {:psi {:req (req (last-turn? state :runner :successful-run))
           :not-equal {:player :runner
                       :prompt "Choose one"
+                      :waiting-prompt "Runner to choose an option"
                       :choices ["Take 1 tag" "Suffer 1 brain damage"]
                       :msg (msg "give the Runner " target)
                       :effect (req (if (= target "Take 1 tag")
@@ -1622,7 +1623,7 @@
   {:on-play
    {:async true
     :player :runner
-    :waiting-prompt "Runner to make a decision"
+    :waiting-prompt "Runner to choose an option"
     :prompt "Choose one"
     :choices (req [(when-not (empty? (:hand runner))
                      "Trash 1 random card from the grip")
@@ -1753,6 +1754,7 @@
 (defcard "Predictive Planogram"
   {:on-play
    {:prompt "Choose one"
+    :waiting-prompt "Corp to choose an option"
     :choices (req ["Gain 3 [Credits]"
                    "Draw 3 cards"
                    (when tagged
@@ -2090,6 +2092,7 @@
 (defcard "Reverse Infection"
   {:on-play
    {:prompt "Choose one"
+    :waiting-prompt "Corp to choose an option"
     :choices ["Purge virus counters"
               "Gain 2 [Credits]"]
     :async true

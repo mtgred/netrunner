@@ -1619,6 +1619,7 @@
                                    (first-event? state side :runner-install)))
              :async true
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices ["Draw 1 card" "Gain 1 [Credits]"]
              :msg (msg (str/lower-case target))
              :effect (req (if (= target "Draw 1 card")
@@ -1662,6 +1663,7 @@
 (defcard "Infiltration"
   {:on-play
    {:prompt "Choose one"
+    :waiting-prompt "Runner to choose an option"
     :choices ["Gain 2 [Credits]" "Expose a card"]
     :async true
     :effect (effect (continue-ability
@@ -2318,6 +2320,7 @@
   {:on-play
    {:play-cost-bonus (req (- (get-link state)))
     :prompt "Choose one"
+    :waiting-prompt "Runner to choose an option"
     :choices ["Gain 4 [Credits]" "Draw 4 cards"]
     :msg (msg "to " (decapitalize target))
     :async true

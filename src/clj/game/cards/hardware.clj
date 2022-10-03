@@ -360,6 +360,7 @@
                                                 tags (pos? (count-real-tags state))]
                                             {:req (req (or deck tags))
                                              :prompt "Choose one"
+                                             :waiting-prompt "Runner to choose an option"
                                              :choices [(when deck "Draw 1 card")
                                                        (when tags "Remove 1 tag")]
                                              :async true
@@ -1846,6 +1847,7 @@
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
                   :label "run a server"
                   :prompt "Choose one"
+                  :waiting-prompt "Runner to choose an option"
                   :choices ["HQ" "R&D"]
                   :async true
                   :effect (effect (continue-ability (implant-fn target (if (= target "HQ") :hq :rd)) card nil))}]}))

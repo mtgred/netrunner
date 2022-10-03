@@ -1117,6 +1117,7 @@
   {:on-score {:interactive (req true)
               :async true
               :prompt "Choose one"
+              :waiting-prompt "Corp to choose an option"
               :choices (req (if (< (count-tags state) 2)
                               ["Gain 7 [Credits]" "No action"]
                               ["Gain 7 [Credits]" "Do 7 meat damage" "No action"]))

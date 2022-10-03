@@ -2280,6 +2280,7 @@
                                 (when (or (= guess (:cost target))
                                           (= guess (get-advancement-requirement target)))
                                   {:prompt "Choose one"
+                                   :waiting-prompt "Runner to choose an option"
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
                                    :async true
                                    :msg (msg "to " (decapitalize target))

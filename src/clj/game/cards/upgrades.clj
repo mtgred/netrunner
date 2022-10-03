@@ -254,6 +254,7 @@
              :player :runner
              :req (req this-server)
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices ["Take 1 brain damage" "Jack out"]
              :effect (req (if (= target "Take 1 brain damage")
                             (damage state :runner eid :brain 1 {:card card})
@@ -690,6 +691,7 @@
 (defcard "Hired Help"
   (let [prompt-to-trash-agenda-or-etr
         {:prompt "Choose one"
+         :waiting-prompt "Runner to choose an option"
          :player :runner
          :choices ["Trash 1 scored agenda" "End the run"]
          :async true
@@ -910,6 +912,7 @@
              :interactive (req true)
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :req (req this-server)
              :choices (req [(when (can-pay? state :runner eid card nil [:click 2])
                               "Spend [Click][Click]")
@@ -1543,6 +1546,7 @@
                             (in-same-server? card (:card context))
                             (first-event? state :corp :corp-install #(in-same-server? card (:card (first %))))))
              :prompt "Choose one"
+             :waiting-prompt "Corp to choose an option"
              :choices ["Gain 2 [Credits]" "Draw 1 card"]
              :msg (msg (decapitalize target))
              :async true

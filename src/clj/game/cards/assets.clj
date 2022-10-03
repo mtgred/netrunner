@@ -431,6 +431,7 @@
    :events [{:event :runner-turn-begins
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")
                             "Take 1 tag"])
@@ -485,6 +486,7 @@
                  :player :runner
                  :once :per-turn
                  :prompt "Choose one"
+                 :waiting-prompt "Runner to choose an option"
                  :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                                   "Pay 1 [Credits]")
                                 (when (seq (:deck runner))
@@ -1565,6 +1567,7 @@
                               {:player :runner
                                :async true
                                :prompt "Choose one"
+                               :waiting-prompt "Runner to choose an option"
                                :choices ["Take 2 tags" "Add News Team to score area"]
                                :effect (req (if (= target "Add News Team to score area")
                                               (do (system-msg state :runner (str "adds " (:title card)
@@ -1961,6 +1964,7 @@
 
 (defcard "Rex Campaign"
   (let [payout-ab {:prompt "Choose one"
+                   :waiting-prompt "Corp to choose an option"
                    :choices ["Remove 1 bad publicity" "Gain 5 [Credits]"]
                    :msg (msg "to " (decapitalize target))
                    :async true
@@ -2148,6 +2152,7 @@
                   (let [dmg target]
                     {:player :runner
                      :prompt "Choose one"
+                     :waiting-prompt "Runner to choose an option"
                      :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
                      :async true
                      :effect (req (if (= target "Add Shi.Kyū to score area")

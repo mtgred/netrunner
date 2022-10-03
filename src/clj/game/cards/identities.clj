@@ -244,6 +244,7 @@
 (defcard "Argus Security: Protection Guaranteed"
   {:events [{:event :agenda-stolen
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :async true
              :choices ["Take 1 tag" "Suffer 2 meat damage"]
              :player :runner
@@ -1673,6 +1674,7 @@
 
 (defcard "Sportsmetal: Go Big or Go Home"
   (let [ab {:prompt "Choose one"
+            :waiting-prompt "Corp to choose an option"
             :player :corp
             :choices ["Gain 2 [Credits]" "Draw 2 cards"]
             :msg (msg "to " (decapitalize target))

@@ -158,6 +158,7 @@
    :async true
    :label (str "End the run unless the Runner pays " amount " [Credits]")
    :prompt "Choose one"
+   :waiting-prompt "Runner to choose an option"
    :choices (req ["End the run"
                   (when (can-pay? state :runner eid card nil [:credit amount])
                     (str "Pay " amount " [Credits]"))])
@@ -173,6 +174,7 @@
   {:async true
    :label (str "End the run unless the Corp pays " amount " [Credits]")
    :prompt "Choose one"
+   :waiting-prompt "Corp to choose an option"
    :choices (req ["End the run"
                   (when (can-pay? state :corp eid card nil [:credit amount])
                     (str "Pay " amount " [Credits]"))])
@@ -190,6 +192,7 @@
    :async true
    :label (str "End the run unless the Runner " label)
    :prompt "Choose one"
+   :waiting-prompt "Runner to choose an option"
    :choices ["End the run"
              (capitalize prompt)]
    :effect (req (if (= "End the run" target)
@@ -732,6 +735,7 @@
 (defcard "Ballista"
   {:subroutines [{:label "Trash 1 program or end the run"
                   :prompt "Choose one"
+                  :waiting-prompt "Corp to choose an option"
                   :choices (req [(when (not-empty (filter program? (all-active-installed state :runner)))
                                    "Trash a program")
                                  "End the run"])
@@ -1190,6 +1194,7 @@
                               (str "force the runner to " (decapitalize target) " on encountering it")))
                   :player :runner
                   :prompt "Choose one"
+                  :waiting-prompt "Runner to choose an option"
                   :choices ["Take 1 tag" "End the run"]
                   :async true
                   :effect (req (if (= target "Take 1 tag")
@@ -1201,6 +1206,7 @@
   {:on-encounter {:player :runner
                   :msg (msg "force the runner to " (decapitalize target) " on encountering it")
                   :prompt "Choose one"
+                  :waiting-prompt "Runner to choose an option"
                   :choices (req [(when (can-pay? state :runner eid card nil :credit 3)  
                                    "Pay 3 [Credits]")
                                  "Take 1 tag"])
@@ -1403,6 +1409,7 @@
   (let [sub {:async true
              :label "Draw a card or gain 1 [Credits]"
              :prompt "Choose one"
+             :waiting-prompt "Corp to choose an option"
              :choices ["Gain 1 [Credits]" "Draw 1 card"]
              :msg (req (if (= target "Gain 1 [Credits]")
                          "gain 1 [Credits]"
@@ -1446,6 +1453,7 @@
              :msg (msg "force the Runner to " (decapitalize target))
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")
                             "Trash an installed card"])
@@ -1464,6 +1472,7 @@
              :msg (msg "force the Runner to " (decapitalize target))
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 2])
                               "Pay 2 [Credits]")
                             "Trash an installed card"])
@@ -1483,6 +1492,7 @@
              :msg (msg "force the Runner to " (decapitalize target))
              :player :runner
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 3])
                               "Pay 3 [Credits]")
                             "Trash an installed card"])
@@ -1496,6 +1506,7 @@
                    sub
                    {:label "Do 1 brain damage or end the run"
                     :prompt "Choose one"
+                    :waiting-prompt "Corp to choose an option"
                     :choices ["Do 1 brain damage" "End the run"]
                     :msg (msg (decapitalize target))
                     :async true
@@ -1572,6 +1583,7 @@
                   :player :runner
                   :async true
                   :prompt "Choose one"
+                  :waiting-prompt "Runner to choose an option"
                   :choices ["Suffer 2 net damage" "End the run"]
                   :msg (msg (if (= target "End the run")
                               (decapitalize target)
@@ -1596,6 +1608,7 @@
                               (decapitalize target)))
                   :player :runner
                   :prompt "Choose one"
+                  :waiting-prompt "Runner to choose an option"
                   :choices (req [(when-not (forced-to-avoid-tags? state side)
                                    "Take 1 tag")
                                  "End the run"])
@@ -1607,6 +1620,7 @@
                   :async true
                   :label "Give the Runner 1 tag unless they pay 4 [Credits]"
                   :prompt "Choose one"
+                  :waiting-prompt "Runner to choose an option"
                   :choices (req ["Take 1 tag"
                                  (when (can-pay? state :runner eid card nil :credit 4)
                                    "Pay 4 [Credits]")])
@@ -2255,6 +2269,7 @@
                   :player :runner
                   :async true
                   :prompt "Choose one"
+                  :waiting-prompt "Runner to choose an option"
                   :choices (req [(when-not (and (zero? (count (:hand runner)))
                                                 (< (count (:deck runner)) 2)) ; UFAQ 24
                                    "Shuffle the grip into the stack")
@@ -2478,6 +2493,7 @@
                   :msg "swap two pieces of ice or swap two installed non-ice"
                   :async true
                   :prompt "Choose one"
+                  :waiting-prompt "Corp to choose an option"
                   :req (req (or (<= 2 (count (filter ice? (all-installed state :corp))))
                                 (<= 2 (count (remove ice? (all-installed state :corp))))))
                   :choices (req [(when (<= 2 (count (filter ice? (all-installed state :corp))))
@@ -2936,6 +2952,7 @@
              :async true
              :label "Do 1 net damage unless the Runner pays 1 [Credits]"
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices (req ["Suffer 1 net damage"
                             (when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")])
@@ -3349,6 +3366,7 @@
              :async true
              :label "Trash a program"
              :prompt "Choose one"
+             :waiting-prompt "Runner to choose an option"
              :choices (req ["The Corp trashes a program"
                             (when (can-pay? state :runner eid card nil [:credit 3])
                               "Pay 3 [Credits]")])
@@ -3555,6 +3573,7 @@
                                  (decapitalize target)))
                      :player :runner
                      :prompt "Choose one"
+                     :waiting-prompt "Runner to choose an option"
                      :choices (req [(when (can-pay? state :runner eid card nil [:click 1])
                                       "Spend [Click]")
                                     "End the run"])
