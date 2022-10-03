@@ -247,12 +247,10 @@
              :async true
              :choices ["Take 1 tag" "Suffer 2 meat damage"]
              :player :runner
-             :msg "make the Runner take 1 tag or suffer 2 meat damage"
+             :msg (msg "force the Runner to " (decapitalize target))
              :effect (req (if (= target "Take 1 tag")
-                            (do (system-msg state side "chooses to take 1 tag")
-                                (gain-tags state :runner eid 1))
-                            (do (system-msg state side "chooses to suffer 2 meat damage")
-                                (damage state :runner eid :meat 2 {:unboostable true :card card}))))}]})
+                            (gain-tags state :runner eid 1)
+                            (damage state :runner eid :meat 2 {:unboostable true :card card})))}]})
 
 (defcard "Armand \"Geist\" Walker: Tech Lord"
   {:events [{:event :runner-trash
