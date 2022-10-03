@@ -1562,22 +1562,15 @@
 (defcard "News Team"
   {:flags {:rd-reveal (req true)}
    :access {:async true
-            :msg "force the Runner take 2 tags or add itself to their score area as an agenda worth -1 agenda point"
-            :effect (effect (continue-ability
-                              {:player :runner
-                               :async true
-                               :prompt "Choose one"
-                               :waiting-prompt true
-                               :choices ["Take 2 tags" "Add News Team to score area"]
-                               :effect (req (if (= target "Add News Team to score area")
-                                              (do (system-msg state :runner (str "adds " (:title card)
-                                                                                 " to their score area as an agenda worth "
-                                                                                 (quantify -1 "agenda point")))
-                                                  (as-agenda state :runner card -1)
-                                                  (effect-completed state side eid))
-                                              (do (system-msg state :runner (str "takes 2 tags from News Team"))
-                                                  (gain-tags state :runner eid 2))))}
-                              card targets))}})
+            :msg (msg "force the Runner to " (decapitalize target))
+            :player :runner
+            :prompt "Choose one"
+            :waiting-prompt true
+            :choices ["Take 2 tags" "Add News Team to score area"]
+            :effect (req (if (= target "Take 2 tags")
+                          (gain-tags state :runner eid 2)
+                          (do (as-agenda state :runner card -1)
+                              (effect-completed state side eid))))}})
 
 (defcard "NGO Front"
   (letfn [(builder [cost cred]
