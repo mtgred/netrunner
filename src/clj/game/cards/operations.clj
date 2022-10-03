@@ -1257,16 +1257,15 @@
     {:on-play
      {:trace
       {:base 2
-       :successful {:msg "reveal the Runner's Grip and trash up to X resources or events"
-                    :async true
+       :successful {:async true
                     :effect (req (wait-for
                                    (reveal state side (:hand runner))
                                    (let [x (- target (second targets))]
                                      (system-msg
                                        state :corp
-                                       (str "reveals the Runner's Grip ( "
+                                       (str "uses Invasion of Privacy to reveal the Runner's Grip ( "
                                             (str/join ", " (map :title (sort-by :title (:hand runner))))
-                                            " ) and can trash up to " x " resources or events"))
+                                            " ) and trash up to " x " resources or events"))
                                      (continue-ability state side (iop (dec x)) card nil))))}
        :unsuccessful {:msg "take 1 bad publicity"
                       :async true
