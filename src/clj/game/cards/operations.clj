@@ -453,7 +453,7 @@
           :not-equal {:player :runner
                       :prompt "Choose one"
                       :choices ["Take 1 tag" "Suffer 1 brain damage"]
-                      :msg (msg "give the Runner " target)
+                      :msg (msg "force the Runner to " (decapitalize target))
                       :effect (req (if (= target "Take 1 tag")
                                      (gain-tags state :runner eid 1)
                                      (damage state side eid :brain 1 {:card card})))}}}})
