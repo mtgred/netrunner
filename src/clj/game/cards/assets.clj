@@ -832,7 +832,6 @@
                                        (effect-completed state side eid)))}
                {:prompt "Choose an asset to reveal and add to HQ"
                 :msg (msg "reveal " (:title target) ", add it to HQ, and shuffle R&D")
-                :activatemsg (msg "uses " (get-title card) " to search R&D for an asset")
                 :choices (req (cancellable (filter asset?
                                                    (:deck corp))
                                            :sorted))
@@ -848,7 +847,6 @@
 (defcard "Executive Search Firm"
   {:abilities [{:prompt "Choose an Executive, Sysop, or Character to add to HQ"
                 :msg (msg "reveal " (:title target) ", add it to HQ, and shuffle R&D")
-                :activatemsg (msg "uses " (get-title card) " to search R&D for an Executive, Sysop, or Character")
                 :choices (req (cancellable (filter #(or (has-subtype? % "Executive")
                                                         (has-subtype? % "Sysop")
                                                         (has-subtype? % "Character"))
