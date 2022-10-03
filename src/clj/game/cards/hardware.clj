@@ -177,7 +177,7 @@
                                 {:optional
                                  {:waiting-prompt "Corp to make a decision"
                                   :prompt (msg (build-cost-string [:credit cost])
-                                               ", plus " (str/lower-case (build-cost-string additional-costs))
+                                               ", plus " (decapitalize (build-cost-string additional-costs))
                                                " as an additional cost to rez " cname "?")
                                   :player :corp
                                   :yes-ability {:async true

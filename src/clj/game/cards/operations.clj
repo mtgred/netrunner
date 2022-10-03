@@ -949,7 +949,7 @@
               {:async true
                :prompt (str "Choose one. Choice " current " of " total)
                :choices ["Gain 2 [Credits]" "Draw 2 cards"]
-               :msg (msg (str/lower-case target))
+               :msg (msg (decapitalize target))
                :effect (req (if (= target "Gain 2 [Credits]")
                               (wait-for (gain-credits state :corp 2)
                                         (continue-ability state side (repeat-choice (inc current) total)
@@ -1757,7 +1757,7 @@
                    "Draw 3 cards"
                    (when tagged
                      "Gain 3 [Credits] and draw 3 cards")])
-    :msg (msg (str/lower-case target))
+    :msg (msg (decapitalize target))
     :async true
     :effect (req (case target
                    "Gain 3 [Credits]"

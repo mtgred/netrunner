@@ -1620,7 +1620,7 @@
              :async true
              :prompt "Choose one"
              :choices ["Draw 1 card" "Gain 1 [Credits]"]
-             :msg (msg (str/lower-case target))
+             :msg (msg (decapitalize target))
              :effect (req (if (= target "Draw 1 card")
                             (draw state side eid 1)
                             (gain-credits state side eid 1)))}]})
@@ -2571,7 +2571,7 @@
                               (lose-credits state :runner (make-eid state eid) spent)
                               (system-msg state :runner (str "spends " spent " [Credit]"))
                               (system-msg state :corp (str (if correct-guess " " " in")
-                                                           "correctly guesses " (str/lower-case target)))
+                                                           "correctly guesses " (decapitalize target)))
                               (wait-for
                                 (trigger-event-simult state side :reveal-spent-credits nil nil spent)
                                 (if correct-guess
