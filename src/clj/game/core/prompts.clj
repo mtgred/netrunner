@@ -44,13 +44,16 @@
                (:card-title choices)
                (#{:credit :counter} choices)
                (pos? (count choices)))
-       (when (true? waiting-prompt)
+       (when waiting-prompt
          (add-to-prompt-queue
            state (if (= :corp side) :runner :corp)
            {:eid (select-keys eid [:eid])
             :card card
             :prompt-type :waiting
-            :msg (str "Waiting for " (str (other-side side)) " to make a decision")}))
+            :msg (str "Waiting for " 
+                      (if (true? waiting-prompt)
+                        (str (other-side side) " to make a decision")
+                        waiting-prompt))}))
        (add-to-prompt-queue state side newitem)))))
 
 (defn show-prompt-with-dice
