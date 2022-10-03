@@ -905,10 +905,9 @@
              :choices {:card #(and (installed? %)
                                    (or (has-subtype? % "Virtual")
                                        (has-subtype? % "Link")))}
-             :msg "trash 1 virtual resource or link"
+             :msg (msg "trash " (card-str state target))
              :async true
-             :effect (effect (system-msg (str "trashes " (:title target)))
-                             (trash eid target {:cause-card card}))}}}})
+             :effect (effect (trash eid target {:cause-card card}))}}}})
 
 (defcard "Freelancer"
   {:on-play
