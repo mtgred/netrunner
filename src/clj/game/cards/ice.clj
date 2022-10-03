@@ -2310,10 +2310,9 @@
                  {:label "Runner loses 3 [credit], if able. End the run."
                   :msg "make the Runner lose 3 [credit] and end the run"
                   :async true
-                  :effect (req (if (>= (:credit runner) 3)
-                                 (wait-for (lose-credits state (make-eid state eid) :runner 3)
-                                           (end-run state :corp eid card))
-                                 (end-run state :corp eid card)))}]})
+                  :effect (req (do (when (>= (:credit runner) 3)
+                                     (lose-credits state :runner (make-eid state eid) 3))
+                                   (end-run state :corp eid card)))}]})
 
 (defcard "Machicolation B"
   {:subroutines [trash-resource-sub
