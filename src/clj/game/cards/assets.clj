@@ -13,7 +13,8 @@
                             installable-servers]]
    [game.core.card :refer [agenda? asset? can-be-advanced? corp? event?
                            faceup? fake-identity? get-advancement-requirement
-                           get-agenda-points get-card get-counters get-zone hardware? has-subtype? ice? identity?
+                           get-agenda-points get-card get-counters get-title
+                           get-zone hardware? has-subtype? ice? identity?
                            in-deck? in-discard? in-hand? in-server? installed? is-type? operation?
                            program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
@@ -832,8 +833,7 @@
                                        (update! state side (assoc card :ebc-rezzed (:cid target)))
                                        (effect-completed state side eid)))}
                {:prompt "Choose an asset to reveal and add to HQ"
-                :msg (msg "reveal " (:title target) " and add it to HQ")
-                :activatemsg "searches R&D for an asset"
+                :msg (msg "reveal " (:title target) ", add it to HQ, and shuffle R&D")
                 :choices (req (cancellable (filter asset?
                                                    (:deck corp))
                                            :sorted))
@@ -848,8 +848,7 @@
 
 (defcard "Executive Search Firm"
   {:abilities [{:prompt "Choose an Executive, Sysop, or Character to add to HQ"
-                :msg (msg "add " (:title target) " to HQ and shuffle R&D")
-                :activatemsg "searches R&D for an Executive, Sysop, or Character"
+                :msg (msg "reveal " (:title target) ", add it to HQ, and shuffle R&D")
                 :choices (req (cancellable (filter #(or (has-subtype? % "Executive")
                                                         (has-subtype? % "Sysop")
                                                         (has-subtype? % "Character"))

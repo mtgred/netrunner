@@ -33,8 +33,6 @@
   (let [cost (seq (card-ability-cost state side ability card targets))]
     (when (or (nil? cost)
               (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
-      (when-let [activatemsg (:activatemsg ability)]
-        (system-msg state side activatemsg))
       (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}})]
         (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
 
