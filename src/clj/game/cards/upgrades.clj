@@ -253,6 +253,7 @@
              :interactive (req true)
              :player :runner
              :req (req this-server)
+             :msg (msg "force the Runner to " (decapitalize target))
              :prompt "Choose one"
              :choices ["Take 1 brain damage" "Jack out"]
              :effect (req (if (= target "Take 1 brain damage")
