@@ -1422,7 +1422,7 @@
                       state side
                       {:optional
                        {:prompt (str "Rez " (:title inst-target) ", paying additional costs?")
-                        :yes-ability {:msg (msg "to rez " (:title inst-target)
+                        :yes-ability {:msg (msg "rez " (:title inst-target)
                                                 ", paying additional costs")
                                       :async true
                                       :effect (req (corp-install state side eid inst-target nil
@@ -1473,7 +1473,7 @@
                         (str "Shuffle your deck (search for a " target-cost "-cost card from your deck?)"))
               :once :per-turn
               :yes-ability
-              {:msg (msg "to search R&D for a " (str target-cost) "-cost card")
+              {:msg (msg "search R&D for a " (str target-cost) "-cost card")
                :async true
                :effect (req (if (>= target-cost 0)
                               (continue-ability
@@ -1490,7 +1490,7 @@
                                 card nil)
                               (continue-ability
                                 state side
-                                {:msg "to shuffle R&D"
+                                {:msg "shuffle R&D"
                                  :effect (effect (shuffle! :corp :deck))}
                                 card nil)))}
               :no-ability
@@ -1675,7 +1675,7 @@
   (let [ab {:prompt "Choose one"
             :player :corp
             :choices ["Gain 2 [Credits]" "Draw 2 cards"]
-            :msg (msg "to " (decapitalize target))
+            :msg (msg (decapitalize target))
             :async true
             :interactive (req true)
             :effect (req (if (= target "Gain 2 [Credits]")

@@ -177,7 +177,7 @@
                                 {:optional
                                  {:waiting-prompt "Corp to make a decision"
                                   :prompt (msg (build-cost-string [:credit cost])
-                                               ", plus " (str/lower-case (build-cost-string additional-costs))
+                                               ", plus " (decapitalize (build-cost-string additional-costs))
                                                " as an additional cost to rez " cname "?")
                                   :player :corp
                                   :yes-ability {:async true
@@ -1388,7 +1388,7 @@
              :req (req (and
                          (= :hq (first (:server target)))
                          (first-event? state side :successful-run #(= :hq (first (:server (first %)))))))
-             :msg (msg "force the Corp to lose 1 [Credits]")
+             :msg "force the Corp to lose 1 [Credits]"
              :async true
              :effect (req (if (pos? (:credit corp))
                             (wait-for (lose-credits state :corp 1)

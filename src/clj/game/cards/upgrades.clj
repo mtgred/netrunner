@@ -253,6 +253,7 @@
              :interactive (req true)
              :player :runner
              :req (req this-server)
+             :msg (msg "force the Runner to " (decapitalize target))
              :prompt "Choose one"
              :choices ["Take 1 brain damage" "Jack out"]
              :effect (req (if (= target "Take 1 brain damage")
@@ -728,9 +729,9 @@
             :player :runner
             :async true
             :waiting-prompt "Runner to choose an option"
-            :msg (req (if (= target "The Corp removes 1 bad publicity")
-                       "to remove 1 bad publicity"
-                       (msg "force the Runner to " (decapitalize target))))
+            :msg (msg (if (= target "The Corp removes 1 bad publicity")
+                       "remove 1 bad publicity"
+                       (str "force the Runner to " (decapitalize target))))
             :prompt "Choose one"
             :choices ["Take 1 tag" "The Corp removes 1 bad publicity"]
             :effect (req (if (= target "Take 1 tag")

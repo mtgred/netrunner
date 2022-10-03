@@ -453,7 +453,7 @@
           :not-equal {:player :runner
                       :prompt "Choose one"
                       :choices ["Take 1 tag" "Suffer 1 brain damage"]
-                      :msg (msg "give the Runner " target)
+                      :msg (msg "force the Runner to " (decapitalize target))
                       :effect (req (if (= target "Take 1 tag")
                                      (gain-tags state :runner eid 1)
                                      (damage state side eid :brain 1 {:card card})))}}}})
@@ -949,7 +949,7 @@
               {:async true
                :prompt (str "Choose one. Choice " current " of " total)
                :choices ["Gain 2 [Credits]" "Draw 2 cards"]
-               :msg (msg (str/lower-case target))
+               :msg (msg (decapitalize target))
                :effect (req (if (= target "Gain 2 [Credits]")
                               (wait-for (gain-credits state :corp 2)
                                         (continue-ability state side (repeat-choice (inc current) total)
@@ -1757,7 +1757,7 @@
                    "Draw 3 cards"
                    (when tagged
                      "Gain 3 [Credits] and draw 3 cards")])
-    :msg (msg (str/lower-case target))
+    :msg (msg (decapitalize target))
     :async true
     :effect (req (case target
                    "Gain 3 [Credits]"
