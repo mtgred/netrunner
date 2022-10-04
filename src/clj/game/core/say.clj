@@ -52,9 +52,8 @@
 
 (defn implementation-msg
   [state card]
-  (let [impl (:implementation card)]
-    (when (not= :full impl))
-    (system-say state nil (str "[!] " (:title card) " - " impl))))
+  (when (not= :full (:implementation card))
+    (system-say state nil (str "[!] " (:title card) " - " (:implementation card)))))
 
 (defn indicate-action
   [state side _]
