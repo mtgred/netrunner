@@ -162,6 +162,11 @@
              :msg "trash itself"
              :effect (effect (trash eid card {:cause-card card}))}]})
 
+(defcard "Basilar Synthgland"
+  {:on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}
+   :in-play [:click-per-turn 1]})
+
 (defcard "Blackguard"
   {:constant-effects [(mu+ 2)]
    :events [{:event :expose
