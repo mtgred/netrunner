@@ -8,7 +8,7 @@
    [game.core.bad-publicity :refer [lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
                             get-remotes server->zone server-list]]
-   [game.core.card :refer [agenda? asset? can-be-advanced?
+   [game.core.card :refer [agenda? asset? can-be-advanced? card-index
                            corp-installable-type? corp? get-card get-counters get-zone
                            has-subtype? ice? in-discard? in-hand? installed? operation? program? resource? rezzed?
                            runner? upgrade?]]
@@ -758,13 +758,26 @@
                                   (effect-completed state side eid))}}}})
 
 (defcard "Jinja City Grid"
-  (letfn [(install-ice [ice ices grids server]
+  (letfn [(should-reveal [state]
+            (some #(and (= (:title %) "Jinja City Grid")
+                        (= (get-in % [:special :explicit-reveal]) :yes))
+                  (all-installed state :corp)))
+          (install-ice [ice ices grids server]
             (let [remaining (remove-once #(same-card? % ice) ices)]
               {:async true
                :effect (req (if (= "None" server)
                               (continue-ability state side (choose-ice remaining grids) card nil)
                               (wait-for
                                 (reveal state side ice)
+                                (when (should-reveal state)
+                                  (continue-ability
+                                    state :runner
+                                    {:prompt (msg "The corp reveals that they drew " (:title ice))
+                                     :async true
+                                     ;; ugly hack to make this not close the eid
+                                     :effect (req true)
+                                     :choices ["OK"]}
+                                    card nil))
                                 (system-msg state side (str "reveals that they drew " (:title ice)))
                                 (wait-for (corp-install state side ice server {:cost-bonus -4})
                                           (remove-from-currently-drawing state side ice)
@@ -790,7 +803,25 @@
                          (when-not (= "None" target)
                            (choose-grid (some #(when (= target (:title %)) %) ices) ices grids))
                          card nil))}))]
-    {:events [{:event :corp-draw
+    {:on-rez {;; propogate 'explicit reveals' from other copies of jinja
+              :silent (req true)
+              :req (req (should-reveal state))
+              :effect (effect (update! (assoc-in (get-card state card) [:special :explicit-reveal] :yes)))}
+     :runner-abilities [{:label "Explicitly reveal cards"
+                         :prompt "Explicitly reveal ICE with Jinja City Grid?"
+                         :choices ["Yes" "No"]
+                         :effect (req (let [jinjas (filter #(and (rezzed? %)
+                                                                 (= (:title %) (:title card)))
+                                                           (all-installed state :corp))]
+                                        ;; apply the key to all rezzed jinjas
+                                        ;; we can find the key when we rez a jinja too
+                                        (doseq [grid jinjas]
+                                          (update! state side (assoc-in grid [:special :explicit-reveal] (keyword (str/lower-case target)))))
+                                        (toast state :runner (str "From now on, Jinja City Grid will "
+                                                                  (when (= target "No") "Not")
+                                                 "explicitly reveal ICE the Corp installs")
+                                               "info")))}]
+     :events [{:event :corp-draw
                ;; This prevents multiple Jinja from showing the "choose a server to install into" sequence
                :once :per-turn
                :once-key :jinja-city-grid-draw
