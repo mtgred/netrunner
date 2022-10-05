@@ -1541,8 +1541,7 @@
      :abilities [(set-autoresolve :auto-fire "Net Analytics")]}))
 
 (defcard "Net Police"
-  {:x-fn (req (count (filter #(has-subtype? % "Link")
-                             (all-active-installed state :runner))))
+  {:x-fn (req (get-link state))
    :recurring x-fn
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
