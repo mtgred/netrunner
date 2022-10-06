@@ -446,6 +446,7 @@
         (update-installed-card-indices state :corp (:zone b))
         (doseq [new-card [a-new b-new]]
           (unregister-events state side new-card)
+          (unregister-constant-effects state side new-card)
           (when (rezzed? new-card)
             (do (register-default-events state side new-card)
                 (register-constant-effects state side new-card)))
@@ -456,6 +457,7 @@
               (update! state side newh)
               (unregister-events state side h)
               (register-default-events state side newh)
+              (unregister-constant-effects state side h)
               (register-constant-effects state side newh))))
         (trigger-event state side :swap a-new b-new)))))
 
