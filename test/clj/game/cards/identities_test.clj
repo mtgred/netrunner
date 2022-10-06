@@ -4319,6 +4319,45 @@
        (is (= "Ice Wall" (:title iw)) "Ice Wall now outermost ice")
        (is (= "Enigma" (:title enig)) "Enigma now outermost ice"))))
 
+(deftest tao-salonga-swapping-ice-doesnt-mess-with-their-strength
+  ;;Tāo Salonga swapping Palisade, Ice Wall, or Rime doesn't mess with their strength
+  (do-game
+    (new-game {:corp {:hand ["Palisade" "Ice Wall" "Rime" (qty "House of Knives" 2)]}
+               :runner {:id "Tāo Salonga: Telepresence Magician"}})
+    (play-from-hand state :corp "Palisade" "Archives")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Rime" "Server 1")
+    (take-credits state :corp)
+    (let [palisade (get-ice state :archives 0)
+          rime (get-ice state :remote1 1)]
+      (rez state :corp palisade)
+      (is (= 2 (core/get-strength (refresh palisade))))
+      (rez state :corp rime)
+      (is (= 1 (core/get-strength (refresh rime))))
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (refresh palisade))
+      (click-card state :runner (refresh rime)))
+    (let [palisade (get-ice state :remote1 1)
+          iw (get-ice state :remote1 0)
+          rime (get-ice state :archives 0)]
+      (is (= 1 (core/get-strength (refresh rime))) "Rime retains strength")
+      (is (= 4 (core/get-strength (refresh palisade))) "Palisade gains strength")
+      (take-credits state :runner)
+      (core/gain state :corp :credit 1)
+      (rez state :corp iw)
+      (is (= 1 (core/get-strength (refresh iw))))
+      (advance state iw 1)
+      (is (= 2 (core/get-strength (refresh iw))))
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (refresh iw))
+      (click-card state :runner (refresh rime)))
+    (is (= 2 (core/get-strength (refresh (get-ice state :archives 0)))) "Ice Wall retains strength")))
+
 (deftest the-foundry-refining-the-process-interaction-with-accelerated-beta-test
     ;; interaction with Accelerated Beta Test
     (do-game

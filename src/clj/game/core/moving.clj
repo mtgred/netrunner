@@ -11,7 +11,7 @@
     [game.core.finding :refer [get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed? zone-locked?]]
     [game.core.hosting :refer [remove-from-host]]
-    [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength]]
+    [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate reset-card]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [enforce-msg system-msg]]
@@ -447,14 +447,16 @@
         (doseq [new-card [a-new b-new]]
           (unregister-events state side new-card)
           (when (rezzed? new-card)
-            (register-default-events state side new-card))
+            (do (register-default-events state side new-card)
+                (register-constant-effects state side new-card)))
           (doseq [h (:hosted new-card)]
             (let [newh (-> h
                            (assoc-in [:zone] '(:onhost))
                            (assoc-in [:host :zone] (:zone new-card)))]
               (update! state side newh)
               (unregister-events state side h)
-              (register-default-events state side newh))))
+              (register-default-events state side newh)
+              (register-constant-effects state side newh))))
         (trigger-event state side :swap a-new b-new)))))
 
 (defn swap-ice
