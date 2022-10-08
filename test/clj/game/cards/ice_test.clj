@@ -58,7 +58,7 @@
       (run-continue state)
       (card-ability state :runner gord 0)
       (click-prompt state :runner "End the run")
-      (is (not-empty (:prompt (get-runner))) "Can break more subs")
+      (is (not (no-prompt? state :runner)) "Can break more subs")
       (click-prompt state :runner "Make the Runner lose 2 [Credits]"))))
 
 (deftest afshar-breaking-restriction-also-on-the-second-encounter
@@ -159,7 +159,7 @@
         (run-continue state)
         (card-ability state :runner cor 0)
         (click-prompt state :runner "End the run")
-        (is (not-empty (:prompt (get-runner))) "Prompt to break second sub open")
+        (is (not (no-prompt? state :runner)) "Prompt to break second sub open")
         (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement token.")
         (is (no-prompt? state :runner) "Prompt now closed")
         (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
@@ -6482,7 +6482,7 @@
       (rez state :corp tsurugi)
       (run-continue state)
       (card-subroutine state :corp tsurugi 0)
-      (is (seq (:prompt (get-corp))) "Corp is prompted to pay")
+      (is (not (no-prompt? state :corp)) "Corp is prompted to pay")
       (is (= :waiting (prompt-type :runner))
           "Runner has prompt to wait for Corp to use Tsurugi"))))
 

@@ -516,7 +516,7 @@
         (rez state :corp icew)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
-        (is (not-empty (:prompt (get-runner))) "Can use Boomerang on ice"))))
+        (is (not (no-prompt? state :runner)) "Can use Boomerang on ice"))))
 
 (deftest boomerang-update-card-target-on-ice-swap
     ;; Update card-target on ice swap
@@ -872,7 +872,7 @@
       (trash-from-hand state :runner "Corroder")
       (click-prompt state :runner "Corroder")
       (trash-from-hand state :runner "Yog.0")
-      (is empty? (:prompt (get-runner)))))
+      (is (no-prompt? state :runner))))
 
 (deftest buffer-drive-trashing-a-corp-card-must-not-trigger-buffer-drive
     ;; Trashing a corp card must not trigger Buffer Drive
@@ -1865,7 +1865,7 @@
              "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
           "Shown correct six cards")
       (click-prompt state :runner "OK")
-      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+      (is (not (no-prompt? state :corp)) "Corp has waiting prompt")
       (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
       (is (= 0 (count (:deck (get-runner)))) "0 cards in deck")
       (is (= 6 (count (:set-aside (get-runner)))) "6 cards set-aside")
@@ -1901,7 +1901,7 @@
       (play-from-hand state :runner "Gachapon")
       (card-ability state :runner (get-hardware state 0) 0)
       (click-prompt state :runner "OK")
-      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+      (is (not (no-prompt? state :corp)) "Corp has waiting prompt")
       (changes-val-macro 0 (:credit (get-runner))
                          "Paid 0c to install Bankroll"
                          (click-prompt state :runner "Bankroll"))
@@ -1960,7 +1960,7 @@
               "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
             "Shown correct six cards")
         (click-prompt state :runner "OK")
-        (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+        (is (not (no-prompt? state :corp)) "Corp has waiting prompt")
         (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
         (is (= 6 (count (:set-aside (get-runner)))) "6 cards in deck")
         (click-prompt state :runner "DDoS")
@@ -2505,7 +2505,7 @@
       (run-continue state :encounter-ice)
       (card-subroutine state :corp (refresh vanilla) 0)
       (is (:run @state) "Run not ended yet")
-      (is (seq (:prompt (get-runner))) "Runner prompted to ETR"))))
+      (is (not (no-prompt? state :runner)) "Runner prompted to ETR"))))
 
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
     ;; No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction
@@ -2549,7 +2549,7 @@
        (run-continue state)
        (card-subroutine state :corp (refresh iw) 0)
        (is (:run @state) "Run not ended yet")
-       (is (seq (:prompt (get-runner))) "Runner prompted to ETR")
+       (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
        (click-prompt state :runner "Done")
        (is (not (:run @state)) "Run ended yet")
        (is (no-prompt? state :runner) "Prevent prompt gone")
@@ -2558,7 +2558,7 @@
        (run-continue state)
        (card-subroutine state :corp (refresh bc) 1)
        (is (:run @state) "Run not ended yet")
-       (is (seq (:prompt (get-runner))) "Runner prompted to ETR")
+       (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)
        (click-prompt state :runner "Done")
        (is (= 1 (count (:rfg (get-runner)))) "Lucky Charm RFGed")
@@ -2569,7 +2569,7 @@
        (card-ability state :corp (refresh bc) 0)
        (is (= 1 (count (:discard (get-corp)))) "Border Control trashed")
        (is (:run @state) "Run not ended yet")
-       (is (seq (:prompt (get-runner))) "Runner prompted to ETR")
+       (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)
        (click-prompt state :runner "Done")
        (is (= 2 (count (:rfg (get-runner)))) "2nd Lucky Charm RFGed")
@@ -2581,7 +2581,7 @@
        (click-prompt state :runner "0 [Credits]")
        (card-subroutine state :corp (refresh iw) 0)
        (is (:run @state) "Run not ended yet")
-       (is (seq (:prompt (get-runner))) "Runner prompted to ETR")
+       (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)
        (click-prompt state :runner "Done")
        (is (:run @state) "Run prevented from ending"))))
@@ -2682,7 +2682,7 @@
       (click-prompt state :runner "No action")
       (run-on state "HQ")
       (is (= :waiting (prompt-type :corp)) "Corp should be waiting on Runner")
-      (is (seq (:prompt (get-runner))) "Runner should get a prompt every run")))
+      (is (not (no-prompt? state :runner)) "Runner should get a prompt every run")))
 
 (deftest masterwork-v37-should-only-grant-bonus-on-the-first-hardware-install-issue-4097
     ;; Should only grant bonus on the first Hardware install. Issue #4097
@@ -2931,7 +2931,7 @@
       (click-prompt state :runner "No action")
       (click-prompt state :runner "Yes")
       (is (= "Scorched Earth" (:title (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
-      (is (:prompt (get-runner)) "Runner has next access prompt")))
+      (is (not (no-prompt? state :runner)) "Runner has next access prompt")))
 
 (deftest maya-triggers-only-on-rd-accesses
     ;; Maya does not trigger on accesses out of R&D
@@ -3381,7 +3381,7 @@
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner "Cyberfeeder")
       (is (find-card "Cyberfeeder" (:play-area (get-runner))) "Cyberfeeder is on the table")
-      (is (not-empty (:prompt (get-runner))) "Prompt still open")))
+      (is (not (no-prompt? state :runner)) "Prompt still open")))
 
 (deftest patchwork-used-when-runner-credit-pool-is-under-printed-cost-issue-4563
     ;; Used when runner credit pool is under printed cost. Issue #4563
@@ -3555,10 +3555,10 @@
                 (click-prompt state :runner "OK")
                 (is (no-prompt? state :runner) "Look prompt closed"))
             "Ask"
-            (do (is (not-empty (:prompt (get-runner))) "Does show trigger prompt")
+            (do (is (not (no-prompt? state :runner)) "Does show trigger prompt")
                 (click-prompt state :runner "Yes")
                 (last-log-contains? state "Runner uses Prognostic Q-Loop to look at the top 2 cards of the stack.")
-                (is (not-empty (:prompt (get-runner))) "Does show look prompt")
+                (is (not (no-prompt? state :runner)) "Does show look prompt")
                 (click-prompt state :runner "OK")
                 (is (no-prompt? state :runner) "Look prompt closed")))
           (run-jack-out state)
@@ -4097,9 +4097,9 @@
       (is (= 1 (:position (:run @state))))
       (is (= 2 (count (:hand (get-runner))))) ; pre archangel
       (card-subroutine state :corp arch 0) ; fire archangel
-      (is (seq (:prompt (get-corp))) "Archangel trace prompt - corp")
+      (is (not (no-prompt? state :corp)) "Archangel trace prompt - corp")
       (click-prompt state :corp "0")
-      (is (seq (:prompt (get-runner))) "Archangel trace prompt - runner")
+      (is (not (no-prompt? state :runner)) "Archangel trace prompt - runner")
       (click-prompt state :runner "0")
       (click-card state :corp sifr)
       (is (= 3 (count (:hand (get-runner))))) ; sifr got lifted to hand
@@ -4107,7 +4107,7 @@
       (run-jack-out state)
       (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength")
       (play-from-hand state :runner "Modded")
-      (is (seq (:prompt (get-runner))) "Modded choice prompt exists")
+      (is (not (no-prompt? state :runner)) "Modded choice prompt exists")
       (click-card state :runner "Şifr")
       (is (= 4 (get-strength (refresh ip))) "IP Block back to standard strength"))))
 

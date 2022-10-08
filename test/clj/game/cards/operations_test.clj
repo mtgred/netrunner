@@ -692,12 +692,12 @@
       (play-from-hand state :corp "Complete Image")
       (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
       (click-prompt state :corp "Sure Gamble")
-      (is (seq (:prompt (get-corp))) "Corp guessed right so should have another choice")
+      (is (not (no-prompt? state :corp)) "Corp guessed right so should have another choice")
       (click-prompt state :corp "Sure Gamble")
       (click-prompt state :corp "Sure Gamble")
       (click-prompt state :corp "Sure Gamble")
       (click-prompt state :corp "Sure Gamble")
-      (is (seq (:prompt (get-corp))) "Even when the runner has no cards in hand, Corp must choose again")
+      (is (not (no-prompt? state :corp)) "Even when the runner has no cards in hand, Corp must choose again")
       (click-prompt state :corp "Sure Gamble")
       (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
       (is (= 5 (-> (get-runner) :discard count)) "Runner's heap should have 5 cards")))
@@ -764,13 +764,13 @@
       (play-from-hand state :corp "Complete Image")
       (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
-      (is (seq (:prompt (get-corp))) "Corp guessed right so should have another choice")
+      (is (not (no-prompt? state :corp)) "Corp guessed right so should have another choice")
       (click-prompt state :corp "Yes") ;; Chronos Protocol
       (click-prompt state :corp "Sure Gamble") ;; Chronos Protocol
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
-      (is (seq (:prompt (get-corp))) "Even when the runner has no cards in hand, Corp must choose again")
+      (is (not (no-prompt? state :corp)) "Even when the runner has no cards in hand, Corp must choose again")
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
@@ -1986,7 +1986,7 @@
     (click-prompt state :runner "0")
     (click-card state :corp (get-resource state 0))
     (is (empty? (:hand (get-runner))) "Can't choose virtual card")
-    (is (seq (:prompt (get-corp))))
+    (is (not (no-prompt? state :corp)))
     (click-card state :corp (get-program state 0))
     (is (= 1 (count (:hand (get-runner)))) "Upya returned to grip")))
 
@@ -2246,7 +2246,7 @@
       (click-prompt state :corp "Done")
       (is (empty? (remove #(not (:seen %)) (:discard (get-corp)))) "Cards in Archives are turned facedown")
       (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
-      (is (not-empty (:prompt (get-corp))) "Could not choose operation to install")
+      (is (not (no-prompt? state :corp)) "Could not choose operation to install")
       (click-card state :corp (find-card "Project Junebug" (:discard (get-corp))))
       (is (= 0 (count (:rfg (get-corp)))) "Kakurenbo was not yet removed from game")
       (click-prompt state :corp "New remote")
@@ -2401,7 +2401,7 @@
     (play-from-hand state :corp "Manhunt")
     (take-credits state :corp)
     (run-empty-server state "HQ")
-    (is (:prompt (get-corp)) "Manhunt trace initiated")
+    (is (not (no-prompt? state :corp)) "Manhunt trace initiated")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
     (is (= 1 (count-tags state)) "Runner took 1 tag")
@@ -3158,7 +3158,7 @@
   (do-game
     (new-game {:corp {:hand [(qty "Public Trail" 2)]}})
     (play-from-hand state :corp "Public Trail")
-    (is (nil? (get-prompt state :corp)))
+    (is (no-prompt? state :corp))
     (is (not (is-tagged? state)))
     (take-credits state :corp)
     (run-empty-server state :hq)
@@ -4028,7 +4028,7 @@
                (= :waiting (prompt-type :corp)))
           "Corp does not have Subcontract prompt until damage prevention completes")
       (click-prompt state :runner "Done")
-      (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
+      (is (not (no-prompt? state :corp)) "Corp can now play second Subcontract operation")))
 
 (deftest subcontract-interaction-with-terminal-operations
     ;; interaction with Terminal operations

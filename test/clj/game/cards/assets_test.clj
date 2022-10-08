@@ -1107,7 +1107,7 @@
       (is (= 1 (count (:hand (get-corp)))))
       (take-credits state :runner)
       (is (= 4 (count (:set-aside (get-corp)))) "Drew an additional 3 cards with 3 DBS")
-      (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
+      (is (not (no-prompt? state :runner)) "Runner is waiting for Corp to use DBS")
       (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp)))) ;invalid target
       (click-card state :corp (find-card "Resistor" (:set-aside (get-corp))))
       (click-card state :corp (find-card "Product Placement" (:set-aside (get-corp))))
@@ -1186,7 +1186,7 @@
       (is (empty? (:hand (get-corp))) "Corp hand is empty")
       (play-from-hand state :runner "Fisk Investment Seminar")
       (is (= 4 (count (:set-aside (get-corp)))) "Drew an additional card from FIS")
-      (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
+      (is (not (no-prompt? state :runner)) "Runner is waiting for Corp to use DBS")
       (click-card state :corp (find-card "Resistor" (:set-aside (get-corp))))
       (is (no-prompt? state :runner) "Runner prompt cleared")
       (is (= 3 (count (:hand (get-corp)))))))
@@ -2972,7 +2972,7 @@
         (is (no-prompt? state :corp) "No interactive prompt")
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (not-empty (:prompt (get-corp))) "Interactive prompt"))))
+        (is (not (no-prompt? state :corp)) "Interactive prompt"))))
 
 (deftest mark-yale
   ;; Mark Yale
@@ -3767,7 +3767,7 @@
         (run-empty-server state :archives)
         (take-credits state :runner)
         (play-from-hand state :corp "Neural EMP")
-        (is (not-empty (:prompt (get-corp))) "Prana prompt for Corp")
+        (is (not (no-prompt? state :corp)) "Prana prompt for Corp")
         (is (= :waiting (prompt-type :runner))))))
 
 (deftest prana-condenser-runner-cards-and-costs-don-t-trigger-prana
