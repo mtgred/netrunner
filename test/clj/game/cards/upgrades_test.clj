@@ -1020,7 +1020,7 @@
       (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
       (core/continue state :corp nil)
       (run-continue state)
-      (is (seq (:prompt (get-runner))) "The Gauntlet has a prompt")))
+      (is (not (no-prompt? state :runner)) "The Gauntlet has a prompt")))
 
 (deftest crisium-grid-crisium-grid-prevents-first-successful-run-abilities-issue-5092
     ;; Crisium Grid prevents first successful run abilities. Issue #5092
@@ -1106,7 +1106,7 @@
         (run-empty-server state "Archives")
         (click-prompt state :runner "Cyberdex Virus Suite")
         (click-prompt state :corp "Yes")
-        (is (pos? (count (:prompt (get-runner)))) "CVS purge did not interrupt archives access")
+        (is (not (no-prompt? state :runner)) "CVS purge did not interrupt archives access")
         ;; purged counters
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters"))))
@@ -3329,7 +3329,7 @@
     (rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
     (is (= 7 (count (:hand (get-corp)))) "+3 cards, 2 of Research Station and +1 of ID")
-    (is (nil? (get-prompt state :corp)) "No prompt asking to discard cards from hand")
+    (is (no-prompt? state :corp) "No prompt asking to discard cards from hand")
     (take-credits state :runner)
     (is (= 8 (count (:hand (get-corp)))) "Double check that you start next turn with 8 cards")))
 
@@ -3743,7 +3743,7 @@
         (click-prompt state :runner "Hokusai Grid")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
-        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
+        (is (no-prompt? state :corp) "No prompts, run ended")
         (run-empty-server state "Archives")
         (click-prompt state :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
         (is (= 2 (count (:discard (get-runner)))))
@@ -3751,7 +3751,7 @@
         (click-prompt state :runner "Hokusai Grid")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
-        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
+        (is (no-prompt? state :corp) "No prompts, run ended"))))
 
 (deftest tori-hanzo-breaking-subsequent-net-damage-issue-3176
     ;; breaking subsequent net damage: Issue #3176
@@ -4126,8 +4126,8 @@
         (play-from-hand state :runner "Dyson Mem Chip")
         (run-empty-server state :hq)
         (click-prompt state :runner "Pay 4 [Credits] to trash")
-        (is (some? (:prompt (get-corp))) "Corp has prompt")
-        (is (some? (:prompt (get-runner))) "Runner has prompt"))))
+        (is (not (no-prompt? state :corp)))
+        (is (not (no-prompt? state :runner))))))
 
 (deftest warroid-tracker-should-trigger-when-trashed-card-is-in-root-of-central-server
     ;; Should trigger when trashed card is in root of central server.

@@ -967,7 +967,7 @@
           v2 (get-ice state :remote1 0)]
       (play-from-hand state :runner "Careful Planning")
       (click-card state :runner v1)
-      (is (:prompt (get-runner)) "Can't target card in central server")
+      (is (not (no-prompt? state :runner)) "Can't target card in central server")
       (click-card state :runner v2)
       (rez state :corp v2)
       (is (not (rezzed? (refresh v2))) "Prevented remote ice from rezzing")
@@ -1874,7 +1874,7 @@
     (is (= 2 (count (:hand (get-runner)))) "Two cards in after playing Déjà Vu")
     (play-from-hand state :runner "Déjà Vu")
     (click-prompt state :runner (find-card "Cache" (:discard (get-runner))))
-    (is (seq (:prompt (get-runner))) "Recurring a virus card causes Déjà Vu to prompt for second virus to recur")
+    (is (not (no-prompt? state :runner)) "Recurring a virus card causes Déjà Vu to prompt for second virus to recur")
     (click-prompt state :runner (find-card "Datasucker" (:discard (get-runner))))
     (is (= 3 (count (:hand (get-runner)))) "Three cards in after playing second Déjà Vu")))
 
@@ -2218,9 +2218,9 @@
                  :runner {:hand ["Divide and Conquer"]}})
       (take-credits state :corp)
       (play-run-event state "Divide and Conquer" :archives)
-      (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing R&D")
+      (is (not (no-prompt? state :runner)) "Even with no cards in Archives, there's a prompt for accessing R&D")
       (click-prompt state :runner "Steal")
-      (is (seq (:prompt (get-runner))) "Even with no cards in Archives, there's a prompt for accessing HQ")
+      (is (not (no-prompt? state :runner)) "Even with no cards in Archives, there's a prompt for accessing HQ")
       (click-prompt state :runner "Steal")))
 
 (deftest divide-and-conquer-interaction-with-crisium-grid-on-archives-issue-5315
@@ -2363,7 +2363,7 @@
       (is (no-prompt? state :runner) "Runner has no derez prompt")
       (run-empty-server state :hq)
       (play-from-hand state :runner "Emergency Shutdown")
-      (is (seq (:prompt (get-runner))) "Runner has a derez prompt")
+      (is (not (no-prompt? state :runner)) "Runner has a derez prompt")
       (click-card state :runner (refresh iw))
       (is (not (rezzed? (refresh iw))) "Ice Wall is derezzed"))))
 
@@ -2995,7 +2995,7 @@
     (click-card state :corp "Ice Wall")
     (click-card state :corp "Fire Wall")
     (click-card state :corp "Wraparound")
-    (is (:prompt (get-corp)) "There is still a prompt")
+    (is (not (no-prompt? state :corp)) "There is still a prompt")
     (click-card state :corp "Enigma")
     (click-card state :corp "Rototurret")
     (is (no-prompt? state :corp) "Selecting 5 cards closed prompt")
@@ -4739,7 +4739,7 @@
       (take-credits state :corp)
       ;; remove 5 Out of the Ashes from the game
       (dotimes [_ 5]
-        (is (seq (:prompt (get-runner))))
+        (is (not (no-prompt? state :runner)))
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Archives")
         (run-continue state))
@@ -4750,7 +4750,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       ;; ensure that if you decline the rfg, game will still ask the next turn
-      (is (seq (:prompt (get-runner))))
+      (is (not (no-prompt? state :runner)))
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "Archives")
       (run-continue state)
@@ -5509,7 +5509,7 @@
     (play-from-hand state :runner "Reshape")
     (click-card state :runner (get-ice state :rd 0))
     (click-card state :runner (get-ice state :hq 0))
-    (is (:prompt (get-runner)) "Can't target rezzed Vanilla, prompt still open")
+    (is (not (no-prompt? state :runner)) "Can't target rezzed Vanilla, prompt still open")
     (click-card state :runner (get-ice state :hq 1))
     (is (no-prompt? state :runner))
     (is (= "Vanilla" (:title (get-ice state :rd 0))) "Vanilla swapped to R&D")

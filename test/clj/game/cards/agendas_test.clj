@@ -92,7 +92,7 @@
         (is (= (inc cards) (count (:hand (get-corp)))) (str "Corp should have " (inc cards) " card in hand"))
         (run-continue state)
         (run-on state :archives)
-        (is (empty (:prompt (get-corp))) "No prompt as it's once per turn")
+        (is (no-prompt? state :corp) "No prompt as it's once per turn")
         (run-jack-out state)))
     (take-credits state :runner)
     (take-credits state :corp)
@@ -104,7 +104,7 @@
         (is (= (inc credits) (:credit (get-corp))) (str "Corp should have " (inc credits) " credits"))
         (run-continue state)
         (run-on state :archives)
-        (is (empty (:prompt (get-corp))) "No prompt as it's once per turn")))))
+        (is (no-prompt? state :corp) "No prompt as it's once per turn")))))
 
 (deftest ancestral-imager
   ;; Ancestral Imager
@@ -162,7 +162,7 @@
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Cancel")
-   (is (empty (:prompt (get-corp))) "No more prompts if cancel is clicked")
+   (is (no-prompt? state :corp) "No more prompts if cancel is clicked")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Rashida Jaheem")
@@ -176,8 +176,7 @@
    (is (= "Oaktown Renovation" (:title (get-content state :remote6 0))) "Oaktown Renovation was installed")
    (is (faceup? (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
    (play-and-score state "Architect Deployment Test")
-   (click-prompt state :corp "OK")
-   (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
+   (is (no-prompt? state :corp) "No prompt if R&D is empty")))
 
 (deftest armed-intimidation
   ;; Armed Intimidation
@@ -460,7 +459,7 @@
       (click-prompt state :corp "Done")
       (click-prompt state :corp (first (:deck (get-corp))))
       (click-prompt state :corp "Done")
-      (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
+      (is (no-prompt? state :corp) "Bacterial Programming prompts finished")
       (is (not (:run @state)) "No run is active")))
 
 (deftest bacterial-programming-removing-all-cards-from-r-d-should-not-freeze-for-runner-nor-give-an-extra-access
@@ -481,8 +480,8 @@
       (click-prompt state :corp "Done") ; Finished with trashing
       (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
       ;; Run and prompts should be over now
-      (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
-      (is (empty (:prompt (get-runner))) "Bacterial Programming prompts finished")
+      (is (no-prompt? state :corp) "Bacterial Programming prompts finished")
+      (is (no-prompt? state :runner) "Bacterial Programming prompts finished")
       (is (not (:run @state)))))
 
 (deftest bellona
@@ -3397,7 +3396,7 @@
       (click-prompt state :corp (find-card "Archer" (:deck (get-corp))))
       (click-prompt state :corp "Server 2")
       (is (= (dec N) (:credit (get-corp))) "Installing Archer cost a credit")
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to forfeit an agenda for Archer")
+      (is (not (no-prompt? state :corp)) "Corp prompted to forfeit an agenda for Archer")
       (is (= (dec N) (:credit (get-corp))) "Rezzing Archer didn't cost any credits"))))
 
 (deftest research-grant
@@ -3666,7 +3665,7 @@
       (new-game {:corp {:deck ["SSL Endorsement"]}})
       (play-and-score state "SSL Endorsement")
       (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
       (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
       (click-prompt state :corp "Yes")
       (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")
@@ -3694,7 +3693,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
       (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
       (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
       (click-prompt state :corp "Yes")
       (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
@@ -3728,7 +3727,7 @@
       (click-prompt state :runner "Yes")
       (click-card state :runner (find-card "SSL Endorsement" (:scored (get-corp))))  ;; Swap BN with SSL
       (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
       (is (= 6 (:credit (get-corp))) "Corp starts with 7 credits")
       (click-prompt state :corp "Yes")
       (is (= 9 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
@@ -3744,7 +3743,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Steal")
       (take-credits state :runner)
-      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
       (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
       (click-prompt state :corp "Yes")
       (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
@@ -4379,7 +4378,7 @@
           (vmi-test vmi-scored "No" 2)
           (vmi-test vmi-scored "Yes" 2)
           (vmi-test vmi-scored "Yes" 1)
-          (is (empty (:prompt (get-corp))) "No prompt as there are no agenda counters left")))))
+          (is (no-prompt? state :corp) "No prompt as there are no agenda counters left")))))
 
 (deftest vulcan-coverup
   ;; Vulcan Coverup

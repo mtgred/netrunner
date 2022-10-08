@@ -1230,7 +1230,7 @@
       (click-prompt state :corp "Done")
       (play-from-hand state :runner "Amped Up")
       (is (not (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2")) "Sabotage did not happen")
-      (is (empty (:prompt (get-corp))) "no Corp prompt"))))
+      (is (no-prompt? state :corp) "no Corp prompt"))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net-pay-credits-prompt
     ;; Pay-credits prompt
@@ -3177,7 +3177,7 @@
       (is (= 1 (count (:hand (get-runner)))))
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 2 [Credits] to trash")
-      (is (seq (:prompt (get-corp))) "Corp should have a Trace prompt")
+      (is (not (no-prompt? state :corp)) "Corp should have a Trace prompt")
       (click-prompt state :corp "No")))
 
 (deftest nbn-making-news-pay-credits-and-not-refilling-on-disabled-issue-2439
@@ -3682,7 +3682,7 @@
    (play-from-hand state :corp "Oaktown Renovation" "New remote")
    (play-from-hand state :corp "Extract")
    (click-card state :corp "Oaktown Renovation")
-   (is (empty? (:prompt (get-corp))) "No Ob prompt")
+   (is (no-prompt? state :corp) "No Ob prompt")
    (is (find-card "Oaktown Renovation" (:discard (get-corp))) "Oaktown is trashed")))
 
 (deftest ob-superheavy-logistics-shuffle-with-rashida
@@ -4264,14 +4264,13 @@
       (rez state :corp i1)
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (= 1 (count (:prompt (get-corp)))) "Corp prompted to trigger Strategic Innovations")
+      (is (not (no-prompt? state :corp)) "Corp prompted to trigger Strategic Innovations")
       (click-card state :corp (first (:discard (get-corp))))
       (is (empty? (:discard (get-corp))) "Hedge Fund moved back to R&D")
       (take-credits state :corp)
       (rez state :corp i2)
       (take-credits state :runner)
-      (is (zero? (count (:prompt (get-corp))))
-          "Corp not prompted to trigger Strategic Innovations"))))
+      (is (no-prompt? state :corp) "Corp not prompted to trigger Strategic Innovations"))))
 
 (deftest sync-everything-everywhere
   ;; SYNC: Everything, Everywhere

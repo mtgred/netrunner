@@ -27,8 +27,8 @@
         (is (= (- prev-cards-in-hq 3)
                (-> (get-corp) :hand count))
             "3 cards from HQ trashed"))
-      (is (empty (:prompt (get-corp))) "no more Corp prompt")
-      (is (empty (:prompt (get-runner))) "no more Runner waiting prompt")
+      (is (no-prompt? state :corp) "No Corp prompt open")
+      (is (no-prompt? state :runner) "No Runner prompt open")
       (is (= 3 (count (:discard (get-corp)))) "Archives has 3 cards")))
   (testing "Choosing only from R&D"
     (do-game
@@ -46,8 +46,8 @@
         (is (= prev-cards-in-hq
                (-> (get-corp) :hand count))
             "No cards from HQ trashed"))
-      (is (empty (:prompt (get-corp))) "no more Corp prompt")
-      (is (empty (:prompt (get-runner))) "no more Runner waiting prompt")
+      (is (no-prompt? state :corp) "No Corp prompt open")
+      (is (no-prompt? state :runner) "No Runner prompt open")
       (is (= 3 (count (:discard (get-corp)))) "Archives has 3 cards")))
   (testing "Choosing a mix from HQ and R&D"
     (do-game
@@ -67,8 +67,8 @@
         (is (= (- prev-cards-in-hq 2)
                (-> (get-corp) :hand count))
             "2 cards from HQ trashed"))
-      (is (empty (:prompt (get-corp))) "no more Corp prompt")
-      (is (empty (:prompt (get-runner))) "no more Runner waiting prompt")
+      (is (no-prompt? state :corp) "No Corp prompt open")
+      (is (no-prompt? state :runner) "No Runner prompt open")
       (is (= 3 (count (:discard (get-corp)))) "Archives has 3 cards")))
   (testing "Forced to trash some cards from HQ"
     (do-game
@@ -90,15 +90,15 @@
       (click-card state :corp (nth (:hand (get-corp)) 1))
       (click-prompt state :corp "Done")
       (is (= 2 (count (-> @state :corp :toast))) "Got no further message to select more cards")
-      (is (empty (:prompt (get-corp))) "no Corp prompt")
-      (is (empty (:prompt (get-runner))) "no Runner waiting prompt")))
+      (is (no-prompt? state :corp) "No Corp prompt open")
+      (is (no-prompt? state :runner) "No Runner prompt open")))
   (testing "Forced to trash entire HQ and R&D"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 7)]}})
       (core/resolve-ability state :runner (eid/make-eid state)
                             (s/sabotage-ability 100) (:identity (get-runner)) nil)
-      (is (empty (:prompt (get-corp))) "no Corp prompt")
-      (is (empty (:prompt (get-runner))) "no Runner waiting prompt")
+      (is (no-prompt? state :corp))
+      (is (no-prompt? state :runner))
       (is (= 0 (count (:hand (get-corp)))) "HQ is empty")
       (is (= 0 (count (:deck (get-corp)))) "R&D is empty")
       (is (= 7 (count (:discard (get-corp)))) "Archives has 7 cards"))))

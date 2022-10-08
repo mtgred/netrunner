@@ -201,6 +201,7 @@
     :msg "look at the top 5 cards of R&D"
     :prompt (msg "The top cards of R&D are (top->bottom) " (str/join ", " (map :title (take 5 (:deck corp)))))
     :choices ["OK"]
+    :req (req (not-empty (:deck corp)))
     :effect (effect (continue-ability
                       {:prompt "Install a card?"
                        :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
