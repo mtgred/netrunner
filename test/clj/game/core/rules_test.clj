@@ -593,8 +593,7 @@
        (toggle-sso "Always")
        (take-credits state :corp)
        (is (= "Choose a piece of ice with no advancement tokens to place 1 advancement token on"
-              (-> @state :corp :prompt first :msg))
-           "SSO autoresolved first prompt")
+              (:msg (get-prompt state :corp))) "SSO autoresolved first prompt")
        (click-card state :corp (get-ice state :remote2 0))
        (is (= 1 (get-counters (get-ice state :remote2 0) :advancement)) "A token was added")
        (is (no-prompt? state :corp) "No prompt displaying")
