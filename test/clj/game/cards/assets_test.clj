@@ -4956,7 +4956,7 @@
       (card-ability state :corp se 0)
       (click-card state :corp pad))
      (card-ability state :corp se 0)
-     (is (not= :select (:prompt-type (prompt-map :corp))) "~ has already been used this turn"))
+     (is (not (prompt-is-type? state :corp :select)) "~ has already been used this turn"))
    (let [se (get-content state :remote2 0)
          pad (get-in @state [:corp :discard 0])]
      (is (not= pad nil) "PAD should be in Heap")

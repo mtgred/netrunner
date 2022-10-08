@@ -3044,7 +3044,7 @@
                        :deck [(qty "Hedge Fund" 5)]}})
      (take-credits state :corp)
      (run-empty-server state "HQ")
-     (is (= :waiting (:prompt-type (prompt-map :runner))) "Runner waiting on Mti ability")
+     (is (prompt-is-type? state :runner :waiting) "Runner waiting on Mti ability")
      (click-prompt state :corp "Carry on!")))
 
 (deftest nasir-meidan-cyber-explorer
@@ -4449,7 +4449,7 @@
       (run-continue state)
       (run-continue state)
       (is (= 1 (count (:discard (get-runner)))) "Runner took only 1 meat damage from BoN total")
-      (is (= 1 (count (:prompt (get-corp)))) "Only run prompt is active")))
+      (is (prompt-is-type? state :corp :run) "Only run prompt is active")))
 
 (deftest weyland-consortium-builder-of-nations-2-meat-damage-from-id-ability-when-the-cleaners-is-scored
     ;; 2 meat damage from ID ability when The Cleaners is scored

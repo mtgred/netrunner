@@ -2293,7 +2293,7 @@
      (is (= ["Ice Wall"] (map :title (:hand (get-corp))))
          "Ice Wall has been added to hand")
      (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to Jack out")
-     (is (= :waiting (:prompt-type (prompt-map :corp))) "Corp waiting for Runner to jack out")
+     (is (prompt-is-type? state :corp :waiting) "Corp waiting for Runner to jack out")
      (click-prompt state :runner "Yes")
      (is (empty? (:run @state)))
      (is (no-prompt? state :runner) "No open runner prompts")

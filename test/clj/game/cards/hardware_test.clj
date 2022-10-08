@@ -1992,7 +1992,7 @@
              "The set aside cards are: Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials, Golden")
           "Shown correct six cards")
       (click-prompt state :runner "OK")
-      (is (not-empty (:prompt (get-corp))) "Corp has waiting prompt")
+      (is (prompt-is-type? state :corp :waiting))
       (is (= 1 (count (:discard (get-runner)))) "Gachapon in heap")
       (is (= 6 (count (:set-aside (get-runner)))) "6 cards in deck")
       (click-prompt state :runner "DDoS")
