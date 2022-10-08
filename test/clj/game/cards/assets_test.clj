@@ -5462,7 +5462,7 @@
       (card-side-ability state :runner ice 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "End the run")
-      (is (empty (remove :broken (:subroutines (refresh ice)))) "No subs broken"))))
+      (is (empty? (remove :broken (:subroutines (refresh ice)))) "No subs broken"))))
 
 (deftest trieste-model-bioroids-odd-breakers
   ;; savant/etc utae, and any other cards where issues pop up
