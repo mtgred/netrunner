@@ -162,7 +162,7 @@
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Cancel")
-   (is (empty (:prompt (get-corp))) "No more prompts if cancel is clicked")
+   (is (no-prompt? state :corp) "No more prompts if cancel is clicked")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Rashida Jaheem")
@@ -176,8 +176,7 @@
    (is (= "Oaktown Renovation" (:title (get-content state :remote6 0))) "Oaktown Renovation was installed")
    (is (faceup? (get-content state :remote6 0)) "Oaktown Renovation is installed faceup.")
    (play-and-score state "Architect Deployment Test")
-   (click-prompt state :corp "OK")
-   (is (empty (:prompt (get-corp))) "No prompts if there is no ice")))
+   (is (no-prompt? state :corp) "No prompt if R&D is empty")))
 
 (deftest armed-intimidation
   ;; Armed Intimidation
