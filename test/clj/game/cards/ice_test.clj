@@ -435,7 +435,7 @@
         (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
         (run-continue state :movement)
         (run-continue state :success)
-        (is (= "You accessed Merger." (:msg (prompt-map :runner))))
+        (is (accessing state "Merger"))
         (is (= ["No action"] (prompt-buttons :runner)))))
     (testing "Third sub blocks stealing and trashing: trashing"
       (do-game state
@@ -448,7 +448,7 @@
         (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
         (run-continue state :movement)
         (run-continue state :success)
-        (is (= "You accessed NGO Front." (:msg (prompt-map :runner))))
+        (is (accessing state "NGO Front"))
         (is (= ["No action"] (prompt-buttons :runner)))))))
 
 (deftest ansel-1-0-access-after-no-steal
@@ -472,7 +472,7 @@
       (run-continue state :movement)
       (run-continue state :success)
       (click-card state :runner "Merger")
-      (is (= "You accessed Merger." (:msg (prompt-map :runner))))
+      (is (accessing state "Merger"))
       (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
       (is (= :waiting (prompt-type :runner))
@@ -514,7 +514,7 @@
     (click-card state :corp (get-resource state 0))
     (is (nil? (get-resource state 0)) "Bank Job is trashed")
     (encounter-continue state)
-    (is (= "You accessed Archangel." (:msg (prompt-map :runner))) "Return to accessing Archangel")))
+    (is (accessing state "Archangel") "Return to accessing Archangel")))
 
 (deftest architect-architect-is-untrashable-while-installed-and-rezzed-but-trashable-if-derezzed-or-from-hq
   ;; Architect is untrashable while installed and rezzed, but trashable if derezzed or from HQ
@@ -4875,8 +4875,7 @@
       (is (= ["Access a card in Server 2"] (prompt-buttons :runner)) "Runner should have 1 option")
       (click-prompt state :runner "Access a card in Server 2")
       (click-prompt state :corp "Yes")
-      (is (= "You accessed Project Junebug." (:msg (prompt-map :runner)))
-          "Runner should access Project Junebug.")
+      (is (accessing state "Project Junebug"))
       (click-prompt state :runner "No action")
       (is (= :corp (:winner @state)) "Corp has won"))))
 

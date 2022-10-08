@@ -900,9 +900,9 @@
       (click-prompt state :corp "1 [Credits]")
       (click-prompt state :runner "Card from hand")
       (click-card state :corp "Hedge Fund")
-      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+      (is (accessing state "Hedge Fund"))
       (click-prompt state :runner "No action")
-      (is (= "You accessed Caprice Nisei." (:msg (prompt-map :runner))))
+      (is (accessing state "Caprice Nisei"))
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run completed")))
 
@@ -4137,7 +4137,8 @@
                            (click-prompt state :runner "HQ")
                            (card-ability state :corp (refresh tm) 0)
                            (run-continue state)
-                           (click-prompt state :runner "No action")) ; accessed Hedge Fund
+                           (is (accessing state "Hedge Fund"))
+                           (click-prompt state :runner "No action"))
         (changes-val-macro 3 (:credit (get-runner))
                            "Gained 5c from DL"
                            (play-from-hand state :runner "Dirty Laundry")
@@ -4177,7 +4178,7 @@
         (card-ability state :corp (refresh tm) 0)
         (run-continue state)
         (is (empty? (-> (get-runner) :register :successful-run)))
-        (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "No stargate prompt")
+        (is (accessing state "Hedge Fund") "No stargate prompt")
         (click-prompt state :runner "No action"))))
 
 (deftest transport-monopoly-successful-runs-bugs-issue-4735

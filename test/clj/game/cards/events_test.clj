@@ -5678,7 +5678,7 @@
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
       (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
-      (is (= "You accessed Anoetic Void." (:msg (prompt-map :runner))) "Runner access Anoetic Void")
+      (is (accessing state "Anoetic Void"))
       (click-prompt state :runner "No action")
       (is (nil? (get-run)) "Run is ended")))
 
@@ -5943,7 +5943,7 @@
       (core/move state :corp (find-card "Fire Wall" (:deck (get-corp))) :deck)
       (take-credits state :corp)
       (play-run-event state "Showing Off" :rd)
-      (is (= "You accessed Fire Wall." (:msg (prompt-map :runner))) "The accessed card is on the bottom of the deck")
+      (is (accessing state "Fire Wall") "The accessed card is on the bottom of the deck")
       (is (= "Accelerated Beta Test" (-> (get-corp) :deck first :title)) "The top of the deck is an entirely different card")
       (click-prompt state :runner "No action")))
 
@@ -6350,11 +6350,11 @@
                 :runner {:deck ["The Maker's Eye"]}})
      (take-credits state :corp)
      (play-run-event state "The Maker's Eye" :rd)
-     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
+     (is (accessing state "Quandary"))
      (click-prompt state :runner "No action")
-     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")
+     (is (accessing state "Quandary"))
      (click-prompt state :runner "No action")
-     (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "3rd quandary")
+     (is (accessing state "Quandary"))
      (click-prompt state :runner "No action")
      (is (not (:run @state)))))
 

@@ -1715,7 +1715,7 @@
       (is (= 0 (get-counters (get-program state 0) :virus)) "Has no virus tokens")
       (run-on state "HQ")
       (run-continue-until state :success)
-      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+      (is (accessing state "Hedge Fund"))
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "No prompt with no virus counters")))
 

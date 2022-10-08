@@ -3712,7 +3712,7 @@
         (run-continue state)
         (click-prompt state :runner "HQ")
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
-        (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+        (is (accessing state "Hedge Fund"))
         (click-prompt state :runner "No action")
         (is (= 3 (:click (get-runner))))
         (card-ability state :runner omar 0)
@@ -4099,11 +4099,11 @@
     (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
     (click-prompt state :corp "Cancel")
     (run-continue state)
-    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
+    (is (accessing state "Quandary"))
     (click-prompt state :runner "No action")
-    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")
+    (is (accessing state "Quandary"))
     (click-prompt state :runner "No action")
-    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "3rd quandary")
+    (is (accessing state "Quandary"))
     (click-prompt state :runner "No action")
     (is (not (:run @state)))
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
@@ -4247,7 +4247,7 @@
       (rez state :corp (refresh (get-content state :remote1 0)))
       (take-credits state :corp)
       (run-empty-server state :hq)
-      (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))) "No Steve Cambridge prompt, go direct to access.")))
+      (is (accessing state "Hedge Fund") "No Steve Cambridge prompt, go direct to access.")))
 
 (deftest strategic-innovations-future-forward
   ;; Strategic Innovations: Future Forward
