@@ -1587,7 +1587,7 @@
         (is (= 1 (count (:hosted (refresh gs-scored)))))
         (take-credits state :runner)
         (card-ability state :corp (refresh gs-scored) 0)
-        (is (not-empty (:prompt (get-corp))))
+        (is (= "Choose a card to host" (:msg (get-prompt state :corp))))
         (click-card state :corp "Enigma")
         (is (find-card "Enigma" (:hosted (refresh gs-scored))))))
     (testing "Can't take a card if only a runner card is hosted"
@@ -1609,7 +1609,7 @@
         (card-ability state :corp (refresh gs-scored) 0)
         (click-card state :corp "Enigma")
         (card-ability state :corp (refresh gs-scored) 1)
-        (is (not-empty (:prompt (get-corp))))
+        (is (= "Choose a hosted card" (:msg (get-prompt state :corp))))
         (click-card state :corp "Enigma")
         (is (find-card "Enigma" (:hand (get-corp))))))))
 
@@ -1895,7 +1895,7 @@
       (run-on state "HQ")
       (run-continue state)
       (fire-subs state nh)
-      (is (= 1 (-> (get-corp) :prompt first :bonus)) "Should gain 1 bonus trace strength")
+      (is (= 1 (:bonus (get-prompt state :corp))) "Should gain 1 bonus trace strength")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)))
@@ -1904,7 +1904,7 @@
       (run-on state "HQ")
       (run-continue state)
       (fire-subs state nh)
-      (is (= 1 (-> (get-corp) :prompt first :bonus))
+      (is (= 1 (:bonus (get-prompt state :corp)))
           "Should gain only 1 bonus trace strength regardless of number of runs in a turn")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
@@ -1914,7 +1914,7 @@
       (run-on state "R&D")
       (run-continue state)
       (fire-subs state io)
-      (is (zero? (-> (get-corp) :prompt first :bonus)) "Should gain 0 bonus trace strength, as it's an encounter ability"))))
+      (is (zero? (:bonus (get-prompt state :corp))) "Should gain 0 bonus trace strength, as it's an encounter ability"))))
 
 (deftest jumon
   ;; Jumon
@@ -2391,13 +2391,13 @@
       (is (= 1 (get-link state)) "Runner has 1 link")
       (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
-      (is (zero? (-> (get-runner) :prompt first :link)) "Runner has 0 link during first trace")
+      (is (zero? (:link (get-prompt state :runner))) "Runner has 0 link during first trace")
       (click-prompt state :runner "3")
       (is (= (inc credits) (:credit (get-corp))) "Corp gained a credit from NQ")
       ; second trace of turn - no link reduction
       (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
       (click-prompt state :corp "0")
-      (is (= 1 (-> (get-runner) :prompt first :link)) "Runner has 1 link during later traces")
+      (is (= 1 (:link (get-prompt state :runner))) "Runner has 1 link during later traces")
       (click-prompt state :runner "2")
       (is (= (+ credits 2) (:credit (get-corp))) "Corp gained a credit from NQ"))))
 

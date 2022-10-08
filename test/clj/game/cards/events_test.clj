@@ -5758,7 +5758,7 @@
       (rez state :corp (get-content state :remote4 0))
       (is (zero? (count-bad-pub state)) "Corp has 0 bad publicity")
       (card-ability state :corp (get-content state :remote4 0) 0) ; Elizabeth Mills, should show a prompt
-      (is (:prompt (get-corp)) "Elizabeth Mills ability allowed")))
+      (is (= 1 (count-bad-pub state)) "Elizabeth Mills ability allowed")))
 
 (deftest rumor-mill-make-sure-rumor-mill-is-not-active-when-hosted-on-peddler
     ;; Make sure Rumor Mill is not active when hosted on Peddler
