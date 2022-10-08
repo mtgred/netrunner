@@ -190,7 +190,7 @@
      (card-ability state :runner ap 0)
      (click-card state :runner cache)
      (card-ability state :runner ap 0)
-     (is (not= :select (:prompt-type (prompt-map :runner))) "Aesop's has already been used this turn")
+     (is (not (prompt-is-type? state :runner :select)) "Aesop's has already been used this turn")
      (let [ap (get-resource state 0)
            cache (get-in @state [:runner :discard 0])]
        (is (= (+ 3 orig-credits) (:credit (get-runner))) "Should have only gained 3 credits")
@@ -526,7 +526,7 @@
      (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
      (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")
      (card-ability state :runner bm 0)
-     (is (not= :select (:prompt-type (prompt-map :runner))) "Bloo Moose has already been used this turn"))))
+     (is (not (prompt-is-type? state :runner :select)) "Bloo Moose has already been used this turn"))))
 
 (deftest bloo-moose-triggered-at-start-of-turn
   ;; Triggered at start of turn
