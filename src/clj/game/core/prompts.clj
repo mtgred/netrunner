@@ -5,7 +5,7 @@
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [when-let*]]
-    [game.utils :refer [pluralize]]
+    [game.utils :refer [pluralize side-str]]
     [jinteki.utils :refer [other-side]]
     [medley.core :refer [find-first]]))
 
@@ -52,7 +52,7 @@
             :prompt-type :waiting
             :msg (str "Waiting for " 
                       (if (true? waiting-prompt)
-                        (str (other-side side) " to make a decision")
+                        (str (side-str side) " to make a decision")
                         waiting-prompt))}))
        (add-to-prompt-queue state side newitem)))))
 
