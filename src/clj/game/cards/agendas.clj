@@ -219,17 +219,12 @@
     :interactive (req true)
     :async true
     :waiting-prompt true
-    :prompt "Choose Armed Intimidation score effect"
+    :prompt "Choose one"
     :choices ["Suffer 5 meat damage" "Take 2 tags"]
-    :effect (req (case target
-                   "Suffer 5 meat damage"
-                   (do (system-msg state :runner "chooses to suffer 5 meat damage from Armed Intimidation")
-                       (damage state :runner eid :meat 5 {:card card :unboostable true}))
-                   "Take 2 tags"
-                   (do (system-msg state :runner "chooses to take 2 tags from Armed Intimidation")
-                       (gain-tags state :runner eid 2 {:card card}))
-                   ; else
-                   (effect-completed state side eid)))}})
+    :msg (msg "force the Runner to " (decapitalize target))
+    :effect (req (if (= target "Take 2 tags")
+                   (gain-tags state :runner eid 2 {:card card})
+                   (damage state :runner eid :meat 5 {:card card :unboostable true})))}})
 
 (defcard "Armored Servers"
   {:on-score {:effect (effect (add-counter card :agenda 1))
