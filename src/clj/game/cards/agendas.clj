@@ -1119,18 +1119,18 @@
               :async true
               :prompt "Choose one"
               :waiting-prompt true
-              :choices (req (if (< (count-tags state) 2)
-                              ["Gain 7 [Credits]" "No action"]
-                              ["Gain 7 [Credits]" "Do 7 meat damage" "No action"]))
+              :choices (req ["Gain 7 [Credits]"
+                             (when (>= (count-tags state) 2) "Do 7 meat damage")
+                             "No action"])
               :effect (req (case target
                              "Gain 7 [Credits]"
-                             (do (system-msg state side "uses Meteor Mining to gain 7 [Credits]")
+                             (do (system-msg state side (str "uses " (:title card) " to gain 7 [Credits]"))
                                  (gain-credits state side eid 7))
                              "Do 7 meat damage"
-                             (do (system-msg state side "uses Meteor Mining do 7 meat damage")
+                             (do (system-msg state side (str "uses " (:title card) " to do 7 meat damage"))
                                  (damage state side eid :meat 7 {:card card}))
                              "No action"
-                             (do (system-msg state side "does not use Meteor Mining")
+                             (do (system-msg state side (str "declines to use " (:title card)))
                                  (effect-completed state side eid))))}})
 
 (defcard "Midnight-3 Arcology"
