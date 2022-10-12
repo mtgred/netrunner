@@ -1768,19 +1768,19 @@
 
 (defcard "Rubicon Switch"
   {:abilities [{:cost [:click 1]
-                :label "derez ice"
+                :label "Derez a piece of ice rezzed this turn"
                 :once :per-turn
                 :async true
                 :prompt "How many credits do you want to spend?"
                 :choices :credit
-                :effect (effect (system-msg (str "spends a [Click] and " target " [Credit] on Rubicon Switch"))
-                                (continue-ability
-                                  {:choices {:card #(and (ice? %)
-                                                         (= :this-turn (:rezzed %))
-                                                         (<= (:cost %) target))}
-                                   :effect (effect (derez target))
-                                   :msg (msg "derez " (:title target))}
-                                  card nil))}]})
+                :effect (effect (continue-ability
+                                  (let [spent-credits target]
+                                    {:choices {:card #(and (ice? %)
+                                                          (= :this-turn (:rezzed %))
+                                                          (<= (:cost %) target))}
+                                    :effect (effect (derez target))
+                                    :msg (msg "spend " spent-credits "[Credits] and derez " (:title target))})
+                                    card nil))}]})
 
 (defcard "Security Chip"
   {:abilities [{:label "Add [Link] strength to a non-Cloud icebreaker until the end of the run"
