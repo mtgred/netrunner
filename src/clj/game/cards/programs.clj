@@ -646,7 +646,7 @@
               :req (req (< 1 (total-available-credits state :runner eid card)))
               :yes-ability
               {:prompt "How many cards do you want to reveal for 2 [Credits] each?"
-               :waiting-promt "Runner to make a decision"
+               :waiting-prompt true
                :choices {:number (req (min (:count context)
                                            (quot (total-available-credits state :runner eid card) 2)))}
                :async true
