@@ -4502,7 +4502,7 @@
       (is (= "Threat Assessment" (:title (first (:rfg (get-corp))))) "Threat Assessment removed from game")
       (play-from-hand state :corp "Threat Assessment")
       (click-card state :corp (find-card "Corroder" (-> (get-runner) :rig :program)))
-      (click-prompt state :runner "Move Corroder")
+      (click-prompt state :runner "Add Corroder to the top of the Stack")
       (is (= 2 (count-tags state)) "Runner didn't take tags")
       (is (= "Corroder" (:title (first (:deck (get-runner))))) "Moved Corroder to the deck")
       (is (= 2 (count (:rfg (get-corp)))))
@@ -4535,7 +4535,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Threat Assessment")
       (click-card state :corp "Corroder")
-      (click-prompt state :runner "Move Corroder")
+      (click-prompt state :runner "Add Corroder to the top of the Stack")
       (is (zero? (count-tags state)) "Runner didn't take tags")
       (is (no-prompt? state :corp))))
 
