@@ -2345,7 +2345,7 @@
                 :effect (req (apply swap-installed state side targets))}]})
 
 (defcard "Test Ground"
-  (letfn [(derez-card [advancements & wait-msg]
+  (letfn [(derez-card [advancements]
             (when (pos? advancements)
               {:async true
                :waiting-prompt true
@@ -2360,9 +2360,7 @@
                   :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
                   :cost [:trash-can]
                   :async true
-                  :effect (req (let [advancements (get-counters card :advancement)
-                                     wait-msg (str "Corp to derez " (quantify advancements "card"))]
-                                 (continue-ability state side (derez-card advancements wait-msg) card nil)))}]}))
+                  :effect (req (continue-ability state side (derez-card (get-counters card :advancement)) card nil))}]}))
 
 (defcard "The Board"
   {:on-trash executive-trash-effect
