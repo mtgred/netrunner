@@ -232,7 +232,8 @@
 (defcard "Algo Trading"
   {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
    :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
-                :prompt "How many credits do you want to move?" :once :per-turn
+                :prompt "How many credits do you want to move?"
+                :once :per-turn
                 :choices {:number (req (min 3 (total-available-credits state :runner eid card)))}
                 :async true
                 :effect (effect (add-counter card :credit target)
@@ -3288,8 +3289,9 @@
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
 
 (defcard "Tyson Observatory"
-  {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
-                :label "search stack for a piece of hardware"
+  {:abilities [{:prompt "Choose a piece of Hardware"
+                :msg (msg "add " (:title target) " to their Grip")
+                :label "Search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
                 :keep-menu-open :while-2-clicks-left
