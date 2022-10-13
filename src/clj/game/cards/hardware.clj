@@ -86,7 +86,7 @@
                                         (gain-credits state side eid counters))))}}}]})
 
 (defcard "Adjusted Matrix"
-  {:implementation "Click Adjusted Matrix to use ability."
+  {:implementation "Click Adjusted Matrix to use the ability"
    :on-install {:req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
                 :prompt "Choose Icebreaker on which to install Adjusted Matrix"
                 :choices {:card #(and (runner? %)
@@ -1477,7 +1477,7 @@
                       (continue-ability
                         state side
                         {:prompt (str "Trash a card to lower the " cost-type
-                                      " cost of " (:title targetcard) " by 2 [Credits].")
+                                      " cost of " (:title targetcard) " by 2 [Credits]")
                          :async true
                          :choices {:card #(and (in-hand? %)
                                                (runner? %)
@@ -1567,8 +1567,7 @@
                         {:msg "look at the top 2 cards of the stack"
                          :choices ["OK"]
                          :prompt (msg "The top 2 cards of the stack are "
-                                      (str/join ", " (map :title (take 2 (:deck runner))))
-                                      ".")}}}]
+                                      (str/join ", " (map :title (take 2 (:deck runner)))))}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of the stack"
                 :once :per-turn
@@ -1845,7 +1844,7 @@
                                         [(breach-access-bonus kw bonus {:duration :end-of-run})])
                                       (make-run state side eid srv card))))})]
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
-                  :label "run a server"
+                  :label "Run HQ or R&D"
                   :prompt "Choose one"
                   :waiting-prompt true
                   :choices ["HQ" "R&D"]
@@ -2086,7 +2085,7 @@
               {:target-server :rd
                :ability {:req (req (and (not= (:max-access run) 0)
                                         (pos? (count (:deck corp)))))
-                         :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+                         :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top)"
                          :choices (req (map str (take (count (:deck corp)) (range 1 6))))
                          :msg (msg "only access the card at position " target " of R&D")
                          :async true

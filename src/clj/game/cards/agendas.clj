@@ -318,7 +318,7 @@
           {:interactive (req true)
            :optional
            {:waiting-prompt true
-            :prompt "Arrange top 7 cards of R&D?"
+            :prompt "Arrange the top 7 cards of R&D?"
             :yes-ability
             {:async true
              :effect (req (let [c (take 7 (:deck corp))]
@@ -1448,7 +1448,7 @@
                                     (effect-completed eid))})
           (choose-card [run-server]
             {:async true
-             :prompt "Choose a card in or protecting the attacked server."
+             :prompt "Choose a card in or protecting the attacked server"
              :choices {:card #(= (first run-server) (second (get-zone %)))}
              :effect (effect (continue-ability (choose-swap target) card nil))
              :cancel-effect (effect (put-back-counter card)
@@ -1495,7 +1495,7 @@
 
 (defcard "Reeducation"
   (letfn [(corp-final [chosen original]
-            {:prompt (str "The bottom cards of R&D will be " (str/join  ", " (map :title chosen)) ".")
+            {:prompt (str "The bottom cards of R&D will be " (str/join  ", " (map :title chosen)))
              :choices ["Done" "Start over"]
              :async true
              :msg (req (let [n (count chosen)]
@@ -1539,7 +1539,7 @@
                                                                      (corp? (second %))))))
               ;; we want a prompt even if there are no valid targets,
               ;; to make sure we don't give away hidden info
-              :prompt "Select a face-down agenda in Archives?"
+              :prompt "Choose a face-down agenda in Archives"
               :choices {:card #(and (agenda? %)
                                     (in-discard? %)
                                     (not (faceup? %)))}
@@ -1885,7 +1885,7 @@
   {:implementation "Prevention of subroutine breaking is not enforced"
    :on-score {:prompt "Choose an ice type"
               :choices ["Barrier" "Code Gate" "Sentry"]
-              :msg (msg "prevent subroutines on " target " ice from being broken until next turn.")}})
+              :msg (msg "prevent subroutines on " target " ice from being broken until next turn")}})
 
 (defcard "Utopia Fragment"
   {:events [{:event :pre-steal-cost

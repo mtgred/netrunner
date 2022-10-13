@@ -327,7 +327,7 @@
 
 (defcard "Azmari EdTech: Shaping the Future"
   {:events [{:event :corp-turn-ends
-             :prompt "Name a card type"
+             :prompt "Name a Runner card type"
              :choices ["Event" "Resource" "Program" "Hardware" "None"]
              :effect (effect (update! (assoc card :card-target (if (= "None" target) nil target)))
                              (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
@@ -1656,7 +1656,7 @@
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
    :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                 :waiting-prompt true
-                :prompt "Choose a card in the Runner's Heap that was just trashed"
+                :prompt "Choose a card in the Heap that was just trashed"
                 :once :per-turn
                 :choices (req (cancellable (:discard runner)))
                 :msg (msg "remove " (:title target) " from the game")
@@ -1702,7 +1702,7 @@
                {:req (req (and (not-empty (installed-faceup-agendas state))
                                (not-empty (ice-with-no-advancement-tokens state))))
                 :waiting-prompt true
-                :prompt "Place advancement tokens?"
+                :prompt "Place advancement tokens on an installed piece of ice?"
                 :autoresolve (get-autoresolve :auto-fire)
                 :yes-ability
                 {:async true
@@ -1865,9 +1865,9 @@
               {:effect (req (if-let [found-card (some #(when (= (:title %) (:title (:card context))) %) (concat (:deck corp) (:play-area corp)))]
                               (do (move state side found-card :hand)
                                   (system-msg state side (str "uses The Foundry to add a copy of "
-                                                              (:title found-card) " to HQ, and shuffles their deck"))
+                                                              (:title found-card) " to HQ, and shuffle R&D"))
                                   (shuffle! state side :deck))
-                              (do (system-msg state side (str "fails to find a target for The Foundry, and shuffles their deck"))
+                              (do (system-msg state side (str "shuffles R&D"))
                                   (shuffle! state side :deck))))}}}]})
 
 (defcard "The Masque: Cyber General"

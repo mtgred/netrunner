@@ -1275,7 +1275,7 @@
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (click-prompt state :runner "Yes")
-      (is (= "Install from where?" (:msg (prompt-map :runner))) "Stack is only option")
+      (is (= "Choose where to install the program from" (:msg (prompt-map :runner))) "Stack is only option")
       (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
       (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack")))
 

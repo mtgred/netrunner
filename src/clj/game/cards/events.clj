@@ -76,7 +76,7 @@
   [subtype]
   {:makes-run true
    :on-play {:async true
-             :prompt "Choose a server:"
+             :prompt "Choose a server"
              :choices (req runnable-servers)
              :effect (effect (make-run eid target card))}
    :events [{:event :subroutines-broken
@@ -439,7 +439,7 @@
 (defcard "CBI Raid"
   (letfn [(cbi-final [chosen original]
             {:player :corp
-             :prompt (str "The top cards of R&D will be " (str/join  ", " (map :title chosen)) ".")
+             :prompt (str "The top cards of R&D will be " (str/join  ", " (map :title chosen)))
              :choices ["Done" "Start over"]
              :async true
              :effect (req (if (= target "Done")
@@ -558,7 +558,7 @@
                 :once :per-run
                 :yes-ability
                 {:async true
-                 :prompt "Install from where?"
+                 :prompt "Choose where to install the program from"
                  :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"]))
                  :msg (msg "install a program from their " target)
                  :effect (effect (continue-ability
@@ -774,7 +774,7 @@
                                :effect (req (wait-for
                                              (access-card state side (first cards))
                                              (effect-completed state side eid)))}
-                              {:prompt "Select a card to access"
+                              {:prompt "Choose a card to access"
                                :waiting-prompt true
                                :not-distinct true
                                :choices cards
@@ -1255,7 +1255,7 @@
 
 (defcard "Falsified Credentials"
   {:on-play
-   {:prompt "Choose a type"
+   {:prompt "Choose one"
     :choices ["Agenda" "Asset" "Upgrade"]
     :msg (msg "guess " target)
     :async true
@@ -1377,7 +1377,7 @@
     (effect
       (continue-ability
         (let [top-ten (take 10 (:deck runner))]
-          {:prompt (str "The top cards of the stack are " (str/join ", " (map :title top-ten)) ".")
+          {:prompt (str "The top cards of the stack are " (str/join ", " (map :title top-ten)))
            :choices ["OK"]
            :async true
            :effect
@@ -1679,7 +1679,7 @@
 
 (defcard "Information Sifting"
   (letfn [(access-pile [cards pile pile-size]
-            {:prompt "Choose a card to access. You must access all cards."
+            {:prompt "Choose a card to access. You must access all cards"
              :choices [(str "Card from pile " pile)]
              :async true
              :req (req (if (:max-access run)
@@ -1896,7 +1896,7 @@
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]
                           {:async true
-                           :prompt "Select a card to access"
+                           :prompt "Choose a card to access"
                            :waiting-prompt true
                            :not-distinct true
                            :choices revealed
@@ -2428,7 +2428,7 @@
               {:mandatory true
                :this-card-run true
                :ability
-               {:prompt "Select a card to access in the root of another server"
+               {:prompt "Choose a card in the root of another server to access"
                 :choices {:req (req (and (not= (first (:server (:run @state)))
                                                (second (get-zone (get-nested-host target))))
                                          (= (last (get-zone (get-nested-host target)))
@@ -2523,7 +2523,7 @@
 
 (defcard "Prey"
   {:makes-run true
-   :on-play {:prompt "Choose a server:"
+   :on-play {:prompt "Choose a server"
              :choices (req runnable-servers)
              :async true
              :effect (effect (make-run eid target card))}
@@ -2566,7 +2566,7 @@
   (letfn [(corp-choice [spent]
             {:player :corp
              :waiting-prompt true
-             :prompt "Even or odd?"
+             :prompt "Choose one"
              :choices ["Even" "Odd"]
              :async true
              :effect (req (let [correct-guess ((if (= target "Even") even? odd?) spent)]
@@ -2650,7 +2650,7 @@
 
 (defcard "Rebirth"
   {:on-play
-   {:prompt "Choose an identity to become"
+   {:prompt "Choose an identity"
     :rfg-instead-of-trashing true
     :choices (req (let [is-draft-id? #(.startsWith (:code %) "00")
                         runner-identity (:identity runner)
@@ -3171,7 +3171,7 @@
                      "Discard 2 cards from HQ")
                    "Draw 4 cards"])
     :async true
-    :msg (msg "force the corp to " (decapitalize target))
+    :msg (msg "force the Corp to " (decapitalize target))
     :effect (req (if (= target "Draw 4 cards")
                    (wait-for (draw state :corp 4)
                              (effect-completed state side eid))

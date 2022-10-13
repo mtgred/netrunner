@@ -590,7 +590,7 @@
                             (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
                             :unrestricted))]
     {:advanceable :always
-     :subroutines [{:label "Gain 1 [Credit]. Place 1 advancement token."
+     :subroutines [{:label "Gain 1 [Credit]. Place 1 advancement token"
                     :breakable breakable-fn
                     :msg (msg "gain 1 [Credit] and place 1 advancement token on " (card-str state target))
                     :prompt "Choose an installed card"
@@ -710,7 +710,7 @@
                   {:req (req (and (not (:bypass run))
                                   (not (forced-to-avoid-tags? state side))))
                    :player :runner
-                   :prompt "Take 1 tag to bypass?"
+                   :prompt "Take 1 tag to bypass Authenticator?"
                    :yes-ability
                    {:async true
                     :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to bypass it")
@@ -1645,7 +1645,7 @@
                            :default (req 1)}
                  :msg (msg "draw " (quantify target "card"))
                  :effect (effect (draw eid target))}
-        reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
+        reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas into R&D"
                             :show-discard true
                             :choices {:card #(and (corp? %)
                                                   (or (in-hand? %)
@@ -1778,7 +1778,7 @@
 (defcard "Hailstorm"
   {:subroutines [{:label  "Remove a card in the Heap from the game"
                   :req     (req (not (zone-locked? state :runner :discard)))
-                  :prompt  "Choose a card in the Runner's Heap"
+                  :prompt  "Choose a card in the Heap"
                   :choices (req (cancellable (:discard runner) :sorted))
                   :msg     (msg "remove " (:title target) " from the game")
                   :effect  (effect (move :runner target :rfg))}
@@ -2110,7 +2110,7 @@
 (defcard "Jua"
   {:on-encounter {:msg "prevent the Runner from installing cards for the rest of the turn"
                   :effect (effect (register-turn-flag! card :runner-lock-install (constantly true)))}
-   :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack."
+   :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack"
                   :req (req (>= (count (all-installed state :runner)) 2))
                   :async true
                   :prompt "Choose 2 installed Runner cards"
@@ -2120,15 +2120,15 @@
                             :all true}
                   :msg (msg "add either " (card-str state (first targets))
                             " or " (card-str state (second targets))
-                            " to the Stack")
+                            " to the top of the Stack")
                   :effect (effect (continue-ability
                                     (when (= 2 (count targets))
                                       {:player :runner
                                        :waiting-prompt true
-                                       :prompt "Choose a card to move to the Stack"
+                                       :prompt "Choose a card to move to the top of the Stack"
                                        :choices {:card #(some (partial same-card? %) targets)}
                                        :effect (req (move state :runner target :deck {:front true})
-                                                    (system-msg state :runner (str "selected " (card-str state target) " to move to the Stack")))})
+                                                    (system-msg state :runner (str "selected " (card-str state target) " to move to the top of the Stack")))})
                                     card nil))}]})
 
 (defcard "Kakugo"
@@ -2174,7 +2174,7 @@
      :runner-abilities [(bioroid-break 1 1)]}))
 
 (defcard "Karunā"
-  {:subroutines [{:label "Do 2 net damage. The Runner may jack out."
+  {:subroutines [{:label "Do 2 net damage. The Runner may jack out"
                   :async true
                   :effect (req (wait-for (resolve-ability state side
                                                           (do-net-damage 2)
@@ -2188,7 +2188,7 @@
                    :prompt "Force the Runner to access a card in HQ?"
                    :yes-ability
                    {:async true
-                    :prompt "Choose a card in HQ to force access"
+                    :prompt "Choose a card in HQ"
                     :choices {:card (every-pred in-hand? corp?)
                               :all true}
                     :label "Force the Runner to breach HQ and access a card"
@@ -2321,7 +2321,7 @@
   {:subroutines [trash-program-sub
                  trash-program-sub
                  trash-hardware-sub
-                 {:label "Runner loses 3 [Credits], if able. End the run."
+                 {:label "Runner loses 3 [Credits], if able. End the run"
                   :msg "make the Runner lose 3 [Credits] and end the run"
                   :async true
                   :effect (req (if (>= (:credit runner) 3)
@@ -2333,7 +2333,7 @@
   {:subroutines [trash-resource-sub
                  trash-resource-sub
                  (do-net-damage 1)
-                 {:label "Runner loses [click], if able. End the run."
+                 {:label "Runner loses [click], if able. End the run"
                   :msg "make the Runner lose [click] and end the run"
                   :async true
                   :effect (req (lose-clicks state :runner 1)
@@ -2822,7 +2822,7 @@
 
 (defcard "Nightdancer"
   (let [sub {:label (str "The Runner loses [Click], if able. "
-                         "You have an additional [Click] to spend during your next turn.")
+                         "You have an additional [Click] to spend during your next turn")
              :msg (str "force the runner to lose a [Click], if able. "
                        "Corp gains an additional [Click] to spend during their next turn")
              :effect (req (lose-clicks state :runner 1)
@@ -3315,7 +3315,7 @@
                        :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
                                            card nil
                                            [:trash-other-installed 1]))
-                       :yes-ability {:prompt "Select another installed card to trash"
+                       :yes-ability {:prompt "Choose another installed card to trash"
                                      :cost [:trash-other-installed 1]
                                      :msg "give itself +5 strength for the remainder of the run"
                                      :effect (effect (register-floating-effect
@@ -3645,7 +3645,7 @@
 
 (defcard "Vasilisa"
   {:on-encounter
-   {:optional {:prompt "Place 1 advancement counter?"
+   {:optional {:prompt "Place 1 advancement counter on a card that can be advanced?"
                :waiting-prompt true
                :req (req (and (can-pay? state side eid card nil [:credit 1])
                               (some #(or (not (rezzed? %))
@@ -3653,7 +3653,7 @@
                                     (all-installed state :corp))))
                :yes-ability {:cost [:credit 1]
                              :choices {:card can-be-advanced?}
-                             :prompt "Choose a card that can be advanced to place 1 advancement counter on"
+                             :prompt "Choose a card that can be advanced"
                              :msg (msg "place 1 advancement counter on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
                              :cancel-effect (effect (system-msg "declines to use Vasilisa")
@@ -3730,7 +3730,7 @@
   {:on-rez
    {:optional {:prompt "Search R&D for a piece of ice?"
                :req (req (and run this-server))
-               :yes-ability {:prompt "Choose a card"
+               :yes-ability {:prompt "Choose a piece of ice"
                              :async true
                              :msg (msg "reveal they added " (:title target) " to HQ from R&D")
                              :choices (req (cancellable (filter #(ice? %) (:deck corp)) :sorted))
