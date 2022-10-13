@@ -179,7 +179,7 @@
                                             :effect (effect (trash eid (get-card state ice) {:cause-card card}))}])
                                         (force-ice-encounter state side eid ice))))}
               :no-ability
-              {:effect (effect (system-msg "declines to use Awakening Center"))}}}]})
+              {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
@@ -530,7 +530,7 @@
                             :effect (effect
                                       (continue-ability
                                         {:optional
-                                         {:prompt "Pay 1 [Credit] to place 1 power counter on Embolus?"
+                                         {:prompt (msg "Pay 1 [Credit] to place 1 power counter on " (:title card) "?")
                                           :yes-ability {:effect (effect (add-counter card :power 1))
                                                         :cost [:credit 1]
                                                         :msg "place 1 power counter on itself"}}}
@@ -543,7 +543,7 @@
      :events [(assoc maybe-gain-counter :event :corp-turn-begins)
               {:event :successful-run
                :req (req (pos? (get-counters card :power)))
-               :msg "remove 1 power counter from Embolus"
+               :msg "remove 1 power counter from itself"
                :effect (effect (add-counter card :power -1))}]
      :abilities [maybe-gain-counter
                  etr]}))
@@ -605,7 +605,7 @@
       :msg (msg "force the Runner to encounter " (card-str state target))
       :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true :cause-card card})
                              (force-ice-encounter state side eid target)))}
-     :no-ability {:effect (effect (system-msg "declines to use Ganked!"))}}}})
+     :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}})
 
 (defcard "Georgia Emelyov"
   {:events [{:event :unsuccessful-run
@@ -697,7 +697,7 @@
          :choices ["Trash 1 scored agenda" "End the run"]
          :async true
          :effect (req (if (= target "End the run")
-                        (do (system-msg state :runner "declines to pay the additional cost from Hired Help")
+                        (do (system-msg state :runner (str "declines to pay the additional cost from " (:title card)))
                             (end-run state side eid card))
                         (if (seq (:scored runner))
                           (continue-ability state :runner
@@ -878,7 +878,7 @@
                    :not-equal
                    {:optional
                     {:waiting-prompt true
-                     :prompt "Trash Letheia Nisei to force the Runner to approach the outermost piece of ice?"
+                     :prompt (msg "Trash " (:title card) " to force the Runner to approach the outermost piece of ice?")
                      :autoresolve (get-autoresolve :auto-fire)
                      :yes-ability
                      {:async true
@@ -906,7 +906,7 @@
                               (move state side target :hand)
                               (effect-completed state side eid)))}
               :no-ability
-              {:effect (effect (system-msg "declines to use Malapert Data Vault")
+              {:effect (effect (system-msg (str "declines to use " (:title card)))
                                (effect-completed state side eid))}}}]})
 
 (defcard "Manegarm Skunkworks"
@@ -984,14 +984,14 @@
                            :effect (req (purge state side)
                                         (if (rezzed? card)
                                           (do
-                                            (system-msg state side "uses Mavirus to do 1 net damage")
+                                            (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
                                             (damage state side eid :net 1 {:card card}))
                                           (effect-completed state side eid)))}
              :no-ability {:async true
-                          :effect (req (system-msg state side "declines to use Mavirus to purge virus counters")
+                          :effect (req (system-msg state side (str "declines to use " (:title card) " to purge virus counters"))
                                        (if (rezzed? card)
                                          (do
-                                           (system-msg state side "uses Mavirus to do 1 net damage")
+                                           (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
                                            (damage state side eid :net 1 {:card card}))
                                          (effect-completed state side eid)))}}}
    :abilities [{:label "Purge virus counters"
@@ -1481,7 +1481,7 @@
                            (:title current-ice) " again?")
               :yes-ability
               {:async true
-               :prompt "Choose a copy of the piece of ice just passed"
+               :prompt (msg "Choose a copy of " (:title current-ice) " in HQ")
                :choices {:req (req (and (in-hand? target)
                                         (ice? target)
                                         (same-card? :title current-ice target)))}

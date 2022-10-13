@@ -360,7 +360,7 @@
                                  :prompt (str "Score " (:title card-to-score) "?")
                                  :yes-ability {:async true
                                                :effect (effect (score eid (get-card state card-to-score)))}
-                                 :no-ability {:effect (effect (system-msg (str "declines to use Big Deal to score " (card-str state card-to-score))))}}}
+                                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to score " (card-str state card-to-score))))}}}
                                card nil))))}})
 
 (defcard "Bioroid Efficiency Research"
@@ -626,7 +626,7 @@
                                                     :effect (effect (corp-install eid card-to-install target nil))})
                                                  target nil)
                                                (end-effect state side eid card targets)))
-                        :cancel-effect (effect (system-msg "declines to use Digital Rights Management to install a card")
+                        :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                (end-effect eid card targets))}
                        card nil))))}})
 
@@ -784,7 +784,7 @@
                               :async true
                               :waiting-prompt true
                               :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
-                              :cancel-effect (effect (system-msg "declines to use Extract to trash an installed card")
+                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash an installed card"))
                                                      (effect-completed eid))
                               :effect (req (wait-for (trash state side target {:cause-card card})
                                                      (gain-credits state side eid 3)))}
@@ -1304,7 +1304,7 @@
                                (update! state side (assoc-in c [:seen] false)))
                              (shuffle! state :corp :discard)
                              (continue-ability state side install-abi card nil)))
-      :cancel-effect (req (system-msg state :corp "declines to use Kakurenbo to trash any cards from HQ")
+      :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to trash any cards from HQ"))
                           (doseq [c (:discard (:corp @state))]
                             (update! state side (assoc-in c [:seen] false)))
                           (shuffle! state :corp :discard)
@@ -1343,7 +1343,7 @@
                                                     (in-hand? %))}
                               :async true
                               :msg (msg (corp-install-msg target))
-                              :cancel-effect (effect (system-msg "declines to use Lateral Growth to install a card")
+                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                      (effect-completed eid))
                               :effect (effect (corp-install eid target nil nil))}
                              card nil)))}})
@@ -1379,7 +1379,7 @@
               (continue-ability
                 (let [title (:title target)
                       copies (filter #(= (:title %) title) (:deck corp))]
-                  {:prompt "How many copies do you want to find?"
+                  {:prompt (msg "How many copies of " title " do you want to find?")
                    :choices {:number (req (count copies))}
                    :msg (msg "add " (quantify target "cop" "y" "ies") " of " title " to HQ")
                    :effect (req (shuffle! state :corp :deck)
@@ -1833,7 +1833,7 @@
                :effect (req (if (or (= target "None")
                                     (ice? target)
                                     (operation? target))
-                              (do (system-msg state side "declines to use Psychokinesis to install a card")
+                              (do (system-msg state side (str "declines to use " (:title card) " to install a card"))
                                   (effect-completed state side eid))
                               (continue-ability state side (install-card target) card nil)))}))
           (install-card [chosen]
@@ -2486,7 +2486,7 @@
              :location :discard
              :optional
              {:req (req (not-last-turn? state :runner :made-run))
-              :prompt "Add Subliminal Messaging to HQ?"
+              :prompt (msg "Add " (:title card) " to HQ?")
               :yes-ability
               {:msg "add itself to HQ"
                :async true
@@ -2735,7 +2735,7 @@
                                        (in-discard? %))}
                  :msg (msg "install and rez " (:title target) ", ignoring all costs")
                  :async true
-                 :cancel-effect (effect (system-msg "declines to use Trust Operation to install a card")
+                 :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                         (effect-completed eid))
                  :effect (effect (corp-install eid target nil {:ignore-all-cost true
                                                                :install-state :rezzed-no-cost}))}]
@@ -2746,7 +2746,7 @@
                                      (resource? %))}
                :async true
                :cancel-effect (effect
-                               (system-msg "declines to use Trust Operation to trash a resource")
+                               (system-msg (str "declines to use " (:title card) " to trash a resource"))
                                (continue-ability ability card nil))
                :effect (req (wait-for (trash state side target {:cause-card card})
                                       (continue-ability state side ability card nil)))}}))
@@ -2765,7 +2765,7 @@
                                               (corp? %)
                                               (not (operation? %)))}
                         :msg (msg (corp-install-msg target))
-                        :cancel-effect (effect (system-msg "declines to use Ultraviolet Clearance to install a card")
+                        :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                (effect-completed eid))
                         :async true
                         :effect (effect (corp-install eid target nil nil))}

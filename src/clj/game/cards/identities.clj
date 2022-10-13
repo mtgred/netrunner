@@ -415,7 +415,7 @@
                           :effect (req (chosen-damage state :corp target))}
                          card nil))}
               :no-ability
-              {:effect (req (system-msg state :corp "declines to use Chronos Protocol: Selective Mind-mapping"))}}}]})
+              {:effect (req (system-msg state :corp (str "declines to use " (:title card))))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:constant-effects [(hand-size+ -1)]})
@@ -862,10 +862,10 @@
 (defcard "Jinteki Biotech: Life Imagined"
   {:events [{:event :pre-first-turn
              :req (req (= side :corp))
-             :prompt "Choose a copy of Jinteki Biotech to use this game"
+             :prompt (msg "Choose a copy of " (:title card) " to use this game")
              :choices ["The Brewery" "The Tank" "The Greenhouse"]
              :effect (effect (update! (assoc card :biotech-target target :face :front))
-                             (system-msg (str "has chosen a copy of Jinteki Biotech for this game")))}]
+                             (system-msg (str "has chosen a copy of " (:title card) " for this game")))}]
    :abilities [{:label "Check chosen flip identity"
                 :effect (req (case (:biotech-target card)
                                "The Brewery"
@@ -1034,7 +1034,7 @@
               :yes-ability {:msg "force the Corp to draw 1 card"
                             :async true
                             :effect (effect (draw :corp eid 1))}
-              :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}]
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :abilities [(set-autoresolve :auto-fire "Laramy Fisk: Savvy Investor")]})
 
 (defcard "Lat: Ethical Freelancer"
@@ -1045,7 +1045,7 @@
                         :yes-ability {:async true
                                       :msg "draw 1 card"
                                       :effect (effect (draw :runner eid 1))}
-                        :no-ability {:effect (effect (system-msg "declines to use Lat: Ethical Freelancer"))}}}]
+                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :abilities [(set-autoresolve :auto-fire "Lat: Ethical Freelancer")]})
 
 (defcard "Leela Patel: Trained Pragmatist"
@@ -1493,7 +1493,7 @@
                                  :effect (effect (shuffle! :corp :deck))}
                                 card nil)))}
               :no-ability
-              {:effect (effect (system-msg "declines to use Ob Superheavy Logistics: Extract. Export. Excel."))}}})]
+              {:effect (effect (system-msg (str "declines to use " (:title card))))}}})]
     {:events [{:event :corp-trash
                :req (req (and
                            (installed? (:card context))
@@ -1548,7 +1548,7 @@
              :choices {:card #(and (installed? %) (can-be-advanced? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))
-             :cancel-effect (effect (system-msg "declines to use Pravdivost Consulting: Political Solutions")
+             :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                     (effect-completed eid))}]})
 
 (defcard "Quetzal: Free Spirit"
@@ -1836,7 +1836,7 @@
            :msg (msg "swap the positions of " (card-str state (first targets))
                      " and " (card-str state (second targets)))
            :effect (req (swap-ice state side (first targets) (second targets)))}
-          :no-ability {:effect (effect (system-msg "declines to use Tāo Salonga: Telepresence Magician"))}}}]
+          :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
     {:events [(assoc swap-ability :event :agenda-scored)
               (assoc swap-ability :event :agenda-stolen)]}))
 
@@ -1864,7 +1864,7 @@
               :yes-ability
               {:effect (req (if-let [found-card (some #(when (= (:title %) (:title (:card context))) %) (concat (:deck corp) (:play-area corp)))]
                               (do (move state side found-card :hand)
-                                  (system-msg state side (str "uses The Foundry to add a copy of "
+                                  (system-msg state side (str "uses " (:title card) " to add a copy of "
                                                               (:title found-card) " to HQ, and shuffle R&D"))
                                   (shuffle! state side :deck))
                               (do (system-msg state side (str "shuffles R&D"))

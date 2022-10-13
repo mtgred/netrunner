@@ -547,7 +547,7 @@
                                      :cost [:trash-from-hand 1]
                                      :async true
                                      :effect (effect (damage eid :net 2 {:card card}))}
-                       :no-ability {:effect (effect (system-msg :corp "declines to use Anemone to do 2 net damage"))}}}
+                       :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card) " to do 2 net damage")))}}}
    :subroutines [(do-net-damage 1)]})
 
 (defcard "Ansel 1.0"
@@ -648,14 +648,14 @@
    {:optional
     {:req (req (not (in-discard? card)))
      :waiting-prompt true
-     :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
+     :prompt (msg "Pay 3 [Credits] to force Runner to encounter " (:title card) "?")
      :player :corp
      :yes-ability
      {:cost [:credit 3]
       :async true
-      :msg "force the Runner to encounter Archangel"
+      :msg "force the Runner to encounter it"
       :effect (req (force-ice-encounter state side eid card))}
-     :no-ability {:effect (effect (system-msg :corp "declines to use Archangel to force the Runner to encounter it"))}}}
+     :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card) " to force the Runner to encounter it")))}}}
    :subroutines [(trace-ability 6 add-runner-card-to-grip)]})
 
 (defcard "Archer"
@@ -889,7 +889,7 @@
                                                        {:ignore-install-cost true
                                                         :index (:index card)})
                                          (effect-completed state side eid)))
-                  :cancel-effect (req (system-msg state :corp "declines to use Brân 1.0 to install a card")
+                  :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to install a card"))
                                       (effect-completed state side eid))}
                  end-the-run
                  end-the-run]
@@ -1745,7 +1745,7 @@
                       :req (req (and (installed? target)
                                      (rezzed? target)))}
             :waiting-prompt true
-            :cancel-effect (effect (system-msg "declines to use Hákarl 1.0 to derez another card")
+            :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to derez another card"))
                                    (effect-completed eid))
             :effect (effect (derez target)
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
@@ -2528,7 +2528,7 @@
                              :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
                              :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
                                              (lose-credits :runner eid 3))}
-               :no-ability {:effect (effect (system-msg "declines to use Mestnichestvo to spend 1 hosted advancement counter"))}}}
+               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to spend 1 hosted advancement counter")))}}}
    :subroutines [{:label "The Runner loses 3 [Credits]"
                   :msg "force the Runner to lose 3 [Credits]"
                   :async true
@@ -3055,7 +3055,7 @@
                               :prompt "Choose a card in HQ to trash"
                               :choices (req (cancellable (:hand corp) :sorted))
                               :async true
-                              :cancel-effect (effect (system-msg "declines to use Sadaka to trash a card from HQ")
+                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash a card from HQ"))
                                                      (effect-completed eid))
                               :effect (req (wait-for
                                              (trash state :corp target {:cause :subroutine})
@@ -3655,9 +3655,9 @@
                              :prompt "Choose a card that can be advanced"
                              :msg (msg "place 1 advancement counter on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
-                             :cancel-effect (effect (system-msg "declines to use Vasilisa")
+                             :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                                     (effect-completed eid))}
-               :no-ability {:effect (effect (system-msg "declines to use Vasililsa"))}}}
+               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
    :subroutines [(give-tags 1)]})
 
 (defcard "Veritas"
@@ -3739,7 +3739,7 @@
                                                     (shuffle! state side :deck)
                                                     (move state side target :hand)
                                                     (effect-completed state side eid)))}
-               :no-ability {:effect (effect (system-msg "declines to use Wave"))}}}
+               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
                   :async true
@@ -3824,7 +3824,7 @@
                   :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move (first (:deck corp)) :deck))}
-                             :no-ability {:effect (effect (system-msg :corp "declines to use Yagura to move the top card of R&D to the bottom"))}}}
+                             :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card) " to move the top card of R&D to the bottom")))}}}
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"

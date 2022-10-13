@@ -430,7 +430,7 @@
                                  state side
                                  {:optional
                                   {:prompt (str "Run on " (zone->name marked-server) "?")
-                                   :no-ability {:effect (effect (system-msg (str "declines to use Carpe Diem to make a run on " (zone->name marked-server))))}
+                                   :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to make a run on " (zone->name marked-server))))}
                                    :yes-ability {:msg (str "make a run on " (zone->name marked-server))
                                                  :async true
                                                  :effect (effect (make-run eid marked-server))}}}
@@ -810,7 +810,7 @@
                                     {:prompt "Pay [Click] to access another card?"
                                      :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:lose-click 1]))
                                      :no-ability
-                                     {:effect (effect (system-msg "declines to use Deep Dive to access another card"))}
+                                     {:effect (effect (system-msg (str "declines to use " (:title card) " to access another card")))}
                                      :yes-ability
                                      {:async true
                                       :cost [:lose-click 1]

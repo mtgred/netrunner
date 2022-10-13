@@ -246,12 +246,12 @@
                                       :optional
                                       {:req (req (and (:successful target)
                                                       (not (zone-locked? state :runner :discard))
-                                                      (some #(= "Boomerang" (:title %)) (:discard runner))))
+                                                      (some #(= (:title card) (:title %)) (:discard runner))))
                                        :once :per-run
                                        :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
                                        :yes-ability
                                        {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                        :effect (effect (move (some #(when (= "Boomerang" (:title %)) %)
+                                        :effect (effect (move (some #(when (= (:title card) (:title %)) %)
                                                                     (:discard runner))
                                                               :deck)
                                                         (shuffle! :deck))}}}]))}}))
@@ -324,7 +324,7 @@
                                          (let [trashed-cards async-result]
                                            (wait-for (draw state side (count (filter overlap trashed-card-names)))
                                                      (system-msg state side
-                                                                 (str "spends [Click] to use Capstone to trash "
+                                                                 (str "uses " (:title card) " to trash "
                                                                       (str/join ", " (map :title trashed-cards))
                                                                       " from the grip and draw "
                                                                       (quantify (count async-result) "card")))
@@ -810,17 +810,17 @@
                :req (req (some #(corp? (:card %)) targets))
                :effect (req (let [amt-trashed (count (filter #(corp? (:card %)) targets))
                                   sing-ab {:optional
-                                           {:prompt "Place a virus counter on Friday Chip?"
+                                           {:prompt (msg "Place a virus counter on " (:title card) "?")
                                             :autoresolve (get-autoresolve :auto-fire)
                                             :yes-ability {:effect (effect (system-msg
                                                                             :runner
-                                                                            "uses Friday Chip to place 1 virus counter on itself")
+                                                                            (msg "uses " (:title card) " to place 1 virus counter on itself"))
                                                                           (add-counter :runner card :virus 1))}}}
-                                  mult-ab {:prompt "Place virus counters on Friday Chip?"
+                                  mult-ab {:prompt (msg "Place virus counters on " (:title card) "?")
                                            :choices {:number (req amt-trashed)
                                                      :default (req amt-trashed)}
                                            :effect (effect (system-msg :runner
-                                                                       (str "uses Friday Chip to place "
+                                                                       (str "uses " (:title card) " to place "
                                                                             (quantify target "virus counter")
                                                                             " on itself"))
                                                            (add-counter :runner card :virus target))}
@@ -1412,7 +1412,7 @@
          :effect (effect (runner-install
                           (assoc eid :source card :source-type :runner-install)
                           target nil))
-         :cancel-effect (effect (system-msg :runner "declines to use Pantograph to install a card")
+         :cancel-effect (effect (system-msg :runner (str "declines to use " (:title card) " to install a card"))
                                 (effect-completed eid))}
         gain-credit-ability
         {:interactive (req true)
@@ -1452,7 +1452,7 @@
                                :no-ability
                                {:effect (effect (system-msg "does not add the top card of the the stack to the bottom"))}}}
                              card nil)))}
-              :no-ability {:effect (effect (system-msg "declines to use Paragon"))}}}]
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :abilities [(set-autoresolve :auto-fire "Paragon")]})
 
 (defcard "Patchwork"
@@ -1526,7 +1526,7 @@
                             :async true
                             :effect (req (wait-for (draw state :runner 1)
                                                    (draw state :corp eid 1)))}
-              :no-ability {:effect (req (system-msg state side "declines to use Polyhistor")
+              :no-ability {:effect (req (system-msg state side (str "declines to use " (:title card)))
                                         (effect-completed state side eid))}}}]
     {:constant-effects [(mu+ 1)
                         (link+ 1)]
@@ -1635,13 +1635,13 @@
   {:constant-effects [(link+ 1)]
    :on-install
    {:optional
-    {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
-     :prompt "Install another Rabbit Hole?"
+    {:req (req (some #(when (= (:title %) (:title card)) %) (:deck runner)))
+     :prompt (msg "Install another copy of " (:title card) "?")
      :msg "install another copy of itself"
      :yes-ability {:async true
                    :effect (req (trigger-event state side :searched-stack nil)
                                 (shuffle! state :runner :deck)
-                                (when-let [c (some #(when (= (:title %) "Rabbit Hole") %)
+                                (when-let [c (some #(when (= (:title %) (:title card)) %)
                                                    (:deck runner))]
                                   (runner-install state side eid c nil)))}}}})
 
@@ -1709,7 +1709,7 @@
                :interactive (req (hardware-and-in-deck? (:card context) runner))
                :silent (req (not (hardware-and-in-deck? (:card context) runner)))
                :optional
-               {:prompt "Search the stack for another copy to add to your grip?"
+               {:prompt (msg "Search the stack for another copy of " (:title (:card context)) " and add it to your grip?")
                 :req (req (hardware-and-in-deck? (:card context) runner))
                 :yes-ability
                 {:msg (msg "add a copy of " (:title (:card context)) " to their grip")
@@ -2001,7 +2001,7 @@
               :yes-ability {:msg "gain 2 [Credits]"
                             :async true
                             :effect (effect (gain-credits eid 2))}
-              :no-ability {:effect (effect (system-msg "declines to use Supercorridor"))}}}]
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :abilities [(set-autoresolve :auto-fire "Supercorridor")]})
 
 (defcard "Swift"

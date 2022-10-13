@@ -213,7 +213,7 @@
                            :req (req (and (runner? target)
                                           (installed? target)))}
                  :msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                 :cancel-effect (req (system-msg state :runner "declines to use Aesop's Pawnshop")
+                 :cancel-effect (req (system-msg state :runner (str "declines to use " (:title card)))
                                      (effect-completed state side eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                         (gain-credits state side eid 3)))}]
@@ -377,9 +377,9 @@
                                  (continue-ability
                                    state side
                                    {:async true
-                                    :prompt "Choose a copy of Bank Job to use"
+                                    :prompt (msg "Choose a copy of " (:title card) " to use")
                                     :choices {:card #(and (installed? %)
-                                                          (= (:title %) "Bank Job"))}
+                                                          (= (:title %) (:title card)))}
                                     :effect (effect (continue-ability (select-credits-ability target) target nil))}
                                    card nil)
                                  (continue-ability state side (select-credits-ability card) card nil))))}})]})
@@ -751,7 +751,7 @@
                                                       card nil))}
                                        card targets)
                                      ;; Can't pay, don't access cards
-                                     (do (system-msg state :runner "could not afford to use Counter Surveillance")
+                                     (do (system-msg state :runner (str "could not afford to use " (:title card)))
                                          (effect-completed state nil eid)))))}})]
     {:abilities [{:cost [:click 1 :trash-can]
                   :label "Run a server"
@@ -819,7 +819,7 @@
 (defcard "Crypt"
   {:events [{:event :successful-run
              :silent (req true)
-             :optional {:prompt "Place 1 virus counter on Crypt?"
+             :optional {:prompt (msg "Place 1 virus counter on " (:title card) "?")
                         :req (req (= :archives (target-server context)))
                         :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability {:msg "place 1 virus counter on itself"
@@ -1277,7 +1277,7 @@
                      :prompt "Explicitly reveal cards the Runner draws?"
                      :choices ["Yes" "No"]
                      :effect (effect (update! (assoc-in card [:special :explicit-reveal](keyword (str/lower-case target))))
-                                     (toast (str "From now on, Find the Truth will "
+                                     (toast (str "From now on, " (:title card) " will "
                                                  (when (= target "No") "Not")
                                                  "explicitly reveal cards the Runner draws")
                                             "info"))}]})
@@ -1600,11 +1600,11 @@
                              (is-remote? (:server target))))
               :autoresolve (get-autoresolve :auto-place-counter)
               :waiting-prompt true
-              :prompt "Place 1 power counter on Kasi String?"
+              :prompt (msg "Place 1 power counter on " (:title card) "?")
               :yes-ability {:msg "place 1 power counter on itself"
                             :async true
                             :effect (req (add-counter state side eid card :power 1 {:placed true}))}
-              :no-ability {:effect (effect (system-msg "declines to use Kasi String"))}}}
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
             {:event :counter-added
              :req (req (<= 4 (get-counters (get-card state card) :power)))
              :msg "add itself to their score area as an agenda worth 1 agenda point"
@@ -2102,8 +2102,8 @@
                 :choices ["Event" "Hardware" "Program" "Resource"]
                 :async true
                 :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                               (system-msg state side (str "spends [Click] to use Oracle May, names " target
-                                                           " and reveals " (:title c)))
+                               (system-msg state side (str "uses " (:title card) " to name " target
+                                                           " and reveal " (:title c)))
                                (wait-for
                                  (reveal state side c)
                                  (if (is-type? c target)
@@ -3400,7 +3400,7 @@
                                      :effect (effect (system-msg (str "draws " (:title (first (:deck corp)))))
                                                      (draw eid 1))}
                                     :no-ability
-                                    {:effect (effect (system-msg "declines to use Woman in the Red Dress"))}}}
+                                    {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
                                   card nil)))}]
     {:events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
