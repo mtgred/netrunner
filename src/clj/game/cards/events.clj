@@ -3218,9 +3218,8 @@
    {:prompt (req (if (not (zone-locked? state :runner :discard))
                    "Install a program from your Stack or Heap?"
                    "Install a program from your Stack?"))
-    :choices (req (if (not (zone-locked? state :runner :discard))
-                    ["Stack" "Heap"]
-                    ["Stack"]))
+    :choices (req ["Stack"
+                   (when (not (zone-locked? state :runner :discard)) "Heap")])
     :msg (msg "install a program from their " target)
     :async true
     :effect (effect
