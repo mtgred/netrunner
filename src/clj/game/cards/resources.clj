@@ -745,7 +745,7 @@
                                         :effect (req (continue-ability
                                                       state :runner
                                                       {:async true
-                                                       :prompt "Choose how many cards to access"
+                                                       :prompt "How many cards do you want to access?"
                                                        :choices {:number (req tags)
                                                                  :default (req tags)}
                                                        :effect (effect (access-n-cards eid (:server run) target))}
@@ -2317,7 +2317,7 @@
                               (let [paydowntarget target
                                     num-counters (get-counters (get-card state paydowntarget) :power)]
                                 {:async true
-                                 :prompt "How many power counters to remove?"
+                                 :prompt "How many power counters do you want to remove?"
                                  :choices {:number (req (min num-counters
                                                              (total-available-credits state :runner eid card)))}
                                  :effect (req (wait-for

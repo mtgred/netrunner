@@ -1255,7 +1255,7 @@
                    sub]}))
 
 (defcard "Dracō"
-  {:on-rez {:prompt "How many power counters?"
+  {:on-rez {:prompt "How many power counters do you want to place?"
             :choices :credit
             :msg (msg "place " (quantify target "power counter"))
             :effect (effect (add-counter card :power target)
@@ -1639,7 +1639,7 @@
 
 (defcard "Gatekeeper"
   (let [draw-ab {:async true
-                 :prompt "Draw how many cards?"
+                 :prompt "How many cards do you want to draw?"
                  :choices {:number (req 3)
                            :max (req 3)
                            :default (req 1)}
@@ -1825,7 +1825,7 @@
    :subroutines [(gain-credits-sub 2)
                  {:async true
                   :label "Pay up to 2 [Credits] to place up to 2 advancement tokens"
-                  :prompt "How many advancement tokens?"
+                  :prompt "How many advancement tokens do you want to place?"
                   :choices (req (map str (range (inc (min 2 (:credit corp))))))
                   :effect (req (let [c (str->int target)]
                                  (if (can-pay? state side (assoc eid :source card :source-type :subroutine) card (:title card) :credit c)
@@ -2777,7 +2777,7 @@
 
 (defcard "NEXT Sapphire"
   {:subroutines [{:label "Draw up to X cards"
-                  :prompt "Draw how many cards?"
+                  :prompt "How many cards do you want to draw?"
                   :msg (msg "draw " (quantify target "card"))
                   :choices {:number (req (next-ice-count corp))
                             :default (req 1)}

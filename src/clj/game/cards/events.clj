@@ -1230,7 +1230,7 @@
                {:req (req (some #(and (pos? (get-counters % :advancement))
                                       (= (first (:server run)) (second (get-zone %))))
                                 (all-installed state :corp)))
-                :prompt "Advancements to remove from a card in or protecting this server?"
+                :prompt "How many advancements tokens do you want to remove?"
                 :choices ["0" "1" "2" "3"]
                 :async true
                 :waiting-prompt true
@@ -1296,7 +1296,7 @@
                                  state side
                                  (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
                                    {:async true
-                                    :prompt "Reveal how many copies of Fear the Masses?"
+                                    :prompt "How many copies of Fear the Masses do you want to reveal?"
                                     :choices {:card #(and (in-hand? %)
                                                           (same-card? :title card %))
                                               :max n}
@@ -2618,7 +2618,7 @@
 (defcard "Queen's Gambit"
   {:on-play
    {:choices ["0" "1" "2" "3"]
-    :prompt "How many advancement tokens?"
+    :prompt "How many advancement tokens do you want to place?"
     :async true
     :effect (effect
               (continue-ability
@@ -3395,7 +3395,7 @@
                :this-card-run true
                :ability
                {:async true
-                :prompt "How many [Credits]?"
+                :prompt "How many [Credits] do you want to spend?"
                 :choices :credit
                 :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                 :effect (req (wait-for (lose-credits state :corp (make-eid state eid) target)

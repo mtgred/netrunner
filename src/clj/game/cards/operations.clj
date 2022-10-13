@@ -125,7 +125,7 @@
     {:on-play
      {:req (req (some #(has-subtype? % "Advertisement")
                       (concat (:discard corp) (:hand corp))))
-      :prompt "How many Advertisements?"
+      :prompt "How many Advertisements do you want to install and rez?"
       :choices :credit
       :msg (msg "install and rez " target " Advertisements")
       :async true
@@ -797,7 +797,7 @@
     :effect
     (req (let [X (-> runner :scored count)
                draw {:async true
-                     :prompt "Draw how many cards?"
+                     :prompt "How many cards do you want to draw?"
                      :choices {:number (req X)
                                :max (req X)
                                :default (req 1)}
@@ -1379,7 +1379,7 @@
               (continue-ability
                 (let [title (:title target)
                       copies (filter #(= (:title %) title) (:deck corp))]
-                  {:prompt "How many copies?"
+                  {:prompt "How many copies do you want to find?"
                    :choices {:number (req (count copies))}
                    :msg (msg "add " (quantify target "cop" "y" "ies") " of " title " to HQ")
                    :effect (req (shuffle! state :corp :deck)
@@ -1716,7 +1716,7 @@
                    (not-empty (filter #(or (hardware? %)
                                            (program? %))
                                       (all-active-installed state :runner)))))
-    :prompt "Trash how many cards from the top R&D?"
+    :prompt "How many cards do you want to trash from the top of R&D?"
     :choices {:number (req (count (:deck corp)))}
     :msg (msg "trash " (quantify target "card") " from the top of R&D")
     :async true
@@ -1893,8 +1893,8 @@
                        n (count cards)]
                    (continue-ability
                      state side
-                     {:prompt (str "Choose how many copies of "
-                                   title " to reveal")
+                     {:prompt (str "How many copies of "
+                                   title " do you want to reveal?")
                       :choices {:number (req n)}
                       :msg (msg "reveal "
                                 (quantify target "cop" "y" "ies")
@@ -1931,7 +1931,7 @@
                    {:effect (effect (shuffle! :corp :deck))
                     :msg "shuffle R&D"}))]
     {:on-play
-     {:prompt "How many Sysops?"
+     {:prompt "How many Sysops do you want to search for?"
       :choices :credit
       :msg (msg "search for " target " Sysops")
       :async true
@@ -2316,7 +2316,7 @@
 (defcard "Shipment from SanSan"
   {:on-play
    {:choices ["0" "1" "2"]
-    :prompt "How many advancement tokens?"
+    :prompt "How many advancement tokens do you want to place?"
     :async true
     :effect (req (let [c (str->int target)]
                    (continue-ability
@@ -2699,7 +2699,7 @@
                    :effect (effect
                              (continue-ability
                                (let [source target]
-                                 {:prompt "Choose number of counters"
+                                 {:prompt "How many advancement counters do you want to move?"
                                   :choices (take (inc (get-counters source :advancement)) ["0" "1" "2"])
                                   :msg (msg "move " target " advancement counters from "
                                             (card-str state source) " to " (card-str state card-to-advance))

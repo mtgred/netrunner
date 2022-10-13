@@ -269,7 +269,7 @@
    :access {:async true
             :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
             :waiting-prompt true
-            :prompt "How many advancement tokens?"
+            :prompt "How many advancement tokens do you want to place?"
             :choices ["0" "1" "2"]
             :effect (effect (continue-ability
                               (let [c (str->int target)]
@@ -906,7 +906,7 @@
   {:on-score
    {:async true
     :interactive (req true)
-    :prompt "How many power counters?"
+    :prompt "How many power counters do you want to place?"
     :choices ["0" "1" "2"]
     :effect (req (let [c (str->int target)]
                    (continue-ability
@@ -1297,7 +1297,7 @@
 (defcard "Profiteering"
   {:on-score {:interactive (req true)
               :choices ["0" "1" "2" "3"]
-              :prompt "How many bad publicity?"
+              :prompt "How many bad publicity do you want to take?"
               :msg (msg "take " target " bad publicity and gain " (* 5 (str->int target)) " [Credits]")
               :async true
               :effect (req (let [bp (count-bad-pub state)]
