@@ -129,7 +129,7 @@
                     state side
                     {:optional
                      {:prompt "Remove a card from the game instead of accessing it?"
-                      :yes-ability {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                      :yes-ability {:prompt "Choose a card in Archives"
                                     :choices (req (:discard corp))
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (effect (move :corp target :rfg))}}} card nil))}]})
@@ -1637,7 +1637,7 @@
    {:optional
     {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
      :prompt "Install another Rabbit Hole?"
-     :msg "install another Rabbit Hole"
+     :msg "install another copy of itself"
      :yes-ability {:async true
                    :effect (req (trigger-event state side :searched-stack nil)
                                 (shuffle! state :runner :deck)

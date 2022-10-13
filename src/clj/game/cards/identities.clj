@@ -1103,7 +1103,7 @@
                   :effect (effect
                            (update! (assoc-in card [:special :mm-actions] []))
                            (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
-        mm-ability {:prompt "Gain [Click] or gain 1 [Credits]"
+        mm-ability {:prompt "Choose one"
                     :choices ["Gain [Click]" "Gain 1 [Credits]"]
                     :msg (msg (decapitalize target))
                     :once :per-turn
@@ -1858,7 +1858,7 @@
 (defcard "The Foundry: Refining the Process"
   {:events [{:event :rez
              :optional
-             {:prompt "Add another copy to HQ?"
+             {:prompt (msg "Add another copy of " (:title (:card context)) " to HQ?")
               :req (req (and (ice? (:card context))
                              (first-event? state :runner :rez #(ice? (:card (first %))))))
               :yes-ability

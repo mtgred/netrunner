@@ -1610,7 +1610,7 @@
                                  :async true
                                  :req (req (seq (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
                                  :effect (effect (score eid (get-card state target) {:no-req true}))
-                                 :msg "score another installed copy of Research Grant"}
+                                 :msg "score another installed copy of itself"}
                                 card nil))}})
 
 (defcard "Restructured Datapool"

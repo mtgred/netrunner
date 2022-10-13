@@ -352,7 +352,7 @@
                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/card-info command"}) nil)
         "/charge"     #(resolve-ability %1 %2
-                                        {:prompt "Choose an installed card to charge"
+                                        {:prompt "Choose an installed card"
                                          :async true
                                          :effect (req (charge-card %1 %2 eid target))
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
@@ -432,7 +432,7 @@
                                                            (enable-card (get-card state target)))}
                                           (map->Card {:title "/rez command"}) nil))
         "/rfg"        #(resolve-ability %1 %2
-                                        {:prompt "Choose a card to remove from the game"
+                                        {:prompt "Choose a card"
                                          :effect (req (let [c (deactivate %1 %2 target)]
                                                         (move %1 %2 c :rfg)))
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}

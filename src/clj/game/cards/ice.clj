@@ -1410,9 +1410,7 @@
              :prompt "Choose one"
              :waiting-prompt true
              :choices ["Gain 1 [Credits]" "Draw 1 card"]
-             :msg (req (if (= target "Gain 1 [Credits]")
-                         "gain 1 [Credits]"
-                         "draw 1 card"))
+             :msg (msg (decapitalize target))
              :effect (req (if (= target "Gain 1 [Credits]")
                             (gain-credits state :corp eid 1)
                             (draw state :corp eid 1)))}]
