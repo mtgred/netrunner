@@ -2827,7 +2827,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Forged Activation Orders")
       (click-card state :runner "Ice Wall")
-      (click-prompt state :corp "Trash")
+      (click-prompt state :corp "Trash ice protecting HQ at position 0")
       (is (= "Ice Wall" (:title (get-discarded state :corp 0))) "Ice Wall is trashed")))
 
 (deftest forged-activation-orders-corp-chooses-to-rez-the-ice
@@ -2840,8 +2840,21 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Forged Activation Orders")
       (click-card state :runner "Ice Wall")
-      (click-prompt state :corp "Rez")
+      (click-prompt state :corp "Rez ice protecting HQ at position 0")
       (is (rezzed? (get-ice state :hq 0)) "Ice Wall is rezzed")))
+
+(deftest forged-activation-orders-corp-cannot-rez-the-ice
+    ;; Corp cannot rez the ice
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Chiyashi"]}
+                 :runner {:hand ["Forged Activation Orders"]}})
+      (play-from-hand state :corp "Chiyashi" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Forged Activation Orders")
+      (click-card state :runner "Chiyashi")
+      (is (= ["Trash ice protecting HQ at position 0"]
+           (mapv :value (:choices (prompt-map :corp)))))))
 
 (deftest forked
   ;; Forked

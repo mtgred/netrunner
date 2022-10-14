@@ -28,7 +28,7 @@
                              turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid find-latest]]
-   [game.core.flags :refer [any-flag-fn? can-run-server?
+   [game.core.flags :refer [any-flag-fn? can-rez? can-run-server?
                             clear-all-flags-for-card! clear-run-flag! clear-turn-flag!
                             in-corp-scored? prevent-run-on-server register-run-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -52,7 +52,7 @@
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal]]
-   [game.core.rezzing :refer [derez rez]]
+   [game.core.rezzing :refer [derez get-rez-cost rez]]
    [game.core.runs :refer [bypass-ice gain-next-run-credits make-run
                            prevent-access successful-run-replace-breach
                            total-cards-accessed]]
@@ -1338,23 +1338,18 @@
                        icepos (card-index state ice)]
                    (continue-ability
                      state :corp
-                     {:prompt (str "Rez " (:title ice) " at position " icepos
-                                   " of " serv " or trash it?")
-                      :choices ["Rez" "Trash"]
+                     {:prompt "Choose one"
+                      :choices [(when (and (can-rez? state :corp ice)
+                                           (can-pay? state :corp eid ice nil (get-rez-cost state :corp ice nil)))
+                                  (str "Rez " (card-str state ice)))
+                                (str "Trash " (card-str state ice))]
                       :async true
+                      :msg (msg "force the Corp to " (decapitalize target))
                       :waiting-prompt true
-                      :effect (effect (continue-ability
-                                        (if (and (= target "Rez")
-                                                 (<= (rez-cost state :corp ice)
-                                                     (:credit corp)))
-                                          {:msg (msg "force the rez of " (:title ice))
-                                           :async true
-                                           :effect (effect (rez :corp eid ice))}
-                                          {:msg (msg "trash the ice at position " icepos " of " serv)
-                                           :async true
-                                           :effect (effect (trash :corp eid ice {:cause-card card
-                                                                                 :cause :forced-to-trash}))})
-                                        card nil))}
+                      :effect (req (if (str/starts-with? target "Rez")
+                                     (rez state :corp eid ice)
+                                     (trash state :corp eid ice {:cause-card card
+                                                                 :cause :forced-to-trash})))}
                      card nil)))}})
 
 (defcard "Forked"
