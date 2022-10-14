@@ -770,8 +770,8 @@
                                       (wait-for (lose-credits state :runner (make-eid state eid) 1)
                                                 (system-msg state :runner "uses Hoshiko Shiro: Mahou Shoujo to draw 1 card and lose 1 [Credits]")
                                                 (effect-completed state side eid))))}]
-     :abilities [{:label "flip ID"
-                  :msg "flip their ID manually"
+     :abilities [{:label "flip identity"
+                  :msg "flip their identity manually"
                   :effect flip-effect}]}))
 
 (defcard "Hyoubu Institute: Absolute Clarity"
@@ -1801,7 +1801,7 @@
                                (update! state side (-> card (assoc :sync-flipped false :face :front)))
                                (update! state side (-> card (assoc :sync-flipped true :face :back)))))
                 :label "Flip this identity"
-                :msg "flip their ID"}]})
+                :msg "flip their identity"}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game
