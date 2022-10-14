@@ -2476,9 +2476,9 @@
                                  (wait-for (gain-credits state :corp 4)
                                            (end-run state :runner eid card))
                                  (do (as-agenda state :runner card -1)
-                                     (when current-ice
-                                       (encounter-ends state side eid))
-                                     (effect-completed state side eid))))}]})
+                                     (if current-ice
+                                       (encounter-ends state side eid)
+                                       (effect-completed state side eid)))))}]})
 
 (defcard "Merlin"
   (grail-ice (do-net-damage 2)))
