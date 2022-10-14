@@ -1455,13 +1455,13 @@
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
    :abilities [{:label "Shuffle cards in Archives into R&D"
-                :prompt (msg (let [mus (count (filter #(and (= "10019" (:code %))
+                :prompt (msg (let [mus (count (filter #(and (= (:title card) (:title %))
                                                             (rezzed? %))
                                                       (all-installed state :corp)))]
                                (str "Choose " (quantify mus "card") " in Archives to shuffle into R&D")))
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))
-                          :max (req (count (filter #(and (= "10019" (:code %))
+                          :max (req (count (filter #(and (= (:title card) (:title %))
                                                          (rezzed? %))
                                                    (all-installed state :corp))))}
                 :show-discard true
