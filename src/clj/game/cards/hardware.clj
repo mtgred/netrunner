@@ -88,7 +88,7 @@
 (defcard "Adjusted Matrix"
   {:implementation "Click Adjusted Matrix to use ability."
    :on-install {:req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
-                :prompt "Choose Icebreaker on which to install Adjusted Matrix"
+                :prompt "Choose an icebreaker"
                 :choices {:card #(and (runner? %)
                                       (has-subtype? % "Icebreaker")
                                       (installed? %))}

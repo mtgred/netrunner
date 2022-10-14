@@ -238,7 +238,7 @@
                 :async true
                 :effect (effect (add-counter card :credit target)
                                 (lose-credits eid target))
-                :msg (msg "move " target " [Credit] to Algo Trading")}
+                :msg (msg "store " target " [Credit]")}
                {:label "Take all hosted credits"
                 :cost [:click 1 :trash-can]
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
@@ -2098,7 +2098,7 @@
 
 (defcard "Oracle May"
   {:abilities [{:cost [:click 1]
-                :label "name and reveal a card"
+                :label "Name a card type"
                 :once :per-turn
                 :prompt "Choose card type"
                 :choices ["Event" "Hardware" "Program" "Resource"]

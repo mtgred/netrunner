@@ -228,7 +228,7 @@
      :abilities [(set-autoresolve :auto-fire "Amani Senai")]}))
 
 (defcard "Anson Rose"
-  (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
+  (let [ability {:label "Place 1 advancement token (start of turn)"
                  :once :per-turn
                  :msg "place 1 advancement token on itself"
                  :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
@@ -365,7 +365,7 @@
                 :async true
                 :effect (effect (add-counter card :credit target)
                                 (lose-credits eid target))
-                :msg (msg "move " target " [Credit] to C.I. Fund")}
+                :msg (msg "store " target " [Credit]")}
                {:label "Take all hosted credits"
                 :cost [:credit 2 :trash-can]
                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
