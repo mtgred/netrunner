@@ -1521,12 +1521,12 @@
              :interactive (req true)
              :req (req (and (get-in card [:special :omar-run])
                             (= :archives (-> run :server first))))
-             :prompt "Treat as a successful run on which server?"
+             :prompt "Choose one"
              :choices ["HQ" "R&D"]
+             :msg (msg "change the attacked server to " target)
              :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
                             (swap! state assoc-in [:run :server] [target-server])
-                            (trigger-event state :corp :no-action)
-                            (system-msg state side (str "uses Omar Keung: Conspiracy Theorist to make a successful run on " target))))}
+                            (trigger-event state :corp :no-action)))}
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
 

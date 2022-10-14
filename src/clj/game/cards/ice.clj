@@ -2464,18 +2464,19 @@
   {:subroutines [{:label "Gain 4 [Credits] and end the run"
                   :waiting-prompt true
                   :prompt "Choose one"
-                  :choices ["End the run" "Add Meridian to score area"]
+                  :choices ["Corp gains 4 [Credits] and end the run" "Add Meridian to score area"]
+                  :msg (msg (if (str/starts-with? target "Corp")
+                              "gain 4 [Credits] and end the run"
+                              (str "force the Runner to " (decapitalize target))))
                   :player :runner
                   :async true
-                  :effect (req (if (= target "End the run")
-                                 (do (system-msg state :corp "uses Meridian to gain 4 [Credits] and end the run")
-                                     (wait-for (gain-credits state :corp 4)
-                                               (end-run state :runner eid card)))
-                                 (do (system-msg state :runner "adds Meridian to their score area as an agenda worth -1 agenda points")
-                                     (as-agenda state :runner card -1)
-                                     (when current-ice
-                                       (encounter-ends state side eid))
-                                     (effect-completed state side eid))))}]})
+                  :effect (req (if (str/starts-with? target "Corp")
+                                 (wait-for (gain-credits state :corp 4)
+                                           (end-run state :runner eid card))
+                                 (do (as-agenda state :runner card -1)
+                                     (if current-ice
+                                       (encounter-ends state side eid)
+                                       (effect-completed state side eid)))))}]})
 
 (defcard "Merlin"
   (grail-ice (do-net-damage 2)))

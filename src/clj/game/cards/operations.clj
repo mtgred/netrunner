@@ -2617,15 +2617,14 @@
                 (let [chosen target]
                   {:player :runner
                    :waiting-prompt true
-                   :prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
-                   :choices [(str "Move " (:title chosen))
+                   :prompt "Choose one"
+                   :choices [(str "Add " (:title chosen) " to the top of the Stack")
                              "Take 2 tags"]
                    :async true
+                   :msg (msg "force the Runner to" (decapitalize target))
                    :effect (req (if (= target "Take 2 tags")
-                                  (do (system-msg state side "chooses to take 2 tags")
-                                      (gain-tags state :runner eid 2))
-                                  (do (system-msg state side (str "chooses to move " (:title chosen) " to the Stack"))
-                                      (move state :runner chosen :deck {:front true})
+                                  (gain-tags state :runner eid 2)
+                                  (do (move state :runner chosen :deck {:front true})
                                       (effect-completed state side eid))))})
                 card nil))}})
 

@@ -4058,7 +4058,7 @@
       (run-on state "HQ")
       (run-continue state)
       (card-subroutine state :corp (refresh mer) 0)
-      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "Corp gains 4 [Credits] and end the run")
       (is (not (:run @state)) "Run is ended")
       (is (empty? (:scored (get-runner))) "Not in runner score area")
       (is (= 1 (count (get-ice state :hq))) "ice still installed"))))
