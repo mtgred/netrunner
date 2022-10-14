@@ -160,7 +160,7 @@
         (card-ability state :runner cor 0)
         (click-prompt state :runner "End the run")
         (is (not (no-prompt? state :runner)) "Prompt to break second sub open")
-        (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement token.")
+        (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement token")
         (is (no-prompt? state :runner) "Prompt now closed")
         (is (empty? (remove :broken (:subroutines (refresh akhet)))) "All subroutines broken")
         (run-continue state :movement)
@@ -3617,7 +3617,7 @@
     (click-card state :corp "Karunā")
     (is (last-log-contains? state "Corp uses Loki to choose Karunā protecting HQ at position 0")
         "The message correctly prints")
-    (is (= ["Do 2 net damage. The Runner may jack out."
+    (is (= ["Do 2 net damage. The Runner may jack out"
             "Do 2 net damage"
             "End the run unless the Runner shuffles the grip into the stack"]
            (map :label (:subroutines (get-ice state :rd 0))))

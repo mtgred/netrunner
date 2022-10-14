@@ -86,7 +86,7 @@
                                         (gain-credits state side eid counters))))}}}]})
 
 (defcard "Adjusted Matrix"
-  {:implementation "Click Adjusted Matrix to use ability."
+  {:implementation "Click Adjusted Matrix to use the ability"
    :on-install {:req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
                 :prompt "Choose Icebreaker on which to install Adjusted Matrix"
                 :choices {:card #(and (runner? %)
@@ -129,7 +129,7 @@
                     state side
                     {:optional
                      {:prompt "Remove a card from the game instead of accessing it?"
-                      :yes-ability {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                      :yes-ability {:prompt "Choose a card in Archives"
                                     :choices (req (:discard corp))
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (effect (move :corp target :rfg))}}} card nil))}]})
@@ -1477,7 +1477,7 @@
                       (continue-ability
                         state side
                         {:prompt (str "Trash a card to lower the " cost-type
-                                      " cost of " (:title targetcard) " by 2 [Credits].")
+                                      " cost of " (:title targetcard) " by 2 [Credits]")
                          :async true
                          :choices {:card #(and (in-hand? %)
                                                (runner? %)
@@ -1567,8 +1567,7 @@
                         {:msg "look at the top 2 cards of the stack"
                          :choices ["OK"]
                          :prompt (msg "The top 2 cards of the stack are "
-                                      (str/join ", " (map :title (take 2 (:deck runner))))
-                                      ".")}}}]
+                                      (str/join ", " (map :title (take 2 (:deck runner)))))}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of the stack"
                 :once :per-turn
@@ -1638,7 +1637,7 @@
    {:optional
     {:req (req (some #(when (= (:title %) "Rabbit Hole") %) (:deck runner)))
      :prompt "Install another Rabbit Hole?"
-     :msg "install another Rabbit Hole"
+     :msg "install another copy of itself"
      :yes-ability {:async true
                    :effect (req (trigger-event state side :searched-stack nil)
                                 (shuffle! state :runner :deck)
@@ -1845,7 +1844,7 @@
                                         [(breach-access-bonus kw bonus {:duration :end-of-run})])
                                       (make-run state side eid srv card))))})]
     {:abilities [{:req (req (<= 2 (count (:hand runner))))
-                  :label "run a server"
+                  :label "Run HQ or R&D"
                   :prompt "Choose one"
                   :waiting-prompt true
                   :choices ["HQ" "R&D"]
@@ -2086,7 +2085,7 @@
               {:target-server :rd
                :ability {:req (req (and (not= (:max-access run) 0)
                                         (pos? (count (:deck corp)))))
-                         :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
+                         :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top)"
                          :choices (req (map str (take (count (:deck corp)) (range 1 6))))
                          :msg (msg "only access the card at position " target " of R&D")
                          :async true

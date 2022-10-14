@@ -1736,7 +1736,7 @@
       (run-continue-until state :success)
       (is (not (no-prompt? state :runner)) "Cordyceps prompt")
       (click-prompt state :runner "Yes")
-      (is (= "Choose ice protecting this server" (:msg (prompt-map :runner))))
+      (is (= "Choose a piece of ice protecting this server" (:msg (prompt-map :runner))))
       (is (= :select (prompt-type :runner)))
       (click-card state :runner "Ice Wall")
       (click-card state :runner "Enigma")
@@ -6024,7 +6024,7 @@
       (let [snitch (get-program state 0)]
         (run-on state "R&D")
         (is (prompt-is-card? state :runner snitch) "Option to expose")
-        (is (= "Expose approached ice?" (:msg (prompt-map :runner))))
+        (is (= "Expose approached piece of ice?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes")
         (is (= "Jack out?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "Yes"))))

@@ -383,7 +383,7 @@
                                               (some #(has-subtype? % "Stealth")
                                                     (all-active state :runner))))
                                :once :per-turn
-                               :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)))
+                               :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)) "?")
                                :yes-ability
                                {:cost [:credit 2]
                                 :cost-req all-stealth
@@ -626,7 +626,7 @@
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :player :runner ; Needed for when the run is ended by the Corp
-                              :prompt "Choose a non-virus program to add to the top of your stack."
+                              :prompt "Choose a non-virus program to add to the top of your stack"
                               :choices {:card #(and (installed? %)
                                                     (program? %)
                                                     (not (facedown? %))
@@ -715,7 +715,7 @@
              :effect (effect (add-counter card :virus 1))}]})
 
 (defcard "Chameleon"
-  (auto-icebreaker {:on-install {:prompt "Choose one subtype"
+  (auto-icebreaker {:on-install {:prompt "Choose one"
                                  :choices ["Barrier" "Code Gate" "Sentry"]
                                  :msg (msg "choose " target)
                                  :effect (effect (update! (assoc card :subtype-target target)))}
@@ -828,7 +828,7 @@
                             (continue-ability state side ab card targets)))}]
    :abilities [{:req (req (pos? (get-virus-counters state card)))
                 :cost [:click 1]
-                :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
+                :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters"
                 :async true
                 :effect (req (wait-for (gain-credits state side (* 2 (get-virus-counters state card)))
                                        (update! state side (assoc-in card [:counter :virus] 0))
@@ -872,7 +872,7 @@
               :once :per-turn
               :prompt "Swap 2 pieces of ice?"
               :yes-ability
-              {:prompt "Choose ice protecting this server"
+              {:prompt "Choose a piece of ice protecting this server"
                :choices {:req (req (and (installed? target)
                                         (ice? target)
                                         (= (target-server (:run @state)) (second (get-zone target)))))}
@@ -880,7 +880,7 @@
                :effect (effect
                          (continue-ability
                            (let [first-ice target]
-                             {:prompt "Choose ice to swap with"
+                             {:prompt "Choose a piece of ice to swap with"
                               :choices {:req (req (and (installed? target)
                                                        (ice? target)
                                                        (not= first-ice target)))}
@@ -1973,7 +1973,7 @@
                 :effect (effect
                           (continue-ability
                             (let [ice target]
-                              {:prompt "Choose a subtype"
+                              {:prompt "Choose one"
                                :choices ["Sentry" "Code Gate" "Barrier"]
                                :msg (msg "spend [Click] and make " (card-str state ice)
                                          " gain " target
@@ -1989,7 +1989,7 @@
 (defcard "Panchatantra"
   {:events [{:event :encounter-ice
              :optional
-             {:prompt "Give ice a subtype?"
+             {:prompt "Give encountered piece ice a subtype?"
               :req (req (not (get-in @state [:per-turn (:cid card)])))
               :yes-ability
               {:prompt "Choose an ice subtype"
@@ -2461,10 +2461,10 @@
   {:events [{:event :approach-ice
              :optional
              {:req (req (not (rezzed? (:ice context))))
-              :prompt "Expose approached ice?"
+              :prompt "Expose approached piece of ice?"
               :yes-ability
               {:async true
-               :msg "expose the approached ice"
+               :msg "expose the approached piece of ice"
                :effect (req (wait-for
                               (expose state side (:ice context))
                               (continue-ability state side (offer-jack-out) card nil)))}}}]})
@@ -2603,7 +2603,7 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Tracker"
-  (let [ability {:prompt "Choose a server for Tracker"
+  (let [ability {:prompt "Choose a server"
                  :choices (req servers)
                  :msg (msg "target " target)
                  :req (req (not (:card-target card)))
@@ -2740,7 +2740,7 @@
 
 (defcard "Wari"
   (letfn [(prompt-for-subtype []
-            {:prompt "Choose a subtype"
+            {:prompt "Choose one"
              :choices ["Barrier" "Code Gate" "Sentry"]
              :async true
              :effect (req (wait-for (trash state side card {:unpreventable true

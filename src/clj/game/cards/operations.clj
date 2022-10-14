@@ -105,7 +105,7 @@
                                       (let [cards (filterv #(not (same-card? % target)) cards)]
                                         (continue-ability state side (ad state side eid card cards) card nil))))}))]
     {:on-play
-     {:prompt (msg "The top cards of R&D are " (str/join ", " (map :title (take 3 (:deck corp)))) ".")
+     {:prompt (msg "The top cards of R&D are " (str/join ", " (map :title (take 3 (:deck corp)))))
       :choices ["OK"]
       :async true
       :effect (effect (continue-ability (ad state side eid card (take 3 (:deck corp))) card nil))}}))
@@ -302,7 +302,7 @@
             (count (filter #(is-type? % t) (all-active-installed state :runner))))]
     {:on-play
      {:req (req (not-empty (all-active-installed state :runner)))
-      :prompt "Choose a card type"
+      :prompt "Choose one"
       :choices ["Hardware" "Program" "Resource"]
       :async true
       :msg (msg "choose " target)
@@ -613,15 +613,15 @@
                      (shuffle! state side :deck)
                      (continue-ability
                        state side
-                       {:prompt "You may install a card in HQ"
+                       {:prompt "Choose a card in HQ to install"
                         :choices {:card #(and (in-hand? %)
                                               (corp? %)
                                               (not (operation? %)))}
                         :effect (req (wait-for (resolve-ability
                                                  state side
                                                  (let [card-to-install target]
-                                                   {:prompt (str "Choose a location to install " (:title target))
-                                                    :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state target))
+                                                   {:prompt "Choose a server"
+                                                    :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state card-to-install))
                                                     :async true
                                                     :effect (effect (corp-install eid card-to-install target nil))})
                                                  target nil)
@@ -756,7 +756,7 @@
    {:req (req (and tagged
                    (seq (:scored runner))
                    (seq (:scored corp))))
-    :prompt "Choose a stolen agenda in the Runner's score area to swap"
+    :prompt "Choose an agenda in the Runner's score area to swap"
     :choices {:req (req (in-runner-scored? state side target))}
     :async true
     :effect (effect
@@ -817,7 +817,7 @@
                                                    (continue-ability state side (install-cards server (inc n)) card nil)
                                                    (effect-completed state side eid)))))})
                select-server {:async true
-                              :prompt "Install cards in which server?"
+                              :prompt "Choose a server"
                               :choices (req (conj (vec (get-remote-names state)) "New remote"))
                               :effect (effect (continue-ability (install-cards target 1) card nil))}]
            (wait-for (gain-credits state :corp X)
@@ -863,7 +863,7 @@
 (defcard "Focus Group"
   {:on-play
    {:req (req (last-turn? state :runner :successful-run))
-    :prompt "Choose a card type"
+    :prompt "Choose one"
     :choices ["Event" "Hardware" "Program" "Resource"]
     :async true
     :effect (req (let [type target
@@ -971,7 +971,7 @@
 (defcard "Game Over"
   {:on-play
    {:req (req (last-turn? state :runner :stole-agenda))
-    :prompt "Choose a card type"
+    :prompt "Choose one"
     :choices ["Hardware" "Program" "Resource"]
     :async true
     :effect (req (let [card-type target
@@ -987,7 +987,7 @@
                                {:async true
                                 :req (req (<= 3 (:credit runner)))
                                 :waiting-prompt true
-                                :prompt (msg "Prevent any " typemsg " from being trashed? Pay 3 [Credits] per card.")
+                                :prompt (msg "Prevent any " typemsg " from being trashed? Pay 3 [Credits] per card")
                                 :choices {:max (req (min numtargets (quot (total-available-credits state :runner eid card) 3)))
                                           :card #(and (installed? %)
                                                       (is-type? % card-type)
@@ -1050,7 +1050,7 @@
                {:player :runner
                 :async true
                 :waiting-prompt true
-                :prompt "Access card?"
+                :prompt "Access the installed card?"
                 :yes-ability
                 {:async true
                  :effect (req (wait-for (access-card state side target)
@@ -1092,7 +1092,7 @@
 
 (defcard "Hasty Relocation"
   (letfn [(hr-final [chosen original]
-            {:prompt (str "The top cards of R&D will be " (str/join  ", " (map :title chosen)) ".")
+            {:prompt (str "The top cards of R&D will be " (str/join  ", " (map :title chosen)))
              :choices ["Done" "Start over"]
              :async true
              :effect (req (if (= target "Done")
@@ -1493,7 +1493,7 @@
                           (mitosis-ability state side card eid (rest target-cards))
                           (effect-completed state side eid)))))]
     {:on-play
-     {:prompt "Select cards to install in new remotes"
+     {:prompt "Choose 2 cards to install in new remote servers"
       :choices {:card #(and (not (operation? %))
                             (corp? %)
                             (in-hand? %))
@@ -1995,7 +1995,7 @@
 
 (defcard "Replanting"
   (letfn [(replant [n]
-            {:prompt "Choose a card to install with Replanting"
+            {:prompt "Choose a card to install"
              :async true
              :choices {:card #(and (corp? %)
                                    (not (operation? %))
@@ -2232,7 +2232,7 @@
 
 (defcard "Seamless Launch"
   {:on-play
-   {:prompt "Choose target"
+   {:prompt "Choose an installed card"
     :req (req (some #(and (corp? %)
                           (installed? %)
                           (not (= :this-turn (installed? %))))
@@ -2260,7 +2260,7 @@
                         (continue-ability
                           (let [chosen-ice target]
                             {:async true
-                             :prompt (str "Choose where to install " (:title chosen-ice))
+                             :prompt "Choose a server"
                              :choices ["Archives" "R&D" "HQ"]
                              :msg (msg "reveal " (:title chosen-ice) " and install it, paying 3 [Credit] less")
                              :effect (req (wait-for
@@ -2415,7 +2415,7 @@
 (defcard "Standard Procedure"
   {:on-play
    {:req (req (last-turn? state :runner :successful-run))
-    :prompt "Choose a card type"
+    :prompt "Choose one"
     :choices ["Event" "Hardware" "Program" "Resource"]
     :msg (msg "name " target
               ", revealing " (str/join ", " (map :title (:hand runner)))

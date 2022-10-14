@@ -860,7 +860,7 @@
 
 (defcard "La Costa Grid"
   (let [ability {:prompt (msg "Choose a card in " (zone->name (second (get-zone card))))
-                 :label "place 1 advancement counter (start of turn)"
+                 :label "Place 1 advancement counter (start of turn)"
                  :msg (msg "place 1 advancement counter on " (card-str state target))
                  :choices {:req (req (and (installed? target)
                                           (in-same-server? card target)))}
@@ -895,7 +895,7 @@
              {:prompt "Search R&D for non-agenda card?"
               :req (req (= (:previous-zone (:card context)) (get-zone card)))
               :yes-ability
-              {:prompt "Choose card"
+              {:prompt "Choose a card"
                :choices (req (cancellable (filter #(not (agenda? %)) (:deck corp))
                                           :sorted))
                :msg (msg "reveal " (:title target) " and add it to HQ")
@@ -950,7 +950,7 @@
                 :cost [:trash-can]
                 :psi {:req (req this-server)
                       :not-equal
-                      {:prompt "Choose the ice"
+                      {:prompt "Choose a piece of ice"
                        :choices {:card #(and (ice? %)
                                              (rezzed? %))
                                  :all true}
@@ -1440,7 +1440,7 @@
                                            (can-pay? state side (assoc eid :source card :source-type :rez) % nil
                                                      [:credit (install-cost state side % {:cost-bonus -2})]))
                                      (all-installed state :corp)))))
-              :prompt "Rez another card paying 2 [Credits] less?"
+              :prompt "Rez another card paying 2 [Credits] less?"
               :yes-ability {:prompt "Choose a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
                                                      (not (agenda? target))

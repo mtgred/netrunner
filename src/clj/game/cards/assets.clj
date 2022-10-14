@@ -541,7 +541,7 @@
                 :effect (effect
                           (continue-ability
                             (let [from-ice target]
-                              {:prompt "Move to where?"
+                              {:prompt "Choose a piece of ice that can be advanced"
                                :choices {:card #(and (ice? %)
                                                      (not (same-card? from-ice %))
                                                      (can-be-advanced? %))}
@@ -1138,7 +1138,7 @@
                                         (= counters (:agendapoints %)))
                                   (:hand corp))))
                 :waiting-prompt true
-                :prompt "Choose an Agenda in HQ to move to score area"
+                :prompt "Choose an Agenda in HQ to add to score area"
                 :choices {:req (req (and (agenda? target)
                                          (= (:agendapoints target) (get-counters (get-card state card) :power))
                                          (in-hand? target)))}
@@ -2488,7 +2488,7 @@
                 (continue-ability
                   (let [card-to-install target]
                     {:async true
-                     :prompt (str "Where to install " (:title card-to-install))
+                     :prompt "Choose a server"
                      :choices (req (remove (set (zone->name (get-zone card)))
                                            (installable-servers state card-to-install)))
                      :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true}))})

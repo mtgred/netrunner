@@ -542,7 +542,7 @@
                       :unregister-once-resolved true
                       :duration :end-of-run
                       :optional
-                      {:prompt (msg "Pay " (get-strength (:ice context)) " [Credits] to bypass?")
+                      {:prompt (msg "Pay " (get-strength (:ice context)) " [Credits] to bypass encountered piece of ice?")
                        :req (req (and (rezzed? (:ice context))
                                       (first-run-event? state side :approach-ice
                                                         (fn [targets]
@@ -635,13 +635,13 @@
                     (zones->sorted-names (get-runnable-zones state side eid card nil))))
           (trash-or-bonus [chosen-server]
             {:player :corp
-             :prompt "Choose a piece of ice to trash or cancel"
+             :prompt "Choose a piece of ice to trash"
              :choices {:card #(and (= (last (get-zone %)) :ices)
                                    (= chosen-server (rest (butlast (get-zone %)))))}
              :async true
              :effect (effect (system-msg (str "trashes " (card-str state target)))
                              (trash :corp eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))
-             :cancel-effect (effect (system-msg (str "does not trash a piece of ice protecting " (zone->name chosen-server)))
+             :cancel-effect (effect (system-msg (str "declines to trash a piece of ice protecting " (zone->name chosen-server)))
                                     (register-events
                                       :runner card
                                       [{:event :breach-server
@@ -659,13 +659,12 @@
                                   {:prompt "Choose a server"
                                    :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
-                                             " and removes Climactic Showdown from the game")
+                                             " and remove itself from the game")
                                    :effect (effect (continue-ability
                                                      :corp
                                                      (trash-or-bonus (rest (server->zone state target)))
                                                      card nil))}
-                                  {:msg (str "choose a server protected by ice but cannot"
-                                             " and removes Climactic Showdown from the game")})
+                                  {:msg "remove itself from the game"})
                                 card nil)))}]}))
 
 (defcard "Compromised Employee"
@@ -755,7 +754,7 @@
                                      (do (system-msg state :runner "could not afford to use Counter Surveillance")
                                          (effect-completed state nil eid)))))}})]
     {:abilities [{:cost [:click 1 :trash-can]
-                  :label "run a server"
+                  :label "Run a server"
                   :makes-run true
                   :prompt "Choose a server"
                   :msg (msg "make a run on " target)
@@ -809,7 +808,7 @@
                             {:req (req (and (<= 3 (count (:successful-run runner-reg)))
                                             (not (get-in @state [:runner :register :crowdfunding-prompt]))))
                              :player :runner
-                             :prompt "Install Crowdfunding?"
+                             :prompt "Install Crowdfunding from the Heap?"
                              :yes-ability {:async true
                                            :effect (effect (runner-install :runner eid card {:ignore-all-cost true}))}
                              ;; Add a register to note that the player was already asked about installing,
@@ -964,7 +963,7 @@
                   :req (req (and (seq (eligible-cards runner))
                                  (not (zone-locked? state :runner :discard))))
                   :cost [:click 1 :power 3]
-                  :prompt "Choose a card to add to grip?"
+                  :prompt "Choose a card to add to grip"
                   :choices (req (eligible-cards runner))
                   :effect (effect (move target :hand))
                   :msg (msg "add " (:title target) " to grip")}
@@ -1645,12 +1644,12 @@
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
             {:waiting-prompt true
-             :prompt "Choose a Program to keep"
+             :prompt "Choose a Program to add to the Grip"
              :choices (cons "None" (filter program? cards))
              :async true
              :msg (msg (if (= target "None")
-                         "take no card to their Grip"
-                         (str "take " (-> target :title) " to their Grip")))
+                         "add no program to the Grip"
+                         (str "add " (-> target :title) " to the Grip")))
              :effect (req (when (not= target "None")
                             (move state side target :hand))
                           (continue-ability
@@ -1660,8 +1659,8 @@
                             card nil))})]
     {:abilities [{:cost [:click 1]
                   :keep-menu-open :while-clicks-left
-                  :label "reveal cards"
-                  :msg (msg "reveal 4 cards: " (str/join ", " (map :title (take 4 (:deck runner)))))
+                  :label "Reveal the top 4 cards of the stack"
+                  :msg (msg "reveal from the top of the stack: " (str/join ", " (map :title (take 4 (:deck runner)))))
                   :async true
                   :effect (req (let [from (take 4 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -2099,7 +2098,7 @@
   {:abilities [{:cost [:click 1]
                 :label "name and reveal a card"
                 :once :per-turn
-                :prompt "Choose card type"
+                :prompt "Choose one"
                 :choices ["Event" "Hardware" "Program" "Resource"]
                 :async true
                 :effect (req (let [c (first (get-in @state [:runner :deck]))]
@@ -2145,9 +2144,9 @@
 (defcard "Paige Piper"
   (letfn [(pphelper [title cards]
             {:optional
-             {:prompt (str "Trash copies of " title "?")
+             {:prompt (str "Search the Stack for additional copies of " title "?")
               :yes-ability
-              {:prompt "How many copies would you like to trash?"
+              {:prompt (str "How many copies of " title " would you like to find?")
                :choices (take (inc (count cards)) ["0" "1" "2" "3" "4" "5"])
                :msg "shuffle their Stack"
                :async true
@@ -2155,9 +2154,9 @@
                               (trigger-event state side :searched-stack nil)
                               (shuffle! state :runner :deck)
                               (when (pos? target)
-                                (system-msg state side (str "trashes "
+                                (system-msg state side (str "adds "
                                                             (quantify target "cop" "y" "ies")
-                                                            " of " title)))
+                                                            " of " title " to the Heap")))
                               (trash-cards state side eid (take target cards) {:unpreventable true :cause-card card})))}}})]
     {:events [{:event :runner-install
                :interactive (req true)
@@ -2198,8 +2197,8 @@
              :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]})
 
 (defcard "Patron"
-  (let [ability {:prompt "Choose a server for Patron"
-                 :label "Choose a server"
+  (let [ability {:prompt "Choose a server"
+                 :label "Choose a server (start of turn)"
                  :choices (req (conj servers "No server"))
                  :once :per-turn
                  :req (req (and (:runner-phase-12 @state)
@@ -2629,7 +2628,7 @@
 
 (defcard "Security Testing"
   (let [ability {:prompt "Choose a server"
-                 :label "target a server"
+                 :label "Choose a server (start of turn)"
                  :choices (req (conj servers "No server"))
                  :interactive (req true)
                  :msg (msg "target " target)
@@ -2748,7 +2747,7 @@
 
 (defcard "Street Magic"
   (letfn [(runner-break [unbroken-subs]
-            {:prompt "Resolve a subroutine"
+            {:prompt "Choose a subroutine to resolve"
              :choices unbroken-subs
              :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                          (= target (make-label (:sub-effect %))))
@@ -2789,7 +2788,7 @@
                                          (system-msg state side "trashed")
                                          (continue-ability
                                            state side
-                                           {:prompt "Choose a set-aside card to install (paying 1 less)"
+                                           {:prompt "Choose a set-aside card to install"
                                             :waiting-prompt true
                                             :not-distinct true
                                             :async true
@@ -3022,7 +3021,7 @@
 
 (defcard "The Masque A"
   {:abilities [{:cost [:click 1, :trash-can]
-                :label "Make a run and gain [click]. If successful, draw 1 card."
+                :label "Make a run and gain [click]. If successful, draw 1 card"
                 :prompt "Choose a server"
                 :choices (req runnable-servers)
                 :msg (msg "make a run on " target " and gain [click]")
@@ -3042,7 +3041,7 @@
 (defcard "The Masque B"
   {:implementation "Successful run condition not implemented"
    :abilities [{:cost [:click 1 :trash-can]
-                :label "Make a run and gain [click]. If successful, make another run on another server."
+                :label "Make a run and gain [click]. If successful, make another run on another server"
                 :prompt "Choose a server"
                 :choices (req runnable-servers)
                 :msg (msg "make a run on " target " and gain [click]")
