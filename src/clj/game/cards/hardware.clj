@@ -1656,7 +1656,7 @@
                                (continue-ability
                                  state side
                                  {:async true
-                                  :prompt "Choose how much damage to prevent"
+                                  :prompt "How much damage do you want to prevent?"
                                   :choices {:number (req (min n (count (:deck runner))))}
                                   :msg (msg "trash " (str/join ", " (map :title (take target (:deck runner))))
                                             " from their Stack and prevent " target " damage")

@@ -247,7 +247,7 @@
                                  {:waiting-prompt true
                                   :prompt (str "Move advancement tokens to " icename "?")
                                   :yes-ability
-                                  {:prompt "How many advancement tokens?"
+                                  {:prompt "How many advancement tokens do you want to move?"
                                    :choices {:number (req (get-counters card :advancement))}
                                    :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
                                                    (add-prop :corp card :advance-counter (- target) {:placed true})
@@ -1907,7 +1907,7 @@
                 :trash-icon true
                 :cost [:trash-can]
                 :async true
-                :prompt "Move how many hosted advancement tokens?"
+                :prompt "How many hosted advancement tokens do you want to move?"
                 :choices {:number (req (get-counters card :advancement))
                           :default (req (get-counters card :advancement))}
                 :effect (req (let [num-counters target]
