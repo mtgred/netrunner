@@ -1758,7 +1758,7 @@
                                            (move state :runner chosen :rfg)
                                            (move state :runner other :hand)))})
                          card nil))}}}]
-   :abilities [(set-autoresolve :auto-fire "Steve Cambridge")]})
+   :abilities [(set-autoresolve :auto-fire "Steve Cambridge: Master Grifter")]})
 
 (defcard "Strategic Innovations: Future Forward"
   {:events [{:event :pre-start-game
