@@ -1798,8 +1798,8 @@
                        :value [:credit -2]}]
    :abilities [{:cost [:click 1]
                 :effect (req (if (:sync-flipped card)
-                               (update! state side (-> card (assoc :sync-flipped false :face :front)))
-                               (update! state side (-> card (assoc :sync-flipped true :face :back)))))
+                               (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
+                               (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
                 :msg "flip their identity"}]})
 
