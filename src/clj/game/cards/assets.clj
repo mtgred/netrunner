@@ -744,7 +744,7 @@
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Echo Chamber"
-  {:abilities [{:label "Add Echo Chamber to your score area as an agenda worth 1 agenda point"
+  {:abilities [{:label "Add this asset to your score area as an agenda worth 1 agenda point"
                 :cost [:click 3]
                 :msg "add itself to their score area as an agenda worth 1 agenda point"
                 :effect (req (as-agenda state :corp card 1))}]})
@@ -876,7 +876,7 @@
               :async true
               :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
      :abilities [{:cost [:click 1 :advancement 7]
-                  :label "Add False Flag to your score area as an agenda worth 3 agenda points"
+                  :label "Add this asset to your score area as an agenda worth 3 agenda points"
                   :msg "add itself to their score area as an agenda worth 3 agenda points"
                   :effect (req (as-agenda state :corp card 3))}]}))
 
@@ -927,7 +927,7 @@
             :effect (effect (damage eid :net (get-counters (get-card state card) :advancement)
                                     {:card card}))}
    :abilities [{:cost [:click 1 :advancement 3]
-                :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
+                :label "Add this asset to your score area as an agenda worth 1 agenda point"
                 :msg "add itself to their score area as an agenda worth 1 agenda point"
                 :effect (req (as-agenda state :corp card 1))}]})
 

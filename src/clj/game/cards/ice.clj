@@ -866,7 +866,7 @@
              :choices {:card #(and (ice? %)
                                    (can-be-advanced? %))}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
-    {:abilities [{:label "Move Builder to the outermost position of any server"
+    {:abilities [{:label "Move this ice to the outermost position of any server"
                   :cost [:click 1]
                   :prompt "Choose a server"
                   :choices (req servers)
@@ -896,7 +896,7 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Bullfrog"
-  {:subroutines [(do-psi {:label "Move Bullfrog to another server"
+  {:subroutines [(do-psi {:label "Move this ice to another server"
                           :player :corp
                           :prompt "Choose a server"
                           :choices (req servers)
@@ -3098,7 +3098,7 @@
 
 (defcard "Sand Storm"
   {:subroutines [{:async true
-                  :label "Move Sand Storm and the run to another server"
+                  :label "Move this ice and the run to another server"
                   :prompt "Choose another server and redirect the run to its outermost position"
                   :choices (req (remove #{(zone->name (:server (:run @state)))} (cancellable servers)))
                   :msg (msg "move itself and the run on " target " and trash itself")
