@@ -358,8 +358,8 @@
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
-   :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund (start of turn)"
-                :prompt "How many credits do you want to move?"
+   :abilities [{:label "Store up to 3 [Credit] (start of turn)"
+                :prompt "How many credits do you want to store?"
                 :once :per-turn
                 :choices {:number (req (min (:credit corp) 3))}
                 :async true
