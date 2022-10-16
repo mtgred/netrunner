@@ -996,7 +996,7 @@
             {:event :successful-run
              :optional
              {:req (req (= :archives (target-server context)))
-              :prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
+              :prompt (msg "Trash " (:title card) " to force the Corp to lose 3 [Credits]?")
               :yes-ability
               {:async true
                :msg "force the Corp to lose 3 [Credits]"
@@ -1724,7 +1724,7 @@
                  :effect (req (wait-for (draw state :runner 1)
                                         (add-counter state side (get-card state card) :power 1)
                                         (if (= 3 (get-counters (get-card state card) :power))
-                                          (do (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
+                                          (do (system-msg state :runner (str "trashes " (:title card) " as it reached 3 power counters"))
                                               (trash state side eid card {:unpreventable true
                                                                           :cause-card card}))
                                           (effect-completed state side eid))))}

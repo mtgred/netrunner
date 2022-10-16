@@ -1192,11 +1192,11 @@
 (defcard "Exclusive Party"
   {:on-play
    {:msg (msg "draw 1 card and gain "
-              (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))
+              (count (filter #(= (:title %) (:title card)) (:discard runner)))
               " [Credits]")
     :async true
     :effect (req (wait-for (draw state side 1)
-                           (gain-credits state side eid (count (filter #(= (:title %) "Exclusive Party") (:discard runner))))))}})
+                           (gain-credits state side eid (count (filter #(= (:title %) (:title card)) (:discard runner))))))}})
 
 (defcard "Executive Wiretaps"
   {:on-play
@@ -1296,11 +1296,11 @@
                                  state side
                                  (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
                                    {:async true
-                                    :prompt "How many copies of Fear the Masses do you want to reveal?"
+                                    :prompt (msg "How many copies of " (:title card) " do you want to reveal?")
                                     :choices {:card #(and (in-hand? %)
                                                           (same-card? :title card %))
                                               :max n}
-                                    :msg (msg "reveal " (count targets) " copies of Fear the Masses,"
+                                    :msg (msg "reveal " (count targets) " copies of itself,"
                                               " forcing the Corp to trash " (quantify (count targets) "additional card")
                                               " from the top of R&D")
                                     :effect (req (wait-for
@@ -1919,7 +1919,7 @@
          :effect (req (wait-for
                         (resolve-ability state side (select-install-cost state) card nil)
                         (let [revealed (seq (take (second async-result) (:deck corp)))]
-                          (system-msg state :runner (str "uses Khusyuk to choose an install cost of "
+                          (system-msg state :runner (str "uses " (:title card) " to choose an install cost of "
                                                          (first async-result)
                                                          " [Credit] and reveals "
                                                          (if revealed
@@ -2296,10 +2296,10 @@
                            (continue-ability
                              state side
                              {:optional
-                              {:prompt "Pay 1 [Credits] to add Networking to Grip?"
+                              {:prompt (msg "Pay 1 [Credits] to add " (:title card) " to Grip?")
                                :yes-ability
                                {:cost [:credit 1]
-                                :msg "add itself to their Grip"
+                                :msg "add itself to the Grip"
                                 :effect (effect (move card :hand))}}}
                              card nil)))}})
 
@@ -2485,7 +2485,7 @@
                :this-card-run true
                :mandatory true
                :ability
-               {:prompt "Choose an agenda to host Political Graffiti on"
+               {:prompt (msg "Choose an agenda to host " (:title card) " on")
                 :choices {:req (req (in-corp-scored? state side target))}
                 :msg (msg "host itself on " (:title target) " as a hosted condition counter")
                 :async true

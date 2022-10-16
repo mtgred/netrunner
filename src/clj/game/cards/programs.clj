@@ -1287,7 +1287,7 @@
   {:events [{:event :pass-ice
              :optional
              {:req (req (not (rezzed? (:ice context))))
-              :prompt "Trash False Echo to make the Corp rez the passed piece of ice or add it to HQ?"
+              :prompt (msg "Trash " (:title card) " to make the Corp rez the passed piece of ice or add it to HQ?")
               :yes-ability
               {:async true
                :msg "force the Corp to either rez the passed piece of ice or add it to HQ"
@@ -1334,7 +1334,7 @@
                      (add-icon state side card ice "F" "blue")
                      (system-msg state side
                                  (str "selects " (card-str state ice)
-                                      " for Femme Fatale's bypass ability"))
+                                      " for " (:title card) "'s bypass ability"))
                      (register-events
                        state side card
                        [{:event :encounter-ice

@@ -974,7 +974,7 @@
                                              :effect (effect (gain-bad-publicity :corp 1))}}}
                              card nil)
                            (let [n (* 3 (count-bad-pub state))]
-                             (system-msg state side (str "uses Illicit Sales to gain " n " [Credits]"))
+                             (system-msg state side (str "uses " (:title card) " to gain " n " [Credits]"))
                              (gain-credits state side eid n))))}})
 
 (defcard "Improved Protein Source"
@@ -1264,7 +1264,7 @@
 
 (defcard "Posted Bounty"
   {:on-score {:optional
-              {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
+              {:prompt "Forfeit this agenda to give the Runner 1 tag and take 1 bad publicity?"
                :yes-ability
                {:msg "give the Runner 1 tag and take 1 bad publicity"
                 :async true

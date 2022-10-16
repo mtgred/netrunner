@@ -122,7 +122,7 @@
                                 (let [inst-target (find-latest state target)]
                                   (add-prop state :corp inst-target :advance-counter 1 {:placed true})
                                   (system-msg state :corp
-                                              (str "uses Arella Salvatore to install and place a counter on "
+                                              (str "uses " (:title card) " to install and place a counter on "
                                                    (card-str state inst-target) ", ignoring all costs"))
                                   (effect-completed state side eid))))}]
     {:events [{:event :agenda-scored
@@ -383,7 +383,7 @@
                                (set-next-phase state :approach-ice)
                                (update-all-ice state side)
                                (update-all-icebreakers state side)
-                               (system-msg state :corp (str "trashes Code Replicator to make the runner approach "
+                               (system-msg state :corp (str "trashes " (:title card) " to make the runner approach "
                                                             (:title (get-in (:ices (card->server state card)) [(:position run)]))
                                                             " again"))
                                (wait-for (resolve-ability state :runner (make-eid state eid) (offer-jack-out) card nil)
@@ -450,7 +450,7 @@
         ability
         {:optional
          {:waiting-prompt true
-          :prompt "Trash Daruma to swap a card in this server?"
+          :prompt (msg "Trash " (:title card) " to swap a card in this server?")
           :yes-ability
           {:async true
            :prompt "Choose a card in this server to swap"
@@ -595,7 +595,7 @@
                                 (protecting-same-server? card %))
                           (all-active-installed state :corp))))
      :waiting-prompt true
-     :prompt "Trash Ganked! to force the Runner to encounter a piece of ice?"
+     :prompt (msg "Trash " (:title card) " to force the Runner to encounter a piece of ice?")
      :yes-ability
      {:async true
       :choices {:req (req (and (ice? target)
@@ -710,7 +710,7 @@
                                                                                                    " as an additional cost to initiate a run"))
                                                                     (effect-completed state side eid)))}
                                             card nil)
-                          (do (system-msg state :runner "cannot pay the additional cost from Hired Help")
+                          (do (system-msg state :runner (str "cannot pay the additional cost from " (:title card)))
                               (end-run state side eid card)))))}]
     {:events [{:event :run
                :async true
@@ -1637,7 +1637,7 @@
              {:req (req (and this-server
                              (some #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
               :waiting-prompt true
-              :prompt "Trash Will-o'-the-Wisp to choose an icebreaker?"
+              :prompt (msg "Trash " (:title card) " to choose an icebreaker?")
               :yes-ability {:async true
                             :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
                             :choices {:card #(has-subtype? % "Icebreaker")}

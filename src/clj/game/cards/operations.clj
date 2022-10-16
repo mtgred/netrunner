@@ -219,7 +219,7 @@
                              from-archives (map :title (filter in-discard? targets))]
                          (system-msg
                            state side
-                           (str "uses Attitude Adjustment to shuffle "
+                           (str "uses " (:title card) " to shuffle "
                                 (str/join
                                   " and "
                                   (filter identity
@@ -331,7 +331,7 @@
                          card nil)
                        (let [n (* 2 (num-installed state t))]
                          (if (pos? n)
-                           (do (system-msg state :corp (str "uses Biased Reporting to gain " n " [Credits]"))
+                           (do (system-msg state :corp (str "uses " (:title card) " to gain " n " [Credits]"))
                                (gain-credits state :corp eid n))
                            (effect-completed state side eid))))))}}))
 
@@ -427,7 +427,7 @@
              :effect (req (wait-for
                             (corp-install state side target nil {:install-state :face-up})
                             (let [agenda async-result]
-                              (system-msg state side (str "hosts Casting Call on " (:title agenda)))
+                              (system-msg state side (str "hosts " (:title card) " on " (:title agenda)))
                               (install-as-condition-counter state side eid card agenda))))}
    :events [{:event :access
              :condition :hosted
@@ -929,7 +929,7 @@
                                                    (in-discard? %))}
                              :effect (req (wait-for
                                             (corp-install state side target nil nil)
-                                            (do (system-msg state side (str "uses Friends in High Places to "
+                                            (do (system-msg state side (str "uses " (:title card) " to "
                                                                             (corp-install-msg target)))
                                                 (if (< n 2)
                                                   (continue-ability state side (fhp (inc n)) card nil)
@@ -1077,7 +1077,7 @@
                       :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                                              (gain-credits state side eid 10)))} card nil)
                    (do
-                     (system-msg state side "uses Hansei Review to gain 10 [Credits]")
+                     (system-msg state side (str "uses " (:title card) " to gain 10 [Credits]"))
                      (gain-credits state side eid 10))))}})
 
 (defcard "Hard-Hitting News"
@@ -1264,7 +1264,7 @@
                                    (let [x (- target (second targets))]
                                      (system-msg
                                        state :corp
-                                       (str "uses Invasion of Privacy to reveal the Runner's Grip ( "
+                                       (str "uses " (:title card) " to reveal the Runner's Grip ( "
                                             (str/join ", " (map :title (sort-by :title (:hand runner))))
                                             " ) and trash up to " x " resources or events"))
                                      (continue-ability state side (iop (dec x)) card nil))))}
@@ -1289,7 +1289,7 @@
                                            (in-discard? %))}
                      :effect (req (wait-for (corp-install state side (make-eid state {:source card :source-type :corp-install})
                                                           target nil nil)
-                                            (system-msg state side "uses Kakurenbo to place 2 advancements counters on the installed card")
+                                            (system-msg state side (str "uses " (:title card) " to place 2 advancements counters on the installed card"))
                                             (add-prop state side eid async-result :advance-counter 2 {:placed true})))}]
     {:on-play
      {:prompt "Choose any number of cards in HQ to trash"
@@ -2025,7 +2025,7 @@
     :effect (req (wait-for
                    (corp-install state side target nil {:install-state :rezzed})
                    (let [seen (assoc target :seen true)]
-                     (system-msg state side (str "uses Restore to "
+                     (system-msg state side (str "uses " (:title card) " to "
                                                  (corp-install-msg seen)))
                      (let [leftover (filter #(= (:title target) (:title %)) (-> @state :corp :discard))]
                        (when (seq leftover)
@@ -2397,7 +2397,7 @@
    {:async true
     :effect (req (wait-for
                    (draw state side 3)
-                   (system-msg state side (str "uses Sprint to draw "
+                   (system-msg state side (str "uses " (:title card) " to draw "
                                                (quantify (count async-result) "card")))
                    (continue-ability
                      state side

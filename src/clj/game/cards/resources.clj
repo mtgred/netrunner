@@ -335,7 +335,7 @@
                :async true
                :interactive (req true)
                :optional
-               {:prompt (msg "Trash Backstitching to bypass " (:title current-ice) "?")
+               {:prompt (msg "Trash " (:title card) " to bypass " (:title current-ice) "?")
                 :req (req (and (is-min-index state card)
                                (= (:mark @state) (first (:server run)))))
                 :yes-ability {:msg (msg "bypass " (:title current-ice))
@@ -707,7 +707,7 @@
                  {:optional
                   {:player :runner
                    :waiting-prompt true
-                   :prompt (msg "Trash Councilman and pay " (rez-cost state :corp (:card context))
+                   :prompt (msg "Trash " (:title card) " and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
                    {:cost [:credit (rez-cost state :corp (:card context))]
@@ -1515,13 +1515,13 @@
              :optional
              {:req (req (= :runner (:scored-side (second targets))))
               :waiting-prompt true
-              :prompt "Trash Jackpot!?"
+              :prompt (msg "Trash " (:title card) "?")
               :yes-ability
               {:prompt "How many hosted credits do you want to take?"
                :choices {:number (req (get-counters card :credit))}
                :async true
                :effect (req (wait-for (gain-credits state :runner target)
-                                      (system-msg state :runner (str "trashes Jackpot! to gain " target " [Credits]"))
+                                      (system-msg state :runner (str "trashes " (:title card) " to gain " target " [Credits]"))
                                       (trash state :runner eid card {:cause-card card})))}}}]})
 
 (defcard "Jak Sinclair"
@@ -1709,7 +1709,7 @@
                           (if (seq (:scored corp))
                             {:optional
                              {:waiting-prompt true
-                              :prompt "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?"
+                              :prompt (msg "Forfeit an agenda to prevent " (:title card) " from being added to Runner's score area?")
                               :player :corp
                               :async true
                               :yes-ability
@@ -2682,7 +2682,7 @@
                                          (= run-position (card-index state %))
                                          (is-central? (second (get-zone %))))
                                    (all-installed state :corp))))
-              :prompt "Trash Slipstream to approach a piece of ice protecting a central server?"
+              :prompt (msg "Trash " (:title card) " to approach a piece of ice protecting a central server?")
               :yes-ability
               {:async true
                :effect

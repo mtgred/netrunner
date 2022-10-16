@@ -1324,8 +1324,8 @@
               (assoc nasol :event :agenda-stolen)]}))
 
 (defcard "NEXT Design: Guarding the Net"
-  (let [ndhelper (fn nd [n] {:prompt (str "When finished, click NEXT Design: Guarding the Net to draw back up to 5 cards in HQ. "
-                                          "Choose a piece of ice in HQ to install:")
+  (let [ndhelper (fn nd [n] {:prompt (msg "When finished, click " (:title card) " to draw back up to 5 cards in HQ. "
+                                          "Choose a piece of ice in HQ to install")
                              :choices {:card #(and (corp? %)
                                                    (ice? %)
                                                    (in-hand? %))}

@@ -455,7 +455,7 @@
                  (effect
                   (continue-ability
                    {:optional
-                    {:prompt (msg "Trash Clearinghouse to do " (get-counters card :advancement) " meat damage?")
+                    {:prompt (msg "Trash this asset to do " (get-counters card :advancement) " meat damage?")
                      :yes-ability
                      {:async true
                       :msg "do 1 meat damage for each hosted advancement counter"
@@ -890,7 +890,7 @@
   {:can-host (req (and (or (asset? target) (agenda? target))
                        (> 2 (count (:hosted card)))))
    :trash-cost-bonus (req (* 3 (count (:hosted card))))
-   :abilities [{:label "Install an asset or agenda on Full Immersion RecStudio"
+   :abilities [{:label "Install an asset or agenda on this asset"
                 :req (req (< (count (:hosted card)) 2))
                 :cost [:click 1]
                 :prompt "Choose an asset or agenda to install"
@@ -901,7 +901,7 @@
                 :msg "install and host an asset or agenda"
                 :async true
                 :effect (effect (corp-install eid target card nil))}
-               {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
+               {:label "Install a previously-installed asset or agenda on this asset (fixes only)"
                 :req (req (< (count (:hosted card)) 2))
                 :prompt "Choose an installed asset or agenda to host"
                 :choices {:card #(and (or (asset? %) (agenda? %))
@@ -1126,8 +1126,8 @@
                          :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                                 (trash state side eid card {:cause-card card})))}
                         :unsuccessful
-                        {:effect (effect (add-counter card :power 1)
-                                         (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]})
+                        {:effect (effect (add-counter card :power 1))
+                         :msg "add 1 power counter to itself"}}}]})
 
 (defcard "Lady Liberty"
   {:abilities [{:cost [:click 3]
@@ -1681,7 +1681,7 @@
                                     (let [cnt (count (get-in @state [:runner :hand]))
                                           credits (quot cnt 2)]
                                       (system-msg state :corp
-                                                  (str "uses Personalized Portal to force the runner to draw "
+                                                  (str "uses " (:title card) " to force the runner to draw "
                                                        "1 card and gain " credits " [Credits]"))
                                       (gain-credits state :corp eid credits))))}]})
 
@@ -1870,7 +1870,7 @@
                  (effect
                    (continue-ability
                      {:optional
-                      {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
+                      {:prompt "Trash this asset to gain 3 [Credits] and draw 3 cards?"
                        :msg "gain 3 [Credits] and draw 3 cards"
                        :yes-ability
                        {:async true
@@ -2607,11 +2607,11 @@
                                   card nil))}]})
 
 (defcard "Worlds Plaza"
-  {:abilities [{:label "Install an asset on Worlds Plaza"
+  {:abilities [{:label "Install an asset on this asset"
                 :req (req (< (count (:hosted card)) 3))
                 :cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :prompt "Choose an asset to install on Worlds Plaza"
+                :prompt "Choose an asset to install"
                 :choices {:card #(and (asset? %)
                                       (in-hand? %)
                                       (corp? %))}
