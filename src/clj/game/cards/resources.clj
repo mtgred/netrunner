@@ -795,7 +795,7 @@
      :flags {:drip-economy true
              :runner-turn-draw (req (= 1 (get-counters (get-card state card) :credit)))
              :runner-phase-12 (req (= 1 (get-counters (get-card state card) :credit)))}
-     :abilities [ability]
+     :abilities [ability (set-autoresolve :auto-install-from-heap "Crowdfunding self-installing from the Heap")]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
                :async true
@@ -809,6 +809,7 @@
                                             (not (get-in @state [:runner :register :crowdfunding-prompt]))))
                              :player :runner
                              :prompt "Install Crowdfunding from the Heap?"
+                             :autoresolve (get-autoresolve :auto-install-from-heap)
                              :yes-ability {:async true
                                            :effect (effect (runner-install :runner eid card {:ignore-all-cost true}))}
                              ;; Add a register to note that the player was already asked about installing,
