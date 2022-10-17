@@ -979,6 +979,7 @@
    :access {:optional
             {:waiting-prompt true
              :prompt "Purge virus counters?"
+             :autoresolve (get-autoresolve :auto-fire-on-access)
              :yes-ability {:msg (msg "purge virus counters")
                            :async true
                            :effect (req (purge state side)
@@ -997,7 +998,8 @@
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
                 :cost [:trash-can]
-                :effect (effect (purge))}]})
+                :effect (effect (purge))}
+               (set-autoresolve :auto-fire-on-access "Mavirus purging virus counters on access")]})
 
 (defcard "Midori"
   {:events [{:event :approach-ice

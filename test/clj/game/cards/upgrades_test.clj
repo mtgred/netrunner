@@ -2253,6 +2253,28 @@
         (is (zero? (virus-counters (find-card "Medium" (get-program state))))
             "Medium has no counters"))))
 
+(deftest mavirus-purge-on-access-from-archives
+    ;; Purge on access from Archives
+    (do-game
+      (new-game {:corp {:discard ["Mavirus"]}
+                 :runner {:hand ["Cache" "Pelangi"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
+            cache (find-card "Cache" (get-program state))
+            mav (find-card "Mavirus" (:discard (get-corp)))]
+        (run-empty-server state "Archives")
+        (click-prompt state :corp "Yes")
+        (is (zero? (virus-counters cache))
+            "Cache has no counters")
+        ;; Always autoresolve Mavirus
+        (card-ability state :corp mav 1)
+        (click-prompt state :corp "Always")
+        (play-from-hand state :runner "Pelangi")
+        (run-empty-server state "Archives")
+        (is (zero? (virus-counters (find-card "Pelangi" (get-program state))))
+            "Pelangi has no counters"))))
+
 (deftest midori
   ;; Midori
   (do-game
