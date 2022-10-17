@@ -4149,6 +4149,18 @@
       (is (= 2 (count (:hand (get-corp)))) "Both Subliminals returned to HQ")
       (is (zero? (count (:discard (get-corp)))) "No Subliminals in Archives")))
 
+(deftest subliminal-messaging-autoresolve
+    ;; Autoresolve ability prevents prompt
+    (do-game
+      (new-game {:corp {:hand ["Subliminal Messaging"]}})
+      (play-from-hand state :corp "Subliminal Messaging")
+      (card-ability state :corp (find-card "Subliminal Messaging" (:discard (get-corp))) 0)
+      (click-prompt state :corp "Always")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 1 (count (:hand (get-corp)))) "Subliminal returned to HQ")
+      (is (zero? (count (:discard (get-corp)))) "No Subliminal in Archives")))
+
 (deftest subliminal-messaging-user-declines-to-return-to-hand-ensure-game-asks-again-next-turn
     ;; User declines to return to hand, ensure game asks again next turn
     (do-game

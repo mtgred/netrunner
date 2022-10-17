@@ -39,6 +39,7 @@
    [game.core.memory :refer [mu+ update-mu]]
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
+   [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost-target]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
@@ -2487,12 +2488,14 @@
              :optional
              {:req (req (not-last-turn? state :runner :made-run))
               :prompt "Add Subliminal Messaging to HQ?"
+              :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:msg "add itself to HQ"
                :async true
                :effect (req (wait-for (reveal state side (make-eid state eid) card))
                             (move state side card :hand)
-                            (effect-completed state side eid))}}}]})
+                            (effect-completed state side eid))}}}]
+   :abilities [(set-autoresolve :auto-fire "Subliminal Messaging returning to HQ from Archives")]})
 
 
 
