@@ -2376,10 +2376,12 @@
                                        (pos? (total-cards-accessed target :deck))))
                         :prompt "Gain 1 [Credits] for each card you accessed from R&D?"
                         :async true
+                        :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability
                         {:msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
                          :async true
-                         :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}}}]})
+                         :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}}}]
+   :abilities [(set-autoresolve :auto-fire "Psych Mike")]})
 
 (defcard "Public Sympathy"
   {:constant-effects [(runner-hand-size+ 2)]})
