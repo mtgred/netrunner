@@ -2194,10 +2194,12 @@
    :access {:optional
             {:waiting-prompt true
              :prompt "Place 1 advancement token on a card that can be advanced?"
+             :autoresolve (get-autoresolve :auto-fire)
              :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
                            :prompt "Choose a card to place an advancement token on"
                            :choices {:card can-be-advanced?}
-                           :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
+                           :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}
+   :abilities [(set-autoresolve :auto-fire "Space Camp")]})
 
 (defcard "Spin Doctor"
   {:on-rez {:async true
