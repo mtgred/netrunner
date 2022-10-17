@@ -426,12 +426,14 @@
    :access {:optional
             {:waiting-prompt true
              :prompt "Purge virus counters?"
+             :autoresolve (get-autoresolve :auto-fire-on-access)
              :yes-ability {:msg "purge virus counters"
                            :effect (effect (purge))}}}
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
                 :cost [:trash-can]
-                :effect (effect (purge))}]})
+                :effect (effect (purge))}
+               (set-autoresolve :auto-fire-on-access "Cyberdex Virus Suite purging virus counters on access")]})
 
 (defcard "Daruma"
   (let [choose-swap
