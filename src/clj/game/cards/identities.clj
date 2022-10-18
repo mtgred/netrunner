@@ -508,6 +508,7 @@
                                      state side
                                      {:optional
                                       {:prompt "Draw 1 card?"
+                                       :autoresolve (get-autoresolve :auto-fire)
                                        :yes-ability {:async true
                                                      :msg "draw 1 card"
                                                      :effect (effect (draw eid 1))}}}
@@ -515,7 +516,8 @@
                                    (continue-ability
                                      state side
                                      (sabotage-ability 2)
-                                     card nil)))}]}))
+                                     card nil)))}]
+     :abilities [(set-autoresolve :auto-fire "Esâ Afontov: Eco-Insurrectionist drawing cards")]}))
 
 (defcard "Exile: Streethawk"
   {:flags {:runner-install-draw true}
