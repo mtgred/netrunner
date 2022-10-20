@@ -2806,6 +2806,24 @@
     (click-prompt state :runner "OK")
     (is (not (:run @state)) "Run is over")))
 
+(deftest finality
+  (do-game
+    (new-game {:corp {:deck [(qty "Quandary" 5)]
+                      :hand [(qty "Quandary" 5)]}
+               :runner {:hand ["Finality"]}})
+    (take-credits state :corp)
+    (play-run-event state "Finality" :rd)
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
+    (click-prompt state :runner "No action")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")
+    (click-prompt state :runner "No action")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "3rd quandary")
+    (click-prompt state :runner "No action")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "4rd quandary")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)))))
+
 (deftest fisk-investment-seminar
   ;; Fisk Investment Seminar
   (do-game

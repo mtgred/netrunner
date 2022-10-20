@@ -1321,6 +1321,19 @@
             {:event :successful-run
              :effect (effect (prevent-access))}]})
 
+(defcard "Finality"
+  {:makes-run true
+   :on-play {:req (req rd-runnable)
+             :additional-cost [:brain 1]
+             :async true
+             :effect (effect (make-run eid :rd card))}
+   :events [{:event :successful-run
+             :silent (req true)
+             :req (req (and (= :rd (target-server context))
+                            this-card-run))
+             :effect (effect (register-events
+                              card [(breach-access-bonus :rd 3 {:duration :end-of-run})]))}]})
+
 (defcard "Fisk Investment Seminar"
   {:on-play
    {:msg "make each player draw 3 cards"
