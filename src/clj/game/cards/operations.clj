@@ -2235,11 +2235,11 @@
    {:prompt "Choose an installed card"
     :req (req (some #(and (corp? %)
                           (installed? %)
-                          (not (= :this-turn (installed? %))))
+                          (not= :this-turn (installed? %)))
                     (all-installed state :corp)))
     :choices {:card #(and (corp? %)
                           (installed? %)
-                          (not (= :this-turn (installed? %))))}
+                          (not= :this-turn (installed? %)))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
     :async true
     :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})

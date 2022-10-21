@@ -231,13 +231,14 @@
 
 (defcard "Algo Trading"
   {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
-   :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
-                :prompt "How many credits do you want to move?" :once :per-turn
+   :abilities [{:label "Store up to 3 [Credit]"
+                :prompt "How many credits do you want to store?"
+                :once :per-turn
                 :choices {:number (req (min 3 (total-available-credits state :runner eid card)))}
                 :async true
                 :effect (effect (add-counter card :credit target)
                                 (lose-credits eid target))
-                :msg (msg "move " target " [Credit] to Algo Trading")}
+                :msg (msg "store " target " [Credit]")}
                {:label "Take all hosted credits"
                 :cost [:click 1 :trash-can]
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
@@ -245,7 +246,7 @@
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :runner-turn-begins
              :req (req (>= (get-counters card :credit) 6))
-             :msg "add 2 [Credit] to itself"
+             :msg "place 2 [Credit] on itself"
              :effect (effect (add-counter card :credit 2))}]})
 
 (defcard "All-nighter"
@@ -2096,7 +2097,7 @@
 
 (defcard "Oracle May"
   {:abilities [{:cost [:click 1]
-                :label "name and reveal a card"
+                :label "Name a card type"
                 :once :per-turn
                 :prompt "Choose one"
                 :choices ["Event" "Hardware" "Program" "Resource"]
@@ -3289,8 +3290,9 @@
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
 
 (defcard "Tyson Observatory"
-  {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
-                :label "search stack for a piece of hardware"
+  {:abilities [{:prompt "Choose a piece of Hardware"
+                :msg (msg "add " (:title target) " to their Grip")
+                :label "Search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
                 :keep-menu-open :while-2-clicks-left
