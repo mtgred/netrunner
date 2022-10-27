@@ -1558,12 +1558,12 @@
    [{:event :approach-server
      :interactive (req true)
      :optional
-     {:prompt "Rez and move Formicary to protect the approched server?"
+     {:prompt (msg "Rez and move " (card-str state card {:visible true}) " to protect the approched server?")
       :autoresolve (get-autoresolve :auto-fire)
       :req (req (and (can-rez? state side card)
                      (can-pay? state side eid card nil (get-rez-cost state side card nil))))
       :yes-ability
-      {:msg "rez and move Formicary. The Runner is now encountering Formicary"
+      {:msg "rez and move itself, forcing the Runner to encounter it"
        :async true
        :effect (req (wait-for (rez state side card)
                               (when (rezzed? (:card async-result))
