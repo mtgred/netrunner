@@ -649,6 +649,7 @@
            rotated (:rotated card-status)
            allied (validator/alliance-is-free? cards line)
            valid (and (validator/allowed? card identity)
+                      (validator/singleton-agenda-valid? card identity cards)
                       (validator/legal-num-copies? identity line))
            modqty (if (validator/is-prof-prog? deck card) (- qty 1) qty)]
        [:span
@@ -676,7 +677,8 @@
                  rotated (:rotated card-status)
                  allied (validator/alliance-is-free? cards line)
                  valid (and (validator/allowed? card identity)
-                            (validator/legal-num-copies? identity line))
+                            (validator/legal-num-copies? identity line)
+                            (validator/singleton-agenda-valid? card identity cards))
                  modqty (if (validator/is-prof-prog? deck card)
                           (- qty 1)
                           qty)]

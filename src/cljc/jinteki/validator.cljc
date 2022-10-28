@@ -116,8 +116,6 @@
         ;; Check if the card is Alliance and fulfills its requirement
         (alliance-is-free? (:cards deck) line)
         0
-        (singleton-id? (:identity deck))
-        0
         :else
         base-cost))))
 
@@ -145,7 +143,6 @@
   [deck]
   (apply + (vals (influence-map deck))))
 
-
 (defn invalid-singleton-agendas
   "returns invalid agendas for a singleton deck"
   [identity cards]
@@ -158,9 +155,16 @@
           relevant-by-faction (fn [fac] (filter #(= fac (:faction %)) relevant-agendas))
           faction-count (map #(relevant-by-faction %) factions)
           offending-cards (into [] cat (filter #(< 2 (count %)) faction-count))]
-      ;;cards;;relevant-agendas
       (when-not (empty? offending-cards)
         offending-cards))))
+
+(defn singleton-agenda-valid?
+  "returns true if the agenda is valid for singleton, or the deck is not singleton"
+  [card identity cards]
+  (if-not (singleton-id? identity)
+    true
+    (let [gendies (invalid-singleton-agendas identity cards)]
+      (not (some #(= (:title card) (:title %)) gendies)))))
 
 ;; Card and deck validity
 (defn allowed?
