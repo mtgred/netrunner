@@ -57,7 +57,7 @@
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
-   [game.core.props :refer [add-counter]]
+   [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [bypass-ice gain-run-credits get-current-encounter
@@ -1039,13 +1039,16 @@
              :choices {:card installed?}
              :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
              :effect (req (let [c target]
-                            (disable-card state side c)
+                            (add-icon state side card target "DL" (faction-label card))
+                            (disable-card state side (get-card state target))
                             (register-events
                               state side card
                               [{:event :post-runner-turn-ends
                                 :unregister-once-resolved true
-                                :effect (req (enable-card state side (get-card state c))
-                                             (resolve-ability state :runner (:reactivate (card-def c)) (get-card state c) nil))}])
+                                :effect (req (let [disabled-card (get-card state c)]
+                                                (enable-card state side disabled-card)
+                                                (remove-icon state side card (get-card state disabled-card))
+                                                (resolve-ability state :runner (:reactivate (card-def c)) disabled-card nil)))}])
                             (effect-completed state side eid)))}]})
 
 (defcard "DreamNet"
