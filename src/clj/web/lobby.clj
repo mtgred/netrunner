@@ -23,7 +23,7 @@
     user :user
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
-            side spectatorhands timer title]
+            side singleton spectatorhands timer title]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
   (let [player {:user user
@@ -44,6 +44,7 @@
      :room room
      :save-replay save-replay
      :spectatorhands spectatorhands
+     :singleton singleton
      :timer timer
      :title title}))
 
@@ -117,6 +118,7 @@
    :players
    :room
    :save-replay
+   :singleton
    :spectators
    :spectatorhands
    :started
