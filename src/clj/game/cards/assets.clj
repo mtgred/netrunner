@@ -2423,7 +2423,7 @@
             :choices {:card #(and (ice? %)
                                   (rezzed? %)
                                   (has-subtype? % "Bioroid"))}
-            :effect (effect (add-icon card target "T" "red")
+            :effect (effect (add-icon card target "TMB" (faction-label card))
                             (update! (assoc-in (get-card state card) [:special :trieste-target] target)))}
    :leave-play (effect (remove-icon card))
    :constant-effects [{:type :prevent-paid-ability

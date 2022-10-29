@@ -5433,6 +5433,7 @@
     (rez state :corp (get-ice state :remote1 0))
     (rez state :corp (get-content state :remote1 0))
     (click-card state :corp "Eli 1.0")
+    (is (:icon (refresh (get-ice state :remote1 0))) "Eli 1.0 has an icon")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
     (run-on state :remote1)
@@ -5462,7 +5463,9 @@
       (card-side-ability state :runner ice 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "End the run")
-      (is (empty (remove :broken (:subroutines (refresh ice)))) "No subs broken"))))
+      (is (empty (remove :broken (:subroutines (refresh ice)))) "No subs broken")
+      (derez state :corp (get-content state :remote1 0))
+      (is (nil? (:icon (refresh ice)))))))
 
 (deftest trieste-model-bioroids-odd-breakers
   ;; savant/etc utae, and any other cards where issues pop up

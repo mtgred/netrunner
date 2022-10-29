@@ -1331,7 +1331,7 @@
      {:prompt "Choose a piece of ice to target for bypassing"
       :choices {:card ice?}
       :effect (req (let [ice target]
-                     (add-icon state side card ice "F" "blue")
+                     (add-icon state side card ice "FF" (faction-label card))
                      (system-msg state side
                                  (str "selects " (card-str state ice)
                                       " for Femme Fatale's bypass ability"))
@@ -1352,7 +1352,7 @@
                                                          (print-msg state side msg-ab card nil payment-str))
                                                        (bypass-ice state)
                                                        (effect-completed state side eid)))}}}])))}
-     :leave-play (req (remove-icon state side card))
+     :leave-play (effect (remove-icon card))
      :abilities [(break-sub 1 1 "Sentry")
                  (strength-pump 2 1)]}))
 
