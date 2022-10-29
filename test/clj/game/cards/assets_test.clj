@@ -2862,10 +2862,12 @@
       (let [N (:credit (get-runner))]
         (rez state :corp malia1)
         (click-card state :corp (get-resource state 0))
+        (is (:icon (refresh (get-resource state 0))) "Daily Cast has an icon")
         (take-credits state :corp)
         (is (= N (:credit (get-runner))) "Daily casts did not trigger when blanked"))
       (take-credits state :runner)
       (derez state :corp malia1)
+      (is (nil? (:icon (refresh (get-resource state 0)))))
       (let [N (:credit (get-runner))]
         (take-credits state :corp)
         (is (= (+ N 2) (:credit (get-runner))) "Daily casts triggers again when unblanked"))
