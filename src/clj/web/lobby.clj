@@ -44,7 +44,7 @@
      :room room
      :save-replay save-replay
      :spectatorhands spectatorhands
-     :singleton singleton
+     :singleton (when (some #{format} `("standard" "startup" "casual" "eternal")) singleton)
      :timer timer
      :title title}))
 

@@ -69,11 +69,13 @@
                   :checked (= @side-state option)}]
          (tr-side option)]]))])
 
-(defn singleton-only [options]
-  [:label
-   [:input {:type "checkbox" :checked (:singleton @options)
-            :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
-   (tr [:lobby.singleton "Singleton"])])
+(defn singleton-only [options fmt-state]
+  ;; singleton is only supported in these four formats
+  (when (some #{@fmt-state} `("standard" "casual" "startup" "eternal"))
+    [:label
+     [:input {:type "checkbox" :checked (:singleton @options)
+              :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
+     (tr [:lobby.singleton "Singleton"])]))
 
 (defn format-section [fmt-state options]
   [:section
@@ -85,7 +87,12 @@
       (for [[k v] slug->format]
         ^{:key k}
         [:option {:value k} (tr-format v)]))]
-   [singleton-only options]])
+   [singleton-only options fmt-state]
+   (when (some #{@fmt-state} `("standard" "casual" "startup" "eternal"))
+     [:div.infobox.blue-shade
+      {:style {:display (if (:singleton @options) "block" "none")}}
+      [:p "This will restrict decklists to only those which use one of the following identities:"]
+      [:p "1) Nova Initiumia: Catalyst & Impetus" " 2) Ampere: Cybernetics For Anyone"]])])
 
 (defn allow-spectators [options]
   [:p
