@@ -1862,7 +1862,7 @@
       (play-from-hand state :runner "Gachapon")
       (card-ability state :runner (get-hardware state 0) 0)
       (is (= (:msg (prompt-map :runner))
-             "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
+             "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, and Falsified Credentials")
           "Shown correct six cards")
       (click-prompt state :runner "OK")
       (is (not (no-prompt? state :corp)) "Corp has waiting prompt")
@@ -1957,7 +1957,7 @@
         (play-from-hand state :runner "Gachapon")
         (card-ability state :runner (get-hardware state 0) 0)
         (is (= (:msg (get-prompt state :runner))
-              "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials")
+              "The set aside cards are: Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, and Falsified Credentials")
             "Shown correct six cards")
         (click-prompt state :runner "OK")
         (is (not (no-prompt? state :corp)) "Corp has waiting prompt")
@@ -1989,7 +1989,7 @@
       (is (= 1 (count (:hand (get-runner)))))
       (is (= "Au Revoir" (:title (first (:hand (get-runner))))) "Runner drew from Reaver")
       (is (= (:msg (get-prompt state :runner))
-             "The set aside cards are: Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials, Golden")
+             "The set aside cards are: Bankroll, Clone Chip, DDoS, Equivocation, Falsified Credentials, and Golden")
           "Shown correct six cards")
       (click-prompt state :runner "OK")
       (is (prompt-is-type? state :corp :waiting))
@@ -3507,7 +3507,7 @@
       (play-from-hand state :runner "Prognostic Q-Loop")
       (run-on state :hq)
       (click-prompt state :runner "Yes")
-      (is (= "The top 2 cards of the stack are Au Revoir, Bankroll" (:msg (prompt-map :runner))))
+      (is (= "The top 2 cards of the stack are Au Revoir and Bankroll" (:msg (prompt-map :runner))))
       (click-prompt state :runner "OK")
       (card-ability state :runner (get-hardware state 0) 1)
       (click-prompt state :runner "Yes")
@@ -3608,7 +3608,7 @@
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Prognostic Q-Loop")
       (click-prompt state :runner "Yes")
-      (is (= "The top 2 cards of the stack are Au Revoir, Bankroll" (:msg (prompt-map :runner))))))
+      (is (= "The top 2 cards of the stack are Au Revoir and Bankroll" (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-are-the-correct-cards-shown-if-another-start-of-run-trigger-draws-a-card-issue-4973
     ;; Are the correct cards shown if another start of run trigger draws a card. Issue #4973
@@ -3633,7 +3633,7 @@
       (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
-      (is (= "The top 2 cards of the stack are Bankroll, Clone Chip" (:msg (prompt-map :runner))))))
+      (is (= "The top 2 cards of the stack are Bankroll and Clone Chip" (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-works-with-paladin-poemu-5304
     ;; Works with Paladin Poemu #5304
@@ -3792,7 +3792,7 @@
           (click-prompt state :corp "Yes")
           (card-ability state :runner rr2 0)
           (click-prompt state :runner "3")
-          (is (second-last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble")
+          (is (second-last-log-contains? state "Sure Gamble, Sure Gamble, and Sure Gamble")
               "Ramujan did log trashed card names")
           (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented")))))
 

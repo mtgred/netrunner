@@ -124,7 +124,7 @@
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (program? %))}
-                     :msg (msg "trash " (str/join ", " (map :title targets)))
+                     :msg (msg "trash " (enumerate-str (map :title targets)))
                      :async true
                      :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
@@ -1001,7 +1001,7 @@
                         :req (req (seq (:hand runner)))
                         :prompt "Choose a card type"
                         :choices ["Event" "Hardware" "Program" "Resource"]
-                        :msg (msg "reveal " (str/join ", " (map :title (:hand runner))))
+                        :msg (msg "reveal " (enumerate-str (map :title (:hand runner))))
                         :async true
                         :effect (effect (continue-ability (trash-ability target) card nil))}]
     {:additional-cost [:forfeit]
@@ -1367,7 +1367,7 @@
                                  (in-discard? %)
                                  (not (faceup? %)))
                      :max 2}
-           :msg (msg "reveal " (str/join " and " (map :title targets)) " from Archives and shuffle them into R&D")
+           :msg (msg "reveal " (enumerate-str (map :title targets)) " from Archives and shuffle them into R&D")
            :effect (req (wait-for (reveal state side targets)
                                   (doseq [c targets]
                                     (move state side c :deck))
@@ -1470,7 +1470,7 @@
                 :msg (msg "shuffle "
                           (let [seen (filter :seen targets)
                                 n (count (filter #(not (:seen %)) targets))]
-                            (str (str/join ", " (map :title seen))
+                            (str (enumerate-str (map :title seen))
                                  (when (pos? n)
                                    (str (when-not (empty? seen) " and ")
                                         (quantify n "card")))))
@@ -1552,7 +1552,7 @@
      :choices {:card #(and (installed? %)
                            (runner? %))
                :max (req (get-counters (get-card state card) :advancement))}
-     :msg (msg "shuffle " (str/join ", " (map :title targets)) " into the stack")
+     :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the stack")
      :effect (req (doseq [c targets]
                     (move state :runner c :deck))
                   (shuffle! state :runner :deck)
@@ -2120,7 +2120,7 @@
                      :waiting-prompt true
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
-                     :msg (msg "trash " (str/join ", " (map :title targets)))
+                     :msg (msg "trash " (enumerate-str (map :title targets)))
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (hardware? %))}

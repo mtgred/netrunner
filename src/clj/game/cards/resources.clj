@@ -1249,7 +1249,7 @@
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
-                       (str/join ", " (map :title runner-currently-drawing)))
+                       (enumerate-str (map :title runner-currently-drawing)))
              :async true
              :effect (req (let [current-draws runner-currently-drawing]
                             (reveal state side eid current-draws)
@@ -1260,7 +1260,7 @@
                               (continue-ability
                                state :corp
                                {:prompt (msg "The runner reveals that they drew "
-                                             (str/join ", " (map :title current-draws)))
+                                             (enumerate-str (map :title current-draws)))
                                 :choices ["OK"]}
                                card nil))))}
             {:event :successful-run
@@ -1497,7 +1497,7 @@
                 :effect (req (as-agenda state :runner card 0)
                              (let [zone (server->zone state target)
                                    path (conj (into [:corp] zone) :content)
-                                   cards (str/join ", " (map :title (get-in @state path)))]
+                                   cards (enumerate-str (map :title (get-in @state path)))]
                                (wait-for
                                  (reveal state :corp (make-eid state eid) targets)
                                  (system-msg state side
@@ -1661,7 +1661,7 @@
     {:abilities [{:cost [:click 1]
                   :keep-menu-open :while-clicks-left
                   :label "Reveal the top 4 cards of the stack"
-                  :msg (msg "reveal from the top of the stack: " (str/join ", " (map :title (take 4 (:deck runner)))))
+                  :msg (msg "reveal from the top of the stack: " (enumerate-str (map :title (take 4 (:deck runner)))))
                   :async true
                   :effect (req (let [from (take 4 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -2488,7 +2488,7 @@
    :on-trash {:async true
               :effect (req (system-msg state :runner
                                        (str "trashes "
-                                            (str/join ", " (map :title (take 3 (:deck runner))))
+                                            (enumerate-str (map :title (take 3 (:deck runner))))
                                             " from their Stack due to Rolodex being trashed"))
                            (mill state :runner eid :runner 3))}})
 
@@ -2542,7 +2542,7 @@
                                               (:hand runner))]
                             (str "prevent all damage, trash "
                                  (quantify (count cards) "card")
-                                 " (" (str/join ", " (map :title cards)) "),"
+                                 " (" (enumerate-str (map :title cards)) "),"
                                  " lose " (quantify (:credit (:runner @state)) "credit")
                                  ", and lose " (quantify (count-real-tags state) "tag"))))
                 :effect (req (damage-prevent state side :net Integer/MAX_VALUE)
@@ -2799,7 +2799,7 @@
                                                                         (runner-can-install? state side % nil)
                                                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -1})])) set-aside-cards))
                                             :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                                                      (str/join ", " (map :title (remove-once #(same-card? % target) set-aside-cards)))
+                                                      (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
                                                       "are trashed as a result")
                                             :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
                                                                    (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
@@ -2961,7 +2961,7 @@
                           :req (req (and (runner? target)
                                          (in-discard? target)
                                          (has-trash-ability? target)))}
-                :msg (msg "shuffle " (str/join ", " (map :title targets))
+                :msg (msg "shuffle " (enumerate-str (map :title targets))
                           " into their Stack")
                 :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)

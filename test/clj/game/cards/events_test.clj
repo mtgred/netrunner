@@ -2585,7 +2585,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Executive Wiretaps")
     (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal cards in HQ: "
-                                       "Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, PAD Campaign.")))))
+                                       "Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, and PAD Campaign.")))))
 
 (deftest exploit
   ;; Exploit
@@ -3741,7 +3741,7 @@
       (play-from-hand state :runner "Gordian Blade")
       (play-run-event state "Khusyuk" :rd)
       (click-prompt state :runner "1 [Credit]: 6 cards")
-      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi, DNA Tracker, Excalibur, Fire Wall")
+      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi, DNA Tracker, Excalibur, and Fire Wall")
           "Revealed correct 6 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")))
@@ -3768,7 +3768,7 @@
       (dotimes [_ 3] (play-from-hand state :runner "Akamatsu Mem Chip"))
       (play-run-event state "Khusyuk" :rd)
       (click-prompt state :runner "1 [Credit]: 6 cards")
-      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, and Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")))
 
@@ -3794,7 +3794,7 @@
       (play-from-hand state :runner "R&D Interface")
       (play-run-event state "Khusyuk" :rd)
       (click-prompt state :runner "1 [Credit]: 3 cards")
-      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+      (is (last-log-contains? state "Accelerated Beta Test, Brainstorm, and Chiyashi") "Revealed correct 3 cards from R&D")
       (click-prompt state :runner "Brainstorm")
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "No access prompt on C or D, so no other cards were accessed")))
@@ -3852,7 +3852,7 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0") ; lose Ash trace
         (click-prompt state :runner "1 [Credit]: 3 cards")
-        (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+        (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, and Chiyashi") "Revealed correct 3 cards from R&D")
         (is (no-prompt? state :runner) "No prompt to access cards."))))
 
 (deftest khusyuk-eater-interaction
@@ -3883,7 +3883,7 @@
       (run-continue state)
       (run-continue state)
       (click-prompt state :runner "1 [Credit]: 3 cards")
-      (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, Chiyashi") "Revealed correct 3 cards from R&D")
+      (is (second-last-log-contains? state "Accelerated Beta Test, Brainstorm, and Chiyashi") "Revealed correct 3 cards from R&D")
       (is (no-prompt? state :runner) "No prompt to access cards.")))
 
 (deftest knifed

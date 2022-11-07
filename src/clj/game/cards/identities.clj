@@ -404,7 +404,7 @@
               :yes-ability
               {:async true
                :msg (msg "look at the Runner's Grip ( "
-                         (str/join ", " (map :title (sort-by :title (:hand runner))))
+                         (enumerate-str (map :title (sort-by :title (:hand runner))))
                          " ) and choose the card that is trashed")
                :effect
                (effect (continue-ability
@@ -668,12 +668,12 @@
 (defcard "Harishchandra Ent.: Where You're the Star"
   (letfn [(format-grip [runner]
             (if (pos? (count (:hand runner)))
-              (str/join ", " (map :title (sort-by :title (:hand runner))))
+              (enumerate-str (map :title (sort-by :title (:hand runner))))
               "no cards"))]
     {:events [{:event :post-runner-draw
                :req (req (is-tagged? state))
                :msg (msg "see that the Runner drew: "
-                         (str/join ", " (map :title runner-currently-drawing)))}
+                         (enumerate-str (map :title runner-currently-drawing)))}
               {:event :tags-changed
                :effect (req (if (is-tagged? state)
                               (when-not (get-in @state [:runner :openhand])
@@ -1085,7 +1085,7 @@
 (defcard "MaxX: Maximum Punk Rock"
   (let [ability {:msg (msg (let [deck (:deck runner)]
                              (if (pos? (count deck))
-                               (str "trash " (str/join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
+                               (str "trash " (enumerate-str (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                  :label "trash and draw cards"
                  :once :per-turn

@@ -186,7 +186,7 @@
    :abilities [{:cost [:click 1]
                 :req (req (pos? (count (:deck corp))))
                 :async true
-                :msg (msg (str "reveal " (str/join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
+                :msg (msg (str "reveal " (enumerate-str (map :title (take 3 (:deck corp)))) " from R&D"))
                 :label "Add 1 card from top 3 of R&D to HQ"
                 :waiting-prompt true
                 :effect (req
@@ -581,7 +581,7 @@
                             (protecting-same-server? card target)))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
-                           (str "trash " (str/join ", " (map :title (take 2 deck))) " from the stack")
+                           (str "trash " (enumerate-str (map :title (take 2 deck))) " from the stack")
                            "trash no cards from the stack (it is empty)")))
              :async true
              :effect (effect (mill :corp eid :runner 2))}]})
@@ -1596,7 +1596,7 @@
                        :max n
                        :card #(and (runner? %)
                                    (installed? %))}
-             :msg (msg "force the Runner to trash " (str/join ", " (map :title targets)))
+             :msg (msg "force the Runner to trash " (enumerate-str (map :title targets)))
              :effect (req (trash-cards state :runner eid targets {:unpreventable true :cause-card card :cause :forced-to-trash}))})
           (ability []
             {:trace {:base 4

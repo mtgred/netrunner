@@ -661,7 +661,7 @@
                                     (reveal state side (make-eid state eid) cards)
                                     (system-msg state side (str payment-str
                                                                 " to use Bug to reveal "
-                                                                (str/join ", " (map :title cards))))
+                                                                (enumerate-str (map :title cards))))
                                     (effect-completed state side eid))))))}}}]})
 
 (defcard "Bukhgalter"
@@ -955,7 +955,7 @@
                                                     card nil))))}))]
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-                  :msg (msg "reveal the top cards of the stack: " (str/join ", " (map :title (take 5 (:deck runner)))))
+                  :msg (msg "reveal the top cards of the stack: " (enumerate-str (map :title (take 5 (:deck runner)))))
                   :waiting-prompt true
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -1263,7 +1263,7 @@
                   :duration :end-of-run
                   :ability
                   {:msg (msg "reveal all cards in HQ: "
-                             (str/join ", " (map :title (:hand corp))))
+                             (enumerate-str (map :title (:hand corp))))
                    :async true
                    :effect (effect (reveal eid (:hand corp)))}})]
     {:abilities [{:cost [:click 1]
@@ -2488,7 +2488,7 @@
                    :msg (msg "reveal " (->> (:deck corp)
                                             (take 3)
                                             (map :title)
-                                            (str/join ", ")))
+                                            (enumerate-str)))
                    :effect (req (wait-for
                                  (reveal state side (take 3 (:deck corp)))
                                  (continue-ability
@@ -2647,7 +2647,7 @@
                                :all true
                                :card #(and (runner? %)
                                            (in-discard? %))}
-                     :msg (msg "shuffle " (str/join ", " (map :title targets))
+                     :msg (msg "shuffle " (enumerate-str (map :title targets))
                                " into their Stack")
                      :effect (req (doseq [c targets] (move state side c :deck))
                                   (shuffle! state side :deck))}
