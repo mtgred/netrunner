@@ -35,7 +35,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [get-strength pump pump-all-icebreakers
+   [game.core.ice :refer [all-subs-broken? get-strength pump pump-all-icebreakers
                           update-all-ice update-breaker-strength]]
    [game.core.identities :refer [disable-card disable-identity enable-card
                                  enable-identity]]
@@ -82,9 +82,9 @@
    :events [{:event :subroutines-broken
              :async true
              :req (req (and (has-subtype? target subtype)
-                            (every? :broken (:subroutines target))
+                            (all-subs-broken? target)
                             (let [pred #(and (has-subtype? (first %) subtype)
-                                             (every? :broken (:subroutines (first %))))]
+                                             (all-subs-broken? (first %)))]
                               (first-run-event? state side :subroutines-broken pred))))
              :msg (msg "trash " (card-str state target))
              :effect (effect (trash eid target {:cause-card card}))}]})
