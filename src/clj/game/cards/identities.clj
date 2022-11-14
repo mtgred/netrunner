@@ -1552,7 +1552,7 @@
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
 
-(defcard "Ampere: Cybernetics For Anyone"
+(defcard "Ampère: Cybernetics For Anyone"
     ;; No special implementation
   {})
 

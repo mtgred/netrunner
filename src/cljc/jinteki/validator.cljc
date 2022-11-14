@@ -69,7 +69,7 @@
   "Returns true if the given id is singleton"
   [identity]
   (or (= "Nova Initiumia: Catalyst & Impetus" (:title identity))
-      (= "Ampere: Cybernetics For Anyone" (:title identity))))
+      (= "Ampère: Cybernetics For Anyone" (:title identity))))
 
 (defn singleton-legal
   "Returns false if the identity chosen is a singleton id and the there are multiple copies of the given card, otherwise returns true"
