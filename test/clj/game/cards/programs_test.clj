@@ -4719,6 +4719,21 @@
                            "Got 1 token"
                            (run-continue state)))))
 
+(deftest nga
+  ;; Nga
+  (do-game
+    (new-game {:runner {:hand ["Nga"]}
+               :corp {:hand ["Hedge Fund" "NGO Front" "IPO"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nga")
+    (let [nga (get-program state 0)]
+      (is (= 3 (get-counters (refresh nga) :power)))
+      (run-on state "R&D")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-card state :corp "Hedge Fund")
+      (is (= 2 (get-counters (refresh nga) :power))))))
+
 (deftest nyashia
   ;; Nyashia
   (do-game

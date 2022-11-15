@@ -2025,6 +2025,29 @@
                               :msg "place 1 power counter on itself"
                               :effect (effect (add-counter card :power 1))}]}))
 
+(defcard "Nga"
+  {:data {:counter {:power 3}}
+   :events [(trash-on-empty :power)
+            {:event :successful-run
+            :interactive (get-autoresolve :auto-fire (complement never?))
+            :silent (get-autoresolve :auto-fire never?)
+            :optional
+            {:req (req (and (first-event? state side :successful-run)
+                            (pos? (get-counters card :power))))
+             :player :runner
+             :autoresolve (get-autoresolve :auto-fire)
+             :waiting-prompt "Runner to make a decision"
+             :prompt "Remove 1 hosted power to Sabotage 1?"
+             :yes-ability
+             {:msg "remove 1 hosted power to Sabotage 1"
+              :async true
+              :cost [:power 1]
+              :effect (effect (continue-ability
+                                (sabotage-ability 1)
+                                card nil))}
+             :no-ability {:effect (effect (system-msg "declines to use Nga"))}}}]
+   :abilities [(set-autoresolve :auto-fire "Nga")]})
+
 (defcard "Ninja"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 3 5)]}))
