@@ -5229,6 +5229,30 @@
     (click-card state :runner "Hostile Takeover")
     (click-prompt state :runner "Steal")))
 
+(deftest raindrops-cut-stone
+  (do-game
+    (new-game {:corp {:hand ["Komainu"]}
+               :runner {:hand ["Raindrops Cut Stone", (qty "Sure Gamble" 5)]
+                        :deck [(qty "Sure Gamble" 15)]}})
+    (play-from-hand state :corp "Komainu" "HQ")
+    (let [kmu (get-ice state :hq 0)]
+      (rez state :corp kmu)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Raindrops Cut Stone")
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (is (= 5 (count (:subroutines (refresh kmu)))) "5 cards in hand")
+      (fire-subs state (refresh kmu))
+      (is (zero? (count (:hand (get-runner)))) "hand wiped by komainu")
+      (run-continue state)
+      (changes-val-macro
+        +3 (:credit (get-runner))
+        "gained 3 credits from raindrop"
+        (changes-val-macro
+          +5 (count (:hand (get-runner)))
+          "drew 5 cards from raindrop"
+          (run-continue state))))))
+
 ;; Rebirth
 (let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"

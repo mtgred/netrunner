@@ -259,7 +259,8 @@
      (resolve-subroutine! state side eid ice sub)))
   ([state side eid ice sub]
    (update! state :corp (resolve-subroutine ice sub))
-   (resolve-ability state side eid (:sub-effect sub) (get-card state ice) nil)))
+   (resolve-ability state side eid (:sub-effect sub) (get-card state ice) nil)
+   (trigger-event state side :subroutine-fired sub ice)))
 
 (defn- resolve-next-unbroken-sub
   ([state side ice subroutines]

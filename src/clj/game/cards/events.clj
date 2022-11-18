@@ -2643,6 +2643,29 @@
     :async true
     :effect (effect (access-card eid target))}})
 
+(defcard "Raindrops Cut Stone"
+  {:makes-run true
+   :on-play {:async true
+             :prompt "Choose a server"
+             :choices (req runnable-servers)
+             :effect (effect (make-run eid target card))}
+   :events [{:event :subroutine-fired
+             :req (req (some #(= % :play-area) (:zone card)))
+             :effect (effect (add-counter (get-card state card) :power 1))}
+            {:event :run-ends
+             :req (req this-card-run)
+             :effect (req (let [cards-to-draw (get-counters (get-card state card) :power)]
+                            (continue-ability
+                              state side
+                              {:msg (msg "draw " cards-to-draw " cards and gain 3 [Credits]")
+                               :async true
+                               :effect (req (if (< 0 cards-to-draw)
+                                              (wait-for (draw state side cards-to-draw)
+                                                        (gain-credits state side eid 3))
+                                              (gain-credits state side eid 3)))}
+                              card nil)))
+             :async true}]})
+
 (defcard "Rebirth"
   {:on-play
    {:prompt "Choose an identity"
