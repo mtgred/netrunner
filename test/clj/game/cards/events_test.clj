@@ -3731,6 +3731,20 @@
     (is (not (:run @state)) "Run ended")
     (is (= 2 (count (:hand (get-runner)))) "One played, one drawn")))
 
+(deftest katorga-breakout
+  ;; Basic Functionality
+  (do-game
+    (new-game {:corp {:hand ["BOOM!"]}
+               :runner {:hand ["Katorga Breakout" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Katorga Breakout")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (click-prompt state :runner "Sure Gamble")
+    (click-prompt state :runner "No action")
+    (is (find-card "Sure Gamble" (:hand (get-runner))) "Sure Gamble is in hand")))
+
 (deftest khusyuk-basic-functionality
     ;; Basic functionality
     (do-game

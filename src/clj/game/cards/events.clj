@@ -1901,6 +1901,20 @@
                               card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
                              (draw eid 1))}]})
 
+(defcard "Katorga Breakout"
+  {:makes-run true
+   :on-play {:async true
+             :prompt "Choose a server"
+             :choices (req runnable-servers)
+             :effect (effect (make-run eid target card))}
+   :events [{:event :successful-run
+             :req (req this-card-run)
+             :async true
+             :prompt "Add a card from the heap to the grip"
+             :choices (req (cancellable (:discard runner) :sorted))
+             :effect (effect (move target :hand)
+                             (effect-completed eid))}]})
+
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]
                           {:async true
