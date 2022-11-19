@@ -8,7 +8,7 @@
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
-   [game.core.board :refer [all-active all-active-installed all-installed
+   [game.core.board :refer [all-active all-active-installed all-installed card->server
                             server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp?
                            event? facedown? get-agenda-points get-card
@@ -21,7 +21,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
-                                  reorder-choice trash-on-empty]]
+                                  reorder-choice trash-on-empty do-net-damage]]
    [game.core.drawing :refer [draw draw-bonus first-time-draw-bonus]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -61,6 +61,7 @@
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [bypass-ice gain-run-credits get-current-encounter
+                           update-current-encounter
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
@@ -3292,6 +3293,41 @@
      :effect (req (add-counter state side card :credit -1)
                   (wait-for (gain-credits state side 1)
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
+
+(defcard "Tsakhia ˮBankharˮ Gantulga"
+  (let [subroutine {:variable true
+                    :sub-effect (do-net-damage 1)}
+        matches-server (fn [target card state side]
+                         (= (:card-target card)
+                            (zone->name (second (get-zone target)))))
+        ability {:prompt "Choose a server"
+                 :label "target a server"
+                 :choices (req (conj servers "No server"))
+                 :interactive (req true)
+                 :msg (msg "target " target)
+                 :req (req (and (:runner-phase-12 @state)
+                                (not (used-this-turn? (:cid card) state))))
+                 :effect (req (when (not= target "No server")
+                                (update! state side (assoc card :card-target target))))}]
+    {:events [(assoc ability :event :runner-turn-begins)
+              {:event :encounter-ice
+               :req (req (and
+                           (matches-server (:ice target) card state side)
+                           (first-event? state side :encounter-ice #(matches-server (:ice (first %)) card state side))))
+               :effect (effect
+                         (register-events
+                           card
+                           [{:event :pre-resolve-subroutine
+                             :duration :end-of-encounter
+                             :async true
+                             :effect (req (system-msg state side (str "uses " (:title card) " to force the Corporation to resolve [Subroutine] Do 1 net damage"))
+                                          (update-current-encounter state :replace-subroutine subroutine)
+                                          (effect-completed state side eid))
+                             }]))}
+              {:event :runner-turn-ends
+               :silent (req true)
+               :effect (effect (update! (dissoc card :card-target)))}]
+     :abilities [ability]}))
 
 (defcard "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware"

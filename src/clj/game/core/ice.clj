@@ -30,6 +30,16 @@
         (get-card state ice)
         ice)))
 
+(defn get-current-encounter
+  [state]
+  (peek (:encounters @state)))
+
+(defn update-current-encounter
+  [state key value]
+  (when-let [encounter (get-current-encounter state)]
+    (let [updated-encounter (assoc encounter key value)]
+      (swap! state update :encounters #(conj (pop %) updated-encounter)))))
+
 (defn set-current-ice
   ([state]
    (when (:run @state)
@@ -258,9 +268,13 @@
                               :source-type :subroutine})]
      (resolve-subroutine! state side eid ice sub)))
   ([state side eid ice sub]
+   (trigger-event state side :pre-resolve-subroutine sub ice)
    (update! state :corp (resolve-subroutine ice sub))
-   (resolve-ability state side eid (:sub-effect sub) (get-card state ice) nil)
-   (trigger-event state side :subroutine-fired sub ice)))
+   (let [replacement (:replace-subroutine (get-current-encounter state))
+         sub (or (when replacement (assoc replacement :index (:index sub))) sub)]
+     (update-current-encounter state :replace-subroutine nil)
+     (resolve-ability state side eid (:sub-effect sub) (get-card state ice) nil)
+     (trigger-event state side :subroutine-fired sub ice))))
 
 (defn- resolve-next-unbroken-sub
   ([state side ice subroutines]

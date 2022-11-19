@@ -6594,6 +6594,34 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner refr)))))
 
+(deftest tsakhia-bankhar-gantula
+  ;; Tsakhia ˮBankharˮ Gantulga
+  (do-game
+    (new-game {:runner {:hand ["Tsakhia ˮBankharˮ Gantulga" (qty "Sure Gamble" 4)]}
+               :corp {:hand ["Akhet"]}})
+    (play-from-hand state :corp "Akhet" "HQ")
+    (let [ak (get-ice state :hq 0)]
+      (rez state :corp (refresh ak))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tsakhia ˮBankharˮ Gantulga")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (run-on state :hq)
+      (run-continue state)
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "took 2 net damage"
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "Did not gain 1 credit"
+          (fire-subs state (refresh ak))))
+      (run-continue state))))
+
+
+
+
+
 (deftest verbal-plasticity
   ;; Verbal Plasticity
   (do-game
