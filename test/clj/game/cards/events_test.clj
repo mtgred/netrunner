@@ -5602,6 +5602,32 @@
         (run-continue state)
         (click-prompt state :runner "Hedge Fund"))))
 
+(deftest reprise
+  ;; Reprise
+  (do-game
+    (new-game {:corp {:hand [(qty "Project Vitruvius" 2)]}
+               :runner {:deck [(qty "Reprise" 2)]}})
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (take-credits state :corp)
+    (changes-val-macro
+      0 (:click (get-runner))
+      "Couldn't play Reprise without stealing an agenda this turn"
+      (play-from-hand state :runner "Reprise"))
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (play-from-hand state :runner "Reprise")
+    (click-card state :runner (get-content state :remote1 0))
+    (is (= 1 (count (:hand (get-corp)))))
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "HQ")
+    (is (= [:hq] (get-in @state [:run :server])) "Run initiated on HQ")
+    (run-continue state)
+    (click-prompt state :runner "Steal")
+    (play-from-hand state :runner "Reprise")
+    (click-prompt state :runner "Done")
+    (click-prompt state :runner "No")
+    (is (no-prompt? state :runner))))
+
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ice
   (do-game

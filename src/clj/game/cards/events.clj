@@ -2816,6 +2816,29 @@
                                                (put-down async-result)
                                                card nil)))}}))
 
+(defcard "Reprise"
+  (letfn [(opt-run []
+    {:optional
+     {:prompt "Run a server?"
+      :yes-ability
+      {:prompt "Choose a server"
+       :choices (req runnable-servers)
+       :async true
+       :msg (msg "make a run on " target)
+       :effect (effect (make-run eid target card))}
+       :no-ability {:effect (effect (system-msg (str "declines to use Reprise to make a run")))}}})]
+    {:makes-run true
+     :on-play
+     {:async true
+      :req (req (:stole-agenda runner-reg))
+      :prompt "Choose an installed Corp card to add to HQ"
+      :choices {:card #(and (installed? %)
+                            (corp? %))}
+      :msg (msg "add " (card-str state target) " to HQ")
+      :cancel-effect (effect (continue-ability (opt-run) card nil))
+      :effect (effect (move :corp target :hand)
+                      (continue-ability (opt-run) card nil))}}))
+
 (defcard "Reshape"
   {:on-play
    {:prompt "Choose two pieces of unrezzed ice to swap positions"
