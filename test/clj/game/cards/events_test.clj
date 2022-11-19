@@ -1332,6 +1332,39 @@
         (click-prompt state :runner "Mayfly")
         (is (zero? (count (:deck (get-runner)))) "Mayfly should not be back in the stack"))))
 
+(deftest concerto
+  ;; Concerto
+  (do-game
+      (new-game {:corp {:deck ["Sealed Vault"]}
+                 :runner {:deck ["Sure Gamble"]
+                          :hand ["Concerto"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Concerto")
+      (let [concerto (-> (get-runner) :play-area first)]
+        (is (last-log-contains? state "reveal Sure Gamble"))
+        (is (find-card "Sure Gamble" (:hand (get-runner))))
+        (is (= 5 (get-counters (refresh concerto) :credit))))
+      (click-prompt state :runner "HQ")
+      (is (= [:hq] (get-in @state [:run :server])) "Run initiated on HQ")
+      (run-continue state)
+      (click-prompt state :runner "Pay 8 [Credits] to trash")
+      (dotimes [_ 5]
+        (click-card state :runner "Concerto"))
+      (is (and (zero? (count (:hand (get-corp))))
+               (= 1 (count (:discard (get-corp)))))
+        "Corp hand empty and Sealed Vault trashed")
+      (is (= 2 (:credit (get-runner))))))
+
+(deftest concerto-on-empty-stack
+  ;; Concerto - no cards left in the stack
+  (do-game
+      (new-game {:runner {:hand ["Concerto"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Concerto")
+      (let [concerto (-> (get-runner) :play-area first)]
+        (is (not (last-log-contains? state "reveal")))
+        (is (zero? (get-counters (refresh concerto) :credit))))))
+
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
   (do-game

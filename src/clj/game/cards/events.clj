@@ -576,6 +576,29 @@
                                     (effect-completed state side eid))
                                 (effect-completed state side eid))))}]}))
 
+(defcard "Concerto"
+  (letfn [(reveal-and-load-credits [stack]
+            (when-let [topcard (first stack)]
+              {:async true
+               :msg (msg "reveal " (get-title topcard) " from the top of the stack, "
+                         "move it to the grip and place " (:cost topcard) " [Credits] on itself")
+               :effect (req (wait-for (reveal state side topcard)
+                                      (add-counter state side card :credit (:cost topcard) {:placed true})
+                                      (move state :runner topcard :hand)))}))]
+    {:makes-run true
+     :interactions {:pay-credits {:req (req run)
+                                  :type :credit}}
+     :on-play {:async true
+               :effect (effect (continue-ability
+                                 (reveal-and-load-credits (:deck runner))
+                                 card nil)
+                               (continue-ability
+                                 {:prompt "Choose a server"
+                                  :choices (req runnable-servers)
+                                  :async true
+                                  :effect (effect (make-run eid target (get-card state card)))}
+                                 (get-card state card) nil))}}))
+
 (defcard "Contaminate"
   {:on-play
    {:msg (msg "place 3 virus tokens on " (:title target))
