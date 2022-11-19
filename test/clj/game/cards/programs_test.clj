@@ -4201,6 +4201,50 @@
         (click-prompt state :runner "Pay 1 [Credits]")
         (is (no-prompt? state :runner) "No more prompts open"))))
 
+(deftest matryoshka
+  ;; Matryoshka basic functionality
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand [(qty "Matryoshka" 5)]
+                        :credits 20}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Matryoshka")
+    (let [iwall (get-ice state :hq 0)
+          mat (get-program state 0)]
+      (rez state :corp iwall)
+      (card-ability state :runner mat 0)
+      (click-card state :runner (first (:hand (get-runner))))
+      (card-ability state :runner mat 0)
+      (click-card state :runner (first (:hand (get-runner))))
+      (card-ability state :runner mat 0)
+      (click-card state :runner (first (:hand (get-runner))))
+      (card-ability state :runner mat 0)
+      (click-card state :runner (first (:hand (get-runner))))
+      (let [face-up (fn [card] (count (filter #(not (:facedown %)) (:hosted (refresh card)))))
+            face-down (fn [card] (count (filter #(:facedown %) (:hosted (refresh card)))))
+            do-mat-run (fn [card up total]
+                         (do
+                           (is (= up (face-up mat)) (str up " face-up copies of Matryoshka"))
+                           (run-on state :hq)
+                           (run-continue state)
+                           (card-ability state :runner (refresh mat) 1)
+                           (click-prompt state :runner "1")
+                           (click-prompt state :runner "End the run")
+                           (is (= (- up 1) (face-up mat))
+                               (str (- up 1) " face-up copies of Matryoshka left"))
+                           (is (= (+ 1 (- total up)) (face-down mat))
+                               (str (+ 1 (- total up)) "face-down copies of Matryoshka"))
+                           (run-continue state)
+                           (run-continue state)))]
+        (do-mat-run mat 4 4)
+        (do-mat-run mat 3 4)
+        (do-mat-run mat 2 4)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 4 (face-up mat)) "All copies of Matryoshka turned back up again")))))
+
 (deftest maven
   ;; Maven
   (do-game

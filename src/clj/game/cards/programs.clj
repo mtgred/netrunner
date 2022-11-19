@@ -1835,6 +1835,52 @@
                                       :effect (req (doseq [sub (take 3 (:subroutines (:ice context)))]
                                                      (dont-resolve-subroutine! state (get-card state (:ice context)) sub)))}])))}]}))
 
+(defcard "Matryoshka"
+  (let [break-abi {:label "Break X subroutines"
+                   :cost [:x-credits]
+                   :break-cost [:x-credits]
+                   :req (req (let [hosted (:hosted (get-card state card))
+                                   valid (filter #(not (facedown? %)) hosted)
+                                   same-title (filter #(= "Matryoshka" (:title %)) valid)]
+                               (and (active-encounter? state)
+                                    (<= (get-strength current-ice) (get-strength card))
+                                    (not-empty same-title))))
+                                        ; no break-req to not enable auto-pumping
+                   :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                             " on " (card-str state current-ice) " and turn one hosted copy of "
+                             (:title card) " facedown.")
+                   :effect (req
+                             (let [hosted (:hosted (get-card state card))
+                                   valid (filter #(not (facedown? %)) hosted)
+                                   same-title (filter #(= "Matryoshka" (:title %)) valid)
+                                   first-copy (first same-title)]
+                               (flip-facedown state side (get-card state first-copy))
+                               (when (pos? (cost-value eid :x-credits))
+                                 (continue-ability
+                                   state side
+                                   (break-sub nil (cost-value eid :x-credits) "All")
+                                   card nil))))}
+        host-abi {:label "Host a copy of Matryoshka"
+                  :prompt "Choose a copy of Matryoshka in the Grip"
+                  :keep-menu-open :while-clicks-left
+                  :cost [:click 1]
+                  :choices {:card #(and (in-hand? %)
+                                        (= (:title %) "Matryoshka"))}
+                  :effect (effect (host card target))
+                  :msg (msg " host " (:title target))}]
+    (auto-icebreaker
+      {:abilities [host-abi
+                   break-abi
+                   (strength-pump 1 1)]
+       :events [{:event :runner-turn-begins
+                 :req (req (some #(facedown? %) (:hosted (get-card state card))))
+                 :msg "turn all cards hosted on Matryoshka face-up"
+                 :effect (req (let [targets (filter #(facedown? %) (:hosted (get-card state card)))]
+                                (doseq [oc targets]
+                                  ;; we can't use flip-faceup as that wires up events
+                                  (let [newcard (assoc-in oc [:facedown] nil)]
+                                    (update! state side newcard)))))}]})))
+
 (defcard "Maven"
   (auto-icebreaker {:abilities [(break-sub 2 1)]
                     :constant-effects [(breaker-strength-bonus (req (count (filter program? (all-active-installed state :runner)))))]}))
