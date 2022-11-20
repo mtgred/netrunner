@@ -47,7 +47,7 @@
    [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
                                  runner-install]]
    [game.core.link :refer [get-link link+]]
-   [game.core.mark :refer [identify-mark-ability]]
+   [game.core.mark :refer [identify-mark-ability is-mark?]]
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-faceup forfeit mill move
                              remove-from-currently-drawing trash trash-cards
@@ -1489,6 +1489,15 @@
                        :req (req (and (get-current-encounter state)
                                       (same-card? current-ice target)))
                        :value -1}]})
+
+(defcard "Info Bounty"
+  {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+            {:event :end-breach-server
+              :async true
+              :interactive (req true)
+              :req (req (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %)))))
+              :msg "gain 2 [Credits]"
+              :effect (effect (gain-credits :runner eid 2))}]})
 
 (defcard "Inside Man"
   {:recurring 2

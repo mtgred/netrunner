@@ -2991,6 +2991,34 @@
       (run-continue state)
       (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
+(deftest info-bounty
+    ;; Info Bounty
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund"]}
+                 :runner {:deck ["Info Bounty" "Patron"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Info Bounty")
+      (play-from-hand state :runner "Patron")
+      (core/set-mark state :hq)
+      (changes-val-macro
+        2 (:credit (get-runner))
+        "Gained 2 credits"
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No action"))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gained no credits on subsequent runs on mark"
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No action"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (core/set-mark state :hq)
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gained no credits on run on mark when breach is replaced"
+        (run-empty-server state :hq))))
+
 (deftest inside-man-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
