@@ -1242,6 +1242,16 @@
       (is (no-prompt? state :corp) "Corp should be waiting on Runner")
       (is (no-prompt? state :runner) "Runner should be able to take actions")))
 
+(deftest Djupstad-grid
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas" "Djupstad Grid"] :credits 10}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Djupstad Grid" "New remote")
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (score-agenda state :corp (get-content state :remote1 1))
+    (is (= 1 (:brain-damage (get-runner))) "Did 1 brain damage")))
+
 (deftest drone-screen
   ;; Drone Screen
   (do-game

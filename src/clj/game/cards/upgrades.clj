@@ -513,6 +513,13 @@
                                   (dhq 1 (count (:hand corp)))
                                   card nil))}}}}))
 
+(defcard "Djupstad Grid"
+  {:events [{:event :agenda-scored
+             :req (req (= (:previous-zone (:card context)) (get-zone card)))
+             :interactive (req true)
+             :async true
+             :effect (effect (damage eid :brain 1 {:card card}))}]})
+
 (defcard "Drone Screen"
   {:events [{:event :run
              :async true
