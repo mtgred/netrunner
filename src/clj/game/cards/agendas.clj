@@ -1224,6 +1224,9 @@
     :msg "gain 7 [Credits]"
     :effect (effect (gain-credits :corp eid 7))}})
 
+(defcard "Ontological Dependence"
+  {:advancement-requirement (req (- (or (get-in @state [:runner :brain-damage]) 0)))})
+
 (defcard "Orbital Superiority"
   {:on-score
    {:msg (msg (if (is-tagged? state) "do 4 meat damage" "give the Runner 1 tag"))

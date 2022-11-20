@@ -2523,6 +2523,21 @@
         "Corp gains 7 credits from Offworld Office"
         (play-and-score state "Offworld Office"))))
 
+(deftest ontological-dependence
+  ;; Ontological Dependence
+  (do-game
+    (new-game {:corp {:hand ["Ontological Dependence"]}})
+    (play-from-hand state :corp "Ontological Dependence" "New remote")
+    (let [conj (get-content state :remote1 0)]
+      (advance state conj 2)
+      (score state :corp (refresh conj))
+      (is (some? (get-content state :remote1 0))
+          "Corp can't score with 2 advancements because of no brain damage")
+      (damage state :corp :brain 2)
+      (score state :corp (refresh conj))
+      (is (not (some? (get-content state :remote1 0)))
+          "Corp can score with 2 advancements because of 2 brain damage"))))
+
 (deftest orbital-superiority
   ;; Orbital Superiority
   (do-game
