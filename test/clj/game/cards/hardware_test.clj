@@ -4947,6 +4947,34 @@
     (click-prompt state :runner "Pay 1 [Credits] to trash")
     (is (no-prompt? state :runner))))
 
+(deftest wake-implant-v2a-jrj
+  ;; WAKE Implant v2A-JRJ
+  (do-game
+    (new-game {:corp {:deck [(qty "Ice Wall" 10)]
+                      :hand ["Hedge Fund"]}
+               :runner {:hand ["WAKE Implant v2A-JRJ" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 6)
+    (play-from-hand state :runner "WAKE Implant v2A-JRJ")
+    (is (= 1 (count (:discard (get-runner)))) "1 damage done")
+    (let [wi (get-hardware state 0)]
+      (dotimes [_ 6]
+        (changes-val-macro
+          1 (get-counters (refresh wi) :power)
+          "1 counter added"
+          (run-empty-server state :hq)
+          (click-prompt state :runner "No action")))
+      (dotimes [c 3]
+        (changes-val-macro
+          (- c) (get-counters (refresh wi) :power)
+          (str c " counters spent")
+          (run-empty-server state :rd)
+          (click-prompt state :runner (str c))
+          (is (= c (core/access-bonus-count state :runner :rd)) (str "Runner should access " c " additional cards"))
+          (click-prompt state :runner "No action")
+          (dotimes [_ c]
+            (click-prompt state :runner "No action")))))))
+
 (deftest zamba
   ;; Zamba - Whenever corp card is exposed you may gain 1 credit
   (do-game

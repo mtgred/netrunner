@@ -2190,6 +2190,32 @@
                                     :effect (req (breach-server state :runner eid [:hq] nil))}])
                                 (effect-completed state side eid))))}]})
 
+(defcard "WAKE Implant v2A-JRJ"
+  {:on-install {:async true
+                :msg "suffer 1 meat damage"
+                :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
+   :events [{:event :successful-run
+             :async true
+             :req (req (= :hq (target-server context)))
+             :msg "place 1 power counter on itself"
+             :effect (req (add-counter state :runner card :power 1 {:placed true})
+                          (effect-completed state side eid))}
+            {:event :breach-server
+             :async true
+             :req (req (and (= :rd target)
+                            (pos? (get-counters card :power))))
+             :effect (req (continue-ability
+                            state side
+                            {:prompt "How many additional R&D accesses do you want to make?"
+                             :choices {:number (req (min 3 (get-counters card :power)))
+                                       :default (req (min 3 (get-counters card :power)))}
+                             :msg (msg "access " (quantify target "additional card") " from R&D")
+                             :async true
+                             :effect (effect (access-bonus :rd (max 0 target))
+                                             (add-counter :runner card :power (- target) {:placed true})
+                                             (effect-completed eid))}
+                            card nil))}]})
+
 (defcard "Window"
   {:abilities [{:cost [:click 1]
                 :keep-menu-open :while-clicks-left
