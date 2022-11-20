@@ -2203,7 +2203,10 @@
     (play-from-hand state :corp "Public Trail")
     (click-prompt state :runner "Take 1 tag")
     (play-from-hand state :corp "Hypoxia")
-    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Hypoxia")))
+    (is (= 1 (count (:rfg (get-corp)))) "Hypoxia removed from game")
+    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Hypoxia")
+    (take-credits state :corp)
+    (is (= 3 (:click (get-runner))) "Runner should lose 1 click start of turn")))
 
 (deftest interns
   ;; Fire Wall
