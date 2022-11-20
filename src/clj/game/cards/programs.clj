@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [game.core.access :refer [access-bonus max-access]]
-   [game.core.board :refer [all-active all-active-installed all-installed
+   [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type
                             card->server server->zone]]
    [game.core.card :refer [agenda? asset? card-index corp? facedown?
                            get-advancement-requirement get-card get-counters
@@ -2747,6 +2747,16 @@
                   :effect action}
      :events [{:event :runner-turn-begins
                :effect action}]}))
+
+(defcard "Tremolo"
+  (letfn [(credit-discount [s] (->> (all-installed-runner-type s :hardware)
+                                    (filter #(has-subtype? % "Cybernetic"))
+                                    count
+                                    -))]
+    (auto-icebreaker {:abilities [(break-sub 3 2 "Barrier"
+                                             {:label "Break up to 2 Barrier subroutine"
+                                              :break-cost-bonus (req [:credit (credit-discount state)])})
+                                  (strength-pump 2 2)]})))
 
 (defcard "Trope"
   {:events [{:event :runner-turn-begins

@@ -6710,6 +6710,52 @@
           (is (= 1 (get-counters (refresh tranquilizer) :virus)))
           (is (not (rezzed? (refresh iw))) "Ice Wall derezzed")))))
 
+(deftest tremolo
+  ;; Tremolo
+  (do-game
+    (new-game {:corp {:hand ["Battlement" "Meru Mati"]}
+                :runner {:hand ["Tremolo" (qty "Severnius Stim Implant" 4)]
+                        :credits 100}})
+    (play-from-hand state :corp "Meru Mati" "HQ")
+    (play-from-hand state :corp "Battlement" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "Tremolo")
+    (let [tremolo (get-program state 0)
+        meru (get-ice state :hq 0)
+        battlement (get-ice state :hq 1)]
+      (run-on state :hq)
+      (rez state :corp battlement)
+      (run-continue state)
+      (changes-val-macro
+        -3 (:credit (get-runner))
+        "Spent 3 credits to break subs"
+        (card-ability state :runner tremolo 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run"))
+      (run-continue-until state :approach-ice meru)
+      (rez state :corp meru)
+      (run-continue state)
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Spent 2 credits to match ice strength"
+        (card-ability state :runner tremolo 1))
+      (card-ability state :runner tremolo 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (run-continue state)
+      (is (not (:run @state)) "Run is finished")
+      (play-from-hand state :runner "Severnius Stim Implant")
+      (play-from-hand state :runner "Severnius Stim Implant")
+      (run-on state :hq)
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Spent only 1 credit to break subs"
+        (card-ability state :runner tremolo 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")))))
+
 (deftest trope-happy-path
     ;; Happy Path
     (do-game
