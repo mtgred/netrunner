@@ -6565,6 +6565,43 @@
           (is (zero? (count (get-ice state :rd))) "Unrezzed Architect was trashed")
           (is (= 3 (count (:discard (get-runner)))) "Trypano went to discard")))))
 
+(deftest tunnel-vision
+    ;; Tunnel Vision
+    (do-game
+      (new-game {:corp {:hand ["Envelopment" "Ice Wall"]}
+                 :runner {:hand ["Tunnel Vision"]
+                          :credits 10}})
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Envelopment" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tunnel Vision")
+      (core/set-mark state :hq)
+      (let [tv (get-program state 0)
+            iw (get-ice state :rd 0)
+            env (get-ice state :hq 0)]
+        (run-on state :rd)
+        (rez state :corp iw)
+        (run-continue state)
+        (card-ability state :runner tv 0)
+        (is (no-prompt? state :runner) "Can only use ability when running marked server")
+        (fire-subs state iw)
+        (run-on state :hq)
+        (rez state :corp env)
+        (run-continue state)
+        (changes-val-macro
+          -4 (:credit (get-runner))
+          "Spent 4 credits to match ice strength"
+          (card-ability state :runner tv 1)
+          (card-ability state :runner tv 1))
+        (changes-val-macro
+          -4 (:credit (get-runner))
+          "Spent 4 credits to break 3 subs"
+          (card-ability state :runner tv 0)
+          (click-prompt state :runner "End the run")
+          (click-prompt state :runner "End the run")
+          (click-prompt state :runner "End the run")
+          (click-prompt state :runner "Done")))))
+
 (deftest tycoon-tycoon-gives-2c-after-using-to-break-ice
     ;; Tycoon gives 2c after using to break ice
     (do-game
