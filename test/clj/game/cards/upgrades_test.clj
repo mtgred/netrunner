@@ -2354,6 +2354,75 @@
         (card-ability state :runner (get-program state 0) 0)
         (click-prompt state :runner "End the run"))))
 
+(deftest mr-hendrik-corp-declines
+  ;; Pay 2: runner suffers core or loses all (at least 1) clicks
+  (do-game
+    (new-game {:corp {:hand ["Mr. Hendrik"] :credits 20}})
+    (play-from-hand state :corp "Mr. Hendrik" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "spent nothing declining hendrik"
+      (click-prompt state :corp "No"))
+    (is (= 0 (:brain-damage (get-runner))) "Did 0 core damage")
+    (is (= 3 (:click (get-runner))))
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")))
+
+(deftest mr-hendrik-take-damage
+  ;; Pay 2: runner suffers core or loses all (at least 1) clicks
+  (do-game
+    (new-game {:corp {:hand ["Mr. Hendrik"] :credits 20}})
+    (play-from-hand state :corp "Mr. Hendrik" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "spent nothing declining hendrik"
+      (click-prompt state :corp "Yes"))
+    (is (= 3 (:click (get-runner))))
+    (click-prompt state :runner "Take 1 core damage")
+    (is (= 1 (:brain-damage (get-runner))) "Did 1 core damage")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")))
+
+(deftest mr-hendrik-decline-damage
+  ;; Pay 2: runner suffers core or loses all (at least 1) clicks
+  (do-game
+    (new-game {:corp {:hand ["Mr. Hendrik"] :credits 20}})
+    (play-from-hand state :corp "Mr. Hendrik" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "spent nothing declining hendrik"
+      (click-prompt state :corp "Yes"))
+    (is (= 3 (:click (get-runner))))
+    (click-prompt state :runner "Lose remaining clicks")
+    (is (= 0 (:brain-damage (get-runner))) "Did 0 core damage")
+    (is (= 0 (:click (get-runner))) "lost remaining clicks")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")))
+
+(deftest mr-hendrik-no-clicks-remaining
+  ;; Pay 2: runner suffers core or loses all (at least 1) clicks
+  (do-game
+    (new-game {:corp {:hand ["Mr. Hendrik"] :credits 20}})
+    (play-from-hand state :corp "Mr. Hendrik" "New remote")
+    (take-credits state :corp)
+    (core/lose state :runner :click 3)
+    (run-empty-server state "Server 1")
+    (is (= 0 (:click (get-runner))))
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "spent nothing declining hendrik"
+      (click-prompt state :corp "Yes"))
+    (click-prompt state :runner "Take 1 core damage")
+    (is (= 1 (:brain-damage (get-runner))) "Did 1 core damage")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")))
+
 (deftest mumbad-city-grid-1-ice
     ;; 1 ice
     (do-game
