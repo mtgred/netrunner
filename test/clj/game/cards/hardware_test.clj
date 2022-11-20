@@ -3497,6 +3497,49 @@
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 
+(deftest poison-vial
+  ;; Poison Vial
+  (do-game
+    (new-game {:corp {:deck ["Spiderweb"]}
+               :runner {:id "Quetzal: Free Spirit"
+                        :deck ["Poison Vial"]}})
+    (play-from-hand state :corp "Spiderweb" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Poison Vial")
+    (let [pvial (get-hardware state 0)
+          spiderweb (get-ice state :hq 0)
+          q (get-in @state [:runner :identity])]
+      (is (= 3 (get-counters pvial :power)) "3 counters on install")
+      (run-on state :hq)
+      (rez state :corp spiderweb)
+      (run-continue state)
+      (card-ability state :runner pvial 0)
+      (is (no-prompt? state :runner) "Can use ability only after breaking at least 1 sub")
+      (card-ability state :runner q 0)
+      (click-prompt state :runner "End the run")
+      (changes-val-macro
+        -1 (get-counters (refresh pvial) :power)
+        "Spent 1 counter"
+        (card-ability state :runner pvial 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run"))
+      (is (= 3 (count (filter :broken (:subroutines (refresh spiderweb))))) "Spiderweb has all of its subroutines broken")
+      (run-continue state :movement)
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (card-ability state :runner q 0)
+      (click-prompt state :runner "End the run")
+      (changes-val-macro
+        -1 (get-counters (refresh pvial) :power)
+        "Spent 1 counter"
+        (card-ability state :runner pvial 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "Done"))
+      (is (= 2 (count (filter :broken (:subroutines (refresh spiderweb))))) "Spiderweb has 2 out of 3 subroutines broken"))))
+
 (deftest prepaid-voicepad-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game

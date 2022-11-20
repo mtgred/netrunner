@@ -33,8 +33,8 @@
                               lose-credits]]
    [game.core.hand-size :refer [hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [all-subs-broken? break-sub pump reset-all-ice
-                          update-all-ice update-all-icebreakers
+   [game.core.ice :refer [all-subs-broken? any-subs-broken? break-sub pump
+                          reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]
    [game.core.installing :refer [install-locked? runner-can-install?
                                  runner-can-pay-and-install? runner-install]]
@@ -1515,6 +1515,11 @@
    :abilities [{:cost [:power 1]
                 :msg "prevent 1 meat damage"
                 :effect (req (damage-prevent state side :meat 1))}]})
+
+(defcard "Poison Vial"
+  {:data {:counter {:power 3}}
+   :events [(trash-on-empty :power)]
+   :abilities [(break-sub [:power 1] 2 "All" {:req (req (any-subs-broken? current-ice))})]})
 
 (defcard "Polyhistor"
   (let [abi {:optional
