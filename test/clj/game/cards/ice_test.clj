@@ -5260,6 +5260,31 @@
       (fire-subs state png1)
       (is (not (:run @state)) "Run ended"))))
 
+(deftest pulse
+  ;; Pulse
+  (do-game
+    (new-game {:corp {:hand [(qty "Pulse" 2)] :credit 15}})
+    (play-from-hand state :corp "Pulse" "HQ")
+    (play-from-hand state :corp "Pulse" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [p1 (get-ice state :hq 1)
+          p2 (get-ice state :hq 0)]
+      (changes-val-macro
+        -1 (:click (get-runner))
+        "lost a click to the rez"
+        (rez state :corp (refresh p1)))
+      (run-continue state)
+      (rez state :corp (refresh p2))
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "lost 1 credit for 1 rezzed harmonic"
+        (fire-subs state (refresh p1)))
+      (changes-val-macro
+        -1 (:click (get-runner))
+        "paid 1 click"
+        (click-prompt state :runner "Lose [Click]")))))
+
 (deftest red-tape
   ;; Red Tape
   (do-game
