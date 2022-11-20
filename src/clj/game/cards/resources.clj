@@ -11,8 +11,8 @@
    [game.core.board :refer [all-active all-active-installed all-installed card->server
                             server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp?
-                           event? facedown? get-agenda-points get-card
-                           get-counters get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
+                           event? facedown? get-agenda-points get-card get-counters
+                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
                            installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
@@ -298,6 +298,39 @@
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (runner-install eid target nil))}]})
+
+(defcard "Asmund Pudlat"
+  (letfn [(search-and-host [x]
+            {:prompt (msg "Choose a virus or weapon card (" x " remaining)")
+             :choices (req (cancellable (filter
+                                          #(and (not (contains? (:hosted card) %))
+                                                (or (has-subtype? % "Virus")
+                                                    (has-subtype? % "Weapon")))
+                                          (:deck runner)) :sorted))
+             :async true
+             :msg (msg "host " (get-title target) " on itself")
+             :effect (req (host state side card target)
+                          (if (> x 1)
+                            (continue-ability state side (search-and-host (dec x)) card nil)
+                            (effect-completed state side eid)))})]
+    {:on-install {:msg "shuffle the stack"
+                  :effect (effect (continue-ability (search-and-host 2) card nil)
+                                  (trigger-event :searched-stack nil)
+                                  (shuffle! :deck))}
+      :events [{:event :runner-turn-begins
+                :label "Add a hosted card to the grip (start of turn)"
+                :prompt "Choose a hosted card to move to the grip"
+                :choices {:req (req (same-card? card (:host target)))}
+                :msg (msg "add " (get-title target) " to the grip")
+                :once :per-turn
+                :cancel-effect (effect (system-msg (str "declines to use " (get-title card)))
+                                       (effect-completed eid))
+                :async true
+                :effect (req (move state side target :hand)
+                             (if-not (empty? (:hosted (get-card state card)))
+                               (effect-completed state side eid)
+                               (do (system-msg state side (str "trashes " (get-title card)))
+                                   (trash state side eid card {:unpreventable true :source-card card}))))}]}))
 
 (defcard "Assimilator"
   {:abilities [{:label "Turn a facedown card faceup"

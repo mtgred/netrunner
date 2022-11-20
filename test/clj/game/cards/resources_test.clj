@@ -226,6 +226,32 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest asmund-pudlat
+  ;; Asmund Pudlat
+  (do-game
+    (new-game {:runner {:hand ["Asmund Pudlat"]
+                        :deck ["Unregistered S&W '35" (qty "Fermenter" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Asmund Pudlat")
+    (click-prompt state :runner "Fermenter")
+    (is (not (contains? (:choices (prompt-map :runner)) "Fermenter")) "Runner cannot choose Fermenter twice")
+    (click-prompt state :runner "Unregistered S&W '35")
+    (let [asmund (get-resource state 0)]
+      (is (= 2 (count (:hosted (refresh asmund)))) "Asmund Pudlat is hosting 2 cards")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (changes-val-macro -1 (count (:hosted (refresh asmund)))
+                         "Unregistered S&W '35 not hosted anymore"
+                         (click-card state :runner (find-card "Unregistered S&W '35" (:hosted (refresh asmund)))))
+      (is (= 1 (count (:hand (get-runner)))) "Card was added to grip")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (changes-val-macro -1 (count (:hosted (refresh asmund)))
+                         "Fermenter not hosted anymore"
+                         (click-card state :runner (find-card "Fermenter" (:hosted (refresh asmund)))))
+      (is (= 2 (count (:hand (get-runner)))) "Card was added to grip")
+      (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed"))))
+
 (deftest avgustina-ivanovskaya
   ;; First time each turn you install a virus program, resist 1
   (do-game
