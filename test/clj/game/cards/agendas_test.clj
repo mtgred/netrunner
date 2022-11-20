@@ -1787,6 +1787,29 @@
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
+(deftest hybrid-release
+    ;; Hybrid Release
+    (do-game
+      (new-game {:corp {:deck ["Hybrid Release" (qty "Hansei Review" 2) "PAD Campaign" "Hedge Fund"]
+                        :discard ["Obokata Protocol"]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (core/gain state :corp :click 2)
+      (play-from-hand state :corp "Hansei Review")
+      (click-card state :corp "PAD Campaign")
+      (play-from-hand state :corp "Hansei Review")
+      (click-card state :corp "Hedge Fund")
+      (play-and-score state "Hybrid Release")
+      (click-card state :corp (find-card "Obokata Protocol" (:discard (get-corp))))
+      (is (= "Choose a facedown card in Archives to install" (:msg (prompt-map :corp))) "Cannot select faceup cards in Archives")
+      (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
+      (is (= "Choose a facedown card in Archives to install" (:msg (prompt-map :corp))) "Cannot install operations")
+      (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
+      (click-prompt state :corp "New remote")
+      (is (= "PAD Campaign" (:title (get-content state :remote2 0))) "Installed PAD Campaign in remote")))
+
 (deftest hyperloop-extension-score
     ;; Score
     (do-game

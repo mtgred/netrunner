@@ -958,6 +958,17 @@
                 :once :per-run
                 :effect (effect (damage eid :net 1 {:card card}))}]})
 
+(defcard "Hybrid Release"
+  {:on-score {:prompt "Choose a facedown card in Archives to install"
+               :show-discard true
+               :async true
+               :choices {:card #(and (corp-installable-type? %)
+                                     (in-discard? %)
+                                     (not (faceup? %)))}
+               :effect (effect (corp-install (make-eid state {:source card :source-type :corp-install}) target nil nil))
+               :cancel-effect {:effect (effect (system-msg "declines to use Hybrid Release"))}
+               :msg (msg "install " (card-str state target))}})
+
 (defcard "Hyperloop Extension"
   (let [he {:msg "gain 3 [Credits]"
             :async true
