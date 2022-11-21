@@ -1221,10 +1221,10 @@
 (deftest end-of-the-line
   ;; End of the Line
   (do-game
-    (new-game {:corp {:deck ["End Of The Line"]}
+    (new-game {:corp {:deck ["End of the Line"]}
                :runner {:deck [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]}})
     (gain-tags state :runner 1)
-    (play-from-hand state :corp "End Of The Line")
+    (play-from-hand state :corp "End of the Line")
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
     (is (zero? (count-tags state)) "Runner list a tag")))
 

@@ -730,7 +730,7 @@
     :effect (req (wait-for (trash-cards state side (get-in @state [:corp :hand]) {:cause-card card})
                            (draw state side eid 5)))}})
 
-(defcard "End Of The Line"
+(defcard "End of the Line"
   {:on-play
    {:additional-cost [:tag 1]
     :msg "do 4 meat damage"
