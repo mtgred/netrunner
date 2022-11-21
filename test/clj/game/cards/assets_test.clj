@@ -2288,37 +2288,29 @@
     (click-prompt state :runner "No action")
     (is (= 2 (:credit (get-runner))))))
 
-(deftest hostile-architecture-basic-behavior
+(deftest hostile-architecture-basic
+  ;; Basic behavior
   (do-game
-    (new-game {:corp {:hand ["Hostile Architecture" (qty "Rashida Jaheem" 5)]}
-               :runner {:hand [(qty "Sure Gamble" 10)] :credits 10}})
+    (new-game {:corp {:hand [(qty "Hostile Architecture" 4)]}})
+    (core/gain state :runner :credit 50)
     (play-from-hand state :corp "Hostile Architecture" "New remote")
-    (play-from-hand state :corp "Rashida Jaheem" "New remote")
-    (play-from-hand state :corp "Rashida Jaheem" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state "Server 2")
-    (click-prompt state :runner "Pay 1 [Credits] to trash")
-    (is (= 0 (count (:discard (get-runner)))) "took 0 damage")
+    (play-from-hand state :corp "Hostile Architecture" "New remote")
+    (play-from-hand state :corp "Hostile Architecture" "New remote")
     (rez state :corp (get-content state :remote1 0))
-    ;; only works on first trash
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (is (zero? (count (:discard (get-runner)))) "Took 0 meat damage (card wasn't installed)")
+    (run-empty-server state "Server 2")
+    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (is (= 2 (count (:discard (get-runner)))) "Took 2 meat damage")
     (run-empty-server state "Server 3")
-    (click-prompt state :runner "Pay 1 [Credits] to trash")
-    (is (= 0 (count (:discard (get-runner)))) "took 0 damage")
-    (take-credits state :runner)
-    (play-from-hand state :corp "Rashida Jaheem" "New remote")
-    (play-from-hand state :corp "Rashida Jaheem" "New remote")
-    (take-credits state :corp)
-    ;; actually functions
-    (run-empty-server state "Server 4")
-    (click-prompt state :runner "Pay 1 [Credits] to trash")
-    (take-credits state :runner)
-    (is (= 2 (count (:discard (get-runner)))) "took 2 damage")
-    (take-credits state :corp)
-    ;; works on self trashed
+    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (is (= 2 (count (:discard (get-runner)))) "Took 0 more meat damage")
     (run-empty-server state "Server 1")
     (click-prompt state :runner "Pay 3 [Credits] to trash")
-    (is (= 4 (count (:discard (get-runner)))) "took 2 damage")))
-
+    (is (= 2 (count (:discard (get-runner)))) "Took 0 more meat damage")
+    ))
 
 (deftest hostile-infrastructure-basic-behavior
     ;; Basic behavior
