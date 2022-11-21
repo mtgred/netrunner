@@ -1896,7 +1896,7 @@
 
 (defcard "Thule Subsea: Safety Below"
   {:events [{:event :agenda-stolen
-             :msg (msg "force the runner to suffer 1 core damage unless they spend [Click] and 2[Credits]")
+             :msg "force the runner to suffer 1 core damage unless they spend [Click] and 2[Credits]"
              :async true
              :effect (effect (continue-ability
                                {:prompt "Choose an option"
