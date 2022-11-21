@@ -2126,7 +2126,7 @@
                                    sort))
                 :msg (msg "make " (card-str state current-ice)
                           " gain " target
-                          " until end of the run")
+                          " until end of the encounter")
                 :effect (effect (register-floating-effect
                                   card
                                   (let [ice current-ice]
