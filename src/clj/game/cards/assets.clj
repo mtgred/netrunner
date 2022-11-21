@@ -1961,6 +1961,21 @@
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
 
+(defcard "Reaper Function"
+  {:derezzed-events [corp-rez-toast]
+   :flags {:corp-phase-12 (req true)}
+   :events [{:event :corp-turn-begins
+             :once :per-turn
+             :label "Trash this asset to do 2 net damage (start of turn)"
+             :req (req (:corp-phase-12 @state))
+             :optional
+             {:prompt "Trash Reaper Function to do 2 net damage?"
+              :yes-ability
+              {:msg "do 2 net damage"
+               :async true
+               :effect (req (wait-for (trash state side card {:cause-card card})
+                                      (damage state side eid :net 2 {:card card})))}}}]})
+
 (defcard "Reconstruction Contract"
   {:events [{:event :damage
              :req (req (and (pos? (:amount context))

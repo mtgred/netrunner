@@ -4183,6 +4183,23 @@
       (take-credits state :runner)
       (is (= 13 (:credit (get-corp))) "Gained 2 credits because Runner is tagged"))))
 
+(deftest reaper-function
+  ;; Reaper Function
+  (do-game
+    (new-game {:corp {:deck ["Reaper Function"]}})
+    (play-from-hand state :corp "Reaper Function" "New remote")
+    (let [rf (get-content state :remote1 0)]
+      (rez state :corp rf)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (end-phase-12 state :corp)
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "Runner discards 2 cards from grip"
+        (click-prompt state :corp "Yes"))
+      (is (= 1 (count (:discard (get-corp)))) "Reaper Function was trashed"))))
+
 (deftest reconstruction-contract
   ;; Reconstruction Contract - place advancement token when runner takes meat damage
   (do-game
