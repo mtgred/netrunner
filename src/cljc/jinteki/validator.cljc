@@ -338,6 +338,21 @@
       status
       (calculate-deck-status deck)))
 
+(defn singleton-deck-status
+  "Calculates if a deck is singleton"
+  [deck]
+  (let [cards (:cards deck)
+        duplicates (filter #(not= 1 (:qty %)) cards)
+        is-singleton (zero? (count duplicates))]
+    {:singleton is-singleton}))
+
+(defn singleton-deck? [deck]
+  (if-let [deck (get-in deck [:status :singleton])]
+    deck
+    (get-in (singleton-deck-status deck)
+            [:singleton]
+            false)))
+
 (defn legal-deck?
  ([deck] (legal-deck? deck (:format deck)))
  ([deck fmt]

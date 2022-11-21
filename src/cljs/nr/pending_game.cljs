@@ -1,6 +1,6 @@
 (ns nr.pending-game
   (:require
-   [jinteki.validator :refer [singleton-id? trusted-deck-status]]
+   [jinteki.validator :refer [singleton-deck? trusted-deck-status]]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.cardbrowser :refer [image-url] :as cb]
    [nr.deck-status :refer [deck-format-status-span]]
@@ -31,7 +31,8 @@
       (let [fmt (:format @current-game)
             players (:players @current-game)
             singleton? (:singleton @current-game)
-            singleton-fn? (fn [deck] (or (not singleton?) (singleton-id? (get-in deck [:identity]))))
+            singleton-fn? (fn [deck] (or (not singleton?) (singleton-deck? deck)))
+            ;;(or (not singleton?) (singleton-id? (get-in deck [:identity])))) -- this one restricts to the ids only
             side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
             same-side? (fn [deck] (= side (get-in deck [:identity :side])))
             legal? (fn [deck fmt] (or (= "casual" fmt)
