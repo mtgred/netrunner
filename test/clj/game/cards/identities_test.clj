@@ -4454,6 +4454,38 @@
           (is (no-prompt? state :corp) "No prompt for the Corp as no counters exist to spend")
           (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")))))
 
+(deftest thule-subsea-safety-below-pay
+  (do-game
+    (new-game {:corp {:id "Thule Subsea: Safety Below"
+                      :deck ["Project Vitruvius"]}})
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (changes-val-macro
+      -2 (:credit (get-runner))
+      "paid creds to not suffer"
+      (changes-val-macro
+        -1 (:click (get-runner))
+        "paid click to not suffer"
+        (click-prompt state :runner "Pay [Click] and 2 [Credits]")))
+    (is (= 0 (:brain-damage (get-runner))) "Runner took 0 brain damage")))
+
+(deftest thule-subsea-safety-below-suffer
+  (do-game
+    (new-game {:corp {:id "Thule Subsea: Safety Below"
+                      :deck ["Project Vitruvius"]}})
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (changes-val-macro
+      0 (:credit (get-runner))
+      "didn't pay credits"
+      (changes-val-macro
+        0 (:click (get-runner))
+        "didn't pay clicks"
+        (click-prompt state :runner "Suffer 1 Core Damage")))
+    (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")))
+
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
