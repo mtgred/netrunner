@@ -478,6 +478,48 @@
       (is (= :waiting (prompt-type :runner))
           "Runner has prompt to wait for Corp to use Ganked!"))))
 
+(deftest anvil
+  (do-game
+    (new-game {:corp {:hand ["Anvil" "Ice Wall"]}
+               :runner {:hand ["Unity"]
+                        :credits 50}})
+    (play-from-hand state :corp "Anvil" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Unity")
+    (let [unity (get-program state 0)
+          anvil (get-ice state :hq 0)
+          iwall (get-ice state :rd 0)]
+      (run-on state :hq)
+      (rez state :corp (refresh anvil))
+      (run-continue state)
+      (click-prompt state :corp "No")
+      (changes-val-macro
+        -4 (:credit (get-runner))
+        "spent 4 to break"
+        (core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh unity)})
+        (core/continue state :corp nil))
+      (run-jack-out state)
+      (run-on state :hq)
+      (run-continue state :encounter-ice)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp (refresh iwall))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "can't break"
+        (core/play-dynamic-ability state :runner
+                                   {:dynamic "auto-pump-and-break" :card (refresh unity)}))
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "gained 1"
+        (changes-val-macro
+          -1 (:credit (get-runner))
+          "lost 1"
+          (fire-subs state (core/get-current-ice state))))
+      (click-card state :runner (refresh unity))
+      (is (= 1 (count (:discard (get-runner)))) "trashed unity"))))
+
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
