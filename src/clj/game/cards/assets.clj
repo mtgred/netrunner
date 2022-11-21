@@ -700,6 +700,15 @@
                        " by " (get-counters card :power) " [Credits]")
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
 
+(defcard "Dr. Vientiane Keeling"
+  {:constant-effects [(runner-hand-size+ (req (- (get-counters card :power))))]
+   :events [{:event :rez
+             :msg "add 1 power counter to itself"
+             :effect (effect (add-counter card :power 1))}
+            {:event :corp-turn-begins
+             :msg "add 1 power counter to itself"
+             :effect (effect (add-counter card :power 1))}]})
+
 (defcard "Drago Ivanov"
   {:advanceable :always
    :abilities [{:cost [:advancement 2]

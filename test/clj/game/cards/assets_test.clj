@@ -1464,6 +1464,21 @@
                 (is (= (- 4 number) (:credit (get-runner)))))))]
     (doall (map dlcd-test [0 1 2 3 4]))))
 
+(deftest dr-vientiane-keeling
+  ;; Dr. Vientiane Keeling
+  (do-game
+    (new-game {:corp {:hand ["Dr. Vientiane Keeling"]}
+               :runner {:hand ["Sure Gamble"]}})
+    (play-from-hand state :corp "Dr. Vientiane Keeling" "New remote")
+    (let [dr (get-content state :remote1 0)]
+      (rez state :corp dr)
+      (dotimes [i 5]
+        (let [c (inc i)]
+          (is (= c (get-counters (refresh dr) :power)))
+          (is (= (- 5 c) (hand-size :runner)) (str "Runner max hand size reduced by " c))
+          (take-credits state :corp)
+          (take-credits state :runner))))))
+
 (deftest drago-ivanov
   (do-game
     (new-game {:corp {:hand ["Drago Ivanov"] :credits 10}})
