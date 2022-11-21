@@ -3060,9 +3060,7 @@
 (defcard "Pulse"
   {:on-rez {:req (req (and run this-server))
             :msg "force the runner to lose [Click]"
-            :async true
-            :effect (effect (lose-clicks :runner 1)
-                            (effect-completed eid))}
+            :effect (effect (lose-clicks :runner 1))}
    :subroutines [{:label (str "Runner loses 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "make the runner lose " (harmonic-ice-count corp) " [Credits]")
                   :async true
