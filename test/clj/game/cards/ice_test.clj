@@ -6887,6 +6887,53 @@
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub"))))
 
+(deftest vampyronassa
+  ;; Vampyronassa
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                      :hand ["Vampyronassa"]}})
+    (play-from-hand state :corp "Vampyronassa" "HQ")
+    (take-credits state :corp)
+    (let [vam (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp vam)
+      (run-continue state)
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner loses 2 credits"
+        (card-subroutine state :corp vam 0))
+      (changes-val-macro
+        2 (:credit (get-corp))
+        "Corp gains 2 credits"
+        (card-subroutine state :corp vam 1))
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "Runner suffers 2 net damage"
+        (card-subroutine state :corp vam 2))
+      (changes-val-macro
+        2 (count (:hand (get-corp)))
+        "Corp draws 2 cards"
+        (card-subroutine state :corp vam 3)
+        (click-prompt state :corp "2")))))
+
+(deftest vampyronassa-draw-no-cards
+  ;; Vampyronassa - choose to skip drawing cards
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3)]
+                      :hand ["Vampyronassa"]}})
+    (play-from-hand state :corp "Vampyronassa" "HQ")
+    (take-credits state :corp)
+    (let [vam (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp vam)
+      (run-continue state)
+      (changes-val-macro
+        0 (count (:hand (get-corp)))
+        "Corp draws no cards"
+        (card-subroutine state :corp vam 3)
+        (click-prompt state :corp "0")))))
+
+
 (deftest vasilisa
   ;; Vasilisa
   (do-game
