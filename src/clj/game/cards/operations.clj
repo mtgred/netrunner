@@ -648,6 +648,13 @@
       :effect (req (wait-for (gain-credits state :runner 2)
                              (continue-ability state side trash-from-hq card nil)))}}))
 
+(defcard "Distributed Tracing"
+  {:on-play
+   {:req (req (last-turn? state :runner :stole-agenda))
+    :msg "give the runner a tag"
+    :async true
+    :effect (req (gain-tags state :corp eid 1))}})
+
 (defcard "Diversified Portfolio"
   (letfn [(number-of-non-empty-remotes [state]
             (count (filter seq (map #(:content (second %)) (get-remotes state)))))]

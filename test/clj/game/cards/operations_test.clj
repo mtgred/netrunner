@@ -1039,6 +1039,21 @@
     (is (= 1 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
     (is (= 7 (:credit (get-runner))) "Runner gained 2 credits")))
 
+(deftest distributed-tracing
+  ;; Distributed Tracing
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Distributed Tracing" "Hostile Takeover"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Distributed Tracing")
+    (is (no-prompt? state :corp) "Corp should have no prompt without agenda stolen")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Distributed Tracing")
+    (is (= 1 (count-tags state)) "Runner took 1 tag")))
+
 (deftest diversified-portfolio
   (do-game
     (new-game {:corp {:deck ["Diversified Portfolio"
