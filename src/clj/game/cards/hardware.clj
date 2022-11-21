@@ -2230,6 +2230,19 @@
              :effect (effect (gain-credits :runner eid 1))
              :msg "gain 1 [Credits]"}]})
 
+(defcard "Zenit Chip JZ-2MJ"
+  {:on-install {:async true
+                :effect (effect (damage eid :brain 1 {:card card}))}
+   :events [{:event :successful-run
+             :async true
+             :req (req (and (is-central? (:server context))
+                            (first-event? state side :successful-run
+                                          (fn [targets]
+                                            (let [context (first targets)]
+                                              (is-central? (:server context)))))))
+             :msg "draw 1 card"
+             :effect (req (draw state :runner eid 1))}]})
+
 (defcard "Zer0"
   {:abilities [{:cost [:click 1 :net 1]
                 :once :per-turn
