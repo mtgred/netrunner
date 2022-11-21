@@ -314,9 +314,14 @@
                             (continue-ability state side (search-and-host (dec x)) card nil)
                             (effect-completed state side eid)))})]
     {:on-install {:msg "shuffle the stack"
-                  :effect (effect (continue-ability (search-and-host 2) card nil)
-                                  (trigger-event :searched-stack nil)
-                                  (shuffle! :deck))}
+                  :async true
+                  :effect (req (wait-for (resolve-ability state side
+                                                          (make-eid state eid) 
+                                                          (search-and-host 2)
+                                                          card nil)
+                                         (trigger-event state side :searched-stack nil)
+                                         (shuffle! state side :deck)
+                                         (effect-completed state side eid)))}
       :events [{:event :runner-turn-begins
                 :label "Add a hosted card to the grip (start of turn)"
                 :prompt "Choose a hosted card to move to the grip"
