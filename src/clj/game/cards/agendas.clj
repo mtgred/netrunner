@@ -355,6 +355,7 @@
                              (no-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))))
               :waiting-prompt true
               :prompt "Give the runner 1 tag?"
+              :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:async true
                :msg "give the Runner a tag for installing an icebreaker"

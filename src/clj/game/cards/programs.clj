@@ -1864,7 +1864,20 @@
     (assoc cdef :events (apply conj events (:events cdef)))))
 
 (defcard "Mongoose"
-  (auto-icebreaker {:implementation "Usage restriction is not implemented"
+  (auto-icebreaker {:events [{:event :subroutines-broken
+                              :silent (req true)
+                              :req (req (and (any-subs-broken-by-card? target card)
+                                             run))
+                              :effect (req (let [broken-ice target]
+                                             (register-floating-effect
+                                               state side
+                                               card
+                                               {:type :prevent-paid-ability
+                                                :duration :end-of-run
+                                                :req (req (let [[break-card break-ability] targets]
+                                                            (and (not (same-card? current-ice broken-ice))
+                                                                 (same-card? break-card card))))
+                                                :value (req true)})))}]
                     :abilities [(break-sub 1 2 "Sentry")
                                 (strength-pump 2 2)]}))
 
@@ -2126,7 +2139,7 @@
                                    sort))
                 :msg (msg "make " (card-str state current-ice)
                           " gain " target
-                          " until end of the run")
+                          " until end of the encounter")
                 :effect (effect (register-floating-effect
                                   card
                                   (let [ice current-ice]

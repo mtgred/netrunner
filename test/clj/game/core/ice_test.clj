@@ -159,7 +159,7 @@
           (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh corroder)}))
         (is (= 5 (:current-strength (refresh corroder))) "Breaker strength equals ice strength")
         (is (not (some #{:broken} (:subroutines fire-wall))) "No subroutines have been broken")
-        (is (empty (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh corroder)))) "No auto pump ability since breaker is at strength"))))
+        (is (empty? (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh corroder)))) "No auto pump ability since breaker is at strength"))))
   (testing "Auto pump handles pump abilities with variable strength"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

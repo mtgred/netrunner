@@ -508,6 +508,7 @@
                                      state side
                                      {:optional
                                       {:prompt "Draw 1 card?"
+                                       :autoresolve (get-autoresolve :auto-fire)
                                        :yes-ability {:async true
                                                      :msg "draw 1 card"
                                                      :effect (effect (draw eid 1))}}}
@@ -515,7 +516,8 @@
                                    (continue-ability
                                      state side
                                      (sabotage-ability 2)
-                                     card nil)))}]}))
+                                     card nil)))}]
+     :abilities [(set-autoresolve :auto-fire "Esâ Afontov: Eco-Insurrectionist drawing cards")]}))
 
 (defcard "Exile: Streethawk"
   {:flags {:runner-install-draw true}
@@ -770,8 +772,8 @@
                                       (wait-for (lose-credits state :runner (make-eid state eid) 1)
                                                 (system-msg state :runner "uses Hoshiko Shiro: Mahou Shoujo to draw 1 card and lose 1 [Credits]")
                                                 (effect-completed state side eid))))}]
-     :abilities [{:label "flip ID"
-                  :msg "flip their ID manually"
+     :abilities [{:label "flip identity"
+                  :msg "flip their identity manually"
                   :effect flip-effect}]}))
 
 (defcard "Hyoubu Institute: Absolute Clarity"
@@ -1758,7 +1760,7 @@
                                            (move state :runner chosen :rfg)
                                            (move state :runner other :hand)))})
                          card nil))}}}]
-   :abilities [(set-autoresolve :auto-fire "Steve Cambridge")]})
+   :abilities [(set-autoresolve :auto-fire "Steve Cambridge: Master Grifter")]})
 
 (defcard "Strategic Innovations: Future Forward"
   {:events [{:event :pre-start-game
@@ -1801,7 +1803,7 @@
                                (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
                                (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
-                :msg "flip their ID"}]})
+                :msg "flip their identity"}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game

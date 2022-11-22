@@ -228,7 +228,7 @@
      :abilities [(set-autoresolve :auto-fire "Amani Senai")]}))
 
 (defcard "Anson Rose"
-  (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
+  (let [ability {:label "Place 1 advancement token (start of turn)"
                  :once :per-turn
                  :msg "place 1 advancement token on itself"
                  :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
@@ -358,14 +358,14 @@
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
-   :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund (start of turn)"
-                :prompt "How many credits do you want to move?"
+   :abilities [{:label "Store up to 3 [Credit] (start of turn)"
+                :prompt "How many credits do you want to store?"
                 :once :per-turn
                 :choices {:number (req (min (:credit corp) 3))}
                 :async true
                 :effect (effect (add-counter card :credit target)
                                 (lose-credits eid target))
-                :msg (msg "move " target " [Credit] to C.I. Fund")}
+                :msg (msg "store " target " [Credit]")}
                {:label "Take all hosted credits"
                 :cost [:credit 2 :trash-can]
                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
@@ -1455,13 +1455,13 @@
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req (pos? (count (get-in @state [:corp :discard]))))}
    :abilities [{:label "Shuffle cards in Archives into R&D"
-                :prompt (msg (let [mus (count (filter #(and (= "10019" (:code %))
+                :prompt (msg (let [mus (count (filter #(and (= (:title card) (:title %))
                                                             (rezzed? %))
                                                       (all-installed state :corp)))]
                                (str "Choose " (quantify mus "card") " in Archives to shuffle into R&D")))
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))
-                          :max (req (count (filter #(and (= "10019" (:code %))
+                          :max (req (count (filter #(and (= (:title card) (:title %))
                                                          (rezzed? %))
                                                    (all-installed state :corp))))}
                 :show-discard true
@@ -2345,7 +2345,7 @@
                 :effect (req (apply swap-installed state side targets))}]})
 
 (defcard "Test Ground"
-  (letfn [(derez-card [advancements & wait-msg]
+  (letfn [(derez-card [advancements]
             (when (pos? advancements)
               {:async true
                :waiting-prompt true
@@ -2360,9 +2360,7 @@
                   :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
                   :cost [:trash-can]
                   :async true
-                  :effect (req (let [advancements (get-counters card :advancement)
-                                     wait-msg (str "Corp to derez " (quantify advancements "card"))]
-                                 (continue-ability state side (derez-card advancements wait-msg) card nil)))}]}))
+                  :effect (req (continue-ability state side (derez-card (get-counters card :advancement)) card nil))}]}))
 
 (defcard "The Board"
   {:on-trash executive-trash-effect

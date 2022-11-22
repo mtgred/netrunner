@@ -906,8 +906,7 @@
                               (move state side target :hand)
                               (effect-completed state side eid)))}
               :no-ability
-              {:effect (effect (system-msg (str "declines to use " (:title card)))
-                               (effect-completed state side eid))}}}]})
+              {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
 
 (defcard "Manegarm Skunkworks"
   {:events [{:event :approach-server

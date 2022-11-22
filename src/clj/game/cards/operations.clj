@@ -271,8 +271,7 @@
     :effect (req (as-agenda state :corp card 1))}})
 
 (defcard "Bad Times"
-  {:implementation "Any required program trashing is manual"
-   :on-play {:req (req tagged)
+  {:on-play {:req (req tagged)
              :msg "force the Runner to lose 2[mu] until the end of the turn"
              :effect (req (register-floating-effect
                             state :corp card
@@ -2235,11 +2234,11 @@
    {:prompt "Choose an installed card"
     :req (req (some #(and (corp? %)
                           (installed? %)
-                          (not (= :this-turn (installed? %))))
+                          (not= :this-turn (installed? %)))
                     (all-installed state :corp)))
     :choices {:card #(and (corp? %)
                           (installed? %)
-                          (not (= :this-turn (installed? %))))}
+                          (not= :this-turn (installed? %)))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
     :async true
     :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})

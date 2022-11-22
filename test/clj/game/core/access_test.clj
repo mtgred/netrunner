@@ -513,7 +513,7 @@
         (is (accessing state "Breaking News"))
         (click-prompt state :runner "Steal")
         (is (= 3 (count (:scored (get-runner)))) "3 agendas stolen")
-        (is (empty (:discard (get-corp))) "0 agendas left in archives")))
+        (is (empty? (:discard (get-corp))) "0 agendas left in archives")))
   (testing "choosing Everything else first #5151"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

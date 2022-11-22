@@ -2690,13 +2690,15 @@
                                       state side
                                       {:optional
                                        {:prompt "Draw 1 card?"
+                                        :autoresolve (get-autoresolve :auto-fire)
                                         :yes-ability {:async true
                                                       :msg "draw 1 card"
                                                       :effect (effect (draw eid 1))}}}
                                       card nil)))}]
     {:subroutines [sub
                    sub]
-     :runner-abilities [(bioroid-break 2 2)]}))
+     :runner-abilities [(bioroid-break 2 2)]
+     :abilities [(set-autoresolve :auto-fire "Nerine 2.0 drawing cards")]}))
 
 (defcard "Neural Katana"
   {:subroutines [(do-net-damage 3)]})

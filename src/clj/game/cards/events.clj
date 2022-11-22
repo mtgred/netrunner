@@ -1043,7 +1043,7 @@
                {:prompt "Choose a card type"
                 :choices ["Asset" "Upgrade" "Operation" "ICE"]
                 :msg (msg "reveal 2 cards from HQ and trash all "
-                          target (when (not (= "ICE" target)) "s"))
+                          target (when (not= "ICE" target) "s"))
                 :async true
                 :effect (req (let [cards-to-reveal (take 2 (shuffle (:hand corp)))
                                    cards-to-trash (filter #(is-type? % target) cards-to-reveal)
