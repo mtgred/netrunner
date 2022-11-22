@@ -1644,3 +1644,27 @@
                             :effect (req (wait-for (trash state side card {:cause-card card})
                                                    (move state :runner target :deck)
                                                    (effect-completed state side eid)))}}}]})
+
+(defcard "ZATO City Grid"
+  {:constant-effects [{:type :gain-encounter-ability
+                       :req (req (and (protecting-same-server? card target)
+                                      (some #(:printed %) (:subroutines target))
+                                      (not (:disabled target))))
+                       :value (req {:async true
+                                    :interactive (req true)
+                                    :optional
+                                    {:waiting-prompt "Corp to make a decision"
+                                     :prompt "Trash ice to fire a (printed) subroutine?"
+                                     :yes-ability {:msg (msg "trash " (card-str state (:ice context)))
+                                                   :effect (req (let [target-ice (:ice context)]
+                                                                  (wait-for (trash state side target-ice {:cause-card target-ice})
+                                                                            (continue-ability
+                                                                              state side
+                                                                              {:prompt "Choose a subroutine to resolve"
+                                                                               :choices (req (unbroken-subroutines-choice target-ice))
+                                                                               :msg (msg "resolves the subroutine (\"[Subroutine] "
+                                                                                         target "\") from " (:title target-ice))
+                                                                               :async true
+                                                                               :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines target-ice)))]
+                                                                                              (continue-ability state side (:sub-effect sub) target-ice nil)))}
+                                                                              card nil))))}}})}]})

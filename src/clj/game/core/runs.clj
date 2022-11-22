@@ -5,9 +5,9 @@
     [game.core.card :refer [get-card get-zone rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
-    [game.core.effects :refer [any-effects]]
+    [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event]]
+    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
     [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
@@ -306,11 +306,15 @@
   (swap! state update :encounters conj {:eid eid
                                         :ice ice})
   (check-auto-no-action state)
-  (let [on-encounter (:on-encounter (card-def ice))]
+  (let [on-encounter (:on-encounter (card-def ice))
+        applied-encounters (get-effects state nil ice :gain-encounter-ability)
+        all-encounters (conj applied-encounters on-encounter)]
+    (system-msg state side (str "effects: " all-encounters))
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
-    (when on-encounter
-      (register-pending-event state :encounter-ice ice on-encounter))
-    (queue-event state :encounter-ice {:ice ice})
+    (when-not (empty? all-encounters)
+      (doall (map #(register-pending-event state :encounter-ice ice %) all-encounters)))
+    ;;(register-pending-event state :encounter-ice ice on-encounter))
+    (queue-event state :encounter-ice {:ice (assoc ice :title "test")})
     (wait-for (checkpoint state side
                           (make-eid state eid)
                           {:cancel-fn (fn [state]
