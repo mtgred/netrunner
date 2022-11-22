@@ -346,7 +346,7 @@
 
 (defcard "Chop Bot 3000"
   (let [ability {:req (req (>= (count (all-installed state :runner)) 2))
-                 :label "trash and draw or remove tag"
+                 :label "Trash another installed card to draw 1 card or remove 1 tag"
                  :once :per-turn
                  :choices {:card #(and (runner? %)
                                        (installed? %))
@@ -355,20 +355,17 @@
                  :effect (req (wait-for (trash state :runner target {:unpreventable true :cause-card card})
                                         (continue-ability
                                           state side
-                                          (let [trash-str (str "uses Chop Bot 3000 to trash " (:title target))
-                                                deck (pos? (count (:deck runner)))
+                                          (let [trashed-card target
                                                 tags (pos? (count-real-tags state))]
-                                            {:req (req (or deck tags))
-                                             :prompt "Choose one"
+                                            {:prompt "Choose one"
                                              :waiting-prompt true
-                                             :choices [(when deck "Draw 1 card")
+                                             :choices ["Draw 1 card"
                                                        (when tags "Remove 1 tag")]
                                              :async true
+                                             :msg (msg "trash " (:title trashed-card) " and " (decapitalize target))
                                              :effect (req (if (= target "Draw 1 card")
-                                                            (do (system-msg state :runner (str trash-str " and draw 1 card"))
-                                                                (draw state :runner eid 1))
-                                                            (do (system-msg state :runner (str trash-str " and remove 1 tag"))
-                                                                (lose-tags state :runner eid 1))))})
+                                                            (draw state :runner eid 1)
+                                                            (lose-tags state :runner eid 1)))})
                                           card nil)))}]
     {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
      :events [(assoc ability
