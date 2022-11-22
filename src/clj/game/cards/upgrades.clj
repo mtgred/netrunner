@@ -1681,6 +1681,33 @@
                                                    (move state :runner target :deck)
                                                    (effect-completed state side eid)))}}}]})
 
+(defcard "Yakov Erikovich Avdakov"
+  (letfn [(valid-target-fn [target card]
+            (and (same-server? card (:card target))
+                 (corp? (:card target))
+                 (installed? (:card target))))]
+    {:events [{:event :runner-trash
+               :async true
+               :once-per-instance false
+               :req (req (valid-target-fn target card))
+               :msg "gain 2 [Credits]"
+               :effect (effect (gain-credits eid 2))}
+              {:event :corp-trash
+               :interactive (req true)
+               :once-per-instance false
+               :req (req (let [cause (:cause target)
+                               cause-card (:cause-card target)]
+                           (and (or
+                                  (corp? (:source eid))
+                                  (= :ability-cost cause)
+                                  (= :subroutine cause)
+                                  (and (corp? cause-card) (not= cause :opponent-trashes))
+                                  (and (runner? cause-card) (= cause :forced-to-trash)))
+                                (valid-target-fn target card))))
+               :async true
+               :msg "gain 2 [Credits]"
+               :effect (effect (gain-credits eid 2))}]}))
+
 (defcard "ZATO City Grid"
   {:constant-effects [{:type :gain-encounter-ability
                        :req (req (and (protecting-same-server? card target)
