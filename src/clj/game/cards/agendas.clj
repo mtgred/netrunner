@@ -966,7 +966,7 @@
                                      (in-discard? %)
                                      (not (faceup? %)))}
                :effect (effect (corp-install (make-eid state {:source card :source-type :corp-install}) target nil nil))
-               :cancel-effect {:effect (effect (system-msg "declines to use Hybrid Release"))}
+               :cancel-effect (effect (system-msg "declines to use Hybrid Release"))
                :msg (msg "install " (card-str state target))}})
 
 (defcard "Hyperloop Extension"
