@@ -309,7 +309,6 @@
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil ice :gain-encounter-ability)
         all-encounters (conj applied-encounters on-encounter)]
-    (system-msg state side (str "effects: " all-encounters))
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (when-not (empty? all-encounters)
       (doall (map #(register-pending-event state :encounter-ice ice %) all-encounters)))

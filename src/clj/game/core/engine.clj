@@ -890,7 +890,12 @@
                                                      (card-for-ability state (:handler %))
                                                      (:context %)))))
                              handlers)
-          titles (keep #(card-for-ability state (:handler %)) non-silent)
+          cards-with-titles (filter #(card-for-ability state (:handler %)) non-silent)
+          titles (map #(card-for-ability state (:handler %)) cards-with-titles)
+          choices-map (map #(vector (or (:ability-name (:ability (:handler %)))
+                                        (card-for-ability state (:handler %)))
+                                    %) cards-with-titles)
+          choices-titles (map first choices-map)
           interactive (filter #(let [interactive-fn (:interactive (:ability (:handler %)))]
                                  (and interactive-fn
                                       (interactive-fn state side
@@ -926,8 +931,11 @@
           (when (pos? (count handlers))
             {:async true
              :prompt "Choose a trigger to resolve"
-             :choices titles
-             :effect (req (let [handler (some #(when (same-card? target (card-for-ability state (:handler %))) %) handlers)
+             :choices choices-titles
+             :effect (req (let [choice-target (first (filter #(or (= target (first %))
+                                                                  (same-card? target (first %))) choices-map))
+                                handler (second choice-target)
+                                ;;(some #(when (same-card? target (card-for-ability state (:handler %))) %) handlers)
                                 to-resolve (:handler handler)
                                 ability (:ability to-resolve)
                                 context (:context handler)
@@ -940,7 +948,7 @@
                                                context)
                               (when (:unregister-once-resolved to-resolve)
                                 (unregister-event-by-uuid state side (:uuid to-resolve)))
-                              (let [remaining-handlers (remove-once #(same-card? target (card-for-ability state (:handler %))) handlers)]
+                              (let [remaining-handlers (remove-once #(= handler %) handlers)]
                                 (trigger-queued-event-player state side eid remaining-handlers args)))))})
           nil nil)))))
 

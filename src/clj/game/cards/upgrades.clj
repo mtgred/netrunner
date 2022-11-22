@@ -1651,6 +1651,7 @@
                                       (some #(:printed %) (:subroutines target))
                                       (not (:disabled target))))
                        :value (req {:async true
+                                    :ability-name "ZATO Ability"
                                     :interactive (req true)
                                     :optional
                                     {:waiting-prompt "Corp to make a decision"
