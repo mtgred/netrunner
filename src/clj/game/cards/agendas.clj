@@ -1012,6 +1012,29 @@
      :msg (msg "place 2 advancement token on " (card-str state target))
      :effect (effect (add-prop :corp target :advance-counter 2 {:placed true}))}]})
 
+(defcard "Kimberlite Field"
+  {:on-score
+   {:interactive (req true)
+    :waiting-prompt "Corp to make a decision"
+    :prompt "Choose a card to trash"
+    :req (req (some rezzed? (all-installed state :corp)))
+    :choices {:card #(rezzed? %)}
+    :cancel-effect (effect (system-msg :runner "declines to use Kimberlite Field to trash a card")
+                           (effect-completed eid))
+    :effect (req (let [target-cost (rez-cost state :corp target)
+                       prompt-str (str "trash a runner card that costs " target-cost " or less")]
+                   (wait-for (trash state side target {:cause-card card})
+                             (continue-ability
+                               state side
+                               {:prompt prompt-str
+                                :choices {:card #(and (installed? %)
+                                                      (runner? %)
+                                                      (<= (install-cost state :runner %) target-cost))}
+                                :msg (str "trash " (card-str state target))
+                                :async true
+                                :effect (effect (trash eid target))}
+                               card nil))))}})
+
 (defcard "Labyrinthine Servers"
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :power 2))}

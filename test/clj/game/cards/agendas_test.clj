@@ -1984,6 +1984,31 @@
         (run-jack-out state)
         (is (not (:run @state)) "No jack out prevent prompt")))))
 
+(deftest kimberlite-no-target
+  (do-game
+    (new-game {:corp {:hand ["Kimberlite Field" "Rashida Jaheem"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (play-and-score state "Kimberlite Field")
+    (is (no-prompt? state :corp))))
+
+(deftest kimberlite-standard-functionality
+  (do-game
+    (new-game {:corp {:hand ["Kimberlite Field" "Echo Chamber"]}
+               :runner {:hand ["Amina" "Paperclip"] :credits 15}})
+    (play-from-hand state :corp "Echo Chamber" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Amina")
+    (play-from-hand state :runner "Paperclip")
+    (take-credits state :runner)
+    (rez state :corp (get-content state :remote1 0))
+    (play-and-score state "Kimberlite Field")
+    (click-card state :corp "Echo Chamber")
+    (click-card state :corp "Amina")
+    (is (= 0 (count (:discard (get-runner)))) "amina not trashed")
+    (click-card state :corp "Paperclip")
+    (is (= 1 (count (:discard (get-runner)))) "clippy trashed")
+    (is (no-prompt? state :corp))))
+
 (deftest license-acquisition
   ;; License Acquisition
   (do-game
