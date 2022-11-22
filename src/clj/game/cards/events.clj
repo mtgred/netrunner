@@ -2818,15 +2818,15 @@
 
 (defcard "Reprise"
   (letfn [(opt-run []
-    {:optional
-     {:prompt "Run a server?"
-      :yes-ability
-      {:prompt "Choose a server"
-       :choices (req runnable-servers)
-       :async true
-       :msg (msg "make a run on " target)
-       :effect (effect (make-run eid target card))}
-       :no-ability {:effect (effect (system-msg (str "declines to use Reprise to make a run")))}}})]
+            {:optional
+             {:prompt "Run a server?"
+              :yes-ability
+              {:prompt "Choose a server"
+               :choices (req runnable-servers)
+               :async true
+               :msg (msg "make a run on " target)
+               :effect (effect (make-run eid target card))}
+               :no-ability {:effect (effect (system-msg "declines to use Reprise to make a run"))}}})]
     {:makes-run true
      :on-play
      {:async true
