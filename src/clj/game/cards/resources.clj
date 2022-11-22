@@ -1247,7 +1247,8 @@
                                  (effect-completed state side eid)))}]}))
 
 (defcard "Find the Truth"
-  {:events [{:event :post-runner-draw
+  {:implementation "Corporation can click Find the Truth for explicit card reveals"
+   :events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
                        (str/join ", " (map :title runner-currently-drawing)))
              :async true
