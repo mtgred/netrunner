@@ -1619,18 +1619,16 @@
                   :prompt "Choose one"
                   :waiting-prompt true
                   :choices (req ["Take 1 tag"
-                                 (when (can-pay? state :runner eid card nil :credit 4)
+                                 (when (can-pay? state :runner eid card nil [:credit 4])
                                    "Pay 4 [Credits]")])
                   :msg (msg (if (= target "Pay 4 [Credits]")
                               (str "force the runner to " (decapitalize target))
                               "give the runner 1 tag"))
-                  :effect (effect (continue-ability
-                                    (if (= "Take 1 tag" target)
-                                      (give-tags 1)
-                                      (wait-for (pay state :runner (make-eid state eid) card :credit 4)
-                                                (system-msg state :runner (:msg async-result))
-                                                (effect-completed state side eid)))
-                                    card nil))}]})
+                  :effect (req (if (= "Take 1 tag" target)
+                                 (gain-tags state :corp eid 1)
+                                 (wait-for (pay state side (make-eid state eid) card :credit 4)
+                                           (system-msg state side (:msg async-result))
+                                           (effect-completed state side eid))))}]})
 
 (defcard "Galahad"
   (grail-ice end-the-run))
