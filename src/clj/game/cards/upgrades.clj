@@ -577,7 +577,7 @@
 
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
-             :req (req (and (every? :broken (:subroutines target))
+             :req (req (and (all-subs-broken? target)
                             (protecting-same-server? card target)))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))

@@ -428,8 +428,8 @@
 (defcard "Cyberdelia"
   {:constant-effects [(mu+ 1)]
    :events [{:event :subroutines-broken
-             :req (req (and (every? :broken (:subroutines target))
-                            (first-event? state side :subroutines-broken #(every? :broken (:subroutines (first %))))))
+             :req (req (and (all-subs-broken? target)
+                            (first-event? state side :subroutines-broken #(all-subs-broken? (first %)))))
              :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
              :async true
              :effect (effect (gain-credits eid 1))}]})
@@ -1006,7 +1006,7 @@
             (fn [events]
               (->> outermost-ices
                    (map #(and (same-card? % (first events))
-                                            (every? :broken (:subroutines (first events)))))
+                                            (all-subs-broken? (first events))))
                    (filter true?)
                    seq)))]
     {:events [{:event :subroutines-broken
@@ -1015,7 +1015,7 @@
                                 outermost-ices (filter #(some? %) (map #(last (:ices %)) servers))
                                 pred (build-hippo-pred outermost-ices)]
                             (and (same-card? (last run-ices) target)
-                                 (every? :broken (:subroutines target))
+                                 (all-subs-broken? target)
                                  (first-event? state side :subroutines-broken pred))))
                 :prompt (msg "Remove Hippo from the game to trash " (:title target) "?")
                 :yes-ability
