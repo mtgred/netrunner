@@ -30,7 +30,7 @@
                             register-persistent-flag! register-run-flag!]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+]]
-   [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice
+   [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
    [game.core.installing :refer [corp-install]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
@@ -963,7 +963,8 @@
                                                                                         target "\") from " (:title ice))
                                       :async true
                                       :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
-                                                     (continue-ability state side (:sub-effect sub) ice nil)))})
+                                                     (resolve-subroutine! state side eid ice (assoc sub :external-trigger true))))})
+                                   ;;(continue-ability state side (:sub-effect sub) ice nil)))})
                                    card nil))}}}]})
 
 (defcard "Mason Bellamy"
@@ -1657,6 +1658,7 @@
                                     {:waiting-prompt "Corp to make a decision"
                                      :prompt "Trash ice to fire a (printed) subroutine?"
                                      :yes-ability {:msg (msg "trash " (card-str state (:ice context)))
+                                                   :async true
                                                    :effect (req (let [target-ice (:ice context)]
                                                                   (wait-for (trash state side target-ice {:cause-card target-ice})
                                                                             (continue-ability
@@ -1667,5 +1669,5 @@
                                                                                          target "\") from " (:title target-ice))
                                                                                :async true
                                                                                :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines target-ice)))]
-                                                                                              (continue-ability state side (:sub-effect sub) target-ice nil)))}
+                                                                                              (resolve-subroutine! state side eid target-ice (assoc sub :external-trigger true))))}
                                                                               card nil))))}}})}]})

@@ -269,7 +269,9 @@
      (resolve-subroutine! state side eid ice sub)))
   ([state side eid ice sub]
    (trigger-event state side :pre-resolve-subroutine sub ice)
-   (update! state :corp (resolve-subroutine ice sub))
+   ;; this is for cards like marcus batty
+   (when-not (:exernal-trigger sub)
+     (update! state :corp (resolve-subroutine ice sub)))
    (let [replacement (:replace-subroutine (get-current-encounter state))
          sub (or (when replacement (assoc replacement :index (:index sub))) sub)]
      (update-current-encounter state :replace-subroutine nil)

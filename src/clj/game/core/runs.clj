@@ -308,10 +308,12 @@
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil ice :gain-encounter-ability)
-        all-encounters (conj applied-encounters on-encounter)]
+        all-encounters (remove nil? (conj applied-encounters on-encounter))]
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
-    (when-not (empty? all-encounters)
-      (doall (map #(register-pending-event state :encounter-ice ice %) all-encounters)))
+    (doseq [on-encounter all-encounters]
+      (register-pending-event state :encounter-ice ice on-encounter))
+    ;;(when-not (empty? all-encounters)
+    ;;  (doall (map #(register-pending-event state :encounter-ice ice %) all-encounters)))
     ;;(register-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice (assoc ice :title "test")})
     (wait-for (checkpoint state side
