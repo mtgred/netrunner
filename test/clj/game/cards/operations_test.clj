@@ -4004,6 +4004,32 @@
       (click-card state :corp "Ice Wall")
       (is (= credits (:credit (get-corp))) "Corp shouldn't pay anything to rez Ice Wall"))))
 
+(deftest simulation-reset
+  ;; Simulation Reset
+  (do-game
+    (new-game {:corp {:hand ["Simulation Reset" "Ganked!" "Mitosis" "Patch" "Restore" "IPO"]
+                      :deck ["Hedge Fund"]
+                      :discard ["Fire Wall" "Ice Wall"]}})
+    (play-from-hand state :corp "Simulation Reset")
+    (click-card state :corp "Ganked!")
+    (click-card state :corp "Mitosis")
+    (click-card state :corp "Patch")
+    (click-card state :corp "Restore")
+    (click-prompt state :corp "Done")
+    (is (not (= "Choose up to 5 cards in HQ to trash"
+                (:msg (prompt-map :runner)))) "Now choosing cards to shuffle back to R&D")
+    (click-card state :corp "Fire Wall")
+    (click-card state :corp "Ice Wall")
+    (click-card state :corp "Mitosis")
+    (click-card state :corp "Restore")
+    (is (no-prompt? state :corp))
+    (is (= 1 (count (:rfg (get-corp)))) "Simulation Reset removed from game")
+    (is (find-card "Ganked!" (:discard (get-corp))))
+    (is (find-card "Patch" (:discard (get-corp))))
+    (is (not (find-card "Ice Wall" (:discard (get-corp)))) "Ice Wall has been shuffled into R&D")
+    (is (not (find-card "Restore" (:discard (get-corp)))) "Restore has been shuffled into R&D")
+    (is (= 5 (count (:hand (get-corp)))))))
+
 (deftest snatch-and-grab
   ;; Snatch and Grab
   (do-game

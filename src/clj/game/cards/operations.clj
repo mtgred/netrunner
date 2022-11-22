@@ -2406,6 +2406,27 @@
       :async true
       :effect (effect (continue-ability (rez-helper targets) card nil))}}))
 
+(defcard "Simulation Reset"
+  (letfn [(trash-and-shuffle [t] {:async true
+                                  :effect
+                                  (req (wait-for (trash-cards state side t
+                                                              {:unpreventable true :cause-card card})
+                                                 (shuffle-into-rd-effect state side eid card (count t) true)))})]
+    {:on-play
+     {:rfg-instead-of-trashing true
+      :prompt "Choose up to 5 cards in HQ to trash"
+      :choices {:max (req 5)
+                :card #(and (corp? %)
+                            (in-hand? %))}
+      :async true
+      :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+      :effect (req (let [n (count targets)]
+                     (wait-for (resolve-ability state side (trash-and-shuffle targets) card nil)
+                               (continue-ability state side
+                                                 {:msg (msg "draw " (quantify n "card"))
+                                                  :effect (effect (draw eid n))}
+                                                 card nil))))}}))
+
 (defcard "Snatch and Grab"
   {:on-play
    {:trace
