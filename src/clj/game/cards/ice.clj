@@ -1558,7 +1558,7 @@
    [{:event :approach-server
      :interactive (req true)
      :optional
-     {:prompt (msg "Rez and move " (:title card) " to protect the approched server?")
+     {:prompt (msg "Rez and move " (card-str state card {:visible true}) " to protect the approched server?")
       :autoresolve (get-autoresolve :auto-fire)
       :req (req (and (can-rez? state side card)
                      (can-pay? state side eid card nil (get-rez-cost state side card nil))))
