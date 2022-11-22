@@ -168,13 +168,13 @@
      :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
      :effect (req (case target
                     "Gain 1 [Credits]"
-                    (do (system-msg state :corp (str "uses Advanced Concept Hopper to gain 1 [Credits]"))
+                    (do (system-msg state :corp (str "uses " (:title card) " to gain 1 [Credits]"))
                         (gain-credits state :corp eid 1))
                     "Draw 1 card"
-                    (do (system-msg state :corp (str "uses Advanced Concept Hopper to draw 1 card"))
+                    (do (system-msg state :corp (str "uses " (:title card) " to draw 1 card"))
                         (draw state :corp eid 1))
                     "No action"
-                    (do (system-msg state :corp "declines to use Advanced Concept Hopper")
+                    (do (system-msg state :corp (str "declines to use " (:title card)))
                         (effect-completed state side eid))))}]})
 
 (defcard "Ancestral Imager"
@@ -672,7 +672,7 @@
     :waiting-prompt true
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
-    :cancel-effect (effect (system-msg :runner "declines to use Élivágar Bifurcation to derez a card")
+    :cancel-effect (effect (system-msg :runner (str "declines to use " (:title card) " to derez a card"))
                            (effect-completed eid))
     :effect (effect (derez target))}})
 
@@ -975,7 +975,7 @@
                                              :effect (effect (gain-bad-publicity :corp 1))}}}
                              card nil)
                            (let [n (* 3 (count-bad-pub state))]
-                             (system-msg state side (str "uses Illicit Sales to gain " n " [Credits]"))
+                             (system-msg state side (str "uses " (:title card) " to gain " n " [Credits]"))
                              (gain-credits state side eid n))))}})
 
 (defcard "Improved Protein Source"
@@ -1041,7 +1041,7 @@
                           (in-hand? %))}
     :msg (msg "trash " (quantify (count targets) "card") " from HQ")
     :async true
-    :cancel-effect (req (system-msg state :corp "declines to use Longevity Serum to trash any cards from HQ")
+    :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to trash any cards from HQ"))
                         (shuffle-into-rd-effect state side eid card 3)
                         (effect-completed state side eid))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
@@ -1265,7 +1265,7 @@
 
 (defcard "Posted Bounty"
   {:on-score {:optional
-              {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
+              {:prompt "Forfeit this agenda to give the Runner 1 tag and take 1 bad publicity?"
                :yes-ability
                {:msg "give the Runner 1 tag and take 1 bad publicity"
                 :async true
@@ -1332,7 +1332,7 @@
                 :req (req (pos? (get-counters card :agenda)))
                 :msg (msg "add " (:title target) " to HQ from R&D")
                 :choices (req (cancellable (:deck corp) :sorted))
-                :cancel-effect (effect (system-msg "cancels the effect of Project Atlas"))
+                :cancel-effect (effect (system-msg (str "declines to use " (:title card))))
                 :effect (effect (shuffle! :deck)
                                 (move target :hand))}]})
 
@@ -1547,7 +1547,7 @@
                            (update-all-advancement-requirements state)
                            (update-all-agenda-points state)
                            (check-win-by-agenda state side))
-              :cancel-effect (effect (system-msg "declines to use Regenesis to reveal an agenda in Archives"))}})
+              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal an agenda in Archives")))}})
 
 (defcard "Remastered Edition"
   {:on-score {:effect (effect (add-counter card :agenda 1))
@@ -1597,14 +1597,14 @@
 
 (defcard "Research Grant"
   {:on-score {:interactive (req true)
-              :silent (req (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
+              :silent (req (empty? (filter #(= (:title %) (:title card)) (all-installed state :corp))))
               :async true
               :effect (effect (continue-ability
-                                {:prompt "Choose another installed copy of Research Grant to score"
-                                 :choices {:card #(= (:title %) "Research Grant")}
+                                {:prompt (str "Choose another installed copy of " (:title card) " to score")
+                                 :choices {:card #(= (:title %) (:title card))}
                                  :interactive (req true)
                                  :async true
-                                 :req (req (seq (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
+                                 :req (req (seq (filter #(= (:title %) (:title card)) (all-installed state :corp))))
                                  :effect (effect (score eid (get-card state target) {:no-req true}))
                                  :msg "score another installed copy of itself"}
                                 card nil))}})
@@ -1712,19 +1712,19 @@
              :cancel-effect (req (if (= side :runner)
                                    (wait-for (draw state :corp 1)
                                              (clear-wait-prompt state :corp)
-                                             (system-msg state :runner "declines to trash a card for Standoff")
-                                             (system-msg state :corp "uses Standoff to draw 1 card and gain 5 [Credits]")
+                                             (system-msg state :runner (str "declines to trash a card for " (:title card)))
+                                             (system-msg state :corp (str "uses " (:title card) " to draw 1 card and gain 5 [Credits]"))
                                              (gain-credits state :corp eid 5))
-                                   (do (system-msg state :corp "declines to trash a card for Standoff")
+                                   (do (system-msg state :corp (str "declines to trash a card for " (:title card)))
                                        (clear-wait-prompt state :runner)
                                        (effect-completed state :corp eid))))
              :effect (req (wait-for (trash state side target
                                            (if (= side :corp)
                                              {:unpreventable true :cause-card card}
                                              {:unpreventable true :cause-card card :cause :forced-to-trash}))
-                                    (system-msg state side (str "trashes " (card-str state target) " for Standoff"))
+                                    (system-msg state side (str "trashes " (card-str state target) " for " (:title card)))
                                     (clear-wait-prompt state (other-side side))
-                                    (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
+                                    (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for " (:title card)))
                                     (continue-ability state (other-side side) (stand (other-side side)) card nil)))})]
     {:on-score
      {:interactive (req true)
