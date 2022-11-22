@@ -547,7 +547,7 @@
                                      :cost [:trash-from-hand 1]
                                      :async true
                                      :effect (effect (damage eid :net 2 {:card card}))}
-                       :no-ability {:effect (effect (system-msg :corp "declines to use Anemone to do 2 net damage"))}}}
+                       :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card) " to do 2 net damage")))}}}
    :subroutines [(do-net-damage 1)]})
 
 (defcard "Ansel 1.0"
@@ -648,14 +648,14 @@
    {:optional
     {:req (req (not (in-discard? card)))
      :waiting-prompt true
-     :prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
+     :prompt (msg "Pay 3 [Credits] to force Runner to encounter " (:title card) "?")
      :player :corp
      :yes-ability
      {:cost [:credit 3]
       :async true
-      :msg "force the Runner to encounter Archangel"
+      :msg "force the Runner to encounter it"
       :effect (req (force-ice-encounter state side eid card))}
-     :no-ability {:effect (effect (system-msg :corp "declines to use Archangel to force the Runner to encounter it"))}}}
+     :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card) " to force the Runner to encounter it")))}}}
    :subroutines [(trace-ability 6 add-runner-card-to-grip)]})
 
 (defcard "Archer"
@@ -866,7 +866,7 @@
              :choices {:card #(and (ice? %)
                                    (can-be-advanced? %))}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
-    {:abilities [{:label "Move Builder to the outermost position of any server"
+    {:abilities [{:label "Move this ice to the outermost position of any server"
                   :cost [:click 1]
                   :prompt "Choose a server"
                   :choices (req servers)
@@ -889,14 +889,14 @@
                                                        {:ignore-install-cost true
                                                         :index (:index card)})
                                          (effect-completed state side eid)))
-                  :cancel-effect (req (system-msg state :corp "declines to use Brân 1.0 to install a card")
+                  :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to install a card"))
                                       (effect-completed state side eid))}
                  end-the-run
                  end-the-run]
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Bullfrog"
-  {:subroutines [(do-psi {:label "Move Bullfrog to another server"
+  {:subroutines [(do-psi {:label "Move this ice to another server"
                           :player :corp
                           :prompt "Choose a server"
                           :choices (req servers)
@@ -1241,7 +1241,7 @@
                         [(nil? trashed-card)
                          (effect-completed state side eid)]
                         [(odd? (:cost trashed-card))
-                         (system-msg state :corp "uses Diviner to end the run")
+                         (system-msg state :corp (str "uses " (:title card) " to end the run"))
                          (end-run state :corp eid card)]
                         [:else (effect-completed state side eid)]))))}]})
 
@@ -1536,20 +1536,20 @@
                          :effect (req (wait-for
                                         (trash state side target {:cause :subroutine})
                                         (system-msg state :corp
-                                                    (str "uses Flare to trash " (:title target)))
+                                                    (str "uses " (:title card) " to trash " (:title target)))
                                         (wait-for (damage state side :meat 2 {:unpreventable true
                                                                               :card card})
                                         (system-msg state :corp
-                                                    (str "uses Flare to deal 2 meat damage"))
+                                                    (str "uses " (:title card) " to deal 2 meat damage"))
                                         (system-msg state :corp
-                                                    (str "uses Flare to end the run"))
+                                                    (str "uses " (:title card) " to end the run"))
                                         (end-run state side eid card))))
                          :cancel-effect (req (wait-for (damage state side :meat 2 {:unpreventable true
                                                                                    :card card})
                                                        (system-msg state :corp
-                                                                   (str "uses Flare to deal 2 meat damage"))
+                                                                   (str "uses " (:title card) " to deal 2 meat damage"))
                                                        (system-msg state :corp
-                                                                   (str "uses Flare to end the run"))
+                                                                   (str "uses " (:title card) " to end the run"))
                                                        (end-run state side eid card)))}
                         card nil))})]})
 
@@ -1558,12 +1558,12 @@
    [{:event :approach-server
      :interactive (req true)
      :optional
-     {:prompt "Rez and move Formicary to protect the approched server?"
+     {:prompt (msg "Rez and move " (:title card) " to protect the approched server?")
       :autoresolve (get-autoresolve :auto-fire)
       :req (req (and (can-rez? state side card)
                      (can-pay? state side eid card nil (get-rez-cost state side card nil))))
       :yes-ability
-      {:msg "rez and move Formicary. The Runner is now encountering Formicary"
+      {:msg (msg "rez and move " (:title card) ". The Runner is now encountering it")
        :async true
        :effect (req (wait-for (rez state side card)
                               (when (rezzed? (:card async-result))
@@ -1745,7 +1745,7 @@
                       :req (req (and (installed? target)
                                      (rezzed? target)))}
             :waiting-prompt true
-            :cancel-effect (effect (system-msg "declines to use Hákarl 1.0 to derez another card")
+            :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to derez another card"))
                                    (effect-completed eid))
             :effect (effect (derez target)
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
@@ -2089,7 +2089,7 @@
             :effect (effect (damage eid :net 2 {:card card}))}
    :subroutines [(assoc runner-trash-installed-sub
                         :effect (req (wait-for (trash state side target {:cause :subroutine})
-                                               (system-msg state :corp "uses It's a Trap! to trash itself")
+                                               (system-msg state :corp (str "uses " (:title card) " to trash itself"))
                                                (trash state :corp (make-eid state eid) card {:cause :subroutine})
                                                (encounter-ends state side eid))))]})
 
@@ -2193,7 +2193,7 @@
                     :msg (msg "force the Runner to breach HQ and access " (:title target))
                     :effect (req (wait-for (breach-server state :runner [:hq] {:no-root true
                                                                                :access-first target})
-                                           (system-msg state :corp "uses Kitsune to trash itself")
+                                           (system-msg state :corp (str "uses " (:title card) " to trash itself"))
                                            (trash state :corp (make-eid state eid) card {:cause :subroutine})
                                            (encounter-ends state side eid)))}}}]})
 
@@ -2528,7 +2528,7 @@
                              :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
                              :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
                                              (lose-credits :runner eid 3))}
-               :no-ability {:effect (effect (system-msg "declines to use Mestnichestvo to spend 1 hosted advancement counter"))}}}
+               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to spend 1 hosted advancement counter")))}}}
    :subroutines [{:label "The Runner loses 3 [Credits]"
                   :msg "force the Runner to lose 3 [Credits]"
                   :async true
@@ -3057,7 +3057,7 @@
                               :prompt "Choose a card in HQ to trash"
                               :choices (req (cancellable (:hand corp) :sorted))
                               :async true
-                              :cancel-effect (effect (system-msg "declines to use Sadaka to trash a card from HQ")
+                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash a card from HQ"))
                                                      (effect-completed eid))
                               :effect (req (wait-for
                                              (trash state :corp target {:cause :subroutine})
@@ -3065,7 +3065,7 @@
                                              (continue-ability state side trash-resource-sub card nil)))}
                              card nil)
                            (wait-for (trash state :corp (make-eid state eid) card {:cause-card card})
-                                     (system-msg state :corp "uses Sadaka to trash itself")
+                                     (system-msg state :corp (str "uses " (:title card) " to trash itself"))
                                      (encounter-ends state side eid))))}]}))
 
 (defcard "Sagittarius"
@@ -3080,7 +3080,7 @@
                                           cards async-result
                                           dmg (some #(when (= (:type %) choice) %) cards)]
                                       (if dmg
-                                        (do (system-msg state :corp "uses Saisentan to deal a second net damage")
+                                        (do (system-msg state :corp (str "uses " (:title card) " to deal a second net damage"))
                                             (damage state side eid :net 1 {:card card}))
                                         (effect-completed state side eid)))))}]
     {:on-encounter {:waiting-prompt true
@@ -3100,7 +3100,7 @@
 
 (defcard "Sand Storm"
   {:subroutines [{:async true
-                  :label "Move Sand Storm and the run to another server"
+                  :label "Move this ice and the run to another server"
                   :prompt "Choose another server and redirect the run to its outermost position"
                   :choices (req (remove #{(zone->name (:server (:run @state)))} (cancellable servers)))
                   :msg (msg "move itself and the run on " target " and trash itself")
@@ -3298,7 +3298,7 @@
   {:subroutines [(do-psi end-the-run)]})
 
 (defcard "Special Offer"
-  {:subroutines [{:label "Gain 5 [Credits] and trash Special Offer"
+  {:subroutines [{:label "Gain 5 [Credits] and trash this ice"
                   :msg "gain 5 [Credits] and trash itself"
                   :async true
                   :effect (req (wait-for (gain-credits state :corp 5)
@@ -3475,7 +3475,7 @@
                                                            (complete-with-result state side eid target)))}
                                    card nil)
                                  (system-msg state side
-                                             (str "uses Tithonium to "
+                                             (str "uses " (:title card) " to "
                                                   (if async-result
                                                     (str "trash " (:title async-result)
                                                          " and ends the run")
@@ -3523,9 +3523,9 @@
   {:on-encounter {:async true
                   :effect (req (wait-for (pay state :runner (make-eid state eid) card [:credit 3])
                                          (if (:cost-paid async-result)
-                                           (do (system-msg state :runner (str (:msg async-result) " on encountering Tollbooth"))
+                                           (do (system-msg state :runner (str (:msg async-result) " on encountering " (:title card)))
                                                (effect-completed state side eid))
-                                           (do (system-msg state :corp "uses Tollbooth to end the run")
+                                           (do (system-msg state :corp (str "uses " (:title card) " to end the run"))
                                                (end-run state :corp eid card)))))}
    :subroutines [end-the-run]})
 
@@ -3657,9 +3657,9 @@
                              :prompt "Choose a card that can be advanced"
                              :msg (msg "place 1 advancement counter on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))
-                             :cancel-effect (effect (system-msg "declines to use Vasilisa")
+                             :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                                     (effect-completed eid))}
-               :no-ability {:effect (effect (system-msg "declines to use Vasililsa"))}}}
+               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
    :subroutines [(give-tags 1)]})
 
 (defcard "Veritas"
@@ -3707,7 +3707,7 @@
                                      (reveal state side (:hand runner))
                                      (let [delta (- target (second targets))
                                            cards (filter #(<= (:cost %) delta) (:hand runner))]
-                                       (system-msg state side (str "uses Waiver to trash "
+                                       (system-msg state side (str "uses " (:title card) " to trash "
                                                                    (str/join ", " (map :title cards))))
                                        (trash-cards state side eid cards {:cause :subroutine}))))})]})
 
@@ -3741,7 +3741,7 @@
                                                     (shuffle! state side :deck)
                                                     (move state side target :hand)
                                                     (effect-completed state side eid)))}
-               :no-ability {:effect (effect (system-msg "declines to use Wave"))}}}
+               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
                   :async true
@@ -3826,7 +3826,7 @@
                   :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move (first (:deck corp)) :deck))}
-                             :no-ability {:effect (effect (system-msg :corp "declines to use Yagura to move the top card of R&D to the bottom"))}}}
+                             :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card) " to move the top card of R&D to the bottom")))}}}
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"
