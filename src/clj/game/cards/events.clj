@@ -584,20 +584,21 @@
                          "move it to the grip and place " (:cost topcard) " [Credits] on itself")
                :effect (req (wait-for (reveal state side topcard)
                                       (add-counter state side card :credit (:cost topcard) {:placed true})
-                                      (move state :runner topcard :hand)))}))]
+                                      (move state :runner topcard :hand)
+                                      (effect-completed state side eid)))}))]
     {:makes-run true
      :interactions {:pay-credits {:req (req run)
                                   :type :credit}}
      :on-play {:async true
-               :effect (effect (continue-ability
-                                 (reveal-and-load-credits (:deck runner))
-                                 card nil)
-                               (continue-ability
-                                 {:prompt "Choose a server"
-                                  :choices (req runnable-servers)
-                                  :async true
-                                  :effect (effect (make-run eid target (get-card state card)))}
-                                 (get-card state card) nil))}}))
+               :effect (req (wait-for (resolve-ability state side
+                                                       (reveal-and-load-credits (:deck runner))
+                                                       card nil)
+                                      (continue-ability state side
+                                        {:prompt "Choose a server"
+                                         :choices (req runnable-servers)
+                                         :async true
+                                         :effect (effect (make-run eid target (get-card state card)))}
+                                        (get-card state card) nil)))}}))
 
 (defcard "Contaminate"
   {:on-play
