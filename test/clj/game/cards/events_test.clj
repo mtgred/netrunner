@@ -6117,6 +6117,29 @@
       (rez state :corp (get-ice state :hq 0))
       (is (= (+ credits 5) (:credit (get-runner))) "Should gain credits from correct ice rez"))))
 
+(deftest spark-of-inspiration-basic
+  (do-game
+    (new-game {:runner {:hand ["Spark of Inspiration"]
+                        :deck ["Torch"]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "Spent 3 on spark, 0 on install"
+      (play-from-hand state :runner "Spark of Inspiration")
+      (is (= "Torch" (:title (get-program state 0))) "installed torch"))))
+
+(deftest spark-no-targets
+  (do-game
+    (new-game {:runner {:hand ["Spark of Inspiration"]
+                        :deck [(qty "Sure Gamble" 3)]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "Spent 3 on spark, 0 on install"
+      (play-from-hand state :runner "Spark of Inspiration"))
+    (is (no-prompt? state :runner))
+    (is (zero? (count (:set-aside (get-runner)))) "cards returned to stack")))
+
 (deftest spear-phishing
   ;; Spear Phishing
   (do-game
