@@ -5865,6 +5865,38 @@
           (click-prompt state :corp "HQ"))
         (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is now installed"))))
 
+(deftest vera-ivanovna-shuyskaya
+  ;; Vera Ivanovna Shuyskaya
+  (do-game
+    (new-game {:corp {:deck ["Vera Ivanovna Shuyskaya" (qty "15 Minutes" 3)]
+                      :credits 10}
+               :runner {:hand ["Sure Gamble" "Hippo" "Endurance"]}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Vera Ivanovna Shuyskaya" "New remote")
+    (play-from-hand state :corp "15 Minutes" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    ;; Toggle autoresolve
+    (card-ability state :runner (get-content state :remote1 0) 0)
+    (click-prompt state :runner "Always")
+    (play-and-score state "15 Minutes")
+    (is (last-log-contains? state "Sure Gamble, Hippo and Endurance") "Revealed Runner grip")
+    (changes-val-macro -1 (count (:hand (get-runner)))
+                          "Hippo was discarded"
+                          (click-prompt state :corp "Hippo"))
+    (is (= 1 (count (:discard (get-runner)))))
+    (play-and-score state "15 Minutes")
+    (changes-val-macro -1 (count (:hand (get-runner)))
+                          "Sure Gamble was discarded"
+                          (click-prompt state :corp "Sure Gamble"))
+    (is (= 2 (count (:discard (get-runner)))))
+    (take-credits state :corp)
+    (run-empty-server state "Server 2")
+    (click-prompt state :runner "Steal")
+    (changes-val-macro -1 (count (:hand (get-runner)))
+                          "Endurance was discarded"
+                          (click-prompt state :corp "Endurance"))
+    (is (= 3 (count (:discard (get-runner)))))))
+
 (deftest victoria-jenkins
   ;; Victoria Jenkins
   (do-game

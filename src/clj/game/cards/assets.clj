@@ -2547,6 +2547,35 @@
                 :msg (msg (corp-install-msg target))
                 :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]})
 
+(defcard "Vera Ivanovna Shuyskaya"
+  (let [select-and-trash {:async true
+                          :prompt "Choose a card to trash"
+                          :choices (req (cancellable (:hand runner) :sorted))
+                          :msg (msg "trash " (:title target) " from the grip")
+                          :effect (effect (trash eid target {:cause-card card}))}
+        ability {:interactive (req true)
+                 :optional {:prompt "Reveal the grip and trash a card?"
+                            :player :corp
+                            :autoresolve (get-autoresolve :auto-fire)
+                            :yes-ability
+                            {:async true
+                             :effect (effect (reveal (:hand runner))
+                                             (system-msg (str "reveal "
+                                                              (quantify (count (:hand runner)) "card")
+                                                              " from grip: "
+                                                              (enumerate-str (map :title (:hand runner)))))
+                                             (continue-ability select-and-trash card nil))}
+                            :no-ability {:effect (effect (system-msg "declines to use Vera Ivanovna Shuyskaya"))}}}]
+    {:events [{:event :agenda-scored
+               :interactive (req true)
+               :async true
+               :effect (effect (continue-ability ability card nil))}
+              {:event :agenda-stolen
+               :interactive (req true)
+               :async true
+               :effect (effect (continue-ability ability card nil))}]
+     :abilities [(set-autoresolve :auto-fire "Vera Ivanovna Shuyskaya")]}))
+
 (defcard "Victoria Jenkins"
   {:on-rez {:effect (req (lose state :runner :click-per-turn 1))}
    :leave-play (req (gain state :runner :click-per-turn 1))
