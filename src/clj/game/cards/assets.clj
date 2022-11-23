@@ -455,7 +455,7 @@
                  (effect
                   (continue-ability
                    {:optional
-                    {:prompt (msg "Trash Clearinghouse to do " (get-counters card :advancement) " meat damage?")
+                    {:prompt (msg "Trash this asset to do " (get-counters card :advancement) " meat damage?")
                      :yes-ability
                      {:async true
                       :msg "do 1 meat damage for each hosted advancement counter"
@@ -744,7 +744,7 @@
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Echo Chamber"
-  {:abilities [{:label "Add Echo Chamber to your score area as an agenda worth 1 agenda point"
+  {:abilities [{:label "Add this asset to your score area as an agenda worth 1 agenda point"
                 :cost [:click 3]
                 :msg "add itself to their score area as an agenda worth 1 agenda point"
                 :effect (req (as-agenda state :corp card 1))}]})
@@ -876,7 +876,7 @@
               :async true
               :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
      :abilities [{:cost [:click 1 :advancement 7]
-                  :label "Add False Flag to your score area as an agenda worth 3 agenda points"
+                  :label "Add this asset to your score area as an agenda worth 3 agenda points"
                   :msg "add itself to their score area as an agenda worth 3 agenda points"
                   :effect (req (as-agenda state :corp card 3))}]}))
 
@@ -890,7 +890,7 @@
   {:can-host (req (and (or (asset? target) (agenda? target))
                        (> 2 (count (:hosted card)))))
    :trash-cost-bonus (req (* 3 (count (:hosted card))))
-   :abilities [{:label "Install an asset or agenda on Full Immersion RecStudio"
+   :abilities [{:label "Install an asset or agenda on this asset"
                 :req (req (< (count (:hosted card)) 2))
                 :cost [:click 1]
                 :prompt "Choose an asset or agenda to install"
@@ -901,7 +901,7 @@
                 :msg "install and host an asset or agenda"
                 :async true
                 :effect (effect (corp-install eid target card nil))}
-               {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
+               {:label "Install a previously-installed asset or agenda on this asset (fixes only)"
                 :req (req (< (count (:hosted card)) 2))
                 :prompt "Choose an installed asset or agenda to host"
                 :choices {:card #(and (or (asset? %) (agenda? %))
@@ -927,7 +927,7 @@
             :effect (effect (damage eid :net (get-counters (get-card state card) :advancement)
                                     {:card card}))}
    :abilities [{:cost [:click 1 :advancement 3]
-                :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
+                :label "Add this asset to your score area as an agenda worth 1 agenda point"
                 :msg "add itself to their score area as an agenda worth 1 agenda point"
                 :effect (req (as-agenda state :corp card 1))}]})
 
@@ -1126,8 +1126,8 @@
                          :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                                 (trash state side eid card {:cause-card card})))}
                         :unsuccessful
-                        {:effect (effect (add-counter card :power 1)
-                                         (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]})
+                        {:effect (effect (add-counter card :power 1))
+                         :msg "add 1 power counter to itself"}}}]})
 
 (defcard "Lady Liberty"
   {:abilities [{:cost [:click 3]
@@ -1274,11 +1274,11 @@
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :on-rez {:effect (req (add-counter state side card :credit 8))}
-     :abilities [(set-autoresolve :auto-reshuffle "Marilyn Campaign's shuffling itself back into R&D")]
+     :abilities [(set-autoresolve :auto-reshuffle "Marilyn Campaign shuffling itself back into R&D")]
      :on-trash {:interactive (req true)
                 :optional
                 {:waiting-prompt true
-                 :prompt "Shuffle Marilyn Campaign into R&D?"
+                 :prompt (msg "Shuffle " (:title card) " into R&D?")
                  :autoresolve (get-autoresolve :auto-reshuffle)
                  :player :corp
                  :yes-ability {:msg "shuffle itself back into R&D"
@@ -1360,7 +1360,7 @@
                                         (moon-pool-place-advancements (dec x))
                                         card nil)
                                       (effect-completed state side eid))))
-             :cancel-effect (effect (system-msg "declines to use Moon Pool to place advancement counters")
+             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to place advancement counters"))
                                    (effect-completed eid))})]
     (let [moon-pool-reveal-ability
           {:prompt "Reveal up to 2 facedown cards from Archives and shuffle them into R&D"
@@ -1381,7 +1381,7 @@
                                         (moon-pool-place-advancements agenda-count)
                                         card nil)
                                       (effect-completed state side eid)))))
-           :cancel-effect (effect (system-msg "declines to use Moon Pool to reveal any cards in Archives")
+           :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal any cards in Archives"))
                                   (effect-completed eid))}
           moon-pool-discard-ability
             {:prompt "Trash up to 2 cards from HQ"
@@ -1395,7 +1395,7 @@
                                       state side
                                       moon-pool-reveal-ability
                                       card nil)))
-             :cancel-effect (effect (system-msg "declines to use Moon Pool to trash any cards from HQ")
+             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
                                     (continue-ability moon-pool-reveal-ability card nil))}]
       {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
                     :cost [:remove-from-game]
@@ -1683,7 +1683,7 @@
                                     (let [cnt (count (get-in @state [:runner :hand]))
                                           credits (quot cnt 2)]
                                       (system-msg state :corp
-                                                  (str "uses Personalized Portal to force the runner to draw "
+                                                  (str "uses " (:title card) " to force the runner to draw "
                                                        "1 card and gain " credits " [Credits]"))
                                       (gain-credits state :corp eid credits))))}]})
 
@@ -1872,7 +1872,7 @@
                  (effect
                    (continue-ability
                      {:optional
-                      {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
+                      {:prompt "Trash this asset to gain 3 [Credits] and draw 3 cards?"
                        :msg "gain 3 [Credits] and draw 3 cards"
                        :yes-ability
                        {:async true
@@ -1919,7 +1919,7 @@
                                   :prompt "Choose a card that can be advanced"
                                   :choices {:card can-be-advanced?}
                                   :effect (effect (add-counter target :advancement num-counters {:placed true})
-                                                  (system-msg (str "uses Reconstruction Contract to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
+                                                  (system-msg (str "uses " (:title card) " to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
                                                   (effect-completed eid))}
                                  card nil)))}]})
 
@@ -2133,7 +2133,7 @@
    {:optional
     {:req (req (not (in-deck? card)))
      :waiting-prompt true
-     :prompt "Pay credits to use Shi.Kyū ability?"
+     :prompt (msg "Pay credits to use " (:title card) " ability?")
      :yes-ability
      {:prompt "How many credits do you want to pay?"
       :choices :credit
@@ -2147,13 +2147,13 @@
                      :waiting-prompt true
                      :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
                      :async true
-                     :effect (req (if (= target "Add Shi.Kyū to score area")
+                     :effect (req (if (str/starts-with? target "Add")
                                     (do (system-msg state :runner (str "adds " (:title card)
                                                                        " to their score area as an agenda worth "
                                                                        (quantify -1 "agenda point")))
                                         (as-agenda state :runner card -1)
                                         (effect-completed state side eid))
-                                    (do (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
+                                    (do (system-msg state :runner (str "takes " dmg " net damage from " (:title card)))
                                         (damage state :corp eid :net dmg {:card card}))))})
                   card targets))}}}})
 
@@ -2183,8 +2183,8 @@
    :access {:optional
             {:req (req (not (in-discard? card)))
              :waiting-prompt true
-             :prompt "Pay 4 [Credits] to use Snare! ability?"
-             :no-ability {:effect (effect (system-msg "declines to use Snare!"))}
+             :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
+             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
              :yes-ability {:async true
                            :cost [:credit 4]
                            :msg "do 3 net damage and give the Runner 1 tag"
@@ -2265,7 +2265,7 @@
                            :req (req (and (corp? target)
                                           (installed? target)))}
                  :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
-                 :cancel-effect (req (system-msg state :corp "declines to use Svyatogor Excavator")
+                 :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card)))
                                      (effect-completed state side eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                         (gain-credits state side eid 3)))}]
@@ -2607,11 +2607,11 @@
                                   card nil))}]})
 
 (defcard "Worlds Plaza"
-  {:abilities [{:label "Install an asset on Worlds Plaza"
+  {:abilities [{:label "Install an asset on this asset"
                 :req (req (< (count (:hosted card)) 3))
                 :cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :prompt "Choose an asset to install on Worlds Plaza"
+                :prompt "Choose an asset to install"
                 :choices {:card #(and (asset? %)
                                       (in-hand? %)
                                       (corp? %))}

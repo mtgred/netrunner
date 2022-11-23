@@ -5465,7 +5465,7 @@
       (card-side-ability state :runner ice 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "End the run")
-      (is (empty (remove :broken (:subroutines (refresh ice)))) "No subs broken")
+      (is (empty? (remove :broken (:subroutines (refresh ice)))) "No subs broken")
       (derez state :corp (get-content state :remote1 0))
       (is (nil? (:icon (refresh ice)))))))
 

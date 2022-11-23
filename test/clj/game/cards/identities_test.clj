@@ -1205,7 +1205,7 @@
   (testing "happy path"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Hedge Fund"]}
+                        :hand [(qty "Hedge Fund" 2)]}
                  :runner {:id "Esâ Afontov: Eco-Insurrectionist"
                           :hand [(qty "Amped Up" 5)]}})
       (take-credits state :corp)
@@ -1216,7 +1216,7 @@
   (testing "Does not trigger on second time"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Hedge Fund"]}
+                        :hand [(qty "Hedge Fund" 2)]}
                  :runner {:id "Esâ Afontov: Eco-Insurrectionist"
                           :hand [(qty "Amped Up" 5)]}})
       (take-credits state :corp)
