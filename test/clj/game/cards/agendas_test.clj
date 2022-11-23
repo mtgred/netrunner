@@ -1469,6 +1469,20 @@
     (play-and-score state "Fly on the Wall")
     (is (= 1 (count-tags state)) "Runner is tagged")))
 
+(deftest freedom-of-information
+  ;; Freedom of Information
+  (do-game
+    (new-game {:corp {:deck ["Freedom of Information"]}})
+    (play-from-hand state :corp "Freedom of Information" "New remote")
+    (let [foi (get-content state :remote1 0)]
+      (advance state foi 2)
+      (score state :corp (refresh foi))
+      (is (some? (get-content state :remote1 0))
+        "Advancement requirement not yet met, cannot score")
+      (gain-tags state :runner 2)
+      (score state :corp (refresh foi))
+      (is (= 2 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
+
 (deftest genetic-resequencing
   ;; Genetic Resequencing
   (do-game
