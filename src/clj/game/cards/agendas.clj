@@ -1291,6 +1291,14 @@
               :msg (msg "do " (count (:scored runner)) " net damage")
               :effect (effect (damage eid :net (count (:scored runner)) {:card card}))}})
 
+(defcard "Post-Truth Dividend"
+  {:on-score {:optional
+              {:prompt "Draw 1 card?"
+               :yes-ability
+               {:msg "draw 1 card"
+                :effect (effect (draw eid 1))}
+               :no-ability (effect (system-msg :corp "declines to use Post-Truth Dividend to draw 1 card"))}}})
+
 (defcard "Posted Bounty"
   {:on-score {:optional
               {:prompt "Forfeit this agenda to give the Runner 1 tag and take 1 bad publicity?"

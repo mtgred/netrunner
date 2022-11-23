@@ -2669,6 +2669,17 @@
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
 
+(deftest post-truth-dividend
+  ;; Post-Truth Dividend
+  (do-game
+    (new-game {:corp {:hand ["Post-Truth Dividend"]
+                      :deck ["Hedge Fund"]}})
+    (play-and-score state "Post-Truth Dividend")
+    (changes-val-macro
+      1 (count (:hand (get-corp)))
+      "Drew 1 card"
+      (click-prompt state :corp "Yes"))))
+
 (deftest posted-bounty-forfeiting-takes-1-bad-publicity
     ;; Forfeiting takes 1 bad publicity
     (do-game
