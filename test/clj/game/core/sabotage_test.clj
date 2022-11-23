@@ -111,4 +111,4 @@
       (is (no-prompt? state :runner))
       (is (empty? (:hand (get-corp))))
       (is (empty? (:deck (get-corp))))
-      (is (= 7 (count (:discard (get-corp))))))))
+      (is (= 7 (count (:discard (get-corp)))))))
