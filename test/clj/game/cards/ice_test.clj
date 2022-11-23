@@ -2640,6 +2640,75 @@
       (take-credits state :runner)
       (is (= 5 (hand-size :runner)) "Runner handsize returns to 5"))))
 
+(deftest hafrun
+  ;; Hafrún
+  (do-game
+    (new-game {:corp {:hand ["Hafrún" (qty "Ice Wall" 2) "Hedge Fund"]
+                      :credits 10}
+               :runner {:hand ["Buzzsaw" "Cleaver"]
+                        :credits 50}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Hafrún" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buzzsaw")
+    (play-from-hand state :runner "Cleaver")
+    (let [iw1 (get-ice state :hq 0)
+          iw2 (get-ice state :rd 0)
+          hafrun (get-ice state :hq 1)
+          buzz (get-program state 0)
+          clea (get-program state 1)]
+      (run-on state "HQ")
+      (rez state :corp hafrun)
+      (click-prompt state :corp "Yes")
+      (is (= :select (prompt-type :corp)))
+      (click-card state :corp "Hedge Fund")
+      (click-card state :corp clea)
+      (is (:icon (refresh clea)) "Cleaver has an icon")
+      (run-continue state)
+      (card-ability state :runner (refresh clea) 0)
+      (is (no-prompt? state :runner) "Cleaver cannot be used")
+      (card-ability state :runner (refresh buzz) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (run-continue state)
+      (rez state :corp iw1)
+      (run-continue state)
+      (card-ability state :runner (refresh clea) 0)
+      (is (no-prompt? state :runner) "Cleaver still cannot be used")
+      (fire-subs state (refresh iw1))
+      (is (nil? (:icon (refresh clea))))
+      (run-on state "R&D")
+      (rez state :corp iw2)
+      (run-continue state)
+      (card-ability state :runner (refresh clea) 0)
+      (click-prompt state :runner "End the run"))))
+
+(deftest hafrun-wrong-server
+  (do-game
+    (new-game {:corp {:hand ["Hafrún" "Hedge Fund"]}})
+    (play-from-hand state :corp "Hafrún" "HQ")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "Hafrún not active outside attacked server")))
+
+(deftest hafrun-outside-run
+  (do-game
+    (new-game {:corp {:hand ["Hafrún" "Hedge Fund"]}})
+    (play-from-hand state :corp "Hafrún" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "Hafrún not active outside run")))
+
+(deftest hafrun-cant-afford
+  (do-game
+    (new-game {:corp {:hand ["Hafrún"]}})
+    (play-from-hand state :corp "Hafrún" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "Hafrún not active if Corp can't pay the cost")))
+
 (deftest hagen-trashing-only-non-fracter-non-decoder-non-killer-cards
   ;; Trashing only non-fracter non-decoder non-killer cards.
   (do-game

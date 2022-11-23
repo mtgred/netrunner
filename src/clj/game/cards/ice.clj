@@ -42,7 +42,7 @@
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay?]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
-   [game.core.props :refer [add-counter add-prop]]
+   [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
@@ -1730,6 +1730,44 @@
 (defcard "Hadrian's Wall"
   (wall-ice [end-the-run end-the-run]))
 
+(defcard "Hafrún"
+  (letfn [(prevent-sub-break-by [t]
+            {:type :prevent-paid-ability
+             :duration :end-of-run
+             :value true
+             :req (req (let [[break-card break-ability] targets]
+                         (and (same-card? break-card t)
+                              (or (contains? break-ability :break)
+                                  (contains? break-ability :breaks)
+                                  (contains? break-ability :heap-breaker-break)
+                                  (contains? break-ability :break-cost)))))})]
+    {:subroutines [end-the-run]
+     :on-rez {:optional
+              {:prompt "Trash a card from HQ to prevent subroutines from being broken by a Runner card abilities for the remainder of the run?"
+               :req (req (and run this-server
+                              (seq (:hand corp))))
+               :waiting-prompt "Corp to choose an option"
+               :yes-ability
+               {:cost [:trash-from-hand 1]
+                :effect
+                (effect (continue-ability
+                          {:waiting-prompt "Corp to make a decision"
+                           :prompt "Choose an installed Runner card"
+                           :async true
+                           :choices {:card #(and (installed? %)
+                                                 (runner? %))}
+                           :msg (msg "trash 1 card from HQ to prevent subroutines from being broken by "
+                                     (:title target)
+                                     " abilities for the remainder of the run")
+                           :effect (req (let [t target]
+                                          (add-icon state side card target "H" "red")
+                                          (register-events state side card
+                                            [{:event :run-ends
+                                              :duration :end-of-run
+                                              :effect (effect (remove-icon card t))}])
+                                          (register-floating-effect state side card (prevent-sub-break-by t))))}
+                          card nil))}
+               :no-ability {:effect (effect (system-msg :corp "declines to use Hafrún to discard a card from HQ"))}}}}))
 
 (defcard "Hákarl 1.0"
   {:runner-abilities [(bioroid-break 1 1)]
