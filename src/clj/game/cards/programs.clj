@@ -660,7 +660,7 @@
                                   (wait-for
                                     (reveal state side (make-eid state eid) cards)
                                     (system-msg state side (str payment-str
-                                                                " to use Bug to reveal "
+                                                                " to use " (:title card) " to reveal "
                                                                 (enumerate-str (map :title cards))))
                                     (effect-completed state side eid))))))}}}]})
 
@@ -793,10 +793,10 @@
               :player :runner
               :waiting-prompt true
               :autoresolve (get-autoresolve :auto-place-counter)
-              :prompt "Place 1 virus counter on Conduit?"
+              :prompt (msg "Place 1 virus counter on " (:title card) "?")
               :yes-ability {:msg "place 1 virus counter on itself"
                             :effect (effect (add-counter card :virus 1))}
-              :no-ability {:effect (effect (system-msg "declines to use Conduit to place 1 virus counter on itself"))}}}
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to place 1 virus counter on itself")))}}}
             {:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
@@ -815,14 +815,14 @@
              :async true
              :req (req (some #(corp? (:card %)) targets))
              :effect (req (let [amt-trashed (count (filter #(corp? (:card %)) targets))
-                                sing-ab {:optional {:prompt "Place 1 virus counter on Consume?"
+                                sing-ab {:optional {:prompt (msg "Place 1 virus counter on " (:title card) "?")
                                                     :autoresolve (get-autoresolve :auto-place-counter)
                                                     :yes-ability {:effect (effect (add-counter :runner card :virus 1))
-                                                                  :msg "place 1 virus counter on Consume"}}}
-                                mult-ab {:prompt "Place virus counters on Consume?"
+                                                                  :msg "place 1 virus counter on itself"}}}
+                                mult-ab {:prompt (msg "Place virus counters on " (:title card) "?")
                                          :choices {:number (req amt-trashed)
                                                    :default (req amt-trashed)}
-                                         :msg (msg "place " (quantify target "virus counter") " on Consume")
+                                         :msg (msg "place " (quantify target "virus counter") " on itself")
                                          :effect (effect (add-counter :runner card :virus target))}
                                 ab (if (= 1 amt-trashed) sing-ab mult-ab)]
                             (continue-ability state side ab card targets)))}]
@@ -838,7 +838,7 @@
                 :msg (msg (let [local-virus (get-counters card :virus)
                                 global-virus (get-virus-counters state card)
                                 hivemind-virus (- global-virus local-virus)]
-                            (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
+                            (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from itself"
                                  (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
                (set-autoresolve :auto-place-counter "Consume placing virus counters on itself")]})
@@ -1287,7 +1287,7 @@
   {:events [{:event :pass-ice
              :optional
              {:req (req (not (rezzed? (:ice context))))
-              :prompt "Trash False Echo to make the Corp rez the passed piece of ice or add it to HQ?"
+              :prompt (msg "Trash " (:title card) " to make the Corp rez the passed piece of ice or add it to HQ?")
               :yes-ability
               {:async true
                :msg "force the Corp to either rez the passed piece of ice or add it to HQ"
@@ -1334,7 +1334,7 @@
                      (add-icon state side card ice "F" "blue")
                      (system-msg state side
                                  (str "selects " (card-str state ice)
-                                      " for Femme Fatale's bypass ability"))
+                                      " for " (:title card) "'s bypass ability"))
                      (register-events
                        state side card
                        [{:event :encounter-ice
@@ -1517,7 +1517,7 @@
                 :prompt "Choose a Virus card to move hosted virus counters to"
                 :choices {:card #(has-subtype? % "Virus")
                           :not-self true}
-                :msg (msg "manually move a virus counter from Hivemind to " (:title target))
+                :msg (msg "manually move a virus counter from itself to " (:title target))
                 :effect (effect (add-counter :runner target :virus 1)
                                 (add-counter :runner card :virus -1))}]})
 
@@ -1864,7 +1864,20 @@
     (assoc cdef :events (apply conj events (:events cdef)))))
 
 (defcard "Mongoose"
-  (auto-icebreaker {:implementation "Usage restriction is not implemented"
+  (auto-icebreaker {:events [{:event :subroutines-broken
+                              :silent (req true)
+                              :req (req (and (any-subs-broken-by-card? target card)
+                                             run))
+                              :effect (req (let [broken-ice target]
+                                             (register-floating-effect
+                                               state side
+                                               card
+                                               {:type :prevent-paid-ability
+                                                :duration :end-of-run
+                                                :req (req (let [[break-card break-ability] targets]
+                                                            (and (not (same-card? current-ice broken-ice))
+                                                                 (same-card? break-card card))))
+                                                :value (req true)})))}]
                     :abilities [(break-sub 1 2 "Sentry")
                                 (strength-pump 2 2)]}))
 
@@ -2126,7 +2139,7 @@
                                    sort))
                 :msg (msg "make " (card-str state current-ice)
                           " gain " target
-                          " until end of the run")
+                          " until end of the encounter")
                 :effect (effect (register-floating-effect
                                   card
                                   (let [ice current-ice]
@@ -2566,7 +2579,7 @@
 (defcard "Takobi"
   {:events [{:event :subroutines-broken
              :optional {:req (req (all-subs-broken? target))
-                        :prompt "Place 1 power counter on Takobi?"
+                        :prompt (msg "Place 1 power counter on " (:title card) "?")
                         :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability
                         {:msg "place 1 power counter on itself"
@@ -2670,7 +2683,7 @@
      :abilities [(set-autoresolve :auto-place-counter "Trypano placing virus counters on itself")]
      :events [{:event :runner-turn-begins
                :optional
-               {:prompt "Place 1 virus counter on Trypano?"
+               {:prompt (msg "Place 1 virus counter on " (:title card) "?")
                 :autoresolve (get-autoresolve :auto-place-counter)
                 :yes-ability {:msg "place 1 virus counter on itself"
                               :effect (req (add-counter state side card :virus 1))}}}

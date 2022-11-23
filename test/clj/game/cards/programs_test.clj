@@ -5142,7 +5142,7 @@
       (is (has-subtype? (refresh iw) "Code Gate") "Ice Wall gained Code Gate")
       (run-continue state)
       (run-jack-out state)
-      (is (not (has-subtype? (refresh iw) "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
+      (is (not (has-subtype? (refresh iw) "Code Gate")) "Ice Wall lost Code Gate at the end of the encounter"))))
 
 (deftest penrose-pay-credits-prompt-and-first-turn-ability
     ;; Pay-credits prompt and first turn ability

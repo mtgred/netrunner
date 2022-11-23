@@ -2093,6 +2093,7 @@
       (is (zero? (get-in @state [:run :position])) "Now approaching server")
       (run-continue state)
       (click-prompt state :corp "Formicary")
+      (is (= "Rez and move Formicary protecting Archives at position 0 to protect the approched server?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes") ; Move Formicary
       (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
       (is (= 1 (get-in @state [:run :position])) "Now encountering Formicary")

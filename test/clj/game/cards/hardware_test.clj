@@ -1126,7 +1126,8 @@
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn begins trash 1 card, then draw or remove tag
   (do-game
-    (new-game {:runner {:deck ["Chop Bot 3000" (qty "Spy Camera" 3)]}})
+    (new-game {:runner {:deck ["Sure Gamble"]
+                        :hand ["Chop Bot 3000" (qty "Spy Camera" 4)]}})
     (core/gain state :runner :tag 2)
     (take-credits state :corp)
     (play-from-hand state :runner "Chop Bot 3000")
@@ -1149,7 +1150,22 @@
       (click-prompt state :runner "Remove 1 tag")
       (is (find-card "Spy Camera" (:discard (get-runner))) "Spy Camera trashed")
       (is (= 1 (count-tags state)) "Runner lost 1 tag")
-      (end-phase-12 state :runner))))
+      (play-from-hand state :runner "Spy Camera")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner chop-bot 0)
+      (click-card state :runner (find-card "Spy Camera" (get-hardware state)))
+      (changes-val-macro
+        1 (count (:hand (get-runner)))
+        "Draws 1 card"
+        (click-prompt state :runner "Draw 1 card"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (true? (:runner-phase-12 @state)))
+      (card-ability state :runner chop-bot 0)
+      (click-card state :runner (find-card "Spy Camera" (get-hardware state)))
+      (is (zero? (count (:deck (get-runner)))))
+      (click-prompt state :runner "Draw 1 card"))))
 
 (deftest clone-chip
   ;; Test clone chip usage- outside and during run
