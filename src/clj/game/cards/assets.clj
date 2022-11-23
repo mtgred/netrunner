@@ -919,6 +919,40 @@
              :msg "do 1 meat damage"
              :effect (effect (damage eid :meat 1 {:card card}))}]})
 
+(defcard "Gaslight"
+  (let [search-for-operation {:prompt "Choose an operation to add to HQ"
+                              :msg (msg (if (= target "No action")
+                                          "search R&D, but does not find an operation"
+                                          (str "add " (get-title target) " to HQ")))
+                              :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
+                              :async true
+                              :effect (req (if (= target "No action")
+                                             (do (shuffle! state :corp :deck)
+                                                 (effect-completed state side eid))
+                                             (wait-for
+                                               (reveal state side target)
+                                               (shuffle! state :corp :deck)
+                                               (move state :corp target :hand)
+                                               (effect-completed state side eid))))}
+        ability {:once :per-turn
+                 :async true
+                 :label "Trash this asset to search R&D for an operation (start of turn)"
+                 :req (req (:corp-phase-12 @state))
+                 :effect
+                 (effect
+                   (continue-ability
+                     {:optional
+                      {:prompt "Trash Gaslight to search R&D for an operation?"
+                       :yes-ability
+                       {:async true
+                        :effect (req (wait-for (trash state side card {:cause-card card})
+                                               (continue-ability state side search-for-operation card nil)))}}}
+                     card nil))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (req true)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (defcard "Gene Splicer"
   {:advanceable :always
    :access {:req (req (pos? (get-counters (get-card state card) :advancement)))

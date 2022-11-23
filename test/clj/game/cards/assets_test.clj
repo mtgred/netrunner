@@ -1964,6 +1964,24 @@
       (click-prompt state :runner "0 [Credits]")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should discard a card to meat damage"))))
 
+(deftest gaslight
+  ;; Gaslight
+  (do-game
+    (new-game {:corp {:hand ["Gaslight"]
+                      :deck ["Hedge Fund"]}})
+    (play-from-hand state :corp "Gaslight" "New remote")
+    (let [gasl (get-content state :remote1 0)]
+      (rez state :corp (refresh gasl))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state))
+      (card-ability state :corp gasl 0)
+      (click-prompt state :corp "Yes")
+      (changes-val-macro 1 (count (:hand (get-corp)))
+                           "Hedge Fund moved to HQ"
+                           (click-prompt state :corp "Hedge Fund"))
+      (is (= 1 (count (:discard (get-corp)))) "Gaslight was trashed"))))
+
 (deftest gene-splicer-runner-accesses-an-unadvanced-gene-splicer-and-doesn-t-trash-no-net-damage-is-dealt-and-gene-splicer-remains-installed
     ;; Runner accesses an unadvanced Gene Splicer and doesn't trash     ;; No net damage is dealt and Gene Splicer remains installed
     (do-game
