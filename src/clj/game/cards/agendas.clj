@@ -148,7 +148,7 @@
                        [{:event :corp-shuffle-deck
                          :effect (effect (update! (assoc-in card [:special :shuffle-occurred] true)))}])
                   (let [choices (take 3 (:deck corp))
-                        titles (str/join ", " (map :title choices))]
+                        titles (enumerate-str (map :title choices))]
                     (continue-ability
                       state side
                       (if (seq (filter ice? choices))
@@ -199,7 +199,7 @@
    {:interactive (req true)
     :async true
     :msg "look at the top 5 cards of R&D"
-    :prompt (msg "The top cards of R&D are (top->bottom) " (str/join ", " (map :title (take 5 (:deck corp)))))
+    :prompt (msg "The top cards of R&D are (top->bottom) " (enumerate-str (map :title (take 5 (:deck corp)))))
     :choices ["OK"]
     :req (req (not-empty (:deck corp)))
     :effect (effect (continue-ability
@@ -1318,7 +1318,7 @@
                 :msg (msg "force the Runner to trash " (trash-count-str (:card context)) " and take 1 bad publicity")
                 :async true
                 :effect (req (wait-for (trash-cards state side targets {:cause-card card :cause :forced-to-trash})
-                                       (system-msg state side (str "trashes " (str/join ", " (map :title targets))))
+                                       (system-msg state side (str "trashes " (enumerate-str (map :title targets))))
                                        (gain-bad-publicity state :corp eid 1)))}}))
 
 (defcard "Project Atlas"
@@ -1491,7 +1491,7 @@
 
 (defcard "Reeducation"
   (letfn [(corp-final [chosen original]
-            {:prompt (str "The bottom cards of R&D will be " (str/join  ", " (map :title chosen)))
+            {:prompt (str "The bottom cards of R&D will be " (enumerate-str (map :title chosen)))
              :choices ["Done" "Start over"]
              :async true
              :msg (req (let [n (count chosen)]
@@ -1872,7 +1872,7 @@
                :req (req (same-card? card target))
                :msg (msg (if (pos? (count (:deck runner)))
                            (str "trash "
-                                (str/join ", " (map :title (take (adv4? state card) (:deck runner))))
+                                (enumerate-str (map :title (take (adv4? state card) (:deck runner))))
                                 " from the stack")
                            "trash no cards from the stack (it is empty)"))
                :effect (effect (mill :corp eid :runner (adv4? state card)))}]}))

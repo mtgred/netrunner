@@ -4979,7 +4979,7 @@
       (rez state :corp (refresh tom))
       (run-continue state)
       (click-prompt state :corp "Event")
-      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, and Sure Gamble")
           "Revealed Runner grip")
       (is (last-log-contains? state "4") "Correctly counted Events in Runner grip")
       (fire-subs state tom)
@@ -5736,7 +5736,7 @@
     (let [sm (get-ice state :hq 0)]
       (rez state :corp sm))
     (run-continue state)
-    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), Sure Gamble \\(Event\\).") "3 top cards revelaed")))
+    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), and Sure Gamble \\(Event\\).") "3 top cards revelaed")))
 
 (deftest slot-machine-subroutines
   ;; Subroutines

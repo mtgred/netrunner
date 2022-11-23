@@ -2763,7 +2763,7 @@
       (starting-hand state :runner ["Eater"])
       (take-credits state :corp)
       (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
-      (is (last-log-contains? state "Wyldside, Wyldside")
+      (is (last-log-contains? state "Wyldside and Wyldside")
           "Maxx did log trashed card names")))
 
 (deftest maxx-maximum-punk-rock-with-dummy-box-check-that-mills-don-t-trigger-trash-prevention-3246

@@ -4221,7 +4221,7 @@
       (is (= 1 (count (:discard (get-runner)))) "No Runner mills; advancements were placed")
       (advance state ur)
       (is (= 4 (get-counters (refresh ur) :advancement)))
-      (is (last-log-contains? state "Sure Gamble, Sure Gamble")
+      (is (last-log-contains? state "Sure Gamble and Sure Gamble")
           "Underway Renovation trashed card name is in log")
       (is (= 3 (count (:discard (get-runner)))) "2 cards milled from Runner Stack; 4+ advancements"))))
 

@@ -415,7 +415,7 @@
    :async true
    :effect (effect (reveal eid targets))
    :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
-          (msg "reveal " (str/join ", " (map #(str (:title %) " (" (sub-label %) ")") targets))))})
+          (msg "reveal " (enumerate-str (map #(str (:title %) " (" (sub-label %) ")") targets))))})
 
 (def resolve-grail
   "Ability for resolving a subroutine on a Grail ice in HQ."
@@ -579,7 +579,7 @@
                   :label "Trash the top 3 cards of the stack"
                   :effect (req (system-msg state :corp
                                            (str "uses Aimor to trash "
-                                                (str/join ", " (map :title (take 3 (:deck runner))))
+                                                (enumerate-str (map :title (take 3 (:deck runner))))
                                                 " from the top of the stack and trash itself"))
                                (wait-for (mill state :corp :runner 3)
                                          (trash state :corp (make-eid state eid) card {:cause :subroutine})
@@ -1354,7 +1354,7 @@
   (let [sub {:async true
              :label "Reveal the grip"
              :msg (msg "reveal " (quantify (count (:hand runner)) "card")
-                       " from grip: " (str/join ", " (map :title (:hand runner))))
+                       " from grip: " (enumerate-str (map :title (:hand runner))))
              :effect (effect (reveal eid (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
@@ -1659,8 +1659,7 @@
                                                    (effect-completed eid))
                             :msg (msg
                                    "shuffle "
-                                   (str/join
-                                     " and "
+                                   (enumerate-str
                                      (filter identity
                                              [(when-let [h (->> targets
                                                                 (filter in-hand?)
@@ -1797,7 +1796,7 @@
                                            :effect (req (wait-for (trash-cards state :runner targets)
                                                                   (system-msg
                                                                     state :runner
-                                                                    (str "trashes " (str/join ", " (map :title targets))))
+                                                                    (str "trashes " (enumerate-str (map :title targets))))
                                                                   (effect-completed state side eid)))}))
                                       card nil)))}]
     {:subroutines [sub
@@ -2286,7 +2285,7 @@
                    {:label "Reveal the top 3 cards of the Stack"
                     :async true
                     :effect (req (system-msg state side (str "uses Loot Box to reveal the top 3 cards of the stack: "
-                                                             (str/join ", " (top-3-names state))))
+                                                             (enumerate-str (top-3-names state))))
                               (wait-for
                                 (reveal state side (top-3 state))
                                 (continue-ability
@@ -2635,7 +2634,7 @@
                                 (damage state :runner eid :net net-dmg {:card card}))
                             (do (system-msg state :corp
                                             (str "uses Mlinzi to trash "
-                                                 (str/join ", " (map :title (take mill-cnt (:deck runner))))
+                                                 (enumerate-str (map :title (take mill-cnt (:deck runner))))
                                                  " from the runner's stack"))
                                 (mill state :runner eid :runner mill-cnt))))})]
     {:subroutines [(net-or-trash 1 2)
@@ -2793,7 +2792,7 @@
                   :msg (msg "add "
                             (let [seen (filter :seen targets)
                                   m (count (filter #(not (:seen %)) targets))]
-                              (str (str/join ", " (map :title seen))
+                              (str (enumerate-str (map :title seen))
                                    (when (pos? m)
                                      (str (when-not (empty? seen) " and ")
                                           (quantify m "unseen card")))))
@@ -2917,7 +2916,7 @@
                     :effect (req (let [n (count (filter #(is-type? % target) (:hand runner)))]
                                    (system-msg state side
                                                (str "uses Peeping Tom to name " target ", then reveals "
-                                                    (str/join ", " (map :title (:hand runner)))
+                                                    (enumerate-str (map :title (:hand runner)))
                                                     " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
                                    (wait-for
                                      (reveal state side (:hand runner))
@@ -3029,7 +3028,7 @@
                               (let [top-cards (take 3 (:deck corp))
                                     top-names (map :title top-cards)]
                                 {:waiting-prompt true
-                                 :prompt (str "The top cards of R&D are: " (str/join ", " top-names))
+                                 :prompt (str "The top cards of R&D are: " (enumerate-str top-names))
                                  :choices ["Arrange cards" "Shuffle R&D"]
                                  :async true
                                  :effect
@@ -3238,7 +3237,7 @@
                             (system-msg state side
                                         (str "uses Slot Machine to put the top card of the stack to the bottom,"
                                              " then reveal the top 3 cards in the stack: "
-                                             (str/join ", " (top-3-names t3))))
+                                             (enumerate-str (top-3-names t3))))
                             (reveal state side eid t3)))})]
     {:on-encounter (ability)
      :abilities [(ability)]
@@ -3276,7 +3275,7 @@
 
 (defcard "Snoop"
   {:on-encounter {:msg (msg "reveal the Runner's Grip ("
-                            (str/join ", " (map :title (:hand runner)))
+                            (enumerate-str (map :title (:hand runner)))
                             ")")
                   :async true
                   :effect (effect (reveal eid (:hand runner)))}
@@ -3699,14 +3698,14 @@
 (defcard "Waiver"
   {:subroutines [(trace-ability
                    5 {:label "Reveal the grip and trash cards"
-                      :msg (msg "reveal all cards in the grip: " (str/join ", " (map :title (:hand runner))))
+                      :msg (msg "reveal all cards in the grip: " (enumerate-str (map :title (:hand runner))))
                       :async true
                       :effect (req (wait-for
                                      (reveal state side (:hand runner))
                                      (let [delta (- target (second targets))
                                            cards (filter #(<= (:cost %) delta) (:hand runner))]
                                        (system-msg state side (str "uses " (:title card) " to trash "
-                                                                   (str/join ", " (map :title cards))))
+                                                                   (enumerate-str (map :title cards))))
                                        (trash-cards state side eid cards {:cause :subroutine}))))})]})
 
 (defcard "Wall of Static"

@@ -325,7 +325,7 @@
                                            (wait-for (draw state side (count (filter overlap trashed-card-names)))
                                                      (system-msg state side
                                                                  (str "uses " (:title card) " to trash "
-                                                                      (str/join ", " (map :title trashed-cards))
+                                                                      (enumerate-str (map :title trashed-cards))
                                                                       " from the grip and draw "
                                                                       (quantify (count async-result) "card")))
                                                      (effect-completed state side eid))))))}]})
@@ -826,8 +826,8 @@
 
 (defcard "Gachapon"
   (letfn [(shuffle-end [remove-from-game shuffle-back]
-            {:msg (msg "shuffle " (str/join ", " (map :title shuffle-back)) " into the stack"
-                       " and remove " (str/join ", " (map :title remove-from-game)) " from the game")
+            {:msg (msg "shuffle " (enumerate-str (map :title shuffle-back)) " into the stack"
+                       " and remove " (enumerate-str (map :title remove-from-game)) " from the game")
              :effect (req
                        (doseq [c remove-from-game]
                          (move state side c :rfg))
@@ -843,14 +843,14 @@
                                 (empty? set-aside-cards))]
               {:prompt (msg (if finished?
                               (str "Removing: " (if (not-empty set-aside-cards)
-                                                  (str/join ", " (map :title set-aside-cards))
+                                                  (enumerate-str (map :title set-aside-cards))
                                                   "nothing")
                                    "[br]Shuffling: " (if (not-empty to-shuffle)
-                                                       (str/join ", " (map :title to-shuffle))
+                                                       (enumerate-str (map :title to-shuffle))
                                                        "nothing"))
                               (str "Choose " (- 3 (count to-shuffle)) " more cards to shuffle back."
                                    (when (not-empty to-shuffle)
-                                     (str "[br]Currently shuffling back: " (str/join ", " (map :title to-shuffle)))))))
+                                     (str "[br]Currently shuffling back: " (enumerate-str (map :title to-shuffle)))))))
                :async true
                :not-distinct true ; show cards separately
                :choices (req (if finished?
@@ -876,7 +876,7 @@
                                (let [set-aside-cards (sort-by :title (get-set-aside state side eid))]
                                  (wait-for (resolve-ability state side
                                                             {:async true
-                                                             :prompt (msg "The set aside cards are: " (str/join ", " (map :title set-aside-cards)))
+                                                             :prompt (msg "The set aside cards are: " (enumerate-str (map :title set-aside-cards)))
                                                              :choices ["OK"]}
                                                             card nil)
                                            (continue-ability
@@ -1564,7 +1564,7 @@
                         {:msg "look at the top 2 cards of the stack"
                          :choices ["OK"]
                          :prompt (msg "The top 2 cards of the stack are "
-                                      (str/join ", " (map :title (take 2 (:deck runner)))))}}}]
+                                      (enumerate-str (map :title (take 2 (:deck runner)))))}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of the stack"
                 :once :per-turn
@@ -1655,7 +1655,7 @@
                                  {:async true
                                   :prompt "How much damage do you want to prevent?"
                                   :choices {:number (req (min n (count (:deck runner))))}
-                                  :msg (msg "trash " (str/join ", " (map :title (take target (:deck runner))))
+                                  :msg (msg "trash " (enumerate-str (map :title (take target (:deck runner))))
                                             " from their Stack and prevent " target " damage")
                                   :cost [:trash-can]
                                   :effect (effect (damage-prevent :net target)
@@ -2073,7 +2073,7 @@
                                            :all true
                                            :card #(and (in-hand? %)
                                                        (runner? %))}
-                                 :msg (msg "trash " (str/join ", " (map :title targets)))
+                                 :msg (msg "trash " (enumerate-str (map :title targets)))
                                  :effect (effect (chosen-damage :runner targets))})
                               card nil)))}]})
 

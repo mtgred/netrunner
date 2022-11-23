@@ -1058,7 +1058,7 @@
       "Runner uses Bug"
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "3"))
-    (is (last-log-contains? state "Runner pays 6 \\[Credits] to use Bug to reveal Hedge Fund, Hedge Fund, Hedge Fund."))))
+    (is (last-log-contains? state "Runner pays 6 \\[Credits] to use Bug to reveal Hedge Fund, Hedge Fund, and Hedge Fund."))))
 
 (deftest buzzsaw
   ;; Buzzsaw
