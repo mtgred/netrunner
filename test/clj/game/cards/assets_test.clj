@@ -2862,10 +2862,12 @@
       (let [N (:credit (get-runner))]
         (rez state :corp malia1)
         (click-card state :corp (get-resource state 0))
+        (is (:icon (refresh (get-resource state 0))) "Daily Cast has an icon")
         (take-credits state :corp)
         (is (= N (:credit (get-runner))) "Daily casts did not trigger when blanked"))
       (take-credits state :runner)
       (derez state :corp malia1)
+      (is (nil? (:icon (refresh (get-resource state 0)))))
       (let [N (:credit (get-runner))]
         (take-credits state :corp)
         (is (= (+ N 2) (:credit (get-runner))) "Daily casts triggers again when unblanked"))
@@ -5433,6 +5435,7 @@
     (rez state :corp (get-ice state :remote1 0))
     (rez state :corp (get-content state :remote1 0))
     (click-card state :corp "Eli 1.0")
+    (is (:icon (refresh (get-ice state :remote1 0))) "Eli 1.0 has an icon")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
     (run-on state :remote1)
@@ -5462,7 +5465,9 @@
       (card-side-ability state :runner ice 0)
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "End the run")
-      (is (empty? (remove :broken (:subroutines (refresh ice)))) "No subs broken"))))
+      (is (empty? (remove :broken (:subroutines (refresh ice)))) "No subs broken")
+      (derez state :corp (get-content state :remote1 0))
+      (is (nil? (:icon (refresh ice)))))))
 
 (deftest trieste-model-bioroids-odd-breakers
   ;; savant/etc utae, and any other cards where issues pop up

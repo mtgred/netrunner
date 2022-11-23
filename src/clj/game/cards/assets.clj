@@ -1241,9 +1241,10 @@
 (defcard "Malia Z0L0K4"
   (let [re-enable-target (req (when-let [malia-target (:malia-target card)]
                                 (when (:disabled (get-card state malia-target))
-                                  (system-msg state side (str "uses "  (:title card) " to unblank "
+                                  (system-msg state side (str "uses " (:title card) " to unblank "
                                                               (card-str state malia-target)))
                                   (enable-card state :runner (get-card state malia-target))
+                                  (remove-icon state :runner card (get-card state malia-target))
                                   (when-let [reactivate-effect (:reactivate (card-def malia-target))]
                                     (resolve-ability state :runner reactivate-effect (get-card state malia-target) nil)))))]
     {:on-rez {:msg (msg (str "blank the text box of " (card-str state target)))
@@ -1251,8 +1252,9 @@
                                     (installed? %)
                                     (resource? %)
                                     (not (has-subtype? % "Virtual")))}
-              :effect (effect (update! (assoc card :malia-target target))
-                              (disable-card :runner target))}
+              :effect (effect (add-icon card target "MZ" (faction-label card))
+                              (update! (assoc card :malia-target target))
+                              (disable-card :runner (get-card state target)))}
      :leave-play re-enable-target
      :move-zone re-enable-target}))
 
@@ -2423,7 +2425,7 @@
             :choices {:card #(and (ice? %)
                                   (rezzed? %)
                                   (has-subtype? % "Bioroid"))}
-            :effect (effect (add-icon card target "T" "red")
+            :effect (effect (add-icon card target "TMB" (faction-label card))
                             (update! (assoc-in (get-card state card) [:special :trieste-target] target)))}
    :leave-play (effect (remove-icon card))
    :constant-effects [{:type :prevent-paid-ability

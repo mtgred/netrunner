@@ -402,20 +402,20 @@
   {:on-play
    {:prompt "Choose a card in or protecting a remote server"
     :choices {:card #(is-remote? (second (get-zone %)))}
-    :effect (effect (add-icon card target "CP" "red")
-                    (system-msg (str "prevents the rezzing of " (card-str state target)
-                                     " for the rest of this turn via Careful Planning"))
-                    (register-events
-                      card
-                      [{:event :runner-turn-ends
-                        :duration :end-of-turn
-                        :effect (effect (remove-icon card target))}])
-                    (register-turn-flag! card :can-rez
-                                         (fn [state _side card]
-                                           (if (same-card? card target)
-                                             ((constantly false)
-                                              (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
-                                             true))))}})
+    :msg (msg "prevent the Corp from rezzing " (card-str state target) " for the rest of the turn")
+    :effect (req (add-icon state side card target "CP" (faction-label card))
+                 (let [t target]
+                   (register-events state side card
+                     [{:event :post-runner-turn-ends
+                       :duration :end-of-turn
+                       :unregister-once-resolved true
+                       :effect (effect (remove-icon card t))}]))
+                 (register-turn-flag! state side card :can-rez
+                                      (fn [state _side card]
+                                        (if (same-card? card target)
+                                          ((constantly false)
+                                           (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
+                                           true))))}})
 
 (defcard "Carpe Diem"
   {:makes-run true
@@ -3305,14 +3305,19 @@
     :choices {:card #(and (installed? %)
                           (ice? %))}
     :msg (msg "make " (card-str state target) " gain Sentry, Code Gate, and Barrier until the end of the turn")
-    :effect (effect (register-floating-effect
-                      card
-                      (let [ice target]
-                        {:type :gain-subtype
-                         :duration :end-of-turn
-                         :req (req (same-card? ice target))
-                         :value ["Sentry" "Code Gate" "Barrier"]}))
-                    (add-icon card (get-card state target) "T" "green"))}})
+    :effect (req (register-floating-effect state side card
+                 (let [ice target]
+                   {:type :gain-subtype
+                    :duration :end-of-turn
+                    :req (req (same-card? ice target))
+                    :value ["Sentry" "Code Gate" "Barrier"]}))
+                 (add-icon state side card target "T" (faction-label card))
+                 (let [t target]
+                   (register-events state side card
+                     [{:event :runner-turn-ends
+                       :duration :end-of-turn
+                       :unregister-once-resolved true
+                       :effect (effect (remove-icon card t))}])))}})
 
 (defcard "Trade-In"
   ;; TODO: look at me plz

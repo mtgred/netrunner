@@ -217,7 +217,7 @@
                 :msg (msg "target " (card-str state target))
                 :choices {:card #(and (installed? %)
                                       (ice? %))}
-                :effect (effect (add-icon card target "B" "blue")
+                :effect (effect (add-icon card target "B" (faction-label card))
                                 (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
    :leave-play (effect (remove-icon card))
    :abilities [(assoc
