@@ -345,6 +345,18 @@
       (run-jack-out state)
       (is (= "Autoscripter" (:title (last (:discard (get-runner))))) "Autoscripter was trashed after successful run"))))
 
+(deftest basilar-synth
+  (do-game
+    (new-game {:runner {:hand ["Basilar Synthgland 2KVJ" (qty "Sure Gamble" 4)]}})
+    (take-credits state :corp)
+    (is (= 4 (:click (get-runner))) "4 base clicks")
+    (play-from-hand state :runner "Basilar Synthgland 2KVJ")
+    (is (= 2 (:brain-damage (get-runner))) "2 damage taken")
+    (is (= 3 (:click (get-runner))))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (= 5 (:click (get-runner))) "4+1  base clicks")))
+
 (deftest blackguard
   ;; Blackguard - +2 MU, forced rez of exposed ice
   (do-game
