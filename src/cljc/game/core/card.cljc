@@ -11,6 +11,7 @@
    agendapoints
    art
    baselink
+   cannot-use-ability
    card-target
    cid
    code
