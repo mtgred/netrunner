@@ -3661,6 +3661,28 @@
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
 
+(deftest k2cp-turbine
+  ;; K2CP Turbine
+  (do-game
+    (new-game {:runner {:hand ["K2CP Turbine" "Ika" "Mayfly" "Corroder" "Buzzsaw" "Keiko"]
+                        :credits 50}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "Keiko")
+    (play-from-hand state :runner "Buzzsaw")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Ika")
+    (play-from-hand state :runner "Mayfly")
+    (play-from-hand state :runner "K2CP Turbine")
+    (is (= 5 (get-strength (refresh (get-program state 0)))))
+    (is (= 4 (get-strength (refresh (get-program state 1)))))
+    (is (= 4 (get-strength (refresh (get-program state 2)))))
+    (is (= 1 (get-strength (refresh (get-program state 3)))))
+    (core/move state :runner (get-program state 4) :hand)
+    (is (= 3 (get-strength (refresh (get-program state 0)))))
+    (is (= 2 (get-strength (refresh (get-program state 1)))))
+    (is (= 2 (get-strength (refresh (get-program state 2)))))))
+
 (deftest keyhole
   ;; Keyhole
   (do-game

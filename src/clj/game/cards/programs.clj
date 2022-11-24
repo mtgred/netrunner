@@ -33,7 +33,7 @@
                           any-subs-broken-by-card? auto-icebreaker break-sub
                           break-subroutine! break-subroutines-msg breaker-strength-bonus dont-resolve-subroutine!
                           get-strength ice-strength pump pump-ice set-current-ice strength-pump
-                          unbroken-subroutines-choice update-breaker-strength]]
+                          unbroken-subroutines-choice update-all-icebreakers update-breaker-strength]]
    [game.core.initializing :refer [ability-init card-init]]
    [game.core.installing :refer [install-locked? runner-can-install?
                                  runner-install]]
@@ -1637,6 +1637,13 @@
              :async true
              :msg "trash itself"
              :effect (req (trash state :runner eid card {:cause :purge :cause-card card}))}]})
+
+(defcard "K2CP Turbine"
+  {:constant-effects [{:type :breaker-strength
+                       :req (req (and (has-subtype? target "Icebreaker")
+                                      (not (has-subtype? target "AI"))))
+                       :value 2}]
+   :leave-play (effect (update-all-icebreakers))})
 
 (defcard "Keyhole"
   (let [ability (successful-run-replace-breach
