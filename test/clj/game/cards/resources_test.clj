@@ -1811,6 +1811,24 @@
         (take-credits state :runner)
         (is (nil? (:icon (refresh blackfile)))))))
 
+(deftest dr-nuka-vrolyck
+  (do-game
+      (new-game {:runner {:hand ["Dr. Nuka Vrolyck"]
+                          :deck [(qty "Sure Gamble" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dr. Nuka Vrolyck")
+      (let [dr (get-resource state 0)]
+        (changes-val-macro
+          3 (count (:hand (get-runner)))
+          "Runner has drawn 3 cards"
+          (card-ability state :runner dr 0))
+        (is (= 2 (:click (get-runner))))
+        (changes-val-macro
+          2 (count (:hand (get-runner)))
+          "Runner has drawn the remaining 2 cards from the stack"
+          (card-ability state :runner dr 0))
+        (is (= 1 (count (:discard (get-runner)))) "Dr. Nuka Vrolyck was trashed"))))
+
 (deftest dreamnet-draw-1-card-on-first-successful-run
     ;; Draw 1 card on first successful run
     (do-game

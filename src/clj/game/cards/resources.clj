@@ -1052,6 +1052,16 @@
                                                 (resolve-ability state :runner (:reactivate (card-def c)) disabled-card nil)))}])
                             (effect-completed state side eid)))}]})
 
+(defcard "Dr. Nuka Vrolyck"
+  {:data {:counter {:power 2}}
+   :abilities [{:msg "draw 3 cards"
+                :cost [:click 1 :power 1]
+                :async true
+                :effect (req (wait-for (draw state :runner 3)
+                                       (if (pos? (get-counters (get-card state card) :power))
+                                         (effect-completed state side eid)
+                                         (trash state :runner eid card {:unpreventable true :cause-card card}))))}]})
+
 (defcard "DreamNet"
   {:events [{:event :successful-run
              :async true
