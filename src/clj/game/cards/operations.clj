@@ -1639,6 +1639,21 @@
                                          (:break ability))))
                         :value true}]}))
 
+(defcard "Nonequivalent Exchange"
+  {:on-play
+   {:optional
+    {:prompt "Let the Runner gain 2 [Credits]?"
+     :waiting-prompt "Corp to make a decision"
+     :async true
+     :yes-ability
+     {:msg "gain 7 [Credits]. The Runner gains 2 [Credits]"
+      :async true
+      :effect (req (wait-for (gain-credits state side 7)
+                             (gain-credits state :runner eid 2)))}
+     :no-ability
+     {:msg "gain 5 [Credits]"
+      :async true
+      :effect (effect (gain-credits eid 5))}}}})
 
 (defcard "O₂ Shortage"
   {:on-play

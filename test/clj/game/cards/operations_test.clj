@@ -2824,6 +2824,23 @@
         (is (= 1 (core/get-strength (refresh iw))))
         (is (find-card "NEXT Activation Command" (:discard (get-corp)))))))
 
+(deftest nonequivalent-exchange
+    ;; Nonequivalent Exchange
+    (do-game
+      (new-game {:corp {:hand [(qty "Nonequivalent Exchange" 2)]}})
+      (play-from-hand state :corp "Nonequivalent Exchange")
+      (changes-val-macro 2 (:credit (get-runner))
+        "Runner gained 2 credits"
+        (changes-val-macro 7 (:credit (get-corp))
+                           "Corp gained 7 credits"
+                           (click-prompt state :corp "Yes")))
+      (play-from-hand state :corp "Nonequivalent Exchange")
+      (changes-val-macro 0 (:credit (get-runner))
+        "Runner gained no credits"
+        (changes-val-macro 5 (:credit (get-corp))
+                           "Corp gained 5 credits"
+                           (click-prompt state :corp "No")))))
+
 (deftest o-shortage
   ;; O₂ Shortage
   (do-game
