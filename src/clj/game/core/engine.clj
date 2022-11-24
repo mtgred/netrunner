@@ -142,7 +142,7 @@
 ;            Example: Hayley Kaplan will not show a prompt if there are no valid targets in the grip.
 
 ; OTHER KEYS
-; :once -- either :per-turn or :per-run. signifies an effect that can only be triggered once per turn.
+; :once -- :per-turn, :per-run, or :per-encounter. signifies an effect that can only be triggered once per turn, per run, or per encounter.
 ; :once-key -- keyword. by default, each :once is distinct per card. If multiple copies of a card can only resolve
 ;              some ability once between all of them, then the card should specify a manual :once-key that can
 ;              be any value, preferrably a unique keyword.

@@ -66,6 +66,7 @@
   [state]
   (when-let [encounter (get-current-encounter state)]
     (swap! state update :encounters pop)
+    (swap! state assoc :per-encounter nil)
     (effect-completed state nil (:eid encounter))))
 
 (defn set-phase
