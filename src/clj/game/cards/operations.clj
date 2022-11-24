@@ -2357,6 +2357,23 @@
     :msg (msg "place 2 advancement tokens on " (card-str state target))
     :effect (effect (add-prop target :advance-counter 2 {:placed true}))}})
 
+(defcard "Shipment from Vladisibirsk"
+  (letfn [(ability [x]
+            {:prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
+             :async true
+             :choices {:card #(and (corp? %)
+                                   (installed? %))}
+             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
+                                    (if (> x 1)
+                                      (continue-ability state side (ability (dec x)) card nil)
+                                      (effect-completed state side eid))))})]
+    {:on-play
+     {:async true
+      :req (req (<= 2 (count-tags state)))
+      :msg "trash all cards in HQ"
+      :effect (effect (continue-ability (ability 4) card nil))}}))
+
 (defcard "Shoot the Moon"
   (letfn [(rez-helper [ice]
             (when (seq ice)

@@ -3945,6 +3945,34 @@
     (click-card state :corp "Ice Wall")
     (is (= 2 (get-counters (get-ice state :hq 0) :advancement)) "Ice Wall should be advanced")))
 
+(deftest shipment-from-vladisibirsk
+  ;; Shipment from Vladisibirsk
+  (do-game
+    (new-game {:corp {:hand [(qty "Shipment from Vladisibirsk" 2) "Ice Wall" "Hostile Takeover" "PAD Campaign" "Bio Vault"]}})
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Bio Vault" "New remote")
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (is (no-prompt? state :corp) "Shouldn't be able to play without runner being tagged")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (is (no-prompt? state :corp) "Shouldn't be able to play without runner having 2 tags")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (click-card state :corp "Ice Wall")
+    (click-card state :corp "Hostile Takeover")
+    (click-card state :corp "PAD Campaign")
+    (click-card state :corp "PAD Campaign")
+    (is (= 1 (get-counters (get-ice state :hq 0) :advancement)))
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)))
+    (is (= 2 (get-counters (get-content state :remote2 0) :advancement)))
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (dotimes [_ 4]
+      (click-card state :corp "Bio Vault"))
+    (is (= 4 (get-counters (get-content state :remote3 0) :advancement)))))
+
 (deftest shoot-the-moon
   ;; Ice Wall
   (do-game
