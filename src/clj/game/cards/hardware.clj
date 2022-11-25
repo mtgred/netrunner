@@ -1024,6 +1024,13 @@
                                  (move card :rfg)
                                  (trash eid target {:cause-card card}))}}}]}))
 
+(defcard "Hippocampic Mechanocytes"
+  {:on-install {:async true
+                :msg "suffer 1 meat damage"
+                :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
+   :data {:counter {:power 2}}
+   :constant-effects [(runner-hand-size+ (req (get-counters card :power)))]})
+
 (defcard "HQ Interface"
   {:events [(breach-access-bonus :hq 1)]})
 

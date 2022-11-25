@@ -2338,6 +2338,24 @@
       (click-prompt state :runner "End the run")
       (is (no-prompt? state :runner) "No Hippo prompt on later ice")))
 
+(deftest hippocampic-mechanocytes
+  ;; Hippocampic Mechanocytes
+  (do-game
+    (new-game {:runner {:hand ["Hippocampic Mechanocytes" (qty "Stoneship Chart Room" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hippocampic Mechanocytes")
+    (is (= 1 (count (:discard (get-runner)))) "Suffered 1 meat damage")
+    (let [hm (get-hardware state 0)]
+      (is (= 2 (get-counters (refresh hm) :power)))
+      (is (= 7 (hand-size :runner)))
+      (play-from-hand state :runner "Stoneship Chart Room")
+      (card-ability state :runner (get-resource state 0) 1)
+      (click-card state :runner hm)
+      (is (= 8 (hand-size :runner)))
+      (core/add-counter state :runner (refresh hm) :power -3)
+      (core/update-hand-size state :runner)
+      (is (= 5 (hand-size :runner))))))
+
 (deftest keiko
   ;; Keiko
   (do-game
