@@ -4577,6 +4577,40 @@
         (run-jack-out state)
         (is (= 1 (get-strength (refresh nanotk))) "Back to default strength"))))
 
+(deftest nanuq
+  ;; Nanuq
+  (do-game
+      (new-game {:runner {:deck [(qty "Nanuq" 3) "Uninstall"]
+                          :credits 50}
+                 :corp {:deck ["Spiderweb" (qty "Hostile Takeover" 2)]}})
+      (play-from-hand state :corp "Spiderweb" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Nanuq")
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (changes-val-macro -4 (:credit (get-runner)) "Broke all subroutines"
+        (card-ability state :runner (refresh (get-program state 0)) 0)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run"))
+      (run-continue-until state :movement)
+      (run-jack-out state)
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (is (not (get-program state 0)) "Nanuq no installed anymore")
+      (is (= 1 (count (:rfg (get-runner)))) "Nanuq removed from the game on agenda scored")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Nanuq")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (is (not (get-program state 0)) "Nanuq no installed anymore")
+      (is (= 2 (count (:rfg (get-runner)))) "Nanuq removed from the game on agenda stolen")
+      (play-from-hand state :runner "Nanuq")
+      (play-from-hand state :runner "Uninstall")
+      (click-card state :runner (get-program state 0))
+      (is (= 3 (count (:rfg (get-runner)))) "Nanuq removed from the game when uninstalled")))
+
 (deftest nfr
   ;; Nfr
   (do-game

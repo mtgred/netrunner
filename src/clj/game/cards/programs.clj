@@ -1973,6 +1973,17 @@
                     :abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 3 2)]}))
 
+(defcard "Nanuq"
+  (let [self-rfg {:msg "remove itself from the game"
+                  :once :per-turn ;; prevents self triggering
+                  :interactive (req true)
+                  :effect (effect (move card :rfg))}]
+    (auto-icebreaker {:abilities [(break-sub 2 2 "All")
+                                  (strength-pump 1 1)]
+                      :uninstall (effect (continue-ability self-rfg card nil))
+                      :events [(assoc self-rfg :event :agenda-scored)
+                               (assoc self-rfg :event :agenda-stolen)]})))
+
 (defcard "Nerve Agent"
   {:events [{:event :successful-run
              :req (req (= :hq (target-server context)))
