@@ -6,9 +6,7 @@
                             card->server server->zone]]
    [game.core.card :refer [agenda? asset? card-index corp? facedown?
                            get-advancement-requirement get-card get-counters
-                           get-nested-host get-title get-zone hardware? has-subtype?
-                           ice? in-discard? in-hand? installed?
-                           program? resource? rezzed? runner?]]
+                           is-type? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [charge-ability]]
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
@@ -2882,6 +2880,40 @@
                                      (all-installed state :corp))))
                 :prompt "Trash Wari to expose a piece of ice?"
                 :yes-ability (prompt-for-subtype)}}]}))
+
+(defcard "World Tree"
+  (let [search-and-install
+        (fn [trashed-card]
+          {:prompt (msg "Choose a " (:type trashed-card) " to install")
+           :req (req (not (install-locked? state side)))
+           :msg (req (if (= target "No install")
+                       "shuffle the stack"
+                       (str "install " (:title target) " paying 3 [Credits] less")))
+           :choices (req (conj (filter #(can-pay? state side
+                                                  (assoc eid :source card :source-type :runner-install)
+                                                  % nil [:credit (install-cost state side % {:cost-bonus -3})])
+                                       (vec (sort-by :title (filter #(is-type? % (:type trashed-card)) (:deck runner)))))
+                               "No install"))
+           :async true
+           :effect (req (trigger-event state side :searched-stack nil)
+                        (shuffle! state side :deck)
+                        (if (= target "No install")
+                          (effect-completed state side eid)
+                          (runner-install state side (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3})))})
+        ability {:async true
+                 :choices {:not-self true
+                           :req (req (and (runner? target)
+                                          (installed? target)))}
+                 :msg (msg "trash " (:title target))
+                 :cancel-effect (req (system-msg state :runner "declines to use World Tree to trash another installed card")
+                                     (effect-completed state side eid))
+                 :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
+                                        (continue-ability state side (search-and-install target) card nil)))}]
+    {:events [{:event :successful-run
+               :interactive (req true)
+               :req (req (and (first-event? state :runner :successful-run)
+                              (>= (count (all-installed state :runner)) 2)))
+               :effect (effect (continue-ability ability card nil))}]}))
 
 (defcard "Wyrm"
   (auto-icebreaker {:abilities [(break-sub 3 1 "All" {:label "break 1 subroutine on a piece of ice with 0 or less strength"

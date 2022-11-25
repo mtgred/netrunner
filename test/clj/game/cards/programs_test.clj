@@ -7010,6 +7010,52 @@
     (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
     (is (not (no-prompt? state :runner)) "Runner is currently accessing Ice Wall")))
 
+(deftest world-tree
+  (do-game
+    (new-game {:runner {:deck ["Sneakdoor Beta"]
+                        :hand ["World Tree" "Paricia"]
+                        :credits 20}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paricia")
+    (play-from-hand state :runner "World Tree")
+    (run-empty-server state "Archives")
+    (click-prompt state :runner "Done")
+    (run-empty-server state "Archives")
+    (is (no-prompt? state :runner) "No further prompts")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (click-card state :runner (get-program state 1))
+    (is (zero? (count (:discard (get-runner)))) "World Tree cannot trash itself")
+    (click-card state :runner (get-program state 0))
+    (is (= 1 (count (:discard (get-runner)))) "Paricia was trashed")
+    (is (= 2 (count (:choices (prompt-map :runner)))) "Only Sneakdoor Beta (and No install) are available")
+    (changes-val-macro -1 (:credit (get-runner))
+      "Sneakdoor Beta install cost lowered by 3"
+      (click-prompt state :runner "Sneakdoor Beta"))))
+
+(deftest world-tree-no-available-install-targets
+  (do-game
+    (new-game {:runner {:deck ["Street Peddler" "Sure Gamble" "Boomerang"]
+                        :hand ["World Tree" "Paricia"]
+                        :credits 20}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paricia")
+    (play-from-hand state :runner "World Tree")
+    (run-empty-server state "Archives")
+    (click-prompt state :runner "Done")
+    (run-empty-server state "Archives")
+    (is (no-prompt? state :runner) "No further prompts")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (click-card state :runner (get-program state 1))
+    (is (zero? (count (:discard (get-runner)))) "World Tree cannot trash itself")
+    (click-card state :runner (get-program state 0))
+    (is (= 1 (count (:discard (get-runner)))) "Paricia was trashed")
+    (is (= 1 (count (:choices (prompt-map :runner)))))
+    (click-prompt state :runner "No install")))
+
 (deftest wyrm
   ;; Wyrm reduces strength of ice
   (do-game
