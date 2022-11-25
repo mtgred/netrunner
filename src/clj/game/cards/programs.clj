@@ -10,6 +10,7 @@
                            ice? in-discard? in-hand? installed?
                            program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.charge :refer [charge-ability]]
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-prevent]]
@@ -1984,6 +1985,15 @@
                                  {:req (req (let [server-ice (:ices (card->server state current-ice))]
                                                                   (same-card? current-ice (first server-ice))))})
                                 (strength-pump 1 1)]}))
+
+(defcard "Orca"
+  (auto-icebreaker {:abilities [(break-sub 2 0 "Sentry")
+                                (strength-pump 2 3)]
+                    :events [{:event :subroutines-broken
+                              :req (req (and (all-subs-broken-by-card? target card)
+                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
+                              :async true
+                              :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]}))
 
 (defcard "Origami"
   {:constant-effects [{:type :hand-size

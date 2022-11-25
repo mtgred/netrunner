@@ -4590,6 +4590,61 @@
                            "Paid 3 to pump and 0 to break"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)})))))
 
+(deftest orca
+  ;; Orca
+  (do-game
+    (new-game {:runner {:hand ["Orca" "Earthrise Hotel"]
+                        :credits 50}
+               :corp {:hand ["Saisentan"]}})
+    (play-from-hand state :corp "Saisentan" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Orca")
+    (play-from-hand state :runner "Earthrise Hotel")
+    (let [orca (get-program state 0)
+          hotel (get-resource state 0)
+          sais (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp sais)
+      (run-continue state)
+      (click-prompt state :corp "Event")
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh orca)})
+      (changes-val-macro 1
+        (get-counters (refresh hotel) :power)
+        "Charged Earthrise Hotel"
+        (click-card state :runner hotel))
+      (core/continue state :corp nil)
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (click-prompt state :corp "Event")
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh orca)})
+      (is (no-prompt? state :runner) "No second prompt to charge"))))
+
+(deftest orca-triggers-when-breaking-with-itself-only
+  ;; Orca - no trigger when subs were broken by something else as well
+  (do-game
+    (new-game {:runner {:hand ["Orca" "Earthrise Hotel" "Boomerang"]
+                        :credits 50}
+               :corp {:hand ["Saisentan"]}})
+    (play-from-hand state :corp "Saisentan" "HQ")
+    (take-credits state :corp)
+    (core/gain-clicks state :runner 3)
+    (play-from-hand state :runner "Orca")
+    (play-from-hand state :runner "Earthrise Hotel")
+    (let [orca (get-program state 0)
+          sais (get-ice state :hq 0)]
+      (play-from-hand state :runner "Boomerang")
+      (click-card state :runner sais)
+      (run-on state "HQ")
+      (rez state :corp sais)
+      (run-continue state)
+      (click-prompt state :corp "Event")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "Do 1 net damage")
+      (click-prompt state :runner "Do 1 net damage")
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh orca)})
+      (is (no-prompt? state :runner) "No prompt to charge"))))
+
 (deftest origami
   ;; Origami - Increases Runner max hand size
   (do-game
