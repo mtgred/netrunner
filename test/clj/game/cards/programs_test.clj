@@ -2983,7 +2983,6 @@
       (run-continue state)
       (card-ability state :runner corr 0)
       (click-prompt state :runner "End the run")
-      (click-prompt state :runner "Yes")
       (changes-val-macro 0 (get-counters (refresh corr) :power)
         "Cannot charge Corroder"
         (click-card state :runner corr))
@@ -3013,7 +3012,7 @@
       (run-continue state)
       (card-ability state :runner corr 0)
       (click-prompt state :runner "End the run")
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Done")
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "End the run"))))
 
@@ -3039,7 +3038,6 @@
       (run-continue state)
       (card-ability state :runner buzz 0)
       (click-prompt state :runner "End the run")
-      (click-prompt state :runner "Yes")
       (changes-val-macro 1 (get-counters (refresh hotel) :power)
         "Charged Earthrise Hotel"
         (click-card state :runner hotel))
@@ -3049,29 +3047,9 @@
       (run-continue-until state :encounter-ice thim)
       (card-ability state :runner buzz 0)
       (click-prompt state :runner "End the run")
-      (click-prompt state :runner "Yes")
       (changes-val-macro 1 (get-counters (refresh hotel) :power)
         "Charged Earthrise Hotel"
         (click-card state :runner hotel)))))
-
-(deftest flux-capacitor-no-charge-targets
-  ;; Flux Capacitor - no prompt if there are no charge targets
-  (do-game
-    (new-game {:runner {:hand ["Corroder" "Flux Capacitor"]}
-               :corp {:hand ["Spiderweb"]}})
-    (play-from-hand state :corp "Spiderweb" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Corroder")
-    (let [sweb (get-ice state :hq 0)
-          corr (get-program state 0)]
-      (play-from-hand state :runner "Flux Capacitor")
-      (click-card state :runner sweb)
-      (run-on state :hq)
-      (rez state :corp sweb)
-      (run-continue state)
-      (card-ability state :runner corr 0)
-      (click-prompt state :runner "End the run")
-      (is (not (= :select (prompt-type :runner))) "No charge prompt"))))
 
 (deftest gauss-loses-strength-at-end-of-runner-s-turn
     ;; Loses strength at end of Runner's turn
