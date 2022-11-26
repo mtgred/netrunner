@@ -1140,6 +1140,30 @@
                                      :event :breach-server
                                      :duration :end-of-run)])))}}))
 
+(defcard "Nanisivik Grid"
+  {:events [{:event :approach-server
+             :interactive (req true)
+             :prompt "Choose a facedown piece of ice in Archives"
+             :req (req (and this-server
+                            ;; not filtering ice only so that we don't reveal valuable information
+                            (seq (filter #(not (:seen %)) (:discard corp)))))
+             :show-discard true
+             :choices {:card #(and (ice? %)
+                                   (in-discard? %)
+                                   (not (:seen %)))}
+             :async true
+             :effect
+             (effect (update! (assoc-in target [:seen] true))
+                     (continue-ability
+                       (let [ice target]
+                         {:async true
+                          :prompt "Choose a subroutine to resolve"
+                          :choices (req (unbroken-subroutines-choice ice))
+                          :msg (msg "resolve the subroutine (\"[subroutine] " target "\") from " (card-str state ice))
+                          :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
+                                         (continue-ability state side (:sub-effect sub) ice nil)))})
+                       card nil))}]})
+
 (defcard "Navi Mumbai City Grid"
   {:constant-effects [{:type :prevent-paid-ability
                        :req (req (let [target-card (first targets)]

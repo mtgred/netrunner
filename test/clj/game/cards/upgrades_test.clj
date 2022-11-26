@@ -2755,6 +2755,30 @@
         (run-jack-out state)
         (is (= 2 (-> (get-corp) :discard count)) "Two Kitsunes trashed after resolving their subroutines"))))
 
+(deftest nanisivik-grid
+  ;; Nanisivik Grid
+  (do-game
+      (new-game {:corp {:hand ["Nanisivik Grid" "Ice Wall"]
+                        :discard ["Anemone"]}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (play-from-hand state :corp "Nanisivik Grid" "HQ")
+      (rez state :corp (get-content state :hq 0))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (core/move state :corp (get-ice state :hq 0) :discard)
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-card state :corp "Ice Wall")
+      (is (= :select (prompt-type :corp)) "Cannot select faceup pieces of ice")
+      (changes-val-macro -1 (count (:hand (get-runner)))
+        "Runner suffered 1 net damage"
+        (click-card state :corp "Anemone")
+        (click-prompt state :corp "Do 1 net damage"))
+      (is (empty? (remove #(:seen %) (:discard (get-corp)))) "Anemone was turned faceup")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (is (no-prompt? state :corp) "No prompt when no facedown cards are in Archives")))
+
 (deftest navi-mumbai-city-grid
   ;; Navi Mumbai City Grid
   (do-game
