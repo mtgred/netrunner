@@ -57,6 +57,7 @@
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [number-of-runner-virus-counters]]
+   [game.core.winning :refer [check-win-by-agenda]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
@@ -824,6 +825,25 @@
                :effect draft-points-target}
               (assoc inf :event :agenda-scored)
               (assoc inf :event :agenda-stolen)])})
+
+(defcard "Issuaq Adaptics: Sustaining Diversity"
+  {:effect (effect (lose :agenda-point-req (get-counters card :power)))
+   :leave-play (effect (gain :agenda-point-req (get-counters card :power)))
+   :events [{:event :agenda-scored
+             :interactive (req true)
+             :req (req (and (->> (turn-events state side :corp-install)
+                                 (map #(:card (first %)))
+                                 (filter #(same-card? (:card context) %))
+                                 empty?)
+                            (->> (turn-events state side :advance)
+                                 (map #(first %))
+                                 (filter #(same-card? (:card context) %))
+                                 empty?)))
+             :msg "put 1 charge counter on itself"
+             :effect (req (add-counter state side card :power 1)
+                          (swap! state assoc-in [:corp :agenda-point-req]
+                                 (get-counters (get-card state card) :power))
+                          (check-win-by-agenda state))}]})
 
 (defcard "Jamie \"Bzzz\" Micken: Techno Savant"
   {:events [{:event :pre-start-game

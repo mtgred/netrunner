@@ -3047,6 +3047,54 @@
      (is (prompt-is-type? state :runner :waiting) "Runner waiting on Mti ability")
      (click-prompt state :corp "Carry on!")))
 
+(deftest issuaq-adaptics-sustaining-diversity
+  ;; Issuaq Adaptics: Sustaining Diversity
+  (do-game
+    (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
+                      :hand ["Merger" (qty "Blood in the Water" 2)]
+                      :deck [(qty "Hedge Fund" 5)]}
+               :runner {:hand []}})
+    (let [issuaq (get-in @state [:corp :identity])]
+      (play-from-hand state :corp "Blood in the Water" "New remote")
+      (play-from-hand state :corp "Merger" "New remote")
+      (play-from-hand state :corp "Blood in the Water" "New remote")
+      (changes-val-macro 0 (get-counters (refresh issuaq) :power)
+        "No power counter added to ID when agenda is scored on the same turn it's installed"
+        (score state :corp (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (advance state (get-content state :remote2 0) 3)
+      (changes-val-macro 0 (get-counters (refresh issuaq) :power)
+        "No power counter added to ID when agenda is scored on the same turn it's advanced"
+        (score state :corp (get-content state :remote2 0)))
+      (changes-val-macro 1 (get-counters (refresh issuaq) :power)
+        "1 power counter added to ID"
+        (score state :corp (get-content state :remote3 0)))
+      (is (= :corp (:winner @state))))))
+
+(deftest issuaq-adaptics-sustaining-diversity-with-employee-strike
+  ;; Issuaq Adaptics: Sustaining Diversity - ability goes back after Employee Strike is trashed
+  (do-game
+    (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
+                      :hand ["Merger" (qty "Blood in the Water" 2)]
+                      :deck [(qty "Hedge Fund" 5)]}
+               :runner {:hand ["Employee Strike"]}})
+    (let [issuaq (get-in @state [:corp :identity])]
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Merger" "New remote")
+      (advance state (get-content state :remote1 0) 3)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (changes-val-macro 1 (get-counters (refresh issuaq) :power)
+        "1 power counter added to ID"
+        (score state :corp (get-content state :remote1 0)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Employee Strike")
+      (take-credits state :runner)
+      (play-and-score state "Blood in the Water")
+      (play-and-score state "Blood in the Water")
+      (is (= :corp (:winner @state))))))
+
 (deftest nasir-meidan-cyber-explorer
   ;; Nasir
   (do-game
