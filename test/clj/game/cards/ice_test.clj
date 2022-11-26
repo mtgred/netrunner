@@ -3553,6 +3553,106 @@
       (click-prompt state :runner "No action")
       (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
 
+(deftest klevetnik
+  ;; Klevetnik
+  (do-game
+    (new-game {:corp {:hand ["Klevetnik"]}
+               :runner {:hand [(qty "No Free Lunch" 2) "Keiko"]}})
+    (play-from-hand state :corp "Klevetnik" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Keiko")
+    (play-from-hand state :runner "No Free Lunch")
+    (play-from-hand state :runner "No Free Lunch")
+    (let [klev (get-ice state :hq 0)
+          nfl1 (get-resource state 0)
+          nfl2 (get-resource state 1)]
+      (run-on state "HQ")
+      (rez state :corp klev)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp (get-hardware state 0))
+      (is (= :select (prompt-type :corp)) "Hardware cannot be selected")
+      (changes-val-macro 2 (:credit (get-runner))
+        "Runner gained 2 Credits thanks to Klevetnik's on-rez ability"
+        (click-card state :corp nfl1))
+      (changes-val-macro 0 (:credit (get-runner))
+        "No Free Lunch was blanked"
+        (card-ability state :runner (refresh nfl1) 0))
+      (changes-val-macro 0 (:credit (get-runner))
+        "Both No Free Lunches were blanked"
+        (card-ability state :runner (refresh nfl2) 0))
+      (run-continue state)
+      (card-subroutine state :corp klev 0)
+      (is (not (:run @state)) "The run should have ended")
+      (take-credits state :runner)
+      (changes-val-macro 0 (:credit (get-runner))
+        "No Free Lunch still blank"
+        (card-ability state :runner (refresh nfl1) 0))
+      (changes-val-macro 0 (:credit (get-runner))
+        "Both No Free Lunches still blank"
+        (card-ability state :runner (refresh nfl2) 0))
+      (take-credits state :corp)
+      (changes-val-macro 3 (:credit (get-runner))
+        "No Free Lunch unblanked"
+        (card-ability state :runner (refresh nfl1) 0))
+      (changes-val-macro 3 (:credit (get-runner))
+        "Both No Free Lunches unblanked"
+        (card-ability state :runner (refresh nfl2) 0)))))
+
+(deftest klevetnik-wrong-server
+  (do-game
+    (new-game {:corp {:hand ["Klevetnik"]}
+               :runner {:hand ["No Free Lunch"]}})
+    (play-from-hand state :corp "Klevetnik" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "No Free Lunch")
+    (run-on state :rd)
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "Klevetnik not active outside attacked server")))
+
+(deftest klevetnik-outside-run
+  (do-game
+    (new-game {:corp {:hand ["Klevetnik"]}
+               :runner {:hand ["No Free Lunch"]}})
+    (play-from-hand state :corp "Klevetnik" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "No Free Lunch")
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "Klevetnik not active outside run")))
+
+(deftest klevetnik-on-the-corp-turn
+  ;; Klevetnik - effect should last until the end of the Corp next turn
+  (do-game
+    (new-game {:corp {:hand ["Klevetnik" "An Offer You Can't Refuse"]}
+               :runner {:hand ["No Free Lunch"]}})
+    (play-from-hand state :corp "Klevetnik" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "No Free Lunch")
+    (let [klev (get-ice state :hq 0)
+          nfl (get-resource state 0)]
+      (take-credits state :runner)
+      (play-from-hand state :corp "An Offer You Can't Refuse")
+      (click-prompt state :corp "HQ")
+      (click-prompt state :runner "Yes")
+      (rez state :corp klev)
+      (click-prompt state :corp "Yes")
+      (changes-val-macro 2 (:credit (get-runner))
+        "Runner gained 2 Credits thanks to Klevetnik's on-rez ability"
+        (click-card state :corp nfl))
+      (changes-val-macro 0 (:credit (get-runner))
+        "No Free Lunch was blanked"
+        (card-ability state :runner (refresh nfl) 0))
+      (run-continue state)
+      (card-subroutine state :corp klev 0)
+      (take-credits state :corp) ;; End of the Corp current turn
+      (changes-val-macro 0 (:credit (get-runner))
+        "No Free Lunch still blank"
+        (card-ability state :runner (refresh nfl) 0))
+      (take-credits state :runner)
+      (take-credits state :corp) ;; End of the Corp next turn
+      (changes-val-macro 3 (:credit (get-runner))
+        "No Free Lunch unblanked"
+        (card-ability state :runner (refresh nfl) 0)))))
+
 (deftest komainu-subroutine-gain-loss-ability
   ;; Subroutine gain/loss ability
   (do-game

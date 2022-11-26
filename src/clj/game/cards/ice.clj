@@ -4,7 +4,7 @@
    [cond-plus.core :refer [cond+]]
    [game.core.access :refer [access-bonus access-card breach-server max-access]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
-   [game.core.board :refer [all-active-installed all-installed card->server
+   [game.core.board :refer [all-active-installed all-installed all-installed-runner-type card->server
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index
                            corp? faceup? get-card get-counters get-zone
@@ -32,6 +32,7 @@
                           remove-sub! remove-subs! resolve-subroutine
                           set-current-ice unbroken-subroutines-choice update-all-ice update-all-icebreakers
                           update-ice-strength]]
+   [game.core.identities :refer [disable-card enable-card]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-list
                                  corp-install-msg]]
@@ -2232,6 +2233,53 @@
                                            (system-msg state :corp (str "uses " (:title card) " to trash itself"))
                                            (trash state :corp (make-eid state eid) card {:cause :subroutine})
                                            (encounter-ends state side eid)))}}}]})
+
+(defcard "Klevetnik"
+  (let [re-enable-targets
+        (fn [target-resources] {:event :corp-turn-ends
+                                :unregister-once-resolved true
+                                :async true
+                                :msg (msg "unblank every " (:title (first target-resources)))
+                                :effect
+                                (req (doseq [t target-resources]
+                                       (when (:disabled (get-card state t))
+                                         (enable-card state :runner (get-card state t))
+                                        ;;  (remove-icon state :runner card (get-card state t))
+                                         (when-let [reactivate-effect (:reactivate (card-def t))]
+                                           (resolve-ability state :runner reactivate-effect (get-card state t) nil)))))})
+        register-corp-next-turn-end
+        (fn [target-resources] {:event :corp-turn-ends ;; delayed registration to make it wait the Corp next turn end
+                                :unregister-once-resolved true
+                                :effect (effect (register-events card [(re-enable-targets target-resources)]))})
+        on-rez-ability {:prompt "Name an installed resource"
+                        :choices {:card #(and (installed? %)
+                                              (resource? %))}
+                        :async true
+                        :msg (msg "let the Runner gain 2 [Credits] to"
+                                  " blank the text box of every " (:title target)
+                                  " until the Corp next turn ends")
+                        :effect
+                        (req (let [target-resources (filter #(= (:title %) (:title target))
+                                                            (all-installed-runner-type state :resource))]
+                               (wait-for (gain-credits state :runner 2)
+                                         (doseq [t target-resources]
+                                          ;;  (add-icon card target "K" "yellow") ;; waiting for the new faction-icon feature to be merged
+                                           (disable-card state :runner (get-card state t)))
+                                         (register-events
+                                           state side card
+                                           [(if (= (:active-player @state) :runner)
+                                              (re-enable-targets target-resources)
+                                              (register-corp-next-turn-end target-resources))])
+                                         (effect-completed state side eid))))}]
+    {:subroutines [end-the-run]
+     :on-rez {:optional
+              {:prompt "Let the Runner gain 2 [Credits]?"
+               :waiting-prompt "Corp to make a decision"
+               :req (req (and run this-server
+                              (seq (all-installed-runner-type state :resource))))
+               :yes-ability {:async true
+                             :effect (effect (continue-ability on-rez-ability card nil))}
+               :no-ability {:effect (effect (system-msg "declines to use Klevetnik"))}}}}))
 
 (defcard "Komainu"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-net-damage 1)))}
