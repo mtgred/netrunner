@@ -2896,13 +2896,9 @@
                                                    (get-in @state [:corp :hand])
                                                    (get-in @state [:corp :deck])
                                                    (get-in @state [:corp :discard]))))]
-    {:leave-play (req (doseq [c (rumor state)]
-                        (enable-card state :corp c)))
-     :on-play {:effect (req (doseq [c (rumor state)]
-                              (disable-card state :corp c)))}
-     :events [{:event :corp-install
-               :req (req (eligible? (:card context)))
-               :effect (effect (disable-card :corp (:card context)))}]}))
+    {:constant-effects [{:type :disable-card
+                         :req (req (eligible? target))
+                         :value (req true)}]}))
 
 (defcard "Run Amok"
   (letfn [(get-rezzed-cids [ice]

@@ -1040,15 +1040,18 @@
              :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
              :effect (req (let [c target]
                             (add-icon state side card target "DL" (faction-label card))
-                            (disable-card state side (get-card state target))
+                            (register-floating-effect
+                              state side card
+                              {:type :disable-card
+                               :duration :end-of-run
+                               :req (req (same-card? c target))
+                               :value (req true)})
                             (register-events
                               state side card
                               [{:event :post-runner-turn-ends
                                 :unregister-once-resolved true
                                 :effect (req (let [disabled-card (get-card state c)]
-                                                (enable-card state side disabled-card)
-                                                (remove-icon state side card (get-card state disabled-card))
-                                                (resolve-ability state :runner (:reactivate (card-def c)) disabled-card nil)))}])
+                                                (remove-icon state side card (get-card state disabled-card))))}])
                             (effect-completed state side eid)))}]})
 
 (defcard "DreamNet"
@@ -1753,7 +1756,7 @@
                                 :duration :end-of-run
                                 :effect (effect (enable-server (first target))
                                                 (disable-server (second (second targets))))}
-          ;post-redirect-trigger {:event :redirect-server
+                                        ;post-redirect-trigger {:event :redirect-server
           ;                       :duration :end-of-run
           ;                       :async true
           ;                       :effect (effect (disable-server (first (:server run)))
@@ -1785,7 +1788,12 @@
           run-end-trigger {:event :run-ends
                            :duration :end-of-run
                            :effect (effect (enable-server (first (:server target))))}]
-      {:abilities [{:label "Run a remote server"
+      {:constant-effects [{:type :disable-card
+                           :req (req (and (this-card-run)
+                                          (eligible? state target (:server (:run @state)))))
+                           ;;todo - needs to also be a remote server
+                           :value (req true)}]
+       :abilities [{:label "Run a remote server"
                     :cost [:trash-can :click 1 :brain 1]
                     :prompt "Choose a remote server"
                     :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
@@ -1793,13 +1801,13 @@
                     :makes-run true
                     :async true
                     :effect (effect (register-events card [successful-run-trigger
-                                                           run-end-trigger
-                                                           pre-redirect-trigger
-                                                           ;post-redirect-trigger
-                                                           corp-install-trigger
-                                                           swap-trigger])
-                                    (make-run eid target card)
-                                    (disable-server (second (server->zone state target))))}]})))
+                                        ;run-end-trigger
+                                        ;pre-redirect-trigger
+                                        ;post-redirect-trigger
+                                        ;corp-install-trigger
+                                        ;swap-trigger
+                                                           ])
+                                    (make-run eid target card))}]}))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"

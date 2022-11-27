@@ -1240,13 +1240,7 @@
 
 (defcard "Malia Z0L0K4"
   (let [re-enable-target (req (when-let [malia-target (:malia-target card)]
-                                (when (:disabled (get-card state malia-target))
-                                  (system-msg state side (str "uses " (:title card) " to unblank "
-                                                              (card-str state malia-target)))
-                                  (enable-card state :runner (get-card state malia-target))
-                                  (remove-icon state :runner card (get-card state malia-target))
-                                  (when-let [reactivate-effect (:reactivate (card-def malia-target))]
-                                    (resolve-ability state :runner reactivate-effect (get-card state malia-target) nil)))))]
+                                (remove-icon state :runner card (get-card state malia-target))))]
     {:on-rez {:msg (msg (str "blank the text box of " (card-str state target)))
               :choices {:card #(and (runner? %)
                                     (installed? %)
@@ -1254,7 +1248,10 @@
                                     (not (has-subtype? % "Virtual")))}
               :effect (effect (add-icon card target "MZ" (faction-label card))
                               (update! (assoc card :malia-target target))
-                              (disable-card :runner (get-card state target)))}
+                              (fake-checkpoint state))}
+     :constant-effects [{:type :disable-card
+                         :req (req (and (same-card? target (:malia-target card))))
+                         :value (req true)}]
      :leave-play re-enable-target
      :move-zone re-enable-target}))
 

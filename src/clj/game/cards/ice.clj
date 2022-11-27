@@ -2355,35 +2355,26 @@
                  (trace-ability 1 end-the-run)]})
 
 (defcard "Magnet"
-  (letfn [(disable-hosted [state side c]
-            (doseq [hc (:hosted (get-card state c))]
-              (unregister-events state side hc)
-              (unregister-constant-effects state side hc)
-              (update! state side (dissoc hc :abilities))))]
-    {:on-rez {:async true
-              :effect (req (let [magnet card]
-                             (wait-for (resolve-ability
-                                         state side
-                                         {:req (req (some #(some program? (:hosted %))
-                                                          (remove-once #(same-card? % magnet)
-                                                                       (filter ice? (all-installed state corp)))))
-                                          :prompt "Choose a Program to host"
-                                          :msg (msg "host " (card-str state target))
-                                          :choices {:card #(and (program? %)
-                                                                (ice? (:host %))
-                                                                (not (same-card? (:host %) magnet)))}
-                                          :effect (effect (host card target))}
-                                         card nil)
-                                       (disable-hosted state side card)
-                                       (effect-completed state side eid))))}
-     :derez-effect {:req (req (not-empty (:hosted card)))
-                    :effect (req (doseq [c (get-in card [:hosted])]
-                                   (card-init state side c {:resolve-effect false})))}
-     :events [{:event :runner-install
-               :req (req (same-card? card (:host (:card context))))
-               :effect (req (disable-hosted state side card)
-                         (update-ice-strength state side card))}]
-     :subroutines [end-the-run]}))
+  {:on-rez {:async true
+            :effect (req (let [magnet card]
+                           (wait-for (resolve-ability
+                                       state side
+                                       {:req (req (some #(some program? (:hosted %))
+                                                        (remove-once #(same-card? % magnet)
+                                                                     (filter ice? (all-installed state corp)))))
+                                        :prompt "Choose a Program to host"
+                                        :msg (msg "host " (card-str state target))
+                                        :choices {:card #(and (program? %)
+                                                              (ice? (:host %))
+                                                              (not (same-card? (:host %) magnet)))}
+                                        :effect (effect (host card target))}
+                                       card nil)
+                                     (effect-completed state side eid))))}
+   :constant-effects [{:type :disable-card
+                       :req (req (and (program? target)
+                                      (some #(same-card? % target) (:hosted card))))
+                       :value (req true)}]
+   :subroutines [end-the-run]})
 
 (defcard "Mamba"
   {:abilities [(power-counter-ability (do-net-damage 1))]
