@@ -6645,6 +6645,106 @@
       (advance state tyrant 2)
       (is (= 2 (count (:subroutines (refresh tyrant)))) "Tyrant gains 2 subs"))))
 
+(deftest unsmiling-tsarevna
+  ;; Unsmiling Tsarevna
+  (do-game
+    (new-game {:corp {:hand [(qty "Unsmiling Tsarevna" 2)]
+                      :deck [(qty "Hedge Fund" 5)]
+                      :credits 20}
+               :runner {:hand ["Carmen" (qty "Sure Gamble" 2)]
+                        :credits 20}})
+    (play-from-hand state :corp "Unsmiling Tsarevna" "R&D")
+    (play-from-hand state :corp "Unsmiling Tsarevna" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Carmen")
+    (let [ut-rd (get-ice state :rd 0)
+          ut-hq (get-ice state :hq 0)
+          carm (get-program state 0)]
+      (run-on state :hq)
+      (rez state :corp ut-hq)
+      (changes-val-macro 2 (:credit (get-runner))
+        "Runner gained 2 Credits"
+        (click-prompt state :corp "Yes"))
+      (run-continue state)
+      (card-ability state :runner carm 0)
+      (click-prompt state :runner "Do 2 net damage")
+      (is (no-prompt? state :runner) "Cannot break more than 1 sub")
+      (core/play-unbroken-subroutines state :corp {:card (refresh ut-hq)})
+      (is (= 2 (count (:hand (get-runner)))) "Runner took no net damage")
+      (is (= 1 (count-tags state)) "Runner took 1 tag")
+      (changes-val-macro 2 (count (:hand (get-corp)))
+        "Corp drew 2 cards"
+        (click-prompt state :corp "Yes"))
+      (run-continue state)
+      (run-jack-out state)
+      (run-on state :rd)
+      (rez state :corp ut-rd)
+      (changes-val-macro 0 (:credit (get-runner))
+        "Runner gained no Credits"
+        (click-prompt state :corp "No"))
+      (run-continue state)
+      (card-ability state :runner carm 0)
+      (click-prompt state :runner "Do 2 net damage")
+      (click-prompt state :runner "Give the Runner 1 tag")
+      (click-prompt state :runner "Done"))))
+
+(deftest unsmiling-tsarevna-wrong-server
+  (do-game
+    (new-game {:corp {:hand ["Unsmiling Tsarevna"]}})
+    (play-from-hand state :corp "Unsmiling Tsarevna" "HQ")
+    (take-credits state :corp)
+    (run-on state :rd)
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "Unsmiling Tsarevna not active outside attacked server")))
+
+(deftest unsmiling-tsarevna-outside-run
+  (do-game
+    (new-game {:corp {:hand ["Unsmiling Tsarevna"]}})
+    (play-from-hand state :corp "Unsmiling Tsarevna" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "Unsmiling Tsarevna not active outside run")))
+
+(deftest unsmiling-tsarevna-multiple-encounters
+  ;; Unsmiling Tsarevna - multiple encounters during the same run are still limited on subrouting breaking
+  (do-game
+    (new-game {:corp {:hand ["Unsmiling Tsarevna" "Vanilla" "Mumbad City Grid"]
+                      :deck [(qty "Hedge Fund" 5)]
+                      :credits 20}
+               :runner {:hand ["Carmen" (qty "Sure Gamble" 2)]
+                        :credits 20}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Unsmiling Tsarevna" "HQ")
+    (play-from-hand state :corp "Mumbad City Grid" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Carmen")
+    (let [ut (get-ice state :hq 1)
+          carm (get-program state 0)]
+      (run-on state :hq)
+      (rez state :corp ut)
+      (changes-val-macro 2 (:credit (get-runner))
+        "Runner gained 2 Credits"
+        (click-prompt state :corp "Yes"))
+      (run-continue state)
+      (card-ability state :runner carm 0)
+      (click-prompt state :runner "Do 2 net damage")
+      (is (no-prompt? state :runner) "Cannot break more than 1 sub")
+      (core/play-unbroken-subroutines state :corp {:card (refresh ut)})
+      (is (= 2 (count (:hand (get-runner)))) "Runner took no net damage")
+      (is (= 1 (count-tags state)) "Runner took 1 tag")
+      (changes-val-macro 2 (count (:hand (get-corp)))
+        "Corp drew 2 cards"
+        (click-prompt state :corp "Yes"))
+      (run-continue state)
+      ;; Swap Unsmiling Tsarevna with the innermost ice
+      (click-card state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (run-continue state)
+      (card-ability state :runner carm 0)
+      (click-prompt state :runner "Do 2 net damage")
+      (is (no-prompt? state :runner) "Cannot break more than 1 sub"))))
+
 (deftest vasilisa
   ;; Vasilisa
   (do-game
