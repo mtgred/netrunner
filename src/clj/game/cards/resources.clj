@@ -1807,7 +1807,7 @@
                                         ;corp-install-trigger
                                         ;swap-trigger
                                                            ])
-                                    (make-run eid target card))}]}))
+                                    (make-run eid target card))}]})))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"

@@ -18,6 +18,7 @@
                            in-deck? in-discard? in-hand? in-server? installed? is-type? operation?
                            program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
                                   trash-on-empty]]
@@ -1246,9 +1247,9 @@
                                     (installed? %)
                                     (resource? %)
                                     (not (has-subtype? % "Virtual")))}
-              :effect (effect (add-icon card target "MZ" (faction-label card))
-                              (update! (assoc card :malia-target target))
-                              (fake-checkpoint state))}
+              :effect (req (add-icon state side card target "MZ" (faction-label card))
+                           (update! state side (assoc card :malia-target target))
+                           (fake-checkpoint state))}
      :constant-effects [{:type :disable-card
                          :req (req (and (same-card? target (:malia-target card))))
                          :value (req true)}]
