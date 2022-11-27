@@ -4,7 +4,7 @@
     [game.core.card :refer [asset? condition-counter? get-card ice? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
-    [game.core.effects :refer [unregister-constant-effects]]
+    [game.core.effects :refer [unregister-constant-effects any-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [register-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
@@ -81,7 +81,8 @@
                           (play-sfx state side "rez-ice"))
                       (play-sfx state side "rez-other"))
                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
-                    (when-let [card-ability (:on-rez cdef)]
+                    (when-let [card-ability (and (not (any-effects state side :disable-card card))
+                                                 (:on-rez cdef))]
                       (register-pending-event state :rez card card-ability))
                     (queue-event state :rez {:card (get-card state card)
                                              :cost cost-paid})

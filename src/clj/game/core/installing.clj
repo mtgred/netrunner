@@ -8,7 +8,7 @@
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
-    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.effects :refer [register-constant-effects unregister-constant-effects any-effects]]
     [game.core.flags :refer [turn-flag? zone-locked?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
@@ -356,6 +356,7 @@
     (queue-event state :runner-install {:card (get-card state installed-card)
                                         :facedown facedown})
     (when-let [on-install (and (not facedown)
+                               (not (any-effects state side :disable-card installed-card))
                                (:on-install (card-def installed-card)))]
       (register-pending-event state :runner-install installed-card on-install))
     (wait-for (checkpoint state nil (make-eid state eid) nil)
