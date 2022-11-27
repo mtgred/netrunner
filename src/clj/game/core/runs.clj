@@ -758,6 +758,7 @@
   (swap! state dissoc-in [:end-run :ended])
   (wait-for (checkpoint state nil (make-eid state eid) {:durations [:end-of-encounter :end-of-run]})
             (reset-all-ice state side)
+            (swap! state assoc :per-encounter nil)
             (clear-run-register! state)
             (effect-completed state side eid)))
 
