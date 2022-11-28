@@ -13,6 +13,7 @@
                            get-nested-host get-title get-zone hardware? has-subtype? ice? in-discard? in-hand?
                            installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [can-charge charge-ability charge-card]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
@@ -2896,13 +2897,14 @@
                                                    (get-in @state [:corp :hand])
                                                    (get-in @state [:corp :deck])
                                                    (get-in @state [:corp :discard]))))]
-    {:leave-play (req (doseq [c (rumor state)]
-                        (enable-card state :corp c)))
-     :on-play {:effect (req (doseq [c (rumor state)]
-                              (disable-card state :corp c)))}
-     :events [{:event :corp-install
-               :req (req (eligible? (:card context)))
-               :effect (effect (disable-card :corp (:card context)))}]}))
+    {:constant-effects [{:type :disable-card
+                         :req (req (eligible? target))
+                         :value (req true)}]
+     ;; this might not even be needed
+     :leave-play (req (fake-checkpoint state))}))
+
+     ;;doseq [c (rumor state)]
+     ;;(enable-card state :corp c)))
 
 (defcard "Run Amok"
   (letfn [(get-rezzed-cids [ice]
