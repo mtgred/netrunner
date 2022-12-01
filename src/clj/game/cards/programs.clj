@@ -13,7 +13,7 @@
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out]]
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect
                               unregister-effects-for-card]]
@@ -361,13 +361,6 @@
   [ice-type]
   (cloud-icebreaker (auto-icebreaker {:abilities [(break-sub 2 0 ice-type)
                                                   (strength-pump 2 3)]})))
-
-;;; Helper for x-fn cards
-(def x-fn
-  (req
-    (if-let [x-fn (and (active? card) (not (:disabled card)) (:x-fn card))]
-      (x-fn state side eid card targets)
-      0)))
 
 ;; Card definitions
 
