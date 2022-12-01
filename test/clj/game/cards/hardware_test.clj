@@ -4773,8 +4773,7 @@
     (click-card state :corp "Hedge Fund")
     (click-card state :corp "IPO")
     (click-card state :corp "Restructure")
-    (is (no-prompt? state :corp))
-  ))
+    (is (no-prompt? state :corp))))
 
 (deftest titanium-ribs
   ;; Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol
