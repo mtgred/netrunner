@@ -2244,7 +2244,6 @@
                                 (req (doseq [t target-resources]
                                        (when (:disabled (get-card state t))
                                          (enable-card state :runner (get-card state t))
-                                        ;;  (remove-icon state :runner card (get-card state t))
                                          (when-let [reactivate-effect (:reactivate (card-def t))]
                                            (resolve-ability state :runner reactivate-effect (get-card state t) nil)))))})
         register-corp-next-turn-end
@@ -2263,7 +2262,6 @@
                                                             (all-installed-runner-type state :resource))]
                                (wait-for (gain-credits state :runner 2)
                                          (doseq [t target-resources]
-                                          ;;  (add-icon card target "K" "yellow") ;; waiting for the new faction-icon feature to be merged
                                            (disable-card state :runner (get-card state t)))
                                          (register-events
                                            state side card
