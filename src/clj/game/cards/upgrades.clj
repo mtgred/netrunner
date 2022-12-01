@@ -1153,16 +1153,18 @@
                                    (not (:seen %)))}
              :async true
              :effect
-             (effect (update! (assoc-in target [:seen] true))
-                     (continue-ability
-                       (let [ice target]
-                         {:async true
-                          :prompt "Choose a subroutine to resolve"
-                          :choices (req (unbroken-subroutines-choice ice))
-                          :msg (msg "resolve the subroutine (\"[subroutine] " target "\") from " (card-str state ice))
-                          :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
-                                         (continue-ability state side (:sub-effect sub) ice nil)))})
-                       card nil))}]})
+             (req (wait-for (reveal state side target)
+                            (update! state side (assoc target :seen true))
+                            (continue-ability
+                              state side
+                              (let [ice target]
+                                {:async true
+                                 :prompt "Choose a subroutine to resolve"
+                                 :choices (req (unbroken-subroutines-choice ice))
+                                 :msg (msg "resolve the subroutine (\"[subroutine] " target "\") from " (card-str state ice))
+                                 :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
+                                                (continue-ability state side (:sub-effect sub) ice nil)))})
+                              card nil)))}]})
 
 (defcard "Navi Mumbai City Grid"
   {:constant-effects [{:type :prevent-paid-ability
