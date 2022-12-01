@@ -312,10 +312,7 @@
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (doseq [on-encounter all-encounters]
       (register-pending-event state :encounter-ice ice on-encounter))
-    ;;(when-not (empty? all-encounters)
-    ;;  (doall (map #(register-pending-event state :encounter-ice ice %) all-encounters)))
-    ;;(register-pending-event state :encounter-ice ice on-encounter))
-    (queue-event state :encounter-ice {:ice (assoc ice :title "test")})
+    (queue-event state :encounter-ice {:ice ice})
     (wait-for (checkpoint state side
                           (make-eid state eid)
                           {:cancel-fn (fn [state]
