@@ -964,7 +964,6 @@
                                       :async true
                                       :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
                                                      (resolve-subroutine! state side eid ice (assoc sub :external-trigger true))))})
-                                   ;;(continue-ability state side (:sub-effect sub) ice nil)))})
                                    card nil))}}}]})
 
 (defcard "Mason Bellamy"
