@@ -6595,15 +6595,15 @@
                            (click-card state :runner refr)))))
 
 (deftest tsakhia-bankhar-gantula
-  ;; Tsakhia ˮBankharˮ Gantulga
+  ;; Tsakhia "Bankhar" Gantulga
   (do-game
-    (new-game {:runner {:hand ["Tsakhia ˮBankharˮ Gantulga" (qty "Sure Gamble" 4)]}
+    (new-game {:runner {:hand ["Tsakhia \"Bankhar\" Gantulga" (qty "Sure Gamble" 4)]}
                :corp {:hand ["Akhet"]}})
     (play-from-hand state :corp "Akhet" "HQ")
     (let [ak (get-ice state :hq 0)]
       (rez state :corp (refresh ak))
       (take-credits state :corp)
-      (play-from-hand state :runner "Tsakhia ˮBankharˮ Gantulga")
+      (play-from-hand state :runner "Tsakhia \"Bankhar\" Gantulga")
       (take-credits state :runner)
       (take-credits state :corp)
       (click-prompt state :runner "HQ")

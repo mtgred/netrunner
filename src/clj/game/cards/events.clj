@@ -2664,8 +2664,7 @@
                                               (wait-for (draw state side cards-to-draw)
                                                         (gain-credits state side eid 3))
                                               (gain-credits state side eid 3)))}
-                              card nil)))
-             :async true}]})
+                              card nil)))}]})
 
 (defcard "Rebirth"
   {:on-play
