@@ -935,7 +935,6 @@
              :effect (req (let [choice-target (first (filter #(or (= target (first %))
                                                                   (same-card? target (first %))) choices-map))
                                 handler (second choice-target)
-                                ;;(some #(when (same-card? target (card-for-ability state (:handler %))) %) handlers)
                                 to-resolve (:handler handler)
                                 ability (:ability to-resolve)
                                 context (:context handler)
