@@ -3177,6 +3177,7 @@
                       state side
                       {:msg (msg "reveal " rev-str " from the top of the stack and install "
                                  (:title revealed-card) ", paying 10 [Credits] less")
+                       :async true
                        :effect (req
                                  (wait-for (runner-install
                                              state side
