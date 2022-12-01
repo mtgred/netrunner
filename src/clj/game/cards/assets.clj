@@ -2559,12 +2559,12 @@
                             :autoresolve (get-autoresolve :auto-fire)
                             :yes-ability
                             {:async true
-                             :effect (effect (reveal (:hand runner))
-                                             (system-msg (str "reveal "
-                                                              (quantify (count (:hand runner)) "card")
-                                                              " from grip: "
-                                                              (enumerate-str (map :title (:hand runner)))))
-                                             (continue-ability select-and-trash card nil))}
+                             :effect (req (wait-for (reveal state side (:hand runner))
+                                                    (system-msg state :corp (str "reveal "
+                                                                (quantify (count (:hand runner)) "card")
+                                                                " from grip: "
+                                                                (enumerate-str (map :title (:hand runner)))))
+                                                    (continue-ability state side select-and-trash card nil)))}
                             :no-ability {:effect (effect (system-msg "declines to use Vera Ivanovna Shuyskaya"))}}}]
     {:events [{:event :agenda-scored
                :interactive (req true)
