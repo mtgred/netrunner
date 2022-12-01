@@ -1157,7 +1157,7 @@
                             (update! state side (assoc target :seen true))
                             (continue-ability
                               state side
-                              (let [ice target]
+                              (let [ice (get-card state target)]
                                 {:async true
                                  :prompt "Choose a subroutine to resolve"
                                  :choices (req (unbroken-subroutines-choice ice))
