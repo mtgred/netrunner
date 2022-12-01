@@ -2892,7 +2892,7 @@
            :choices (req (conj (filter #(can-pay? state side
                                                   (assoc eid :source card :source-type :runner-install)
                                                   % nil [:credit (install-cost state side % {:cost-bonus -3})])
-                                       (vec (sort-by :title (filter #(is-type? % (:type trashed-card)) (:deck runner)))))
+                                       (sort-by :title (filter #(is-type? % (:type trashed-card)) (:deck runner))))
                                "No install"))
            :async true
            :effect (req (trigger-event state side :searched-stack nil)
