@@ -5429,6 +5429,34 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Trace succeeds with 1 advancement"))))
 
+(deftest searchlight-x-fn
+  (do-game
+    (new-game {:corp {:deck ["Searchlight"]}})
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Searchlight" "HQ")
+    (let [searchlight (get-ice state :hq 0)]
+      (rez state :corp searchlight)
+      (advance state (refresh searchlight) 1)
+      (take-credits state :corp)
+      (core/disable-card state :corp (refresh searchlight))
+      (core/fake-checkpoint state)
+      (run-on state "HQ")
+      (run-continue state)
+      (card-subroutine state :corp (refresh searchlight) 0)
+      (is (= :trace (prompt-type :corp)) "Trace is initiated")
+      (is (zero? (:base (prompt-map :corp))) "Trace is base 0")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (zero? (count-tags state)) "Trace failed with 0 advancements")
+      (core/enable-card state :corp (refresh searchlight))
+      (core/fake-checkpoint state)
+      (card-subroutine state :corp (refresh searchlight) 0)
+      (is (= :trace (prompt-type :corp)) "Trace is initiated")
+      (is (= 1 (:base (prompt-map :corp))) "Trace is now base 1")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (= 1 (count-tags state)) "Trace succeeds with 1 advancement"))))
+
 (deftest seidr-adaptive-barrier
   ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
   (do-game
@@ -5924,6 +5952,21 @@
       (is (= 2 (count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
       (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ice"))))
+
+(deftest surveyor-x-fn-test
+  (do-game
+    (new-game {:corp {:deck ["Surveyor"]}})
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Surveyor" "HQ")
+    (let [surv (get-ice state :hq 0)]
+      (rez state :corp surv)
+      (is (= 2 (get-strength (refresh surv))) "Surveyor has 2 strength for itself")
+      (core/disable-card state :corp (refresh surv))
+      (core/fake-checkpoint state)
+      (is (= 0 (get-strength (refresh surv))) "Surveyor has 0 strength while disabled")
+      (core/enable-card state :corp (refresh surv))
+      (core/fake-checkpoint state)
+      (is (= 2 (get-strength (refresh surv))) "Surveyor has 2 strength again"))))
 
 (deftest susanoo-no-mikoto
   ;;Susanoo-no-Mikoto

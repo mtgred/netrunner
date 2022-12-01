@@ -364,9 +364,19 @@
         "/credit"     #(swap! %1 assoc-in [%2 :credit] (constrain-value value 0 1000))
         "/deck"       #(toast %1 %2 "/deck number takes the format #n")
         "/derez"      command-derez
+        "/disable-card" #(resolve-ability %1 %2
+                                          {:prompt "Choose a card to disable"
+                                           :effect (req (disable-card state side target))
+                                           :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                          (map->Card {:title "/disable-card command"}) nil)
         "/discard"    #(toast %1 %2 "/discard number takes the format #n")
         "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
         "/draw"       #(draw %1 %2 (make-eid %1) (constrain-value value 0 1000))
+        "/enable-card" #(resolve-ability %1 %2
+                                         {:prompt "Choose a card to enable"
+                                          :effect (req (enable-card state side target))
+                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
+                                         (map->Card {:title "/enable-card command"}) nil)
         "/end-run"    (fn [state side]
                         (when (and (= side :corp)
                                     (:run @state))

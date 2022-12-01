@@ -3362,7 +3362,7 @@
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
 
 (deftest net-police
-  ;; Net Police - Recurring credits equal to Runner's link
+  ;; Net Police - Recurring credits equal to number of runners links
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                       :hand ["Net Police" "Snatch and Grab"]}
@@ -3373,15 +3373,15 @@
     (is (= 2 (get-link state)))
     (let [netpol (get-content state :remote1 0)]
       (rez state :corp netpol)
-      (is (= 2 (get-counters (refresh netpol) :recurring)) "2 recurring for Runner's 2 link")
+      (is (= 2 (get-counters (refresh netpol) :recurring)) "0 recurring for Runner's 2 links")
       (take-credits state :corp)
       (play-from-hand state :runner "Dyson Mem Chip")
       (take-credits state :runner)
-      (is (= 3 (get-counters (refresh netpol) :recurring)) "3 recurring for Runner's 3 link")
+      (is (= 3 (get-counters (refresh netpol) :recurring)) "1 recurring for Runner's 3 link")
       (take-credits state :corp)
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
-      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link")
+      (is (= 4 (get-counters (refresh netpol) :recurring)) "2 recurring for Runner's 3 link")
       (play-from-hand state :corp "Snatch and Grab")
       (is (= (+ (:credit (get-corp)) (get-counters (refresh netpol) :recurring))
              (:choices (prompt-map :corp))) "13 total available credits for the trace")
@@ -3389,7 +3389,7 @@
       (dotimes [_ 4]
         (click-card state :corp netpol))
       (is (zero? (get-counters (refresh netpol) :recurring)) "Has used recurring credit")
-      (is (= 16 (:strength (prompt-map :runner))) "Current trace strength should be 16"))))
+      (is (= 16 (:strength (prompt-map :runner))) "Current trace strength should be 14"))))
 
 (deftest neurostasis
   ;; Neurostasis - ambush, shuffle cards into the stack
