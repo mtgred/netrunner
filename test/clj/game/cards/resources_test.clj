@@ -6618,10 +6618,6 @@
           (fire-subs state (refresh ak))))
       (run-continue state))))
 
-
-
-
-
 (deftest verbal-plasticity
   ;; Verbal Plasticity
   (do-game
