@@ -1015,6 +1015,7 @@
 (defcard "Kimberlite Field"
   {:on-score
    {:interactive (req true)
+    :async true
     :waiting-prompt "Corp to make a decision"
     :prompt "Choose a card to trash"
     :req (req (some rezzed? (all-installed state :corp)))
