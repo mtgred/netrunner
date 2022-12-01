@@ -2067,24 +2067,20 @@
                                 :type :recurring}}})
 
 (defcard "Time Bomb"
-  (let [ability {:once :per-turn
-                 :req (req (:runner-phase-12 @state))
-                 :label "Add 1 power counter (start of turn)"
-                 :effect (req (add-counter state side card :power 1))}]
-    {:data {:counter {:power 1}}
-     :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-     :events [{:event :runner-turn-begins
-               :async true
-               :effect (req (if (<= 3 (get-counters (get-card state card) :power))
-                              (wait-for (trash state side card {:unpreventable :true
-                                                                :cause-card card})
-                                        (system-msg state side (str "uses " (:title card) " to sabotage 3"))
-                                        (continue-ability state side
-                                                          (sabotage-ability 3)
-                                                          card nil))
-                              (do (system-msg state side (str "adds 1 power counter to " (:title card)))
-                                  (add-counter state side card :power 1)
-                                  (effect-completed state side eid))))}]}))
+  {:data {:counter {:power 1}}
+   :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+   :events [{:event :runner-turn-begins
+             :async true
+             :effect (req (if (<= 3 (get-counters (get-card state card) :power))
+                            (wait-for (trash state side card {:unpreventable :true
+                                                              :cause-card card})
+                                      (system-msg state side (str "uses " (:title card) " to sabotage 3"))
+                                      (continue-ability state side
+                                                        (sabotage-ability 3)
+                                                        card nil))
+                            (do (system-msg state side (str "adds 1 power counter to " (:title card)))
+                                (add-counter state side card :power 1)
+                                (effect-completed state side eid))))}]})
 
 (defcard "Titanium Ribs"
   {:on-install {:async true
