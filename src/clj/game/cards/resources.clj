@@ -3294,7 +3294,7 @@
                   (wait-for (gain-credits state side 1)
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
 
-(defcard "Tsakhia ˮBankharˮ Gantulga"
+(defcard "Tsakhia \"Bankhar\" Gantulga"
   (let [subroutine {:variable true
                     :sub-effect (do-net-damage 1)}
         matches-server (fn [target card state side]
