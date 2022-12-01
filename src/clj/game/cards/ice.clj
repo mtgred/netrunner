@@ -1749,6 +1749,7 @@
                :waiting-prompt "Corp to choose an option"
                :yes-ability
                {:cost [:trash-from-hand 1]
+                :async true
                 :effect
                 (effect (continue-ability
                           {:waiting-prompt "Corp to make a decision"
@@ -1765,7 +1766,8 @@
                                             [{:event :run-ends
                                               :duration :end-of-run
                                               :effect (effect (remove-icon card t))}])
-                                          (register-floating-effect state side card (prevent-sub-break-by t))))}
+                                          (register-floating-effect state side card (prevent-sub-break-by t))
+                                          (effect-completed state side eid)))}
                           card nil))}
                :no-ability {:effect (effect (system-msg :corp "declines to use Hafrún to discard a card from HQ"))}}}}))
 
