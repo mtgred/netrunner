@@ -1854,12 +1854,13 @@
                                    valid (filter #(not (facedown? %)) hosted)
                                    same-title (filter #(= "Matryoshka" (:title %)) valid)
                                    first-copy (first same-title)]
-                               (flip-facedown state side (get-card state first-copy))
-                               (when (pos? (cost-value eid :x-credits))
+                               ;;(flip-facedown state side (get-card state first-copy))
+                               (if (pos? (cost-value eid :x-credits))
                                  (continue-ability
                                    state side
                                    (break-sub nil (cost-value eid :x-credits) "All")
-                                   card nil))))}
+                                   card nil)
+                                 (effect-completed state side eid))))}
         host-abi {:label "Host a copy of Matryoshka"
                   :prompt "Choose a copy of Matryoshka in the Grip"
                   :keep-menu-open :while-clicks-left
