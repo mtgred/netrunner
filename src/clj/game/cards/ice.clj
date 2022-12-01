@@ -3663,22 +3663,22 @@
                                  (lose-credits state :runner eid 1)))}]})
 
 (defcard "Unsmiling Tsarevna"
-  (let [breakable-fn (req (if (run-flag? state side card :can-break-all-subs)
-                            :unrestricted
-                            (not (any-subs-broken? card))))
-        on-rez-ability {:async true
+  (let [on-rez-ability {:async true
                         :msg (msg "let the Runner gain 2 [Credits] to"
                                   " prevent them from breaking more than 1 subroutine"
                                   " on this ice per encounter for the remainder of this run")
                         :effect
                         (req (wait-for (gain-credits state :runner 2)
-                                       (register-run-flag! state side card
-                                                           :can-break-all-subs (constantly false))
+                                       (register-floating-effect
+                                         state side card
+                                         {:type :cannot-break-subs-on-ice
+                                          :duration :end-of-run
+                                          :req (req (same-card? card (:ice context)))
+                                          :value (req (any-subs-broken? (:ice context)))})
                                        (effect-completed state side eid)))}]
-    {:subroutines [(assoc (give-tags 1) :breakable breakable-fn)
-                   (assoc (do-net-damage 2) :breakable breakable-fn)
-                   {:breakable breakable-fn
-                    :optional
+    {:subroutines [(give-tags 1)
+                   (do-net-damage 2)
+                   {:optional
                     {:prompt "Draw 2 cards?"
                      :msg "draw 2 cards"
                      :yes-ability
