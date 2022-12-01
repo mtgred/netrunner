@@ -1296,8 +1296,10 @@
               {:prompt "Draw 1 card?"
                :yes-ability
                {:msg "draw 1 card"
+                :async true
                 :effect (effect (draw eid 1))}
-               :no-ability (effect (system-msg :corp "declines to use Post-Truth Dividend to draw 1 card"))}}})
+               :no-ability
+               {:effect (effect (system-msg :corp "declines to use Post-Truth Dividend to draw 1 card"))}}}})
 
 (defcard "Posted Bounty"
   {:on-score {:optional
