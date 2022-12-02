@@ -47,6 +47,7 @@
     (= zone [:discard]) (if (= side "Runner") "Heap" "Archives")
     (= zone [:deck]) (if (= side "Runner") "Stack" "R&D")
     (= zone [:set-aside]) "set-aside cards"
+    (= zone [:scored]) (str side "'s score area")
     (= (take 1 zone) [:rig]) "Rig"
     (= (take 2 zone) [:servers :hq]) "the root of HQ"
     (= (take 2 zone) [:servers :rd]) "the root of R&D"

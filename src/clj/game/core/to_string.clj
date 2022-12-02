@@ -20,7 +20,6 @@
                          installed-ice " protecting "
                          (is-root? zone) " in the root of "
                          :else " in ")
-                       ;TODO add naming of scoring area of corp/runner
                        (zone->name (or (second zone) zone)) ;; handles [:hand] as well as [:servers :hq]
                        (when installed-ice
                          (str " at position " (card-index state card)))))))
