@@ -1605,7 +1605,6 @@
                               (decapitalize target)))
                   :player :runner
                   :prompt "Choose one"
-                  :waiting-prompt true
                   :choices (req [(when-not (forced-to-avoid-tags? state side)
                                    "Take 1 tag")
                                  "End the run"])
