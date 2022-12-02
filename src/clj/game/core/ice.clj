@@ -6,7 +6,7 @@
     [game.core.cost-fns :refer [break-sub-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects get-effects register-floating-effect sum-effects]]
-    [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event]]
+    [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
     [game.core.flags :refer [card-flag?]]
     [game.core.payment :refer [build-cost-label can-pay? merge-costs]]
     [game.core.say :refer [system-msg]]
@@ -272,13 +272,13 @@
              ;; this is for cards like marcus batty
              (when-not (:exernal-trigger sub)
                (update! state :corp (resolve-subroutine ice sub)))
-   (let [replacement (:replace-subroutine (get-current-encounter state))
-         sub (or (when replacement (assoc replacement :index (:index sub))) sub)]
-     (update-current-encounter state :replace-subroutine nil)
-     (resolve-ability state side eid (:sub-effect sub) (get-card state ice) nil)
-     (wait-for (resolve-ability state side (:sub-effect sub) (get-card state ice) nil)
-               (queue-event state :subroutine-fired {:sub sub :ice ice})
-                         (effect-completed state side eid))))))
+             ;; TODO - need a way to interact with multiple replacement effects.
+             (let [replacement (:replace-subroutine (get-current-encounter state))
+                   sub (or (when replacement (assoc replacement :index (:index sub))) sub)]
+               (update-current-encounter state :replace-subroutine nil)
+               (wait-for (resolve-ability state side (:sub-effect sub) (get-card state ice) nil)
+                         (queue-event state :subroutine-fired {:sub sub :ice ice})
+                         (checkpoint state nil eid))))))
 
 (defn- resolve-next-unbroken-sub
   ([state side ice subroutines]
