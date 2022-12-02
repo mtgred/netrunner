@@ -14,6 +14,7 @@
                            get-card get-counters get-title get-zone has-subtype? ice? in-discard? in-hand?
                            in-scored? installed? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
                                   offer-jack-out reorder-choice]]
