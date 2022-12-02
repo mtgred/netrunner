@@ -2343,7 +2343,7 @@
   {:req (req (some #{:hq} (:successful-run runner-reg)))
    :abilities [{:async true
                 :trash-icon true
-                :label "trash an ice"
+                :label "Trash a rezzed card"
                 :effect
                 (effect
                   (continue-ability
