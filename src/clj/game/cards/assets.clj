@@ -1619,9 +1619,9 @@
             :effect (req (if (= target (str "Add Nightmare Archive to score area"))
                            (do (as-agenda state :runner card -1)
                                (effect-completed state side eid))
-                           (do (damage state :corp nil :brain 1 {:card card})
-                               (move state :corp card :rfg)
-                               (effect-completed state side eid))))}})
+                           (do (wait-for (damage state :corp :brain 1 {:card card})
+                                         (move state :corp card :rfg)
+                                         (effect-completed state side eid)))))}})
 
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw
