@@ -1041,6 +1041,7 @@
 
 (defcard "Lat: Ethical Freelancer"
   {:events [{:event :runner-turn-ends
+             :interactive (req true)
              :optional {:req (req (= (count (:hand runner)) (count (:hand corp))))
                         :autoresolve (get-autoresolve :auto-fire)
                         :prompt "Draw 1 card?"

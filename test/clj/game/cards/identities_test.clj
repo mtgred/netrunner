@@ -2581,6 +2581,23 @@
       (click-prompt state :runner "Yes")
       (is (= 6 (count (:hand (get-runner)))))))
 
+(deftest ^:kaocha/pending lat-ethical-freelancer-ability-is-interactive
+    ;;TODO Chameleon and Lat ability should go along well
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :hand ["Chameleon" (qty "Sure Gamble" 5)]
+                          :deck ["Sure Gamble"]}
+                 :corp {:id "Haas-Bioroid: Precision Design"
+                        :hand [(qty "Hedge Fund" 6)]}})
+      (take-credits state :corp)
+      (core/lose state :runner :click 3)
+      (play-from-hand state :runner "Chameleon")
+      (click-prompt state :runner "Barrier")
+      (core/end-turn state :runner nil)
+      (is (= 5 (count (:hand (get-runner)))))
+      (click-prompt state :runner "Chameleon")
+      (is (= "Draw 1 card?" (:msg (prompt-map :runner))))))
+
 (deftest lat-ethical-freelancer-ability-fires-don-t-draw
     ;; Ability fires - don't draw
     (do-game
