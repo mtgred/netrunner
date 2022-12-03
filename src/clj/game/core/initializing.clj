@@ -4,7 +4,7 @@
     [game.core.card :refer [get-card map->Card program? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
-    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
+    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-default-events register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
@@ -124,7 +124,7 @@
          (register-events
            state side c
            [{:event (if (= side :corp) :corp-phase-12 :runner-phase-12)
-             :req (req (not (:disabled card)))
+             :req (req (not (any-effects state side :disable-card true? card)))
              :effect r}])))
      (register-default-events state side c)
      (register-constant-effects state side c)
