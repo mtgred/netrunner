@@ -1043,8 +1043,7 @@
     :msg (msg "trash " (quantify (count targets) "card") " from HQ")
     :async true
     :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to trash any cards from HQ"))
-                        (shuffle-into-rd-effect state side eid card 3)
-                        (effect-completed state side eid))
+                        (shuffle-into-rd-effect state side eid card 3))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
 

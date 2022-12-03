@@ -1230,7 +1230,33 @@
       (click-prompt state :corp "Done")
       (play-from-hand state :runner "Amped Up")
       (is (not (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2")) "Sabotage did not happen")
-      (is (no-prompt? state :corp) "no Corp prompt"))))
+      (is (no-prompt? state :corp) "no Corp prompt")))
+  (testing "Plays nicely with Longevity Serum"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand ["Hedge Fund" "Hostile Takeover" "Longevity Serum" "Project Atlas"]
+                        :discard ["Prisec"]}
+                 :runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                          :hand ["Marrow" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Marrow")
+      (click-prompt state :runner "No")
+      (click-prompt state :corp "Done")
+      (take-credits state :runner)
+      (play-and-score state "Longevity Serum")
+      (is (= "Choose any number of cards in HQ to trash"
+             (:msg (prompt-map :corp))))
+      (click-card state :corp "Hedge Fund")
+      (click-card state :corp "Hostile Takeover")
+      (click-prompt state :corp "Done")
+      (is (= "Choose up to 3 targets for Longevity Serum"
+             (:msg (prompt-map :corp))))
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Prisec")
+      (click-card state :corp "Hedge Fund")
+      (is (= "Choose up to 1 card to trash from HQ. Remainder will be trashed from top of R&D."
+             (:msg (prompt-map :corp))))
+      (click-card state :corp "Project Atlas"))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net-pay-credits-prompt
     ;; Pay-credits prompt
