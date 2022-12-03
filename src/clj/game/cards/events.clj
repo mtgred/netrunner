@@ -2899,7 +2899,7 @@
                                                    (get-in @state [:corp :discard]))))]
     {:constant-effects [{:type :disable-card
                          :req (req (eligible? target))
-                         :value (req true)}]
+                         :value true}]
      ;; this might not even be needed
      :leave-play (req (fake-checkpoint state))}))
 
