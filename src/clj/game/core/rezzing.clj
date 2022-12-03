@@ -31,7 +31,7 @@
               (concat
                 (when-not ignore-cost
                   [:credit cost])
-                (when (not (:disabled card))
+                (when-not (any-effects state side :disable-card true? card)
                   additional-costs))))))
 
 (defn trash-hosted-cards
@@ -46,8 +46,7 @@
                 (effect-completed state side eid)))))
 
 (defn- complete-rez
-  [state side eid
-   {:keys [disabled] :as card}
+  [state side eid card
    {:keys [alternative-cost ignore-cost no-warning no-msg press-continue] :as args}]
   (let [cdef (card-def card)
         costs (get-rez-cost state side card args)]
@@ -57,7 +56,7 @@
                   (effect-completed state side eid)
                   (let [_ (when (:derezzed-events cdef)
                             (unregister-events state side card))
-                        card (if disabled
+                        card (if (any-effects state side :disable-card true? card)
                                (update! state side (assoc card :rezzed :this-turn))
                                (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true}))]
                     (doseq [h (:hosted card)]
