@@ -3,6 +3,7 @@
     [game.core.agendas :refer [update-all-advancement-requirements]]
     [game.core.board :refer [all-active all-active-installed all-installed all-installed-and-scored]]
     [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
+    [game.core.card-defs :refer [card-def]]
     [game.core.drawing :refer [draw]]
     [game.core.effects :refer [unregister-floating-effects any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
@@ -12,6 +13,7 @@
     [game.core.hand-size :refer [hand-size]]
     [game.core.ice :refer [update-all-ice update-breaker-strength]]
     [game.core.moving :refer [move]]
+    [game.core.props :refer [add-counter]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
@@ -30,11 +32,28 @@
         text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
 
+(defn refill-recurring-credits
+  "Triggers before start of turn and after the 1.2 PAW"
+  ([state side eid _]
+   ;; get all active cards of that side with recurring credits
+   (let [active-cards (all-active state side)
+         not-disabled (filter #(not (any-effects state side :disable-card true? %)) active-cards)
+         with-recurring (filter #(:recurring (card-def %)) not-disabled)]
+     (doseq [card with-recurring]
+       (let [cdef (card-def card)
+             recurring (:recurring cdef)
+             recurring-fn (req (if (number? recurring) recurring (recurring state side eid card nil)))
+             card (update! state side (assoc-in card [:counter :recurring] 0))]
+         (add-counter state side card
+                      :recurring (recurring-fn state side card eid nil)
+                      {:placed true}))))))
+
 (defn end-phase-12
   "End phase 1.2 and trigger appropriate events for the player."
   ([state side _] (end-phase-12 state side (make-eid state) nil))
   ([state side eid _]
    (turn-message state side true)
+   (refill-recurring-credits state side eid nil)
    (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
              (unregister-floating-effects state side :start-of-turn)
              (unregister-floating-events state side :start-of-turn)
