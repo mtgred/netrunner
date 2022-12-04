@@ -2581,8 +2581,8 @@
       (click-prompt state :runner "Yes")
       (is (= 6 (count (:hand (get-runner)))))))
 
-(deftest ^:kaocha/pending lat-ethical-freelancer-ability-is-interactive
-    ;;TODO Chameleon and Lat ability should go along well
+(deftest lat-ethical-freelancer-ability-is-interactive
+    ;; Chameleon and Lat ability should go along well
     (do-game
       (new-game {:runner {:id "Lat: Ethical Freelancer"
                           :hand ["Chameleon" (qty "Sure Gamble" 5)]
