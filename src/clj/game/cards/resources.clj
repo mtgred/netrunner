@@ -861,10 +861,14 @@
               (assoc trash-effect :event :runner-spent-credits)
               {:event :runner-turn-begins
                :once :per-turn
-               :msg "gain 1 [Credits]"
-               :req (req (< (get-in @state [:runner :credit]) 6))
-               :async true
-               :effect (effect (gain-credits :runner eid 1))}]}))
+               :interactive (req true)
+               :effect
+               (effect (continue-ability
+                         {:msg "gain 1 [Credits]"
+                          :req (req (< (get-in @state [:runner :credit]) 6))
+                          :async true
+                          :effect (effect (gain-credits :runner eid 1))}
+                         card nil))}]}))
 
 (defcard "Daily Casts"
   (let [ability {:once :per-turn
@@ -1687,11 +1691,8 @@
                  :effect (req (if (= target "Trash Lewi Guilherme")
                                 (trash state :runner eid card {:cause-card card})
                                 (pay state :runner eid card :credit 1)))}]
-    {:flags {:drip-economy true ;; for Drug Dealer
-             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
-                                                       (all-active-installed state :runner)))))}
+    {:flags {:drip-economy true}
      :constant-effects [(corp-hand-size+ -1)]
-     :abilities [(assoc ability :req (req (:runner-phase-12 @state)))]
      :events [(assoc ability :event :runner-turn-begins)]}))
 
 (defcard "Liberated Account"
