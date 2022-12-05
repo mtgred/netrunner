@@ -1254,6 +1254,21 @@
                          "Spending all their money on trace causes Chacon to resolve"
                          (click-prompt state :runner (str (:credit (get-runner)))))))
 
+(deftest dadiana-chacon-ability-is-interactive
+    ;; Lewi Guilherme and Dadiana Chacon should go along well
+    (do-game
+      (new-game {:runner {:hand ["Dadiana Chacon" "Lewi Guilherme" "Inti"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dadiana Chacon")
+      (play-from-hand state :runner "Lewi Guilherme")
+      (play-from-hand state :runner "Inti")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (changes-val-macro 0 (:credit (get-runner))
+        "Credit loss from Lewi triggers Dadiana"
+        (click-prompt state :runner "Lewi Guilherme")
+        (click-prompt state :runner "Pay 1 [Credits]"))))
+
 (deftest dadiana-chacon-when-playing-a-card
     ;; when playing a card
     (do-game
