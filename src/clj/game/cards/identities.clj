@@ -1041,13 +1041,18 @@
 
 (defcard "Lat: Ethical Freelancer"
   {:events [{:event :runner-turn-ends
-             :optional {:req (req (= (count (:hand runner)) (count (:hand corp))))
+             :interactive (req true)
+             :effect
+             (effect (continue-ability 
+                       {:optional {:req (req (= (count (:hand runner)) (count (:hand corp))))
                         :autoresolve (get-autoresolve :auto-fire)
                         :prompt "Draw 1 card?"
                         :yes-ability {:async true
                                       :msg "draw 1 card"
                                       :effect (effect (draw :runner eid 1))}
-                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
+                        :no-ability
+                        {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
+                       card nil))}]
    :abilities [(set-autoresolve :auto-fire "Lat: Ethical Freelancer")]})
 
 (defcard "Leela Patel: Trained Pragmatist"

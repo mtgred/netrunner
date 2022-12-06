@@ -2501,8 +2501,8 @@
       (click-prompt state :runner "Gordian Blade")
       (is (some? (get-program state 0)) "Gordian Blade should be installed")
       (play-from-hand state :runner "Rebirth")
-      (click-prompt state :runner "Lat: Ethical Freelancer")
-      (is (= "Lat: Ethical Freelancer" (:title (:identity (get-runner)))) "Runner is now Lat")
+      (click-prompt state :runner "Chaos Theory: Wünderkind")
+      (is (= "Chaos Theory: Wünderkind" (:title (:identity (get-runner)))) "Runner is now Chaos Theory")
       (take-credits state :runner)
       (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
       (is (= "Gordian Blade" (-> (get-runner) :rfg last :title))
@@ -2606,6 +2606,23 @@
       (is (= 5 (count (:hand (get-runner)))))
       (click-prompt state :runner "Yes")
       (is (= 6 (count (:hand (get-runner)))))))
+
+(deftest lat-ethical-freelancer-ability-is-interactive
+    ;; Chameleon and Lat ability should go along well
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :hand ["Chameleon" (qty "Sure Gamble" 5)]
+                          :deck ["Sure Gamble"]}
+                 :corp {:id "Haas-Bioroid: Precision Design"
+                        :hand [(qty "Hedge Fund" 6)]}})
+      (take-credits state :corp)
+      (core/lose state :runner :click 3)
+      (play-from-hand state :runner "Chameleon")
+      (click-prompt state :runner "Barrier")
+      (core/end-turn state :runner nil)
+      (is (= 5 (count (:hand (get-runner)))))
+      (click-prompt state :runner "Chameleon")
+      (is (= "Draw 1 card?" (:msg (prompt-map :runner))))))
 
 (deftest lat-ethical-freelancer-ability-fires-don-t-draw
     ;; Ability fires - don't draw
