@@ -4373,14 +4373,12 @@
 
 (deftest yakov-runner-trash-multiple
   (do-game
-    (new-game {:corp {:hand ["Yakov Erikovich Avdakov" "NGO Front"
-                             "Prisec" "Mutually Assured Destruction"]
-                    :credits 15}
+    (new-game {:corp {:hand ["Yakov Erikovich Avdakov" "NGO Front" "Prisec"]}
                :runner {:hand ["Apocalypse"]}})
-    (core/gain state :corp :click 5)
     (play-from-hand state :corp "Yakov Erikovich Avdakov" "New remote")
     (play-from-hand state :corp "NGO Front" "Server 1")
     (play-from-hand state :corp "Prisec" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
@@ -4411,5 +4409,4 @@
       "trashed 3 cards"
       (click-card state :corp (get-content state :remote1 0))
       (click-card state :corp (get-content state :remote1 1))
-      (click-card state :corp (get-content state :remote1 2))
-      (click-prompt state :corp "Done"))))
+      (click-card state :corp (get-content state :remote1 2)))))
