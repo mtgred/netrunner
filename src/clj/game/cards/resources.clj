@@ -1537,6 +1537,7 @@
             {:event :end-breach-server
               :async true
               :interactive (req true)
+              :once :per-run
               :req (req (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %)))))
               :msg "gain 2 [Credits]"
               :effect (effect (gain-credits :runner eid 2))}]})
