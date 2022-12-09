@@ -2332,18 +2332,17 @@
     (rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (run-empty-server state :hq)
-    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
     (is (zero? (count (:discard (get-runner)))) "Took 0 meat damage (card wasn't installed)")
     (run-empty-server state "Server 2")
-    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
     (is (= 2 (count (:discard (get-runner)))) "Took 2 meat damage")
     (run-empty-server state "Server 3")
-    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
     (is (= 2 (count (:discard (get-runner)))) "Took 0 more meat damage")
     (run-empty-server state "Server 1")
-    (click-prompt state :runner "Pay 3 [Credits] to trash")
-    (is (= 2 (count (:discard (get-runner)))) "Took 0 more meat damage")
-    ))
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (is (= 2 (count (:discard (get-runner)))) "Took 0 more meat damage")))
 
 (deftest hostile-infrastructure-basic-behavior
     ;; Basic behavior
