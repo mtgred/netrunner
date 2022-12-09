@@ -50,7 +50,7 @@
                  [buddy/buddy-auth "3.0.1"]
                  [crypto-password "0.3.0"]
                  [digest "1.4.10"]
-                 [http-kit "2.5.3"]
+                 [http-kit "2.6.0"]
                  [com.draines/postal "2.0.5"]
                  [throttler "1.0.1"]
                  [clj-http "3.12.3"]

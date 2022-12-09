@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
-                                  offer-jack-out reorder-choice]]
+                                  offer-jack-out reorder-choice x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -379,7 +379,8 @@
       :effect (effect (continue-ability (:on-score (card-def target)) target nil))}}}})
 
 (defcard "Blood in the Water"
-  {:advancement-requirement (req (count (:hand runner)))})
+  {:x-fn (req (count (:hand runner)))
+   :advancement-requirement x-fn})
 
 (defcard "Brain Rewiring"
   {:on-score
@@ -1081,8 +1082,7 @@
     :msg (msg "trash " (quantify (count targets) "card") " from HQ")
     :async true
     :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to trash any cards from HQ"))
-                        (shuffle-into-rd-effect state side eid card 3)
-                        (effect-completed state side eid))
+                        (shuffle-into-rd-effect state side eid card 3))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
 

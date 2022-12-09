@@ -2,7 +2,7 @@
   (:require
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
-    [game.core.card :refer [corp? faceup? get-card get-counters has-subtype? in-discard?]]
+    [game.core.card :refer [active? corp? faceup? get-card get-counters has-subtype? in-discard?]]
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
@@ -231,6 +231,13 @@
     :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))
+
+;;; Helper for x-fn cards
+(def x-fn
+  (req
+    (if-let [x-fn (and (not (:disabled card)) (:x-fn card))]
+      (x-fn state side eid card targets)
+      0)))
 
 (defmacro defcard
   [title ability]

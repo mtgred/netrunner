@@ -8,7 +8,7 @@
    [game.core.board :refer [all-active-installed all-installed
                             get-all-installed get-remote-names get-remotes
                             installable-servers server->zone]]
-   [game.core.card :refer [agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
+   [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
                            event? facedown? faceup? get-advancement-requirement
                            get-card get-counters get-zone hardware? has-subtype? ice? identity? in-discard?
                            in-hand? installed? is-type? operation? program? resource? rezzed? runner?
@@ -18,7 +18,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-brain-damage
-                                  reorder-choice]]
+                                  reorder-choice x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -803,15 +803,15 @@
                              card nil)))}})
 
 (defcard "Fast Break"
-  {:on-play
+  {:x-fn (req (-> runner :scored count))
+   :on-play
    {:req (req (-> runner :scored count pos?))
     :async true
     :effect
-    (req (let [X (-> runner :scored count)
-               draw {:async true
-                     :prompt "How many cards do you want to draw?"
-                     :choices {:number (req X)
-                               :max (req X)
+    (req (let [draw {:async true
+                     :prompt "Draw how many cards?"
+                     :choices {:number x-fn
+                               :max x-fn
                                :default (req 1)}
                      :msg (msg "draw " (quantify target "card"))
                      :effect (effect (draw eid target))}
@@ -825,14 +825,14 @@
                                 :effect (req (wait-for
                                                (corp-install state side target server nil)
                                                (let [server (remote->name (second (:zone async-result)))]
-                                                 (if (< n X)
+                                                 (if (< n (x-fn state side eid card targets))
                                                    (continue-ability state side (install-cards server (inc n)) card nil)
                                                    (effect-completed state side eid)))))})
                select-server {:async true
                               :prompt "Choose a server"
                               :choices (req (conj (vec (get-remote-names state)) "New remote"))
                               :effect (effect (continue-ability (install-cards target 1) card nil))}]
-           (wait-for (gain-credits state :corp X)
+           (wait-for (gain-credits state :corp (x-fn state side eid card targets))
                      (wait-for (resolve-ability state side draw card nil)
                                (continue-ability state side select-server card nil)))))}})
 

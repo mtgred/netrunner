@@ -46,7 +46,7 @@
   (binding [org.httpkit.client/*default-client* sni-client/default-client]
     (let [url (str jnet-image-url code ".jpg")]
       (println "Downloading: " title "\t\t(" url ")")
-      (http/get url {:as :byte-array :timeout 120000 :insecure? true}
+      (http/get url {:as :byte-array :timeout 120000}
                 (fn [{:keys [status body error]}]
                   (case status
                     404 (println "No image for card" code title)

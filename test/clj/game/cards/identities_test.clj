@@ -1230,7 +1230,33 @@
       (click-prompt state :corp "Done")
       (play-from-hand state :runner "Amped Up")
       (is (not (last-log-contains? state "uses Esâ Afontov: Eco-Insurrectionist to sabotage 2")) "Sabotage did not happen")
-      (is (no-prompt? state :corp) "no Corp prompt"))))
+      (is (no-prompt? state :corp) "no Corp prompt")))
+  (testing "Plays nicely with Longevity Serum"
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 5)]
+                        :hand ["Hedge Fund" "Hostile Takeover" "Longevity Serum" "Project Atlas"]
+                        :discard ["Prisec"]}
+                 :runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                          :hand ["Marrow" "Sure Gamble"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Marrow")
+      (click-prompt state :runner "No")
+      (click-prompt state :corp "Done")
+      (take-credits state :runner)
+      (play-and-score state "Longevity Serum")
+      (is (= "Choose any number of cards in HQ to trash"
+             (:msg (prompt-map :corp))))
+      (click-card state :corp "Hedge Fund")
+      (click-card state :corp "Hostile Takeover")
+      (click-prompt state :corp "Done")
+      (is (= "Choose up to 3 targets for Longevity Serum"
+             (:msg (prompt-map :corp))))
+      (click-card state :corp "Hostile Takeover")
+      (click-card state :corp "Prisec")
+      (click-card state :corp "Hedge Fund")
+      (is (= "Choose up to 1 card to trash from HQ. Remainder will be trashed from top of R&D."
+             (:msg (prompt-map :corp))))
+      (click-card state :corp "Project Atlas"))))
 
 (deftest ele-smoke-scovak-cynosure-of-the-net-pay-credits-prompt
     ;; Pay-credits prompt
@@ -2475,8 +2501,8 @@
       (click-prompt state :runner "Gordian Blade")
       (is (some? (get-program state 0)) "Gordian Blade should be installed")
       (play-from-hand state :runner "Rebirth")
-      (click-prompt state :runner "Lat: Ethical Freelancer")
-      (is (= "Lat: Ethical Freelancer" (:title (:identity (get-runner)))) "Runner is now Lat")
+      (click-prompt state :runner "Chaos Theory: Wünderkind")
+      (is (= "Chaos Theory: Wünderkind" (:title (:identity (get-runner)))) "Runner is now Chaos Theory")
       (take-credits state :runner)
       (is (nil? (get-program state 0)) "Gordian Blade shouldn't be installed anymore")
       (is (= "Gordian Blade" (-> (get-runner) :rfg last :title))
@@ -2580,6 +2606,23 @@
       (is (= 5 (count (:hand (get-runner)))))
       (click-prompt state :runner "Yes")
       (is (= 6 (count (:hand (get-runner)))))))
+
+(deftest lat-ethical-freelancer-ability-is-interactive
+    ;; Chameleon and Lat ability should go along well
+    (do-game
+      (new-game {:runner {:id "Lat: Ethical Freelancer"
+                          :hand ["Chameleon" (qty "Sure Gamble" 5)]
+                          :deck ["Sure Gamble"]}
+                 :corp {:id "Haas-Bioroid: Precision Design"
+                        :hand [(qty "Hedge Fund" 6)]}})
+      (take-credits state :corp)
+      (core/lose state :runner :click 3)
+      (play-from-hand state :runner "Chameleon")
+      (click-prompt state :runner "Barrier")
+      (core/end-turn state :runner nil)
+      (is (= 5 (count (:hand (get-runner)))))
+      (click-prompt state :runner "Chameleon")
+      (is (= "Draw 1 card?" (:msg (prompt-map :runner))))))
 
 (deftest lat-ethical-freelancer-ability-fires-don-t-draw
     ;; Ability fires - don't draw

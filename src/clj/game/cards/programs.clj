@@ -4,7 +4,7 @@
    [game.core.access :refer [access-bonus max-access]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type
                             card->server server->zone]]
-   [game.core.card :refer [agenda? asset? card-index corp? facedown?
+   [game.core.card :refer [active? agenda? asset? card-index corp? facedown?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone
                            hardware? has-subtype? in-hand? in-discard? ice? installed?
@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty]]
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect
                               unregister-effects-for-card]]
@@ -1022,6 +1022,7 @@
 
 (defcard "Darwin"
   (auto-icebreaker {:flags {:runner-phase-12 (req true)}
+                    :x-fn (req (get-virus-counters state card))
                     :abilities [(break-sub 2 1)
                                 {:label "Place 1 virus counter (start of turn)"
                                  :once :per-turn
@@ -1029,7 +1030,7 @@
                                  :msg "place 1 virus counter"
                                  :req (req (:runner-phase-12 @state))
                                  :effect (effect (add-counter card :virus 1))}]
-                    :constant-effects [(breaker-strength-bonus (req (get-virus-counters state card)))]}))
+                    :constant-effects [(breaker-strength-bonus x-fn)]}))
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
@@ -2313,7 +2314,8 @@
                                   card nil))}]}))
 
 (defcard "Pheromones"
-  {:recurring (req (get-counters card :virus))
+  {:x-fn (req (get-counters card :virus))
+   :recurring x-fn
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :hq (target-server context)))
