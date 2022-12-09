@@ -2,6 +2,7 @@
   (:require
    [game.core.card :refer [has-subtype?]]
    [jinteki.cards :as cards]
+   [clojure.string :as str]
    [jinteki.utils :refer [faction-label INFINITY]]))
 
 (defn card-count
@@ -64,11 +65,25 @@
   (let [inf (:influencelimit identity)]
     (if (or (nil? inf) (= "∞" inf)) INFINITY inf)))
 
+(defn singleton-id?
+  "Returns true if the given id is singleton"
+  [identity]
+  (or (= "Nova Initiumia: Catalyst & Impetus" (:title identity))
+      (= "Ampère: Cybernetics For Anyone" (:title identity))))
+
+(defn singleton-legal
+  "Returns false if the identity chosen is a singleton id and the there are multiple copies of the given card, otherwise returns true"
+  [identity {:keys [qty card]}]
+  (if (singleton-id? identity)
+    (= 1 qty)
+    true))
+
 (defn legal-num-copies?
   "Returns true if there is a legal number of copies of a particular card."
   [identity {:keys [qty card]}]
-  (or (draft-id? identity)
-      (<= qty (:deck-limit card 3))))
+  (and (singleton-legal identity {:qty qty :card card})
+       (or (draft-id? identity)
+           (<= qty (:deck-limit card 3)))))
 
 (defn is-prof-prog?
   "Check if ID is The Professor and card is a Program"
@@ -128,6 +143,29 @@
   [deck]
   (apply + (vals (influence-map deck))))
 
+(defn invalid-singleton-agendas
+  "returns invalid agendas for a singleton deck"
+  [identity cards]
+  (when (singleton-id? identity)
+    ;; filter into only agendas
+    (let [cards (map :card cards)
+          relevant-agendas (filter #(and (= (:type %) "Agenda")
+                                         (not= (:faction %) "Neutral")) cards)
+          factions (distinct (map :faction relevant-agendas))
+          relevant-by-faction (fn [fac] (filter #(= fac (:faction %)) relevant-agendas))
+          faction-count (map #(relevant-by-faction %) factions)
+          offending-cards (into [] cat (filter #(< 2 (count %)) faction-count))]
+      (when-not (empty? offending-cards)
+        offending-cards))))
+
+(defn singleton-agenda-valid?
+  "returns true if the agenda is valid for singleton, or the deck is not singleton"
+  [card identity cards]
+  (if-not (singleton-id? identity)
+    true
+    (let [gendies (invalid-singleton-agendas identity cards)]
+      (not (some #(= (:title card) (:title %)) gendies)))))
+
 ;; Card and deck validity
 (defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
@@ -137,7 +175,8 @@
        (or (not= (:type card) "Agenda")
            (= (:faction card) "Neutral")
            (= (:faction card) faction)
-           (draft-id? identity))
+           (draft-id? identity)
+           (singleton-id? identity))
        (or (not= title "Custom Biotics: Engineered for Success")
            (not= (:faction card) "Jinteki"))))
 
@@ -156,10 +195,11 @@
         allowed-cards? (every? allowed-cards-fn cards)
         legal-num-copies? (every? legal-num-copies-fn cards)
         min-agenda-points (min-agenda-points deck)
+        invalid-singleton-agendas? (invalid-singleton-agendas identity cards)
         agenda-points (agenda-points deck)
         agenda-points? (or (= (:side identity) "Runner")
                            (<= min-agenda-points agenda-points (inc min-agenda-points)))]
-    {:legal (and identity? card-count? influence-limit? allowed-cards? legal-num-copies? agenda-points?)
+    {:legal (and identity? card-count? influence-limit? allowed-cards? legal-num-copies? agenda-points? (not invalid-singleton-agendas?))
      :reason (cond
                (not identity?) (str "Invalid identity: " (:title identity))
                (not card-count?) (str "Not enough cards in the deck: " card-count ", Min: " min-deck-size)
@@ -168,6 +208,7 @@
                                          (get-in (some #(when ((complement allowed-cards-fn) %) %) cards) [:card :title]))
                (not legal-num-copies?) (str "Too many copies of a card: "
                                             (get-in (some #(when ((complement legal-num-copies-fn) %) %) cards) [:card :title]))
+               invalid-singleton-agendas? (str "Too many agendas from the same factions: " (str/join ", " (map :title invalid-singleton-agendas?)))
                (not agenda-points?) (str "Incorrect amount of agenda points: " agenda-points
                                          ", Between: " min-agenda-points " and " (inc min-agenda-points)))}))
 
@@ -296,6 +337,21 @@
     (if status
       status
       (calculate-deck-status deck)))
+
+(defn singleton-deck-status
+  "Calculates if a deck is singleton"
+  [deck]
+  (let [cards (:cards deck)
+        duplicates (filter #(not= 1 (:qty %)) cards)
+        is-singleton (zero? (count duplicates))]
+    {:singleton is-singleton}))
+
+(defn singleton-deck? [deck]
+  (if-let [deck (get-in deck [:status :singleton])]
+    deck
+    (get-in (singleton-deck-status deck)
+            [:singleton]
+            false)))
 
 (defn legal-deck?
  ([deck] (legal-deck? deck (:format deck)))

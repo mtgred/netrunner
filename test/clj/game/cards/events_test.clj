@@ -1332,6 +1332,39 @@
         (click-prompt state :runner "Mayfly")
         (is (zero? (count (:deck (get-runner)))) "Mayfly should not be back in the stack"))))
 
+(deftest concerto
+  ;; Concerto
+  (do-game
+      (new-game {:corp {:deck ["Sealed Vault"]}
+                 :runner {:deck ["Sure Gamble"]
+                          :hand ["Concerto"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Concerto")
+      (let [concerto (-> (get-runner) :play-area first)]
+        (is (last-log-contains? state "reveal Sure Gamble"))
+        (is (find-card "Sure Gamble" (:hand (get-runner))))
+        (is (= 5 (get-counters (refresh concerto) :credit))))
+      (click-prompt state :runner "HQ")
+      (is (= [:hq] (get-in @state [:run :server])) "Run initiated on HQ")
+      (run-continue state)
+      (click-prompt state :runner "Pay 8 [Credits] to trash")
+      (dotimes [_ 5]
+        (click-card state :runner "Concerto"))
+      (is (and (zero? (count (:hand (get-corp))))
+               (= 1 (count (:discard (get-corp)))))
+        "Corp hand empty and Sealed Vault trashed")
+      (is (= 2 (:credit (get-runner))))))
+
+(deftest concerto-on-empty-stack
+  ;; Concerto - no cards left in the stack
+  (do-game
+      (new-game {:runner {:hand ["Concerto"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Concerto")
+      (let [concerto (-> (get-runner) :play-area first)]
+        (is (not (last-log-contains? state "reveal")))
+        (is (zero? (get-counters (refresh concerto) :credit))))))
+
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
   (do-game
@@ -2806,6 +2839,24 @@
     (click-prompt state :runner "OK")
     (is (not (:run @state)) "Run is over")))
 
+(deftest finality
+  (do-game
+    (new-game {:corp {:deck [(qty "Quandary" 5)]
+                      :hand [(qty "Quandary" 5)]}
+               :runner {:hand ["Finality" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-run-event state "Finality" :rd)
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "1st quandary")
+    (click-prompt state :runner "No action")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "2nd quandary")
+    (click-prompt state :runner "No action")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "3rd quandary")
+    (click-prompt state :runner "No action")
+    (is (= "You accessed Quandary." (:msg (prompt-map :runner))) "4rd quandary")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)))))
+
 (deftest fisk-investment-seminar
   ;; Fisk Investment Seminar
   (do-game
@@ -3712,6 +3763,20 @@
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")
     (is (= 2 (count (:hand (get-runner)))) "One played, one drawn")))
+
+(deftest katorga-breakout
+  ;; Basic Functionality
+  (do-game
+    (new-game {:corp {:hand ["BOOM!"]}
+               :runner {:hand ["Katorga Breakout" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Katorga Breakout")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (click-prompt state :runner "Sure Gamble")
+    (click-prompt state :runner "No action")
+    (is (find-card "Sure Gamble" (:hand (get-runner))) "Sure Gamble is in hand")))
 
 (deftest khusyuk-basic-functionality
     ;; Basic functionality
@@ -5229,6 +5294,30 @@
     (click-card state :runner "Hostile Takeover")
     (click-prompt state :runner "Steal")))
 
+(deftest raindrops-cut-stone
+  (do-game
+    (new-game {:corp {:hand ["Komainu"]}
+               :runner {:hand ["Raindrops Cut Stone", (qty "Sure Gamble" 5)]
+                        :deck [(qty "Sure Gamble" 15)]}})
+    (play-from-hand state :corp "Komainu" "HQ")
+    (let [kmu (get-ice state :hq 0)]
+      (rez state :corp kmu)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Raindrops Cut Stone")
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (is (= 5 (count (:subroutines (refresh kmu)))) "5 cards in hand")
+      (fire-subs state (refresh kmu))
+      (is (zero? (count (:hand (get-runner)))) "hand wiped by komainu")
+      (run-continue state)
+      (changes-val-macro
+        +3 (:credit (get-runner))
+        "gained 3 credits from raindrop"
+        (changes-val-macro
+          +5 (count (:hand (get-runner)))
+          "drew 5 cards from raindrop"
+          (run-continue state))))))
+
 ;; Rebirth
 (let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
@@ -5512,6 +5601,32 @@
         (card-ability state :runner stargate 0)
         (run-continue state)
         (click-prompt state :runner "Hedge Fund"))))
+
+(deftest reprise
+  ;; Reprise
+  (do-game
+    (new-game {:corp {:hand [(qty "Project Vitruvius" 2)]}
+               :runner {:deck [(qty "Reprise" 2)]}})
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (take-credits state :corp)
+    (changes-val-macro
+      0 (:click (get-runner))
+      "Couldn't play Reprise without stealing an agenda this turn"
+      (play-from-hand state :runner "Reprise"))
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (play-from-hand state :runner "Reprise")
+    (click-card state :runner (get-content state :remote1 0))
+    (is (= 1 (count (:hand (get-corp)))))
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "HQ")
+    (is (= [:hq] (get-in @state [:run :server])) "Run initiated on HQ")
+    (run-continue state)
+    (click-prompt state :runner "Steal")
+    (play-from-hand state :runner "Reprise")
+    (click-prompt state :runner "Done")
+    (click-prompt state :runner "No")
+    (is (no-prompt? state :runner))))
 
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ice
@@ -6001,6 +6116,29 @@
       (is (= credits (:credit (get-runner))) "Shouldn't gain credits from different ice rez")
       (rez state :corp (get-ice state :hq 0))
       (is (= (+ credits 5) (:credit (get-runner))) "Should gain credits from correct ice rez"))))
+
+(deftest spark-of-inspiration-basic
+  (do-game
+    (new-game {:runner {:hand ["Spark of Inspiration"]
+                        :deck ["Torch"]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "Spent 3 on spark, 0 on install"
+      (play-from-hand state :runner "Spark of Inspiration")
+      (is (= "Torch" (:title (get-program state 0))) "installed torch"))))
+
+(deftest spark-no-targets
+  (do-game
+    (new-game {:runner {:hand ["Spark of Inspiration"]
+                        :deck [(qty "Sure Gamble" 3)]}})
+    (take-credits state :corp)
+    (changes-val-macro
+      -3 (:credit (get-runner))
+      "Spent 3 on spark, 0 on install"
+      (play-from-hand state :runner "Spark of Inspiration"))
+    (is (no-prompt? state :runner))
+    (is (zero? (count (:set-aside (get-runner)))) "cards returned to stack")))
 
 (deftest spear-phishing
   ;; Spear Phishing

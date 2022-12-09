@@ -6,7 +6,7 @@
     [game.core.cost-fns :refer [break-sub-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects get-effects register-floating-effect sum-effects]]
-    [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
     [game.core.flags :refer [card-flag?]]
     [game.core.payment :refer [build-cost-label can-pay? merge-costs]]
     [game.core.say :refer [system-msg]]
@@ -29,6 +29,16 @@
     (or (get-card state (-> @state :encounters peek :ice))
         (get-card state ice)
         ice)))
+
+(defn get-current-encounter
+  [state]
+  (peek (:encounters @state)))
+
+(defn update-current-encounter
+  [state key value]
+  (when-let [encounter (get-current-encounter state)]
+    (let [updated-encounter (assoc encounter key value)]
+      (swap! state update :encounters #(conj (pop %) updated-encounter)))))
 
 (defn set-current-ice
   ([state]
@@ -258,8 +268,17 @@
                               :source-type :subroutine})]
      (resolve-subroutine! state side eid ice sub)))
   ([state side eid ice sub]
-   (update! state :corp (resolve-subroutine ice sub))
-   (resolve-ability state side eid (:sub-effect sub) (get-card state ice) nil)))
+   (wait-for (trigger-event-simult state side :pre-resolve-subroutine nil sub ice)
+             ;; this is for cards like marcus batty
+             (when-not (:exernal-trigger sub)
+               (update! state :corp (resolve-subroutine ice sub)))
+             ;; TODO - need a way to interact with multiple replacement effects.
+             (let [replacement (:replace-subroutine (get-current-encounter state))
+                   sub (or (when replacement (assoc replacement :index (:index sub))) sub)]
+               (update-current-encounter state :replace-subroutine nil)
+               (wait-for (resolve-ability state side (:sub-effect sub) (get-card state ice) nil)
+                         (queue-event state :subroutine-fired {:sub sub :ice ice})
+                         (checkpoint state nil eid))))))
 
 (defn- resolve-next-unbroken-sub
   ([state side ice subroutines]

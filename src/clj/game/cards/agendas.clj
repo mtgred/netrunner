@@ -14,6 +14,7 @@
                            get-card get-counters get-title get-zone has-subtype? ice? in-discard? in-hand?
                            in-scored? installed? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
                                   offer-jack-out reorder-choice x-fn]]
@@ -801,6 +802,9 @@
               :async true
               :effect (req (gain-tags state :runner eid 1))}})
 
+(defcard "Freedom of Information"
+  {:advancement-requirement (req (- (count-tags state)))})
+
 (defcard "Genetic Resequencing"
   {:on-score {:choices {:card in-scored?}
               :msg (msg "place 1 agenda counter on " (:title target))
@@ -955,6 +959,17 @@
                 :once :per-run
                 :effect (effect (damage eid :net 1 {:card card}))}]})
 
+(defcard "Hybrid Release"
+  {:on-score {:prompt "Choose a facedown card in Archives to install"
+               :show-discard true
+               :async true
+               :choices {:card #(and (corp-installable-type? %)
+                                     (in-discard? %)
+                                     (not (faceup? %)))}
+               :effect (effect (corp-install (make-eid state {:source card :source-type :corp-install}) target nil nil))
+               :cancel-effect (effect (system-msg "declines to use Hybrid Release"))
+               :msg (msg "install " (card-str state target))}})
+
 (defcard "Hyperloop Extension"
   (let [he {:msg "gain 3 [Credits]"
             :async true
@@ -1012,6 +1027,30 @@
                            (is-remote? (second (get-zone %))))}
      :msg (msg "place 2 advancement token on " (card-str state target))
      :effect (effect (add-prop :corp target :advance-counter 2 {:placed true}))}]})
+
+(defcard "Kimberlite Field"
+  {:on-score
+   {:interactive (req true)
+    :async true
+    :waiting-prompt "Corp to make a decision"
+    :prompt "Choose a card to trash"
+    :req (req (some rezzed? (all-installed state :corp)))
+    :choices {:card #(rezzed? %)}
+    :cancel-effect (effect (system-msg :runner "declines to use Kimberlite Field to trash a card")
+                           (effect-completed eid))
+    :effect (req (let [target-cost (rez-cost state :corp target)
+                       prompt-str (str "trash a runner card that costs " target-cost " or less")]
+                   (wait-for (trash state side target {:cause-card card})
+                             (continue-ability
+                               state side
+                               {:prompt prompt-str
+                                :choices {:card #(and (installed? %)
+                                                      (runner? %)
+                                                      (<= (install-cost state :runner %) target-cost))}
+                                :msg (str "trash " (card-str state target))
+                                :async true
+                                :effect (effect (trash eid target))}
+                               card nil))))}})
 
 (defcard "Labyrinthine Servers"
   {:on-score {:silent (req true)
@@ -1224,6 +1263,9 @@
     :msg "gain 7 [Credits]"
     :effect (effect (gain-credits :corp eid 7))}})
 
+(defcard "Ontological Dependence"
+  {:advancement-requirement (req (- (or (get-in @state [:runner :brain-damage]) 0)))})
+
 (defcard "Orbital Superiority"
   {:on-score
    {:msg (msg (if (is-tagged? state) "do 4 meat damage" "give the Runner 1 tag"))
@@ -1262,6 +1304,16 @@
               :req (req (pos? (count (:scored runner))))
               :msg (msg "do " (count (:scored runner)) " net damage")
               :effect (effect (damage eid :net (count (:scored runner)) {:card card}))}})
+
+(defcard "Post-Truth Dividend"
+  {:on-score {:optional
+              {:prompt "Draw 1 card?"
+               :yes-ability
+               {:msg "draw 1 card"
+                :async true
+                :effect (effect (draw eid 1))}
+               :no-ability
+               {:effect (effect (system-msg :corp "declines to use Post-Truth Dividend to draw 1 card"))}}}})
 
 (defcard "Posted Bounty"
   {:on-score {:optional
@@ -1548,6 +1600,10 @@
                            (update-all-agenda-points state)
                            (check-win-by-agenda state side))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal an agenda in Archives")))}})
+
+
+(defcard "Regulatory Capture"
+  {:advancement-requirement (req (- (min 4 (count-bad-pub state))))})
 
 (defcard "Remastered Edition"
   {:on-score {:effect (effect (add-counter card :agenda 1))

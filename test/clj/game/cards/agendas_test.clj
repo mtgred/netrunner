@@ -1469,6 +1469,20 @@
     (play-and-score state "Fly on the Wall")
     (is (= 1 (count-tags state)) "Runner is tagged")))
 
+(deftest freedom-of-information
+  ;; Freedom of Information
+  (do-game
+    (new-game {:corp {:deck ["Freedom of Information"]}})
+    (play-from-hand state :corp "Freedom of Information" "New remote")
+    (let [foi (get-content state :remote1 0)]
+      (advance state foi 2)
+      (score state :corp (refresh foi))
+      (is (some? (get-content state :remote1 0))
+        "Advancement requirement not yet met, cannot score")
+      (gain-tags state :runner 2)
+      (score state :corp (refresh foi))
+      (is (= 2 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
+
 (deftest genetic-resequencing
   ;; Genetic Resequencing
   (do-game
@@ -1773,6 +1787,29 @@
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
+(deftest hybrid-release
+    ;; Hybrid Release
+    (do-game
+      (new-game {:corp {:deck ["Hybrid Release" (qty "Hansei Review" 2) "PAD Campaign" "Hedge Fund"]
+                        :discard ["Obokata Protocol"]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (core/gain state :corp :click 2)
+      (play-from-hand state :corp "Hansei Review")
+      (click-card state :corp "PAD Campaign")
+      (play-from-hand state :corp "Hansei Review")
+      (click-card state :corp "Hedge Fund")
+      (play-and-score state "Hybrid Release")
+      (click-card state :corp (find-card "Obokata Protocol" (:discard (get-corp))))
+      (is (= "Choose a facedown card in Archives to install" (:msg (prompt-map :corp))) "Cannot select faceup cards in Archives")
+      (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
+      (is (= "Choose a facedown card in Archives to install" (:msg (prompt-map :corp))) "Cannot install operations")
+      (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
+      (click-prompt state :corp "New remote")
+      (is (= "PAD Campaign" (:title (get-content state :remote2 0))) "Installed PAD Campaign in remote")))
+
 (deftest hyperloop-extension-score
     ;; Score
     (do-game
@@ -1983,6 +2020,31 @@
         (run-on state "HQ")
         (run-jack-out state)
         (is (not (:run @state)) "No jack out prevent prompt")))))
+
+(deftest kimberlite-no-target
+  (do-game
+    (new-game {:corp {:hand ["Kimberlite Field" "Rashida Jaheem"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (play-and-score state "Kimberlite Field")
+    (is (no-prompt? state :corp))))
+
+(deftest kimberlite-standard-functionality
+  (do-game
+    (new-game {:corp {:hand ["Kimberlite Field" "Echo Chamber"]}
+               :runner {:hand ["Amina" "Paperclip"] :credits 15}})
+    (play-from-hand state :corp "Echo Chamber" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Amina")
+    (play-from-hand state :runner "Paperclip")
+    (take-credits state :runner)
+    (rez state :corp (get-content state :remote1 0))
+    (play-and-score state "Kimberlite Field")
+    (click-card state :corp "Echo Chamber")
+    (click-card state :corp "Amina")
+    (is (= 0 (count (:discard (get-runner)))) "amina not trashed")
+    (click-card state :corp "Paperclip")
+    (is (= 1 (count (:discard (get-runner)))) "clippy trashed")
+    (is (no-prompt? state :corp))))
 
 (deftest license-acquisition
   ;; License Acquisition
@@ -2523,6 +2585,21 @@
         "Corp gains 7 credits from Offworld Office"
         (play-and-score state "Offworld Office"))))
 
+(deftest ontological-dependence
+  ;; Ontological Dependence
+  (do-game
+    (new-game {:corp {:hand ["Ontological Dependence"]}})
+    (play-from-hand state :corp "Ontological Dependence" "New remote")
+    (let [conj (get-content state :remote1 0)]
+      (advance state conj 2)
+      (score state :corp (refresh conj))
+      (is (some? (get-content state :remote1 0))
+          "Corp can't score with 2 advancements because of no brain damage")
+      (damage state :corp :brain 2)
+      (score state :corp (refresh conj))
+      (is (not (some? (get-content state :remote1 0)))
+          "Corp can score with 2 advancements because of 2 brain damage"))))
+
 (deftest orbital-superiority
   ;; Orbital Superiority
   (do-game
@@ -2628,6 +2705,17 @@
     (play-and-score state "Philotic Entanglement")
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
+
+(deftest post-truth-dividend
+  ;; Post-Truth Dividend
+  (do-game
+    (new-game {:corp {:hand ["Post-Truth Dividend"]
+                      :deck ["Hedge Fund"]}})
+    (play-and-score state "Post-Truth Dividend")
+    (changes-val-macro
+      1 (count (:hand (get-corp)))
+      "Drew 1 card"
+      (click-prompt state :corp "Yes"))))
 
 (deftest posted-bounty-forfeiting-takes-1-bad-publicity
     ;; Forfeiting takes 1 bad publicity
@@ -3269,6 +3357,7 @@
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
 
+
 (deftest regenesis
   ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
   ;; and add it to score area
@@ -3300,6 +3389,30 @@
     (prompt-is-type? state :corp :choice)
     (click-card state :corp "Obokata Protocol")
     (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
+
+(deftest regulatory-capture
+  ;; regulatory capture
+  (do-game
+    (new-game {:corp {:hand [(qty "Regulatory Capture" 2)] :credits 10}})
+    (play-from-hand state :corp "Regulatory Capture" "New remote")
+    (play-from-hand state :corp "Regulatory Capture" "New remote")
+    (let [r1 (get-content state :remote1 0)
+          r2 (get-content state :remote1 0)]
+      (core/add-prop state :corp (refresh r1) :advance-counter 4)
+      (core/add-prop state :corp (refresh r2) :advance-counter 1)
+      (score state :corp (refresh r1))
+      (is (some? (get-content state :remote1 0))
+          "Corp can't score with 4 advancements because of 0 BP")
+      (core/gain state :corp :bad-publicity 2)
+      (core/fake-checkpoint state)
+      (score state :corp (refresh r1))
+      (is (not (some? (get-content state :remote1 0)))
+          "Corp scored capture with 2 bp and 4 counters")
+      (core/gain state :corp :bad-publicity 3)
+      (core/fake-checkpoint state)
+      (score state :corp (refresh r2))
+      (is (some? (get-content state :remote2 0))
+          "Corp can't score with 1 advancements and 5 BP (max 4 counted)"))))
 
 (deftest remastered-edition
   ;; Remastered Edition

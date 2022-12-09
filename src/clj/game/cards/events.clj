@@ -576,6 +576,30 @@
                                     (effect-completed state side eid))
                                 (effect-completed state side eid))))}]}))
 
+(defcard "Concerto"
+  (letfn [(reveal-and-load-credits [stack]
+            (when-let [topcard (first stack)]
+              {:async true
+               :msg (msg "reveal " (get-title topcard) " from the top of the stack, "
+                         "move it to the grip and place " (:cost topcard) " [Credits] on itself")
+               :effect (req (wait-for (reveal state side topcard)
+                                      (add-counter state side card :credit (:cost topcard) {:placed true})
+                                      (move state :runner topcard :hand)
+                                      (effect-completed state side eid)))}))]
+    {:makes-run true
+     :interactions {:pay-credits {:req (req run)
+                                  :type :credit}}
+     :on-play {:async true
+               :effect (req (wait-for (resolve-ability state side
+                                                       (reveal-and-load-credits (:deck runner))
+                                                       card nil)
+                                      (continue-ability state side
+                                        {:prompt "Choose a server"
+                                         :choices (req runnable-servers)
+                                         :async true
+                                         :effect (effect (make-run eid target (get-card state card)))}
+                                        (get-card state card) nil)))}}))
+
 (defcard "Contaminate"
   {:on-play
    {:msg (msg "place 3 virus tokens on " (:title target))
@@ -1321,6 +1345,19 @@
             {:event :successful-run
              :effect (effect (prevent-access))}]})
 
+(defcard "Finality"
+  {:makes-run true
+   :on-play {:req (req rd-runnable)
+             :additional-cost [:brain 1]
+             :async true
+             :effect (effect (make-run eid :rd card))}
+   :events [{:event :successful-run
+             :silent (req true)
+             :req (req (and (= :rd (target-server context))
+                            this-card-run))
+             :effect (effect (register-events
+                              card [(breach-access-bonus :rd 3 {:duration :end-of-run})]))}]})
+
 (defcard "Fisk Investment Seminar"
   {:on-play
    {:msg "make each player draw 3 cards"
@@ -1887,6 +1924,20 @@
              :effect (effect (register-events
                               card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
                              (draw eid 1))}]})
+
+(defcard "Katorga Breakout"
+  {:makes-run true
+   :on-play {:async true
+             :prompt "Choose a server"
+             :choices (req runnable-servers)
+             :effect (effect (make-run eid target card))}
+   :events [{:event :successful-run
+             :req (req this-card-run)
+             :async true
+             :prompt "Add a card from the heap to the grip"
+             :choices (req (cancellable (:discard runner) :sorted))
+             :effect (effect (move target :hand)
+                             (effect-completed eid))}]})
 
 (defcard "Khusyuk"
   (let [access-revealed (fn [revealed]
@@ -2643,6 +2694,29 @@
     :async true
     :effect (effect (access-card eid target))}})
 
+(defcard "Raindrops Cut Stone"
+  {:makes-run true
+   :on-play {:async true
+             :prompt "Choose a server"
+             :choices (req runnable-servers)
+             :effect (effect (make-run eid target card))}
+   :events [{:event :subroutine-fired
+             :req (req (some #(= % :play-area) (:zone card)))
+             :effect (effect (add-counter (get-card state card) :power 1))}
+            {:event :run-ends
+             :async true
+             :req (req this-card-run)
+             :effect (req (let [cards-to-draw (get-counters (get-card state card) :power)]
+                            (continue-ability
+                              state side
+                              {:msg (msg "draw " cards-to-draw " cards and gain 3 [Credits]")
+                               :async true
+                               :effect (req (if (< 0 cards-to-draw)
+                                              (wait-for (draw state side cards-to-draw)
+                                                        (gain-credits state side eid 3))
+                                              (gain-credits state side eid 3)))}
+                              card nil)))}]})
+
 (defcard "Rebirth"
   {:on-play
    {:prompt "Choose an identity"
@@ -2741,6 +2815,29 @@
                              (continue-ability state side
                                                (put-down async-result)
                                                card nil)))}}))
+
+(defcard "Reprise"
+  (letfn [(opt-run []
+            {:optional
+             {:prompt "Run a server?"
+              :yes-ability
+              {:prompt "Choose a server"
+               :choices (req runnable-servers)
+               :async true
+               :msg (msg "make a run on " target)
+               :effect (effect (make-run eid target card))}
+               :no-ability {:effect (effect (system-msg "declines to use Reprise to make a run"))}}})]
+    {:makes-run true
+     :on-play
+     {:async true
+      :req (req (:stole-agenda runner-reg))
+      :prompt "Choose an installed Corp card to add to HQ"
+      :choices {:card #(and (installed? %)
+                            (corp? %))}
+      :msg (msg "add " (card-str state target) " to HQ")
+      :cancel-effect (effect (continue-ability (opt-run) card nil))
+      :effect (effect (move :corp target :hand)
+                      (continue-ability (opt-run) card nil))}}))
 
 (defcard "Reshape"
   {:on-play
@@ -3063,6 +3160,51 @@
                     :msg (msg "gain " (rez-cost state side (get-card state (:card context))) " [Credits]")
                     :async true
                     :effect (effect (gain-credits :runner eid (rez-cost state side (get-card state (:card context)))))}])))}})
+
+(defcard "Spark of Inspiration"
+  (letfn [(spark-search-fn [state side eid card remainder rev-str]
+            (if (not-empty remainder)
+              (let [revealed-card (first remainder)
+                    rest-of-deck (rest remainder)
+                    rev-str (if (= "" rev-str)
+                              (:title revealed-card)
+                              (str rev-str ", " (:title revealed-card)))]
+                (if (program? revealed-card)
+                  (if (can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                revealed-card nil
+                                [:credit (install-cost state side revealed-card {:cost-bonus -10})])
+                    (continue-ability
+                      state side
+                      {:msg (msg "reveal " rev-str " from the top of the stack and install "
+                                 (:title revealed-card) ", paying 10 [Credits] less")
+                       :async true
+                       :effect (req
+                                 (wait-for (runner-install
+                                             state side
+                                             (make-eid state {:source card :source-type :runner-install})
+                                             revealed-card {:cost-bonus -10})
+                                           (shuffle! state side :deck)
+                                           (system-msg state side "shuffles the Stack")
+                                           (effect-completed state side eid)))}
+                      card nil)
+                    (continue-ability ;;can't afford to install it somehow
+                      state side
+                      {:msg (msg "reveal " rev-str " from the top of the stack")
+                       :effect (effect (shuffle! :deck)
+                                       (system-msg "shuffles the Stack"))}
+                      card nil))
+                  (spark-search-fn state side eid card rest-of-deck rev-str)))
+              (continue-ability
+                state side
+                {:msg (msg "reveal " rev-str " from the top of the stack")
+                 :effect (effect (shuffle! :deck)
+                                 (system-msg "shuffles the Stack"))}
+                card nil)))]
+    {:on-play
+     {:req (req (not-empty (:deck runner)))
+      :msg "reveal cards from the top of the Stack"
+      :async true
+      :effect (req (spark-search-fn state side eid card (:deck runner) ""))}}))
 
 (defcard "Spear Phishing"
   {:makes-run true

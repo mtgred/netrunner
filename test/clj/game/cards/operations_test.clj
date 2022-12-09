@@ -1039,6 +1039,21 @@
     (is (= 1 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
     (is (= 7 (:credit (get-runner))) "Runner gained 2 credits")))
 
+(deftest distributed-tracing
+  ;; Distributed Tracing
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Distributed Tracing" "Hostile Takeover"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Distributed Tracing")
+    (is (no-prompt? state :corp) "Corp should have no prompt without agenda stolen")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Distributed Tracing")
+    (is (= 1 (count-tags state)) "Runner took 1 tag")))
+
 (deftest diversified-portfolio
   (do-game
     (new-game {:corp {:deck ["Diversified Portfolio"
@@ -1202,6 +1217,16 @@
     (is (= 2 (count (:hand (get-corp)))) "Corp has now 1 + 1 cards before Election Day")
     (play-from-hand state :corp "Election Day")
     (is (= 5 (count (:hand (get-corp)))) "Corp has now 5 cards due to Election Day")))
+
+(deftest end-of-the-line
+  ;; End of the Line
+  (do-game
+    (new-game {:corp {:deck ["End of the Line"]}
+               :runner {:deck [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]}})
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "End of the Line")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (is (zero? (count-tags state)) "Runner list a tag")))
 
 (deftest enforced-curfew
   ;; Hostile Takeover
@@ -2177,6 +2202,22 @@
       (click-prompt state :runner "1 [Credits]")
       (is (:run @state) "Run still going")))
 
+(deftest hypoxia
+  (do-game
+    (new-game {:corp {:hand ["Hypoxia" "Public Trail"]}})
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hypoxia")
+    (is (= 2 (count (:hand (get-corp)))) "not played, no tag")
+    (play-from-hand state :corp "Public Trail")
+    (click-prompt state :runner "Take 1 tag")
+    (play-from-hand state :corp "Hypoxia")
+    (is (= 1 (count (:rfg (get-corp)))) "Hypoxia removed from game")
+    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Hypoxia")
+    (take-credits state :corp)
+    (is (= 3 (:click (get-runner))) "Runner should lose 1 click start of turn")))
+
 (deftest interns
   ;; Fire Wall
   (do-game
@@ -2782,6 +2823,23 @@
         (take-credits state :runner)
         (is (= 1 (core/get-strength (refresh iw))))
         (is (find-card "NEXT Activation Command" (:discard (get-corp)))))))
+
+(deftest nonequivalent-exchange
+    ;; Nonequivalent Exchange
+    (do-game
+      (new-game {:corp {:hand [(qty "Nonequivalent Exchange" 2)]}})
+      (play-from-hand state :corp "Nonequivalent Exchange")
+      (changes-val-macro 2 (:credit (get-runner))
+        "Runner gained 2 credits"
+        (changes-val-macro 7 (:credit (get-corp))
+                           "Corp gained 7 credits"
+                           (click-prompt state :corp "Yes")))
+      (play-from-hand state :corp "Nonequivalent Exchange")
+      (changes-val-macro 0 (:credit (get-runner))
+        "Runner gained no credits"
+        (changes-val-macro 5 (:credit (get-corp))
+                           "Corp gained 5 credits"
+                           (click-prompt state :corp "No")))))
 
 (deftest o-shortage
   ;; O₂ Shortage
@@ -3904,6 +3962,34 @@
     (click-card state :corp "Ice Wall")
     (is (= 2 (get-counters (get-ice state :hq 0) :advancement)) "Ice Wall should be advanced")))
 
+(deftest shipment-from-vladisibirsk
+  ;; Shipment from Vladisibirsk
+  (do-game
+    (new-game {:corp {:hand [(qty "Shipment from Vladisibirsk" 2) "Ice Wall" "Hostile Takeover" "PAD Campaign" "Bio Vault"]}})
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Bio Vault" "New remote")
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (is (no-prompt? state :corp) "Shouldn't be able to play without runner being tagged")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (is (no-prompt? state :corp) "Shouldn't be able to play without runner having 2 tags")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (click-card state :corp "Ice Wall")
+    (click-card state :corp "Hostile Takeover")
+    (click-card state :corp "PAD Campaign")
+    (click-card state :corp "PAD Campaign")
+    (is (= 1 (get-counters (get-ice state :hq 0) :advancement)))
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)))
+    (is (= 2 (get-counters (get-content state :remote2 0) :advancement)))
+    (play-from-hand state :corp "Shipment from Vladisibirsk")
+    (dotimes [_ 4]
+      (click-card state :corp "Bio Vault"))
+    (is (= 4 (get-counters (get-content state :remote3 0) :advancement)))))
+
 (deftest shoot-the-moon
   ;; Ice Wall
   (do-game
@@ -3917,6 +4003,32 @@
     (let [credits (:credit (get-corp))]
       (click-card state :corp "Ice Wall")
       (is (= credits (:credit (get-corp))) "Corp shouldn't pay anything to rez Ice Wall"))))
+
+(deftest simulation-reset
+  ;; Simulation Reset
+  (do-game
+    (new-game {:corp {:hand ["Simulation Reset" "Ganked!" "Mitosis" "Patch" "Restore" "IPO"]
+                      :deck ["Hedge Fund"]
+                      :discard ["Fire Wall" "Ice Wall"]}})
+    (play-from-hand state :corp "Simulation Reset")
+    (click-card state :corp "Ganked!")
+    (click-card state :corp "Mitosis")
+    (click-card state :corp "Patch")
+    (click-card state :corp "Restore")
+    (click-prompt state :corp "Done")
+    (is (not (= "Choose up to 5 cards in HQ to trash"
+                (:msg (prompt-map :runner)))) "Now choosing cards to shuffle back to R&D")
+    (click-card state :corp "Fire Wall")
+    (click-card state :corp "Ice Wall")
+    (click-card state :corp "Mitosis")
+    (click-card state :corp "Restore")
+    (is (no-prompt? state :corp))
+    (is (= 1 (count (:rfg (get-corp)))) "Simulation Reset removed from game")
+    (is (find-card "Ganked!" (:discard (get-corp))))
+    (is (find-card "Patch" (:discard (get-corp))))
+    (is (not (find-card "Ice Wall" (:discard (get-corp)))) "Ice Wall has been shuffled into R&D")
+    (is (not (find-card "Restore" (:discard (get-corp)))) "Restore has been shuffled into R&D")
+    (is (= 5 (count (:hand (get-corp)))))))
 
 (deftest snatch-and-grab
   ;; Snatch and Grab

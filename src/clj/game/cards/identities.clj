@@ -57,6 +57,7 @@
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [number-of-runner-virus-counters]]
+   [game.core.winning :refer [check-win-by-agenda]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
@@ -825,6 +826,25 @@
               (assoc inf :event :agenda-scored)
               (assoc inf :event :agenda-stolen)])})
 
+(defcard "Issuaq Adaptics: Sustaining Diversity"
+  {:effect (effect (lose :agenda-point-req (get-counters card :power)))
+   :leave-play (effect (gain :agenda-point-req (get-counters card :power)))
+   :events [{:event :agenda-scored
+             :interactive (req true)
+             :req (req (and (->> (turn-events state side :corp-install)
+                                 (map #(:card (first %)))
+                                 (filter #(same-card? (:card context) %))
+                                 empty?)
+                            (->> (turn-events state side :advance)
+                                 (map #(first %))
+                                 (filter #(same-card? (:card context) %))
+                                 empty?)))
+             :msg "put 1 charge counter on itself"
+             :effect (req (add-counter state side card :power 1)
+                          (swap! state assoc-in [:corp :agenda-point-req]
+                                 (get-counters (get-card state card) :power))
+                          (check-win-by-agenda state))}]})
+
 (defcard "Jamie \"Bzzz\" Micken: Techno Savant"
   {:events [{:event :pre-start-game
              :effect draft-points-target}
@@ -1537,6 +1557,14 @@
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
 
+(defcard "Ampère: Cybernetics For Anyone"
+    ;; No special implementation
+  {})
+
+(defcard "Nova Initiumia: Catalyst & Impetus"
+      ;; No special implementation
+  {})
+
 (defcard "Pālanā Foods: Sustainable Growth"
   {:events [{:event :runner-draw
              :req (req (and (first-event? state :corp :runner-draw)
@@ -1898,6 +1926,25 @@
 (defcard "The Syndicate: Profit over Principle"
   ;; No special implementation
   {})
+
+(defcard "Thule Subsea: Safety Below"
+  {:events [{:event :agenda-stolen
+             :msg "force the runner to suffer 1 core damage unless they spend [Click] and 2[Credits]"
+             :async true
+             :effect (effect (continue-ability
+                               {:prompt "Choose an option"
+                                :player :runner
+                                :choices (req [(when (can-pay? state :runner eid card [:credit 2 :click 1])
+                                                 "Pay [Click] and 2 [Credits]")
+                                               "Suffer 1 Core Damage"])
+                                :async true
+                                :effect (req (if (= target "Pay [Click] and 2 [Credits]")
+                                               (wait-for (pay state side (make-eid state eid) card [:click 1 :credit 2])
+                                                         (system-msg state side (:msg async-result))
+                                                         (effect-completed state :runner eid))
+                                               (do (system-msg state :corp "forces the runner to suffer 1 Core Damage")
+                                                   (damage state side eid :brain 1 {:card card}))))}
+                               card nil))}]})
 
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored

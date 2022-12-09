@@ -226,6 +226,32 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest asmund-pudlat
+  ;; Asmund Pudlat
+  (do-game
+    (new-game {:runner {:hand ["Asmund Pudlat"]
+                        :deck ["Unregistered S&W '35" (qty "Fermenter" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Asmund Pudlat")
+    (click-prompt state :runner "Fermenter")
+    (is (not (contains? (:choices (prompt-map :runner)) "Fermenter")) "Runner cannot choose Fermenter twice")
+    (click-prompt state :runner "Unregistered S&W '35")
+    (let [asmund (get-resource state 0)]
+      (is (= 2 (count (:hosted (refresh asmund)))) "Asmund Pudlat is hosting 2 cards")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (changes-val-macro -1 (count (:hosted (refresh asmund)))
+                         "Unregistered S&W '35 not hosted anymore"
+                         (click-card state :runner (find-card "Unregistered S&W '35" (:hosted (refresh asmund)))))
+      (is (= 1 (count (:hand (get-runner)))) "Card was added to grip")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (changes-val-macro -1 (count (:hosted (refresh asmund)))
+                         "Fermenter not hosted anymore"
+                         (click-card state :runner (find-card "Fermenter" (:hosted (refresh asmund)))))
+      (is (= 2 (count (:hand (get-runner)))) "Card was added to grip")
+      (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed"))))
+
 (deftest avgustina-ivanovskaya
   ;; First time each turn you install a virus program, resist 1
   (do-game
@@ -1826,6 +1852,24 @@
         (take-credits state :runner)
         (is (nil? (:icon (refresh blackfile)))))))
 
+(deftest dr-nuka-vrolyck
+  (do-game
+      (new-game {:runner {:hand ["Dr. Nuka Vrolyck"]
+                          :deck [(qty "Sure Gamble" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dr. Nuka Vrolyck")
+      (let [dr (get-resource state 0)]
+        (changes-val-macro
+          3 (count (:hand (get-runner)))
+          "Runner has drawn 3 cards"
+          (card-ability state :runner dr 0))
+        (is (= 2 (:click (get-runner))))
+        (changes-val-macro
+          2 (count (:hand (get-runner)))
+          "Runner has drawn the remaining 2 cards from the stack"
+          (card-ability state :runner dr 0))
+        (is (= 1 (count (:discard (get-runner)))) "Dr. Nuka Vrolyck was trashed"))))
+
 (deftest dreamnet-draw-1-card-on-first-successful-run
     ;; Draw 1 card on first successful run
     (do-game
@@ -2987,6 +3031,34 @@
       (is (zero? (get-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-continue state)
       (is (= 1 (get-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
+
+(deftest info-bounty
+    ;; Info Bounty
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund"]}
+                 :runner {:deck ["Info Bounty" "Patron"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Info Bounty")
+      (play-from-hand state :runner "Patron")
+      (core/set-mark state :hq)
+      (changes-val-macro
+        2 (:credit (get-runner))
+        "Gained 2 credits"
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No action"))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gained no credits on subsequent runs on mark"
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No action"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (core/set-mark state :hq)
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gained no credits on run on mark when breach is replaced"
+        (run-empty-server state :hq))))
 
 (deftest inside-man-pay-credits-prompt
     ;; Pay-credits prompt
@@ -6608,6 +6680,30 @@
                            (run-continue state)
                            (card-ability state :runner refr 1)
                            (click-card state :runner refr)))))
+
+(deftest tsakhia-bankhar-gantula
+  ;; Tsakhia "Bankhar" Gantulga
+  (do-game
+    (new-game {:runner {:hand ["Tsakhia \"Bankhar\" Gantulga" (qty "Sure Gamble" 4)]}
+               :corp {:hand ["Akhet"]}})
+    (play-from-hand state :corp "Akhet" "HQ")
+    (let [ak (get-ice state :hq 0)]
+      (rez state :corp (refresh ak))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tsakhia \"Bankhar\" Gantulga")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (run-on state :hq)
+      (run-continue state)
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "took 2 net damage"
+        (changes-val-macro
+          0 (:credit (get-corp))
+          "Did not gain 1 credit"
+          (fire-subs state (refresh ak))))
+      (run-continue state))))
 
 (deftest verbal-plasticity
   ;; Verbal Plasticity

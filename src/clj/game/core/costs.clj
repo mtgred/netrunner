@@ -11,6 +11,7 @@
     [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
     [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
+    [game.core.rezzing :refer [derez]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.tags :refer [lose-tags]]
     [game.core.to-string :refer [card-str]]
@@ -441,6 +442,35 @@
                                :type :hardware
                                :value (count async-result)
                                :targets targets})))}
+    card nil))
+
+;; DerezHarmonic
+(defmethod cost-name :derez-harmonic [_] :derez-harmonic)
+(defmethod value :derez-harmonic [[_ cost-value]] cost-value)
+(defmethod label :derez-harmonic [cost]
+  (str "derez " (quantify (value cost) "harmonic Ice")))
+(defmethod payable? :derez-harmonic
+  [cost state side eid card]
+  (<= 0 (- (count (filter #(and (rezzed? %) (has-subtype? % "Harmonic"))
+                          (all-active-installed state :corp))) (value cost))))
+(defmethod handler :derez-harmonic
+  [cost state side eid card actions]
+  (continue-ability
+    state side
+    {:prompt (str "Choose " (quantify (value cost) "Harmonic Ice to derez") " to derez")
+     :choices {:all true
+               :max (value cost)
+               :card #(and (rezzed? %) (has-subtype? % "Harmonic"))}
+     :async true
+     :effect (req (doseq [harmonic targets]
+                    (derez state side harmonic))
+                  (complete-with-result
+                    state side eid
+                    {:msg (str "derezzes " (quantify (count targets) "Harmonic Ice")
+                               " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                     :type :derez
+                     :value (count targets)
+                     :targets targets}))}
     card nil))
 
 ;; TrashInstalledProgram

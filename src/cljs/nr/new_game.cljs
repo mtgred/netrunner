@@ -16,6 +16,7 @@
    :room
    :save-replay
    :side
+   :singleton
    :spectatorhands
    :timer
    :title])
@@ -68,7 +69,13 @@
                   :checked (= @side-state option)}]
          (tr-side option)]]))])
 
-(defn format-section [fmt-state]
+(defn singleton-only [options fmt-state]
+  [:label
+   [:input {:type "checkbox" :checked (:singleton @options)
+            :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
+   (tr [:lobby.singleton "Singleton"])])
+
+(defn format-section [fmt-state options]
   [:section
    [:h3 (tr [:lobby.format "Format"])]
    [:select.format
@@ -77,7 +84,12 @@
     (doall
       (for [[k v] slug->format]
         ^{:key k}
-        [:option {:value k} (tr-format v)]))]])
+        [:option {:value k} (tr-format v)]))]
+   [singleton-only options fmt-state]
+   [:div.infobox.blue-shade
+    {:style {:display (if (:singleton @options) "block" "none")}}
+    [:p "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]
+    [:p "1) Nova Initiumia: Catalyst & Impetus" " 2) Ampere: Cybernetics For Anyone"]]])
 
 (defn allow-spectators [options]
   [:p
@@ -193,6 +205,7 @@
                                 :password ""
                                 :protected false
                                 :save-replay (not= "casual" (:room @lobby-state))
+                                :singleton false
                                 :spectatorhands false
                                 :timed false
                                 :timer nil})
@@ -208,5 +221,5 @@
        [:div.content
         [title-section title]
         [side-section side]
-        [format-section fmt]
+        [format-section fmt options]
         [options-section options user]]])))

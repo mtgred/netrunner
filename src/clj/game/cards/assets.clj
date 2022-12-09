@@ -59,7 +59,7 @@
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
-   [game.core.winning :refer [check-win-by-agenda]]
+   [game.core.winning :refer [check-win-by-agenda win]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
@@ -700,6 +700,15 @@
                        " by " (get-counters card :power) " [Credits]")
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
 
+(defcard "Dr. Vientiane Keeling"
+  {:constant-effects [(runner-hand-size+ (req (- (get-counters card :power))))]
+   :events [{:event :rez
+             :msg "add 1 power counter to itself"
+             :effect (effect (add-counter card :power 1))}
+            {:event :corp-turn-begins
+             :msg "add 1 power counter to itself"
+             :effect (effect (add-counter card :power 1))}]})
+
 (defcard "Drago Ivanov"
   {:advanceable :always
    :abilities [{:cost [:advancement 2]
@@ -919,6 +928,40 @@
              :msg "do 1 meat damage"
              :effect (effect (damage eid :meat 1 {:card card}))}]})
 
+(defcard "Gaslight"
+  (let [search-for-operation {:prompt "Choose an operation to add to HQ"
+                              :msg (msg (if (= target "No action")
+                                          "search R&D, but does not find an operation"
+                                          (str "add " (get-title target) " to HQ")))
+                              :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
+                              :async true
+                              :effect (req (if (= target "No action")
+                                             (do (shuffle! state :corp :deck)
+                                                 (effect-completed state side eid))
+                                             (wait-for
+                                               (reveal state side target)
+                                               (shuffle! state :corp :deck)
+                                               (move state :corp target :hand)
+                                               (effect-completed state side eid))))}
+        ability {:once :per-turn
+                 :async true
+                 :label "Trash this asset to search R&D for an operation (start of turn)"
+                 :req (req (:corp-phase-12 @state))
+                 :effect
+                 (effect
+                   (continue-ability
+                     {:optional
+                      {:prompt "Trash Gaslight to search R&D for an operation?"
+                       :yes-ability
+                       {:async true
+                        :effect (req (wait-for (trash state side card {:cause-card card})
+                                               (continue-ability state side search-for-operation card nil)))}}}
+                     card nil))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (req true)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (defcard "Gene Splicer"
   {:advanceable :always
    :access {:req (req (pos? (get-counters (get-card state card) :advancement)))
@@ -968,6 +1011,20 @@
    :access {:msg "force the Runner to lose 1 [Credits]"
             :async true
             :effect (effect (lose-credits :runner eid 1))}})
+
+(defcard "Hostile Architecture"
+  (let [valid-trash (fn [target] (and (corp? (:card target)) (installed? (:card target))))
+        ability
+        {:event :runner-trash
+         :async true
+         :once-per-instance false
+         :req (req (and (valid-trash target)
+                        (first-event? state side :runner-trash #(valid-trash (first %)))))
+         :msg "do 2 meat damage"
+         :effect (effect (damage :corp eid :meat 2 {:card card}))}]
+    {:on-trash ability
+     :events [ability]}))
+
 
 (defcard "Hostile Infrastructure"
   (let [ability
@@ -1611,6 +1668,20 @@
      :abilities [ability]
      :events [(assoc ability :event :corp-turn-begins)]}))
 
+(defcard "Nightmare Archive"
+  {:flags {:rd-reveal (req true)}
+   :access {:async true
+            :msg (msg "force the Runner to " (decapitalize target))
+            :player :runner
+            :prompt "Choose one"
+            :choices ["Take 1 Core Damage" "Add Nightmare Archive to score area"]
+            :effect (req (if (= target (str "Add Nightmare Archive to score area"))
+                           (do (as-agenda state :runner card -1)
+                               (effect-completed state side eid))
+                           (do (wait-for (damage state :corp :brain 1 {:card card})
+                                         (move state :corp card :rfg)
+                                         (effect-completed state side eid)))))}})
+
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw
              :interactive (req true)
@@ -1898,6 +1969,27 @@
     {:on-rez {:msg "take 1 bad publicity"
               :effect (effect (gain-bad-publicity :corp 1))}
      :derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
+(defcard "Reaper Function"
+  (let [ability {:async true
+                 :once :per-turn
+                 :label "Trash this asset to do 2 net damage (start of turn)"
+                 :req (req (:corp-phase-12 @state))
+                 :effect
+                 (effect
+                  (continue-ability
+                    {:optional
+                     {:prompt "Trash Reaper Function to do 2 net damage?"
+                      :yes-ability
+                      {:msg "do 2 net damage"
+                       :async true
+                       :effect (req (wait-for (trash state side card {:cause-card card})
+                                              (damage state side eid :net 2 {:card card})))}}}
+                    card nil))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
 
@@ -2235,6 +2327,22 @@
                                       (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
                        :value [:credit 2]}]})
 
+(defcard "Superdeep Borehole"
+  ;; the "when it is empty" text is reliant on the card being loaded
+  {:on-rez {:effect (req (update! state side (assoc-in (get-card state card) [:special :borehole-valid] true))
+                         (add-counter state side card :bad-publicity 6))}
+   :events [{:event :corp-turn-begins
+             :msg (msg "take 1 bad publicity from " (:title card))
+             :async true
+             :effect (req (add-counter state side card :bad-publicity -1 nil)
+                          (gain-bad-publicity state :corp eid 1))}
+            {:event :counter-added
+             :req (req (and (same-card? card target)
+                            (not (pos? (get-counters card :power)))
+                            (:borehole-valid (:special card))))
+             :msg "win the game"
+             :effect (req (win state :corp "Superdeep Borehole extinction event"))}]})
+
 (defcard "Sundew"
   ; If this a run event then handle in :begin-run as we do not know the server
   ; being run on in :runner-spent-click.
@@ -2504,6 +2612,35 @@
                                       (not (operation? %)))}
                 :msg (msg (corp-install-msg target))
                 :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]})
+
+(defcard "Vera Ivanovna Shuyskaya"
+  (let [select-and-trash {:async true
+                          :prompt "Choose a card to trash"
+                          :choices (req (cancellable (:hand runner) :sorted))
+                          :msg (msg "trash " (:title target) " from the grip")
+                          :effect (effect (trash eid target {:cause-card card}))}
+        ability {:interactive (req true)
+                 :optional {:prompt "Reveal the grip and trash a card?"
+                            :player :corp
+                            :autoresolve (get-autoresolve :auto-fire)
+                            :yes-ability
+                            {:async true
+                             :effect (req (wait-for (reveal state side (:hand runner))
+                                                    (system-msg state :corp (str "reveal "
+                                                                (quantify (count (:hand runner)) "card")
+                                                                " from grip: "
+                                                                (enumerate-str (map :title (:hand runner)))))
+                                                    (continue-ability state side select-and-trash card nil)))}
+                            :no-ability {:effect (effect (system-msg "declines to use Vera Ivanovna Shuyskaya"))}}}]
+    {:events [{:event :agenda-scored
+               :interactive (req true)
+               :async true
+               :effect (effect (continue-ability ability card nil))}
+              {:event :agenda-stolen
+               :interactive (req true)
+               :async true
+               :effect (effect (continue-ability ability card nil))}]
+     :abilities [(set-autoresolve :auto-fire "Vera Ivanovna Shuyskaya")]}))
 
 (defcard "Victoria Jenkins"
   {:on-rez {:effect (req (lose state :runner :click-per-turn 1))}
