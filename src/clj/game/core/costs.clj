@@ -444,30 +444,34 @@
                                :targets targets})))}
     card nil))
 
-;; DerezHarmonic
-(defmethod cost-name :derez-harmonic [_] :derez-harmonic)
-(defmethod value :derez-harmonic [[_ cost-value]] cost-value)
-(defmethod label :derez-harmonic [cost]
-  (str "derez " (quantify (value cost) "harmonic Ice")))
-(defmethod payable? :derez-harmonic
+;; DerezOtherHarmonic - this may NOT target the source card (itself)
+(defmethod cost-name :derez-other-harmonic [_] :derez-other-harmonic)
+(defmethod value :derez-other-harmonic [[_ cost-value]] cost-value)
+(defmethod label :derez-other-harmonic [cost]
+  (str "derez " (value cost) " harmonic ice"))
+(defmethod payable? :derez-other-harmonic
   [cost state side eid card]
-  (<= 0 (- (count (filter #(and (rezzed? %) (has-subtype? % "Harmonic"))
+  (<= 0 (- (count (filter #(and (rezzed? %)
+                                (has-subtype? % "Harmonic")
+                                (not (same-card? card %)))
                           (all-active-installed state :corp))) (value cost))))
-(defmethod handler :derez-harmonic
+(defmethod handler :derez-other-harmonic
   [cost state side eid card actions]
   (continue-ability
     state side
-    {:prompt (str "Choose " (quantify (value cost) "Harmonic Ice to derez") " to derez")
+    {:prompt (str "Choose " (value cost) " Harmonic ice to derez")
      :choices {:all true
                :max (value cost)
-               :card #(and (rezzed? %) (has-subtype? % "Harmonic"))}
+               :card #(and (rezzed? %)
+                           (not (same-card? % card))
+                           (has-subtype? % "Harmonic"))}
      :async true
      :effect (req (doseq [harmonic targets]
                     (derez state side harmonic))
                   (complete-with-result
                     state side eid
-                    {:msg (str "derezzes " (quantify (count targets) "Harmonic Ice")
-                               " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                    {:msg (str "derezzes " (count targets)
+                               " Harmonic ice (" (string/join ", " (map #(card-str state %) targets)) ")")
                      :type :derez
                      :value (count targets)
                      :targets targets}))}
