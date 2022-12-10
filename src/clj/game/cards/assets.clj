@@ -2340,7 +2340,7 @@
                           (gain-bad-publicity state :corp eid 1))}
             {:event :counter-added
              :req (req (and (same-card? card target)
-                            (not (pos? (get-counters card :power)))
+                            (not (pos? (get-counters (get-card state card) :power)))
                             (:borehole-valid (:special card))))
              :msg "win the game"
              :effect (req (win state :corp "Superdeep Borehole extinction event"))}]})
