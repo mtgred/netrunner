@@ -863,7 +863,7 @@
                                  :index (max (dec run-position) 0)}))}]})
 
 (defcard "Bloop"
-  {:additional-cost [:derez-harmonic]
+  {:additional-cost [:derez-other-harmonic]
    :subroutines [(do-brain-damage 1)
                  trash-program-sub
                  trash-program-sub]})
