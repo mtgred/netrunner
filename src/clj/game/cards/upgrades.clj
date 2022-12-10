@@ -1038,7 +1038,7 @@
             :optional
             {:req (req (and (installed? card)
                             (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 2])))
-             :waiting-prompt "Corp to choose an option"
+             :waiting-prompt true
              :prompt "Pay 2 [Credits]?"
              :player :corp
              :yes-ability
@@ -1049,7 +1049,7 @@
                                        state side
                                        {:player :runner
                                         :prompt "Take 1 core damage, or lose all clicks?"
-                                        :waiting-prompt "Runner to choose an option"
+                                        :waiting-prompt true
                                         :choices ["Take 1 core damage"
                                                   (when (< 0 (:click runner))
                                                     "Lose remaining clicks")]
@@ -1744,7 +1744,7 @@
                                     :ability-name "ZATO Ability"
                                     :interactive (req true)
                                     :optional
-                                    {:waiting-prompt "Corp to make a decision"
+                                    {:waiting-prompt true
                                      :prompt "Trash ice to fire a (printed) subroutine?"
                                      :yes-ability {:msg (msg "trash " (card-str state (:ice context)))
                                                    :async true

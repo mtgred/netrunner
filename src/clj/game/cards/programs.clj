@@ -2040,7 +2040,7 @@
                             (pos? (get-counters card :power))))
              :player :runner
              :autoresolve (get-autoresolve :auto-fire)
-             :waiting-prompt "Runner to make a decision"
+             :waiting-prompt true
              :prompt "Remove 1 hosted power to Sabotage 1?"
              :yes-ability
              {:msg "remove 1 hosted power to Sabotage 1"

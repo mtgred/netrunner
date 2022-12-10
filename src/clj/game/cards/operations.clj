@@ -1643,7 +1643,7 @@
   {:on-play
    {:optional
     {:prompt "Let the Runner gain 2 [Credits]?"
-     :waiting-prompt "Corp to make a decision"
+     :waiting-prompt true
      :async true
      :yes-ability
      {:msg "gain 7 [Credits]. The Runner gains 2 [Credits]"

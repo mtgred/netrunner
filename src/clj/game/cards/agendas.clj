@@ -1032,7 +1032,7 @@
   {:on-score
    {:interactive (req true)
     :async true
-    :waiting-prompt "Corp to make a decision"
+    :waiting-prompt true
     :prompt "Choose a card to trash"
     :req (req (some rezzed? (all-installed state :corp)))
     :choices {:card #(rezzed? %)}
