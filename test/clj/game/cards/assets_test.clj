@@ -5928,7 +5928,7 @@
     (card-ability state :runner (get-content state :remote1 0) 0)
     (click-prompt state :runner "Always")
     (play-and-score state "15 Minutes")
-    (is (last-log-contains? state "Sure Gamble, Hippo and Endurance") "Revealed Runner grip")
+    (is (last-log-contains? state "Sure Gamble, Hippo, and Endurance") "Revealed Runner grip")
     (changes-val-macro -1 (count (:hand (get-runner)))
                           "Hippo was discarded"
                           (click-prompt state :corp "Hippo"))
