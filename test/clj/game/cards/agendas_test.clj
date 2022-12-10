@@ -1790,7 +1790,8 @@
 (deftest hybrid-release
     ;; Hybrid Release
     (do-game
-      (new-game {:corp {:deck ["Hybrid Release" (qty "Hansei Review" 2) "PAD Campaign" "Hedge Fund"]
+      (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
+                        :deck ["Hybrid Release" (qty "Hansei Review" 2) "PAD Campaign" "Hedge Fund"]
                         :discard ["Obokata Protocol"]}})
       (take-credits state :corp)
       (run-empty-server state "Archives")
@@ -1802,12 +1803,15 @@
       (play-from-hand state :corp "Hansei Review")
       (click-card state :corp "Hedge Fund")
       (play-and-score state "Hybrid Release")
+      (click-prompt state :corp "Sportsmetal: Go Big or Go Home")
+      (click-prompt state :corp "Gain 2 [Credits]")
       (click-card state :corp (find-card "Obokata Protocol" (:discard (get-corp))))
       (is (= "Choose a facedown card in Archives to install" (:msg (prompt-map :corp))) "Cannot select faceup cards in Archives")
       (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
       (is (= "Choose a facedown card in Archives to install" (:msg (prompt-map :corp))) "Cannot install operations")
       (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
       (click-prompt state :corp "New remote")
+      (is (no-prompt? state :runner))
       (is (= "PAD Campaign" (:title (get-content state :remote2 0))) "Installed PAD Campaign in remote")))
 
 (deftest hyperloop-extension-score
