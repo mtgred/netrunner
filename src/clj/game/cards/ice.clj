@@ -558,7 +558,7 @@
 (defcard "Anvil"
   (letfn [(encounter-ab []
             {:optional {:prompt "Trash another card?"
-                       :waiting-prompt "Corp to make a decision"
+                       :waiting-prompt true
                        :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
                                            card nil
                                            [:trash-other-installed 1]))
@@ -1636,7 +1636,7 @@
                   :choices (req [(when-not (forced-to-avoid-tags? state side)
                                    "Take 1 tag")
                                  "End the run"])
-                  :waiting-prompt "Runner to make a choice"
+                  :waiting-prompt true
                   :async true
                   :effect (req (if (= target "Take 1 tag")
                                  (gain-tags state :runner eid 1 {:unpreventable true})
@@ -1774,13 +1774,13 @@
               {:prompt "Trash a card from HQ to prevent subroutines from being broken by a Runner card abilities for the remainder of the run?"
                :req (req (and run this-server
                               (seq (:hand corp))))
-               :waiting-prompt "Corp to choose an option"
+               :waiting-prompt true
                :yes-ability
                {:cost [:trash-from-hand 1]
                 :async true
                 :effect
                 (effect (continue-ability
-                          {:waiting-prompt "Corp to make a decision"
+                          {:waiting-prompt true
                            :prompt "Choose an installed Runner card"
                            :async true
                            :choices {:card #(and (installed? %)
@@ -2300,7 +2300,7 @@
     {:subroutines [end-the-run]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"
-               :waiting-prompt "Corp to make a decision"
+               :waiting-prompt true
                :req (req (and run this-server
                               (seq (all-installed-runner-type state :resource))))
                :yes-ability {:async true
@@ -3777,7 +3777,7 @@
                       :effect (effect (draw eid 2))}}}]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"
-               :waiting-prompt "Corp to make a decision"
+               :waiting-prompt true
                :req (req (and run this-server))
                :yes-ability {:async true
                              :effect (effect (continue-ability on-rez-ability card nil))}

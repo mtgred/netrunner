@@ -386,7 +386,10 @@
       {:eid (select-keys eid [:eid])
        :card card
        :prompt-type :waiting
-       :msg (str "Waiting for " waiting-prompt)}))
+       :msg (str "Waiting for " 
+                 (if (true? waiting-prompt)
+                   (str (side-str side) " to make a decision")
+                   waiting-prompt))}))
   (if (seq cost)
     ;; Ensure that any costs can be paid
     (wait-for (pay state side (make-eid state eid) card cost {:action (:cid card)})
