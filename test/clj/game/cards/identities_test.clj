@@ -2226,6 +2226,58 @@
           (click-card state :corp pad)
           (is (= (+ credits 8) (:credit (get-corp))) "Gain 8 credits from trashing PAD Campaign")))))
 
+(deftest issuaq-adaptics-normal-score
+  ;; Issuaq Adaptics - does not trigger when scoring normally
+  (do-game
+    (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
+                      :deck ["House of Knives"]}})
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (let [issuaq (get-in @state [:corp :identity])]
+      (let [hok (get-content state :remote1 0)]
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (score-agenda state :corp hok)
+        (is (= 0 (get-counters (refresh issuaq) :power)) "Issuaq has no power counters")
+        (is (= 7 (:agenda-point-req (get-corp))) "Corp still requires 7 points to win")))))
+
+(deftest issuaq-adaptics-single-score
+  ;; Issuaq Adaptics - Adjust point requirement when a single agenda is scored
+  (do-game
+    (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
+                      :deck ["Project Kusanagi", "Seamless Launch"]}})
+    (play-from-hand state :corp "Project Kusanagi" "New remote")
+    (let [issuaq (get-in @state [:corp :identity])]
+      (let [pk (get-content state :remote1 0)]
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Seamless Launch")
+        (click-card state :corp pk)
+        (score state :corp (refresh pk))
+        (is (= 6 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 1")
+        (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter")))))
+
+
+(deftest issuaq-adaptics-multiple-score
+  ;; Issuaq Adaptics - Adjusts point requirement after multiple agendas are scored
+  (do-game
+      (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
+                        :deck [(qty "Project Kusanagi" 2) (qty "Seamless Launch" 2)]}})
+      (play-from-hand state :corp "Project Kusanagi" "New remote")
+      (play-from-hand state :corp "Project Kusanagi" "New remote")
+      (let [issuaq (get-in @state [:corp :identity])]
+        (let [pk1 (get-content state :remote1 0)]
+          (let [pk2 (get-content state :remote2 0)]
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (play-from-hand state :corp "Seamless Launch")
+          (click-card state :corp pk1)
+          (play-from-hand state :corp "Seamless Launch")
+          (click-card state :corp pk2)
+          (score state :corp (refresh pk1))
+          (score state :corp (refresh pk2))
+          (is (= 5 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 2")
+          (is (= 2 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 2 power counters"))))))
+
 (deftest jemison-astronautics-sacrifice-audacity-success
   ;; Jemison Astronautics - Place advancements when forfeiting agendas
   (do-game
