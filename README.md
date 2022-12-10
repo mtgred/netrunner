@@ -86,24 +86,24 @@ Now, let's populate the database and create indexes. First, let's open a termina
 
 After this, just restart the server by running `(restart)` in the REPL.
 
-To do testing, you run them inside the container: `$ docker exec -it netrunner-server-1 /bin/bash` and then `$ lein test`.
+To do testing, you run them inside the container: `$ docker exec -it netrunner-server-1 /bin/bash` and then `$ lein kaocha`.
 ### Tests
 
 To run all tests:
 
-    $ lein test
+    $ lein kaocha
     Ran 2640 tests containing 44704 assertions.
     0 failures, 0 errors.
 
 To run a single test file:
 
-    $ lein test game.cards.agendas-test
+    $ lein kaocha --focus game.cards.agendas-test
     Ran 216 tests containing 3536 assertions.
     0 failures, 0 errors.
 
 Or a single test:
 
-    $ lein test :only game.cards.agendas-test/fifteen-minutes
+    $ lein kaocha --focus game.cards.agendas-test/fifteen-minutes
     Ran 1 tests containing 29 assertions.
     0 failures, 0 errors.
 
