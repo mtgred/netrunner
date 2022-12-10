@@ -842,7 +842,7 @@
              :msg "put 1 charge counter on itself"
              :effect (req (add-counter state side card :power 1)
                           (swap! state assoc-in [:corp :agenda-point-req]
-                                 (- (get-in @state [:corp :agenda-point-req]) 1))
+                                 (dec (get-in @state [:corp :agenda-point-req])))
                           (check-win-by-agenda state))}]})
 
 (defcard "Jamie \"Bzzz\" Micken: Techno Savant"
