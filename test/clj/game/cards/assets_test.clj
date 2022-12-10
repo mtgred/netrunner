@@ -5041,6 +5041,28 @@
       (is (= 0 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
       (is (= "Superdeep Borehole extinction event" (:reason @state)) "Win condition reports borehole"))))
 
+(deftest superdeep-borehole-doesn't-instantly-win
+  (do-game
+    (new-game {:corp {:hand ["Superdeep Borehole"]
+                      :deck [(qty "Hedge Fund" 50)]}})
+    (play-from-hand state :corp "Superdeep Borehole" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (is (not (= :corp (:winner @state))) "Corp doesn't win")))
+
+(deftest superdeep-borehole-doesn't-instantly-win-when-disabled
+  (do-game
+    (new-game {:corp {:hand ["Superdeep Borehole"]
+                      :deck [(qty "Hedge Fund" 50)]}
+               :runner {:hand ["Light the Fire!" "Sure Gamble"]}})
+    (play-from-hand state :corp "Superdeep Borehole" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Light the Fire!")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (run-jack-out state)
+    (is (not (= :corp (:winner @state))) "Corp doesn't win")))
+
 (deftest synth-dna-modification
   ;; Synth DNA Modification
   (do-game
