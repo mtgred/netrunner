@@ -2786,7 +2786,7 @@
                                     -))]
     (auto-icebreaker {:abilities [(break-sub 3 2 "Barrier"
                                              {:label "Break up to 2 Barrier subroutine"
-                                              :break-cost-bonus (req [:credit (credit-discount state)])})
+                                              :break-cost-bonus (req [:credit (max -3 (credit-discount state))])})
                                   (strength-pump 2 2)]})))
 
 (defcard "Trope"
