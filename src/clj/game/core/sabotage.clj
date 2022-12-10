@@ -57,7 +57,7 @@
                                     (let [cards-rd (count (:deck corp))
                                           cards-hq (count (:hand corp))
                                           forced-hq (- n cards-rd)]
-                                      (if (> n cards-hq)
+                                      (if (>= n (+ cards-rd cards-hq))
                                         ((trash-selected-req n) state :corp eid card (:hand corp))
                                         (continue-ability state side
                                                           (choosing-ab forced-hq)
