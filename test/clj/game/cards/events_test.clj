@@ -1054,6 +1054,25 @@
     (play-run-event state "Chastushka" :hq)
     (is (last-log-contains? state "uses Chastushka to sabotage 4") "Sabotage happened")))
 
+(deftest chastushka-sabotage-auto-trashes
+  (do-game
+    (new-game {:runner {:deck ["Chastushka"]}
+               :corp {:hand ["IPO" "Beanstalk Royalties" "IQ"] :deck ["Hedge Fund"]}})
+    (take-credits state :corp)
+    (play-run-event state "Chastushka" :hq)
+    (is (= 4 (count (:discard (get-corp)))) "trashed 4")))
+
+(deftest chastushka-sabotage-behaves
+  (do-game
+    (new-game {:runner {:deck ["Chastushka"]}
+               :corp {:hand ["IPO" "Beanstalk Royalties" "IQ"] :deck [(qty "Hedge Fund" 5)]}})
+    (take-credits state :corp)
+    (play-run-event state "Chastushka" :hq)
+    (click-card state :corp "Beanstalk Royalties")
+    (click-card state :corp "IPO")
+    (click-prompt state :corp "Done")
+    (is (= 4 (count (:discard (get-corp)))) "trashed 4")))
+
 (deftest code-siphon
   ;; Code Siphon
   (do-game
