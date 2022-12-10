@@ -2951,21 +2951,20 @@
                         (shuffle! state side :deck)
                         (if (= target "No install")
                           (effect-completed state side eid)
-                          (runner-install state side (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3})))})
-        ability {:async true
-                 :choices {:not-self true
-                           :req (req (and (runner? target)
-                                          (installed? target)))}
-                 :msg (msg "trash " (:title target))
-                 :cancel-effect (req (system-msg state :runner "declines to use World Tree to trash another installed card")
-                                     (effect-completed state side eid))
-                 :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
-                                        (continue-ability state side (search-and-install target) card nil)))}]
+                          (runner-install state side (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3})))})]
     {:events [{:event :successful-run
                :interactive (req true)
                :req (req (and (first-event? state :runner :successful-run)
                               (>= (count (all-installed state :runner)) 2)))
-               :effect (effect (continue-ability ability card nil))}]}))
+               :async true
+               :choices {:not-self true
+                         :req (req (and (runner? target)
+                                        (installed? target)))}
+               :msg (msg "trash " (:title target))
+               :cancel-effect (req (system-msg state :runner "declines to use World Tree to trash another installed card")
+                                   (effect-completed state side eid))
+               :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
+                                      (continue-ability state side (search-and-install target) card nil)))}]}))
 
 (defcard "Wyrm"
   (auto-icebreaker {:abilities [(break-sub 3 1 "All" {:label "break 1 subroutine on a piece of ice with 0 or less strength"

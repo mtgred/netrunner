@@ -7183,6 +7183,34 @@
       "Sneakdoor Beta install cost lowered by 3"
       (click-prompt state :runner "Sneakdoor Beta"))))
 
+(deftest world-tree-no-other-cards-to-trash
+  (do-game
+    (new-game {:runner {:deck ["Sneakdoor Beta"]
+                        :hand ["World Tree"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "World Tree")
+    (run-empty-server state "Archives")
+    (is (no-prompt? state :runner) "No prompt since there's no other installed card to trash")))
+
+(deftest world-tree-multiple-cards-in-server
+  (do-game
+    (new-game {:runner {:deck ["Sneakdoor Beta"]
+                        :hand ["World Tree" "Paricia"]
+                        :credits 10}
+               :corp {:hand ["PAD Campaign" "Manegarm Skunkworks"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Manegarm Skunkworks" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paricia")
+    (play-from-hand state :runner "World Tree")
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Done")
+    (click-card state :runner (get-content state :remote1 0))
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner))))
+
 (deftest world-tree-no-available-install-targets
   (do-game
     (new-game {:runner {:deck ["Street Peddler" "Sure Gamble" "Boomerang"]
