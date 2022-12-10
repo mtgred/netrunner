@@ -1060,9 +1060,6 @@
                :corp {:hand ["IPO" "Beanstalk Royalties" "IQ"] :deck ["Hedge Fund"]}})
     (take-credits state :corp)
     (play-run-event state "Chastushka" :hq)
-    ;;(click-card state :corp "Beanstalk Royalties")
-    ;;(click-card state :corp "IPO")
-    ;;(click-prompt state :corp "Done")
     (is (= 4 (count (:discard (get-corp)))) "trashed 4")))
 
 (deftest chastushka-sabotage-behaves
