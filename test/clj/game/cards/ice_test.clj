@@ -5263,7 +5263,7 @@
 (deftest pulse
   ;; Pulse
   (do-game
-    (new-game {:corp {:hand [(qty "Pulse" 2)] :credit 15}})
+    (new-game {:corp {:hand [(qty "Pulse" 2)] :credits 15}})
     (play-from-hand state :corp "Pulse" "HQ")
     (play-from-hand state :corp "Pulse" "HQ")
     (take-credits state :corp)
