@@ -703,6 +703,7 @@
 (defcard "Dr. Vientiane Keeling"
   {:constant-effects [(runner-hand-size+ (req (- (get-counters card :power))))]
    :events [{:event :rez
+             :req (req (same-card? card (:card context)))
              :msg "add 1 power counter to itself"
              :effect (effect (add-counter card :power 1))}
             {:event :corp-turn-begins
