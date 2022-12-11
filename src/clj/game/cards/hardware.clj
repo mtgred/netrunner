@@ -2075,7 +2075,6 @@
              :effect (req (if (<= 3 (get-counters (get-card state card) :power))
                             (wait-for (trash state side card {:unpreventable :true
                                                               :cause-card card})
-                                      (system-msg state side (str "uses " (:title card) " to sabotage 3"))
                                       (continue-ability state side
                                                         (sabotage-ability 3)
                                                         card nil))
