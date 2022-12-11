@@ -961,15 +961,17 @@
 
 (defcard "Hybrid Release"
   {:on-score {:prompt "Choose a facedown card in Archives to install"
-               :show-discard true
-               :async true
-               :choices {:card #(and (corp-installable-type? %)
-                                     (in-discard? %)
-                                     (not (faceup? %)))}
-               :effect (effect (corp-install eid target nil nil))
-               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                      (effect-completed eid))
-               :msg (msg "install " (card-str state target))}})
+              :show-discard true
+              :waiting-prompt true
+              :req (req (some #(not (faceup? %)) (:discard corp)))
+              :async true
+              :choices {:card #(and (corp-installable-type? %)
+                                    (in-discard? %)
+                                    (not (faceup? %)))}
+              :effect (effect (corp-install eid target nil nil))
+              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                     (effect-completed eid))
+              :msg (msg "install " (card-str state target))}})
 
 (defcard "Hyperloop Extension"
   (let [he {:msg "gain 3 [Credits]"
