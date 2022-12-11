@@ -1933,7 +1933,6 @@
              :effect (effect (continue-ability
                                {:prompt "Choose one"
                                 :player :runner
-                                :waiting-prompt true
                                 :choices (req [(when (can-pay? state :runner eid card [:credit 2 :click 1])
                                                  "Pay [Click] and 2 [Credits]")
                                                "Suffer 1 core damage"])
