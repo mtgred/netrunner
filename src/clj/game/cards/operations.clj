@@ -1642,7 +1642,7 @@
 (defcard "Nonequivalent Exchange"
   {:on-play
    {:optional
-    {:prompt "Let the Runner gain 2 [Credits]?"
+    {:prompt "Have each player gain 2 [Credits]?"
      :waiting-prompt true
      :async true
      :yes-ability
