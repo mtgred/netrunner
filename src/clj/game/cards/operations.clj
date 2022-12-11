@@ -1237,14 +1237,12 @@
 
 (defcard "Hypoxia"
   {:on-play {:req (req tagged)
-             :msg "do 1 core damage and make the Runner lose [Click] when their next turn begins"
+             :msg "do 1 core damage and give the Runner -1 allotted [Click] for their next turn"
              :rfg-instead-of-trashing true
              :async true
-             :effect (effect (damage :runner eid :brain 1 {:card card}))}
-   :events [{:event :runner-turn-begins
-             :duration :until-runner-turn-begins
-             :msg "make the Runner lose [Click]"
-             :effect (effect (lose-clicks :runner 1))}]})
+             :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                    (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+                                    (effect-completed state side eid)))}})
 
 (defcard "Interns"
   {:on-play
