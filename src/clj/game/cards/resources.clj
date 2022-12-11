@@ -3360,7 +3360,7 @@
                          (= (:card-target card)
                             (zone->name (second (get-zone target)))))
         ability {:prompt "Choose a server"
-                 :label "target a server"
+                 :label "Choose a server (start of turn)"
                  :choices (req (conj servers "No server"))
                  :interactive (req true)
                  :msg (msg "target " target)
@@ -3379,10 +3379,9 @@
                            [{:event :pre-resolve-subroutine
                              :duration :end-of-encounter
                              :async true
-                             :effect (req (system-msg state side (str "uses " (:title card) " to force the Corporation to resolve [Subroutine] Do 1 net damage"))
-                                          (update-current-encounter state :replace-subroutine subroutine)
-                                          (effect-completed state side eid))
-                             }]))}
+                             :msg "force the Corp to resolve \"[Subroutine] Do 1 net damage\""
+                             :effect (req (update-current-encounter state :replace-subroutine subroutine)
+                                          (effect-completed state side eid))}]))}
               {:event :runner-turn-ends
                :silent (req true)
                :effect (effect (update! (dissoc card :card-target)))}]
