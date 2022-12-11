@@ -3038,9 +3038,14 @@
       (new-game {:corp {:hand ["Hedge Fund"]}
                  :runner {:deck ["Info Bounty" "Patron"]}})
       (take-credits state :corp)
+      (core/gain state :runner :click 1)
       (play-from-hand state :runner "Info Bounty")
       (play-from-hand state :runner "Patron")
       (core/set-mark state :hq)
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gained no credits when running not on mark"
+        (run-empty-server state :archives))
       (changes-val-macro
         2 (:credit (get-runner))
         "Gained 2 credits"
@@ -3059,6 +3064,24 @@
         0 (:credit (get-runner))
         "Gained no credits on run on mark when breach is replaced"
         (run-empty-server state :hq))))
+
+(deftest info-bounty-with-virtuoso
+    ;; Info Bounty - interaction with Virtuoso
+    (do-game
+      (new-game {:corp {:hand ["Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 10)]}
+                 :runner {:deck ["Info Bounty" "Virtuoso"]
+                          :credits 10}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Info Bounty")
+      (play-from-hand state :runner "Virtuoso")
+      (core/set-mark state :rd)
+      (changes-val-macro
+        2 (:credit (get-runner))
+        "Gained 2 credits when finished breaching mark"
+        (run-empty-server state :rd)
+        (click-prompt state :runner "No action"))
+      (click-prompt state :runner "No action")))
 
 (deftest inside-man-pay-credits-prompt
     ;; Pay-credits prompt

@@ -1538,10 +1538,10 @@
             {:event :end-breach-server
               :async true
               :interactive (req true)
-              :once :per-run
+              :once :per-turn
               :req (req (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %)))))
               :msg "gain 2 [Credits]"
-              :effect (effect (gain-credits :runner eid 2))}]})
+              :effect (effect (gain-credits eid 2))}]})
 
 (defcard "Inside Man"
   {:recurring 2
