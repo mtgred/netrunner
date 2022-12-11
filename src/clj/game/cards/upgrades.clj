@@ -1736,7 +1736,8 @@
                :effect (effect (gain-credits eid 2))}]}))
 
 (defcard "ZATO City Grid"
-  {:constant-effects [{:type :gain-encounter-ability
+  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+   :constant-effects [{:type :gain-encounter-ability
                        :req (req (and (protecting-same-server? card target)
                                       (some #(:printed %) (:subroutines target))
                                       (not (:disabled target))))
