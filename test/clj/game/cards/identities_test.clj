@@ -4611,7 +4611,7 @@
         -1 (:click (get-runner))
         "paid click to not suffer"
         (click-prompt state :runner "Pay [Click] and 2 [Credits]")))
-    (is (= 0 (:brain-damage (get-runner))) "Runner took 0 brain damage")))
+    (is (= 0 (:brain-damage (get-runner))) "Runner took no core damage")))
 
 (deftest thule-subsea-safety-below-suffer
   (do-game
@@ -4626,8 +4626,8 @@
       (changes-val-macro
         0 (:click (get-runner))
         "didn't pay clicks"
-        (click-prompt state :runner "Suffer 1 Core Damage")))
-    (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")))
+        (click-prompt state :runner "Suffer 1 core damage")))
+    (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")))
 
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt
