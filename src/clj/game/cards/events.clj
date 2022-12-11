@@ -2709,9 +2709,11 @@
              :effect (req (let [cards-to-draw (get-counters (get-card state card) :power)]
                             (continue-ability
                               state side
-                              {:msg (msg "draw " cards-to-draw " cards and gain 3 [Credits]")
+                              {:msg (msg (if (pos? cards-to-draw)
+                                           (str "draw " (quantify cards-to-draw "card") " and gain 3 [Credits]")
+                                           "gain 3 [Credits]"))
                                :async true
-                               :effect (req (if (< 0 cards-to-draw)
+                               :effect (req (if (pos? cards-to-draw)
                                               (wait-for (draw state side cards-to-draw)
                                                         (gain-credits state side eid 3))
                                               (gain-credits state side eid 3)))}
