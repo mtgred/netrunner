@@ -995,7 +995,7 @@
                                             (damage state side eid :net 1 {:card card}))
                                           (effect-completed state side eid)))}
              :no-ability {:async true
-                          :effect (req (system-msg state side (str "declines to use " (:title card) " to purge virus counters"))
+                          :effect (req (system-msg state :corp (str "declines to use " (:title card)))
                                        (if (rezzed? card)
                                          (do
                                            (system-msg state side (str "uses " (:title card) " to do 1 net damage"))

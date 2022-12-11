@@ -1854,18 +1854,18 @@
                    :break-cost [:x-credits]
                    :req (req (let [hosted (:hosted (get-card state card))
                                    valid (filter #(not (facedown? %)) hosted)
-                                   same-title (filter #(= "Matryoshka" (:title %)) valid)]
+                                   same-title (filter #(= (:title card) (:title %)) valid)]
                                (and (active-encounter? state)
                                     (<= (get-strength current-ice) (get-strength card))
                                     (not-empty same-title))))
                                         ; no break-req to not enable auto-pumping
                    :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
-                             " on " (card-str state current-ice) " and turn one hosted copy of "
-                             (:title card) " facedown.")
+                             " on " (card-str state current-ice) " and turn 1 hosted copy of "
+                             (:title card) " facedown")
                    :effect (req
                              (let [hosted (:hosted (get-card state card))
                                    valid (filter #(not (facedown? %)) hosted)
-                                   same-title (filter #(= "Matryoshka" (:title %)) valid)
+                                   same-title (filter #(= (:title card) (:title %)) valid)
                                    first-copy (first same-title)]
                                (flip-facedown state side (get-card state first-copy))
                                (if (pos? (cost-value eid :x-credits))
@@ -1874,21 +1874,21 @@
                                    (break-sub nil (cost-value eid :x-credits) "All")
                                    card nil)
                                  (effect-completed state side eid))))}
-        host-abi {:label "Host a copy of Matryoshka"
-                  :prompt "Choose a copy of Matryoshka in the Grip"
+        host-abi {:label "Host 1 copy of Matryoshka"
+                  :prompt (msg "Choose 1 copy of " (:title card) " in the grip")
                   :keep-menu-open :while-clicks-left
                   :cost [:click 1]
                   :choices {:card #(and (in-hand? %)
                                         (= (:title %) "Matryoshka"))}
                   :effect (effect (host card target))
-                  :msg (msg " host " (:title target))}]
+                  :msg (msg "host " (:title target) " on itself")}]
     (auto-icebreaker
       {:abilities [host-abi
                    break-abi
                    (strength-pump 1 1)]
        :events [{:event :runner-turn-begins
                  :req (req (some #(facedown? %) (:hosted (get-card state card))))
-                 :msg "turn all cards hosted on Matryoshka face-up"
+                 :msg "turn all cards hosted on itself face-up"
                  :effect (req (let [targets (filter #(facedown? %) (:hosted (get-card state card)))]
                                 (doseq [oc targets]
                                   ;; we can't use flip-faceup as that wires up events
@@ -2049,7 +2049,7 @@
               :effect (effect (continue-ability
                                 (sabotage-ability 1)
                                 card nil))}
-             :no-ability {:effect (effect (system-msg "declines to use Nga"))}}}]
+             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :abilities [(set-autoresolve :auto-fire "Nga")]})
 
 (defcard "Ninja"
@@ -2961,8 +2961,8 @@
                          :req (req (and (runner? target)
                                         (installed? target)))}
                :msg (msg "trash " (:title target))
-               :cancel-effect (req (system-msg state :runner "declines to use World Tree to trash another installed card")
-                                   (effect-completed state side eid))
+               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                      (effect-completed eid))
                :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                       (continue-ability state side (search-and-install target) card nil)))}]}))
 

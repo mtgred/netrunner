@@ -674,7 +674,7 @@
     :waiting-prompt true
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
-    :cancel-effect (effect (system-msg :runner (str "declines to use " (:title card) " to derez a card"))
+    :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
     :effect (effect (derez target))}})
 
@@ -967,7 +967,7 @@
                                      (in-discard? %)
                                      (not (faceup? %)))}
                :effect (effect (corp-install eid target nil nil))
-               :cancel-effect (effect (system-msg "declines to use Hybrid Release")
+               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                       (effect-completed eid))
                :msg (msg "install " (card-str state target))}})
 
@@ -1037,7 +1037,7 @@
     :prompt "Choose a card to trash"
     :req (req (some rezzed? (all-installed state :corp)))
     :choices {:card #(rezzed? %)}
-    :cancel-effect (effect (system-msg :runner "declines to use Kimberlite Field to trash a card")
+    :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
     :effect (req (let [target-cost (rez-cost state :corp target)
                        prompt-str (str "trash a runner card that costs " target-cost " or less")]
@@ -1082,8 +1082,8 @@
                           (in-hand? %))}
     :msg (msg "trash " (quantify (count targets) "card") " from HQ")
     :async true
-    :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to trash any cards from HQ"))
-                        (shuffle-into-rd-effect state side eid card 3))
+    :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
+                           (shuffle-into-rd-effect eid card 3))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
 
@@ -1314,7 +1314,7 @@
                 :async true
                 :effect (effect (draw eid 1))}
                :no-ability
-               {:effect (effect (system-msg :corp "declines to use Post-Truth Dividend to draw 1 card"))}}}})
+               {:effect (effect (system-msg (str "declines to use " (:title card))))}}}})
 
 (defcard "Posted Bounty"
   {:on-score {:optional
@@ -1600,8 +1600,7 @@
                            (update-all-advancement-requirements state)
                            (update-all-agenda-points state)
                            (check-win-by-agenda state side))
-              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal an agenda in Archives")))}})
-
+              :cancel-effect (effect (system-msg (str "declines to use " (:title card))))}})
 
 (defcard "Regulatory Capture"
   {:advancement-requirement (req (- (min 4 (count-bad-pub state))))})

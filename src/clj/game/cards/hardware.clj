@@ -1541,8 +1541,8 @@
                             :async true
                             :effect (req (wait-for (draw state :runner 1)
                                                    (draw state :corp eid 1)))}
-              :no-ability {:effect (req (system-msg state side (str "declines to use " (:title card)))
-                                        (effect-completed state side eid))}}}]
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card)))
+                                           (effect-completed eid))}}}]
     {:constant-effects [(mu+ 1)
                         (link+ 1)]
      :events [{:event :pass-ice
