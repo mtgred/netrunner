@@ -2374,6 +2374,7 @@
   (letfn [(ability [x]
             {:prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
              :async true
+             :waiting-prompt true
              :choices {:card #(and (corp? %)
                                    (installed? %))}
              :msg (msg "place 1 advancement counter on " (card-str state target))
@@ -2408,6 +2409,7 @@
   {:on-play
    {:rfg-instead-of-trashing true
     :prompt "Choose up to 5 cards in HQ to trash"
+    :waiting-prompt true
     :choices {:max (req 5)
               :card #(and (corp? %)
                           (in-hand? %))}

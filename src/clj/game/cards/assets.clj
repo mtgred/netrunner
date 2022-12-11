@@ -931,6 +931,7 @@
 
 (defcard "Gaslight"
   (let [search-for-operation {:prompt "Choose an operation to add to HQ"
+                              :waiting-prompt true
                               :msg (msg (if (= target "No action")
                                           "search R&D, but does not find an operation"
                                           (str "add " (get-title target) " to HQ")))
@@ -2620,6 +2621,7 @@
 (defcard "Vera Ivanovna Shuyskaya"
   (let [select-and-trash {:async true
                           :prompt "Choose a card to trash"
+                          :waiting-prompt true
                           :choices (req (cancellable (:hand runner) :sorted))
                           :msg (msg "trash " (:title target) " from the grip")
                           :effect (effect (trash eid target {:cause-card card}))}

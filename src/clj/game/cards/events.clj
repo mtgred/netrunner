@@ -1935,6 +1935,7 @@
              :req (req this-card-run)
              :async true
              :prompt "Add a card from the heap to the grip"
+             :waiting-prompt true
              :choices (req (cancellable (:discard runner) :sorted))
              :effect (effect (move target :hand)
                              (effect-completed eid))}]})
@@ -2834,6 +2835,7 @@
      {:async true
       :req (req (:stole-agenda runner-reg))
       :prompt "Choose an installed Corp card to add to HQ"
+      :waiting-prompt true
       :choices {:card #(and (installed? %)
                             (corp? %))}
       :msg (msg "add " (card-str state target) " to HQ")

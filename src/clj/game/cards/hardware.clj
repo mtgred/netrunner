@@ -2238,6 +2238,7 @@
                              :choices {:number (req (min 3 (get-counters card :power)))
                                        :default (req (min 3 (get-counters card :power)))}
                              :msg (msg "access " (quantify target "additional card") " from R&D")
+                             :waiting-prompt true
                              :async true
                              :effect (effect (access-bonus :rd (max 0 target))
                                              (add-counter :runner card :power (- target) {:placed true})

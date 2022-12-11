@@ -1145,6 +1145,7 @@
   {:events [{:event :approach-server
              :interactive (req true)
              :prompt "Choose a facedown piece of ice in Archives"
+             :waiting-prompt true
              :req (req (and this-server
                             ;; not filtering ice only so that we don't reveal valuable information
                             (seq (filter #(not (:seen %)) (:discard corp)))))

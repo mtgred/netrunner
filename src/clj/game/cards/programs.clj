@@ -376,6 +376,7 @@
                               :async true
                               :effect (effect (continue-ability
                                                 {:prompt "Choose 1 card in the grip to trash"
+                                                 :waiting-prompt true
                                                  :async true
                                                  :choices {:card #(and (in-hand? %)
                                                                        (runner? %))}
