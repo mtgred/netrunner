@@ -40,7 +40,7 @@
       (is (= [[:credit 1] [:net 1]] (core/merge-costs [[:net 1 :credit 1]]))))
     (testing "Damage is combined"
       (is (= [[:net 2]] (core/merge-costs [[:net 1 :net 1]]))))
-    (testing "Net, meat, and brain damage are recognized"
+    (testing "Net, meat, and core damage are recognized"
       (is (= [[:net 1] [:meat 1] [:brain 1]]
              (core/merge-costs [[:net 1] [:meat 1] [:brain 1]]))))))
 

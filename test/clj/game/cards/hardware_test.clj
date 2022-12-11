@@ -1668,7 +1668,7 @@
         (card-ability state :runner ff 1)
         (click-prompt state :runner "Done")
         (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash Overwriter for 0
-        (is (= 1 (:brain-damage (get-runner))) "2 of the 3 brain damage prevented")
+        (is (= 1 (:brain-damage (get-runner))) "2 of the 3 core damage prevented")
         (is (= 2 (count (:hand (get-runner)))))
         (is (empty? (get-hardware state)) "Feedback Filter trashed")))))
 
@@ -3978,7 +3978,7 @@
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd4 0)
       (click-prompt state :runner "1")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took no brain damage"))))
+      (is (= 2 (count (:hand (get-runner)))) "Runner took no core damage"))))
 
 (deftest record-reconstructor
   ;; Record Reconstructor
@@ -4410,7 +4410,7 @@
         (card-subroutine state :corp cad 0)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
+        (is (= 1 (:brain-damage (get-runner))) "Took 1 core damage")
         (is (= 1 (count (:discard (get-runner)))))
         (is (= 4 (hand-size :runner)) "Reduced hand size"))))
 

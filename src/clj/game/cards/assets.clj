@@ -402,7 +402,7 @@
   (advance-ambush 3 {:async true
                      :waiting-prompt true
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
-                     :msg (msg "do " (get-counters (get-card state card) :advancement) " brain damage")
+                     :msg (msg "do " (get-counters (get-card state card) :advancement) " core damage")
                      :effect (effect (damage eid :brain (get-counters (get-card state card) :advancement) {:card card}))}))
 
 (defcard "Chairman Hiro"
@@ -762,7 +762,7 @@
 (defcard "Edge of World"
   (letfn [(ice-count [state]
             (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]
-    (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " brain damage")
+    (installed-access-trigger 3 {:msg (msg "do " (ice-count state) " core damage")
                                  :async true
                                  :effect (effect (damage eid :brain (ice-count state)
                                                          {:card card}))})))
@@ -1177,11 +1177,11 @@
   {:x-fn (req (get-counters card :power))
    :derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
-   :abilities [{:label "Trace X - do 1 brain damage (start of turn)"
+   :abilities [{:label "Trace X - do 1 core damage (start of turn)"
                 :trace {:base x-fn
                         :successful
                         {:async true
-                         :msg "do 1 brain damage"
+                         :msg "do 1 core damage"
                          :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                                 (trash state side eid card {:cause-card card})))}
                         :unsuccessful

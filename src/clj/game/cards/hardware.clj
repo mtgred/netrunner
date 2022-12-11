@@ -688,8 +688,8 @@
    :abilities [{:cost [:credit 3]
                 :msg "prevent 1 net damage"
                 :effect (effect (damage-prevent :net 1))}
-               {:label "Prevent up to 2 brain damage"
-                :msg "prevent up to 2 brain damage"
+               {:label "Prevent up to 2 core damage"
+                :msg "prevent up to 2 core damage"
                 :cost [:trash-can]
                 :effect (effect (damage-prevent :brain 2))}]})
 
@@ -1664,7 +1664,7 @@
   {:interactions {:prevent [{:type #{:net :brain}
                              :req (req true)}]}
    :abilities [{:async true
-                :label "prevent net or brain damage"
+                :label "prevent net or core damage"
                 :trash-icon true
                 :req (req (not-empty (:deck runner)))
                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
@@ -1965,7 +1965,7 @@
    :recurring 2
    :events [{:event :successful-trace
              :req (req run)
-             :msg "suffer 1 brain damage"
+             :msg "suffer 1 core damage"
              :effect (effect (damage eid :brain 1 {:card card}))}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))

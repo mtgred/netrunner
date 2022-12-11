@@ -564,7 +564,7 @@
                 :msg "prevent 1 net damage"
                 :effect (effect (damage-prevent :net 1))}
                {:cost [:credit 3]
-                :msg "prevent 1 brain damage"
+                :msg "prevent 1 core damage"
                 :effect (effect (damage-prevent :brain 1))}]})
 
 (defcard "Charlatan"
@@ -2796,7 +2796,7 @@
              :effect (req (if (>= (get-counters card :power) 2)
                             (do (add-counter state side card :power (- (get-counters card :power)))
                                 (damage state side eid :brain 1 {:unpreventable true :card card})
-                                (system-msg state side "takes 1 brain damage from Stim Dealer"))
+                                (system-msg state side "takes 1 core damage from Stim Dealer"))
                             (do (add-counter state side card :power 1)
                                 (gain-clicks state side 1)
                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})

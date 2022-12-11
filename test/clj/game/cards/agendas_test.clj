@@ -2504,23 +2504,23 @@
   ;; NEXT Wave 2
   (do-game
       (new-game {:corp {:deck [(qty "NEXT Wave 2" 2) "NEXT Bronze"]}})
-      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 core damage")
       (play-from-hand state :corp "NEXT Bronze" "HQ")
       (let [nxbr (get-ice state :hq 0)]
         (rez state :corp nxbr))
       (play-and-score state "NEXT Wave 2")
       (click-prompt state :corp "No")
-      (is (zero? (:brain-damage (get-runner))) "Runner should stay at 0 brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner should stay at 0 core damage")
       (play-and-score state "NEXT Wave 2")
       (click-prompt state :corp "Yes")
-      (is (= 1 (:brain-damage (get-runner))) "Runner should gain 1 brain damage")))
+      (is (= 1 (:brain-damage (get-runner))) "Runner should gain 1 core damage")))
 
 (deftest next-wave-2-stealing-doesn-t-do-anything
     ;; Stealing doesn't do anything
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["NEXT Wave 2" "NEXT Bronze"]}})
-      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+      (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 core damage")
       (play-from-hand state :corp "NEXT Bronze" "HQ")
       (let [nxbr (get-ice state :hq 0)]
         (rez state :corp nxbr))
@@ -2530,7 +2530,7 @@
       (run-continue state)
       (run-continue state)
       (click-prompt state :runner "Steal")
-      (is (zero? (:brain-damage (get-runner))) "Runner should still have 0 brain damage")))
+      (is (zero? (:brain-damage (get-runner))) "Runner should still have 0 core damage")))
 
 (deftest nisei-mk-ii
   ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
@@ -2609,11 +2609,11 @@
       (advance state conj 2)
       (score state :corp (refresh conj))
       (is (some? (get-content state :remote1 0))
-          "Corp can't score with 2 advancements because of no brain damage")
+          "Corp can't score with 2 advancements because of no core damage")
       (damage state :corp :brain 2)
       (score state :corp (refresh conj))
       (is (not (some? (get-content state :remote1 0)))
-          "Corp can score with 2 advancements because of 2 brain damage"))))
+          "Corp can score with 2 advancements because of 2 core damage"))))
 
 (deftest orbital-superiority
   ;; Orbital Superiority

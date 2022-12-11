@@ -256,8 +256,8 @@
              :msg (msg "force the Runner to " (decapitalize target))
              :prompt "Choose one"
              :waiting-prompt true
-             :choices ["Take 1 brain damage" "Jack out"]
-             :effect (req (if (= target "Take 1 brain damage")
+             :choices ["Take 1 core damage" "Jack out"]
+             :effect (req (if (= target "Take 1 core damage")
                             (damage state :runner eid :brain 1 {:card card})
                             (wait-for
                               (jack-out state :runner (make-eid state))
@@ -1392,10 +1392,10 @@
              :effect (effect (init-trace-bonus 2))}]})
 
 (defcard "Ryon Knight"
-  {:abilities [{:label "Do 1 brain damage"
+  {:abilities [{:label "Do 1 core damage"
                 :req (req (and this-server (zero? (:click runner))))
                 :cost [:trash-can]
-                :msg "do 1 brain damage"
+                :msg "do 1 core damage"
                 :async true
                 :effect (effect (damage eid :brain 1 {:card card}))}]})
 
@@ -1516,7 +1516,7 @@
                      :player :runner
                      :choices (req [(when (<= 2 (:click runner))
                                       "Lose [Click][Click]")
-                                    "Suffer 1 brain damage"])
+                                    "Suffer 1 core damage"])
                      :async true
                      :msg (msg "force the Runner to " (decapitalize target))
                      :effect (req (if (and (= target "Lose [Click][Click]")
@@ -1558,11 +1558,11 @@
                                                       (= :corp s))))
                              (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 2])))
               :waiting-prompt true
-              :prompt "Pay 2 [Credits] to do 1 brain damage?"
+              :prompt "Pay 2 [Credits] to do 1 core damage?"
               :player :corp
               :yes-ability
               {:async true
-               :msg "do 1 brain damage instead of net damage"
+               :msg "do 1 core damage instead of net damage"
                :effect (req (swap! state update :damage dissoc :damage-replace :defer-damage)
                             (wait-for (pay state :corp (make-eid state eid) card :credit 2)
                                       (system-msg state side (:msg async-result))
