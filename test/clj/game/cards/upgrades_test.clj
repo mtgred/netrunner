@@ -2373,7 +2373,7 @@
     (run-empty-server state "Server 1")
     (changes-val-macro
       0 (:credit (get-corp))
-      "spent nothing declining hendrik"
+      "spent 0 credits declining hendrik"
       (click-prompt state :corp "No"))
     (is (= 0 (:brain-damage (get-runner))) "Did 0 core damage")
     (is (= 3 (:click (get-runner))))
@@ -2389,10 +2389,10 @@
     (run-empty-server state "Server 1")
     (changes-val-macro
       -2 (:credit (get-corp))
-      "spent nothing declining hendrik"
+      "spent 2 credits on hendrik"
       (click-prompt state :corp "Yes"))
     (is (= 3 (:click (get-runner))))
-    (click-prompt state :runner "Take 1 core damage")
+    (click-prompt state :runner "Suffer 1 core damage")
     (is (= 1 (:brain-damage (get-runner))) "Did 1 core damage")
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")))
@@ -2406,10 +2406,10 @@
     (run-empty-server state "Server 1")
     (changes-val-macro
       -2 (:credit (get-corp))
-      "spent nothing declining hendrik"
+      "spent 2 credits on hendrik"
       (click-prompt state :corp "Yes"))
     (is (= 3 (:click (get-runner))))
-    (click-prompt state :runner "Lose remaining clicks")
+    (click-prompt state :runner "Lose all remaining [Click]")
     (is (= 0 (:brain-damage (get-runner))) "Did 0 core damage")
     (is (= 0 (:click (get-runner))) "lost remaining clicks")
     (click-prompt state :runner "No action")
@@ -2428,7 +2428,7 @@
       -2 (:credit (get-corp))
       "spent nothing declining hendrik"
       (click-prompt state :corp "Yes"))
-    (click-prompt state :runner "Take 1 core damage")
+    (click-prompt state :runner "Suffer 1 core damage")
     (is (= 1 (:brain-damage (get-runner))) "Did 1 core damage")
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")))
