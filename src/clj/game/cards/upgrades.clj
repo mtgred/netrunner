@@ -1705,9 +1705,16 @@
             (and (same-server? card (:card target))
                  (corp? (:card target))
                  (installed? (:card target))))]
-    {:events [{:event :runner-trash
+    {:on-trash {:req (req (some? (:cause-card context)))
+                :async true
+                :once-per-instance false
+                :interactive (req true)
+                :msg "gain 2 [Credits]"
+                :effect (effect (gain-credits eid 2))}
+     :events [{:event :runner-trash
                :async true
                :once-per-instance false
+               :interactive (req true)
                :req (req (valid-target-fn target card))
                :msg "gain 2 [Credits]"
                :effect (effect (gain-credits eid 2))}

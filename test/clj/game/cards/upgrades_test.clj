@@ -4386,7 +4386,10 @@
     (changes-val-macro
       +6 (:credit (get-corp))
       "+6 from 3 trashes"
-      (play-from-hand state :runner "Apocalypse"))))
+      (play-from-hand state :runner "Apocalypse")
+      (click-prompt state :corp "Yakov Erikovich Avdakov")
+      (click-prompt state :corp "Yakov Erikovich Avdakov"))
+    (is (no-prompt? state :corp))))
 
 (deftest yakov-multiple-trashed
   (do-game
@@ -4409,4 +4412,7 @@
       "trashed 3 cards"
       (click-card state :corp (get-content state :remote1 0))
       (click-card state :corp (get-content state :remote1 1))
-      (click-card state :corp (get-content state :remote1 2)))))
+      (click-card state :corp (get-content state :remote1 2))
+      (click-prompt state :corp "Yakov Erikovich Avdakov")
+      (click-prompt state :corp "Yakov Erikovich Avdakov"))
+    (is (no-prompt? state :corp))))
