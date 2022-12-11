@@ -674,7 +674,7 @@
     :waiting-prompt true
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
-    :cancel-effect (effect (system-msg :runner (str "declines to use " (:title card) " to derez a card"))
+    :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
     :effect (effect (derez target))}})
 
