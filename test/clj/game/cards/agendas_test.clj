@@ -1814,6 +1814,17 @@
       (is (no-prompt? state :runner))
       (is (= "PAD Campaign" (:title (get-content state :remote2 0))) "Installed PAD Campaign in remote")))
 
+(deftest hybrid-release-no-prompt-when-no-facedown-card-in-archives
+    ;; Hybrid Release - skip prompt when all cards in Archives are faceup
+    (do-game
+      (new-game {:corp {:hand ["Hybrid Release"]
+                        :discard ["Ice Wall"]}})
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (play-and-score state "Hybrid Release")
+      (is (no-prompt? state :corp))))
+
 (deftest hyperloop-extension-score
     ;; Score
     (do-game
