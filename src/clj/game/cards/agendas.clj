@@ -1037,7 +1037,7 @@
     :prompt "Choose a card to trash"
     :req (req (some rezzed? (all-installed state :corp)))
     :choices {:card #(rezzed? %)}
-    :cancel-effect (effect (system-msg :runner "declines to use Kimberlite Field to trash a card")
+    :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
     :effect (req (let [target-cost (rez-cost state :corp target)
                        prompt-str (str "trash a runner card that costs " target-cost " or less")]
