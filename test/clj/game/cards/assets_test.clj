@@ -3526,7 +3526,7 @@
       (trash-from-hand state :corp "Nightmare Archive")
       (take-credits state :corp)
       (run-empty-server state :archives)
-      (click-prompt state :runner "Take 1 Core Damage")
+      (click-prompt state :runner "Suffer 1 core damage")
       (is (= 1 (:brain-damage (get-runner))) "Runner takes 1 core damage")
       (is (= 1 (count (:rfg (get-corp)))) "Nightmare Archive removed from game")
       (run-empty-server state :hq)
