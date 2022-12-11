@@ -322,7 +322,7 @@
 
 (defn get-trash-effect
   "Criteria for abilities that trigger when the card is trashed"
-  [state side eid card {:keys [accessed cause host-trashed]}]
+  [state side eid card {:keys [accessed cause cause-card host-trashed]}]
   (let [trash-effect (:on-trash (card-def card))]
     (when (and card
                (not (:disabled card))
@@ -337,6 +337,7 @@
                (should-trigger? state side eid card
                                 [{:card card
                                   :cause cause
+                                  :cause-card cause-card
                                   :accessed accessed}]
                                 trash-effect))
       (let [once-per (:once-per-instance trash-effect)]
