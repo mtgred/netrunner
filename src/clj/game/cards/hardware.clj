@@ -2078,7 +2078,7 @@
                                       (continue-ability state side
                                                         (sabotage-ability 3)
                                                         card nil))
-                            (do (system-msg state side (str "adds 1 power counter to " (:title card)))
+                            (do (system-msg state side (str "uses " (:title card) " to add 1 power counter to itself"))
                                 (add-counter state side card :power 1)
                                 (effect-completed state side eid))))}]})
 
