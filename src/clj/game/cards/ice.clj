@@ -40,7 +40,7 @@
    [game.core.moving :refer [as-agenda mill move swap-ice swap-installed trash
                              trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
-   [game.core.payment :refer [can-pay?]]
+   [game.core.payment :refer [can-pay? cost->string build-cost-label]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.purging :refer [purge]]
@@ -139,48 +139,42 @@
    :async true
    :effect (effect (end-run :corp eid card))})
 
-(defn runner-pays
-  "Ability to pay to avoid a subroutine by paying a resource"
-  [cost]
-  {:async true
-   :effect (req (wait-for (pay state :runner (make-eid state eid) card cost)
-                          (when-let [payment-str (:msg async-result)]
-                            (system-msg state :runner
-                                        (str payment-str
-                                             " due to " (:title card)
-                                             " subroutine")))
-                          (effect-completed state side eid)))})
-
 (defn end-the-run-unless-runner-pays
-  [amount]
+  [cost]
   {:player :runner
    :async true
-   :label (str "End the run unless the Runner pays " amount " [Credits]")
+   :label (str "End the run unless the Runner pays " (build-cost-label cost))
    :prompt "Choose one"
    :waiting-prompt true
    :choices (req ["End the run"
-                  (when (can-pay? state :runner eid card nil [:credit amount])
-                    (str "Pay " amount " [Credits]"))])
+                  (when (can-pay? state :runner eid card nil cost)
+                    (capitalize (cost->string cost)))])
    :msg (msg (if (= "End the run" target)
                (decapitalize target)
                (str "force the runner to " (decapitalize target))))
    :effect (req (if (= "End the run" target)
                   (end-run state :corp eid card)
-                  (continue-ability state side (runner-pays [:credit amount]) card nil)))})
+                  (wait-for (pay state :runner (make-eid state eid) card cost)
+                    (when-let [payment-str (:msg async-result)]
+                      (system-msg state :runner
+                                  (str payment-str
+                                       " due to " (:title card)
+                                       " subroutine")))
+                    (effect-completed state side eid))))})
 
 (defn end-the-run-unless-corp-pays
-  [amount]
+  [cost]
   {:async true
-   :label (str "End the run unless the Corp pays " amount " [Credits]")
+   :label (str "End the run unless the Corp pays " (build-cost-label cost))
    :prompt "Choose one"
    :waiting-prompt true
    :choices (req ["End the run"
-                  (when (can-pay? state :corp eid card nil [:credit amount])
-                    (str "Pay " amount " [Credits]"))])
+                  (when (can-pay? state :corp eid card nil cost)
+                    (capitalize (cost->string cost)))])
    :msg (msg (decapitalize target))
    :effect (req (if (= "End the run" target)
                   (end-run state :corp eid card)
-                  (wait-for (pay state :corp (make-eid state eid) card [:credit amount])
+                  (wait-for (pay state :corp (make-eid state eid) card cost)
                             (when-let [payment-str (:msg async-result)]
                               (system-msg state :corp payment-str))
                             (effect-completed state side eid))))})
@@ -1326,7 +1320,7 @@
    :runner-abilities [(bioroid-break 2 2)]})
 
 (defcard "Endless EULA"
-  (let [sub (end-the-run-unless-runner-pays 1)]
+  (let [sub (end-the-run-unless-runner-pays [:credit 1])]
     (letfn [(break-fn [unbroken-subs total]
               {:async true
                :effect
@@ -1462,16 +1456,10 @@
                                                  (currently-encountering-card card state)))})]})
 
 (defcard "Fairchild"
-  {:subroutines [(end-the-run-unless-runner-pays 4)
-                 (end-the-run-unless-runner-pays 4)
-                 (end-the-run-unless-runner
-                   "trashes an installed card"
-                   "trash an installed card"
-                   runner-trash-installed-sub)
-                 (end-the-run-unless-runner
-                   "suffers 1 brain damage"
-                   "suffer 1 brain damage"
-                   (do-brain-damage 1))]})
+  {:subroutines [(end-the-run-unless-runner-pays [:credit 4])
+                 (end-the-run-unless-runner-pays [:credit 4])
+                 (end-the-run-unless-runner-pays [:trash-installed 1])
+                 (end-the-run-unless-runner-pays [:brain 1])]})
 
 (defcard "Fairchild 1.0"
   (let [sub {:label "Force the Runner to pay 1 [Credits] or trash an installed card"
@@ -1727,8 +1715,8 @@
                                       " [Credits] for breaking printed subs")))
                      :async true
                      :effect (effect (gf-lose-credits eid (count (filter :printed (second targets)))))}
-     :subroutines [(end-the-run-unless-runner-pays 3)
-                   (end-the-run-unless-runner-pays 3)]}))
+     :subroutines [(end-the-run-unless-runner-pays [:credit 3])
+                   (end-the-run-unless-runner-pays [:credit 3])]}))
 
 (defcard "Grim"
   {:on-rez take-bad-pub
@@ -2394,7 +2382,7 @@
 (defcard "Loot Box"
   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
           (top-3-names [state] (map :title (top-3 state)))]
-    {:subroutines [(end-the-run-unless-runner-pays 2)
+    {:subroutines [(end-the-run-unless-runner-pays [:credit 2])
                    {:label "Reveal the top 3 cards of the Stack"
                     :async true
                     :effect (req (system-msg state side (str "uses Loot Box to reveal the top 3 cards of the stack: "
@@ -3057,20 +3045,17 @@
 
 (defcard "Pop-up Window"
   {:on-encounter (gain-credits-sub 1)
-   :subroutines [(end-the-run-unless-runner-pays 1)]})
+   :subroutines [(end-the-run-unless-runner-pays [:credit 1])]})
 
 (defcard "Pulse"
   {:on-rez {:req (req (and run this-server))
             :msg "force the runner to lose [Click]"
             :effect (effect (lose-clicks :runner 1))}
-   :subroutines [{:label (str "Runner loses 1 [Credits] for each rezzed piece of Harmonic ice")
+   :subroutines [{:label "Runner loses 1 [Credits] for each rezzed piece of Harmonic ice"
                   :msg (msg "make the runner lose " (harmonic-ice-count corp) " [Credits]")
                   :async true
                   :effect (req (lose-credits state :runner eid (harmonic-ice-count corp)))}
-                 (end-the-run-unless-runner
-                   "loses [Click]"
-                   "lose [Click]"
-                   (runner-pays [:lose-click 1]))]})
+                 (end-the-run-unless-runner-pays [:click 1])]})
 
 (defcard "Pup"
   (let [sub {:player :runner
@@ -3712,7 +3697,7 @@
                                     (end-run state :corp eid card)))})})
 
 (defcard "Tsurugi"
-  {:subroutines [(end-the-run-unless-corp-pays 1)
+  {:subroutines [(end-the-run-unless-corp-pays [:credit 1])
                  (do-net-damage 1)
                  (do-net-damage 1)
                  (do-net-damage 1)]})
@@ -3723,10 +3708,7 @@
                                       (has-subtype? (:icebreaker context) "AI")))
                        :value true}
                       (ice-strength-bonus (req (not (protecting-a-central? card))) 3)]
-   :subroutines [(end-the-run-unless-runner
-                   "spends [Click][Click][Click]"
-                   "spend [Click][Click][Click]"
-                   (runner-pays [:click 3]))]})
+   :subroutines [(end-the-run-unless-runner-pays [:click 3])]})
 
 (defcard "Turnpike"
   {:on-encounter {:msg "force the Runner to lose 1 [Credits]"
@@ -3977,19 +3959,10 @@
   (space-ice (resolve-another-subroutine)))
 
 (defcard "Wotan"
-  {:subroutines [(end-the-run-unless-runner
-                   "spends [Click][Click]"
-                   "spend [Click][Click]"
-                   (runner-pays [:click 2]))
-                 (end-the-run-unless-runner-pays 3)
-                 (end-the-run-unless-runner
-                   "trashes an installed program"
-                   "trash an installed program"
-                   trash-program-sub)
-                 (end-the-run-unless-runner
-                   "takes 1 brain damage"
-                   "take 1 brain damage"
-                   (do-brain-damage 1))]})
+  {:subroutines [(end-the-run-unless-runner-pays [:click 2])
+                 (end-the-run-unless-runner-pays [:credit 3])
+                 (end-the-run-unless-runner-pays [:program 1])
+                 (end-the-run-unless-runner-pays [:brain 1])]})
 
 (defcard "Wraparound"
   {:subroutines [end-the-run]

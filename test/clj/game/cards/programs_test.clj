@@ -3521,7 +3521,7 @@
         (rez state :corp (refresh tur))
         (run-continue state)
         (card-ability state :runner (refresh inv) 0)
-        (click-prompt state :runner "End the run unless the Runner spends [Click][Click][Click]")
+        (click-prompt state :runner "End the run unless the Runner pays [Click][Click][Click]")
         (run-continue state)
         (click-prompt state :runner "Yes")
         (click-card state :runner (get-ice state :hq 1))
