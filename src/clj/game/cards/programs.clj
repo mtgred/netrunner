@@ -2041,9 +2041,9 @@
              :player :runner
              :autoresolve (get-autoresolve :auto-fire)
              :waiting-prompt true
-             :prompt "Remove 1 hosted power to Sabotage 1?"
+             :prompt "Remove 1 hosted power counter?"
              :yes-ability
-             {:msg "remove 1 hosted power to Sabotage 1"
+             {:msg "remove 1 hosted power counter to sabotage 1"
               :async true
               :cost [:power 1]
               :effect (effect (continue-ability
