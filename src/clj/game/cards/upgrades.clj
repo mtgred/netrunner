@@ -1034,33 +1034,25 @@
                        :value [:credit 1]}]})
 
 (defcard "Mr. Hendrik"
-  {:access {:interactive (req true)
-            :optional
-            {:req (req (and (installed? card)
-                            (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 2])))
-             :waiting-prompt true
-             :prompt "Pay 2 [Credits]?"
-             :player :corp
-             :yes-ability
-             {:async true
-              :effect (req (wait-for (pay state :corp (make-eid state eid) card :credit 2)
-                                     (system-msg state side "pays 2 [Credits] to force the Runner to suffer 1 core damage or lose all remaining clicks")
-                                     (continue-ability
-                                       state side
-                                       {:player :runner
-                                        :prompt "Take 1 core damage, or lose all clicks?"
-                                        :waiting-prompt true
-                                        :choices ["Take 1 core damage"
-                                                  (when (< 0 (:click runner))
-                                                    "Lose remaining clicks")]
-                                        :async true
-                                        :effect (req
-                                                  (system-msg state :runner (str "chooses to " target))
-                                                  (if (= target "Take 1 core damage")
-                                                       (damage state :corp eid :brain 1 {:card card})
-                                                       (do (lose-clicks state :runner (:click runner))
-                                                           (effect-completed state side eid))))}
-                                       card nil)))}}}})
+  (installed-access-trigger
+    2
+    {:async true
+     :effect
+     (effect (continue-ability {:player :runner
+                                :prompt "Choose one"
+                                :waiting-prompt true
+                                :choices (req ["Suffer 1 core damage"
+                                               (when (pos? (:click runner))
+                                                 "Lose all remaining [Click]")])
+                                :async true
+                                :msg (msg (if (= target "Suffer 1 core damage")
+                                            "do 1 core damage"
+                                            (str "force the Runner to " (decapitalize target))))
+                                :effect (req (if (= target "Suffer 1 core damage")
+                                               (damage state :corp eid :brain 1 {:card card})
+                                               (do (lose-clicks state :runner (:click runner))
+                                                   (effect-completed state side eid))))}
+                               card nil))}))
 
 (defcard "Mumbad City Grid"
   {:events [{:event :pass-ice
