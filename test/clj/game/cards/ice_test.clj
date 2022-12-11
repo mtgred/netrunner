@@ -5282,8 +5282,24 @@
         (fire-subs state (refresh p1)))
       (changes-val-macro
         -1 (:click (get-runner))
-        "paid 1 click"
-        (click-prompt state :runner "Lose [Click]")))))
+        "spent 1 click"
+        (click-prompt state :runner "Spend [Click]")))))
+
+(deftest pulse-run-last-click
+  ;; Pulse - cannot spend click when running last click
+  (do-game
+    (new-game {:corp {:hand ["Pulse"]}})
+    (play-from-hand state :corp "Pulse" "HQ")
+    (take-credits state :corp)
+    (dotimes [_ 3]
+      (click-credit state :runner))
+    (run-on state :hq)
+    (let [pulse (get-ice state :hq 0)]
+      (rez state :corp pulse)
+      (run-continue state)
+      (fire-subs state (refresh pulse))
+      (is (= ["End the run"] (prompt-buttons :runner))
+          "Runner has no click left to spend"))))
 
 (deftest red-tape
   ;; Red Tape
