@@ -33,7 +33,7 @@
       (let [damage-amount (str->int (second match))
             damage-type (case (nth match 2)
                           "net" :net
-                          "brain" :brain
+                          "core" :brain
                           "meat" :meat)
             prevented (get-in @state [:damage :damage-prevent damage-type] 0)
             new-prompt (assoc prompt :msg (prevention-prompt-msg damage-amount
