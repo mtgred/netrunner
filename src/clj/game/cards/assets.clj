@@ -1673,16 +1673,18 @@
 (defcard "Nightmare Archive"
   {:flags {:rd-reveal (req true)}
    :access {:async true
-            :msg (msg "force the Runner to " (decapitalize target))
+            :msg (msg (if (= target "Suffer 1 core damage")
+                        "do 1 core damage"
+                        (str "force the runner to " (decapitalize target))))
             :player :runner
             :prompt "Choose one"
-            :choices ["Take 1 Core Damage" "Add Nightmare Archive to score area"]
-            :effect (req (if (= target (str "Add Nightmare Archive to score area"))
+            :choices ["Suffer 1 core damage" "Add Nightmare Archive to score area"]
+            :effect (req (if (= target "Suffer 1 core damage")
+                           (wait-for (damage state :corp :brain 1 {:card card})
+                                     (move state :corp card :rfg)
+                                     (effect-completed state side eid))
                            (do (as-agenda state :runner card -1)
-                               (effect-completed state side eid))
-                           (do (wait-for (damage state :corp :brain 1 {:card card})
-                                         (move state :corp card :rfg)
-                                         (effect-completed state side eid)))))}})
+                               (effect-completed state side eid))))}})
 
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw
