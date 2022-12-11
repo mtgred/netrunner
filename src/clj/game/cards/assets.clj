@@ -1023,7 +1023,7 @@
                         (first-event? state side :runner-trash #(valid-trash (first %)))))
          :msg "do 2 meat damage"
          :effect (effect (damage :corp eid :meat 2 {:card card}))}]
-    {:on-trash ability
+    {:on-trash (assoc ability :req (req (= :runner side)))
      :events [ability]}))
 
 
