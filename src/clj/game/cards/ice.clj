@@ -552,18 +552,18 @@
 (defcard "Anvil"
   (letfn [(encounter-ab []
             {:optional {:prompt "Trash another card?"
-                       :waiting-prompt true
-                       :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
-                                           card nil
-                                           [:trash-other-installed 1]))
-                       :yes-ability {:prompt "Select another installed card to trash"
-                                     :cost [:trash-other-installed 1]
-                                     :msg "prevent its printed subroutines being broken this encounter"
-                                     :effect (effect (register-floating-effect
-                                                       card {:type :cannot-break-subs-on-ice
-                                                             :req (req (same-card? card (:ice context)))
-                                                             :value true
-                                                             :duration :end-of-encounter}))}}})]
+                        :waiting-prompt true
+                        :req (req (can-pay? state side (assoc eid :source card :source-type :ability)
+                                            card nil
+                                            [:trash-other-installed 1]))
+                        :yes-ability {:prompt "Select another installed card to trash"
+                                      :cost [:trash-other-installed 1]
+                                      :msg "prevent its printed subroutines being broken this encounter"
+                                      :effect (effect (register-floating-effect
+                                                        card {:type :cannot-break-subs-on-ice
+                                                              :req (req (same-card? card (:ice context)))
+                                                              :value true
+                                                              :duration :end-of-encounter}))}}})]
     {:on-encounter (encounter-ab)
      :subroutines[{:label "Gain 1 [Credits], Runner loses 1 [Credits]"
                    :msg "gain 1 [Credits] and force the Runner to lose 1 [Credits]"
