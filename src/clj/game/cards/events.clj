@@ -144,7 +144,7 @@
 
 (defcard "Amped Up"
   {:on-play
-   {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
+   {:msg "gain [Click][Click][Click] and suffer 1 core damage"
     :async true
     :effect (effect (gain-clicks 3)
                     (damage eid :brain 1 {:unpreventable true :card card}))}})
@@ -3278,7 +3278,7 @@
                              (make-run eid target card))}
    :events [{:event :run-ends
              :req (req this-card-run)
-             :msg "take 1 brain damage"
+             :msg "take 1 core damage"
              :effect (effect (damage eid :brain 1 {:unpreventable true
                                                    :card card}))}]})
 

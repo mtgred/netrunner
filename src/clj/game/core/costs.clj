@@ -810,7 +810,7 @@
 ;; BrainDamage
 (defmethod cost-name :brain [_] :brain)
 (defmethod value :brain [[_ cost-value]] cost-value)
-(defmethod label :brain [cost] (str "suffer " (value cost) " brain damage"))
+(defmethod label :brain [cost] (str "suffer " (value cost) " core damage"))
 (defmethod payable? :brain
   [cost state side eid card]
   (<= (value cost) (count (get-in @state [:runner :hand]))))
@@ -819,7 +819,7 @@
   (wait-for (damage state side :brain (value cost) {:unpreventable true})
             (complete-with-result
               state side eid
-              {:msg (str "suffers " (count async-result) " brain damage")
+              {:msg (str "suffers " (count async-result) " core damage")
                :type :brain
                :value (count async-result)
                :targets async-result})))

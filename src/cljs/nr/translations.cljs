@@ -357,7 +357,7 @@
    :scored-area "Scored Area"
    :archives "Archives"
    :max-hand "Max hand size"
-   :brain-damage "Brain Damage"
+   :brain-damage "Core Damage"
    :tag-count (fn [[base additional total]]
                 (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
    :agenda-count (fn [[agenda-point]] (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s")))

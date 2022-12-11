@@ -1518,13 +1518,13 @@
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
     {:subroutines [sub
                    sub
-                   {:label "Do 1 brain damage or end the run"
+                   {:label "Do 1 core damage or end the run"
                     :prompt "Choose one"
                     :waiting-prompt true
-                    :choices ["Do 1 brain damage" "End the run"]
+                    :choices ["Do 1 core damage" "End the run"]
                     :msg (msg (decapitalize target))
                     :async true
-                    :effect (req (if (= target "Do 1 brain damage")
+                    :effect (req (if (= target "Do 1 core damage")
                                    (damage state side eid :brain 1 {:card card})
                                    (end-run state side eid card)))}]
      :runner-abilities [(bioroid-break 3 3)]}))
@@ -1866,7 +1866,7 @@
 
 (defcard "Heimdall 2.0"
   {:subroutines [(do-brain-damage 1)
-                 {:msg "do 1 brain damage and end the run"
+                 {:msg "do 1 core damage and end the run"
                   :effect (req (wait-for (damage state side :brain 1 {:card card})
                                          (end-run state side eid card)))}
                  end-the-run]
@@ -2039,8 +2039,8 @@
 
 (defcard "Ichi 1.0"
   {:subroutines [trash-program-sub trash-program-sub
-                 (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
-                                   :msg "give the Runner 1 tag and do 1 brain damage"
+                 (trace-ability 1 {:label "Give the Runner 1 tag and do 1 core damage"
+                                   :msg "give the Runner 1 tag and do 1 core damage"
                                    :async true
                                    :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                                           (gain-tags state :corp eid 1)))})]
@@ -2048,8 +2048,8 @@
 
 (defcard "Ichi 2.0"
   {:subroutines [trash-program-sub trash-program-sub
-                 (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
-                                   :msg "give the Runner 1 tag and do 1 brain damage"
+                 (trace-ability 3 {:label "Give the Runner 1 tag and do 1 core damage"
+                                   :msg "give the Runner 1 tag and do 1 core damage"
                                    :async true
                                    :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                                           (gain-tags state :corp eid 1)))})]
@@ -2208,15 +2208,15 @@
              :async true
              :waiting-prompt true
              :prompt "Choose one"
-             :choices ["Take 1 brain damage" (str "Trash an installed " (better-name kind))]
-             :msg (msg (if (= target "Take 1 brain damage")
-                         "do 1 brain damage"
+             :choices ["Take 1 core damage" (str "Trash an installed " (better-name kind))]
+             :msg (msg (if (= target "Take 1 core damage")
+                         "do 1 core damage"
                          (str "force the runner to " (decapitalize target))))
-             :effect (req (if (= target "Take 1 brain damage")
+             :effect (req (if (= target "Take 1 core damage")
                             (damage state :runner eid :brain 1 {:card card})
                             (continue-ability state :runner (runner-trash kind) card nil)))})
           (brain-trash [kind]
-            {:label (str "Force the Runner to take 1 brain damage or trash an installed " (better-name kind))
+            {:label (str "Force the Runner to take 1 core damage or trash an installed " (better-name kind))
              :async true
              :effect (req (wait-for (resolve-ability state side (sub-map kind) card nil)
                                     (clear-wait-prompt state :corp)))})]
@@ -2782,9 +2782,9 @@
    :runner-abilities [(break-sub [:credit 2] 1 "All" {:req (req (currently-encountering-card card state))})]})
 
 (defcard "Nerine 2.0"
-  (let [sub {:label "Do 1 brain damage and Corp may draw 1 card"
+  (let [sub {:label "Do 1 core damage and Corp may draw 1 card"
              :async true
-             :msg "do 1 brain damage"
+             :msg "do 1 core damage"
              :effect (req (wait-for (damage state :runner :brain 1 {:card card})
                                     (continue-ability
                                       state side
@@ -3978,27 +3978,27 @@
                  (do-net-damage 1)]})
 
 (defcard "Zed 1.0"
-  {:subroutines [{:label "Do 1 brain damage"
+  {:subroutines [{:label "Do 1 core damage"
                   :async true
                   :effect (req (if (spent-click-to-break-sub state run)
                                  (continue-ability state side (do-brain-damage 1) card nil)
-                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                 (do (system-msg state side "does not do core damage with Zed 1.0")
                                      (effect-completed state side eid))))}
-                 {:label "Do 1 brain damage"
+                 {:label "Do 1 core damage"
                   :async true
                   :effect (req (if (spent-click-to-break-sub state run)
                                  (continue-ability state side (do-brain-damage 1) card nil)
-                                 (do (system-msg state side "does not do brain damage with Zed 1.0")
+                                 (do (system-msg state side "does not do core damage with Zed 1.0")
                                      (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Zed 2.0"
   {:subroutines [trash-hardware-sub
                  trash-hardware-sub
-                 {:label "Do 1 brain damage"
+                 {:label "Do 1 core damage"
                   :async true
                   :effect (req (if (spent-click-to-break-sub state run)
                                  (continue-ability state side (do-brain-damage 2) card nil)
-                                 (do (system-msg state side "does not do brain damage with Zed 2.0")
+                                 (do (system-msg state side "does not do core damage with Zed 2.0")
                                      (effect-completed state side eid))))}]
    :runner-abilities [(bioroid-break 2 2)]})

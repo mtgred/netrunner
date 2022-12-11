@@ -217,11 +217,11 @@
     (play-from-hand state :runner "Feedback Filter")
     (play-from-hand state :runner "Amped Up")
     (is (no-prompt? state :runner)
-        "Feedback Filter brain damage prevention opportunity not given")
+        "Feedback Filter core damage prevention opportunity not given")
     (is (= 5 (:click (get-runner))) "Runner gained 2 clicks from Amped Up")
     (is (= 2 (count (:discard (get-runner)))) "Runner discarded 1 card from damage")
     (is (= 4 (hand-size :runner)) "Runner handsize decreased by 1")
-    (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
+    (is (= 1 (:brain-damage (get-runner))) "Took 1 core damage")))
 
 (deftest another-day-another-paycheck
   ;; Another Day, Another Paycheck
@@ -3451,9 +3451,9 @@
      (take-credits state :corp)
      (play-from-hand state :runner "In the Groove")
      (play-from-hand state :runner "Brain Cage")
-     (is (= 0 (:brain-damage (get-runner))) "No brain damage taken yet")
+     (is (= 0 (:brain-damage (get-runner))) "No core damage taken yet")
      (click-prompt state :runner "Brain Cage")
-     (is (= 1 (:brain-damage (get-runner))) "Brain damage taken")
+     (is (= 1 (:brain-damage (get-runner))) "Core damage taken")
      (is (changes-credits (get-runner) 1
                              (click-prompt state :runner "Gain 1 [Credits]")))))
 
@@ -5995,11 +5995,11 @@
     (play-from-hand state :runner "Feedback Filter")
     (play-from-hand state :runner "Running Hot")
     (is (no-prompt? state :runner)
-        "Feedback Filter brain damage prevention opportunity not given")
+        "Feedback Filter core damage prevention opportunity not given")
     (is (= 5 (:click (get-runner))) "Runner gained 2 clicks from Running Hot")
     (is (= 2 (count (:discard (get-runner)))) "Runner discarded 1 card from damage")
     (is (= 4 (hand-size :runner)) "Runner handsize decreased by 1")
-    (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")))
+    (is (= 1 (:brain-damage (get-runner))) "Took 1 core damage")))
 
 (deftest running-interference
   ;; Running Interference
@@ -6309,7 +6309,7 @@
              (= 1 (count (:discard (get-corp)))))
         "Corp hand empty and Eve in Archives")
     (is (= 5 (:credit (get-runner))))
-    (is (zero? (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+    (is (zero? (count (:hand (get-runner)))) "Lost card from Grip to core damage")
     (is (= 4 (hand-size :runner)))
     (is (= 1 (:brain-damage (get-runner))))))
 

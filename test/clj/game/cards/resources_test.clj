@@ -3467,7 +3467,7 @@
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
-   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to core damage")
    (is (= 1 (:brain-damage (get-runner))))
    (rez state :corp (refresh (get-content state :remote1 0)))
    (changes-val-macro 0 (:credit (get-runner))
@@ -3487,7 +3487,7 @@
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
-   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to core damage")
    (is (= 1 (:brain-damage (get-runner))))
    (rez state :corp (refresh (get-content state :remote1 0)))
    (run-jack-out state)
@@ -3506,7 +3506,7 @@
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
-   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to core damage")
    (let [crick (get-ice state :remote1 0)]
      (rez state :corp crick)
      (run-continue state)
@@ -3536,7 +3536,7 @@
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
-   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to core damage")
    (rez state :corp (refresh (get-content state :remote1 0)))
    (rez state :corp (refresh (get-content state :remote2 0)))
    (let [meta (get-ice state :remote1 0)]
@@ -3572,7 +3572,7 @@
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
    (click-prompt state :runner "Server 1")
-   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to brain damage")
+   (is (= 1 (count (:hand (get-runner)))) "Lost card from Grip to core damage")
    (let [sand (get-ice state :remote1 0)
          ngo (get-content state :remote1 0)
          hoku (get-content state :remote2 0)]
@@ -4169,7 +4169,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
     (play-from-hand state :runner "Skulljack")
-    (is (= 3 (count (:hand (get-runner)))) "Took 1 brain damage")
+    (is (= 3 (count (:hand (get-runner)))) "Took 1 core damage")
     (card-ability state :runner (get-resource state 0) 0)
     (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
     (let [sm (get-ice state :archives 0)]
@@ -5342,7 +5342,7 @@
       (take-credits state :corp)
       (is (zero? (get-counters (refresh sd) :power)) "Lost all counters")
       (is (no-prompt? state :runner) "No Feedback Filter brain dmg prevention possible")
-      (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Took 1 core damage")
       (is (= 4 (:click (get-runner))) "Didn't gain extra click"))))
 
 (deftest stoneship-chart-room

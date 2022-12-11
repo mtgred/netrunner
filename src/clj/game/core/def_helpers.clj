@@ -135,11 +135,11 @@
    :effect (effect (damage eid :meat dmg {:card card}))})
 
 (defn do-brain-damage
-  "Do specified amount of brain damage."
+  "Do specified amount of core damage."
   [dmg]
-  {:label (str "Do " dmg " brain damage")
+  {:label (str "Do " dmg " core damage")
    :async true
-   :msg (str "do " dmg " brain damage")
+   :msg (str "do " dmg " core damage")
    :effect (effect (damage eid :brain dmg {:card card}))})
 
 (defn trash-on-empty

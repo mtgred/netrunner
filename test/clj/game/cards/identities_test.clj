@@ -420,7 +420,7 @@
       (run-empty-server state :remote1)
       (click-prompt state :corp "Yes")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
-      (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
+      (is (= 2 (:brain-damage (get-runner))) "Runner took 2 core damage")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives")))
 
 (deftest aginfusion-new-miracles-for-a-new-world-ability-works-5056

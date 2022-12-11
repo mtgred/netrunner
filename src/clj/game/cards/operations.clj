@@ -451,7 +451,7 @@
           :not-equal {:player :runner
                       :prompt "Choose one"
                       :waiting-prompt true
-                      :choices ["Take 1 tag" "Suffer 1 brain damage"]
+                      :choices ["Take 1 tag" "Suffer 1 core damage"]
                       :msg (msg "force the Runner to " (decapitalize target))
                       :effect (req (if (= target "Take 1 tag")
                                      (gain-tags state :runner eid 1)
@@ -567,7 +567,7 @@
 (defcard "Defective Brainchips"
   {:events [{:event :pre-damage
              :req (req (= target :brain))
-             :msg "do 1 additional brain damage"
+             :msg "do 1 additional core damage"
              :once :per-turn
              :effect (effect (damage-bonus :brain 1))}]})
 
@@ -1336,7 +1336,7 @@
                                 :trace {:base 3
                                         :req (req (or (agenda? (:card context))
                                                       (agenda? target)))
-                                        :successful {:msg "do 1 brain damage"
+                                        :successful {:msg "do 1 core damage"
                                                      :async true
                                                      :effect (effect (damage :runner eid :brain 1 {:card card}))}}}]
     {:events [(assoc trace-for-brain-damage
@@ -2166,8 +2166,8 @@
     :waiting-prompt true
     :prompt "Choose one"
     :msg (msg "force the Runner to " (decapitalize target))
-    :choices ["Suffer 1 brain damage" "Get 3 fewer [Click] on the next turn"]
-    :effect (req (if (= target "Suffer 1 brain damage")
+    :choices ["Suffer 1 core damage" "Get 3 fewer [Click] on the next turn"]
+    :effect (req (if (= target "Suffer 1 core damage")
                    (damage state :runner eid :brain 1 {:card card})
                    (do (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
                        (effect-completed state side eid))))}})
@@ -2912,11 +2912,11 @@
                 card nil))}})
 
 (defcard "Wetwork Refit"
-  (let [new-sub {:label "[Wetwork Refit] Do 1 brain damage"}]
+  (let [new-sub {:label "[Wetwork Refit] Do 1 core damage"}]
     {:on-play {:choices {:card #(and (ice? %)
                                      (has-subtype? % "Bioroid")
                                      (rezzed? %))}
-               :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
+               :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 core damage\" before all its other subroutines")
                :async true
                :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
                             (install-as-condition-counter state side eid card (get-card state target)))}

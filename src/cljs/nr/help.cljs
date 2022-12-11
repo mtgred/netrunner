@@ -154,7 +154,7 @@
    {:name "/take-brain"
     :has-args :required
     :usage "/take-brain n"
-    :help "Take n brain damage (Runner only)"}
+    :help "Take n core damage (Runner only)"}
    {:name "/take-meat"
     :has-args :required
     :usage "/take-meat n"

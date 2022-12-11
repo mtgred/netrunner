@@ -1233,8 +1233,8 @@
                           (has-subtype? % "NEXT"))
                     (all-installed state :corp))
           {:optional
-           {:prompt "Do 1 brain damage?"
-            :yes-ability {:msg "do 1 brain damage"
+           {:prompt "Do 1 core damage?"
+            :yes-ability {:msg "do 1 core damage"
                           :async true
                           :effect (effect (damage eid :brain 1 {:card card}))}}})
         card nil))}})
