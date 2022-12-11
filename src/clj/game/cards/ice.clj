@@ -1314,7 +1314,8 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Eli 2.0"
-  {:subroutines [{:optional
+  {:subroutines [{:label "Draw 1 card"
+                  :optional
                   {:prompt "Draw 1 card?"
                    :msg "draw 1 card"
                    :autoresolve (get-autoresolve :auto-fire)
@@ -2246,7 +2247,8 @@
                  (do-net-damage 2)]})
 
 (defcard "Kitsune"
-  {:subroutines [{:optional
+  {:subroutines [{:label "Force the Runner to access a card in HQ"
+                  :optional
                   {:req (req (pos? (count (:hand corp))))
                    :prompt "Force the Runner to access a card in HQ?"
                    :yes-ability
@@ -3535,7 +3537,8 @@
 
 (defcard "Tapestry"
   {:subroutines [runner-loses-click
-                 {:optional
+                 {:label "Draw 1 card"
+                  :optional
                   {:prompt "Draw 1 card?"
                    :msg "draw 1 card"
                    :autoresolve (get-autoresolve :auto-fire)
@@ -3769,7 +3772,8 @@
                                        (effect-completed state side eid)))}]
     {:subroutines [(give-tags 1)
                    (do-net-damage 2)
-                   {:optional
+                   {:label "Draw 2 cards"
+                    :optional
                     {:prompt "Draw 2 cards?"
                      :msg "draw 2 cards"
                      :yes-ability
@@ -3810,6 +3814,7 @@
                   :effect (effect (gain-credits :corp eid 2))}
                  (do-net-damage 2)
                  {:async true
+                  :label "Draw up to 2 cards"
                   :prompt "Draw how many cards?"
                   :choices {:number (req 2)
                             :max (req 2)
@@ -3998,7 +4003,7 @@
                         7)]})
 
 (defcard "Yagura"
-  {:subroutines [{:msg "look at the top card of R&D"
+  {:subroutines [{:label "Look at the top card of R&D"
                   :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move (first (:deck corp)) :deck))}
