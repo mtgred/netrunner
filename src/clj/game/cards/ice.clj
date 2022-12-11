@@ -1797,7 +1797,7 @@
                                           (register-floating-effect state side card (prevent-sub-break-by t))
                                           (effect-completed state side eid)))}
                           card nil))}
-               :no-ability {:effect (effect (system-msg :corp "declines to use Hafrún to discard a card from HQ"))}}}}))
+               :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}}))
 
 (defcard "Hákarl 1.0"
   {:runner-abilities [(bioroid-break 1 1)]
@@ -2305,7 +2305,7 @@
                               (seq (all-installed-runner-type state :resource))))
                :yes-ability {:async true
                              :effect (effect (continue-ability on-rez-ability card nil))}
-               :no-ability {:effect (effect (system-msg "declines to use Klevetnik"))}}}}))
+               :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}}))
 
 (defcard "Komainu"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-net-damage 1)))}
@@ -3782,7 +3782,7 @@
                :yes-ability {:async true
                              :effect (effect (continue-ability on-rez-ability card nil))}
                :no-ability
-               {:effect (effect (system-msg "declines to use Unsmiling Tsarevna"))}}}}))
+               {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}}))
 
 (defcard "Upayoga"
   {:subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"

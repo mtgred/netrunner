@@ -2826,7 +2826,7 @@
                :async true
                :msg (msg "make a run on " target)
                :effect (effect (make-run eid target card))}
-               :no-ability {:effect (effect (system-msg "declines to use Reprise to make a run"))}}})]
+               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to make a run")))}}})]
     {:makes-run true
      :on-play
      {:async true

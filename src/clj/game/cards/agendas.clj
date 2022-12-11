@@ -967,7 +967,7 @@
                                      (in-discard? %)
                                      (not (faceup? %)))}
                :effect (effect (corp-install eid target nil nil))
-               :cancel-effect (effect (system-msg "declines to use Hybrid Release")
+               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                       (effect-completed eid))
                :msg (msg "install " (card-str state target))}})
 
@@ -1314,7 +1314,7 @@
                 :async true
                 :effect (effect (draw eid 1))}
                :no-ability
-               {:effect (effect (system-msg :corp "declines to use Post-Truth Dividend to draw 1 card"))}}}})
+               {:effect (effect (system-msg (str "declines to use " (:title card))))}}}})
 
 (defcard "Posted Bounty"
   {:on-score {:optional

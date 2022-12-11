@@ -2633,7 +2633,7 @@
                                                                 " from grip: "
                                                                 (enumerate-str (map :title (:hand runner)))))
                                                     (continue-ability state side select-and-trash card nil)))}
-                            :no-ability {:effect (effect (system-msg "declines to use Vera Ivanovna Shuyskaya"))}}}]
+                            :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
     {:events [{:event :agenda-scored
                :interactive (req true)
                :async true

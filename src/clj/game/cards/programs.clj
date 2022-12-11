@@ -2049,7 +2049,7 @@
               :effect (effect (continue-ability
                                 (sabotage-ability 1)
                                 card nil))}
-             :no-ability {:effect (effect (system-msg "declines to use Nga"))}}}]
+             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :abilities [(set-autoresolve :auto-fire "Nga")]})
 
 (defcard "Ninja"
@@ -2961,8 +2961,8 @@
                          :req (req (and (runner? target)
                                         (installed? target)))}
                :msg (msg "trash " (:title target))
-               :cancel-effect (req (system-msg state :runner "declines to use World Tree to trash another installed card")
-                                   (effect-completed state side eid))
+               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                      (effect-completed eid))
                :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                       (continue-ability state side (search-and-install target) card nil)))}]}))
 
