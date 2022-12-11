@@ -1929,21 +1929,23 @@
 
 (defcard "Thule Subsea: Safety Below"
   {:events [{:event :agenda-stolen
-             :msg "force the runner to suffer 1 core damage unless they spend [Click] and 2[Credits]"
              :async true
              :effect (effect (continue-ability
-                               {:prompt "Choose an option"
+                               {:prompt "Choose one"
                                 :player :runner
                                 :choices (req [(when (can-pay? state :runner eid card [:credit 2 :click 1])
                                                  "Pay [Click] and 2 [Credits]")
-                                               "Suffer 1 Core Damage"])
+                                               "Suffer 1 core damage"])
                                 :async true
+                                :waiting-prompt true
+                                :msg (msg (if (= target "Pay [Click] and 2 [Credits]")
+                                            (str "force the runner to " (decapitalize target))
+                                            "do 1 core damage"))
                                 :effect (req (if (= target "Pay [Click] and 2 [Credits]")
                                                (wait-for (pay state side (make-eid state eid) card [:click 1 :credit 2])
                                                          (system-msg state side (:msg async-result))
                                                          (effect-completed state :runner eid))
-                                               (do (system-msg state :corp "forces the runner to suffer 1 Core Damage")
-                                                   (damage state side eid :brain 1 {:card card}))))}
+                                               (damage state side eid :brain 1 {:card card})))}
                                card nil))}]})
 
 (defcard "Titan Transnational: Investing In Your Future"
