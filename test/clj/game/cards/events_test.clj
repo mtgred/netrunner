@@ -5337,6 +5337,43 @@
           "drew 5 cards from raindrop"
           (run-continue state))))))
 
+(deftest raindrops-cut-stone-end-the-run-sub
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Raindrops Cut Stone"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [iw (get-ice state :hq 0)]
+      (rez state :corp iw)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Raindrops Cut Stone")
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (changes-val-macro
+        +3 (:credit (get-runner))
+        "gained 3 credits from raindrop"
+        (changes-val-macro
+          1 (count (:hand (get-runner)))
+          "drew 1 card from raindrop"
+          (fire-subs state (refresh iw)))))))
+
+(deftest raindrops-cut-stone-no-sub-fired
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Raindrops Cut Stone"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Raindrops Cut Stone")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (changes-val-macro
+      +3 (:credit (get-runner))
+      "gained 3 credits from raindrop"
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "drew no cards from raindrop"
+        (click-prompt state :runner "No action")))))
+
 ;; Rebirth
 (let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
