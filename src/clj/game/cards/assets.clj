@@ -2377,8 +2377,8 @@
                            :req (req (and (corp? target)
                                           (installed? target)))}
                  :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
-                 :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card)))
-                                     (effect-completed state side eid))
+                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                        (effect-completed eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                         (gain-credits state side eid 3)))}]
     {:flags {:corp-phase-12 (req (>= (count (all-installed state :corp)) 2))}

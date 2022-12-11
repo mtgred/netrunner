@@ -917,8 +917,8 @@
                                                        {:ignore-install-cost true
                                                         :index (:index card)})
                                          (effect-completed state side eid)))
-                  :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to install a card"))
-                                      (effect-completed state side eid))}
+                  :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card) " to install a card"))
+                                         (effect-completed eid))}
                  end-the-run
                  end-the-run]
    :runner-abilities [(bioroid-break 1 1)]})
