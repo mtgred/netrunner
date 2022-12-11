@@ -375,11 +375,11 @@
                                              (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
                               :async true
                               :effect (effect (continue-ability
-                                                {:prompt (str "Trash a card to draw a card?")
+                                                {:prompt "Choose 1 card in the grip to trash"
                                                  :async true
                                                  :choices {:card #(and (in-hand? %)
                                                                        (runner? %))}
-                                                 :msg (msg "trash " (:title target) " to draw a card")
+                                                 :msg (msg "trash " (:title target) " to draw 1 card")
                                                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                                                   :cause-card card})
                                                                         (draw state :runner eid 1)))
