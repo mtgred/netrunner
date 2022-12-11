@@ -3800,14 +3800,8 @@
                  (trace-ability 4 end-the-run)]})
 
 (defcard "Vampyronassa"
-  {:subroutines [{:label "Runner loses 2 [Credits]"
-                  :msg "force the Runner to lose 2 [Credits]"
-                  :async true
-                  :effect (effect (lose-credits :runner eid 2))}
-                 {:label "Corp gains 2 [Credits]"
-                  :msg "gain 2 [Credits]"
-                  :async true
-                  :effect (effect (gain-credits :corp eid 2))}
+  {:subroutines [(runner-loses-credits 2)
+                 (gain-credits-sub 2)
                  (do-net-damage 2)
                  {:async true
                   :prompt "Draw how many cards?"
