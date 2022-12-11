@@ -1097,6 +1097,7 @@
 (defcard "Dr. Nuka Vrolyck"
   {:data {:counter {:power 2}}
    :abilities [{:msg "draw 3 cards"
+                :keep-menu-open :while-clicks-left
                 :cost [:click 1 :power 1]
                 :async true
                 :effect (req (wait-for (draw state :runner 3)
