@@ -962,6 +962,7 @@
 (defcard "Hybrid Release"
   {:on-score {:prompt "Choose a facedown card in Archives to install"
               :show-discard true
+              :waiting-prompt true
               :req (req (some #(not (faceup? %)) (:discard corp)))
               :async true
               :choices {:card #(and (corp-installable-type? %)
