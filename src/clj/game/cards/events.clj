@@ -430,7 +430,7 @@
                                  state side
                                  {:optional
                                   {:prompt (str "Run on " (zone->name marked-server) "?")
-                                   :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to make a run on " (zone->name marked-server))))}
+                                   :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to make a run")))}
                                    :yes-ability {:msg (str "make a run on " (zone->name marked-server))
                                                  :async true
                                                  :effect (effect (make-run eid marked-server))}}}
