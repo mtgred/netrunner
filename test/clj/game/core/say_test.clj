@@ -249,16 +249,16 @@
         (core/command-parser state :runner {:user user :text "/tag 99999999999999999999999999999999999999999999"})
         (is (= 1000 (:base (:tag (get-runner)))) "Runner has 1000 tags"))))
 
-  (testing "/take-brain"
+  (testing "/take-core"
     (let [user {:username "Runner"}]
       (do-game
         (new-game)
-        (core/command-parser state :runner {:user user :text "/take-brain 3"})
-        (is (= 3 (:brain-damage (get-runner))) "Runner gains 3 brain")
-        (core/command-parser state :runner {:user user :text "/take-brain -5"})
-        (is (= 3 (:brain-damage (get-runner))) "Runner gains 0 brain")
-        (core/command-parser state :runner {:user user :text "/take-brain 99999999999999999999999999999999999999999999"})
-        (is (= 1003 (:brain-damage (get-runner))) "Runner gains 1000 brain"))))
+        (core/command-parser state :runner {:user user :text "/take-core 3"})
+        (is (= 3 (:brain-damage (get-runner))) "Runner gains 3 core")
+        (core/command-parser state :runner {:user user :text "/take-core -5"})
+        (is (= 3 (:brain-damage (get-runner))) "Runner gains 0 cire")
+        (core/command-parser state :runner {:user user :text "/take-core 99999999999999999999999999999999999999999999"})
+        (is (= 1003 (:brain-damage (get-runner))) "Runner gains 1000 core"))))
 
   (testing "/trace"
     (let [user {:username "Corp"}]
