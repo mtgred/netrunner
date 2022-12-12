@@ -151,9 +151,9 @@
     :has-args :required
     :usage "/tag n"
     :help "Set your tags to n"}
-   {:name "/take-brain"
+   {:name "/take-core"
     :has-args :required
-    :usage "/take-brain n"
+    :usage "/take-core n"
     :help "Take n core damage (Runner only)"}
    {:name "/take-meat"
     :has-args :required
