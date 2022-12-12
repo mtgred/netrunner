@@ -2882,7 +2882,7 @@
    :subroutines [{:label "Draw up to X cards"
                   :prompt "Draw how many cards?"
                   :msg (msg "draw " (quantify target "card"))
-                  :choices {:number x-fn
+                  :choices {:number #'x-fn
                             :default (req 1)}
                   :async true
                   :effect (effect (draw eid target))}
@@ -2891,7 +2891,7 @@
                   :show-discard  true
                   :choices {:card #(and (corp? %)
                                         (in-discard? %))
-                            :max x-fn}
+                            :max #'x-fn}
                   :effect (req (doseq [c targets]
                                  (move state side c :hand)))
                   :msg (msg "add "
@@ -2906,7 +2906,7 @@
                   :prompt "Choose cards to shuffle into R&D"
                   :choices {:card #(and (corp? %)
                                         (in-hand? %))
-                            :max x-fn}
+                            :max #'x-fn}
                   :effect (req (doseq [c targets]
                                  (move state :corp c :deck))
                                (shuffle! state :corp :deck))
@@ -3243,7 +3243,7 @@
 
 (defcard "Searchlight"
   (let [sub {:label "Trace X - Give the Runner 1 tag"
-             :trace {:base x-fn
+             :trace {:base #'x-fn
                      :label "Give the Runner 1 tag"
                      :successful (give-tags 1)}}]
     {:x-fn (req (get-counters card :advancement))
@@ -3444,14 +3444,14 @@
                  trash-program-sub]})
 
 (defcard "Surveyor"
-  {:constant-effects [(ice-strength-bonus x-fn)]
+  {:constant-effects [(ice-strength-bonus #'x-fn)]
    :x-fn (req (* 2 (count (:ices (card->server state card)))))
    :subroutines [{:label "Trace X - Give the Runner 2 tags"
-                  :trace {:base x-fn
+                  :trace {:base #'x-fn
                           :label "Give the Runner 2 tags"
                           :successful (give-tags 2)}}
                  {:label "Trace X - End the run"
-                  :trace {:base x-fn
+                  :trace {:base #'x-fn
                           :label "End the run"
                           :successful end-the-run}}]})
 

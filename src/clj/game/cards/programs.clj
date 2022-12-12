@@ -22,7 +22,7 @@
    [game.core.engine :refer [ability-as-handler dissoc-req not-used-once? pay
                              print-msg register-events register-once
                              trigger-event trigger-event-simult unregister-events]]
-   [game.core.events :refer [first-event? first-installed-trash?
+   [game.core.events :refer [run-events first-event? first-installed-trash?
                              first-successful-run-on-server? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
@@ -1031,7 +1031,7 @@
                                  :msg "place 1 virus counter"
                                  :req (req (:runner-phase-12 @state))
                                  :effect (effect (add-counter card :virus 1))}]
-                    :constant-effects [(breaker-strength-bonus x-fn)]}))
+                    :constant-effects [(breaker-strength-bonus #'x-fn)]}))
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
@@ -1406,9 +1406,7 @@
     :events [{:event :subroutines-broken
               :once :per-encounter
               :async true
-              :req (req (and this-server
-                             (first-event? state side :subroutines-broken #(same-card? (first %) (:host card)))
-                             (same-card? current-ice (:host card))))
+              :req (req (and this-server (same-card? current-ice (:host card))))
               :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
 
 (defcard "Force of Nature"
@@ -2316,7 +2314,7 @@
 
 (defcard "Pheromones"
   {:x-fn (req (get-counters card :virus))
-   :recurring x-fn
+   :recurring #'x-fn
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :hq (target-server context)))

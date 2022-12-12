@@ -108,7 +108,8 @@
                 (when recurring
                   {:recurring
                    (cond
-                     (fn? recurring) (recurring state side eid c nil)
+                     (or (fn? recurring)
+                         (var? recurring)) (recurring state side eid c nil)
                      (number? recurring) recurring
                      :else (throw (Exception. (str (:title card) " - Recurring isn't number or fn"))))}))
          _ (when recurring (update! state side (assoc-in c [:counter :recurring] 0)))

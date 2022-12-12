@@ -1,5 +1,5 @@
 (ns game.core.psi
-(:require
+  (:require
     [game.core.card :refer [corp?]]
     [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [effect-completed make-eid]]
@@ -64,4 +64,4 @@
       card targets)
     (effect-completed state side eid)))
 
-(register-ability-type :psi check-psi)
+(register-ability-type :psi #'check-psi)

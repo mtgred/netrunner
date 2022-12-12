@@ -19,10 +19,18 @@
   [state _ dtype n]
   (swap! state update-in [:damage :damage-bonus dtype] (fnil #(+ % n) 0)))
 
+(defn damage-name [damage-type]
+  (case damage-type
+    :net "net"
+    :meat "meat"
+    :core "core"
+    :brain "core"
+    "[UNKNOWN DAMAGE TYPE]"))
+
 (defn prevention-prompt-msg
   [damage-amount damage-type prevented]
   (str "Prevent any of the " damage-amount
-       " " (name damage-type) " damage?"
+       " " (damage-name damage-type) " damage?"
        " (" prevented "/" damage-amount " prevented)"))
 
 (defn- damage-prevent-update-prompt
@@ -33,6 +41,7 @@
       (let [damage-amount (str->int (second match))
             damage-type (case (nth match 2)
                           "net" :net
+                          "brain" :brain
                           "core" :brain
                           "meat" :meat)
             prevented (get-in @state [:damage :damage-prevent damage-type] 0)
@@ -112,7 +121,7 @@
                   (when (= dmg-type :brain)
                     (swap! state update-in [:runner :brain-damage] #(+ % n)))
                   (when-let [trashed-msg (string/join ", " (map get-title cards-trashed))]
-                    (system-msg state :runner (str "trashes " trashed-msg " due to " (name dmg-type) " damage")))
+                    (system-msg state :runner (str "trashes " trashed-msg " due to " (damage-name dmg-type) " damage")))
                   (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
                   (swap! state update-in [:stats :corp :damage dmg-type] (fnil + 0) n)
                   (if (< (count hand) n)
@@ -149,14 +158,14 @@
            (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
            (swap! state assoc-in [:prevent :current] type)
            (show-prompt
-             state player nil (str "Prevent any of the " (- n already-prevented) " " (name type) " damage?") ["Done"]
+             state player nil (str "Prevent any of the " (- n already-prevented) " " (damage-name type) " damage?") ["Done"]
              (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
                            damage-prevented (if prevent (- prevent already-prevented) false)]
                        (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
                        (system-msg state player
                                    (if damage-prevented (str "prevents "
                                                              (if (>= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
-                                                             " " (name type) " damage") "will not prevent damage"))
+                                                             " " (damage-name type) " damage") "will not prevent damage"))
                        (clear-wait-prompt state other-player)
                        (effect-completed state side eid)))))
        (effect-completed state side eid)))))

@@ -277,7 +277,7 @@
                         (req (pos? (x-fn state side eid card targets)))
                         ;; [:regular N] is needed to make the mu system work
                         (req [:regular (x-fn state side eid card targets)]))
-                      (runner-hand-size+ x-fn)]})
+                      (runner-hand-size+ #'x-fn)]})
 
 (defcard "Buffer Drive"
   (let [grip-or-stack-trash?
@@ -1188,7 +1188,7 @@
 (defcard "Māui"
   {:x-fn (req (count (get-in corp [:servers :hq :ices])))
    :constant-effects [(mu+ 2)]
-   :recurring x-fn
+   :recurring #'x-fn
    :interactions {:pay-credits {:req (req (= [:hq] (get-in @state [:run :server])))
                                 :type :recurring}}})
 

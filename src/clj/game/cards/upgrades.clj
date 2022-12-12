@@ -860,7 +860,7 @@
 
 (defcard "Khondi Plaza"
   {:x-fn (req (count (get-remotes state)))
-   :recurring x-fn
+   :recurring #'x-fn
    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
                                                (ice? target)
                                                (= (card->server state card) (card->server state target))))

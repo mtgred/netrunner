@@ -810,8 +810,8 @@
     :effect
     (req (let [draw {:async true
                      :prompt "Draw how many cards?"
-                     :choices {:number x-fn
-                               :max x-fn
+                     :choices {:number #'x-fn
+                               :max #'x-fn
                                :default (req 1)}
                      :msg (msg "draw " (quantify target "card"))
                      :effect (effect (draw eid target))}

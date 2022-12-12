@@ -380,7 +380,7 @@
 
 (defcard "Blood in the Water"
   {:x-fn (req (count (:hand runner)))
-   :advancement-requirement x-fn})
+   :advancement-requirement #'x-fn})
 
 (defcard "Brain Rewiring"
   {:on-score

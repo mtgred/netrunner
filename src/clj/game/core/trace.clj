@@ -156,4 +156,4 @@
       card targets)
     (effect-completed state side eid)))
 
-(register-ability-type :trace check-trace)
+(register-ability-type :trace #'check-trace)
