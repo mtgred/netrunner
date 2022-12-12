@@ -223,6 +223,7 @@
   ([pred]
    {:label "add card from Archives to HQ"
     :prompt "Choose a card to add to HQ"
+    :waiting-prompt true
     :show-discard true
     :choices {:card #(and (corp? %)
                        (in-discard? %)

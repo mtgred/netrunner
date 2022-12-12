@@ -308,6 +308,7 @@
                                                     (has-subtype? % "Weapon")))
                                           (:deck runner)) :sorted))
              :async true
+             :waiting-prompt true
              :msg (msg "host " (get-title target) " on itself")
              :effect (req (host state side card target)
                           (if (> x 1)
@@ -331,6 +332,7 @@
                 :cancel-effect (effect (system-msg (str "declines to use " (get-title card)))
                                        (effect-completed eid))
                 :async true
+                :waiting-prompt true
                 :effect (req (move state side target :hand)
                              (if-not (empty? (:hosted (get-card state card)))
                                (effect-completed state side eid)
@@ -3364,6 +3366,7 @@
                  :label "Choose a server (start of turn)"
                  :choices (req (conj servers "No server"))
                  :interactive (req true)
+                 :waiting-prompt true
                  :msg (msg "target " target)
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
