@@ -79,6 +79,11 @@
                       (swap! app-state assoc :editing false :current-game nil))))}
    (tr [:lobby.leave "Leave"])])
 
+(defn singleton-info-box [current-game]
+  (when (:singleton @current-game)
+    [:div.infobox.blue-shade
+     [:p "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."]]))
+
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
     (if (< 1 (count @players))
@@ -185,6 +190,7 @@
      [button-bar user gameid players]
      [:div.content
       [:h2 (:title @current-game)]
+      [singleton-info-box current-game]
       (when-not (every? :deck @players)
         [:div.flash-message
          (tr [:lobby.waiting "Waiting players deck selection"])])
