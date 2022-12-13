@@ -193,6 +193,13 @@
                                    (jack-out eid))}
      :no-ability {:effect (effect (system-msg :runner (str "uses " (:title card) " to continue the run")))}}}))
 
+(defn get-x-fn []
+  (fn get-x-fn-inner
+    [state side eid card targets]
+    (if-let [x-fn (and (not (:disabled card)) (:x-fn card))]
+      (x-fn state side eid card targets)
+      0)))
+
 (defn make-current-event-handler
   [title ability]
   (let [card (server-card title)]
@@ -232,13 +239,6 @@
     :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))
-
-;;; Helper for x-fn cards
-(def x-fn
-  (req
-    (if-let [x-fn (and (not (:disabled card)) (:x-fn card))]
-      (x-fn state side eid card targets)
-      0)))
 
 (defmacro defcard
   [title ability]

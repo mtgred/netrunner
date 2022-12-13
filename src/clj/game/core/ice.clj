@@ -268,7 +268,7 @@
                               :source-type :subroutine})]
      (resolve-subroutine! state side eid ice sub)))
   ([state side eid ice sub]
-   (wait-for (trigger-event-simult state side :pre-resolve-subroutine nil sub ice)
+   (wait-for (trigger-event-simult state side (make-eid state eid) :pre-resolve-subroutine nil sub ice)
              ;; this is for cards like marcus batty
              (when-not (:exernal-trigger sub)
                (update! state :corp (resolve-subroutine ice sub)))
@@ -276,7 +276,7 @@
              (let [replacement (:replace-subroutine (get-current-encounter state))
                    sub (or (when replacement (assoc replacement :index (:index sub))) sub)]
                (update-current-encounter state :replace-subroutine nil)
-               (wait-for (resolve-ability state side (:sub-effect sub) (get-card state ice) nil)
+               (wait-for (resolve-ability state side (make-eid state eid) (:sub-effect sub) (get-card state ice) nil)
                          (queue-event state :subroutine-fired {:sub sub :ice ice})
                          (checkpoint state nil eid))))))
 

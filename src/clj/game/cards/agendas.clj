@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
-                                  offer-jack-out reorder-choice x-fn]]
+                                  offer-jack-out reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -380,7 +380,7 @@
 
 (defcard "Blood in the Water"
   {:x-fn (req (count (:hand runner)))
-   :advancement-requirement x-fn})
+   :advancement-requirement (get-x-fn)})
 
 (defcard "Brain Rewiring"
   {:on-score

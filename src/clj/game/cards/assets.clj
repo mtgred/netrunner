@@ -11,16 +11,15 @@
                                     lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed
                             installable-servers]]
-   [game.core.card :refer [active? agenda? asset? can-be-advanced? corp? event?
+   [game.core.card :refer [agenda? asset? can-be-advanced? corp? event?
                            faceup? fake-identity? get-advancement-requirement
-                           get-agenda-points get-card get-counters get-title
-                           get-zone hardware? has-subtype? ice? identity?
-                           in-deck? in-discard? in-hand? in-server? installed? is-type? operation?
-                           program? resource? rezzed? runner? upgrade?]]
+                           get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype? ice?
+                           identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
+                           operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
-                                  trash-on-empty x-fn]]
+                                  trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [register-floating-effect]]
@@ -39,15 +38,13 @@
    [game.core.identities :refer [disable-card enable-card]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
-   [game.core.link :refer [get-link]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
                              swap-cards swap-installed trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
-   [game.core.payment :refer [cost-value]]
+   [game.core.payment :refer [can-pay? cost-value]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
-   [game.core.payment :refer [can-pay?]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.say :refer [system-msg]]
@@ -62,7 +59,8 @@
    [game.core.winning :refer [check-win-by-agenda win]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
-   [jinteki.utils :refer :all]))
+   [jinteki.utils :refer :all]
+   [game.core.link :refer [get-link]]))
 
 ;;; Asset-specific helpers
 (defn- advance-ambush
@@ -1179,7 +1177,7 @@
    :derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
    :abilities [{:label "Trace X - do 1 core damage (start of turn)"
-                :trace {:base x-fn
+                :trace {:base (get-x-fn)
                         :successful
                         {:async true
                          :msg "do 1 core damage"
@@ -1600,9 +1598,8 @@
      :abilities [(set-autoresolve :auto-fire "Net Analytics")]}))
 
 (defcard "Net Police"
-  {:x-fn (req (count (filter #(has-subtype? % "Link")
-                             (all-active-installed state :runner))))
-   :recurring x-fn
+  {:x-fn (req (get-link state))
+   :recurring (get-x-fn)
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 

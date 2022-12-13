@@ -16,7 +16,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-rez-toast defcard offer-jack-out
-                                  reorder-choice x-fn]]
+                                  reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -860,7 +860,7 @@
 
 (defcard "Khondi Plaza"
   {:x-fn (req (count (get-remotes state)))
-   :recurring x-fn
+   :recurring (get-x-fn)
    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
                                                (ice? target)
                                                (= (card->server state card) (card->server state target))))

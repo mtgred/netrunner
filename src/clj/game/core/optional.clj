@@ -54,7 +54,7 @@
       card targets)
     (effect-completed state side eid)))
 
-(register-ability-type :optional check-optional)
+(register-ability-type :optional #'check-optional)
 
 (defn never?
   "Returns true if is argument is :never."

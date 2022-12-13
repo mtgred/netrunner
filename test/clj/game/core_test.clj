@@ -580,9 +580,10 @@
 (defn score-agenda-impl
   [state card]
   (let [card (get-card state card)
-        advancementcost (:advancementcost card)]
+        advancementcost (:current-advancement-requirement card)]
     (ensure-no-prompts state)
     (is' (some? card) (str (:title card) " exists"))
+    (is' (number? advancementcost) (str (:title card) " has an advancement cost"))
     (when (some? card)
       (core/gain state :corp :click advancementcost :credit advancementcost)
       (core/fake-checkpoint state)
