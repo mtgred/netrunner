@@ -8,7 +8,7 @@ on:
 
 jobs:
   stylus:
-    name: 'Check stylus css'
+    name: 'Check Stylus css'
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v3
@@ -21,7 +21,7 @@ jobs:
        run: npm run css:release
 
   clojurescript:
-    name: 'Compile clojurescript'
+    name: 'Compile Clojurescript'
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v3
@@ -34,7 +34,7 @@ jobs:
        run: npm run cljs:release
 
   clojure-tests:
-    name: 'Compile clojurescript'
+    name: 'Run jnet tests'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
