@@ -16,7 +16,7 @@
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
                                   do-brain-damage do-net-damage offer-jack-out
-                                  reorder-choice x-fn]]
+                                  reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [get-effects register-floating-effect unregister-constant-effects]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -2847,12 +2847,12 @@
               (effect-completed state side eid)))]
     {:x-fn (req (next-ice-count corp))
      :subroutines [{:label "Do X net damage"
-                    :msg (msg "do " (x-fn state side eid card targets) " net damage")
-                    :effect (effect (damage eid :net (x-fn state side eid card targets) {:card card}))}
+                    :msg (msg "do " ((get-x-fn) state side eid card targets) " net damage")
+                    :effect (effect (damage eid :net ((get-x-fn) state side eid card targets) {:card card}))}
                    {:label "Trash X programs"
                     :async true
                     :effect (req (trash-programs (min (count (filter program? (all-active-installed state :runner)))
-                                                      (x-fn state side eid card targets))
+                                                      ((get-x-fn) state side eid card targets))
                                                  state side card eid))}]}))
 
 (defcard "NEXT Opal"
@@ -2882,7 +2882,7 @@
    :subroutines [{:label "Draw up to X cards"
                   :prompt "Draw how many cards?"
                   :msg (msg "draw " (quantify target "card"))
-                  :choices {:number #'x-fn
+                  :choices {:number (get-x-fn)
                             :default (req 1)}
                   :async true
                   :effect (effect (draw eid target))}
@@ -2891,7 +2891,7 @@
                   :show-discard  true
                   :choices {:card #(and (corp? %)
                                         (in-discard? %))
-                            :max #'x-fn}
+                            :max (get-x-fn)}
                   :effect (req (doseq [c targets]
                                  (move state side c :hand)))
                   :msg (msg "add "
@@ -2906,7 +2906,7 @@
                   :prompt "Choose cards to shuffle into R&D"
                   :choices {:card #(and (corp? %)
                                         (in-hand? %))
-                            :max #'x-fn}
+                            :max (get-x-fn)}
                   :effect (req (doseq [c targets]
                                  (move state :corp c :deck))
                                (shuffle! state :corp :deck))
@@ -2940,7 +2940,7 @@
     :effect (effect (add-prop card :advance-counter 1 {:placed true})
                     (continue-ability
                       (let [card (get-card state card)
-                            counters (x-fn state side eid card targets)]
+                            counters ((get-x-fn) state side eid card targets)]
                         {:optional
                          {:prompt (str "Place " (quantify counters "advancement counter") " on another ice?")
                           :yes-ability
@@ -3243,7 +3243,7 @@
 
 (defcard "Searchlight"
   (let [sub {:label "Trace X - Give the Runner 1 tag"
-             :trace {:base #'x-fn
+             :trace {:base (get-x-fn)
                      :label "Give the Runner 1 tag"
                      :successful (give-tags 1)}}]
     {:x-fn (req (get-counters card :advancement))
@@ -3444,14 +3444,14 @@
                  trash-program-sub]})
 
 (defcard "Surveyor"
-  {:constant-effects [(ice-strength-bonus #'x-fn)]
+  {:constant-effects [(ice-strength-bonus (get-x-fn))]
    :x-fn (req (* 2 (count (:ices (card->server state card)))))
    :subroutines [{:label "Trace X - Give the Runner 2 tags"
-                  :trace {:base #'x-fn
+                  :trace {:base (get-x-fn)
                           :label "Give the Runner 2 tags"
                           :successful (give-tags 2)}}
                  {:label "Trace X - End the run"
-                  :trace {:base #'x-fn
+                  :trace {:base (get-x-fn)
                           :label "End the run"
                           :successful end-the-run}}]})
 

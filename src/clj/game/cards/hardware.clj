@@ -15,7 +15,7 @@
    [game.core.damage :refer [chosen-damage damage damage-prevent
                              enable-runner-damage-choice runner-can-choose-damage?]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
-                                  reorder-choice trash-on-empty x-fn]]
+                                  reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect
                               unregister-effects-for-card unregister-floating-effects]]
@@ -274,10 +274,10 @@
 (defcard "Brain Chip"
   {:x-fn (req (max (get-in @state [:runner :agenda-point] 0) 0))
    :constant-effects [(mu+
-                        (req (pos? (x-fn state side eid card targets)))
+                        (req (pos? ((get-x-fn) state side eid card targets)))
                         ;; [:regular N] is needed to make the mu system work
-                        (req [:regular (x-fn state side eid card targets)]))
-                      (runner-hand-size+ #'x-fn)]})
+                        (req [:regular ((get-x-fn) state side eid card targets)]))
+                      (runner-hand-size+ (get-x-fn))]})
 
 (defcard "Buffer Drive"
   (let [grip-or-stack-trash?
@@ -1188,7 +1188,7 @@
 (defcard "Māui"
   {:x-fn (req (count (get-in corp [:servers :hq :ices])))
    :constant-effects [(mu+ 2)]
-   :recurring #'x-fn
+   :recurring (get-x-fn)
    :interactions {:pay-credits {:req (req (= [:hq] (get-in @state [:run :server])))
                                 :type :recurring}}})
 

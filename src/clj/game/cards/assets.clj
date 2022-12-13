@@ -19,7 +19,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
-                                  trash-on-empty x-fn]]
+                                  trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [register-floating-effect]]
@@ -1177,7 +1177,7 @@
    :derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
    :abilities [{:label "Trace X - do 1 core damage (start of turn)"
-                :trace {:base #'x-fn
+                :trace {:base (get-x-fn)
                         :successful
                         {:async true
                          :msg "do 1 core damage"
@@ -1599,7 +1599,7 @@
 
 (defcard "Net Police"
   {:x-fn (req (get-link state))
-   :recurring #'x-fn
+   :recurring (get-x-fn)
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 

@@ -18,7 +18,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-brain-damage
-                                  reorder-choice x-fn]]
+                                  reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -810,8 +810,8 @@
     :effect
     (req (let [draw {:async true
                      :prompt "Draw how many cards?"
-                     :choices {:number #'x-fn
-                               :max #'x-fn
+                     :choices {:number (get-x-fn)
+                               :max (get-x-fn)
                                :default (req 1)}
                      :msg (msg "draw " (quantify target "card"))
                      :effect (effect (draw eid target))}
@@ -825,14 +825,14 @@
                                 :effect (req (wait-for
                                                (corp-install state side target server nil)
                                                (let [server (remote->name (second (:zone async-result)))]
-                                                 (if (< n (x-fn state side eid card targets))
+                                                 (if (< n ((get-x-fn) state side eid card targets))
                                                    (continue-ability state side (install-cards server (inc n)) card nil)
                                                    (effect-completed state side eid)))))})
                select-server {:async true
                               :prompt "Choose a server"
                               :choices (req (conj (vec (get-remote-names state)) "New remote"))
                               :effect (effect (continue-ability (install-cards target 1) card nil))}]
-           (wait-for (gain-credits state :corp (x-fn state side eid card targets))
+           (wait-for (gain-credits state :corp ((get-x-fn) state side eid card targets))
                      (wait-for (resolve-ability state side draw card nil)
                                (continue-ability state side select-server card nil)))))}})
 

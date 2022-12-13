@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty x-fn]]
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect
                               unregister-effects-for-card]]
@@ -1031,7 +1031,7 @@
                                  :msg "place 1 virus counter"
                                  :req (req (:runner-phase-12 @state))
                                  :effect (effect (add-counter card :virus 1))}]
-                    :constant-effects [(breaker-strength-bonus #'x-fn)]}))
+                    :constant-effects [(breaker-strength-bonus (get-x-fn))]}))
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
@@ -2314,7 +2314,7 @@
 
 (defcard "Pheromones"
   {:x-fn (req (get-counters card :virus))
-   :recurring #'x-fn
+   :recurring (get-x-fn)
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :hq (target-server context)))
