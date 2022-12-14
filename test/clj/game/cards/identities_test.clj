@@ -4613,6 +4613,18 @@
         (click-prompt state :runner "Pay [Click] and 2 [Credits]")))
     (is (= 0 (:brain-damage (get-runner))) "Runner took no core damage")))
 
+(deftest thule-subsea-safety-below-cannot-pay
+  (do-game
+    (new-game {:corp {:id "Thule Subsea: Safety Below"
+                      :deck ["Project Vitruvius"]}})
+    (take-credits state :corp)
+    (click-credit state :runner)
+    (click-credit state :runner)
+    (click-credit state :runner)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (is (= 1 (count (:choices (prompt-map :runner)))))))
+
 (deftest thule-subsea-safety-below-suffer
   (do-game
     (new-game {:corp {:id "Thule Subsea: Safety Below"
