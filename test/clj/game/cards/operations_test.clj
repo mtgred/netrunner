@@ -3463,6 +3463,24 @@
       (take-credits state :corp)
       (is (= 4 (:click (get-runner))) "Runner has all clicks the following turn")))
 
+(deftest riot-suppression-damage-cannot-be-prevented
+    ;; Take 1 brain damage
+    (do-game
+      (new-game {:corp {:deck ["Riot Suppression" "Adonis Campaign"]}
+                 :runner {:hand ["Caldera"]
+                          :credits 20}})
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Caldera")
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Riot Suppression")
+      (is (empty? (:discard (get-runner))) "Runner discard is empty")
+      (is (zero? (:brain-damage (get-runner))) "Runner starts with no core damage")
+      (click-prompt state :runner "Suffer 1 core damage")
+      (is (no-prompt? state :runner) "Cannot use Caldera to prevent core damage")))
+
 (deftest riot-suppression-lose-3-clicks
     ;; Lose 3 clicks
     (do-game

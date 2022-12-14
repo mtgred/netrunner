@@ -2168,7 +2168,7 @@
     :msg (msg "force the Runner to " (decapitalize target))
     :choices ["Suffer 1 core damage" "Get 3 fewer [Click] on the next turn"]
     :effect (req (if (= target "Suffer 1 core damage")
-                   (damage state :runner eid :brain 1 {:card card})
+                   (pay state :runner eid card [:brain 1])
                    (do (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
                        (effect-completed state side eid))))}})
 
