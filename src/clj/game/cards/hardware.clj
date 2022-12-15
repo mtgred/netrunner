@@ -97,7 +97,7 @@
    :constant-effects [{:type :gain-subtype
                        :req (req (same-card? target (:host card)))
                        :value "AI"}]
-   :abilities [(break-sub [:click 1] 1 "All" {:req (req true)})]})
+   :abilities [(break-sub [:lose-click 1] 1 "All" {:req (req true)})]})
 
 (defcard "Akamatsu Mem Chip"
   {:constant-effects [(mu+ 1)]})
