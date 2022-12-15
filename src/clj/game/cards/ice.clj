@@ -2192,37 +2192,30 @@
    :subroutines [end-the-run]})
 
 (defcard "Kamali 1.0"
-  (letfn [(better-name [kind] (if (= "hardware" kind) "piece of hardware" kind))
-          (runner-trash [kind]
-            {:prompt (str "Choose an installed " (better-name kind) " to trash")
-             :label (str "Trash an installed " (better-name kind))
-             :msg (msg "trash " (:title target))
-             :async true
-             :choices {:card #(and (installed? %)
-                                   (is-type? % (capitalize kind)))}
-             :cancel-effect (effect (system-msg (str "fails to trash an installed " (better-name kind)))
-                                    (effect-completed eid))
-             :effect (effect (trash eid target {:cause :subroutine}))})
-          (sub-map [kind]
+  (letfn [(sub-map [cost]
             {:player :runner
              :async true
              :waiting-prompt true
              :prompt "Choose one"
-             :choices ["Take 1 core damage" (str "Trash an installed " (better-name kind))]
+             :choices (req ["Take 1 core damage"
+                            (when (can-pay? state :runner eid card nil cost)
+                              (capitalize (build-cost-label cost)))])
              :msg (msg (if (= target "Take 1 core damage")
                          "do 1 core damage"
                          (str "force the runner to " (decapitalize target))))
              :effect (req (if (= target "Take 1 core damage")
                             (damage state :runner eid :brain 1 {:card card})
-                            (continue-ability state :runner (runner-trash kind) card nil)))})
-          (brain-trash [kind]
-            {:label (str "Force the Runner to take 1 core damage or trash an installed " (better-name kind))
+                            (wait-for (pay state :runner (make-eid state eid) card cost)
+                                      (system-msg state :runner (:msg async-result))
+                                      (effect-completed state side eid))))})
+          (brain-damage-unless-runner-pays [cost]
+            {:label (str "Force the Runner to take 1 core damage or " (build-cost-label cost))
              :async true
-             :effect (req (wait-for (resolve-ability state side (sub-map kind) card nil)
+             :effect (req (wait-for (resolve-ability state side (sub-map cost) card nil)
                                     (clear-wait-prompt state :corp)))})]
-    {:subroutines [(brain-trash "resource")
-                   (brain-trash "hardware")
-                   (brain-trash "program")]
+    {:subroutines [(brain-damage-unless-runner-pays [:resource 1])
+                   (brain-damage-unless-runner-pays [:hardware 1])
+                   (brain-damage-unless-runner-pays [:program 1])]
      :runner-abilities [(bioroid-break 1 1)]}))
 
 (defcard "Karunā"

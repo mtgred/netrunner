@@ -3535,16 +3535,32 @@
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")
       (card-subroutine state :corp kamali 1)
       (is (empty? (:discard (get-runner))) "Runner starts with no discarded cards")
-      (click-prompt state :runner "Trash an installed piece of hardware")
+      (click-prompt state :runner "Trash 1 installed piece of hardware")
       (click-card state :runner (get-hardware state 0))
       (is (empty? (get-hardware state)) "Astrolabe trashed")
       (is (= 1 (count (:discard (get-runner)))) "Runner trashed 1 card")
       (card-subroutine state :corp kamali 2)
       (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 discarded card")
-      (click-prompt state :runner "Trash an installed program")
+      (click-prompt state :runner "Trash 1 installed program")
       (click-card state :runner (get-program state 0))
       (is (empty? (get-program state)) "Cache trashed")
       (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
+
+(deftest kamali-1-0-runner-has-no-installed-cards
+  ;; Kamali 1.0
+  (do-game
+    (new-game {:corp {:deck ["Kamali 1.0"]}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-from-hand state :corp "Kamali 1.0" "HQ")
+    (take-credits state :corp)
+    (let [kamali (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp kamali)
+      (run-continue state)
+      (dotimes [i 3]
+        (card-subroutine state :corp kamali i)
+        (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
+        (click-prompt state :runner "Take 1 core damage")))))
 
 (deftest karuna
   (do-game
