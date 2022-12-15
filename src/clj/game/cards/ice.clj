@@ -1593,18 +1593,7 @@
                                 (update-all-ice state side)
                                 (update-all-icebreakers state side))
                               (effect-completed state side eid)))}}}]
-   :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
-                  :player :runner
-                  :async true
-                  :prompt "Choose one"
-                  :waiting-prompt true
-                  :choices ["Suffer 2 net damage" "End the run"]
-                  :msg (msg (if (= target "End the run")
-                              (decapitalize target)
-                              (str "force the Runner to " (decapitalize target))))
-                  :effect (req (if (= target "End the run")
-                                 (end-run state :corp eid card)
-                                 (damage state :runner eid :net 2 {:card card :unpreventable true})))}]
+   :subroutines [(end-the-run-unless-runner-pays [:net 2])]
    :abilities [(set-autoresolve :auto-fire "Formicary rezzing and moving itself on approach")]})
 
 (defcard "Free Lunch"
