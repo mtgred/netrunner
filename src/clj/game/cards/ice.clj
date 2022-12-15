@@ -2714,28 +2714,26 @@
                                            card nil)))}]})
 
 (defcard "Mlinzi"
-  (letfn [(net-or-trash [net-dmg mill-cnt]
+  (letfn [(net-or-mill [net-dmg mill-cnt]
             {:label (str "Do " net-dmg " net damage")
              :player :runner
              :waiting-prompt true
              :prompt "Choose one"
              :choices (req [(str "Take " net-dmg " net damage")
-                            (when (<= mill-cnt (count (:deck runner)))
-                              (str "Trash the top " (quantify mill-cnt "card") " of the stack"))])
+                            (when (can-pay? state :runner eid card nil [:trash-from-deck mill-cnt])
+                              (capitalize (build-cost-label [:trash-from-deck mill-cnt])))])
              :async true
              :effect (req (if (= target (str "Take " net-dmg " net damage"))
                             (do (system-msg state :corp
                                             (str "uses Mlinzi to do "
                                                  net-dmg " net damage"))
                                 (damage state :runner eid :net net-dmg {:card card}))
-                            (do (system-msg state :corp
-                                            (str "uses Mlinzi to trash "
-                                                 (enumerate-str (map :title (take mill-cnt (:deck runner))))
-                                                 " from the runner's stack"))
-                                (mill state :runner eid :runner mill-cnt))))})]
-    {:subroutines [(net-or-trash 1 2)
-                   (net-or-trash 2 3)
-                   (net-or-trash 3 4)]}))
+                            (wait-for (pay state :runner (make-eid state eid) card [:trash-from-deck mill-cnt])
+                                      (system-msg state :runner (:msg async-result))
+                                      (effect-completed state side eid))))})]
+    {:subroutines [(net-or-mill 1 2)
+                   (net-or-mill 2 3)
+                   (net-or-mill 3 4)]}))
 
 (defcard "Mother Goddess"
   (let [mg {:req (req (ice? target))

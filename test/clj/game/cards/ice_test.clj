@@ -4671,32 +4671,32 @@
       ;; Subroutine 1
       (card-subroutine state :corp (refresh ml) 0)
       (is (= 10 (count (:hand (get-runner)))) "Runner has 10 cards in hand")
-      (is (= ["Take 1 net damage" "Trash the top 2 cards of the stack"] (prompt-buttons :runner)))
+      (is (= ["Take 1 net damage" "Trash 2 cards from the top of your deck"] (prompt-buttons :runner)))
       (click-prompt state :runner "Take 1 net damage")
       (is (= 1 (count (:discard (get-runner)))) "Runner trashes 1 card in hand")
       (is (= 9 (count (:hand (get-runner)))) "Runner trashes 1 card in hand")
       (card-subroutine state :corp (refresh ml) 0)
-      (click-prompt state :runner "Trash the top 2 cards of the stack")
+      (click-prompt state :runner "Trash 2 cards from the top of your deck")
       (is (= 3 (count (:discard (get-runner)))) "Runner trashes 2 cards in deck")
       (is (= 8 (count (:deck (get-runner)))) "Runner trashes 2 cards in deck")
       ;; Subroutine 2
       (card-subroutine state :corp (refresh ml) 1)
-      (is (= ["Take 2 net damage" "Trash the top 3 cards of the stack"] (prompt-buttons :runner)))
+      (is (= ["Take 2 net damage" "Trash 3 cards from the top of your deck"] (prompt-buttons :runner)))
       (click-prompt state :runner "Take 2 net damage")
       (is (= 5 (count (:discard (get-runner)))) "Runner trashes 2 cards in hand")
       (is (= 7 (count (:hand (get-runner)))) "Runner trashes 2 cards in hand")
       (card-subroutine state :corp (refresh ml) 1)
-      (click-prompt state :runner "Trash the top 3 cards of the stack")
+      (click-prompt state :runner "Trash 3 cards from the top of your deck")
       (is (= 8 (count (:discard (get-runner)))) "Runner trashes 3 cards in deck")
       (is (= 5 (count (:deck (get-runner)))) "Runner trashes 3 cards in deck")
       ;; Subroutine 3
       (card-subroutine state :corp (refresh ml) 2)
-      (is (= ["Take 3 net damage" "Trash the top 4 cards of the stack"] (prompt-buttons :runner)))
+      (is (= ["Take 3 net damage" "Trash 4 cards from the top of your deck"] (prompt-buttons :runner)))
       (click-prompt state :runner "Take 3 net damage")
       (is (= 11 (count (:discard (get-runner)))) "Runner trashes 3 cards in hand")
       (is (= 4 (count (:hand (get-runner)))) "Runner trashes 3 cards in hand")
       (card-subroutine state :corp (refresh ml) 2)
-      (click-prompt state :runner "Trash the top 4 cards of the stack")
+      (click-prompt state :runner "Trash 4 cards from the top of your deck")
       (is (= 15 (count (:discard (get-runner)))) "Runner trashes 4 cards in deck")
       (is (= 1 (count (:deck (get-runner)))) "Runner trashes 4 cards in deck"))))
 
@@ -4715,7 +4715,7 @@
       ;; Subroutine 3, 3 net or 4 from stack
       (is (= 1 (count (:hand (get-runner)))) "Runner only has 1 card in hand")
       (card-subroutine state :corp (refresh ml) 2)
-      (is (= ["Take 3 net damage" "Trash the top 4 cards of the stack"] (prompt-buttons :runner))
+      (is (= ["Take 3 net damage" "Trash 4 cards from the top of your deck"] (prompt-buttons :runner))
           "Taking net damage is allowed to be chosen when there aren't enough cards in hand"))))
 
 (deftest mlinzi-not-enough-cards-in-deck
