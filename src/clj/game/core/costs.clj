@@ -782,7 +782,7 @@
   (<= (value cost) (count (get-in @state [:runner :hand]))))
 (defmethod handler :net
   [cost state side eid card actions]
-  (wait-for (damage state side :net (value cost) {:unpreventable true})
+  (wait-for (damage state side :net (value cost) {:unpreventable true :card card})
             (complete-with-result
               state side eid
               {:msg (str "suffers " (count async-result) " net damage")
@@ -799,7 +799,7 @@
   (<= (value cost) (count (get-in @state [:runner :hand]))))
 (defmethod handler :meat
   [cost state side eid card actions]
-  (wait-for (damage state side :meat (value cost) {:unpreventable true})
+  (wait-for (damage state side :meat (value cost) {:unpreventable true :card card})
             (complete-with-result
               state side eid
               {:msg (str "suffers " (count async-result) " meat damage")
@@ -816,7 +816,7 @@
   (<= (value cost) (count (get-in @state [:runner :hand]))))
 (defmethod handler :brain
   [cost state side eid card actions]
-  (wait-for (damage state side :brain (value cost) {:unpreventable true})
+  (wait-for (damage state side :brain (value cost) {:unpreventable true :card card})
             (complete-with-result
               state side eid
               {:msg (str "suffers " (count async-result) " core damage")
