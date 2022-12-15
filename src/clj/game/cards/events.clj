@@ -832,12 +832,12 @@
                                    state side
                                    {:optional
                                     {:prompt "Pay [Click] to access another card?"
-                                     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:lose-click 1]))
+                                     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:click 1]))
                                      :no-ability
                                      {:effect (effect (system-msg (str "declines to use " (:title card) " to access another card")))}
                                      :yes-ability
                                      {:async true
-                                      :cost [:lose-click 1]
+                                      :cost [:click 1]
                                       :msg "access another card"
                                       :effect (req (wait-for
                                                     (resolve-ability state side (deep-dive-access async-result) card nil)
