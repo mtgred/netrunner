@@ -1017,6 +1017,7 @@
         ability
         {:event :runner-trash
          :async true
+         :once :per-turn
          :once-per-instance false
          :req (req (and (valid-trash target)
                         (first-event? state side :runner-trash #(valid-trash (first %)))))
