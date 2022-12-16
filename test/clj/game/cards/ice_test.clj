@@ -3535,16 +3535,32 @@
       (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")
       (card-subroutine state :corp kamali 1)
       (is (empty? (:discard (get-runner))) "Runner starts with no discarded cards")
-      (click-prompt state :runner "Trash an installed piece of hardware")
+      (click-prompt state :runner "Trash 1 installed piece of hardware")
       (click-card state :runner (get-hardware state 0))
       (is (empty? (get-hardware state)) "Astrolabe trashed")
       (is (= 1 (count (:discard (get-runner)))) "Runner trashed 1 card")
       (card-subroutine state :corp kamali 2)
       (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 discarded card")
-      (click-prompt state :runner "Trash an installed program")
+      (click-prompt state :runner "Trash 1 installed program")
       (click-card state :runner (get-program state 0))
       (is (empty? (get-program state)) "Cache trashed")
       (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
+
+(deftest kamali-1-0-runner-has-no-installed-cards
+  ;; Kamali 1.0
+  (do-game
+    (new-game {:corp {:deck ["Kamali 1.0"]}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-from-hand state :corp "Kamali 1.0" "HQ")
+    (take-credits state :corp)
+    (let [kamali (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp kamali)
+      (run-continue state)
+      (dotimes [i 3]
+        (card-subroutine state :corp kamali i)
+        (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
+        (click-prompt state :runner "Take 1 core damage")))))
 
 (deftest karuna
   (do-game
@@ -4655,32 +4671,32 @@
       ;; Subroutine 1
       (card-subroutine state :corp (refresh ml) 0)
       (is (= 10 (count (:hand (get-runner)))) "Runner has 10 cards in hand")
-      (is (= ["Take 1 net damage" "Trash the top 2 cards of the stack"] (prompt-buttons :runner)))
+      (is (= ["Take 1 net damage" "Trash 2 cards from the top of your deck"] (prompt-buttons :runner)))
       (click-prompt state :runner "Take 1 net damage")
       (is (= 1 (count (:discard (get-runner)))) "Runner trashes 1 card in hand")
       (is (= 9 (count (:hand (get-runner)))) "Runner trashes 1 card in hand")
       (card-subroutine state :corp (refresh ml) 0)
-      (click-prompt state :runner "Trash the top 2 cards of the stack")
+      (click-prompt state :runner "Trash 2 cards from the top of your deck")
       (is (= 3 (count (:discard (get-runner)))) "Runner trashes 2 cards in deck")
       (is (= 8 (count (:deck (get-runner)))) "Runner trashes 2 cards in deck")
       ;; Subroutine 2
       (card-subroutine state :corp (refresh ml) 1)
-      (is (= ["Take 2 net damage" "Trash the top 3 cards of the stack"] (prompt-buttons :runner)))
+      (is (= ["Take 2 net damage" "Trash 3 cards from the top of your deck"] (prompt-buttons :runner)))
       (click-prompt state :runner "Take 2 net damage")
       (is (= 5 (count (:discard (get-runner)))) "Runner trashes 2 cards in hand")
       (is (= 7 (count (:hand (get-runner)))) "Runner trashes 2 cards in hand")
       (card-subroutine state :corp (refresh ml) 1)
-      (click-prompt state :runner "Trash the top 3 cards of the stack")
+      (click-prompt state :runner "Trash 3 cards from the top of your deck")
       (is (= 8 (count (:discard (get-runner)))) "Runner trashes 3 cards in deck")
       (is (= 5 (count (:deck (get-runner)))) "Runner trashes 3 cards in deck")
       ;; Subroutine 3
       (card-subroutine state :corp (refresh ml) 2)
-      (is (= ["Take 3 net damage" "Trash the top 4 cards of the stack"] (prompt-buttons :runner)))
+      (is (= ["Take 3 net damage" "Trash 4 cards from the top of your deck"] (prompt-buttons :runner)))
       (click-prompt state :runner "Take 3 net damage")
       (is (= 11 (count (:discard (get-runner)))) "Runner trashes 3 cards in hand")
       (is (= 4 (count (:hand (get-runner)))) "Runner trashes 3 cards in hand")
       (card-subroutine state :corp (refresh ml) 2)
-      (click-prompt state :runner "Trash the top 4 cards of the stack")
+      (click-prompt state :runner "Trash 4 cards from the top of your deck")
       (is (= 15 (count (:discard (get-runner)))) "Runner trashes 4 cards in deck")
       (is (= 1 (count (:deck (get-runner)))) "Runner trashes 4 cards in deck"))))
 
@@ -4699,7 +4715,7 @@
       ;; Subroutine 3, 3 net or 4 from stack
       (is (= 1 (count (:hand (get-runner)))) "Runner only has 1 card in hand")
       (card-subroutine state :corp (refresh ml) 2)
-      (is (= ["Take 3 net damage" "Trash the top 4 cards of the stack"] (prompt-buttons :runner))
+      (is (= ["Take 3 net damage" "Trash 4 cards from the top of your deck"] (prompt-buttons :runner))
           "Taking net damage is allowed to be chosen when there aren't enough cards in hand"))))
 
 (deftest mlinzi-not-enough-cards-in-deck
