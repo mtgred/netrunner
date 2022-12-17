@@ -863,7 +863,7 @@
    :recurring (get-x-fn)
    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
                                                (ice? target)
-                                               (= (card->server state card) (card->server state target))))
+                                               (same-server? card target)))
                                 :type :recurring}}})
 
 (defcard "La Costa Grid"
