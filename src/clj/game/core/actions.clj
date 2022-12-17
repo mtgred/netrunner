@@ -32,8 +32,8 @@
 (defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (seq (card-ability-cost state side ability card targets))]
     (when (or (nil? cost)
-              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
-      (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}})]
+              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx :ability-targets targets}}) card (:title card) cost))
+      (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx :ability-targets targets}})]
         (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
 
 (defn play-ability

@@ -18,7 +18,7 @@
    [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
-   [game.core.eid :refer [effect-completed make-eid]]
+   [game.core.eid :refer [effect-completed is-basic-advance-action? make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability trigger-event]]
    [game.core.events :refer [event-count first-event?
                              first-successful-run-on-server? no-event? not-last-turn? turn-events]]
@@ -1962,7 +1962,8 @@
 
 (defcard "Weyland Consortium: Because We Built It"
   {:recurring 1
-   :interactions {:pay-credits {:req (req (= :advance (:source-type eid)))
+   :interactions {:pay-credits {:req (req (or (= :advance (:source-type eid))
+                                              (is-basic-advance-action? eid)))
                                 :type :recurring}}})
 
 (defcard "Weyland Consortium: Builder of Nations"
