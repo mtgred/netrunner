@@ -1183,7 +1183,9 @@
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 3 credits from Dedicated Technician Team"
                            (play-from-hand state :corp "Enigma" "Server 1")
-                           (click-card state :corp dtt)))))
+                           (click-card state :corp (refresh dtt))
+                           (click-card state :corp (refresh dtt)))
+        (is (zero? (get-counters (refresh dtt) :recurring)) "Took 2 credits from Dedicated Technician Team"))))
 
 (deftest defense-construct
   (do-game
