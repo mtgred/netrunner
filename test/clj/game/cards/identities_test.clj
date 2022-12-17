@@ -4563,9 +4563,9 @@
       (play-from-hand state :corp "Project Atlas" "New remote")
       (let [atl (get-content state :remote1 0)]
         (core/gain state :corp :click 1)
-        (core/advance state :corp {:card (refresh atl)})
-        (core/advance state :corp {:card (refresh atl)})
-        (core/advance state :corp {:card (refresh atl)})
+        (click-advance state :corp (refresh atl))
+        (click-advance state :corp (refresh atl))
+        (click-advance state :corp (refresh atl))
         (score state :corp (refresh atl))
         (let [scored (get-scored state :corp 0)]
           (is (= 1 (get-counters scored :agenda)) "1 counter added by Titan")))))
@@ -4580,10 +4580,10 @@
       (let [cst (get-content state :remote1 0)
             my (get-content state :remote2 0)]
         (core/gain state :corp :click 3)
-        (core/advance state :corp {:card (refresh cst)})
-        (core/advance state :corp {:card (refresh cst)})
-        (core/advance state :corp {:card (refresh cst)})
-        (core/advance state :corp {:card (refresh cst)})
+        (click-advance state :corp (refresh cst))
+        (click-advance state :corp (refresh cst))
+        (click-advance state :corp (refresh cst))
+        (click-advance state :corp (refresh cst))
         (score state :corp (refresh cst))
         (let [scored (get-scored state :corp 0)]
           (is (= 1 (get-counters (refresh scored) :agenda)) "1 counter added by Titan")
@@ -4651,7 +4651,7 @@
             bwbi (get-in @state [:corp :identity])]
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 1 credit from Weyland BWBI to advance Ice Wall"
-                           (core/advance state :corp {:card (refresh iw)})
+                           (click-advance state :corp (refresh iw))
                            (click-card state :corp bwbi)))))
 
 (deftest weyland-consortium-builder-of-nations-1-meat-damage-per-turn-at-most

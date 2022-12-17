@@ -777,8 +777,8 @@
                :runner {:deck [(qty "Sure Gamble" 4)]}})
     (play-from-hand state :corp "City Works Project" "New remote")
     (let [cwp (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh cwp)})
-      (core/advance state :corp {:card (refresh cwp)}))
+      (click-advance state :corp (refresh cwp))
+      (click-advance state :corp (refresh cwp)))
     (take-credits state :corp)
     (run-empty-server state "Server 1")
     (click-prompt state :runner "Steal")

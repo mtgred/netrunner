@@ -2343,7 +2343,7 @@
                  :runner {:deck ["Film Critic"]}})
       (play-from-hand state :corp "Priority Requisition" "New remote")
       (let [prireq (get-content state :remote1 0)]
-        (dotimes [_ 2] (core/advance state :corp {:card (refresh prireq)}))
+        (dotimes [_ 2] (click-advance state :corp (refresh prireq)))
         (take-credits state :corp)
         (play-from-hand state :runner "Film Critic")
         (run-empty-server state :remote1)
@@ -3554,7 +3554,7 @@
    (play-from-hand state :corp "Metamorph" "Server 1")
    (play-from-hand state :corp "Hokusai Grid" "New remote")
    ;(let [ht (get-content state :remote2 0)]
-   (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
+   (click-advance state :corp (refresh (get-content state :remote1 0)))
    (take-credits state :corp)
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
@@ -3590,7 +3590,7 @@
    (play-from-hand state :corp "Sand Storm" "Server 1")
    (play-from-hand state :corp "Hokusai Grid" "New remote")
    ;(let [ht (get-content state :remote2 0)]
-   (core/advance state :corp {:card (refresh (get-content state :remote1 0))})
+   (click-advance state :corp (refresh (get-content state :remote1 0)))
    (take-credits state :corp)
    (play-from-hand state :runner "Light the Fire!")
    (card-ability state :runner (get-resource state 0) 0)
@@ -6234,12 +6234,12 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (let [ht (get-content state :remote2 0)]
-      (core/advance state :corp {:card (refresh ht)})
-      (core/advance state :corp {:card (refresh ht)})
+      (click-advance state :corp (refresh ht))
+      (click-advance state :corp (refresh ht))
       (score state :corp (refresh ht))
       (is (empty? (:scored (get-corp))) "Hostile Takeover can't be scored with 2 adv")
       (core/gain state :corp :click 1)
-      (core/advance state :corp {:card (refresh ht)})
+      (click-advance state :corp (refresh ht))
       (score state :corp (refresh ht))
       (is (= 1 (:agenda-point (get-corp))) "Hostile Takeover scored with 3 adv")
       (is (= 3 (count (:discard (get-runner)))) "The Source is trashed"))))
@@ -6261,10 +6261,10 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (let [ht (get-content state :remote2 0)]
-      (core/advance state :corp {:card (refresh ht)})
-      (core/advance state :corp {:card (refresh ht)})
+      (click-advance state :corp (refresh ht))
+      (click-advance state :corp (refresh ht))
       (core/gain state :corp :click 1)
-      (core/advance state :corp {:card (refresh ht)})
+      (click-advance state :corp (refresh ht))
       (score state :corp (refresh ht))
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 

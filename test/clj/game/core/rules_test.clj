@@ -177,7 +177,7 @@
       ;; Trying to score without any tokens does not do anything
       (is (not (find-card "Ancestral Imager" (:scored (get-corp)))) "AI not scored")
       (is (not (nil? (get-content state :remote1 0))))
-      (core/advance state :corp {:card (refresh ai)})
+      (click-advance state :corp (refresh ai))
       (score state :corp (refresh ai))
       (is (not (nil? (get-content state :remote1 0)))))))
 
