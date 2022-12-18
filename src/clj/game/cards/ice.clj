@@ -2555,10 +2555,9 @@
                   :effect (req (if (str/starts-with? target "Corp")
                                  (wait-for (gain-credits state :corp 4)
                                            (end-run state :runner eid card))
-                                 (do (as-agenda state :runner card -1)
-                                     (if current-ice
-                                       (encounter-ends state side eid)
-                                       (effect-completed state side eid)))))}]})
+                                 (do (encounter-ends state side (make-eid state eid))
+                                     (as-agenda state :runner card -1)
+                                     (effect-completed state side eid))))}]})
 
 (defcard "Merlin"
   (grail-ice (do-net-damage 2)))
