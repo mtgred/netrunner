@@ -787,6 +787,7 @@
                                                       state :runner
                                                       {:async true
                                                        :prompt "How many cards do you want to access?"
+                                                       :waiting-prompt true
                                                        :choices {:number (req tags)
                                                                  :default (req tags)}
                                                        :effect (effect (access-n-cards eid (:server run) target))}

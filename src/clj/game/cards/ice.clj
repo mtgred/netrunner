@@ -1642,6 +1642,7 @@
 (defcard "Gatekeeper"
   (let [draw-ab {:async true
                  :prompt "How many cards do you want to draw?"
+                 :waiting-prompt true
                  :choices {:number (req 3)
                            :max (req 3)
                            :default (req 1)}
@@ -2860,7 +2861,8 @@
 (defcard "NEXT Sapphire"
   {:x-fn (req (next-ice-count corp))
    :subroutines [{:label "Draw up to X cards"
-                  :prompt "Draw how many cards?"
+                  :prompt "How many cards do you want to draw?"
+                  :waiting-prompt true
                   :msg (msg "draw " (quantify target "card"))
                   :choices {:number (get-x-fn)
                             :default (req 1)}
@@ -3771,7 +3773,8 @@
                  (do-net-damage 2)
                  {:async true
                   :label "Draw up to 2 cards"
-                  :prompt "Draw how many cards?"
+                  :prompt "How many cards do you want to draw?"
+                  :waiting-prompt true
                   :choices {:number (req 2)
                             :max (req 2)
                             :default (req 2)}
