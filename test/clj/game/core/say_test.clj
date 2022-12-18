@@ -1,6 +1,7 @@
 (ns game.core.say-test
   (:require [game.core :as core]
             [game.core.card :refer :all]
+            [game.core.mark :refer :all]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
@@ -211,6 +212,25 @@
         (click-card state :corp (nth (:hand (get-corp)) 0))
         (click-prompt state :corp "Done")
         (is (= 2 (count (:discard (get-corp)))) "Archives has 2 card"))))
+
+  (testing "/set-mark"
+    (let [user {:username "Runner"}]
+      (testing "Setting the mark to a central server"
+        (do-game
+          (new-game)
+          (core/command-parser state :runner {:user user :text "/set-mark HQ"})
+          (is (is-mark? state :hq))))
+      (testing "Setting the mark overrides previous mark, if any"
+        (do-game
+          (new-game)
+          (set-mark state :rd)
+          (core/command-parser state :runner {:user user :text "/set-mark Archives"})
+          (is (is-mark? state :archives))))
+      (testing "Setting the mark doesn't work on remote servers"
+        (do-game
+          (new-game)
+          (core/command-parser state :runner {:user user :text "/set-mark Server 1"})
+          (is (nil? (:mark @state)))))))
 
   (testing "/summon"
     (let [user {:username "Runner"}]

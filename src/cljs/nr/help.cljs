@@ -134,6 +134,10 @@
    {:name "/save-replay"
     :usage "/save-replay"
     :help "Save a replay of the game"}
+   {:name "/set-mark"
+    :has-args :required
+    :usage "/set-mark n"
+    :help "Set the central server n as your mark (Runner only)"}
    {:name "/show-hand"
     :usage "/show-hand"
     :help "Shows your hand in the chat log (does not proc reveal triggers)"}
