@@ -670,15 +670,14 @@
         -1 (:click (get-runner))
         "While resolving the cost, runner doesn't gain any clicks"
         (card-ability state :runner (get-resource state 1) "Gain [Click][Click]"))
-      (is (second-last-log-contains? state "Runner uses Armand \"Geist\" Walker: Tech Lord")
-          "Geist prints first")
-      (is (last-log-contains? state "Runner uses The Class Act")
-          "The Class Act prints second, with no All-nighter yet")
       (changes-val-macro
         2 (:click (get-runner))
         "After resolving the cost, runner gains 2 clicks"
         (click-card state :runner "Magnum Opus"))
-      (is (second-last-log-contains? state "Runner uses The Class Act"))
+      (is (last-n-log-contains? state 2 "Runner uses Armand \"Geist\" Walker: Tech Lord")
+          "Geist prints first")
+      (is (second-last-log-contains? state "Runner uses The Class Act")
+        "The Class Act prints second, with no All-nighter yet")
       (is (last-log-contains? state "trashes All-nighter to use All-nighter")
           "All-nighter is now logged correctly, having paid all costs")))
 
