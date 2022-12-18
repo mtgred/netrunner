@@ -1767,7 +1767,7 @@
                                      (:title target)
                                      " abilities for the remainder of the run")
                            :effect (req (let [t target]
-                                          (add-icon state side card target "H" "red")
+                                          (add-icon state side card target "H" (faction-label card))
                                           (register-events state side card
                                             [{:event :run-ends
                                               :duration :end-of-run
