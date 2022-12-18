@@ -16,7 +16,7 @@
    [game.core.identities :refer [disable-identity disable-card enable-card]]
    [game.core.initializing :refer [card-init deactivate make-card]]
    [game.core.installing :refer [corp-install runner-install]]
-   [game.core.mark :refer [identify-mark]]
+   [game.core.mark :refer [identify-mark set-mark]]
    [game.core.moving :refer [move swap-ice swap-installed trash]]
    [game.core.prompt-state :refer [remove-from-prompt-queue]]
    [game.core.prompts :refer [show-prompt]]
@@ -26,6 +26,7 @@
    [game.core.runs :refer [end-run get-current-encounter jack-out]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg system-say unsafe-say]]
+   [game.core.servers :refer [is-central? unknown->kw]]
    [game.core.set-up :refer [build-card]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [show-error-toast toast]]
@@ -163,6 +164,14 @@
 (defn command-roll [state side value]
   (let [value (constrain-value value 1 1000)]
     (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value))))))
+
+(defn command-set-mark
+  "Sets a central server as the mark for the turn"
+  [state side [server & _]]
+  (when (and (= :runner side)
+             (is-central? (unknown->kw server)))
+    (system-msg state side (str "sets " server " as the mark for this turn"))
+    (set-mark state (unknown->kw server))))
 
 (defn command-undo-click
   "Resets the game state back to start of the click"
@@ -451,6 +460,7 @@
         "/roll"       #(command-roll %1 %2 value)
         "/sabotage"   #(when (= %2 :runner) (resolve-ability %1 %2 (sabotage-ability (constrain-value value 0 1000)) nil nil))
         "/save-replay" command-save-replay
+        "/set-mark"   #(command-set-mark %1 %2 args)
         "/show-hand" #(resolve-ability %1 %2
                                          {:effect (effect (system-msg (str
                                                                        (if (= :corp %2)
