@@ -469,7 +469,7 @@
   {:recurring 2
    :interactions {:pay-credits {:req (req (and (= :corp-install (:source-type eid))
                                                (= (second (get-zone card))
-                                                  (second (server->zone state (:source eid))))))
+                                                  (unknown->kw (:source eid)))))
                                 :type :recurring}}})
 
 (defcard "Defense Construct"
@@ -863,7 +863,7 @@
    :recurring (get-x-fn)
    :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
                                                (ice? target)
-                                               (= (card->server state card) (card->server state target))))
+                                               (same-server? card target)))
                                 :type :recurring}}})
 
 (defcard "La Costa Grid"
