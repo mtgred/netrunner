@@ -809,7 +809,8 @@
     :async true
     :effect
     (req (let [draw {:async true
-                     :prompt "Draw how many cards?"
+                     :prompt "How many cards do you want to draw?"
+                     :waiting-prompt true
                      :choices {:number (get-x-fn)
                                :max (get-x-fn)
                                :default (req 1)}
@@ -1753,6 +1754,7 @@
                                            (program? %))
                                       (all-active-installed state :runner)))))
     :prompt "How many cards do you want to trash from the top of R&D?"
+    :waiting-prompt true
     :choices {:number (req (count (:deck corp)))}
     :msg (msg "trash " (quantify target "card") " from the top of R&D")
     :async true
