@@ -3298,6 +3298,7 @@
                                  (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
         ability {:async true
                  :prompt "Choose a card in the grip"
+                 :waiting-prompt true
                  :choices
                  {:req (req (and (runner? target)
                                  (in-hand? target)

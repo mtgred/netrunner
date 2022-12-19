@@ -6608,6 +6608,25 @@
       (is (= 1 (get-counters (get-program state 0) :virus)) "Datasucker didn't duplicate effects")
       (is (zero? (count-tags state)) "Jesminder avoided Hot Pursuit tag")))
 
+(deftest thunder-art-gallery-on-no-credits
+    ;; Thunder Art Gallery - no install on 0 credits
+    (do-game
+      (new-game {:runner {:hand ["Thunder Art Gallery" "Boomerang" "Citadel Sanctuary" "Self-modifying Code"]}})
+      (gain-tags state :runner 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (play-from-hand state :runner "Citadel Sanctuary")
+      (play-from-hand state :runner "Self-modifying Code")
+      (click-credit state :runner)
+      (click-credit state :runner)
+      (core/end-turn state :runner nil)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "1")
+      (is (= 1 (count (:choices (prompt-map :runner)))) "Only one choice in prompt")
+      (is (= :waiting (prompt-type :corp)))
+      (click-prompt state :runner "Done")
+      (is (no-prompt? state :corp))))
+
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
   (do-game
