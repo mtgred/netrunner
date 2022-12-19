@@ -2962,8 +2962,12 @@
                :msg (msg "trash " (:title target))
                :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                       (effect-completed eid))
-               :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
-                                      (continue-ability state side (search-and-install target) card nil)))}]}))
+               :effect
+               (req (let [facedown-target (facedown? target)]
+                      (wait-for (trash state side target {:unpreventable true :cause-card card})
+                                (if facedown-target
+                                  (effect-completed state side eid)
+                                  (continue-ability state side (search-and-install target) card nil)))))}]}))
 
 (defcard "Wyrm"
   (auto-icebreaker {:abilities [(break-sub 3 1 "All" {:label "break 1 subroutine on a piece of ice with 0 or less strength"

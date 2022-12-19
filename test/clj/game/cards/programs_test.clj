@@ -7233,6 +7233,23 @@
     (is (= 1 (count (:choices (prompt-map :runner)))))
     (click-prompt state :runner "No install")))
 
+(deftest world-tree-trashing-facedown-card
+  (do-game
+    (new-game {:runner {:deck ["Street Peddler" "Sure Gamble"]
+                        :hand ["World Tree" "Harbinger"]
+                        :credits 20}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Harbinger")
+    (play-from-hand state :runner "World Tree")
+    (run-empty-server state "Archives")
+    (click-card state :runner (get-program state 0))
+    (click-prompt state :runner "No install")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (click-card state :runner (-> (get-runner) :rig :facedown first))
+    (is (no-prompt? state :runner) "Select prompt not even shown")))
+
 (deftest wyrm
   ;; Wyrm reduces strength of ice
   (do-game
