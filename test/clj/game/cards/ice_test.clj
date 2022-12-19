@@ -4312,17 +4312,17 @@
     (new-game {:corp {:deck ["Meridian"]}})
     (play-from-hand state :corp "Meridian" "HQ")
     (take-credits state :corp)
+    (run-on state "HQ")
     (let [mer (get-ice state :hq 0)]
       (rez state :corp (refresh mer))
-      (run-on state "HQ")
       (run-continue state)
       (card-subroutine state :corp (refresh mer) 0)
       (click-prompt state :runner "Add Meridian to score area")
-      (is (:run @state) "Run is still live")
-      (run-continue state)
       (is (= 1 (count (:scored (get-runner)))) "In runner score area")
       (is (= -1 (:agenda-point (get-runner))) "Worth -1 agenda points")
-      (is (empty? (get-ice state :hq)) "ice uninstalled"))))
+      (is (empty? (get-ice state :hq)) "ice uninstalled")
+      (run-continue state)
+      (is (not (:run @state)) "Run has ended"))))
 
 (deftest meru-mati
   (do-game
