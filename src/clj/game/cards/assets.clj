@@ -2332,8 +2332,8 @@
 
 (defcard "Superdeep Borehole"
   ;; the "when it is empty" text is reliant on the card being loaded
-  {:on-rez {:effect (req (update! state side (assoc-in (get-card state card) [:special :borehole-valid] true))
-                         (add-counter state side card :bad-publicity 6))}
+  {:on-rez {:effect (req (add-counter state side card :bad-publicity 6)
+                         (update! state side (assoc-in (get-card state card) [:special :borehole-valid] true)))}
    :events [{:event :corp-turn-begins
              :msg (msg "take 1 bad publicity from " (:title card))
              :async true
@@ -2341,7 +2341,7 @@
                           (gain-bad-publicity state :corp eid 1))}
             {:event :counter-added
              :req (req (and (same-card? card target)
-                            (not (pos? (get-counters (get-card state card) :power)))
+                            (not (pos? (get-counters (get-card state card) :bad-publicity)))
                             (:borehole-valid (:special card))))
              :msg "win the game"
              :effect (req (win state :corp "Superdeep Borehole extinction event"))}]})

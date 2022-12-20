@@ -5017,27 +5017,33 @@
     (take-credits state :corp)
     (let [bore (get-content state :remote1 0)]
       (rez state :corp (refresh bore))
+      (is (= nil (:reason @state)) "no win happened yet")
       ;;6 counters on superdeep
       (is (= 6 (get-counters (refresh bore) :bad-publicity)) "6 bp counters")
       (take-credits state :runner)
       (take-credits state :corp)
       ;;6 counters on superdeep
+      (is (= nil (:reason @state)) "no win happened yet")
       (is (= 5 (get-counters (refresh bore) :bad-publicity)) "5 bp counters")
       (take-credits state :runner)
       (take-credits state :corp)
       ;;6 counters on superdeep
+      (is (= nil (:reason @state)) "no win happened yet")
       (is (= 4 (get-counters (refresh bore) :bad-publicity)) "4 bp counters")
       (take-credits state :runner)
       (take-credits state :corp)
       ;;6 counters on superdeep
+      (is (= nil (:reason @state)) "no win happened yet")
       (is (= 3 (get-counters (refresh bore) :bad-publicity)) "3 bp counters")
       (take-credits state :runner)
       (take-credits state :corp)
       ;;6 counters on superdeep
+      (is (= nil (:reason @state)) "no win happened yet")
       (is (= 2 (get-counters (refresh bore) :bad-publicity)) "2 bp counters")
       (take-credits state :runner)
       (take-credits state :corp)
       ;;6 counters on superdeep
+      (is (= nil (:reason @state)) "no win happened yet")
       (is (= 1 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
       (take-credits state :runner)
       (is (= 0 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
@@ -5049,6 +5055,7 @@
                       :deck [(qty "Hedge Fund" 50)]}})
     (play-from-hand state :corp "Superdeep Borehole" "New remote")
     (rez state :corp (get-content state :remote1 0))
+    (is (= nil (:reason @state)) "no win happened yet")
     (is (not (= :corp (:winner @state))) "Corp doesn't win")))
 
 (deftest superdeep-borehole-doesn't-instantly-win-when-disabled
@@ -5063,6 +5070,7 @@
     (click-prompt state :runner "Server 1")
     (rez state :corp (get-content state :remote1 0))
     (run-jack-out state)
+    (is (= nil (:reason @state)) "no win happened yet")
     (is (not (= :corp (:winner @state))) "Corp doesn't win")))
 
 (deftest synth-dna-modification
