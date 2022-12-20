@@ -45,7 +45,7 @@
   ([state side eid n {:keys [suppress-event no-update-draw-stats]}]
    (if (zero? n)
      (effect-completed state side eid)
-     (wait-for (trigger-event-simult state side (make-eid state eid) (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
+     (wait-for (trigger-event-simult state side (make-eid state eid) (if (= side :corp) :pre-corp-draw :pre-runner-draw) nil n)
        (let [n (+ n (get-in @state [:bonus :draw] 0))
              draws-wanted n
              active-player (get-in @state [:active-player])
