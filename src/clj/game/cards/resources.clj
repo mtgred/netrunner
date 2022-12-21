@@ -69,7 +69,7 @@
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? target-server unknown->kw
                               zone->name zones->sorted-names]]
-   [game.core.set-aside :refer [set-aside get-set-aside]]
+   [game.core.set-aside :refer [set-aside get-set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
    [game.core.to-string :refer [card-str]]
@@ -3057,29 +3057,33 @@
                       :effect (effect (draw :runner eid 4))}]
     {:events [(assoc draw-ability :event :corp-turn-ends)
               (assoc draw-ability :event :runner-turn-ends)
-              (first-time-draw-bonus :runner 1)
-              {:event :runner-draw
-               :req (req (and (first-event? state :runner :runner-draw)
-                              (< 1 (count runner-currently-drawing))))
+              {:event :pre-runner-draw
+               :req (req (and (first-event? state :runner :pre-runner-draw)
+                              (< 1 (count (:deck runner)))
+                              (pos? target)))
                :once :per-turn
                :once-key :the-class-act-put-bottom
                :async true
                :effect
-               (effect (continue-ability
-                         (when-let [drawn runner-currently-drawing]
-                           {:waiting-prompt true
-                            :prompt "Choose 1 card to add to the bottom of the stack"
-                            :choices {:card #(some (fn [c] (same-card? c %)) drawn)
-                                      :all true}
-                            :effect (req (system-msg
-                                           state side
-                                           (str "uses The Class Act to add the "
-                                                (pprint/cl-format nil "~:R"
-                                                                  (inc (first (keep-indexed #(when (same-card? target %2) %1) drawn))))
-                                                " card drawn to the bottom of the stack"))
-                                         (move state :runner target :deck)
-                                         (remove-from-currently-drawing state side target))})
-                         card nil))}]}))
+               (req (set-aside-for-me state :runner eid (take (inc target) (:deck runner)))
+                    (let [cards (get-set-aside state :runner eid)]
+                      (continue-ability
+                        state side
+                        {:waiting-prompt true
+                         :prompt "Choose 1 card to add to the bottom of the stack"
+                         :choices {:card #(some (fn [c] (same-card? c %)) cards)
+                                   :all true}
+                         :effect
+                         (req (system-msg state side
+                                          (str "uses The Class Act to add the "
+                                               (pprint/cl-format nil "~:R"
+                                                                 (inc (first (keep-indexed #(when (same-card? target %2) %1) cards))))
+                                               " card on the top of the stack to the bottom"))
+                                          (doseq [c (reverse cards)]
+                                            (move state :runner
+                                                  c :deck
+                                                  (if (same-card? c target) nil {:front true}))))}
+                        card nil)))}]}))
 
 (defcard "The Helpful AI"
   {:constant-effects [(link+ 1)]
