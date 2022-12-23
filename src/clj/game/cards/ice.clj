@@ -3882,7 +3882,7 @@
                                                     (effect-completed state side eid)))}
                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
-                  :msg (msg "Gain " (harmonic-ice-count corp) " [Credits]")
+                  :msg (msg "gain " (harmonic-ice-count corp) " [Credits]")
                   :async true
                   :effect (req (gain-credits state :corp eid (harmonic-ice-count corp)))}]})
 
