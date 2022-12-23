@@ -2837,7 +2837,7 @@
                   :label "Choose subroutine order"
                   :req (req (pos? (count (remove :broken (:subroutines current-ice)))))
                   :async true
-                  :msg (msg "Choose the order the unbroken subroutines on "
+                  :msg (msg "choose the order the unbroken subroutines on "
                          (:title current-ice) " resolve")
                   :effect (effect (continue-ability (runner-break (unbroken-subroutines-choice current-ice)) card nil))}]}))
 
