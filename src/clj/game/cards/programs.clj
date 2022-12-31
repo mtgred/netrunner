@@ -22,8 +22,7 @@
    [game.core.engine :refer [ability-as-handler dissoc-req not-used-once? pay
                              print-msg register-events register-once
                              trigger-event trigger-event-simult unregister-events]]
-   [game.core.events :refer [run-events first-event? first-installed-trash?
-                             first-successful-run-on-server? turn-events]]
+   [game.core.events :refer [run-events first-event? first-successful-run-on-server? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
    [game.core.flags :refer [can-host? card-flag? lock-zone release-zone zone-locked?]]
@@ -2394,7 +2393,7 @@
              :interactive (req true)
              :once-per-instance true
              :req (req (and (some #(installed? (:card %)) targets)
-                            (first-installed-trash? state side)))
+                            (first-event? state side :runner-trash)))
              :msg "draw 1 card"
              :effect (effect (draw :runner eid 1))}]})
 
