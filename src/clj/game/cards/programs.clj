@@ -2393,7 +2393,8 @@
              :interactive (req true)
              :once-per-instance true
              :req (req (and (some #(installed? (:card %)) targets)
-                            (first-event? state side :runner-trash)))
+                            (first-event? state side :runner-trash
+                              (fn [targets] (some #(installed? (:card %)) targets)))))
              :msg "draw 1 card"
              :effect (effect (draw :runner eid 1))}]})
 
