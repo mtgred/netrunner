@@ -101,7 +101,7 @@
       (is (no-prompt? state :runner))
       (is (empty? (:hand (get-corp))) "HQ is empty")
       (is (empty? (:deck (get-corp))) "R&D is empty")
-      (is (= 7 (count (:discard (get-corp)))) "Archives has 7 cards"))))
+      (is (= 7 (count (:discard (get-corp)))) "Archives has 7 cards")))
   (testing "Forced to trash more cards than there are in HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 7)]}})
@@ -111,4 +111,4 @@
       (is (no-prompt? state :runner))
       (is (empty? (:hand (get-corp))))
       (is (empty? (:deck (get-corp))))
-      (is (= 7 (count (:discard (get-corp)))))))
+      (is (= 7 (count (:discard (get-corp))))))))
