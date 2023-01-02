@@ -5134,6 +5134,31 @@
       (click-card state :runner (get-hardware state 1))
       (is (not (get-ice state :rd 0)) "Enigma should be trashed")))
 
+(deftest prey-inteaction-with-reaper
+  ;; Prey - Multiple cards trashed trigger Reaper
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+                :runner {:hand ["Prey" "Reaver" (qty "No Free Lunch" 2)]
+                         :deck ["Sure Gamble"]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "No Free Lunch")
+    (play-from-hand state :runner "No Free Lunch")
+    (play-from-hand state :runner "Reaver")
+    (play-from-hand state :runner "Prey")
+    (click-prompt state :runner "HQ")
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (changes-val-macro
+        1 (count (:hand (get-runner)))
+        "Drew 1 card from Reaver"
+        (click-card state :runner (get-resource state 0))
+        (click-card state :runner (get-resource state 1)))))
+
 (deftest prey-correct-prompt-when-ice-has-0-strength-issue-4743
     ;; Correct prompt when ice has 0 strength. Issue #4743
     (do-game

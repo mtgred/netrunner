@@ -5683,6 +5683,27 @@
       (card-ability state :runner (get-resource state 0) 1)
       (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
 
+(deftest reaver-not-triggering-on-non-installed-cards
+  ;; Reaver - Doesn't trigger when trashing non-installed cards
+  (do-game
+      (new-game {:corp {:hand [(qty "PAD Campaign" 2)]}
+                 :runner {:hand ["Reaver"]
+                          :deck [(qty "Fall Guy" 5)]
+                          :credits 10}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Reaver")
+      (run-empty-server state "HQ")
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Drew 0 cards from Reaver"
+        (click-prompt state :runner "Pay 4 [Credits] to trash"))
+      (run-empty-server state "Server 1")
+      (changes-val-macro
+        1 (count (:hand (get-runner)))
+        "Drew 1 card from Reaver"
+        (click-prompt state :runner "Pay 4 [Credits] to trash"))))
+
 (deftest reaver-with-freelance-coding-construct-should-not-draw-when-trash-from-hand-2671
     ;; with Freelance Coding Construct - should not draw when trash from hand #2671
     (do-game
