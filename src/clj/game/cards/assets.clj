@@ -2491,7 +2491,7 @@
 
 (defcard "The Root"
   {:recurring 3
-   :interactions {:pay-credits {:req (req (or (some #(= % (:source-type eid)) [:advance :corp-install :rez])
+   :interactions {:pay-credits {:req (req (or (#{:advance :corp-install :rez} (:source-type eid))
                                               (is-basic-advance-action? eid)))
                                 :type :recurring}}})
 
