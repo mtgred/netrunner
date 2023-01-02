@@ -4835,7 +4835,7 @@
       (is (= 5 (count (:discard (get-runner)))))
       (take-credits state :runner)
       (let [underway (get-content state :remote1 0)]
-        (core/advance state :corp {:card (refresh underway)}))
+        (click-advance state :corp (refresh underway)))
       (is (= 6 (count (:discard (get-runner)))))
       (take-credits state :corp)
       ;; remove 5 Out of the Ashes from the game
@@ -6633,14 +6633,14 @@
       (is (= 1 (count (:discard (get-runner)))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
     (take-credits state :runner)
     (let [napd (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh napd)})
+      (click-advance state :corp (refresh napd))
       (is (= 7 (:credit (get-corp))) "NAPD contract could not be advanced because of The Price of Freedom")
       (take-credits state :corp)
       (is (= 10 (:credit (get-corp))) "Corp has 10 credits now (3 clicks for credit, no click charged for failed advancing)")
       (take-credits state :runner)
-      (core/advance state :corp {:card (refresh napd)})
-      (core/advance state :corp {:card (refresh napd)})
-      (core/advance state :corp {:card (refresh napd)})
+      (click-advance state :corp (refresh napd))
+      (click-advance state :corp (refresh napd))
+      (click-advance state :corp (refresh napd))
       (is (= 7 (:credit (get-corp))) "NAPD could be advanced (3 credits charged for advancing)"))))
 
 (deftest three-steps-ahead

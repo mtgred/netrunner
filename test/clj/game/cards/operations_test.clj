@@ -450,7 +450,7 @@
   (do-game
     (new-game {:corp {:hand ["SDS Drone Deployment" "Big Deal"] :credits 20}})
     (play-from-hand state :corp "SDS Drone Deployment" "New remote")
-    (core/advance state :corp {:card (get-content state :remote1 0)})
+    (click-advance state :corp (get-content state :remote1 0))
     (play-from-hand state :corp "Big Deal")
     (click-card state :corp "SDS Drone Deployment")
     (is (= 5 (get-counters (get-content state :remote1 0) :advancement)))
@@ -567,7 +567,7 @@
         (click-card state :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
         (click-prompt state :corp "New remote")
         (let [oak (get-content state :remote2 0)]
-          (core/advance state :corp {:card (refresh oak)})
+          (click-advance state :corp (refresh oak))
           (is (= 5 (:credit (get-corp))) "Events on Public agenda work; gained 2 credits from advancing")
           (take-credits state :corp)
           (run-empty-server state "Server 2")
@@ -915,7 +915,7 @@
     (click-prompt state :corp "New remote")
     (core/gain state :corp :click 2)
     (let [vit (get-content state :remote1 0)]
-      (dotimes [_ 3] (core/advance state :corp {:card (refresh vit)}))
+      (dotimes [_ 3] (click-advance state :corp (refresh vit)))
       (score state :corp (refresh vit))
       (is (= 0 (count (get-scored state :corp))) "Project Vitruvius was not scored")
       (take-credits state :corp)
@@ -943,7 +943,7 @@
       (click-prompt state :corp "New remote")
       (core/gain state :corp :click 1)
       (let [beale (get-content state :remote1 0)]
-        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+        (dotimes [_ 3] (click-advance state :corp (refresh beale)))
         (score state :corp (refresh beale))
         (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
         (take-credits state :corp)
@@ -977,7 +977,7 @@
       (click-prompt state :corp "New remote")
       (core/gain state :corp :click 1)
       (let [beale (get-content state :remote1 0)]
-        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+        (dotimes [_ 3] (click-advance state :corp (refresh beale)))
         (score state :corp (refresh beale))
         (is (= 0 (count (get-scored state :corp))) "Beale was not scored")
         (take-credits state :corp)
@@ -995,7 +995,7 @@
       (core/gain state :corp :click 3)
       (play-from-hand state :corp "Project Beale" "New remote")
       (let [beale (get-content state :remote1 0)]
-        (dotimes [_ 3] (core/advance state :corp {:card (refresh beale)}))
+        (dotimes [_ 3] (click-advance state :corp (refresh beale)))
         (play-from-hand state :corp "Digital Rights Management")
         (click-prompt state :corp "None")
         (click-prompt state :corp "Done")
@@ -2506,9 +2506,9 @@
     (play-from-hand state :corp "Ice Wall" "R&D")
     (play-from-hand state :corp "Ice Wall" "Archives")
     (take-credits state :runner)
-    (core/advance state :corp {:card (refresh (get-ice state :hq 0))})
-    (core/advance state :corp {:card (refresh (get-ice state :archives 0))})
-    (core/advance state :corp {:card (refresh (get-ice state :rd 0))})
+    (click-advance state :corp (refresh (get-ice state :hq 0)))
+    (click-advance state :corp (refresh (get-ice state :archives 0)))
+    (click-advance state :corp (refresh (get-ice state :rd 0)))
     (take-credits state :runner)
     (play-from-hand state :corp "Mass Commercialization")
     (is (= 8 (:credit (get-corp))) "Gained 6 for 3 advanced ice from Mass Commercialization")))
@@ -2714,7 +2714,7 @@
       (play-from-hand state :corp "NAPD Cordon")
       (play-from-hand state :corp "Project Atlas" "New remote")
       (let [atlas (get-content state :remote1 0)]
-        (dotimes [_ 2] (core/advance state :corp {:card (refresh atlas)}))
+        (dotimes [_ 2] (click-advance state :corp (refresh atlas)))
         (take-credits state :corp)
         (run-empty-server state :remote1)
         (changes-val-macro -8 (:credit (get-runner))
@@ -4309,7 +4309,7 @@
       (core/gain state :corp :click 15)
       (let [napd (get-content state :remote1 0)
             beale (get-content state :remote2 0)]
-        (dotimes [_ 13] (core/advance state :corp {:card (refresh napd)}))
+        (dotimes [_ 13] (click-advance state :corp (refresh napd)))
         (is (= 13 (get-counters (refresh napd) :advancement)))
         (score state :corp (refresh napd))
         (is (= 2 (:agenda-point (get-corp))))

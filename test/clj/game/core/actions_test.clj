@@ -86,9 +86,9 @@
           publics1 (get-content state :remote2 0)
           publics2 (get-content state :remote3 0)
           oaktown (get-content state :remote4 0)]
-      (core/advance state :corp {:card (refresh oaktown)})
-      (core/advance state :corp {:card (refresh oaktown)})
-      (core/advance state :corp {:card (refresh oaktown)})
+      (click-advance state :corp (refresh oaktown))
+      (click-advance state :corp (refresh oaktown))
+      (click-advance state :corp (refresh oaktown))
       (is (= 8 (:credit (get-corp))) "Corp 5+3 creds from Oaktown")
       (core/end-turn state :corp nil)
       (testing "Turn 1 Runner"

@@ -4339,7 +4339,7 @@
     (new-game {:corp {:hand ["Mestnichestvo"] :credits 10}})
     (play-from-hand state :corp "Mestnichestvo" "HQ")
     (let [mes (get-ice state :hq 0)]
-      (core/advance state :corp {:card (refresh mes)})
+      (click-advance state :corp (refresh mes))
       (take-credits state :corp)
       (run-on state :hq)
       (rez state :corp (refresh mes))
@@ -6718,8 +6718,8 @@
           ngo (get-content state :remote2 0)]
       (rez state :corp tg)
       (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")
-      (core/advance state :corp {:card (refresh ngo)})
-      (core/advance state :corp {:card (refresh ngo)})
+      (click-advance state :corp (refresh ngo))
+      (click-advance state :corp (refresh ngo))
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 1 [Credits] to trash")

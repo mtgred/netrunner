@@ -2846,13 +2846,13 @@
       (click-card state :corp nis)
       (is (= 2 (get-counters (refresh nis) :advancement)) "2 advancements on agenda")
       (is (= 4 (:credit (get-corp))) "Gained 1 credit")
-      (core/advance state :corp {:card (refresh nis)})
+      (click-advance state :corp (refresh nis))
       (is (= 3 (get-counters (refresh nis) :advancement)) "3 advancements on agenda")
       (is (= 3 (:credit (get-corp))) "No credit gained")
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Ice Wall" "Server 1")
-      (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
+      (click-advance state :corp (refresh (get-ice state :remote1 0)))
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ice"))))
 
 (deftest nihongai-grid
@@ -3635,11 +3635,11 @@
         (rez state :corp sd)
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 1 credit from Simone Diego to advance Ice Wall"
-                           (core/advance state :corp {:card (refresh iw)})
+                           (click-advance state :corp (refresh iw))
                            (click-card state :corp sd))
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 1 credit from Simone Diego to advance Project Junebug"
-                           (core/advance state :corp {:card (refresh pj)})
+                           (click-advance state :corp (refresh pj))
                            (click-card state :corp sd)))))
 
 (deftest strongbox

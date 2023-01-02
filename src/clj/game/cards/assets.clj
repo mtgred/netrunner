@@ -23,7 +23,7 @@
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [register-floating-effect]]
-   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events]]
    [game.core.expose :refer [expose-prevent]]
@@ -2491,9 +2491,8 @@
 
 (defcard "The Root"
   {:recurring 3
-   :interactions {:pay-credits {:req (req (or (= :advance (:source-type eid))
-                                              (= :corp-install (:source-type eid))
-                                              (= :rez (:source-type eid))))
+   :interactions {:pay-credits {:req (req (or (#{:advance :corp-install :rez} (:source-type eid))
+                                              (is-basic-advance-action? eid)))
                                 :type :recurring}}})
 
 (defcard "Thomas Haas"

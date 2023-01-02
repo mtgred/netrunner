@@ -2404,7 +2404,7 @@
           ;; manually add 3 counters
           (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
           (take-credits state :runner 2)
-          (core/advance state :corp {:card agenda})
+          (click-advance state :corp agenda)
           (is (= 1 (get-counters (refresh agenda) :advancement)) "Agenda was advanced")))))
 
 (deftest djinn-host-a-non-icebreaker-program

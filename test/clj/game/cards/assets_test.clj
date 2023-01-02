@@ -85,7 +85,7 @@
     (play-from-hand state :corp "Aggressive Secretary" "New remote")
     (let [as (get-content state :remote1 0)]
       ;; Single advance AggSec
-      (core/advance state :corp {:card (refresh as)})
+      (click-advance state :corp (refresh as))
       (take-credits state :corp)
       ;; Run on AggSec with 3 programs
       (play-from-hand state :runner "Cache")
@@ -294,7 +294,7 @@
           iw (get-ice state :hq 0)]
       (rez state :corp (refresh ap))
       (rez state :corp (refresh iw))
-      (core/advance state :corp {:card (refresh iw)})
+      (click-advance state :corp (refresh iw))
       (is (= 1 (get-counters (refresh iw) :advancement)) "Ice Wall has 1 advancement token")
       (take-credits state :corp)
       (take-credits state :runner)
@@ -631,8 +631,8 @@
     (new-game {:corp {:deck ["Cerebral Overwriter"]}})
     (play-from-hand state :corp "Cerebral Overwriter" "New remote")
     (let [co (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh co)})
-      (core/advance state :corp {:card (refresh co)})
+      (click-advance state :corp (refresh co))
+      (click-advance state :corp (refresh co))
       (is (= 2 (get-counters (refresh co) :advancement)))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
@@ -1961,7 +1961,7 @@
         (is (= 2 (get-strength (refresh van))) "Vanilla at 2 strength")
         (card-ability state :corp fir 0)
         (click-card state :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
-        (core/advance state :corp {:card (last (:hosted (refresh fir)))})
+        (click-advance state :corp (last (:hosted (refresh fir))))
         (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
 
 (deftest fumiko-yamamori
@@ -2104,7 +2104,7 @@
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
       (let [gs (get-content state :remote1 0)]
-        (dotimes [_ 2] (core/advance state :corp {:card (refresh gs)}))
+        (dotimes [_ 2] (click-advance state :corp (refresh gs)))
         (take-credits state :runner)
         (rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
@@ -2238,8 +2238,8 @@
       (new-game {:corp {:deck ["Ghost Branch"]}})
       (play-from-hand state :corp "Ghost Branch" "New remote")
       (let [gb (get-content state :remote1 0)]
-        (core/advance state :corp {:card (refresh gb)})
-        (core/advance state :corp {:card (refresh gb)})
+        (click-advance state :corp (refresh gb))
+        (click-advance state :corp (refresh gb))
         (is (= 2 (get-counters (refresh gb) :advancement)))
         (take-credits state :corp)
         (run-empty-server state "Server 1")
@@ -2255,8 +2255,8 @@
       (core/gain state :corp :click 1)
       (let [gb (get-content state :remote1 0)
             drt (get-content state :remote2 0)]
-        (core/advance state :corp {:card gb})
-        (core/advance state :corp {:card (refresh gb)})
+        (click-advance state :corp gb)
+        (click-advance state :corp (refresh gb))
         (is (= 2 (get-counters (refresh gb) :advancement)) "Ghost Branch advanced twice")
         (take-credits state :corp)
         (run-on state "Server 1")
@@ -3398,7 +3398,7 @@
           net (get-content state :remote2 0)
           nach (get-resource state 0)]
       (rez state :corp (refresh net))
-      (core/advance state :corp {:card (refresh gb)})
+      (click-advance state :corp (refresh gb))
       (is (= 1 (get-counters (refresh gb) :advancement)))
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))) "Corp hand size is 1 before run")
@@ -3456,7 +3456,7 @@
     (play-from-hand state :corp "Neurostasis" "New remote")
     (let [neuro (get-content state :remote1 0)]
       ;; Single advance Neurostasis
-      (core/advance state :corp {:card (refresh neuro)})
+      (click-advance state :corp (refresh neuro))
       (take-credits state :corp)
       ;; Run on Neurostasis with 3 programs
       (play-from-hand state :runner "Cache")
@@ -3473,7 +3473,7 @@
       (is (= 2 (count (get-program state))) "Removed one installed program")
       (is (= 1 (count (:deck (get-runner)))) "Shuffled one program into the stack")
       (take-credits state :runner)
-      (core/advance state :corp {:card (refresh neuro)})
+      (click-advance state :corp (refresh neuro))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (is (= 3 (:credit (get-corp))) "Corp starts with 3 credits")
@@ -4262,16 +4262,16 @@
     (new-game {:corp {:deck ["Reversed Accounts"]}})
     (play-from-hand state :corp "Reversed Accounts" "New remote")
     (let [rev (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh rev)})
-      (core/advance state :corp {:card (refresh rev)})
+      (click-advance state :corp (refresh rev))
+      (click-advance state :corp (refresh rev))
       (take-credits state :corp)
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Sure Gamble")
       (take-credits state :runner)
       (is (= 18 (:credit (get-runner))))
-      (core/advance state :corp {:card (refresh rev)})
-      (core/advance state :corp {:card (refresh rev)})
+      (click-advance state :corp (refresh rev))
+      (click-advance state :corp (refresh rev))
       (is (= 4 (get-counters (refresh rev) :advancement)))
       (rez state :corp (refresh rev))
       (card-ability state :corp rev 0)
@@ -4364,7 +4364,7 @@
         (is (= 3 (count (:hand (get-runner)))) "Ronin ability didn't fire with only 3 advancements")
         (take-credits state :corp)
         (take-credits state :runner)
-        (core/advance state :corp {:card (refresh ron)})
+        (click-advance state :corp (refresh ron))
         (is (= 4 (get-counters (refresh ron) :advancement)))
         (card-ability state :corp ron 0)
         (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
@@ -5481,7 +5481,7 @@
         (let [iw (get-ice state :hq 1)]
           (changes-val-macro 0 (:credit (get-corp))
                              "Used 1 credit from The Root to advance"
-                             (core/advance state :corp {:card (refresh iw)})
+                             (click-advance state :corp (refresh iw))
                              (click-card state :corp root))
           (is (= 1 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")
           (changes-val-macro 0 (:credit (get-corp))
@@ -5785,8 +5785,8 @@
     (new-game {:corp {:hand ["Ubiquitous Vig"]}})
     (play-from-hand state :corp "Ubiquitous Vig" "New remote")
     (let [vig (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh vig)})
-      (core/advance state :corp {:card (refresh vig)})
+      (click-advance state :corp (refresh vig))
+      (click-advance state :corp (refresh vig))
       (rez state :corp vig)
       (take-credits state :corp)
       (let [credits (:credit (get-corp))]

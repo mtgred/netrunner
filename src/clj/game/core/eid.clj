@@ -1,6 +1,7 @@
 (ns game.core.eid
   (:require
     [medley.core :refer [find-first]]
+    [game.core.card :refer [basic-action?]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]))
 
 (defn make-eid
@@ -18,6 +19,15 @@
     (if (not-empty kvs)
       (apply assoc eid (flatten kvs))
       eid)))
+
+(defn get-ability-targets
+  [eid]
+  (get-in eid [:source-info :ability-targets]))
+
+(defn is-basic-advance-action?
+  [eid]
+  (and (basic-action? (:source eid))
+       (= 4 (get-in eid [:source-info :ability-idx]))))
 
 (defn register-effect-completed
   [state eid effect]

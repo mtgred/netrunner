@@ -19,7 +19,7 @@
                                   reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-floating-effect]]
-   [game.core.eid :refer [effect-completed make-eid]]
+   [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [dissoc-req pay register-default-events
                              register-events resolve-ability unregister-events]]
    [game.core.events :refer [first-event? first-run-event? turn-events]]
@@ -1462,8 +1462,10 @@
 
 (defcard "Simone Diego"
   {:recurring 2
-   :interactions {:pay-credits {:req (req (and (= :advance (:source-type eid))
-                                               (same-server? card target)))
+   :interactions {:pay-credits {:req (req (let [ab-target (first (get-ability-targets eid))]
+                                            (and (same-server? card ab-target)
+                                                 (or (= :advance (:source-type eid))
+                                                     (is-basic-advance-action? eid)))))
                                 :type :recurring}}})
 
 (defcard "Strongbox"
