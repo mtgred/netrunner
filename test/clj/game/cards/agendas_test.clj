@@ -575,13 +575,13 @@
     (let [blood (get-content state :remote1 0)]
       (core/add-prop state :corp blood :advance-counter 2)
       (score state :corp (refresh blood))
-      (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 4)")
+      (is (= 0 (:agenda-point (get-corp))) "Can't score Blood in the Water (X = 4)")
       (damage state :corp :net 1)
       (score state :corp (refresh blood))
-      (is (= 0 (:agenda-point (get-corp))) "Can't score regenesis (X = 3)")
+      (is (= 0 (:agenda-point (get-corp))) "Can't score Blood in the Water (X = 3)")
       (damage state :corp :net 1)
       (score state :corp (refresh blood))
-      (is (= 2 (:agenda-point (get-corp))) "Scored regenesis when runner had 2 cards"))))
+      (is (= 2 (:agenda-point (get-corp))) "Scored Blood in the Water when runner had 2 cards"))))
 
 (deftest brain-rewiring
   ;; Brain Rewiring
@@ -3372,7 +3372,6 @@
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
 
-
 (deftest regenesis
   ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
   ;; and add it to score area
@@ -3387,6 +3386,20 @@
     (play-and-score state "Regenesis")
     (click-card state :corp "Obokata Protocol")
     (is (= 5 (:agenda-point (get-corp))) "3+1+1 agenda points from obo + regen + regen")))
+
+(deftest regenesis-not-affected-by-subliminal-messaging
+  ;; Regenesis - Leaving Subliminal Messaging in Archives doesn't interfere
+  (do-game
+    (new-game {:corp {:hand ["Regenesis" "Hansei Review" "Obokata Protocol" "Subliminal Messaging"]}})
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Hansei Review")
+    (click-card state :corp "Obokata Protocol")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "No")
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Obokata Protocol")
+    (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
 
 (deftest regenesis-extra-score-not-prevented-by-runner-discard
   (do-game
