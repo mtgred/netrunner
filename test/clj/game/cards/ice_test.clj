@@ -3650,8 +3650,8 @@
       (changes-val-macro 0 (:credit (get-runner))
         "No Free Lunch was blanked"
         (card-ability state :runner (refresh nfl1) 0))
-      (changes-val-macro 0 (:credit (get-runner))
-        "Both No Free Lunches were blanked"
+      (changes-val-macro 3 (:credit (get-runner))
+        "Other No Free Lunch was not blanked"
         (card-ability state :runner (refresh nfl2) 0))
       (run-continue state)
       (card-subroutine state :corp klev 0)
@@ -3660,16 +3660,10 @@
       (changes-val-macro 0 (:credit (get-runner))
         "No Free Lunch still blank"
         (card-ability state :runner (refresh nfl1) 0))
-      (changes-val-macro 0 (:credit (get-runner))
-        "Both No Free Lunches still blank"
-        (card-ability state :runner (refresh nfl2) 0))
       (take-credits state :corp)
       (changes-val-macro 3 (:credit (get-runner))
         "No Free Lunch unblanked"
-        (card-ability state :runner (refresh nfl1) 0))
-      (changes-val-macro 3 (:credit (get-runner))
-        "Both No Free Lunches unblanked"
-        (card-ability state :runner (refresh nfl2) 0)))))
+        (card-ability state :runner (refresh nfl1) 0)))))
 
 (deftest klevetnik-wrong-server
   (do-game

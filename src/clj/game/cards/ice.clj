@@ -2236,39 +2236,36 @@
                                            (encounter-ends state side eid)))}}}]})
 
 (defcard "Klevetnik"
-  (let [re-enable-targets
-        (fn [target-resources] {:event :corp-turn-ends
-                                :unregister-once-resolved true
-                                :async true
-                                :msg (msg "unblank every " (:title (first target-resources)))
-                                :effect
-                                (req (doseq [t target-resources]
-                                       (when (:disabled (get-card state t))
-                                         (enable-card state :runner (get-card state t))
-                                         (when-let [reactivate-effect (:reactivate (card-def t))]
-                                           (resolve-ability state :runner reactivate-effect (get-card state t) nil)))))})
+  (let [re-enable-target
+        (fn [t] {:event :corp-turn-ends
+                 :unregister-once-resolved true
+                 :msg (msg "unblank " (:title t))
+                 :effect
+                 (req (when (:disabled (get-card state t))
+                        (enable-card state :runner (get-card state t))
+                        (when-let [reactivate-effect (:reactivate (card-def t))]
+                          (resolve-ability state :runner reactivate-effect (get-card state t) nil))))})
         register-corp-next-turn-end
-        (fn [target-resources] {:event :corp-turn-ends ;; delayed registration to make it wait the Corp next turn end
-                                :unregister-once-resolved true
-                                :effect (effect (register-events card [(re-enable-targets target-resources)]))})
-        on-rez-ability {:prompt "Name an installed resource"
+        (fn [t] {:event :corp-turn-ends ;; delayed registration to make it wait the Corp next turn end
+                 :unregister-once-resolved true
+                 :effect (effect (register-events card [(re-enable-target t)]))})
+        on-rez-ability {:prompt "Choose an installed resource"
+                        :waiting-prompt true
                         :choices {:card #(and (installed? %)
                                               (resource? %))}
                         :async true
                         :msg (msg "let the Runner gain 2 [Credits] to"
-                                  " blank the text box of every " (:title target)
+                                  " blank the text box of " (:title target)
                                   " until the Corp next turn ends")
                         :effect
-                        (req (let [target-resources (filter #(= (:title %) (:title target))
-                                                            (all-installed-runner-type state :resource))]
+                        (req (let [t target]
                                (wait-for (gain-credits state :runner 2)
-                                         (doseq [t target-resources]
-                                           (disable-card state :runner (get-card state t)))
+                                         (disable-card state :runner t)
                                          (register-events
                                            state side card
                                            [(if (= (:active-player @state) :runner)
-                                              (re-enable-targets target-resources)
-                                              (register-corp-next-turn-end target-resources))])
+                                              (re-enable-target t)
+                                              (register-corp-next-turn-end t))])
                                          (effect-completed state side eid))))}]
     {:subroutines [end-the-run]
      :on-rez {:optional
