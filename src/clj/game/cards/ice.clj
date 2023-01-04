@@ -2239,7 +2239,6 @@
   (let [re-enable-target
         (fn [t] {:event :corp-turn-ends
                  :unregister-once-resolved true
-                 :async true
                  :msg (msg "unblank " (:title t))
                  :effect
                  (req (when (:disabled (get-card state t))
