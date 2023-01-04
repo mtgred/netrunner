@@ -1706,8 +1706,7 @@
             (and (same-server? card (:card target))
                  (corp? (:card target))
                  (installed? (:card target))))]
-    {:on-trash {:req (req (some? (:cause-card context)))
-                :async true
+    {:on-trash {:async true
                 :once-per-instance false
                 :interactive (req true)
                 :msg "gain 2 [Credits]"

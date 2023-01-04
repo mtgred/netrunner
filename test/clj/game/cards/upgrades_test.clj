@@ -4346,7 +4346,7 @@
 
 (deftest yakov-game-trash
   (do-game
-    (new-game {:corp {:hand ["Yakov Erikovich Avdakov" "NGO Front"]}})
+    (new-game {:corp {:hand ["Yakov Erikovich Avdakov" (qty "NGO Front" 2)]}})
     (core/gain state :corp :click 5)
     (play-from-hand state :corp "Yakov Erikovich Avdakov" "New remote")
     (play-from-hand state :corp "NGO Front" "Server 1")
@@ -4355,7 +4355,8 @@
       (changes-val-macro
         0 (:credit (get-corp))
         "hard trash doesn't trigger"
-        (trash state :corp (refresh yakov))))))
+        (play-from-hand state :corp "NGO Front" "Server 1")
+        (click-prompt state :corp "OK")))))
 
 (deftest yakov-corp-trash
   (do-game
@@ -4372,6 +4373,23 @@
         +7 (:credit (get-corp))
         "5 + 2 from ngo/yakov"
         (card-ability state :corp (refresh ngo) 0)))))
+
+(deftest yakov-runner-trash
+  (do-game
+    (new-game {:corp {:hand ["Yakov Erikovich Avdakov"]}
+               :runner {:hand ["Pinhole Threading"]}})
+    (play-from-hand state :corp "Yakov Erikovich Avdakov" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Pinhole Threading")
+    (click-prompt state :runner "Archives")
+    (run-continue state)
+    (changes-val-macro
+      +2 (:credit (get-corp))
+      "+2 credits from Yakov been trashed"
+      (click-card state :runner "Yakov Erikovich Avdakov")
+      (click-prompt state :runner "Pay 2 [Credits] to trash"))
+    (is (no-prompt? state :corp))))
 
 (deftest yakov-runner-trash-multiple
   (do-game
