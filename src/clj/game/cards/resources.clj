@@ -302,11 +302,13 @@
 (defcard "Asmund Pudlat"
   (letfn [(search-and-host [x]
             {:prompt (msg "Choose a virus or weapon card (" x " remaining)")
-             :choices (req (cancellable (filter
-                                          #(and (not (contains? (:hosted card) %))
-                                                (or (has-subtype? % "Virus")
-                                                    (has-subtype? % "Weapon")))
-                                          (:deck runner)) :sorted))
+             :choices
+             (req (let [hosted-cards (:hosted (get-card state card))
+                        not-hosted? (fn [c] (not-any? #(= (:title %) (:title c)) hosted-cards))]
+                    (cancellable (filter #(and (not-hosted? %)
+                                               (or (has-subtype? % "Virus")
+                                                   (has-subtype? % "Weapon")))
+                                         (:deck runner)) :sorted)))
              :async true
              :waiting-prompt true
              :msg (msg "host " (get-title target) " on itself")
