@@ -233,8 +233,9 @@
                         :deck ["Unregistered S&W '35" (qty "Fermenter" 2)]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Asmund Pudlat")
-    (click-prompt state :runner "Fermenter")
-    (is (not (contains? (:choices (prompt-map :runner)) "Fermenter")) "Runner cannot choose Fermenter twice")
+    (changes-val-macro -1 (count (:choices (prompt-map :runner)))
+                      "Runner cannot choose Fermenter twice"
+                      (click-prompt state :runner "Fermenter"))
     (click-prompt state :runner "Unregistered S&W '35")
     (let [asmund (get-resource state 0)]
       (is (= 2 (count (:hosted (refresh asmund)))) "Asmund Pudlat is hosting 2 cards")
