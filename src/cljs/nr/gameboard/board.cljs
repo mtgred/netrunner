@@ -1798,17 +1798,17 @@
   ;; is just too convenient
   (let [start-time-string (str (tr [:game.game-start "Game start"])
                                ": " (.toLocaleTimeString (js/Date. start-date)))
-        hide-remaining (r/atom false)]
+        hide-timer (r/atom false)]
     (fn []
       [:div.panel.blue-shade.timestamp
        [:span.float-center start-time-string]
        [:<>
-        [:span.pm {:on-click #(swap! hide-remaining not)}
-         (if @hide-remaining "+" "-")]
-        (if time-limit [:span {:on-click #(swap! hide-remaining not)}
-                        [time-remaining start-date time-limit hide-remaining]]
-                       [:span {:on-click #(swap! hide-remaining not)}
-                        [match-timer start-date hide-remaining]])]])))
+        [:span.pm {:on-click #(swap! hide-timer not)}
+         (if @hide-timer "+" "-")]
+        (if time-limit [:span {:on-click #(swap! hide-timer not)}
+                        [time-remaining start-date time-limit hide-timer]]
+                       [:span {:on-click #(swap! hide-timer not)}
+                        [match-timer start-date hide-timer]])]])))
 
 
 (defn- handle-click [{:keys [render-board?]} e]
