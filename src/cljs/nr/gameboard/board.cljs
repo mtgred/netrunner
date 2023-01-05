@@ -1731,10 +1731,10 @@
 
 (defn time-remaining
   "Component which displays a readout of the time remaining on the timer."
-  [start-date timer hidden]
+  [start-date time-limit hidden]
   (let [end-time (-> start-date
                      (inst/parse)
-                     (inst/plus timer chrono/minutes))
+                     (inst/plus time-limit chrono/minutes))
         remaining (r/atom nil)
         interval (r/atom nil)]
     (r/create-class
@@ -1757,7 +1757,43 @@
               (:minutes @remaining) "m:"
               (:seconds @remaining) "s remaining")]))})))
 
-(defn starting-timestamp [start-date timer]
+(defn- time-since
+  "Helper method for match timer. Computes how much time since game start"
+  [start]
+  (let [start-time (-> start
+                       (inst/parse))
+        now (inst/now)
+        diff (duration/between start-time now)
+        total-seconds (duration/get diff chrono/seconds)
+        minutes (abs (quot total-seconds 60))
+        seconds (mod (abs total-seconds) 60)]
+    {:minutes minutes :seconds seconds}))
+
+(defn match-timer
+  "Component which displays a readout of the time since the start of the match."
+  [start-date hidden]
+  (let [duration (r/atom nil)
+        interval (r/atom nil)]
+    (r/create-class
+      {:component-did-mount
+       (fn []
+         (reset! interval
+                 ;; Update timer at most every 1 sec
+                 (js/setInterval #(reset! duration (time-since start-date)) 1000)))
+       :component-will-unmount
+       (fn []
+         (js/clearInterval @interval)
+         (reset! interval nil))
+       :reagent-render
+       (fn []
+         (when (not @hidden)
+           [:span.float-center.timer
+            (str
+              (:minutes @duration) "m:"
+              (:seconds @duration) "s")])
+         )})))
+
+(defn starting-timestamp [start-date time-limit]
   ;; I don't like using js/Date, but `toLocalTimeString`
   ;; is just too convenient
   (let [start-time-string (str (tr [:game.game-start "Game start"])
@@ -1766,12 +1802,14 @@
     (fn []
       [:div.panel.blue-shade.timestamp
        [:span.float-center start-time-string]
-       (when timer
-         [:<>
-          [:span.pm {:on-click #(swap! hide-remaining not)}
-           (if @hide-remaining "+" "-")]
-          [:span {:on-click #(swap! hide-remaining not)}
-           [time-remaining start-date timer hide-remaining]]])])))
+       [:<>
+        [:span.pm {:on-click #(swap! hide-remaining not)}
+         (if @hide-remaining "+" "-")]
+        (if time-limit [:span {:on-click #(swap! hide-remaining not)}
+                        [time-remaining start-date time-limit hide-remaining]]
+                       [:span {:on-click #(swap! hide-remaining not)}
+                        [match-timer start-date hide-remaining]])]])))
+
 
 (defn- handle-click [{:keys [render-board?]} e]
   (when render-board?
@@ -2045,7 +2083,7 @@
                         me-play-area (r/cursor game-state [me-side :play-area])]
                     [:div
                      (when-not (:replay @game-state)
-                       [starting-timestamp @start-date @timer])
+                       [starting-timestamp @start-date @time-limit])
                      [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
                      [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
                      [rfg-view op-set-aside (tr [:game.set-aside "Set aside"]) true]
@@ -2058,7 +2096,7 @@
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
-                                  :me me :opponent opponent :prompt-state prompt-state}])]]
+                                  :me            me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
                  [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
