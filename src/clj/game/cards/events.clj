@@ -3629,12 +3629,13 @@
     :waiting-prompt true
     :prompt "Choose one"
     :choices ["Runner gains 6 [Credits]" "Runner draws 4 cards"]
+    :msg (msg (if (= target "Runner gains 6 [Credits]")
+                "gain 6 [Credits]"
+                "draw 4 cards"))
     :async true
     :effect (req (if (= target "Runner gains 6 [Credits]")
-                   (do (system-msg state :corp "chooses 6 [Credits] for the Runner")
-                       (gain-credits state :runner eid 6))
-                   (do (system-msg state :corp "chooses 4 cards for the Runner")
-                       (draw state :runner eid 4))))}})
+                   (gain-credits state :runner eid 6)
+                   (draw state :runner eid 4)))}})
 
 (defcard "Windfall"
   {:on-play
