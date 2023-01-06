@@ -946,6 +946,7 @@
         ability {:once :per-turn
                  :async true
                  :label "Trash this asset to search R&D for an operation (start of turn)"
+                 :interactive (req true)
                  :req (req (:corp-phase-12 @state))
                  :effect
                  (effect
