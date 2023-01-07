@@ -3059,12 +3059,16 @@
         (click-prompt state :runner "No action"))
       (take-credits state :runner)
       (take-credits state :corp)
-      (click-prompt state :runner "HQ")
-      (core/set-mark state :hq)
+      (click-prompt state :runner "Archives")
+      (core/set-mark state :archives)
       (changes-val-macro
         0 (:credit (get-runner))
         "Gained no credits on run on mark when breach is replaced"
-        (run-empty-server state :hq))))
+        (run-empty-server state :archives))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gained no credits on sunsequent runs with breach on mark even if breach didn't happen yet"
+        (run-empty-server state :archives))))
 
 (deftest info-bounty-with-virtuoso
     ;; Info Bounty - interaction with Virtuoso
@@ -3081,7 +3085,8 @@
         2 (:credit (get-runner))
         "Gained 2 credits when finished breaching mark"
         (run-empty-server state :rd)
-        (click-prompt state :runner "No action"))
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Info Bounty"))
       (click-prompt state :runner "No action")))
 
 (deftest inside-man-pay-credits-prompt
