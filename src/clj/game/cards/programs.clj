@@ -49,7 +49,8 @@
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
    [game.core.runs :refer [active-encounter? bypass-ice continue
-                           get-current-encounter make-run successful-run-replace-breach]]
+                           get-current-encounter make-run successful-run-replace-breach
+                           update-current-encounter]]
    [game.core.say :refer [system-msg]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.servers :refer [is-central? is-remote? target-server zone->name]]
@@ -2754,14 +2755,22 @@
                  :choices (req servers)
                  :msg (msg "target " target)
                  :req (req (not (:card-target card)))
-                 :effect (effect (update! (assoc card :card-target target)))}]
-    {:implemention "Doesn't preveent subroutine from resolving"
-     :abilities [{:label "Make a run on targeted server"
+                 :effect (effect (update! (assoc card :card-target target)))}
+        prevent-sub {:event :pre-resolve-subroutine
+                     :duration :end-of-run
+                     :unregister-once-resolved true
+                     :async true
+                     :req (req true)
+                     :effect (req (update-current-encounter state :prevent-subroutine true)
+                                  (effect-completed state side eid))
+                     :msg (msg (str "prevent a subroutine (" (:label target) ") from resolving"))}]
+    {:abilities [{:label "Make a run on targeted server"
                   :cost [:click 1 :credit 2]
                   :req (req (some #(= (:card-target card) %) runnable-servers))
                   :msg (msg "make a run on " (:card-target card) ". Prevent the first subroutine that would resolve from resolving")
                   :async true
-                  :effect (effect (make-run eid (:card-target card) card))}]
+                  :effect (effect (register-events card [prevent-sub])
+                                  (make-run eid (:card-target card) card))}]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
                :effect (effect (update! (dissoc card :card-target)))}]}))
