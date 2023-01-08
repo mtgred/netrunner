@@ -2234,6 +2234,36 @@
       (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
       (is (get-run) "The run is still in progress"))))
 
+(deftest formicary-autoresolve-qol-test
+  ;; checks that if autoresolve is set to never, the prompt will be silent
+  ;; this means you can prevent the runner from inferring formicary exists even with 2-3 of them
+  ;; on the field
+  (do-game
+    (new-game {:corp {:deck [(qty "Formicary" 2) "Manegarm Skunkworks"]}})
+    (play-from-hand state :corp "Formicary" "HQ")
+    (play-from-hand state :corp "Formicary" "Archives")
+    (play-from-hand state :corp "Manegarm Skunkworks" "HQ")
+    (take-credits state :corp)
+    (let [f1 (get-ice state :hq 0)
+          f2 (get-ice state :archives 0)
+          skunk (get-content state :hq 0)]
+      ;; Never resolve
+      (card-ability state :corp f1 0)
+      (click-prompt state :corp "Never")
+      (card-ability state :corp f2 0)
+      (click-prompt state :corp "Never")
+      (run-on state "R&D")
+      (run-continue state)
+      (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is on HQ")
+      (is (not (get-run)) "The run has ended without prompting for Formicary")
+      (run-on state "HQ")
+      (rez state :corp skunk)
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :runner "Spend [Click][Click]")
+      (click-prompt state :runner "No action")
+  )))
+
 (deftest free-lunch-basic-behavior
   ;; Basic behavior
   (do-game
