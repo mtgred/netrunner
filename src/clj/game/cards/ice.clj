@@ -1573,7 +1573,8 @@
 (defcard "Formicary"
   {:derezzed-events
    [{:event :approach-server
-     :interactive (req true)
+     :interactive (req (not= ((get-autoresolve :auto-fire) state side eid card nil) "No"))
+     :silent (req (= ((get-autoresolve :auto-fire) state side eid card nil) "No"))
      :optional
      {:prompt (msg "Rez and move " (card-str state card {:visible true}) " to protect the approched server?")
       :autoresolve (get-autoresolve :auto-fire)
