@@ -2759,10 +2759,8 @@
         prevent-sub {:event :pre-resolve-subroutine
                      :duration :end-of-run
                      :unregister-once-resolved true
-                     :async true
                      :req (req true)
-                     :effect (req (update-current-encounter state :prevent-subroutine true)
-                                  (effect-completed state side eid))
+                     :effect (req (update-current-encounter state :prevent-subroutine true))
                      :msg (msg (str "prevent a subroutine (" (:label target) ") from resolving"))}]
     {:abilities [{:label "Make a run on targeted server"
                   :cost [:click 1 :credit 2]
