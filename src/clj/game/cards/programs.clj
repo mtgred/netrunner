@@ -1557,6 +1557,20 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 2 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
+(defcard "Hush"
+  ;; TODO - come back to this once disabling cards has been reworded. nbkelly, jan 2023
+  {:implementation "Unimplemented - corp must use /disable-card and /enable-card on ice to fix any issues (ie anansi, afshar, magnet)"
+   :hosting {:card #(and (ice? %)
+                         (can-host? %))}
+   :abilities [{:label "Host on a piece of ice"
+                :prompt "Choose a piece of ice"
+                :cost [:click 1]
+                :choices {:card #(and (ice? %)
+                                      (installed? %)
+                                      (can-host? %))}
+                :msg (msg "host itself on " (card-str state target))
+                :effect (effect (host target card))}]})
+
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}
                     :abilities [(break-sub 1 1 "Code Gate")

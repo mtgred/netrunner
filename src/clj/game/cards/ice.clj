@@ -2441,9 +2441,11 @@
 (defcard "Magnet"
   (letfn [(disable-hosted [state side c]
             (doseq [hc (:hosted (get-card state c))]
-              (unregister-events state side hc)
-              (unregister-constant-effects state side hc)
-              (update! state side (dissoc hc :abilities))))]
+              ;; TODO - remove this boilerplate when disabling cards is reworked
+              (when (not= (:title hc) "Hush")
+                (unregister-events state side hc)
+                (unregister-constant-effects state side hc)
+                (update! state side (dissoc hc :abilities)))))]
     {:on-rez {:async true
               :effect (req (let [magnet card]
                              (wait-for (resolve-ability
