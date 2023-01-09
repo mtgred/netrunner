@@ -1568,7 +1568,9 @@
                 :cost [:click 1]
                 :choices {:card #(and (ice? %)
                                       (installed? %)
-                                      (can-host? %))}}]})
+                                      (can-host? %))}
+                :msg (msg "host itself on " (card-str state target))
+                :effect (effect (host target card))}]})
 
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}
