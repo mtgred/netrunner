@@ -1,5 +1,5 @@
 (defproject netrunner "1.0"
-  :description "Browser implementation of Android: Netrunner card game."
+  :description "Browser implementation of Netrunner card game."
   :url "https://github.com/mtgred/netrunner"
   :license {:name "The MIT License (MIT)"
             :url "https://opensource.org/licenses/MIT"}

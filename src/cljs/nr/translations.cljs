@@ -70,7 +70,7 @@
      :zezir "Ze/zir"
      :xe "Xe/xem"}
     :chat
-    {:title "Play Android: Netrunner in your browser"
+    {:title "Play Netrunner in your browser"
      :channels "Channels"
      :send "Send"
      :placeholder "Say something..."
@@ -892,7 +892,7 @@
      :zezir "Ezay/irzay"
      :xe "Exay/emxay"}
     :chat
-    {:title "Ayplay Android: Etrunnernay inyay ouryay owserbray"
+    {:title "Ayplay Etrunnernay inyay ouryay owserbray"
      :channels "Annelschay"
      :send "Endsay"
      :placeholder "Aysay omethingsay..."
@@ -1297,7 +1297,7 @@
      :zezir "Ze/zir"
      :xe "Xe/xem"}
     :chat
-    {:title "Joue à Android: Netrunner dans ton navigateur"
+    {:title "Joue à Netrunner dans ton navigateur"
      :channels "Canaux"
      :send "Envoyer"
      :placeholder "Dire quelque chose..."

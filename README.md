@@ -1,4 +1,4 @@
-# Android: Netrunner in the browser
+# Netrunner in the browser
 
 Hosted at [http://www.jinteki.net](http://www.jinteki.net). [Example of gameplay](https://www.youtube.com/watch?v=cnWudnpeY2c).
 
