@@ -425,11 +425,6 @@
                         [:p "At the last run step on the relevant server, instead of pressing \"Successful Run\" button, "
                          "click the shard card you want to install in hand. You should end the run with the shard installed "
                          "at no cost."]]}
-            {:id "nasir"
-             :title "How do I use Nasir's ability?"
-             :content [:ul
-                        [:p "Nasir's ability is currently triggered manually - when encountering a piece of ice, click Nasir's "
-                       "identity card to trigger the ability."]]}
             {:id "adam"
              :title "How do I install Adam's directives?"
              :content [:ul
