@@ -6207,7 +6207,17 @@
       -3 (:credit (get-runner))
       "Spent 3 on spark, 0 on install"
       (play-from-hand state :runner "Spark of Inspiration")
+      (click-prompt state :runner "Yes")
       (is (= "Torch" (:title (get-program state 0))) "installed torch"))))
+
+(deftest spark-of-inspiration-decline-install
+  (do-game
+    (new-game {:runner {:hand ["Spark of Inspiration"]
+                        :deck ["Torch"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Spark of Inspiration")
+    (click-prompt state :runner "No")
+    (is (not (get-program state 0))) "Torch was not installed"))
 
 (deftest spark-no-targets
   (do-game
