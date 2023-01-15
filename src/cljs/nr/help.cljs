@@ -419,33 +419,23 @@
     {:id "cards"
      :title "Cards and Specific Interactions"
      :sub (list
-            {:id "shards"
-             :title "How do I install Eden/Hades/Utopia Shard during a run?"
-             :content [:ul
-                        [:p "At the last run step on the relevant server, instead of pressing \"Successful Run\" button, "
-                         "click the shard card you want to install in hand. You should end the run with the shard installed "
-                         "at no cost."]]}
             {:id "adam"
              :title "How do I install Adam's directives?"
              :content [:ul
                         [:p "Adam's directives are installed automatically at the game start. The directives are pulled "
                          "directly from the game-server so do not need to be a part of your deck. The previous workaround "
                          "of explicitly adding the 3 directives to the deck is no longer necessary."]]}
-            {:id "napdmwl"
-             :title "What is MWL and \"Tournament legal\"? Why is my deck marked as \"Casual play only\"?"
+            {:id "banlist"
+             :title "What is SBL?"
              :content [:ul
-                        [:p "New Angeles Police Department Most Wanted List, also known as NAPD MWL or just MWL, is a list "
+                        [:p "Standard Ban List, also known as SBL, is a list "
                          "of cards with additional deck building restrictions for tournament play. "
-                         "There are two categories of MWL cards: \"restricted\" and \"removed\". "
-                         "You may only include up to one card (up to its maximum number of copies) from the restricted category. "
-                         "You may not include cards from the removed category. "
-                         "For more information about the MWL read Tournament Rules from "
-                         [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
-                        [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Tournament legal" ] ". "
-                         "Decks that fit within the printed influence limit, but not within the tournament restrictions, "
-                         "are marked " [:span.casual "Casual play only"] ". Decks that do not fit basic deckbuilding rules are marked " [:span.invalid "Invalid"] "."]
+                         "For more information refer to "
+                         [:a {:href "https://nullsignal.games/players/supported-formats/"} "the Supported Formats page"] "."]
+                        [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Standard legal" ] ". "
+                         "Decks that do not fit basic deckbuilding rules are marked " [:span.invalid "Standard invalid"] "."]
                         [:p "Putting cards in your deck that are not yet available for sale (i.e. future spoilers) or ones that are "
-                         "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual play only"] ". Such cards "
+                         "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual legal"] ". Such cards "
                          "should be easy to identify - they are " [:span.casual "highlighted"] " in the deckbuilder."]]}
             {:id "altarts"
              :title "How do I change my decks to use alternative art versions of cards (or promotional ones)?"
