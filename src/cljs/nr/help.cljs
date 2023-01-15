@@ -267,12 +267,11 @@
      :sub (list
             {:id "learnrules"
              :title "Where can I find the game's rules explanation?"
-             :content [:ul [:p "The first step is reading " [:a {:href "https://www.fantasyflightgames.com/ffg_content/android-netrunner/support/android-netrunner-core-rules.pdf" :target "_blank"} "the official rulebook"]
-                             ". If you prefer video form, FFG has prepared " [:a {:href "https://www.youtube.com/watch?v=VAslVfZ9p-Y" :target "_blank"} "a video tutorial"]
+             :content [:ul [:p "The first step is " [:a {:href "https://nullsignal.games/players/learn-to-play/" :target "_blank"} "the Learn to Play page"]
+                             ". If you prefer video form, Null Signal Games has prepared " [:a {:href "https://youtube.com/watch?v=aG0eTf7BncU" :target "_blank"} "a video tutorial"]
                              ", too."]
                            [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
-                             "the official FAQ on "
-                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] ". "
+                             [:a {:href "https://nullsignal.games/about/frequently-asked-questions/"} "the FAQ page"] ". "
                              "There is also " [:a {:href "http://ancur.wikia.com/wiki/Project_ANCUR_Wiki"} "Project ANCUR"] ", which is a collection "
                              "of rulings (also unofficial) regarding various cards and game situations."]]}
             {:id "firstgame"
@@ -305,25 +304,25 @@
             {:id "standard"
              :title "What is the Standard format?"
              :content [:ul
-                        [:p "The flagship format of NISEI Organized Play, Standard is "
+                        [:p "The flagship format of Null Signal Games' Organized Play, Standard is "
                          "frequently changing to keep the meta exciting and engaging for "
                          "players of all levels. Most official Organised Play events will "
                          "follow the Standard format. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
             {:id "startup"
              :title "What is the Startup format?"
              :content [:ul
                         [:p "Startup is a limited-cardpool format, intended for new players "
                          "taking their first steps into Organized Play as well as experienced "
                          "players who want a slimmed-down deckbuilding challenge. "
-                         "Refer to " [:a {:href "https://nisei.net/players/supported-formats/"} "NISEI Supported Formats"] "."]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
             {:id "system-gateway"
              :title "What is the System Gateway format?"
              :content [:ul
-                        [:p "System Gateway is NISEI’s foundational set. It is designed as an "
+                        [:p "System Gateway is Null Signal Games' foundational set. It is designed as an "
                          "out-of-the-box learning experience and provides everything you need "
                          "to start playing Netrunner. "
-                         "Refer to " [:a {:href "https://nisei.net/products/system-gateway/"} "NISEI System Gateway"] "."]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/products/system-gateway/"} "System Gateway"] "."]]}
             {:id "eternal"
              :title "What is the Eternal format?"
              :content [:ul
@@ -331,14 +330,14 @@
                          "stringent Most Wanted List. The largest and most complex format, "
                          "it encompasses nearly the entirety of the printed card pool and "
                          "only grows larger with time. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
            {:id "snapshot"
              :title "What is the Snapshot format?"
              :content [:ul
                         [:p "This format is a \"snapshot\" of the meta at Magnum Opus; "
                          "the culmination of FFG Organized Play. It will see minimal "
                          "changes unless strictly necessary. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
            {:id "snapshot-plus"
              :title "What is the Snapshot Plus format?"
              :content [:ul
@@ -347,7 +346,7 @@
                          "included cards are Labor Rights, Embolus, Slot Machine, Border "
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"] "."]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
            {:id "classic"
              :title "What is the Classic format?"
              :content [:ul
