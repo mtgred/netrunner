@@ -374,7 +374,9 @@
                ^{:key label}
                [card-menu-item label
                 #(do (close-card-menu)
-                     (send-command "play" {:card card :server label}))])
+                     (if (= "Pioneer" label)
+                       (send-command "pioneer" {:card card :server label})
+                       (send-command "play" {:card card :server label})))])
              servers)]])))
 
 (defn list-abilities

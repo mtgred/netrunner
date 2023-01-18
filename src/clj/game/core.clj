@@ -38,6 +38,7 @@
     [game.core.optional]
     [game.core.payment]
     [game.core.pick-counters]
+    [game.core.pioneer]
     [game.core.play-instants]
     [game.core.player]
     [game.core.process-actions]
@@ -645,6 +646,10 @@
   [game.core.pick-counters
    pick-credit-providing-cards
    pick-virus-counters-to-spend])
+
+(expose-vars
+  [game.core.pioneer
+   pioneer])
 
 (expose-vars
   [game.core.process-actions

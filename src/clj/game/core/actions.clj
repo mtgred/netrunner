@@ -47,6 +47,14 @@
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
+(defn pioneer-ability
+  "Called when the player clicks a card from hand."
+  [state side {:keys [card]}]
+  (let [card (get-card state card)
+        eid (make-eid state {:source card :source-type :ability})
+        pioneer (:pioneer card)]
+    (resolve-ability state side eid pioneer card nil)))
+
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
@@ -509,7 +517,9 @@
   [state _ {:keys [card]}]
   (let [card (get-card state card)]
     (if card
-      (swap! state assoc-in [:corp :install-list] (installable-servers state card))
+      (if (:pioneer card)
+        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Pioneer"))
+        (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
       (swap! state dissoc-in [:corp :install-list]))))
 
 (defn get-runnable-zones
