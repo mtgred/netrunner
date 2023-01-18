@@ -58,6 +58,7 @@
     [game.core.state]
     [game.core.subtypes]
     [game.core.tags]
+    [game.core.threat]
     [game.core.to-string]
     [game.core.toasts]
     [game.core.trace]
@@ -813,6 +814,11 @@
    gain-tags
    lose-tags
    tag-prevent])
+
+(expose-vars
+  [game.core.threat
+   threat
+   threat-level])
 
 (expose-vars
   [game.core.to-string
