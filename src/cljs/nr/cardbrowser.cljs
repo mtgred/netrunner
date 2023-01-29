@@ -341,7 +341,7 @@
                    (let [status (get-in card [:format (keyword k)] "unknown")
                          c (text-class-for-status status)]
                      ^{:key k}
-                     [:div.format-item {:class c} name
+                     [:div.format-item {:class c} (tr-format name)
                       (cond (:banned status) banned-span
                             (:restricted status) restricted-span
                             (:rotated status) rotated-span
