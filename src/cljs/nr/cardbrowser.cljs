@@ -300,7 +300,7 @@
 (defn card-as-text
   "Generate text html representation a card"
   [card show-extra-info]
-  (let [title (:title card)
+  (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
         uniq (when (:uniqueness card) "◇ ")]
     [:div
@@ -452,7 +452,7 @@
          [card-as-text card true]
          (when-let [url (base-image-url card)]
            [:img {:src url
-                  :alt (:title card)
+                  :alt (tr-data :title card)
                   :onError #(-> (swap! cv assoc :show-text true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
