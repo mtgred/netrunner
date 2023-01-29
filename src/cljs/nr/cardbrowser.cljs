@@ -411,6 +411,7 @@
     cards
     (let [lcquery (s/lower-case query)]
       (filter #(or (s/includes? (s/lower-case (:title %)) lcquery)
+                   (s/includes? (s/lower-case (tr-data :title %)) lcquery)
                    (s/includes? (:normalizedtitle %) lcquery))
               cards))))
 
