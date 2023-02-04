@@ -1950,9 +1950,9 @@
                    (continue-ability
                      {:optional
                       {:prompt "Trash this asset to gain 3 [Credits] and draw 3 cards?"
-                       :msg "gain 3 [Credits] and draw 3 cards"
                        :yes-ability
                        {:async true
+                        :msg "gain 3 [Credits] and draw 3 cards"
                         :effect (req (wait-for
                                        (trash state side card {:cause-card card})
                                        (wait-for
