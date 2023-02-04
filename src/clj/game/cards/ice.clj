@@ -1311,9 +1311,9 @@
   {:subroutines [{:label "Draw 1 card"
                   :optional
                   {:prompt "Draw 1 card?"
-                   :msg "draw 1 card"
                    :autoresolve (get-autoresolve :auto-fire)
                    :yes-ability {:async true
+                                 :msg "draw 1 card"
                                  :effect (effect (draw eid 1))}}}
                  end-the-run
                  end-the-run]
@@ -3506,9 +3506,9 @@
                  {:label "Draw 1 card"
                   :optional
                   {:prompt "Draw 1 card?"
-                   :msg "draw 1 card"
                    :autoresolve (get-autoresolve :auto-fire)
                    :yes-ability {:async true
+                                 :msg "draw 1 card"
                                  :effect (effect (draw eid 1))}}}
                  {:req (req (pos? (count (:hand corp))))
                   :prompt "Choose a card in HQ to move to the top of R&D"
@@ -3738,9 +3738,9 @@
                    {:label "Draw 2 cards"
                     :optional
                     {:prompt "Draw 2 cards?"
-                     :msg "draw 2 cards"
                      :yes-ability
                      {:async true
+                      :msg "draw 2 cards"
                       :effect (effect (draw eid 2))}}}]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"

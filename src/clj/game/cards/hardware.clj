@@ -1652,8 +1652,8 @@
    {:optional
     {:req (req (some #(when (= (:title %) (:title card)) %) (:deck runner)))
      :prompt (msg "Install another copy of " (:title card) "?")
-     :msg "install another copy of itself"
      :yes-ability {:async true
+                   :msg "install another copy of itself"
                    :effect (req (trigger-event state side :searched-stack nil)
                                 (shuffle! state :runner :deck)
                                 (when-let [c (some #(when (= (:title %) (:title card)) %)
