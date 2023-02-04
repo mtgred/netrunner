@@ -443,9 +443,9 @@
                                    {:optional
                                     {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
                                      :prompt (msg "Install another copy of " hw "?")
-                                     :msg (msg "install another copy of " hw)
                                      :yes-ability
                                      {:async true
+                                      :msg (msg "install another copy of " hw)
                                       :effect (req (if-let [c (some #(when (= (:title %) hw) %) (:hand runner))]
                                                      (runner-install state side eid c nil)
                                                      (effect-completed state side eid)))}}})
