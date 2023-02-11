@@ -9,7 +9,7 @@
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [quantify]]))
+    [game.utils :refer [pluralize quantify]]))
 
 (defn sum-tag-effects
   [state]
@@ -78,7 +78,7 @@
                                prevent-msg (if prevent
                                              (str "avoids "
                                                   (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                                  (quantify prevent "tag"))
+                                                  (pluralize prevent "tag"))
                                              "will not avoid tags")]
                            (system-msg state :runner prevent-msg)
                            (clear-wait-prompt state :corp)
