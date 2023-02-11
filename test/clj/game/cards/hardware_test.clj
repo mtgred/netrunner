@@ -2129,7 +2129,7 @@
           hbdown (get-runner-facedown state 0)]
       (damage state :corp :net 1)
       (is (= (:msg (prompt-map :runner))
-             "Prevent any of the 1 net damage?")
+             "Prevent 1 net damage?")
           "Damage prevention message correct.")
       (card-ability state :runner hb 0)
       (click-card state :runner cache)
