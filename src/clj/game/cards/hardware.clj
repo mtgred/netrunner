@@ -290,7 +290,7 @@
         {:once-per-instance true
          :req (req (and (grip-or-stack-trash? targets)
                         (first-trash? state grip-or-stack-trash?)))
-         :prompt "Add a trashed card to the bottom of the stack"
+         :prompt "Choose 1 trashed card to add to the bottom of the stack"
          :choices (req (conj (sort (map :title (map :card targets))) "No action"))
          :async true
          :effect (req (if (= "No action" target)
