@@ -141,9 +141,8 @@
   (merge
     (dissoc-req (break-sub cost strength subtype))
     {:label (str "add " strength " strength and "
-                 " break up to " strength
-                 " " subtype
-                 " subroutines")
+                 " break up to "
+                 (quantify strength (str subtype " subroutine")))
      :heap-breaker-pump strength ; strength gained
      :heap-breaker-break strength ; number of subs broken
      :cost cost
