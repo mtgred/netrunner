@@ -946,7 +946,7 @@
                                 (strength-pump 1 1)
                                 {:cost [:click 1]
                                  :keep-menu-open :while-clicks-left
-                                 :msg "place 1 virus counter"
+                                 :msg "place 1 virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
@@ -1028,7 +1028,7 @@
                                 {:label "Place 1 virus counter (start of turn)"
                                  :once :per-turn
                                  :cost [:credit 1]
-                                 :msg "place 1 virus counter"
+                                 :msg "place 1 virus counter on itself"
                                  :req (req (:runner-phase-12 @state))
                                  :effect (effect (add-counter card :virus 1))}]
                     :constant-effects [(breaker-strength-bonus (get-x-fn))]}))
