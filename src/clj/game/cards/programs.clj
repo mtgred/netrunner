@@ -291,7 +291,7 @@
   (auto-icebreaker
     {:events [{:event :successful-run
                :silent (req true)
-               :effect (effect (system-msg (str "adds 1 virus counter to " (:title card)))
+               :effect (effect (system-msg (str "places 1 virus counter on " (:title card)))
                                (add-counter card :virus 1))}]
      :abilities [(break-sub [:any-virus-counter 1] 1 ice-type)
                  (strength-pump [:any-virus-counter 1] 1)]}))
@@ -499,7 +499,7 @@
 
 (defcard "Atman"
   {:on-install {:cost [:x-credits]
-                :msg (msg "add " (cost-value eid :x-credits) " power counters")
+                :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")
                 :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
    :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
    :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))]})

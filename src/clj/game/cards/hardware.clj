@@ -1074,7 +1074,7 @@
                                        (pos? (count-virus-programs state))))
                         :prompt "Place 1 virus counter?"
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:prompt "Choose an installed virus program to place 1 virus counter to"
+                        :yes-ability {:prompt "Choose an installed virus program to place 1 virus counter on"
                                       :choices {:card #(and (installed? %)
                                                             (has-subtype? % "Virus")
                                                             (program? %))}
@@ -2078,7 +2078,7 @@
                                       (continue-ability state side
                                                         (sabotage-ability 3)
                                                         card nil))
-                            (do (system-msg state side (str "uses " (:title card) " to add 1 power counter to itself"))
+                            (do (system-msg state side (str "uses " (:title card) " to place 1 power counter on itself"))
                                 (add-counter state side card :power 1)
                                 (effect-completed state side eid))))}]})
 

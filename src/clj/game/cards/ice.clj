@@ -203,9 +203,9 @@
    :effect (effect (gain-tags :corp eid n))})
 
 (def add-power-counter
-  "Adds 1 power counter to the card."
+  "Places 1 power counter on a card."
   {:label "Place 1 power counter"
-   :msg "place 1 power counter"
+   :msg "place 1 power counter on itself"
    :effect (effect (add-counter card :power 1))})
 
 (defn trace-ability
