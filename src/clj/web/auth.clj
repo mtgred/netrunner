@@ -152,7 +152,8 @@
     (acknowledged?
       (mc/update db "users"
                  {:username username}
-                 {"$set" {:email email}}))
+                 {"$set" {:email email
+                          :emailhash (md5 email)}}))
     (response 200 {:message "Refresh your browser"})
 
     :else
