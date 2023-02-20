@@ -1080,7 +1080,7 @@
             "Runner draws 3 cards"
             (click-prompt state :runner "I've Had Worse"))
           (is (find-card "I've Had Worse" (:discard (get-runner))))
-          (is (= "Add a trashed card to the bottom of the stack" (:msg (prompt-map :runner))))
+          (is (= "Choose 1 trashed card to add to the bottom of the stack" (:msg (prompt-map :runner))))
           (changes-val-macro
             1 (count (:deck (get-runner)))
             "Runner draws 2 cards, adds 1 card to deck"
@@ -1094,7 +1094,7 @@
             "Runner draws 0 cards"
             (click-prompt state :runner "Buffer Drive"))
           (is (find-card "I've Had Worse" (:discard (get-runner))))
-          (is (= "Add a trashed card to the bottom of the stack" (:msg (prompt-map :runner))))
+          (is (= "Choose 1 trashed card to add to the bottom of the stack" (:msg (prompt-map :runner))))
           (changes-val-macro
             1 (count (:deck (get-runner)))
             "Runner draws 2 cards, adds 1 card to deck"
