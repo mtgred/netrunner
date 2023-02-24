@@ -639,7 +639,7 @@
   Gather all registered handlers from the state, then append the card-abilities if appropriate,
   then filter to remove suppressed handlers and those whose req is false.
   This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
-  https://nullsignal.games/rules/comp-rules/"
+  https://nullsignal.games/wp-content/uploads/2021/03/Comprehensive_Rules_1.1.pdf"
   ([state side event targets] (gather-events state side event targets nil))
   ([state side event targets card-abilities] (gather-events state side (make-eid state) event targets card-abilities))
   ([state side eid event targets card-abilities]
