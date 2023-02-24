@@ -1423,8 +1423,9 @@
              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to place advancement counters"))
                                    (effect-completed eid))})]
     (let [moon-pool-reveal-ability
-          {:prompt "Reveal up to 2 facedown cards from Archives and shuffle them into R&D"
+          {:prompt "Choose up to 2 facedown cards from Archives to shuffle into R&D"
            :async true
+           :show-discard true
            :choices {:card #(and (corp? %)
                                  (in-discard? %)
                                  (not (faceup? %)))
@@ -1444,7 +1445,7 @@
            :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal any cards in Archives"))
                                   (effect-completed eid))}
           moon-pool-discard-ability
-            {:prompt "Trash up to 2 cards from HQ"
+            {:prompt "Choose up to 2 cards from HQ to trash"
              :choices {:card #(and (corp? %)
                                    (in-hand? %))
                        :max 2}
