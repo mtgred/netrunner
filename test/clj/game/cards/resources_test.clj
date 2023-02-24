@@ -4898,6 +4898,22 @@
       (is (= 9 (:credit (get-runner))) "Runner still has 9 credits")
       (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team still has 3 credits remaining")))
 
+(deftest red-team-is-interactive
+  ;; Red Team ability is interactive
+  (do-game
+    (new-game {:runner {:hand ["Red Team" "World Tree"]
+                        :deck ["Liberated Account"]
+                        :credits 11}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Red Team")
+    (play-from-hand state :runner "World Tree")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Archives")
+    (run-continue state)
+    (click-prompt state :runner "Red Team")
+    (click-card state :runner "Red Team")
+    (click-prompt state :runner "Liberated Account")))
+
 (deftest rolodex
   ;; Rolodex - Full test
   (do-game

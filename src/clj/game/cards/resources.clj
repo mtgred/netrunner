@@ -2514,7 +2514,7 @@
             {:event :successful-run
              :req (req this-card-run)
              :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
-             :silent (req true)
+             :interactive (req true)
              :async true
              :effect (req (let [credits (min 3 (get-counters card :credit))]
                             (add-counter state side card :credit (- credits))
