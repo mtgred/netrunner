@@ -1036,7 +1036,7 @@
    {:interactive (req true)
     :async true
     :waiting-prompt true
-    :prompt "Choose a card to trash"
+    :prompt "Choose a rezzed card to trash"
     :msg (msg "trash " (card-str state target))
     :req (req (some rezzed? (all-installed state :corp)))
     :choices {:card #(rezzed? %)}
