@@ -816,7 +816,7 @@
                                             :autoresolve (get-autoresolve :auto-fire)
                                             :yes-ability {:effect (effect (system-msg
                                                                             :runner
-                                                                            (msg "uses " (:title card) " to place 1 virus counter on itself"))
+                                                                            (str "uses " (:title card) " to place 1 virus counter on itself"))
                                                                           (add-counter :runner card :virus 1))}}}
                                   mult-ab {:prompt (msg "Place virus counters on " (:title card) "?")
                                            :choices {:number (req amt-trashed)
