@@ -443,9 +443,9 @@
                                    {:optional
                                     {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
                                      :prompt (msg "Install another copy of " hw "?")
-                                     :msg (msg "install another copy of " hw)
                                      :yes-ability
                                      {:async true
+                                      :msg (msg "install another copy of " hw)
                                       :effect (req (if-let [c (some #(when (= (:title %) hw) %) (:hand runner))]
                                                      (runner-install state side eid c nil)
                                                      (effect-completed state side eid)))}}})
@@ -1540,13 +1540,16 @@
 
 (defcard "Info Bounty"
   {:events [(assoc identify-mark-ability :event :runner-turn-begins)
-            {:event :end-breach-server
+            {:event :run-ends
               :async true
               :interactive (req true)
               :once :per-turn
-              :req (req (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %)))))
-              :msg "gain 2 [Credits]"
-              :effect (effect (gain-credits eid 2))}]})
+              :req (req (first-event? state side :run-ends #(is-mark? state (target-server (first %)))))
+              :effect
+              (req (if (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %))))
+                     (do (system-msg state :runner (str "uses " (:title card) " to gain 2 [Credits]"))
+                         (gain-credits state :runner eid 2))
+                     (effect-completed state side eid)))}]})
 
 (defcard "Inside Man"
   {:recurring 2
@@ -2511,7 +2514,7 @@
             {:event :successful-run
              :req (req this-card-run)
              :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
-             :silent (req true)
+             :interactive (req true)
              :async true
              :effect (req (let [credits (min 3 (get-counters card :credit))]
                             (add-counter state side card :credit (- credits))

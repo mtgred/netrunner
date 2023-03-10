@@ -22,7 +22,7 @@
         [:meta {:property "og:type" :content (:type og "website")}]
         [:meta {:property "og:url" :content (:url og "https://jinteki.net")}]
         [:meta {:property "og:image" :content (:image og "https://www.jinteki.net/img/icons/jinteki_167.png")}]
-        [:meta {:property "og:title" :content (:title og "Play Android: Netrunner in your browser")}]
+        [:meta {:property "og:title" :content (:title og "Play Netrunner in your browser")}]
         [:meta {:property "og:site_name" :content (:site_name og "jinteki.net")}]
         [:meta {:property "og:description" :content (:description og "Build Netrunner decks and test them online against other players.")}]
         [:link {:rel "apple-touch-icon" :href "/img/icons/jinteki_167.png"}]

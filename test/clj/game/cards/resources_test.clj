@@ -3059,12 +3059,16 @@
         (click-prompt state :runner "No action"))
       (take-credits state :runner)
       (take-credits state :corp)
-      (click-prompt state :runner "HQ")
-      (core/set-mark state :hq)
+      (click-prompt state :runner "Archives")
+      (core/set-mark state :archives)
       (changes-val-macro
         0 (:credit (get-runner))
         "Gained no credits on run on mark when breach is replaced"
-        (run-empty-server state :hq))))
+        (run-empty-server state :archives))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Gained no credits on sunsequent runs with breach on mark even if breach didn't happen yet"
+        (run-empty-server state :archives))))
 
 (deftest info-bounty-with-virtuoso
     ;; Info Bounty - interaction with Virtuoso
@@ -3081,7 +3085,8 @@
         2 (:credit (get-runner))
         "Gained 2 credits when finished breaching mark"
         (run-empty-server state :rd)
-        (click-prompt state :runner "No action"))
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Info Bounty"))
       (click-prompt state :runner "No action")))
 
 (deftest inside-man-pay-credits-prompt
@@ -4892,6 +4897,22 @@
       (run-empty-server state "Archives")
       (is (= 9 (:credit (get-runner))) "Runner still has 9 credits")
       (is (= 3 (get-counters (get-resource state 0) :credit)) "Red team still has 3 credits remaining")))
+
+(deftest red-team-is-interactive
+  ;; Red Team ability is interactive
+  (do-game
+    (new-game {:runner {:hand ["Red Team" "World Tree"]
+                        :deck ["Liberated Account"]
+                        :credits 11}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Red Team")
+    (play-from-hand state :runner "World Tree")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Archives")
+    (run-continue state)
+    (click-prompt state :runner "Red Team")
+    (click-card state :runner "Red Team")
+    (click-prompt state :runner "Liberated Account")))
 
 (deftest rolodex
   ;; Rolodex - Full test

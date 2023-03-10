@@ -1037,6 +1037,8 @@
   (installed-access-trigger
     2
     {:async true
+     ;; Adding a msg to print the ability's cost
+     :msg "force the Runner to suffer a core damage or lose all remaining [Click]"
      :effect
      (effect (continue-ability {:player :runner
                                 :prompt "Choose one"

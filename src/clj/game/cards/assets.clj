@@ -946,6 +946,7 @@
         ability {:once :per-turn
                  :async true
                  :label "Trash this asset to search R&D for an operation (start of turn)"
+                 :interactive (req true)
                  :req (req (:corp-phase-12 @state))
                  :effect
                  (effect
@@ -1422,8 +1423,9 @@
              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to place advancement counters"))
                                    (effect-completed eid))})]
     (let [moon-pool-reveal-ability
-          {:prompt "Reveal up to 2 facedown cards from Archives and shuffle them into R&D"
+          {:prompt "Choose up to 2 facedown cards from Archives to shuffle into R&D"
            :async true
+           :show-discard true
            :choices {:card #(and (corp? %)
                                  (in-discard? %)
                                  (not (faceup? %)))
@@ -1443,7 +1445,7 @@
            :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal any cards in Archives"))
                                   (effect-completed eid))}
           moon-pool-discard-ability
-            {:prompt "Trash up to 2 cards from HQ"
+            {:prompt "Choose up to 2 cards from HQ to trash"
              :choices {:card #(and (corp? %)
                                    (in-hand? %))
                        :max 2}
@@ -1949,9 +1951,9 @@
                    (continue-ability
                      {:optional
                       {:prompt "Trash this asset to gain 3 [Credits] and draw 3 cards?"
-                       :msg "gain 3 [Credits] and draw 3 cards"
                        :yes-ability
                        {:async true
+                        :msg "gain 3 [Credits] and draw 3 cards"
                         :effect (req (wait-for
                                        (trash state side card {:cause-card card})
                                        (wait-for

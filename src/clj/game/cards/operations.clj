@@ -807,6 +807,7 @@
    :on-play
    {:req (req (-> runner :scored count pos?))
     :async true
+    :msg (msg "gain " ((get-x-fn) state side eid card targets) " [Credits]")
     :effect
     (req (let [draw {:async true
                      :prompt "How many cards do you want to draw?"

@@ -1036,21 +1036,21 @@
    {:interactive (req true)
     :async true
     :waiting-prompt true
-    :prompt "Choose a card to trash"
+    :prompt "Choose a rezzed card to trash"
+    :msg (msg "trash " (card-str state target))
     :req (req (some rezzed? (all-installed state :corp)))
     :choices {:card #(rezzed? %)}
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (req (let [target-cost (rez-cost state :corp target)
-                       prompt-str (str "trash a runner card that costs " target-cost " or less")]
+    :effect (req (let [target-cost (rez-cost state :corp target)]
                    (wait-for (trash state side target {:cause-card card})
                              (continue-ability
                                state side
-                               {:prompt prompt-str
+                               {:prompt (str "Choose a runner card that costs " target-cost " or less to trash")
                                 :choices {:card #(and (installed? %)
                                                       (runner? %)
                                                       (<= (install-cost state :runner %) target-cost))}
-                                :msg (str "trash " (card-str state target))
+                                :msg (msg "trash " (:title target))
                                 :async true
                                 :effect (effect (trash eid target))}
                                card nil))))}})

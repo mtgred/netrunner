@@ -1311,9 +1311,9 @@
   {:subroutines [{:label "Draw 1 card"
                   :optional
                   {:prompt "Draw 1 card?"
-                   :msg "draw 1 card"
                    :autoresolve (get-autoresolve :auto-fire)
                    :yes-ability {:async true
+                                 :msg "draw 1 card"
                                  :effect (effect (draw eid 1))}}}
                  end-the-run
                  end-the-run]
@@ -1573,7 +1573,8 @@
 (defcard "Formicary"
   {:derezzed-events
    [{:event :approach-server
-     :interactive (req true)
+     :interactive (req (not= ((get-autoresolve :auto-fire) state side eid card nil) "No"))
+     :silent (req (= ((get-autoresolve :auto-fire) state side eid card nil) "No"))
      :optional
      {:prompt (msg "Rez and move " (card-str state card {:visible true}) " to protect the approched server?")
       :autoresolve (get-autoresolve :auto-fire)
@@ -2440,9 +2441,11 @@
 (defcard "Magnet"
   (letfn [(disable-hosted [state side c]
             (doseq [hc (:hosted (get-card state c))]
-              (unregister-events state side hc)
-              (unregister-constant-effects state side hc)
-              (update! state side (dissoc hc :abilities))))]
+              ;; TODO - remove this boilerplate when disabling cards is reworked
+              (when (not= (:title hc) "Hush")
+                (unregister-events state side hc)
+                (unregister-constant-effects state side hc)
+                (update! state side (dissoc hc :abilities)))))]
     {:on-rez {:async true
               :effect (req (let [magnet card]
                              (wait-for (resolve-ability
@@ -3503,9 +3506,9 @@
                  {:label "Draw 1 card"
                   :optional
                   {:prompt "Draw 1 card?"
-                   :msg "draw 1 card"
                    :autoresolve (get-autoresolve :auto-fire)
                    :yes-ability {:async true
+                                 :msg "draw 1 card"
                                  :effect (effect (draw eid 1))}}}
                  {:req (req (pos? (count (:hand corp))))
                   :prompt "Choose a card in HQ to move to the top of R&D"
@@ -3735,9 +3738,9 @@
                    {:label "Draw 2 cards"
                     :optional
                     {:prompt "Draw 2 cards?"
-                     :msg "draw 2 cards"
                      :yes-ability
                      {:async true
+                      :msg "draw 2 cards"
                       :effect (effect (draw eid 2))}}}]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"

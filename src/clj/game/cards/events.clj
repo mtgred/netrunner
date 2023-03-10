@@ -3165,7 +3165,38 @@
                     :effect (effect (gain-credits :runner eid (rez-cost state side (get-card state (:card context)))))}])))}})
 
 (defcard "Spark of Inspiration"
-  (letfn [(spark-search-fn [state side eid card remainder rev-str]
+  (letfn [(install-program [state side eid card revealed-card rev-str]
+            (if (can-pay? state side (assoc eid :source card :source-type :runner-install)
+                          revealed-card nil
+                          [:credit (install-cost state side revealed-card {:cost-bonus -10})])
+              (continue-ability
+                state side
+                {:optional
+                 {:prompt (str "Install " (:title revealed-card) " paying 10 [Credits] less?")
+                  :waiting-prompt true
+                  :yes-ability
+                  {:msg (msg "reveal " rev-str " from the top of the stack and install "
+                             (:title revealed-card) ", paying 10 [Credits] less")
+                   :async true
+                   :effect (req (wait-for (runner-install
+                                            state side
+                                            (make-eid state {:source card :source-type :runner-install})
+                                            revealed-card {:cost-bonus -10})
+                                          (shuffle! state side :deck)
+                                          (system-msg state side "shuffles the Stack")
+                                          (effect-completed state side eid)))}
+                  :no-ability
+                  {:msg (msg "reveal " rev-str " from the top of the stack")
+                   :effect (effect (shuffle! :deck)
+                                   (system-msg "shuffles the Stack"))}}}
+                card nil)
+              (continue-ability ;;can't afford to install it somehow
+                state side
+                {:msg (msg "reveal " rev-str " from the top of the stack")
+                 :effect (effect (shuffle! :deck)
+                                 (system-msg "shuffles the Stack"))}
+                card nil)))
+          (spark-search-fn [state side eid card remainder rev-str]
             (if (not-empty remainder)
               (let [revealed-card (first remainder)
                     rest-of-deck (rest remainder)
@@ -3173,29 +3204,7 @@
                               (:title revealed-card)
                               (str rev-str ", " (:title revealed-card)))]
                 (if (program? revealed-card)
-                  (if (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                revealed-card nil
-                                [:credit (install-cost state side revealed-card {:cost-bonus -10})])
-                    (continue-ability
-                      state side
-                      {:msg (msg "reveal " rev-str " from the top of the stack and install "
-                                 (:title revealed-card) ", paying 10 [Credits] less")
-                       :async true
-                       :effect (req
-                                 (wait-for (runner-install
-                                             state side
-                                             (make-eid state {:source card :source-type :runner-install})
-                                             revealed-card {:cost-bonus -10})
-                                           (shuffle! state side :deck)
-                                           (system-msg state side "shuffles the Stack")
-                                           (effect-completed state side eid)))}
-                      card nil)
-                    (continue-ability ;;can't afford to install it somehow
-                      state side
-                      {:msg (msg "reveal " rev-str " from the top of the stack")
-                       :effect (effect (shuffle! :deck)
-                                       (system-msg "shuffles the Stack"))}
-                      card nil))
+                  (install-program state side eid card revealed-card rev-str)
                   (spark-search-fn state side eid card rest-of-deck rev-str)))
               (continue-ability
                 state side
@@ -3203,11 +3212,8 @@
                  :effect (effect (shuffle! :deck)
                                  (system-msg "shuffles the Stack"))}
                 card nil)))]
-    {:on-play
-     {:req (req (not-empty (:deck runner)))
-      :msg "reveal cards from the top of the Stack"
-      :async true
-      :effect (req (spark-search-fn state side eid card (:deck runner) ""))}}))
+    {:on-play {:async true
+               :effect (effect (spark-search-fn eid card (:deck runner) ""))}}))
 
 (defcard "Spear Phishing"
   {:makes-run true
@@ -3629,12 +3635,13 @@
     :waiting-prompt true
     :prompt "Choose one"
     :choices ["Runner gains 6 [Credits]" "Runner draws 4 cards"]
+    :msg (msg (if (= target "Runner gains 6 [Credits]")
+                "gain 6 [Credits]"
+                "draw 4 cards"))
     :async true
     :effect (req (if (= target "Runner gains 6 [Credits]")
-                   (do (system-msg state :corp "chooses 6 [Credits] for the Runner")
-                       (gain-credits state :runner eid 6))
-                   (do (system-msg state :corp "chooses 4 cards for the Runner")
-                       (draw state :runner eid 4))))}})
+                   (gain-credits state :runner eid 6)
+                   (draw state :runner eid 4)))}})
 
 (defcard "Windfall"
   {:on-play

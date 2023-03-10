@@ -29,7 +29,9 @@
 
 (defn prevention-prompt-msg
   [damage-amount damage-type prevented]
-  (str "Prevent any of the " damage-amount
+  (str "Prevent "
+       (when (< 1 damage-amount) "any of the ")
+       damage-amount
        " " (damage-name damage-type) " damage?"
        " (" prevented "/" damage-amount " prevented)"))
 
@@ -37,7 +39,7 @@
   "Look at the current runner prompt and (if a damage prevention prompt), update message."
   [state side]
   (when-let [prompt (first (get-in @state [side :prompt]))]
-    (when-let [match (re-matches #"^Prevent any of the (\d+) (\w+) damage\?.*" (:msg prompt))]
+    (when-let [match (re-matches #"^Prevent (?:any of the )?(\d+) (\w+) damage\?.*" (:msg prompt))]
       (let [damage-amount (str->int (second match))
             damage-type (case (nth match 2)
                           "net" :net
@@ -158,14 +160,18 @@
            (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
            (swap! state assoc-in [:prevent :current] type)
            (show-prompt
-             state player nil (str "Prevent any of the " (- n already-prevented) " " (damage-name type) " damage?") ["Done"]
+             state player nil
+             (str "Prevent " (when (< 1 (- n already-prevented)) "any of the ") (- n already-prevented) " " (damage-name type) " damage?")
+             ["Done"]
              (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
                            damage-prevented (if prevent (- prevent already-prevented) false)]
                        (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
                        (system-msg state player
-                                   (if damage-prevented (str "prevents "
-                                                             (if (>= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
-                                                             " " (damage-name type) " damage") "will not prevent damage"))
+                                   (if damage-prevented
+                                     (str "prevents "
+                                          (if (= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
+                                          " " (damage-name type) " damage")
+                                     "will not prevent damage"))
                        (clear-wait-prompt state other-player)
                        (effect-completed state side eid)))))
        (effect-completed state side eid)))))
