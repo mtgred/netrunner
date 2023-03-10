@@ -1731,10 +1731,10 @@
 
 (defn time-remaining
   "Component which displays a readout of the time remaining on the timer."
-  [start-date time-limit hidden]
+  [start-date timer hidden]
   (let [end-time (-> start-date
                      (inst/parse)
-                     (inst/plus time-limit chrono/minutes))
+                     (inst/plus timer chrono/minutes))
         remaining (r/atom nil)
         interval (r/atom nil)]
     (r/create-class
@@ -1758,7 +1758,7 @@
               (:seconds @remaining) "s remaining")]))})))
 
 (defn- time-since
-  "Helper method for match timer. Computes how much time since game start"
+  "Helper method for match duration. Computes how much time since game start"
   [start]
   (let [start-time (-> start
                        (inst/parse))
@@ -1769,7 +1769,7 @@
         seconds (mod (abs total-seconds) 60)]
     {:minutes minutes :seconds seconds}))
 
-(defn match-timer
+(defn match-duration
   "Component which displays a readout of the time since the start of the match."
   [start-date hidden]
   (let [duration (r/atom nil)
@@ -1793,7 +1793,7 @@
               (:seconds @duration) "s")])
          )})))
 
-(defn starting-timestamp [start-date time-limit]
+(defn starting-timestamp [start-date timer]
   ;; I don't like using js/Date, but `toLocalTimeString`
   ;; is just too convenient
   (let [start-time-string (str (tr [:game.game-start "Game start"])
@@ -1805,10 +1805,10 @@
        [:<>
         [:span.pm {:on-click #(swap! hide-timer not)}
          (if @hide-timer "+" "-")]
-        (if time-limit [:span {:on-click #(swap! hide-timer not)}
-                        [time-remaining start-date time-limit hide-timer]]
-                       [:span {:on-click #(swap! hide-timer not)}
-                        [match-timer start-date hide-timer]])]])))
+        (if timer [:span {:on-click #(swap! hide-timer not)}
+                        [time-remaining start-date timer hide-timer]]
+                  [:span {:on-click #(swap! hide-timer not)}
+                        [match-duration start-date hide-timer]])]])))
 
 
 (defn- handle-click [{:keys [render-board?]} e]
@@ -2083,7 +2083,7 @@
                         me-play-area (r/cursor game-state [me-side :play-area])]
                     [:div
                      (when-not (:replay @game-state)
-                       [starting-timestamp @start-date @time-limit])
+                       [starting-timestamp @start-date @timer])
                      [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
                      [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
                      [rfg-view op-set-aside (tr [:game.set-aside "Set aside"]) true]
