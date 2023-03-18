@@ -654,7 +654,7 @@
   {:constant-effects [(corp-hand-size+ 1)]
    :events [{:event :agenda-scored
              :interactive (req true)
-             :optional {:prompt "Add card from Archives to HQ?"
+             :optional {:prompt "Add 1 card from Archives to HQ?"
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability (corp-recur)}}]
    :abilities [(set-autoresolve :auto-fire "Haas-Bioroid: Precision Design")]})

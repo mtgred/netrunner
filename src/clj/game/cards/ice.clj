@@ -203,9 +203,9 @@
    :effect (effect (gain-tags :corp eid n))})
 
 (def add-power-counter
-  "Adds 1 power counter to the card."
+  "Places 1 power counter on a card."
   {:label "Place 1 power counter"
-   :msg "place 1 power counter"
+   :msg "place 1 power counter on itself"
    :effect (effect (add-counter card :power 1))})
 
 (defn trace-ability
@@ -2604,7 +2604,7 @@
 (defcard "Mestnichestvo"
   {:advanceable :always
    :on-encounter
-   {:optional {:prompt "Remove a hosted advancement counter to make the Runner lose 3 [Credits]?"
+   {:optional {:prompt "Remove 1 hosted advancement counter to make the Runner lose 3 [Credits]?"
                :req (req (pos? (get-counters (get-card state card) :advancement)))
                :yes-ability {:async true
                              :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")

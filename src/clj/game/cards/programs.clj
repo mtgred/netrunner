@@ -141,9 +141,8 @@
   (merge
     (dissoc-req (break-sub cost strength subtype))
     {:label (str "add " strength " strength and "
-                 " break up to " strength
-                 " " subtype
-                 " subroutines")
+                 " break up to "
+                 (quantify strength (str subtype " subroutine")))
      :heap-breaker-pump strength ; strength gained
      :heap-breaker-break strength ; number of subs broken
      :cost cost
@@ -291,7 +290,7 @@
   (auto-icebreaker
     {:events [{:event :successful-run
                :silent (req true)
-               :effect (effect (system-msg (str "adds 1 virus counter to " (:title card)))
+               :effect (effect (system-msg (str "places 1 virus counter on " (:title card)))
                                (add-counter card :virus 1))}]
      :abilities [(break-sub [:any-virus-counter 1] 1 ice-type)
                  (strength-pump [:any-virus-counter 1] 1)]}))
@@ -499,7 +498,7 @@
 
 (defcard "Atman"
   {:on-install {:cost [:x-credits]
-                :msg (msg "add " (cost-value eid :x-credits) " power counters")
+                :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")
                 :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
    :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
    :constant-effects [(breaker-strength-bonus (req (get-counters card :power)))]})
@@ -946,7 +945,7 @@
                                 (strength-pump 1 1)
                                 {:cost [:click 1]
                                  :keep-menu-open :while-clicks-left
-                                 :msg "place 1 virus counter"
+                                 :msg "place 1 virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
@@ -1028,7 +1027,7 @@
                                 {:label "Place 1 virus counter (start of turn)"
                                  :once :per-turn
                                  :cost [:credit 1]
-                                 :msg "place 1 virus counter"
+                                 :msg "place 1 virus counter on itself"
                                  :req (req (:runner-phase-12 @state))
                                  :effect (effect (add-counter card :virus 1))}]
                     :constant-effects [(breaker-strength-bonus (get-x-fn))]}))

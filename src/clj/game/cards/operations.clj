@@ -266,7 +266,7 @@
 (defcard "Backroom Machinations"
   {:on-play
    {:additional-cost [:tag 1]
-    :msg "add it to their score area as an agenda worth 1 agenda point"
+    :msg "add itself to the score area as an agenda worth 1 agenda point"
     :effect (req (as-agenda state :corp card 1))}})
 
 (defcard "Bad Times"
@@ -464,7 +464,7 @@
 
 (defcard "\"Clones are not People\""
   {:events [{:event :agenda-scored
-             :msg "add it to their score area as an agenda worth 1 agenda point"
+             :msg "add itself to the score area as an agenda worth 1 agenda point"
              :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Closed Accounts"

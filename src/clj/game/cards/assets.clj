@@ -702,10 +702,10 @@
   {:constant-effects [(runner-hand-size+ (req (- (get-counters card :power))))]
    :events [{:event :rez
              :req (req (same-card? card (:card context)))
-             :msg "add 1 power counter to itself"
+             :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}
             {:event :corp-turn-begins
-             :msg "add 1 power counter to itself"
+             :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Drago Ivanov"
@@ -1187,7 +1187,7 @@
                                                 (trash state side eid card {:cause-card card})))}
                         :unsuccessful
                         {:effect (effect (add-counter card :power 1))
-                         :msg "add 1 power counter to itself"}}}]})
+                         :msg "place 1 power counter on itself"}}}]})
 
 (defcard "Lady Liberty"
   {:abilities [{:cost [:click 3]

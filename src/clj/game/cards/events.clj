@@ -1933,10 +1933,10 @@
              :effect (effect (make-run eid target card))}
    :events [{:event :successful-run
              :req (req this-card-run)
-             :prompt "Add a card from the heap to the grip"
+             :prompt "Choose 1 card to add to the grip"
              :waiting-prompt true
              :choices (req (cancellable (:discard runner) :sorted))
-             :msg (msg "move " (:title target) " to their grip")
+             :msg (msg "add " (:title target) " to the grip")
              :effect (effect (move target :hand))}]})
 
 (defcard "Khusyuk"
