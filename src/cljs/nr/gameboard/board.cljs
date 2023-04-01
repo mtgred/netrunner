@@ -1905,6 +1905,32 @@
         ;; else
         nil))))
 
+(defonce table-position (r/atom 0))
+(defonce table-transition-duration (r/atom 0))
+(defonce table-resetting (r/atom false))
+
+(defn flip-table-april-fools [resetting]
+  (let [angle (rand-int 450)
+        future-missing-angle (- 360 (mod (+ @table-position angle) 360))
+        angle (if (or (< future-missing-angle 15) ; Nudge a bit further if almost correct orientation
+                      (> future-missing-angle 345))
+                (+ angle 60)
+                angle)
+        future-missing-angle (- 360 (mod (+ @table-position angle) 360))
+        curr-missing-angle (- 360 (mod @table-position 360))
+        curr-missing-angle (if (> curr-missing-angle 180)
+                             (- curr-missing-angle 360) ; Rotate the other way to reset board, if smaller
+                             curr-missing-angle)]
+    (if resetting
+      (do (swap! table-position + curr-missing-angle)
+          (reset! table-resetting true)
+          (reset! table-transition-duration (Math/abs (/ curr-missing-angle 45)))
+          (println "curr-miss:" curr-missing-angle)
+          (println "dur:" @table-transition-duration)) ; Slowly rotate back to normal
+      (do (swap! table-position + angle)
+          (reset! table-resetting false)
+          (reset! table-transition-duration (/ angle 360))))))
+
 (defn gameboard []
   (let [active (r/cursor app-state [:active-page])
         start-date (r/cursor game-state [:start-date])
@@ -2005,6 +2031,10 @@
                  runner-rig (r/cursor game-state [:runner :rig])
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview
+              {:style {:transform (str "perspective(50rem) rotateX(" @table-position "deg)")
+                       :transition-duration (str @table-transition-duration "s")
+                       :transition-property "transform"
+                       :transition-timing-function (if @table-resetting "linear" "cubic-bezier(0,1,0.5,1)")}}
               [:div.gameboard
                (let [me-keep (r/cursor game-state [me-side :keep])
                      op-keep (r/cursor game-state [op-side :keep])

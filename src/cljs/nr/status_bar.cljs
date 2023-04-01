@@ -2,6 +2,7 @@
   (:require
    [nr.appstate :refer [app-state]]
    [nr.gameboard.actions :refer [concede mute-spectators]]
+   [nr.gameboard.board :refer [flip-table-april-fools]]
    [nr.gameboard.replay :refer [set-replay-side]]
    [nr.lobby :refer [filter-games leave-game]]
    [nr.player-view :refer [player-view]]
@@ -13,12 +14,27 @@
    (let [c (count (filter-games @user @games (:visible-formats @app-state)))]
      (tr [:nav/game-count] c))])
 
+(defonce flip-table-button-pressed (r/atom 0))
+
 (defn in-game-buttons [user current-game gameid]
   (when (and (:started @current-game)
              (not= "local-replay" @gameid))
     (let [user-id (-> @user :_id)
           is-player (some #(= user-id (-> % :user :_id)) (:players @current-game))]
       [:div.float-right
+       [:a.flip-table-button {:on-click #(if (<= @flip-table-button-pressed 3)
+                                           (do
+                                             (swap! flip-table-button-pressed inc)
+                                             (flip-table-april-fools false))
+                                           (do
+                                             (reset! flip-table-button-pressed 0)
+                                             (flip-table-april-fools true)))}
+        (case @flip-table-button-pressed
+          0 "New Feature: Flip table view"
+          1 "Uh oh... try again?"
+          2 "Next time it'll work..."
+          3 "Aaaaaaaaaaaaaaargh..."
+          "Let's try to stay calm...")]
        (when is-player
          [:a.concede-button {:on-click #(concede)}
           (tr [:game.concede "Concede"])])
