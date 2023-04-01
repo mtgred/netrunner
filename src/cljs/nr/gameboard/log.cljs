@@ -7,7 +7,7 @@
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
-   [nr.gameboard.state :refer [game-state not-spectator?]]
+   [nr.gameboard.state :refer [game-state get-side not-spectator? realistic-mode]]
    [nr.help :refer [command-info]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [influence-dot render-message]]
@@ -222,6 +222,12 @@
   (fn []
     [:div.log
      [angel-arena-log/inactivity-pane]
+     [:div
+      [:span.new-feature
+       "Try out the new feature: "]
+      [:button {:on-click #(swap! realistic-mode not)}
+       "Turn " (if @realistic-mode "off" "on") " realistic mode"]
+      [:hr {:style {:width "100%"}}]]
      [log-messages]
      [log-typing]
      [log-input]]))
