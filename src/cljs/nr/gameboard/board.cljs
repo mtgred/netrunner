@@ -52,6 +52,18 @@
 
 (defonce button-channel (chan))
 
+(defn to-dice [n]
+  (if (pos? n)
+    (cond
+      (= 1 n) "⚀"
+      (= 2 n) "⚁"
+      (= 3 n) "⚂"
+      (= 4 n) "⚃"
+      (= 5 n) "⚄"
+      (= 6 n) "⚅"
+      :else (str "⚅" (to-dice (- n 6))))
+    ""))
+
 (defn open-card-menu [source]
   (swap! card-menu assoc :source source))
 
@@ -672,16 +684,16 @@
             [:div
              [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
         [:span.cardname title]
-        [:div.counters
+        [(if @realistic-mode :div.counters.realistic :div.counters)
          (when counter
            (doall
              (map (fn [[type num-counters]]
                     (when (pos? num-counters)
                       (let [selector (str "div.darkbg." (lower-case (name type)) "-counter.counter")]
-                        [(keyword selector) {:key type} num-counters])))
+                        [(keyword selector) {:key type} (if @realistic-mode (to-dice num-counters) num-counters)])))
                   (sort-by key counter))))
          (when (pos? (get-counters card :advancement))
-           [:div.darkbg.advance-counter.counter {:key "adv"} (get-counters card :advancement)])]
+           [:div.darkbg.advance-counter.counter {:key "adv"} (if @realistic-mode (to-dice (get-counters card :advancement)) (get-counters card :advancement))])]
         (when (and (or current-strength strength)
                    (or (ice? card)
                        (has-subtype? card "Icebreaker"))
