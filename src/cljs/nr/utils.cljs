@@ -62,7 +62,7 @@
   [faction id]
   (letfn [(icon-span [css-faction]
             [:span.faction-icon {:class css-faction
-                                 :title id}])]
+                                 :title faction}])]
     (case faction
       "Adam" (icon-span "adam")
       "Anarch" (icon-span "anarch")
@@ -151,7 +151,7 @@
 (def icon-patterns
   "A sequence of icon pattern pairs consisting of an regex, used to match icon
   codes, and the span fragment that should replace it"
-  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])
+  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon) :title (str " " icon)}])
           (regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
     (->> {"[credit]" "credit"
           "[credits]" "credit"
