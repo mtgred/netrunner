@@ -105,7 +105,7 @@
       (and user (password/check password (:password user)))
       (do (mc/update db "users"
                      {:username username}
-                     {"$set" {:last-connection (inst/now)}})
+                     {"$set" {:lastConnection (inst/now)}})
           (assoc (response 200 {:message "ok"})
                  :cookies {"session" (merge {:value (create-token auth user)}
                                             (:cookie auth))}))
