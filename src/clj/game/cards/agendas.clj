@@ -1596,7 +1596,8 @@
                                     (not (faceup? %)))}
               :show-discard true
               :msg (msg "reveal " (:title (first targets)) " and add it to their score area")
-              :effect (req (let [c (move state :corp target :scored)]
+              :effect (req (wait-for (reveal state side (make-eid state eid) target))
+                           (let [c (move state :corp target :scored)]
                              (card-init state :corp c {:resolve-effect false
                                                        :init-data true}))
                            (update-all-advancement-requirements state)
