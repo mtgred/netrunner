@@ -1595,6 +1595,7 @@
                                     (in-discard? %)
                                     (not (faceup? %)))}
               :show-discard true
+              :async true
               :msg (msg "reveal " (:title (first targets)) " and add it to their score area")
               :effect (req (wait-for (reveal state side target)
                                      (let [c (move state :corp target :scored)]
