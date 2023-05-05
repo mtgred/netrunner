@@ -1596,13 +1596,14 @@
                                     (not (faceup? %)))}
               :show-discard true
               :msg (msg "reveal " (:title (first targets)) " and add it to their score area")
-              :effect (req (wait-for (reveal state side (make-eid state eid) target))
-                           (let [c (move state :corp target :scored)]
-                             (card-init state :corp c {:resolve-effect false
-                                                       :init-data true}))
-                           (update-all-advancement-requirements state)
-                           (update-all-agenda-points state)
-                           (check-win-by-agenda state side))
+              :effect (req (wait-for (reveal state side target)
+                                     (let [c (move state :corp target :scored)]
+                                       (card-init state :corp c {:resolve-effect false
+                                                                 :init-data true}))
+                                     (update-all-advancement-requirements state)
+                                     (update-all-agenda-points state)
+                                     (check-win-by-agenda state side)
+                                     (effect-completed state side eid)))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card))))}})
 
 (defcard "Regulatory Capture"
