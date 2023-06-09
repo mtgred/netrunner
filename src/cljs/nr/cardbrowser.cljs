@@ -23,6 +23,7 @@
 (declare generate-flip-cards)
 (declare insert-starter-info)
 (declare insert-starter-ids)
+(declare merge-localized-data)
 
 (defn- format-card-key->string
   [format]
@@ -40,8 +41,11 @@
           latest-cards (if need-update?
                            (:json (<! (GET "/data/cards")))
                            (:cards local-cards))
+          localized-data (if (not= lang "en")
+                           (:json (<! (GET (str "/data/cards/lang/" lang)))))
           cards (->> latest-cards
                      (insert-starter-ids)
+                     (merge-localized-data localized-data)
                      (sort-by :code))
           sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
@@ -70,6 +74,12 @@
              :previous-cards (generate-previous-cards cards)
              :alt-info alt-info)
       (put! cards-channel cards)))
+
+(defn- merge-localized-data
+  [localized-data cards]
+  (let [localized-data-indexed (into {} (map (juxt :code identity) localized-data))]
+    (map #(assoc % :localized (dissoc (localized-data-indexed (:code %)) :code))
+         cards)))
 
 (defn- insert-starter-info
   [card]
