@@ -32,8 +32,11 @@
                   {} (:cards format))))
 
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
+          lang (get-in @app-state [:options :language] "en")
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
-          need-update? (or (not local-cards) (not= server-version (:version local-cards)))
+          need-update? (or (not local-cards)
+                           (not= server-version (:version local-cards))
+                           (not= lang (:lang local-cards)))
           latest-cards (if need-update?
                            (:json (<! (GET "/data/cards")))
                            (:cards local-cards))
@@ -59,7 +62,7 @@
       (reset! cards/cycles cycles)
       (swap! app-state assoc :sets sets :cycles cycles)
       (when need-update?
-        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
+        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version :lang lang}))))
       (reset! all-cards (into {} (map (juxt :title identity) (sort-by :code cards))))
       (swap! app-state assoc
              :cards-loaded true
