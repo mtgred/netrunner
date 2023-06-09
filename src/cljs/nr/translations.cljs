@@ -1663,7 +1663,7 @@
 
 
   :ko
-  {:missing ":kr 텍스트를 찾을 수 없음"
+  {:missing ":ko 텍스트를 찾을 수 없음"
    :side
    {:corp "기업"
     :runner "러너"
@@ -2490,8 +2490,8 @@
    :win-points (fn [[turn]] (str "wygrywa przez zdobycie punktów zwycięstwa w " turn " turze."))}
    } 
 
-   :jp
-   {:missing ":jp missing text"
+   :ja
+   {:missing ":ja missing text"
     :side
     {:corp "コーポ"
      :runner "ランナー"
@@ -2577,9 +2577,9 @@
      :features "Features"
      :game-count (fn [[cnt]] (str "ルーム数 " cnt))}
     :menu
-    {:settings :jp.nav/settings
+    {:settings :ja.nav/settings
      :logout "ジャックアウト"
-     :admin :jp.nav/admin
+     :admin :ja.nav/admin
      :moderator "Moderator"
      :donor "Donor"}
     :card-browser
