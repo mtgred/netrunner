@@ -292,7 +292,7 @@
                             {:name "Français" :ref "fr"}
                             {:name "Deutsch" :ref "de"}
                             {:name "Italiano" :ref "it"}
-                            {:name "日本語" :ref "jp"}
+                            {:name "日本語" :ref "ja"}
                             {:name "한국어" :ref "ko"}
                             {:name "Polski" :ref "pl"}
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
