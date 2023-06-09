@@ -47,7 +47,8 @@
       ["/cards"
        ["" {:get data/cards-handler}]
        ["/version" {:get data/cards-version-handler}]
-       ["/altarts" {:get data/alt-arts-handler}]]
+       ["/altarts" {:get data/alt-arts-handler}]
+       ["/lang/:lang" {:get data/lang-handler}]]
       ["/news" {:get data/news-handler}]
       ["/sets" {:get data/sets-handler}]
       ["/mwl" {:get data/mwl-handler}]
