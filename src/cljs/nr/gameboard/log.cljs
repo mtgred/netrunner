@@ -205,7 +205,8 @@
          (into [:div.messages {:class [(when (:replay @game-state)
                                          "panel-bottom")]
                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                               :on-mouse-out #(card-preview-mouse-out % zoom-channel)}]
+                               :on-mouse-out #(card-preview-mouse-out % zoom-channel)
+                               :aria-live "polite"}]
                (map
                  (fn [{:keys [user text timestamp]}]
                    ^{:key timestamp}
