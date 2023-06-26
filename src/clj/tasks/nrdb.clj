@@ -16,7 +16,8 @@
     [tasks.setup :refer [connect disconnect]]))
 
 (def ^:const edn-base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
-(def ^:const jnet-image-url "https://static.nrdbassets.com/v1/large/")
+(def ^:const jnet-image-url-base "https://static.nrdbassets.com/v1/")
+(def ^:const supported-img-langs #{"en" "ja"})
 
 (defn download-edn-data
   [localpath]
@@ -37,24 +38,29 @@
 
 (defn- card-image-file
   "Returns the path to a card's image as a File"
-  [code]
-  (io/file "resources" "public" "img" "cards" "en" "default" "stock" (str code ".png")))
+  [code lang]
+  (io/file "resources" "public" "img" "cards" (or lang "en") "default" "stock" (str code ".png")))
+
+(defn- jnet-image-url
+  [code lang]
+  (let [lang-path (if (and lang (not= lang "en")) (str lang "/"))]
+    (str jnet-image-url-base lang-path "large/" code ".jpg")))
 
 (defn- download-card-image
   "Download a single card image from NRDB"
-  [{:keys [code title]}]
+  [lang {:keys [code title]}]
   (binding [org.httpkit.client/*default-client* sni-client/default-client]
-    (let [url (str jnet-image-url code ".jpg")]
+    (let [url (jnet-image-url code lang)]
       (println "Downloading: " title "\t\t(" url ")")
       (http/get url {:as :byte-array :timeout 120000}
                 (fn [{:keys [status body error]}]
                   (case status
                     404 (println "No image for card" code title)
-                    200 (let [card-path (.getPath (card-image-file code))]
+                    200 (let [card-path (.getPath (card-image-file code lang))]
                           (io/make-parents card-path)
                           (with-open [w (io/output-stream card-path)]
                             (.write w body)))
-                    (println "Error downloading art for card" code error)))))))
+                    (println "Error downloading art for card" code (or lang "default") error)))))))
 
 (def download-card-image-throttled
   (throttle-fn download-card-image 5 :second))
@@ -72,27 +78,30 @@
 
 ;; these are cards with multiple faces, so we can't download them directly
 (def ^:const cards-to-skip #{"08012" "09001" "26066" "26120"})
+;; starting code for NSG cards in other languages since NRDB doesn't host non-English FFG cards
+(def ^:const translated-img-code-start 26001)
 
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
-  [cards]
-  (let [img-dir (io/file "resources" "public" "img" "cards" "en" "default" "stock")]
+  [cards lang]
+  (let [img-dir (io/file "resources" "public" "img" "cards" lang "default" "stock")]
     (io/make-parents img-dir)
     (let [previous-cards (generate-previous-card-stubs cards)
           total-cards (concat cards previous-cards)
           total-cards (remove #(get cards-to-skip (:code %)) total-cards)
-          missing-cards (remove #(.exists (card-image-file (:code %))) total-cards)
+          total-cards (remove #(and (not= lang "en") (>= translated-img-code-start (Integer/parseInt (:code %)))) total-cards)
+          missing-cards (remove #(.exists (card-image-file (:code %) lang)) total-cards)
           total (count total-cards)
           missing (count missing-cards)]
       (if (pos? missing)
         (do
-          (println "Have art for" (str (- total missing) "/" total) "cards. Downloading" missing "missing images...")
-          (let [futures (doall (map download-card-image-throttled missing-cards))]
+          (println "Have art for" (str (- total missing) "/" total) "cards for" lang "lang. Downloading" missing "missing images...")
+          (let [futures (doall (map (partial download-card-image-throttled lang) missing-cards))]
             (doseq [resp futures]
               ; wait for all the GETs to complete
               (:status @resp)))
           (println "Finished downloading card art"))
-        (println "All" total "card images exist, skipping download")))))
+        (println "All" total "card images exist for" lang "lang, skipping download")))))
 
 (defn- update-config
   "Store import meta info in the db"
@@ -119,7 +128,7 @@
             (println (str "Imported " col " into database")))
           (update-config db)
           (when card-images
-            (download-card-images (:cards edn)))
+            (doall (map (partial download-card-images (:cards edn)) supported-img-langs)))
           (add-images db)
           (create-indexes db)
           (finally (disconnect system)))))
