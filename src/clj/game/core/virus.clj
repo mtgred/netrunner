@@ -1,6 +1,6 @@
 (ns game.core.virus
   (:require
-    [game.core.board :refer [all-active-installed get-all-installed]]
+    [game.core.board :refer [all-active-installed get-all-installed all-installed]]
     [game.core.card :refer [get-counters virus-program?]]))
 
 (defn get-virus-counters
@@ -19,3 +19,8 @@
   "Returns number of actual virus counters (excluding virtual counters from Hivemind)"
   [state]
   (reduce + (map #(get-counters % :virus) (get-all-installed state))))
+
+(defn number-of-runner-virus-counters
+  "Returns the number of actual virus counters on Runner cards (excluding virtual counters from Hivemind)"
+  [state]
+  (reduce + (map #(get-counters % :virus) (all-installed state :runner))))

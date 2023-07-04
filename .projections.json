@@ -1,0 +1,10 @@
+{
+  "src/clj/game/*.clj": {"alternate": "test/clj/game/{}_test.clj"},
+  "test/clj/game/*_test.clj": {"alternate": "src/clj/game/{}.clj"},
+
+  "src/clj/game/cards/*.clj": {"type": "card"},
+  "src/clj/game/core/*.clj": {"type": "core"},
+  "src/clj/web/*.clj": {"type": "web"},
+  "src/cljc/*.cljc": {"type": "cljc"},
+  "src/cljs/nr/*.cljs": {"type": "cljs"}
+}

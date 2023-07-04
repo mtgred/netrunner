@@ -4,8 +4,27 @@
             [game.utils :refer [side-str]]
             [clojure.test :refer :all]
             [clojure.string :refer [join]]
-            [game.utils-test :refer :all]
-            [jinteki.utils :as jutils]))
+            [game.utils-test :refer :all]))
+
+(defn- dont-use-me [s]
+  `(throw (ex-info (str ~s " should only be used in do-game") {})))
+
+(defmacro refresh [_]
+  (dont-use-me "refresh"))
+(defmacro prompt-map [_]
+  (dont-use-me "prompt-map"))
+(defmacro prompt-type [_]
+  (dont-use-me "prompt-type"))
+(defmacro prompt-buttons [_]
+  (dont-use-me "prompt-buttons"))
+(defmacro prompt-titles [_]
+  (dont-use-me "prompt-titles"))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro prompt-fmt [_]
+  (dont-use-me "prompt-fmt"))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro print-prompts []
+  (dont-use-me "print-prompts"))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -38,12 +57,12 @@
                                (join "\n" (map #(str "[ " (or (get-in % [:value :title])
                                                               (:value %)
                                                               %
-                                                              "nil") " ]") choices#)) "\n")))]
+                                                              "nil") " ]") choices#))
+                               "\n")))
+         ~'print-prompts (fn []
+                           (print (~'prompt-fmt :corp))
+                           (println (~'prompt-fmt :runner)))]
      ~@body))
-
-(defmacro deftest-pending [name & body]
-  (let [message (str "\n" name " is pending")]
-    `(clojure.test/deftest- ~name (println ~message))))
 
 (defmacro changes-val-macro [change-amt val-form msg & body-form]
   `(let [start-val# ~val-form]
@@ -54,13 +73,19 @@
          {:type (if (= actual-change# ~change-amt) :pass :fail)
           :actual actual-change#
           :expected ~change-amt
-          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " '~body-form)}))))
+          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " (cons 'do '~body-form))}))))
+
+(defmacro changes-val [change-amt val-form & body-form]
+  `(changes-val-macro ~change-amt ~val-form "" ~@body-form))
 
 (defmethod clojure.test/assert-expr 'changes-val [msg form]
   (let [change-amt (nth form 1)
         val-form (nth form 2)
-        body-form (nth form 3)]
-    `(changes-val-macro ~change-amt ~val-form ~msg ~body-form)))
+        body-form (drop 3 form)]
+    `(changes-val-macro ~change-amt ~val-form ~msg ~@body-form)))
+
+(defmacro changes-credits [side change-amt & body-form]
+  `(changes-val-macro ~change-amt (:credit ~side) "" ~@body-form))
 
 ;; Enables you to do this:
 ;; (is (changes-credits (get-runner) -5
@@ -68,5 +93,11 @@
 (defmethod clojure.test/assert-expr 'changes-credits [msg form]
   (let [side (nth form 1)
         change-amt (nth form 2)
-        body-form (nth form 3)]
-    `(changes-val-macro ~change-amt (:credit ~side) ~msg ~body-form)))
+        body-form (drop 3 form)]
+    `(changes-val-macro ~change-amt (:credit ~side) ~msg ~@body-form)))
+
+(defmacro before-each
+  [let-bindings & testing-blocks]
+  (assert (every? #(= 'testing (first %)) testing-blocks))
+  (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
+    `(do ~@bundles)))

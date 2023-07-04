@@ -1,19 +1,25 @@
 (ns web.decks
-  (:require [web.db :refer [db object-id]]
-            [web.utils :refer [response]]
-            [clojure.string :refer [split split-lines join escape lower-case] :as s]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [web.config :refer [server-config]]
-            [crypto.password.pbkdf2 :as pbkdf2]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.validator :refer [calculate-deck-status]]))
+  (:require
+   [cljc.java-time.instant :as inst]
+   [clojure.string :as str]
+   [crypto.password.pbkdf2 :as pbkdf2]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :refer [slugify]]
+   [jinteki.validator :refer [calculate-deck-status]]
+   [monger.collection :as mc]
+   [monger.result :refer [acknowledged?]]
+   [web.mongodb :refer [->object-id ->object-id]]
+   [web.nrdb :as nrdb]
+   [web.utils :refer [response mongo-time-to-utc-string]]
+   [web.ws :as ws]))
 
-
-(defn decks-handler [req]
-  (if-let [user (:user req)]
-    (response 200 (mc/find-maps db "decks" {:username (:username user)}))
-    (response 200 (mc/find-maps db "decks" {:username "__demo__"}))))
+(defn decks-handler
+  [{db :system/db
+    {:keys [username]} :user}]
+  (let [uname (or username "__demo__")
+        decks (mc/find-maps db "decks" {:username uname})
+        decks (map #(update % :date (fn [x] (if (string? x) x (mongo-time-to-utc-string x)))) decks)]
+    (response 200 decks)))
 
 (defn update-card
   [card]
@@ -33,6 +39,17 @@
              :status status
              :hash deck-hash)))
 
+(defn- deck-locked?
+  [db deck-id]
+  (let [deck (mc/find-one-as-map db "decks" {:_id (->object-id deck-id)})]
+    (or (:locked deck)
+        false)))
+
+(defn make-salt
+  [deck-name]
+  (let [salt (byte-array (map byte (slugify deck-name)))]
+    (if (empty? salt) (byte-array (map byte "default-salt")) salt)))
+
 (defn hash-deck
   [deck]
   (let [check-deck (-> deck
@@ -40,14 +57,16 @@
                        (update :identity #(get @all-cards (:title %))))
         id (-> deck :identity :title)
         sorted-cards (sort-by #(:code (:card %)) (:cards check-deck))
-        decklist (s/join (for [entry sorted-cards]
+        decklist (str/join (for [entry sorted-cards]
                            (str (:qty entry) (:code (:card entry)))))
         deckstr (str id decklist)
-        salt (byte-array (map byte (:name deck)))]
-    (last (s/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
+        salt (make-salt (:name deck))]
+    (last (str/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
 
-(defn decks-create-handler [{{username :username} :user
-                             deck                 :body}]
+(defn decks-create-handler
+  [{db :system/db
+    {username :username} :user
+    deck                 :body}]
   (if (and username deck)
     (let [updated-deck (update-deck deck)
           status (calculate-deck-status updated-deck)
@@ -56,41 +75,61 @@
       (response 200 (mc/insert-and-return db "decks" deck)))
     (response 401 {:message "Unauthorized"})))
 
-(defn decks-save-handler [{{username :username} :user
-                           deck                 :body}]
+(defn decks-save-handler
+  [{db :system/db
+    {username :username} :user
+    deck                 :body}]
   (if (and username deck)
     (let [updated-deck (update-deck deck)
           status (calculate-deck-status updated-deck)
           deck-hash (hash-deck updated-deck)
           deck (prepare-deck-for-db deck username status deck-hash)]
       (if-let [deck-id (:_id deck)]
-        (if (:identity deck)
-          (do (mc/update db "decks"
-                         {:_id (object-id deck-id) :username username}
-                         {"$set" (dissoc deck :_id)})
-            (response 200 {:message "OK" :_id (object-id deck-id)}))
-          (response 409 {:message "Deck is missing identity"}))
+        (if-not (deck-locked? db deck-id)
+          (if (:identity deck)
+            (do (mc/update db "decks"
+                           {:_id (->object-id deck-id) :username username}
+                           {"$set" (dissoc deck :_id)})
+                (response 200 {:message "OK" :_id (->object-id deck-id)}))
+            (response 409 {:message "Deck is missing identity"}))
+          (response 403 {:message "Deck is locked"}))
         (response 409 {:message "Deck is missing _id"})))
     (response 401 {:message "Unauthorized"})))
 
-(defn hash-existing-decks []
-  (let [decks (mc/find-maps db "decks")]
-    (->> decks
-         (remove :hash)
-         (map #(assoc % :hash (hash-deck %)))
-         (map #(let [deck-id (:_id %)
-                     username (:username %)]
-                 (when deck-id
-                   (mc/update db "decks"
-                              {:_id (object-id deck-id) :username username}
-                              {"$set" (dissoc % :_id)}))))
-         (filter acknowledged?)
-         count)))
+(defn decks-delete-handler
+  [{db :system/db
+    {username :username} :user
+    {id :id}             :path-params}]
+  (try
+    (if (and username id)
+      (if-not (deck-locked? db id)
+        (if (acknowledged? (mc/remove db "decks" {:_id (->object-id id) :username username}))
+          (response 200 {:message "Deleted"})
+          (response 403 {:message "Forbidden"}))
+        (response 403 {:message "Locked"}))
+      (response 401 {:message "Unauthorized"}))
+    (catch Exception _
+      ;; Deleting a deck that was never saved throws an exception
+      (response 409 {:message "Unknown deck id"}))))
 
-(defn decks-delete-handler [{{username :username} :user
-                             {id :id}             :params}]
-  (if (and username id)
-    (if (acknowledged? (mc/remove db "decks" {:_id (object-id id) :username username}))
-      (response 200 {:message "Deleted"})
-      (response 403 {:message "Forbidden"}))
-    (response 401 {:message "Unauthorized"})))
+(defmethod ws/-msg-handler :decks/import
+  [{{db :system/db
+     {username :username} :user} :ring-req
+    uid :uid
+    {:keys [input]} :?data}]
+  (try
+    (let [deck (nrdb/download-public-decklist db input)]
+      (if (every? #(contains? deck %) [:name :identity :cards])
+        (let [db-deck (assoc deck
+                             :_id (->object-id)
+                             :date (inst/now)
+                             :format "standard")
+              updated-deck (update-deck db-deck)
+              status (calculate-deck-status updated-deck)
+              deck-hash (hash-deck updated-deck)
+              deck (prepare-deck-for-db db-deck username status deck-hash)]
+          (mc/insert db "decks" deck)
+          (ws/broadcast-to! [uid] :decks/import-success "Imported"))
+        (ws/broadcast-to! [uid] :decks/import-failure "Failed to parse imported deck.")))
+    (catch Exception _
+      (ws/broadcast-to! [uid] :decks/import-failure "Failed to import deck."))))

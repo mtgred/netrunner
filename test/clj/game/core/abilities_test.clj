@@ -57,10 +57,10 @@
         (is (= (+ 6 cr) (:credit (get-corp))) "Corp gained 3 credits")))))
 
 (deftest trash-icon
-  (doseq [card (->> @all-cards
-                    vals
-                    (filter #(re-find #"(?i)\[trash\].*:" (:text % ""))))]
-    (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [:trash] or :trash-icon true"))))
+  (doseq [card (->> (vals @all-cards)
+                    (filter #(re-find #"(?i)\[trash\].*:" (:text % ""))))
+          :when (not-empty (card-def card))]
+    (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [:trash-can] or :trash-icon true"))))
 
 (deftest label
   (doseq [[title abilities]
@@ -95,7 +95,7 @@
       (new-game {:runner {:hand ["Bankroll"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Bankroll")
-      (is (= "[trash]: Take all credits from Bankroll" (generate-label (get-program state 0))))))
+      (is (= "[trash]: Take all hosted credits" (generate-label (get-program state 0))))))
   (testing "x credits"
     (do-game
       (new-game {:runner {:hand ["Misdirection"]}})

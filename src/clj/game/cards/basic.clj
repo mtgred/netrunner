@@ -1,7 +1,28 @@
 (ns game.cards.basic
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]))
+  (:require
+   [game.core.agendas :refer [update-advancement-requirement]]
+   [game.core.board :refer [all-active-installed installable-servers]]
+   [game.core.card :refer [agenda? asset? event? get-card hardware? ice?
+                           in-hand? operation? program? resource? upgrade?]]
+   [game.core.def-helpers :refer [defcard]]
+   [game.core.drawing :refer [draw]]
+   [game.core.eid :refer [effect-completed]]
+   [game.core.engine :refer [trigger-event]]
+   [game.core.flags :refer [can-advance? untrashable-while-resources?]]
+   [game.core.gaining :refer [gain-credits]]
+   [game.core.installing :refer [corp-can-pay-and-install? corp-install
+                                 runner-can-pay-and-install? runner-install]]
+   [game.core.moving :refer [trash]]
+   [game.core.play-instants :refer [can-play-instant? play-instant]]
+   [game.core.props :refer [add-prop]]
+   [game.core.purging :refer [purge]]
+   [game.core.runs :refer [make-run]]
+   [game.core.say :refer [play-sfx]]
+   [game.core.tags :refer [lose-tags]]
+   [game.core.to-string :refer [card-str]]
+   [game.macros :refer [effect msg req wait-for]]
+   [game.utils :refer :all]
+   [jinteki.utils :refer :all]))
 
 ;; Card definitions
 
@@ -16,33 +37,56 @@
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
                {:label "Draw 1 card"
+                :req (req (not-empty (:deck corp)))
                 :cost [:click]
                 :msg "draw 1 card"
                 :async true
-                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :pre-corp-click-draw nil nil)
-                                       (trigger-event state side :corp-click-draw (->> @state side :deck (take 1)))
-                                       (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-                                       (play-sfx state side "click-card")
-                                       (draw state side eid 1 nil)))}
+                :effect (req (trigger-event state side :corp-click-draw (-> @state side :deck (nth 0)))
+                             (swap! state update-in [:stats side :click :draw] (fnil inc 0))
+                             (play-sfx state side "click-card")
+                             (draw state side eid 1))}
                {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
-                :req (req (not-empty (:hand corp)))
-                :effect (req (let [target-card (first targets)
-                                   server (second targets)]
-                               (corp-install state side (assoc eid :source server :source-type :corp-install)
-                                             target-card server {:base-cost [:click 1] :action :corp-click-install})))}
+                :req (req (and (not-empty (:hand corp))
+                               (in-hand? target)
+                               (or (agenda? target)
+                                   (asset? target)
+                                   (ice? target)
+                                   (upgrade? target))
+                               (if-let [server (second targets)]
+                                 (corp-can-pay-and-install?
+                                   state side (assoc eid :source server :source-type :corp-install)
+                                   target server {:base-cost [:click 1]
+                                                  :action :corp-click-install
+                                                  :no-toast true})
+                                 (some
+                                   (fn [server]
+                                     (corp-can-pay-and-install?
+                                       state side (assoc eid :source server :source-type :corp-install)
+                                       target server {:base-cost [:click 1]
+                                                      :action :corp-click-install
+                                                      :no-toast true}))
+                                   (installable-servers state card)))))
+                :effect (req (let [server (second targets)]
+                               (corp-install
+                                 state side (assoc eid :source server :source-type :corp-install)
+                                 target server {:base-cost [:click 1]
+                                                :action :corp-click-install})))}
                {:label "Play 1 operation"
                 :async true
-                :req (req (not-empty (:hand corp)))
-                :effect (req (let [target-card (first targets)]
-                               (play-instant state side (assoc eid :source :action :source-type :play)
-                                             target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand corp))
+                               (in-hand? target)
+                               (operation? target)
+                               (can-play-instant? state :corp (assoc eid :source :action :source-type :play)
+                                                  target {:base-cost [:click 1]})))
+                :effect (req (play-instant state :corp (assoc eid :source :action :source-type :play)
+                                           target {:base-cost [:click 1]}))}
                {:label "Advance 1 installed card"
                 :cost [:click 1 :credit 1]
                 :async true
                 :msg (msg "advance " (card-str state target))
                 :req (req (can-advance? state side target))
-                :effect (effect (update-advancement-cost target)
+                :effect (effect (update-advancement-requirement target)
                                 (add-prop (get-card state target) :advance-counter 1)
                                 (play-sfx "click-advance")
                                 (effect-completed eid))}
@@ -74,28 +118,39 @@
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
                {:label "Draw 1 card"
+                :req (req (not-empty (:deck runner)))
                 :cost [:click]
                 :msg "draw 1 card"
-                :effect (req (wait-for (trigger-event-simult state side (make-eid state eid) :pre-runner-click-draw nil nil)
-                                       (trigger-event state side :runner-click-draw (->> @state side :deck (take 1)))
-                                       (swap! state update-in [:stats side :click :draw] (fnil inc 0))
-                                       (play-sfx state side "click-card")
-                                       (draw state side eid 1 nil)))}
+                :effect (req (trigger-event state side :runner-click-draw (-> @state side :deck (nth 0)))
+                             (swap! state update-in [:stats side :click :draw] (fnil inc 0))
+                             (play-sfx state side "click-card")
+                             (draw state side eid 1))}
                {:label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
-                :req (req (not-empty (:hand runner)))
-                :effect (req (let [target-card (first targets)]
-                               (runner-install state side (assoc eid :source :action :source-type :runner-install)
-                                               target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand runner))
+                               (in-hand? target)
+                               (or (hardware? target)
+                                   (program? target)
+                                   (resource? target))
+                               (runner-can-pay-and-install?
+                                 state :runner (assoc eid :source :action :source-type :runner-install)
+                                 target {:base-cost [:click 1]})))
+                :effect (req (runner-install
+                               state :runner (assoc eid :source :action :source-type :runner-install)
+                               target {:base-cost [:click 1]
+                                       :no-toast true}))}
                {:label "Play 1 event"
                 :async true
-                :req (req (not-empty (:hand runner)))
-                :effect (req (let [target-card (first targets)]
-                               (play-instant state side (assoc eid :source :action :source-type :play)
-                                             target-card {:base-cost [:click 1]})))}
+                :req (req (and (not-empty (:hand runner))
+                               (in-hand? target)
+                               (event? target)
+                               (can-play-instant? state :runner (assoc eid :source :action :source-type :play)
+                                                  target {:base-cost [:click 1]})))
+                :effect (req (play-instant state :runner (assoc eid :source :action :source-type :play)
+                                           target {:base-cost [:click 1]}))}
                {:label "Run any server"
                 :async true
-                :effect (effect (make-run eid target nil nil {:click-run true}))}
+                :effect (effect (make-run eid target nil {:click-run true}))}
                {:label "Remove 1 tag"
                 :cost [:click 1 :credit 2]
                 :msg "remove 1 tag"

@@ -1,93 +1,122 @@
 (ns web.chat
-  (:require [buddy.sign.jwt :as jwt]
-            [clojure.string :as s]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]
-            [monger.query :as q]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [web.config :refer [server-config]]
-            [web.db :refer [db]]
-            [web.utils :refer [response]]
-            [web.ws :as ws])
-  (:import org.bson.types.ObjectId))
+  (:require
+   [cljc.java-time.instant :as inst]
+   [clojure.string :as s]
+   [monger.collection :as mc]
+   [monger.query :as q]
+   [web.app-state :as app-state]
+   [web.mongodb :refer [->object-id]]
+   [web.user :refer [active-user? visible-to-user]]
+   [web.utils :refer [response mongo-time-to-utc-string]]
+   [web.ws :as ws]))
 
-(defonce chat-config (:chat server-config))
 (def msg-collection "messages")
 (def log-collection "moderator_actions")
 
-(defn- chat-max-length [] (:max-length chat-config 144))
+(defn- chat-max-length [chat-settings] (:max-length chat-settings 144))
 
-(defn config-handler [req]
-  (response 200 {:max-length (chat-max-length)}))
+(defn config-handler
+  [{chat-settings :system/chat}]
+  (response 200 {:max-length (chat-max-length chat-settings)}))
 
-(defn messages-handler [{{:keys [channel]} :params}]
-  (response 200 (reverse (q/with-collection db msg-collection
-                                            (q/find {:channel channel})
-                                            (q/sort (array-map :date -1))
-                                            (q/limit 100)))))
+(defn- blocked-by-user
+  [db username]
+    (let [blocks
+          (mc/find-one-as-map db :users
+                              {:username username}
+                              ["username" "options.blocked-users"])]
+      [username blocks]))
+
+(defn messages-handler
+  [{db :system/db
+    user :user
+    {:keys [channel]} :path-params :as args}]
+  (if user
+    (let [messages (->> (q/with-collection
+                          db msg-collection
+                          (q/find {:channel channel})
+                          (q/sort (array-map :date -1))
+                          (q/limit 100))
+                        reverse)
+          messages (map #(update % :date mongo-time-to-utc-string) messages)
+          senders (->> messages
+                       (map :username)
+                       (map #(blocked-by-user db %))
+                       (into {}))
+          visible-users (->> (for [username (keys senders)
+                                   :when (or (= (:username user) username)
+                                             (visible-to-user user {:username username} senders))]
+                               username)
+                             (into #{}))
+          messages (filter #(contains? visible-users (:username %)) messages)]
+      (response 200 messages))
+    (response 200 [])))
 
 (defn- within-rate-limit
-  [username]
-  (let [window (:rate-window chat-config 60)
-        start-date (c/to-date (t/plus (t/now) (t/seconds (- window))))
-        max-cnt (:rate-cnt chat-config 10)
-        msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
+  [db chat-settings username]
+  (let [window (:rate-window chat-settings 60)
+        start-date (inst/plus-seconds (inst/now) (- window))
+        max-cnt (:rate-cnt chat-settings 10)
+        msg-cnt (mc/count db msg-collection {:username username
+                                             :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
 
-(defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
-                    client-id :client-id
-                    {:keys [:channel :msg]} :?data :as event}]
-  (let [len-valid (<= (count msg) (chat-max-length))
-        rate-valid (within-rate-limit username)]
-    (when (and username
-               emailhash
-               (not (s/blank? msg)))
+(defmethod ws/-msg-handler :chat/say
+  [{{db :system/db
+     chat-settings :system/chat
+     user :user} :ring-req
+    uid :uid
+    {:keys [channel msg]} :?data}]
+  (when (and (active-user? user)
+             (not (s/blank? msg)))
+    (let [len-valid (<= (count msg) (chat-max-length chat-settings))
+          rate-valid (within-rate-limit db chat-settings (:username user))]
       (if (and len-valid rate-valid)
-        (let [message {:emailhash emailhash
-                       :username  username
+        (let [message {:emailhash (:emailhash user)
+                       :username  (:username user)
+                       :pronouns  (-> user :options :pronouns)
                        :msg       msg
                        :channel   channel
-                       :date      (java.util.Date.)}
-              inserted (mc/insert-and-return db msg-collection message)]
-          (update inserted :_id str))
-        (do
-          (when client-id
-            (ws/broadcast-to! [client-id] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))
-          nil)))))
+                       :date      (inst/now)}
+              inserted (mc/insert-and-return db msg-collection message)
+              inserted (update inserted :_id str)
+              inserted (update inserted :date #(.toString %))
+              connected-users (app-state/get-users)]
+          (doseq [uid (ws/connected-uids)
+                  :when (or (= (:username user) uid)
+                            (visible-to-user user {:username uid} connected-users))]
+            (ws/broadcast-to! [uid] :chat/message inserted)))
+        (when uid
+          (ws/broadcast-to! [uid] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))))))
 
-(defn broadcast-msg
-  [arg]
-  (when-let [msg (insert-msg arg)]
-    (ws/broadcast! :chat/message msg)))
-
-(defn- delete-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
-                    {:keys [msg]} :?data :as event}]
+(defmethod ws/-msg-handler :chat/delete-msg
+  [{{db :system/db
+     {:keys [username isadmin ismoderator] :as user} :user} :ring-req
+    {:keys [msg]} :?data}]
   (when-let [id (:_id msg)]
     (when (or isadmin ismoderator)
       (println username "deleted message" msg "\n")
-      (mc/remove-by-id db msg-collection (ObjectId. id))
+      (mc/remove-by-id db msg-collection (->object-id id))
       (mc/insert db log-collection
                  {:moderator username
                   :action :delete-message
-                  :date (java.util.Date.)
+                  :date (inst/now)
                   :msg msg})
-      (ws/broadcast! :chat/delete-msg msg))))
+      (doseq [uid (ws/connected-uids)]
+        (ws/broadcast-to! [uid] :chat/delete-msg msg)))))
 
-(defn- delete-all-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
-                        {:keys [sender]} :?data :as event}]
+(defmethod ws/-msg-handler :chat/delete-all
+  [{{db :system/db
+     {:keys [username isadmin ismoderator]} :user :as user} :ring-req
+    {:keys [sender]} :?data}]
   (when (and sender
              (or isadmin ismoderator))
-      (println username "deleted all messages from user" sender "\n")
-      (mc/remove db msg-collection {:username sender})
-      (mc/insert db log-collection
-                 {:moderator username
-                  :action :delete-all-messages
-                  :date (java.util.Date.)
-                  :sender sender})
-      (ws/broadcast! :chat/delete-all {:username sender})))
-
-(ws/register-ws-handlers!
-  :chat/say broadcast-msg
-  :chat/delete-msg delete-msg
-  :chat/delete-all delete-all-msg)
+    (println username "deleted all messages from user" sender "\n")
+    (mc/remove db msg-collection {:username sender})
+    (mc/insert db log-collection
+               {:moderator username
+                :action :delete-all-messages
+                :date (inst/now)
+                :sender sender})
+    (doseq [uid (ws/connected-uids)]
+      (ws/broadcast-to! [uid] :chat/delete-all {:username sender}))))

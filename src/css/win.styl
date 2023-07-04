@@ -1,0 +1,47 @@
+@require "opacity"
+@require "palette"
+
+// Win Message Box
+.win.centered
+    position: fixed
+    top: 30%
+    left: 35%
+    width: 40%
+    text-align: center
+    margin-top: -50px
+    margin-left: -100px
+    padding: 15px
+    border: 1px solid gold-base
+    z-index: 30
+    border-radius: 4px
+
+.win-right
+    position: absolute
+    top: 0px
+    right: -8px
+    padding: 0
+    font-size: .75rem
+    line-height: .825rem
+    height: 15px
+    width: 15px
+    background-color: transparent
+    border-radius: 1px
+
+    &:hover
+        background-color: alpha(gold-base, o-40)
+        border-color: gold-base
+
+.win.table
+    border: 1px solid gold-base
+    width: 100%
+    text-align: left
+
+.win.th
+    border-bottom: 1px solid gold-base
+
+.page-container
+    width: 1000px
+    margin: 0 auto
+
+    .content-page
+        margin-top: 9px

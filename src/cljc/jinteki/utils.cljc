@@ -1,27 +1,27 @@
 (ns jinteki.utils
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as str]))
 
 (def INFINITY 2147483647)
-
 
 (defn str->int
   [string]
   #?(:clj (java.lang.Integer/parseInt (re-find #"^\d+" string))
-     :cljs (js/parseInt string)))
+     :cljs (js/parseInt string 10)))
 
 (defn side-from-str [side-str]
-  (keyword (s/lower-case side-str)))
+  (keyword (str/lower-case side-str)))
 
 (defn faction-label
   "Returns faction of a card as a lowercase label"
   [card]
   (if (nil? (:faction card))
     "neutral"
-    (-> card :faction s/lower-case (s/replace " " "-"))))
+    (-> card :faction str/lower-case (str/replace " " "-"))))
 
 (defn other-side [side]
   (cond (= side :corp) :runner
-        (= side :runner) :corp))
+        (= side :runner) :corp
+        :else nil))
 
 (defn count-bad-pub
   "Counts number of bad pub corp has (real + additional)"
@@ -58,12 +58,12 @@
      (as-> string $
        #?(:clj (java.text.Normalizer/normalize $ java.text.Normalizer$Form/NFD)
           :cljs (.normalize $ "NFD"))
-       (s/replace $ #"[^\x00-\x7F]+" "")
-       (s/lower-case $)
-       (s/trim $)
-       (s/split $ #"[ \t\n\x0B\f\r!\"#$%&'()*+,-./:;<=>?@\\\[\]^_`{|}~]+")
+       (str/replace $ #"[^\x00-\x7F]+" "")
+       (str/lower-case $)
+       (str/trim $)
+       (str/split $ #"[ \t\n\x0B\f\r!\"#$%&'()*+,-./:;<=>?@\\\[\]^_`{|}~]+")
        (filter seq $)
-       (s/join sep $)))))
+       (str/join sep $)))))
 
 (defn superuser?
   [user]
@@ -73,12 +73,12 @@
 
 (defn capitalize [string]
   (if (pos? (count string))
-    (str (s/upper-case (first string)) (subs string 1))
+    (str (str/upper-case (first string)) (subs string 1))
     ""))
 
 (defn decapitalize [string]
   (if (pos? (count string))
-    (str (s/lower-case (first string)) (subs string 1))
+    (str (str/lower-case (first string)) (subs string 1))
     ""))
 
 (defn make-label
@@ -94,8 +94,24 @@
   (let [label (make-label ability)
         cost-label (:cost-label ability)]
     (cond
-      (and (not (s/blank? cost-label))
-           (not (s/blank? label)))
+      (and (not (str/blank? cost-label))
+           (not (str/blank? label)))
       (str cost-label ": " label)
       :else
       label)))
+
+(defn select-non-nil-keys
+  "Returns a map containing only those entries in map whose key is in keys and whose value is non-nil"
+  [m keyseq]
+  (loop [ret (transient {})
+         keyseq (seq keyseq)]
+    (if keyseq
+      (let [k (first keyseq)
+            entry (get m k ::not-found)]
+        (recur
+          (if (and (not= entry ::not-found)
+                   (some? entry))
+            (assoc! ret k entry)
+            ret)
+          (next keyseq)))
+      (with-meta (persistent! ret) (meta m)))))

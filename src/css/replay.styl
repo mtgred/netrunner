@@ -1,0 +1,327 @@
+@require "opacity"
+@require "palette"
+.bottompane
+    width: 100%
+    height: 117px
+
+    .replay
+        width: 100%
+        height: 100%
+        margin: auto;
+
+        #timeline
+            width: 100%
+            height: 70px
+            margin: auto;
+            display-flex()
+            flex-direction(row)
+            overflow-x: hidden;
+            overflow-y: hidden;
+            position: relative;
+            scroll-behavior: smooth;
+
+            &:hover
+                overflow-x: visible;
+
+            .step
+                text-align: center
+                width:50px
+                height:50px
+
+                .step-label .anr-icon
+                    font-size: inherit
+
+                .step-label
+                    text-align: center
+                    font-size: 1.25rem
+                    position: relative
+                    background-color: blue-dark
+                    border-radius: 50%
+                    border: 1px solid white-solid
+                    margin: auto
+                    padding-top: 5px
+                    z-index: 2
+                    width: 32px
+                    height: 32px
+                    top:10px
+
+                    &:hover
+                        border-color: gold-base
+                        box-shadow(0 0 6px blue-light)
+
+                .annotated-before:before, .annotated-after:after
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: .625rem
+                    line-height: .75rem
+                    position: absolute
+                    width: 15px
+                    height: 15px
+                    border-radius: 50%
+                    border: 1px solid white-solid
+                    box-shadow(0 0 3px white-solid)
+
+                .annotated-before:before
+                    left: -6px
+                    top: -6px
+
+                .annotated-after:after
+                    right: -6px
+                    top: -6px
+
+                .annotated-after.none:after
+                    display: none!important
+
+                .start-of-turn-corp:before
+                    content: attr(data-turn);
+                    color: white-solid
+                    background-color: alpha(blue-dark, o-80)
+
+                .active-step-label
+                    font-size: 2rem
+                    width: 45px
+                    height: 45px
+                    padding-top: 11px
+                    top:5px
+                    border-color: gold-base
+                    color: gold-base
+                    box-shadow(0 0 6px gold-base)
+
+                .draw .symbol, .draw .symbol:after
+                    box-sizing: content-box;
+                    position:relative
+                    content: ''
+                    display: block
+                    margin: auto
+
+                    height: .35*3.5ex
+                    width: .35*2.5ex
+                    border: 1px solid white-solid
+                    background: alpha(blue-dark, o-80)
+                    color: transparent
+
+                .draw .symbol
+                    margin: auto
+                    transform: translate(-5%, -5%)
+
+                .draw .symbol:after
+                    transform: translate(10%, 10%)
+
+                .step-label.draw
+                    padding-top: 7px
+
+                .active-step-label.draw
+                    padding-top: 10px
+
+                .active-step-label.draw .symbol, .active-step-label.draw .symbol:after
+                    border-color: gold-base
+
+            .step:after
+                content: ''
+                display: block
+                position: relative
+                z-index: 1
+                left: 25px
+                top: -8px
+                width: 40px
+                height: 5px
+
+            .step.corp:after
+                background-color: blue-core
+
+            .step.runner:after
+                background-color: red-core
+
+            .active-step:after
+                top:-21px
+                width: 50px
+
+            .start-of-turn-corp,.start-of-turn-runner
+                margin-left: 8px
+
+
+        .controls
+            position:relative
+            top: -15px
+            margin: 10px auto
+            text-align: center
+
+            button.small
+              margin: 0 4px 0 4px
+              font-size: 1.5rem
+              height: 30px
+              width: 30px
+              background-color: transparent
+              border-color: white-solid
+
+              &:hover
+                background-color: alpha(gold-base, o-40)
+                border-color: gold-core
+
+            button.on
+                background-color: alpha(gold-mid, o-90)
+                border: 1px solid yellow-core
+
+            button.off
+                background-color: alpha(gold-base, o-40)
+
+        .sharing
+            position: absolute
+            text-align: right
+            bottom: 0px
+            right: 0px
+            margin: 10px
+
+            button
+                margin: 5px
+            input
+                width: 400px
+                margin: 5px
+
+.right-pane
+    .notes, .notes-shared
+        height: 100%
+        display-flex()
+        flex-direction(column)
+
+        .turn, .click
+            position: relative
+            flex-grow: 1
+
+        hr
+            margin: 15px auto
+            width: 95%
+
+        input
+            min-height: 28px
+            margin: 2px 0
+
+        .button-row
+            margin: 4px 0
+
+        textarea
+            background: transparent
+            color: white-solid
+            box-shadow: 0 0 12px alpha(black-solid, o-60), inset 0 0 0 1px alpha(black-solid, o-10)
+            width: 100%
+            height: 100%
+
+        .click:after
+            position: absolute
+            top: 50%
+            left: 0
+            width: 100%
+            color: alpha(white-solid, o-10)
+            text-align: center
+            font-family: "anr-icon" !important
+            font-size: 8.75rem
+            speak: none
+            content: "\e611"
+            pointer-events: none
+
+        .turn
+            content: "";
+            background: url('/img/turn.png') no-repeat 0 0;
+            background-size: 200px
+            background-position: center
+
+        .notes-icons
+            display-flex()
+            flex-direction(row)
+            justify-content: center
+
+            .notes-icon:after
+                width: 15px
+                height: 15px
+
+            .notes-icon:after
+                margin:5px
+
+            .notes-icon:hover:after
+                border-color: gold-base!important
+
+            .notes-icon.selected:after
+                border-color: gold-base!important
+                box-shadow(0 0 6px gold-base)
+
+            .notes-separator
+                width: 10px
+
+.notes-icon:after
+    display:inline-block
+    width: 15px
+    height: 15px
+    text-align: center;
+    font-weight: bold;
+    font-size: .625rem
+    line-height: .75rem
+    border-radius: 50%
+    border: 1px solid white-solid
+    color: white-solid
+    box-shadow(0 0 3px white-solid)
+
+.notes-icon.none:after
+    content: ''
+    color: black-solid
+    background-color: alpha(blue-dark, o-80)
+    box-shadow(0 0 6px alpha(blue-dark, o-80))
+
+.notes-icon.blunder:after
+    content: '??'
+    color: black-solid
+    background-color: red-core
+    box-shadow(0 0 6px red-core)
+
+.notes-icon.mistake:after
+    content: '?'
+    color: black-solid
+    background-color: gold-mid
+    box-shadow(0 0 6px gold-mid)
+
+.notes-icon.inaccuracy:after
+    content: '?!'
+    color: black-solid
+    background-color: gold-light
+    box-shadow(0 0 6px gold-light)
+
+.notes-icon.good:after
+    content: '!'
+    color: black-solid
+    background-color: olive-green
+    box-shadow(0 0 6px olive-green)
+
+.notes-icon.brilliant:after
+    content: '!!'
+    color: black-solid
+    background-color: blue-core
+    box-shadow(0 0 6px blue-core)
+
+.notes-icon.a:after
+    content: '⯀'
+    color: white-solid
+    border-radius: 25%!important
+    line-height: .75rem!important
+    background-color: red-light
+    box-shadow(0 0 6px red-light)
+
+.notes-icon.b:after
+    content: '⬥'
+    color: white-solid
+    border-radius: 25%!important
+    line-height: .75rem!important
+    background-color: blue-light
+    box-shadow(0 0 6px blue-light)
+
+.notes-icon.c:after
+    content: '☀'
+    color: black-solid
+    border-radius: 25%!important
+    background-color: green-bright
+    box-shadow(0 0 6px green-bright)
+
+.notes-icon.d:after
+    content: '★'
+    color: white-solid
+    border-radius: 25%!important
+    background-color: purple-dark
+    box-shadow(0 0 6px purple-dark)

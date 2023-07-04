@@ -1,27 +1,50 @@
 (ns web.data
-  (:require [web.db :refer [db object-id]]
-            [web.utils :refer [response]]
+  (:require [web.utils :refer [response mongo-time-to-utc-string]]
             [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [web.config :refer [server-config]]
+            [monger.query :as mq]
+            [game.core.initializing :refer [card-implemented]]
             [clojure.edn :as edn]))
 
-(defn cards-handler [req]
-  (response 200 (map #(dissoc % :_id) (mc/find-maps db "cards"))))
+(defn news-handler [{db :system/db}]
+  (let [data (mq/with-collection db "news"
+               (mq/find {})
+               (mq/fields [:_id :item :date])
+               (mq/sort (array-map :date -1)))
+        data (map #(update % :date mongo-time-to-utc-string) data)]
+    (response 200 data)))
 
-(defn alt-arts-handler [req]
+(defn- cards-version-impl [db]
+  (:cards-version (mc/find-one-as-map db "config" nil)))
+
+(def cards-version (memoize cards-version-impl))
+
+(defn cards-version-handler [{db :system/db}]
+  (response 200 {:version (int (cards-version db))}))
+
+(defn- enriched-cards-impl [db]
+  (let [cards (mc/find-maps db "cards")]
+    (->> cards
+         (map #(assoc % :implementation (card-implemented %)))
+         (map #(dissoc % :_id)))))
+
+(def enriched-cards (memoize enriched-cards-impl))
+
+(defn cards-handler [{db :system/db}]
+  (response 200 (enriched-cards db)))
+
+(defn alt-arts-handler [{db :system/db}]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "altarts"))))
 
-(defn sets-handler [req]
+(defn sets-handler [{db :system/db}]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "sets"))))
 
-(defn mwl-handler [req]
+(defn mwl-handler [{db :system/db}]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "mwls"))))
 
-(defn cycles-handler [req]
+(defn cycles-handler [{db :system/db}]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "cycles"))))
 
-(defn donors-handler [req]
+(defn donors-handler [{db :system/db}]
   (response 200 (->> (mc/find-maps db "donators")
                      (map #(let [amount (:amount %)]
                              (assoc % :amount (if (string? amount)
@@ -32,6 +55,3 @@
                              (if (empty? username)
                                (:name %)
                                username))))))
-
-(defn cards-version-handler [req]
-  (response 200 {:version (int (:cards-version (mc/find-one-as-map db "config" nil)))}))

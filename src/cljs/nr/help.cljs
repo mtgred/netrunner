@@ -1,5 +1,202 @@
-(ns nr.help
-  (:require [clojure.string :refer [split]]))
+(ns nr.help)
+
+(def command-info
+  [{:name "/adv-counter"
+    :has-args :required
+    :usage "/adv-counter n"
+    :help "set advancement counters on a card to n (player's own cards only). Deprecated in favor of /counter ad n"}
+   {:name "/bp"
+    :has-args :required
+    :usage "/bp n"
+    :help "Set your bad publicity to n"}
+   {:name "/bug"
+    :usage "/bug"
+    :help "Report a bug on GitHub"}
+   {:name "/card-info"
+    :usage "/card-info"
+    :help "display debug info about a card (player's own cards only)"}
+   {:name "/charge"
+    :usage "/charge"
+    :help "Charge an installed card"}
+   {:name "/clear-win"
+    :usage "/clear-win"
+    :help "requests game to clear the current win state.  Requires both players to request it"}
+   {:name "/click"
+    :has-args :required
+    :usage "/click n"
+    :help "Set your clicks to n"}
+   {:name "/close-prompt"
+    :usage "/close-prompt"
+    :help "close an active prompt and show the next waiting prompt, or the core click actions"}
+   {:name "/counter"
+    :has-args :required
+    :usage "/counter n"
+    :help "set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."}
+   {:name "/counter"
+    :has-args :required
+    :usage "/counter type n"
+    :help "set the specified counter type on a card to n (player's own cards only). Type must be agenda, advance, credit, power, or virus. Can be abbreviated as ag, ad, c, p, or v respectively."}
+   {:name "/credit"
+    :has-args :required
+    :usage "/credit n"
+    :help "Set your credits to n"}
+   {:name "/deck"
+    :has-args :required
+    :usage "/deck #n"
+    :help "Put card number n from your hand on top of your deck"}
+   {:name "/derez"
+    :usage "/derez"
+    :help "derez a rezzed card (corp only)"}
+   {:name "/discard"
+    :has-args :required
+    :usage "/discard #n"
+    :help "Discard card number n from your hand"}
+   {:name "/discard-random"
+    :usage "/discard-random"
+    :help "Discard a random card from your hand"}
+   {:name "/draw"
+    :has-args :optional
+    :usage "/draw n"
+    :help "Draw n cards"}
+   {:name "/end-run"
+    :usage "/end-run"
+    :help "End the run (Corp only)"}
+   {:name "/facedown"
+    :usage "/facedown"
+    :help "Install a card facedown (Runner only)"}
+   {:name "/handsize"
+    :has-args :required
+    :usage "/handsize n"
+    :help "Set your handsize to n"}
+   {:name "/host"
+    :usage "/host"
+    :help "Manually host a card on another card"}
+   {:name "/install-ice"
+    :usage "/install-ice"
+    :help "Install a piece of ice at any position in a server (Corp only)"}
+   {:name "/jack-out"
+    :usage "/jack-out"
+    :help "Jack out (Runner only)"}
+   {:name "/link"
+    :has-args :required
+    :usage "/link n"
+    :help "Set your link to n"}
+   {:name "/mark"
+    :usage "/mark"
+    :help "Identify your mark"}
+   {:name "/memory"
+    :has-args :required
+    :usage "/memory n"
+    :help "Set your memory to n"}
+   {:name "/move-bottom"
+    :usage "/move-bottom"
+    :help "Pick a card in your hand to put on the bottom of your deck"}
+   {:name "/move-deck"
+    :usage "/move-deck"
+    :help "Pick a card from your play-area to put on top of your deck"}
+   {:name "/move-hand"
+    :usage "/move-hand"
+    :help "Pick a card from your play-area to put into your hand"}
+   {:name "/peek"
+    :has-args :optional
+    :usage "/peek n"
+    :help "See n top cards of your deck"}
+   {:name "/psi"
+    :usage "/psi"
+    :help "Start a Psi game (Corp only)"}
+   {:name "/reload-id"
+    :usage "/reload-id"
+    :help "Reloads your ID (this can sometimes fix gamestates)"}
+   {:name "/replace-id"
+    :has-args :required
+    :usage "/replace-id n"
+    :help "Replace your ID with the card \"n\""}
+   {:name "/rez"
+    :usage "/rez"
+    :help "Choose a card to rez, ignoring all costs (Corp only)"}
+   {:name "/rez-all"
+    :usage "/rez-all"
+    :help "Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."}
+   {:name "/rez-free"
+    :usage "/rez-free"
+    :help "Choose a card to rez, ignoring all costs and on-rez abilities (Corp only)"}
+   {:name "/rfg"
+    :usage "/rfg"
+    :help "Choose a card to remove from the game"}
+   {:name "/roll"
+    :has-args :required
+    :usage "/roll n"
+    :help "Roll an n-sided die"}
+   {:name "/sabotage"
+    :has-args :required
+    :usage "/sabotage n"
+    :help "Sabotage n cards"}
+   {:name "/save-replay"
+    :usage "/save-replay"
+    :help "Save a replay of the game"}
+   {:name "/set-mark"
+    :has-args :required
+    :usage "/set-mark n"
+    :help "Set the central server n as your mark (Runner only)"}
+   {:name "/show-hand"
+    :usage "/show-hand"
+    :help "Shows your hand in the chat log (does not proc reveal triggers)"}
+   {:name "/summon"
+    :has-args :required
+    :usage "/summon n"
+    :help "Add card \"n\" to your hand (from outside the game)"}
+   {:name "/swap-ice"
+    :usage "/swap-ice"
+    :help "Swap the position of two installed pieces of ice (Corp only)"}
+   {:name "/swap-installed"
+    :usage "/swap-installed"
+    :help "Swap the position of two installed non-ice (Corp only)"}
+   {:name "/tag"
+    :has-args :required
+    :usage "/tag n"
+    :help "Set your tags to n"}
+   {:name "/take-core"
+    :has-args :required
+    :usage "/take-core n"
+    :help "Take n core damage (Runner only)"}
+   {:name "/take-meat"
+    :has-args :required
+    :usage "/take-meat n"
+    :help "Take n meat damage (Runner only)"}
+   {:name "/take-net"
+    :has-args :required
+    :usage "/take-net n"
+    :help "Take n net damage (Runner only)"}
+   {:name "/trace"
+    :has-args :required
+    :usage "/trace n"
+    :help "Start a trace with base strength n (Corp only)"}
+   {:name "/trash"
+    :usage "/trash"
+    :help "Trash an installed card"}
+   {:name "/undo-click"
+    :usage "/undo-click"
+    :help "Resets the game back to start of the click.  One click only retained. Only allowed for active player"}
+   {:name "/undo-turn"
+    :usage "/undo-turn"
+    :help "Resets the game back to end of the last turn. Requires both players to request it"}
+   {:name "/unique"
+    :usage "/unique"
+    :help "Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"}])
+
+(def keyboard-control-info
+  [{:name "Space"
+    :usage "Space"
+    :help "Performs a default action if there are no controls focused. Otherwise, activates the focused control. Default actions: Clicking for credits, Starting/Ending turns, and continuing a run"}
+   {:name "Enter"
+    :usage "Enter"
+    :help "Focuses the chat if there are no controls focused. Otherwise, activates the focused control"}
+   {:name "/"
+    :usage "/ (forward slash)"
+    :help "Focuses the chat and brings up the command menu"}
+   {:name "numbers"
+    :usage "Number keys"
+    :help "Activates options in the button panel or card menu. Numbers are mapped to options from top to bottom"}])
 
 (def help-data
   "List of maps with FAQ about jinteki.net. Every section MUST have an :id here, so the links can work."
@@ -8,102 +205,73 @@
      :title "General"
      :sub (list
             {:id "dostuff"
-             :title "How do I do I perform actions in a game?"
+             :title "How do I perform actions in a game?"
              :content [:ul
-                        [:p "In general, if you want to perform an action connected to a card, try clicking that card. "
-                         "Either something will happen or a menu should appear."]
-                        [:p "Cards can be moved by clicking them and dragging. Clicking and dragging excessive cards from one's "
-                         "hand to discard pile is normally done after one's turn ends and they are over their hand size limit."]
-                        [:p "A player's clicks, credits, tags etc. can be manipulated by hand by using plus/minus signs next "
-                         "to their numbers in the panel on the left."]]}
+                       [:p "In general, if you want to perform an action connected to a card, try clicking that card. "
+                        "Either something will happen or a menu should appear. Your mouse cursor may also turn into a \"target\" icon if you need to choose a target. "
+                        "You will be prompted discard down to your hand size after you choose \"End Turn\"."]
+                       [:p "Most cards in the game are now automated, but be aware that some cards' restrictions or trigger conditions are not implemented. "
+                        "If you want to spend credits from a card, but the game is not giving you the option, just click the card with credits and take some."]]}
+            {:id "manual"
+             :title "What if the card I'm playing is not implemented?"
+             :content [:ul
+                       [:p "Once in a while you may need to do something manually. A player's clicks, credits, tags etc. can be manipulated by hand by using plus/minus signs next "
+                        "to their numbers in the panel on the left (which will appear when you move your mouse there)."]
+                       [:p "Cards can be moved by clicking them and dragging, but this does not work when moving a card into the play area (including from one server to another server). "
+                        "One workaround is to manually add a click and any credits needed, then click on the card to install it. This works even if it's not your turn."]]}
             {:id "undo"
              :title "How do I undo an action?"
              :content [:ul
-                        [:p "There are two undo functions - undo to turn start, and undo the last click. "
-                         "To undo the start of the current turn both players must use the /undo-turn command. "
-                         "To undo to the start of the click the active player must use the /undo-click command. "]
-                        [:p "There are some non-click based interactions such as using clone-chip and rezzing ICE or assets which are "
-                         "not supported via the undo-click function and players will need to handle manually. "
-                         " Trashed/played cards can be dragged back to hand and reinstalled if needed. If there"
-                         " are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]]}
+                       [:p "There are two undo functions - undo to turn start, and undo the last click. "
+                        "To undo the start of the current turn both players must use the /undo-turn command. "
+                        "To undo to the start of the click the active player must use the /undo-click command. "]
+                       [:p "There are some non-click based interactions such as using clone-chip and rezzing ice or assets which are "
+                        "not supported via the undo-click function and players will need to handle manually. "
+                        " Trashed/played cards can be dragged back to hand and reinstalled if needed. If there"
+                        " are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]]}
             {:id "breakice"
-             :title "How do I break ICE and fire ICE subroutines?"
+             :title "How do I break ice and fire ice subroutines?"
              :content [:ul
-                        [:p "Breaking ICE during a run and subroutines firing is currently not automated. Runner signals using their "
-                         "icebreakers by clicking them and using their abilities. When some subroutines are left unbroken and fire, "
-                         "Corp clicks the piece of ICE with subroutines firing and uses them."]
-                        [:p "It's considered common courtesy to wait as Corp for the runner to say \"fire\" before firing the "
-                         "subroutines, since Runner may have ways of breaking/avoiding the effects that are not immediately obvious "
-                         "and the effects of a fired subroutine may be hard to undo."]]}
+                       [:p "Once the Runner encounters a piece of ice, both the Runner and the Corp will see a menu. "
+                        "To break subroutines, the Runner should click on their icebreakers and use their abilities. "
+                        "If some subroutines are left unbroken, after the Runner chooses \"Let all subroutines fire\", "
+                        "the Corp clicks \"Fire unbroken subroutines\" to fire them."]
+                       [:p "It's considered common courtesy to wait as Corp for the Runner to indicate to fire unbroken subroutines, "
+                        "since the Runner may have ways of breaking/avoiding the effects that are not immediately obvious "
+                        "and the effects of a fired subroutine may be hard to undo."]]}
             {:id "closemenu"
              :title "How do I close a card's menu?"
              :content [:ul
-                        [:p "Click that card again. If it isn't a menu, but a bugged prompt that shouldn't be there, "
-                       "try using " [:code "/close-prompt"]]]}
+                       [:p "Click outside the menu or press Escape. If it isn't a menu, but a bugged prompt that shouldn't be there, "
+                        "try using " [:code "/close-prompt"] "."]]}
+            {:id "keyboard"
+             :title "Are there any keyboard controls?"
+             :content [:ul
+                       [:div "The keyboard can control some basic functionality. "
+                        "List of available keyboard controls:"
+                        [:ul (doall (map-indexed (fn [idx {:keys [usage help]}] [:li {:key idx} [:code usage] " - " help]) keyboard-control-info))]]]}
             {:id "commands"
              :title "How do I use commands during a game?"
              :content [:ul
-                        [:div "To use a command, type it in chatbox and press Enter. Some of the commands will bring up a prompt "
-                         "requiring you to select something. List of available commands:"
-                         [:ul
-                          [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only). Deprecated in favor of " [:code "/counter ad n"]]
-                          [:li [:code "/bp n"] " - Set your bad publicity to n"]
-                          [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]
-                          [:li [:code "/clear-win"] " - requests game to clear the current win state.  Requires both players to request it"]
-                          [:li [:code "/click n"] " - Set your clicks to n"]
-                          [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
-                          [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."]
-                          [:li [:code "/counter type n"] " - set the specified counter type on a card to n (player's own cards only). Type must be " [:code "agenda"] ", " [:code "advance"] ", " [:code "credit"] ", " [:code "power"] ", or " [:code "virus"] ". Can be abbreviated as " [:code "ag"] ", "  [:code "ad"] ", "  [:code "c"] ", "  [:code "p"] ", or " [:code "v"] " respectively."]
-                          [:li [:code "/credit n"] " - Set your credits to n"]
-                          [:li [:code "/deck #n"] " - Put card number n from your hand on top of your deck"]
-                          [:li [:code "/discard #n"] " - Discard card number n from your hand"]
-                          [:li [:code "/discard-random"] " - Discard a random card from your hand"]
-                          [:li [:code "/draw n"] " - Draw n cards"]
-                          [:li [:code "/end-run"] " - End the run (Corp only)"]
-                          [:li [:code "/facedown"] " - Install a card facedown (Runner only)"]
-                          [:li [:code "/handsize n"] " - Set your handsize to n"]
-                          [:li [:code "/install-ice"] " - Install a piece of ICE at any position in a server (Corp only)"]
-                          [:li [:code "/jack-out"] " - Jack out (Runner only)"]
-                          [:li [:code "/link n"] " - Set your link to n"]
-                          [:li [:code "/memory n"] " - Set your memory to n"]
-                          [:li [:code "/move-bottom"] " - Pick a card in your hand to put on the bottom of your deck"]
-                          [:li [:code "/move-deck"] " - Pick a card from your play-area to put on top of your deck"]
-                          [:li [:code "/move-hand"] " - Pick a card from your play-area to put into your hand"]
-                          [:li [:code "/peek n"] " - See n top cards of your deck"]
-                          [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
-                          [:li [:code "/replace-id n"] " - Replace your ID with the card \"n\""]
-                          [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
-                          [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
-                          [:li [:code "/rfg"] " - Select a card to remove from the game"]
-                          [:li [:code "/roll n"] " - Roll an n-sided die"]
-                          [:li [:code "/summon n"] " - Add card \"n\" to your hand (from outside the game)"]
-                          [:li [:code "/swap-ice"] " - Swap the position of two installed ICE (Corp only)"]
-                          [:li [:code "/swap-installed"] " - Swap the position of two installed non-ICE (Corp only)"]
-                          [:li [:code "/tag n"] " - Set your tags to n"]
-                          [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
-                          [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
-                          [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
-                          [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
-                          [:li [:code "/undo-click"] " - Resets the game back to start of the click.  One click only retained. Only allowed for active player"]
-                          [:li [:code "/undo-turn"] " - Resets the game back to end of the last turn. Requires both players to request it"]
-                          [:li [:code "/unique"] " - Toggles uniqueness of selected card (can be used to e.g. play with non-errata version of Wireless Net Pavillion)"]]]]}
+                       [:div "To use a command, type it in chatbox and press Enter. Some of the commands will bring up a prompt "
+                        "requiring you to select something. List of available commands:"
+                        [:ul (doall (map-indexed (fn [idx {:keys [usage help]}] [:li {:key idx} [:code usage] " - " help]) command-info))]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:ul
-                        [:p "Read the "
-                         [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"} "Jinteki.net Guide"]
-                         " on the GitHub wiki."]]})}
+                       [:p "Read the "
+                        [:a {:href "https://github.com/mtgred/netrunner/wiki/Jinteki.net-Guide" :target "_blank"} "Jinteki.net Guide"]
+                        " on the GitHub wiki."]]})}
     {:id "beginners"
      :title "Beginners"
      :sub (list
             {:id "learnrules"
              :title "Where can I find the game's rules explanation?"
-             :content [:ul [:p "The first step is reading " [:a {:href "https://www.fantasyflightgames.com/ffg_content/android-netrunner/support/android-netrunner-core-rules.pdf" :target "_blank"} "the official rulebook"]
-                             ". If you prefer video form, FFG has prepared " [:a {:href "https://www.youtube.com/watch?v=VAslVfZ9p-Y" :target "_blank"} "a video tutorial"]
+             :content [:ul [:p "The first step is " [:a {:href "https://nullsignal.games/players/learn-to-play/" :target "_blank"} "the Learn to Play page"]
+                             ". If you prefer video form, Null Signal Games has prepared " [:a {:href "https://youtube.com/watch?v=aG0eTf7BncU" :target "_blank"} "a video tutorial"]
                              ", too."]
-                            [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
-                             "the official FAQ on "
-                             [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the FFG page"] ". "
+                           [:p "Once familiar with the basics, the finer points of rules/card interactions can be found in "
+                             [:a {:href "https://nullsignal.games/about/frequently-asked-questions/"} "the FAQ page"] ". "
                              "There is also " [:a {:href "http://ancur.wikia.com/wiki/Project_ANCUR_Wiki"} "Project ANCUR"] ", which is a collection "
                              "of rulings (also unofficial) regarding various cards and game situations."]]}
             {:id "firstgame"
@@ -117,50 +285,59 @@
              :content [:ul [:p [:a {:href "https://netrunnerdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
                              "For finding decks consisting of core set only try setting some filters in "
                              [:a {:href "http://netrunnerdb.com/en/decklists/search#allowed_packs"} "the decklist search"] "."]
-                            [:p "Once you find a deck you like, export it in Jinteki.net's format (or plain text format if the "
-                             "site doesn't offer the former), copy and paste it into the deckbuilder."]]}
+                           [:p "Once you find a deck you like, export it in Jinteki.net's format (or plain text format if the "
+                            "site doesn't offer the former), copy and paste it into the deckbuilder."]]}
             {:id "communities"
              :title "Where can I find other Netrunner players to talk to?"
              :content [:ul
                         [:div "Apart from the chatrooms here on Jinteki.net, here are a few links to online Netrunner communities:"
                          [:ul
                           [:li [:a {:href "http://forum.stimhack.com/"} "Stimhack forums"]]
+                          [:li [:a {:href "https://stimslackinvite.herokuapp.com/"} "Stimslack"] " (herokuapp invite link)"]
+                          [:li [:a {:href "https://discord.gg/VxgbNj5"} "Green Level Clearance Discord server"]]
                           [:li [:a {:href "http://reddit.com/r/netrunner/"} "/r/netrunner subreddit"]]
-                          [:li "multiple Facebook groups, such as "
-                           [:a {:href "https://www.facebook.com/groups/netrunnergeeks/"} "Netrunner Geeks"]]]]]})}
+                          [:li [:a {:href "https://www.facebook.com/groups/netrunnerdorks/"} "Netrunner Dorks Facebook group"]]
+                          [:li [:a {:href "https://www.nearearthhub.net/#h.c28pw9eqowgt"} "NearEarthHub#Community Resources"]]]]]})}
     {:id "formats"
      :title "Formats"
      :sub (list
             {:id "standard"
              :title "What is the Standard format?"
              :content [:ul
-                        [:p "The flagship format of NISEI Organized Play, Standard is "
+                        [:p "The flagship format of Null Signal Games' Organized Play, Standard is "
                          "frequently changing to keep the meta exciting and engaging for "
                          "players of all levels. Most official Organised Play events will "
                          "follow the Standard format. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
+            {:id "startup"
+             :title "What is the Startup format?"
+             :content [:ul
+                        [:p "Startup is a limited-cardpool format, intended for new players "
+                         "taking their first steps into Organized Play as well as experienced "
+                         "players who want a slimmed-down deckbuilding challenge. "
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
+            {:id "system-gateway"
+             :title "What is the System Gateway format?"
+             :content [:ul
+                        [:p "System Gateway is Null Signal Games' foundational set. It is designed as an "
+                         "out-of-the-box learning experience and provides everything you need "
+                         "to start playing Netrunner. "
+                         "Refer to " [:a {:href "https://nullsignal.games/products/system-gateway/"} "System Gateway"] "."]]}
             {:id "eternal"
-             :title "What is Eternal format?"
+             :title "What is the Eternal format?"
              :content [:ul
                         [:p "Eternal is not affected by rotation and has a much less "
                          "stringent Most Wanted List. The largest and most complex format, "
                          "it encompasses nearly the entirety of the printed card pool and "
                          "only grows larger with time. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
-            {:id "core-experience"
-             :title "What is the Core Experience format?"
-             :content [:ul
-                        [:p "The \"core\" of the game experience, and an excellent "
-                         "starting point for new or returning players. A single copy of "
-                         "System Core 2019 is the only legal product; there is no MWL. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
            {:id "snapshot"
              :title "What is the Snapshot format?"
              :content [:ul
                         [:p "This format is a \"snapshot\" of the meta at Magnum Opus; "
                          "the culmination of FFG Organized Play. It will see minimal "
                          "changes unless strictly necessary. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
            {:id "snapshot-plus"
              :title "What is the Snapshot Plus format?"
              :content [:ul
@@ -169,21 +346,13 @@
                          "included cards are Labor Rights, Embolus, Slot Machine, Border "
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
-                         "Refer to " [:a {:href "https://nisei.net/op/supported-formats"} "NISEI Supported Formats"]]]}
-           {:id "socr"
-             :title "What is the SOCR format?"
-             :content [:ul
-                        [:p "SOCR stands for Stimhack Online Cache Refresh. It's a limited "
-                         "cardpool tournament originally based on FFG's Cache Refresh "
-                         "format but with an updated MWL and cardpool. It is currently "
-                         "in it's 9th iteration. "
-                         "Refer to the " [:a {:href "https://forum.stimhack.com/t/stimhack-online-cache-refresh-9-information-thread/10419"} "Stimhack Thread"]]]}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
            {:id "classic"
              :title "What is the Classic format?"
              :content [:ul
                         [:p "An alternate Eternal format created by thebigboy. The entire "
-                         "ANR cardpool is legal, except for a Ban-list of (currently) 49 cards. "
-                         "Refer to the " [:a {:href "https://runthenet.wordpress.com/2019/01/01/the-classic-format-netrunners-final-form/"} "announcement article"]]]})}
+                         "ANR cardpool is legal, except for a Ban-list of (as of " [:i "Uprising" ] ") 55 cards. "
+                         "Refer to the " [:a {:href "https://runthenet.wordpress.com/2019/01/01/the-classic-format-netrunners-final-form/"} "announcement article"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list
@@ -250,43 +419,28 @@
     {:id "cards"
      :title "Cards and Specific Interactions"
      :sub (list
-            {:id "shards"
-             :title "How do I install Eden/Hades/Utopia Shard during a run?"
-             :content [:ul
-                        [:p "At the last run step on the relevant server, instead of pressing \"Successful Run\" button, "
-                         "click the shard card you want to install in hand. You should end the run with the shard installed "
-                         "at no cost."]]}
-            {:id "nasir"
-             :title "How do I use Nasir's ability?"
-             :content [:ul
-                        [:p "Nasir's ability is currently triggered manually - when encountering a piece of ICE, click Nasir's "
-                       "identity card to trigger the ability."]]}
             {:id "adam"
              :title "How do I install Adam's directives?"
              :content [:ul
                         [:p "Adam's directives are installed automatically at the game start. The directives are pulled "
                          "directly from the game-server so do not need to be a part of your deck. The previous workaround "
                          "of explicitly adding the 3 directives to the deck is no longer necessary."]]}
-            {:id "napdmwl"
-             :title "What is MWL and \"Tournament legal\"? Why is my deck marked as \"Casual play only\"?"
+            {:id "banlist"
+             :title "What is SBL?"
              :content [:ul
-                        [:p "New Angeles Police Department Most Wanted List, also known as NAPD MWL or just MWL, is a list "
+                        [:p "Standard Ban List, also known as SBL, is a list "
                          "of cards with additional deck building restrictions for tournament play. "
-                         "There are two categories of MWL cards: \"restricted\" and \"removed\". "
-                         "You may only include up to one card (up to its maximum number of copies) from the restricted category. "
-                         "You may not include cards from the removed category. "
-                         "For more information about the MWL read Tournament Rules from "
-                         [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
-                        [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Tournament legal" ] ". "
-                         "Decks that fit within the printed influence limit, but not within the tournament restrictions, "
-                         "are marked " [:span.casual "Casual play only"] ". Decks that do not fit basic deckbuilding rules are marked " [:span.invalid "Invalid"] "."]
+                         "For more information refer to "
+                         [:a {:href "https://nullsignal.games/players/supported-formats/"} "the Supported Formats page"] "."]
+                        [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Standard legal" ] ". "
+                         "Decks that do not fit basic deckbuilding rules are marked " [:span.invalid "Standard invalid"] "."]
                         [:p "Putting cards in your deck that are not yet available for sale (i.e. future spoilers) or ones that are "
-                         "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual play only"] ". Such cards "
+                         "out of competitive rotation will also result in your deck being marked as " [:span.casual "Casual legal"] ". Such cards "
                          "should be easy to identify - they are " [:span.casual "highlighted"] " in the deckbuilder."]]}
             {:id "altarts"
              :title "How do I change my decks to use alternative art versions of cards (or promotional ones)?"
              :content [:ul
-                        [:p "Alternative art cards are enabled for the " [:a {:href "#donations"} "donators"] " and "
+                        [:p "Alternative art cards are enabled for " [:a {:href "#donations"} "donors"] " and "
                          [:a {:href "#devs"} "developers"] " of the site. If you belong to one of the aforementioned groups and you feel like you should have them enabled, "
                          "but you don't, " [:a {:href "/about"} "contact us"] "."]]})}
     {:id "troubleshooting"
@@ -346,34 +500,37 @@
             {:id "awesome"
              :title "Why is this site so awesome?"
              :content [:ul
-                        [:p "Because We Built It."]]}
-            )}))
+                        [:p "Because We Built It."]]})}))
 
 (def help-toc
   "Generates list serving as help's table of contents. Parses help-data."
   [:nav {:role "navigation" :class "table-of-contents" :key "nav"}
-   [:ul (doall
-          (for [{:keys [id title sub] :as section} help-data]
-            ^{:key id}
-            [:li [:a (when id {:href (str "#" id)}) title]
-             [:ul (doall
-                    (for [{:keys [id title] :as question} sub]
-                      ^{:key id}
-                      [:li [:a (when id {:href (str "#" id)}) title]]))]]))]])
+   (into [:ul]
+         (for [{:keys [id title sub]} help-data]
+           ^{:key id}
+           [:li
+            [:a (when id {:href (str "#" id)}) title]
+            (into [:ul]
+                  (for [{:keys [id title]} sub]
+                    ^{:key id}
+                    [:li [:a (when id {:href (str "#" id)}) title]]))]))])
 
 (def help-contents
   "Takes help-data and translates it to HTML tags."
   (doall
-    (for [{:keys [id title sub] :as section} help-data]
-      (list [:h2 {:id id :key id} title]
-            (doall
-              (for [{:keys [id title content] :as question} sub]
-                ^{:key title}
-                [:div [:h3 {:id id :key title} title]
-                 content]))))))
+    (for [{:keys [id title sub]} help-data]
+      ^{:key id}
+      [:<>
+       [:h2 {:id id :key id} title]
+       (for [{:keys [id title content]} sub]
+         ^{:key title}
+         [:div [:h3 {:id id :key title} title]
+          content])])))
 
 (defn help []
-  [:div.help.panel.content-page.blue-shade
-   [:h2 "Help Topics"]
-   help-toc
-   help-contents])
+  [:div.page-container
+   [:div.help-bg]
+   [:div.help.panel.content-page.blue-shade
+    [:h2 "Help Topics"]
+    help-toc
+    help-contents]])

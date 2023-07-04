@@ -1,0 +1,106 @@
+@require "opacity"
+@require "palette"
+nav ul
+    list-style-type: none
+
+.topnav
+    position: absolute
+    z-index: 11
+    top: 0
+    left: 0
+    right: 0
+    color: gray-core
+    border-bottom: 1px solid alpha(blue-dark, o-80)
+    height: 32px
+
+    #left-menu, #right-menu
+        margin: 0 10px
+
+        > ul li
+            margin: 0 10px
+
+            &.usermenu
+                margin: 0
+
+                .dropdown-menu
+                    margin-right: -5px
+
+    li, #status
+        display: inline-block
+        height: 30px
+        line-height: 29px
+
+        a
+            color: white-solid
+
+            &:hover
+                color: gold-base
+
+    li.active a
+        color: gold-base
+
+    li.active#admin-nav a
+        margin-left: 30px
+        color: gold-base
+
+    #admin-nav
+        margin-left: 30px
+
+        a
+            margin-left: 30px
+            color: yellow-light
+
+            &:hover
+                color: gold-base
+
+    li.active#features-nav a,
+    li.active#users-nav a
+        color: gold-base
+
+    #features-nav a,
+    #users-nav a
+        color: yellow-light
+
+        &:hover
+            color: gold-base
+
+    .dropdown-menu a
+        line-height: 20px
+
+        &:hover
+            color: white-solid
+
+#left-menu
+    float: left
+
+#right-menu, #status
+    float: right
+
+#status
+    .float-right
+        padding-right: 12px
+        border-right: 1px solid white-solid
+
+    .spectators
+        display: none
+        position: absolute
+        padding: 4px 8px
+        top: 36px
+        border-radius: 4px
+        min-width: 180px
+
+    .player
+        display: block
+
+    .spectators-count
+        position: relative
+        cursor: pointer
+
+        &:hover .spectators
+            display: block
+
+    .concede-button
+        margin-right: 12px
+
+    .mute-button, .stack-cards-button, .runner-board-order-button, .replay-button
+        margin-left: 12px

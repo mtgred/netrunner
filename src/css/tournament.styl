@@ -1,0 +1,30 @@
+ul.missing-players
+    padding: revert
+
+.tournament-settings-container
+    overflow: auto
+    flex: 1
+
+
+.game-list
+
+    .gameline
+        span.game-title
+            font-weight: bold
+
+        .game-status
+            span.not-started
+                color: yellow-core
+            span.started
+                color: green-bright
+        .players
+            display: flex
+
+            .player-info
+                flex: 1
+
+                span.username-label, span.id-label, span.hash-label, span.side-label
+                    font-weight: bold
+
+                span.hash-value
+                    font-family: monospace

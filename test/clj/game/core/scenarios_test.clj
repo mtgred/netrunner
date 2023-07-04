@@ -33,7 +33,6 @@
       (click-prompt state :runner "Pay to steal")
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (get-hardware state 1))
-      (click-prompt state :runner "Cyberdex Virus Suite")
       (click-prompt state :corp "Yes")
       (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua has 0 virus counter after purge and steal")
       (is (not (:run @state)) "Run has ended"))))
@@ -94,7 +93,7 @@
                                  "Lamprey"
                                  "Data Folding"
                                  "Career Fair"]}})
-      (core/draw state :corp 1)
+      (draw state :corp 1)
       (core/gain state :corp :click 1)
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Adonis Campaign" "New remote")
@@ -108,7 +107,7 @@
         (rez state :corp adon)
         (is (= 10 (:credit (get-corp))) "Breaker Bay Grid allowed rez of Adonis for free")
         (take-credits state :corp)
-        (core/draw state :runner 1)
+        (draw state :runner 1)
         (play-from-hand state :runner "Career Fair")
         (click-card state :runner (find-card "Data Folding" (:hand (get-runner))))
         (is (= 5 (:credit (get-runner))) "Data Folding installed for free by Career Fair")

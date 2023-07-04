@@ -150,10 +150,10 @@
     (resolve-ability
       state side
       (-> ability
-          (dissoc :trace)
+          (dissoc :trace :req)
           (assoc :async true
                  :effect (effect (init-trace eid card trace))))
       card targets)
     (effect-completed state side eid)))
 
-(register-ability-type :trace check-trace)
+(register-ability-type :trace #'check-trace)

@@ -9,7 +9,7 @@
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [quantify]]))
+    [game.utils :refer [pluralize quantify]]))
 
 (defn sum-tag-effects
   [state]
@@ -23,11 +23,15 @@
    (let [old-total (get-in @state [:runner :tag :total])
          new-total (sum-tag-effects state)
          is-tagged? (or (any-effects state :runner :is-tagged)
-                        (pos? new-total))]
-     (swap! state assoc-in [:runner :tag :total] new-total)
-     (swap! state assoc-in [:runner :tag :is-tagged] is-tagged?)
-     (when (not= old-total new-total)
-       (trigger-event state :runner :tags-changed new-total old-total is-tagged?)))))
+                        (pos? new-total))
+         old-tags (select-keys (get-in @state [:runner :tag]) [:total :is-tagged])
+         new-tags {:total new-total
+                   :is-tagged is-tagged?}
+         changed? (not= old-tags new-tags)]
+     (when changed?
+       (swap! state update-in [:runner :tag] merge new-tags)
+       (trigger-event state :runner :tags-changed new-total old-total is-tagged?))
+     changed?)))
 
 (defn tag-prevent
   [state side eid n]
@@ -74,7 +78,7 @@
                                prevent-msg (if prevent
                                              (str "avoids "
                                                   (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                                  (if (< 1 prevent) " tags" " tag"))
+                                                  (pluralize prevent "tag"))
                                              "will not avoid tags")]
                            (system-msg state :runner prevent-msg)
                            (clear-wait-prompt state :corp)

@@ -3,9 +3,10 @@
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.effects :refer [register-floating-effect]]
     [game.core.engine :refer [trigger-event]]
-    [game.core.gaining :refer [available-mu base-mod-size deduct free-mu gain]]
+    [game.core.gaining :refer [base-mod-size deduct gain]]
     [game.core.hand-size :refer [hand-size update-hand-size]]
     [game.core.link :refer [get-link update-link]]
+    [game.core.memory :refer [available-mu update-mu]]
     [game.core.say :refer [system-msg]]
     [game.core.tags :refer [update-tag-status]]
     [game.macros :refer [req]]))
@@ -27,9 +28,13 @@
 (defn- change-mu
   "Send a system message indicating how mu was changed"
   [state side delta]
-  (free-mu state delta)
+  (register-floating-effect
+    state side nil
+    {:type :user-available-mu
+     :value [:regular delta]})
+  (update-mu state)
   (system-msg state side
-              (str "sets unused MU to " (available-mu state)
+              (str "sets unused [mu] to " (available-mu state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-tags
@@ -76,7 +81,7 @@
      :value delta})
   (update-link state)
   (system-msg state side
-              (str "sets their link to " (get-link state)
+              (str "sets their [link] to " (get-link state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-hand-size

@@ -1,13 +1,15 @@
 (ns game.core.flags
-  (:require [clojure.string :as string]
-            [game.core.board :refer [all-active all-installed]]
-            [game.core.card :refer [corp? facedown? get-cid get-counters in-discard? in-hand? installed? operation? rezzed? runner?]]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.eid :refer [make-eid]]
-            [game.core.servers :refer [zone->name]]
-            [game.core.to-string :refer [card-str]]
-            [game.core.toasts :refer [toast]]
-            [game.utils :refer [same-side? same-card?]]))
+  (:require
+    [clojure.string :as string]
+    [game.core.board :refer [all-active all-installed]]
+    [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed?]]
+    [game.core.card-defs :refer [card-def]]
+    [game.core.effects :refer [any-effects]]
+    [game.core.eid :refer [make-eid]]
+    [game.core.servers :refer [zone->name]]
+    [game.core.to-string :refer [card-str]]
+    [game.core.toasts :refer [toast]]
+    [game.utils :refer [same-card? same-side?]]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -214,6 +216,7 @@
   :side card is not on :corp side
   :run-flag run flag prevents rez
   :turn-flag turn flag prevents rez
+  :persistent-flag persistent flag prevents rez
   :unique fails unique check
   :req does not meet rez requirement"
   [state side card]
@@ -225,6 +228,7 @@
       ;; No flag restrictions?
       (not (run-flag? state side card :can-rez)) :run-flag
       (not (turn-flag? state side card :can-rez)) :turn-flag
+      (not (persistent-flag? state side card :can-rez)) :persistent-flag
       ;; Uniqueness check
       (and uniqueness (some #(and (rezzed? %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
       ;; Rez req check
@@ -247,6 +251,7 @@
        ;; Flag restrictions - toast handled by flag
        :run-flag false
        :turn-flag false
+       :persistent-flag false
        ;; Uniqueness
        :unique (or ignore-unique
                    (reason-toast (str "Cannot rez a second copy of " title " since it is unique. Please trash the other"
@@ -257,7 +262,8 @@
 (defn can-steal?
   "Checks if the runner can steal agendas"
   [state side card]
-  (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
+  (and (not (any-effects state side :cannot-steal true? card))
+       (check-flag-types? state side card :can-steal [:current-turn :current-run])
        (check-flag-types? state side card :can-steal [:current-turn :persistent])))
 
 (defn can-trash?
@@ -268,12 +274,13 @@
 
 (defn can-run?
   "Checks if the runner is allowed to run"
-  [state side]
+  ([state side] (can-run? state side false))
+  ([state side silent]
   (let [cards (->> @state :stack :current-turn :can-run (map :card))]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
-        false))))
+      (do (when-not silent (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
+        false))))))
 
 (defn can-access?
   "Checks if the runner can access the specified card"
@@ -295,21 +302,28 @@
   (check-flag-types? state side card :can-advance [:current-turn :persistent]))
 
 (defn can-score?
-  "Checks if the corp can score cards"
-  [state side card]
-  (and
-    (some? card)
-    ;; The agenda has enough agenda counters to legally score
-    (let [cost (or (:current-cost card)
-                   (:advancementcost card))]
-      (and cost
-           (<= cost (get-counters card :advancement))))
-    ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
-    (check-flag-types? state side card :can-score [:current-turn :persistent])
-    ;; An effect hasn't set a card as unable to be scored (Clot)
-    (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
-    ;; A terminal operation hasn't been played
-    (not (get-in @state [:corp :register :terminal]))))
+  "Checks if the corp can score a given card"
+  ([state side card] (can-score? state side card nil))
+  ([state side card {:keys [no-req]}]
+   (and
+     (agenda? card)
+     ;; The Agenda is not already scored
+     (not (in-scored? card))
+     ;; The agenda has enough agenda counters to legally score
+     (or no-req
+         (let [cost (get-advancement-requirement card)]
+           (and cost
+                (<= cost (get-counters card :advancement)))))
+     ;; Score req on the card is allowed
+     (if (card-flag? card :can-score)
+       (card-flag-fn? state side card :can-score)
+       true)
+     ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
+     (check-flag-types? state side card :can-score [:current-turn :persistent])
+     ;; An effect hasn't set a card as unable to be scored (Clot)
+     (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
+     ;; A terminal operation hasn't been played
+     (not (get-in @state [:corp :register :terminal])))))
 
 (defn is-scored?
   "Checks if the specified card is in the scored area of the specified player."
@@ -326,33 +340,6 @@
   [state _ card]
   (is-scored? state :runner card))
 
-(defn card-is-public?
-  [state side {:keys [zone] :as card}]
-  (if (= side :runner)
-    ;; public runner cards: in hand and :openhand is true;
-    ;; or installed/hosted and not facedown;
-    ;; or scored or current or in heap
-    (or (corp? card)
-        (and (:openhand (:runner @state))
-             (in-hand? card))
-        (and (or (installed? card)
-                 (:host card))
-             (not (facedown? card)))
-        (#{:scored :discard :current} (last zone)))
-    ;; public corp cards: in hand and :openhand;
-    ;; or installed and rezzed;
-    ;; or in :discard and :seen
-    ;; or scored or current
-    (or (runner? card)
-        (and (:openhand (:corp @state))
-             (in-hand? card))
-        (and (or (installed? card)
-                 (:host card))
-             (or (operation? card)
-                 (rezzed? card)))
-        (and (in-discard? card) (:seen card))
-        (#{:scored :current} (last zone)))))
-
 (defn can-host?
   "Checks if the specified card is able to host other cards"
   [card]
@@ -362,7 +349,7 @@
 (defn when-scored?
   "Checks if the specified card is able to be used for a when-scored text ability"
   [card]
-  (not (:not-when-scored (card-def card))))
+  (:on-score (card-def card)))
 
 (defn ab-can-prevent?
   "Checks if the specified ability definition should prevent.
@@ -386,7 +373,7 @@
   [state side card type target args]
   (->> (get-card-prevention card type)
        (map #(ab-can-prevent? state side card (:req %) target args))
-       (some #(-> % false? not))))
+       (some identity)))
 
 (defn cards-can-prevent?
   "Checks if any cards in a list can prevent this type"

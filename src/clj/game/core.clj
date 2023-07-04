@@ -8,12 +8,14 @@
     [game.core.card]
     [game.core.card-defs]
     [game.core.change-vals]
+    [game.core.charge]
     [game.core.checkpoint]
     [game.core.commands]
     [game.core.cost-fns]
     [game.core.costs]
     [game.core.damage]
     [game.core.def-helpers]
+    [game.core.diffs]
     [game.core.drawing]
     [game.core.effects]
     [game.core.eid]
@@ -29,13 +31,17 @@
     [game.core.identities]
     [game.core.initializing]
     [game.core.installing]
+    [game.core.link]
+    [game.core.mark]
+    [game.core.memory]
     [game.core.moving]
     [game.core.optional]
     [game.core.payment]
     [game.core.pick-counters]
-    [game.core.player]
     [game.core.play-instants]
+    [game.core.player]
     [game.core.process-actions]
+    [game.core.prompt-state]
     [game.core.prompts]
     [game.core.props]
     [game.core.psi]
@@ -43,11 +49,14 @@
     [game.core.revealing]
     [game.core.rezzing]
     [game.core.runs]
+    [game.core.sabotage]
     [game.core.say]
     [game.core.servers]
+    [game.core.set-aside]
     [game.core.set-up]
     [game.core.shuffling]
     [game.core.state]
+    [game.core.subtypes]
     [game.core.tags]
     [game.core.to-string]
     [game.core.toasts]
@@ -59,29 +68,33 @@
     [game.macros]
     [potemkin :refer [import-vars]]))
 
-(import-vars
+(defmacro expose-vars
+  "Surrounds a import-vars call with an anonymous function to get arround the 64kb limit on the method size in the JVM"
+  [symbols]
+  `((fn [] (import-vars ~symbols))))
 
+(expose-vars
   [game.core.access
    access-bonus
    access-bonus-count
    access-card
    access-cost
    access-cost-bonus
-   access-count
    access-end
    access-helper-archives
    access-helper-hq
    access-helper-rd
    access-helper-remote
    access-non-agenda
+   breach-server
    clean-access-args
    choose-access
-   do-access
    facedown-cards
    faceup-accessible
    get-all-content
    get-all-hosted
    get-only-card-to-access
+   installed-access-trigger
    interactions
    max-access
    msg-handle-access
@@ -89,13 +102,13 @@
    no-trash-or-steal
    num-cards-central
    num-cards-to-access
-   root-content
    set-only-card-to-access
    steal
    steal-cost
    steal-cost-bonus
-   turn-archives-faceup]
+   turn-archives-faceup])
 
+(expose-vars
   [game.core.actions
    advance
    click-advance
@@ -123,27 +136,28 @@
    score
    select
    trash-resource
-   view-deck]
+   view-deck])
 
+(expose-vars
   [game.core.agendas
-   advancement-cost
-   advancement-cost-bonus
-   get-agenda-points
-   update-advancement-cost
-   update-all-advancement-costs
-   update-all-agenda-points]
+   update-advancement-requirement
+   update-all-advancement-requirements
+   update-all-agenda-points])
 
+(expose-vars
   [game.core.bad-publicity
    bad-publicity-prevent
    gain-bad-publicity
-   lose-bad-publicity]
+   lose-bad-publicity])
 
+(expose-vars
   [game.core.board
    all-active
    all-active-installed
    all-installed
    all-installed-runner-type
    card->server
+   get-all-cards
    get-all-installed
    get-remote-names
    get-remote-zones
@@ -153,8 +167,9 @@
    installable-servers
    installed-byname
    server->zone
-   server-list]
+   server-list])
 
+(expose-vars
   [game.core.card
    active?
    agenda?
@@ -163,17 +178,21 @@
    can-be-advanced?
    card-index
    condition-counter?
+   console?
    corp-installable-type?
    corp?
    event?
    facedown?
    faceup?
    fake-identity?
+   get-advancement-requirement
+   get-agenda-points
    get-card
    get-card-hosted
    get-cid
    get-counters
    get-nested-host
+   get-title
    get-zone
    hardware?
    has-subtype?
@@ -188,41 +207,54 @@
    in-play-area?
    in-rd-root?
    in-root?
+   in-set-aside?
    in-scored?
    in-server?
    installed?
+   is-public?
    is-type?
    map->Card
    operation?
-   private-card
    program?
+   protecting-a-central?
    protecting-archives?
    protecting-hq?
    protecting-rd?
-   protecting-a-central?
    resource?
    rezzed?
    runner?
+   unique?
    upgrade?
-   virus-program?]
+   virus-program?])
 
+(expose-vars
   [game.core.card-defs
    card-def
-   defcard-impl]
+   defcard-impl])
 
+(expose-vars
   [game.core.change-vals
-   change]
+   change])
 
+(expose-vars
+  [game.core.charge
+   can-charge
+   charge-ability
+   charge-card])
+
+(expose-vars
   [game.core.checkpoint
-   fake-checkpoint]
+   fake-checkpoint])
 
+(expose-vars
   [game.core.commands
    command-adv-counter
    command-counter
    command-undo-click
    command-undo-turn
-   parse-command]
+   parse-command])
 
+(expose-vars
   [game.core.cost-fns
    break-sub-ability-cost
    card-ability-cost
@@ -237,11 +269,14 @@
    rez-cost
    run-additional-cost-bonus
    run-cost
-   trash-cost]
+   score-additional-cost-bonus
+   trash-cost])
 
+(expose-vars
   [game.core.costs
-   total-available-credits]
+   total-available-credits])
 
+(expose-vars
   [game.core.damage
    chosen-damage
    corp-can-choose-damage?
@@ -251,9 +286,11 @@
    damage-prevent
    enable-corp-damage-choice
    enable-runner-damage-choice
-   runner-can-choose-damage?]
+   runner-can-choose-damage?])
 
+(expose-vars
   [game.core.def-helpers
+   breach-access-bonus
    combine-abilities
    corp-rez-toast
    defcard
@@ -261,48 +298,66 @@
    do-meat-damage
    do-net-damage
    make-recurring-ability
+   offer-jack-out
    reorder-choice
-   trash-on-empty]
+   trash-on-empty
+   corp-recur])
 
+(expose-vars
+  [game.core.diffs
+   public-states
+   public-diffs])
+
+(expose-vars
   [game.core.drawing
    draw
    draw-bonus
+   first-time-draw-bonus
    max-draw
-   remaining-draws]
+   remaining-draws])
 
+(expose-vars
   [game.core.effects
    any-effects
    gather-effects
    get-effects
+   get-effect-maps
+   get-effect-value
    register-constant-effects
    register-floating-effect
    sum-effects
    unregister-constant-effects
-   unregister-floating-effects]
+   unregister-effects-for-card
+   unregister-floating-effects])
 
+(expose-vars
   [game.core.eid
    complete-with-result
    effect-completed
    eid-set-defaults
+   get-ability-targets
+   is-basic-advance-action?
    make-eid
    make-result
-   register-effect-completed]
+   register-effect-completed])
 
+(expose-vars
   [game.core.engine
    ability-as-handler
    can-trigger?
-   card-as-handler
    checkpoint
-   effect-as-handler
+   dissoc-req
    gather-events
    is-ability?
-   make-pending-event
+   merge-costs-paid
    not-used-once?
    pay
-   prompt!
+   print-msg
    queue-event
    register-ability-type
+   register-default-events
    register-events
+   register-pending-event
    register-once
    register-suppress
    resolve-ability
@@ -315,10 +370,10 @@
    unregister-event-by-uuid
    unregister-events
    unregister-floating-events
-   unregister-floating-events-for-card
    unregister-suppress
-   unregister-suppress-by-uuid]
+   unregister-suppress-by-uuid])
 
+(expose-vars
   [game.core.events
    event-count
    first-event?
@@ -336,18 +391,21 @@
    run-event-count
    run-events
    second-event?
-   turn-events]
+   turn-events])
 
+(expose-vars
   [game.core.expose
    expose
-   expose-prevent]
+   expose-prevent])
 
+(expose-vars
   [game.core.finding
    find-card
    find-cid
    find-latest
-   get-scoring-owner]
+   get-scoring-owner])
 
+(expose-vars
   [game.core.flags
    ab-can-prevent?
    any-flag-fn?
@@ -364,7 +422,6 @@
    card-can-prevent?
    card-flag-fn?
    card-flag?
-   card-is-public?
    cards-can-prevent?
    check-flag-types?
    clear-all-flags-for-card!
@@ -396,31 +453,36 @@
    untrashable-while-resources?
    untrashable-while-rezzed?
    when-scored?
-   zone-locked?]
+   zone-locked?])
 
+(expose-vars
   [game.core.gaining
-   available-mu
    base-mod-size
    deduct
-   free-mu
    gain
    gain-credits
+   gain-clicks
    lose
    lose-credits
+   lose-clicks
    safe-inc-n
-   sub->0
-   toast-check-mu
-   use-mu]
+   sub->0])
 
+(expose-vars
   [game.core.hand-size
+   corp-hand-size+
    hand-size
+   hand-size+
+   runner-hand-size+
    sum-hand-size-effects
-   update-hand-size]
+   update-hand-size])
 
+(expose-vars
   [game.core.hosting
    host
-   remove-from-host]
+   remove-from-host])
 
+(expose-vars
   [game.core.ice
    add-extra-sub!
    add-sub
@@ -472,16 +534,16 @@
    update-all-icebreakers
    update-breaker-strength
    update-ice-in-server
-   update-ice-strength]
+   update-ice-strength])
 
+(expose-vars
   [game.core.identities
    disable-card
    disable-identity
    enable-card
-   enable-identity
-   flip-facedown
-   flip-faceup]
+   enable-identity])
 
+(expose-vars
   [game.core.initializing
    ability-init
    card-init
@@ -490,28 +552,54 @@
    subroutines-init
    update-abilities-cost-str
    update-ability-cost-str
-   update-all-card-labels]
+   update-all-card-labels])
 
+(expose-vars
   [game.core.installing
+   corp-can-pay-and-install?
    corp-install
+   corp-install-cost
    corp-install-list
    corp-install-msg
+   install-as-condition-counter
    install-locked?
    runner-can-install?
-   runner-install]
+   runner-can-pay-and-install?
+   runner-install])
 
+(expose-vars
   [game.core.link
    get-link
-   update-link]
+   link+
+   update-link])
 
+(expose-vars
+  [game.core.mark
+   set-mark
+   is-mark?
+   identify-mark
+   identify-mark-ability])
+
+(expose-vars
+  [game.core.memory
+   available-mu
+   caissa-mu+
+   mu+
+   update-mu
+   virus-mu+])
+
+(expose-vars
   [game.core.moving
+   add-to-currently-drawing
    as-agenda
    discard-from-hand
+   flip-facedown
+   flip-faceup
    forfeit
    mill
    move
    move-zone
-   remove-old-current
+   remove-from-currently-drawing
    swap-agendas
    swap-cards
    swap-ice
@@ -519,17 +607,16 @@
    trash
    trash-cards
    trash-prevent
-   trash-resource-bonus
-   uninstall
-   update-current-ice-to-trash
-   update-installed-card-indices]
+   uninstall])
 
+(expose-vars
   [game.core.optional
    get-autoresolve
    never?
    optional-ability
-   set-autoresolve]
+   set-autoresolve])
 
+(expose-vars
   [game.core.payment
    add-cost-label-to-ability
    build-cost-label
@@ -538,7 +625,6 @@
    can-pay?
    cost->string
    cost-name
-   cost-ranks
    cost-target
    cost-targets
    cost-value
@@ -546,59 +632,79 @@
    label
    merge-costs
    payable?
-   value]
+   value])
 
+(expose-vars
   [game.core.play-instants
-   play-instant]
+   can-play-instant?
+   play-instant
+   play-instant-costs])
 
+(expose-vars
   [game.core.pick-counters
    pick-credit-providing-cards
-   pick-virus-counters-to-spend]
+   pick-virus-counters-to-spend])
 
+(expose-vars
   [game.core.process-actions
    command-parser
-   process-action]
+   process-action])
 
+(expose-vars
   [game.core.props
    add-counter
    add-icon
    add-prop
    remove-icon
-   set-prop]
+   set-prop])
 
+(expose-vars
   [game.core.player
    map->Corp
    map->Runner
    new-corp
-   new-runner]
+   new-runner])
 
+(expose-vars
+  [game.core.prompt-state
+   add-to-prompt-queue
+   remove-from-prompt-queue])
+
+(expose-vars
   [game.core.prompts
    cancellable
    choice-parser
+   clear-run-prompts
    clear-wait-prompt
    resolve-select
+   show-run-prompts
    show-prompt
    show-prompt-with-dice
    show-select
    show-trace-prompt
-   show-wait-prompt]
+   show-wait-prompt])
 
+(expose-vars
   [game.core.psi
-   psi-game]
+   psi-game])
 
+(expose-vars
   [game.core.purging
-   purge]
+   purge])
 
+(expose-vars
   [game.core.revealing
    conceal-hand
    reveal
-   reveal-hand]
+   reveal-hand])
 
+(expose-vars
   [game.core.rezzing
    derez
    get-rez-cost
-   rez]
+   rez])
 
+(expose-vars
   [game.core.runs
    add-run-effect
    bypass-ice
@@ -607,12 +713,13 @@
    check-for-empty-server
    complete-run
    continue
-   corp-phase-43
    encounter-ends
    end-run
    end-run-prevent
+   force-ice-encounter
    gain-next-run-credits
    gain-run-credits
+   get-current-encounter
    handle-end-run
    jack-out
    jack-out-prevent
@@ -624,21 +731,29 @@
    set-phase
    start-next-phase
    successful-run
-   successful-run-replace-access
+   successful-run-replace-breach
    toggle-auto-no-action
    total-cards-accessed
-   total-run-cost]
+   total-run-cost])
 
+
+(expose-vars
+  [game.core.sabotage
+   sabotage-ability])
+
+(expose-vars
   [game.core.say
    enforce-msg
    indicate-action
+   make-message
+   make-system-message
    play-sfx
    say
    system-msg
-   system-say
-   typing
-   typingstop]
+   implementation-msg
+   system-say])
 
+(expose-vars
   [game.core.servers
    central->name
    central->zone
@@ -658,64 +773,89 @@
    unknown->kw
    zone->name
    zone->sort-key
-   zones->sorted-names]
+   zones->sorted-names])
 
+(expose-vars
+  [game.core.set-aside
+   set-aside
+   set-aside-for-me
+   add-to-set-aside
+   swap-set-aside-cards
+   get-set-aside])
+
+(expose-vars
   [game.core.set-up
    build-card
    create-deck
    init-game
    keep-hand
-   mulligan]
+   mulligan])
 
+(expose-vars
   [game.core.shuffling
    shuffle!
    shuffle-deck
    shuffle-into-deck
-   shuffle-into-rd-effect]
+   shuffle-into-rd-effect])
 
+(expose-vars
   [game.core.state
    make-rid
    map->State
-   new-state]
+   new-state])
 
+(expose-vars
+  [game.core.subtypes
+   update-all-subtypes])
+
+(expose-vars
   [game.core.tags
    gain-tags
    lose-tags
-   tag-prevent]
+   tag-prevent])
 
+(expose-vars
   [game.core.to-string
-   card-str]
+   card-str])
 
+(expose-vars
   [game.core.toasts
    show-error-toast
-   toast]
+   toast])
 
+(expose-vars
   [game.core.trace
    init-trace
-   init-trace-bonus]
+   init-trace-bonus])
 
+(expose-vars
   [game.core.turns
    end-phase-12
    end-turn
-   start-turn]
+   start-turn])
 
+(expose-vars
   [game.core.update
    update!
-   update-hosted!]
+   update-hosted!])
 
+(expose-vars
   [game.core.virus
    count-virus-programs
    get-virus-counters
-   number-of-virus-counters]
+   number-of-virus-counters
+   number-of-runner-virus-counters])
 
+(expose-vars
   [game.core.winning
-   check-winner
+   check-win-by-agenda
    clear-win
    concede
    flatline
    win
-   win-decked]
+   win-decked])
 
+(expose-vars
   [game.macros
    continue-ability
    effect
@@ -723,3 +863,4 @@
    req
    wait-for
    when-let*])
+

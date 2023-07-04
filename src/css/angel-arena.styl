@@ -1,0 +1,201 @@
+// Note: Some of the definitions here overwrite styles set in lobby.styl for .lobby .gamepanel
+.lobby .angel-arena.game-panel
+    display-flex()
+    flex-direction(column)
+    position:relative
+    overflow-y: auto
+
+    >div
+        position:relative
+        top: 0
+        bottom: 0
+        left: 0
+        right: 0
+        margin-top: 0
+        margin-bottom: .5rem
+        display: inline
+
+    >h3
+        font-size: 1.25rem
+        margin-bottom: .25rem
+
+        &:not(:first-child)
+            margin-top: .5rem
+
+    .format-bar
+        padding: 0 1rem 0
+        margin-top: 0px
+        margin-bottom: .5rem
+
+        .tab
+            float: left
+            display: block
+            color: white
+            margin: 0 .5rem
+            line-height: 1.5rem
+            transition(all 0.2s ease-in-out)
+
+            &:hover
+                color: orange
+                cursor: pointer
+
+            &.current
+                color: orange
+
+    .queue-time
+        margin-top: .125rem
+
+    .run .deck
+        height: 65px
+
+        h4
+            margin: 0
+            text-overflow: ellipsis
+            white-space: nowrap
+            overflow: hidden
+
+        > img
+            float: left
+            height: 100%
+            margin-right: .5rem
+
+        .time, .result
+            font-weight: bold
+
+    .run .buttons
+        padding: 0
+        width: auto
+        overflow-y: auto
+
+        .button-row
+            margin-top: .125rem
+
+        button
+            width: auto
+
+        .small
+            min-width:0
+            width: auto
+            padding: 0 2px
+
+    >.run .games
+        margin-top: .125rem
+        display-flex()
+        flex-direction(row)
+
+        .match
+            width:auto
+            margin: .125rem
+
+            &:first-child
+                margin-left:0
+
+            &.aborted
+                display:none
+
+            &>img.identity
+                width: 30px
+                border-radius: 2px
+
+                &.won
+                    box-shadow(0 0 4px 2px green-bright)
+
+                &.lost
+                    box-shadow(0 0 4px 2px red-light)
+
+                // &.aborted
+                    // filter: grayscale(100%);
+                    // box-shadow(0 0 4px 2px grey)
+
+    .latest-runs
+        .run
+            display-flex()
+            flex-wrap(wrap)
+            gap: .25rem 1rem
+            margin: 0
+
+            .deck
+                flex-grow:1
+
+            .match
+                width:auto
+                margin: .125rem
+
+                &.aborted
+                    display:none
+
+                &>img.identity
+                    width: 45.8px
+                    height: 65px
+                    border-radius: 2px
+                    margin: auto
+
+                    &.won
+                        box-shadow(0 0 4px 2px green-bright)
+
+                    &.lost
+                        box-shadow(0 0 4px 2px red-light)
+
+                    // &.aborted
+                        // filter: grayscale(100%);
+                        // box-shadow(0 0 4px 2px grey)
+
+                .name-area
+                    flex-grow: 0
+                    margin:.5rem
+
+            .unfold-button
+                content: ""
+                display: block
+
+                width: 0
+                height: 0
+                border-top: .375rem solid transparent
+                border-bottom: .375rem solid transparent
+                border-left: .75rem solid white
+
+                margin: auto
+                transition(transform .2s ease-in-out)
+
+                &.open
+                    transform: rotate(90deg)
+
+            .unfold
+                overflow: hidden
+                transition(max-height .2s ease-in-out)
+
+                min-width: 100%
+                max-height: 0
+                // max-height set to exact value by cljs, when opened
+                // does not work with "auto"
+
+            .games
+                display: block!important
+
+                .match
+                    display-flex()
+                    width:100%!important
+                    height: 5rem
+                    margin: .25rem
+
+                    .info
+                        margin:auto
+                        flex-grow: 1
+
+.lobby
+    .player .standings
+        margin-left: .125rem
+
+    .win-group
+        &:not(:first-child)
+            margin-top: .75rem
+
+        .win-divider
+            font-size: 120%
+            font-weight: bold
+            text-align:center
+            margin-bottom: .5rem
+
+.gameboard
+    .right-pane .log .angel-arena-time-warning
+        margin-bottom: 1rem

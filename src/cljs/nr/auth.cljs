@@ -1,16 +1,19 @@
 (ns nr.auth
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan put!] :as async]
-            [nr.ajax :refer [POST GET]]
-            [nr.appstate :refer [app-state]]
-            [nr.avatar :refer [avatar]]
-            [clojure.string :refer [lower-case]]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!]]
+   [clojure.string :refer [lower-case]]
+   [nr.ajax :refer [GET POST]]
+   [nr.appstate :refer [app-state]]
+   [nr.avatar :refer [avatar]]
+   [nr.translations :refer [tr]]
+   [reagent.core :as r]))
 
 (defn authenticated [f]
   (if-let [user (:user @app-state)]
     (f user)
-    (.modal (js/$ "#login-form") "show")))
+    (do (.modal (js/$ "#login-form") "show")
+        nil)))
 
 (defn handle-post [event url s]
   (.preventDefault event)
@@ -23,6 +26,7 @@
             (swap! s assoc :flash-message "Reset password sent")
             (case (:status response)
               401 (swap! s assoc :flash-message "Invalid login or password")
+              403 (swap! s assoc :flash-message (or (:error (:json response)) "Account banned"))
               421 (swap! s assoc :flash-message "No account with that email address exists")
               422 (swap! s assoc :flash-message "Username taken")
               423 (swap! s assoc :flash-message "Username too long")
@@ -31,8 +35,8 @@
 
 (defn handle-logout [event]
   (.preventDefault event)
-  (go (let [response (<! (POST "/logout" nil))]
-        (-> js/document .-location (.reload true)))))
+  (go (<! (POST "/logout" nil))
+      (-> js/document .-location (.reload true))))
 
 (defn logged-menu [user]
   [:ul
@@ -43,17 +47,19 @@
      [:b.caret]]
     [:div.dropdown-menu.blue-shade.float-right
      (when (:isadmin user)
-       [:a.block-link "[Admin]"])
+       [:a.block-link {:href "/admin"} (str "[" (tr [:menu/admin "Admin"]) "]")])
      (when (:ismoderator user)
-       [:a.block-link "[Moderator]"])
-     [:a.block-link {:href "/account"} "Settings"]
-     [:a.block-link {:on-click #(handle-logout %)} "Jack out"]]]])
+       [:a.block-link (str "[" (tr [:menu/moderator "Moderator"]) "]")])
+     (when (:special user)
+       [:a.block-link (str "[" (tr [:menu/donor "Donor"]) "]")])
+     [:a.block-link {:href "/account"} (tr [:menu/settings "Settings"])]
+     [:a.block-link {:on-click #(handle-logout %)} (tr [:menu/logout "Jack out"])]]]])
 
 (defn unlogged-menu []
   [:ul
    [:li
     [:a {:href "" :data-target "#register-form" :data-toggle "modal"
-         :on-click (fn [] .focus (js/$ "input[name='email']"))} "Sign up"]]
+         :on-click (fn [] (.focus (js/$ "input[name='email']")))} "Sign up"]]
    [:li
     [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]])
 

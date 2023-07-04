@@ -1,9 +1,87 @@
 (ns game.cards.resources
-  (:require [game.core :refer :all]
-            [game.utils :refer :all]
-            [jinteki.utils :refer :all]
-            [clojure.pprint :as pprint]
-            [clojure.string :as string]))
+  (:require
+   [clojure.pprint :as pprint]
+   [clojure.string :as str]
+   [game.core.access :refer [access-bonus access-n-cards breach-server steal
+                             steal-cost-bonus]]
+   [game.core.actions :refer [get-runnable-zones]]
+   [game.core.agendas :refer [update-all-advancement-requirements
+                              update-all-agenda-points]]
+   [game.core.bad-publicity :refer [gain-bad-publicity]]
+   [game.core.board :refer [all-active all-active-installed all-installed card->server
+                            server->zone]]
+   [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp?
+                           event? facedown? get-agenda-points get-card get-counters
+                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
+                           installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.charge :refer [can-charge charge-ability]]
+   [game.core.cost-fns :refer [has-trash-ability? install-cost rez-cost
+                               trash-cost]]
+   [game.core.costs :refer [total-available-credits]]
+   [game.core.damage :refer [damage damage-prevent]]
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
+                                  reorder-choice trash-on-empty do-net-damage]]
+   [game.core.drawing :refer [draw draw-bonus first-time-draw-bonus]]
+   [game.core.effects :refer [register-floating-effect]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.engine :refer [not-used-once? pay register-events
+                             register-once register-suppress resolve-ability
+                             trigger-event trigger-event-sync unregister-events unregister-suppress-by-uuid checkpoint]]
+   [game.core.events :refer [event-count first-event?
+                             first-installed-trash-own? first-run-event?
+                             first-successful-run-on-server? get-turn-damage no-event? second-event? turn-events]]
+   [game.core.expose :refer [expose]]
+   [game.core.flags :refer [can-run-server? card-flag? clear-persistent-flag!
+                            has-flag? in-corp-scored?
+                            register-persistent-flag! register-turn-flag! zone-locked?]]
+   [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
+                              lose-credits]]
+   [game.core.hand-size :refer [corp-hand-size+ hand-size runner-hand-size+]]
+   [game.core.hosting :refer [host]]
+   [game.core.ice :refer [break-sub break-subroutine! get-strength pump
+                          unbroken-subroutines-choice update-all-ice
+                          update-all-icebreakers update-breaker-strength]]
+   [game.core.identities :refer [disable-card enable-card]]
+   [game.core.initializing :refer [card-init make-card]]
+   [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
+                                 runner-install]]
+   [game.core.link :refer [get-link link+]]
+   [game.core.mark :refer [identify-mark-ability is-mark?]]
+   [game.core.memory :refer [available-mu]]
+   [game.core.moving :refer [as-agenda flip-faceup forfeit mill move
+                             remove-from-currently-drawing trash trash-cards
+                             trash-prevent]]
+   [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
+   [game.core.payment :refer [build-spend-msg can-pay?]]
+   [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
+   [game.core.play-instants :refer [play-instant]]
+   [game.core.prompts :refer [cancellable]]
+   [game.core.props :refer [add-counter add-icon remove-icon]]
+   [game.core.revealing :refer [reveal]]
+   [game.core.rezzing :refer [derez rez]]
+   [game.core.runs :refer [bypass-ice gain-run-credits get-current-encounter
+                           update-current-encounter
+                           make-run set-next-phase
+                           successful-run-replace-breach total-cards-accessed]]
+   [game.core.sabotage :refer [sabotage-ability]]
+   [game.core.say :refer [system-msg]]
+   [game.core.servers :refer [central->name is-central? is-remote?
+                              protecting-same-server? target-server unknown->kw
+                              zone->name zones->sorted-names]]
+   [game.core.set-aside :refer [set-aside get-set-aside set-aside-for-me]]
+   [game.core.shuffling :refer [shuffle!]]
+   [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
+   [game.core.to-string :refer [card-str]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.core.virus :refer [get-virus-counters number-of-runner-virus-counters]]
+   [game.core.winning :refer [check-win-by-agenda]]
+   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.utils :refer :all]
+   [jinteki.utils :refer :all]
+   [jinteki.validator :refer [legal?]]
+   [medley.core :refer [find-first]]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -16,7 +94,7 @@
   "Function for constructing a Shard card"
   [title target-server message effect-fn]
   {:events [(assoc
-              (successful-run-replace-access
+              (successful-run-replace-breach
                 {:target-server target-server
                  :ability
                  {:async true
@@ -24,7 +102,7 @@
                   :effect (effect (runner-install eid card {:ignore-all-cost true}))}})
               :location :hand)]
    :abilities [{:async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg message
                 :effect (effect (effect-fn eid card targets))}]})
 
@@ -34,40 +112,39 @@
   (let [trash-effect {:async true
                       :effect (req (if tagged
                                      (do (system-msg state :runner (str "trashes " card-name " for being tagged"))
-                                         (trash state :runner eid card {:unpreventable true}))
+                                         (trash state :runner eid card {:unpreventable true :cause-card card}))
                                      (effect-completed state side eid)))}]
     (-> definition
         (update :events conj (assoc trash-effect :event :tags-changed))
         (assoc :reactivate trash-effect))))
 
 (defn companion-builder
-  "pay-credits-req says when it can be used. turn-ends-effect defines what happens,
+  "pay-credits-req says when it can be used. turn-ends-ability defines what happens,
   and requires `effect-completed`."
-  [pay-credits-req turn-ends-effect ability]
+  [pay-credits-req turn-ends-ability ability]
   (let [place-credit {:msg "add 1 [Credits] to itself"
                       :effect (effect (add-counter card :credit 1))}]
     {:interactions {:pay-credits {:req pay-credits-req
-                                 :type :credit}}
+                                  :type :credit}}
      :events [(assoc place-credit :event :runner-turn-begins)
               (assoc place-credit :event :agenda-stolen)
               {:event :runner-turn-ends
                :req (req (<= 3 (get-counters (get-card state card) :credit)))
                :async true
-               :effect turn-ends-effect}]
+               :effect (effect (continue-ability turn-ends-ability card targets))}]
      :abilities [ability]}))
 
 (defn bitey-boi
   [f]
   (let [selector (resolve f)
         descriptor (str f)]
-    {:abilities [{:req (req (and current-ice
+    {:abilities [{:req (req (and (get-current-encounter state)
                                  (rezzed? current-ice)
-                                 (= :encounter-ice (:phase run))
                                  (not (:broken (selector (:subroutines current-ice))))))
                   :break 1
                   :breaks "All"
-                  :break-cost [:trash]
-                  :cost [:trash]
+                  :break-cost [:trash-can]
+                  :cost [:trash-can]
                   :label (str "Break the " descriptor " subroutine")
                   :msg (msg "break the " descriptor " subroutine on " (:title current-ice)
                             " (\"[subroutine] " (:label (selector (:subroutines current-ice))) "\")")
@@ -76,19 +153,19 @@
 ;; Card definitions
 
 (defcard "Aaron Marrón"
-  (let [am {:effect (effect (add-counter card :power 2)
-                            (system-msg :runner (str "places 2 power counters on Aaron Marrón")))}]
+  (let [am {:msg "place 2 power counters on itself"
+            :effect (effect (add-counter card :power 2))}]
     {:abilities [{:cost [:power 1]
+                  :keep-menu-open :while-power-tokens-left
                   :msg "remove 1 tag and draw 1 card"
                   :async true
                   :effect (req (wait-for (lose-tags state side 1)
-                                         (draw state side eid 1 nil)))}]
+                                         (draw state side eid 1)))}]
      :events [(assoc am :event :agenda-scored)
               (assoc am :event :agenda-stolen)]}))
 
 (defcard "Access to Globalsec"
-  {:constant-effects [{:type :link
-                       :value 1}]})
+  {:constant-effects [(link+ 1)]})
 
 (defcard "Activist Support"
   {:events [{:event :corp-turn-begins
@@ -106,84 +183,92 @@
                             (effect-completed state :runner eid)))}]})
 
 (defcard "Adjusted Chronotype"
-  {:events [{:event :runner-lose
-             :req (req (and (some #{:click} target)
-                            (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-lose))))]
-                              (or (= 1 click-losses)
-                                  (and (= 2 click-losses)
-                                       (has-flag? state side :persistent :genetics-trigger-twice))))))
+  {:events [{:event :runner-click-loss
+             :req (req (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-lose))))]
+                            (or (= 1 click-losses)
+                                (and (= 2 click-losses)
+                                     (has-flag? state side :persistent :genetics-trigger-twice)))))
              :msg "gain [Click]"
-             :effect (effect (gain :runner :click 1))}]})
+             :effect (effect (gain-clicks :runner 1))}]})
 
 (defcard "Aeneas Informant"
-  {:events [{:event :no-trash
-             :req (req (and (:trash target)
-                            (not (in-discard? target))))
+  {:events [{:event :post-access-card
              :optional
-             {:autoresolve (get-autoresolve :auto-reveal-and-gain)
-              :prompt "Use Aeneas Informant?"
+             {:autoresolve (get-autoresolve :auto-fire)
+              :req (req (and (:trash (second targets))
+                             (not (in-discard? target))))
+              :prompt "Gain 1 [Credits] and reveal accessed card?"
               :yes-ability {:msg (msg (str "gain 1 [Credits]"
                                            (when-not (installed? target)
                                              (str " and reveal " (:title target)))))
                             :async true
                             :effect (effect (gain-credits eid 1))}}}]
-   :abilities [(set-autoresolve :auto-reveal-and-gain "Aeneas Informant")]})
+   :abilities [(set-autoresolve :auto-fire "Aeneas Informant")]})
 
 (defcard "Aesop's Pawnshop"
-  {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
-   :abilities [{:async true
-                :label "trash a card to gain 3 [Credits]"
-                :choices {:req (req (and (runner? target)
-                                         (installed? target)
-                                         (not (same-card? target card))))}
-                :msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                :effect (req (wait-for (trash state side target {:unpreventable true})
-                                       (gain-credits state side eid 3)))}]})
+  (let [ability {:async true
+                 :label "trash a card to gain 3 [Credits]"
+                 :once :per-turn
+                 :req (req (>= (count (all-installed state :runner)) 2))
+                 :choices {:not-self true
+                           :req (req (and (runner? target)
+                                          (installed? target)))}
+                 :msg (msg "trash " (:title target) " and gain 3 [Credits]")
+                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                        (effect-completed eid))
+                 :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
+                                        (gain-credits state side eid 3)))}]
+    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
+     :events [(assoc ability
+                     :event :runner-turn-begins
+                     :interactive (req true))]
+     :abilities [ability]}))
 
 (defcard "Akshara Sareen"
   {:in-play [:click-per-turn 1]
-   :msg "give each player 1 additional [Click] to spend during their turn"
-   :effect (effect (gain :corp :click-per-turn 1))
+   :on-install {:msg "give each player 1 additional [Click] to spend during their turn"
+                :effect (effect (gain :corp :click-per-turn 1))}
    :leave-play (effect (lose :corp :click-per-turn 1))})
 
 (defcard "Algo Trading"
   {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
-   :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
-                :prompt "Choose how many [Credit] to move" :once :per-turn
+   :abilities [{:label "Store up to 3 [Credit]"
+                :prompt "How many credits do you want to store?"
+                :once :per-turn
                 :choices {:number (req (min 3 (total-available-credits state :runner eid card)))}
                 :async true
                 :effect (effect (add-counter card :credit target)
                                 (lose-credits eid target))
-                :msg (msg "move " target " [Credit] to Algo Trading")}
-               {:label "Take all credits from Algo Trading"
-                :cost [:click 1 :trash]
-                :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
+                :msg (msg "store " target " [Credit]")}
+               {:label "Take all hosted credits"
+                :cost [:click 1 :trash-can]
+                :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :runner-turn-begins
              :req (req (>= (get-counters card :credit) 6))
-             :effect (effect (add-counter card :credit 2)
-                             (system-msg (str "adds 2 [Credit] to Algo Trading")))}]})
+             :msg "place 2 [Credit] on itself"
+             :effect (effect (add-counter card :credit 2))}]})
 
 (defcard "All-nighter"
-  {:abilities [{:cost [:click 1 :trash]
-                :effect (effect (gain :click 2))
+  {:abilities [{:cost [:click 1 :trash-can]
+                :effect (effect (gain-clicks 2))
                 :msg "gain [Click][Click]"}]})
 
 (defcard "Always Be Running"
   {:implementation "Run requirement not enforced"
    :events [{:event :runner-turn-begins
              :effect (req (toast state :runner "Reminder: Always Be Running requires a run on the first click" "info"))}]
-   :abilities [(assoc (break-sub [:click 2 {:action :bioroid-cost}] 1 "All" {:req (req true)})
-                      :once :per-turn)]})
+   :abilities [(assoc (break-sub [:lose-click 2] 1 "All" {:req (req true)}) :once :per-turn)]})
 
 (defcard "Angel Arena"
-  {:prompt "How many power counters?"
-   :choices :credit
-   :msg (msg "add " target " power counters")
-   :effect (effect (add-counter card :power target))
+  {:on-install {:prompt "How many credits do you want to spend?"
+                :choices :credit
+                :msg (msg "place " (quantify target "power counter") " on itself")
+                :effect (effect (add-counter card :power target))}
    :events [(trash-on-empty :power)]
    :abilities [{:cost [:power 1]
+                :keep-menu-open :while-power-tokens-left
                 :msg "look at the top card of Stack"
                 :optional
                 {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
@@ -195,6 +280,7 @@
   {:data {:counter {:credit 12}}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :label "gain 2 [Credits]"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -213,36 +299,106 @@
                                 (shuffle! :deck)
                                 (runner-install eid target nil))}]})
 
+(defcard "Asmund Pudlat"
+  (letfn [(search-and-host [x]
+            {:prompt (msg "Choose a virus or weapon card (" x " remaining)")
+             :choices
+             (req (let [hosted-cards (:hosted (get-card state card))
+                        not-hosted? (fn [c] (not-any? #(= (:title %) (:title c)) hosted-cards))]
+                    (cancellable (filter #(and (not-hosted? %)
+                                               (or (has-subtype? % "Virus")
+                                                   (has-subtype? % "Weapon")))
+                                         (:deck runner)) :sorted)))
+             :async true
+             :waiting-prompt true
+             :msg (msg "host " (get-title target) " on itself")
+             :effect (req (host state side card target)
+                          (if (> x 1)
+                            (continue-ability state side (search-and-host (dec x)) card nil)
+                            (effect-completed state side eid)))})]
+    {:on-install {:msg "shuffle the stack"
+                  :async true
+                  :effect (req (wait-for (resolve-ability state side
+                                                          (make-eid state eid) 
+                                                          (search-and-host 2)
+                                                          card nil)
+                                         (trigger-event state side :searched-stack nil)
+                                         (shuffle! state side :deck)
+                                         (effect-completed state side eid)))}
+      :events [{:event :runner-turn-begins
+                :label "Add a hosted card to the grip (start of turn)"
+                :prompt "Choose a hosted card to move to the grip"
+                :choices {:req (req (same-card? card (:host target)))}
+                :msg (msg "add " (get-title target) " to the grip")
+                :once :per-turn
+                :cancel-effect (effect (system-msg (str "declines to use " (get-title card)))
+                                       (effect-completed eid))
+                :async true
+                :waiting-prompt true
+                :effect (req (move state side target :hand)
+                             (if-not (empty? (:hosted (get-card state card)))
+                               (effect-completed state side eid)
+                               (do (system-msg state side (str "trashes " (get-title card)))
+                                   (trash state side eid card {:unpreventable true :source-card card}))))}]}))
+
 (defcard "Assimilator"
   {:abilities [{:label "Turn a facedown card faceup"
                 :cost [:click 2]
-                :prompt "Select a facedown installed card"
+                :keep-menu-open :while-2-clicks-left
+                :prompt "Choose a facedown installed card"
                 :choices {:card #(and (facedown? %)
                                       (installed? %)
                                       (runner? %))}
                 :async true
                 :msg (msg "turn " (:title target) " faceup")
-                :effect (req (if (or (event? target)
-                                     (and (has-subtype? target "Console")
-                                          (some #(has-subtype? % "Console") (all-active-installed state :runner))))
-                               ;; Consoles and events are immediately unpreventably trashed.
+                :effect (req (if (event? target)
                                (trash state side eid target {:unpreventable true})
                                ;; Other cards are moved to rig and have events wired.
                                (do (flip-faceup state side target)
-                                   (effect-completed state side eid))))}]})
+                                   (checkpoint state nil eid))))}]})
+
+(defcard "Avgustina Ivanovskaya"
+  {:events [{:event :runner-install
+             :req (req (and (virus-program? (:card context))
+                            (first-event? state side :runner-install #(virus-program? (:card (first %))))))
+             :async true
+             :effect (effect
+                       (continue-ability
+                         (sabotage-ability 1)
+                         card nil))}]})
+
+(defcard "Backstitching"
+  ;; only fire the event for one backstitching per encounter (otherwise you have to press no 3x)
+  (letfn [(is-min-index [state card]
+            (let [stitches (filterv #(= (:title card) (:title %))
+                                    (all-active-installed state :runner))
+                  ordered (sort-by :index stitches)]
+              (= (:index (first ordered)) (:index card))))]
+    {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+              {:event :encounter-ice
+               :async true
+               :interactive (req true)
+               :optional
+               {:prompt (msg "Trash " (:title card) " to bypass " (:title current-ice) "?")
+                :req (req (and (is-min-index state card)
+                               (= (:mark @state) (first (:server run)))))
+                :yes-ability {:msg (msg "bypass " (:title current-ice))
+                              :async true
+                              :effect (req (wait-for (trash state side card {:cause-card card :cause :runner-ability})
+                                                     (bypass-ice state)
+                                                     (effect-completed state side eid)))}}}]}))
 
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))
-             :msg (msg "places 1 power counter on " (:title card))
+             :msg "place 1 power counter on itself"
              :effect (effect (add-counter card :power 1))}]
    :abilities [{:label "Derez a piece of ice currently being encountered"
                 :msg "derez a piece of ice currently being encountered and take 1 tag"
-                :req (req (and current-ice
+                :req (req (and (get-current-encounter state)
                                (rezzed? current-ice)
-                               (= :encounter-ice (:phase run))
                                (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (derez current-ice)
                                 (gain-tags eid 1))}]})
@@ -250,12 +406,12 @@
 (defcard "Bank Job"
   {:data {:counter {:credit 8}}
    :events [(trash-on-empty :credit)
-            (successful-run-replace-access
+            (successful-run-replace-breach
               {:target-server :remote
                :ability
                {:async true
                 :effect (req (letfn [(select-credits-ability [bj]
-                                       {:prompt "How many Bank Job credits?"
+                                       {:prompt "How many hosted credits do you want to take?"
                                         :choices {:number (req (get-counters (get-card state bj) :credit))}
                                         :msg (msg "gain " target " [Credits]")
                                         :async true
@@ -265,9 +421,9 @@
                                  (continue-ability
                                    state side
                                    {:async true
-                                    :prompt "Select a copy of Bank Job to use"
+                                    :prompt (msg "Choose a copy of " (:title card) " to use")
                                     :choices {:card #(and (installed? %)
-                                                          (= (:title %) "Bank Job"))}
+                                                          (= (:title %) (:title card)))}
                                     :effect (effect (continue-ability (select-credits-ability target) target nil))}
                                    card nil)
                                  (continue-ability state side (select-credits-ability card) card nil))))}})]})
@@ -275,32 +431,31 @@
 (defcard "Bazaar"
   (letfn [(hardware-and-in-hand? [target runner]
             (and (hardware? target)
-                 (some #(= (:title %) (:title target)) (:hand runner))))]
+                 (some #(same-card? :title % target) (:hand runner))))]
     {:events [{:event :runner-install
-               :interactive (req (hardware-and-in-hand? target runner))
-               :silent (req (not (hardware-and-in-hand? target runner)))
+               :interactive (req (hardware-and-in-hand? (:card context) runner))
+               :silent (req (not (hardware-and-in-hand? (:card context) runner)))
                :async true
-               :req (req (and (hardware? target) (= [:hand] (:previous-zone target))))
+               :req (req (and (hardware? (:card context))
+                              (= [:hand] (:previous-zone (:card context)))))
                :effect (effect (continue-ability
-                                 (let [hw (:title target)]
+                                 (let [hw (:title (:card context))]
                                    {:optional
                                     {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
                                      :prompt (msg "Install another copy of " hw "?")
-                                     :msg (msg "install another copy of " hw)
                                      :yes-ability
                                      {:async true
+                                      :msg (msg "install another copy of " hw)
                                       :effect (req (if-let [c (some #(when (= (:title %) hw) %) (:hand runner))]
                                                      (runner-install state side eid c nil)
                                                      (effect-completed state side eid)))}}})
                                  card nil))}]}))
 
 (defcard "Beach Party"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 5}]
+  {:constant-effects [(runner-hand-size+ 5)]
    :events [{:event :runner-turn-begins
              :msg "lose [Click]"
-             :effect (effect (lose :click 1))}]})
+             :effect (effect (lose-clicks 1))}]})
 
 (defcard "Beth Kilrain-Chang"
   (let [ability {:once :per-turn
@@ -317,11 +472,11 @@
                                   ;; draw 1 card
                                   (<= 10 c 14)
                                   (do (system-msg state side (str "uses " b " to draw 1 card"))
-                                      (draw state side eid 1 nil))
+                                      (draw state side eid 1))
                                   ;; gain 1 click
                                   (<= 15 c)
                                   (do (system-msg state side (str "uses " b " to gain [Click]"))
-                                      (gain state side :click 1)
+                                      (gain-clicks state side 1)
                                       (effect-completed state side eid))
                                   :else (effect-completed state side eid))))}]
     {:flags {:drip-economy true}
@@ -344,7 +499,7 @@
              :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}]
    :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
                 :label "prevent net damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :net (dec (:dmg-amount card))))}]})
 
 (defcard "Biometric Spoofing"
@@ -352,19 +507,20 @@
                              :req (req true)}]}
    :abilities [{:label "Prevent 2 damage"
                 :msg "prevent 2 damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :brain 2)
                                 (damage-prevent :net 2)
                                 (damage-prevent :meat 2))}]})
 
 (defcard "Blockade Runner"
   {:abilities [{:cost [:click 2]
-                :msg "draw 3 cards and shuffle 1 card from their Grip back into their Stack"
+                :keep-menu-open :while-2-clicks-left
+                :msg "draw 3 cards and shuffle 1 card from the grip back into the stack"
                 :async true
-                :effect (req (wait-for (draw state side 3 nil)
+                :effect (req (wait-for (draw state side 3)
                                        (continue-ability
                                          state side
-                                         {:prompt "Choose a card in your Grip to shuffle back into your Stack"
+                                         {:prompt "Choose a card in the grip to shuffle back into the stack"
                                           :choices {:card #(and (in-hand? %)
                                                                 (runner? %))}
                                           :effect (effect (move target :deck)
@@ -372,38 +528,38 @@
                                          card nil)))}]})
 
 (defcard "Bloo Moose"
-  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
-   :abilities [{:req (req (and (:runner-phase-12 @state)
-                               (not (zone-locked? state :runner :discard))))
-                :label "rfg a card to gain 2 [Credits]"
+  (let [ability {:req (req (not (zone-locked? state :runner :discard)))
+                :label "Remove a card in the Heap from the game to gain 2 [Credits]"
                 :once :per-turn
-                :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
+                :prompt "Choose a card in the Heap"
                 :show-discard true
                 :choices {:card #(and (in-discard? %)
                                       (runner? %))}
                 :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
                 :async true
                 :effect (effect (move target :rfg)
-                                (gain-credits eid 2))}]})
+                                (gain-credits eid 2))}]
+  {:flags {:runner-phase-12 (req (not (zone-locked? state :runner :discard)))}
+   :events [(assoc ability
+                   :event :runner-turn-begins
+                   :interactive (req true))]
+   :abilities [ability]}))
 
 (defcard "Borrowed Satellite"
-  {:constant-effects [{:type :link
-                       :value 1}
-                      {:type :hand-size
-                       :req (req (= :runner side))
-                       :value 1}]})
+  {:constant-effects [(link+ 1)
+                      (runner-hand-size+ 1)]})
 
 (defcard "Bug Out Bag"
-  {:prompt "How many power counters?"
-   :choices :credit
-   :msg (msg "add " target " power counters")
-   :effect (effect (add-counter card :power target))
+  {:on-install {:prompt "How many credits do you want to spend?"
+                :choices :credit
+                :msg (msg "place " (quantify target "power counter") " on itself")
+                :effect (effect (add-counter card :power target))}
    :events [{:event :runner-turn-ends
              :req (req (zero? (count (:hand runner))))
-             :msg (msg "draw " (get-counters card :power) " cards. Bug Out Bag is trashed")
+             :msg (msg "draw " (quantify (get-counters card :power) "card"))
              :async true
-             :effect (req (wait-for (draw state side (get-counters card :power) nil)
-                                    (trash state side eid card nil)))}]})
+             :effect (req (wait-for (draw state side (get-counters card :power))
+                                    (trash state side eid card {:cause-card card})))}]})
 
 (defcard "Caldera"
   {:interactions {:prevent [{:type #{:net :brain}
@@ -412,7 +568,7 @@
                 :msg "prevent 1 net damage"
                 :effect (effect (damage-prevent :net 1))}
                {:cost [:credit 3]
-                :msg "prevent 1 brain damage"
+                :msg "prevent 1 core damage"
                 :effect (effect (damage-prevent :brain 1))}]})
 
 (defcard "Charlatan"
@@ -430,7 +586,7 @@
                       :unregister-once-resolved true
                       :duration :end-of-run
                       :optional
-                      {:prompt (msg "Pay " (get-strength (:ice context)) " [Credits] to bypass?")
+                      {:prompt (msg "Pay " (get-strength (:ice context)) " [Credits] to bypass encountered piece of ice?")
                        :req (req (and (rezzed? (:ice context))
                                       (first-run-event? state side :approach-ice
                                                         (fn [targets]
@@ -441,7 +597,7 @@
                        :yes-ability
                        {:async true
                         :effect (req (let [ice (:ice context)]
-                                       (wait-for (pay state :runner card [:credit (get-strength ice)])
+                                       (wait-for (pay state :runner (make-eid state eid) card [:credit (get-strength ice)])
                                                  (if-let [payment-str (:msg async-result)]
                                                    (do (system-msg state :runner
                                                                    (str (build-spend-msg payment-str "use")
@@ -456,16 +612,18 @@
                                                    (do (system-msg state :runner
                                                                    (str "can't afford to pay to bypass " (:title ice)))
                                                        (effect-completed state side eid))))))}}}])
-                  (make-run eid target nil card))}]})
+                  (make-run eid target card))}]})
 
 (defcard "Chatterjee University"
   {:abilities [{:cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :label "Place 1 power counter"
-                :msg "place 1 power counter on it"
+                :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}
                {:cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :label "Install a program from your Grip"
-                :prompt "Select a program to install from your Grip"
+                :prompt "Choose a program to install from your Grip"
                 :choices
                 {:async true
                  :req (req (and (program? target)
@@ -489,31 +647,31 @@
                              :req (req true)}]}
    :abilities [{:label "Prevent all meat damage"
                 :msg "prevent all meat damage"
-                :cost [:trash :trash-entire-hand]
+                :cost [:trash-can :trash-entire-hand]
                 :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]
    :events [{:event :runner-turn-ends
-             :req (req tagged)
              :interactive (req true)
              :msg "force the Corp to initiate a trace"
              :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
              :trace {:base 1
+                     :req (req tagged)
                      :unsuccessful {:msg "remove 1 tag"
                                     :async true
                                     :effect (effect (lose-tags :runner eid 1))}}}]})
 
 (defcard "Clan Vengeance"
   {:events [{:event :damage
-             :req (req (pos? (nth targets 2 0)))
-             :effect (effect (add-counter card :power 1)
-                             (system-msg :runner "places 1 power counter on Clan Vengeance"))}]
-   :abilities [{:label "Trash 1 random card from HQ for each power counter"
+             :req (req (pos? (:amount context)))
+             :msg "place 1 power counter on itself"
+             :effect (effect (add-counter card :power 1))}]
+   :abilities [{:label "Trash 1 random card from HQ for each hosted power counter"
                 :async true
                 :req (req (pos? (get-counters card :power)))
-                :cost [:trash]
-                :msg (msg "trash " (quantify "card" (min (get-counters card :power) (count (:hand corp))))
+                :cost [:trash-can]
+                :msg (msg "trash " (quantify (min (get-counters card :power) (count (:hand corp))) "card")
                           " from HQ")
                 :effect (effect (trash-cards eid (take (min (get-counters card :power) (count (:hand corp)))
-                                                       (shuffle (:hand corp)))))}]})
+                                                       (shuffle (:hand corp))) {:cause-card card}))}]})
 
 (defcard "Climactic Showdown"
   (letfn [(iced-servers [state side eid card]
@@ -521,16 +679,16 @@
                     (zones->sorted-names (get-runnable-zones state side eid card nil))))
           (trash-or-bonus [chosen-server]
             {:player :corp
-             :prompt "Choose a piece of ice to trash or cancel"
+             :prompt "Choose a piece of ice to trash"
              :choices {:card #(and (= (last (get-zone %)) :ices)
                                    (= chosen-server (rest (butlast (get-zone %)))))}
              :async true
              :effect (effect (system-msg (str "trashes " (card-str state target)))
-                             (trash :corp eid target {:unpreventable true}))
-             :cancel-effect (effect (system-msg (str "does not trash a piece of ice protecting " (zone->name chosen-server)))
+                             (trash :corp eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))
+             :cancel-effect (effect (system-msg (str "declines to trash a piece of ice protecting " (zone->name chosen-server)))
                                     (register-events
                                       :runner card
-                                      [{:event :pre-access
+                                      [{:event :breach-server
                                         :duration :until-runner-turn-ends
                                         :req (req (#{:hq :rd} target))
                                         :once :per-turn
@@ -542,74 +700,81 @@
                               (continue-ability
                                 state side
                                 (if (pos? (count (iced-servers state side eid card)))
-                                  {:prompt (msg  "Choose a server")
+                                  {:prompt "Choose a server"
                                    :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
-                                             " and removes Climactic Showdown from the game")
+                                             " and remove itself from the game")
                                    :effect (effect (continue-ability
                                                      :corp
                                                      (trash-or-bonus (rest (server->zone state target)))
                                                      card nil))}
-                                  {:msg (str "choose a server protected by ice but cannot"
-                                             " and removes Climactic Showdown from the game")})
+                                  {:msg "remove itself from the game"})
                                 card nil)))}]}))
 
 (defcard "Compromised Employee"
   {:recurring 1
    :events [{:event :rez
-             :req (req (ice? target))
+             :req (req (ice? (:card context)))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}]
    :interactions {:pay-credits {:req (req (= :trace (:source-type eid)))
                                 :type :recurring}}})
 
+(defcard "Cookbook"
+  {:events [{:event :runner-install
+             :interactive (req true)
+             :optional {:prompt "Place 1 virus counter?"
+                        :req (req (has-subtype? (:card context) "Virus"))
+                        :autoresolve (get-autoresolve :auto-fire)
+                        :yes-ability {:msg (msg "place 1 virus counter on " (card-str state (:card context)))
+                                      :effect (effect (add-counter (:card context) :virus 1))}}}]
+   :abilities [(set-autoresolve :auto-fire "Cookbook")]})
+
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
-             :msg (msg "reveal " (-> target first :title))
+             :msg (msg "reveal " (:title target))
              :async true
              :effect (effect (reveal eid target))}]})
 
 (defcard "Councilman"
   {:events [{:event :rez
-             :async true
-             :req (req (and (or (asset? target)
-                                (upgrade? target))
+             :req (req (and (or (asset? (:card context))
+                                (upgrade? (:card context)))
                             (can-pay? state :runner (assoc eid :source card :source-type :ability)
                                       card nil
-                                      [:credit (rez-cost state :corp target)])))
-             :effect (effect
-                       (show-wait-prompt :corp "Runner to use Councilman")
-                       (continue-ability
-                         :runner
-                         (let [c target]
-                           {:optional
-                            {:prompt (str "Trash Councilman and pay " (rez-cost state :corp c)
-                                          " [Credits] to derez " (:title c) "?")
-                             :yes-ability
-                             {:async true
-                              :cost [:credit (rez-cost state :corp c)]
-                              :msg (msg "derez " (:title c)
-                                        " and prevent it from being rezzed this turn")
-                              :effect (req (wait-for (trash state side card nil)
-                                                     (clear-wait-prompt state :corp)
-                                                     (when-not (get-card state card)
-                                                       (derez state :runner c)
-                                                       (register-turn-flag!
-                                                         state side card :can-rez
-                                                         (fn [state side card]
-                                                           (if (same-card? card c)
-                                                             ((constantly false)
-                                                              (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
-                                                             true))))
-                                                     (effect-completed state side eid)))}
-                             :no-ability {:effect (effect (clear-wait-prompt :corp))}}})
-                         card nil))}]})
+                                      [:credit (rez-cost state :corp (:card context))])))
+             :async true
+             :effect
+             (effect
+               (continue-ability
+                 {:optional
+                  {:player :runner
+                   :waiting-prompt true
+                   :prompt (msg "Trash " (:title card) " and pay " (rez-cost state :corp (:card context))
+                                " [Credits] to derez " (:title (:card context)) "?")
+                   :yes-ability
+                   {:cost [:credit (rez-cost state :corp (:card context))]
+                    :msg (msg "derez " (:title (:card context))
+                              " and prevent it from being rezzed this turn")
+                    :async true
+                    :effect (req (wait-for (trash state side card {:cause-card card})
+                                           (when-not (get-card state card)
+                                             (derez state :runner (:card context))
+                                             (register-turn-flag!
+                                               state side card :can-rez
+                                               (fn [state _ card]
+                                                 (if (same-card? card (:card context))
+                                                   ((constantly false)
+                                                    (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
+                                                   true))))
+                                           (effect-completed state side eid)))}}}
+                 card targets))}]})
 
 (defcard "Counter Surveillance"
-  (let [ability (successful-run-replace-access
-                  {:can-access true
-                   :mandatory true
+  (let [ability (successful-run-replace-breach
+                  {:mandatory true
+                   :duration :end-of-run
                    :ability
                    {:async true
                     :effect (req (let [tags (count-tags state)]
@@ -617,23 +782,31 @@
                                      ;; Can pay, do access
                                      (continue-ability
                                        state :runner
-                                       {:cost [:credit tags]
-                                        :msg (str "access up to " tags " cards")
-                                        :effect (effect (access-bonus (target-server run) (dec tags)))}
+                                       {:async true
+                                        :cost [:credit tags]
+                                        :msg (msg "access up to " (quantify tags "card") " from " (zone->name (:server run)))
+                                        :effect (req (continue-ability
+                                                      state :runner
+                                                      {:async true
+                                                       :prompt "How many cards do you want to access?"
+                                                       :waiting-prompt true
+                                                       :choices {:number (req tags)
+                                                                 :default (req tags)}
+                                                       :effect (effect (access-n-cards eid (:server run) target))}
+                                                      card nil))}
                                        card targets)
                                      ;; Can't pay, don't access cards
-                                     (do (system-msg state :runner "could not afford to use Counter Surveillance")
-                                         ;; Cannot access any cards
-                                         (max-access state :runner 0)
+                                     (do (system-msg state :runner (str "could not afford to use " (:title card)))
                                          (effect-completed state nil eid)))))}})]
-    {:abilities [{:cost [:click 1 :trash]
-                  :label "run a server"
+    {:abilities [{:cost [:click 1 :trash-can]
+                  :label "Run a server"
                   :makes-run true
                   :prompt "Choose a server"
                   :msg (msg "make a run on " target)
                   :choices (req runnable-servers)
-                  :effect (effect (make-run target nil card)
-                                  (register-events card [(assoc ability :duration :end-of-run)]))}]}))
+                  :async true
+                  :effect (effect (register-events card [ability])
+                                  (make-run eid target card))}]}))
 
 (defcard "Crash Space"
   {:interactions {:prevent [{:type #{:meat}
@@ -645,7 +818,7 @@
    :recurring 2
    :abilities [{:label "Trash to prevent up to 3 meat damage"
                 :msg "prevent up to 3 meat damage"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (damage-prevent :meat 3))}]})
 
 (defcard "Crowdfunding"
@@ -657,11 +830,11 @@
                  :effect (req (add-counter state side card :credit -1)
                               (wait-for (gain-credits state :runner 1)
                                         (if (not (pos? (get-counters (get-card state card) :credit)))
-                                          (wait-for (trash state :runner card {:unpreventable true})
+                                          (wait-for (trash state :runner card {:unpreventable true :cause-card card})
                                                     (system-msg state :runner (str "trashes Crowdfunding"
-                                                                                   (when (not (empty? (:deck runner)))
+                                                                                   (when (seq (:deck runner))
                                                                                      " and draws 1 card")))
-                                                    (draw state :runner eid 1 nil))
+                                                    (draw state :runner eid 1))
                                           (effect-completed state side eid))))}]
     {:data {:counter {:credit 3}}
      :flags {:drip-economy true
@@ -680,7 +853,7 @@
                             {:req (req (and (<= 3 (count (:successful-run runner-reg)))
                                             (not (get-in @state [:runner :register :crowdfunding-prompt]))))
                              :player :runner
-                             :prompt "Install Crowdfunding?"
+                             :prompt "Install Crowdfunding from the Heap?"
                              :yes-ability {:async true
                                            :effect (effect (runner-install :runner eid card {:ignore-all-cost true}))}
                              ;; Add a register to note that the player was already asked about installing,
@@ -691,11 +864,11 @@
 (defcard "Crypt"
   {:events [{:event :successful-run
              :silent (req true)
-             :req (req (= :archives (target-server context)))
-             :optional {:prompt "Place a virus counter on Crypt?"
-                        :autoresolve (get-autoresolve :auto-add)
-                        :yes-ability {:effect (effect (add-counter card :virus 1)
-                                                      (system-msg "places a virus counter on Crypt"))}}}]
+             :optional {:prompt (msg "Place 1 virus counter on " (:title card) "?")
+                        :req (req (= :archives (target-server context)))
+                        :autoresolve (get-autoresolve :auto-place-counter)
+                        :yes-ability {:msg "place 1 virus counter on itself"
+                                      :effect (effect (add-counter card :virus 1))}}}]
    :abilities [{:async true
                 :label "Install a virus program from the stack"
                 :prompt "Choose a virus"
@@ -703,40 +876,43 @@
                 :choices (req (cancellable (filter #(and (program? %)
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
-                :cost [:click 1 :virus 3 :trash]
+                :cost [:click 1 :virus 3 :trash-can]
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
-               (set-autoresolve :auto-add "adding virus counters to Crypt")]})
+               (set-autoresolve :auto-place-counter "Crypt placing virus counters on itself")]})
 
 (defcard "Cybertrooper Talut"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :events [{:event :runner-install
              :silent (req true)
-             :req (req (and (has-subtype? target "Icebreaker")
-                            (not (has-subtype? target "AI"))))
-             :effect (effect (pump target 2 :end-of-turn))}]})
+             :req (req (and (has-subtype? (:card context) "Icebreaker")
+                            (not (has-subtype? (:card context) "AI"))))
+             :effect (effect (pump (:card context) 2 :end-of-turn))}]})
 
 (defcard "Dadiana Chacon"
   (let [trash-effect {:async true
                       :req (req (zero? (get-in @state [:runner :credit])))
-                      :msg (msg "trashes Dadiana Chacon and suffers 3 meat damage")
-                      :effect (req (wait-for (trash state :runner card {:unpreventable true})
+                      :msg "suffer 3 meat damage"
+                      :effect (req (wait-for (trash state :runner card {:unpreventable true :cause-card card})
                                              (damage state :runner eid :meat 3 {:unboostable true :card card})))}]
-    {:async true
-     :effect (req (if (zero? (get-in @state [:runner :credit]))
-                    (continue-ability state side trash-effect card nil)
-                    (effect-completed state side eid)))
+    {:on-install {:async true
+                  :effect (req (if (zero? (get-in @state [:runner :credit]))
+                                 (continue-ability state side trash-effect card nil)
+                                 (effect-completed state side eid)))}
      :flags {:drip-economy true}
      :events [(assoc trash-effect :event :runner-credit-loss)
               (assoc trash-effect :event :runner-spent-credits)
               {:event :runner-turn-begins
                :once :per-turn
-               :msg "gain 1 [Credits]"
-               :req (req (< (get-in @state [:runner :credit]) 6))
-               :async true
-               :effect (effect (gain-credits :runner eid 1))}]}))
+               :interactive (req true)
+               :effect
+               (effect (continue-ability
+                         {:msg "gain 1 [Credits]"
+                          :req (req (< (get-in @state [:runner :credit]) 6))
+                          :async true
+                          :effect (effect (gain-credits :runner eid 1))}
+                         card nil))}]}))
 
 (defcard "Daily Casts"
   (let [ability {:once :per-turn
@@ -752,6 +928,14 @@
      :abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)
               (trash-on-empty :credit)]}))
+
+(defcard "Daeg, First Net-Cat"
+  (let [ability {:async true
+                 :interactive (req true)
+                 :msg "charge"
+                 :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]
+    {:events [(assoc ability :event :agenda-scored)
+              (assoc ability :event :agenda-stolen)]}))
 
 (defcard "Data Dealer"
   {:abilities [{:cost [:click 1 :forfeit]
@@ -776,31 +960,32 @@
    :abilities [{:async true
                 :req (req tagged)
                 :cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :effect (req (mill state :corp eid :corp 1))
                 :msg "force the Corp to trash the top card of R&D"}]})
 
 (defcard "DDoS"
   {:abilities [{:msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect
                           (register-turn-flag!
                             card :can-rez
-                            (fn [state side card]
+                            (fn [state _ card]
                               (let [idx (card-index state card)]
                                 (if (and (ice? card)
                                          idx
                                          (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
                                             (inc idx)))
-                                  ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
+                                  ((constantly false) (toast state :corp "Cannot rez any outermost ice due to DDoS." "warning"))
                                   true)))))}]})
 
 (defcard "Dean Lister"
   {:abilities [{:req (req run)
                 :label "pump icebreaker"
-                :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
+                :msg (msg "give +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (register-floating-effect
                                   card
                                   (let [breaker target]
@@ -814,7 +999,7 @@
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
    :abilities [{:async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :msg "avoid 1 tag"
                 :effect (effect (tag-prevent :runner eid 1))}]})
 
@@ -822,19 +1007,19 @@
   (letfn [(eligible-cards [runner]
             (filter #(same-card? :faction (:identity runner) %)
                     (:discard runner)))]
-    {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
+    {:implementation "Place counters manually for programs or pieces of hardware trashed manually (e.g. by being over MU)"
      :abilities [{:label "Add a card from your heap to your grip"
                   :req (req (and (seq (eligible-cards runner))
                                  (not (zone-locked? state :runner :discard))))
                   :cost [:click 1 :power 3]
-                  :prompt "Select a card to add to grip?"
+                  :prompt "Choose a card to add to grip"
                   :choices (req (eligible-cards runner))
                   :effect (effect (move target :hand))
                   :msg (msg "add " (:title target) " to grip")}
-                 {:label "Add a power counter manually"
+                 {:label "Place 1 power counter"
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
-                  :msg "manually add a power counter"}]
+                  :msg "manually place 1 power counter on itself"}]
      :events (let [prog-or-hw (fn [targets]
                                 (some #(or (program? (:card %))
                                            (hardware? (:card %)))
@@ -845,23 +1030,26 @@
                                   :once-per-instance true
                                   :req (req (and (prog-or-hw targets)
                                                  (first-event? state side side-trash prog-or-hw)))
-                                  :effect (effect (system-msg :runner "adds 1 power counter on District 99")
-                                                  (add-counter card :power 1))})]
+                                  :msg "place 1 power counter on itself"
+                                  :effect (effect (add-counter card :power 1))})]
                [(trash-event :corp-trash)
                 (trash-event :runner-trash)])}))
 
 (defcard "DJ Fenris"
-  (let [is-draft-id? #(string/starts-with? (:code %) "00")
-        sorted-id-list (fn [runner] (->> (server-cards)
-                                         (filter #(and (identity? %)
-                                                       (has-subtype? % "g-mod")
-                                                       (not= (-> runner :identity :faction)
-                                                             (:faction %))
-                                                       (not (is-draft-id? %))))
-                                         (sort-by :title)))
+  (let [is-draft-id? #(str/starts-with? (:code %) "00")
+        sorted-id-list (fn [runner format] (->> (server-cards)
+                                                (filter #(and (identity? %)
+                                                              (has-subtype? % "G-mod")
+                                                              (not= (-> runner :identity :faction)
+                                                                    (:faction %))
+                                                              (not (is-draft-id? %))
+                                                              (or (= :casual format)
+                                                                  (legal? format :legal %))))
+                                                (sort-by :title)))
         fenris-effect {:async true
-                       :prompt "Choose a g-mod identity to host on DJ Fenris"
-                       :choices (req (sorted-id-list runner))
+                       :waiting-prompt true
+                       :prompt "Choose a g-mod identity to host"
+                       :choices (req (sorted-id-list runner (:format @state)))
                        :msg (msg "host " (:title target))
                        :effect (req (let [card (assoc-host-zones card)
                                           ;; Work around for get-card and update!
@@ -869,29 +1057,21 @@
                                           c (make-card c)
                                           c (assoc c
                                                    :host (dissoc card :hosted)
-                                                   :zone '(:onhost)
+                                                   :zone [:onhost]
                                                    ;; semi hack to get deactivate to work
                                                    :installed true)]
                                       ;; Manually host id on card
                                       (update! state side (assoc card :hosted [c]))
                                       (card-init state :runner c)
                                       ;; Clean-up
-                                      (clear-wait-prompt state :corp)
                                       (effect-completed state side eid)))}]
-    {:async true
-     :effect (req (show-wait-prompt state :corp "Runner to pick identity to host on DJ Fenris")
-                  (continue-ability state side fenris-effect card nil))
+    {:on-install {:async true
+                  :effect (effect (continue-ability fenris-effect card nil))}
      ;; Handle Dr. Lovegood / Malia
      :disable {:effect (req (doseq [hosted (:hosted card)]
                               (disable-card state side hosted)))}
-     :reactivate {:effect (req (doseq [hosted (:hosted card)
-                                       :let [c (dissoc hosted :disabled)
-                                             {:keys [effect events]} (card-def c)]]
-                                 ;; Manually enable card to trigger `:effect`, similar to `enable-identity`
-                                 (update! state side c)
-                                 (when effect
-                                   (effect state side (make-eid state) c nil))
-                                 (register-events state side c)))}}))
+     :reactivate {:effect (req (doseq [hosted (:hosted card)]
+                                 (enable-card state side hosted)))}}))
 
 (defcard "Donut Taganes"
   {:constant-effects [{:type :play-cost
@@ -900,21 +1080,35 @@
 (defcard "Dr. Lovegood"
   {:events [{:event :runner-turn-begins
              :label "blank a card"
-             :prompt "Select an installed card to make its text box blank for the remainder of the turn"
+             :prompt "Choose an installed card to make its text box blank for the remainder of the turn"
              :once :per-turn
              :interactive (req true)
              :async true
              :choices {:card installed?}
              :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
              :effect (req (let [c target]
-                            (disable-card state side c)
+                            (add-icon state side card target "DL" (faction-label card))
+                            (disable-card state side (get-card state target))
                             (register-events
                               state side card
                               [{:event :post-runner-turn-ends
                                 :unregister-once-resolved true
-                                :effect (req (enable-card state side (get-card state c))
-                                             (resolve-ability state :runner (:reactivate (card-def c)) (get-card state c) nil))}])
+                                :effect (req (let [disabled-card (get-card state c)]
+                                                (enable-card state side disabled-card)
+                                                (remove-icon state side card (get-card state disabled-card))
+                                                (resolve-ability state :runner (:reactivate (card-def c)) disabled-card nil)))}])
                             (effect-completed state side eid)))}]})
+
+(defcard "Dr. Nuka Vrolyck"
+  {:data {:counter {:power 2}}
+   :abilities [{:msg "draw 3 cards"
+                :keep-menu-open :while-clicks-left
+                :cost [:click 1 :power 1]
+                :async true
+                :effect (req (wait-for (draw state :runner 3)
+                                       (if (pos? (get-counters (get-card state card) :power))
+                                         (effect-completed state side eid)
+                                         (trash state :runner eid card {:unpreventable true :cause-card card}))))}]})
 
 (defcard "DreamNet"
   {:events [{:event :successful-run
@@ -924,7 +1118,7 @@
                        (when (or (<= 2 (get-link state))
                                  (has-subtype? (:identity (:runner @state)) "Digital"))
                          " and gain 1 [Credit]"))
-             :effect (req (wait-for (draw state :runner 1 nil)
+             :effect (req (wait-for (draw state :runner 1)
                                     (if (or (<= 2 (get-link state))
                                             (has-subtype? (:identity (:runner @state)) "Digital"))
                                       (gain-credits state :runner eid 1)
@@ -934,7 +1128,7 @@
   {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-active-installed state :runner)))}
    :abilities [{:label "Lose 1 [Credits] (start of turn)"
                 :msg (msg (if (zero? (get-in @state [:runner :credit]))
-                            "lose 0 [Credits] (runner has no credits to lose)"
+                            "lose 0 [Credits] (Runner has no credits to lose)"
                             "lose 1 [Credits]"))
                 :req (req (:runner-phase-12 @state))
                 :once :per-turn
@@ -942,24 +1136,29 @@
                 :effect (effect (lose-credits eid 1))}]
    :events [{:event :corp-turn-begins
              :msg (msg "draw " (if (zero? (count (get-in @state [:runner :deck])))
-                                 "0 cards (runner's stack is empty)"
+                                 "no cards (the stack is empty)"
                                  "1 card"))
              :async true
-             :effect (effect (draw :runner eid 1 nil))}
+             :effect (effect (draw :runner eid 1))}
             {:event :runner-turn-begins
              :msg (msg "lose " (if (zero? (get-in @state [:runner :credit]))
-                                 "0 [Credits] (runner has no credits to lose)"
+                                 "0 [Credits] (Runner has no credits to lose)"
                                  "1 [Credits]"))
              :once :per-turn
              :async true
              :effect (effect (lose-credits eid 1))}]})
 
 (defcard "Duggar's"
-  {:abilities [{:cost [:click 4] :async true :effect (effect (draw eid 10 nil)) :msg "draw 10 cards"}]})
+  {:abilities [{:cost [:click 4]
+                :keep-menu-open :while-4-clicks-left
+                :async true
+                :effect (effect (draw eid 10))
+                :msg "draw 10 cards"}]})
 
 (defcard "Dummy Box"
-  (letfn [(dummy-prevent [card-type]
-            {:msg (str "prevent a " card-type " from being trashed")
+  (letfn [(better-name [card-type] (if (= "hardware" card-type) "piece of hardware" card-type))
+          (dummy-prevent [card-type]
+            {:msg (str "prevent a " (better-name card-type) " from being trashed")
              :async true
              :cost [(keyword (str "trash-" card-type "-from-hand")) 1]
              :effect (effect (trash-prevent (keyword card-type) 1))})]
@@ -978,9 +1177,9 @@
                  :req (req (:runner-phase-12 @state))
                  :async true
                  :interactive (req true)
-                 :effect (req (wait-for (draw state :runner 2 nil)
+                 :effect (req (wait-for (draw state :runner 2)
                                         (if (not (pos? (get-counters (get-card state card) :power)))
-                                          (trash state :runner eid card {:unpreventable true})
+                                          (trash state :runner eid card {:unpreventable true :cause-card card})
                                           (effect-completed state side eid))))}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
@@ -991,14 +1190,14 @@
      :abilities [ability]}))
 
 (defcard "Eden Shard"
-  (shard-constructor "Eden Shard" :rd "force the Corp to draw 2 cards" (effect (draw :corp eid 2 nil))))
+  (shard-constructor "Eden Shard" :rd "force the Corp to draw 2 cards" (effect (draw :corp eid 2))))
 
 (defcard "Emptied Mind"
   (let [ability {:req (req (zero? (count (:hand runner))))
                  :msg "gain [Click]"
                  :label "Gain [Click] (start of turn)"
                  :once :per-turn
-                 :effect (effect (gain :click 1))}]
+                 :effect (effect (gain-clicks 1))}]
     {:events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
@@ -1011,46 +1210,59 @@
                             (reveal state :corp eid target)))
              :req (req (genetics-trigger? state side :successful-run))}]})
 
+(defcard "Environmental Testing"
+  {:events [{:event :runner-install
+             :silent (req true)
+             :req (req (and (or (hardware? (:card context))
+                                (program? (:card context)))
+                            (not (:facedown? context))))
+             :async true
+             :msg "place 1 power counter on itself"
+             :effect (req (add-counter state :runner eid card :power 1 nil))}
+            {:event :counter-added
+             :async true
+             :req (req (<= 4 (get-counters (get-card state card) :power)))
+             :msg "gain 9 [Credit]"
+             :effect (req (wait-for (trash state side card {:unpreventable :true
+                                                            :cause-card card})
+                                    (gain-credits state side eid 9)))}]})
+
 (defcard "Fall Guy"
   {:interactions {:prevent [{:type #{:trash-resource}
                              :req (req true)}]}
    :abilities [{:label "Prevent another installed resource from being trashed"
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (trash-prevent :resource 1))}
                {:label "Gain 2 [Credits]"
                 :msg "gain 2 [Credits]"
-                :cost [:trash]
+                :cost [:trash-can]
                 :async true
                 :effect (effect (gain-credits eid 2))}]})
 
 (defcard "Fan Site"
   {:events [{:event :agenda-scored
-             :msg "add it to their score area as an agenda worth 0 agenda points"
-             :async true
+             :msg "add itself to their score area as an agenda worth 0 agenda points"
              :req (req (installed? card))
-             :effect (req (as-agenda state :runner eid card 0))}]})
+             :effect (req (as-agenda state :runner card 0))}]})
 
 (defcard "Fencer Fueno"
   (companion-builder
     ;; companion-builder: pay-credits-req
     (req (:successful run))
-    ;; companion-builder: turn-ends-effect
-    (effect (show-wait-prompt :corp "Runner to take decision on Fencer Fueno")
-            (continue-ability
-              {:prompt "Pay 1 [Credits] or trash Fencer Fueno?"
-               :choices (req (if (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
-                               ["Pay 1 [Credits]" "Trash"]
-                               ["Trash"]))
-               :player :runner
-               :async true
-               :effect (req (clear-wait-prompt state :corp)
-                            (if (= target "Trash")
-                              (do (system-msg state :runner "trashes Fencer Fueno")
-                                  (trash state :runner eid card nil))
-                              (wait-for (pay state :runner card :credit 1)
-                                        (system-msg state :runner (str (:msg async-result) " to avoid trashing Fencer Fueno"))
-                                        (effect-completed state side eid))))}
-              card nil))
+    ;; companion-builder: turn-ends-ability
+    {:prompt "Choose one"
+     :waiting-prompt true
+     :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
+                      "Pay 1 [Credits]")
+                    "Trash Fencer Fueno"])
+     :player :runner
+     :msg (msg (if (= target "Trash Fencer Fueno")
+                 "trash itself"
+                 (decapitalize target)))
+     :async true
+     :effect (req (if (= target "Trash Fencer Fueno")
+                    (trash state :runner eid card {:cause-card card})
+                    (pay state :runner eid card :credit 1)))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -1070,7 +1282,7 @@
 (defcard "Film Critic"
   (letfn [(get-agenda [card] (first (filter agenda? (:hosted card))))
           (host-agenda? [agenda]
-            {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
+            {:optional {:prompt (str "Host " (:title agenda) " on Film Critic?")
                         :yes-ability {:effect (req (host state side card agenda)
                                                    (swap! state dissoc :access))
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
@@ -1086,50 +1298,74 @@
                   :async true
                   :msg (msg (let [c (get-agenda card)]
                               (str "add " (:title c) " to their score area and gain "
-                                   (quantify (get-agenda-points state :runner c) "agenda point"))))
-                  :effect (req (let [c (get-agenda card)
-                                     points (get-agenda-points state :runner c)
-                                     args {:register-events (card-flag? c :has-events-when-stolen true)}]
-                                 (as-agenda state :runner eid c points args)))}]}))
+                                   (quantify (get-agenda-points c) "agenda point"))))
+                  :effect (req (let [c (move state :runner (get-agenda card) :scored)]
+                                 (when (card-flag? c :has-events-when-stolen true)
+                                   (card-init state :corp c {:resolve-effect false
+                                                             :init-data true}))
+                                 (update-all-advancement-requirements state)
+                                 (update-all-agenda-points state)
+                                 (check-win-by-agenda state side)
+                                 (effect-completed state side eid)))}]}))
 
 (defcard "Find the Truth"
-  {:events [{:event :post-runner-draw
+  {:implementation "Corporation can click Find the Truth for explicit card reveals"
+   :events [{:event :post-runner-draw
              :msg (msg "reveal that they drew: "
-                       (string/join ", " (map :title (:most-recent-drawn runner-reg))))
+                       (enumerate-str (map :title runner-currently-drawing)))
              :async true
-             :effect (effect (reveal eid (:most-recent-drawn runner-reg)))}
+             :effect (req (let [current-draws runner-currently-drawing]
+                            (reveal state side eid current-draws)
+                            ;; If the corp wants explicit reveals from FTT, then show a prompt with
+                            ;; the card names in it
+                            (when  (= (get-in (get-card state card) [:special :explicit-reveal])
+                                      :yes)
+                              (continue-ability
+                               state :corp
+                               {:prompt (msg "The runner reveals that they drew "
+                                             (enumerate-str (map :title current-draws)))
+                                :choices ["OK"]}
+                               card nil))))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
              :optional {:req (req (and (first-event? state side :successful-run)
                                        (-> @state :corp :deck count pos?)))
                         :autoresolve (get-autoresolve :auto-peek)
-                        :prompt "Use Find the Truth to look at the top card of R&D?"
+                        :prompt "Look at the top card of R&D?"
                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                       :msg "look at the top card of R&D"
                                       :choices ["OK"]}}}]
-   :abilities [(set-autoresolve :auto-peek "Find the Truth's peek at R&D ability")]})
+   :abilities [(set-autoresolve :auto-peek "Find the Truth looking at the top card of R&D")]
+   :corp-abilities [{:label "Explicitly reveal drawn cards"
+                     :prompt "Explicitly reveal cards the Runner draws?"
+                     :choices ["Yes" "No"]
+                     :effect (effect (update! (assoc-in card [:special :explicit-reveal](keyword (str/lower-case target))))
+                                     (toast (str "From now on, " (:title card) " will "
+                                                 (when (= target "No") "Not")
+                                                 "explicitly reveal cards the Runner draws")
+                                            "info"))}]})
 
 (defcard "First Responders"
   {:abilities [{:cost [:credit 2]
-                :req (req (some corp? (map second (turn-events state :runner :damage))))
+                :req (req (some corp? (map #(:card (first %)) (turn-events state :runner :damage))))
                 :msg "draw 1 card"
                 :async true
-                :effect (effect (draw eid 1 nil))}]})
+                :effect (effect (draw eid 1))}]})
 
 (defcard "Gang Sign"
   {:events [{:event :agenda-scored
              :async true
              :interactive (req true)
-             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
-             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]})
+             :msg "breach HQ"
+             :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}]})
 
 (defcard "Gbahali"
   (bitey-boi 'last))
 
 (defcard "Gene Conditioning Shoppe"
-  {:msg "make Genetics trigger a second time each turn"
-   :effect (effect (register-persistent-flag! card :genetics-trigger-twice (constantly true)))
+  {:on-install {:msg "make Genetics trigger a second time each turn"
+                :effect (effect (register-persistent-flag! card :genetics-trigger-twice (constantly true)))}
    :leave-play (effect (clear-persistent-flag! card :genetics-trigger-twice))})
 
 (defcard "Ghost Runner"
@@ -1146,15 +1382,24 @@
                                 :type :credit}}})
 
 (defcard "Globalsec Security Clearance"
+  (let [ability {:once :per-turn
+                 :label "Lose [Click] and look at the top card of R&D (start of turn)"
+                 :req (req (:runner-phase-12 @state))
+                 :optional
+                 {:prompt "Lose [Click] to look at the top card of R&D?"
+                  :waiting-prompt true
+                  :autoresolve (get-autoresolve :auto-fire)
+                  :yes-ability
+                  {:msg "lose [Click] and look at the top card of R&D"
+                   :prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                   :choices ["OK"]
+                   :effect (effect (lose-clicks 1))}}}]
   {:req (req (< 1 (get-link state)))
    :flags {:runner-phase-12 (req true)}
-   :abilities [{:msg "lose [Click] and look at the top card of R&D"
-                :once :per-turn
-                :effect (effect (prompt! card (str "The top card of R&D is "
-                                                   (:title (first (:deck corp)))) ["OK"] {}))}]
-   :events [{:event :runner-turn-begins
-             :req (req (get-in @state [:per-turn (:cid card)]))
-             :effect (effect (lose :click 1))}]})
+   :abilities [ability (set-autoresolve :auto-fire "Globalsec Security Clearance")]
+   :events [(assoc ability
+                   :event :runner-turn-begins
+                   :interactive (req true))]}))
 
 (defcard "Grifter"
   {:events [{:event :runner-turn-ends
@@ -1165,7 +1410,7 @@
                                       :effect (effect (gain-credits eid 1))}
                                      {:msg "trash Grifter"
                                       :async true
-                                      :effect (effect (trash eid card nil))})]
+                                      :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))})]
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
@@ -1181,31 +1426,28 @@
                             [{:event :pre-resolve-damage
                               :unregister-once-resolved true
                               :async true
-                              :effect (req (if (< (:credit runner) 4)
-                                             (trash state side eid card nil)
-                                             (continue-ability
-                                               state :runner
-                                               {:optional
-                                                {:prompt "Pay 4 [Credits] to prevent trashing Guru Davinder?"
-                                                 :player :runner
-                                                 :yes-ability
-                                                 {:async true
-                                                  :effect (effect (system-msg (str "pays 4 [Credits] to prevent Guru Davinder "
-                                                                                   "from being trashed"))
-                                                                  (lose-credits :runner eid 4))}
-                                                 :no-ability {:async true
-                                                              :effect (effect (trash eid card nil))}}}
-                                               card nil)))}]))}]})
+                              :msg (msg (if (= target "Trash Guru Davinder")
+                                          "trash itself"
+                                          (decapitalize target)))
+                              :prompt "Choose one"
+                              :waiting-prompt true
+                              :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 4)
+                                               "Pay 4 [Credits]")
+                                             "Trash Guru Davinder"])
+                              :effect (req (if (= target "Trash Guru Davinder")
+                                              (trash state :runner eid card {:cause :runner-ability :cause-card card})
+                                              (pay state :runner eid card :credit 4)))}]))}]})
+
 
 (defcard "Hades Shard"
-  (shard-constructor "Hades Shard" :archives "access all cards in Archives"
-                     (effect (do-access eid [:archives] {:no-root true}))))
+  (shard-constructor "Hades Shard" :archives "breach Archives"
+                     (effect (breach-server eid [:archives] {:no-root true}))))
 
 (defcard "Hard at Work"
   (let [ability {:msg "gain 2 [Credits] and lose [Click]"
                  :once :per-turn
                  :async true
-                 :effect (effect (lose :click 1)
+                 :effect (effect (lose-clicks 1)
                                  (gain-credits eid 2))}]
     {:flags {:drip-economy true}
      :events [(assoc ability :event :runner-turn-begins)]
@@ -1219,69 +1461,95 @@
 
 (defcard "Human First"
   {:events [{:event :agenda-scored
-             :msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")
+             :msg (msg "gain " (get-agenda-points (:card context)) " [Credits]")
              :async true
-             :effect (effect (gain-credits :runner eid (get-agenda-points state :corp target)))}
+             :effect (effect (gain-credits :runner eid (get-agenda-points (:card context))))}
             {:event :agenda-stolen
-             :msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
+             :msg (msg "gain " (get-agenda-points (:card context)) " [Credits]")
              :async true
-             :effect (effect (gain-credits :runner eid (get-agenda-points state :runner target)))}]})
+             :effect (effect (gain-credits :runner eid (get-agenda-points (:card context))))}]})
 
 (defcard "Hunting Grounds"
-  {:implementation "Use prevention ability during approach, after ice is rezzed"
-   :abilities [{:label "Prevent a \"When encountered\" ability"
-                :once :per-turn
-                :req (req (and (= :approach-ice (:phase run))
-                               (rezzed? current-ice)
-                               (or (->> (:events @state)
-                                        (filter #(and (= :encounter-ice (:event %))
-                                                      (same-card? current-ice (:card %))))
-                                        seq)
-                                   (contains? (card-def current-ice) :on-encounter))))
-                :msg (msg "prevent the encounter effect on " (card-str state current-ice))
-                :effect (req (let [[suppress]
-                                   (register-suppress
-                                     state side card
-                                     (let [ice current-ice]
-                                       [{:event :encounter-ice
-                                         ;; TODO: when suppression is fixed, this should be (:ice context)
-                                         :req (req (same-card? ice target))}]))]
-                               (register-events
-                                 state side card
-                                 [{:event :end-of-encounter
-                                   :duration :end-of-encounter
-                                   :unregister-once-resolved true
-                                   :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}
-               (letfn [(ri [cards]
-                         (when (seq cards)
-                           {:async true
-                            :effect (req (wait-for (runner-install state side (first cards) {:facedown true})
-                                                   (continue-ability state side (ri (rest cards)) card nil)))}))]
-                 {:async true
-                  :label "Install the top 3 cards of your Stack facedown"
-                  :msg "install the top 3 cards of their Stack facedown"
-                  :cost [:trash]
-                  :effect (effect (continue-ability (ri (take 3 (:deck runner))) card nil))})]})
+  (let [ability
+        {:label "Prevent a \"When encountered\" ability"
+         :once :per-turn
+         :msg (msg "prevent the encounter effect on " (card-str state current-ice))
+         :effect (req (let [[suppress]
+                            (register-suppress
+                              state side card
+                              (let [ice current-ice]
+                                [{:event :encounter-ice
+                                  ;; TODO: when suppression is fixed, this should be (:ice context)
+                                  :req (req (same-card? ice target))}]))]
+                        (register-once state side {:once :per-turn} card) ;; needed for firing in the event handler
+                        (register-events
+                          state side card
+                          [{:event :end-of-encounter
+                            :duration :end-of-encounter
+                            :unregister-once-resolved true
+                            :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}]
+    {:events [{:event :encounter-ice
+               :req (req (and (not-used-once? state {:once :per-turn} card)
+                              (contains? (card-def current-ice) :on-encounter)))
+               :async true
+               :effect
+               (effect (continue-ability
+                         {:eid (assoc eid :source-type :ability)
+                          :optional
+                          {:prompt (str "Prevent \"when encountered\" effect of " (:title (:ice context)) "?")
+                           :yes-ability ability}}
+                         card nil))}]
+     :abilities [(assoc ability
+                        :req (req (and (= :approach-ice (:phase run))
+                                       (rezzed? current-ice)
+                                       (or (->> (:events @state)
+                                                (filter #(and (= :encounter-ice (:event %))
+                                                              (same-card? current-ice (:card %))))
+                                                seq)
+                                           (contains? (card-def current-ice) :on-encounter)))))
+                 (letfn [(ri [cards]
+                           (when (seq cards)
+                             {:async true
+                              :effect (req (wait-for (runner-install state side (first cards) {:facedown true})
+                                                     (continue-ability state side (ri (rest cards)) card nil)))}))]
+                   {:async true
+                    :label "Install the top 3 cards of your Stack facedown"
+                    :msg "install the top 3 cards of their Stack facedown"
+                    :cost [:trash-can]
+                    :effect (effect (continue-ability (ri (take 3 (:deck runner))) card nil))})]}))
 
 (defcard "Ice Analyzer"
   {:implementation "Credit use restriction is not enforced"
    :events [{:event :rez
-             :req (req (ice? target))
-             :msg "place 1 [Credits] on Ice Analyzer"
+             :req (req (ice? (:card context)))
+             :msg "place 1 [Credits] on itself"
              :effect (effect (add-counter :runner card :credit 1))}]
    :abilities [{:async true
                 :effect (effect (add-counter card :credit -1)
                                 (gain-credits eid 1))
-                :msg "take 1 [Credits] to install programs"}]
+                :msg "take 1 hosted [Credits] to install programs"}]
    :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
                                                (program? target)))
                                 :type :credit}}})
 
 (defcard "Ice Carver"
   {:constant-effects [{:type :ice-strength
-                       :req (req (and (= :encounter-ice (:phase run))
+                       :req (req (and (get-current-encounter state)
                                       (same-card? current-ice target)))
                        :value -1}]})
+
+(defcard "Info Bounty"
+  {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+            {:event :run-ends
+              :async true
+              :interactive (req true)
+              :once :per-turn
+              :req (req (first-event? state side :run-ends #(is-mark? state (target-server (first %)))))
+              :effect
+              (req (if (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %))))
+                     (do (system-msg state :runner (str "uses " (:title card) " to gain 2 [Credits]"))
+                         (gain-credits state :runner eid 2))
+                     (effect-completed state side eid)))}]})
 
 (defcard "Inside Man"
   {:recurring 2
@@ -1291,60 +1559,75 @@
 
 (defcard "Investigative Journalism"
   {:req (req (has-bad-pub? state))
-   :abilities [{:cost [:click 4 :trash]
+   :abilities [{:cost [:click 4 :trash-can]
                 :msg "give the Corp 1 bad publicity"
                 :effect (effect (gain-bad-publicity :corp 1))}]})
 
+(defcard "Investigator Inez Delgado"
+  {:abilities [{:msg "add itself to their score area as an agenda worth 0 agenda points"
+                :label "Add to score area and reveal cards in server"
+                :async true
+                :prompt "Choose a server"
+                :choices (req remotes)
+                :req (req (:stole-agenda runner-reg))
+                :effect (req (as-agenda state :runner card 0)
+                             (let [zone (server->zone state target)
+                                   path (conj (into [:corp] zone) :content)
+                                   cards (enumerate-str (map :title (get-in @state path)))]
+                               (wait-for
+                                 (reveal state :corp (make-eid state eid) targets)
+                                 (system-msg state side
+                                             (str "uses Investigator Inez Delgado to reveal " cards " from " target))
+                                 (effect-completed state side eid))))}]})
+
 (defcard "Jackpot!"
-  (let [jackpot {:interactive (req true)
-                 :async true
-                 :req (req (= :runner (:as-agenda-side target)))
-                 :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
-                              (continue-ability
-                                state side
-                                {:optional
-                                 {:prompt "Trash Jackpot!?"
-                                  :no-ability {:effect (effect (clear-wait-prompt :corp))}
-                                  :yes-ability
-                                  {:prompt "Choose how many [Credit] to take"
-                                   :choices {:number (req (get-counters card :credit))}
-                                   :async true
-                                   :effect (req (clear-wait-prompt state :corp)
-                                                (wait-for (gain-credits state :runner target)
-                                                          (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
-                                                          (trash state :runner eid card nil)))}}}
-                                card nil))}]
-    {:events [{:event :runner-turn-begins
-               :effect (effect (add-counter :runner card :credit 1))}
-              (-> jackpot
-                  (assoc :event :agenda-stolen)
-                  (dissoc :req))
-              (assoc jackpot :event :as-agenda)]}))
+  {:implementation "Credit gain must be manually triggered"
+   :events [{:event :runner-turn-begins
+             :effect (effect (add-counter :runner card :credit 1))}
+            ;; TODO (NoahTheDuke, Oct 2020):
+            ;; This is an async ability and it's getting called in `move`, which is sync.
+            ;; This won't work long-term, but it's the best solution at the moment.
+            {:event :card-moved
+             :interactive (req true)
+             :optional
+             {:req (req (= :runner (:scored-side (second targets))))
+              :waiting-prompt true
+              :prompt (msg "Trash " (:title card) "?")
+              :yes-ability
+              {:prompt "How many hosted credits do you want to take?"
+               :choices {:number (req (get-counters card :credit))}
+               :async true
+               :effect (req (wait-for (gain-credits state :runner target)
+                                      (system-msg state :runner (str "trashes " (:title card) " to gain " target " [Credits]"))
+                                      (trash state :runner eid card {:cause-card card})))}}}]})
 
 (defcard "Jak Sinclair"
   (let [ability {:label "Make a run (start of turn)"
-                 :prompt "Choose a server to run with Jak Sinclair"
+                 :prompt "Choose a server"
                  :once :per-turn
                  :req (req (:runner-phase-12 @state))
                  :choices (req runnable-servers)
                  :msg (msg "make a run on " target " during which no programs can be used")
                  :makes-run true
-                 :effect (effect (make-run target nil card))}]
+                 :async true
+                 :effect (req (wait-for (make-run state :runner (make-eid state eid) target card)
+                                        (effect-completed state side eid)))}]
     {:implementation "Doesn't prevent program use"
      :flags {:runner-phase-12 (req true)}
      :install-cost-bonus (req (- (get-link state)))
      :events [{:event :runner-turn-begins
+               :interactive (req true)
                :optional
-               {:req (req (not (get-in @state [:per-turn (:cid card)])))
-                :prompt "Use Jak Sinclair to make a run?"
+               {:once :per-turn
+                :prompt "Make a run?"
                 :yes-ability ability}}]
      :abilities [ability]}))
 
 (defcard "Jarogniew Mercs"
-  {:async true
-   :effect (req (wait-for (gain-tags state :runner 1)
-                          (add-counter state :runner card :power (+ 3 (count-tags state)))
-                          (effect-completed state :runner eid)))
+  {:on-install {:async true
+                :effect (req (wait-for (gain-tags state :runner 1)
+                                       (add-counter state :runner card :power (+ 3 (count-tags state)))
+                                       (effect-completed state :runner eid)))}
    :events [(trash-on-empty :power)]
    :flags {:untrashable-while-resources true}
    :interactions {:prevent [{:type #{:meat}
@@ -1359,7 +1642,7 @@
              :interactive (req true)
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw eid 1 nil))}
+             :effect (effect (draw eid 1))}
             {:event :unsuccessful-run
              :req (req (first-event? state side :unsuccessful-run))
              :async true
@@ -1370,11 +1653,11 @@
   (let [ability {:msg "gain [Click]"
                  :once :per-turn
                  :label "Gain [Click] (start of turn)"
-                 :effect (effect (gain :click 1)
+                 :effect (effect (gain-clicks 1)
                                  (update! (assoc-in card [:special :joshua-b] true)))}]
     {:flags {:runner-phase-12 (req true)}
      :events [{:event :runner-turn-begins
-               :optional {:prompt "Use Joshua B. to gain [Click]?"
+               :optional {:prompt "Gain [Click]?"
                           :once :per-turn
                           :yes-ability ability}}
               {:event :runner-turn-ends
@@ -1387,16 +1670,23 @@
 
 (defcard "Kasi String"
   {:events [{:event :run-ends
-             :req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
-                            (not (:did-steal target))
-                            (:did-access target)
-                            (is-remote? (:server target))))
-             :effect (effect (add-counter card :power 1))
-             :msg "add a power counter to itself"}
+             :optional
+             {:req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
+                             (not (:did-steal target))
+                             (:did-access target)
+                             (is-remote? (:server target))))
+              :autoresolve (get-autoresolve :auto-place-counter)
+              :waiting-prompt true
+              :prompt (msg "Place 1 power counter on " (:title card) "?")
+              :yes-ability {:msg "place 1 power counter on itself"
+                            :async true
+                            :effect (req (add-counter state side eid card :power 1 {:placed true}))}
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
             {:event :counter-added
-             :req (req (>= (get-counters (get-card state card) :power) 4))
-             :effect (effect (as-agenda :runner card 1))
-             :msg "add it to their score area as an agenda worth 1 agenda point"}]})
+             :req (req (<= 4 (get-counters (get-card state card) :power)))
+             :msg "add itself to their score area as an agenda worth 1 agenda point"
+             :effect (req (as-agenda state :runner card 1))}]
+   :abilities [(set-autoresolve :auto-place-counter "Kasi String placing power counters on itself")]})
 
 (defcard "Kati Jones"
   {:abilities [{:cost [:click 1]
@@ -1424,62 +1714,59 @@
   (bitey-boi 'first))
 
 (defcard "Laguna Velasco District"
-  {:events [{:event :pre-runner-click-draw
+  {:events [{:event :runner-click-draw
              :msg "draw 1 additional card"
              :effect (effect (draw-bonus 1))}]})
 
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
-            {:prompt "Choose a Program to keep"
-             :choices (cons "None" (filter #(= "Program" (:type %)) cards))
+            {:waiting-prompt true
+             :prompt "Choose a Program to add to the Grip"
+             :choices (cons "None" (filter program? cards))
              :async true
-             :msg (msg (if (= target "None") "take no card to their Grip" (str "take " (-> target :title) " to their Grip")))
+             :msg (msg (if (= target "None")
+                         "add no program to the Grip"
+                         (str "add " (-> target :title) " to the Grip")))
              :effect (req (when (not= target "None")
                             (move state side target :hand))
-                          (if (not-empty cards)
-                            (let [tobottom (remove #(= % target) cards)]
-                              (continue-ability state side (reorder-choice :runner :corp tobottom '()
-                                                                           (count tobottom) tobottom "bottom") card nil))
-                            (do (clear-wait-prompt state :corp)
-                                (effect-completed state side eid))))})]
+                          (continue-ability
+                            state side
+                            (when-let [to-bottom (not-empty (remove #(= % target) cards))]
+                              (reorder-choice :runner :corp to-bottom '() (count to-bottom) to-bottom "bottom"))
+                            card nil))})]
     {:abilities [{:cost [:click 1]
-                  :label "reveal cards"
-                  :msg (msg "reveal 4 cards: " (string/join ", " (map :title (take 4 (:deck runner)))))
+                  :keep-menu-open :while-clicks-left
+                  :label "Reveal the top 4 cards of the stack"
+                  :msg (msg "reveal from the top of the stack: " (enumerate-str (map :title (take 4 (:deck runner)))))
                   :async true
-                  :effect (req (show-wait-prompt state :corp "Runner to choose card to keep")
-                            (let [from (take 4 (:deck runner))]
-                              (wait-for (reveal state side from)
-                                        (continue-ability state side (lab-keep from) card nil))))}]}))
+                  :effect (req (let [from (take 4 (:deck runner))]
+                                 (wait-for (reveal state side from)
+                                           (continue-ability state side (lab-keep from) card nil))))}]}))
 
 (defcard "Lewi Guilherme"
-  (let [ability {:once :per-turn
-                 :label "lose 1 [Credits] or trash"
-                 :optional
-                 {:once :per-turn
-                  :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
-                  :yes-ability
-                  {:async true
-                   :effect (req (if (pos? (:credit runner))
-                                  (do (system-msg state side "pays 1 [Credits] to keep Lewi Guilherme")
-                                      (lose-credits state side eid 1))
-                                  (do (system-msg state side "must trash Lewi Guilherme")
-                                      (trash state side eid card nil))))}
-                  :no-ability
-                  {:async true
-                   :effect (effect (system-msg "chooses to trash Lewi Guilherme")
-                                   (trash eid card nil))}}}]
-    {:flags {:drip-economy true ;; for Drug Dealer
-             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
-                                                       (all-active-installed state :runner)))))}
-     :constant-effects [{:type :hand-size
-                         :req (req (= :corp side))
-                         :value -1}]
-     :abilities [(assoc ability :req (req (:runner-phase-12 @state)))]
+  (let [ability {:label "lose 1 [Credits] or trash"
+                 :interactive (req true)
+                 :async true
+                 :prompt "Choose one"
+                 :waiting-prompt true
+                 :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil :credit 1)
+                                  "Pay 1 [Credits]")
+                                "Trash Lewi Guilherme"])
+                 :player :runner
+                 :msg (msg (if (= target "Trash Lewi Guilherme")
+                             "trash itself"
+                             (decapitalize target)))
+                 :effect (req (if (= target "Trash Lewi Guilherme")
+                                (trash state :runner eid card {:cause-card card})
+                                (pay state :runner eid card :credit 1)))}]
+    {:flags {:drip-economy true}
+     :constant-effects [(corp-hand-size+ -1)]
      :events [(assoc ability :event :runner-turn-begins)]}))
 
 (defcard "Liberated Account"
   {:data {:counter {:credit 16}}
    :abilities [{:cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :label "gain 4 [Credits]"
                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -1489,78 +1776,144 @@
 
 (defcard "Liberated Chela"
   {:abilities [{:cost [:click 5 :forfeit]
-                :msg "add it to their score area"
+                :msg "add itself to their score area"
                 :async true
-                :effect (req (if (seq (:scored corp))
-                               (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
-                                   (continue-ability
-                                     state side
-                                     {:prompt (msg "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?")
-                                      :choices ["Yes" "No"]
-                                      :player :corp
-                                      :async true
-                                      :effect (effect (continue-ability
-                                                        (if (= target "Yes")
-                                                          {:player :corp
-                                                           :prompt "Select an agenda to forfeit"
-                                                           :choices {:card #(in-corp-scored? state side %)}
-                                                           :effect (effect (forfeit target)
-                                                                           (move :runner card :rfg)
-                                                                           (clear-wait-prompt :runner))}
-                                                          {:async true
-                                                           :effect (req (clear-wait-prompt state :runner)
-                                                                        (as-agenda state :runner eid card 2))
-                                                           :msg "add it to their score area as an agenda worth 2 points"})
-                                                        card nil))} card nil))
-                               (continue-ability
-                                 state side
-                                 {:async true
-                                  :effect (req (as-agenda state :runner eid card 2))
-                                  :msg "add it to their score area as an agenda worth 2 points"} card nil)))}]})
+                :effect
+                (effect (continue-ability
+                          (if (seq (:scored corp))
+                            {:optional
+                             {:waiting-prompt true
+                              :prompt (msg "Forfeit an agenda to prevent " (:title card) " from being added to Runner's score area?")
+                              :player :corp
+                              :async true
+                              :yes-ability
+                              {:player :corp
+                               :prompt "Choose an agenda to forfeit"
+                               :choices {:card #(in-corp-scored? state side %)}
+                               :async true
+                               :effect (req (wait-for (forfeit state side (make-eid state eid) target)
+                                                      (move state :runner card :rfg)
+                                                      (effect-completed state side eid)))}
+                              :no-ability
+                              {:msg "add itself to their score area as an agenda worth 2 points"
+                               :effect (effect (as-agenda :runner card 2))}}}
+                            {:msg "add itself to their score area as an agenda worth 2 points"
+                             :effect (effect (as-agenda :runner card 2))})
+                          card nil))}]})
+
+(defcard "Light the Fire!"
+  (letfn [(eligible? [_state card server]
+            (let [zone (:zone card)] (and (some #{:content} zone) (some #{server} zone))))
+          (select-targets [state server]
+            (filter #(eligible? state % server) (all-installed state :corp)))
+          (disable-server [state _side server]
+            (doseq [c (select-targets state server)]
+              (disable-card state :corp c)))
+          (enable-server [state _side server]
+            (doseq [c (select-targets state server)]
+              (enable-card state :corp c)))]
+    (let [successful-run-trigger {:event :successful-run
+                                  :duration :end-of-run
+                                  :async true
+                                  :req (req (is-remote? (:server run)))
+                                  :effect (effect (trash-cards eid (:content run-server)))
+                                  :msg "trash all cards in the server for no cost"}
+          pre-redirect-trigger {:event :pre-redirect-server
+                                :duration :end-of-run
+                                :effect (effect (enable-server (first target))
+                                                (disable-server (second (second targets))))}
+          ;post-redirect-trigger {:event :redirect-server
+          ;                       :duration :end-of-run
+          ;                       :async true
+          ;                       :effect (effect (disable-server (first (:server run)))
+          ;                                       (effect-completed eid))}
+          corp-install-trigger {:event :corp-install
+                                :duration :end-of-run
+                                :effect (req (disable-server state side (first (:server run))))}
+          swap-trigger {:event :swap
+                        :duration :end-of-run
+                        :effect (req (let [first-card (first targets)
+                                           second-card (second targets)
+                                           server (first (:server run))]
+                                       ;; disable cards that have moved into the server
+                                       (when (and (some #{:content} (:zone first-card))
+                                                  (some #{server} (:zone first-card)))
+                                         (disable-card state :corp first-card))
+                                       (when (and (some #{:content} (:zone second-card))
+                                                  (some #{server} (:zone second-card)))
+                                         (disable-card state :corp second-card))
+                                       ;; enable cards that have left the server
+                                       (when (and (some #{:content} (:zone first-card))
+                                                  (not (some #{server} (:zone first-card)))
+                                                  (some #{server} (:zone second-card)))
+                                         (enable-card state :corp first-card))
+                                       (when (and (some #{:content} (:zone second-card))
+                                                  (not (some #{server} (:zone second-card)))
+                                                  (some #{server} (:zone first-card)))
+                                         (enable-card state :corp second-card))))}
+          run-end-trigger {:event :run-ends
+                           :duration :end-of-run
+                           :effect (effect (enable-server (first (:server target))))}]
+      {:abilities [{:label "Run a remote server"
+                    :cost [:trash-can :click 1 :brain 1]
+                    :prompt "Choose a remote server"
+                    :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
+                    :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
+                    :makes-run true
+                    :async true
+                    :effect (effect (register-events card [successful-run-trigger
+                                                           run-end-trigger
+                                                           pre-redirect-trigger
+                                                           ;post-redirect-trigger
+                                                           corp-install-trigger
+                                                           swap-trigger])
+                                    (make-run eid target card)
+                                    (disable-server (second (server->zone state target))))}]})))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
-                :req (req (and (= :encounter-ice (:phase run))
+                :req (req (and (get-current-encounter state)
                                (rezzed? current-ice)))
                 :msg (msg "bypass "
                           (:title current-ice)
                           (when (pos? (:click runner))
                             (str " and loses "
                                  (apply str (repeat (:click runner) "[Click]")))))
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (req (bypass-ice state)
-                             (lose state :runner :click (:click runner)))}]})
+                             (lose-clicks state :runner (:click runner)))}]})
 
 (defcard "London Library"
   {:abilities [{:async true
-                :label "Install a non-virus program on London Library"
+                :label "Install and host a non-virus program"
                 :cost [:click 1]
-                :prompt "Select a non-virus program to install on London Library from your grip"
+                :keep-menu-open :while-clicks-left
+                :prompt "Choose a non-virus program in the grip"
                 :choices {:card #(and (program? %)
                                       (not (has-subtype? % "Virus"))
                                       (in-hand? %))}
-                :msg (msg "host " (:title target))
+                :msg (msg "install and host " (:title target))
                 :effect (effect (runner-install eid target {:host-card card :ignore-install-cost true}))}
-               {:label "Add a program hosted on London Library to your Grip"
+               {:label "Add a hosted program to the grip"
                 :cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :choices {:req (req (same-card? card (:host target)))}
                 :msg (msg "add " (:title target) " to their Grip")
                 :effect (effect (move target :hand))}]
    :events [{:event :runner-turn-ends
              :interactive (req true)
              :async true
-             :effect (effect (trash-cards eid (filter program? (:hosted card))))}]})
+             :effect (effect (trash-cards eid (filter program? (:hosted card)) {:cause-card card}))}]})
 
 (defcard "Maxwell James"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
-                :prompt "Choose a piece of ICE protecting a remote server"
+                :prompt "Choose a piece of ice protecting a remote server"
                 :choices {:card #(and (ice? %)
                                       (rezzed? %)
                                       (is-remote? (second (get-zone %))))}
-                :msg "derez a piece of ICE protecting a remote server"
-                :cost [:trash]
+                :msg "derez a piece of ice protecting a remote server"
+                :cost [:trash-can]
                 :effect (effect (derez target))}]})
 
 (defcard "Miss Bones"
@@ -1568,8 +1921,8 @@
    :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
                                                (installed? target)))
                                 :type :credit}}
-   :abilities [{:prompt "Choose how many credits to take from Miss Bones"
-                :label "take hosted credits"
+   :abilities [{:prompt "How many hosted credits do you want to take?"
+                :label "Take hosted credits"
                 :choices {:number (req (get-counters card :credit))}
                 :msg (msg "gain " target " [Credits] for trashing installed cards")
                 :async true
@@ -1578,82 +1931,93 @@
    :events [(trash-on-empty :credit)]})
 
 (defcard "Motivation"
-  (let [ability {:msg "look at the top card of their Stack"
-                 :label "Look at the top card of Stack (start of turn)"
-                 :once :per-turn
+  (let [ability {:label "Look at the top card of your Stack (start of turn)"
                  :req (req (:runner-phase-12 @state))
-                 :effect (effect (prompt! card (str "The top card of your Stack is "
-                                                    (:title (first (:deck runner)))) ["OK"] {}))}]
+                 :once :per-turn
+                 :optional
+                 {:waiting-prompt true
+                  :prompt "Look at the top card of your Stack?"
+                  :autoresolve (get-autoresolve :auto-fire)
+                  :yes-ability
+                  {:prompt (req (->> runner :deck first :title (str "The top card of your Stack is ")))
+                   :msg "look at the top card of their Stack"
+                   :choices ["OK"]}}}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner)))}
      :events [(assoc ability :event :runner-turn-begins)]
-     :abilities [ability]}))
+     :abilities [ability (set-autoresolve :auto-fire "Motivation")]}))
 
 (defcard "Mr. Li"
   {:abilities [{:cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :msg "draw 2 cards"
                 :async true
-                :effect (req (wait-for (draw state side 2 nil)
-                                       (continue-ability
-                                         state side
-                                         (if-let [drawn (get-in @state [:runner :register :most-recent-drawn])]
-                                           {:prompt "Select 1 card to add to the bottom of the Stack"
-                                            :choices {:card #(and (in-hand? %)
-                                                                  (some (fn [c] (same-card? c %)) drawn))}
-                                            :msg (msg "add 1 card to the bottom of the Stack")
-                                            :effect (req (move state side target :deck))})
-                                         card nil)))}]})
+                ;; there's no event for when a draw gets prevented, so this will leave a floating
+                ;; eid for later draws - we need to unregister the events after the draw to get
+                ;; around this (see Genetics Pavilion) - nbkelly, 2022
+                :effect (req (register-events
+                               state side
+                               card
+                               [{:event :runner-draw
+                                 :unregister-once-resolved true
+                                 :duration :end-of-turn
+                                 :waiting-prompt true
+                                 :prompt "Choose 1 card to add to the bottom of the Stack"
+                                 :choices {:req (req (some #(same-card? target %) runner-currently-drawing))}
+                                 :msg "add 1 card to the bottom of the Stack"
+                                 :effect (effect (move target :deck))}])
+                                (wait-for (draw state side 2)
+                                          (unregister-events state side card)
+                                          (effect-completed state side eid)))}]})
 
 (defcard "Muertos Gang Member"
-  {:effect (effect (show-wait-prompt :runner "Corp to select a card to derez")
-                   (continue-ability
-                     :corp
-                     {:prompt "Select a card to derez"
-                      :choices {:card #(and (corp? %)
-                                            (not (agenda? %))
-                                            (rezzed? %))}
-                      :effect (effect (clear-wait-prompt :runner)
-                                      (derez target))}
-                     card nil))
-   :uninstall (effect (show-wait-prompt :runner "Corp to select a card to rez")
-                      (continue-ability
-                        :corp
-                        {:prompt "Select a card to rez, ignoring the rez cost"
-                         :choices {:card (complement rezzed?)}
-                         :effect (effect (clear-wait-prompt :runner)
-                                         (rez target {:ignore-cost :rez-cost :no-msg true})
-                                         (system-say (str (:title card) " allows the Corp to rez " (:title target) " at no cost")))}
-                        card nil))
-   :abilities [{:msg "draw 1 card"
+  {:on-install {:player :corp
+                :waiting-prompt true
+                :prompt "Choose a card to derez"
+                :choices {:card #(and (corp? %)
+                                      (not (agenda? %))
+                                      (rezzed? %))}
+                :effect (effect (derez target))}
+   :uninstall
+   (effect
+     (continue-ability
+       {:player :corp
+        :waiting-prompt true
+        :prompt "Choose a card to rez, ignoring the rez cost"
+        :choices {:card (complement rezzed?)}
+        :async true
+        :effect (effect (system-msg :corp (str "uses " (:title card) " to rez " (:title target) " at no cost"))
+                        (rez eid target {:ignore-cost :rez-cost :no-msg true}))}
+       card nil))
+   :abilities [{:cost [:trash-can]
+                :msg "draw 1 card"
                 :async true
-                :cost [:trash]
-                :effect (effect (draw eid 1 nil))}]})
+                :effect (effect (draw eid 1))}]})
 
 (defcard "Mystic Maemi"
   (companion-builder
     ;; companion-builder: pay-credits-req
-    (req (= :play (:source-type eid)))
-    ;; companion-builder: turn-ends-effect
-    (effect (show-wait-prompt :corp "Runner to take decision on Mystic Maemi")
-            (continue-ability
-              {:prompt "Trash 1 card from your grip at random or trash Mystic Maemi?"
-               :choices (req (if (can-pay? state :runner
-                                           (assoc eid :source card :source-type :ability)
-                                           card nil :randomly-trash-from-hand 1)
-                               ["Card from grip" "Trash"]
-                               ["Trash"]))
-               :player :runner
-               :async true
-               :effect (req (clear-wait-prompt state :corp)
-                            (if (= target "Trash")
-                              (do (system-msg state :runner "trashes Mystic Maemi")
-                                  (trash state :runner eid card nil))
-                              (wait-for (pay state :runner
-                                                  (make-eid state {:source card :source-type :ability})
-                                                  card [:randomly-trash-from-hand 1])
-                                        (system-msg state :runner (build-spend-msg (:msg async-result) "avoid" "trashing Mystic Maemi"))
-                                        (effect-completed state side eid))))}
-              card nil))
+   (req (and
+         (event? target)
+         (or (= 0 (count (:cost-paid eid)))
+             (:x-cost eid))
+         (= :play (:source-type eid))))
+    ;; companion-builder: turn-ends-ability
+    {:prompt "Choose one"
+     :waiting-prompt true
+     :choices (req [(when (can-pay? state :runner
+                                 (assoc eid :source card :source-type :ability)
+                                 card nil :randomly-trash-from-hand 1)
+                       "Trash a random card from the grip")
+                     "Trash Mystic Maemi"])
+     :player :runner
+     :msg (msg (if (= target "Trash Mystic Maemi")
+                 "trash itself"
+                 (decapitalize target)))
+     :async true
+     :effect (req (if (= target "Trash Mystic Maemi")
+                    (trash state :runner eid card {:cause-card card})
+                    (pay state :runner (assoc eid :source card :source-type :ability) card [:randomly-trash-from-hand 1])))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -1665,46 +2029,46 @@
 (defcard "Net Mercur"
   {:abilities [{:msg "gain 1 [Credits]"
                 :async true
+                :req (req (pos? (get-counters (get-card state card) :credit)))
                 :effect (req (add-counter state side card :credit -1)
-                             (wait-for (gain-credits state side eid 1)
+                             (wait-for (gain-credits state side (make-eid state eid) 1)
                                        (trigger-event-sync state side eid :spent-credits-from-card card)))}]
    :events [{:event :spent-credits-from-card
-             :req (req (and (:run @state)
-                            (has-subtype? target "Stealth")))
+             :req (req (and run (has-subtype? target "Stealth")))
              :once :per-run
+             :waiting-prompt true
+             :prompt "Choose one"
+             :player :runner
+             :choices ["Place 1 [Credits] on Net Mercur" "Draw 1 card"]
              :async true
-             :effect (effect (show-wait-prompt :corp "Runner to use Net Mercur")
-                             (continue-ability
-                               {:prompt "Place 1 [Credits] on Net Mercur or draw 1 card?"
-                                :player :runner
-                                :choices ["Place 1 [Credits]" "Draw 1 card"]
-                                :async true
-                                :effect (req (if (= target "Draw 1 card")
-                                               (do (clear-wait-prompt state :corp)
-                                                   (system-msg state :runner (str "uses Net Mercur to draw 1 card"))
-                                                   (draw state side eid 1 nil))
-                                               (do (clear-wait-prompt state :corp)
-                                                   (system-msg state :runner (str "places 1 [Credits] on Net Mercur"))
-                                                   (add-counter state :runner card :credit 1)
-                                                   (effect-completed state side eid))))}
-                               card nil))}]
-   ; Normally this should be (req true), but having pay-credits prompts on
-   ; literally every interaction would get tiresome. Therefore Net Mercur will
-   ; only ask for payments during a run, traces, psi games, and prevention abilities
-   :interactions {:pay-credits {:req (req (or run
-                                              (#{:psi :trace} (:source-type eid))
-                                              (#{:net :meat :brain :tag} (get-in @state [:prevent :current]))))
+             :msg (msg (if (= target "Draw 1 card")
+                         (decapitalize target)
+                         "place 1 [Credits] on itself"))
+             :effect (req (if (= target "Draw 1 card")
+                            (draw state side eid 1)
+                            (do (add-counter state :runner card :credit 1)
+                                (effect-completed state side eid))))}]
+   ;; Normally this should be (req true), but having pay-credits prompts on
+   ;; literally every interaction would get tiresome. Therefore Net Mercur will
+   ;; only ask for payments during a run, traces, psi games, and prevention abilities
+   ;; with the release of twinning, net mercur should always ask when spending credits on
+   ;; the opponents turn
+   :interactions {:pay-credits {:req (req (or
+                                            run
+                                            (= :corp (:active-player @state))
+                                            (#{:psi :trace} (:source-type eid))
+                                            (#{:net :meat :brain :tag} (get-in @state [:prevent :current]))))
                                 :type :credit}}})
 
 (defcard "Network Exchange"
-  {:msg "increase the install cost of non-innermost ICE by 1"
+  {:on-install {:msg "increase the install cost of non-innermost ice by 1"}
    :constant-effects [{:type :install-cost
                        :req (req (ice? target))
                        :value (req (when (pos? (count (:dest-zone (second targets)))) 1))}]})
 
 (defcard "Neutralize All Threats"
-  {:in-play [:hq-access 1]
-   :events [{:event :pre-access
+  {:events [(breach-access-bonus :hq 1)
+            {:event :breach-server
              :req (req (and (= target :archives)
                             (seq (filter :trash (:discard corp)))))
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
@@ -1727,11 +2091,23 @@
    :events [{:event :agenda-stolen
              :async true
              :msg "trash itself"
-             :effect (effect (trash eid card nil))}]
+             :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}]
    :abilities [{:async true
                 :cost [:credit 2]
                 :msg "avoid 1 tag"
                 :effect (effect (tag-prevent :runner eid 1))}]})
+
+(defcard "No Free Lunch"
+  {:abilities [{:label "Gain 3 [Credits]"
+                :msg "gain 3 [Credits]"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (gain-credits eid 3))}
+               {:label "Remove 1 tag"
+                :msg "remove 1 tag"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (lose-tags :runner eid 1))}]})
 
 (defcard "No One Home"
   (letfn [(first-chance? [state side]
@@ -1755,70 +2131,72 @@
                                :req (req (first-chance? state side))}]}
      :abilities [{:msg "force the Corp to trace"
                   :async true
-                  :effect (req (let [type (get-in @state [:prevent :current])]
-                                 (wait-for (trash state side card {:unpreventable true})
-                                           (continue-ability state side (start-trace type)
+                  :effect (req (let [prevent-type (get-in @state [:prevent :current])]
+                                 (wait-for (trash state side card {:unpreventable true :cause-card card})
+                                           (continue-ability state side (start-trace prevent-type)
                                                              card nil))))}]}))
 
 (defcard "Off-Campus Apartment"
   {:flags {:runner-install-draw true}
    :abilities [{:async true
-                :label "Install and host a connection on Off-Campus Apartment"
+                :label "Install and host a connection"
                 :cost [:click 1]
-                :prompt "Select a connection in your Grip to install on Off-Campus Apartment"
+                :prompt "Choose a connection in the grip"
                 :choices {:req (req (and (has-subtype? target "Connection")
-                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil [:credit (install-cost state side target)])
+                                         (can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                                   target nil [:credit (install-cost state side target)])
                                          (in-hand? target)))}
-                :msg (msg "host " (:title target) " and draw 1 card")
+                :msg (msg "install and host " (:title target) " and draw 1 card")
                 :effect (effect (runner-install eid target {:host-card card}))}
-               {:label "Host an installed connection"
-                :prompt "Select a connection to host on Off-Campus Apartment"
+               {:label "Host an installed connection (manual)"
+                :prompt "Choose an installed connection"
                 :choices {:card #(and (has-subtype? % "Connection")
                                       (installed? %))}
                 :msg (msg "host " (:title target) " and draw 1 card")
                 :async true
                 :effect (effect (host card target)
-                                (draw eid 1 nil))}]
+                                (draw eid 1))}]
    :events [{:event :runner-install
-             :req (req (same-card? card (:host target)))
+             :req (req (same-card? card (:host (:card context))))
              :async true
-             :effect (effect (draw eid 1 nil))}]})
+             :effect (effect (draw eid 1))}]})
 
 (defcard "Officer Frank"
-  {:abilities [{:cost [:credit 1 :trash]
-                :req (req (some #(= :meat %) (map first (turn-events state :runner :damage))))
+  {:abilities [{:cost [:credit 1 :trash-can]
+                :req (req (find-first #(= :meat (:damage-type (first %))) (turn-events state :runner :damage)))
                 :msg "force the Corp to trash 2 random cards from HQ"
                 :async true
-                :effect (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp)))))}]})
+                :effect (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp))) {:cause-card card}))}]})
 
 (defcard "Oracle May"
   {:abilities [{:cost [:click 1]
-                :label "name and reveal a card"
+                :label "Name a card type"
                 :once :per-turn
-                :prompt "Choose card type"
+                :prompt "Choose one"
                 :choices ["Event" "Hardware" "Program" "Resource"]
                 :async true
                 :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                               (system-msg state side (str "spends [Click] to use Oracle May, names " target
-                                                           " and reveals " (:title c)))
+                               (system-msg state side (str "uses " (:title card) " to name " target
+                                                           " and reveal " (:title c)))
                                (wait-for
                                  (reveal state side c)
                                  (if (is-type? c target)
                                    (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
                                        (wait-for (gain-credits state side 2)
-                                                 (draw state side eid 1 nil)))
+                                                 (draw state side eid 1)))
                                    (do (system-msg state side (str "trashes " (:title c)))
                                        (mill state side eid :runner 1))))))}]})
 
 (defcard "Order of Sol"
-  (let [ability {:event :runner-credit-loss
-                 :msg "gain 1 [Credits]"
+  (let [ability {:msg "gain 1 [Credits]"
                  :req (req (zero? (:credit runner)))
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
-    {:effect (effect (continue-ability ability card nil))
-     :events [ability]}))
+    {:on-install {:async true
+                  :effect (effect (continue-ability ability card nil))}
+     :events [(assoc ability :event :runner-credit-loss)
+              (assoc ability :event :runner-spent-credits)]}))
 
 (defcard "PAD Tap"
   {:events [{:event :corp-credit-gain
@@ -1835,30 +2213,32 @@
                      :cost [:click 1 :credit 3]
                      :req (req (= :corp side))
                      :effect (effect (system-msg :corp "spends [Click] and 3 [Credits] to trash PAD Tap")
-                                     (trash :corp eid card nil))}]})
+                                     (trash :corp eid card {:cause-card card}))}]})
 
 (defcard "Paige Piper"
   (letfn [(pphelper [title cards]
             {:optional
-             {:prompt (str "Use Paige Piper to trash copies of " title "?")
-              :yes-ability {:prompt "How many would you like to trash?"
-                            :choices (take (inc (count cards)) ["0" "1" "2" "3" "4" "5"])
-                            :msg "shuffle their Stack"
-                            :async true
-                            :effect (req (let [target (str->int target)]
-                                           (trigger-event state side :searched-stack nil)
-                                           (shuffle! state :runner :deck)
-                                           (when (pos? target)
-                                             (system-msg state side (str "trashes "
-                                                                         (quantify target "cop" "y" "ies")
-                                                                         " of " title)))
-                                           (trash-cards state side eid (take target cards) {:unpreventable true})))}}})]
+             {:prompt (str "Search the Stack for additional copies of " title "?")
+              :yes-ability
+              {:prompt (str "How many copies of " title " would you like to find?")
+               :choices (take (inc (count cards)) ["0" "1" "2" "3" "4" "5"])
+               :msg "shuffle their Stack"
+               :async true
+               :effect (req (let [target (str->int target)]
+                              (trigger-event state side :searched-stack nil)
+                              (shuffle! state :runner :deck)
+                              (when (pos? target)
+                                (system-msg state side (str "adds "
+                                                            (quantify target "cop" "y" "ies")
+                                                            " of " title " to the Heap")))
+                              (trash-cards state side eid (take target cards) {:unpreventable true :cause-card card})))}}})]
     {:events [{:event :runner-install
                :interactive (req true)
                :req (req (first-event? state side :runner-install))
                :async true
                :effect (effect (continue-ability
-                                 (pphelper (:title target) (filterv #(= (:title %) (:title target)) (:deck runner)))
+                                 (pphelper (:title (:card context))
+                                           (filterv #(= (:title %) (:title (:card context))) (:deck runner)))
                                  card nil))}]}))
 
 (defcard "Paladin Poemu"
@@ -1866,22 +2246,18 @@
     ;; companion-builder: pay-credits-req
     (req (and (= :runner-install (:source-type eid))
               (not (has-subtype? target "Connection"))))
-    ;; companion-builder: turn-ends-effect
-    (effect (show-wait-prompt :corp "Runner to take decision on Paladin Poemu")
-            (continue-ability
-              {:async true
-               :prompt "Select an installed card to trash for Paladin Poemu"
-               :player :runner
-               :msg (msg "trash " (:title target))
-               :choices {:all true
-                         :card #(and (installed? %)
-                                     (runner? %))}
-               :effect (effect (clear-wait-prompt :corp)
-                               (trash eid target {:cause :runner-ability}))}
-              card nil))
+    ;; companion-builder: turn-ends-ability
+    {:prompt "Choose an installed card to trash"
+     :waiting-prompt true
+     :choices {:all true
+               :card #(and (installed? %)
+                           (runner? %))}
+     :player :runner
+     :msg (msg "trash " (:title target))
+     :async true
+     :effect (effect (trash eid target {:cause :runner-ability :cause-card card}))}
     ;; companion-builder: ability
-    {:req (req (and (pos? (get-counters (get-card state card) :credit))
-                    (:successful run)))
+    {:req (req (pos? (get-counters (get-card state card) :credit)))
      :msg "take 1 [Credits]"
      :async true
      :effect (effect (add-counter card :credit -1)
@@ -1895,37 +2271,38 @@
              :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]})
 
 (defcard "Patron"
-  (let [ability {:prompt "Choose a server for Patron"
-                 :label "Choose a server"
+  (let [ability {:prompt "Choose a server"
+                 :label "Choose a server (start of turn)"
                  :choices (req (conj servers "No server"))
                  :once :per-turn
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
                  :msg (msg "target " target)
                  :effect (req (when (not= target "No server")
-                                (update! state side (assoc card :server-target target))))}]
+                                (update! state side (assoc card :card-target target))))}]
     {:abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)
               (assoc
-                (successful-run-replace-access
+                (successful-run-replace-breach
                   {:mandatory true
                    :ability
                    {:msg "draw 2 cards"
                     :async true
-                    :effect (effect (draw eid 2 nil))}})
+                    :effect (effect (draw eid 2))}})
                 :req (req (when-let [card (get-card state card)]
-                            (and (= (zone->name (:server context)) (:server-target card))
+                            (and (= (zone->name (:server context)) (:card-target card))
                                  (first-event? state side :successful-run
                                                (fn [targets]
                                                  (let [context (first targets)]
                                                    (= (zone->name (:server context))
-                                                      (:server-target card)))))))))
+                                                      (:card-target card)))))))))
               {:event :runner-turn-ends
-               :effect (effect (update! (dissoc (get-card state card) :server-target)))}]}))
+               :effect (effect (update! (dissoc (get-card state card) :card-target)))}]}))
 
 (defcard "Paule's Café"
   {:abilities [{:label "Host a program or piece of hardware"
                 :cost [:click 1]
+                :keep-menu-open :while-clicks-left
                 :choices {:card #(and (#{"Program" "Hardware"} (:type %))
                                       (in-hand? %)
                                       (runner? %))}
@@ -1978,18 +2355,19 @@
 (defcard "Personal Workshop"
   (let [remove-counter
         {:async true
-         :req (req (not (empty? (:hosted card))))
-         :msg (msg "remove 1 counter from " (:title target))
+         :req (req (seq (:hosted card)))
+         :msg (msg "remove 1 power counter from " (:title target))
          :choices {:card #(:host %)}
          :effect (req (do (add-counter state side target :power -1)
-                          (if (not (pos? (get-counters (get-card state target) :power)))
-                            (runner-install state side eid (dissoc target :counter) {:ignore-all-cost true}))
-                          (effect-completed state side eid)))}]
+                          (if (pos? (get-counters (get-card state target) :power))
+                            (effect-completed state side eid)
+                            (runner-install state side eid (dissoc target :counter) {:ignore-all-cost true}))))}]
     {:flags {:drip-economy true}
      :abilities [{:async true
                   :label "Host a program or piece of hardware"
                   :cost [:click 1]
-                  :prompt "Select a card to host on Personal Workshop"
+                  :keep-menu-open :while-clicks-left
+                  :prompt "Choose a program or piece of hardware in the grip"
                   :choices {:card #(and (or (program? %)
                                             (hardware? %))
                                         (in-hand? %)
@@ -1999,29 +2377,29 @@
                                  (do (host state side card
                                            (assoc target :counter {:power (:cost target)}))
                                      (effect-completed state side eid))))
-                  :msg (msg "host " (:title target) "")}
+                  :msg (msg "install and host " (:title target))}
                  (assoc remove-counter
-                        :label "Remove 1 counter from a hosted card"
+                        :label "Remove 1 power counter from a hosted card"
                         :cost [:credit 1])
                  {:async true
-                  :label "X[Credit]: Remove counters from a hosted card"
+                  :label "Remove power counters from a hosted card"
                   :choices {:card #(:host %)}
-                  :req (req (not (empty? (:hosted card))))
+                  :req (req (seq (:hosted card)))
                   :effect (effect
                             (continue-ability
                               (let [paydowntarget target
                                     num-counters (get-counters (get-card state paydowntarget) :power)]
                                 {:async true
-                                 :prompt "How many counters to remove?"
+                                 :prompt "How many power counters do you want to remove?"
                                  :choices {:number (req (min num-counters
                                                              (total-available-credits state :runner eid card)))}
                                  :effect (req (wait-for
-                                                (pay state :runner card [:credit target])
+                                                (pay state :runner (make-eid state eid) card [:credit target])
                                                 (if-let [payment-str (:msg async-result)]
                                                   (do (system-msg state side
                                                                   (str (build-spend-msg payment-str "use") (:title card)
-                                                                       " to remove " target
-                                                                       " counters from " (:title paydowntarget)))
+                                                                       " to remove " (quantify target "power counter")
+                                                                       " from " (:title paydowntarget)))
                                                       (if (= num-counters target)
                                                         (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true})
                                                         (do (add-counter state side paydowntarget :power (- target))
@@ -2034,12 +2412,12 @@
   {:req (req (some #{:hq} (:successful-run runner-reg)))
    :abilities [{:async true
                 :trash-icon true
-                :label "trash an ice"
+                :label "Trash a rezzed card"
                 :effect
                 (effect
                   (continue-ability
                     ;; TODO: Convert this to a cost
-                    {:prompt "Select a rezzed card with a trash cost"
+                    {:prompt "Choose a rezzed card with a trash cost"
                      :choices {:card #(and (:trash %)
                                            (rezzed? %)
                                            (can-pay? state side (assoc eid :source card :source-type :ability) card nil [:credit (trash-cost state :runner %)]))}
@@ -2047,8 +2425,8 @@
                                (continue-ability
                                  {:async true
                                   :msg (msg "trash " (card-str state target))
-                                  :cost [:credit (trash-cost state :runner target) :trash]
-                                  :effect (effect (trash eid target nil))}
+                                  :cost [:credit (trash-cost state :runner target) :trash-can]
+                                  :effect (effect (trash eid target {:cause-card card}))}
                                  card targets))}
                     card nil))}]})
 
@@ -2063,21 +2441,24 @@
                 :msg "gain 1 [Credits] and draw 1 card"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1)
-                                       (draw state side eid 1 nil)))}]})
+                                       (draw state side eid 1)))}]})
 
 (defcard "Psych Mike"
   {:events [{:event :run-ends
-             :req (req (and (:successful target)
-                            (first-event? state side :run-ends #(and (= :rd (target-server (first %)))
-                                                                     (:successful (first %))))))
-             :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
-             :async true
-             :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}]})
+             :optional {:req (req (and (= :rd (target-server context))
+                                       (first-successful-run-on-server? state :rd)
+                                       (pos? (total-cards-accessed target :deck))))
+                        :prompt "Gain 1 [Credits] for each card you accessed from R&D?"
+                        :async true
+                        :autoresolve (get-autoresolve :auto-fire)
+                        :yes-ability
+                        {:msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
+                         :async true
+                         :effect (effect (gain-credits :runner eid (total-cards-accessed target :deck)))}}}]
+   :abilities [(set-autoresolve :auto-fire "Psych Mike")]})
 
 (defcard "Public Sympathy"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value 2}]})
+  {:constant-effects [(runner-hand-size+ 2)]})
 
 (defcard "Rachel Beckman"
   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]}))
@@ -2085,47 +2466,82 @@
 (defcard "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
              :async true
-             :msg (msg "access " (quantify (num-cards-to-access state :runner :hq {:no-root true}) "card") " from HQ")
-             :effect (req (do-access state :runner eid [:hq] {:no-root true}))}]
+             :msg "breach HQ"
+             :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}]
    :abilities [{:msg "expose 1 card"
                 :label "Expose 1 installed card"
                 :choices {:card installed?}
                 :async true
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (expose eid target))}]})
 
 (defcard "Reclaim"
   {:abilities
-   [{:req (req (not (zone-locked? state :runner :discard)))
+   [{:async true
      :label "Install a program, piece of hardware, or virtual resource from your Heap"
-     :cost [:click 1 :trash :trash-from-hand]
+     :req (req (and (not (zone-locked? state :runner :discard))
+                    (not (install-locked? state :runner))
+                    (not-empty (filter #(and (or (program? %)
+                                                 (hardware? %)
+                                                 (and (resource? %)
+                                                      (has-subtype? % "Virtual")))
+                                             (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
+                                                       [:credit (install-cost state side %)]))
+                                       (:discard runner)))))
+     :cost [:click 1 :trash-can :trash-from-hand 1]
+     :msg "install a program, piece of hardware, or virtual resource from the Heap"
      :effect
      (effect
        (continue-ability
-         {:prompt "Choose a card to install"
-          :choices (req (conj (vec (sort-by
-                                     :title
-                                     (filter #(and (or (program? %)
-                                                       (hardware? %)
-                                                       (and (resource? %)
-                                                            (has-subtype? % "Virtual")))
-                                                   (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
-                                                             [:credit (install-cost state side %)]))
-                                             (:discard runner))))
-                              "No install"))
-          :msg (msg (if (= target "No install")
-                      (str "search the heap, but does not find anything to install")
-                      (str "install " (:title target) " from the heap")))
-          :async true
-          :effect (req (if (not= target "No install")
-                         (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil)
-                         (effect-completed state side eid)))}
+         {:async true
+          :prompt "Choose a card to install"
+          :choices (req (vec (sort-by
+                              :title
+                              (filter #(and (or (program? %)
+                                                (hardware? %)
+                                                (and (resource? %)
+                                                     (has-subtype? % "Virtual")))
+                                            (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
+                                                      [:credit (install-cost state side %)]))
+                                      (:discard runner)))))
+          :msg (msg "install " (:title target) " from the heap")
+          :effect (req (runner-install state :runner (assoc eid :source card :source-type :runner-install) target nil))}
          card nil))}]})
+
+(defcard "Red Team"
+  {:data {:counter {:credit 12}}
+   :events [(trash-on-empty :credit)
+            {:event :successful-run
+             :req (req this-card-run)
+             :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+             :interactive (req true)
+             :async true
+             :effect (req (let [credits (min 3 (get-counters card :credit))]
+                            (add-counter state side card :credit (- credits))
+                            (gain-credits state side eid credits)))}]
+   :abilities [{:cost [:click 1]
+                :prompt "Choose a server"
+                :req (req (->> runnable-servers
+                               (map unknown->kw)
+                               (filter is-central?)
+                               (remove (into #{} (:made-run runner-reg)))
+                               not-empty))
+                :choices (req (cancellable
+                                (->> runnable-servers
+                                     (map unknown->kw)
+                                     (filter is-central?)
+                                     (remove (into #{} (:made-run runner-reg)))
+                                     (map central->name))))
+                :msg "make a run on central server"
+                :makes-run true
+                :async true
+                :effect (effect (make-run eid target card))}]})
 
 (defcard "Rogue Trading"
   {:data {:counter {:credit 18}}
    :events [(trash-on-empty :credit)]
    :abilities [{:cost [:click 2]
+                :keep-menu-open :while-2-clicks-left
                 :msg "gain 6 [Credits] and take 1 tag"
                 :async true
                 :effect (req (let [credits (min 6 (get-counters card :credit))]
@@ -2134,21 +2550,18 @@
                                          (gain-tags state :runner eid 1))))}]})
 
 (defcard "Rolodex"
-  {:async true
-   :msg "look at the top 5 cards of their Stack"
-   :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
-                (let [from (take 5 (:deck runner))]
-                  (if (pos? (count from))
-                    (continue-ability
-                      state side
-                      (reorder-choice :runner :corp from '() (count from) from)
-                      card nil)
-                    (do (clear-wait-prompt state :corp)
-                        (effect-completed state side eid)))))
+  {:on-install {:async true
+                :msg "look at the top 5 cards of their Stack"
+                :waiting-prompt true
+                :effect (effect (continue-ability
+                                  (let [from (take 5 (:deck runner))]
+                                    (when (pos? (count from))
+                                      (reorder-choice :runner :corp from '() (count from) from)))
+                                  card nil))}
    :on-trash {:async true
               :effect (req (system-msg state :runner
                                        (str "trashes "
-                                            (string/join ", " (map :title (take 3 (:deck runner))))
+                                            (enumerate-str (map :title (take 3 (:deck runner))))
                                             " from their Stack due to Rolodex being trashed"))
                            (mill state :runner eid :runner 3))}})
 
@@ -2193,16 +2606,16 @@
 (defcard "Sacrificial Clone"
   {:interactions {:prevent [{:type #{:net :brain :meat}
                              :req (req true)}]}
-   :abilities [{:cost [:trash]
+   :abilities [{:cost [:trash-can]
                 :label "prevent damage"
                 :async true
                 :msg (msg (let [cards (concat (get-in runner [:rig :hardware])
                                               (filter #(not (has-subtype? % "Virtual"))
                                                       (get-in runner [:rig :resource]))
                                               (:hand runner))]
-                            (str "to prevent all damage, trash "
+                            (str "prevent all damage, trash "
                                  (quantify (count cards) "card")
-                                 " (" (string/join ", " (map :title cards)) "),"
+                                 " (" (enumerate-str (map :title cards)) "),"
                                  " lose " (quantify (:credit (:runner @state)) "credit")
                                  ", and lose " (quantify (count-real-tags state) "tag"))))
                 :effect (req (damage-prevent state side :net Integer/MAX_VALUE)
@@ -2214,27 +2627,26 @@
                                  (concat (get-in runner [:rig :hardware])
                                          (filter #(not (has-subtype? % "Virtual"))
                                                  (get-in runner [:rig :resource]))
-                                         (:hand runner)))
-                               (wait-for (lose-credits state side :all)
+                                         (:hand runner))
+                                 {:cause-card card})
+                               (wait-for (lose-credits state side (make-eid state eid) :all)
                                          (lose-tags state side eid :all))))}]})
 
 (defcard "Sacrificial Construct"
   {:interactions {:prevent [{:type #{:trash-program :trash-hardware}
                              :req (req true)}]}
-   :abilities [{:cost [:trash]
+   :abilities [{:cost [:trash-can]
                 :label "prevent a program trash"
                 :effect (effect (trash-prevent :program 1)
                                 (trash-prevent :hardware 1))}]})
 
 (defcard "Safety First"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value -2}]
+  {:constant-effects [(runner-hand-size+ -2)]
    :events [{:event :runner-turn-ends
              :async true
              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
-                            (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
-                                (draw state :runner eid 1 nil))
+                            (do (system-msg state :runner (str "uses " (:title card) " to draw 1 card"))
+                                (draw state :runner eid 1))
                             (effect-completed state :runner eid)))}]})
 
 (defcard "Salsette Slums"
@@ -2260,35 +2672,29 @@
 
 (defcard "Salvaged Vanadis Armory"
   {:events [{:event :damage
-             :async true
              :trash-icon true
-             :effect (req (show-wait-prompt state :corp "Runner to use Salvaged Vanadis Armory")
-                          (continue-ability
-                            state :runner
-                            {:optional
-                             {:prompt "Use Salvaged Vanadis Armory?"
-                              :yes-ability {:async true
-                                            :cost [:trash]
-                                            :msg (msg "force the Corp to trash the top "
-                                                      (get-turn-damage state :runner)
-                                                      " cards of R&D and trash itself")
-                                            :effect (effect (clear-wait-prompt :corp)
-                                                            (mill :corp eid :corp (get-turn-damage state :runner)))}
-                              :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
-                            card nil))}]})
+             :optional
+             {:waiting-prompt true
+              :prompt "Trash Salvaged Vanadis Armory to force the Corp to trash the top cards of R&D?"
+              :yes-ability {:async true
+                            :cost [:trash-can]
+                            :msg (msg "force the Corp to trash the top "
+                                      (quantify (get-turn-damage state :runner) "card")
+                                      " of R&D")
+                            :effect (effect (mill :corp eid :corp (get-turn-damage state :runner)))}}}]})
 
 (defcard "Same Old Thing"
   {:abilities [{:async true
                 :label "play an event in the heap"
-                :cost [:click 2 :trash]
-                :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                :cost [:click 2 :trash-can]
+                :req (req (and (not (zone-locked? state :runner :discard))
                                (pos? (count (filter event? (:discard runner))))))
-                :prompt "Select an event to play"
+                :prompt "Choose an event in the heap"
                 :msg (msg "play " (:title target))
                 :show-discard true
                 :choices {:card #(and (event? %)
                                       (in-discard? %))}
-                :effect (effect (play-instant eid target {:no-additional-cost true}))}]})
+                :effect (effect (play-instant eid target))}]})
 
 (defcard "Scrubber"
   {:recurring 2
@@ -2297,44 +2703,62 @@
                                 :type :recurring}}})
 
 (defcard "Security Testing"
-  (let [ability {:prompt "Choose a server for Security Testing"
-                 :label "target a server"
+  (let [ability {:prompt "Choose a server"
+                 :label "Choose a server (start of turn)"
                  :choices (req (conj servers "No server"))
+                 :interactive (req true)
                  :msg (msg "target " target)
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
                  :effect (req (when (not= target "No server")
-                                (update! state side (assoc card :server-target target))))}]
+                                (update! state side (assoc card :card-target target))))}]
     {:events [(assoc ability :event :runner-turn-begins)
               (assoc
-                (successful-run-replace-access
+                (successful-run-replace-breach
                   {:mandatory true
                    :ability
                    {:msg "gain 2 [Credits]"
                     :async true
                     :effect (effect (gain-credits eid 2))}})
                 :req (req (when-let [card (get-card state card)]
-                            (and (= (zone->name (:server context)) (:server-target card))
+                            (and (= (zone->name (:server context)) (:card-target card))
                                  (first-event? state side :successful-run
                                                (fn [targets]
                                                  (let [context (first targets)]
                                                    (= (zone->name (:server context))
-                                                      (:server-target card)))))))))
+                                                      (:card-target card)))))))))
               {:event :runner-turn-ends
                :silent (req true)
-               :effect (effect (update! (dissoc card :server-target)))}]
+               :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
+
+(defcard "Smartware Distributor"
+  (let [start-of-turn-ability {:once :per-turn
+                               :label "Take 1 [Credits] (start of turn)"
+                               :req (req (and (:runner-phase-12 @state)
+                                              (pos? (get-counters card :credit))))
+                               :msg "take 1 [Credits]"
+                               :async true
+                               :effect (req (add-counter state side card :credit -1)
+                                         (gain-credits state side eid 1))}]
+    {:flags {:drip-economy (req (pos? (get-counters card :credit)))}
+     :abilities [{:cost [:click 1]
+                  :msg "place 3 [Credits]"
+                  :req (req (not (:runner-phase-12 @state)))
+                  :effect (req (add-counter state side card :credit 3))}
+                 start-of-turn-ability]
+     :events [(assoc start-of-turn-ability :event :runner-turn-begins)]}))
 
 (defcard "Slipstream"
   {:events [{:event :pass-ice
-             :req (req (and (rezzed? (get-card state (:ice context)))
-                            (some #(and (ice? %)
-                                        (not (protecting-same-server? (:ice context) %))
-                                        (= run-position (card-index state %))
-                                        (is-central? (second (get-zone %))))
-                                  (all-installed state :corp))))
              :optional
-             {:prompt "Trash Slipstream to change servers?"
+             {:req (req (and (rezzed? (get-card state (:ice context)))
+                             (some #(and (ice? %)
+                                         (not (protecting-same-server? (:ice context) %))
+                                         (= run-position (card-index state %))
+                                         (is-central? (second (get-zone %))))
+                                   (all-installed state :corp))))
+              :prompt (msg "Trash " (:title card) " to approach a piece of ice protecting a central server?")
               :yes-ability
               {:async true
                :effect
@@ -2342,21 +2766,21 @@
                  (continue-ability
                    (let [passed-ice (:ice context)]
                      {:async true
-                      :prompt "Choose a piece of ICE protecting a central server at the same position"
+                      :prompt "Choose a piece of ice protecting a central server at the same position"
                       :choices {:req (req (and (ice? target)
                                                (not (protecting-same-server? passed-ice target))
                                                (= run-position (card-index state target))
                                                (not (same-card? target passed-ice))
                                                (is-central? (second (get-zone target)))))}
                       :msg (msg "approach " (card-str state target))
-                      :effect (req (wait-for (trash state side card {:unpreventable true})
+                      :effect (req (wait-for (trash state side card {:unpreventable true :cause-card card})
                                              (let [dest (second (get-zone target))]
                                                (swap! state update-in [:run]
                                                       #(assoc % :position (inc run-position) :server [dest]))
                                                (set-next-phase state :approach-ice)
                                                (update-all-ice state side)
                                                (update-all-icebreakers state side)
-                                               (effect-completed state side eid))))})
+                                               (continue-ability state side (offer-jack-out) card nil))))})
                    card nil))}}}]})
 
 (defcard "Spoilers"
@@ -2367,11 +2791,11 @@
              :effect (effect (mill :corp eid :corp 1))}]})
 
 (defcard "Starlight Crusade Funding"
-  {:msg "ignore additional costs on Double events"
-   :effect (req (swap! state assoc-in [:runner :register :double-ignore-additional] true))
+  {:on-install {:msg "ignore additional costs on Double events"
+                :effect (req (swap! state assoc-in [:runner :register :double-ignore-additional] true))}
    :events [{:event :runner-turn-begins
              :msg "lose [Click] and ignore additional costs on Double events"
-             :effect (req (lose state :runner :click 1)
+             :effect (req (lose-clicks state :runner 1)
                           (swap! state assoc-in [:runner :register :double-ignore-additional] true))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :double-ignore-additional))})
 
@@ -2380,22 +2804,34 @@
              :effect (req (if (>= (get-counters card :power) 2)
                             (do (add-counter state side card :power (- (get-counters card :power)))
                                 (damage state side eid :brain 1 {:unpreventable true :card card})
-                                (system-msg state side "takes 1 brain damage from Stim Dealer"))
+                                (system-msg state side "takes 1 core damage from Stim Dealer"))
                             (do (add-counter state side card :power 1)
-                                (gain state side :click 1)
+                                (gain-clicks state side 1)
                                 (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})
+
+(defcard "Stoneship Chart Room"
+  {:abilities [{:label "Draw 2 cards"
+                :msg "draw 2 cards"
+                :cost [:trash-can]
+                :async true
+                :effect (effect (draw :runner eid 2))}
+               {:label "Charge a card"
+                :req (req (can-charge state side))
+                :cost [:trash-can]
+                :async true
+                :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
 
 (defcard "Street Magic"
   (letfn [(runner-break [unbroken-subs]
-            {:prompt "Resolve a subroutine"
+            {:prompt "Choose a subroutine to resolve"
              :choices unbroken-subs
              :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                          (= target (make-label (:sub-effect %))))
                                                    (:subroutines current-ice)))]
-                            (wait-for (resolve-ability state :corp (make-eid state {:source-type :subroutine})
+                            (wait-for (resolve-ability state :corp (make-eid state {:source current-ice :source-type :subroutine})
                                                        (:sub-effect sub) current-ice nil)
                                       (if (and (:run @state)
-                                               (not (:ended (:run @state)))
+                                               (not (:ended (:end-run @state)))
                                                (rest unbroken-subs))
                                         (continue-ability
                                           state side
@@ -2403,40 +2839,44 @@
                                           card nil)
                                         (effect-completed state side eid)))))})]
     {:abilities [{:implementation "Effect is manually triggered"
-                  :label "choose subroutine order"
+                  :label "Choose subroutine order"
                   :req (req (pos? (count (remove :broken (:subroutines current-ice)))))
                   :async true
-                  :msg (msg "select the order the unbroken subroutines on "
+                  :msg (msg "choose the order the unbroken subroutines on "
                          (:title current-ice) " resolve")
-                  :effect (effect
-                            (continue-ability
-                              (let [unbroken-subs (unbroken-subroutines-choice current-ice)]
-                                (runner-break unbroken-subs))
-                              card nil))}]}))
+                  :effect (effect (continue-ability (runner-break (unbroken-subroutines-choice current-ice)) card nil))}]}))
 
 (defcard "Street Peddler"
-  {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-   :effect (req (doseq [c (take 3 (:deck runner))]
-                  (host state side (get-card state card) c {:facedown true})))
+  {:on-install {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
+                :effect (req (doseq [c (take 3 (:deck runner))]
+                               (host state side (get-card state card) c {:facedown true})))}
+   ;; req to use ability - can pay to install at least one of the cards
    :abilities [{:async true
                 :label "install a hosted card"
                 :trash-icon true
-                :req (req (not (install-locked? state side)))
-                :prompt "Choose a card on Street Peddler to install"
-                :choices (req (cancellable
-                                (filter #(let [target (dissoc % :facedown)]
-                                           (and (not (event? target))
-                                                (runner-can-install? state side target nil)
-                                                (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                          [:credit (install-cost state side target {:cost-bonus -1})])))
-                                        (:hosted card))))
-                :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                          (string/join ", " (map :title (remove-once #(same-card? % target) (:hosted card))))
-                          " are trashed as a result")
-                :effect (req (let [card (update! state side (update card :hosted (fn [coll] (remove-once #(same-card? % target) coll))))]
-                               (wait-for (trash state side card {:cause :ability-cost})
-                                         (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                                         (dissoc target :facedown) {:cost-bonus -1}))))}]})
+                :req (req (and (not (install-locked? state side))
+                               (pos? (count (:hosted card)))
+                               (pos? (count (filter #(and (not (event? (get-card state %)))
+                                                          (runner-can-pay-and-install? state side (assoc eid :source card :source-type :runner-install) (get-card state %) {:cost-bonus -1})) (:hosted card))))))
+                :effect (req (set-aside state side eid (:hosted card))
+                             (let [set-aside-cards (get-set-aside state side eid)]
+                               (wait-for (trash state side card {:cause :ability-cost :cause-card card})
+                                         (system-msg state side "trashed")
+                                         (continue-ability
+                                           state side
+                                           {:prompt "Choose a set-aside card to install"
+                                            :waiting-prompt true
+                                            :not-distinct true
+                                            :async true
+                                            :choices (req (filter #(and (not (event? %))
+                                                                        (runner-can-install? state side % nil)
+                                                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -1})])) set-aside-cards))
+                                            :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
+                                                      (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
+                                                      "are trashed as a result")
+                                            :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
+                                                                   (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
+                                           card nil))))}]})
 
 (defcard "Symmetrical Visage"
   {:events [{:event :runner-click-draw
@@ -2450,31 +2890,25 @@
              :req (req (genetics-trigger? state side :damage))
              :msg "draw 1 card"
              :async true
-             :effect (effect (draw :runner eid 1 nil))}]})
+             :effect (effect (draw :runner eid 1))}]})
 
 (defcard "Tallie Perrault"
-  {:abilities [{:label "Draw 1 card for each Corp bad publicity"
+  {:abilities [{:label "Draw 1 card for each bad publicity the Corp has"
                 :async true
-                :cost [:trash]
-                :effect (effect (draw eid (count-bad-pub state) nil))
-                :msg (msg "draw " (count-bad-pub state) " cards")}]
+                :cost [:trash-can]
+                :effect (effect (draw eid (count-bad-pub state)))
+                :msg (msg "draw " (quantify (count-bad-pub state) "card"))}]
    :events [{:event :play-operation
-             :req (req (or (has-subtype? target "Black Ops")
-                           (has-subtype? target "Gray Ops")))
-             :async true
-             :effect (req (show-wait-prompt state :corp "Runner to use Tallie Perrault")
-                          (continue-ability
-                            state :runner
-                            {:optional
-                             {:prompt "Use Tallie Perrault to give the Corp 1 bad publicity and take 1 tag?"
-                              :player :runner
-                              :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
-                                            :async true
-                                            :effect (effect (clear-wait-prompt :corp)
-                                                            (gain-bad-publicity :corp 1)
-                                                            (gain-tags :runner eid 1))}
-                              :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
-                            card nil))}]})
+             :optional
+             {:req (req (or (has-subtype? (:card context) "Black Ops")
+                            (has-subtype? (:card context) "Gray Ops")))
+              :waiting-prompt true
+              :prompt "Give the Corp 1 bad publicity and take 1 tag?"
+              :player :runner
+              :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
+                            :async true
+                            :effect (effect (gain-bad-publicity :corp 1)
+                                            (gain-tags :runner eid 1))}}}]})
 
 (defcard "Tech Trader"
   {:events [{:event :runner-trash
@@ -2487,38 +2921,49 @@
 (defcard "Technical Writer"
   {:events [{:event :runner-install
              :silent (req true)
-             :req (req (and (or (hardware? target)
-                                (program? target))
-                            (not (facedown? target))))
-             :effect (effect (add-counter :runner card :credit 1)
-                             (system-msg "places 1 [Credits] on Technical Writer"))}]
-   :abilities [{:cost [:click 1 :trash]
-                :label "gain credits"
+             :req (req (and (or (hardware? (:card context))
+                                (program? (:card context)))
+                            (not (:facedown? context))))
+             :msg "place 1 [Credits] on itself"
+             :effect (effect (add-counter :runner card :credit 1))}]
+   :abilities [{:cost [:click 1 :trash-can]
+                :label "Take all hosted credits"
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]})
 
+(defcard "Telework Contract"
+  {:data {:counter {:credit 9}}
+   :events [(trash-on-empty :credit)]
+   :abilities [{:label "Take 3 [Credits] from this resource"
+                :cost [:click 1]
+                :once :per-turn
+                :msg "gain 3 [Credits]"
+                :async true
+                :effect (req (let [credits (min 3 (get-counters card :credit))]
+                               (add-counter state side card :credit (- credits))
+                               (gain-credits state :runner eid credits)))}]})
+
 (defcard "Temple of the Liberated Mind"
   {:abilities [{:cost [:click 1]
                 :label "Place 1 power counter"
-                :msg "place 1 power counter on it"
+                :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}
                {:label "Gain [Click]"
                 :cost [:power 1]
                 :req (req (= (:active-player @state) :runner))
                 :msg "gain [Click]" :once :per-turn
-                :effect (effect (gain :click 1))}]})
+                :effect (effect (gain-clicks 1))}]})
 
 (defcard "Temüjin Contract"
   {:data {:counter {:credit 20}}
-   :prompt "Choose a server for Temüjin Contract"
-   :choices (req servers)
-   :msg (msg "target " target)
-   :req (req (not (:server-target card)))
-   :effect (effect (update! (assoc card :server-target target)))
+   :on-install {:prompt "Choose a server"
+                :choices (req servers)
+                :msg (msg "target " target)
+                :effect (effect (update! (assoc card :card-target target)))}
    :events [(trash-on-empty :credit)
             {:event :successful-run
-             :req (req (= (zone->name (:server context)) (:server-target (get-card state card))))
+             :req (req (= (zone->name (:server context)) (:card-target (get-card state card))))
              :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
              :async true
              :effect (req (let [credits (min 4 (get-counters card :credit))]
@@ -2526,16 +2971,12 @@
                             (gain-credits state side eid credits)))}]})
 
 (defcard "The Archivist"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :events [{:event :agenda-scored
-             :req (req (or (has-subtype? target "Initiative")
-                           (has-subtype? target "Security")))
              :interactive (req true)
-             :async true
-             :msg "force the Corp to initiate a trace"
-             :label "Trace 1 - If unsuccessful, take 1 bad publicity"
              :trace {:base 1
+                     :req (req (or (has-subtype? (:card context) "Initiative")
+                                   (has-subtype? (:card context) "Security")))
                      :unsuccessful
                      {:effect (effect (gain-bad-publicity :corp 1)
                                       (system-msg :corp (str "takes 1 bad publicity")))}}}]})
@@ -2549,13 +2990,13 @@
                 :async true
                 :effect (effect (gain-credits eid 2))}
                {:cost [:click 1]
-                :label "Install a program of piece of hardware"
+                :label "Install a program or piece of hardware"
                 :req (req (some #(and (or (hardware? %)
                                           (program? %))
                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                 [:credit (install-cost state side % {:cost-bonus -1})]))
                                 (:hand runner)))
-                :prompt "Select a program or piece of hardware to install from your Grip"
+                :prompt "Choose a program or piece of hardware to install from your Grip"
                 :choices
                 {:req (req (and (or (hardware? target)
                                     (program? target))
@@ -2571,18 +3012,17 @@
                 :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]})
 
 (defcard "The Back"
-  {:implementation "Adding power tokens is manual"
+  {:implementation "Placing power counters is manual"
    ; :events [{:event :spent-credits-from-card
                ; :req (req (and (:run @state)
                                 ; (hardware? target)
                                 ; (not (used-this-turn? (:cid card) state))))
                ; :once :per-turn
                ; :async true
-               ; :effect (effect (system-msg (str "places 1 power token on " (:title card)))
+               ; :effect (effect (system-msg (str "places 1 power counter on " (:title card)))
                                  ; (add-counter card :power 1))}]
-   :abilities [{:label "Manually place 1 power token"
-                :req (req (:run @state))
-                :effect (effect (system-msg (str "manually places 1 power token on " (:title card)))
+   :abilities [{:label "Manually place 1 power counter"
+                :effect (effect (system-msg (str "manually places 1 power counter on " (:title card)))
                                 (add-counter card :power 1))}
                {:label "Shuffle back cards with [Trash] abilities"
                 :req (req (and (pos? (get-counters card :power))
@@ -2594,14 +3034,14 @@
                           :req (req (and (runner? target)
                                          (in-discard? target)
                                          (has-trash-ability? target)))}
-                :msg (msg "shuffle " (string/join ", " (map :title targets))
+                :msg (msg "shuffle " (enumerate-str (map :title targets))
                           " into their Stack")
                 :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)
                              (effect-completed state side eid))}]})
 
 (defcard "The Black File"
-  {:msg "prevent the Corp from winning the game unless they are flatlined"
+  {:on-install {:msg "prevent the Corp from winning the game unless they are flatlined"}
    :constant-effects [{:type :cannot-win-on-points
                        :req (req (and (= :corp side)
                                       (< (get-counters card :power) 3)))
@@ -2610,83 +3050,117 @@
              :effect (req (if (<= 2 (get-counters card :power))
                             (do (move state side card :rfg)
                                 (system-msg state side "removes The Black File from the game")
-                                (check-winner state side))
+                                (check-win-by-agenda state side))
                             (add-counter state side card :power 1)))}]
-   :on-trash {:effect (effect (check-winner))}
-   :leave-play (effect (check-winner))})
+   :on-trash {:effect (effect (check-win-by-agenda))}
+   :leave-play (effect (check-win-by-agenda))})
 
 (defcard "The Class Act"
   (let [draw-ability {:req (req (= :this-turn (installed? card)))
                       :async true
                       :msg "draw 4 cards"
-                      :effect (effect (draw :runner eid 4 nil))}]
+                      :effect (effect (draw :runner eid 4))}]
     {:events [(assoc draw-ability :event :corp-turn-ends)
               (assoc draw-ability :event :runner-turn-ends)
               {:event :pre-runner-draw
-               :msg "draw 1 additional card"
-               ;; The req catches draw events that happened before The Class Act was installed
-               :req (req (first-event? state :runner :pre-runner-draw))
-               :async true
-               :interactive (req true)
+               :req (req (and (first-event? state :runner :pre-runner-draw)
+                              (< 1 (count (:deck runner)))
+                              (pos? target)))
                :once :per-turn
-               :effect (req (if (zero? (count (get-in @state [:runner :deck])))
-                              (effect-completed state side eid)
-                              (let [n (+ target (get-in @state [:bonus :draw] 0))
-                                    to-draw (take (inc n) (:deck (:runner @state)))]
-                                (show-wait-prompt state :corp "Runner to use The Class Act")
-                                (continue-ability
-                                  state :runner
-                                  {:async true
-                                   :prompt "Select 1 card to add to the bottom of the stack"
-                                   :choices to-draw
-                                   :effect (effect (move target :deck)
-                                                   (system-msg (str "uses The Class Act to add the "
-                                                                    (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? target %2) %1) to-draw))))
-                                                                    " card drawn to the bottom of the Stack"))
-                                                   (clear-wait-prompt :corp)
-                                                   (effect-completed eid))}
-                                  card nil))))}]}))
+               :once-key :the-class-act-put-bottom
+               :async true
+               :effect
+               (req (set-aside-for-me state :runner eid (take (inc target) (:deck runner)))
+                    (let [cards (get-set-aside state :runner eid)]
+                      (continue-ability
+                        state side
+                        {:waiting-prompt true
+                         :prompt "Choose 1 card to add to the bottom of the stack"
+                         :choices {:card #(some (fn [c] (same-card? c %)) cards)
+                                   :all true}
+                         :effect
+                         (req (system-msg state side
+                                          (str "uses The Class Act to add the "
+                                               (pprint/cl-format nil "~:R"
+                                                                 (inc (first (keep-indexed #(when (same-card? target %2) %1) cards))))
+                                               " card on the top of the stack to the bottom"))
+                                          (doseq [c (reverse cards)]
+                                            (move state :runner
+                                                  c :deck
+                                                  (if (same-card? c target) nil {:front true}))))}
+                        card nil)))}]}))
 
 (defcard "The Helpful AI"
-  {:constant-effects [{:type :link
-                       :value 1}]
+  {:constant-effects [(link+ 1)]
    :abilities [{:msg (msg "give +2 strength to " (:title target))
                 :label "pump icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (installed? %))}
-                :cost [:trash]
+                :cost [:trash-can]
                 :effect (effect (pump target 2 :end-of-turn))}]})
 
+(defcard "The Masque A"
+  {:abilities [{:cost [:click 1, :trash-can]
+                :label "Make a run and gain [click]. If successful, draw 1 card"
+                :prompt "Choose a server"
+                :choices (req runnable-servers)
+                :msg (msg "make a run on " target " and gain [click]")
+                :async true
+                :effect (effect
+                          (gain-clicks :runner 1)
+                          (register-events
+                            card
+                            [{:event :successful-run
+                              :unregister-once-resolved true
+                              :duration :end-of-run
+                              :async true
+                              :msg "draw 1 card"
+                              :effect (effect (draw :runner eid 1))}])
+                          (make-run eid target card))}]})
+
+(defcard "The Masque B"
+  {:implementation "Successful run condition not implemented"
+   :abilities [{:cost [:click 1 :trash-can]
+                :label "Make a run and gain [click]. If successful, make another run on another server"
+                :prompt "Choose a server"
+                :choices (req runnable-servers)
+                :msg (msg "make a run on " target " and gain [click]")
+                :async true
+                :effect (effect (gain-clicks 1)
+                                (make-run eid target card))}]})
+
 (defcard "The Nihilist"
-  (let [corp-choice {:optional {:player :corp
-                                :prompt "Trash the top card of R&D to prevent the Runner drawing 2 cards?"
-                                :yes-ability {:async true
-                                              :effect (effect (clear-wait-prompt :runner)
-                                                              (system-msg :corp "trashes the top card of R&D to prevent the Runner drawing 2 cards")
-                                                              (mill :corp eid :corp 1))}
-                                :no-ability {:async true
-                                             :effect (effect (clear-wait-prompt :runner)
-                                                             (system-msg :runner "draw 2 cards")
-                                                             (draw :runner eid 2 nil))}}}
-        maybe-spend-2 {:prompt "Spend 2 virus counters on The Nihilist?"
-                       :async true
-                       :yes-ability
-                       {:req (req (<= 2 (number-of-virus-counters state)))
-                        :async true
-                        :effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
-                                               (if (:number async-result)
-                                                 (do (system-msg state side (str "spends " (:msg async-result) " on The Nihilist"))
-                                                     (show-wait-prompt state :runner "Corp to decide")
-                                                     (continue-ability state side corp-choice card nil))
-                                                 (effect-completed state side eid))))}}]
-    {:events [{:event :runner-turn-begins
-               :interactive (req true)
-               :optional maybe-spend-2}
+  (let [corp-choice {:player :corp
+                     :waiting-prompt true
+                     :prompt "Choose one"
+                     :choices (req [(when (seq (:deck corp))
+                                      "Trash the top card of R&D")
+                                    "The Runner draws 2 cards"])
+                     :async true
+                     :msg (msg (if (= target "The Runner draws 2 cards")
+                                "draw 2 cards"
+                                (str "force the Corp to " (decapitalize target))))
+                     :effect (req (if (= target "The Runner draws 2 cards")
+                                    (draw state :runner eid 2)
+                                    (mill state :corp eid :corp 1)))}
+        maybe-spend-2 {:event :runner-turn-begins
+                       :interactive (req true)
+                       :optional
+                       {:prompt "Spend 2 virus counters?"
+                        :yes-ability
+                        {:req (req (<= 2 (number-of-runner-virus-counters state)))
+                         :async true
+                         :effect (req (wait-for (resolve-ability state side (pick-virus-counters-to-spend 2) card nil)
+                                                (if (:msg async-result)
+                                                  (do (system-msg state side (str "spends " (:msg async-result)))
+                                                      (continue-ability state side corp-choice card nil))
+                                                  (effect-completed state side eid))))}}}]
+    {:events [maybe-spend-2
               {:event :runner-install
-               :msg "add 2 virus tokens to The Nihilist"
-               :effect (effect (add-counter card :virus 2))
-               :req (req (has-subtype? target "Virus"))
-               :once :per-turn}]}))
+               :once :per-turn
+               :msg "place 2 virus tokens on itself"
+               :req (req (has-subtype? (:card context) "Virus"))
+               :effect (effect (add-counter card :virus 2))}]}))
 
 (defcard "The Shadow Net"
   (letfn [(events [runner] (filter #(and (event? %) (not (has-subtype? % "Priority"))) (:discard runner)))]
@@ -2701,29 +3175,28 @@
                   :effect (effect (play-instant eid target {:ignore-cost true}))}]}))
 
 (defcard "The Source"
-  {:effect (effect (update-all-advancement-costs))
-   :leave-play (effect (update-all-advancement-costs))
+  {:constant-effects [{:type :advancement-requirement
+                       :value 1}]
    :events [{:event :agenda-scored
              :async true
-             :effect (effect (trash eid card nil))}
+             :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}
             {:event :agenda-stolen
              :async true
-             :effect (effect (trash eid card nil))}
-            {:event :pre-advancement-cost
-             :effect (effect (advancement-cost-bonus 1))}
+             :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}
             {:event :pre-steal-cost
-             :effect (effect (steal-cost-bonus [:credit 3]))}]})
+             :effect (effect (steal-cost-bonus [:credit 3] {:source card :source-type :ability}))}]})
 
 (defcard "The Supplier"
   (let [ability {:label "Install a hosted card (start of turn)"
-                 :prompt "Choose a card hosted on The Supplier to install"
-                 :req (req (some #(can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -2})])
+                 :prompt "Choose a hosted card to install"
+                 :req (req (some #(can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                            % nil [:credit (install-cost state side % {:cost-bonus -2})])
                                  (:hosted card)))
                  :choices
                  {:req (req (and (= "The Supplier" (:title (:host target)))
                                  (runner? target)
-                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                           [:credit (install-cost state side target {:cost-bonus -2})])))}
+                                 (can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                           target nil [:credit (install-cost state side target {:cost-bonus -2})])))}
                  :once :per-turn
                  :msg (msg "install " (:title target)
                            ", lowering its install cost by 2 [Credits]")
@@ -2742,12 +3215,13 @@
     {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
      :abilities [{:label "Host a resource or piece of hardware"
                   :cost [:click 1]
-                  :prompt "Select a card to host on The Supplier"
+                  :keep-menu-open :while-clicks-left
+                  :prompt "Choose a card in the grip"
                   :choices {:card #(and (or (hardware? %)
                                             (resource? %))
                                         (in-hand? %))}
                   :effect (effect (host card target))
-                  :msg (msg "host " (:title target))}
+                  :msg (msg "install and host " (:title target))}
                  ability]
      ; A card installed by The Supplier is ineligible to receive the turn-begins event for this turn.
      :suppress [{:event :runner-turn-begins
@@ -2762,13 +3236,19 @@
             {:label (str "Access an additional card in " name)
              :cost [:power 2]
              :req (req run)
+             :keep-menu-open :while-2-power-tokens-left
              :msg (msg "access 1 additional card from " name " for the remainder of the run")
-             :effect (req (access-bonus state side server 1))})
+             :effect (effect (register-events
+                              card [(breach-access-bonus server 1 {:duration :end-of-run})]))})
           (ttw-bounce [name server]
             {:label (str "Shortcut: Bounce " name)
              :cost [:click 1]
+             :keep-menu-open :while-clicks-left
              :msg (msg "bounce off of " name " for a token (shortcut)")
-             :effect (effect (add-counter card :power 1))})]
+             :effect (req (add-counter state :runner card :power 1)
+                          (swap! state assoc-in [:runner :register :made-click-run] true)
+                          (swap! state update-in [:runner :register :unsuccessful-run] conj server)
+                          (swap! state update-in [:runner :register :made-run] conj server))})]
     {:events [{:event :agenda-stolen
                :effect (effect (update! (assoc card :agenda-stolen true)))
                :silent (req true)}
@@ -2776,7 +3256,7 @@
                :effect (req (when (and (not (:agenda-stolen card))
                                        (#{:hq :rd} (target-server target)))
                               (add-counter state side card :power 1)
-                              (system-msg state :runner (str "places a power counter on " (:title card))))
+                              (system-msg state :runner (str "uses " (:title card) " to place 1 power counter on itself")))
                          (update! state side (dissoc (get-card state card) :agenda-stolen)))
                :silent (req true)}]
      :abilities [(ttw-ab "R&D" :rd)
@@ -2784,13 +3264,41 @@
                  (ttw-bounce "R&D" :rd)
                  (ttw-bounce "HQ" :hq)]}))
 
+(defcard "The Twinning"
+  {:events [{:event :spent-credits-from-card
+             :req (req (and
+                         (installed? target)
+                         (first-event? state side :spent-credits-from-card #(installed? (first %)))))
+             :async true
+             :msg "place a power counter on itself"
+             :effect (req (add-counter state :runner card :power 1 {:placed true})
+                          (effect-completed state side eid))}
+            {:event :breach-server
+             :async true
+             :req (req (and (or (= :rd target)
+                                (= :hq target))
+                            (< 0 (get-counters card :power))))
+             :effect (req
+                       (let [target-server target]
+                         (continue-ability
+                           state side
+                           {:req (req (< 0 (get-counters card :power)))
+                            :prompt (msg (format "How many additional %s accesses do you want to make?" (if (= :rd target-server) "R&D" "HQ")))
+                            :choices {:number (req (min 2 (get-counters card :power)))
+                                      :default (req (min 2 (get-counters card :power)))}
+                            :msg (msg "access " (quantify target "additional card") " from "
+                                      (if (= :rd target-server) "R&D" "HQ"))
+                            :async true
+                            :effect (effect (access-bonus target-server (max 0 target))
+                                            (add-counter :runner card :power (- target) {:placed true})
+                                            (effect-completed eid))}
+                           card nil)))}]})
+
 (defcard "Theophilius Bagbiter"
-  {:constant-effects [{:type :hand-size
-                       :req (req (= :runner side))
-                       :value (req (:credit runner))}]
-   :async true
-   :effect (req (swap! state assoc-in [:runner :hand-size :base] 0)
-                (lose-credits state :runner eid :all))
+  {:constant-effects [(runner-hand-size+ (req (:credit runner)))]
+   :on-install {:async true
+                :effect (req (swap! state assoc-in [:runner :hand-size :base] 0)
+                             (lose-credits state :runner eid :all))}
    :leave-play (req (swap! state assoc-in [:runner :hand-size :base] 5))})
 
 (defcard "Thunder Art Gallery"
@@ -2798,7 +3306,8 @@
                             (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                  (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
         ability {:async true
-                 :prompt "Select a card to install with Thunder Art Gallery"
+                 :prompt "Choose a card in the grip"
+                 :waiting-prompt true
                  :choices
                  {:req (req (and (runner? target)
                                  (in-hand? target)
@@ -2820,28 +3329,33 @@
                      :req (req (and (first-event-check state no-event? first-event?)
                                     (seq (filter #(some #{:tag} %) targets)))))]}))
 
+(defcard "Tri-maf Contact"
+  {:abilities [{:cost [:click 1]
+                :msg "gain 2 [Credits]"
+                :once :per-turn
+                :async true
+                :effect (effect (gain-credits eid 2))}]
+   :on-trash {:async true
+              :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}})
+
 (defcard "Trickster Taka"
   (companion-builder
     ;; companion-builder: pay-credits req
     (req (and (= :ability (:source-type eid))
               (program? target)
               run))
-    ;; companion-builder: turn-ends-effect
-    (effect (show-wait-prompt :corp "Runner to take decision on Trickster Taka")
-            (continue-ability
-              {:prompt "Take 1 tag or trash Trickster Taka?"
-               :choices ["Take 1 tag" "Trash"]
-               :player :runner
-               :async true
-               :effect (req (clear-wait-prompt state :corp)
-                            (if (= target "Trash")
-                              (do
-                                (system-msg state :runner "trashes Trickster Taka")
-                                (trash state :runner eid card nil))
-                              (do
-                                (system-msg state :runner "takes 1 tag to avoid trashing Trickster Taka")
-                                (gain-tags state :runner eid 1))))}
-              card nil))
+    ;; companion-builder: turn-ends-ability
+    {:prompt "Choose one"
+     :waiting-prompt true
+     :choices ["Take 1 tag" "Trash Trickster Taka"]
+     :player :runner
+     :msg (msg (if (= target "Trash Trickster Taka")
+                 "trash itself"
+                 (decapitalize target)))
+     :async true
+     :effect (req (if (= target "Trash Trickster Taka")
+                    (trash state :runner eid card {:cause-card card})
+                    (gain-tags state :runner eid 1)))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     run
@@ -2853,20 +3367,48 @@
                   (wait-for (gain-credits state side 1)
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
 
-(defcard "Tri-maf Contact"
-  {:abilities [{:cost [:click 1]
-                :msg "gain 2 [Credits]"
-                :once :per-turn
-                :async true
-                :effect (effect (gain-credits eid 2))}]
-   :on-trash {:async true
-              :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}})
+(defcard "Tsakhia \"Bankhar\" Gantulga"
+  (let [subroutine {:variable true
+                    :sub-effect (do-net-damage 1)}
+        matches-server (fn [target card state side]
+                         (= (:card-target card)
+                            (zone->name (second (get-zone target)))))
+        ability {:prompt "Choose a server"
+                 :label "Choose a server (start of turn)"
+                 :choices (req (conj servers "No server"))
+                 :interactive (req true)
+                 :waiting-prompt true
+                 :msg (msg "target " target)
+                 :req (req (and (:runner-phase-12 @state)
+                                (not (used-this-turn? (:cid card) state))))
+                 :effect (req (when (not= target "No server")
+                                (update! state side (assoc card :card-target target))))}]
+    {:events [(assoc ability :event :runner-turn-begins)
+              {:event :encounter-ice
+               :req (req (and
+                           (matches-server (:ice target) card state side)
+                           (first-event? state side :encounter-ice #(matches-server (:ice (first %)) card state side))))
+               :effect (effect
+                         (register-events
+                           card
+                           [{:event :pre-resolve-subroutine
+                             :duration :end-of-encounter
+                             :async true
+                             :msg "force the Corp to resolve \"[Subroutine] Do 1 net damage\""
+                             :effect (req (update-current-encounter state :replace-subroutine subroutine)
+                                          (effect-completed state side eid))}]))}
+              {:event :runner-turn-ends
+               :silent (req true)
+               :effect (effect (update! (dissoc card :card-target)))}]
+     :abilities [ability]}))
 
 (defcard "Tyson Observatory"
-  {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
-                :label "search stack for a hardware"
+  {:abilities [{:prompt "Choose a piece of Hardware"
+                :msg (msg "add " (:title target) " to their Grip")
+                :label "Search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [:click 2]
+                :keep-menu-open :while-2-clicks-left
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (move target :hand))}]})
@@ -2886,7 +3428,14 @@
 
 (defcard "Utopia Shard"
   (shard-constructor "Utopia Shard" :hq "force the Corp to discard 2 cards from HQ at random"
-                     (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp)))))))
+                     (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp))) {:cause-card card}))))
+
+(defcard "Verbal Plasticity"
+  {:events [{:event :runner-click-draw
+             :req (req (genetics-trigger? state side :runner-click-draw))
+             :msg "draw 1 additional card"
+             :async true
+             :effect (effect (draw-bonus 1))}]})
 
 (defcard "Virus Breeding Ground"
   {:events [{:event :runner-turn-begins
@@ -2918,8 +3467,8 @@
 (defcard "Whistleblower"
   {:events [{:event :successful-run
              :optional
-             {:autoresolve (get-autoresolve :auto-name-agenda)
-              :prompt "Trash Whistleblower to name an agenda?"
+             {:autoresolve (get-autoresolve :auto-fire)
+              :prompt "Name an agenda?"
               :yes-ability
               {:async true
                :prompt "Name an agenda"
@@ -2937,8 +3486,8 @@
                                      :async true
                                      :req (req (= (:title target) named-agenda))
                                      :effect (effect (steal eid target))}]))
-                               (trash eid card {:unpreventable true}))}}}]
-   :abilities [(set-autoresolve :auto-name-agenda "Whistleblower's ability")]})
+                               (trash eid card {:unpreventable true :cause-card card}))}}}]
+   :abilities [(set-autoresolve :auto-fire "Whistleblower")]})
 
 (defcard "Wireless Net Pavilion"
   {:constant-effects [{:type :card-ability-additional-cost
@@ -2957,18 +3506,18 @@
                  :async true
                  :effect (req (wait-for
                                 (reveal state side (first (:deck corp)))
-                                (show-wait-prompt state :runner "Corp to decide whether or not to draw with Woman in the Red Dress")
                                 (continue-ability
                                   state side
                                   {:optional
                                    {:player :corp
+                                    :waiting-prompt true
                                     :prompt (msg "Draw " (:title (first (:deck corp))) "?")
-                                    :yes-ability {:async true
-                                                  :effect (effect (clear-wait-prompt :runner)
-                                                                  (system-msg (str "draws " (:title (first (:deck corp)))))
-                                                                  (draw eid 1 nil))}
-                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
-                                                                 (system-msg "doesn't draw with Woman in the Red Dress"))}}}
+                                    :yes-ability
+                                    {:async true
+                                     :effect (effect (system-msg (str "draws " (:title (first (:deck corp)))))
+                                                     (draw eid 1))}
+                                    :no-ability
+                                    {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
                                   card nil)))}]
     {:events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
@@ -2980,15 +3529,15 @@
                                                            (all-active-installed state :runner))))))}
    :events [{:event :runner-turn-begins
              :async true
-             :effect (req (lose state side :click 1)
+             :effect (req (lose-clicks state side 1)
                           (if (get-in @state [:per-turn (:cid card)])
                             (effect-completed state side eid)
                             (do (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
-                                (draw state side eid 2 nil))))}]
+                                (draw state side eid 2))))}]
    :abilities [{:msg "draw 2 cards and lose [Click]"
                 :once :per-turn
                 :async true
-                :effect (effect (draw eid 2 nil))}]})
+                :effect (effect (draw eid 2))}]})
 
 (defcard "Xanadu"
   {:constant-effects [{:type :rez-cost

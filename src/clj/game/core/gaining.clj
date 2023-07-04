@@ -94,13 +94,31 @@
   ([state side eid amount args]
    (if (and amount
             (or (= :all amount)
-                (pos? amount)))
+                (pos? amount))
+            (pos? (:credit (side @state))))
      (do (lose state side :credit amount)
          (when (and (= side :runner)
                     (= :all amount))
            (lose state :runner :run-credit :all))
          (trigger-event-sync state side eid (if (= :corp side) :corp-credit-loss :runner-credit-loss) amount args))
      (effect-completed state side eid))))
+
+(defn gain-clicks
+  ([state side amount] (gain-clicks state side amount nil))
+  ([state side amount args]
+    (when (and amount
+               (pos? amount))
+      (do (gain state side :click amount)
+          (trigger-event state side (if (= :corp side) :corp-click-gain :runner-click-gain) amount args)))))
+
+(defn lose-clicks
+  ([state side amount] (lose-clicks state side amount nil))
+  ([state side amount args]
+    (when (and amount
+               (or (= :all amount)
+                   (pos? amount)))
+      (do (lose state side :click amount)
+          (trigger-event state side (if (= :corp side) :corp-click-loss :runner-click-loss) amount args)))))
 
 ;;; Stuff for handling {:base x :mod y} data structures
 (defn base-mod-size
@@ -109,27 +127,3 @@
   (let [base (get-in @state [side prop :base] 0)
         mod (get-in @state [side prop :mod] 0)]
     (+ base mod)))
-
-(defn available-mu
-  "Returns the available MU the runner has"
-  [state]
-  (- (base-mod-size state :runner :memory)
-     (get-in @state [:runner :memory :used] 0)))
-
-(defn toast-check-mu
-  "Check runner has not exceeded, toast if they have"
-  [state]
-  (when (neg? (available-mu state))
-    (toast state :runner "You have exceeded your memory units!")))
-
-(defn free-mu
-  "Frees up specified amount of mu (reduces :used)"
-  ([state _ n] (free-mu state n))
-  ([state n]
-   (deduct state :runner [:memory {:used n}])))
-
-(defn use-mu
-  "Increases amount of mu used (increased :used)"
-  ([state _ n] (use-mu state n))
-  ([state n]
-   (gain state :runner :memory {:used n})))

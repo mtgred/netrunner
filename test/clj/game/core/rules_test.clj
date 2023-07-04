@@ -27,35 +27,44 @@
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
       (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
-(deftest runner-installing-uniques
-  ;; Installing a copy of an active unique Runner card is prevented
+(deftest installing-second-unique-trashes-first-unique-test
   (do-game
-    (new-game {:runner {:deck [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
-                               "Off-Campus Apartment" (qty "Hivemind" 2)]}})
+    (new-game {:runner {:hand [(qty "Kati Jones" 2)]
+                        :credits 100}})
     (take-credits state :corp)
-    (core/gain state :runner :click 1 :memory 2)
-    (core/draw state :runner 2)
+    (play-from-hand state :runner "Kati Jones")
+    (play-from-hand state :runner "Kati Jones")
+    (is (find-card "Kati Jones" (get-resource state)))
+    (is (last-log-contains? state "Kati Jones is trashed."))))
+
+(deftest installing-second-unique-on-off-campus-apartment-trashes-first-test
+  (do-game
+    (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
+                        :credits 100}})
+    (take-credits state :corp)
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
-    (play-from-hand state :runner "Scheherazade")
-    (let [oca (get-resource state 1)
-          scheh (get-program state 0)]
-      (card-ability state :runner scheh 0)
-      (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= "Hivemind" (:title (first (:hosted (refresh scheh))))) "Hivemind hosted on Scheherazade")
-      (play-from-hand state :runner "Kati Jones")
-      (is (= 1 (:click (get-runner))) "Not charged a click")
-      (is (= 2 (count (get-resource state))) "2nd copy of Kati couldn't install")
+    (let [oca (get-resource state 1)]
       (card-ability state :runner oca 0)
       (click-card state :runner (find-card "Kati Jones" (:hand (get-runner))))
-      (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
-      (is (= 1 (:click (get-runner))) "Not charged a click")
-      (play-from-hand state :runner "Hivemind")
-      (is (= 1 (count (get-program state))) "2nd copy of Hivemind couldn't install")
+      (is (find-card "Kati Jones" (:hosted (refresh oca))))
+      (is (= "Kati Jones" (:title (get-discarded state :runner))))
+      (is (last-log-contains? state "Kati Jones is trashed.")))))
+
+(deftest installing-second-hivemind-trashes-hosted-hivemind-test
+  (do-game
+    (new-game {:runner {:hand ["Scheherazade" (qty "Hivemind" 2)]
+                        :credits 100}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Scheherazade")
+    (let [scheh (get-program state 0)]
       (card-ability state :runner scheh 0)
       (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
-      (is (= 1 (:click (get-runner))) "Not charged a click"))))
+      (is (find-card "Hivemind" (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade")
+      (play-from-hand state :runner "Hivemind")
+      (is (= "Hivemind" (:title (get-discarded state :runner))))
+      (is (last-log-contains? state "Hivemind hosted on Scheherazade is trashed."))
+      (is (empty? (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade"))))
 
 (deftest deactivate-program
   ;; deactivate - Program; ensure MU are restored
@@ -103,11 +112,10 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Off-Campus Apartment")
-    (play-from-hand state :runner "Compromised Employee")
     (let [iwall (get-ice state :hq 0)
           apt (get-resource state 0)]
-      (card-ability state :runner apt 1) ; use Off-Campus option to host an installed card
-      (click-card state :runner (find-card "Compromised Employee" (get-resource state)))
+      (card-ability state :runner apt 0) ; use Off-Campus option to host a card
+      (click-card state :runner "Compromised Employee")
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
@@ -148,8 +156,8 @@
       (rez state :corp jh1)
       (click-card state :runner (refresh hqiwall0))
       (is (= (core/card-str state (refresh hqiwall0)) "Ice Wall protecting HQ at position 0"))
-      (is (= (core/card-str state (refresh hqiwall1)) "ICE protecting HQ at position 1"))
-      (is (= (core/card-str state (refresh rdiwall)) "ICE protecting R&D at position 0"))
+      (is (= (core/card-str state (refresh hqiwall1)) "ice protecting HQ at position 1"))
+      (is (= (core/card-str state (refresh rdiwall)) "ice protecting R&D at position 0"))
       (is (= (core/card-str state (refresh rdiwall) {:visible true})
              "Ice Wall protecting R&D at position 0"))
       (is (= (core/card-str state (refresh jh1)) "Jackson Howard in Server 1"))
@@ -169,8 +177,8 @@
       ;; Trying to score without any tokens does not do anything
       (is (not (find-card "Ancestral Imager" (:scored (get-corp)))) "AI not scored")
       (is (not (nil? (get-content state :remote1 0))))
-      (core/advance state :corp {:card (refresh ai)})
-      (core/score state :corp {:card (refresh ai)})
+      (click-advance state :corp (refresh ai))
+      (score state :corp (refresh ai))
       (is (not (nil? (get-content state :remote1 0)))))))
 
 (deftest trash-corp-hosted
@@ -260,7 +268,7 @@
     (is (not (:seen (get-content state :remote2 0))) "New asset is unseen")))
 
 (deftest all-installed-runner-test
-  ;; Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs
+  ;; Tests all-installed for programs hosted on ice, nested hosted programs, and non-installed hosted programs
   (do-game
     (new-game {:corp {:deck ["Wraparound"]}
                :runner {:deck ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]}})
@@ -268,7 +276,7 @@
     (let [wrap (get-ice state :hq 0)]
       (rez state :corp wrap)
       (take-credits state :corp)
-      (core/draw state :runner)
+      (draw state :runner)
       (core/gain state :runner :credit 7)
       (play-from-hand state :runner "Knight")
       (play-from-hand state :runner "Personal Workshop")
@@ -297,7 +305,7 @@
             (is (not-empty (filter #(= (:title %) "Mimic") all-installed)) "Mimic is in all-installed")
             (is (not-empty (filter #(= (:title %) "Omni-drive") all-installed)) "Omni-drive is in all-installed")
             (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
-            (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
+            (is (empty? (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
 (deftest log-accessed-names
   ;; Check that accessed card names are logged - except those on R&D, and no logs on archives
@@ -392,36 +400,6 @@
       (take-credits state :corp)
       (is (= 0 (get-counters (refresh iw) :virus)) "Purging removed Ice Wall counters"))))
 
-(deftest virus-counter-flags
-  (testing "Set counter flag when virus card enters play with counters"
-    (do-game
-      (new-game {:runner {:deck ["Surge" "Imp" "Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Imp")
-      (let [imp (get-program state 0)]
-        (is (get-in imp [:added-virus-counter]) "Counter flag was set on Imp"))))
-  (testing "Set counter flag when add-prop is called on a virus"
-    (do-game
-      (new-game {:runner {:deck ["Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Crypsis")
-      (let [crypsis (get-program state 0)]
-        (card-ability state :runner crypsis 2) ;click to add a virus counter
-        (is (= 1 (get-counters (refresh crypsis) :virus)) "Crypsis added a virus token")
-        (is (get-in (refresh crypsis) [:added-virus-counter])
-            "Counter flag was set on Crypsis"))))
-  (testing "Clear the virus counter flag at the end of each turn"
-    (do-game
-      (new-game {:runner {:deck ["Crypsis"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Crypsis")
-      (let [crypsis (get-program state 0)]
-        (card-ability state :runner crypsis 2) ; click to add a virus counter
-        (take-credits state :runner 2)
-        (take-credits state :corp 1)
-        (is (not (get-in (refresh crypsis) [:added-virus-counter]))
-            "Counter flag was cleared on Crypsis")))))
-
 (deftest end-the-run-test
   ;; Since all ETR ice share a common ability, we only need one test
   (do-game
@@ -439,9 +417,8 @@
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
-(deftest auto-pump-breakers
-  ;; Breaker get a dynamic ability that matches the strength of the encountered ice
-  (testing "Single pump"
+(deftest auto-pump-breakers-single-pump
+    ;; Single pump
     (do-game
       (new-game {:corp {:deck ["Masvingo"]}
                  :runner {:deck ["Laamb"]}})
@@ -458,7 +435,9 @@
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh laamb)})
         (is (= 8 (get-strength (refresh laamb))) "Laamb is at 8 strength")
         (is (= 3 (:credit (get-runner))) "Spent 3 to pump"))))
-  (testing "Multi pump"
+
+(deftest auto-pump-breakers-multi-pump
+    ;; Multi pump
     (do-game
       (new-game {:corp {:deck ["Masvingo"]}
                  :runner {:deck ["Ankusa"]}})
@@ -474,10 +453,10 @@
         (is (= 4 (:credit (get-runner))) "Spent 6 to install")
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
         (is (= 3 (get-strength (refresh ank))) "Ankusa is at 3 strength")
-        (is (= 1 (:credit (get-runner))) "Spent 3 to pump")))))
+        (is (= 1 (:credit (get-runner))) "Spent 3 to pump"))))
 
-(deftest autoresolve
-  (testing "Aeneas with and without autoresolve"
+(deftest autoresolve-aeneas-with-and-without-autoresolve
+    ;; Aeneas with and without autoresolve
     (do-game
      (new-game {:corp {:deck ["Jackson Howard"]}
                 :runner {:deck [(qty "Aeneas Informant" 2)]}})
@@ -495,11 +474,11 @@
          (run-jackson)
          (is (changes-credits (get-runner) 1 ; triggering Aeneas should grant a credit
                               (click-prompt state :runner "Yes")))
-         (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+         (is (no-prompt? state :runner) "No Aeneas prompt displaying")
          (run-jackson)
          (is (changes-credits (get-runner) 0 ; not triggering Aeneas should not grant a credit
                               (click-prompt state :runner "No")))
-         (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+         (is (no-prompt? state :runner) "No Aeneas prompt displaying")
          (card-ability state :runner (get-aeneas1) 0)
          (click-prompt state :runner "Ask"))
        ;; if aeneas is set to always/never fire, we should get to run without being prompted
@@ -507,24 +486,26 @@
        (click-prompt state :runner "Never")
        (is (changes-credits (get-runner) 0
                             (run-jackson)))
-       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+       (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        (card-ability state :runner (get-aeneas1) 0)
        (click-prompt state :runner "Always")
        (is (changes-credits (get-runner) 1
                             (run-jackson)))
-       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+       (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        ;; should also be able to play a new aeneas which doesn't care about the first one's autoresolve
        (play-from-hand state :runner "Aeneas Informant")
        (is (changes-credits (get-runner) 2
                             (do (run-jackson)
                                 (click-prompt state :runner "Yes"))))
-       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying")
+       (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        (card-ability state :runner (get-resource state 1) 0)
        (click-prompt state :runner "Never")
        (is (changes-credits (get-runner) 1
                             (run-jackson)))
-       (is (empty? (:prompt (get-runner))) "No Aeneas prompt displaying"))))
-  (testing "Fisk + FTT with and without autoresolve"
+       (is (no-prompt? state :runner) "No Aeneas prompt displaying"))))
+
+(deftest autoresolve-fisk-ftt-with-and-without-autoresolve
+    ;; Fisk + FTT with and without autoresolve
     (do-game
      (new-game {:corp {:deck [(qty "Archer" 30)]}
                 :runner {:id "Laramy Fisk: Savvy Investor"
@@ -567,18 +548,18 @@
        ;; if either is set to 'never', we should not need simult event resolution
        (set-fisk-autoresolve "Ask")
        (set-ftt-autoresolve "Never")
-       (is (empty? (:prompt (get-runner))) "No prompts displaying")
+       (is (no-prompt? state :runner) "No prompts displaying")
        (run-empty-server state "Archives")
        (is (= "Laramy Fisk: Savvy Investor" (-> @state :runner :prompt first :card :title)) "Fisk prompt is open")
        (click-prompt state :runner "No")
-       (is (empty? (:prompt (get-runner))) "No prompts displaying")
+       (is (no-prompt? state :runner) "No prompts displaying")
        (pass-turn-runner-corp)
        ;; if one is 'never' and the other is 'always', still do not need simult resolution
        (set-fisk-autoresolve "Never")
        (set-ftt-autoresolve "Always")
        (run-empty-server state "Archives")
        (click-prompt state :runner "OK")
-       (is (empty? (:prompt (get-runner))) "No prompts displaying")
+       (is (no-prompt? state :runner) "No prompts displaying")
        (pass-turn-runner-corp)
        ;; if one is set to 'always', and the other to 'Ask' we do need simult event resolution
        (set-fisk-autoresolve "Always")
@@ -589,8 +570,10 @@
        (changes-val-macro 1 (count (get-in @state [:corp :hand]))
                           "Fisk triggers after closing FTT prompt"
                           (click-prompt state :runner "OK"))
-       (is (empty? (:prompt (get-runner))) "No prompts displaying"))))
-  (testing "Ensure autoresolve does not break prompts with a :req"
+       (is (no-prompt? state :runner) "No prompts displaying"))))
+
+(deftest autoresolve-ensure-autoresolve-does-not-break-prompts-with-a-req
+    ;; Ensure autoresolve does not break prompts with a :req
     (do-game
      (new-game {:corp {:id "SSO Industries: Fueling Innovation"
                        :deck ["Underway Renovation" (qty "Ice Wall" 3)]}})
@@ -600,25 +583,26 @@
        (toggle-sso "Always")
        (play-from-hand state :corp "Underway Renovation" "New remote")
        (take-credits state :corp)
-       (is (empty? (:prompt (get-corp))) "No prompts displaying, as conditions are not satisfied")
+       (is (no-prompt? state :corp) "No prompts displaying, as conditions are not satisfied")
        (take-credits state :runner)
        (play-from-hand state :corp "Ice Wall" "New remote")
        (toggle-sso "Never")
        (take-credits state :corp)
-       (is (empty? (:prompt (get-corp))) "No prompts displaying, as conditions are not satisfied")
+       (is (no-prompt? state :corp) "No prompts displaying, as conditions are not satisfied")
        (take-credits state :runner)
        (toggle-sso "Always")
        (take-credits state :corp)
-       (is (= "Select ICE with no advancement tokens to place 1 advancement token on"
-              (-> @state :corp :prompt first :msg))
-           "SSO autoresolved first prompt")
+       (is (= "Choose a piece of ice with no advancement tokens to place 1 advancement token on"
+              (:msg (get-prompt state :corp))) "SSO autoresolved first prompt")
        (click-card state :corp (get-ice state :remote2 0))
        (is (= 1 (get-counters (get-ice state :remote2 0) :advancement)) "A token was added")
-       (is (empty? (:prompt (get-corp))) "No prompt displaying")
+       (is (no-prompt? state :corp) "No prompt displaying")
        (take-credits state :runner)
        (take-credits state :corp)
-       (is (empty? (:prompt (get-corp))) "No prompt displaying, as conditions are not met"))))
-  (testing "CtM autoresolve"
+       (is (no-prompt? state :corp) "No prompt displaying, as conditions are not met"))))
+
+(deftest autoresolve-ctm-autoresolve
+    ;; CtM autoresolve
     (do-game
       (new-game {:corp {:id "NBN: Controlling the Message"
                         :deck [(qty "Rashida Jaheem" 3)]}})
@@ -642,8 +626,8 @@
         (click-prompt state :runner "Pay 1 [Credits] to trash")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (empty? (:prompt (get-corp))) "No prompt displaying for Corp")
-        (is (empty? (:prompt (get-runner))) "No prompt displaying for Runner")))))
+        (is (no-prompt? state :corp) "No prompt displaying for Corp")
+        (is (no-prompt? state :runner) "No prompt displaying for Runner"))))
 
 (deftest no-scoring-after-terminal
   (do-game
@@ -657,11 +641,11 @@
       (let [credits (:credit (get-corp))]
         (play-from-hand state :corp "IPO")
         (is (= (+ 5 credits) (:credit (get-corp))) "Corp gains 5 credits from IPO"))
-      (core/score state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
       (is (refresh ht) "Hostile Takeover isn't scored because a terminal Operation was played")
       (take-credits state :corp)
       (take-credits state :runner)
-      (core/score state :corp {:card (refresh ht)})
+      (score state :corp (refresh ht))
       (is (nil? (refresh ht)) "Hostile Takeover is scored because it's the Corp's turn again")
       (is (= "Hostile Takeover" (:title (get-scored state :corp 0)))))))
 
@@ -733,7 +717,8 @@
                :runner {:hand ["Security Testing"]}})
     (play-from-hand state :corp "Rashida Jaheem" "New remote")
     (take-credits state :corp)
-    (core/runner-install state :runner (find-card "Security Testing" (:hand (get-runner))) {:facedown true})
+    (play-from-hand state :runner "Security Testing")
+    (core/update! state :runner (assoc (get-resource state 0) :facedown true))
     (take-credits state :runner)
     (is (:corp-phase-12 @state) "Facedown corp cards can be rezzed so trigger phase 1.2")
     (end-phase-12 state :corp)
@@ -752,7 +737,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Boomerang")
     (let [icew (get-ice state :hq 0)
-          boom (get-hardware state 0)
           yagi (get-scored state :corp 0)]
       (click-card state :runner icew)
       (run-on state :hq)

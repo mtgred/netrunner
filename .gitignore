@@ -16,12 +16,15 @@ pom.xml
 .nrepl-history
 .rebel_readline_history
 .idea
+.eastwood
+.cache
 
 /resources/public/js/
 /resources/public/cljs/
-/resources/public/lib/
+/resources/public/cljs-out/
 /resources/public/css/
-/resources/public/img/cards
+/resources/public/img/cards/
+/resources/public/sound/
 /data/andb-*.json
 /data/cards.edn
 /data/cycles.edn
@@ -32,6 +35,7 @@ pom.xml
 /.lein-failures
 
 config.edn
+resources/prod.edn
 
 # MongoDB files
 *.wt
@@ -44,3 +48,11 @@ data/storage.bson
 
 #Calva
 .calva/*
+
+tags
+tags.temp
+tags.temp.tmp
+
+.lsp/
+.shadow-cljs/
+tests-user.edn

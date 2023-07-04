@@ -63,17 +63,18 @@
   ([state] (first-trash? state (constantly true)))
   ([state pred]
    (= 1 (+ (event-count state nil :runner-trash pred)
-           (event-count state nil :corp-trash pred)))))
+           (event-count state nil :corp-trash pred)
+           (event-count state nil :game-trash pred)))))
 
 (defn get-turn-damage
   "Returns the value of damage take this turn"
   [state _]
-  (apply + (map #(nth % 2) (turn-events state :runner :damage))))
+  (apply + (keep #(:amount (first %)) (turn-events state :runner :damage))))
 
 (defn get-installed-trashed
   "Returns list of cards trashed this turn owned by side that were installed"
   [state side]
-  (->> (turn-events state side (keyword (str (name side) "-trash")))
+  (->> (turn-events state side (if (= :corp side) :corp-trash :runner-trash))
        (mapcat (fn [targets] (filter #(installed? (:card %)) targets)))))
 
 (defn first-installed-trash?
@@ -90,9 +91,11 @@
 ;; Functions for run event parsing
 (defn run-events
   "Returns the targets vectors of each run event with the given key that was triggered this run."
-  [state _ ev]
-  (when (:run @state)
-    (mapcat rest (filter #(= ev (first %)) (get-in @state [:run :events])))))
+  ([state _ ev]
+   (when (:run @state)
+     (run-events (:run @state) ev)))
+  ([run ev]
+   (mapcat rest (filter #(= ev (first %)) (:events run)))))
 
 (defn no-run-event?
   "Returns true if the given run event has not happened yet this run.

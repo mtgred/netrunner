@@ -1,26 +1,25 @@
 (ns game.utils
   (:require
     [jinteki.cards :refer [all-cards]]
-    [clojure.string :as string]
-    [clojure.stacktrace :refer [print-stack-trace]]
+    [clojure.string :as str]
     [clj-uuid :as uuid]))
 
 (defn make-cid []
   (uuid/to-string (uuid/v4)))
 
 (defn server-card
-  [title]
-  (let [card (get @all-cards title)]
-    (if (and title card)
-      card
-      (.println *err* (with-out-str
-                        (print-stack-trace
-                          (Exception. (str "Tried to select server-card for " title))
-                          2500))))))
+  ([title] (server-card title true))
+  ([title strict?]
+   (let [card (get @all-cards title)]
+     (cond
+       (and title card) card
+       (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
+       :else (when strict?
+               (throw (Exception. (str "Tried to select server-card for " title))))))))
 
 (defn server-cards
   []
-  (vals @jinteki.cards/all-cards))
+  (vals @all-cards))
 
 (defn abs [n] (max n (- n)))
 
@@ -33,38 +32,11 @@
   (let [[head tail] (split-with (complement pred) coll)]
     (vec (concat head (rest tail)))))
 
-(defn card-is?
-  "Checks the property of the card to see if it is equal to the given value,
-  as either a string or a keyword"
-  [card property value]
-  (let [cv (property card)]
-    (cond
-      (or (keyword? cv)
-          (and (string? value)
-               (string? cv)))
-      (= value cv)
-
-      (and (keyword? value)
-           (string? cv))
-      (= value (keyword (string/lower-case cv)))
-
-      :else
-      (= value cv))))
-
 (defn to-keyword [string]
   (cond
-
-    (= "[Credits]" string)
-    :credit
-
-    (string? string)
-    (keyword (string/lower-case string))
-
-    :else
-    string))
-
-(defn vdissoc [v n]
-  (vec (concat (subvec v 0 n) (subvec v (inc n)))))
+    (= "[Credits]" string) :credit
+    (string? string) (keyword (str/lower-case string))
+    :else string))
 
 (defn distinct-by [f coll]
   (letfn [(step [xs seen]
@@ -81,7 +53,7 @@
       (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
   (catch Exception _ nil)))
 
-(def safe-split (fnil string/split ""))
+(def safe-split (fnil str/split ""))
 
 (defn dissoc-in
   "Dissociates an entry from a nested associative structure returning a new
@@ -96,13 +68,6 @@
           (dissoc m k)))
       m)
     (dissoc m k)))
-
-(defn click-spent?
-  "Returns true if player has spent at least one click"
-  [side state]
-  (case side
-    :runner (contains? (into {} (get @state :turn-events)) :runner-spent-click)
-    :corp   (contains? (into {} (get @state :turn-events)) :corp-spent-click)))
 
 (defn used-this-turn?
   "Returns true if a card has been used this turn"
@@ -133,36 +98,6 @@
           (some? id2)
           (= id1 id2)))))
 
-(defn combine-subtypes
-  "Takes an existing subtype-string, adds in the new-subtypes, and removes
-  duplicates if is-distinct is truthy"
-  [is-distinct subtype-string & new-subtypes]
-  (let [do-distinct #(if is-distinct (distinct %) %)]
-    (->> (string/split (or subtype-string " - ") #" - ")
-         (concat new-subtypes)
-         do-distinct
-         (string/join " - "))))
-
-(defn remove-subtypes
-  "Takes an existing subtype-string and removes all instances of
-  subtypes-to-remove"
-  [subtype-string & subtypes-to-remove]
-  (->> (string/split (or subtype-string " - ") #" - ")
-       (remove #(some #{%} subtypes-to-remove))
-       (string/join " - ")))
-
-(defn remove-subtypes-once
-  "Takes an existing subtype-string and removes one instance of
-  each subtypes-to-remove"
-  [subtype-string & subtypes-to-remove]
-  (let [subtypes-to-remove (flatten subtypes-to-remove)
-        types (string/split (or subtype-string " - ") #" - ")
-        part (string/join " - " (remove-once #(= % (first subtypes-to-remove)) types))
-        left (rest subtypes-to-remove)]
-    (if-not (empty? left)
-      (remove-subtypes-once part left)
-      part)))
-
 (defn pluralize
   "Makes a string plural based on the number n. Takes specific suffixes for singular and plural cases if necessary."
   ([string n] (pluralize string "s" n))
@@ -179,6 +114,15 @@
   ([n string suffix] (str n " " (pluralize string suffix n)))
   ([n string single-suffix plural-suffix]
    (str n " " (pluralize string single-suffix plural-suffix n))))
+
+(defn enumerate-str
+  "Joins a collection to a string, seperated by commas and 'and' in front of
+  the last item. If collection only has one item, justs returns that item
+  without seperators. Returns an empty string if coll is empty."
+  [strings]
+  (if (<= (count strings) 2)
+    (str/join " and " strings)
+    (str (apply str (interpose ", " (butlast strings))) ", and " (last strings))))
 
 (defn in-coll?
   "true if coll contains elm"

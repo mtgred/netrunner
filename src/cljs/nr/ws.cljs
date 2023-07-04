@@ -1,49 +1,72 @@
 (ns nr.ws
-  (:require-macros
-    [cljs.core.async.macros :as asyncm :refer [go go-loop]])
   (:require
-    [cljs.core.async :as async :refer [<! >! put! chan]]
-    [nr.cardbrowser :refer [non-game-toast] :as cb]
-    [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
+   [nr.ajax :refer [?csrf-token]]
+   [nr.appstate :refer [app-state current-gameid]]
+   [nr.utils :refer [non-game-toast]]
+   [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
-(let [{:keys [chsk ch-recv send-fn state]}
-      (sente/make-channel-socket! "/ws" {:type :ws})]
-  (def chsk       chsk)
-  (def <ws-recv ch-recv) ; ChannelSocket's receive channel
-  (def ws-send! send-fn) ; ChannelSocket's send API fn
-  (def chsk-state state)   ; Watchable, read-only atom
-  )
+(defonce lock (atom false))
 
-(enable-console-print!)
+(if-not ?csrf-token
+  (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
+  (let [{:keys [chsk ch-recv send-fn]}
+        (sente/make-channel-socket-client!
+          "/chsk"
+          ?csrf-token
+          {:type :auto
+           :wrap-recv-evs? false})]
+    (def chsk chsk)
+    (def ch-chsk ch-recv)
+    (defn ws-send!
+      ([ev] (send-fn ev))
+      ([ev ?timeout ?cb] (send-fn ev ?timeout ?cb)))))
 
-(let [ws-handlers (atom {})]
-  (defn register-ws-handler! [event handler-fn]
-    (swap! ws-handlers assoc event handler-fn))
+(defmulti event-msg-handler
+  "Multimethod to handle Sente `event-msg`s"
+  :id)
 
-  (defn handle-state-msg [[old-state new-state]]
-    (when (= (:type old-state) (:type new-state))
-      (when (and (:open? old-state)
-                 (not (:open? new-state))
-                 (not (:first-open? new-state)))
-        (cb/non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
-      (when (and (not (:open? old-state))
-                 (:open? new-state)
-                 (not (:first-open? new-state)))
-        (.clear js/toastr)
-        (cb/non-game-toast "Reconnected to server" "success" nil))))
+(defn event-msg-handler-wrapper
+  "Wraps `-msg-handler` with logging, error catching, etc."
+  [event]
+  (try
+    (event-msg-handler event)
+    (catch js/Object e
+      (println "Caught an error in the message handler: " e))))
 
-  (defn handle-netrunner-msg [[event msg]]
-    (let [handler (get @ws-handlers event)]
-      (cond
-        handler (handler msg)
-        msg (println "unknown game socket msg" event msg))))
+(defmethod event-msg-handler :default [event]
+  (println (str "unknown event message"
+                "\nid: " (:id event)
+                "\nevent:" event)))
 
-  (defn event-msg-handler [msg]
-    (let [[event-type data] (:event msg)]
-      (case event-type
-        :chsk/handshake nil
-        :chsk/state (handle-state-msg data)
-        :chsk/recv (handle-netrunner-msg data)
-        (println "unknown event message" event-type data)))))
+(defmethod event-msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
+(defmethod event-msg-handler :chsk/ws-ping [_])
 
-(start-client-chsk-router! <ws-recv event-msg-handler)
+(defmethod event-msg-handler :system/force-disconnect [_]
+  (sente/chsk-reconnect! chsk))
+
+(defn resync []
+  (ws-send! [:game/resync {:gameid (current-gameid app-state)}]))
+
+(defmethod event-msg-handler :chsk/state
+  [{[old-state new-state] :?data}]
+  (when (not (:first-open? new-state))
+    (when (and (:open? old-state)
+               (not (:open? new-state)))
+      (reset! lock true)
+      (non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
+    (when (and (not (:open? old-state))
+               (:open? new-state))
+      (.clear js/toastr)
+      (ws-send! [:lobby/list])
+      (when (get-in @app-state [:current-game :started])
+        (resync))
+      (non-game-toast "Reconnected to server" "success" nil))))
+
+(defonce router_ (atom nil))
+(defn stop-router! [] (when-let [stop-fn @router_] (stop-fn)))
+(defn start-router! []
+  (stop-router!)
+  (reset! router_
+          (start-client-chsk-router!
+            ch-chsk
+            event-msg-handler-wrapper)))

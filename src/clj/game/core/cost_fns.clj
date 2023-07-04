@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [any-effects get-effects sum-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.payment :refer [merge-costs]]))
+    [game.core.payment :refer [merge-costs cost-name value]]))
 
 ;; State-aware cost-generating functions
 (defn play-cost
@@ -14,7 +14,7 @@
    (when-not (nil? cost)
      (->> [cost
            (or cost-bonus 0)
-           (when-let [playfun (:play-cost-bonus (card-def card))]
+           (when-let [playfun (get-in (card-def card) [:on-play :play-cost-bonus])]
              (playfun state side (make-eid state) card nil))
            (sum-effects state side card :play-cost)]
           (reduce (fnil + 0 0))
@@ -24,7 +24,7 @@
   [state side card]
   (merge-costs
     (concat (:additional-cost card)
-            (:additional-cost (card-def card))
+            (get-in (card-def card) [:on-play :additional-cost])
             (get-effects state side card :play-additional-cost))))
 
 (defn rez-cost
@@ -46,6 +46,13 @@
     (concat (:additional-cost card)
             (:additional-cost (card-def card))
             (get-effects state side card :rez-additional-cost))))
+
+(defn score-additional-cost-bonus
+  [state side card]
+  (merge-costs
+   (concat (:additional-cost card)
+           (:additional-cost (card-def card))
+           (get-effects state side card :score-additional-cost))))
 
 (defn trash-cost
   "Returns the number of credits required to trash the given card."
@@ -106,7 +113,7 @@
   (let [abilities (:abilities (card-def card))
         events (:events (card-def card))]
     (or (some :trash-icon (concat abilities events))
-        (some #(= :trash (first %))
+        (some #(= :trash-can (first %))
               (->> abilities
                    (map :cost)
                    (map merge-costs)
@@ -123,11 +130,26 @@
 (defn break-sub-ability-cost
   ([state side ability card] (break-sub-ability-cost state side ability card nil))
   ([state side ability card targets]
-   (concat (:cost ability)
+   (concat (:break-cost ability)
            (:additional-cost ability)
+           (when-let [break-fn (:break-cost-bonus ability)]
+             (break-fn state side (make-eid state) card targets))
            (get-effects state side card :break-sub-additional-cost (flatten [ability targets])))))
 
 (defn jack-out-cost
   ([state side] (jack-out-cost state side nil))
   ([state side args]
    (get-effects state side nil :jack-out-additional-cost args)))
+
+(defn all-stealth
+  "To be used as the :cost-req of an ability. Requires all credits spent to be stealth credits."
+  [costs]
+  (mapv #(condp = (cost-name %) :x-credits [:x-credits nil -1] :credit [:credit (value %) (value %)] %) costs))
+
+(defn min-stealth
+  "Returns a function to be used as the :cost-req of an ability. Requires a minimum number of credits spent to be stealth"
+  [stealth-requirement]
+  (fn [costs]
+    (if (some #(= (cost-name %) :credit) costs)
+      (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement] %) costs)
+      (map #(if (= (cost-name %) :x-credits) [:x-credits nil stealth-requirement] %) costs))))

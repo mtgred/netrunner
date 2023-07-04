@@ -46,6 +46,7 @@
     (= zone [:hand]) (if (= side "Runner") "Grip" "HQ")
     (= zone [:discard]) (if (= side "Runner") "Heap" "Archives")
     (= zone [:deck]) (if (= side "Runner") "Stack" "R&D")
+    (= zone [:set-aside]) "set-aside cards"
     (= (take 1 zone) [:rig]) "Rig"
     (= (take 2 zone) [:servers :hq]) "the root of HQ"
     (= (take 2 zone) [:servers :rd]) "the root of R&D"
@@ -115,7 +116,8 @@
        ice
        (let [zone1 (get-zone card)
              zone2 (get-zone ice)]
-         (and (= (second zone1) (second zone2))
+         (and (= (second (or (central->zone zone1) zone1))
+                 (second zone2))
               (= :ices (last zone2))))))
 
 (defn in-same-server?
@@ -126,7 +128,6 @@
     (and card1
          card2
          (= zone1 zone2)
-         (is-remote? (second zone1)) ; cards in centrals are in the server's root, not in the server.
          (= :content (last zone1)))))
 
 (defn from-same-server?

@@ -1,29 +1,79 @@
 (ns nr.navbar
-  (:require [nr.appstate :refer [app-state]]
-            [nr.history :refer [history]]
-            [reagent.core :as r]))
+  (:require
+   [goog.events :as events]
+   [goog.history.EventType :as EventType]
+   [nr.appstate :refer [app-state]]
+   [nr.routes :as routes]
+   [nr.translations :refer [tr]])
+  (:import
+   goog.history.Html5History))
 
 (def navbar-links
-  [["Chat" "/" 0 nil]
-   ["Cards" "/cards" 1 nil]
-   ["Deck Builder" "/deckbuilder" 2 nil]
-   ["Play" "/play" 3 nil]
-   ["Help" "/help" 4 nil]
-   ["Settings" "/account" 5 #(:user %)]
-   ["Stats" "/stats" 6 #(:user %)]
-   ["About" "/about" 7 nil]
-   ["Tournaments" "/tournament" 8 #(:tournament-organizer (:user %))]])
+  [{:title (tr [:nav/chat "Chat"])
+    :cls "chat"
+    :route "/"}
+   {:title (tr [:nav/cards "Cards"])
+    :cls "card"
+    :route "/cards"}
+   {:title (tr [:nav/deck-builder "Deck Builder"])
+    :cls "deckbuilder"
+    :route "/deckbuilder"}
+   {:title (tr [:nav/play "Play"])
+    :cls "play"
+    :route "/play"}
+   {:title (tr [:nav/help "Help"])
+    :cls "help"
+    :route "/help"}
+   {:title (tr [:nav/settings "Settings"])
+    :cls "settings"
+    :route "/account"
+    :show? :user}
+   {:title (tr [:nav/stats "Stats"])
+    :cls "stats"
+    :route "/stats"
+    :show? :user}
+   {:title (tr [:nav/about "About"])
+    :cls "about"
+    :route "/about"}
+   {:title (tr [:nav/tournaments "Tournaments"])
+    :cls "tournaments"
+    :route "/tournament"
+    :show? #(:tournament-organizer (:user %))}
+   {:title (tr [:nav/admin "Admin"])
+    :cls "admin"
+    :route "/admin"
+    :show? #(:isadmin (:user %))}
+   {:title (tr [:nav/users "Users"])
+    :cls "users"
+    :route "/users"
+    :show? #(or (:isadmin (:user %))
+                (:ismoderator (:user %)))}
+   {:title (tr [:nav/features "Features"])
+    :cls "features"
+    :route "/features"
+    :show? #(:isadmin (:user %))}])
+
+(def history (Html5History.))
+
+(defn navigate [token]
+  (.setToken history token))
+
+(events/listen history EventType/NAVIGATE #(navigate (.-token ^js %)))
+(.setUseFragment history false)
+(.setPathPrefix history "")
+(.setEnabled history true)
+
 
 (defn navbar []
-  (r/with-let [active (r/cursor app-state [:active-page])]
-    [:ul.carousel-indicator
-     (doall
-       (for [[name route ndx show-fn?] navbar-links]
-         (when (or (not show-fn?)
-                   (show-fn? @app-state))
-           [:li {:class (if (= (first @active) route) "active" "")
-                 :key name
-                 :on-click #(.setToken history route)
-                 :data-target "#main"
-                 :data-slide-to ndx}
-            [:a {:href route} name]])))]))
+  [:ul
+   (doall
+     (for [[idx {:keys [title cls route show?]}] (map-indexed vector navbar-links)]
+       (when (or (not show?)
+                 (show? @app-state))
+         [:li {:class (if (= (:path @routes/current-view) route) "active" "")
+               :id (str cls "-nav")
+               :key title
+               ; :on-click #(.setToken history route)
+               :data-target "#main"
+               :data-slide-to idx}
+          [:a {:href route} title]])))])

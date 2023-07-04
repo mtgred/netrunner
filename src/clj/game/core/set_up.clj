@@ -1,22 +1,22 @@
 (ns game.core.set-up
   (:require
-    [game.core.card :refer [corp? runner?]]
-    [game.core.card-defs :refer [card-def]]
-    [game.core.checkpoint :refer [fake-checkpoint]]
-    [game.core.drawing :refer [draw]]
-    [game.core.eid :refer [make-eid]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
-    [game.core.gaining :refer [gain]]
-    [game.core.initializing :refer [card-init make-card]]
-    [game.core.player :refer [new-corp new-runner]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
-    [game.core.say :refer [system-msg]]
-    [game.core.shuffling :refer [shuffle-into-deck]]
-    [game.core.state :refer [new-state]]
-    [game.macros :refer [wait-for]]
-    [game.quotes :as quotes]
-    [game.utils :refer [server-card]]
-    [clj-time.core :as t]))
+   [cljc.java-time.instant :as inst]
+   [game.core.card :refer [corp? runner?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.diffs :refer [public-states]]
+   [game.core.drawing :refer [draw]]
+   [game.core.eid :refer [make-eid]]
+   [game.core.engine :refer [trigger-event trigger-event-sync]]
+   [game.core.initializing :refer [card-init make-card]]
+   [game.core.player :refer [new-corp new-runner]]
+   [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
+   [game.core.say :refer [system-msg system-say implementation-msg]]
+   [game.core.shuffling :refer [shuffle-into-deck]]
+   [game.core.state :refer [new-state]]
+   [game.macros :refer [wait-for]]
+   [game.quotes :as quotes]
+   [game.utils :refer [server-card]]))
 
 (defn build-card
   [card]
@@ -35,7 +35,7 @@
   "Mulligan starting hand."
   [state side _]
   (shuffle-into-deck state side :hand)
-  (draw state side 5 {:suppress-event true})
+  (draw state side (make-eid state) 5 {:suppress-event true :no-update-draw-stats true})
   (let [card (get-in @state [side :identity])]
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
@@ -62,13 +62,13 @@
     (clear-wait-prompt state :corp)))
 
 (defn- init-hands [state]
-  (draw state :corp 5 {:suppress-event true})
-  (draw state :runner 5 {:suppress-event true})
+  (draw state :corp (make-eid state) 5 {:suppress-event true})
+  (draw state :runner (make-eid state) 5 {:suppress-event true})
   (doseq [side [:corp :runner]]
     (when (-> @state side :identity :title)
       (show-prompt state side nil "Keep hand?"
                    ["Keep" "Mulligan"]
-                   #(if (= % "Keep")
+                   #(if (= (:value %) "Keep")
                       (keep-hand state side nil)
                       (mulligan state side nil))
                    {:prompt-type :mulligan})))
@@ -78,7 +78,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid spectatorhands room]}]
+  [{:keys [players gameid timer spectatorhands api-access save-replay room] :as game}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp))
@@ -88,24 +88,41 @@
         corp-options (get-in corp [:options])
         runner-options (get-in runner [:options])
         corp-identity (build-card (or (get-in corp [:deck :identity])
-                                      {:side "Corp" :type "Identity" :title "Custom Biotics: Engineered for Success"}))
+                                      {:side "Corp"
+                                       :type "Identity"
+                                       :title "Custom Biotics: Engineered for Success"}))
         runner-identity (build-card (or (get-in runner [:deck :identity])
-                                        {:side "Runner" :type "Identity" :title "The Professor: Keeper of Knowledge"}))
+                                        {:side "Runner"
+                                         :type "Identity"
+                                         :title "The Professor: Keeper of Knowledge"}))
         corp-quote (quotes/make-quote corp-identity runner-identity)
-        runner-quote (quotes/make-quote runner-identity corp-identity)]
+        runner-quote (quotes/make-quote runner-identity corp-identity)
+        fmt (:format game)]
     (atom
       (new-state
         gameid
         room
-        (t/now)
-        spectatorhands
+        fmt
+        (inst/now)
+        {:timer timer
+         :spectatorhands spectatorhands
+         :api-access api-access
+         :save-replay save-replay}
         (new-corp (:user corp) corp-identity corp-options (map #(assoc % :zone [:deck]) corp-deck) corp-deck-id corp-quote)
         (new-runner (:user runner) runner-identity runner-options (map #(assoc % :zone [:deck]) runner-deck) runner-deck-id runner-quote)))))
 
 (defn- create-basic-action-cards
   [state]
-  (swap! state assoc-in [:corp :basic-action-card] (make-card {:side "Corp" :type "Basic Action" :title "Corp Basic Action Card"}))
-  (swap! state assoc-in [:runner :basic-action-card] (make-card {:side "Runner" :type "Basic Action" :title "Runner Basic Action Card"})))
+  (swap! state
+         assoc-in [:corp :basic-action-card]
+         (make-card {:side "Corp"
+                     :type "Basic Action"
+                     :title "Corp Basic Action Card"}))
+  (swap! state
+         assoc-in [:runner :basic-action-card]
+         (make-card {:side "Runner"
+                     :type "Basic Action"
+                     :title "Runner Basic Action Card"})))
 
 (defn init-game
   "Initializes a new game with the given players vector."
@@ -114,15 +131,17 @@
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
     (when-let [messages (seq (:messages game))]
-      (swap! state assoc :log (conj (vec messages) {:user "__system__" :text "[hr]"})))
+      (swap! state assoc :log (into [] messages))
+      (system-say state nil "[hr]"))
     (card-init state :corp corp-identity)
+    (implementation-msg state corp-identity)
     (card-init state :runner runner-identity)
+    (implementation-msg state runner-identity)
     (create-basic-action-cards state)
     (fake-checkpoint state)
-    (let [side :corp]
-      (wait-for (trigger-event-sync state side :pre-start-game nil)
-                (let [side :runner]
-                  (wait-for (trigger-event-sync state side :pre-start-game nil)
-                            (init-hands state)
-                            (fake-checkpoint state)))))
+    (wait-for (trigger-event-sync state :corp :pre-start-game nil)
+              (wait-for (trigger-event-sync state :runner :pre-start-game nil)
+                        (init-hands state)
+                        (fake-checkpoint state)))
+    (swap! state assoc :history [(:hist-state (public-states state))])
     state))

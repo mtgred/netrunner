@@ -1,0 +1,38 @@
+@require "opacity"
+@require "palette"
+// Dropdown
+.dropdown
+    position: relative
+
+.dropdown-toggle:focus
+    outline: 0
+
+.dropdown-menu
+    position: absolute
+    top: 100%
+    left: 0
+    z-index: 1000
+    display: none
+    float: left
+    min-width: 140px
+    padding: 4px 6px
+    list-style: none
+    background-clip: padding-box
+    border: 1px solid alpha(white-solid, o-20)
+    border-radius: 4px
+    box-shadow(0 6px 12px alpha(black-solid, o-10))
+
+    .block-link
+        padding: 2px 8px
+
+.dropdown-menu.float-right
+    right: 0
+    left: auto
+
+.open > .dropdown-menu
+    display: block
+
+.open > a
+    outline: 0
+
+

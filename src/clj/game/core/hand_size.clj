@@ -1,7 +1,6 @@
 (ns game.core.hand-size
   (:require
-    [game.core.effects :refer [get-effects sum-effects]]
-    [game.core.engine :refer [trigger-event]]))
+    [game.core.effects :refer [get-effects sum-effects]]))
 
 (defn hand-size
   [state side]
@@ -18,5 +17,31 @@
   "Update the player's hand-size"
   [state side]
   (let [old-total (get-in @state [side :hand-size :total])
-        new-total (sum-hand-size-effects state side)]
-    (swap! state assoc-in [side :hand-size :total] new-total)))
+        new-total (sum-hand-size-effects state side)
+        changed? (not= old-total new-total)]
+    (when changed?
+      (swap! state assoc-in [side :hand-size :total] new-total))
+    changed?))
+
+(defn hand-size+
+  ([value] (hand-size+ (constantly true) value))
+  ([req value]
+   {:type :hand-size
+    :req req
+    :value value}))
+
+(defn corp-hand-size+
+  ([value] (corp-hand-size+ (constantly true) value))
+  ([req value]
+   (hand-size+ (fn [state side eid card targets]
+                 (and (= :corp side)
+                      (req state side eid card targets)))
+               value)))
+
+(defn runner-hand-size+
+  ([value] (runner-hand-size+ (constantly true) value))
+  ([req value]
+   (hand-size+ (fn [state side eid card targets]
+                 (and (= :runner side)
+                      (req state side eid card targets)))
+               value)))

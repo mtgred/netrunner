@@ -2,7 +2,7 @@
   (:require
     [game.core.card :refer [get-card]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [can-trigger? register-ability-type resolve-ability]]
+    [game.core.engine :refer [can-trigger? register-ability-type register-once resolve-ability]]
     [game.core.payment :refer [can-pay?]]
     [game.core.prompts :refer [show-prompt]]
     [game.core.toasts :refer [toast]]
@@ -23,11 +23,11 @@
                    ability-to-do (if (and (= (:value prompt-choice) "Yes")
                                           yes-ability
                                           (can-pay? state side eid card (:title card) (:cost yes-ability)))
-                                   yes-ability
+                                   (assoc yes-ability :once (:once ability))
                                    no-ability)]
                (wait-for (resolve-ability state side new-eid ability-to-do card targets)
                          (when end-effect
-                           (end-effect state side new-eid card nil))
+                           (end-effect state side new-eid card targets))
                          (effect-completed state side eid))))]
      (let [autoresolve-fn (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
@@ -39,7 +39,7 @@
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
              (show-prompt state side eid card message ["Yes" "No"]
-                          prompt-fn ability)))))))
+                          prompt-fn (assoc ability :targets targets))))))))
 
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
@@ -48,13 +48,13 @@
     (resolve-ability
       state side
       (-> ability
-          (dissoc :optional)
+          (dissoc :optional :once :req)
           (assoc :async true
                  :effect (req (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets))))
       card targets)
     (effect-completed state side eid)))
 
-(register-ability-type :optional check-optional)
+(register-ability-type :optional #'check-optional)
 
 (defn never?
   "Returns true if is argument is :never."
@@ -64,7 +64,8 @@
 (defn set-autoresolve
   "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."
   [toggle-kw ability-name]
-  {:label (str "Toggle auto-resolve on " ability-name)
+  {:autoresolve true
+   :label (str "Toggle auto-resolve on " ability-name)
    :prompt (str "Set auto-resolve on " ability-name " to:")
    :choices ["Always" "Never" "Ask"]
    :effect (effect (update! (assoc-in card [:special toggle-kw] (keyword (string/lower-case target))))

@@ -1,6 +1,7 @@
 (ns game.quotes
-  (:require [aero.core :refer [read-config]]
-            [clojure.java.io :as io]))
+  (:require
+    [clojure.edn :as edn]
+    [clojure.java.io :as io]))
 
 
 (def quotes-corp-filename "data/quotes-corp.edn")
@@ -9,13 +10,15 @@
 
 (def identity-quotes (atom {}))
 
-(defn load-quotes!
-  []
+(defn load-quotes! []
   (let [quotes-corp (when (.exists (io/file quotes-corp-filename))
-                      (read-config quotes-corp-filename))
+                      (-> (io/file quotes-corp-filename)
+                          (slurp)
+                          (edn/read-string)))
         quotes-runner (when (.exists (io/file quotes-runner-filename))
-                        (read-config quotes-runner-filename))]
-    (println "Loaded quote files")
+                        (-> (io/file quotes-runner-filename)
+                            (slurp)
+                            (edn/read-string)))]
     (reset! identity-quotes (merge quotes-corp quotes-runner))))
 
 (defn- choose-and-repeat [options qty]
