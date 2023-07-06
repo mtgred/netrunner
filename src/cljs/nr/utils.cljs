@@ -62,7 +62,7 @@
   [faction id]
   (letfn [(icon-span [css-faction]
             [:span.faction-icon {:class css-faction
-                                 :title (str " " faction)}])]
+                                 :title (str faction " - " id)}])]
     (case faction
       "Adam" (icon-span "adam")
       "Anarch" (icon-span "anarch")
