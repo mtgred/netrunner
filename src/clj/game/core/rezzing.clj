@@ -40,9 +40,10 @@
     (if (can-host? card)
       (effect-completed state side eid)
       (wait-for (trash-cards state side hosted-cards {:unpreventable true :game-trash true})
-                (system-msg state side (str "trashes " (string/join ", " (map #(card-str state %) hosted-cards))
-                                            " because " (:title card)
-                                            " cannot host cards"))
+                (when (pos? (count hosted-cards))
+                  (system-msg state side (str "trashes " (string/join ", " (map #(card-str state %) hosted-cards))
+                                              " because " (:title card)
+                                              " cannot host cards")))
                 (effect-completed state side eid)))))
 
 (defn- complete-rez
