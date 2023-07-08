@@ -2040,6 +2040,28 @@
       (click-card state :runner "Clone Chip")
       (is (empty? (get-hardware state)) "Sac Con trashed"))))
 
+(deftest fairchild-1-0-runner-cannoy-pay
+  ;; Fairchild 1.0 - runner has no credits nor cards installed
+  (do-game
+    (new-game {:corp {:deck ["Fairchild 1.0"]}
+               :runner {:credits 1}})
+    (play-from-hand state :corp "Fairchild 1.0" "HQ")
+    (take-credits state :corp)
+    (let [fc1 (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp fc1)
+      (run-continue state)
+      (card-subroutine state :corp fc1 0)
+      (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Paid 1c for subroutine"
+        (click-prompt state :runner "Pay 1 [Credits]"))
+      (card-subroutine state :corp fc1 1)
+      (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
+      (click-prompt state :runner "Trash an installed card")
+      (click-prompt state :runner "Done"))))
+
 (deftest fairchild-2-0
   ;; Fairchild 2.0
   (do-game

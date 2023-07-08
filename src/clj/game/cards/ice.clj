@@ -1470,7 +1470,9 @@
              :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                               "Pay 1 [Credits]")
-                            "Trash an installed card"])
+                            (when (or (not (can-pay? state :runner eid card nil [:credit 1]))
+                                      (can-pay? state :runner eid card nil [:trash-installed 1]))
+                              "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 1 [Credits]")
                             (wait-for (pay state side (make-eid state eid) card :credit 1)
@@ -1489,7 +1491,9 @@
              :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 2])
                               "Pay 2 [Credits]")
-                            "Trash an installed card"])
+                            (when (or (not (can-pay? state :runner eid card nil [:credit 2]))
+                                      (can-pay? state :runner eid card nil [:trash-installed 1]))
+                              "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 2 [Credits]")
                             (wait-for (pay state side (make-eid state eid) card :credit 2)
@@ -1509,7 +1513,9 @@
              :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [:credit 3])
                               "Pay 3 [Credits]")
-                            "Trash an installed card"])
+                            (when (or (not (can-pay? state :runner eid card nil [:credit 3]))
+                                      (can-pay? state :runner eid card nil [:trash-installed 1]))
+                              "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 3 [Credits]")
                             (wait-for (pay state side (make-eid state eid) card :credit 3)

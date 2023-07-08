@@ -488,7 +488,8 @@
                  :waiting-prompt true
                  :choices (req [(when (can-pay? state :runner eid card nil [:credit 1])
                                   "Pay 1 [Credits]")
-                                (when (seq (:deck runner))
+                                (when (or (not (can-pay? state :runner eid card nil [:credit 1]))
+                                          (seq (:deck runner)))
                                   "Trash the top card of the stack")])
                  :label "make the Runner pay 1 [Credits] or trash the top card of the stack (start of turn)"
                  :msg (msg "force the Runner to " (decapitalize target))
