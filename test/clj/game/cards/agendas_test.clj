@@ -3401,6 +3401,20 @@
     (click-card state :corp "Obokata Protocol")
     (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
 
+(deftest regenesis-triggering-hyoubu-institute
+  ;; Regenesis - Triggers Hyoubu Institute
+  (do-game
+    (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                      :hand ["Regenesis" "Hansei Review" "Obokata Protocol"]}})
+    (play-from-hand state :corp "Hansei Review")
+    (click-card state :corp "Obokata Protocol")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (changes-val-macro 1 (:credit (get-corp))
+      "Regenesis triggers Hyoubu Institute"
+      (play-and-score state "Regenesis")
+      (click-card state :corp "Obokata Protocol"))))
+
 (deftest regenesis-extra-score-not-prevented-by-runner-discard
   (do-game
     (new-game {:corp {:deck [(qty "Regenesis" 6)]
