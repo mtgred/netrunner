@@ -273,7 +273,6 @@
     :block "Block user"
     :update-profile "Update Profile"
     :nisei "NISEI"
-    :nsg "NSG"
     :ffg "FFG"
     :api-keys "API Keys"
     :delete-api-key "Delete"
@@ -691,7 +690,6 @@
     :block "屏蔽"
     :update-profile "保存设置"
     :nisei "NISEI"
-    :nsg "NSG"
     :ffg "FFG"}
   :stats
   {:game-stats "胜负统计"
@@ -1089,7 +1087,6 @@
     :update-profile "Updateyay Ofilepray"
     :nisei "ISEINAY"
     :ffg "FFGYAY"
-    :nsg "NSGYAY"
     :api-keys "APIYAY Eyskay"
     :delete-api-key "Eleteday"
     :create-api-key "Eatecray APIYAY Eykay"}
@@ -1500,7 +1497,6 @@
     :block "Bloquer l'utilisateur"
     :update-profile "Mettre à jour le profil"
     :nisei "NISEI"
-    :nsg "NSG"
     :ffg "FFG"
     :api-keys "Clés API"
     :delete-api-key "Effacer"
@@ -1921,7 +1917,6 @@
    :block "사용자 차단"
    :update-profile "프로필 갱신"
    :nisei "NISEI"
-   :nsg "NSG"
    :ffg "FFG"}
   :stats
   {:game-stats "게임 기록"
@@ -2331,7 +2326,6 @@
     :block "Zablokuj użytkownika"
     :update-profile "Aktualizuj profil"
     :nisei "NISEI"
-    :nsg "NSG"
     :ffg "FFG"
     :api-keys "Klucze API"
     :delete-api-key "Usuń"
@@ -2763,7 +2757,6 @@
     :block "Block user"
     :update-profile "Update Profile"
     :nisei "NISEI"
-    :nsg "NSG"
     :ffg "FFG"
     :api-keys "API Keys"
     :delete-api-key "Delete"
