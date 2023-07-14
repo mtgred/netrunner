@@ -518,7 +518,7 @@
   (let [card (get-card state card)]
     (if card
       (if (:pioneer card)
-        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Pioneer"))
+        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Reveal and Trash")) ;;april fools we can make this "cast as a sorcery"
         (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
       (swap! state dissoc-in [:corp :install-list]))))
 

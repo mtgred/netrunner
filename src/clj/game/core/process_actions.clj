@@ -66,7 +66,7 @@
    "move" #'move-card
    "mulligan" #'mulligan
    "play" #'play
-   "pioneer" #'pioneer-ability
+   "Reveal and Trash" #'pioneer-ability
    "purge" #'do-purge
    "remove-tag" #'remove-tag
    "rez" #(rez %1 %2 (make-eid %1) (:card %3) (dissoc %3 :card))
