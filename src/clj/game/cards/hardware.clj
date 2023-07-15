@@ -20,9 +20,9 @@
    [game.core.effects :refer [register-floating-effect
                               unregister-effects-for-card unregister-floating-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
-   [game.core.engine :refer [can-trigger? register-events
-                             register-once resolve-ability trigger-event
-                             unregister-floating-events]]
+   [game.core.engine :refer [can-trigger? not-used-once? register-events
+                             register-once register-suppress resolve-ability trigger-event
+                             unregister-floating-events unregister-suppress-by-uuid]]
    [game.core.events :refer [event-count first-event? first-trash? no-event?
                              run-events]]
    [game.core.expose :refer [expose]]

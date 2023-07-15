@@ -54,6 +54,12 @@
     ;; Installing not locked
     (install-locked? state :corp)
     :lock-install
+    ;; A Teia cannot have more than two servers
+    (and (clojure.string/starts-with? (:title (get-in @state [:corp :identity])) "A Teia")
+         (not (:disabled (get-in @state [:corp :identity])))
+         (<= 2 (count (get-remotes state)))
+         (not (in-coll? (conj (keys (get-remotes state)) :archives :rd :hq) (second slot))))
+    :a-teia
     ;; Earth station cannot have more than one server
     (and (= "Earth Station" (subs (:title (get-in @state [:corp :identity])) 0 (min 13 (count (:title (get-in @state [:corp :identity]))))))
          (not (:disabled (get-in @state [:corp :identity])))
@@ -82,6 +88,9 @@
       ;; Earth station cannot have more than one remote server
       :earth-station
       (reason-toast (str "Unable to install " title " in new remote: Earth Station limit"))
+      ;; A Teia can only have two remotes
+      :a-teia
+      (reason-toast (str "Unable to install " title " in new remote: A Teia limit"))
       ;; else
       true)))
 
