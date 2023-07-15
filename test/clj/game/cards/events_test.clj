@@ -1073,6 +1073,39 @@
     (click-prompt state :corp "Done")
     (is (= 4 (count (:discard (get-corp)))) "trashed 4")))
 
+(deftest chrysopeoeian-skimming-reveal
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas" "Project Beale"]}
+               :runner {:hand ["Chrysopoeian Skimming"]
+                        :deck ["Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chrysopoeian Skimming")
+    (click-prompt state :corp "Project Atlas")
+    (is (= 4 (:click (get-runner))))
+    (is (= 1 (count (:hand (get-runner)))))))
+
+(deftest chrysopeoeian-skimming-decline
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas" "Project Beale"]
+                      :deck ["Hedge Fund" "IPO" "NGO Front"]}
+               :runner {:hand ["Chrysopoeian Skimming"]
+                        :deck ["Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chrysopoeian Skimming")
+    (click-prompt state :corp "No thanks")
+    (click-prompt state :runner "Noted")))
+
+(deftest chrysopeoeian-skimming-forced-decline
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                      :deck ["Hedge Fund" "IPO" "NGO Front"]}
+               :runner {:hand ["Chrysopoeian Skimming"]
+                        :deck ["Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chrysopoeian Skimming")
+    (click-prompt state :corp "No thanks")
+    (click-prompt state :runner "Noted")))
+
 (deftest code-siphon
   ;; Code Siphon
   (do-game
@@ -6055,6 +6088,44 @@
       (is (no-prompt? state :corp))
       (is (= (- credits (:cost iw)) (:credit (get-corp))) "Rezzing Ice Wall costs normal"))))
 
+(deftest s-dobrado-no-threat
+  (do-game
+    (new-game {:corp {:hand ["Vanilla" "Ice Wall"]}
+               :runner {:hand ["S-Dobrado"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "S-Dobrado")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 1))
+    (rez state :corp (get-ice state :hq 0))
+    (is (:run @state) "A run has been initiated")
+    (run-continue state)
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")
+    (run-continue state)
+    (run-continue state)
+    (is (= :encounter-ice (:phase (get-run))))))
+
+(deftest s-dobrado-threat-active
+  (do-game
+    (new-game {:corp {:hand ["Vanilla" "Ice Wall" "Government Takeover"]}
+               :runner {:hand ["S-Dobrado"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-and-score state "Government Takeover")
+    (take-credits state :corp)
+    (play-from-hand state :runner "S-Dobrado")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 1))
+    (rez state :corp (get-ice state :hq 0))
+    (is (:run @state) "A run has been initiated")
+    (run-continue state)
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (is (= :movement (:phase (get-run))))))
+
 (deftest satellite-uplink-when-exposing-2-cards
     ;; when exposing 2 cards
     (do-game
@@ -6347,6 +6418,19 @@
     (is (zero? (count (:hand (get-runner)))) "Lost card from Grip to core damage")
     (is (= 4 (hand-size :runner)))
     (is (= 1 (:brain-damage (get-runner))))))
+
+(deftest strike-fund
+  (do-game
+    (new-game {:runner {:hand ["Strike Fund" "Strike Fund"]}})
+    (changes-val-macro
+      2 (:credit (get-runner))
+      "gained 2c from strike fund"
+      (damage state :runner :meat 1))
+    (take-credits state :corp)
+    (changes-val-macro
+      3 (:credit (get-runner))
+      "gained 3c from playing strike fund"
+      (play-from-hand state :runner "Strike Fund"))))
 
 (deftest sure-gamble
   ;; Sure Gamble
@@ -6646,6 +6730,16 @@
       (click-prompt state :runner "No action")
       (damage state :runner :net 1)
       (is (zero? (hand-count)) "Damage works again after run"))))
+
+(deftest the-price
+  ;; trash the top 4, install one paying 3 less
+  (do-game
+    (new-game {:runner {:deck ["Liberated Account", "Daily Casts", "Earthrise Hotel", "Rezeki"]
+                        :hand ["The Price"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Price")
+    (click-prompt state :runner "Rezeki")
+    (is (= 4 (:credit (get-runner))))))
 
 (deftest the-price-of-freedom
   ;; The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn
