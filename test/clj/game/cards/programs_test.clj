@@ -527,6 +527,28 @@
     (run-jack-out state)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
+(deftest audrey
+  (do-game
+    (new-game {:corp {:hand ["Rashida Jaheem" "Vanilla"]}
+               :runner {:hand ["Knifed" "Audrey V2" "Sure Gamble"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Audrey V2")
+    (run-on state :hq)
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (= 1 (get-counters (get-program state 0) :virus)) "Audrey gains virus counter from trash")
+    (play-from-hand state :runner "Knifed")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (is (= 2 (count (:discard (get-corp)))) "Vanilla Campaign trashed")
+    (is (= 0 (get-counters (get-program state 0) :virus)) "No virus counter because not accessed")))
+
 (deftest aumakua-gain-counter-on-no-trash
     ;; Gain counter on no trash
     (do-game
