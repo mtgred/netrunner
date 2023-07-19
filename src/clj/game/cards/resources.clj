@@ -67,13 +67,14 @@
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote?
-                              protecting-same-server? target-server unknown->kw
+                              protecting-same-server? remote->name target-server unknown->kw
                               zone->name zones->sorted-names]]
    [game.core.set-aside :refer [set-aside get-set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
+   [game.core.threat :refer [threat-level]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [get-virus-counters number-of-runner-virus-counters]]
    [game.core.winning :refer [check-win-by-agenda]]
@@ -456,6 +457,24 @@
    :events [{:event :runner-turn-begins
              :msg "lose [Click]"
              :effect (effect (lose-clicks 1))}]})
+
+(defcard "Beatriz Friere Gonzalez"
+  {:abilities [{:cost [:click 2]
+                :msg "Make a run on HQ"
+                :makes-run true
+                :async true
+                :effect (req (make-run state :runner eid :hq card))}]
+   :events [(successful-run-replace-breach
+              {:target-server :hq
+               :this-card-run true
+               :mandatory true
+               :ability {:msg "breach R&D, accessing one additional card"
+                         :async true
+                         :effect (req (register-events
+                                        state side
+                                        card [(breach-access-bonus :rd 1 {:duration :end-of-run})])
+                                      (breach-server state :runner eid [:rd] nil))}})]})
+
 
 (defcard "Beth Kilrain-Chang"
   (let [ability {:once :per-turn
@@ -995,6 +1014,32 @@
                                      :value (req (count (:hand runner)))}))
                                 (update-breaker-strength target))}]})
 
+(defcard "Debbie \"Downtown\" Moreira"
+  {:on-install {:req (req (threat-level 4 state))
+                :msg "(Threat) place 2 credits on itself"
+                :effect (req (add-counter state side card :credit 2))}
+   :events [{:event :play-event
+             :req (req (has-subtype? (:card context) "Run"))
+             :async true
+             :effect (req (add-counter state side card :credit 1)
+                          (effect-completed state side eid))}]
+   :abilities [{:msg "gain 1 [Credits]"
+                :async true
+                :req (req (pos? (get-counters (get-card state card) :credit)))
+                :effect (req (add-counter state side card :credit -1)
+                             (wait-for (gain-credits state side (make-eid state eid) 1)
+                                       (trigger-event-sync state side eid :spent-credits-from-card card)))}
+               {:label "run a server"
+                :cost [:click 1]
+                :async true
+                :makes-run true
+                :prompt "Choose a server"
+                :choices (req runnable-servers)
+                :effect (req (wait-for (make-run state :runner (make-eid state eid) target card)
+                                        (effect-completed state side eid)))}]
+   :interactions {:pay-credits {:req (req this-card-run) ;;no clue why this doesn't work
+                                :type :credit}}})
+
 (defcard "Decoy"
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
@@ -1227,6 +1272,42 @@
                                                             :cause-card card})
                                     (gain-credits state side eid 9)))}]})
 
+(defcard "Eru Ayase-Pessoa"
+  (let [constant-ability
+        {:event :run
+         :silent (req true)
+         :req (req (= :archives (target-server context)))
+         :effect (req (register-events
+                        state side card
+                        [{:event :successful-run
+                          :duration :end-of-run
+                          :silent (req true)
+                          :req (req (threat-level 3 state))
+                          :effect (req (register-events
+                                         state side card
+                                         [(breach-access-bonus :rd 1 {:duration :end-of-run})])
+                                       (effect-completed state side eid))}]))}]
+    {:events [constant-ability]
+     :abilities [{:cost [:click 1]
+                  :msg "make a run on Archives"
+                  :makes-run true
+                  :async true
+                  :effect
+                  (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
+                                 (register-events
+                                   state side
+                                   card
+                                   [{:event :pre-successful-run
+                                     :duration :end-of-run
+                                     :unregister-once-resolved true
+                                     :interactive (req true)
+                                     :req (req (= :archives (-> run :server first)))
+                                     :effect
+                                     (req (swap! state assoc-in [:run :server] [:rd])
+                                          (trigger-event state :corp :no-action)
+                                          (system-msg state side (str "uses " (:title card) " to breach R&D")))}])
+                                 (make-run state side eid :archives (get-card state card))))}]}))
+
 (defcard "Fall Guy"
   {:interactions {:prevent [{:type #{:trash-resource}
                              :req (req true)}]}
@@ -1442,6 +1523,40 @@
 (defcard "Hades Shard"
   (shard-constructor "Hades Shard" :archives "breach Archives"
                      (effect (breach-server eid [:archives] {:no-root true}))))
+
+(defcard "Hannah \"Wheels\" Pilantra"
+  {:abilities [{:cost [:click 1]
+                :once :per-turn
+                :async true
+                :prompt "Choose a remote server"
+                :req (req (and
+                            (some some? (:successful-run runner-reg))
+                            (->> runnable-servers
+                                 (map unknown->kw)
+                                 (filter is-remote?)
+                                 not-empty)))
+                :choices (req (cancellable
+                                (->> runnable-servers
+                                     (map unknown->kw)
+                                     (filter is-remote?)
+                                     (map remote->name))))
+                :msg "gain [Click] and make a run on remote server"
+                :makes-run true
+                :effect (req (gain-clicks state side 1)
+                             (register-events
+                               state side card
+                               [{:event :unsuccessful-run
+                                 :duration :end-of-run
+                                 :req (req (first-event? state side :unsuccessful-run))
+                                 :async true
+                                 :msg "take 1 tag"
+                                 :effect (effect (gain-tags :runner eid 1))}])
+                             (make-run state side eid target card))}
+               {:cost [:click 1 :trash-can]
+                :async true
+                :effect (effect (gain-clicks 2)
+                                (lose-tags eid 1))
+                :msg "gain [Click][Click] and remove a tag"}]})
 
 (defcard "Hard at Work"
   (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -1712,6 +1827,20 @@
 
 (defcard "Kongamato"
   (bitey-boi 'first))
+
+(defcard "Lago Paranoá Shelter"
+  {:events [{:event :corp-install
+             :optional {:prompt "Rock out?"
+                        :req (req (and (not (ice? (:card target)))
+                                                     (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
+                        :yes-ability {:msg (msg (let [deck (:deck runner)]
+                                                  (if (pos? (count deck))
+                                                    (str "trash " (str/join ", " (map :title (take 1 deck))) " from their Stack and draw 1 card")
+                                                    "trash the top card from their Stack and draw 1 card - but their Stack is empty")))
+                                      :async true
+                                      :effect (req (wait-for (mill state :runner :runner 1)
+                                                             (draw state :runner eid 1)))}
+                        :no-ability {:msg "decline to rock out"}}}]})
 
 (defcard "Laguna Velasco District"
   {:events [{:event :runner-click-draw
@@ -3425,6 +3554,30 @@
     {:flags {:drip-economy true}
      :abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)]}))
+
+(defcard "Urban Art Vernissage"
+  (let [is-trojan? (fn [cr] (and (has-subtype? cr "Trojan") (not (has-subtype? cr "Virus"))))
+        ability {:async true
+                 :label "return a non-virus trojan to place 2 [Credits]"
+                 :once :per-turn
+                 :req (req (some is-trojan? (all-installed state :runner)))
+                 :choices {:not-self true
+                           :req (req (and (runner? target)
+                                          (installed? target)
+                                          (is-trojan? target)))}
+                 :msg (msg "add " (:title target) " to the grip and place 2 [Credits] on itself")
+                 :cancel-effect (req (system-msg state :runner "declines to use " (:title card))
+                                     (effect-completed state side eid))
+                 :effect (req (move state side target :hand)
+                              (add-counter state side card :credit 2)
+                              (effect-completed state side eid))}]
+    {:interactions {:pay-credits {:req (req (= :runner-install (:source-type eid)))
+                                  :type :credit}}
+     :flags {:runner-phase-12 (req (some is-trojan? (all-installed state :runner)))}
+     :events [(assoc ability
+                     :event :runner-turn-begins
+                     :interactive (req true))]
+     :abilities [ability]}))
 
 (defcard "Utopia Shard"
   (shard-constructor "Utopia Shard" :hq "force the Corp to discard 2 cards from HQ at random"
