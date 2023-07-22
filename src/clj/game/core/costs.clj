@@ -41,7 +41,10 @@
     (deduct state side [:click (value cost)])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
-                                  a (value cost))
+                                  a (value cost) (:ability-idx (:source-info eid)))
+              ;; sending the idx is mandatory to make wage workers functional
+              ;; and so we can look through the events and figure out WHICH abilities were used
+              ;; I don't think it will break anything
               (swap! state assoc-in [side :register :spent-click] true)
               (complete-with-result state side eid {:msg (str "spends " (label cost))
                                                     :type :click
