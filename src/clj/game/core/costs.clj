@@ -11,6 +11,7 @@
     [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
     [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
     [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
+    [game.core.revealing :refer [reveal]]
     [game.core.rezzing :refer [derez]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.tags :refer [lose-tags]]
@@ -205,6 +206,24 @@
                                                  :type :x-credits
                                                  :value 0}))))}
     card nil))
+
+;; Expend Helper - this is a dummy cost just for cost strings
+(defmethod cost-name :expend [_] :expend)
+(defmethod value :expend [cost] 1)
+(defmethod label :expend [cost] "reveal and trash itself from HQ")
+(defmethod payable? :expend
+  [cost state side eid card]
+  (in-hand? (get-card state card)))
+(defmethod handler :expend
+  [cost state side eid card actions]
+  (wait-for (reveal state :corp (make-eid state eid) [card])
+            (wait-for (trash state :corp (make-eid state eid)
+                             (assoc (get-card state card) :seen true))
+                      (complete-with-result state side eid
+                                            {:msg (str "trashes " (:title card) " from HQ")
+                                             :type :expend
+                                             :value 1
+                                             :targets [card]}))))
 
 ;; Trash
 (defmethod cost-name :trash-can [_] :trash-can)

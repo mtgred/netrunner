@@ -23,7 +23,7 @@
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability
                              unregister-events]]
-   [game.core.events :refer [first-event? no-event? turn-events]]
+   [game.core.events :refer [first-event? no-event? run-events turn-events]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [in-runner-scored? is-scored? register-run-flag!
                             register-turn-flag! when-scored? zone-locked?]]
@@ -31,13 +31,14 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice]]
+   [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-list
                                  corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-ice
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
+   [game.core.payment :refer [can-pay?]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
@@ -805,6 +806,14 @@
 (defcard "Freedom of Information"
   {:advancement-requirement (req (- (count-tags state)))})
 
+(defcard "Fujii Asset Retrieval"
+  {:stolen {:async true
+            :msg "do 2 net damage"
+            :effect (effect (damage eid :net 2 {:card card}))}
+   :on-score {:async true
+              :msg "do 2 net damage"
+              :effect (effect (damage eid :net 2 {:card card}))}})
+
 (defcard "Genetic Resequencing"
   {:on-score {:choices {:card in-scored?}
               :msg (msg "place 1 agenda counter on " (:title target))
@@ -1269,6 +1278,18 @@
 (defcard "Ontological Dependence"
   {:advancement-requirement (req (- (or (get-in @state [:runner :brain-damage]) 0)))})
 
+(defcard "Oracle Thinktank"
+  {:stolen {:msg "give the Runner 1 tag"
+            :async true
+            :effect (effect (gain-tags eid 1))}
+   :abilities [{:cost [:click 1 :tag 1]
+                :msg "shuffle itself into R&D"
+                :label "Shuffle into R&D"
+                :effect (effect (move :corp card :deck nil)
+                                (shuffle! :corp :deck)
+                                (update-all-agenda-points))}]
+   :flags {:has-abilities-when-stolen true}})
+
 (defcard "Orbital Superiority"
   {:on-score
    {:msg (msg (if (is-tagged? state) "do 4 meat damage" "give the Runner 1 tag"))
@@ -1679,6 +1700,12 @@
                                      :async true
                                      :effect (effect (gain-tags eid 1))}}}]})
 
+(defcard "Salvo Testing"
+  {:events [{:event :agenda-scored
+             :async true
+             :msg "do 1 core damage"
+             :effect (effect (damage eid :brain 1 {:card card}))}]})
+
 (defcard "SDS Drone Deployment"
   {:steal-cost-bonus (req [:program 1])
    :on-score {:req (req (seq (all-installed-runner-type state :program)))
@@ -1743,6 +1770,16 @@
               :msg "do 2 meat damage"
               :effect (effect (damage eid :meat 2 {:card card}))}})
 
+(defcard "Slash and Burn Agriculture"
+  {:expend {:req (req (some #(can-be-advanced? %) (all-installed state :corp)))
+            :cost [:credit 1]
+            :choices {:card #(can-be-advanced? %)}
+            :msg (msg "place 2 advancement counters on " (card-str state target))
+            :async true
+            :effect (req
+                      (add-prop state :corp target :advance-counter 2 {:placed true})
+                      (effect-completed state side eid))}})
+
 (defcard "SSL Endorsement"
   (let [add-credits (effect (add-counter card :credit 9))]
     {:flags {:has-events-when-stolen true}
@@ -1792,6 +1829,34 @@
       :async true
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
                       (continue-ability :runner (stand :runner) card nil))}}))
+
+(defcard "Stegodon MK IV"
+  {:events [{:event :run
+             :async true
+             :effect
+             (req (let [rezzed-targets
+                        (seq (filter #(and (ice? %)
+                                           (rezzed? %)
+                                           (not= (first (:server target)) (second (get-zone %))))
+                                     (all-installed state :corp)))]
+                    (if-not (empty? rezzed-targets)
+                              (continue-ability
+                                state side
+                                {:prompt "derez a card in/protecting another server?"
+                                 :choices {:req (req (some #{target} rezzed-targets))}
+                                 :once :per-turn
+                                 :msg (msg "derezzes " (:title target) " to gain 1[Credit]")
+                                 :async true
+                                 :effect (effect (derez target)
+                                                 (gain-credits eid 1))}
+                                card nil)
+                              (effect-completed state side eid))))}]
+   :leave-play (effect (update-all-icebreakers))
+   :constant-effects [{:type :breaker-strength
+                       :value -2
+                       :req (req (and run
+                                      (has-subtype? target "Icebreaker")
+                                      (not-empty (run-events state side :derez))))}]})
 
 (defcard "Sting!"
   (letfn [(count-opp-stings [state side]

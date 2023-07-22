@@ -16,6 +16,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string]]
+    [game.core.expend :refer [expend]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
@@ -47,13 +48,13 @@
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
 
-(defn pioneer-ability
+(defn expend-ability
   "Called when the player clicks a card from hand."
   [state side {:keys [card]}]
   (let [card (get-card state card)
         eid (make-eid state {:source card :source-type :ability})
-        pioneer (:pioneer card)]
-    (resolve-ability state side eid pioneer card nil)))
+        expend-ab (expend (:expend card))]
+    (resolve-ability state side eid expend-ab card nil)))
 
 (defn play
   "Called when the player clicks a card from hand."
@@ -517,8 +518,8 @@
   [state _ {:keys [card]}]
   (let [card (get-card state card)]
     (if card
-      (if (:pioneer card)
-        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Reveal and Trash")) ;;april fools we can make this "cast as a sorcery"
+      (if (:expend card)
+        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
         (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
       (swap! state dissoc-in [:corp :install-list]))))
 

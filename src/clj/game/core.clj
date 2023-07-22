@@ -38,7 +38,7 @@
     [game.core.optional]
     [game.core.payment]
     [game.core.pick-counters]
-    [game.core.pioneer]
+    [game.core.expend]
     [game.core.play-instants]
     [game.core.player]
     [game.core.process-actions]
@@ -648,8 +648,8 @@
    pick-virus-counters-to-spend])
 
 (expose-vars
-  [game.core.pioneer
-   pioneer])
+  [game.core.expend
+   expend])
 
 (expose-vars
   [game.core.process-actions
