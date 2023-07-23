@@ -1,26 +1,27 @@
 (ns game.core.costs
   (:require
-    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
-    [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
-    [game.core.card-defs :refer [card-def]]
-    [game.core.damage :refer [damage]]
-    [game.core.eid :refer [complete-with-result make-eid]]
-    [game.core.engine :refer [checkpoint resolve-ability trigger-event-sync]]
-    [game.core.flags :refer [is-scored?]]
-    [game.core.gaining :refer [deduct lose]]
-    [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
-    [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
-    [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
-    [game.core.revealing :refer [reveal]]
-    [game.core.rezzing :refer [derez]]
-    [game.core.shuffling :refer [shuffle!]]
-    [game.core.tags :refer [lose-tags]]
-    [game.core.to-string :refer [card-str]]
-    [game.core.update :refer [update!]]
-    [game.core.virus :refer [number-of-virus-counters]]
-    [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [quantify same-card?]]
-    [clojure.string :as string]))
+   [game.core.bad-publicity :refer [gain-bad-publicity]]
+   [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
+   [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.damage :refer [damage]]
+   [game.core.eid :refer [complete-with-result make-eid]]
+   [game.core.engine :refer [checkpoint resolve-ability trigger-event-sync]]
+   [game.core.flags :refer [is-scored?]]
+   [game.core.gaining :refer [deduct lose]]
+   [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
+   [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
+   [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
+   [game.core.revealing :refer [reveal]]
+   [game.core.rezzing :refer [derez]]
+   [game.core.shuffling :refer [shuffle!]]
+   [game.core.tags :refer [lose-tags]]
+   [game.core.to-string :refer [card-str]]
+   [game.core.update :refer [update!]]
+   [game.core.virus :refer [number-of-virus-counters]]
+   [game.macros :refer [continue-ability req wait-for]]
+   [game.utils :refer [quantify same-card?]]
+   [clojure.string :as string]))
 
 ;; Click
 (defmethod cost-name :click [_] :click)
@@ -307,6 +308,37 @@
             (complete-with-result state side eid {:msg (str "removes " (quantify (value cost) "tag"))
                                                   :type :tag
                                                   :value (value cost)})))
+
+;; Tag-or-bp
+(defmethod cost-name :tag-or-bad-pub [_] :tag-or-bad-pub)
+(defmethod value :tag-or-bad-pub [[_ cost-value]] cost-value)
+(defmethod label :tag-or-bad-pub [cost] (str "remove " (quantify (value cost) "tag") " or take " (value cost) " bad publicity"))
+(defmethod payable? :tag-or-bad-pub
+  [cost state side eid card]
+  true)
+;;  (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost))))
+(defmethod handler :tag-or-bad-pub
+  [cost state side eid card actions]
+  (if-not (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost)))
+    (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) nil)
+              (complete-with-result state side eid {:msg (str "gains " (value cost) "bad publicity")
+                                                    :type :tag-or-bad-pub
+                                                    :value (value cost)}))
+    (continue-ability
+      state side
+      {:prompt "remove tag or take bad pub?"
+       :choices ["tag" "bad pub"]
+       :async true
+       :effect (req (if (= target "bad pub")
+                      (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) nil)
+                                (complete-with-result state side eid {:msg (str "gains " (value cost) "bad publicity")
+                                                                      :type :tag-or-bad-pub
+                                                                      :value (value cost)}))
+                      (wait-for (lose-tags state side (value cost))
+                                (complete-with-result state side eid {:msg (str "removes " (quantify (value cost) "tag"))
+                                                                      :type :tag-or-bad-pub
+                                                                      :value (value cost)}))))}
+      card nil)))
 
 ;; ReturnToHand
 (defmethod cost-name :return-to-hand [_] :return-to-hand)
