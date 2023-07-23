@@ -311,6 +311,7 @@
 (defcard "Arissana Rocha Nahu: Street Artist"
   {:abilities [{:req (req (and run (not-used-once? state {:once :per-turn} card)))
                 :async true
+                :label "install a program"
                 :effect
                 (effect
                   (continue-ability
