@@ -2420,6 +2420,28 @@
    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
                                 :type :recurring}}})
 
+(defcard "Pichação"
+  ;; TODO - there's not really a way to tell if an event happened during a run?
+  ;; this can be cleaned up a little later
+  {:hosting {:card #(and (ice? %)
+                         (can-host? %))}
+   :events [{:event :pass-ice
+             :interactive (req true)
+             :req (req (same-card? (:ice context) (:host card)))
+             :msg "gain [Click]"
+             :async true
+             :effect (req
+                       (gain-clicks state :runner 1)
+                       (if (< 1 (count (turn-events state side :runner-click-gain)))
+                         (continue-ability
+                           state side
+                           {:optional
+                            {:prompt "Is Pichação added to the Grip?"
+                             :yes-ability {:msg "appease the rules"
+                                           :cost [:return-to-hand]}}}
+                           card nil)
+                         (effect-completed state side eid)))}]})
+
 (defcard "Pipeline"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 2 1 :end-of-run)]}))

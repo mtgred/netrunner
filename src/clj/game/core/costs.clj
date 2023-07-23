@@ -938,6 +938,29 @@
                          :targets cards})))}
       nil nil)))
 
+;; AddRandomToBottom
+(defmethod cost-name :add-random-from-hand-to-bottom-of-deck [_] :add-random-from-hand-to-bottom-of-deck)
+(defmethod value :add-random-from-hand-to-bottom-of-deck [[_ cost-value]] cost-value)
+(defmethod label :add-random-from-hand-to-bottom-of-deck [cost]
+  (str "add " (quantify (value cost) "random card") " to the bottom of your deck"))
+(defmethod payable? :add-random-from-hand-to-bottom-of-deck
+  [cost state side eid card]
+  (<= 0 (- (count (get-in @state [side :hand])) (value cost))))
+(defmethod handler :add-random-from-hand-to-bottom-of-deck
+  [cost state side eid card actions]
+  (let [deck (if (= :corp side) "R&D" "the stack")
+        hand (get-in @state [side :hand])
+        chosen (take (value cost) (shuffle hand))]
+    (doseq [c chosen]
+      (move state side c :deck))
+    (complete-with-result
+      state side eid
+      {:msg (str "adds " (quantify (value cost) "random cards")
+                 " to the bottom of " deck)
+       :type :add-random-from-hand-to-bottom-of-deck
+       :value (value cost)
+       :targets chosen})))
+
 ;; AnyAgendaCounter
 (defmethod cost-name :any-agenda-counter [_] :any-agenda-counter)
 (defmethod value :any-agenda-counter [[_ cost-value]] cost-value)
