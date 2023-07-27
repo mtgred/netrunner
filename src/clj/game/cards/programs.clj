@@ -510,7 +510,7 @@
              :effect (effect (gain-credits eid 1))
              :msg "gain 1 [Credits]"}]})
 
-(defcard "Audrey V2"
+(defcard "Audrey v2"
   {:abilities [(break-sub [:virus 1] 2)
                (strength-pump [:trash-from-hand 1] 3)]
    :events [{:event :runner-trash
