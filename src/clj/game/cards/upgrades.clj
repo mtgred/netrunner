@@ -484,8 +484,17 @@
                    :req (req (or (in-same-server? card target)
                                  (from-same-server? card target)))
                    :effect (effect (steal-cost-bonus [:add-random-from-hand-to-bottom-of-deck 2] {:source card :source-type :ability}))}]
-    {:events [pre-steal]
-     :implementation "doesn't check you have the cards to trash her"
+    {:events [{:event :pre-access-card
+               :req (req (and (rezzed? card)
+                              (same-card? target card)))
+               :effect (req (register-run-flag!
+                              state side
+                              card :can-trash
+                              (fn [state side card]
+                                (not (and (same-card? target card)
+                                          (> 2 (count (:hand runner))))))))}
+              pre-steal]
+     :implementation "trash cost not displayed on dialogue"
      :on-trash {:async true
                 :interactive (req true)
                 :req (req (= :runner side))
