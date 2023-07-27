@@ -2426,21 +2426,25 @@
   {:hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :pass-ice
-             :interactive (req true)
-             :req (req (same-card? (:ice context) (:host card)))
-             :msg "gain [Click]"
-             :async true
-             :effect (req
-                       (gain-clicks state :runner 1)
-                       (if (< 1 (count (turn-events state side :runner-click-gain)))
-                         (continue-ability
-                           state side
-                           {:optional
-                            {:prompt "Is Pichação added to the Grip?"
-                             :yes-ability {:msg "appease the rules"
-                                           :cost [:return-to-hand]}}}
-                           card nil)
-                         (effect-completed state side eid)))}]})
+             :optional {:interactive (req true)
+                        :prompt "gain [click]?"
+                        :req (req (same-card? (:ice context) (:host card)))
+
+                        :yes-ability
+                        {:msg "gain [Click]"
+                         :async true
+                         :effect (req
+                                   (gain-clicks state :runner 1)
+                                   (if (< 1 (count (turn-events state side :runner-click-gain)))
+                                     (continue-ability
+                                       state side
+                                       {:optional
+                                        {:prompt "Is Pichação added to the Grip?"
+                                         :yes-ability {:msg "appease the rules"
+                                                       :cost [:return-to-hand]}}}
+                                       card nil)
+                                     (effect-completed state side eid)))}
+                        :no-ability {:msg "decline to gain [click]"}}}]})
 
 (defcard "Pipeline"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
