@@ -572,7 +572,7 @@
                 :cost [:trash-can]
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]})
 
-(defcard "[Banner]"
+(defcard "Banner"
   (auto-icebreaker {:abilities [{:label "Prevent barrier subroutines from ending the run this encounter"
                                  :cost [:credit 2]
                                  :req (req (and (get-current-encounter state)
@@ -3009,8 +3009,38 @@
                               :effect (effect (gain-credits :corp eid 2))}]}))
 
 (defcard "Umbrella"
-  (auto-icebreaker {:implementation "Draw and trojan requirements not implemented"
-                    :abilities [(break-sub 2 3 "Code Gate")]}))
+  (let [corp-draw {:optional {:prompt "Draw a card?"
+                              :player :corp
+                              :yes-ability {:async true
+                                            :effect (req
+                                                      (system-msg state :corp (str "uses " (:title card) " to draw a card"))
+                                                      (draw state :corp eid 1))}
+                              :no-ability {:player :corp
+                                           :effect (req (system-msg state :corp (str "uses " (:title card) " to decline to draw a card")))}}}
+        runner-draw {:label "(manual) each player may draw"
+                     :optional {:prompt "Draw a card?"
+                                :player :runner
+                                :yes-ability {:msg "draw a card"
+                                              :async true
+                                              :effect (req (wait-for (draw state :runner 1)
+                                                                     (continue-ability
+                                                                       state side
+                                                                       corp-draw
+                                                                       card nil)))}
+                                :no-ability {:msg "decline to draw a card"
+                                             :async true
+                                             :effect (req (continue-ability
+                                                            state side
+                                                            corp-draw
+                                                            card nil))}}}]
+    (auto-icebreaker {:implementation "Draw doesn't work when mixing breakers"
+                      :abilities [runner-draw
+                                  (break-sub 2 3 "Code Gate"
+                                             {:req (req
+                                                     (some #(and (has-subtype? % "Trojan") (program? %)) (:hosted current-ice)))})]
+                      :events [{:event :subroutines-broken
+                                :req (req (every? #(or (= (:breaker %) nil) (= (:breaker %) (:cid card))) (:subroutines target)))
+                                :effect (req (continue-ability state side runner-draw card nil))}]})))
 
 (defcard "Unity"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
