@@ -2491,7 +2491,7 @@
 (defcard "Lycan"
   (morph-ice "Sentry" "Code Gate" trash-program-sub))
 
-(defcard "M.I.C"
+(defcard "M.I.C."
   {:abilities [{:label "End the run unless runner spends [Click]"
                 :msg "end the run unless runner spends [Click]"
                 :req (req (and run this-server))
