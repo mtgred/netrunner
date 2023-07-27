@@ -530,7 +530,7 @@
 (deftest audrey
   (do-game
     (new-game {:corp {:hand ["Rashida Jaheem" "Vanilla"]}
-               :runner {:hand ["Knifed" "Audrey V2" "Sure Gamble"]}})
+               :runner {:hand ["Knifed" "Audrey v2" "Sure Gamble"]}})
     (play-from-hand state :corp "Vanilla" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
