@@ -1274,38 +1274,27 @@
 
 (defcard "Eru Ayase-Pessoa"
   (let [constant-ability
-        {:event :run
-         :silent (req true)
-         :req (req (= :archives (target-server context)))
-         :effect (req (register-events
-                        state side card
-                        [{:event :successful-run
-                          :duration :end-of-run
-                          :silent (req true)
-                          :req (req (threat-level 3 state))
-                          :effect (req (register-events
-                                         state side card
-                                         [(breach-access-bonus :rd 1 {:duration :end-of-run})])
-                                       (effect-completed state side eid))}]))}]
-    {:events [constant-ability]
+        ;; event breach req target run hq
+        {:event :breach-server
+         :req (req (and (= :rd target)
+                        (= :archives (first (:server run)))))
+         :msg (msg "access an additional card")
+         :effect (effect (access-bonus :rd 1))}]
+    {:events [constant-ability
+              (successful-run-replace-breach
+              {:target-server :archives
+               :this-card-run true
+               :mandatory true
+               :ability {:msg "breach R&D, accessing one additional card"
+                         :async true
+                         :effect (req (breach-server state :runner eid [:rd] nil))}})]
      :abilities [{:cost [:click 1]
                   :msg "make a run on Archives"
                   :makes-run true
+                  :once :per-turn
                   :async true
                   :effect
                   (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
-                                 (register-events
-                                   state side
-                                   card
-                                   [{:event :pre-successful-run
-                                     :duration :end-of-run
-                                     :unregister-once-resolved true
-                                     :interactive (req true)
-                                     :req (req (= :archives (-> run :server first)))
-                                     :effect
-                                     (req (swap! state assoc-in [:run :server] [:rd])
-                                          (trigger-event state :corp :no-action)
-                                          (system-msg state side (str "uses " (:title card) " to breach R&D")))}])
                                  (make-run state side eid :archives (get-card state card))))}]}))
 
 (defcard "Fall Guy"
@@ -1832,7 +1821,7 @@
   {:events [{:event :corp-install
              :optional {:prompt "Rock out?"
                         :req (req (and (not (ice? (:card target)))
-                                                     (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
+                                       (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
                         :yes-ability {:msg (msg (let [deck (:deck runner)]
                                                   (if (pos? (count deck))
                                                     (str "trash " (str/join ", " (map :title (take 1 deck))) " from their Stack and draw 1 card")
