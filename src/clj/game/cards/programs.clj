@@ -16,13 +16,14 @@
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect
+   [game.core.effects :refer [any-effects register-floating-effect
                               unregister-effects-for-card]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [ability-as-handler dissoc-req not-used-once? pay
                              print-msg register-events register-once
                              trigger-event trigger-event-simult unregister-events]]
-   [game.core.events :refer [run-events first-event? first-successful-run-on-server? turn-events]]
+   [game.core.events :refer [run-events first-event? first-installed-trash? run-events
+                             first-successful-run-on-server? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
    [game.core.flags :refer [can-host? card-flag? lock-zone release-zone zone-locked?]]
@@ -47,9 +48,10 @@
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
-   [game.core.runs :refer [active-encounter? bypass-ice continue
+   [game.core.runs :refer [active-encounter? bypass-ice continue end-run-prevent
                            get-current-encounter make-run successful-run-replace-breach
                            update-current-encounter]]
+   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.servers :refer [is-central? is-remote? target-server zone->name]]
@@ -573,21 +575,39 @@
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]})
 
 (defcard "Banner"
-  (auto-icebreaker {:abilities [{:label "Prevent barrier subroutines from ending the run this encounter"
+  (auto-icebreaker {:abilities [{:msg "prevent the run from ending"
+                                 :effect (effect (end-run-prevent))}
+                                {:label "Prevent barrier subroutines from ending the run this encounter"
                                  :cost [:credit 2]
                                  :req (req (and (get-current-encounter state)
-                                                (has-subtype? current-ice "Barrier")))
+                                                 (<= (get-strength current-ice) (get-strength card))
+                                                 (has-subtype? current-ice "Barrier")))
                                  :msg (msg "prevent " (:title current-ice) " from ending the run (this encounter)")
                                  :effect (req
-                                           (let [ice current-ice]
+                                           (let [target-ice (:ice (get-current-encounter state))]
                                              (register-floating-effect
                                                state side
                                                card
-                                               {:type :end-run-prevent
+                                               {:type :auto-prevent-run-end
                                                 :duration :end-of-encounter
                                                 :req (req
                                                        (let [target (second targets)]
-                                                         (same-card? (:cause-card target) ice)))
+                                                         (and (same-card? target target-ice)
+                                                              ;;special case for border control/MIC
+                                                              ;; this is an ugly hack, but we have
+                                                              ;; no way of knowing which *ability*
+                                                              ;; actually ended the run
+                                                              ;; these seem like the safe hedge.
+                                                              ;; MIC is included for paint effects.
+                                                              ;; TODO - fix this, add :cause :subroutine to a bunch of
+                                                              ;; end the run effects
+                                                              (if (or (= "Border Control" (:title target-ice))
+                                                                      (= "M.I.C." (:title target-ice)))
+                                                                (not (some #(and
+                                                                              (same-card? target (:card (first %)))
+                                                                              (= (:cause (first %)) :ability-cost))
+                                                                           (run-events state :corp :corp-trash)))
+                                                                true))))
                                                 :value (req true)})))}]
                     :implementation "Note - this is half implemented. Use your best judgement."}))
 

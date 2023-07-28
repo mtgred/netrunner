@@ -20,7 +20,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
     [game.utils :refer [dissoc-in same-card?]]
-    [jinteki.utils :refer [count-bad-pub]]
+    [jinteki.utils :refer [count-bad-pub other-side]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]))
 
@@ -650,6 +650,10 @@
      (handle-end-run state side eid)
      (register-unsuccessful-run state side eid))))
 
+
+;; todo - ideally we should be able to know not just the card ending the run, but the cause as well
+;; ie subroutine, card ability (like the trash on bc), or something else
+;; this matters for cards like banner
 (defn end-run
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
   ([state side eid card] (end-run state side eid card nil))
@@ -657,20 +661,25 @@
    (if (or (:run @state)
            (get-current-encounter state))
      (do (swap! state update-in [:end-run] dissoc :end-run-prevent)
-         (let [prevent (get-prevent-list state :runner :end-run)]
-           (if (and (not unpreventable)
-                    (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
-             (do (system-msg state :runner "has the option to prevent the run from ending")
-                 (show-wait-prompt state :corp "Runner to prevent the run from ending")
-                 (show-prompt state :runner nil
-                              (str "Prevent the run from ending?") ["Done"]
-                              (fn [_]
-                                (clear-wait-prompt state :corp)
-                                (if-let [_ (get-in @state [:end-run :end-run-prevent])]
-                                  (effect-completed state side eid)
-                                  (do (system-msg state :runner "will not prevent the run from ending")
-                                      (resolve-end-run state side eid))))))
-             (resolve-end-run state side eid))))
+         (let [prevent (get-prevent-list state :runner :end-run)
+               auto-prevent (any-effects state side :auto-prevent-run-end true? card [card])]
+           (if auto-prevent
+             (do (end-run-prevent state side)
+                 (system-msg state (other-side side) "prevents the run from ending")
+                 (effect-completed state side eid))
+             (if (and (not unpreventable)
+                      (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
+               (do (system-msg state :runner "has the option to prevent the run from ending")
+                   (show-wait-prompt state :corp "Runner to prevent the run from ending")
+                   (show-prompt state :runner nil
+                                (str "Prevent the run from ending?") ["Done"]
+                                (fn [_]
+                                  (clear-wait-prompt state :corp)
+                                  (if-let [_ (get-in @state [:end-run :end-run-prevent])]
+                                    (effect-completed state side eid)
+                                    (do (system-msg state :runner "will not prevent the run from ending")
+                                        (resolve-end-run state side eid))))))
+               (resolve-end-run state side eid)))))
      (effect-completed state side eid))))
 
 (defn jack-out-prevent
