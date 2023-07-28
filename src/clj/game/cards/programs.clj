@@ -608,8 +608,7 @@
                                                                               (= (:cause (first %)) :ability-cost))
                                                                            (run-events state :corp :corp-trash)))
                                                                 true))))
-                                                :value (req true)})))}]
-                    :implementation "Note - this is half implemented. Use your best judgement."}))
+                                                :value (req true)})))}]}))
 
 (defcard "Battering Ram"
   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")
