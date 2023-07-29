@@ -1036,7 +1036,8 @@
                                                   (all-installed state :corp))))
                         (apply enable-run-on-server
                           state card (map first (get-remotes state)))))]
-    {:on-rez {:req (req (no-event? state side :run #(is-central? (:server (:first %)))))
+    {:rez-req (req (= (:active-player @state) :corp))
+     :on-rez {:req (req (no-event? state side :run #(is-central? (:server (:first %)))))
               :effect prevent}
      :uninstall allow-if
      :derez-effect {:effect allow-if}
@@ -1045,6 +1046,7 @@
                :effect allow}
               {:event :run
                :req (req (and (= :archives (target-server context))
+                              (first-event? state :runner :run #(= :archives (target-server (first %))))
                               unprotected))
                :msg "do 2 net damage"
                :async true

@@ -575,9 +575,7 @@
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]})
 
 (defcard "Banner"
-  (auto-icebreaker {:abilities [{:msg "prevent the run from ending"
-                                 :effect (effect (end-run-prevent))}
-                                {:label "Prevent barrier subroutines from ending the run this encounter"
+  (auto-icebreaker {:abilities [{:label "Prevent barrier subroutines from ending the run this encounter"
                                  :cost [:credit 2]
                                  :req (req (and (get-current-encounter state)
                                                  (<= (get-strength current-ice) (get-strength card))

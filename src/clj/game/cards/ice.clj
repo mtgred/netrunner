@@ -757,10 +757,13 @@
   (space-ice end-the-run))
 
 (defcard "Attini"
+  ;; TODO - this should provide an aura that prevents the runner from paying credits
+  ;; for paid abilities during subroutine resolution
+  ;; we can figure out how to do that type of thing some time in the future
   (let [sub {:label "Do 1 net damage unless runner pays 2 [Credits] (Do 1 net damage)"
              :msg (msg "do 1 net damage" (when-not (threat-level 4 state) " unless the runner pays 2 [Credits]"))
              :async true
-             :effect (req (if (threat-level 4 state)
+             :effect (req (if (threat-level 3 state)
                             (damage state :corp eid :net 1)
                             (continue-ability
                               state side

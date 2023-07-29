@@ -3572,7 +3572,7 @@
                               :cancel-effect (effect (system-msg "declines to install a card")
                                                      (effect-completed eid))
                               :effect (req (let [card-to-install (first (seq (filter #(and (= (:title target) (:title %)) (in-discard? (get-card state %))) trashed-cards)))]
-                                               (runner-install state side (make-eid state (assoc eid :source card :source-type :runner-install)) card-to-install {:cost-bonus -3})))}
+                                               (runner-install state side (assoc eid :source card :source-type :runner-install) card-to-install {:cost-bonus -3})))}
                              card nil))))}})
 
 (defcard "The Price of Freedom"

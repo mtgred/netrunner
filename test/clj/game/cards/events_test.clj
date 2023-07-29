@@ -6739,7 +6739,8 @@
     (take-credits state :corp)
     (play-from-hand state :runner "The Price")
     (click-prompt state :runner "Rezeki")
-    (is (= 4 (:credit (get-runner))))))
+    (is (= 4 (:credit (get-runner))))
+    (is (= 4 (count (:discard (get-runner)))))) "3 + price")
 
 (deftest the-price-of-freedom
   ;; The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn

@@ -676,6 +676,32 @@
         (is (= (+ 3 credits) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll"))
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
+(deftest banner
+  (do-game
+    (new-game {:runner {:hand ["Banner" "Sure Gamble"]}
+               :corp {:hand ["Border Control"]}})
+    (play-from-hand state :corp "Border Control" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Banner")
+    (run-on state :hq)
+    (let [bc (get-ice state :hq 0)
+          banner (get-program state 0)]
+      (rez state :corp (refresh bc))
+      (run-continue state :encounter-ice)
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "banner costs 2"
+        (card-ability state :runner (refresh banner) 0))
+      (changes-val-macro
+        +1 (:credit (get-corp))
+        "corp gained 1 from BC"
+        (fire-subs state (refresh bc)))
+      (is (:run @state) "Run still ongoing (banner prevented)")
+      (card-ability state :corp (refresh bc) 0)
+      (is (nil? (refresh bc)))
+      (is (nil? (get-run))))) "BC ability ended run (banner no prevento)")
+
 (deftest begemot
   (do-game
     (new-game {:runner {:hand ["Begemot" (qty "Sure Gamble" 4)] :credits 10}})
