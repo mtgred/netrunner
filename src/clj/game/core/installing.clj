@@ -238,6 +238,7 @@
   [state side eid card server {:keys [action] :as args}]
   (let [slot (get-slot state card server args)
         costs (corp-install-cost state side card server (dissoc args :cached-costs))
+        ;; note - all this filler is solely for tucana. Maybe NSG will re-use that combined discount again? idk
         credcost (or (second (first (filter #(= (first %) :credit) costs))) 0)
         discount (or (:combined-credit-discount args) 0)
         appldisc (if (and (not (zero? credcost)) (not (zero? discount)))
