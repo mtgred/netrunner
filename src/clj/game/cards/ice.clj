@@ -152,6 +152,18 @@
    :async true
    :effect (effect (end-run :corp eid card))})
 
+(defn runner-pays
+  "Ability to pay to avoid a subroutine by paying a resource"
+  [cost]
+  {:async true
+   :effect (req (wait-for (pay state :runner (make-eid state eid) card cost)
+                          (when-let [payment-str (:msg async-result)]
+                            (system-msg state :runner
+					(str payment-str
+                                             " due to " (:title card)
+                                             " subroutine")))
+                          (effect-completed state side eid)))})
+
 (defn end-the-run-unless-runner-pays
   [cost]
   {:player :runner
