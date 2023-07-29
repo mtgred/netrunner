@@ -194,6 +194,7 @@
                                        :end-of-encounter
                                        {:ice ice})
               (when (:bypass encounter)
+                (queue-event state :bypassed-ice ice)
                 (system-msg state :runner (str "bypasses " (:title ice))))
               (let [run (:run @state)
                     phase (:phase run)]

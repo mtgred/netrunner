@@ -1678,37 +1678,14 @@
                             (gain-credits state side eid 2)
                             (draw state side eid 1)))}]})
 
-(defcard "[Tucana]"
+(defcard "Tucana"
   (let [ability {:async true
-                 :effect (req
-                           (add-counter state :corp card :credit 3)
-                           (wait-for (resolve-ability
-                                       state side
-                                       (if (not-empty (filter ice? (:deck corp)))
-                                         {:async true
-                                          :prompt "Choose a piece of ice"
-                                          :choices (req (filter ice? (:deck corp)))
-                                          :effect (effect
-                                                    (continue-ability
-                                                      (let [chosen-ice target]
-                                                        {:async true
-                                                         :prompt (str "Choose a server to install " (:title chosen-ice) " on")
-                                                         :choices (corp-install-list state chosen-ice)
-                                                         :effect (effect (shuffle! :deck)
-                                                                         (corp-install eid chosen-ice target
-                                                                                       {:install-state :rezzed}))})
-                                                      card nil))}
-                                         {:prompt "You have no ice in R&D"
-                                          :choices ["Carry on!"]
-                                          :prompt-type :bogus
-                                          :effect (effect (shuffle! :deck))})
-                                       card nil)
-                                     (add-counter state :corp card :credit (- 0 (get-counters (get-card state card) :credit)))
-                                     (effect-completed state side eid)))}]
-    {:implementation "v10. Credits are placed on tucana to pay for install/rez. May need to manually adjust if tucana is trashed before the steal."
-     :interactions {:pay-credits {:req (req (or (= :corp-install (:source-type eid))
-                                                (= :rez (:source-type eid))))
-                                  :type :credit}}
+                 :prompt "Choose a piece of ice to install and rez"
+                 :choices (req (cancellable (filter ice? (:deck corp))))
+                 :effect (req (corp-install state side eid target nil {:install-state :rezzed :combined-credit-discount 3}))
+                 :cancel-effect (effect (system-msg  "declines to use Tucana to install a card")
+                                        (effect-completed eid))}]
+    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
      :events [(assoc ability
                      :event :agenda-stolen
                      :req (req (= (:previous-zone (:card context)) (get-zone card))))

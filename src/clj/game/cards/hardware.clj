@@ -382,20 +382,19 @@
 
 (defcard "Capybara"
   {:events [{:event :bypassed-ice
-             :effect (req (let [ice target]
+             :async true
+             :effect (req (let [target-ice target]
                             (continue-ability
                               state side
                               {:optional
                                {:req (req true)
-                                :prompt (str "Remove Capybara from the game to derez " (:title ice))
+                                :prompt (str "Remove Capybara from the game to derez " (:title target-ice))
                                 :yes-ability
                                 {:async true
-                                 :msg (msg "derez " (:title ice))
-                                 :effect
-                                 (req (wait-for
-                                        (move state :runner card :rfg)
-                                        (derez state side ice)
-                                        (effect-completed state side eid)))}}}
+                                 :cost [:remove-from-game]
+                                 :msg (msg "derez " (:title target-ice))
+                                 :effect (effect (derez target-ice)
+                                                 (effect-completed eid))}}}
                               card nil)))}]})
 
 (defcard "Carnivore"
@@ -1061,7 +1060,8 @@
                                      (corp? %))}
                :msg (msg "add " (card-str state target) " to HQ")
                :effect (effect (move :corp target :hand))}]
-    {:events [(assoc leela :event :agenda-scored)
+    {:constant-effects [(mu+ 1)]
+     :events [(assoc leela :event :agenda-scored)
               (assoc leela :event :agenda-stolen)]}))
 
 (defcard "Hijacked Router"

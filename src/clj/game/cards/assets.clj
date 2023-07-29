@@ -311,7 +311,7 @@
   (let [name-abi
         {:prompt "Choose a card type"
          :waiting-prompt "corp to choose a card type"
-         :choices ["Operation" "Asset" "Upgrade" "Ice" "Agenda"]
+         :choices ["Operation" "Asset" "Upgrade" "ICE" "Agenda"]
          :async true
          :msg (msg "choose the card type " target)
          :effect (req (let [named-type target
