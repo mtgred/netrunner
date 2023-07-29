@@ -2743,7 +2743,7 @@
   (auto-icebreaker {:x-fn (req (if (threat-level 4 state) -2 0))
                     :abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 2 2)]
-                    :constant-effects [(breaker-strength-bonus x-fn)]}))
+                    :constant-effects [(breaker-strength-bonus (get-x-fn))]}))
 
 (defcard "Shiv"
   (break-and-enter "Sentry"))
