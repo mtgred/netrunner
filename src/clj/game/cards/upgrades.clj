@@ -129,7 +129,7 @@
                             :effect (effect (rez eid (:card context) {:cost-bonus -3}))}}}]})
 
 (defcard "Angelique Garza Correa"
-  {:expend {:req (req threat-level 3 state)
+  {:expend {:req (req (threat-level 3 state))
             :cost [:credit 1]
             :msg "do 1 meat damage"
             :effect (effect (damage eid :meat 1 {:card card}))}

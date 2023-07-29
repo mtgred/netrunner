@@ -2531,6 +2531,19 @@
       (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma is now protecting R&D")
       (is (no-prompt? state :runner) "No prompt if not virus program installed")))
 
+(deftest lilypad
+  (do-game
+    (new-game {:runner {:hand ["LilyPAD" "Marjanah" "Refractor"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "LilyPAD")
+    (is (no-prompt? state :runner))
+    (play-from-hand state :runner "Marjanah")
+    (click-prompt state :runner "Yes")
+    (is (= 2 (count (:hand (get-runner)))) "drew a card")
+    (play-from-hand state :runner "Refractor")
+    (is (no-prompt? state :runner) "No more prompt for draw")))
+
 (deftest llds-processor
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
   (do-game

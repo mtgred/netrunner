@@ -1869,10 +1869,9 @@
   (auto-icebreaker {:on-install {:req (req (threat-level 4 state))
                                  :msg "gain 3 strength for the remainder of the turn"
                                  :effect (effect (pump card 3 :end-of-turn))}
-                    :implementation "Strength on install not implemented yet"
                     :hosting {:card #(and (ice? %)
                                           (can-host? %))}
-                    :abilities [(break-sub 1 1 "Sentry")
+                    :abilities [(break-sub 1 1 "Sentry" {:req (req (same-card? current-ice (:host card)))})
                                 (strength-pump 1 2)]}))
 
 (defcard "LLDS Energy Regulator"

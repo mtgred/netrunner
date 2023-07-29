@@ -1165,14 +1165,14 @@
 
 (defcard "LilyPAD"
   {:events [{:event :runner-install
-             :req (req (and
-                         (program? (:card target))
-                         (first-event? state :runner :runner-install #(program? (:card (first %))))))
              :optional {:prompt "Draw a card?"
+                        :req (req (and
+                                    (program? (:card target))
+                                    (first-event? state :runner :runner-install #(program? (:card (first %))))))
                         :yes-ability {:msg "draw a card"
                                       :async true
                                       :effect (req (draw state :runner eid 1))}
-                        :no-ability {:msg "declmines to draw a card"}}}]
+                        :no-ability {:msg "declines to draw a card"}}}]
    :constant-effects [(mu+ 2)]})
 
 (defcard "LLDS Memory Diamond"
