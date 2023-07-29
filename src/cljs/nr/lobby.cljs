@@ -223,10 +223,14 @@
 (defn games-list-panel [state games current-game user visible-formats]
   [:div.games
    [button-bar state games current-game user visible-formats]
-   (if (= "angel-arena" (:room @state))
-     [angel-arena/game-list state {:games games
-                                   :current-game current-game}]
-     [game-list state user games current-game])])
+   (if @ws/lobby-updates-state
+     (if (= "angel-arena" (:room @state))
+       [angel-arena/game-list state {:games games
+                                     :current-game current-game}]
+       [game-list state user games current-game])
+     [:div
+      "Lobby updates halted." ; this should never be visible
+      [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])
 
 (defn right-panel
   [state decks current-game user]
