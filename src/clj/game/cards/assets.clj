@@ -990,13 +990,22 @@
                   :effect (req (as-agenda state :corp card 3))}]}))
 
 (defcard "Federal Fundraising"
-  (let [ability
+  (let [draw-ab {:optional {:req (req unprotected)
+                            :prompt "draw a cards?"
+                            :yes-ability {:msg "draw a card"
+                                          :async true
+                                          :effect (effect (draw eid 1))}
+                            :no-ability {:msg "decline to draw cards"}}}
+        ability
         {:once :per-turn
          :req (req (:corp-phase-12 @state))
          :interactive (req true)
          :label "look at the top 3 cards"
          :optional
          {:prompt "look at the top 3 cards?"
+          :no-ability
+          {:msg (msg "declines to look at the top 3 cards")
+           :effect (req (continue-ability state side draw-ab card nil))}
           :yes-ability
           {:msg (msg "rearrange the top 3 cards of R&D")
            :async true
@@ -1006,12 +1015,7 @@
                                                    card nil)
                                   (continue-ability
                                     state side
-                                    {:optional {:req (req unprotected)
-                                                :prompt "draw a cards?"
-                                                :yes-ability {:msg "draw a card"
-                                                              :async true
-                                                              :effect (effect (draw eid 1))}
-                                                :no-ability {:msg "decline to draw cards"}}}
+                                    draw-ab
                                     card nil)))}}}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
