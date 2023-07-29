@@ -21,8 +21,6 @@
    [taoensso.sente :as sente]))
 
 (defmethod ws/event-msg-handler :lobby/list [{data :?data}]
-  (when (get-in @app-state [:current-game :started] false) ; Pause lobby updates if in game
-    (ws/lobby-updates-pause!))
   (swap! app-state assoc :games data))
 
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
@@ -223,16 +221,27 @@
        [load-replay-button s games current-game user]])])
 
 (defn games-list-panel [state games current-game user visible-formats]
-  [:div.games
-   [button-bar state games current-game user visible-formats]
-   (if @ws/lobby-updates-state
-     (if (= "angel-arena" (:room @state))
-       [angel-arena/game-list state {:games games
-                                     :current-game current-game}]
-       [game-list state user games current-game])
-     [:div
-      "Lobby updates halted." ; this should never be visible
-      [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])
+  (r/create-class
+    {:display-name "games-list"
+     :component-did-mount
+     (fn []
+       (ws/lobby-updates-continue!))
+     :component-will-unmount
+     (fn []
+       (ws/lobby-updates-pause!))
+
+     :reagent-render
+     (fn []
+       [:div.games
+        [button-bar state games current-game user visible-formats]
+        (if @ws/lobby-updates-state
+          (if (= "angel-arena" (:room @state))
+            [angel-arena/game-list state {:games games
+                                          :current-game current-game}]
+            [game-list state user games current-game])
+          [:div
+           "Lobby updates halted." ; this should never be visible
+           [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])}))
 
 (defn right-panel
   [state decks current-game user]
