@@ -75,10 +75,8 @@
 (def lobby-updates-state (r/atom true))
 (defn lobby-updates-pause! []
   (ws-send! [:lobby/pause-updates])
-  (reset! lobby-updates-state false)
-  (print "lobby-updates-state:" @lobby-updates-state))
+  (reset! lobby-updates-state false))
 
 (defn lobby-updates-continue! []
   (ws-send! [:lobby/continue-updates])
-  (reset! lobby-updates-state true)
-  (print "lobby-updates-state:" @lobby-updates-state))
+  (reset! lobby-updates-state true))
