@@ -1563,7 +1563,9 @@
                                            :prompt "Choose a card in HQ to move to the top of R&D"
                                            :msg "add 1 card in HQ to the top of R&D"
                                            :choices {:card #(and (in-hand? %)
-                                                                 (corp? %))}
+                                                                 (corp? %))
+                                                     ;; just incase everything gets jinja'd out of hand
+                                                     :all (req (not (zero? (count (:hand corp)))))}
                                            :effect (effect (move target :deck {:front true})
                                                            (effect-completed eid))}
                                           card nil)))))}})
