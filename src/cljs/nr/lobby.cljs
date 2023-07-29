@@ -21,6 +21,8 @@
    [taoensso.sente :as sente]))
 
 (defmethod ws/event-msg-handler :lobby/list [{data :?data}]
+  (when (get-in @app-state [:current-game :started] false) ; Pause lobby updates if in game
+    (ws/lobby-updates-pause!))
   (swap! app-state assoc :games data))
 
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
