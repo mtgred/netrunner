@@ -1023,7 +1023,7 @@
              :async true
              :effect (req (add-counter state side card :credit 1)
                           (effect-completed state side eid))}]
-   :abilities [{:msg "gain 1 [Credits]"
+   :abilities [{:msg "take 1 [Credits]"
                 :async true
                 :req (req (pos? (get-counters (get-card state card) :credit)))
                 :effect (req (add-counter state side card :credit -1)
