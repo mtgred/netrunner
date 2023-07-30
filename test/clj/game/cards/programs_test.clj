@@ -534,7 +534,7 @@
     (play-from-hand state :corp "Vanilla" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
-    (play-from-hand state :runner "Audrey V2")
+    (play-from-hand state :runner "Audrey v2")
     (run-on state :hq)
     (run-continue state)
     (run-continue state)

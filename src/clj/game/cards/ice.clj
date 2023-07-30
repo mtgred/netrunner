@@ -2235,14 +2235,15 @@
                                 {;:msg "give the runner 1 tag unless they spend [click]"
                                  :player :runner
                                  :prompt "Choose one"
-                                 :choices ["Take 1 tag"
-                                           "Spend [click]"]
+                                 :choices (req ["Take 1 tag"
+                                                (when (can-pay? state :runner nil card nil [:click 1])
+                                                  "Spend [click]")])
                                  :waiting-prompt "Runner to make a choice"
                                  :async true
                                  :effect (req (if (= target "Take 1 tag")
                                                 (do (system-msg state :runner "takes 1 tag on encountering Jaguarundi")
                                                     (gain-tags state :runner eid 1))
-                                                (wait-for (pay state side (make-eid state eid) card :click 1)
+                                                (wait-for (pay state :runner (make-eid state eid) card :lose-click 1)
                                                           (system-msg state side (:msg async-result))
                                                           (effect-completed state :runner eid))))})
                               card nil))}

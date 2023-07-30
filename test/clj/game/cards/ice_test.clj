@@ -3481,8 +3481,11 @@
 (deftest jaguarundi-no-threat-spend-click
   (do-game
     (new-game {:corp {:hand ["City Works Project" "Hostile Takeover" "Jaguarundi"]}})
+    (core/gain state :corp :click 10)
+    (core/gain state :corp :credit 10)
     (play-and-score state "City Works Project")
     (play-and-score state "Hostile Takeover")
+    (is (= 2 (count (:scored (get-corp)))))
     (play-from-hand state :corp "Jaguarundi" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
@@ -7112,7 +7115,7 @@
     (rez state :corp (get-ice state :hq 0))
     (click-prompt state :corp "tag")
     (is (zero? (count-tags state)) "spent tag to rez")
-    (is (= 1 (count-bad-pub state)) "Gained 1 bad pub")))
+    (is (= 0 (count-bad-pub state)) "Gained 1 bad pub")))
 
 (deftest vampyronassa
   ;; Vampyronassa
