@@ -13,7 +13,7 @@
    [web.app-state :as app-state]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
    [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
-   [web.utils :refer [response]]
+   [web.utils :refer [response md5]]
    [web.versions :refer [banned-msg]])
   (:import
    java.security.SecureRandom))
