@@ -3,6 +3,7 @@
    [nr.ajax :refer [?csrf-token]]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.utils :refer [non-game-toast]]
+   [reagent.core :as r]
    [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
 (defonce lock (atom false))
@@ -70,3 +71,12 @@
           (start-client-chsk-router!
             ch-chsk
             event-msg-handler-wrapper)))
+
+(def lobby-updates-state (r/atom true))
+(defn lobby-updates-pause! []
+  (ws-send! [:lobby/pause-updates])
+  (reset! lobby-updates-state false))
+
+(defn lobby-updates-continue! []
+  (ws-send! [:lobby/continue-updates])
+  (reset! lobby-updates-state true))

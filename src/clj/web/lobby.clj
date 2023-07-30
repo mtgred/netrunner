@@ -189,7 +189,8 @@
   ([]
    (let [user-cache (:users @app-state/app-state)
          uids (ws/connected-uids)
-         users (map #(get user-cache %) uids)]
+         users (map #(get user-cache %) uids)
+         users (filter #(:lobby-updates %) users)]
      (broadcast-lobby-list users)))
   ([users]
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
@@ -651,3 +652,14 @@
     (if (and lobby (in-lobby? uid lobby))
       (update-in lobbies [gameid :mute-spectators] not)
       lobbies)))
+
+(defmethod ws/-msg-handler :lobby/pause-updates
+  [{{user :user} :ring-req
+    uid :uid}]
+  (app-state/pause-lobby-updates uid))
+
+(defmethod ws/-msg-handler :lobby/continue-updates
+  [{{user :user} :ring-req
+    uid :uid}]
+  (app-state/continue-lobby-updates uid)
+  (send-lobby-list uid))

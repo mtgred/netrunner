@@ -8,7 +8,7 @@
 
 (defn register-user
   [app-state uid user]
-  (assoc-in app-state [:users uid] (assoc user :uid uid)))
+  (assoc-in app-state [:users uid] (assoc user :uid uid :lobby-updates true)))
 
 (defn uid->lobby
   ([uid] (uid->lobby (:lobbies @app-state) uid))
@@ -57,3 +57,11 @@
         new-users (dissoc users uid)
         _ (println "NEW USERS" new-users)]
     (swap! app-state #(assoc %1 :users new-users))))
+
+(defn pause-lobby-updates
+  [uid]
+  (swap! app-state assoc-in [:users uid :lobby-updates] false))
+
+(defn continue-lobby-updates
+  [uid]
+  (swap! app-state assoc-in [:users uid :lobby-updates] true))
