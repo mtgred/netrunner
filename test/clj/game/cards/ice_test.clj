@@ -3493,6 +3493,7 @@
     (run-continue state :encounter-ice)
     (changes-val-macro
       -1 (:click (get-runner))
+      "spent a click on jag"
       (click-prompt state :runner "Spend [click]"))
     (is (no-prompt? state :runner) "no jaguarundi prompt")))
 
