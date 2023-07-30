@@ -32,6 +32,15 @@
 (defn cards-handler [{db :system/db}]
   (response 200 (enriched-cards db)))
 
+(defn- validate-lang
+  [lang]
+  (contains? #{"de" "es" "fr" "it" "ja" "ko" "pl" "zh"} lang))
+
+(defn lang-handler [{db :system/db {lang :lang} :path-params}]
+  (if (validate-lang lang)
+      (response 200 (map #(dissoc % :_id) (mc/find-maps db (str "cards-" lang))))
+      (response 200 {})))
+
 (defn alt-arts-handler [{db :system/db}]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "altarts"))))
 

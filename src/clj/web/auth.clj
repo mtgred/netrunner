@@ -13,7 +13,7 @@
    [web.app-state :as app-state]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
    [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
-   [web.utils :refer [response]]
+   [web.utils :refer [response md5]]
    [web.versions :refer [banned-msg]])
   (:import
    java.security.SecureRandom))
@@ -105,7 +105,7 @@
       (and user (password/check password (:password user)))
       (do (mc/update db "users"
                      {:username username}
-                     {"$set" {:last-connection (inst/now)}})
+                     {"$set" {:lastConnection (inst/now)}})
           (assoc (response 200 {:message "ok"})
                  :cookies {"session" (merge {:value (create-token auth user)}
                                             (:cookie auth))}))
@@ -152,7 +152,8 @@
     (acknowledged?
       (mc/update db "users"
                  {:username username}
-                 {"$set" {:email email}}))
+                 {"$set" {:email email
+                          :emailhash (md5 email)}}))
     (response 200 {:message "Refresh your browser"})
 
     :else

@@ -39,7 +39,7 @@
 
      [:section
       [:h4 (tr [:ingame-settings.card-backs "Card backs"])]
-      (doall (for [option [{:name (tr [:settings.nisei "NISEI"]) :ref "nisei"}
+      (doall (for [option [{:name (tr [:settings.nsg "NSG"]) :ref "nsg"}
                            {:name (tr [:settings.ffg "FFG"]) :ref "ffg"}]]
                [:div.radio {:key (:name option)}
                 [:label [:input {:type "radio"
