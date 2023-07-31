@@ -152,7 +152,7 @@
 (def icon-patterns
   "A sequence of icon pattern pairs consisting of an regex, used to match icon
   codes, and the span fragment that should replace it"
-  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon) :title (str " " icon) :aria-label (str icon) :role ("img") }])
+  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon) :title (str " " icon) :aria-label (str icon) :role "img" }])
           (regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
     (->> {"[credit]" "credit"
           "[credits]" "credit"
