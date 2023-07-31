@@ -1120,6 +1120,37 @@
         (click-card state :runner (nth (:hand (get-runner)) n))))
     (is (= 3 (count (:hand (get-runner)))) "3 cards in hand after using Capstone")))
 
+(deftest capybara-no-ice
+    ;; No ice
+    (do-game
+      (new-game {:runner {:deck ["Capybara"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Capybara")
+      (run-on state "HQ")
+      (is (not-empty (get-hardware state)) "Capybara installed")
+      (is (no-prompt? state :runner) "No prompt")
+      (is (empty? (:rfg (get-runner))) "Capybara not RFGed")
+      (is (not-empty (get-hardware state)) "Capybara still installed")))
+
+(deftest capybara-single-ice
+    ;; Single ice
+    (do-game
+      (new-game {:corp {:deck ["Ice Wall"]}
+                 :runner {:deck ["Capybara" "Inside Job"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Capybara")
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (not-empty (get-hardware state)) "Capybara installed")
+      (is (= 1 (count (get-ice state :hq))) "Ice Wall installed")
+      (click-prompt state :runner "Yes")
+      (is (not (rezzed? (get-ice state :hq 0))) "Ice Wall derezzed")
+      (is (= 1 (count (:rfg (get-runner)))) "Capybara RFGed")
+      (is (empty? (get-hardware state)) "Capybara removed")))
+
 (deftest carnivore
   ;; Carnivore
   (do-game
@@ -2499,6 +2530,19 @@
       (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is now protecting HQ")
       (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma is now protecting R&D")
       (is (no-prompt? state :runner) "No prompt if not virus program installed")))
+
+(deftest lilypad
+  (do-game
+    (new-game {:runner {:hand ["LilyPAD" "Marjanah" "Refractor"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "LilyPAD")
+    (is (no-prompt? state :runner))
+    (play-from-hand state :runner "Marjanah")
+    (click-prompt state :runner "Yes")
+    (is (= 2 (count (:hand (get-runner)))) "drew a card")
+    (play-from-hand state :runner "Refractor")
+    (is (no-prompt? state :runner) "No more prompt for draw")))
 
 (deftest llds-processor
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
@@ -3890,7 +3934,7 @@
     (do-game
       (new-game {:corp {:deck ["Data Mine"]}
                  :runner {:deck ["Ramujan-reliant 550 BMI" "Sure Gamble"]}})
-      (play-from-hand state :corp "Data Mine" "Server 1")
+      (play-from-hand state :corp "Data Mine" "New remote")
       (let [dm (get-ice state :remote1 0)]
         (take-credits state :corp)
         (play-from-hand state :runner "Ramujan-reliant 550 BMI")
@@ -4413,6 +4457,41 @@
         (is (= 1 (:brain-damage (get-runner))) "Took 1 core damage")
         (is (= 1 (count (:discard (get-runner)))))
         (is (= 4 (hand-size :runner)) "Reduced hand size"))))
+
+(deftest solidarity-badge-draw
+  (do-game
+    (new-game {:corp {:hand ["Rashida Jaheem"]}
+               :runner {:hand ["Solidarity Badge"]
+                        :deck ["Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Solidarity Badge")
+    (run-empty-server state "HQ")
+    (changes-val-macro
+      1 (get-counters (get-hardware state 0) :power)
+      "added a counter to solidarity badge"
+      (click-prompt state :runner "Pay 1 [Credits] to trash"))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-prompt state :runner "Draw 1 card")
+    (is (= 1 (count (:hand (get-runner)))))))
+
+(deftest solidarity-badge-tag
+  (do-game
+    (new-game {:corp {:hand ["Rashida Jaheem"]}
+               :runner {:hand ["Solidarity Badge"]
+                        :deck ["Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Solidarity Badge")
+    (run-empty-server state "HQ")
+    (changes-val-macro
+      1 (get-counters (get-hardware state 0) :power)
+      "added a counter to solidarity badge"
+      (click-prompt state :runner "Pay 1 [Credits] to trash"))
+    (core/gain state :runner :tag 1)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-prompt state :runner "Remove 1 tag")
+    (is (zero? (count-tags state)))))
 
 (deftest spinal-modem-pay-credits-prompt
     ;; Pay-credits prompt

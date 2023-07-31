@@ -32,7 +32,7 @@
    [game.core.hand-size :refer [corp-hand-size+]]
    [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
-   [game.core.installing :refer [corp-install]]
+   [game.core.installing :refer [corp-install corp-install-list]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
                              swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
@@ -51,6 +51,7 @@
                               target-server unknown->kw zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags]]
+   [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.trace :refer [init-trace-bonus]]
@@ -59,7 +60,37 @@
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
 
+;; Helpers
+(def mobile-sysop-event
+  {:event :corp-turn-ends
+   :optional {:prompt (msg "move " (:title card) " to another server?")
+              :yes-ability {:async true
+                            :effect (effect (continue-ability
+                                              {:prompt "Choose a server"
+                                               :choices (server-list state)
+                                               :msg (msg "move to " target)
+                                               :effect (req (let [c (move state side card
+                                                                          (conj (server->zone state target) :content))]
+                                                              (unregister-events state side card)
+                                                              (register-default-events state side c)))}
+                                              card nil))}}})
+
 ;; Card definitions
+
+(defcard "Adrian Seis"
+  {:events [mobile-sysop-event
+            {:event :approach-server
+            :interactive (req true)
+            :psi {:req (req this-server)
+                  :not-equal {:msg (msg "prevent the Runner from accessing cards other than " (:title card))
+                              :effect (effect (set-only-card-to-access card)
+                                              (effect-completed eid))}
+                  :equal {:msg (msg "prevent the runner from accessing " (:title card))
+                          :effect (effect (register-run-flag!
+                                            card :can-access
+                                            ;; prevent access of advanced card
+                                            (fn [_ _ target] (not (same-card? target card))))
+                                          (effect-completed eid))}}}]})
 
 (defcard "Akitaro Watanabe"
   {:constant-effects [{:type :rez-cost
@@ -96,6 +127,21 @@
               :yes-ability {:msg (msg "lower the rez cost of " (:title (:card context)) " by 3 [Credits]")
                             :async true
                             :effect (effect (rez eid (:card context) {:cost-bonus -3}))}}}]})
+
+(defcard "Angelique Garza Correa"
+  {:expend {:req (req (threat-level 3 state))
+            :cost [:credit 1]
+            :msg "do 1 meat damage"
+            :effect (effect (damage eid :meat 1 {:card card}))}
+   :access {:optional
+            {:req (req (rezzed? card))
+             :waiting-prompt "Corp to choose an option"
+             :prompt "Pay 2 [Credits] to do 2 meat damage?"
+             :no-ability {:effect (effect (system-msg "declines to use Neural Prisec"))}
+             :yes-ability {:async true
+                           :cost [:credit 2]
+                           :msg "do 2 meat damage"
+                           :effect (effect (damage eid :meat 2 {:card card}))}}}})
 
 (defcard "Anoetic Void"
   {:events [{:event :approach-server
@@ -432,6 +478,34 @@
                 :msg "purge virus counters"
                 :cost [:trash-can]
                 :effect (effect (purge))}]})
+
+(defcard "Daniela Jorge Inácio"
+  (let [pre-steal {:event :pre-steal-cost
+                   :req (req (or (in-same-server? card target)
+                                 (from-same-server? card target)))
+                   :effect (effect (steal-cost-bonus [:add-random-from-hand-to-bottom-of-deck 2] {:source card :source-type :ability}))}]
+    {:events [{:event :pre-access-card
+               :req (req (and (rezzed? card)
+                              (same-card? target card)))
+               :effect (req (register-run-flag!
+                              state side
+                              card :can-trash
+                              (fn [state side card]
+                                (not (and (same-card? target card)
+                                          (> 2 (count (:hand runner))))))))}
+              pre-steal]
+     :implementation "trash cost not displayed on dialogue"
+     :on-trash {:async true
+                :interactive (req true)
+                :req (req (= :runner side))
+                :msg "make the Runner randomly adds 2 cards from their Grip to the bottom of the Stack"
+                :effect (req (when (:run @state)
+                               (register-events
+                                 state side card
+                                 [(assoc pre-steal :duration :end-of-run)]))
+                             (when (<= 2 (count (:hand runner)))
+                               (doseq [r (take 2 (shuffle (:hand runner)))] (move state :runner r :deck)))
+                             (effect-completed state side eid))}}))
 
 (defcard "Daruma"
   (let [choose-swap
@@ -1604,6 +1678,28 @@
                             (gain-credits state side eid 2)
                             (draw state side eid 1)))}]})
 
+(defcard "Tucana"
+  (let [ability {:async true
+                 :prompt "Choose a piece of ice to install and rez"
+                 :choices (req (cancellable (filter ice? (:deck corp))))
+                 :effect (req (corp-install state side eid target nil {:install-state :rezzed :combined-credit-discount 3}))
+                 :cancel-effect (effect (system-msg  "declines to use Tucana to install a card")
+                                        (effect-completed eid))}]
+    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+     :events [(assoc ability
+                     :event :agenda-stolen
+                     :req (req (= (:previous-zone (:card context)) (get-zone card))))
+              (assoc ability
+                     :event :agenda-scored
+                     :req (req (= (:previous-zone (:card context)) (get-zone card))))]
+     :on-trash
+     {:req (req (and run (= :runner side)))
+      :effect (effect (register-events
+                        card
+                        [(assoc ability
+                                :req (req (= (second (:previous-zone card)) (first (:server context))))
+                                :duration :end-of-run)]))}}))
+
 (defcard "Tyr's Hand"
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ice from being broken"
                 :req (req (and (= (butlast (get-zone current-ice)) (butlast (get-zone card)))
@@ -1643,6 +1739,14 @@
                                          (can-be-advanced? target)
                                          (in-same-server? card target)))}
                 :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
+
+(defcard "Vovô Ozetti"
+   {:constant-effects [{:type :rez-cost
+                       :req (req (and (or (ice? target)
+                                          (threat-level 4 state))
+                                      (= (card->server state card) (card->server state target))))
+                        :value -2}]
+    :events [mobile-sysop-event]})
 
 (defcard "Warroid Tracker"
   (letfn [(wt [n]

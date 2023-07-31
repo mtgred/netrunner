@@ -2948,3 +2948,6 @@
 (def tr-lobby (partial tr-string "lobby"))
 (def tr-pronouns (partial tr-string "pronouns"))
 (def tr-watch-join (partial tr-string "lobby"))
+
+(defn tr-data [key data]
+  (or (get-in data [:localized key]) (key data)))

@@ -10,7 +10,7 @@
    [nr.account :refer [alt-art-name]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-faction tr-format tr-side tr-sort tr-type]]
+   [nr.translations :refer [tr tr-faction tr-format tr-side tr-sort tr-type tr-data]]
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
                      format->slug get-image-path image-or-face influence-dots
                      non-game-toast render-icons restricted-span rotated-span set-scroll-top slug->format
@@ -23,6 +23,7 @@
 (declare generate-flip-cards)
 (declare insert-starter-info)
 (declare insert-starter-ids)
+(declare merge-localized-data)
 
 (defn- format-card-key->string
   [format]
@@ -32,13 +33,19 @@
                   {} (:cards format))))
 
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
+          lang (get-in @app-state [:options :language] "en")
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
-          need-update? (or (not local-cards) (not= server-version (:version local-cards)))
+          need-update? (or (not local-cards)
+                           (not= server-version (:version local-cards))
+                           (not= lang (:lang local-cards)))
           latest-cards (if need-update?
                            (:json (<! (GET "/data/cards")))
                            (:cards local-cards))
+          localized-data (if (not= lang "en")
+                           (:json (<! (GET (str "/data/cards/lang/" lang)))))
           cards (->> latest-cards
                      (insert-starter-ids)
+                     (merge-localized-data localized-data)
                      (sort-by :code))
           sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
@@ -59,7 +66,7 @@
       (reset! cards/cycles cycles)
       (swap! app-state assoc :sets sets :cycles cycles)
       (when need-update?
-        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
+        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version :lang lang}))))
       (reset! all-cards (into {} (map (juxt :title identity) (sort-by :code cards))))
       (swap! app-state assoc
              :cards-loaded true
@@ -67,6 +74,12 @@
              :previous-cards (generate-previous-cards cards)
              :alt-info alt-info)
       (put! cards-channel cards)))
+
+(defn- merge-localized-data
+  [localized-data cards]
+  (let [localized-data-indexed (into {} (map (juxt :code identity) localized-data))]
+    (map #(assoc % :localized (dissoc (localized-data-indexed (:code %)) :code))
+         cards)))
 
 (defn- insert-starter-info
   [card]
@@ -287,7 +300,7 @@
 (defn card-as-text
   "Generate text html representation a card"
   [card show-extra-info]
-  (let [title (:title card)
+  (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
         uniq (when (:uniqueness card) "◇ ")]
     [:div
@@ -319,7 +332,7 @@
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
        (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
-      [:pre (render-icons (:text (get @all-cards (:title card))))]
+      [:pre (render-icons (tr-data :text (get @all-cards (:title card))))]
 
       (when show-extra-info
         [:<>
@@ -328,7 +341,7 @@
                    (let [status (get-in card [:format (keyword k)] "unknown")
                          c (text-class-for-status status)]
                      ^{:key k}
-                     [:div.format-item {:class c} name
+                     [:div.format-item {:class c} (tr-format name)
                       (cond (:banned status) banned-span
                             (:restricted status) restricted-span
                             (:rotated status) rotated-span
@@ -398,6 +411,7 @@
     cards
     (let [lcquery (s/lower-case query)]
       (filter #(or (s/includes? (s/lower-case (:title %)) lcquery)
+                   (s/includes? (s/lower-case (tr-data :title %)) lcquery)
                    (s/includes? (:normalizedtitle %) lcquery))
               cards))))
 
@@ -438,7 +452,7 @@
          [card-as-text card true]
          (when-let [url (base-image-url card)]
            [:img {:src url
-                  :alt (:title card)
+                  :alt (tr-data :title card)
                   :onError #(-> (swap! cv assoc :show-text true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
