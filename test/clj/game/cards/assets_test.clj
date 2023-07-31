@@ -1278,7 +1278,7 @@
         (is (no-prompt? state :corp) "No DBS prompt cuz all drawn cards have been installed"))))
 
 (deftest daily-quest-can-only-rez-during-corp-s-action-phase
-    ;; Can only rez during Corp's action phase
+  ;; Can only rez during Corp's action phase
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Daily Quest"]}})
@@ -1918,6 +1918,34 @@
         "Franchise City no longer installed")
     (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
+
+(deftest front-company
+  ;; Can only rez during Corp's action phase
+  (do-game
+    (new-game {:corp {:deck []
+                      :hand ["Front Company"]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Front Company" "New remote")
+    (let [fc (get-content state :remote1 0)]
+      (rez state :corp fc)
+      (is (rezzed? (refresh fc)) "Can rez on Corp turn")
+      (derez state :corp fc)
+      (take-credits state :corp)
+      (rez state :corp fc)
+      (is (not (rezzed? (refresh fc))) "Cannot rez on Runner turn")
+      (take-credits state :runner)
+      (rez state :corp fc)
+      (take-credits state :corp)
+      ;;can't run on remotes
+      (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
+      (run-empty-server state "HQ")
+      (is (core/can-run-server? state "Server 1") "Runner can run remotes again")
+      (is (zero? (count (:discard (get-runner)))) "No cards trashed")
+      (run-on state "Archives")
+      (is (= 2 (count (:discard (get-runner)))) "2 cards trashed to FC")
+      (run-jack-out state)
+      (run-on state "Archives")
+      (is (= 2 (count (:discard (get-runner)))) "No more cards trashed to FC"))))
 
 (deftest full-immersion-recstudio-full-test
     ;; Full test

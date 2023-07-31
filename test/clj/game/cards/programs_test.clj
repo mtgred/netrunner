@@ -527,6 +527,28 @@
     (run-jack-out state)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
+(deftest audrey
+  (do-game
+    (new-game {:corp {:hand ["Rashida Jaheem" "Vanilla"]}
+               :runner {:hand ["Knifed" "Audrey v2" "Sure Gamble"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Audrey v2")
+    (run-on state :hq)
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (= 1 (get-counters (get-program state 0) :virus)) "Audrey gains virus counter from trash")
+    (play-from-hand state :runner "Knifed")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (is (= 2 (count (:discard (get-corp)))) "Vanilla Campaign trashed")
+    (is (= 0 (get-counters (get-program state 0) :virus)) "No virus counter because not accessed")))
+
 (deftest aumakua-gain-counter-on-no-trash
     ;; Gain counter on no trash
     (do-game
@@ -653,6 +675,32 @@
         (card-ability state :runner bankroll 0)
         (is (= (+ 3 credits) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll"))
       (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
+
+(deftest banner
+  (do-game
+    (new-game {:runner {:hand ["Banner" "Sure Gamble"]}
+               :corp {:hand ["Border Control"]}})
+    (play-from-hand state :corp "Border Control" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Banner")
+    (run-on state :hq)
+    (let [bc (get-ice state :hq 0)
+          banner (get-program state 0)]
+      (rez state :corp (refresh bc))
+      (run-continue state :encounter-ice)
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "banner costs 2"
+        (card-ability state :runner (refresh banner) 0))
+      (changes-val-macro
+        +1 (:credit (get-corp))
+        "corp gained 1 from BC"
+        (fire-subs state (refresh bc)))
+      (is (:run @state) "Run still ongoing (banner prevented)")
+      (card-ability state :corp (refresh bc) 0)
+      (is (nil? (refresh bc)))
+      (is (nil? (get-run))))) "BC ability ended run (banner no prevento)")
 
 (deftest begemot
   (do-game

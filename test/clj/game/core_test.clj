@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [clojure.test :refer :all]
             [game.core :as core]
+            [game.core.board :refer [server-list]]
             [game.core.card :refer [get-card installed? rezzed? active? get-counters get-title]]
             [game.core.ice :refer [active-ice?]]
             [game.utils :as utils :refer [server-card]]
@@ -321,6 +322,9 @@
   (let [card (find-card title (get-in @state [side :hand]))]
     (ensure-no-prompts state)
     (is' (some? card) (str title " is in the hand"))
+    (when server
+      (is' (some #{server} (concat (server-list state) ["New remote"]))
+           (str server " is not a valid server.")))
     (when (some? card)
       (is' (core/process-action "play" state side {:card card :server server}))
       true)))

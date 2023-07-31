@@ -54,6 +54,12 @@
     ;; Installing not locked
     (install-locked? state :corp)
     :lock-install
+    ;; A Teia cannot have more than two servers
+    (and (clojure.string/starts-with? (:title (get-in @state [:corp :identity])) "A Teia")
+         (not (:disabled (get-in @state [:corp :identity])))
+         (<= 2 (count (get-remotes state)))
+         (not (in-coll? (conj (keys (get-remotes state)) :archives :rd :hq) (second slot))))
+    :a-teia
     ;; Earth station cannot have more than one server
     (and (= "Earth Station" (subs (:title (get-in @state [:corp :identity])) 0 (min 13 (count (:title (get-in @state [:corp :identity]))))))
          (not (:disabled (get-in @state [:corp :identity])))
@@ -82,6 +88,9 @@
       ;; Earth station cannot have more than one remote server
       :earth-station
       (reason-toast (str "Unable to install " title " in new remote: Earth Station limit"))
+      ;; A Teia can only have two remotes
+      :a-teia
+      (reason-toast (str "Unable to install " title " in new remote: A Teia limit"))
       ;; else
       true)))
 
@@ -132,7 +141,7 @@
 (defn- corp-install-continue
   "Used by corp-install to actually install the card, rez it if it's supposed to be installed
   rezzed, and calls :corp-install in an awaitable fashion."
-  [state side eid card server {:keys [install-state host-card front index display-message] :as args} slot cost-str]
+  [state side eid card server {:keys [install-state host-card front index display-message cost-bonus] :as args} slot cost-str]
   (let [cdef (card-def card)
         dest-zone (get-in @state (cons :corp slot))
         install-state (or (:install-state cdef) install-state)
@@ -169,7 +178,9 @@
                     ;; Pay costs
                     :rezzed
                     (if-not (agenda? moved-card)
-                      (rez state side eid moved-card {:no-msg no-msg})
+                      (if-not (zero? cost-bonus)
+                        (rez state side eid moved-card {:no-msg no-msg :cost-bonus cost-bonus})
+                        (rez state side eid moved-card {:no-msg no-msg}))
                       (checkpoint state nil eid))
                     ;; "Face-up" cards
                     :face-up
@@ -226,7 +237,15 @@
   "Used by corp-install to pay install costs"
   [state side eid card server {:keys [action] :as args}]
   (let [slot (get-slot state card server args)
-        costs (corp-install-cost state side card server (dissoc args :cached-costs))]
+        costs (corp-install-cost state side card server (dissoc args :cached-costs))
+        ;; note - all this filler is solely for tucana. Maybe NSG will re-use that combined discount again? idk
+        credcost (or (second (first (filter #(= (first %) :credit) costs))) 0)
+        discount (or (:combined-credit-discount args) 0)
+        appldisc (if (and (not (zero? credcost)) (not (zero? discount)))
+                   (if (>= credcost discount) discount credcost) 0)
+        args (if discount (assoc args :cost-bonus (- appldisc discount)) args)
+        costs (merge-costs (conj costs [:credit (- 0 appldisc)]))]
+      ;; get a functional discount and apply it to
     (if (corp-can-pay-and-install? state side eid card server (assoc args :cached-costs costs))
       (wait-for (pay state side (make-eid state eid) card costs {:action action})
                 (if-let [payment-str (:msg async-result)]

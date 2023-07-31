@@ -38,6 +38,7 @@
     [game.core.optional]
     [game.core.payment]
     [game.core.pick-counters]
+    [game.core.expend]
     [game.core.play-instants]
     [game.core.player]
     [game.core.process-actions]
@@ -58,6 +59,7 @@
     [game.core.state]
     [game.core.subtypes]
     [game.core.tags]
+    [game.core.threat]
     [game.core.to-string]
     [game.core.toasts]
     [game.core.trace]
@@ -646,6 +648,10 @@
    pick-virus-counters-to-spend])
 
 (expose-vars
+  [game.core.expend
+   expend])
+
+(expose-vars
   [game.core.process-actions
    command-parser
    process-action])
@@ -813,6 +819,11 @@
    gain-tags
    lose-tags
    tag-prevent])
+
+(expose-vars
+  [game.core.threat
+   threat
+   threat-level])
 
 (expose-vars
   [game.core.to-string

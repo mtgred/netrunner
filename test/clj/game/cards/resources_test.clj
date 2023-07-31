@@ -1436,6 +1436,24 @@
       (run-jack-out state)
       (is (= 2 (get-strength (refresh faust))) "Dean Lister effect ends after run"))))
 
+(deftest debbie-downtown
+  (do-game
+    (new-game {:corp {:hand ["Rashida Jaheem"]}
+               :runner {:hand ["Carpe Diem" "Debbie \"Downtown\" Moreira"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Debbie \"Downtown\" Moreira")
+    (let [deb (get-resource state 0)]
+      (play-from-hand state :runner "Carpe Diem")
+      (click-prompt state :runner "No")
+      (is (= 1 (get-counters (refresh deb) :credit)) "1 credit placed on Debbie")
+      (card-ability state :runner (refresh deb) 1)
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (is (not (no-prompt? state :runner)) "Prompt to spend credits")
+      (click-card state :runner (refresh deb))
+      (is (no-prompt? state :runner) "Spent"))))
+
 (deftest decoy
   ;; Decoy - Trash to avoid 1 tag
   (do-game
@@ -2108,6 +2126,29 @@
         (is (find-card "Environmental Testing" (:discard (get-runner)))
             "Env. Testing was trashed")))))
 
+(deftest eru-ayase-pessoa
+  (do-game
+    (new-game {:corp {:hand ["IPO" "IPO" "City Works Project"]
+                      :deck ["Hedge Fund" "Hedge Fund" "Hedge Fund"]}
+               :runner {:hand ["Eru Ayase-Pessoa" "Divide and Conquer"]}})
+    (play-and-score state "City Works Project")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Eru Ayase-Pessoa")
+    (let [eru (get-resource state 0)]
+      (card-ability state :runner (refresh eru) 0)
+      (run-continue state)
+      ;;should access two cards
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (is (empty? (get-run)) "Run has ended")
+      ;;1 from hq 2 from rd
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-continue state :success)
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (is (empty? (get-run)) "Run has ended"))))
+
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (do-game
@@ -2703,6 +2744,28 @@
       (click-prompt state :runner "Suffer 2 meat damage")
       (click-prompt state :runner "Trash Guru Davinder")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
+
+(deftest hannah-wheels-basic-test
+  (do-game
+    (new-game {:runner {:hand ["Hannah \"Wheels\" Pilintra"]}
+               :corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Rashida Jaheem"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hannah \"Wheels\" Pilintra")
+    (let [wheels (get-resource state 0)]
+      (card-ability state :runner (refresh wheels) 0)
+      (click-prompt state :runner "Server 1")
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner took a tag for jacking out"
+        (run-jack-out state))
+      (run-on state "Server 1")
+      (changes-val-macro
+        0 (count-tags state)
+        "Runner took no tag for jacking out"
+        (run-jack-out state))
+      (take-credits state :runner))))
 
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins

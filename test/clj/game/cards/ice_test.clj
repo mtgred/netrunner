@@ -6,6 +6,29 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
+(deftest ablative-barrier-no-threat
+  (do-game
+    (new-game {:corp {:hand ["Ablative Barrier" "Ablative Barrier" "City Works Project"]
+                      :discard ["Vanilla"]}})
+    (play-from-hand state :corp "Ablative Barrier" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "no prompt to pull a card with ablative")))
+
+(deftest ablative-barrier-no-threat
+  (do-game
+    (new-game {:corp {:hand ["Ablative Barrier" "Ablative Barrier" "City Works Project"]
+                      :discard ["Vanilla"]}})
+    (play-from-hand state :corp "Ablative Barrier" "HQ")
+    (play-and-score state "City Works Project")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Archives")
+    (is (= "Vanilla" (:title (get-ice state :archives 0))))))
+
 (deftest afshar-subroutines
   ;; Subroutines
   (do-game
@@ -1595,7 +1618,7 @@
   ;; Data Mine - do one net and trash
   (do-game
     (new-game {:corp {:deck ["Data Mine"]}})
-    (play-from-hand state :corp "Data Mine" "Server 1")
+    (play-from-hand state :corp "Data Mine" "New remote")
     (take-credits state :corp)
     (let [dm (get-ice state :remote1 0)]
       (run-on state "Server 1")
@@ -3443,6 +3466,36 @@
       -5 (:credit (get-corp))
       "7 - 2 = 5 credits"
       (rez state :corp (get-ice state :remote1 0)))))
+
+(deftest jaguarundi-no-threat
+  (do-game
+    (new-game {:corp {:hand ["City Works Project" "Hostile Takeover" "Jaguarundi"]}})
+    (play-and-score state "City Works Project")
+    (play-from-hand state :corp "Jaguarundi" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (is (no-prompt? state :runner) "no jaguarundi prompt")))
+
+(deftest jaguarundi-no-threat-spend-click
+  (do-game
+    (new-game {:corp {:hand ["City Works Project" "Hostile Takeover" "Jaguarundi"]}})
+    (core/gain state :corp :click 10)
+    (core/gain state :corp :credit 10)
+    (play-and-score state "City Works Project")
+    (play-and-score state "Hostile Takeover")
+    (is (= 2 (count (:scored (get-corp)))))
+    (play-from-hand state :corp "Jaguarundi" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (changes-val-macro
+      -1 (:click (get-runner))
+      "spent a click on jag"
+      (click-prompt state :runner "Spend [click]"))
+    (is (no-prompt? state :runner) "no jaguarundi prompt")))
 
 (deftest jua-encounter-effect-prevent-runner-from-installing-cards-for-the-rest-of-the-turn
   ;; Encounter effect - Prevent Runner from installing cards for the rest of the turn
@@ -7047,6 +7100,23 @@
       (card-ability state :runner carm 0)
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub"))))
+
+(deftest valentao-no-choice-without-tags
+  (do-game
+    (new-game {:corp {:hand ["Valentão"]}})
+    (play-from-hand state :corp "Valentão" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 1 (count-bad-pub state)) "Gained 1 bad pub")))
+
+(deftest valentao-spend-tag
+  (do-game
+    (new-game {:corp {:hand ["Valentão"]}})
+    (play-from-hand state :corp "Valentão" "HQ")
+    (gain-tags state :runner 1)
+    (rez state :corp (get-ice state :hq 0))
+    (click-prompt state :corp "tag")
+    (is (zero? (count-tags state)) "spent tag to rez")
+    (is (= 0 (count-bad-pub state)) "Gained 1 bad pub")))
 
 (deftest vampyronassa
   ;; Vampyronassa
