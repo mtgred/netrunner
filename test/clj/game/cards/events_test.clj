@@ -716,7 +716,7 @@
                         :hand [(qty "Ice Wall" 2)]}
                  :runner {:hand [(qty "Bravado" 2)]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (play-from-hand state :corp "Ice Wall" "New remote")
       (take-credits state :corp)
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
       (play-from-hand state :runner "Bravado")
@@ -1163,13 +1163,13 @@
                :corp {:id "Earth Station: SEA Headquarters" :hand ["PAD Campaign"]}})
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (is (:flipped (get-in @state [:corp :identity])) "Earth station is on flip side")
-    (play-from-hand state :corp "PAD Campaign" "New Remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
     (changes-val-macro -6 (:credit (get-runner))
                        "Paid for earth station"
                        (play-from-hand state :runner "Cold Read")
-                       (click-prompt state :runner "Server Remote"))
+                       (click-prompt state :runner "Server 1"))
     (is (no-prompt? state :runner) "waiting on earth station payment prompt")))
 
 (deftest cold-read-pay-credits-prompt
@@ -4956,13 +4956,13 @@
                :corp {:id "Earth Station: SEA Headquarters" :hand ["PAD Campaign"]}})
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (is (:flipped (get-in @state [:corp :identity])) "Earth station is on flip side")
-    (play-from-hand state :corp "PAD Campaign" "New Remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
     (changes-val-macro -7 (:credit (get-runner))
                        "Paid for earth station"
                        (play-from-hand state :runner "Overclock")
-                       (click-prompt state :runner "Server Remote"))
+                       (click-prompt state :runner "Server 1"))
     (is (no-prompt? state :runner) "waiting on earth station payment prompt")))
 
 (deftest paper-tripping

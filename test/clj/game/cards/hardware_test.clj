@@ -3934,7 +3934,7 @@
     (do-game
       (new-game {:corp {:deck ["Data Mine"]}
                  :runner {:deck ["Ramujan-reliant 550 BMI" "Sure Gamble"]}})
-      (play-from-hand state :corp "Data Mine" "Server 1")
+      (play-from-hand state :corp "Data Mine" "New remote")
       (let [dm (get-ice state :remote1 0)]
         (take-credits state :corp)
         (play-from-hand state :runner "Ramujan-reliant 550 BMI")

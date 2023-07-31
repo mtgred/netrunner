@@ -1439,20 +1439,20 @@
 (deftest debbie-downtown
   (do-game
     (new-game {:corp {:hand ["Rashida Jaheem"]}
-               :runner {:hand ["Carpe Diem" "Debbie \"Downtown\" Moreira"]}})))
-    ;(take-credits state :corp)
-    ;(play-from-hand state :runner "Debbie \"Downtown\" Moreira")
-    ;(let [deb (get-resource state 0)]
-     ; (play-from-hand state :runner "Carpe Diem")
-      ;(click-prompt state :runner "No")
-      ;(is (= 1 (get-counters (refresh deb) :credit)) "1 credit placed on Debbie")
-      ;(card-ability state :runner (refresh deb) 1)
-      ;(click-prompt state :runner "HQ")
-      ;(run-continue state)
-      ;(click-prompt state :runner "Pay 1 [Credits] to trash")
-      ;(is (not (no-prompt? state :runner)) "Prompt to spend credits")
-      ;(click-card state :runner (refresh deb))
-      ;(is (no-prompt? state :runner) "Spent"))))
+               :runner {:hand ["Carpe Diem" "Debbie \"Downtown\" Moreira"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Debbie \"Downtown\" Moreira")
+    (let [deb (get-resource state 0)]
+      (play-from-hand state :runner "Carpe Diem")
+      (click-prompt state :runner "No")
+      (is (= 1 (get-counters (refresh deb) :credit)) "1 credit placed on Debbie")
+      (card-ability state :runner (refresh deb) 1)
+      (click-prompt state :runner "HQ")
+      (run-continue state)
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (is (not (no-prompt? state :runner)) "Prompt to spend credits")
+      (click-card state :runner (refresh deb))
+      (is (no-prompt? state :runner) "Spent"))))
 
 (deftest decoy
   ;; Decoy - Trash to avoid 1 tag
@@ -2747,11 +2747,12 @@
 
 (deftest hannah-wheels-basic-test
   (do-game
-    (new-game {:runner {:hand ["Hannah \"Wheels\" Pilantra"]}
-               :corp {:hand ["Rashida Jaheem"]}})
-    (play-from-hand state :corp "Rashida Jaheem" "New Remote")
+    (new-game {:runner {:hand ["Hannah \"Wheels\" Pilintra"]}
+               :corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Rashida Jaheem"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
     (take-credits state :corp)
-    (play-from-hand state :runner "Hannah \"Wheels\" Pilantra")
+    (play-from-hand state :runner "Hannah \"Wheels\" Pilintra")
     (let [wheels (get-resource state 0)]
       (card-ability state :runner (refresh wheels) 0)
       (click-prompt state :runner "Server 1")
