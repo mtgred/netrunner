@@ -2231,7 +2231,8 @@
                               state side
                               (if (zero? (:click runner))
                                 {:msg "give the runner 1 tag"
-                                 :effect (effect (give-tags 1))}
+                                 :async true
+                                 :effect (req (gain-tags state :runner eid 1))}
                                 {;:msg "give the runner 1 tag unless they spend [click]"
                                  :player :runner
                                  :prompt "Choose one"
