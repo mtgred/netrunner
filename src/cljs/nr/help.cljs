@@ -347,12 +347,11 @@
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
                          "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
-           {:id "classic"
-             :title "What is the Classic format?"
+           {:id "neo"
+             :title "What is the Neo format?"
              :content [:ul
-                        [:p "An alternate Eternal format created by thebigboy. The entire "
-                         "ANR cardpool is legal, except for a Ban-list of (as of " [:i "Uprising" ] ") 55 cards. "
-                         "Refer to the " [:a {:href "https://runthenet.wordpress.com/2019/01/01/the-classic-format-netrunners-final-form/"} "announcement article"] "."]]})}
+                        [:p "TODO UPDATE ME"
+                         "Refer to the " [:a {:href ""} "announcement article"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list
