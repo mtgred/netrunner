@@ -519,7 +519,7 @@
              :once-per-instance true
              :req (req (:accessed target))
              :effect (effect (add-counter :runner card :virus 1))
-             :msg "place 1 virus counter on Seymour"}]})
+             :msg "place 1 virus counter on itself"}]})
 
 (defcard "Aumakua"
   (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
