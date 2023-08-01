@@ -2524,7 +2524,7 @@
     {:on-play
      {:async true
       :req (req (<= 2 (count-tags state)))
-      :msg "trash all cards in HQ"
+      :msg "place up to 4 advancement counters"
       :effect (effect (continue-ability (ability 4) card nil))}}))
 
 (defcard "Shoot the Moon"
