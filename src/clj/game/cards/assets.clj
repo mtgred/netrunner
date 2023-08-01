@@ -991,20 +991,22 @@
 
 (defcard "Federal Fundraising"
   (let [draw-ab {:optional {:req (req unprotected)
-                            :prompt "draw a cards?"
+                            :prompt "draw a card?"
                             :yes-ability {:msg "draw a card"
                                           :async true
                                           :effect (effect (draw eid 1))}
-                            :no-ability {:msg "decline to draw cards"}}}
+                            :no-ability {:msg "decline to draw"}}}
         ability
         {:once :per-turn
          :req (req (:corp-phase-12 @state))
          :interactive (req true)
          :label "look at the top 3 cards"
+         :async true
          :optional
          {:prompt "look at the top 3 cards?"
           :no-ability
           {:msg (msg "declines to look at the top 3 cards")
+           :async true
            :effect (req (continue-ability state side draw-ab card nil))}
           :yes-ability
           {:msg (msg "rearrange the top 3 cards of R&D")
