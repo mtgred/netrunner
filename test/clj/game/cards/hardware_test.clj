@@ -4493,6 +4493,20 @@
     (click-prompt state :runner "Remove 1 tag")
     (is (zero? (count-tags state)))))
 
+(deftest solidarity-badge-first-trash-only
+  (do-game
+    (new-game {:corp {:hand ["Rashida Jaheem" "Rashida Jaheem"]}
+               :runner {:hand ["Solidarity Badge"]}})
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (play-from-hand state :runner "Solidarity Badge")
+    (run-empty-server state "HQ")
+    (changes-val-macro
+      0 (get-counters (get-hardware state 0) :power)
+      "added a counter to solidarity badge"
+      (click-prompt state :runner "Pay 1 [Credits] to trash"))))
+
 (deftest spinal-modem-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game

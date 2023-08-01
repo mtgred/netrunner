@@ -2070,7 +2070,10 @@
             {:event :runner-trash
              :async true
              :interactive (req true)
-             :req (req (some #(corp? (:card %)) targets))
+             :req (req (and (some #(corp? (:card %)) targets)
+                            (first-event? state side :runner-trash
+                                          (fn [targets]
+                                            (some #(corp? (:card %)) targets)))))
              :once :per-turn
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter :runner card :power 1)
