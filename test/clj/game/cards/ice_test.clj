@@ -5356,6 +5356,44 @@
       (is (= 3 (get-counters (refresh pha) :advancement)) "Pharos has 3 adv tokens")
       (is (= 10 (get-strength (refresh pha))) "Pharos is now at 10 strength"))))
 
+(deftest phonuetria-tag-only-when-passing-itself
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund" "Phoneutria" "Vanilla"]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Phoneutria" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 1))
+    (rez state :corp (get-ice state :hq 0))
+    (changes-val-macro
+      0 (count-tags state)
+      "gained no tag for passing vanilla"
+      (run-continue state :encounter-ice)
+      (run-continue state :pass-ice)
+      (run-continue state :approach-ice))
+    (run-continue state :encounter-ice)
+    (changes-val-macro
+      1 (count-tags state)
+      "gained 1 tag for phoneutria"
+      (run-continue state :pass-ice))))
+
+(deftest phonuetria-no-tag
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund" "Phoneutria"]}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Phoneutria" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (changes-val-macro
+      0 (count-tags state)
+      "gained no tag for passing phoneutria"
+      (run-continue state :encounter-ice)
+      (run-continue state :pass-ice))))
+
 (deftest ping
   ;; Ping
   (do-game

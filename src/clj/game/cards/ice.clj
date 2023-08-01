@@ -3155,8 +3155,8 @@
   {:subroutines [(do-net-damage 1)
                  (do-net-damage 1)]
    :events [{:event :pass-ice
-             :req (req (same-card? (:ice context) card)
-                       (<= 4 (count (:hand runner))))
+             :req (req (and (same-card? (:ice context) card)
+                            (<= 4 (count (:hand runner)))))
              :msg "give the runner a tag"
              :effect (effect (gain-tags eid 1))}]})
 
