@@ -46,6 +46,30 @@
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
 
+(deftest undo-click-return-card-from-play-area
+  (do-game
+   (new-game {:corp {:deck ["Predictive Planogram"]}
+              :runner {:deck ["Dirty Laundry"]}})
+   (play-from-hand state :corp "Predictive Planogram")
+   (core/command-undo-click state :corp)
+   (is (= 0 (count (:play-area (get-corp)))) "Corp play area is empty")
+   (is (= 1 (count (:hand (get-corp)))) "Corp has 1 card in HQ")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Dirty Laundry")
+   (core/command-undo-click state :runner)
+   (is (= 0 (count (:play-area (get-runner)))) "Runner play area is empty")
+   (is (= 1 (count (:hand (get-runner)))) "Player has 1 card in grip")))
+
+(deftest undo-click-does-not-return-lockdown-from-play-area
+  (do-game
+   (new-game {:corp {:deck ["NAPD Cordon" "Predictive Planogram"]}
+              :runner {:deck ["Dirty Laundry"]}})
+   (play-from-hand state :corp "NAPD Cordon")
+   (play-from-hand state :corp "Predictive Planogram")
+   (core/command-undo-click state :corp)
+   (is (= 1 (count (:play-area (get-corp)))) "Corp play area still has NAPD Cordon")
+   (is (= 1 (count (:hand (get-corp)))) "Corp has 1 card in HQ")))
+
 (deftest undo-click-with-bioroid-cost
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

@@ -179,6 +179,8 @@
   (when-let [click-state (:click-state @state)]
     (when (= (:active-player @state) side)
       (reset! state (assoc click-state :log (:log @state) :click-state click-state :run nil :history (:history @state)))
+      (doseq [c (filter #(not (has-subtype? % "Lockdown")) (:play-area (side @state)))]
+        (move state side c (:previous-zone c) {:suppress-event true}))
       (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
