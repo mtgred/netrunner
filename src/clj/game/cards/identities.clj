@@ -596,7 +596,7 @@
                                                    ;; don't look at this spaghetti please
                                                    (if (= target (first top)) "first"
                                                        (if (= target (second top)) "second" "third"))
-                                                   "card from R&D")))
+                                                   " card from R&D")))
                                   :async true
                                   :effect (req (if-not (= target "No Thanks")
                                                  (corp-install state side eid target nil)
