@@ -100,14 +100,14 @@
   "returns a set of cards to the top of the deck"
   ([set-aside-cards] (return-to-top set-aside-cards false))
   ([set-aside-cards reveal]
-   {:prompt "choose a card to put ontop of R&D"
+   {:prompt "choose a card to put on top of R&D"
     :req (req (not (zero? (count set-aside-cards))))
     :choices {:min 1
               :max 1
               :req (req (some #(same-card? % target) set-aside-cards))}
     :async true
     :waiting-prompt "corp to return cards to R&D"
-    :msg (msg "place " (if reveal (:title target) "a card") " ontop of R&D")
+    :msg (msg "place " (if reveal (:title target) "a card") " on top of R&D")
     :effect (req (move state :corp target :deck {:front true})
                  (let [rem (seq (filter #(not (same-card? target %)) set-aside-cards))]
                    (if (not (empty? rem))
