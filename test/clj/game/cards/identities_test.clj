@@ -4661,7 +4661,7 @@
     (do-game
       (new-game {:corp {:id "Weyland Consortium: Because We Built It"
                         :hand ["Ice Wall"]}})
-      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (play-from-hand state :corp "Ice Wall" "New remote")
       (let [iw (get-ice state :remote1 0)
             bwbi (get-in @state [:corp :identity])]
         (changes-val-macro 0 (:credit (get-corp))
