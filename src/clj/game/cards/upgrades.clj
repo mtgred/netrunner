@@ -1697,6 +1697,7 @@
       :effect (effect (register-events
                         card
                         [(assoc ability
+                                :event :agenda-stolen
                                 :req (req (= (second (:previous-zone card)) (first (:server context))))
                                 :duration :end-of-run)]))}}))
 
