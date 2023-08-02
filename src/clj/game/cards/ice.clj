@@ -38,7 +38,8 @@
    [game.core.installing :refer [corp-install corp-install-list
                                  corp-install-msg]]
    [game.core.memory :refer [available-mu]]
-   [game.core.moving :refer [as-agenda mill move swap-cards swap-ice swap-installed trash
+   [game.core.moving :refer [as-agenda mill move swap-cards swap-cards-async
+                             swap-ice swap-installed trash
                              trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost->string build-cost-label]]
@@ -3684,8 +3685,8 @@
                                 :yes-ability {:prompt "Choose a piece of ice to swap Tatu-Bola with"
                                               :choices (req (filter ice? (:hand corp)))
                                               :async true
-                                              :effect (req (swap-cards state side target current-ice)
-                                                           (gain-credits state :corp eid 4))
+                                              :effect (req (wait-for (swap-cards-async state side (make-eid state eid) target current-ice)
+                                                                     (gain-credits state :corp eid 4)))
                                               :msg (msg "swap " (card-str state card)
                                                         " with a card from HQ and gain 4 [Credits]")}}}
                               {:prompt "You have no ice"
