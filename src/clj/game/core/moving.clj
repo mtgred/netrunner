@@ -497,8 +497,16 @@
                         {:keep-server-alive true
                          :index (card-index state a)
                          :suppress-event true
-                         :swap true})]
+                         :swap true})
+          ;; under the new nsg rules, swapping a card into play triggers an install event
+          ;; TODO - quote exactly where
+          install-event (or (and (installed? a) (not (installed? b)))
+                            (and (installed? b) (not (installed? a))))]
       (trigger-event state side :swap moved-a moved-b)
+      (when (and install-event (= :corp side))
+        (trigger-event state side :corp-install
+                       {:card (get-card state (if (installed? moved-a) moved-a moved-b))
+                        :install-state (:install-state (card-def (if (installed? moved-a) moved-a moved-b)))}))
       (when (and (:run @state)
                  (or (ice? a)
                      (ice? b)))

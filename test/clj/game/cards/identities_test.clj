@@ -149,6 +149,22 @@
       (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
       (is (prompt-is-type? state :runner :waiting) "Runner should wait again")))
 
+(deftest a-teia-tatu-bola
+  (do-game
+    (new-game {:corp {:id "A Teia: IP Recovery"
+                      :hand ["Tatu-Bola" "Vanilla"]}})
+    (play-from-hand state :corp "Tatu-Bola" "New remote")
+    (click-prompt state :corp "Done")
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (rez state :corp (get-ice state :remote1 0))
+    (run-continue state :encounter-ice)
+    (run-continue state :pass-ice)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Vanilla")
+    (click-card state :corp "Tatu-Bola")
+    (click-prompt state :corp "New remote")))
+
 (deftest acme-consulting-the-truth-you-need-tag-gain-when-rezzing-outermost-ice
     ;; Tag gain when rezzing outermost ice
     (do-game
