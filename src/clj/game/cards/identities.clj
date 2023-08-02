@@ -586,6 +586,7 @@
                                (continue-ability
                                  state :corp
                                  {:prompt (msg (str "The top cards are " (str (str/join ", " (map :title top))) ". Install a card?"))
+                                  :not-distinct true
                                   :choices (req (conj
                                                   (filter #(not (operation? %)) top)
                                                   "No Thanks"))
