@@ -122,8 +122,7 @@
                                :req (req true)}]}
      :events [(trash-on-empty :power)
               {:event :encounter-ice
-               :req (req (and (not-used-once? state {:once :per-turn} card)
-                              (contains? (card-def current-ice) :on-encounter)))
+               :req (req (contains? (card-def current-ice) :on-encounter))
                :async true
                :effect
                (effect (continue-ability
@@ -133,6 +132,7 @@
                            :yes-ability ability}}
                          card nil))}]
      :abilities [{:cost [:power 1]
+                  :req (req run)
                   :msg "prevent 1 net damage"
                   :effect (effect (damage-prevent :net 1))}
                  (assoc ability
