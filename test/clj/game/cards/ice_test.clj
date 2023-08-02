@@ -1618,7 +1618,7 @@
   ;; Data Mine - do one net and trash
   (do-game
     (new-game {:corp {:deck ["Data Mine"]}})
-    (play-from-hand state :corp "Data Mine" "Server 1")
+    (play-from-hand state :corp "Data Mine" "New remote")
     (take-credits state :corp)
     (let [dm (get-ice state :remote1 0)]
       (run-on state "Server 1")

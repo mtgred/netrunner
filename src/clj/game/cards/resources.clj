@@ -1035,9 +1035,9 @@
                 :makes-run true
                 :prompt "Choose a server"
                 :choices (req runnable-servers)
-                :effect (req (wait-for (make-run state :runner (make-eid state eid) target card)
-                                        (effect-completed state side eid)))}]
-   :interactions {:pay-credits {:req (req this-card-run) ;;no clue why this doesn't work
+                :effect (req (make-run state :runner eid target card))}]
+   :interactions {:pay-credits {:req (req (and (get-in card [:special :run-id])
+                                               (= (get-in card [:special :run-id]) (:run-id run))))
                                 :type :credit}}})
 
 (defcard "Decoy"
@@ -1513,17 +1513,15 @@
   (shard-constructor "Hades Shard" :archives "breach Archives"
                      (effect (breach-server eid [:archives] {:no-root true}))))
 
-(defcard "Hannah \"Wheels\" Pilantra"
+(defcard "Hannah \"Wheels\" Pilintra"
   {:abilities [{:cost [:click 1]
                 :once :per-turn
                 :async true
                 :prompt "Choose a remote server"
-                :req (req (and
-                            (some some? (:successful-run runner-reg))
-                            (->> runnable-servers
-                                 (map unknown->kw)
-                                 (filter is-remote?)
-                                 not-empty)))
+                :req (req (->> runnable-servers
+                               (map unknown->kw)
+                               (filter is-remote?)
+                               not-empty))
                 :choices (req (cancellable
                                 (->> runnable-servers
                                      (map unknown->kw)
@@ -1534,9 +1532,11 @@
                 :effect (req (gain-clicks state side 1)
                              (register-events
                                state side card
-                               [{:event :unsuccessful-run
+                               [{:event :run-ends
                                  :duration :end-of-run
-                                 :req (req (first-event? state side :unsuccessful-run))
+                                 :unregister-once-resolved true
+                                 :req (req (and (:unsuccessful context)
+                                                (same-card? card (:source-card context))))
                                  :async true
                                  :msg "take 1 tag"
                                  :effect (effect (gain-tags :runner eid 1))}])

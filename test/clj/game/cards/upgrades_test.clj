@@ -1308,8 +1308,8 @@
   (do-game
     (new-game {:corp {:credits 7 :hand ["Experiential Data" "Ice Wall" "Enigma"]}})
     (play-from-hand state :corp "Ice Wall" "New remote")
-    (play-from-hand state :corp "Experiential Data" "Remote 1")
-    (play-from-hand state :corp "Enigma" "Remote 1")
+    (play-from-hand state :corp "Experiential Data" "Server 1")
+    (play-from-hand state :corp "Enigma" "Server 1")
     (take-credits state :runner)
     (let [iw (get-ice state :remote1 0)
           ed (get-content state :remote1 0)
@@ -1329,7 +1329,7 @@
   (do-game
     (new-game {:corp {:hand ["Expo Grid" "Dedicated Response Team" "Breaking News"]}})
     (play-from-hand state :corp "Dedicated Response Team" "New remote")
-    (play-from-hand state :corp "Expo Grid" "Remote 1")
+    (play-from-hand state :corp "Expo Grid" "Server 1")
     (let [drt (get-content state :remote1 0)
           expo (get-content state :remote1 1)]
       (rez state :corp drt)
@@ -1339,7 +1339,7 @@
         (take-credits state :runner)
         (is (= (+ 1 total-corp-credits) (:credit (get-corp))) "Corp gains 1c")
         ;;Replace asset with agenda
-        (play-from-hand state :corp "Breaking News" "Remote 1")
+        (play-from-hand state :corp "Breaking News" "Server 1")
         (click-prompt state :corp "OK")
         (take-credits state :corp)
         (take-credits state :runner)
@@ -1371,7 +1371,7 @@
     (new-game {:corp {:hand ["Fractal Threat Matrix" "Najja 1.0"]}
                :runner {:deck [(qty "Acacia" 7)]}})
     (play-from-hand state :corp "Fractal Threat Matrix" "New remote")
-    (play-from-hand state :corp "Najja 1.0" "Remote 1")
+    (play-from-hand state :corp "Najja 1.0" "Server 1")
     (take-credits state :corp)
     (is (= 2 (count (:deck (get-runner)))))
     (run-on state :remote1)
@@ -1555,12 +1555,12 @@
   (do-game
     (new-game {:corp {:credits 10 :hand ["Heinlein Grid" "Najja 1.0"]}})
     (play-from-hand state :corp "Heinlein Grid" "New remote")
-    (play-from-hand state :corp "Najja 1.0" "Remote 1")
+    (play-from-hand state :corp "Najja 1.0" "Server 1")
     (let [hg (get-content state :remote1 0)
           najja (get-ice state :remote1 0)]
       (rez state :corp hg)
       (take-credits state :corp)
-      (run-on state "Remote 1")
+      (run-on state "Server 1")
       (rez state :corp najja)
       (run-continue state)
       (card-side-ability state :runner najja 0)
@@ -2927,7 +2927,7 @@
     (new-game {:corp {:hand ["Oaktown Grid" "PAD Campaign"]}
                :runner {:credits 7}})
     (play-from-hand state :corp "Oaktown Grid" "New remote")
-    (play-from-hand state :corp "PAD Campaign" "Remote 1")
+    (play-from-hand state :corp "PAD Campaign" "Server 1")
     (let [og (get-content state :remote1 0)
           pad (get-content state :remote1 1)]
       (rez state :corp og)
@@ -2945,12 +2945,12 @@
   (do-game
     (new-game {:corp {:deck ["Hostile Takeover" "Oberth Protocol" "Oaktown Renovation"]}})
     (play-and-score state "Hostile Takeover")
-    (play-from-hand state :corp "Oberth Protocol" "Server 1")
-    (play-from-hand state :corp "Oaktown Renovation" "Server 1")
+    (play-from-hand state :corp "Oberth Protocol" "New remote")
+    (play-from-hand state :corp "Oaktown Renovation" "Server 2")
     (take-credits state :corp)
     (take-credits state :runner)
-    (let [oberth (get-content state :remote1 0)
-          oak (get-content state :remote1 1) ]
+    (let [oberth (get-content state :remote2 0)
+          oak (get-content state :remote2 1) ]
       (rez state :corp (refresh oberth))
       (click-card state :corp (get-scored state :corp 0))
       (advance state oak)
@@ -3487,7 +3487,7 @@
   (do-game
     (new-game {:corp {:hand ["Rutherford Grid" "Caduceus"]}})
     (play-from-hand state :corp "Rutherford Grid" "New remote")
-    (play-from-hand state :corp "Caduceus" "Remote 1")
+    (play-from-hand state :corp "Caduceus" "Server 1")
     (let [rg (get-content state :remote1 0)
           caduceus (get-ice state :remote1 0)]
       (rez state :corp rg)
@@ -4170,7 +4170,7 @@
                           :hand ["Corroder" "Dyson Mem Chip"]
                           :credits 100}})
       (play-from-hand state :corp "Warroid Tracker" "New remote")
-      (play-from-hand state :corp "Launch Campaign" "Remote 1")
+      (play-from-hand state :corp "Launch Campaign" "Server 1")
       (let [war (get-content state :remote1 0)]
         (rez state :corp war)
         (take-credits state :corp)
@@ -4197,7 +4197,7 @@
                  :runner {:hand ["Singularity" (qty "Akamatsu Mem Chip" 5)]
                           :credits 100}})
       (play-from-hand state :corp "Warroid Tracker" "New remote")
-      (play-from-hand state :corp "PAD Campaign" "Remote 1")
+      (play-from-hand state :corp "PAD Campaign" "Server 1")
       (take-credits state :corp)
       (core/gain state :runner :click 10)
       (dotimes [_ 5]
@@ -4269,7 +4269,7 @@
                           :hand ["Corroder" "Dyson Mem Chip"]
                           :credits 20}})
       (play-from-hand state :corp "Warroid Tracker" "New remote")
-      (play-from-hand state :corp "Marilyn Campaign" "Remote 1")
+      (play-from-hand state :corp "Marilyn Campaign" "Server 1")
       (play-from-hand state :corp "Marilyn Campaign" "New remote")
       (take-credits state :corp)
       (let [war (get-content state :remote1 0)
