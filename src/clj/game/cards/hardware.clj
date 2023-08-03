@@ -8,7 +8,8 @@
    [game.core.board :refer [all-active all-active-installed all-installed]]
    [game.core.card :refer [active? corp? event? facedown? get-card get-counters
                            get-zone hardware? has-subtype? ice? in-deck? in-discard?
-                           in-hand? installed? program? resource? rezzed? runner? virus-program? faceup?]]
+                           in-hand? in-scored? installed? program? resource? rezzed?
+                           runner? virus-program? faceup?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [all-stealth install-cost
                                rez-additional-cost-bonus rez-cost trash-cost]]
@@ -1199,7 +1200,8 @@
              :async true
              :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
                             (pos? (count (:hand corp)))
-                            (not (in-discard? target))))
+                            (not (in-discard? target))
+                            (not (in-scored? target))))
              :once :per-turn
              :msg "force the Corp to trash a random card from HQ"
              :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
