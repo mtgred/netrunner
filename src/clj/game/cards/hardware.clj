@@ -1198,6 +1198,7 @@
    :events [{:event :post-access-card
              :label "Trash a card from HQ"
              :async true
+             ;; todo - no-trash-or-steal to an actual event.
              :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
                             (pos? (count (:hand corp)))
                             (not (in-discard? target))
