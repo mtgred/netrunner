@@ -1276,7 +1276,8 @@
   (let [constant-ability
         ;; event breach req target run hq
         {:event :breach-server
-         :req (req (and (= :rd target)
+         :req (req (and (threat-level 3 state)
+                        (= :rd target)
                         (= :archives (first (:server run)))))
          :msg (msg "access an additional card")
          :effect (effect (access-bonus :rd 1))}]
@@ -1285,7 +1286,7 @@
               {:target-server :archives
                :this-card-run true
                :mandatory true
-               :ability {:msg "breach R&D, accessing one additional card"
+               :ability {:msg "breach R&D"
                          :async true
                          :effect (req (breach-server state :runner eid [:rd] nil))}})]
      :abilities [{:cost [:click 1]
