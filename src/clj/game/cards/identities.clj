@@ -585,8 +585,10 @@
                 :effect (req (let [top (take 3 (:deck corp))]
                                (continue-ability
                                  state :corp
-                                 {:prompt "Install a card?"
-                                  :choices (req (conj top "No Thanks"))
+                                 {:prompt (msg (str "The top cards are " (str (str/join ", " (map :title top))) ". Install a card?"))
+                                  :choices (req (conj
+                                                  (filter #(not (operation? %)) top)
+                                                  "No Thanks"))
                                   :msg (msg (if (= "No Thanks" target)
                                               "decline to install a card"
                                               (str "install the "
