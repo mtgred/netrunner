@@ -54,7 +54,8 @@
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.servers :refer [is-central? is-remote? target-server zone->name]]
+   [game.core.servers :refer [is-central? is-remote? protecting-same-server?
+                              target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
@@ -519,7 +520,7 @@
              :once-per-instance true
              :req (req (:accessed target))
              :effect (effect (add-counter :runner card :virus 1))
-             :msg "place 1 virus counter on Seymour"}]})
+             :msg "place 1 virus counter on itself"}]})
 
 (defcard "Aumakua"
   (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
@@ -1871,7 +1872,7 @@
                                  :effect (effect (pump card 3 :end-of-turn))}
                     :hosting {:card #(and (ice? %)
                                           (can-host? %))}
-                    :abilities [(break-sub 1 1 "Sentry" {:req (req (same-card? current-ice (:host card)))})
+                    :abilities [(break-sub 1 1 "Sentry" {:req (req (protecting-same-server? current-ice (:host card)))})
                                 (strength-pump 1 2)]}))
 
 (defcard "LLDS Energy Regulator"
