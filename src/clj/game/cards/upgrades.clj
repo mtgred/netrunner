@@ -79,7 +79,7 @@
 
 (defcard "Adrian Seis"
   {:events [mobile-sysop-event
-            {:event :approach-server
+            {:event :successful-run
             :interactive (req true)
             :psi {:req (req this-server)
                   :not-equal {:msg (msg "prevent the Runner from accessing cards other than " (:title card))
