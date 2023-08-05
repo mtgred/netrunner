@@ -126,7 +126,6 @@
    "eternal" "Eternal"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
-   "classic" "Classic"
    "neo" "Neo"
    "casual" "Casual"})
 
@@ -137,7 +136,6 @@
    "Eternal" "eternal"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
-   "Classic" "classic"
    "Neo" "neo"
    "Casual" "casual"})
 

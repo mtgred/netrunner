@@ -350,8 +350,9 @@
            {:id "neo"
              :title "What is the Neo format?"
              :content [:ul
-                        [:p "TODO UPDATE ME"
-                         "Refer to the " [:a {:href ""} "announcement article"] "."]]})}
+                        [:p "The Neo format is all the cards released by NSG with a small "
+                         "ban list. Refer to the #neo channel on "
+                         [:a {:href "https://discord.gg/glc"} "GLC Discord"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list
