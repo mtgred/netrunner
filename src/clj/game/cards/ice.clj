@@ -21,7 +21,7 @@
    [game.core.effects :refer [get-effects register-floating-effect unregister-constant-effects]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [gather-events pay register-events resolve-ability
-                             trigger-event unregister-events]]
+                             trigger-event trigger-event-simult unregister-events]]
    [game.core.events :refer [run-events]]
    [game.core.finding :refer [find-cid]]
    [game.core.flags :refer [can-rez? card-flag? prevent-draw prevent-jack-out
@@ -38,7 +38,8 @@
    [game.core.installing :refer [corp-install corp-install-list
                                  corp-install-msg]]
    [game.core.memory :refer [available-mu]]
-   [game.core.moving :refer [as-agenda mill move swap-cards swap-ice swap-installed trash
+   [game.core.moving :refer [as-agenda mill move swap-cards swap-cards-async
+                             swap-ice swap-installed trash
                              trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost->string build-cost-label]]
@@ -3155,8 +3156,8 @@
   {:subroutines [(do-net-damage 1)
                  (do-net-damage 1)]
    :events [{:event :pass-ice
-             :req (req (same-card? (:ice context) card)
-                       (<= 4 (count (:hand runner))))
+             :req (req (and (same-card? (:ice context) card)
+                            (<= 4 (count (:hand runner)))))
              :msg "give the runner a tag"
              :effect (effect (gain-tags eid 1))}]})
 
@@ -3673,16 +3674,25 @@
 (defcard "Tatu-Bola"
   {:events [{:event :pass-ice
              :interactive (req run)
-             :optional
-             {:req (req (same-card? (:ice context) card))
-              :prompt (msg "Gain 4 [Credit] and swap " (:title card) " with an Ice in HQ?")
-              :yes-ability {:prompt "Choose a piece of ice to swap Tatu-Bola with"
-                            :choices (req (filter ice? (:hand corp)))
-                            :async true
-                            :effect (effect (swap-cards current-ice target)
-                                            (gain-credits eid 4))
-                            :msg (msg "swap " (card-str state card)
-                                      " with a card from HQ and gain 4 [Credits]")}}}]
+             :req (req (same-card? (:ice context) card))
+             :async true
+             :effect (req (continue-ability
+                            state side
+                            (if (< 0 (count (filter ice? (:hand corp))))
+                              {:optional
+                               {:prompt (msg "Gain 4 [Credit] and swap " (:title card) " with an Ice in HQ?")
+                                :no-ability {:msg "decline to use it's ability"}
+                                :yes-ability {:prompt "Choose a piece of ice to swap Tatu-Bola with"
+                                              :choices (req (filter ice? (:hand corp)))
+                                              :async true
+                                              :effect (req (wait-for (swap-cards-async state side (make-eid state eid) target current-ice)
+                                                                     (gain-credits state :corp eid 4)))
+                                              :msg (msg "swap " (card-str state card)
+                                                        " with a card from HQ and gain 4 [Credits]")}}}
+                              {:prompt "You have no ice"
+                               :choices ["OK"]
+                               :msg "decline to use it's ability"})
+                            card nil))}]
    :subroutines [end-the-run]})
 
 (defcard "Taurus"

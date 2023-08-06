@@ -544,7 +544,7 @@
                :ability (sabotage-ability 4)})]})
 
 (defcard "Chrysopoeian Skimming"
-  {:on-play {:prompt "reveal an agenda from HQ?"
+  {:on-play {:prompt "Reveal an agenda from HQ?"
              :player :corp
              :choices (req (conj (filter agenda? (:hand corp)) "No thanks"))
              :async true
@@ -556,13 +556,16 @@
                                    :prompt (msg "the top 3 cards of R&D are " (str/join ", " (map :title (take 3 (:deck corp)))))
                                    :choices ["Noted"]}
                                   card nil))
-                            (continue-ability
-                              state :runner
-                              {:msg "gain [Click] and draw a card"
-                               :async true
-                               :effect (req (gain-clicks state :runner 1)
-                                            (draw state :runner eid 1))}
-                              card nil)))}})
+                            (do
+                              (wait-for (reveal state side target)
+                                        (system-msg state :corp (str "reveals " (:title target) " from HQ"))
+                                        (continue-ability
+                                          state :runner
+                                          {:msg "gain [Click] and draw a card"
+                                           :async true
+                                           :effect (req (gain-clicks state :runner 1)
+                                                        (draw state :runner eid 1))}
+                                          card nil)))))}})
 
 (defcard "Code Siphon"
   (letfn [(rd-ice [state]

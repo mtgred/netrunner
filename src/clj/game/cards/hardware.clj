@@ -8,7 +8,8 @@
    [game.core.board :refer [all-active all-active-installed all-installed]]
    [game.core.card :refer [active? corp? event? facedown? get-card get-counters
                            get-zone hardware? has-subtype? ice? in-deck? in-discard?
-                           in-hand? installed? program? resource? rezzed? runner? virus-program? faceup?]]
+                           in-hand? in-scored? installed? program? resource? rezzed?
+                           runner? virus-program? faceup?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [all-stealth install-cost
                                rez-additional-cost-bonus rez-cost trash-cost]]
@@ -122,8 +123,7 @@
                                :req (req true)}]}
      :events [(trash-on-empty :power)
               {:event :encounter-ice
-               :req (req (and (not-used-once? state {:once :per-turn} card)
-                              (contains? (card-def current-ice) :on-encounter)))
+               :req (req (contains? (card-def current-ice) :on-encounter))
                :async true
                :effect
                (effect (continue-ability
@@ -133,6 +133,7 @@
                            :yes-ability ability}}
                          card nil))}]
      :abilities [{:cost [:power 1]
+                  :req (req run)
                   :msg "prevent 1 net damage"
                   :effect (effect (damage-prevent :net 1))}
                  (assoc ability
@@ -1283,9 +1284,11 @@
    :events [{:event :post-access-card
              :label "Trash a card from HQ"
              :async true
+             ;; todo - no-trash-or-steal to an actual event.
              :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
                             (pos? (count (:hand corp)))
-                            (not (in-discard? target))))
+                            (not (in-discard? target))
+                            (not (in-scored? target))))
              :once :per-turn
              :msg "force the Corp to trash a random card from HQ"
              :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
@@ -2070,7 +2073,10 @@
             {:event :runner-trash
              :async true
              :interactive (req true)
-             :req (req (some #(corp? (:card %)) targets))
+             :req (req (and (some #(corp? (:card %)) targets)
+                            (first-event? state side :runner-trash
+                                          (fn [targets]
+                                            (some #(corp? (:card %)) targets)))))
              :once :per-turn
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter :runner card :power 1)

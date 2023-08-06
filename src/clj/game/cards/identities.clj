@@ -586,6 +586,7 @@
                                (continue-ability
                                  state :corp
                                  {:prompt (msg (str "The top cards are " (str (str/join ", " (map :title top))) ". Install a card?"))
+                                  :not-distinct true
                                   :choices (req (conj
                                                   (filter #(not (operation? %)) top)
                                                   "No Thanks"))
@@ -595,7 +596,7 @@
                                                    ;; don't look at this spaghetti please
                                                    (if (= target (first top)) "first"
                                                        (if (= target (second top)) "second" "third"))
-                                                   "card from R&D")))
+                                                   " card from R&D")))
                                   :async true
                                   :effect (req (if-not (= target "No Thanks")
                                                  (corp-install state side eid target nil)
