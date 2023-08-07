@@ -4,7 +4,7 @@
    [game.core.access :refer [access-bonus max-access]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type
                             card->server server->zone]]
-   [game.core.card :refer [active? agenda? asset? card-index corp? facedown?
+   [game.core.card :refer [active? agenda? asset? card-index corp? facedown? faceup?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone
                            hardware? has-subtype? in-hand? in-discard? ice? installed?
@@ -477,7 +477,7 @@
                   :ability
                   {:prompt "Choose a card to shuffle into R&D"
                    :choices {:card #(and (not (ice? %))
-                                         (not (rezzed? %))
+                                         (not (faceup? %))
                                          (zero? (get-counters % :advancement)))}
                    :msg (msg "shuffle " (card-str state target) " into R&D")
                    :effect (effect (move :corp target :deck)

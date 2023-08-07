@@ -390,11 +390,13 @@
   ;; Analog Dreamers
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Hostile Takeover" "PAD Campaign"]}
+                      :hand ["Hostile Takeover" "PAD Campaign" "Oaktown Renovation"]}
                :runner {:hand ["Analog Dreamers"]}})
+    (core/gain state :corp :click 1)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (advance state (get-content state :remote1 0) 1)
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Analog Dreamers")
     (card-ability state :runner (get-program state 0) 0)
@@ -403,6 +405,9 @@
     (click-card state :runner "Hostile Takeover")
     (is (= "Choose a card to shuffle into R&D" (:msg (prompt-map :runner)))
         "Can't click on Hostile Takeover")
+    (click-card state :runner "Oaktown Renovation")
+    (is (= "Choose a card to shuffle into R&D" (:msg (prompt-map :runner)))
+        "Can't click on Oaktown Renovation because it's face up")
     (let [number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
           pad (get-content state :remote2 0)]
       (click-card state :runner "PAD Campaign")
