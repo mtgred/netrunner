@@ -2759,6 +2759,21 @@
       (click-card state :runner (get-content state :remote1 0))
       (is (not (:run @state)) "Run is over")))
 
+(deftest leela-patel-trained-pragmatist-public-agenda
+    ;; agendas with Public subtype are neither rezzed or unrezzed
+    (do-game
+      (new-game {
+                 :corp {:hand ["Ice Wall" "Oaktown Renovation" "Oaktown Renovation"]}
+                 :runner {:id "Leela Patel: Trained Pragmatist"}})
+      (play-from-hand state :corp "Oaktown Renovation" "New remote")
+      (play-from-hand state :corp "Oaktown Renovation" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (take-credits state :corp)
+      (run-empty-server state :remote2)
+      (click-prompt state :runner "Steal")
+      (click-card state :runner (get-content state :remote1 0))
+      (is (= 0 (count (:hand (get-corp)))) "Leela can not bounce Public agenda")))
+
 (deftest leela-patel-trained-pragmatist-upgrades-returned-to-hand-in-the-middle-of-a-run-do-not-break-the-run-issue-2008
     ;; upgrades returned to hand in the middle of a run do not break the run. Issue #2008
     (do-game
