@@ -93,7 +93,7 @@
 
 (defn find-non-banned-user
   [db query]
-  (active-user? (mc/find-one-as-map db "users" query)))
+  (active-user? (find-one-as-map-case-insensitive db "users" query)))
 
 (defn login-handler
   [{db :system/db
