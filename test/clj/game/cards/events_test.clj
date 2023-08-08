@@ -6379,6 +6379,7 @@
   (do-game
     (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
     (damage state :corp :net 1)
+    (click-prompt state :runner "Yes")
     (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards from steelskin"))
   (do-game
     (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}
@@ -6389,6 +6390,7 @@
     (play-from-hand state :corp "Kala Ghoda Real TV" "New remote")
     (rez state :corp (get-content state :remote1 0))
     (card-ability state :corp (get-content state :remote1 0) 1)
+    (click-prompt state :runner "Yes")
     (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards when steelskin gets trashed from stack"))
   (do-game
     (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
@@ -6397,6 +6399,28 @@
       2 (count (:hand (get-runner)))
       "Drew 3 (+2 net cards) with steelskin"
       (play-from-hand state :runner "Steelskin Scarring"))))
+
+(deftest steelskin-scarring-waiting-prompts
+  (do-game
+    (new-game {:runner {:deck [(qty "Steelskin Scarring" 44)]
+                        :hand [(qty "Steelskin Scarring" 2)]}})
+    (damage state :corp :net 1)
+    (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner")
+    (changes-val-macro
+      2 (count (:hand (get-runner)))
+      "Draw 2"
+      (click-prompt state :runner "Yes"))
+    (damage state :corp :net 1)
+    (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner")
+    (changes-val-macro
+      0 (count (:hand (get-runner)))
+      "Draw none (decline)"
+      (click-prompt state :runner "No"))
+    (is (no-prompt? state :corp) "Corp is not waiting anymore")
+    (is (= 2 (count (:hand (get-runner)))))
+    (damage state :corp :meat 2)
+    (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner to pick a steelskin")))
+
 
 (deftest stimhack
   ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run

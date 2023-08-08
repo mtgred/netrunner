@@ -3386,8 +3386,15 @@
               :req (req (let [zone (first (:zone (:card context)))]
                           (or (= :hand zone)
                               (= :deck zone))))
-              :msg "draw 2 cards"
-              :effect (effect (draw :runner eid 2))}})
+
+              :effect (effect (continue-ability
+                                {:optional {:prompt "Draw 2 cards?"
+                                            :waiting-prompt "Runner to use Steelskin Scarring"
+                                            :yes-ability {:msg "draw 2 cards"
+                                                          :async true
+                                                          :effect (effect (draw :runner eid 2))}
+                                            :no-ability {:msg "decline to draw"}}}
+                                card nil))}})
 
 (defcard "Stimhack"
   {:makes-run true
