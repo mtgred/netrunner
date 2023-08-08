@@ -585,15 +585,18 @@
                 :effect (req (let [top (take 3 (:deck corp))]
                                (continue-ability
                                  state :corp
-                                 {:prompt "Install a card?"
-                                  :choices (req (conj top "No Thanks"))
+                                 {:prompt (msg (str "The top cards are " (str (str/join ", " (map :title top))) ". Install a card?"))
+                                  :not-distinct true
+                                  :choices (req (conj
+                                                  (filter #(not (operation? %)) top)
+                                                  "No Thanks"))
                                   :msg (msg (if (= "No Thanks" target)
                                               "decline to install a card"
                                               (str "install the "
                                                    ;; don't look at this spaghetti please
                                                    (if (= target (first top)) "first"
                                                        (if (= target (second top)) "second" "third"))
-                                                   "card from R&D")))
+                                                   " card from R&D")))
                                   :async true
                                   :effect (req (if-not (= target "No Thanks")
                                                  (corp-install state side eid target nil)
@@ -2093,7 +2096,7 @@
                                 :type :recurring}}})
 
 (defcard "Weyland Consortium: Builder of Nations"
-  {:implementation "[Erratum] The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
+  {:implementation "Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
    :events [{:event :end-of-encounter
              :async true
              :req (req (and (rezzed? (:ice context))
