@@ -25,9 +25,8 @@
    [game.core.events :refer [first-event? first-run-event? turn-events]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.finding :refer [find-cid find-latest]]
-   [game.core.flags :refer [clear-persistent-flag! enable-run-on-server
-                            is-scored? prevent-run-on-server
-                            register-persistent-flag! register-run-flag!]]
+   [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
+                            register-run-flag!]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+]]
    [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
@@ -1302,16 +1301,14 @@
 
 (defcard "Off the Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :on-rez {:effect (req (prevent-run-on-server state card (second (get-zone card))))}
-   :events [{:event :runner-turn-begins
-             :effect (req (prevent-run-on-server state card (second (get-zone card))))}
-            {:event :successful-run
+   :constant-effects [{:type :cannot-run-on-server
+                       :req (req (rezzed? card))
+                       :value (req (second (get-zone card)))}]
+   :events [{:event :successful-run
              :req (req (= :hq (target-server context)))
              :async true
              :msg "trash itself"
-             :effect (req (enable-run-on-server state card (second (get-zone card)))
-                          (trash state :corp eid card {:cause-card card}))}]
-   :leave-play (req (enable-run-on-server state card (second (get-zone card))))})
+             :effect (req (trash state :corp eid card {:cause-card card}))}]})
 
 (defcard "Old Hollywood Grid"
   (let [ohg {:effect (effect
