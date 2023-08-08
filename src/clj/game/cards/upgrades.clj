@@ -1664,6 +1664,7 @@
 (defcard "Tranquility Home Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
    :events [{:event :corp-install
+             :interactive (req true)
              :req (req (and (or (asset? (:card context))
                                 (agenda? (:card context))
                                 (upgrade? (:card context)))
