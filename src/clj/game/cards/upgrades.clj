@@ -1681,8 +1681,10 @@
 (defcard "Tucana"
   (let [ability {:async true
                  :prompt "Choose a piece of ice to install and rez"
-                 :choices (req (cancellable (filter ice? (:deck corp))))
-                 :effect (req (corp-install state side eid target nil {:install-state :rezzed :combined-credit-discount 3}))
+                 :choices (req (cancellable (filter ice? (:deck corp)) true))
+                 :effect (req (do (corp-install state side eid target nil {:install-state :rezzed :combined-credit-discount 3})
+                                  (shuffle! state :corp :deck)
+                                  (system-msg state side (str "shuffles R&D"))))
                  :cancel-effect (effect (system-msg  "declines to use Tucana to install a card")
                                         (effect-completed eid))}]
     {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -1698,7 +1700,7 @@
                         card
                         [(assoc ability
                                 :event :agenda-stolen
-                                :req (req (= (second (:previous-zone card)) (first (:server context))))
+                                :req (req (= (:previous-zone card) (:previous-zone (:card context))))
                                 :duration :end-of-run)]))}}))
 
 (defcard "Tyr's Hand"
