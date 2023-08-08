@@ -43,7 +43,7 @@
   (let [card (get-card state card)
         abilities (:abilities card)
         ab (nth abilities ability)
-        cannot-play (or (:disabled card)
+        cannot-play (or (any-effects state side :disable-card true? card)
                         (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
@@ -443,7 +443,7 @@
   (let [card (get-card state card)
         cdef (card-def card)
         ab (get-in cdef [:corp-abilities ability])
-        cannot-play (or (:disabled card)
+        cannot-play (or (any-effects state side :disable-card true? card)
                         (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
@@ -454,7 +454,7 @@
   (let [card (get-card state card)
         cdef (card-def card)
         ab (get-in cdef [:runner-abilities ability])
-        cannot-play (or (:disabled card)
+        cannot-play (or (any-effects state side :disable-card true? card)
                         (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))

@@ -4,7 +4,7 @@
     [game.core.card :refer [asset? condition-counter? get-card ice? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
-    [game.core.effects :refer [unregister-constant-effects]]
+    [game.core.effects :refer [unregister-constant-effects any-effects]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [register-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
@@ -31,7 +31,7 @@
               (concat
                 (when-not ignore-cost
                   [:credit cost])
-                (when (not (:disabled card))
+                (when-not (any-effects state side :disable-card true? card)
                   additional-costs))))))
 
 (defn trash-hosted-cards
@@ -47,8 +47,7 @@
                 (effect-completed state side eid)))))
 
 (defn- complete-rez
-  [state side eid
-   {:keys [disabled] :as card}
+  [state side eid card
    {:keys [alternative-cost ignore-cost no-warning no-msg press-continue] :as args}]
   (let [cdef (card-def card)
         costs (get-rez-cost state side card args)]
@@ -58,7 +57,7 @@
                   (effect-completed state side eid)
                   (let [_ (when (:derezzed-events cdef)
                             (unregister-events state side card))
-                        card (if disabled
+                        card (if (any-effects state side :disable-card true? card)
                                (update! state side (assoc card :rezzed :this-turn))
                                (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true}))]
                     (doseq [h (:hosted card)]
@@ -82,7 +81,8 @@
                           (play-sfx state side "rez-ice"))
                       (play-sfx state side "rez-other"))
                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
-                    (when-let [card-ability (:on-rez cdef)]
+                    (when-let [card-ability (and (not (any-effects state side :disable-card true? card))
+                                                 (:on-rez cdef))]
                       (register-pending-event state :rez card card-ability))
                     (queue-event state :rez {:card (get-card state card)
                                              :cost cost-paid})

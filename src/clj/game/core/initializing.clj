@@ -4,7 +4,7 @@
     [game.core.card :refer [get-card map->Card program? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
-    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
+    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-default-events register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
@@ -115,17 +115,6 @@
          _ (doseq [[c-type c-num] data]
              (add-counter state side (get-card state c) c-type c-num {:placed true}))
          c (get-card state c)]
-     (when recurring
-       (let [recurring-fn (req (if (number? recurring) recurring (recurring state side eid card targets)))
-             r (req (let [card (update! state side (assoc-in card [:counter :recurring] 0))]
-                      (add-counter state side card
-                                   :recurring (recurring-fn state side eid card targets)
-                                   {:placed true})))]
-         (register-events
-           state side c
-           [{:event (if (= side :corp) :corp-phase-12 :runner-phase-12)
-             :req (req (not (:disabled card)))
-             :effect r}])))
      (register-default-events state side c)
      (register-constant-effects state side c)
      ;; Facedown cards can't be initialized
