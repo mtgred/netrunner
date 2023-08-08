@@ -27,7 +27,7 @@
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events]]
    [game.core.expose :refer [expose-prevent]]
-   [game.core.flags :refer [enable-run-on-server lock-zone prevent-current prevent-run-on-server
+   [game.core.flags :refer [lock-zone prevent-current
                             prevent-draw
                             register-turn-flag! release-zone]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -1031,34 +1031,17 @@
              :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Front Company"
-  ;; TODO - this type of effect (prevent x server run) should be doable as a floating effect
-  (let [prevent (req (apply prevent-run-on-server
-                            state card (map first (get-remotes state))))
-        allow (req (apply enable-run-on-server
-                          state card (map first (get-remotes state))))
-        allow-if (req (when (zero? (count (filter #(and (rezzed? %)
-                                                        (= (:title %) (:title card))
-                                                        (not (same-card? % card)))
-                                                  (all-installed state :corp))))
-                        (apply enable-run-on-server
-                          state card (map first (get-remotes state)))))]
-    {:rez-req (req (= (:active-player @state) :corp))
-     :on-rez {:req (req (no-event? state side :run #(is-central? (:server (:first %)))))
-              :effect prevent}
-     :uninstall allow-if
-     :derez-effect {:effect allow-if}
-     :events [{:event :run
-               :req (req (is-central? (:server target)))
-               :effect allow}
-              {:event :run
-               :req (req (and (= :archives (target-server context))
-                              (first-event? state :runner :run #(= :archives (target-server (first %))))
-                              unprotected))
-               :msg "do 2 net damage"
-               :async true
-               :effect (effect (damage eid :net 2))}
-              {:event :runner-phase-12
-               :effect prevent}]}))
+  {:constant-effects [{:type :cannot-run-on-server
+                       :req (req (not (pos? (count (turn-events state side :run)))))
+                       :value (req (map first (get-remotes state)))}]
+   :rez-req (req (= (:active-player @state) :corp))
+   :events [{:event :run
+             :req (req (and (= :archives (target-server context))
+                            (first-event? state :runner :run #(= :archives (target-server (first %))))
+                            unprotected))
+             :msg "do 2 net damage"
+             :async true
+             :effect (effect (damage eid :net 2))}]})
 
 (defcard "Full Immersion RecStudio"
   {:can-host (req (and (or (asset? target) (agenda? target))

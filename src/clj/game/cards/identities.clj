@@ -26,7 +26,6 @@
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [card-flag? clear-persistent-flag!
-                            enable-run-on-server prevent-run-on-server
                             register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
@@ -1057,18 +1056,9 @@
                             (mill state :corp eid :runner 1)))}]})
 
 (defcard "Jinteki: Replicating Perfection"
-  {:events [{:event :runner-phase-12
-             :effect (req (apply prevent-run-on-server
-                                 state card (map first (get-remotes state))))}
-            {:event :run
-             :once :per-turn
-             :req (req (is-central? (:server target)))
-             :effect (req (apply enable-run-on-server
-                                 state card (map first (get-remotes state))))}]
-   :req (req (empty? (let [successes (turn-events state side :successful-run)]
-                       (filter is-central? (map :server successes)))))
-   :effect (req (apply prevent-run-on-server state card (map first (get-remotes state))))
-   :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))})
+  {:constant-effects [{:type :cannot-run-on-server
+                       :req (req (no-event? state side :run #(is-central? (:server (first %)))))
+                       :value (req (map first (get-remotes state)))}]})
 
 (defcard "Jinteki: Restoring Humanity"
   {:events [{:event :corp-turn-ends

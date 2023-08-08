@@ -30,7 +30,7 @@
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [any-flag-fn? can-rez? can-run-server?
                             clear-all-flags-for-card! clear-run-flag! clear-turn-flag!
-                            in-corp-scored? prevent-run-on-server register-run-flag! register-turn-flag! zone-locked?]]
+                            in-corp-scored? register-run-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size]]
@@ -2289,17 +2289,25 @@
 (defcard "Marathon"
   {:makes-run true
    :on-play {:prompt "Choose a server"
+             :req (req (some #(can-run-server? state %) remotes))
              :choices (req (filter #(can-run-server? state %) remotes))
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :run-ends
              :req (req this-card-run)
-             :effect (req (prevent-run-on-server state card (first (:server target)))
-                          (when (:successful target)
-                            (system-msg state :runner "gains [Click] and adds Marathon to their grip")
-                            (gain-clicks state :runner 1)
-                            (move state :runner card :hand)
-                            (unregister-events state side card)))}]})
+             :effect (req
+                       (let [blocked-server (first (:server target))]
+                         (register-floating-effect
+                           state side card
+                           {:type :cannot-run-on-server
+                            :req (req true)
+                            :value [blocked-server]
+                            :duration :end-of-turn}))
+                       (when (:successful target)
+                         (system-msg state :runner "gains [Click] and adds Marathon to their grip")
+                         (gain-clicks state :runner 1)
+                         (move state :runner card :hand)
+                         (unregister-events state side card)))}]})
 
 (defcard "Mars for Martians"
   (letfn [(count-clan [state] (count (filter #(and (has-subtype? % "Clan") (resource? %))
