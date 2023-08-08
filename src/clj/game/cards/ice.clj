@@ -565,6 +565,7 @@
             :show-discard true
             :choices {:card #(and (corp? %)
                                   (not (operation? %))
+                                  (not (agenda? %))
                                   (or (in-hand? %)
                                       (in-discard? %)))}
             :async true
