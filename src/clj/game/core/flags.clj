@@ -155,32 +155,32 @@
   (clear-flag-for-card! state side card :persistent flag))
 
 ;;; Functions related to servers that can be run
-(defn prevent-run-on-server
-  "Adds specified server to list of servers that cannot be run on.
-  The causing card is also specified"
-  [state card & servers]
-  (doseq [server servers]
-    (swap! state assoc-in [:runner :register :cannot-run-on-server server (:cid card)] true)))
+;(defn prevent-run-on-server
+;  "Adds specified server to list of servers that cannot be run on.
+;  The causing card is also specified"
+;  [state card & servers]
+;  (doseq [server servers]
+;    (swap! state assoc-in [:runner :register :cannot-run-on-server server (:cid card)] true)))
 
-(defn enable-run-on-server
-  "Removes specified server from list of server for the associated card.
-  If other cards are associated with the same server that server will still be unable to be run
-  on."
-  [state card & servers]
-  (doseq [server servers]
-    (let [card-map (get-in @state [:runner :register :cannot-run-on-server server])
-          reduced-card-map (dissoc card-map (:cid card))]
-      (if (empty? reduced-card-map)
-        ;; removes server if no cards block it, otherwise updates the map
-        (swap! state update-in [:runner :register :cannot-run-on-server] dissoc server)
-        (swap! state assoc-in [:runner :register :cannot-run-on-server server]
-               reduced-card-map)))))
+;(defn enable-run-on-server
+;  "Removes specified server from list of server for the associated card.
+;  If other cards are associated with the same server that server will still be unable to be run
+;  on."
+;  [state card & servers]
+;  (doseq [server servers]
+;    (let [card-map (get-in @state [:runner :register :cannot-run-on-server server])
+;          reduced-card-map (dissoc card-map (:cid card))]
+;      (if (empty? reduced-card-map)
+;        ;; removes server if no cards block it, otherwise updates the map
+;        (swap! state update-in [:runner :register :cannot-run-on-server] dissoc server)
+;        (swap! state assoc-in [:runner :register :cannot-run-on-server server]
+;               reduced-card-map)))))
 
-(defn can-run-server?
-  "Returns true if the specified server can be run on. Specified server must be string form."
-  [state server]
-  (not-any? #{server}
-            (map zone->name (keys (get-in @state [:runner :register :cannot-run-on-server])))))
+;(defn can-run-server?
+;  "Returns true if the specified server can be run on. Specified server must be string form."
+;  [state server]
+;  (not-any? #{server}
+;            (map zone->name (keys (get-in @state [:runner :register :cannot-run-on-server])))))
 
 
 ;;; Functions for preventing specific game actions.

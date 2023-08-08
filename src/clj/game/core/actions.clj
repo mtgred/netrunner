@@ -8,7 +8,7 @@
     [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
-    [game.core.effects :refer [any-effects]]
+    [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
@@ -529,7 +529,7 @@
   ([state side card] (get-runnable-zones state side (make-eid state) card nil))
   ([state side card args] (get-runnable-zones state side (make-eid state) card args))
   ([state side eid card {:keys [zones ignore-costs]}]
-   (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))
+   (let [restricted-zones (distinct (flatten (get-effects state side nil :cannot-run-on-server)))
          permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
      (if ignore-costs
        permitted-zones
@@ -539,6 +539,10 @@
 (defn generate-runnable-zones
   [state _ _]
   (swap! state assoc-in [:runner :runnable-list] (zones->sorted-names (get-runnable-zones state))))
+
+(defn can-run-server?
+  [state server]
+  (some #{(unknown->kw server)} (seq (get-runnable-zones state))))
 
 (defn advance
   "Advance a corp card that can be advanced.

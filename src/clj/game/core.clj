@@ -113,6 +113,7 @@
 (expose-vars
   [game.core.actions
    advance
+   can-run-server?
    click-advance
    click-credit
    click-draw
@@ -416,7 +417,6 @@
    can-advance?
    can-host?
    can-rez?
-   can-run-server?
    can-run?
    can-score?
    can-steal?
@@ -432,7 +432,7 @@
    clear-run-register!
    clear-turn-flag!
    clear-turn-register!
-   enable-run-on-server
+   ;enable-run-on-server
    get-card-prevention
    get-prevent-list
    get-preventing-cards
@@ -445,7 +445,7 @@
    prevent-current
    prevent-draw
    prevent-jack-out
-   prevent-run-on-server
+   ;prevent-run-on-server
    register-persistent-flag!
    register-run-flag!
    register-turn-flag!
