@@ -4,7 +4,7 @@
    [clojure.string :as str]
    [game.core.access :refer [access-bonus access-n-cards breach-server steal
                              steal-cost-bonus]]
-   [game.core.actions :refer [get-runnable-zones]]
+   [game.core.actions :refer [can-run-server? get-runnable-zones]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
@@ -32,7 +32,7 @@
                              first-installed-trash-own? first-run-event?
                              first-successful-run-on-server? get-turn-damage no-event? second-event? turn-events]]
    [game.core.expose :refer [expose]]
-   [game.core.flags :refer [can-run-server? card-flag? clear-persistent-flag!
+   [game.core.flags :refer [card-flag? clear-persistent-flag!
                             has-flag? in-corp-scored?
                             register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks

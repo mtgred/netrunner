@@ -4,7 +4,7 @@
    [clojure.string :as str]
    [game.core.access :refer [access-card breach-server get-only-card-to-access
                              num-cards-to-access]]
-   [game.core.actions :refer [get-runnable-zones]]
+   [game.core.actions :refer [can-run-server? get-runnable-zones]]
    [game.core.agendas :refer [update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed server->zone]]
@@ -28,7 +28,7 @@
                              turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid find-latest]]
-   [game.core.flags :refer [any-flag-fn? can-rez? can-run-server?
+   [game.core.flags :refer [any-flag-fn? can-rez?
                             clear-all-flags-for-card! clear-run-flag! clear-turn-flag!
                             in-corp-scored? register-run-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -246,7 +246,7 @@
   {:makes-run true
    :on-play {:async true
              :prompt "Choose a server"
-             :choices (req (filter #(can-run-server? state %) remotes))
+             :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
              :effect (effect (make-run eid target card))}
    :events [(successful-run-replace-breach
               {:target-server :remote
