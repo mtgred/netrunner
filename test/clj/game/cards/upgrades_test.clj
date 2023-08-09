@@ -3996,6 +3996,37 @@
       (click-prompt state :corp "Server 1")
       (click-prompt state :corp "Gain 2 [Credits]"))))
 
+(deftest tranquility-home-grid-asa-interaction
+  (do-game
+    (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                      :deck ["Ice Wall"]
+                      :hand ["Tranquility Home Grid" "Vanilla" "Rashida Jaheem"]}})
+    (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+    (click-prompt state :corp "Done")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+    (click-prompt state :corp "Tranquility Home Grid")
+    (click-prompt state :corp "Draw 1 card")
+    (click-card state :corp "Ice Wall")))
+
+(deftest tranquility-home-grid-a-teia-interaction
+  (do-game
+    (new-game {:corp {:id "A Teia: IP Recovery"
+                      :deck ["Ice Wall"]
+                      :hand ["Tranquility Home Grid" "Vanilla" "Rashida Jaheem"]}})
+    (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+    (click-prompt state :corp "Done")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Rashida Jaheem" "Server 1")
+    (click-prompt state :corp "Tranquility Home Grid")
+    (click-prompt state :corp "Draw 1 card")
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :corp "New remote")))
+
 (deftest tucana-corp-scores
   (do-game
     (new-game {:corp {:deck ["Ice Wall" "Fire Wall"]

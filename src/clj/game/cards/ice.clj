@@ -565,6 +565,7 @@
             :show-discard true
             :choices {:card #(and (corp? %)
                                   (not (operation? %))
+                                  (not (agenda? %))
                                   (or (in-hand? %)
                                       (in-discard? %)))}
             :async true
@@ -3681,7 +3682,7 @@
                             (if (< 0 (count (filter ice? (:hand corp))))
                               {:optional
                                {:prompt (msg "Gain 4 [Credit] and swap " (:title card) " with an Ice in HQ?")
-                                :no-ability {:msg "decline to use it's ability"}
+                                :no-ability {:msg "decline to use its ability"}
                                 :yes-ability {:prompt "Choose a piece of ice to swap Tatu-Bola with"
                                               :choices (req (filter ice? (:hand corp)))
                                               :async true
