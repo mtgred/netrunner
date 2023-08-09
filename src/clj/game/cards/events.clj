@@ -3386,7 +3386,6 @@
               :req (req (let [zone (first (:zone (:card context)))]
                           (or (= :hand zone)
                               (= :deck zone))))
-
               :effect (effect (continue-ability
                                 {:optional {:prompt "Draw 2 cards?"
                                             :waiting-prompt "Runner to use Steelskin Scarring"
