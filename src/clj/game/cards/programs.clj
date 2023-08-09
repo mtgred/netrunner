@@ -523,7 +523,7 @@
              :msg "place 1 virus counter on itself"}]})
 
 (defcard "Aumakua"
-  (auto-icebreaker {:implementation "Erratum: Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
+  (auto-icebreaker {:implementation "[Erratum] Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
                                 {:label "Place 1 virus counter"
                                  :msg "manually place 1 virus counter on itself"
@@ -627,7 +627,8 @@
                     :abilities [(break-sub 2 2 "Barrier")]}))
 
 (defcard "Bishop"
-  {:abilities [{:cost [:click 1]
+  {:implementation "[Erratum] Program: Caïssa - Trojan"
+   :abilities [{:cost [:click 1]
                 :label "Host on another piece of ice"
                 :effect (req (let [b (get-card state card)
                                    hosted? (ice? (:host b))
@@ -680,7 +681,8 @@
                                 (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
 (defcard "Botulus"
-  {:data {:counter {:virus 1}}
+  {:implementation "[Erratum] Program: Virus - Trojan"
+   :data {:counter {:virus 1}}
    :hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :runner-turn-begins
@@ -797,7 +799,8 @@
                                                                   true))})]}))
 
 (defcard "Chisel"
-  {:hosting {:card #(and (ice? %)
+  {:implementation "[Erratum] Program: Virus - Trojan"
+   :hosting {:card #(and (ice? %)
                          (can-host? %))}
    :constant-effects [{:type :ice-strength
                        :req (req (same-card? target (:host card)))
@@ -1291,7 +1294,8 @@
                                 (strength-pump 3 2)]}))
 
 (defcard "Egret"
-  {:hosting {:card #(and (ice? %)
+  {:implementation "[Erratum] Program: Trojan"
+   :hosting {:card #(and (ice? %)
                          (can-host? %)
                          (rezzed? %))}
    :on-install {:msg (msg "make " (card-str state (:host card))
@@ -1656,7 +1660,8 @@
                 :msg "gain [Click][Click][Click]"}]})
 
 (defcard "Ika"
-  (auto-icebreaker {:abilities [{:label "Host on a piece of ice"
+  (auto-icebreaker {:implementation "[Erratum] Program: Icebreaker - Killer - Trojan"
+                    :abilities [{:label "Host on a piece of ice"
                                  :prompt "Choose a piece of ice"
                                  :cost [:credit 2]
                                  :choices {:card #(and (ice? %)
@@ -1760,7 +1765,8 @@
 (defcard "Knight"
   (let [knight-req (req (and (same-card? current-ice (get-nested-host card))
                              (<= (get-strength current-ice) (get-strength card))))]
-    {:abilities [{:label "Host on a piece of ice"
+    {:implementation "[Erratum] Program: Icebreaker - AI - Caïssa - Trojan"
+     :abilities [{:label "Host on a piece of ice"
                   :async true
                   :effect (req (let [k (get-card state card)
                                      hosted (ice? (:host k))
@@ -1788,7 +1794,8 @@
                  (break-sub 2 1 "All" {:req knight-req})]}))
 
 (defcard "Kyuban"
-  {:hosting {:card #(and (ice? %)
+  {:implementation "[Erratum] Program: Trojan"
+   :hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :pass-ice
              :interactive (req true)
@@ -2295,7 +2302,8 @@
            :abilities abilities)))
 
 (defcard "Parasite"
-  {:hosting {:card #(and (ice? %)
+  {:implementation "[Erratum] Program: Virus - Trojan"
+   :hosting {:card #(and (ice? %)
                          (can-host? %)
                          (rezzed? %))}
    :on-install
@@ -2331,7 +2339,7 @@
                 (strength-pump 2 2)))
 
 (defcard "Pawn"
-  {:implementation "All abilities are manual"
+  {:implementation "[Erratum] Program: Caïssa - Trojan. Developer Note: All abilities are manual"
    :abilities [{:label "Host on the outermost piece of ice of a central server"
                 :cost [:click 1]
                 :prompt "Choose the outermost piece of ice of a central server"
@@ -2607,7 +2615,8 @@
    :abilities [(set-autoresolve :auto-fire "RNG Key")]})
 
 (defcard "Rook"
-  {:abilities [{:cost [:click 1]
+  {:implementation "[Erratum] Program: Caïssa - Trojan"
+   :abilities [{:cost [:click 1]
                 :label "Host on another ice"
                 :async true
                 :effect (req (let [r (get-card state card)
@@ -2945,7 +2954,8 @@
                     (when (and (rezzed? (get-card state (:host card)))
                                (<= 3 (get-virus-counters state (get-card state card))))
                       (derez state side (get-card state (:host card)))))]
-    {:hosting {:card #(and (ice? %)
+    {:implementation "[Erratum] Program: Virus - Trojan"
+     :hosting {:card #(and (ice? %)
                            (can-host? %))}
      :on-install {:interactive (req true)
                   :effect action}
@@ -2994,7 +3004,8 @@
                                 (unregister-events state side card)
                                 (trash state :runner eid h {:cause-card card}))
                             (effect-completed state side eid))))]
-    {:hosting {:card #(and (ice? %)
+    {:implementation "[Erratum] Program: Virus - Trojan"
+     :hosting {:card #(and (ice? %)
                            (can-host? %))}
      :on-install {:async true
                   :effect trash-if-5}

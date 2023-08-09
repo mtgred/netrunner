@@ -2096,7 +2096,7 @@
                                 :type :recurring}}})
 
 (defcard "Weyland Consortium: Builder of Nations"
-  {:implementation "Erratum: The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
+  {:implementation "[Erratum] The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
    :events [{:event :end-of-encounter
              :async true
              :req (req (and (rezzed? (:ice context))
