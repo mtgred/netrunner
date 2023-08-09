@@ -3996,6 +3996,44 @@
       (click-prompt state :corp "Server 1")
       (click-prompt state :corp "Gain 2 [Credits]"))))
 
+(deftest tucana-corp-scores
+  (do-game
+    (new-game {:corp {:deck ["Ice Wall" "Fire Wall"]
+                      :hand ["Tucana" "Project Atlas"]}})
+    (play-from-hand state :corp "Tucana" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (score-agenda state :corp (get-content state :remote1 1))
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "Corp spends 5 - 3 credits to rez Fire Wall"
+      (is (= ["Fire Wall" "Ice Wall" nil] (prompt-titles :corp)))
+      (click-prompt state :corp "Fire Wall")
+      (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (prompt-buttons :corp)))
+      (click-prompt state :corp "HQ")
+      (is (= "Fire Wall" (:title (first (get-in @state [:corp :servers :hq :ices])))) "Fire Wall on HQ"))))
+
+(deftest tucana-runner-steals
+  (do-game
+    (new-game {:corp {:deck ["Ice Wall" "Fire Wall"]
+                     :hand ["Tucana" "Project Atlas"]}})
+    (play-from-hand state :corp "Tucana" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-card state :runner (get-content state :remote1 0))
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "Corp spends 5 - 3 credits to rez Fire Wall"
+       (click-prompt state :runner "Steal")
+       (is (= ["Fire Wall" "Ice Wall" nil] (prompt-titles :corp)) "Tucana persistent, effect fires")
+       (click-prompt state :corp "Fire Wall")
+       (is (= ["Archives" "R&D" "HQ" "New remote"] (prompt-buttons :corp)) "Corp choices should not include original server as it's gone")
+       (click-prompt state :corp "HQ")
+       (is (= "Fire Wall" (:title (first (get-in @state [:corp :servers :hq :ices])))) "Fire Wall on HQ"))))
+
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game
