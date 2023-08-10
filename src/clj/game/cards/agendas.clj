@@ -1283,6 +1283,7 @@
             :async true
             :effect (effect (gain-tags eid 1))}
    :abilities [{:cost [:click 1 :tag 1]
+                :req (req (is-scored? state :runner card))
                 :msg "shuffle itself into R&D"
                 :label "Shuffle into R&D"
                 :effect (effect (move :corp card :deck nil)
