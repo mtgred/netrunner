@@ -1950,6 +1950,33 @@
         (core/continue state :corp nil)
         (is (= 0 (get-counters (refresh crypsis) :virus)) "Used up virus token on Crypsis"))))
 
+(deftest curupira
+  (do-game
+    (new-game {:runner {:hand ["Curupira"]
+                        :credits 50}
+               :corp {:hand ["Battlement"]}})
+    (play-from-hand state :corp "Battlement" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Curupira")
+    (let [curu (get-program state 0)]
+      (dotimes [_ 3] 
+        (run-on state "HQ")
+        (run-continue state)
+        (changes-val-macro 1 (get-counters (refresh curu) :power)
+          "Placed 1 power counter on Curupira"
+          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh curu)}))
+        (core/continue state :corp nil)
+        (run-jack-out state))
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro -3 (get-counters (refresh curu) :power)
+        "Spent 3 hosted power counters"
+        (click-prompt state :runner "Yes"))
+      (is (= :movement (:phase (get-run))) "Run has bypassed Battlement")
+      )))
+
 (deftest customized-secretary
   ;; Customized Secretary - shuffles the stack even when no program is found
   (do-game
