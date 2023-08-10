@@ -198,11 +198,11 @@
              {:effect (effect (add-counter (get-card state card) :credit 4)
                               (effect-completed eid))
               :async true
-              :msg "Place 4[Credit] for trash costs"}
-             {:msg "Remove a tag"
+              :msg "place 4 [Credits] for paying trash costs"}
+             {:msg "remove 1 tag"
               :async true
               :effect (effect (lose-tags eid 1))}
-             {:msg "install a card, paying 1 less"
+             {:msg "install a card from the grip, paying 1 [Credits] less"
               :async true
               :effect (effect (continue-ability
                                 {:prompt (str "Choose a card to install")
@@ -216,7 +216,7 @@
                                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -1}))}
                                 card nil))}]
         choice (fn choice [abis rem]
-                 {:prompt "Choose an ability to resolve"
+                 {:prompt (str "Choose an ability to resolve (" rem " remaining)")
                   :choices (map #(capitalize (:msg %)) abis)
                   :async true
                   :effect (req (let [chosen (some #(when (= target (capitalize (:msg %))) %) abis)]
