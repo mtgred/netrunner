@@ -7039,6 +7039,42 @@
         (core/continue state :corp nil)
         (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used"))))
 
+(deftest umbrella
+  (do-game
+      (new-game {:corp {:deck ["Hedge Fund"]
+                      :hand ["Fairchild 3.0" "Quandary"]
+                        :credits 10}
+                 :runner {:deck ["Sure Gamble"]
+                          :hand ["Umbrella" "Hush"]
+                          :credits 20}})
+    (play-from-hand state :corp "Quandary" "HQ")
+      (play-from-hand state :corp "Fairchild 3.0" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Umbrella")
+      (play-from-hand state :runner "Hush")
+      (click-card state :runner (get-ice state :rd 0))
+      (let [umb (get-program state 0)
+            quand (get-ice state :hq 0)
+            fc3 (get-ice state :rd 0)]
+        (run-on state "HQ")
+        (rez state :corp quand)
+        (run-continue state)
+        (card-ability state :runner (refresh umb) 0)
+        (is (no-prompt? state :runner) "Can't use Umbrella on ice not hosting Trojans")
+        (fire-subs state (refresh quand))
+        (run-on state "R&D")
+        (rez state :corp fc3)
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh umb)})
+        (changes-val-macro
+          1 (count (:hand (get-runner)))
+          "Runner drew 1 card"
+          (click-prompt state :runner "Yes"))
+        (changes-val-macro
+          1 (count (:hand (get-corp)))
+          "Corp drew 1 card"
+          (click-prompt state :corp "Yes")))))
+
 (deftest unity
   ;; Unity
   (do-game

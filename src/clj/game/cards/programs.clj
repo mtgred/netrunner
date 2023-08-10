@@ -3041,35 +3041,34 @@
                               :effect (effect (gain-credits :corp eid 2))}]}))
 
 (defcard "Umbrella"
-  (let [corp-draw {:optional {:prompt "Draw a card?"
+  (let [corp-draw {:optional {:prompt "Draw 1 card?"
                               :player :corp
                               :yes-ability {:async true
-                                            :effect (req
-                                                      (system-msg state :corp (str "uses " (:title card) " to draw a card"))
-                                                      (draw state :corp eid 1))}
+                                            :msg "draw 1 card"
+                                            :effect (req (draw state :corp eid 1))}
                               :no-ability {:player :corp
-                                           :effect (req (system-msg state :corp (str "uses " (:title card) " to decline to draw a card")))}}}
-        runner-draw {:label "(manual) each player may draw"
-                     :optional {:prompt "Draw a card?"
+                                           :effect (req (system-msg (str "declines to use " (:title card) " to draw 1 card")))}}}
+        runner-draw {:label "Each player draws 1 card (manual)"
+                     :optional {:prompt "Draw 1 card?"
                                 :player :runner
-                                :yes-ability {:msg "draw a card"
-                                              :async true
+                                :yes-ability {:async true
+                                              :msg "draw 1 card"
                                               :effect (req (wait-for (draw state :runner 1)
                                                                      (continue-ability
                                                                        state side
                                                                        corp-draw
                                                                        card nil)))}
-                                :no-ability {:msg "decline to draw a card"
-                                             :async true
-                                             :effect (req (continue-ability
+                                :no-ability {:async true
+                                             :effect (req (system-msg (str "declines to use " (:title card) " to draw 1 card"))
+                                                          (continue-ability
                                                             state side
                                                             corp-draw
                                                             card nil))}}}]
     (auto-icebreaker {:implementation "Draw doesn't work when mixing breakers"
-                      :abilities [runner-draw
-                                  (break-sub 2 3 "Code Gate"
+                      :abilities [(break-sub 2 3 "Code Gate"
                                              {:req (req
-                                                     (some #(and (has-subtype? % "Trojan") (program? %)) (:hosted current-ice)))})]
+                                                     (some #(and (has-subtype? % "Trojan") (program? %)) (:hosted current-ice)))})
+                                  runner-draw]
                       :events [{:event :subroutines-broken
                                 :req (req (every? #(or (= (:breaker %) nil) (= (:breaker %) (:cid card))) (:subroutines target)))
                                 :effect (req (continue-ability state side runner-draw card nil))}]})))
