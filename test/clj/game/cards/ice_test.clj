@@ -7143,18 +7143,55 @@
   (do-game
     (new-game {:corp {:hand ["Valentão"]}})
     (play-from-hand state :corp "Valentão" "HQ")
-    (rez state :corp (get-ice state :hq 0))
-    (is (= 1 (count-bad-pub state)) "Gained 1 bad pub")))
+    (changes-val-macro
+      1 (count-bad-pub state)
+      "Corp got 1 bad publicity"
+      (rez state :corp (get-ice state :hq 0)))))
 
 (deftest valentao-spend-tag
   (do-game
-    (new-game {:corp {:hand ["Valentão"]}})
+    (new-game {:corp {:hand [(qty "Valentão" 2)]
+                      :credits 20}
+               :runner {:hand ["Paparazzi"]}})
     (play-from-hand state :corp "Valentão" "HQ")
+    (play-from-hand state :corp "Valentão" "R&D")
     (gain-tags state :runner 1)
-    (rez state :corp (get-ice state :hq 0))
-    (click-prompt state :corp "tag")
-    (is (zero? (count-tags state)) "spent tag to rez")
-    (is (= 0 (count-bad-pub state)) "Gained 1 bad pub")))
+    (changes-val-macro
+      -1 (count-tags state)
+      "Removed 1 tag"
+      (rez state :corp (get-ice state :hq 0))
+      (click-prompt state :corp "Remove 1 tag"))
+    (is (zero? (count-bad-pub state)) "Got no bad publicity")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paparazzi")
+    (changes-val-macro
+      1 (count-bad-pub state)
+      "Corp got 1 bad publicity even if runner is considered tagged"
+      (rez state :corp (get-ice state :rd 0)))))
+
+(deftest valentao-subs
+  (do-game
+    (new-game {:corp {:hand ["Valentão"]
+                      :credits 10}})
+    (play-from-hand state :corp "Valentão" "HQ")
+    (take-credits state :corp)
+    (let [val (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp val)
+      (run-continue state)
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner lost 2 credits"
+        (changes-val-macro
+          2 (:credit (get-corp))
+          "Corp gained 2 credits"
+          (fire-subs state (refresh val))))
+      (is (not (:run @state)) "Run ended")
+      (core/gain state :runner :credit 10)
+      (run-on state :hq)
+      (run-continue state)
+      (fire-subs state (refresh val))
+      (is (:run @state) "Run didn't end"))))
 
 (deftest vampyronassa
   ;; Vampyronassa
