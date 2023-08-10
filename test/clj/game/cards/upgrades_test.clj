@@ -72,6 +72,35 @@
         (is (rezzed? (refresh spid)) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest angelique-garza-correa
+  (do-game
+    (new-game {:corp {:hand ["Angelique Garza Correa"]}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-from-hand state :corp "Angelique Garza Correa" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "No action")
+    (rez state :corp (get-content state :remote1 0))
+    (run-empty-server state "Server 1")
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "Corp paid 2 credits"
+      (click-prompt state :corp "Yes"))
+    (is (= 2 (count (:discard (get-runner)))) "Runner got 2 damage")))
+
+(deftest angelique-garza-correa-expend-ability
+  (do-game
+    (new-game {:corp {:hand ["Angelique Garza Correa" "City Works Project"]}
+               :runner {:hand [(qty "Sure Gamble" 2)]}})
+    (play-and-score state "City Works Project")
+    (let [ang (first (:hand (get-corp)))]
+      (changes-val-macro
+        -1 (:credit (get-corp))
+        "Corp paid 1 credit"
+        (expend state :corp ang))
+      (is (= 1 (count (:discard (get-runner)))) "Runner got 1 damage")
+      (is (= 1 (count (:discard (get-corp)))) "Angelique Garza Correa got discarded"))))
+
 (deftest anoetic-void
   ;; Anoetic Void
   (do-game
