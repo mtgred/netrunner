@@ -311,11 +311,11 @@
 (defcard "Arissana Rocha Nahu: Street Artist"
   {:abilities [{:req (req (and run (not-used-once? state {:once :per-turn} card)))
                 :async true
-                :label "install a program"
+                :label "Install a program from your grip"
                 :effect
                 (effect
                   (continue-ability
-                    {:prompt "Install a program from your grip?"
+                    {:prompt "Choose a program to install"
                      :choices (req (cancellable
                                      (filter #(and (program? %)
                                                    (runner-can-pay-and-install?
