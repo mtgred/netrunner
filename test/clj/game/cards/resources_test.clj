@@ -2135,7 +2135,9 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Eru Ayase-Pessoa")
     (let [eru (get-resource state 0)]
-      (card-ability state :runner (refresh eru) 0)
+      (changes-val-macro 1 (count-tags state)
+        "Got 1 tag"
+        (card-ability state :runner (refresh eru) 0))
       (run-continue state)
       ;;should access two cards
       (click-prompt state :runner "No action")

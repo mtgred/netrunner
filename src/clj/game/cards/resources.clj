@@ -1274,12 +1274,11 @@
 
 (defcard "Eru Ayase-Pessoa"
   (let [constant-ability
-        ;; event breach req target run hq
         {:event :breach-server
          :req (req (and (threat-level 3 state)
                         (= :rd target)
                         (= :archives (first (:server run)))))
-         :msg (msg "access an additional card")
+         :msg (msg "access 1 additional card")
          :effect (effect (access-bonus :rd 1))}]
     {:events [constant-ability
               (successful-run-replace-breach
@@ -1291,6 +1290,7 @@
                          :effect (req (breach-server state :runner eid [:rd] nil))}})]
      :abilities [{:cost [:click 1]
                   :msg "make a run on Archives"
+                  :label "Take 1 tag and run Archives"
                   :makes-run true
                   :once :per-turn
                   :async true
