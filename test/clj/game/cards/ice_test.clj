@@ -6916,6 +6916,39 @@
       (click-prompt state :runner "No action")
       (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed"))))
 
+(deftest tree-line
+  (do-game
+    (new-game {:corp {:hand ["Tree Line"]}})
+    (play-from-hand state :corp "Tree Line" "HQ")
+    (let [tl (get-ice state :hq 0)]
+      (rez state :corp tl)
+      (changes-val-macro
+        1 (core/get-strength (refresh tl))
+        "Tree Line got 1 strength"
+        (advance state tl 1))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-continue state)
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Corp got 1 credit"
+        (fire-subs state (refresh tl)))
+      (is (not (:run @state)) "Run ended"))))
+
+(deftest tree-line-expend
+  (do-game
+    (new-game {:corp {:hand ["Tree Line" "Enigma"]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (let [enigma (get-ice state :hq 0)
+          tl (first (:hand (get-corp)))]
+      (expend state :corp tl)
+      (changes-val-macro
+        3 (get-counters (refresh enigma) :advancement)
+        "Enigma got 3 advancement counters"
+        (click-card state :corp enigma))
+      (is (= 4 (:credit (get-corp))) "Expend cost was payed")
+      (is (= 1 (count (:discard (get-corp)))) "Tree Line discarded as cost"))))
+
 (deftest troll-giving-the-runner-a-choice-on-successful-trace-shouldn-t-make-runner-pay-trace-first-5335
   ;; Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335
   (do-game
