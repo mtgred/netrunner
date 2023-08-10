@@ -7,7 +7,7 @@
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
-   [game.core.board :refer [all-active-installed all-installed
+   [game.core.board :refer [all-active-installed all-installed all-installed-corp
                             all-installed-runner-type get-remote-names server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? facedown? faceup? get-agenda-points
@@ -23,7 +23,7 @@
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability
                              unregister-events]]
-   [game.core.events :refer [first-event? no-event? run-events turn-events]]
+   [game.core.events :refer [first-event? no-event? run-events run-event-count turn-events]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [in-runner-scored? is-scored? register-run-flag!
                             register-turn-flag! when-scored? zone-locked?]]
@@ -1838,14 +1838,14 @@
                         (seq (filter #(and (ice? %)
                                            (rezzed? %)
                                            (not= (first (:server target)) (second (get-zone %))))
-                                     (all-installed state :corp)))]
+                                     (all-installed-corp state)))]
                     (if-not (empty? rezzed-targets)
                               (continue-ability
                                 state side
-                                {:prompt "derez a card in/protecting another server?"
+                                {:prompt "Choose a piece of ice protecting another server to derez"
                                  :choices {:req (req (some #{target} rezzed-targets))}
                                  :once :per-turn
-                                 :msg (msg "derezzes " (:title target) " to gain 1[Credit]")
+                                 :msg (msg "derezzes " (card-str state target) " to gain 1 [Credits]")
                                  :async true
                                  :effect (effect (derez target)
                                                  (gain-credits eid 1))}
@@ -1856,7 +1856,10 @@
                        :value -2
                        :req (req (and run
                                       (has-subtype? target "Icebreaker")
-                                      (not-empty (run-events state side :derez))))}]})
+                                      (<= 1 (run-event-count
+                                              state side :derez
+                                              (fn [targets]
+                                                (ice? (first targets)))))))}]})
 
 (defcard "Sting!"
   (letfn [(count-opp-stings [state side]
