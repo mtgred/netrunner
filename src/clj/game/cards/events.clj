@@ -546,6 +546,7 @@
 (defcard "Chrysopoeian Skimming"
   {:on-play {:prompt "Choose an agenda to reveal"
              :player :corp
+             :waiting-prompt true
              :choices (req (conj (filter agenda? (:hand corp)) "Done"))
              :async true
              :effect (req (if (= target "Done")
