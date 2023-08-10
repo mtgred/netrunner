@@ -3072,7 +3072,7 @@
     :effect (effect (lose-bad-publicity 2))}})
 
 (defcard "Your Digital Life"
-  {:on-play {:msg (msg "gain " (count (:hand corp)) " [Credit]")
+  {:on-play {:msg (msg "gain " (count (:hand corp)) " [Credits]")
              :req (req (<= 2 (count (:hand corp)))) ;; no change in gamestate rule
              :async true
              :effect (effect (gain-credits :corp eid (count (:hand corp))))}})
