@@ -1079,15 +1079,15 @@
                                                     (in-hand? %))}
                               :async true
                               :msg (msg (corp-install-msg target))
-                              :cancel-effect (effect (system-msg "declines to install a card")
+                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card from HQ"))
                                                      (effect-completed eid))
                               :effect (req (wait-for (corp-install state :corp (make-eid state eid) target nil nil)
                                                      (let [installed-card async-result]
                                                        (if (not (zero? (count-tags state)))
                                                          (continue-ability
                                                            state side
-                                                           {:optional {:prompt "remove a tag to place an advancement counter?"
-                                                                       :yes-ability {:msg (msg "removes a tag to place an advancement coin on " (card-str state installed-card))
+                                                           {:optional {:prompt "Remove 1 tag to place 1 advancement counter on the installed card?"
+                                                                       :yes-ability {:msg (msg "removes 1 tag to place 1 advancement counter on " (card-str state installed-card))
                                                                                      :cost [:tag 1]
                                                                                      :effect (req (add-prop state :corp installed-card :advance-counter 1 {:placed true}))}}}
                                                            card nil)

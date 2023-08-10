@@ -1906,6 +1906,24 @@
       5 (:credit (get-corp)) "Corp gains 15 credits"
       (play-from-hand state :corp "Government Subsidy"))))
 
+(deftest greasing-the-palm
+  (do-game
+    (new-game {:corp {:hand [(qty "Greasing the Palm" 2) "NGO Front" "PAD Campaign"]}})
+    (play-from-hand state :corp "Greasing the Palm")
+    (click-card state :corp "PAD Campaign")
+    (click-prompt state :corp "New remote")
+    (is (= "PAD Campaign" (:title (get-content state :remote1 0))))
+    (is (= 7 (:credit (get-corp))) "Corp gained a net of 2 credits")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Greasing the Palm")
+    (click-card state :corp "NGO Front")
+    (click-prompt state :corp "New remote")
+    (changes-val-macro
+      -1 (count-tags state)
+      "Remvoed 1 tag to pay Greasing the Palm cost"
+      (click-prompt state :corp "Yes"))
+    (is (= 1 (get-counters (refresh (get-content state :remote2 0)) :advancement)))))
+
 (deftest green-level-clearance
   ;; Green Level Clearance
   (do-game
