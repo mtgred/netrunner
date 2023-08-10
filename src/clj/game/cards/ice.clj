@@ -3836,7 +3836,7 @@
 
 (defcard "Tree Line"
   {:constant-effects [(ice-strength-bonus (req (get-counters card :advancement)))]
-   :subroutines [{:msg "gain 1 [Credits]. End the run"
+   :subroutines [{:msg "gain 1 [Credits] and end the run"
                   :async true
                   :effect (req (wait-for (gain-credits state side 1)
                                          (end-run state side eid card)))}]
@@ -3845,7 +3845,7 @@
             :cost [:credit 1]
             :choices {:req (req (and (ice? target)
                                      (installed? target)))}
-            :msg (msg "place 3 advancement tokens on " (card-str state target))
+            :msg (msg "place 3 advancement counters on " (card-str state target))
             :effect (effect (add-counter target :advancement 3 {:placed true}))}})
 
 (defcard "Tribunal"
