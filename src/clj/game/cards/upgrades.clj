@@ -484,29 +484,45 @@
   (let [pre-steal {:event :pre-steal-cost
                    :req (req (or (in-same-server? card target)
                                  (from-same-server? card target)))
-                   :effect (effect (steal-cost-bonus [:add-random-from-hand-to-bottom-of-deck 2] {:source card :source-type :ability}))}]
+                   :effect
+                   (effect (steal-cost-bonus [:add-random-from-hand-to-bottom-of-deck 2] {:source card :source-type :ability}))}]
     {:events [{:event :pre-access-card
                :req (req (and (rezzed? card)
                               (same-card? target card)))
-               :effect (req (register-run-flag!
-                              state side
-                              card :can-trash
-                              (fn [state side card]
-                                (not (and (same-card? target card)
-                                          (> 2 (count (:hand runner))))))))}
+               ;; It would be lovely to instead use :trash-cost-bonus [:add-random-from-hand-to-bottom-of-deck 2]
+               :effect
+               (req (register-run-flag!
+                      state side
+                      card :can-trash
+                      (fn [state side card]
+                        (or (not (same-card? target card))
+                                  (can-pay?
+                                    state :runner
+                                    (assoc eid :source card :source-type :ability)
+                                    card nil
+                                    [:add-random-from-hand-to-bottom-of-deck 2])))))}
               pre-steal]
      :implementation "trash cost not displayed on dialogue"
      :on-trash {:async true
                 :interactive (req true)
-                :req (req (= :runner side))
-                :msg "make the Runner randomly adds 2 cards from their Grip to the bottom of the Stack"
-                :effect (req (when (:run @state)
-                               (register-events
-                                 state side card
-                                 [(assoc pre-steal :duration :end-of-run)]))
-                             (when (<= 2 (count (:hand runner)))
-                               (doseq [r (take 2 (shuffle (:hand runner)))] (move state :runner r :deck)))
-                             (effect-completed state side eid))}}))
+                :req (req (and run (= :runner side)))
+                :msg "force the Runner to add 2 random cards from the grip to the bottom of the stack as additional cost to steal agendas from this server or its root"
+                :effect
+                (req (when (can-pay?
+                             state :runner
+                             (assoc eid :source card :source-type :ability)
+                             card nil [:add-random-from-hand-to-bottom-of-deck 2])
+                       (wait-for (pay state :runner (make-eid state eid) card :add-random-from-hand-to-bottom-of-deck 2)
+                                 (system-msg state :runner (:msg async-result)))
+                     (register-events state side card [(assoc pre-steal
+                                                              :req
+                                                              (req (or (= (:previous-zone card)
+                                                                          (:zone target))
+                                                                       ;; special central-servers case
+                                                                       (= (central->zone (:zone target))
+                                                                          (butlast (:previous-zone card)))))
+                                                              :duration :end-of-run)])
+                     (effect-completed state side eid)))}}))
 
 (defcard "Daruma"
   (let [choose-swap
