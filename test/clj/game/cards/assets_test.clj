@@ -344,6 +344,52 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0"))))
 
+(deftest balanced-coverage
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Balanced Coverage"]}})
+    (play-from-hand state :corp "Balanced Coverage" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Operation")
+    (click-prompt state :corp "OK")
+    (changes-val-macro
+      2 (:credit (get-corp))
+      "Got 2 credits from Balanced Coverage"
+      (click-prompt state :corp "Yes"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Operation")
+    (click-prompt state :corp "OK")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Got no credits declining Balanced Coverage"
+      (click-prompt state :corp "No"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Asset")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Got no credits when types don't match"
+      (click-prompt state :corp "OK"))))
+
+(deftest balanced-coverage-triggers-hyoubu
+  (do-game
+    (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Balanced Coverage"]}})
+    (play-from-hand state :corp "Balanced Coverage" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Operation")
+    (click-prompt state :corp "OK")
+    (changes-val-macro
+      3 (:credit (get-corp))
+      "Got 2 credits from Balanced Coverage + 1 from Hyoubu"
+      (click-prompt state :corp "Yes"))))
+
 (deftest bass-ch1r180g4
   ;; Bass CH1R180G4
   (do-game

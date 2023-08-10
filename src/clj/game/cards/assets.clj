@@ -100,13 +100,13 @@
   "returns a set of cards to the top of the deck"
   ([set-aside-cards] (return-to-top set-aside-cards false))
   ([set-aside-cards reveal]
-   {:prompt "choose a card to put on top of R&D"
+   {:prompt "Choose a card to put on top of R&D"
     :req (req (not (zero? (count set-aside-cards))))
     :choices {:min 1
               :max 1
               :req (req (some #(same-card? % target) set-aside-cards))}
     :async true
-    :waiting-prompt "corp to return cards to R&D"
+    :waiting-prompt true
     :msg (msg "place " (if reveal (:title target) "a card") " on top of R&D")
     :effect (req (move state :corp target :deck {:front true})
                  (let [rem (seq (filter #(not (same-card? target %)) set-aside-cards))]
@@ -310,36 +310,33 @@
 (defcard "Balanced Coverage"
   (let [name-abi
         {:prompt "Choose a card type"
-         :waiting-prompt "corp to choose a card type"
+         :waiting-prompt true
          :choices ["Operation" "Asset" "Upgrade" "ICE" "Agenda"]
          :async true
-         :msg (msg "choose the card type " target)
+         :msg (msg "choose " target)
          :effect (req (let [named-type target
                             top-card (first (:deck corp))]
-                        (if (= (:type top-card) named-type)
-                          (continue-ability
-                            state side
-                            {:prompt (msg "The top card is " (:title top-card))
-                             :choices ["Reveal" "No Thanks"]
-                             :async true
-                             :msg (msg (if (= target "No Thanks")
-                                         "look at the top card of R&D"
-                                         (str "reveal " (:title top-card)
-                                              " from the top of R&D and gain 2[Credits]")))
-                             :effect (req (if-not (= target "No Thanks")
-                                            (wait-for (reveal state side (make-eid state eid) top-card)
-                                                      (gain-credits state :corp eid 2))
-                                            (do (system-msg state side "declines to reveal a card")
-                                                (effect-completed state side eid))))}
-                            card nil)
-                          (continue-ability
-                            state side
-                            {:prompt (msg "The top card is " (:title top-card))
-                             :choices ["Never lucky"]
-                             :msg "look at the top card of R&D"
-                             :effect (effect (system-msg "declines to reveal a card"))}
-                            card nil))))}
-        ability {:label "look at the top card (start of turn)"
+                        (wait-for (resolve-ability state side
+                                                   {:async true
+                                                    :prompt (msg "The top card of R&D is: " (:title top-card))
+                                                    :choices ["OK"]}
+                                                   card nil)
+                                  (if (= (:type top-card) named-type)
+                                    (continue-ability
+                                      state side
+                                      {:optional
+                                       {:prompt "Reveal it to gain 2 [Credits]?"
+                                        :msg (msg "reveal " (:title top-card)
+                                                  " from the top of R&D and gain 2 [Credits]")
+                                        :yes-ability
+                                        {:async true
+                                         :effect (req (wait-for (reveal state side (make-eid state eid) top-card)
+                                                                (gain-credits state :corp eid 2)))}
+                                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to reveal the top card of R&D")))}}}
+                                      card nil)
+                                    (do (system-msg state side (str "declines to use " (:title card) " to reveal the top card of R&D"))
+                                        (effect-completed state side eid))))))}
+        ability {:label "Look at the top card of R&D (start of turn)"
                  :once :per-turn
                  :async true
                  :effect (req (continue-ability
