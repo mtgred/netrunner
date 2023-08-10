@@ -510,6 +510,22 @@
     (take-credits state :corp)
     (is (= 3 (:click (get-runner))) "Lost 1 click at turn start")))
 
+(deftest beatriz-friere-gonzalez
+  (do-game
+    (new-game {:runner {:deck ["Beatriz Friere Gonzalez"]}
+               :corp {:hand ["Hedge Fund"]
+                      :deck [(qty "Rashida Jaheem" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Beatriz Friere Gonzalez")
+    (changes-val-macro
+        -2 (:click (get-runner))
+        "Spent 2 clicks"
+        (card-ability state :runner (get-resource state 0) 0))
+    (run-continue state)
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (no-prompt? state :runner) "No more accesses")))
+
 (deftest bhagat-only-trigger-on-first-run
     ;; only trigger on first run
     (do-game
