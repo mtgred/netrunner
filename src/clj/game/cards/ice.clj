@@ -3554,8 +3554,8 @@
         sub end-the-run]
     {:on-encounter {:req (req (threat-level 4 state))
                     :effect (effect (gain-variable-subs card (sub-count state) sub {:variable true :front false :end true}))}
-   :events [{:event :run-ends
-             :effect (effect (reset-variable-subs card 0 nil))}]
+     :events [{:event :run-ends
+               :effect (effect (reset-variable-subs card 0 nil))}]
      :subroutines [(give-tags 1)
                    (give-tags 1)]}))
 

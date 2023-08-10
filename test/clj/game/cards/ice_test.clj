@@ -6317,6 +6317,38 @@
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
 
+(deftest starlit-knight
+  (do-game
+    (new-game {:corp {:hand ["Starlit Knight" "Vanity Project"]
+                      :credits 20}})
+    (play-from-hand state :corp "Starlit Knight" "HQ")
+    (take-credits state :corp)
+    (let [sk (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp sk)
+      (run-continue state)
+      (changes-val-macro
+        2 (count-tags state)
+        "Runner got 2 tags"
+        (fire-subs state (refresh sk)))
+      (run-continue state :movement)
+      (run-jack-out state)
+      (take-credits state :runner)
+      (play-and-score state "Vanity Project")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (is (= ["Give the Runner 1 tag"
+              "Give the Runner 1 tag"
+              "End the run"
+              "End the run"]
+             (map :label (:subroutines (refresh sk)))))
+      (changes-val-macro
+        2 (count-tags state)
+        "Runner got 2 more tags"
+        (fire-subs state (refresh sk)))
+      (is (not (:run @state)) "Run ended"))))
+
 (deftest stavka
   (do-game
    (new-game {:corp {:hand ["Stavka" "Prisec"] :credits 10}
