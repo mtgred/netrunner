@@ -1020,8 +1020,7 @@
                                          state side
                                          (reorder-choice :corp :runner from '() (count from) from)
                                           card nil)
-                                       (continue-ability state side draw-ab card nil)
-                                       (effect-completed state side eid))))}}}
+                                       (continue-ability state side draw-ab card nil))))}}}
            card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
