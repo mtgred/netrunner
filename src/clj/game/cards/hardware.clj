@@ -1054,16 +1054,16 @@
                                 (damage-prevent :net 1))}]})
 
 (defcard "Hermes"
-  (let [leela {:interactive (req true)
-               :prompt "Choose an unrezzed card to return to HQ"
-               :choices {:card #(and (not (rezzed? %))
-                                     (installed? %)
-                                     (corp? %))}
-               :msg (msg "add " (card-str state target) " to HQ")
-               :effect (effect (move :corp target :hand))}]
+  (let [ab {:interactive (req true)
+            :prompt "Choose an unrezzed card"
+            :choices {:card #(and (not (rezzed? %))
+                                  (installed? %)
+                                  (corp? %))}
+            :msg (msg "add " (card-str state target) " to HQ")
+            :effect (effect (move :corp target :hand))}]
     {:constant-effects [(mu+ 1)]
-     :events [(assoc leela :event :agenda-scored)
-              (assoc leela :event :agenda-stolen)]}))
+     :events [(assoc ab :event :agenda-scored)
+              (assoc ab :event :agenda-stolen)]}))
 
 (defcard "Hijacked Router"
   {:events [{:event :server-created
