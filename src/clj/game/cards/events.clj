@@ -2010,7 +2010,7 @@
              :async true
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :msg "Draw 5 cards"
+             :msg "draw 5 cards"
              :effect (effect (draw eid 5))}]})
 
 (defcard "Katorga Breakout"
