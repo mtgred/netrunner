@@ -1682,12 +1682,15 @@
 (defcard "Tucana"
   (let [ability {:async true
                  :prompt "Choose a piece of ice to install and rez"
+                 :waiting-prompt true
+                 :interactive (req true)
                  :choices (req (cancellable (filter ice? (:deck corp)) true))
+                 :msg (msg "install from HQ and rez " (card-str state target) ", paying a total of 3 [Credits] less")
                  :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3})
                                         (shuffle! state :corp :deck)
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid)))
-                 :cancel-effect (effect (system-msg  "declines to use Tucana to install a card")
+                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                         (effect-completed eid))}]
     {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
      :events [(assoc ability
