@@ -2231,29 +2231,26 @@
                   :effect (req
                             (continue-ability
                               state side
-                              (if (zero? (:click runner))
-                                {:msg "give the runner 1 tag"
-                                 :async true
-                                 :effect (req (gain-tags state :runner eid 1))}
-                                {;:msg "give the runner 1 tag unless they spend [click]"
-                                 :player :runner
-                                 :prompt "Choose one"
-                                 :choices (req ["Take 1 tag"
-                                                (when (can-pay? state :runner nil card nil [:click 1])
-                                                  "Spend [click]")])
-                                 :waiting-prompt "Runner to make a choice"
-                                 :async true
-                                 :effect (req (if (= target "Take 1 tag")
-                                                (do (system-msg state :runner "takes 1 tag on encountering Jaguarundi")
-                                                    (gain-tags state :runner eid 1))
-                                                (wait-for (pay state :runner (make-eid state eid) card :lose-click 1)
-                                                          (system-msg state side (:msg async-result))
-                                                          (effect-completed state :runner eid))))})
+                              {:player :runner
+                               :prompt "Choose one"
+                               :choices (req ["Take 1 tag"
+                                              (when (can-pay? state :runner nil card nil [:click 1])
+                                                "Spend [Click]")])
+                               :waiting-prompt true
+                               :async true
+                               :msg (msg (if (= target "Take 1 tag")
+                                           "give the Runner 1 tag"
+                                           (str "force the runner to " (decapitalize target) " on encountering it")))
+                               :effect (req (if (= target "Take 1 tag")
+                                              (gain-tags state :runner eid 1)
+                                              (wait-for (pay state :runner (make-eid state eid) card :click 1)
+                                                        (system-msg state side (:msg async-result))
+                                                        (effect-completed state :runner eid))))}
                               card nil))}
    :subroutines [(give-tags 1)
                  {:label "Do 1 core damage if the Runner is tagged"
                   :req (req tagged)
-                  :msg "Do 1 core damage"
+                  :msg "do 1 core damage"
                   :async true
                   :effect (req (damage state side eid :brain 1 {:card card}))}]})
 

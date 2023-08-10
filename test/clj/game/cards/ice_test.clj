@@ -3469,16 +3469,33 @@
 
 (deftest jaguarundi-no-threat
   (do-game
-    (new-game {:corp {:hand ["City Works Project" "Hostile Takeover" "Jaguarundi"]}})
+    (new-game {:corp {:hand ["City Works Project" "Jaguarundi"]}})
     (play-and-score state "City Works Project")
     (play-from-hand state :corp "Jaguarundi" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
     (rez state :corp (get-ice state :hq 0))
     (run-continue state :encounter-ice)
-    (is (no-prompt? state :runner) "no jaguarundi prompt")))
+    (is (no-prompt? state :runner) "no jaguarundi prompt")
+    (fire-subs state (get-ice state :hq 0))
+    (is (= 1 (count-tags state)))
+    (is (= 1 (:brain-damage (get-runner))))))
 
-(deftest jaguarundi-no-threat-spend-click
+(deftest jaguarundi-jesminder-interaction
+  (do-game
+    (new-game {:corp {:hand ["Jaguarundi"]}
+               :runner {:id "Jesminder Sareen: Girl Behind the Curtain"}})
+    (play-from-hand state :corp "Jaguarundi" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (changes-val-macro
+      0 (:brain-damage (get-runner))
+      "Got no core damage"
+      (fire-subs state (get-ice state :hq 0)))))
+
+(deftest jaguarundi-threat-ability
   (do-game
     (new-game {:corp {:hand ["City Works Project" "Hostile Takeover" "Jaguarundi"]}})
     (core/gain state :corp :click 10)
@@ -3494,7 +3511,7 @@
     (changes-val-macro
       -1 (:click (get-runner))
       "spent a click on jag"
-      (click-prompt state :runner "Spend [click]"))
+      (click-prompt state :runner "Spend [Click]"))
     (is (no-prompt? state :runner) "no jaguarundi prompt")))
 
 (deftest jua-encounter-effect-prevent-runner-from-installing-cards-for-the-rest-of-the-turn
