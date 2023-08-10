@@ -8,6 +8,27 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
+(deftest adrian-seis
+  (do-game
+    (new-game {:corp {:hand ["Adrian Seis" "Hedge Fund"]}})
+    (play-from-hand state :corp "Adrian Seis" "R&D")
+    (rez state :corp (get-content state :rd 0))
+    (core/end-turn state :corp nil)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "HQ")
+    (is (= "Adrian Seis" (:title (get-content state :hq 0))))
+    (core/start-turn state :runner nil)
+    (run-empty-server state :hq)
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner) "Runner cannot access Adrian Seis")
+    (run-empty-server state :hq)
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "1 [Credits]")
+    (click-prompt state :runner "Pay 2 [Credits] to trash")
+    (is (no-prompt? state :runner) "Runner cannot access HQ")))
+
 (deftest akitaro-watanabe
   (do-game
     (new-game {:corp {:hand ["Akitaro Watanabe" (qty "Fire Wall" 2)]
