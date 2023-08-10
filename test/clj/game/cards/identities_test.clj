@@ -3460,6 +3460,7 @@
    (changes-val-macro
     1 (count (:hand (get-corp)))
     "drew 1 card with neh"
+    (click-prompt state :corp "OK")
     (click-prompt state :corp "Ballista")
     (click-prompt state :corp "New remote"))
    (is (= ["Drafter" "Eli 1.0" "Fenris" "Galahad"]
