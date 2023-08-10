@@ -1832,39 +1832,39 @@
 (defcard "Pivot"
   ;; todo - it might be possible to pre-check the additional costs (consulting never did this)
   {:on-play {:prompt "Choose a card"
-             :label "Search R&D and add 1 operation or agenda to HQ"
              ;; we need the req or the prompt will still show
-             :msg (msg "add " (:title target) " to HQ from R&D")
+             :msg (msg "add " (:title target) " to HQ and shuffle R&D")
              :choices (req (sort-by :title (filter #(or (operation? %) (agenda? %)) (:deck corp))))
              :async true
-             :effect (req (shuffle! state :corp :deck)
-                          (move state side target :hand)
-                          (if (threat-level 3 state)
-                            (continue-ability
-                              state side
-                              {:prompt "Choose an card to play or install"
-                               :choices {:card #(and (corp? %)
-                                                     (in-hand? %)
-                                                     (if (operation? %)
-                                                       (<= (:cost %) (:credit corp))
-                                                       true))}
-                               :async true
-                               :effect (req (let [target-card target]
-                                              (if (operation? target-card)
-                                                (continue-ability
-                                                  state side
-                                                  {:async true
-                                                   :msg (msg "play " (:title target-card))
-                                                   :effect (req (play-instant state side eid target-card nil))}
-                                                  card nil)
-                                                (continue-ability
-                                                  state side
-                                                  {:msg (msg (corp-install-msg target-card))
-                                                   :async true
-                                                   :effect (effect (corp-install eid target-card nil nil))}
-                                                  card nil))))}
-                              card nil)
-                            (effect-completed state side eid)))}})
+             :effect (req (wait-for (reveal state side target)
+                                    (shuffle! state :corp :deck)
+                                    (move state side target :hand)
+                                    (if (threat-level 3 state)
+                                      (continue-ability
+                                        state side
+                                        {:prompt "Choose a card to play or install"
+                                         :choices {:card #(and (corp? %)
+                                                               (in-hand? %)
+                                                               (if (operation? %)
+                                                                 (<= (:cost %) (:credit corp))
+                                                                 true))}
+                                         :async true
+                                         :effect (req (let [target-card target]
+                                                        (if (operation? target-card)
+                                                          (continue-ability
+                                                            state side
+                                                            {:async true
+                                                             :msg (msg "play " (:title target-card))
+                                                             :effect (req (play-instant state side eid target-card nil))}
+                                                            card nil)
+                                                          (continue-ability
+                                                            state side
+                                                            {:msg (msg (corp-install-msg target-card))
+                                                             :async true
+                                                             :effect (effect (corp-install eid target-card nil nil))}
+                                                            card nil))))}
+                                        card nil)
+                                      (effect-completed state side eid))))}})
 
 (defcard "Power Grid Overload"
   {:on-play
