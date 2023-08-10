@@ -2579,6 +2579,24 @@
       (click-prompt state :runner "0") ; Runner won't match
     (is (= 6 (count-tags state)) "Runner took 6 tags")))
 
+(deftest mindscaping
+  (do-game
+    (new-game {:corp {:hand [(qty "Mindscaping" 2)]
+                      :deck ["Hedge Fund" "NGO Front"]}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (gain-tags state :runner 5)
+    (play-from-hand state :corp "Mindscaping")
+    (changes-val-macro
+      -3 (count (:hand (get-runner)))
+      "Runner got 3 damage"
+      (click-prompt state :corp "Do 1 net damage per tag (up to 3)"))
+    (play-from-hand state :corp "Mindscaping")
+    (click-prompt state :corp "Gain 4 [Credits] and draw 2 cards")
+    (click-card state :corp "NGO Front")
+    (is (= 5 (:credit (get-corp))) "Corp gained a net of 2 credits")
+    (is (= 1 (count (:hand (get-corp)))))
+    (is (= "NGO Front" (-> (get-corp) :deck first :title)))))
+
 (deftest mitosis
   ;; Mitosis - Install up to 2 cards in new remotes, placing 2 advancements on each
   ;; prevent rez/score of those cards the rest of the turn
