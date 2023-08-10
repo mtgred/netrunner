@@ -1016,11 +1016,12 @@
 
 (defcard "Debbie \"Downtown\" Moreira"
   {:on-install {:req (req (threat-level 4 state))
-                :msg "(Threat) place 2 credits on itself"
+                :msg "place 2 [Credits] on itself"
                 :effect (req (add-counter state side card :credit 2))}
    :events [{:event :play-event
              :req (req (has-subtype? (:card context) "Run"))
              :async true
+             :msg "place 1 [Credits] on itself"
              :effect (req (add-counter state side card :credit 1)
                           (effect-completed state side eid))}]
    :abilities [{:msg "take 1 [Credits]"
@@ -1029,7 +1030,7 @@
                 :effect (req (add-counter state side card :credit -1)
                              (wait-for (gain-credits state side (make-eid state eid) 1)
                                        (trigger-event-sync state side eid :spent-credits-from-card card)))}
-               {:label "run a server"
+               {:label "Run a server"
                 :cost [:click 1]
                 :async true
                 :makes-run true
