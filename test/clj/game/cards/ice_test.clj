@@ -4518,6 +4518,31 @@
     (fire-subs state (get-ice state :archives 0))
     (is (= ["Swap two pieces of ice" "Swap two non-ice"] (prompt-buttons :corp)) "Both options available")))
 
+(deftest mic
+  ;; M.I.C.
+  (do-game
+    (new-game {:corp {:hand ["M.I.C."]}})
+    (play-from-hand state :corp "M.I.C." "HQ")
+    (take-credits state :corp)
+    (let [mic (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp mic)
+      (run-continue state)
+      (changes-val-macro
+        -2 (:click (get-runner))
+        "Runner lost 2 clicks"
+        (fire-subs state mic))
+      (is (nil? (:run @state)) "M.I.C. ended the run")
+      (core/gain state :runner :click 1)
+      (run-on state "HQ")
+      (changes-val-macro
+        -1 (:click (get-runner))
+        "Runner spent 1 click to pay M.I.C. ability"
+        (card-ability state :corp mic 0)
+        (click-prompt state :runner "Spend [Click]"))
+      (is (:run @state) "Run is still going")
+      (is (= 1 (count (:discard (get-corp)))) "M.I.C. got trashed"))))
+
 (deftest mind-game-server-redirection
   ;; Server redirection
   (do-game
