@@ -3393,6 +3393,7 @@
 
 (defcard "Steelskin Scarring"
   {:on-play {:async true
+             :msg "draw 3 cards"
              :effect (effect (draw eid 3))}
    :on-trash {:when-inactive true
               :interactive (req true)
@@ -3402,11 +3403,12 @@
                               (= :deck zone))))
               :effect (effect (continue-ability
                                 {:optional {:prompt "Draw 2 cards?"
-                                            :waiting-prompt "Runner to use Steelskin Scarring"
+                                            :waiting-prompt true
                                             :yes-ability {:msg "draw 2 cards"
                                                           :async true
                                                           :effect (effect (draw :runner eid 2))}
-                                            :no-ability {:msg "decline to draw"}}}
+                                            :no-ability
+                                            {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
                                 card nil))}})
 
 (defcard "Stimhack"
@@ -3433,8 +3435,15 @@
               :req (req (let [zone (first (:zone (:card context)))]
                           (or (= :hand zone)
                               (= :deck zone))))
-              :msg "gain 2 [Credits]"
-              :effect (req (gain-credits state :runner eid 2))}})
+              :effect (effect (continue-ability
+                                {:optional {:prompt "Gain 2 [Credits]?"
+                                            :waiting-prompt true
+                                            :yes-ability {:msg "gain 2 [Credits]"
+                                                          :async true
+                                                          :effect (effect (gain-credits :runner eid 2))}
+                                            :no-ability
+                                            {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
+                                card nil))}})
 
 (defcard "Sure Gamble"
   {:on-play
