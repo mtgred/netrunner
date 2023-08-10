@@ -5973,6 +5973,27 @@
       (click-prompt state :runner "5")
       (is (= "Choose one" (:msg (prompt-map :runner))) "Runner gets RNG Key reward")))
 
+(deftest saci
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Saci" "\"Baklan\" Bochkin"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (let [iw (get-ice state :hq 0)]
+        (play-from-hand state :runner "\"Baklan\" Bochkin")
+        (play-from-hand state :runner "Saci")
+        (click-card state :runner iw)
+        (run-on state "HQ")
+        (changes-val-macro
+          3 (:credit (get-runner))
+          "Gained 3 credits on rez"
+          (rez state :corp iw))
+        (run-continue state)
+        (changes-val-macro
+          3 (:credit (get-runner))
+          "Gained 3 credits on derez"
+          (card-ability state :runner (get-resource state 0) 0)))))
+
 (deftest sadyojata-swap-ability
     ;; Swap ability
     (testing "Doesnt work if no Deva in hand"
