@@ -135,9 +135,9 @@
             :effect (effect (damage eid :meat 1 {:card card}))}
    :access {:optional
             {:req (req (rezzed? card))
-             :waiting-prompt "Corp to choose an option"
-             :prompt "Pay 2 [Credits] to do 2 meat damage?"
-             :no-ability {:effect (effect (system-msg "declines to use Neural Prisec"))}
+             :waiting-prompt true
+             :prompt (msg "Pay 2 [Credits] to use " (:title card) " ability?")
+             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
              :yes-ability {:async true
                            :cost [:credit 2]
                            :msg "do 2 meat damage"
