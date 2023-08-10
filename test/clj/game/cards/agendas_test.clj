@@ -3615,6 +3615,22 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
+(deftest salvo-testing
+    (do-game
+      (new-game {:corp {:hand ["Salvo Testing" "Project Vitruvius"]
+                        :credits 10}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Runner took 1 damage"
+        (play-and-score state "Salvo Testing"))
+      (is (= 1 (:brain-damage (get-runner))))
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Runner took 1 damage"
+        (play-and-score state "Project Vitruvius"))
+      (is (= 2 (:brain-damage (get-runner))))))
+
 (deftest sds-drone-deployment-corp-score-a-program-is-installed
     ;; Corp score, a program is installed
     (do-game
