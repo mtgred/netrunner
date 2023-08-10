@@ -644,6 +644,70 @@
       (rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
 
+(deftest attini
+  (do-game
+    (new-game {:corp {:hand ["Attini"]
+                      :credits 10}
+               :runner {:hand ["Sure Gamble" "Caldera"]
+                        :credits 10}})
+    (play-from-hand state :corp "Attini" "Archives")
+    (take-credits state :corp)
+    (let [att (get-ice state :archives 0)]
+      (play-from-hand state :runner "Caldera")
+      (run-on state "Archives")
+      (rez state :corp (refresh att))
+      (run-continue state)
+      (fire-subs state att)
+      (changes-val-macro
+        -2 (:credit (get-runner))
+        "Runner lost 2 credits"
+        (click-prompt state :runner "Pay 2 [Credits]"))
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Runner prevented 1 net damage"
+        (click-prompt state :runner "Take 1 net damage")
+        (card-ability state :runner (get-resource state 0) 0))
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Runner got 1 damage"
+        (click-prompt state :runner "Take 1 net damage")
+        (click-prompt state :runner "Done")))))
+
+(deftest attini-threat-ability
+  (do-game
+    (new-game {:corp {:hand ["Attini" "Obokata Protocol"]
+                      :credits 10}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-and-score state "Obokata Protocol")
+    (play-from-hand state :corp "Attini" "HQ")
+    (take-credits state :corp)
+    (let [att (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp (refresh att))
+      (run-continue state)
+      (changes-val-macro
+        -3 (count (:hand (get-runner)))
+        "Runner took 3 damage and couldn't choose to spend credits"
+        (fire-subs state att)))))
+
+(deftest ^:kaocha/pending attini-threat-ability-cannot-spend-credits
+  (do-game
+    (new-game {:corp {:hand ["Attini" "Obokata Protocol"]
+                      :credits 10}
+               :runner {:hand [(qty "Sure Gamble" 3) "Caldera"]}})
+    (play-and-score state "Obokata Protocol")
+    (play-from-hand state :corp "Attini" "HQ")
+    (take-credits state :corp)
+    (let [att (get-ice state :hq 0)]
+      (play-from-hand state :runner "Caldera")
+      (run-on state "HQ")
+      (rez state :corp (refresh att))
+      (run-continue state)
+      (changes-val-macro
+        -3 (count (:hand (get-runner)))
+        "Runner took 3 damage and couldn't prevent any of them by spending credits"
+        (fire-subs state att)))))
+
 (deftest authenticator-encounter-decline-to-take-tag
   (do-game
     (new-game{:corp {:hand ["Authenticator"]}})
