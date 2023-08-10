@@ -6837,6 +6837,39 @@
           (fire-subs state (refresh ak))))
       (run-continue state))))
 
+(deftest urban-art-vernissage
+  (do-game
+      (new-game {:runner {:hand ["Urban Art Vernissage" "Botulus" "Monkeywrench"]
+                          :credits 10}
+                 :corp {:hand [(qty "Ice Wall" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Urban Art Vernissage")
+      (let [iw1 (get-ice state :hq 0)
+            iw2 (get-ice state :rd 0)
+            uav (get-resource state 0)]
+        (play-from-hand state :runner "Monkeywrench")
+        (click-card state :runner iw1)
+        (play-from-hand state :runner "Botulus")
+        (click-card state :runner iw2)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (:runner-phase-12 @state) "Runner in Step 1.2")
+        (card-ability state :runner uav 0)
+        (changes-val-macro
+          0 (get-counters (refresh uav) :credit)
+          "Can't choose virus trojans"
+          (click-card state :runner (first (:hosted (refresh iw2)))))
+        (changes-val-macro
+          2 (get-counters (refresh uav) :credit)
+          "2 credits placed on Urban Art Vernissage"
+          (click-card state :runner (first (:hosted (refresh iw1)))))
+        (is (= 1 (count (:hand (get-runner)))) "1 card added to the grip")
+        (play-from-hand state :runner "Monkeywrench")
+        (dotimes [_ 2]
+          (click-card state :runner uav)))))
+
 (deftest verbal-plasticity
   ;; Verbal Plasticity
   (do-game

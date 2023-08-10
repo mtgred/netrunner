@@ -8,8 +8,8 @@
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
-   [game.core.board :refer [all-active all-active-installed all-installed card->server
-                            server->zone]]
+   [game.core.board :refer [all-active all-active-installed all-installed
+                            all-installed-runner card->server server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp?
                            event? facedown? get-agenda-points get-card get-counters
                            get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
@@ -3546,24 +3546,26 @@
      :events [(assoc ability :event :runner-turn-begins)]}))
 
 (defcard "Urban Art Vernissage"
-  (let [is-trojan? (fn [cr] (and (has-subtype? cr "Trojan") (not (has-subtype? cr "Virus"))))
+  (let [is-eligible?
+          (fn [cr] (and (program? cr)
+                        (has-subtype? cr "Trojan")
+                        (not (has-subtype? cr "Virus"))))
         ability {:async true
-                 :label "return a non-virus trojan to place 2 [Credits]"
+                 :label "Return a non-virus trojan program to the grip"
                  :once :per-turn
-                 :req (req (some is-trojan? (all-installed state :runner)))
-                 :choices {:not-self true
-                           :req (req (and (runner? target)
+                 :req (req (some is-eligible? (all-installed-runner state)))
+                 :choices {:req (req (and (runner? target)
                                           (installed? target)
-                                          (is-trojan? target)))}
+                                          (is-eligible? target)))}
                  :msg (msg "add " (:title target) " to the grip and place 2 [Credits] on itself")
-                 :cancel-effect (req (system-msg state :runner "declines to use " (:title card))
+                 :cancel-effect (req (system-msg state :runner (str "declines to use " (:title card)))
                                      (effect-completed state side eid))
                  :effect (req (move state side target :hand)
                               (add-counter state side card :credit 2)
                               (effect-completed state side eid))}]
     {:interactions {:pay-credits {:req (req (= :runner-install (:source-type eid)))
                                   :type :credit}}
-     :flags {:runner-phase-12 (req (some is-trojan? (all-installed state :runner)))}
+     :flags {:runner-phase-12 (req (some is-eligible? (all-installed-runner state)))}
      :events [(assoc ability
                      :event :runner-turn-begins
                      :interactive (req true))]
