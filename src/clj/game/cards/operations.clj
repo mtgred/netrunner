@@ -1545,14 +1545,15 @@
                                   (gain-tags eid (- target (second targets))))}}}})
 
 (defcard "Mindscaping"
-  {:on-play {:prompt "choose one"
-             :choices ["Do 1 net per tag (up to 3)"
+  {:on-play {:prompt "Choose one"
+             :waiting-prompt true
+             :choices ["Do 1 net damage per tag (up to 3)"
                        "Gain 4 [Credits] and draw 2 cards"]
-             :msg (msg (if (= target "Do 1 net per tag (up to 3)")
+             :msg (msg (if (= target "Do 1 net damage per tag (up to 3)")
                          (str "do " (min 3 (count-tags state)) " net damage")
                          (decapitalize target)))
              :async true
-             :effect (req (if (= "Do 1 net per tag (up to 3)" target)
+             :effect (req (if (= "Do 1 net damage per tag (up to 3)" target)
                             (damage state :corp eid :net (min 3 (count-tags state)) {:card card})
                             (wait-for (gain-credits state :corp (make-eid state eid) 4)
                                       (wait-for
@@ -1560,8 +1561,8 @@
                                         (continue-ability
                                           state side
                                           {:req (req (pos? (count (:hand corp))))
-                                           :prompt "Choose a card in HQ to move to the top of R&D"
-                                           :msg "add 1 card in HQ to the top of R&D"
+                                           :prompt "Choose 1 card to add to the top of R&D"
+                                           :msg "add 1 card from HQ to the top of R&D"
                                            :choices {:card #(and (in-hand? %)
                                                                  (corp? %))
                                                      ;; just incase everything gets jinja'd out of hand
