@@ -1763,7 +1763,7 @@
     :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Oppo Research"
-  {:on-play {:msg "give the runner 2 tags"
+  {:on-play {:msg "give the Runner 2 tags"
              :async true
              :req (req (or (last-turn? state :runner :trashed-card)
                            (last-turn? state :runner :stole-agenda)))
@@ -1773,13 +1773,11 @@
                                    (continue-ability
                                      state side
                                      {:optional
-                                      {:prompt "Pay 5 [Credit] to give the runner 2 tags?"
-                                       ;:req (req (can-pay? state :corp eid card nil
-                                       ;                    [:credit 5]))
-
+                                      {:prompt "Pay 5 [Credit] to give the Runner 2 tags?"
+                                       :waiting-prompt true
                                        :yes-ability {:async true
                                                      :cost [:credit 5]
-                                                     :msg "give the runner 2 additional tags"
+                                                     :msg "give the Runner 2 tags"
                                                      :effect (req (gain-tags state :corp eid 2))}}}
                                      card nil)
                                    (effect-completed state side eid))))}})
