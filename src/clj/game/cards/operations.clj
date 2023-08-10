@@ -198,16 +198,16 @@
 
 
 (defcard "Armed Asset Protection"
-  (let [faceup-gendies (fn [corp] (some #(and (faceup? %) (agenda? %)) (:discard corp)))]
+  (let [faceup-agendas (fn [corp] (some #(and (faceup? %) (agenda? %)) (:discard corp)))]
     {:on-play
      {:msg (msg "gain 3 [Credits], then gain " (faceup-archives-types corp) " [Credits]")
       :async true
       :effect (req (wait-for (gain-credits state :corp 3)
                              (wait-for (gain-credits state :corp (faceup-archives-types corp))
-                                       (if (faceup-gendies corp)
+                                       (if (faceup-agendas corp)
                                          (continue-ability
                                            state side
-                                           {:msg "gain an additional 2[Credits] for having a faceup agenda in archives"
+                                           {:msg "gain 2 [Credits] for having faceup agendas in Archives"
                                             :effect (effect (gain-credits eid 2))
                                             :async true}
                                            card nil)
