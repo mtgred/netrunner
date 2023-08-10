@@ -291,8 +291,8 @@
   "Render all cards in a given text or HTML fragment input"
   [input]
   (cond
-    (re-find (contains-card-pattern) (or input ""))
-    (render-input input (card-patterns))
+    (re-find (contains-card-pattern (:cards-loaded @app-state)) (or input ""))
+    (render-input input (card-patterns (:cards-loaded @app-state)))
     (string? input) [:<> input]
     (vector? input) input
     :else [:<>]))
