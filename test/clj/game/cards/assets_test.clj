@@ -6025,6 +6025,50 @@
       (is (= 1 (count (get-scored state :runner))) "Runner should have 1 card in score area")
       (is (zero? (-> (get-corp) :discard count)) "Victoria Jenkins shouldn't go to Archives when trashed"))))
 
+(deftest wage-workers
+  (do-game
+    (new-game {:corp {:hand ["Wage Workers" "PAD Campaign" "NGO Front"]}})
+    (changes-val-macro
+        -2 (:click (get-corp))
+        "Corp spent 2 clicks instead of 3"
+        (play-from-hand state :corp "Wage Workers" "New remote")
+        (rez state :corp (get-content state :remote1 0))
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (play-from-hand state :corp "NGO Front" "New remote"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (let [ngo (get-content state :remote3 0)]
+      (changes-val-macro
+        -2 (:click (get-corp))
+        "Corp spent 2 clicks instead of 3"
+        (dotimes [_ 3]
+          (click-advance state :corp (refresh ngo)))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (changes-val-macro
+        -2 (:click (get-corp))
+        "Corp spent 2 clicks instead of 3"
+        (dotimes [_ 3]
+          (click-credit state :corp)))))
+
+(deftest wage-workers-multiple-triggers
+  (do-game
+    (new-game {:corp {:hand ["Wage Workers" (qty "Biotic Labor" 3)]
+                      :deck [(qty "Hedge Fund" 5)]
+                      :credits 50}})
+    (play-from-hand state :corp "Wage Workers" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (dotimes [_ 3]
+      (play-from-hand state :corp "Biotic Labor"))
+    (is (= 7 (:click (get-corp))) "Got 1 click from Wage Workers")
+    (changes-val-macro
+        -3 (:click (get-corp))
+        "Corp spent 3 clicks instead of 4"
+        (dotimes [_ 4]
+          (click-draw state :corp)))))
+
 (deftest wall-to-wall-basic-functionality
     ;; Basic functionality
     (do-game
