@@ -1091,6 +1091,28 @@
     (rez state :corp (get-content state :remote1 0))
     (is (= 9 (hand-size :corp)) "Corp should have hand size of 9")))
 
+(deftest cybersand-harvester
+  (do-game
+    (new-game {:corp {:deck ["Cybersand Harvester" (qty "Ice Wall" 2)]}})
+    (play-from-hand state :corp "Cybersand Harvester" "New remote")
+    (let [ch (get-content state :remote1 0)]
+      (rez state :corp ch)
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (changes-val-macro
+        2 (get-counters (refresh ch) :credit)
+        "Placed 2 credits on Cybersand Harvester"
+        (rez state :corp (get-ice state :remote1 0)))
+      (changes-val-macro
+        -1 (get-counters (refresh ch) :credit)
+        "Spent 1 credit from Cybersand Harvester"
+        (play-from-hand state :corp "Ice Wall" "Server 1")
+        (click-card state :corp ch))
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Took all hosted credits"
+        (card-ability state :corp (refresh ch) 0))
+      (is (= 1 (count (:discard (get-corp)))) "Cybersand Harvester got trashed"))))
+
 (deftest daily-business-show-full-test
     ;; Full test
     (do-game
