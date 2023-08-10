@@ -305,6 +305,7 @@
   {:abilities [{:req (req (not this-server))
                 :cost [:tag 1]
                 :msg "end the run"
+                :label "End the run on another server"
                 :effect (effect (end-run eid card))}]})
 
 (defcard "Balanced Coverage"

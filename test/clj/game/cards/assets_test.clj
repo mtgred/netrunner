@@ -344,6 +344,29 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0"))))
 
+(deftest b-1001
+  (do-game
+    (new-game {:corp {:hand ["B-1001"]}})
+    (play-from-hand state :corp "B-1001" "New remote")
+    (let [b (get-content state :remote1 0)]
+      (rez state :corp b)
+      (take-credits state :corp)
+      (gain-tags state :runner 1)
+      (run-on state "Server 1")
+      (card-ability state :corp b 0)
+      (is (:run @state) "Cannot use B-1001 ability during runs on its own server")
+      (run-continue state)
+      (click-prompt state :runner "No action")
+      (run-empty-server state :hq)
+      (changes-val-macro
+        -1 (count-tags state)
+        "Runner loses a tag"
+        (card-ability state :corp b 0)
+        (is (not (:run @state)) "Run ended"))
+      (run-on state "HQ")
+      (card-ability state :corp b 0)
+      (is (:run @state) "B-1001 ability requires a tag"))))
+
 (deftest bass-ch1r180g4
   ;; Bass CH1R180G4
   (do-game
