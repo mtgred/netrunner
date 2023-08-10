@@ -5623,6 +5623,39 @@
           (click-card state :runner phero)
           (click-card state :runner phero)))))
 
+(deftest pichacao
+  ;; Pichação
+  (do-game
+      (new-game {:runner {:hand [(qty "Pichação" 2)]}
+                 :corp {:hand [(qty "Ice Wall" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Pichação")
+      (click-card state :runner (get-ice state :hq 0))
+      (play-from-hand state :runner "Pichação")
+      (click-card state :runner (get-ice state :hq 1))
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (changes-val-macro
+        1 (:click (get-runner))
+        "Gained 1 click"
+        (run-continue state)
+        (click-prompt state :runner "Yes"))
+      (run-continue state)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (changes-val-macro
+        1 (:click (get-runner))
+        "Gained 1 click"
+        (run-continue state)
+        (click-prompt state :runner "Yes"))
+      (changes-val-macro
+        1 (count (:hand (get-runner)))
+        "Pichação returned to the grip"
+        (click-prompt state :runner "Yes"))))
+
 (deftest plague
   ;; Plague
   (do-game

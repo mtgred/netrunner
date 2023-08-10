@@ -2452,7 +2452,7 @@
                          (can-host? %))}
    :events [{:event :pass-ice
              :optional {:interactive (req true)
-                        :prompt "gain [click]?"
+                        :prompt "Gain [Click]?"
                         :req (req (same-card? (:ice context) (:host card)))
 
                         :yes-ability
@@ -2469,7 +2469,7 @@
                                                        :cost [:return-to-hand]}}}
                                        card nil)
                                      (effect-completed state side eid)))}
-                        :no-ability {:msg "decline to gain [click]"}}}]})
+                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
 
 (defcard "Pipeline"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
