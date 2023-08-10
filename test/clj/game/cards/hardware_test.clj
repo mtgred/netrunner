@@ -100,6 +100,32 @@
         (is (:broken (first (:subroutines (refresh hive)))) "The break ability worked")
         (is (no-prompt? state :runner) "Break ability is one at a time")))))
 
+(deftest airbladex-jsrd-ed
+  (do-game
+    (new-game {:runner {:hand ["AirbladeX (JSRF Ed.)" "Sure Gamble"]}
+               :corp {:hand ["Funhouse" "Envelope"]}})
+    (play-from-hand state :corp "Envelope" "HQ")
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (core/gain state :corp :credit 10)
+    (take-credits state :corp)
+    (play-from-hand state :runner "AirbladeX (JSRF Ed.)")
+    (let [airbladex (get-hardware state 0)]
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (no-prompt? state :runner) "No Funhouse prompt")
+      (is (= 2 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter")
+      (run-continue state)
+      (run-continue state)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :hq 0))
+      (changes-val-macro 0 (count (:hand (get-runner)))
+        "1 net damage prevented"
+        (card-ability state :runner airbladex 0))
+      (is (= 1 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter"))))
+
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
   (do-game

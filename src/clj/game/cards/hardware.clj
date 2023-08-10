@@ -101,9 +101,9 @@
    :abilities [(break-sub [:lose-click 1] 1 "All" {:req (req true)})]})
 
 (defcard "AirbladeX (JSRF Ed.)"
-  (let [ability {:label "Prevent a \"When encountered\" ability"
+  (let [ability {:label "Prevent a \"when encountered\" ability on a piece of ice"
                  :cost [:power 1]
-                 :msg (msg "prevent the encounter effect on " (card-str state current-ice))
+                 :msg (msg "prevent the encounter ability on " (card-str state current-ice))
                  :effect (req (let [[suppress]
                                     (register-suppress
                                       state side card
@@ -129,7 +129,7 @@
                (effect (continue-ability
                          {:eid (assoc eid :source-type :ability)
                           :optional
-                          {:prompt (str "Prevent \"when encountered\" effect of " (:title (:ice context)) "?")
+                          {:prompt (str "Prevent \"when encountered\" ability of " (card-str state current-ice) "?")
                            :yes-ability ability}}
                          card nil))}]
      :abilities [{:cost [:power 1]
