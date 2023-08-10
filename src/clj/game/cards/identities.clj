@@ -143,15 +143,15 @@
              :effect (req (let [original-server (zone->name (second (get-zone (:card context))))]
                             (continue-ability
                               state side
-                              {:prompt "Choose a card to install from HQ in another remote"
-                               :choices {:card #(and (not (operation? %))
-                                                     (in-hand? %)
-                                                     (corp? %))}
+                              {:prompt "Choose a card to install in another remote server"
+                               :choices {:card #(and (corp? %)
+                                                     (corp-installable-type? %)
+                                                     (in-hand? %))}
                                :async true
                                :effect (req (let [chosen-card target]
                                               (continue-ability
                                                 state side
-                                                {:prompt "choose a remote server"
+                                                {:prompt "Choose a remote server"
                                                  :choices (req (conj (vec (filter #(not= original-server %)
                                                                                   (get-remote-names state))) "New remote"))
                                                  :async true
@@ -162,7 +162,7 @@
    :effect (effect
              (continue-ability
                {:req (req (< 2 (count (get-remotes state))))
-                :prompt "Choose two servers to be saved from the rules apocalypse"
+                :prompt "Choose 2 servers to be saved from the rules apocalypse"
                 :choices (req (get-remote-names state))
                 :async true
                 :effect (req (let [saved target]
