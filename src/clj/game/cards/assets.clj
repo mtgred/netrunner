@@ -991,34 +991,38 @@
 
 (defcard "Federal Fundraising"
   (let [draw-ab {:optional {:req (req unprotected)
-                            :prompt "draw a card?"
-                            :yes-ability {:msg "draw a card"
+                            :prompt "Draw 1 card?"
+                            :yes-ability {:msg "draw 1 card"
                                           :async true
                                           :effect (effect (draw eid 1))}
-                            :no-ability {:msg "decline to draw"}}}
+                            :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to draw 1 card")))}}}
         ability
         {:once :per-turn
-         :req (req (:corp-phase-12 @state))
+         :req (req (and (:corp-phase-12 @state)
+                        (not-empty (:deck corp))))
          :interactive (req true)
-         :label "look at the top 3 cards"
+         :label "Look at the top 3 cards of R&D (start of turn)"
          :async true
-         :optional
-         {:prompt "look at the top 3 cards?"
-          :no-ability
-          {:msg (msg "declines to look at the top 3 cards")
-           :async true
-           :effect (req (continue-ability state side draw-ab card nil))}
-          :yes-ability
-          {:msg (msg "rearrange the top 3 cards of R&D")
-           :async true
-           :effect (req (set-aside-for-me state :corp eid (take 3 (:deck corp)))
-                        (wait-for (resolve-ability state side
-                                                   (return-to-top (get-set-aside state :corp eid))
-                                                   card nil)
-                                  (continue-ability
-                                    state side
-                                    draw-ab
-                                    card nil)))}}}]
+         :effect
+         (effect
+          (continue-ability
+           {:optional
+            {:prompt "Look at the top 3 cards of R&D?"
+             :no-ability
+             {:async true
+              :effect (effect (continue-ability draw-ab card nil))}
+             :yes-ability
+             {:msg "rearrange the top 3 cards of R&D"
+              :async true
+              :waiting-prompt true
+              :effect (req (let [from (take 3 (:deck corp))]
+                             (wait-for (resolve-ability
+                                         state side
+                                         (reorder-choice :corp :runner from '() (count from) from)
+                                          card nil)
+                                       (continue-ability state side draw-ab card nil)
+                                       (effect-completed state side eid))))}}}
+           card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
