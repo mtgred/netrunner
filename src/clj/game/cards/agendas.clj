@@ -201,7 +201,7 @@
    {:interactive (req true)
     :async true
     :msg "look at the top 5 cards of R&D"
-    :prompt (msg "The top cards of R&D are (top->bottom) " (enumerate-str (map :title (take 5 (:deck corp)))))
+    :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 5 (:deck corp)))))
     :choices ["OK"]
     :req (req (not-empty (:deck corp)))
     :effect (effect (continue-ability
