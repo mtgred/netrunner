@@ -5232,3 +5232,9 @@
                       :bad-pub 3}})
     (play-from-hand state :corp "Witness Tampering")
     (is (= 1 (count-bad-pub state)) "Corp should lose 2 bad pub")))
+
+(deftest your-digital-life
+  (do-game
+    (new-game {:corp {:hand [(qty "Your Digital Life" 5)]}})
+    (play-from-hand state :corp "Your Digital Life")
+    (is (= 7 (:credit (get-corp))) "Corp gained 4 credits")))
