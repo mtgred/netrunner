@@ -1483,6 +1483,21 @@
       (score state :corp (refresh foi))
       (is (= 2 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
 
+(deftest fujii-asset-retrieval
+    (do-game
+      (new-game {:corp {:hand [(qty "Fujii Asset Retrieval" 2)]}
+                 :runner {:hand [(qty "Sure Gamble" 4)]}})
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "Runner took 2 damage"
+        (play-and-score state "Fujii Asset Retrieval"))
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "Runner took 2 damage"
+        (click-prompt state :runner "Steal"))))
+
 (deftest genetic-resequencing
   ;; Genetic Resequencing
   (do-game
