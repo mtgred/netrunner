@@ -234,6 +234,37 @@
                          "Runner took no meat damage on unprotected server"
                          (run-empty-server state :rd))))
 
+(deftest armed-asset-protection-empty-archives
+  (do-game
+    (new-game {:corp {:hand ["Armed Asset Protection"]}})
+    (play-from-hand state :corp "Armed Asset Protection")
+    (is (= 6 (:credit (get-corp))) "Corp gained 3 credits")))
+
+(deftest armed-asset-protection-no-agendas-in-archives
+  (do-game
+    (new-game {:corp {:hand ["Armed Asset Protection" "Ice Wall"]
+                      :discard ["Hedge Fund" "NGO Front" "Prisec"]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (take-credits state :runner)
+    (core/move state :corp (find-card "Ice Wall" (:hand (get-corp))) :discard)
+    (play-from-hand state :corp "Armed Asset Protection")
+    (is (= 12 (:credit (get-corp))) "Corp gained 3 credits + 1 credit per card type (not counting facedown cards)")))
+
+(deftest armed-asset-protection-agendas-in-archives
+  (do-game
+    (new-game {:corp {:hand ["Armed Asset Protection"]
+                      :discard ["Hedge Fund" (qty "Bellona" 2)]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (click-prompt state :runner "Bellona")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Bellona")
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Armed Asset Protection")
+    (is (= 13 (:credit (get-corp))) "Corp gained 3 credits + 1 credit per card type + 2 credits for the agendas")))
+
 (deftest ark-lockdown-happy-path
     ;; Happy Path
     (do-game
