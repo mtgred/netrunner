@@ -1056,7 +1056,7 @@
 (defcard "Hermes"
   (let [leela {:interactive (req true)
                :prompt "Choose an unrezzed card to return to HQ"
-               :choices {:card #(and (not (rezzed? %))
+               :choices {:card #(and (not (faceup? %))
                                      (installed? %)
                                      (corp? %))}
                :msg (msg "add " (card-str state target) " to HQ")

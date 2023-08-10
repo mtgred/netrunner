@@ -2206,6 +2206,22 @@
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
       (is (last-n-log-contains? state 2 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 damage\\.")))))
 
+(deftest hermes-public-agenda
+  (do-game
+   (new-game {:runner {:hand ["Hermes"]}
+              :corp {:hand ["Ice Wall" "Oaktown Renovation" "Oaktown Renovation"]}})
+   (play-from-hand state :corp "Oaktown Renovation" "New remote")
+   (play-from-hand state :corp "Oaktown Renovation" "New remote")
+   (play-from-hand state :corp "Ice Wall" "Server 1")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Hermes")
+   (run-empty-server state :remote2)
+   (click-prompt state :runner "Steal")
+   (click-card state :runner (get-content state :remote1 0))
+   (is (= 0 (count (:hand (get-corp)))) "Hermes can not bounce Public agenda")
+   (click-card state :runner (get-ice state :remote1 0))
+   (is (= 1 (count (:hand (get-corp)))) "Hermes can bounce facedown ice")))
+
 (deftest hijacked-router-run-on-archives
     ;; Run on Archives
     (do-game
