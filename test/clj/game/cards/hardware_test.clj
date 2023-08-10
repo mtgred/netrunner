@@ -4468,7 +4468,7 @@
     (run-empty-server state "HQ")
     (changes-val-macro
       1 (get-counters (get-hardware state 0) :power)
-      "added a counter to solidarity badge"
+      "added a counter to Solidarity Badge"
       (click-prompt state :runner "Pay 1 [Credits] to trash"))
     (take-credits state :runner)
     (take-credits state :corp)
@@ -4485,7 +4485,7 @@
     (run-empty-server state "HQ")
     (changes-val-macro
       1 (get-counters (get-hardware state 0) :power)
-      "added a counter to solidarity badge"
+      "added a counter to Solidarity Badge"
       (click-prompt state :runner "Pay 1 [Credits] to trash"))
     (core/gain state :runner :tag 1)
     (take-credits state :runner)
@@ -4504,7 +4504,7 @@
     (run-empty-server state "HQ")
     (changes-val-macro
       0 (get-counters (get-hardware state 0) :power)
-      "added a counter to solidarity badge"
+      "added no counter to Solidarity Badge"
       (click-prompt state :runner "Pay 1 [Credits] to trash"))))
 
 (deftest spinal-modem-pay-credits-prompt

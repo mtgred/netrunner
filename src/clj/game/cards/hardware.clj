@@ -2054,20 +2054,20 @@
              :req (req (pos? (get-counters (get-card state card) :power)))
              :async true
              :interactive (req (pos? (get-counters (get-card state card) :power)))
-             :prompt "choose one"
-             :choices (req [(when (pos? (count-tags state)) "Remove 1 tag")
+             :prompt "Choose one"
+             :choices (req [(when (pos? (count-real-tags state)) "Remove 1 tag")
                             "Draw 1 card"
-                            "no value"])
+                            "Done"])
              :effect (req (if (= target "Draw 1 card")
                             (do (add-counter state side card :power -1)
                                 (system-msg state side (str "uses " (:title card)
-                                                            "to draw a card"))
+                                                            "to draw 1 card"))
                                 (draw state :runner eid 1))
                             (if (= target "Remove 1 tag")
                               (do
                                 (add-counter state side card :power -1)
                                 (system-msg state side (str "uses " (:title card)
-                                                            "to remove a tag"))
+                                                            "to remove 1 tag"))
                                 (lose-tags state :runner eid 1))
                               (effect-completed state :runner eid))))}
             {:event :runner-trash
