@@ -2759,10 +2759,10 @@
   (break-and-enter "Sentry"))
 
 (defcard "Slap Vandal"
-  (auto-icebreaker {:implementation "Once per encounter not implemented"
-                    :hosting {:card #(and (ice? %)
-                                          (can-host? %))}
-                    :abilities [(break-sub 1 1)]}))
+  {:hosting {:card #(and (ice? %)
+                         (can-host? %))}
+   :abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))
+                                     :repeatable false})]})
 
 (defcard "Sneakdoor Beta"
   {:abilities [{:cost [:click 1]

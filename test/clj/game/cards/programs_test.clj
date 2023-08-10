@@ -6202,6 +6202,26 @@
       (is (= 2 (get-link state)) "2 link")
       (is (= 2 (core/available-mu state)) "Shiv stops using MU when 2+ link"))))
 
+(deftest slap-vandal
+  (do-game
+    (new-game {:runner {:hand ["Slap Vandal"]}
+               :corp {:hand ["Tithe"]}})
+    (play-from-hand state :corp "Tithe" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Slap Vandal")
+    (click-card state :runner (get-ice state :hq 0))
+    (let [tithe (get-ice state :hq 0)
+          slap (first (:hosted (refresh tithe)))]
+      (run-on state "HQ")
+      (rez state :corp tithe)
+      (run-continue state)
+      (card-ability state :runner (refresh slap) 0)
+      (click-prompt state :runner "Do 1 net damage")
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Gained 1 credit from unbroken sub"
+        (fire-subs state (refresh tithe))))))
+
 (deftest sneakdoor-beta-gabriel-santiago-ash-on-hq-should-prevent-sneakdoor-hq-access-but-still-give-gabe-credits-issue-1138
     ;; Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits. Issue #1138.
     (do-game
