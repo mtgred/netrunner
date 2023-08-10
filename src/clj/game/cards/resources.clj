@@ -1517,6 +1517,7 @@
 (defcard "Hannah \"Wheels\" Pilintra"
   {:abilities [{:cost [:click 1]
                 :once :per-turn
+                :label "Run a remote server"
                 :async true
                 :prompt "Choose a remote server"
                 :req (req (->> runnable-servers
@@ -1528,7 +1529,7 @@
                                      (map unknown->kw)
                                      (filter is-remote?)
                                      (map remote->name))))
-                :msg "gain [Click] and make a run on remote server"
+                :msg (msg "gain [Click] and make a run on " target)
                 :makes-run true
                 :effect (req (gain-clicks state side 1)
                              (register-events
@@ -1544,9 +1545,10 @@
                              (make-run state side eid target card))}
                {:cost [:click 1 :trash-can]
                 :async true
+                :label "Gain [Click][Click]. Remove 1 tag"
                 :effect (effect (gain-clicks 2)
                                 (lose-tags eid 1))
-                :msg "gain [Click][Click] and remove a tag"}]})
+                :msg "gain [Click][Click] and remove 1 tag"}]})
 
 (defcard "Hard at Work"
   (let [ability {:msg "gain 2 [Credits] and lose [Click]"
