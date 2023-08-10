@@ -204,6 +204,19 @@
   [state side card ability & targets]
   `(error-wrapper (card-ability-impl ~state ~side ~card ~ability ~@targets)))
 
+(defn expend-impl
+  [state side card]
+  (let [card (get-card state card)]
+    (is' (some? card) (str (:title card) " exists"))
+    (when (some? card)
+      (is' (core/process-action "expend" state side {:card card}))
+      true)))
+
+(defmacro expend
+  "Trigger an Expendable card's ability."
+  [state side card]
+  `(error-wrapper (expend-impl ~state ~side ~card)))
+
 (defn card-subroutine-impl
   [state _ card ability]
   (let [ice (get-card state card)]
