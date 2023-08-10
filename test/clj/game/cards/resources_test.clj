@@ -4007,6 +4007,7 @@
         (run-continue state)
         (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rez")
         (card-subroutine state :corp architect 0)
+        (click-prompt state :corp "OK")
         (click-prompt state :corp "Ice Wall")
         (click-prompt state :corp "HQ")
         (is (= 3 (:credit (get-corp))) "Corp has 7 credits"))))

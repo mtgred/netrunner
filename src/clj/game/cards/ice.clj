@@ -7,7 +7,8 @@
    [game.core.board :refer [all-active-installed all-installed all-installed-runner-type card->server
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index
-                           corp? faceup? get-card get-counters get-zone
+                           corp? corp-installable-type? faceup?
+                           get-card get-counters get-zone
                            hardware? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
                            program? protecting-a-central? protecting-archives? protecting-hq? protecting-rd?
                            resource? rezzed? runner?]]
@@ -358,8 +359,7 @@
    {:label "Install a card from HQ or Archives"
     :prompt "Choose a card to install from Archives or HQ"
     :show-discard true
-    :choices {:card #(and (corp? %)
-                          (not (operation? %))
+    :choices {:card #(and (corp-installable-type? %)
                           (or (in-hand? %)
                               (in-discard? %)))}
     :msg (msg (corp-install-msg target))
@@ -572,7 +572,7 @@
             :effect (req (let [this (zone->name (second (get-zone card)))
                                nice target]
                            (continue-ability state side
-                                             {:prompt (str "Choose a location to install " (:title target))
+                                             {:prompt "Choose a server"
                                               :choices (req (remove #(= this %) (corp-install-list state nice)))
                                               :async true
                                               :msg (msg (corp-install-msg nice))
@@ -732,27 +732,22 @@
 
 (defcard "Architect"
   {:flags {:untrashable-while-rezzed true}
-   :subroutines [{:label "Look at the top 5 cards of R&D"
-                  :prompt "Choose a card to install"
-                  :async true
-                  :req (req (and (not (string? target))
-                                 (not (operation? target))))
-                  :not-distinct true
-                  :choices (req (conj (take 5 (:deck corp)) "No install"))
-                  :effect (effect (system-msg (str "chooses the card in position "
-                                                   (+ 1 (.indexOf (take 5 (:deck corp)) target))
-                                                   " from R&D (top is 1)"))
-                                  (corp-install eid target nil {:ignore-all-cost true}))}
-                 {:label "Install a card from HQ or Archives"
-                  :prompt "Choose a card to install from Archives or HQ"
-                  :show-discard true
-                  :choices {:card #(and (corp? %)
-                                        (not (operation? %))
-                                        (or (in-hand? %)
-                                            (in-discard? %)))}
-                  :async true
-                  :msg (msg (corp-install-msg target))
-                  :effect (effect (corp-install eid target nil nil))}]})
+   :subroutines [{:async true
+                  :label "Look at the top 5 cards of R&D"
+                  :msg "look at the top 5 cards of R&D"
+                  :prompt (msg "The top cards of R&D are (top->bottom) " (enumerate-str (map :title (take 5 (:deck corp)))))
+                  :choices ["OK"]
+                  :req (req (not-empty (:deck corp)))
+                  :effect
+                  (effect (continue-ability
+                            {:prompt "Choose a card to install"
+                             :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
+                             :async true
+                             :effect (effect (corp-install eid target nil {:ignore-all-cost true}))
+                             :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
+                                                    (effect-completed eid))}
+                            card nil))}
+                 (install-from-hq-or-archives-sub)]})
 
 (defcard "Ashigaru"
   {:on-rez {:effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}
@@ -1202,9 +1197,8 @@
                   :prompt "Choose a card to install from Archives"
                   :show-discard true
                   :async true
-                  :choices {:card #(and (not (operation? %))
-                                        (in-discard? %)
-                                        (corp? %))}
+                  :choices {:card #(and (corp-installable-type? %)
+                                        (in-discard? %))}
                   :msg (msg (corp-install-msg target))
                   :effect (effect (corp-install eid target nil nil))}]
    :constant-effects [(ice-strength-bonus (req (protecting-archives? card)) 3)]})
@@ -2972,10 +2966,9 @@
 (defcard "NEXT Opal"
   (let [sub {:label "Install a card from HQ, paying all costs"
              :prompt "Choose a card in HQ to install"
-             :req (req (some #(not (operation? %)) (:hand corp)))
-             :choices {:card #(and (not (operation? %))
-                                   (in-hand? %)
-                                   (corp? %))}
+             :req (req (some #(corp-installable-type? %) (:hand corp)))
+             :choices {:card #(and (corp-installable-type? %)
+                                   (in-hand? %))}
              :async true
              :effect (effect (corp-install eid target nil nil))
              :msg (msg (corp-install-msg target))}

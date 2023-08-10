@@ -16,18 +16,24 @@
     (rez state :corp (get-ice state :hq 0))
     (is (no-prompt? state :corp) "no prompt to pull a card with ablative")))
 
-(deftest ablative-barrier-no-threat
+(deftest ablative-barrier-threat-trigger
   (do-game
-    (new-game {:corp {:hand ["Ablative Barrier" "Ablative Barrier" "City Works Project"]
-                      :discard ["Vanilla"]}})
+    (new-game {:corp {:hand [(qty "Ablative Barrier" 2) "Ice Wall" "City Works Project"]
+                      :discard ["Vanilla"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ablative Barrier" "HQ")
     (play-from-hand state :corp "Ablative Barrier" "HQ")
     (play-and-score state "City Works Project")
     (take-credits state :corp)
     (run-on state :hq)
-    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
     (click-card state :corp "Vanilla")
     (click-prompt state :corp "Archives")
-    (is (= "Vanilla" (:title (get-ice state :archives 0))))))
+    (is (= "Vanilla" (:title (get-ice state :archives 0))))
+    (run-continue state)
+    (rez state :corp (get-ice state :hq 0))
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :corp "R&D")))
 
 (deftest afshar-subroutines
   ;; Subroutines

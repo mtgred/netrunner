@@ -615,6 +615,7 @@
         (rez state :corp arch)
         (run-continue state)
         (card-subroutine state :corp (refresh arch) 0)
+        (click-prompt state :corp "OK")
         (click-prompt state :corp "Ice Wall")
         (core/move state :corp enig :discard)
         (click-prompt state :corp "HQ")
