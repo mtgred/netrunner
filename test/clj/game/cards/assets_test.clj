@@ -1902,6 +1902,58 @@
                    [5 2]
                    [10 5]]))))
 
+(deftest federal-fundraising
+  (do-game
+    (new-game {:corp {:hand ["Federal Fundraising" "Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker"]}})
+    (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+    (is (= (:title (nth (-> @state :corp :deck) 3)) "DNA Tracker"))
+    ;; R&D is now from top to bottom: A B C D
+    (play-from-hand state :corp "Federal Fundraising" "New remote")
+    (let [ff (get-content state :remote1 0)]
+      (rez state :corp ff)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      (card-ability state :corp ff 0)
+      (click-prompt state :corp "Yes")
+      (is (= "Choose a card to move next onto R&D" (:msg (prompt-map :corp))))
+      (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi"]
+             (map :title (prompt-buttons :corp))))
+      (click-prompt state :corp "Brainstorm")
+      (click-prompt state :corp "Accelerated Beta Test")
+      (click-prompt state :corp "Chiyashi")
+      (click-prompt state :corp "Done")
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Brainstorm"))
+      (changes-val-macro
+        1 (count (:hand (get-corp)))
+        "Corp drew 1 card"
+        (click-prompt state :corp "Yes"))
+      (end-phase-12 state :corp)
+      (is (no-prompt? state :corp))
+      (play-from-hand state :corp "Chiyashi" "Server 1")
+      ;; (take-credits state :corp)
+      ;; (take-credits state :runner)
+      ;; (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      ;; (card-ability state :corp ff 0)
+      ;; (click-prompt state :corp "Yes")
+      ;; (is (= ["Brainstorm" "DNA Tracker"]
+      ;;        (map :title (prompt-buttons :corp))))
+      ;; (click-prompt state :corp "Brainstorm")
+      ;; (click-prompt state :corp "DNA Tracker")
+      ;; (click-prompt state :corp "Done")
+      ;; (is (= (:title (nth (-> @state :corp :deck) 0)) "DNA Tracker"))
+      ;; (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      ;; (is (no-prompt? state :corp) "No prompt to draw 1 card")
+      )))
+
 (deftest franchise-city
   ;; Franchise City
   (do-game
