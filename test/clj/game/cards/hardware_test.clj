@@ -2206,6 +2206,30 @@
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
       (is (last-n-log-contains? state 2 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 damage\\.")))))
 
+(deftest hermes
+    (do-game
+      (new-game {:corp {:deck ["Project Atlas" "Hostile Takeover" "PAD Campaign"]}
+                 :runner {:hand ["Hermes"]}})
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hermes")
+      (take-credits state :runner)
+      (score-agenda state :corp (get-content state :remote2 0))
+      (changes-val-macro
+        1 (count (:hand (get-corp)))
+        "PAD Campaign returned to hand"
+        (click-card state :runner (get-content state :remote3 0)))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (changes-val-macro
+        1 (count (:hand (get-corp)))
+        "PAD Campaign returned to hand"
+        (click-card state :runner (get-content state :remote4 0)))))
+
 (deftest hermes-public-agenda
   (do-game
    (new-game {:runner {:hand ["Hermes"]}
