@@ -359,9 +359,9 @@
   {:flags {:rd-reveal (req true)}
    :access {:optional
             {:req (req (not (in-discard? card)))
-             :waiting-prompt "Corp to choose an option"
-             :prompt "Pay 4 [Credits] to give 2 tags?"
-             :no-ability {:effect (effect (system-msg "declines to use Behold!"))}
+             :waiting-prompt true
+             :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
+             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
              :yes-ability {:async true
                            :cost [:credit 4]
                            :msg "give the runner 2 tags"

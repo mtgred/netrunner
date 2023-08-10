@@ -356,6 +356,19 @@
       (is (= 3 (:click (get-corp))))
       (is (nil? (refresh bass)) "Bass CH1R180G4 should be trashed"))))
 
+(deftest behold
+  (do-game
+    (new-game {:corp {:hand ["Behold!"]}})
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (is (= :waiting (prompt-type :runner))
+        "Runner has prompt to wait for Behold!")
+    (changes-val-macro
+      -4 (:credit (get-corp))
+      "Corp spent 4 credits"
+      (click-prompt state :corp "Yes"))
+    (is (= 2 (count-tags state)))))
+
 (deftest bio-ethics-association
   ;; Bio-Ethics Association
   (do-game
