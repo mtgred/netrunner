@@ -1820,17 +1820,15 @@
 
 (defcard "Lago Paranoá Shelter"
   {:events [{:event :corp-install
-             :optional {:prompt "Rock out?"
+             :optional {:prompt "Trash the top card of the stack?"
                         :req (req (and (not (ice? (:card target)))
-                                       (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
-                        :yes-ability {:msg (msg (let [deck (:deck runner)]
-                                                  (if (pos? (count deck))
-                                                    (str "trash " (str/join ", " (map :title (take 1 deck))) " from their Stack and draw 1 card")
-                                                    "trash the top card from their Stack and draw 1 card - but their Stack is empty")))
+                                       (first-event? state side :corp-install #(not (ice? (:card (first %)))))
+                                       (seq (:deck runner))))
+                        :yes-ability {:msg (msg "trash " (:title (first (:deck runner))) " from the stack to draw 1 card")
                                       :async true
                                       :effect (req (wait-for (mill state :runner :runner 1)
                                                              (draw state :runner eid 1)))}
-                        :no-ability {:msg "decline to rock out"}}}]})
+                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
 
 (defcard "Laguna Velasco District"
   {:events [{:event :runner-click-draw

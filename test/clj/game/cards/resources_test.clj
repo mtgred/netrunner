@@ -3492,6 +3492,33 @@
       (is (refresh kongamato-2)
           "Second Kongamato isn't trashed as first subroutine is already broken"))))
 
+(deftest lago-paranoa-shelter
+  (do-game
+      (new-game {:runner {:hand ["Lago Paranoá Shelter"]
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :corp {:hand ["PAD Campaign" "Crisium Grid" "Ice Wall" "Spin Doctor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Lago Paranoá Shelter")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (no-prompt? state :runner) "Ice don't trigger Lago Paranoá Shelter")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (changes-val-macro
+        1 (count (:discard (get-runner)))
+        "Milled 1 card"
+        (click-prompt state :runner "Yes"))
+      (is (= 1 (count (:hand (get-runner)))) "Runner drew 1 card")
+      (play-from-hand state :corp "Spin Doctor" "New remote")
+      (is (no-prompt? state :runner) "Lago Paranoá Shelter is once per turn")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Crisium Grid" "R&D")
+      (changes-val-macro
+        1 (count (:discard (get-runner)))
+        "Milled 1 card"
+        (click-prompt state :runner "Yes"))
+      (is (= 1 (count (:hand (get-runner)))) "No cards left to draw")))
+
 (deftest lewi-guilherme
   ;; Lewi Guilherme - lower corp hand size by 1, pay 1 credit when turn begins or trash
   (do-game
