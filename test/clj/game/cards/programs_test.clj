@@ -4099,6 +4099,51 @@
         (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
         (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU"))))
 
+(deftest living-mural
+  (do-game
+    (new-game {:corp {:hand ["Anansi" (qty "Tithe" 2)]
+               :credits 50}
+               :runner {:hand ["Living Mural"]
+                        :credits 50}})
+    (play-from-hand state :corp "Anansi" "HQ")
+    (play-from-hand state :corp "Tithe" "HQ")
+    (play-from-hand state :corp "Tithe" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Living Mural")
+    (click-card state :runner (get-ice state :hq 1))
+    (let [an (get-ice state :hq 0)
+          tithe (get-ice state :hq 1)
+          lm (first (:hosted (refresh tithe)))]
+      (run-on state "HQ")
+      (rez state :corp tithe)
+      (run-continue state)
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lm)})
+      (core/continue state :corp nil)
+      (run-continue state)
+      (rez state :corp an)
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lm)})
+      (run-continue-until state :success)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (refresh lm) 0)
+      (is (no-prompt? state :runner) "Can't break subs on a different server"))))
+
+(deftest living-mural-threat-ability
+  (do-game
+    (new-game {:corp {:hand ["Anansi" (qty "Project Atlas" 2)]
+               :credits 10}
+               :runner {:hand ["Living Mural"]}})
+    (play-and-score state "Project Atlas")
+    (play-and-score state "Project Atlas")
+    (play-from-hand state :corp "Anansi" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Living Mural")
+    (click-card state :runner (get-ice state :hq 0))
+    (let [an (get-ice state :hq 0)
+          lm (first (:hosted (refresh an)))]
+      (is (= 4 (get-strength lm))))))
+
 (deftest lustig
   ;; Lustig
   (do-game
