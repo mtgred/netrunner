@@ -468,13 +468,12 @@
               {:target-server :hq
                :this-card-run true
                :mandatory true
-               :ability {:msg "breach R&D, accessing one additional card"
+               :ability {:msg "breach R&D, accessing 1 additional card"
                          :async true
                          :effect (req (register-events
                                         state side
                                         card [(breach-access-bonus :rd 1 {:duration :end-of-run})])
                                       (breach-server state :runner eid [:rd] nil))}})]})
-
 
 (defcard "Beth Kilrain-Chang"
   (let [ability {:once :per-turn
