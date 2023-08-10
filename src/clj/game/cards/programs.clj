@@ -1829,9 +1829,11 @@
              :async true
              :effect (effect (continue-ability
                                {:optional
-                                {:prompt "Trash Laser Pointer to bypass?"
+                                {:prompt (msg "Trash Laser Pointer to bypass "
+                                              (card-str state current-ice)
+                                              "?")
                                  :yes-ability
-                                 {:msg (msg "trash itself to bypass the current ice")
+                                 {:msg (msg "bypass" (card-str state current-ice))
                                   :effect (req
                                             (wait-for (trash state :runner (make-eid state eid) card
                                                              {:unpreventable :true
