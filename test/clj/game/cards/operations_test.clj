@@ -2965,6 +2965,48 @@
     (play-from-hand state :corp "Peak Efficiency")
     (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed pieces of ice; unrezzed ice ignored")))
 
+(deftest pivot-gets-operations
+  (do-game
+      (new-game {:corp {:hand ["Pivot"]
+                        :deck ["Hedge Fund" "PAD Campaign" "Project Atlas"]}})
+      (changes-val-macro
+        -2 (:click (get-corp))
+        "Pivot is a double operation"
+        (play-from-hand state :corp "Pivot")
+        (is (= ["Hedge Fund" "Project Atlas"] (prompt-titles :corp)))
+        (click-prompt state :corp "Hedge Fund"))
+      (is (= (:title (first (-> @state :corp :hand))) "Hedge Fund"))))
+
+(deftest pivot-gets-agendas
+  (do-game
+      (new-game {:corp {:hand ["Pivot"]
+                        :deck ["Hedge Fund" "PAD Campaign" "Project Atlas"]}})
+      (play-from-hand state :corp "Pivot")
+      (is (= ["Hedge Fund" "Project Atlas"] (prompt-titles :corp)))
+      (click-prompt state :corp "Project Atlas")
+      (is (= (:title (first (-> @state :corp :hand))) "Project Atlas"))))
+
+(deftest pivot-threat-ability-to-install
+  (do-game
+      (new-game {:corp {:hand ["Pivot" "City Works Project" "NGO Front"]
+                        :deck ["Subliminal Messaging" "PAD Campaign"]}})
+      (play-and-score state "City Works Project")
+      (play-from-hand state :corp "Pivot")
+      (is (= ["Subliminal Messaging"] (prompt-titles :corp)))
+      (click-prompt state :corp "Subliminal Messaging")
+      (click-card state :corp "NGO Front")
+      (click-prompt state :corp "New remote")))
+
+(deftest pivot-threat-ability-to-play-operations
+  (do-game
+      (new-game {:corp {:hand ["Pivot" "City Works Project" "NGO Front"]
+                        :deck ["Subliminal Messaging" "PAD Campaign"]}})
+      (play-and-score state "City Works Project")
+      (play-from-hand state :corp "Pivot")
+      (is (= ["Subliminal Messaging"] (prompt-titles :corp)))
+      (click-prompt state :corp "Subliminal Messaging")
+      (click-card state :corp "Subliminal Messaging")))
+
 (deftest power-grid-overload
   ;; Power Grid Overload
   (do-game
