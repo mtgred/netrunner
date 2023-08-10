@@ -2926,6 +2926,71 @@
     (is (zero? (count-tags state)) "Runner should lose 1 tag")
     (is (not (get-resource state 0)) "Kati should be trashed")))
 
+(deftest oppo-research
+  (do-game
+    (new-game {:corp {:hand [(qty "Oppo Research" 3) "Project Beale" "Rashida Jaheem"]
+                      :credits 10}})
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (changes-val-macro
+      2 (count-tags state)
+      "Runner got 2 tags"
+      (play-from-hand state :corp "Oppo Research"))
+    (take-credits state :corp)
+    (run-empty-server state "Server 2")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Oppo Research")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (changes-val-macro
+      0 (count-tags state)
+      "Runner got no tags"
+      (play-from-hand state :corp "Oppo Research"))))
+
+(deftest oppo-research-threat-ability
+  (do-game
+    (new-game {:corp {:hand ["Oppo Research" "Salvo Testing"]
+                      :credits 10}})
+    (play-from-hand state :corp "Salvo Testing" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (changes-val-macro
+      4 (count-tags state)
+      "Runner got 4 tags"
+      (play-from-hand state :corp "Oppo Research")
+      (click-prompt state :corp "Yes"))
+    (is (= 5 (:credit (get-corp))) "Corp spent 5 additional credits")))
+
+(deftest oppo-research-threat-ability-tag-prevention
+  (do-game
+    (new-game {:corp {:hand ["Oppo Research" "Salvo Testing"]
+                      :credits 10}
+               :runner {:hand ["No One Home"]}})
+    (play-from-hand state :corp "Salvo Testing" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "No One Home")
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (changes-val-macro
+      2 (count-tags state)
+      "Runner prevented 2 tag"
+      (play-from-hand state :corp "Oppo Research")
+      (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-prompt state :runner "Done")
+      (click-prompt state :corp "Yes"))))
+
 (deftest oversight-ai-rez-at-no-cost
     ;; Rez at no cost
     (do-game
