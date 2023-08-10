@@ -1,5 +1,6 @@
 (ns game.cards.identities
   (:require
+   [clojure.pprint :as pprint]
    [clojure.string :as str]
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
@@ -580,28 +581,33 @@
                  :effect (req (add-counter state side card :power 1))}]
   {:events [(assoc ability :event :runner-trash :req (req (valid-trash target)))
             (assoc ability :event :agenda-stolen :req (req true))]
-   :abilities [{:label "look at the top 3 and install 1"
+   :abilities [{:label "Look at the top 3 cards of R&D"
                 :cost [:power 1 :click 1]
                 :effect (req (let [top (take 3 (:deck corp))]
-                               (continue-ability
-                                 state :corp
-                                 {:prompt (msg (str "The top cards are " (str (str/join ", " (map :title top))) ". Install a card?"))
-                                  :not-distinct true
-                                  :choices (req (conj
-                                                  (filter #(not (operation? %)) top)
-                                                  "No Thanks"))
-                                  :msg (msg (if (= "No Thanks" target)
-                                              "decline to install a card"
-                                              (str "install the "
-                                                   ;; don't look at this spaghetti please
-                                                   (if (= target (first top)) "first"
-                                                       (if (= target (second top)) "second" "third"))
-                                                   " card from R&D")))
-                                  :async true
-                                  :effect (req (if-not (= target "No Thanks")
-                                                 (corp-install state side eid target nil)
-                                                 (effect-completed state side eid)))}
-                                 card nil)))}]}))
+                               (wait-for (resolve-ability state side
+                                                          {:async true
+                                                           :waiting-prompt true
+                                                           :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title top)))
+                                                           :choices ["OK"]}
+                                                          card nil)
+                                         (continue-ability
+                                           state :corp
+                                           {:prompt "Choose a card to install"
+                                             :not-distinct true
+                                             :choices (req (conj
+                                                             (filter #(corp-installable-type? %) top)
+                                                             "Done"))
+                                             :async true
+                                             :effect (req (if-not (= target "Done")
+                                                           (do (system-msg
+                                                                 state side
+                                                                 (str "uses " (get-title card) " to install the "
+                                                                      (pprint/cl-format nil "~:R"
+                                                                        (inc (first (keep-indexed #(when (same-card? target %2) %1) top))))
+                                                                      " card"))
+                                                               (corp-install state side eid target nil))
+                                                           (effect-completed state side eid)))}
+                                           card nil))))}]}))
 
 (defcard "Esâ Afontov: Eco-Insurrectionist"
   (letfn

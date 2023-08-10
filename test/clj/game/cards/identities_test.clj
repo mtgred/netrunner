@@ -7,6 +7,7 @@
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
+            [clojure.string :as str]
             [clojure.test :refer :all]))
 
 (deftest ^{:card-title "419-amoral-scammer"}
@@ -1286,6 +1287,66 @@
                            "Used 1 credit from Smoke"
                            (card-ability state :runner refr 1)
                            (click-card state :runner smoke)))))
+
+(deftest epiphany-analytica-nations-undivided
+  (do-game
+    (new-game {:corp {:id "Epiphany Analytica: Nations Undivided"
+                        :hand ["Project Atlas" "Rashida Jaheem" "Accelerated Beta Test" "Brainstorm" "Chiyashi"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (take-credits state :corp)
+    (let [epiph (get-in @state [:corp :identity])]
+      (changes-val-macro
+        1 (get-counters (refresh epiph) :power)
+        "Got 1 power counter"
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 1 [Credits] to trash"))
+      (changes-val-macro
+        0 (get-counters (refresh epiph) :power)
+        "Got no additional power counters"
+        (run-empty-server state "Server 2")
+        (click-prompt state :runner "Steal"))
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C D
+      (changes-val-macro
+        -1 (get-counters (refresh epiph) :power)
+        "Spend hosted power counters"
+        (card-ability state :corp (:identity (get-corp)) 0)
+        (is (str/includes? (:msg (prompt-map :corp)) "Accelerated Beta Test, Brainstorm, and Chiyashi"))
+        (click-prompt state :corp "OK")
+        (click-prompt state :corp "Brainstorm")
+        (click-prompt state :corp "HQ"))
+      (is (= "Brainstorm" (:title (get-ice state :hq 0))) "Brainstorm is installed")
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Chiyashi")))))
+
+(deftest epiphany-analytica-nations-undivided-declines
+  (do-game
+    (new-game {:corp {:id "Epiphany Analytica: Nations Undivided"
+                        :hand ["Rashida Jaheem" "Ad Blitz" "Biased Reporting" "Celebrity Gift"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (let [epiph (get-in @state [:corp :identity])]
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Ad Blitz" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Biased Reporting" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Celebrity Gift" (:hand (get-corp))) :deck)
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (is (str/includes? (:msg (prompt-map :corp)) "Ad Blitz, Biased Reporting, and Celebrity Gift"))
+      (click-prompt state :corp "OK")
+      (click-prompt state :corp "Done")
+      (is (no-prompt? state :corp))
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Ad Blitz"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Biased Reporting"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Celebrity Gift")))))
 
 (deftest exile-streethawk-simultaneous-resolution-prompt-shown-for-interaction-with-customized-secretary
     ;; Simultaneous-resolution prompt shown for interaction with Customized Secretary
