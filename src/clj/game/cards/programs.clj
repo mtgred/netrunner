@@ -2654,12 +2654,12 @@
                          (can-host? %))}
    :events [{:event :rez
              :req (req (same-card? (:card context) (:host card)))
-             :msg "gain 3 [Credit]"
+             :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits eid 3))}
             {:event :derez
              :req (req (same-card? target (:host card)))
-             :msg "gain 3 [Credit]"
+             :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits eid 3))}]})
 
