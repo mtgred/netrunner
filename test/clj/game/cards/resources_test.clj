@@ -2774,7 +2774,7 @@
       (click-prompt state :runner "Trash Guru Davinder")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
-(deftest hannah-wheels-basic-test
+(deftest hannah-wheels-pilintra-basic-test
   (do-game
     (new-game {:runner {:hand ["Hannah \"Wheels\" Pilintra"]}
                :corp {:deck [(qty "Hedge Fund" 5)]
@@ -2783,8 +2783,11 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Hannah \"Wheels\" Pilintra")
     (let [wheels (get-resource state 0)]
-      (card-ability state :runner (refresh wheels) 0)
-      (click-prompt state :runner "Server 1")
+      (changes-val-macro
+        0 (:click (get-runner))
+        "Gained 1 click back"
+        (card-ability state :runner (refresh wheels) 0)
+        (click-prompt state :runner "Server 1"))
       (changes-val-macro
         1 (count-tags state)
         "Runner took a tag for jacking out"
