@@ -1014,12 +1014,12 @@
                                 (strength-pump 1 1)]
                     :interactive (req true)
                     :events [{:event :encounter-ice
-                              :optional {:prompt (msg "spend 3 counters to bypass " (:title current-ice))
+                              :optional {:prompt (msg "Spend 3 power counters to bypass " (card-str state current-ice) "?")
                                          :req (req (and
                                                      (has-subtype? (:ice context) "Barrier")
                                                      (<= 3 (get-counters (get-card state card) :power))))
                                          :yes-ability {:cost [:power 3]
-                                                       :msg (msg "bypass " (:title current-ice))
+                                                       :msg (msg "bypass " (card-str state current-ice))
                                                        :effect (req (bypass-ice state))}}}
 
                              {:event :subroutines-broken
