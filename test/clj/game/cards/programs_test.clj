@@ -4016,6 +4016,44 @@
     (core/purge state :corp)
     (is (empty? (get-program state)) "Lamprey trashed by purge")))
 
+(deftest laser-pointer
+  (do-game
+    (new-game {:runner {:hand [(qty "Laser Pointer" 3)]
+                        :credits 10}
+               :corp {:hand ["Envelope" "Starlit Knight" "Rototurret"]
+                      :credits 50}})
+    (play-from-hand state :corp "Envelope" "HQ")
+    (play-from-hand state :corp "Starlit Knight" "HQ")
+    (play-from-hand state :corp "Rototurret" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (rez state :corp (get-ice state :hq 2))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Laser Pointer")
+    (play-from-hand state :runner "Laser Pointer")
+    (play-from-hand state :runner "Laser Pointer")
+    (run-on state :hq)
+    (run-continue state)
+    (changes-val-macro
+          1 (count (:discard (get-runner)))
+          "Laser Pointer trashed"
+          (click-prompt state :runner "Yes"))
+    (is (= :movement (:phase (get-run))) "Runner bypassed Rototurret")
+    (run-continue state)
+    (run-continue state)
+    (changes-val-macro
+          1 (count (:discard (get-runner)))
+          "Laser Pointer trashed"
+          (click-prompt state :runner "Yes"))
+    (is (= :movement (:phase (get-run))) "Runner bypassed Starlit Knight")
+    (run-continue state)
+    (run-continue state)
+    (changes-val-macro
+          1 (count (:discard (get-runner)))
+          "Laser Pointer trashed"
+          (click-prompt state :runner "Yes"))
+    (is (= :movement (:phase (get-run))) "Runner bypassed Envelope")))
+
 (deftest leech
   ;; Leech - Reduce strength of encountered piece of ice
   (do-game
