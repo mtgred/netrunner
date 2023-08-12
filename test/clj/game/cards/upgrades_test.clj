@@ -4186,6 +4186,34 @@
      (is (= 0 (get-counters (refresh ngo2) :advancement)) "NGO Front 2 has gained no counters")
      (is (not (no-prompt? state :corp)) "Vlad Grid prompt is still active"))))
 
+(deftest vovo-ozetti
+  (do-game
+    (new-game  {:corp {:hand ["Vovô Ozetti" "Enigma" "Vanity Project" "PAD Campaign" "Tranquility Home Grid"]
+                       :credits 10}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Vovô Ozetti", "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Enigma", "Server 1")
+    (changes-val-macro
+      -1 (:credit (get-corp))
+      "Rezzed ice paying 2 less credits"
+      (rez state :corp (get-ice state :remote1 0)))
+    (play-from-hand state :corp "PAD Campaign", "Server 1")
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "No discount on assets or upgrades when under threat"
+      (rez state :corp (get-content state :remote1 1)))
+    (play-and-score state "Vanity Project")
+    (play-from-hand state :corp "Tranquility Home Grid", "Server 1")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Rezzed upgrade paying 2 less credits"
+      (rez state :corp (get-content state :remote1 2)))
+    (core/end-turn state :corp nil)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "R&D")
+    (is (= "Vovô Ozetti" (:title (get-content state :rd 0))))))
+
 (deftest warroid-tracker-trashing-warroid-directly-starts-trace
     ;; Trashing Warroid starts trace
     (do-game
