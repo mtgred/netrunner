@@ -3861,6 +3861,21 @@
     (is (not (:run @state)) "Run ended")
     (is (= 2 (count (:hand (get-runner)))) "One played, one drawn")))
 
+(deftest joy-ride
+  ;; Basic Functionality
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "PAD Campaign" 5)]}
+               :runner {:hand ["Joy Ride"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Joy Ride")
+    (changes-val-macro
+        5 (count (:hand (get-runner)))
+        "Drew 5 cards"
+        (run-continue state))
+    (click-prompt state :runner "No action")))
+
 (deftest katorga-breakout
   ;; Basic Functionality
   (do-game
