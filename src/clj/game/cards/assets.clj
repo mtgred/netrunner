@@ -2826,8 +2826,7 @@
   ;; note - for some reason, clicking for a credit and drawing a card register the same on
   ;; the all-events (corp-spent-click)
   ;; this means we need to do some of this the hard way
-  (let [payoff {:label "Gain [Click]"
-                :msg "gain [Click]"
+  (let [payoff {:msg "gain [Click]"
                 :effect (effect (gain-clicks 1))}
         event-builder (fn [key]
                         {:event key
