@@ -693,6 +693,36 @@
       (click-card state :runner "Spec Work")
       (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown")))
 
+(deftest arissana-rocha-nahu-street-artist
+  (do-game
+    (new-game {:runner {:id "Arissana Rocha Nahu: Street Artist"
+                        :hand ["Hush" "Cache"]}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (let [ari (get-in @state [:runner :identity])]
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (is (no-prompt? state :runner) "Can't use Arissana ability outside of a run")
+      (run-on state "Archives")
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "No additional costs paid"
+        (click-prompt state :runner "Cache"))
+      (is (= "Cache" (:title (get-program state 0))))
+      (run-continue state)
+      (is (= 1 (count (:discard (get-runner)))) "Cache was trashed at the end of the run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (click-prompt state :runner "Hush")
+      (click-card state :runner (get-ice state :hq 0))
+      (is (= "Hush" (:title (first (:hosted (refresh (get-ice state :hq 0)))))))
+      (run-continue state)
+      (is (= 1 (count (:discard (get-runner)))) "Hush is still installed")
+)))
+
 (deftest armand-geist-walker-tech-lord-async-costs-with-sync-abilities
     ;; async costs with sync abilities
     (do-game
