@@ -4693,6 +4693,27 @@
         (is (= 1 (:click (get-runner))) "Runner spent 2 clicks (1 remaining)")
         (is (= 3 (:credit (get-runner))) "Runner spent 2 credits (3 remaining)"))))
 
+(deftest monkeywrench
+    (do-game
+      (new-game {:runner {:hand ["Monkeywrench"]}
+                 :corp {:hand ["Enigma" "Wraparound" "Ice Wall"]
+                        :credits 10}})
+      (play-from-hand state :corp "Enigma" "HQ")
+      (play-from-hand state :corp "Wraparound" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (let [enigma (get-ice state :hq 0)
+            wr (get-ice state :hq 1)
+            iw (get-ice state :rd 0)]
+        (play-from-hand state :runner "Monkeywrench")
+        (click-card state :runner wr)
+        (rez state :corp wr)
+        (rez state :corp enigma)
+        (rez state :corp iw)
+        (is (= 5 (get-strength (refresh wr))))
+        (is (= 1 (get-strength (refresh enigma))))
+        (is (= 1 (get-strength (refresh iw)))))))
+
 (deftest mkultra-auto-pump
     ;; auto-pump
     (testing "Pumping and breaking for 1"
