@@ -1452,7 +1452,7 @@
       (run-jack-out state)
       (is (= 2 (get-strength (refresh faust))) "Dean Lister effect ends after run"))))
 
-(deftest debbie-downtown
+(deftest debbie-downtown-moreira
   (do-game
     (new-game {:corp {:hand ["Rashida Jaheem"]}
                :runner {:hand ["Carpe Diem" "Debbie \"Downtown\" Moreira"]}})
@@ -1469,6 +1469,17 @@
       (is (not (no-prompt? state :runner)) "Prompt to spend credits")
       (click-card state :runner (refresh deb))
       (is (no-prompt? state :runner) "Spent"))))
+
+(deftest debbie-downtown-moreira-threat
+  (do-game
+    (new-game {:corp {:hand [(qty "Project Atlas" 2)]
+                      :credits 10}
+               :runner {:hand ["Debbie \"Downtown\" Moreira"]}})
+    (play-and-score state "Project Atlas")
+    (play-and-score state "Project Atlas")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Debbie \"Downtown\" Moreira")
+    (is (= 2 (get-counters (refresh (get-resource state 0)) :credit)) "Has 2 hosted credits")))
 
 (deftest decoy
   ;; Decoy - Trash to avoid 1 tag
