@@ -3144,7 +3144,7 @@
 
 (defcard "S-Dobrado"
   {:makes-run true
-   :on-play {:prompt "Choose a server"
+   :on-play {:prompt "Choose a central server"
              :choices (req (->> runnable-servers
                                 (map unknown->kw)
                                 (filter is-central?)
@@ -3154,15 +3154,17 @@
    :events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
-             :msg (msg "bypass " (:title (:ice context)))
+             :msg (msg "bypass " (card-str state current-ice))
              :effect (req (bypass-ice state))}
             {:event :encounter-ice
              :req (req (and (= 2 (count (run-events state side :encounter-ice)))
                             (threat-level 4 state)))
              :async true
              :effect (effect (continue-ability
-                               {:optional {:prompt "spend click to bypass ice?"
-                                           :yes-ability {:msg (msg "bypass " (:title (:ice context)))
+                               {:optional {:prompt (msg "Spend [Click] to bypass " 
+                                                        (card-str state current-ice)
+                                                        "?")
+                                           :yes-ability {:msg (msg "bypass " (card-str state current-ice))
                                                          :cost [:click 1]
                                                          :effect (req (bypass-ice state))}}}
                                card nil))}]})
