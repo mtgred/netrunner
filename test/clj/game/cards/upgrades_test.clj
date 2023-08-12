@@ -4094,6 +4094,14 @@
        (click-prompt state :corp "HQ")
        (is (= "Fire Wall" (:title (first (get-in @state [:corp :servers :hq :ices])))) "Fire Wall on HQ"))))
 
+(deftest tucana-is-remote-only
+  (do-game
+    (new-game {:corp {:hand ["Tucana"]}})
+    (play-from-hand state :corp "Tucana")
+      (is (not (some #{"HQ" "R&D" "Archives"} (prompt-buttons :corp)))
+          "Central servers are not listed in the install prompt")
+    (click-prompt state :corp "New remote")))
+
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game
