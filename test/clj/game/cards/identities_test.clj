@@ -149,6 +149,27 @@
       (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
       (is (prompt-is-type? state :runner :waiting) "Runner should wait again")))
 
+(deftest a-teia-ip-recovery
+  (do-game
+    (new-game {:corp {:id "A Teia: IP Recovery"
+                      :hand ["Ice Wall" "Vanilla" "PAD Campaign" "Spin Doctor" "Enigma" "Pharos"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (is (no-prompt? state :corp) "No trigger when installing on central servers")
+    (play-from-hand state :corp "Spin Doctor" "New remote")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (is (= 2 (count (core/get-remotes state))) "Could not install more remotes")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Enigma" "Server 1")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Ignored install costs"
+      (click-card state :corp "Pharos")
+      (click-prompt state :corp "Server 2"))
+    ))
+
 (deftest a-teia-tatu-bola
   (do-game
     (new-game {:corp {:id "A Teia: IP Recovery"
