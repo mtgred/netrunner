@@ -3956,8 +3956,8 @@
    :subroutines [(gain-credits-sub 2)
                  (runner-loses-credits 2)
                  (assoc end-the-run
-                        :label "End the run if you are richer than the Runner"
-                        :req (req (> (:credit corp) (* 1 (:credit runner)))))]})
+                        :label "End the run if you have more credits than the Runner"
+                        :req (req (> (:credit corp) (:credit runner))))]})
 
 (defcard "Vampyronassa"
   {:subroutines [(runner-loses-credits 2)
