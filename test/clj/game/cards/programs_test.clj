@@ -6372,6 +6372,36 @@
         (is (= "Rezeki" (:title (get-program state 1))) "Rezeki is installed")
         (is (= 0 (:credit (get-runner))) "Runner had 2 credits before SMC, paid 2 for SMC from Multithreader, 2 for Rezeki install - 0 credits left"))))
 
+(deftest shibboleth
+    (do-game
+      (new-game {:runner {:hand ["Shibboleth"]}
+                 :corp {:hand ["Magnet" (qty "Project Vitruvius" 2)]
+                        :credits 10}})
+      (play-and-score state "Project Vitruvius")
+      (play-from-hand state :corp "Magnet" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Shibboleth")
+      (let [shi (get-program state 0)]
+        (run-on state "HQ")
+        (run-continue state)
+        (changes-val-macro -1 (:credit (get-runner))
+          "No need to pump strength"
+          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh shi)}))
+        (core/continue state :corp nil)
+        (run-jack-out state)
+        (take-credits state :runner)
+        (changes-val-macro
+          -2 (get-strength (refresh shi))
+          "Strength gets reduced by threat"
+          (play-and-score state "Project Vitruvius"))
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (run-continue state)
+        (changes-val-macro -3 (:credit (get-runner))
+          "Pump strength and break sub"
+          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh shi)})))))
+
 (deftest shiv
   ;; Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link
   (do-game
