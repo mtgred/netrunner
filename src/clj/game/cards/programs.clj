@@ -581,7 +581,7 @@
                                  :req (req (and (get-current-encounter state)
                                                  (<= (get-strength current-ice) (get-strength card))
                                                  (has-subtype? current-ice "Barrier")))
-                                 :msg (msg "prevent " (:title current-ice) " from ending the run (this encounter)")
+                                 :msg (msg "prevent " (card-str state current-ice) " from ending the run this encounter")
                                  :effect (req
                                            (let [target-ice (:ice (get-current-encounter state))]
                                              (register-floating-effect

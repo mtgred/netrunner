@@ -532,7 +532,7 @@
     (run-jack-out state)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
-(deftest audrey
+(deftest audrey-v2
   (do-game
     (new-game {:corp {:hand ["Rashida Jaheem" "Vanilla"]}
                :runner {:hand ["Knifed" "Audrey v2" "Sure Gamble"]}})

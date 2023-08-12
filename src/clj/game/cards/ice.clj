@@ -3148,7 +3148,7 @@
    :events [{:event :pass-ice
              :req (req (and (same-card? (:ice context) card)
                             (<= 4 (count (:hand runner)))))
-             :msg "give the runner a tag"
+             :msg "give the Runner 1 tag"
              :effect (effect (gain-tags eid 1))}]})
 
 (defcard "Ping"
@@ -3257,7 +3257,7 @@
                               (let [top-cards (take 3 (:deck corp))
                                     top-names (map :title top-cards)]
                                 {:waiting-prompt true
-                                 :prompt (str "The top cards of R&D are: " (enumerate-str top-names))
+                                 :prompt (str "The top cards of R&D are (top->bottom): " (enumerate-str top-names))
                                  :choices ["Arrange cards" "Shuffle R&D"]
                                  :async true
                                  :effect

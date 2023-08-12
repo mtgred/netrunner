@@ -389,11 +389,11 @@
                               state side
                               {:optional
                                {:req (req true)
-                                :prompt (str "Remove Capybara from the game to derez " (:title target-ice))
+                                :prompt (str "Remove Capybara from the game to derez " (card-str state target-ice) "?")
                                 :yes-ability
                                 {:async true
                                  :cost [:remove-from-game]
-                                 :msg (msg "derez " (:title target-ice))
+                                 :msg (msg "derez " (card-str state target-ice))
                                  :effect (effect (derez target-ice)
                                                  (effect-completed eid))}}}
                               card nil)))}]})
@@ -1166,14 +1166,14 @@
 
 (defcard "LilyPAD"
   {:events [{:event :runner-install
-             :optional {:prompt "Draw a card?"
+             :optional {:prompt "Draw 1 card?"
                         :req (req (and
                                     (program? (:card target))
                                     (first-event? state :runner :runner-install #(program? (:card (first %))))))
-                        :yes-ability {:msg "draw a card"
+                        :yes-ability {:msg "draw 1 card"
                                       :async true
                                       :effect (req (draw state :runner eid 1))}
-                        :no-ability {:msg "declines to draw a card"}}}]
+                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :constant-effects [(mu+ 2)]})
 
 (defcard "LLDS Memory Diamond"
