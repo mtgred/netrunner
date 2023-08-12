@@ -698,16 +698,17 @@
              :req (req (ice? (:card context)))
              :msg "place 2 [Credits] on itself"
              :effect (effect (add-counter :corp card :credit 2))}]
-   :abilities [{:async true
+   :abilities [{:label "Take all hosted credits"
+                :cost [:trash-can]
+                :msg (msg "gain " (get-counters card :credit) " [Credits]")
+                :async true
+                :effect (effect (gain-credits eid (get-counters card :credit)))}
+               {:async true
                 :effect (effect (add-counter card :credit -1)
                                 (gain-credits eid 1))
-                :msg "take 1 hosted [Credits]"}
-               {:label "Take all hosted credits"
-                :cost [:trash-can]
-                :msg (msg "trash itself and gain " (get-counters card :credit) " [Credits]")
-                :async true
-                :effect (effect (gain-credits eid (get-counters card :credit)))}]
-   :interactions {:pay-credits {:req (req (and (= :corp-install (:source-type eid))))
+                :label "Take 1 hosted [Credits] (manual)"
+                :msg "take 1 hosted [Credits]"}]
+   :interactions {:pay-credits {:req (req (= :corp-install (:source-type eid)))
                                 :type :credit}}})
 
 (defcard "Daily Business Show"
