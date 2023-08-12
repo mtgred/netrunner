@@ -3561,27 +3561,26 @@
                              (damage-prevent :brain Integer/MAX_VALUE))}]})
 
 (defcard "The Price"
-  {:on-play {:msg "trash the top 4 cards of the stack"
-             :async true
+  {:on-play {:async true
              :req (req (not (empty? (:deck runner))))
              :effect
              (req
                (wait-for (mill state :runner (make-eid state eid) :runner 4)
                          (let [trashed-cards async-result]
                            (system-msg state side
-                                       (str "trashes "
-                                            (str/join  ", " (map :title trashed-cards))
+                                       (str "uses " (:title card) "to trash "
+                                            (enumerate-str (map :title trashed-cards))
                                             " from the top of the stack"))
                            (continue-ability
                              state side
-                             {:prompt "choose a trashed card to install"
+                             {:prompt "Choose a card to install"
                               :async true
                               :choices (req (cancellable (filter #(and (not (event? %))
                                                                        (runner-can-install? state side % nil)
                                                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -3})])
                                                                        (in-discard? (get-card state %))) trashed-cards)))
-                              :msg (msg  "install " (:title target) ", paying 3 [Credit] less")
-                              :cancel-effect (effect (system-msg "declines to install a card")
+                              :msg (msg  "install " (:title target) ", paying 3 [Credits] less")
+                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                      (effect-completed eid))
                               :effect (req (let [card-to-install (first (seq (filter #(and (= (:title target) (:title %)) (in-discard? (get-card state %))) trashed-cards)))]
                                                (runner-install state side (assoc eid :source card :source-type :runner-install) card-to-install {:cost-bonus -3})))}
