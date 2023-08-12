@@ -769,23 +769,25 @@
   ;; TODO - this should provide an aura that prevents the runner from paying credits
   ;; for paid abilities during subroutine resolution
   ;; we can figure out how to do that type of thing some time in the future
-  (let [sub {:label "Do 1 net damage unless runner pays 2 [Credits] (Do 1 net damage)"
-             :msg (msg "do 1 net damage" (when-not (threat-level 4 state) " unless the runner pays 2 [Credits]"))
+  (let [sub {:label "Do 1 net damage unless the Runner pays 2 [Credits]"
              :async true
              :effect (req (if (threat-level 3 state)
-                            (damage state :corp eid :net 1)
+                            (damage state side eid :net 1 {:card card})
                             (continue-ability
                               state side
                               {:prompt "Choose one"
+                               :waiting-prompt true
                                :player :runner
-                               :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]) "Pay 2 [Credit]")
-                                              "Corp does 1 net damage"])
-                               :effect (req (if (= "Corp does 1 net damage" target)
-                                              (damage state :corp eid :net 1)
-                                              (continue-ability state side (runner-pays [:credit 2]) card nil)))
-                               :msg (msg (if (= "Corp does 1 net damage" target)
+                               :choices (req ["Take 1 net damage"
+                                              (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]) "Pay 2 [Credits]")])
+                               :effect
+                               (req (if (= "Take 1 net damage" target)
+                                      (damage state side eid :net 1 {:card card})
+                                      (wait-for (pay state :runner (make-eid state eid) card [:credit 2])
+                                                (effect-completed state side eid))))
+                               :msg (msg (if (= "Take 1 net damage" target)
                                            "do 1 net damage"
-                                           "force the runner to pay 2 [Credits]"))}
+                                           (str "force the runner to " (decapitalize target))))}
                               card nil)))}]
     {:implementation "preventing paid abilities with credit costs not implemented (yet)"
      :subroutines [sub
