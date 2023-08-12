@@ -531,6 +531,7 @@
   (let [ability {:once :per-turn
                  :async true
                  :label "Trash this asset to do 1 meat damage for each hosted advancement counter (start of turn)"
+                 :interactive (req true)
                  :req (req (:corp-phase-12 @state))
                  :effect
                  (effect
@@ -2147,6 +2148,7 @@
   (let [ability {:async true
                  :once :per-turn
                  :label "Trash this asset to do 2 net damage (start of turn)"
+                 :interactive (req true)
                  :req (req (:corp-phase-12 @state))
                  :effect
                  (effect
@@ -2744,6 +2746,7 @@
    :derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
              :async true
+             :interactive (req true)
              :effect (req (add-counter state side card :power -1)
                           (if (not (pos? (get-counters (get-card state card) :power)))
                             (wait-for (trash state side card {:cause-card card})

@@ -785,6 +785,20 @@
       "Runner received 4 damage"
       (click-prompt state :corp "Yes"))))
 
+(deftest clearinghouse-interactive
+  ;; Should prompt which to fire first
+  (do-game
+    (new-game {:corp {:deck [(qty "Clearinghouse" 2)]}})
+    (play-from-hand state :corp "Clearinghouse" "New remote")
+    (play-from-hand state :corp "Clearinghouse" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+    (end-phase-12 state :corp)
+    (is (= ["Clearinghouse" "Clearinghouse"] (prompt-titles :corp)))))
+
 (deftest clone-suffrage-movement
   ;; Clone Suffrage Movement
   (do-game
@@ -4243,6 +4257,21 @@
         (click-prompt state :corp "Yes"))
       (is (= 1 (count (:discard (get-corp)))) "Reaper Function was trashed"))))
 
+(deftest reaper-function-interactive
+  ;; Should prompt which to fire first
+  (do-game
+    (new-game {:corp {:deck ["Reaper Function" "Reaper Function"]
+                      :credits 6}})
+    (play-from-hand state :corp "Reaper Function" "New remote")
+    (play-from-hand state :corp "Reaper Function" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+    (end-phase-12 state :corp)
+    (is (= ["Reaper Function" "Reaper Function"] (prompt-titles :corp)))))
+
 (deftest reconstruction-contract
   ;; Reconstruction Contract - place advancement token when runner takes meat damage
   (do-game
@@ -5850,6 +5879,19 @@
       ;; Corp turn 4 - damage fires
       (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
       (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
+
+(deftest urban-renewal-interactive
+  ;; Should prompt which to fire first
+  (do-game
+    (new-game {:corp {:deck [(qty "Urban Renewal" 2)]
+                      :credits 6}})
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= ["Urban Renewal" "Urban Renewal"] (prompt-titles :corp)))))
 
 (deftest urtica-cipher
   ;; Urtica Cipher
