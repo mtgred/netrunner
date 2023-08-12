@@ -7,6 +7,7 @@
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
             [jinteki.validator :refer [legal?]]
+            [clojure.string :as str]
             [clojure.test :refer :all]))
 
 (deftest account-siphon-use-ability
@@ -1123,14 +1124,21 @@
 
 (deftest chrysopeoeian-skimming-decline
   (do-game
-    (new-game {:corp {:hand ["Project Atlas" "Project Beale"]
-                      :deck ["Hedge Fund" "IPO" "NGO Front"]}
+    (new-game {:corp {:hand ["Project Atlas" "Project Beale" "Accelerated Beta Test" "Brainstorm" "Chiyashi"]}
                :runner {:hand ["Chrysopoeian Skimming"]
                         :deck ["Sure Gamble"]}})
+    (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+    ;; R&D is now from top to bottom: A B C
     (take-credits state :corp)
     (play-from-hand state :runner "Chrysopoeian Skimming")
-    (click-prompt state :corp "No thanks")
-    (click-prompt state :runner "Noted")))
+    (click-prompt state :corp "Done")
+    (is (str/includes? (:msg (prompt-map :runner)) "Accelerated Beta Test, Brainstorm, and Chiyashi"))
+    (click-prompt state :runner "OK")))
 
 (deftest chrysopeoeian-skimming-forced-decline
   (do-game
@@ -1140,8 +1148,8 @@
                         :deck ["Sure Gamble"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Chrysopoeian Skimming")
-    (click-prompt state :corp "No thanks")
-    (click-prompt state :runner "Noted")))
+    (click-prompt state :corp "Done")
+    (click-prompt state :runner "OK")))
 
 (deftest code-siphon
   ;; Code Siphon

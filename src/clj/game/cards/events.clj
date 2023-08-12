@@ -544,24 +544,25 @@
                :ability (sabotage-ability 4)})]})
 
 (defcard "Chrysopoeian Skimming"
-  {:on-play {:prompt "Reveal an agenda from HQ?"
+  {:on-play {:prompt "Choose an agenda to reveal"
              :player :corp
-             :choices (req (conj (filter agenda? (:hand corp)) "No thanks"))
+             :waiting-prompt true
+             :choices (req (conj (filter agenda? (:hand corp)) "Done"))
              :async true
-             :effect (req (if (= target "No thanks")
-                            (do (system-msg state :corp "declines to reveal an agenda")
+             :effect (req (if (= target "Done")
+                            (do (system-msg state :corp "declines to reveal an agenda from HQ")
                                 (continue-ability
                                   state :runner
                                   {:msg "look at the top 3 cards of R&D"
-                                   :prompt (msg "the top 3 cards of R&D are " (str/join ", " (map :title (take 3 (:deck corp)))))
-                                   :choices ["Noted"]}
+                                   :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
+                                   :choices ["OK"]}
                                   card nil))
                             (do
                               (wait-for (reveal state side target)
                                         (system-msg state :corp (str "reveals " (:title target) " from HQ"))
                                         (continue-ability
                                           state :runner
-                                          {:msg "gain [Click] and draw a card"
+                                          {:msg "gain [Click] and draw 1 card"
                                            :async true
                                            :effect (req (gain-clicks state :runner 1)
                                                         (draw state :runner eid 1))}
