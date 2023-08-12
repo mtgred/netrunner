@@ -2504,17 +2504,14 @@
   (morph-ice "Sentry" "Code Gate" trash-program-sub))
 
 (defcard "M.I.C."
-  {:abilities [{:label "End the run unless runner spends [Click]"
-                :msg "end the run unless runner spends [Click]"
+  {:abilities [{:label "End the run unless the Runner spends [Click]"
+                :msg "end the run unless the Runner spends [Click]"
                 :req (req (and run this-server))
                 :async true
                 :cost [:trash-can]
                 :effect (req (wait-for (resolve-ability
                                          state side
-                                         (end-the-run-unless-runner
-                                           "loses [Click]"
-                                           "lose [Click]"
-                                           (runner-pays [:lose-click 1]))
+                                         (end-the-run-unless-runner-pays [:click 1])
                                          card nil)
                                        (when (and current-ice run)
                                          (continue state :corp nil)
