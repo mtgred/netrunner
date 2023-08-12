@@ -2949,6 +2949,62 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
 
+(deftest mercury-chrome-libertador
+  (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 2)]}
+                 :runner {:id "Mercury: Chrome Libertador"}})
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")))
+
+(deftest mercury-chrome-libertador-no-additional-access-when-subs-are-broken
+  (do-game
+      (new-game {:corp {:hand [(qty "Hedge Fund" 2) "Ice Wall"]}
+                 :runner {:id "Mercury: Chrome Libertador"
+                          :hand ["Corroder"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh (get-program state 0))})
+      (core/continue state :corp nil)
+      (run-continue state :success)
+      (click-prompt state :runner "No action")))
+
+(deftest mercury-chrome-libertador-interaction-with-tracker
+  (do-game
+      (new-game {:corp {:hand [(qty "Hedge Fund" 2) "Ice Wall"]}
+                 :runner {:id "Mercury: Chrome Libertador"
+                          :hand ["Tracker"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tracker")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (card-ability state :runner (get-program state 0) 0)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (fire-subs state (refresh (get-ice state :hq 0)))
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")))
+
 (deftest mirrormorph-endless-iteration-triggers-gain-credit-from-mm
       ;; Gain credit from MM
     (do-game

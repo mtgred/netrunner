@@ -1236,20 +1236,19 @@
   {:events [{:event :breach-server
              :req (req (and run
                             (empty? (run-events state side :subroutines-broken))
-                            (or (= :rd target)
-                                (= :hq target))))
+                            (#{:hq :rd} target)))
              :async true
              :effect (req (let [breached-server target]
                             (continue-ability
                               state side
                               {:optional
-                               {:prompt "Access an additional card?"
+                               {:prompt "Access 1 additional card?"
                                 :once :per-turn
                                 :async true
                                 :yes-ability {:msg (msg "access 1 additional card")
                                               :effect (effect (access-bonus breached-server 1 :end-of-access)
                                                               (effect-completed eid))}
-                                :no-ability {:msg "decline to access an additional card"}}}
+                                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to access 1 additional card")))}}}
                               card nil)))}]})
 
 (defcard "MirrorMorph: Endless Iteration"
