@@ -513,7 +513,7 @@
                              (assoc eid :source card :source-type :ability)
                              card nil [:add-random-from-hand-to-bottom-of-deck 2])
                        (wait-for (pay state :runner (make-eid state eid) card :add-random-from-hand-to-bottom-of-deck 2)
-                                 (system-msg state :runner (:msg async-result)))
+                                 (system-msg state :runner (:msg async-result))))
                      (register-events state side card [(assoc pre-steal
                                                               :req
                                                               (req (or (= (:previous-zone card)
@@ -522,7 +522,7 @@
                                                                        (= (central->zone (:zone target))
                                                                           (butlast (:previous-zone card)))))
                                                               :duration :end-of-run)])
-                     (effect-completed state side eid)))}}))
+                     (effect-completed state side eid))}}))
 
 (defcard "Daruma"
   (let [choose-swap
