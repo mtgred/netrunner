@@ -6698,6 +6698,37 @@
               "Done"]
              (prompt-buttons :runner))))))
 
+(deftest tatu-bola
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Guard"]}})
+    (play-from-hand state :corp "Tatu-Bola" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (run-continue state)
+    (run-continue state :movement)
+    (changes-val-macro
+      4 (:credit (get-corp))
+      "Corp gained 4 credits"
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Guard"))
+    (is (= "Tatu-Bola" (-> (get-corp) :hand first :title)))
+    (is (= "Guard" (:title (get-ice state :archives 0))))))
+
+(deftest tatu-bola-fake-prompt
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Hedge Fund"]}})
+    (play-from-hand state :corp "Tatu-Bola" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (run-continue state)
+    (run-continue state)
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Corp gained no credits"
+      (click-prompt state :corp "OK"))))
+
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
   ;; Thimblerig does not open a prompt if it's the only piece of ice
   (do-game
