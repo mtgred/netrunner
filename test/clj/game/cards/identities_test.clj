@@ -2528,6 +2528,58 @@
       (play-from-hand state :runner "Scrubbed")
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")))
 
+(deftest jinteki-replicating-nightmare-scenarios
+  ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
+  ;; also take into account Front Company, Off the Grid, Marathon
+  (do-game
+    (new-game {:corp {:id "Jinteki: Replicating Perfection"
+                      :hand ["Front Company" "Off the Grid" "Rashida Jaheem"]}
+               :runner {:hand ["Marathon" "Direct Access"]}})
+    (core/gain state :corp :credit 20)
+    (play-from-hand state :corp "Front Company" "New remote")
+    (play-from-hand state :corp "Off the Grid" "New remote")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (let [fc (get-content state :remote1 0)
+          otg (get-content state :remote2 0)
+          rashida (get-content state :remote3 0)]
+      (rez state :corp (refresh fc))
+      (rez state :corp (refresh otg))
+      (rez state :corp (refresh rashida))
+      (take-credits state :corp)
+      ;; still can't run remotes with direct access
+      (is (not (core/can-run-server? state "Server 1")))
+      (is (core/can-run-server? state "R&D"))
+      (play-from-hand state :runner "Direct Access")
+      (is (not (core/can-run-server? state "Server 1")))
+      (click-prompt state :runner "R&D")
+      (is (= :rd (get-in @state [:run :server 0])) "Running on remote vs RP")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access shuffled into stack")
+      ;; still can't run on off the grid, but can run other remotes
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (core/can-run-server? state "Server 1"))
+      (is (core/can-run-server? state "Server 3"))
+      (run-on state "Server 1")
+      (run-continue state :success)
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (play-from-hand state :runner "Marathon")
+      (click-prompt state :runner "Server 3")
+      (run-jack-out state)
+      ;;can't run OTG or Rashida
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (not (core/can-run-server? state "Server 3")))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;;can't run OTG or Rashida
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (not (core/can-run-server? state "Server 3")))
+      (click-draw state :runner)
+      (play-from-hand state :runner "Direct Access")
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (core/can-run-server? state "Server 3") "Can run because of direct access"))))
+
+
 (deftest jinteki-restoring-humanity
   ;; Jinteki: Restoring Humanity
   (do-game
