@@ -121,7 +121,6 @@
    do-purge
    generate-install-list
    generate-runnable-zones
-   get-runnable-zones
    move-card
    play
    play-ability
@@ -416,7 +415,6 @@
    can-advance?
    can-host?
    can-rez?
-   can-run-server?
    can-run?
    can-score?
    can-steal?
@@ -432,7 +430,6 @@
    clear-run-register!
    clear-turn-flag!
    clear-turn-register!
-   enable-run-on-server
    get-card-prevention
    get-prevent-list
    get-preventing-cards
@@ -445,7 +442,6 @@
    prevent-current
    prevent-draw
    prevent-jack-out
-   prevent-run-on-server
    register-persistent-flag!
    register-run-flag!
    register-turn-flag!
@@ -716,6 +712,7 @@
    add-run-effect
    bypass-ice
    can-bypass-ice
+   can-run-server?
    check-auto-no-action
    check-for-empty-server
    complete-run
@@ -727,6 +724,7 @@
    gain-next-run-credits
    gain-run-credits
    get-current-encounter
+   get-runnable-zones
    handle-end-run
    jack-out
    jack-out-prevent
