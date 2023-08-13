@@ -4033,13 +4033,8 @@
    :implementation "Might be incorrect if decoder is uninstalled"
    :events [{:event :end-of-encounter
              :req (req (all-subroutines-not-broken-by state side card "Decoder" context))
-             :effect (req (continue-ability
-                            state side
-                            {:optional {:prompt "Give the runner a tag?"
-                                        :async true
-                                        :yes-ability {:effect (effect (gain-tags eid 1))
-                                                      :msg "give the runner a tag"}}}
-                              card nil))}]})
+             :msg "give the Runner 1 tag"
+             :effect (effect (gain-tags eid 1))}]})
 
 (defcard "Waiver"
   {:subroutines [(trace-ability

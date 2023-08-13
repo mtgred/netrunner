@@ -7469,6 +7469,47 @@
       (card-subroutine state :corp (refresh vas) 0)
       (is (= 1 (count-tags state)) "Runner took 1 tag"))))
 
+(deftest virtual-service-agent
+  (do-game
+    (new-game {:corp {:hand ["Virtual Service Agent"]}
+               :runner {:hand ["Nanuq" "Buzzsaw"]
+                        :credits 20}})
+    (play-from-hand state :corp "Virtual Service Agent" "HQ")
+    (take-credits state :corp)
+    (let [vsa (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp vsa)
+      (run-continue state)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "Runner lost 1 credit"
+        (fire-subs state (refresh vsa)))
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner got 1 tag from not breaking any sub"
+        (run-continue state :movement))
+      (run-jack-out state)
+      (play-from-hand state :runner "Nanuq")
+      (run-on state :hq)
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "Runner loses 1 [Credits]")
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner got 1 tag"
+        (run-continue state :movement))
+      (run-jack-out state)
+      (play-from-hand state :runner "Buzzsaw")
+      (core/gain state :runner :click 1)
+      (run-on state :hq)
+      (run-continue state)
+      (card-ability state :runner (get-program state 1) 0)
+      (click-prompt state :runner "Runner loses 1 [Credits]")
+      (changes-val-macro
+        0 (count-tags state)
+        "Runner got no tag"
+        (run-continue state :movement)))))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
