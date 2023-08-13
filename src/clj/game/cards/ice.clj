@@ -3694,8 +3694,7 @@
                               {:prompt "You have no ice"
                                :choices ["OK"]
                                :waiting-prompt true
-                               :effect (effect (system-msg :runner (str "declines to use " (:title card) " to install a card"))
-                                               (effect-completed eid))})
+                               :effect (effect (system-msg :runner (str "declines to use " (:title card) " to install a card")))})
                             card nil))}]
    :subroutines [end-the-run]})
 
