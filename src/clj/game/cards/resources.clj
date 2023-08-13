@@ -1822,9 +1822,12 @@
   {:events [{:event :corp-install
              :optional {:prompt "Trash the top card of the stack?"
                         :req (req (and (not (ice? (:card target)))
-                                       (first-event? state side :corp-install #(not (ice? (:card (first %)))))
-                                       (seq (:deck runner))))
-                        :yes-ability {:msg (msg "trash " (:title (first (:deck runner))) " from the stack to draw 1 card")
+                                       (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
+                        :yes-ability {:msg (msg (if (seq (:deck runner))
+                                                  (str "trash "
+                                                       (:title (first (:deck runner)))
+                                                       " from the stack and draw 1 card")
+                                                  "trash no cards from the stack (it is empty)"))
                                       :async true
                                       :effect (req (wait-for (mill state :runner :runner 1)
                                                              (draw state :runner eid 1)))}
