@@ -47,7 +47,7 @@
       (make-eid state (:eid (:run @state)))))
 
 ;; dependency loop - duplicate of actions/can-run-server?
-(defn- get-runnable-zones
+(defn get-runnable-zones
   ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
   ([state side] (get-runnable-zones state side (make-eid state) nil nil))
   ([state side card] (get-runnable-zones state side (make-eid state) card nil))
@@ -60,7 +60,7 @@
        (filter #(can-pay? state :runner eid card nil (total-run-cost state side card {:server (unknown->kw %)}))
                permitted-zones)))))
 
-(defn- can-run-server?
+(defn can-run-server?
   [state server]
   (some #{(unknown->kw server)} (seq (get-runnable-zones state))))
 ;; end of boilerplate - nbkelly

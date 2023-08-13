@@ -113,7 +113,6 @@
 (expose-vars
   [game.core.actions
    advance
-   can-run-server?
    click-advance
    click-credit
    click-draw
@@ -122,7 +121,6 @@
    do-purge
    generate-install-list
    generate-runnable-zones
-   get-runnable-zones
    move-card
    play
    play-ability
@@ -714,6 +712,7 @@
    add-run-effect
    bypass-ice
    can-bypass-ice
+   can-run-server?
    check-auto-no-action
    check-for-empty-server
    complete-run
@@ -725,6 +724,7 @@
    gain-next-run-credits
    gain-run-credits
    get-current-encounter
+   get-runnable-zones
    handle-end-run
    jack-out
    jack-out-prevent

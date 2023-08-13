@@ -20,7 +20,7 @@
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
-    [game.core.runs :refer [continue total-run-cost]]
+    [game.core.runs :refer [can-run-server? continue get-runnable-zones total-run-cost]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
@@ -523,26 +523,9 @@
         (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
       (swap! state dissoc-in [:corp :install-list]))))
 
-(defn get-runnable-zones
-  ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
-  ([state side] (get-runnable-zones state side (make-eid state) nil nil))
-  ([state side card] (get-runnable-zones state side (make-eid state) card nil))
-  ([state side card args] (get-runnable-zones state side (make-eid state) card args))
-  ([state side eid card {:keys [zones ignore-costs]}]
-   (let [restricted-zones (distinct (flatten (get-effects state side nil :cannot-run-on-server)))
-         permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
-     (if ignore-costs
-       permitted-zones
-       (filter #(can-pay? state :runner eid card nil (total-run-cost state side card {:server (unknown->kw %)}))
-               permitted-zones)))))
-
 (defn generate-runnable-zones
   [state _ _]
   (swap! state assoc-in [:runner :runnable-list] (zones->sorted-names (get-runnable-zones state))))
-
-(defn can-run-server?
-  [state server]
-  (some #{(unknown->kw server)} (seq (get-runnable-zones state))))
 
 (defn advance
   "Advance a corp card that can be advanced.

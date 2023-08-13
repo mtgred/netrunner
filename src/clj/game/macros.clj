@@ -34,10 +34,10 @@
       unprotected (let [server (second (game.core.card/get-zone card))]
                     (empty? (get-in @state [:corp :servers server :ices])))
       runnable-servers (game.core.servers/zones->sorted-names
-                         (game.core.actions/get-runnable-zones state side eid card nil))
-      hq-runnable (some #{:hq} (game.core.actions/get-runnable-zones state))
-      rd-runnable (some #{:rd} (game.core.actions/get-runnable-zones state))
-      archives-runnable (some #{:archives} (game.core.actions/get-runnable-zones state))
+                         (game.core.runs/get-runnable-zones state side eid card nil))
+      hq-runnable (some #{:hq} (game.core.runs/get-runnable-zones state))
+      rd-runnable (some #{:rd} (game.core.runs/get-runnable-zones state))
+      archives-runnable (some #{:archives} (game.core.runs/get-runnable-zones state))
       tagged (jinteki.utils/is-tagged? state)
       ;; only intended for use in event listeners on (pre-/post-, un-)successful-run or run-ends
       ;; true if the run was initiated by this card

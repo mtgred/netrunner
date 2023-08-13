@@ -4,7 +4,6 @@
    [clojure.string :as str]
    [game.core.access :refer [access-card breach-server get-only-card-to-access
                              num-cards-to-access]]
-   [game.core.actions :refer [can-run-server? get-runnable-zones]]
    [game.core.agendas :refer [update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed server->zone]]
@@ -53,8 +52,8 @@
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
-   [game.core.runs :refer [bypass-ice gain-next-run-credits make-run
-                           prevent-access successful-run-replace-breach
+   [game.core.runs :refer [bypass-ice can-run-server? gain-next-run-credits get-runnable-zones
+                           make-run prevent-access successful-run-replace-breach
                            total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
