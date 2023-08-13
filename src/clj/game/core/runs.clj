@@ -46,7 +46,6 @@
   (or eid
       (make-eid state (:eid (:run @state)))))
 
-;; dependency loop - duplicate of actions/can-run-server?
 (defn get-runnable-zones
   ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
   ([state side] (get-runnable-zones state side (make-eid state) nil nil))
@@ -63,7 +62,6 @@
 (defn can-run-server?
   [state server]
   (some #{(unknown->kw server)} (seq (get-runnable-zones state))))
-;; end of boilerplate - nbkelly
 
 (defn get-current-encounter
   [state]
