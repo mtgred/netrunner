@@ -35,9 +35,9 @@
                     (empty? (get-in @state [:corp :servers server :ices])))
       runnable-servers (game.core.servers/zones->sorted-names
                          (game.core.actions/get-runnable-zones state side eid card nil))
-      hq-runnable (some #{:hq} (game.core.actions/get-runnable-zones state));not (:hq (get-in (:runner @state) [:register :cannot-run-on-server])))
-      rd-runnable (some #{:rd} (game.core.actions/get-runnable-zones state));(not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
-      archives-runnable (some #{:archives} (game.core.actions/get-runnable-zones state));(not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))
+      hq-runnable (some #{:hq} (game.core.actions/get-runnable-zones state))
+      rd-runnable (some #{:rd} (game.core.actions/get-runnable-zones state))
+      archives-runnable (some #{:archives} (game.core.actions/get-runnable-zones state))
       tagged (jinteki.utils/is-tagged? state)
       ;; only intended for use in event listeners on (pre-/post-, un-)successful-run or run-ends
       ;; true if the run was initiated by this card
