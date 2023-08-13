@@ -57,7 +57,7 @@
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.subtypes :refer [update-all-subtypes]]
-   [game.core.tags :refer [gain-tags lose-tags]]
+   [game.core.tags :refer [gain-tags lose-tags sum-tag-effects]]
    [game.core.threat :refer [threat threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -3539,7 +3539,7 @@
 
 (defcard "Starlit Knight"
   (let [sub-count (fn [state]
-                    (count-tags state))
+                    (sum-tag-effects state))
         sub end-the-run]
     {:on-encounter {:req (req (threat-level 4 state))
                     :effect (effect (gain-variable-subs card (sub-count state) sub {:variable true :front false :end true}))}
