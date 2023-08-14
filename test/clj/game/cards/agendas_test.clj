@@ -4173,6 +4173,7 @@
         (card-ability state :corp (refresh tpr) 0)
         (core/move state :corp (assoc (find-card "Enigma" (:hand (get-corp))) :seen true) :discard)
         (click-card state :corp "Enigma")
+        (is (= ["Archives" "R&D" "HQ" "New remote"] (prompt-buttons :corp)))
         (click-prompt state :corp "HQ")
         (click-prompt state :corp "0")
         (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")

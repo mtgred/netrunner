@@ -1952,7 +1952,7 @@
                           (continue-ability
                             (let [chosen-ice target]
                               {:prompt "Choose a server"
-                               :choices (req servers)
+                               :choices (req (conj (vec servers) "New remote"))
                                :async true
                                :effect (effect
                                          (continue-ability
