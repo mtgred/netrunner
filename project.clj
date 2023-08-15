@@ -70,6 +70,8 @@
                  [time-literals "0.1.5"]
                  [metosin/reitit "0.5.18"]]
 
+  :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
+
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.4"]
                                   [cider/piggieback "0.5.3"]
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
@@ -78,7 +80,7 @@
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.16.8"]]
-                   :plugins [[cider/cider-nrepl "0.27.3"]]
+                   :plugins [[lein-eftest "0.6.0"]]
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "src/css"
                                   "dev/src/clj" "dev/src/cljs"
                                   "test/clj"]

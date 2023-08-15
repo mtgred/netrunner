@@ -52,4 +52,4 @@ jobs:
       - name: Fetch cards
         run: lein fetch --no-db --no-card-images
       - name: Run tests
-        run: lein kaocha --profile :ci
+        run: lein eftest
