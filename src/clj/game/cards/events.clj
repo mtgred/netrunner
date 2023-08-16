@@ -205,6 +205,7 @@
               :async true
               :effect (effect (continue-ability
                                 {:prompt (str "Choose a card to install")
+                                 :waiting-prompt true
                                  :choices {:req (req (and (or (hardware? target)
                                                               (program? target)
                                                               (resource? target))
@@ -216,6 +217,7 @@
                                 card nil))}]
         choice (fn choice [abis rem]
                  {:prompt (str "Choose an ability to resolve (" rem " remaining)")
+                  :waiting-prompt true
                   :choices (map #(capitalize (:msg %)) abis)
                   :async true
                   :effect (req (let [chosen (some #(when (= target (capitalize (:msg %))) %) abis)]
@@ -554,6 +556,7 @@
                                   state :runner
                                   {:msg "look at the top 3 cards of R&D"
                                    :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
+                                   :waiting-prompt true
                                    :choices ["OK"]}
                                   card nil))
                             (do
@@ -3171,6 +3174,7 @@
                                {:optional {:prompt (msg "Spend [Click] to bypass " 
                                                         (card-str state current-ice)
                                                         "?")
+                                           :waiting-prompt true
                                            :yes-ability {:msg (msg "bypass " (card-str state current-ice))
                                                          :cost [:click 1]
                                                          :effect (req (bypass-ice state))}}}
@@ -3581,6 +3585,7 @@
                            (continue-ability
                              state side
                              {:prompt "Choose a card to install"
+                              :waiting-prompt true
                               :async true
                               :choices (req (cancellable (filter #(and (not (event? %))
                                                                        (runner-can-install? state side % nil)

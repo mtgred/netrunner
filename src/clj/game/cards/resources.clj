@@ -1823,6 +1823,7 @@
 (defcard "Lago Paranoá Shelter"
   {:events [{:event :corp-install
              :optional {:prompt "Trash the top card of the stack?"
+                        :waiting-prompt true
                         :req (req (and (not (ice? (:card target)))
                                        (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
                         :yes-ability {:msg (msg (if (seq (:deck runner))

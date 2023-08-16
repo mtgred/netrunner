@@ -130,6 +130,7 @@
                          {:eid (assoc eid :source-type :ability)
                           :optional
                           {:prompt (str "Prevent \"when encountered\" ability of " (card-str state current-ice) "?")
+                           :waiting-prompt true
                            :yes-ability ability}}
                          card nil))}]
      :abilities [{:cost [:power 1]
@@ -390,6 +391,7 @@
                               {:optional
                                {:req (req true)
                                 :prompt (str "Remove Capybara from the game to derez " (card-str state target-ice) "?")
+                                :waiting-prompt true
                                 :yes-ability
                                 {:async true
                                  :cost [:remove-from-game]
@@ -1056,6 +1058,7 @@
 (defcard "Hermes"
   (let [ab {:interactive (req true)
             :prompt "Choose an unrezzed card"
+            :waiting-prompt true
             :choices {:card #(and (not (faceup? %))
                                   (installed? %)
                                   (corp? %))}
@@ -1167,6 +1170,7 @@
 (defcard "LilyPAD"
   {:events [{:event :runner-install
              :optional {:prompt "Draw 1 card?"
+                        :waiting-prompt true
                         :req (req (and
                                     (program? (:card target))
                                     (first-event? state :runner :runner-install #(program? (:card (first %))))))
@@ -2057,6 +2061,7 @@
              :async true
              :interactive (req (pos? (get-counters (get-card state card) :power)))
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req [(when (pos? (count-real-tags state)) "Remove 1 tag")
                             "Draw 1 card"
                             "Done"])

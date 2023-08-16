@@ -1843,6 +1843,7 @@
                               (continue-ability
                                 state side
                                 {:prompt "Choose a piece of ice protecting another server to derez"
+                                 :waiting-prompt true
                                  :choices {:req (req (some #{target} rezzed-targets))}
                                  :once :per-turn
                                  :msg (msg "derezzes " (card-str state target) " to gain 1 [Credits]")

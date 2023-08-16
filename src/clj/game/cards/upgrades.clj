@@ -63,9 +63,11 @@
 (def mobile-sysop-event
   {:event :corp-turn-ends
    :optional {:prompt (msg "move " (:title card) " to another server?")
+              :waiting-prompt true
               :yes-ability {:async true
                             :effect (effect (continue-ability
                                               {:prompt "Choose a server"
+                                               :waiting-prompt true
                                                :choices (server-list state)
                                                :msg (msg "move to " target)
                                                :effect (req (let [c (move state side card
