@@ -1170,11 +1170,13 @@
                         :req (req (and
                                     (program? (:card target))
                                     (first-event? state :runner :runner-install #(program? (:card (first %))))))
+                        :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:msg "draw 1 card"
                                       :async true
                                       :effect (req (draw state :runner eid 1))}
                         :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
-   :constant-effects [(mu+ 2)]})
+   :constant-effects [(mu+ 2)]
+   :abilities [(set-autoresolve :auto-fire "LilyPAD")]})
 
 (defcard "LLDS Memory Diamond"
   {:constant-effects [(link+ 1)
