@@ -1702,9 +1702,14 @@
 
 (defcard "Salvo Testing"
   {:events [{:event :agenda-scored
-             :async true
-             :msg "do 1 core damage"
-             :effect (effect (damage eid :brain 1 {:card card}))}]})
+             :interactive (req true)
+             :optional
+             {:prompt "Do 1 core damage?"
+              :waiting-prompt true
+              :yes-ability
+              {:msg "do 1 core damage"
+               :async true
+               :effect (effect (damage eid :brain 1 {:card card}))}}}]})
 
 (defcard "SDS Drone Deployment"
   {:steal-cost-bonus (req [:program 1])
