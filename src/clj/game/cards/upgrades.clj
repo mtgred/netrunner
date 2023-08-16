@@ -84,7 +84,7 @@
                   :not-equal {:msg (msg "prevent the Runner from accessing cards other than " (:title card))
                               :effect (effect (set-only-card-to-access card)
                                               (effect-completed eid))}
-                  :equal {:msg (msg "prevent the runner from accessing " (:title card))
+                  :equal {:msg (msg "prevent the Runner from accessing " (:title card))
                           :effect (effect (register-run-flag!
                                             card :can-access
                                             ;; prevent access of advanced card
