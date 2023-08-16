@@ -208,7 +208,8 @@
           (map (fn [c] [(tr-data :title c) (span-of (:title c) (tr-data :title c))]))
           (sort-by (comp count str first) >))))))
 
-(def card-patterns (memoize card-patterns-impl))
+(def card-patterns-memo (memoize card-patterns-impl))
+(defn card-patterns [] (card-patterns-memo (:cards-loaded @app-state)))
 
 (defn contains-card-pattern-impl
   "A card pattern regex, used to match a card name in text to check if the rest
@@ -221,7 +222,8 @@
          (map (fn [k] (join "|" (map regex-escape (distinct [(:title k) (tr-data :title k)])))))
          (join "|"))))
 
-(def contains-card-pattern (memoize contains-card-pattern-impl))
+(def contains-card-pattern-memo (memoize contains-card-pattern-impl))
+(defn contains-card-pattern [] (contains-card-pattern-memo (:cards-loaded @app-state)))
 
 (def special-patterns
   (letfn [(regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
