@@ -1073,6 +1073,7 @@
                            (continue-ability
                              state side
                              {:prompt "Choose a card to install"
+                              :waiting-prompt true
                               :req (req (not-empty (filter corp-installable-type? (:hand corp))))
                               :choices {:card #(and (corp? %)
                                                     (corp-installable-type? %)
@@ -1087,6 +1088,7 @@
                                                          (continue-ability
                                                            state side
                                                            {:optional {:prompt "Remove 1 tag to place 1 advancement counter on the installed card?"
+                                                                       :waiting-prompt true
                                                                        :yes-ability {:msg (msg "removes 1 tag to place 1 advancement counter on " (card-str state installed-card))
                                                                                      :cost [:tag 1]
                                                                                      :effect (req (add-prop state :corp installed-card :advance-counter 1 {:placed true}))}}}
@@ -1562,6 +1564,7 @@
                                           state side
                                           {:req (req (pos? (count (:hand corp))))
                                            :prompt "Choose 1 card to add to the top of R&D"
+                                           :waiting-prompt true
                                            :msg "add 1 card from HQ to the top of R&D"
                                            :choices {:card #(and (in-hand? %)
                                                                  (corp? %))
@@ -1832,6 +1835,7 @@
   ;; todo - it might be possible to pre-check the additional costs (consulting never did this)
   {:on-play {:prompt "Choose a card"
              ;; we need the req or the prompt will still show
+             :waiting-prompt true
              :msg (msg "add " (:title target) " to HQ and shuffle R&D")
              :choices (req (sort-by :title (filter #(or (operation? %) (agenda? %)) (:deck corp))))
              :async true
@@ -1842,6 +1846,7 @@
                                       (continue-ability
                                         state side
                                         {:prompt "Choose a card to play or install"
+                                         :waiting-prompt true
                                          :choices {:card #(and (corp? %)
                                                                (in-hand? %)
                                                                (if (operation? %)

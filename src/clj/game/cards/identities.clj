@@ -144,6 +144,7 @@
                             (continue-ability
                               state side
                               {:prompt "Choose a card to install in another remote server"
+                               :waiting-prompt true
                                :choices {:card #(and (corp? %)
                                                      (corp-installable-type? %)
                                                      (in-hand? %))}
@@ -152,6 +153,7 @@
                                               (continue-ability
                                                 state side
                                                 {:prompt "Choose a remote server"
+                                                 :waiting-prompt true
                                                  :choices (req (conj (vec (filter #(not= original-server %)
                                                                                   (get-remote-names state))) "New remote"))
                                                  :async true
@@ -316,6 +318,7 @@
                 (effect
                   (continue-ability
                     {:prompt "Choose a program to install"
+                     :waiting-prompt true
                      :choices (req (cancellable
                                      (filter #(and (program? %)
                                                    (runner-can-pay-and-install?
@@ -592,12 +595,13 @@
                                          (continue-ability
                                            state :corp
                                            {:prompt "Choose a card to install"
-                                             :not-distinct true
-                                             :choices (req (conj
-                                                             (filter #(corp-installable-type? %) top)
-                                                             "Done"))
-                                             :async true
-                                             :effect (req (if-not (= target "Done")
+                                            :waiting-prompt true
+                                            :not-distinct true
+                                            :choices (req (conj
+                                                            (filter #(corp-installable-type? %) top)
+                                                            "Done"))
+                                            :async true
+                                            :effect (req (if-not (= target "Done")
                                                            (do (system-msg
                                                                  state side
                                                                  (str "uses " (get-title card) " to install the "
@@ -1239,6 +1243,7 @@
                               state side
                               {:optional
                                {:prompt "Access 1 additional card?"
+                                :waiting-prompt true
                                 :once :per-turn
                                 :async true
                                 :yes-ability {:msg (msg "access 1 additional card")

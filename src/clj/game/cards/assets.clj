@@ -319,6 +319,7 @@
                         (wait-for (resolve-ability state side
                                                    {:async true
                                                     :prompt (msg "The top card of R&D is: " (:title top-card))
+                                                    :waiting-prompt true
                                                     :choices ["OK"]}
                                                    card nil)
                                   (if (= (:type top-card) named-type)
@@ -326,6 +327,7 @@
                                       state side
                                       {:optional
                                        {:prompt "Reveal it to gain 2 [Credits]?"
+                                        :waiting-prompt true
                                         :msg (msg "reveal " (:title top-card)
                                                   " from the top of R&D and gain 2 [Credits]")
                                         :yes-ability
@@ -991,6 +993,7 @@
 (defcard "Federal Fundraising"
   (let [draw-ab {:optional {:req (req unprotected)
                             :prompt "Draw 1 card?"
+                            :waiting-prompt true
                             :yes-ability {:msg "draw 1 card"
                                           :async true
                                           :effect (effect (draw eid 1))}
@@ -1007,6 +1010,7 @@
           (continue-ability
            {:optional
             {:prompt "Look at the top 3 cards of R&D?"
+             :waiting-prompt true
              :no-ability
              {:async true
               :effect (effect (continue-ability draw-ab card nil))}

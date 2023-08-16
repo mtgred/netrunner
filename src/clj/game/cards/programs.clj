@@ -1014,6 +1014,7 @@
                     :interactive (req true)
                     :events [{:event :encounter-ice
                               :optional {:prompt (msg "Spend 3 power counters to bypass " (card-str state current-ice) "?")
+                                         :waiting-prompt true
                                          :req (req (and
                                                      (has-subtype? (:ice context) "Barrier")
                                                      (<= 3 (get-counters (get-card state card) :power))))
@@ -1831,6 +1832,7 @@
                                 {:prompt (msg "Trash this program to bypass "
                                               (card-str state current-ice)
                                               "?")
+                                 :waiting-prompt true
                                  :yes-ability
                                  {:msg (msg "bypass" (card-str state current-ice))
                                   :effect (req
@@ -2454,6 +2456,7 @@
    :events [{:event :pass-ice
              :optional {:interactive (req true)
                         :prompt "Gain [Click]?"
+                        :waiting-prompt true
                         :req (req (same-card? (:ice context) (:host card)))
 
                         :yes-ability
@@ -2465,7 +2468,8 @@
                                      (continue-ability
                                        state side
                                        {:optional
-                                        {:prompt (str "Is " (:title card) " added to the Grip?")
+                                        {:prompt (str "Is " (:title card) " added to the grip?")
+                                         :waiting-prompt true
                                          :yes-ability {:msg "appease the rules"
                                                        :cost [:return-to-hand]}}}
                                        card nil)
@@ -3044,6 +3048,7 @@
 (defcard "Umbrella"
   (let [corp-draw {:optional {:prompt "Draw 1 card?"
                               :player :corp
+                              :waiting-prompt true
                               :yes-ability {:async true
                                             :msg "draw 1 card"
                                             :effect (req (draw state :corp eid 1))}
@@ -3051,6 +3056,7 @@
                                            :effect (req (system-msg (str "declines to use " (:title card) " to draw 1 card")))}}}
         runner-draw {:label "Each player draws 1 card (manual)"
                      :optional {:prompt "Draw 1 card?"
+                                :waiting-prompt true
                                 :player :runner
                                 :yes-ability {:async true
                                               :msg "draw 1 card"
