@@ -90,7 +90,7 @@
       (assoc-in [:format :eternal] {:banned true})
       (assoc-in [:format :snapshot] {:banned true})
       (assoc-in [:format :snapshot-plus] {:banned true})
-      (assoc-in [:format :classic] {:banned true})))
+      (assoc-in [:format :neo] {:banned true})))
 
 (defn- insert-starter-ids
   "Add special case info for the Starter Deck IDs"

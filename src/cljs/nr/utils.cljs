@@ -126,7 +126,7 @@
    "eternal" "Eternal"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
-   "classic" "Classic"
+   "neo" "Neo"
    "casual" "Casual"})
 
 (def format->slug
@@ -136,7 +136,7 @@
    "Eternal" "eternal"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
-   "Classic" "classic"
+   "Neo" "neo"
    "Casual" "casual"})
 
 (defn regex-escape
