@@ -87,7 +87,7 @@
 (defcard "15 Minutes"
   {:abilities [{:cost [:click 1]
                 :msg "shuffle itself into R&D"
-                :label "Shuffle 15 Minutes into R&D"
+                :label "Shuffle this agenda into R&D"
                 :effect (effect (move :corp card :deck nil)
                                 (shuffle! :corp :deck)
                                 (update-all-agenda-points))}]
@@ -1284,7 +1284,7 @@
             :effect (effect (gain-tags eid 1))}
    :abilities [{:cost [:click 1 :tag 1]
                 :msg "shuffle itself into R&D"
-                :label "Shuffle into R&D"
+                :label "Shuffle this agenda into R&D"
                 :effect (effect (move :corp card :deck nil)
                                 (shuffle! :corp :deck)
                                 (update-all-agenda-points))}]
