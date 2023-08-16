@@ -807,12 +807,12 @@
   {:advancement-requirement (req (- (count-tags state)))})
 
 (defcard "Fujii Asset Retrieval"
-  {:stolen {:async true
-            :msg "do 2 net damage"
-            :effect (effect (damage eid :net 2 {:card card}))}
-   :on-score {:async true
-              :msg "do 2 net damage"
-              :effect (effect (damage eid :net 2 {:card card}))}})
+  (let [ability {:async true
+                 :interactive (req true)
+                 :msg "do 2 net damage"
+                 :effect (effect (damage eid :net 2 {:card card}))}]
+    {:stolen ability
+     :on-score ability}))
 
 (defcard "Genetic Resequencing"
   {:on-score {:choices {:card in-scored?}
