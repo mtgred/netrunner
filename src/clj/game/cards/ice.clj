@@ -562,6 +562,7 @@
                            run
                            this-server))
             :prompt "Choose a card to install from Archives or HQ in another server"
+            :waiting-prompt true
             :show-discard true
             :choices {:card #(and (corp? %)
                                   (not (operation? %))
@@ -573,6 +574,7 @@
                                nice target]
                            (continue-ability state side
                                              {:prompt "Choose a server"
+                                              :waiting-prompt true
                                               :choices (req (remove #(= this %) (corp-install-list state nice)))
                                               :async true
                                               :msg (msg (corp-install-msg nice))
@@ -3674,6 +3676,7 @@
                                 :waiting-prompt true
                                 :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}
                                 :yes-ability {:prompt "Choose a piece of ice to swap Tatu-Bola with"
+                                              :waiting-prompt true
                                               :choices (req (filter ice? (:hand corp)))
                                               :async true
                                               :effect (req (wait-for (swap-cards-async state side (make-eid state eid) target current-ice)
