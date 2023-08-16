@@ -2615,6 +2615,31 @@
       (is (not (some? (get-content state :remote1 0)))
           "Corp can score with 2 advancements because of 2 core damage"))))
 
+(deftest oracle-thinktank
+    (do-game
+      (new-game {:corp {:hand [(qty "Oracle Thinktank" 2)]}})
+      (play-and-score state "Oracle Thinktank")
+      (gain-tags state :runner 1)
+      (card-ability state :corp (refresh (first (:scored (get-corp)))) 0)
+      (is (= 1 (:agenda-point (get-corp))) "Oracle Thinktank doesn't work from the Corp's score area")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner took 1 tag"
+        (click-prompt state :runner "Steal"))
+      (take-credits state :runner)
+      (let [ot (first (:scored (get-runner)))]
+        (is (= 3 (:click (get-corp))))
+        (is (= 1 (count (:abilities (refresh ot)))))
+        (changes-val-macro
+          -1 (count-tags state)
+          "Runner lost 1 tag"
+          (card-ability state :corp (refresh ot) 0))
+        (is (zero? (:agenda-point (get-runner))))
+        (is (zero? (count (:scored (get-runner))))))
+      (is (find-card "Oracle Thinktank" (:deck (get-corp))))))
+
 (deftest orbital-superiority
   ;; Orbital Superiority
   (do-game
