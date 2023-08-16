@@ -62,14 +62,14 @@
 ;; Helpers
 (def mobile-sysop-event
   {:event :corp-turn-ends
-   :optional {:prompt (msg "move " (:title card) " to another server?")
+   :optional {:prompt (msg "Move " (:title card) " to another server?")
               :waiting-prompt true
               :yes-ability {:async true
                             :effect (effect (continue-ability
                                               {:prompt "Choose a server"
                                                :waiting-prompt true
                                                :choices (server-list state)
-                                               :msg (msg "move to " target)
+                                               :msg (msg "move itself to " target)
                                                :effect (req (let [c (move state side card
                                                                           (conj (server->zone state target) :content))]
                                                               (unregister-events state side card)
@@ -81,17 +81,17 @@
 (defcard "Adrian Seis"
   {:events [mobile-sysop-event
             {:event :successful-run
-            :interactive (req true)
-            :psi {:req (req this-server)
-                  :not-equal {:msg (msg "prevent the Runner from accessing cards other than " (:title card))
-                              :effect (effect (set-only-card-to-access card)
-                                              (effect-completed eid))}
-                  :equal {:msg (msg "prevent the runner from accessing " (:title card))
-                          :effect (effect (register-run-flag!
-                                            card :can-access
-                                            ;; prevent access of advanced card
-                                            (fn [_ _ target] (not (same-card? target card))))
-                                          (effect-completed eid))}}}]})
+             :interactive (req true)
+             :psi {:req (req this-server)
+                   :not-equal {:msg (msg "prevent the Runner from accessing cards other than " (:title card))
+                               :effect (effect (set-only-card-to-access card)
+                                               (effect-completed eid))}
+                   :equal {:msg (msg "prevent the Runner from accessing " (:title card))
+                           :effect (effect (register-run-flag!
+                                             card :can-access
+                                             ;; prevent access of advanced card
+                                             (fn [_ _ target] (not (same-card? target card))))
+                                           (effect-completed eid))}}}]})
 
 (defcard "Akitaro Watanabe"
   {:constant-effects [{:type :rez-cost
