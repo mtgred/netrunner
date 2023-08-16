@@ -8,7 +8,7 @@
     [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
-    [game.core.effects :refer [any-effects]]
+    [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
@@ -20,7 +20,7 @@
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
-    [game.core.runs :refer [continue total-run-cost]]
+    [game.core.runs :refer [can-run-server? continue get-runnable-zones total-run-cost]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
@@ -522,19 +522,6 @@
         (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
         (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
       (swap! state dissoc-in [:corp :install-list]))))
-
-(defn get-runnable-zones
-  ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
-  ([state side] (get-runnable-zones state side (make-eid state) nil nil))
-  ([state side card] (get-runnable-zones state side (make-eid state) card nil))
-  ([state side card args] (get-runnable-zones state side (make-eid state) card args))
-  ([state side eid card {:keys [zones ignore-costs]}]
-   (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))
-         permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
-     (if ignore-costs
-       permitted-zones
-       (filter #(can-pay? state :runner eid card nil (total-run-cost state side card {:server (unknown->kw %)}))
-               permitted-zones)))))
 
 (defn generate-runnable-zones
   [state _ _]

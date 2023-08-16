@@ -25,9 +25,8 @@
    [game.core.events :refer [first-event? first-run-event? turn-events]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.finding :refer [find-cid find-latest]]
-   [game.core.flags :refer [clear-persistent-flag! enable-run-on-server
-                            is-scored? prevent-run-on-server
-                            register-persistent-flag! register-run-flag!]]
+   [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
+                            register-run-flag!]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+]]
    [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
@@ -64,9 +63,11 @@
 (def mobile-sysop-event
   {:event :corp-turn-ends
    :optional {:prompt (msg "move " (:title card) " to another server?")
+              :waiting-prompt true
               :yes-ability {:async true
                             :effect (effect (continue-ability
                                               {:prompt "Choose a server"
+                                               :waiting-prompt true
                                                :choices (server-list state)
                                                :msg (msg "move to " target)
                                                :effect (req (let [c (move state side card
@@ -79,7 +80,7 @@
 
 (defcard "Adrian Seis"
   {:events [mobile-sysop-event
-            {:event :approach-server
+            {:event :successful-run
             :interactive (req true)
             :psi {:req (req this-server)
                   :not-equal {:msg (msg "prevent the Runner from accessing cards other than " (:title card))
@@ -135,9 +136,9 @@
             :effect (effect (damage eid :meat 1 {:card card}))}
    :access {:optional
             {:req (req (rezzed? card))
-             :waiting-prompt "Corp to choose an option"
-             :prompt "Pay 2 [Credits] to do 2 meat damage?"
-             :no-ability {:effect (effect (system-msg "declines to use Neural Prisec"))}
+             :waiting-prompt true
+             :prompt (msg "Pay 2 [Credits] to use " (:title card) " ability?")
+             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
              :yes-ability {:async true
                            :cost [:credit 2]
                            :msg "do 2 meat damage"
@@ -1302,16 +1303,14 @@
 
 (defcard "Off the Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :on-rez {:effect (req (prevent-run-on-server state card (second (get-zone card))))}
-   :events [{:event :runner-turn-begins
-             :effect (req (prevent-run-on-server state card (second (get-zone card))))}
-            {:event :successful-run
+   :constant-effects [{:type :cannot-run-on-server
+                       :req (req (rezzed? card))
+                       :value (req (second (get-zone card)))}]
+   :events [{:event :successful-run
              :req (req (= :hq (target-server context)))
              :async true
              :msg "trash itself"
-             :effect (req (enable-run-on-server state card (second (get-zone card)))
-                          (trash state :corp eid card {:cause-card card}))}]
-   :leave-play (req (enable-run-on-server state card (second (get-zone card))))})
+             :effect (req (trash state :corp eid card {:cause-card card}))}]})
 
 (defcard "Old Hollywood Grid"
   (let [ohg {:effect (effect
@@ -1682,12 +1681,15 @@
 (defcard "Tucana"
   (let [ability {:async true
                  :prompt "Choose a piece of ice to install and rez"
+                 :waiting-prompt true
+                 :interactive (req true)
                  :choices (req (cancellable (filter ice? (:deck corp)) true))
+                 :msg (msg "install from HQ and rez " (card-str state target) ", paying a total of 3 [Credits] less")
                  :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3})
                                         (shuffle! state :corp :deck)
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid)))
-                 :cancel-effect (effect (system-msg  "declines to use Tucana to install a card")
+                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                         (effect-completed eid))}]
     {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
      :events [(assoc ability

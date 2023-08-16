@@ -344,6 +344,52 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0"))))
 
+(deftest balanced-coverage
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Balanced Coverage"]}})
+    (play-from-hand state :corp "Balanced Coverage" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Operation")
+    (click-prompt state :corp "OK")
+    (changes-val-macro
+      2 (:credit (get-corp))
+      "Got 2 credits from Balanced Coverage"
+      (click-prompt state :corp "Yes"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Operation")
+    (click-prompt state :corp "OK")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Got no credits declining Balanced Coverage"
+      (click-prompt state :corp "No"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Asset")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Got no credits when types don't match"
+      (click-prompt state :corp "OK"))))
+
+(deftest balanced-coverage-triggers-hyoubu
+  (do-game
+    (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["Balanced Coverage"]}})
+    (play-from-hand state :corp "Balanced Coverage" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-prompt state :corp "Operation")
+    (click-prompt state :corp "OK")
+    (changes-val-macro
+      3 (:credit (get-corp))
+      "Got 2 credits from Balanced Coverage + 1 from Hyoubu"
+      (click-prompt state :corp "Yes"))))
+
 (deftest bass-ch1r180g4
   ;; Bass CH1R180G4
   (do-game
@@ -355,6 +401,19 @@
       (card-ability state :corp bass 0)
       (is (= 3 (:click (get-corp))))
       (is (nil? (refresh bass)) "Bass CH1R180G4 should be trashed"))))
+
+(deftest behold
+  (do-game
+    (new-game {:corp {:hand ["Behold!"]}})
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (is (= :waiting (prompt-type :runner))
+        "Runner has prompt to wait for Behold!")
+    (changes-val-macro
+      -4 (:credit (get-corp))
+      "Corp spent 4 credits"
+      (click-prompt state :corp "Yes"))
+    (is (= 2 (count-tags state)))))
 
 (deftest bio-ethics-association
   ;; Bio-Ethics Association
@@ -785,6 +844,20 @@
       "Runner received 4 damage"
       (click-prompt state :corp "Yes"))))
 
+(deftest clearinghouse-interactive
+  ;; Should prompt which to fire first
+  (do-game
+    (new-game {:corp {:deck [(qty "Clearinghouse" 2)]}})
+    (play-from-hand state :corp "Clearinghouse" "New remote")
+    (play-from-hand state :corp "Clearinghouse" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+    (end-phase-12 state :corp)
+    (is (= ["Clearinghouse" "Clearinghouse"] (prompt-titles :corp)))))
+
 (deftest clone-suffrage-movement
   ;; Clone Suffrage Movement
   (do-game
@@ -1090,6 +1163,28 @@
     (play-from-hand state :corp "Cybernetics Court" "New remote")
     (rez state :corp (get-content state :remote1 0))
     (is (= 9 (hand-size :corp)) "Corp should have hand size of 9")))
+
+(deftest cybersand-harvester
+  (do-game
+    (new-game {:corp {:deck ["Cybersand Harvester" (qty "Ice Wall" 2)]}})
+    (play-from-hand state :corp "Cybersand Harvester" "New remote")
+    (let [ch (get-content state :remote1 0)]
+      (rez state :corp ch)
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (changes-val-macro
+        2 (get-counters (refresh ch) :credit)
+        "Placed 2 credits on Cybersand Harvester"
+        (rez state :corp (get-ice state :remote1 0)))
+      (changes-val-macro
+        -1 (get-counters (refresh ch) :credit)
+        "Spent 1 credit from Cybersand Harvester"
+        (play-from-hand state :corp "Ice Wall" "Server 1")
+        (click-card state :corp ch))
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Took all hosted credits"
+        (card-ability state :corp (refresh ch) 0))
+      (is (= 1 (count (:discard (get-corp)))) "Cybersand Harvester got trashed"))))
 
 (deftest daily-business-show-full-test
     ;; Full test
@@ -1901,6 +1996,58 @@
                    [2 1]
                    [5 2]
                    [10 5]]))))
+
+(deftest federal-fundraising
+  (do-game
+    (new-game {:corp {:hand ["Federal Fundraising" "Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker"]}})
+    (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+    (is (= (:title (nth (-> @state :corp :deck) 3)) "DNA Tracker"))
+    ;; R&D is now from top to bottom: A B C D
+    (play-from-hand state :corp "Federal Fundraising" "New remote")
+    (let [ff (get-content state :remote1 0)]
+      (rez state :corp ff)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      (card-ability state :corp ff 0)
+      (click-prompt state :corp "Yes")
+      (is (= "Choose a card to move next onto R&D" (:msg (prompt-map :corp))))
+      (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi"]
+             (map :title (prompt-buttons :corp))))
+      (click-prompt state :corp "Brainstorm")
+      (click-prompt state :corp "Accelerated Beta Test")
+      (click-prompt state :corp "Chiyashi")
+      (click-prompt state :corp "Done")
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Chiyashi"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Brainstorm"))
+      (changes-val-macro
+        1 (count (:hand (get-corp)))
+        "Corp drew 1 card"
+        (click-prompt state :corp "Yes"))
+      (end-phase-12 state :corp)
+      (is (no-prompt? state :corp))
+      (play-from-hand state :corp "Chiyashi" "Server 1")
+      ;; (take-credits state :corp)
+      ;; (take-credits state :runner)
+      ;; (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      ;; (card-ability state :corp ff 0)
+      ;; (click-prompt state :corp "Yes")
+      ;; (is (= ["Brainstorm" "DNA Tracker"]
+      ;;        (map :title (prompt-buttons :corp))))
+      ;; (click-prompt state :corp "Brainstorm")
+      ;; (click-prompt state :corp "DNA Tracker")
+      ;; (click-prompt state :corp "Done")
+      ;; (is (= (:title (nth (-> @state :corp :deck) 0)) "DNA Tracker"))
+      ;; (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      ;; (is (no-prompt? state :corp) "No prompt to draw 1 card")
+      )))
 
 (deftest franchise-city
   ;; Franchise City
@@ -4243,6 +4390,21 @@
         (click-prompt state :corp "Yes"))
       (is (= 1 (count (:discard (get-corp)))) "Reaper Function was trashed"))))
 
+(deftest reaper-function-interactive
+  ;; Should prompt which to fire first
+  (do-game
+    (new-game {:corp {:deck ["Reaper Function" "Reaper Function"]
+                      :credits 6}})
+    (play-from-hand state :corp "Reaper Function" "New remote")
+    (play-from-hand state :corp "Reaper Function" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+    (end-phase-12 state :corp)
+    (is (= ["Reaper Function" "Reaper Function"] (prompt-titles :corp)))))
+
 (deftest reconstruction-contract
   ;; Reconstruction Contract - place advancement token when runner takes meat damage
   (do-game
@@ -5851,6 +6013,19 @@
       (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
       (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
 
+(deftest urban-renewal-interactive
+  ;; Should prompt which to fire first
+  (do-game
+    (new-game {:corp {:deck [(qty "Urban Renewal" 2)]
+                      :credits 6}})
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= ["Urban Renewal" "Urban Renewal"] (prompt-titles :corp)))))
+
 (deftest urtica-cipher
   ;; Urtica Cipher
   (do-game
@@ -6024,6 +6199,50 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner should gain 2 agenda points from trashing Victoria Jenkins")
       (is (= 1 (count (get-scored state :runner))) "Runner should have 1 card in score area")
       (is (zero? (-> (get-corp) :discard count)) "Victoria Jenkins shouldn't go to Archives when trashed"))))
+
+(deftest wage-workers
+  (do-game
+    (new-game {:corp {:hand ["Wage Workers" "PAD Campaign" "NGO Front"]}})
+    (changes-val-macro
+        -2 (:click (get-corp))
+        "Corp spent 2 clicks instead of 3"
+        (play-from-hand state :corp "Wage Workers" "New remote")
+        (rez state :corp (get-content state :remote1 0))
+        (play-from-hand state :corp "PAD Campaign" "New remote")
+        (play-from-hand state :corp "NGO Front" "New remote"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (let [ngo (get-content state :remote3 0)]
+      (changes-val-macro
+        -2 (:click (get-corp))
+        "Corp spent 2 clicks instead of 3"
+        (dotimes [_ 3]
+          (click-advance state :corp (refresh ngo)))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (changes-val-macro
+        -2 (:click (get-corp))
+        "Corp spent 2 clicks instead of 3"
+        (dotimes [_ 3]
+          (click-credit state :corp)))))
+
+(deftest wage-workers-multiple-triggers
+  (do-game
+    (new-game {:corp {:hand ["Wage Workers" (qty "Biotic Labor" 3)]
+                      :deck [(qty "Hedge Fund" 5)]
+                      :credits 50}})
+    (play-from-hand state :corp "Wage Workers" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (dotimes [_ 3]
+      (play-from-hand state :corp "Biotic Labor"))
+    (is (= 7 (:click (get-corp))) "Got 1 click from Wage Workers")
+    (changes-val-macro
+        -3 (:click (get-corp))
+        "Corp spent 3 clicks instead of 4"
+        (dotimes [_ 4]
+          (click-draw state :corp)))))
 
 (deftest wall-to-wall-basic-functionality
     ;; Basic functionality

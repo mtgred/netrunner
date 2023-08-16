@@ -3615,6 +3615,24 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
+(deftest salvo-testing
+    (do-game
+      (new-game {:corp {:hand ["Salvo Testing" "Project Vitruvius"]
+                        :credits 10}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Runner took 1 damage"
+        (play-and-score state "Salvo Testing")
+        (click-prompt state :corp "Yes"))
+      (is (= 1 (:brain-damage (get-runner))))
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Runner took 1 damage"
+        (play-and-score state "Project Vitruvius")
+        (click-prompt state :corp "Yes"))
+      (is (= 2 (:brain-damage (get-runner))))))
+
 (deftest sds-drone-deployment-corp-score-a-program-is-installed
     ;; Corp score, a program is installed
     (do-game
@@ -4014,6 +4032,35 @@
    (click-prompt state :corp "Server 1")
    (is (= 1 (count (get-ice state :remote1))) "Ice Wall installed protecting server 1")
    (is (= 1 (get-counters (get-ice state :remote1 0) :advancement)) "Agenda has 1 advancement counter")))
+
+(deftest stegodon-mk-iv
+  (do-game
+    (new-game {:corp {:hand ["Stegodon MK IV" (qty "Ice Wall" 2)]
+                      :credits 10}
+               :runner {:hand ["Corroder"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (rez state :corp (get-ice state :rd 0))
+    (play-and-score state "Stegodon MK IV")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (let [corr (get-program state 0)]
+      (run-on state "HQ")
+      (is (= 2 (get-strength (refresh corr))))
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Corp gained 1 credit by derezzing ice"
+        (click-card state :corp (get-ice state :rd 0)))
+      (is (zero? (get-strength (refresh corr))) "Corroder's strength lowered")
+      (run-continue state)
+      (card-ability state :runner (refresh corr) 0)
+      (is (no-prompt? state :runner) "Corroder cannot interface with Ice Wall")
+      (run-continue state)
+      (run-continue state)
+      (run-on state "Archives")
+      (is (no-prompt? state :corp) "Stegodon MK IV ability is once per turn")
+      (is (= 2 (get-strength (refresh corr)))))))
 
 (deftest sting-corp-score-then-runner-steal-then-corp-score
     ;; Corp score, then Runner steal, then Corp score

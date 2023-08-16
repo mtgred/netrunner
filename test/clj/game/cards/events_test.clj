@@ -7,6 +7,7 @@
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
             [jinteki.validator :refer [legal?]]
+            [clojure.string :as str]
             [clojure.test :refer :all]))
 
 (deftest account-siphon-use-ability
@@ -404,6 +405,42 @@
         (is (= (+ 2 hand) (count (:hand (get-corp)))) "Calvin Baley draws 2 cards")
         (is (no-prompt? state :corp) "No Jinja City Grid"))))
 
+(deftest bahia-bands
+  (do-game
+      (new-game {:corp {:hand ["PAD Campaign"]}
+                 :runner {:hand [(qty "Bahia Bands" 2)]
+                          :deck ["Sure Gamble" "Simulchip"]}})
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bahia Bands")
+      (click-prompt state :runner "Server 1")
+      (run-continue state)
+      (changes-val-macro 2 (count (:hand (get-runner)))
+        "Drew 2 cards"
+        (click-prompt state :runner "Draw 2 cards"))
+      (changes-val-macro
+        0 (:credit (get-runner))
+        "Spent no credits to install Simulchip"
+        (click-prompt state :runner "Install a card from the grip, paying 1 [Credits] less")
+        (click-card state :runner "Simulchip"))
+      (is (= 1 (count (get-hardware state))) "Installed Simulchip")
+      (click-prompt state :runner "No action")
+      ;; Second run
+      (gain-tags state :runner 1)
+      (play-from-hand state :runner "Bahia Bands")
+      (click-prompt state :runner "Server 1")
+      (run-continue state)
+      (changes-val-macro -1 (count-tags state)
+        "Removed 1 tag"
+        (click-prompt state :runner "Remove 1 tag"))
+      (click-prompt state :runner "Place 4 [Credits] for paying trash costs")
+      (let [bb (-> (get-runner) :play-area first)]
+        (is (= 4 (get-counters (refresh bb) :credit)) "Bahia Bands has 4 credits on it")
+        (click-prompt state :runner "Pay 4 [Credits] to trash")
+        (dotimes [_ 4]
+          (click-card state :runner bb))
+        (is (= 1 (count (:discard (get-corp))))))))
+
 (deftest because-i-can
   ;; Because I Can
   ;; make a successful run on a remote to shuffle its contents into R&D
@@ -615,6 +652,7 @@
         (rez state :corp arch)
         (run-continue state)
         (card-subroutine state :corp (refresh arch) 0)
+        (click-prompt state :corp "OK")
         (click-prompt state :corp "Ice Wall")
         (core/move state :corp enig :discard)
         (click-prompt state :corp "HQ")
@@ -1086,14 +1124,21 @@
 
 (deftest chrysopeoeian-skimming-decline
   (do-game
-    (new-game {:corp {:hand ["Project Atlas" "Project Beale"]
-                      :deck ["Hedge Fund" "IPO" "NGO Front"]}
+    (new-game {:corp {:hand ["Project Atlas" "Project Beale" "Accelerated Beta Test" "Brainstorm" "Chiyashi"]}
                :runner {:hand ["Chrysopoeian Skimming"]
                         :deck ["Sure Gamble"]}})
+    (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+    ;; R&D is now from top to bottom: A B C
     (take-credits state :corp)
     (play-from-hand state :runner "Chrysopoeian Skimming")
-    (click-prompt state :corp "No thanks")
-    (click-prompt state :runner "Noted")))
+    (click-prompt state :corp "Done")
+    (is (str/includes? (:msg (prompt-map :runner)) "Accelerated Beta Test, Brainstorm, and Chiyashi"))
+    (click-prompt state :runner "OK")))
 
 (deftest chrysopeoeian-skimming-forced-decline
   (do-game
@@ -1103,8 +1148,8 @@
                         :deck ["Sure Gamble"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Chrysopoeian Skimming")
-    (click-prompt state :corp "No thanks")
-    (click-prompt state :runner "Noted")))
+    (click-prompt state :corp "Done")
+    (click-prompt state :runner "OK")))
 
 (deftest code-siphon
   ;; Code Siphon
@@ -3815,6 +3860,21 @@
     (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")
     (is (= 2 (count (:hand (get-runner)))) "One played, one drawn")))
+
+(deftest joy-ride
+  ;; Basic Functionality
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "PAD Campaign" 5)]}
+               :runner {:hand ["Joy Ride"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Joy Ride")
+    (changes-val-macro
+        5 (count (:hand (get-runner)))
+        "Drew 5 cards"
+        (run-continue state))
+    (click-prompt state :runner "No action")))
 
 (deftest katorga-breakout
   ;; Basic Functionality

@@ -510,6 +510,22 @@
     (take-credits state :corp)
     (is (= 3 (:click (get-runner))) "Lost 1 click at turn start")))
 
+(deftest beatriz-friere-gonzalez
+  (do-game
+    (new-game {:runner {:deck ["Beatriz Friere Gonzalez"]}
+               :corp {:hand ["Hedge Fund"]
+                      :deck [(qty "Rashida Jaheem" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Beatriz Friere Gonzalez")
+    (changes-val-macro
+        -2 (:click (get-runner))
+        "Spent 2 clicks"
+        (card-ability state :runner (get-resource state 0) 0))
+    (run-continue state)
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (no-prompt? state :runner) "No more accesses")))
+
 (deftest bhagat-only-trigger-on-first-run
     ;; only trigger on first run
     (do-game
@@ -1436,7 +1452,7 @@
       (run-jack-out state)
       (is (= 2 (get-strength (refresh faust))) "Dean Lister effect ends after run"))))
 
-(deftest debbie-downtown
+(deftest debbie-downtown-moreira
   (do-game
     (new-game {:corp {:hand ["Rashida Jaheem"]}
                :runner {:hand ["Carpe Diem" "Debbie \"Downtown\" Moreira"]}})
@@ -1453,6 +1469,17 @@
       (is (not (no-prompt? state :runner)) "Prompt to spend credits")
       (click-card state :runner (refresh deb))
       (is (no-prompt? state :runner) "Spent"))))
+
+(deftest debbie-downtown-moreira-threat
+  (do-game
+    (new-game {:corp {:hand [(qty "Project Atlas" 2)]
+                      :credits 10}
+               :runner {:hand ["Debbie \"Downtown\" Moreira"]}})
+    (play-and-score state "Project Atlas")
+    (play-and-score state "Project Atlas")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Debbie \"Downtown\" Moreira")
+    (is (= 2 (get-counters (refresh (get-resource state 0)) :credit)) "Has 2 hosted credits")))
 
 (deftest decoy
   ;; Decoy - Trash to avoid 1 tag
@@ -2135,7 +2162,9 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Eru Ayase-Pessoa")
     (let [eru (get-resource state 0)]
-      (card-ability state :runner (refresh eru) 0)
+      (changes-val-macro 1 (count-tags state)
+        "Got 1 tag"
+        (card-ability state :runner (refresh eru) 0))
       (run-continue state)
       ;;should access two cards
       (click-prompt state :runner "No action")
@@ -2745,7 +2774,7 @@
       (click-prompt state :runner "Trash Guru Davinder")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
-(deftest hannah-wheels-basic-test
+(deftest hannah-wheels-pilintra-basic-test
   (do-game
     (new-game {:runner {:hand ["Hannah \"Wheels\" Pilintra"]}
                :corp {:deck [(qty "Hedge Fund" 5)]
@@ -2754,8 +2783,11 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Hannah \"Wheels\" Pilintra")
     (let [wheels (get-resource state 0)]
-      (card-ability state :runner (refresh wheels) 0)
-      (click-prompt state :runner "Server 1")
+      (changes-val-macro
+        0 (:click (get-runner))
+        "Gained 1 click back"
+        (card-ability state :runner (refresh wheels) 0)
+        (click-prompt state :runner "Server 1"))
       (changes-val-macro
         1 (count-tags state)
         "Runner took a tag for jacking out"
@@ -3492,6 +3524,33 @@
       (is (refresh kongamato-2)
           "Second Kongamato isn't trashed as first subroutine is already broken"))))
 
+(deftest lago-paranoa-shelter
+  (do-game
+      (new-game {:runner {:hand ["Lago Paranoá Shelter"]
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :corp {:hand ["PAD Campaign" "Crisium Grid" "Ice Wall" "Spin Doctor"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Lago Paranoá Shelter")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (no-prompt? state :runner) "Ice don't trigger Lago Paranoá Shelter")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (changes-val-macro
+        1 (count (:discard (get-runner)))
+        "Milled 1 card"
+        (click-prompt state :runner "Yes"))
+      (is (= 1 (count (:hand (get-runner)))) "Runner drew 1 card")
+      (play-from-hand state :corp "Spin Doctor" "New remote")
+      (is (no-prompt? state :runner) "Lago Paranoá Shelter is once per turn")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Crisium Grid" "R&D")
+      (changes-val-macro
+        1 (count (:discard (get-runner)))
+        "Milled 1 card"
+        (click-prompt state :runner "Yes"))
+      (is (= 1 (count (:hand (get-runner)))) "No cards left to draw")))
+
 (deftest lewi-guilherme
   ;; Lewi Guilherme - lower corp hand size by 1, pay 1 credit when turn begins or trash
   (do-game
@@ -4007,6 +4066,7 @@
         (run-continue state)
         (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rez")
         (card-subroutine state :corp architect 0)
+        (click-prompt state :corp "OK")
         (click-prompt state :corp "Ice Wall")
         (click-prompt state :corp "HQ")
         (is (= 3 (:credit (get-corp))) "Corp has 7 credits"))))
@@ -6836,6 +6896,39 @@
           "Did not gain 1 credit"
           (fire-subs state (refresh ak))))
       (run-continue state))))
+
+(deftest urban-art-vernissage
+  (do-game
+      (new-game {:runner {:hand ["Urban Art Vernissage" "Botulus" "Monkeywrench"]
+                          :credits 10}
+                 :corp {:hand [(qty "Ice Wall" 2)]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Urban Art Vernissage")
+      (let [iw1 (get-ice state :hq 0)
+            iw2 (get-ice state :rd 0)
+            uav (get-resource state 0)]
+        (play-from-hand state :runner "Monkeywrench")
+        (click-card state :runner iw1)
+        (play-from-hand state :runner "Botulus")
+        (click-card state :runner iw2)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (:runner-phase-12 @state) "Runner in Step 1.2")
+        (card-ability state :runner uav 0)
+        (changes-val-macro
+          0 (get-counters (refresh uav) :credit)
+          "Can't choose virus trojans"
+          (click-card state :runner (first (:hosted (refresh iw2)))))
+        (changes-val-macro
+          2 (get-counters (refresh uav) :credit)
+          "2 credits placed on Urban Art Vernissage"
+          (click-card state :runner (first (:hosted (refresh iw1)))))
+        (is (= 1 (count (:hand (get-runner)))) "1 card added to the grip")
+        (play-from-hand state :runner "Monkeywrench")
+        (dotimes [_ 2]
+          (click-card state :runner uav)))))
 
 (deftest verbal-plasticity
   ;; Verbal Plasticity
