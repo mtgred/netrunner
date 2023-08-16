@@ -47,6 +47,9 @@
    {:name "/derez"
     :usage "/derez"
     :help "derez a rezzed card (corp only)"}
+   {:name "/disable-card"
+    :usage "/disable-card"
+    :help "Disable a card"}
    {:name "/discard"
     :has-args :required
     :usage "/discard #n"
@@ -58,6 +61,9 @@
     :has-args :optional
     :usage "/draw n"
     :help "Draw n cards"}
+   {:name "/enable-card"
+    :usage "/enable-card"
+    :help "Enable a card"}
    {:name "/end-run"
     :usage "/end-run"
     :help "End the run (Corp only)"}

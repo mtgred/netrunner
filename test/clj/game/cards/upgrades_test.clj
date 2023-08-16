@@ -72,6 +72,35 @@
         (is (rezzed? (refresh spid)) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest angelique-garza-correa
+  (do-game
+    (new-game {:corp {:hand ["Angelique Garza Correa"]}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-from-hand state :corp "Angelique Garza Correa" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "No action")
+    (rez state :corp (get-content state :remote1 0))
+    (run-empty-server state "Server 1")
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "Corp paid 2 credits"
+      (click-prompt state :corp "Yes"))
+    (is (= 2 (count (:discard (get-runner)))) "Runner got 2 damage")))
+
+(deftest angelique-garza-correa-expend-ability
+  (do-game
+    (new-game {:corp {:hand ["Angelique Garza Correa" "City Works Project"]}
+               :runner {:hand [(qty "Sure Gamble" 2)]}})
+    (play-and-score state "City Works Project")
+    (let [ang (first (:hand (get-corp)))]
+      (changes-val-macro
+        -1 (:credit (get-corp))
+        "Corp paid 1 credit"
+        (expend state :corp ang))
+      (is (= 1 (count (:discard (get-runner)))) "Runner got 1 damage")
+      (is (= 1 (count (:discard (get-corp)))) "Angelique Garza Correa got discarded"))))
+
 (deftest anoetic-void
   ;; Anoetic Void
   (do-game
@@ -4065,6 +4094,14 @@
        (click-prompt state :corp "HQ")
        (is (= "Fire Wall" (:title (first (get-in @state [:corp :servers :hq :ices])))) "Fire Wall on HQ"))))
 
+(deftest tucana-is-remote-only
+  (do-game
+    (new-game {:corp {:hand ["Tucana"]}})
+    (play-from-hand state :corp "Tucana")
+      (is (not (some #{"HQ" "R&D" "Archives"} (prompt-buttons :corp)))
+          "Central servers are not listed in the install prompt")
+    (click-prompt state :corp "New remote")))
+
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game
@@ -4156,6 +4193,34 @@
      (is (= 2 (get-counters (refresh vlad) :advancement)) "Vladisibirsk City Grid has not spent counters")
      (is (= 0 (get-counters (refresh ngo2) :advancement)) "NGO Front 2 has gained no counters")
      (is (not (no-prompt? state :corp)) "Vlad Grid prompt is still active"))))
+
+(deftest vovo-ozetti
+  (do-game
+    (new-game  {:corp {:hand ["Vovô Ozetti" "Enigma" "Vanity Project" "PAD Campaign" "Tranquility Home Grid"]
+                       :credits 10}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Vovô Ozetti", "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Enigma", "Server 1")
+    (changes-val-macro
+      -1 (:credit (get-corp))
+      "Rezzed ice paying 2 less credits"
+      (rez state :corp (get-ice state :remote1 0)))
+    (play-from-hand state :corp "PAD Campaign", "Server 1")
+    (changes-val-macro
+      -2 (:credit (get-corp))
+      "No discount on assets or upgrades when under threat"
+      (rez state :corp (get-content state :remote1 1)))
+    (play-and-score state "Vanity Project")
+    (play-from-hand state :corp "Tranquility Home Grid", "Server 1")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Rezzed upgrade paying 2 less credits"
+      (rez state :corp (get-content state :remote1 2)))
+    (core/end-turn state :corp nil)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "R&D")
+    (is (= "Vovô Ozetti" (:title (get-content state :rd 0))))))
 
 (deftest warroid-tracker-trashing-warroid-directly-starts-trace
     ;; Trashing Warroid starts trace

@@ -309,14 +309,13 @@
                                                   :type :tag
                                                   :value (value cost)})))
 
-;; Tag-or-bp
+;; Tag-or-bad-pub
 (defmethod cost-name :tag-or-bad-pub [_] :tag-or-bad-pub)
 (defmethod value :tag-or-bad-pub [[_ cost-value]] cost-value)
 (defmethod label :tag-or-bad-pub [cost] (str "remove " (quantify (value cost) "tag") " or take " (value cost) " bad publicity"))
 (defmethod payable? :tag-or-bad-pub
   [cost state side eid card]
   true)
-;;  (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost))))
 (defmethod handler :tag-or-bad-pub
   [cost state side eid card actions]
   (if-not (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost)))
@@ -326,10 +325,11 @@
                                                     :value (value cost)}))
     (continue-ability
       state side
-      {:prompt "remove tag or take bad pub?"
-       :choices ["tag" "bad pub"]
+      {:prompt "Choose one"
+       :choices [(str "Remove " (quantify (value cost) "tag"))
+                 (str "Gain " (value cost) "bad publicity")]
        :async true
-       :effect (req (if (= target "bad pub")
+       :effect (req (if (= target (str "Gain " (value cost) "bad publicity"))
                       (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) nil)
                                 (complete-with-result state side eid {:msg (str "gains " (value cost) "bad publicity")
                                                                       :type :tag-or-bad-pub

@@ -4,7 +4,7 @@
    [game.core.access :refer [access-bonus max-access]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type
                             card->server server->zone]]
-   [game.core.card :refer [active? agenda? asset? card-index corp? facedown?
+   [game.core.card :refer [active? agenda? asset? card-index corp? facedown? faceup?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone
                            hardware? has-subtype? in-hand? in-discard? ice? installed?
@@ -477,7 +477,7 @@
                   :ability
                   {:prompt "Choose a card to shuffle into R&D"
                    :choices {:card #(and (not (ice? %))
-                                         (not (rezzed? %))
+                                         (not (faceup? %))
                                          (zero? (get-counters % :advancement)))}
                    :msg (msg "shuffle " (card-str state target) " into R&D")
                    :effect (effect (move :corp target :deck)
@@ -581,7 +581,7 @@
                                  :req (req (and (get-current-encounter state)
                                                  (<= (get-strength current-ice) (get-strength card))
                                                  (has-subtype? current-ice "Barrier")))
-                                 :msg (msg "prevent " (:title current-ice) " from ending the run (this encounter)")
+                                 :msg (msg "prevent " (card-str state current-ice) " from ending the run this encounter")
                                  :effect (req
                                            (let [target-ice (:ice (get-current-encounter state))]
                                              (register-floating-effect
@@ -1014,12 +1014,13 @@
                                 (strength-pump 1 1)]
                     :interactive (req true)
                     :events [{:event :encounter-ice
-                              :optional {:prompt (msg "spend 3 counters to bypass " (:title current-ice))
+                              :optional {:prompt (msg "Spend 3 power counters to bypass " (card-str state current-ice) "?")
+                                         :waiting-prompt true
                                          :req (req (and
                                                      (has-subtype? (:ice context) "Barrier")
                                                      (<= 3 (get-counters (get-card state card) :power))))
                                          :yes-ability {:cost [:power 3]
-                                                       :msg (msg "bypass " (:title current-ice))
+                                                       :msg (msg "bypass " (card-str state current-ice))
                                                        :effect (req (bypass-ice state))}}}
 
                              {:event :subroutines-broken
@@ -1829,9 +1830,12 @@
              :async true
              :effect (effect (continue-ability
                                {:optional
-                                {:prompt "Trash Laser Pointer to bypass?"
+                                {:prompt (msg "Trash " (:title card) " to bypass "
+                                              (card-str state current-ice)
+                                              "?")
+                                 :waiting-prompt true
                                  :yes-ability
-                                 {:msg (msg "trash itself to bypass the current ice")
+                                 {:msg (msg "bypass" (card-str state current-ice))
                                   :effect (req
                                             (wait-for (trash state :runner (make-eid state eid) card
                                                              {:unpreventable :true
@@ -2452,7 +2456,8 @@
                          (can-host? %))}
    :events [{:event :pass-ice
              :optional {:interactive (req true)
-                        :prompt "gain [click]?"
+                        :prompt "Gain [Click]?"
+                        :waiting-prompt true
                         :req (req (same-card? (:ice context) (:host card)))
 
                         :yes-ability
@@ -2464,12 +2469,13 @@
                                      (continue-ability
                                        state side
                                        {:optional
-                                        {:prompt "Is Pichação added to the Grip?"
+                                        {:prompt (str "Is " (:title card) " added to the grip?")
+                                         :waiting-prompt true
                                          :yes-ability {:msg "appease the rules"
                                                        :cost [:return-to-hand]}}}
                                        card nil)
                                      (effect-completed state side eid)))}
-                        :no-ability {:msg "decline to gain [click]"}}}]})
+                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
 
 (defcard "Pipeline"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -2652,12 +2658,12 @@
                          (can-host? %))}
    :events [{:event :rez
              :req (req (same-card? (:card context) (:host card)))
-             :msg "gain 3 [Credit]"
+             :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits eid 3))}
             {:event :derez
              :req (req (same-card? target (:host card)))
-             :msg "gain 3 [Credit]"
+             :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits eid 3))}]})
 
@@ -2759,10 +2765,10 @@
   (break-and-enter "Sentry"))
 
 (defcard "Slap Vandal"
-  (auto-icebreaker {:implementation "Once per encounter not implemented"
-                    :hosting {:card #(and (ice? %)
-                                          (can-host? %))}
-                    :abilities [(break-sub 1 1)]}))
+  {:hosting {:card #(and (ice? %)
+                         (can-host? %))}
+   :abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))
+                                     :repeatable false})]})
 
 (defcard "Sneakdoor Beta"
   {:abilities [{:cost [:click 1]
@@ -3041,35 +3047,36 @@
                               :effect (effect (gain-credits :corp eid 2))}]}))
 
 (defcard "Umbrella"
-  (let [corp-draw {:optional {:prompt "Draw a card?"
+  (let [corp-draw {:optional {:prompt "Draw 1 card?"
                               :player :corp
+                              :waiting-prompt true
                               :yes-ability {:async true
-                                            :effect (req
-                                                      (system-msg state :corp (str "uses " (:title card) " to draw a card"))
-                                                      (draw state :corp eid 1))}
+                                            :msg "draw 1 card"
+                                            :effect (req (draw state :corp eid 1))}
                               :no-ability {:player :corp
-                                           :effect (req (system-msg state :corp (str "uses " (:title card) " to decline to draw a card")))}}}
-        runner-draw {:label "(manual) each player may draw"
-                     :optional {:prompt "Draw a card?"
+                                           :effect (req (system-msg (str "declines to use " (:title card) " to draw 1 card")))}}}
+        runner-draw {:label "Each player draws 1 card (manual)"
+                     :optional {:prompt "Draw 1 card?"
+                                :waiting-prompt true
                                 :player :runner
-                                :yes-ability {:msg "draw a card"
-                                              :async true
+                                :yes-ability {:async true
+                                              :msg "draw 1 card"
                                               :effect (req (wait-for (draw state :runner 1)
                                                                      (continue-ability
                                                                        state side
                                                                        corp-draw
                                                                        card nil)))}
-                                :no-ability {:msg "decline to draw a card"
-                                             :async true
-                                             :effect (req (continue-ability
+                                :no-ability {:async true
+                                             :effect (req (system-msg (str "declines to use " (:title card) " to draw 1 card"))
+                                                          (continue-ability
                                                             state side
                                                             corp-draw
                                                             card nil))}}}]
     (auto-icebreaker {:implementation "Draw doesn't work when mixing breakers"
-                      :abilities [runner-draw
-                                  (break-sub 2 3 "Code Gate"
+                      :abilities [(break-sub 2 3 "Code Gate"
                                              {:req (req
-                                                     (some #(and (has-subtype? % "Trojan") (program? %)) (:hosted current-ice)))})]
+                                                     (some #(and (has-subtype? % "Trojan") (program? %)) (:hosted current-ice)))})
+                                  runner-draw]
                       :events [{:event :subroutines-broken
                                 :req (req (every? #(or (= (:breaker %) nil) (= (:breaker %) (:cid card))) (:subroutines target)))
                                 :effect (req (continue-ability state side runner-draw card nil))}]})))

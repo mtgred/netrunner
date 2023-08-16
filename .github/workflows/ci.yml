@@ -12,11 +12,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v3
+
      - uses: actions/setup-node@v3
        with:
          node-version: '18'
+
+     - name: Get npm cache directory
+       id: npm-cache-dir
+       shell: bash
+       run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+
+     - uses: actions/cache@v3
+       id: npm-cache
+       with:
+         path: ${{ steps.npm-cache-dir.outputs.dir }}
+         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+         restore-keys: |
+           ${{ runner.os }}-node-
+
      - name: Install npm dependencies
-       run: npm install
+       id: npm-ci
+       run: npm ci
+
      - name: Compile stylus css
        run: npm run css:release
 
@@ -25,11 +42,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v3
+
      - uses: actions/setup-node@v3
        with:
          node-version: '18'
+
+     - name: Get npm cache directory
+       id: npm-cache-dir
+       shell: bash
+       run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+
+     - uses: actions/cache@v3
+       id: npm-cache
+       with:
+         path: ${{ steps.npm-cache-dir.outputs.dir }}
+         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+         restore-keys: |
+           ${{ runner.os }}-node-
+
+     - name: Cache lein project dependencies
+       id: cljs-cache
+       uses: actions/cache@v3
+       with:
+         path: |
+           ~/.m2
+           ~/.lein
+         key: ${{ runner.os }}-clojure-${{ hashFiles('**/project.clj') }}
+         restore-keys: ${{ runner.os }}-clojure
+
      - name: Install npm dependencies
-       run: npm install
+       run: npm ci
+
      - name: Compile clojurescript with shadow-cljs
        run: npm run cljs:release
 
@@ -38,18 +81,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Cache
-        uses: actions/cache@v3.0.5
+
+      - name: Cache lein project dependencies
+        id: clj-cache
+        uses: actions/cache@v3
         with:
-          # A list of files, directories, and wildcard patterns to cache and restore
           path: |
             ~/.m2
             ~/.lein
-          # An explicit key for restoring and saving the cache
-          key: lein-deps-{{ checksum "project.clj" }}
-          # An ordered list of keys to use for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
-          restore-keys: lein-deps-{{ checksum "project.clj" }}
+          key: ${{ runner.os }}-clojure-${{ hashFiles('**/project.clj') }}
+          restore-keys: ${{ runner.os }}-clojure
+
       - name: Fetch cards
         run: lein fetch --no-db --no-card-images
+
       - name: Run tests
-        run: lein kaocha --profile :ci
+        run: lein eftest

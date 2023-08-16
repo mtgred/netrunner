@@ -100,6 +100,32 @@
         (is (:broken (first (:subroutines (refresh hive)))) "The break ability worked")
         (is (no-prompt? state :runner) "Break ability is one at a time")))))
 
+(deftest airbladex-jsrd-ed
+  (do-game
+    (new-game {:runner {:hand ["AirbladeX (JSRF Ed.)" "Sure Gamble"]}
+               :corp {:hand ["Funhouse" "Envelope"]}})
+    (play-from-hand state :corp "Envelope" "HQ")
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (core/gain state :corp :credit 10)
+    (take-credits state :corp)
+    (play-from-hand state :runner "AirbladeX (JSRF Ed.)")
+    (let [airbladex (get-hardware state 0)]
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (no-prompt? state :runner) "No Funhouse prompt")
+      (is (= 2 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter")
+      (run-continue state)
+      (run-continue state)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (fire-subs state (get-ice state :hq 0))
+      (changes-val-macro 0 (count (:hand (get-runner)))
+        "1 net damage prevented"
+        (card-ability state :runner airbladex 0))
+      (is (= 1 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter"))))
+
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
   (do-game
@@ -2179,6 +2205,46 @@
       (click-prompt state :runner "Done")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
       (is (last-n-log-contains? state 2 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 damage\\.")))))
+
+(deftest hermes
+    (do-game
+      (new-game {:corp {:deck ["Project Atlas" "Hostile Takeover" "PAD Campaign"]}
+                 :runner {:hand ["Hermes"]}})
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hermes")
+      (take-credits state :runner)
+      (score-agenda state :corp (get-content state :remote2 0))
+      (changes-val-macro
+        1 (count (:hand (get-corp)))
+        "PAD Campaign returned to hand"
+        (click-card state :runner (get-content state :remote3 0)))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Steal")
+      (changes-val-macro
+        1 (count (:hand (get-corp)))
+        "PAD Campaign returned to hand"
+        (click-card state :runner (get-content state :remote4 0)))))
+
+(deftest hermes-public-agenda
+  (do-game
+   (new-game {:runner {:hand ["Hermes"]}
+              :corp {:hand ["Ice Wall" "Oaktown Renovation" "Oaktown Renovation"]}})
+   (play-from-hand state :corp "Oaktown Renovation" "New remote")
+   (play-from-hand state :corp "Oaktown Renovation" "New remote")
+   (play-from-hand state :corp "Ice Wall" "Server 1")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Hermes")
+   (run-empty-server state :remote2)
+   (click-prompt state :runner "Steal")
+   (click-card state :runner (get-content state :remote1 0))
+   (is (= 0 (count (:hand (get-corp)))) "Hermes can not bounce Public agenda")
+   (click-card state :runner (get-ice state :remote1 0))
+   (is (= 1 (count (:hand (get-corp)))) "Hermes can bounce facedown ice")))
 
 (deftest hijacked-router-run-on-archives
     ;; Run on Archives
@@ -4468,7 +4534,7 @@
     (run-empty-server state "HQ")
     (changes-val-macro
       1 (get-counters (get-hardware state 0) :power)
-      "added a counter to solidarity badge"
+      "added a counter to Solidarity Badge"
       (click-prompt state :runner "Pay 1 [Credits] to trash"))
     (take-credits state :runner)
     (take-credits state :corp)
@@ -4485,7 +4551,7 @@
     (run-empty-server state "HQ")
     (changes-val-macro
       1 (get-counters (get-hardware state 0) :power)
-      "added a counter to solidarity badge"
+      "added a counter to Solidarity Badge"
       (click-prompt state :runner "Pay 1 [Credits] to trash"))
     (core/gain state :runner :tag 1)
     (take-credits state :runner)
@@ -4504,7 +4570,7 @@
     (run-empty-server state "HQ")
     (changes-val-macro
       0 (get-counters (get-hardware state 0) :power)
-      "added a counter to solidarity badge"
+      "added no counter to Solidarity Badge"
       (click-prompt state :runner "Pay 1 [Credits] to trash"))))
 
 (deftest spinal-modem-pay-credits-prompt
