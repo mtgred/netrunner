@@ -1100,12 +1100,12 @@
                             (and (same-card? (last run-ices) target)
                                  (all-subs-broken? target)
                                  (first-event? state side :subroutines-broken pred))))
-                :prompt (msg "Remove Hippo from the game to trash " (:title target) "?")
+                :prompt (msg "Remove this hardware from the game to trash " (:title target) "?")
                 :yes-ability
                 {:async true
-                 :effect (effect (system-msg (str "removes Hippo from the game to trash " (card-str state target)))
-                                 (move card :rfg)
-                                 (trash eid target {:cause-card card}))}}}]}))
+                 :cost [:remove-from-game]
+                 :msg (msg "trash " (card-str state target))
+                 :effect (effect (trash eid target {:cause-card card}))}}}]}))
 
 (defcard "Hippocampic Mechanocytes"
   {:on-install {:async true
