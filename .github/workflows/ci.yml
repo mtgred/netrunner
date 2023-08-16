@@ -60,6 +60,16 @@ jobs:
          restore-keys: |
            ${{ runner.os }}-node-
 
+     - name: Cache lein project dependencies
+       id: cljs-cache
+       uses: actions/cache@v3
+       with:
+         path: |
+           ~/.m2
+           ~/.lein
+         key: ${{ runner.os }}-clojure-${{ hashFiles('**/project.clj') }}
+         restore-keys: ${{ runner.os }}-clojure
+
      - name: Install npm dependencies
        run: npm ci
 
@@ -73,7 +83,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Cache lein project dependencies
-        id: jnet-cache
+        id: clj-cache
         uses: actions/cache@v3
         with:
           path: |
