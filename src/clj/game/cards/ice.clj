@@ -564,7 +564,7 @@
             :prompt "Choose a card to install from Archives or HQ in another server"
             :show-discard true
             :choices {:card #(and (corp? %)
-                                  (not (operation? %))
+                                  (corp-installable-type? %)
                                   (not (agenda? %))
                                   (or (in-hand? %)
                                       (in-discard? %)))}

@@ -2122,7 +2122,7 @@
               :effect (effect (gain-clicks 1))}
              {:prompt "Choose a non-agenda to install"
               :msg "install a non-agenda from hand"
-              :choices {:card #(and (not (agenda? %))
+              :choices {:card #(and (corp-installable-type? %)
                                     (not (operation? %))
                                     (in-hand? %))}
               :async true
