@@ -6508,12 +6508,14 @@
     (new-game {:runner {:hand ["Strike Fund" "Strike Fund"]}})
     (changes-val-macro
       2 (:credit (get-runner))
-      "gained 2c from strike fund"
-      (damage state :runner :meat 1))
+      "Gained 2 credits from Strike Fund"
+      (damage state :runner :meat 1)
+      (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner")
+      (click-prompt state :runner "Yes"))
     (take-credits state :corp)
     (changes-val-macro
       3 (:credit (get-runner))
-      "gained 3c from playing strike fund"
+      "Gained 3 credits from playing Strike Fund"
       (play-from-hand state :runner "Strike Fund"))))
 
 (deftest sure-gamble
