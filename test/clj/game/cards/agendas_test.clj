@@ -1483,6 +1483,21 @@
       (score state :corp (refresh foi))
       (is (= 2 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
 
+(deftest fujii-asset-retrieval
+    (do-game
+      (new-game {:corp {:hand [(qty "Fujii Asset Retrieval" 2)]}
+                 :runner {:hand [(qty "Sure Gamble" 4)]}})
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "Runner took 2 damage"
+        (play-and-score state "Fujii Asset Retrieval"))
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "Runner took 2 damage"
+        (click-prompt state :runner "Steal"))))
+
 (deftest genetic-resequencing
   ;; Genetic Resequencing
   (do-game
@@ -2615,6 +2630,31 @@
       (is (not (some? (get-content state :remote1 0)))
           "Corp can score with 2 advancements because of 2 core damage"))))
 
+(deftest oracle-thinktank
+    (do-game
+      (new-game {:corp {:hand [(qty "Oracle Thinktank" 2)]}})
+      (play-and-score state "Oracle Thinktank")
+      (gain-tags state :runner 1)
+      (card-ability state :corp (refresh (first (:scored (get-corp)))) 0)
+      (is (= 1 (:agenda-point (get-corp))) "Oracle Thinktank doesn't work from the Corp's score area")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (changes-val-macro
+        1 (count-tags state)
+        "Runner took 1 tag"
+        (click-prompt state :runner "Steal"))
+      (take-credits state :runner)
+      (let [ot (first (:scored (get-runner)))]
+        (is (= 3 (:click (get-corp))))
+        (is (= 1 (count (:abilities (refresh ot)))))
+        (changes-val-macro
+          -1 (count-tags state)
+          "Runner lost 1 tag"
+          (card-ability state :corp (refresh ot) 0))
+        (is (zero? (:agenda-point (get-runner))))
+        (is (zero? (count (:scored (get-runner))))))
+      (is (find-card "Oracle Thinktank" (:deck (get-corp))))))
+
 (deftest orbital-superiority
   ;; Orbital Superiority
   (do-game
@@ -3615,6 +3655,24 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
+(deftest salvo-testing
+    (do-game
+      (new-game {:corp {:hand ["Salvo Testing" "Project Vitruvius"]
+                        :credits 10}
+                 :runner {:hand [(qty "Sure Gamble" 2)]}})
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Runner took 1 damage"
+        (play-and-score state "Salvo Testing")
+        (click-prompt state :corp "Yes"))
+      (is (= 1 (:brain-damage (get-runner))))
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Runner took 1 damage"
+        (play-and-score state "Project Vitruvius")
+        (click-prompt state :corp "Yes"))
+      (is (= 2 (:brain-damage (get-runner))))))
+
 (deftest sds-drone-deployment-corp-score-a-program-is-installed
     ;; Corp score, a program is installed
     (do-game
@@ -3996,6 +4054,35 @@
    (click-prompt state :corp "Server 1")
    (is (= 1 (count (get-ice state :remote1))) "Ice Wall installed protecting server 1")
    (is (= 1 (get-counters (get-ice state :remote1 0) :advancement)) "Agenda has 1 advancement counter")))
+
+(deftest stegodon-mk-iv
+  (do-game
+    (new-game {:corp {:hand ["Stegodon MK IV" (qty "Ice Wall" 2)]
+                      :credits 10}
+               :runner {:hand ["Corroder"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (rez state :corp (get-ice state :rd 0))
+    (play-and-score state "Stegodon MK IV")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (let [corr (get-program state 0)]
+      (run-on state "HQ")
+      (is (= 2 (get-strength (refresh corr))))
+      (changes-val-macro
+        1 (:credit (get-corp))
+        "Corp gained 1 credit by derezzing ice"
+        (click-card state :corp (get-ice state :rd 0)))
+      (is (zero? (get-strength (refresh corr))) "Corroder's strength lowered")
+      (run-continue state)
+      (card-ability state :runner (refresh corr) 0)
+      (is (no-prompt? state :runner) "Corroder cannot interface with Ice Wall")
+      (run-continue state)
+      (run-continue state)
+      (run-on state "Archives")
+      (is (no-prompt? state :corp) "Stegodon MK IV ability is once per turn")
+      (is (= 2 (get-strength (refresh corr)))))))
 
 (deftest sting-corp-score-then-runner-steal-then-corp-score
     ;; Corp score, then Runner steal, then Corp score

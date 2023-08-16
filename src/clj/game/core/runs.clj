@@ -1,14 +1,14 @@
 (ns game.core.runs
   (:require
     [game.core.access :refer [breach-server]]
-    [game.core.board :refer [server->zone]]
+    [game.core.board :refer [get-zones server->zone]]
     [game.core.card :refer [get-card get-zone rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
-    [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
+    [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
@@ -45,6 +45,23 @@
   [state eid]
   (or eid
       (make-eid state (:eid (:run @state)))))
+
+(defn get-runnable-zones
+  ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
+  ([state side] (get-runnable-zones state side (make-eid state) nil nil))
+  ([state side card] (get-runnable-zones state side (make-eid state) card nil))
+  ([state side card args] (get-runnable-zones state side (make-eid state) card args))
+  ([state side eid card {:keys [zones ignore-costs]}]
+   (let [restricted-zones (distinct (flatten (get-effects state side nil :cannot-run-on-server)))
+         permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
+     (if ignore-costs
+       permitted-zones
+       (filter #(can-pay? state :runner eid card nil (total-run-cost state side card {:server (unknown->kw %)}))
+               permitted-zones)))))
+
+(defn can-run-server?
+  [state server]
+  (some #{(unknown->kw server)} (seq (get-runnable-zones state))))
 
 (defn get-current-encounter
   [state]

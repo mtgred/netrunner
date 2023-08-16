@@ -1,5 +1,6 @@
 (ns game.cards.identities
   (:require
+   [clojure.pprint :as pprint]
    [clojure.string :as str]
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
@@ -26,7 +27,6 @@
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [card-flag? clear-persistent-flag!
-                            enable-run-on-server prevent-run-on-server
                             register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
@@ -143,15 +143,17 @@
              :effect (req (let [original-server (zone->name (second (get-zone (:card context))))]
                             (continue-ability
                               state side
-                              {:prompt "Choose a card to install from HQ in another remote"
-                               :choices {:card #(and (not (operation? %))
-                                                     (in-hand? %)
-                                                     (corp? %))}
+                              {:prompt "Choose a card to install in another remote server"
+                               :waiting-prompt true
+                               :choices {:card #(and (corp? %)
+                                                     (corp-installable-type? %)
+                                                     (in-hand? %))}
                                :async true
                                :effect (req (let [chosen-card target]
                                               (continue-ability
                                                 state side
-                                                {:prompt "choose a remote server"
+                                                {:prompt "Choose a remote server"
+                                                 :waiting-prompt true
                                                  :choices (req (conj (vec (filter #(not= original-server %)
                                                                                   (get-remote-names state))) "New remote"))
                                                  :async true
@@ -162,7 +164,7 @@
    :effect (effect
              (continue-ability
                {:req (req (< 2 (count (get-remotes state))))
-                :prompt "Choose two servers to be saved from the rules apocalypse"
+                :prompt "Choose 2 servers to be saved from the rules apocalypse"
                 :choices (req (get-remote-names state))
                 :async true
                 :effect (req (let [saved target]
@@ -311,11 +313,12 @@
 (defcard "Arissana Rocha Nahu: Street Artist"
   {:abilities [{:req (req (and run (not-used-once? state {:once :per-turn} card)))
                 :async true
-                :label "install a program"
+                :label "Install a program from your grip"
                 :effect
                 (effect
                   (continue-ability
-                    {:prompt "Install a program from your grip?"
+                    {:prompt "Choose a program to install"
+                     :waiting-prompt true
                      :choices (req (cancellable
                                      (filter #(and (program? %)
                                                    (runner-can-pay-and-install?
@@ -580,25 +583,34 @@
                  :effect (req (add-counter state side card :power 1))}]
   {:events [(assoc ability :event :runner-trash :req (req (valid-trash target)))
             (assoc ability :event :agenda-stolen :req (req true))]
-   :abilities [{:label "look at the top 3 and install 1"
+   :abilities [{:label "Look at the top 3 cards of R&D"
                 :cost [:power 1 :click 1]
                 :effect (req (let [top (take 3 (:deck corp))]
-                               (continue-ability
-                                 state :corp
-                                 {:prompt "Install a card?"
-                                  :choices (req (conj top "No Thanks"))
-                                  :msg (msg (if (= "No Thanks" target)
-                                              "decline to install a card"
-                                              (str "install the "
-                                                   ;; don't look at this spaghetti please
-                                                   (if (= target (first top)) "first"
-                                                       (if (= target (second top)) "second" "third"))
-                                                   "card from R&D")))
-                                  :async true
-                                  :effect (req (if-not (= target "No Thanks")
-                                                 (corp-install state side eid target nil)
-                                                 (effect-completed state side eid)))}
-                                 card nil)))}]}))
+                               (wait-for (resolve-ability state side
+                                                          {:async true
+                                                           :waiting-prompt true
+                                                           :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title top)))
+                                                           :choices ["OK"]}
+                                                          card nil)
+                                         (continue-ability
+                                           state :corp
+                                           {:prompt "Choose a card to install"
+                                            :waiting-prompt true
+                                            :not-distinct true
+                                            :choices (req (conj
+                                                            (filter #(corp-installable-type? %) top)
+                                                            "Done"))
+                                            :async true
+                                            :effect (req (if-not (= target "Done")
+                                                           (do (system-msg
+                                                                 state side
+                                                                 (str "uses " (get-title card) " to install the "
+                                                                      (pprint/cl-format nil "~:R"
+                                                                        (inc (first (keep-indexed #(when (same-card? target %2) %1) top))))
+                                                                      " card"))
+                                                               (corp-install state side eid target nil))
+                                                           (effect-completed state side eid)))}
+                                           card nil))))}]}))
 
 (defcard "Esâ Afontov: Eco-Insurrectionist"
   (letfn
@@ -1054,18 +1066,9 @@
                             (mill state :corp eid :runner 1)))}]})
 
 (defcard "Jinteki: Replicating Perfection"
-  {:events [{:event :runner-phase-12
-             :effect (req (apply prevent-run-on-server
-                                 state card (map first (get-remotes state))))}
-            {:event :run
-             :once :per-turn
-             :req (req (is-central? (:server target)))
-             :effect (req (apply enable-run-on-server
-                                 state card (map first (get-remotes state))))}]
-   :req (req (empty? (let [successes (turn-events state side :successful-run)]
-                       (filter is-central? (map :server successes)))))
-   :effect (req (apply prevent-run-on-server state card (map first (get-remotes state))))
-   :leave-play (req (apply enable-run-on-server state card (map first (get-remotes state))))})
+  {:constant-effects [{:type :cannot-run-on-server
+                       :req (req (no-event? state side :run #(is-central? (:server (first %)))))
+                       :value (req (map first (get-remotes state)))}]})
 
 (defcard "Jinteki: Restoring Humanity"
   {:events [{:event :corp-turn-ends
@@ -1184,7 +1187,7 @@
 (defcard "Leela Patel: Trained Pragmatist"
   (let [leela {:interactive (req true)
                :prompt "Choose an unrezzed card to return to HQ"
-               :choices {:card #(and (not (rezzed? %))
+               :choices {:card #(and (not (faceup? %))
                                      (installed? %)
                                      (corp? %))}
                :msg (msg "add " (card-str state target) " to HQ")
@@ -1233,20 +1236,20 @@
   {:events [{:event :breach-server
              :req (req (and run
                             (empty? (run-events state side :subroutines-broken))
-                            (or (= :rd target)
-                                (= :hq target))))
+                            (#{:hq :rd} target)))
              :async true
              :effect (req (let [breached-server target]
                             (continue-ability
                               state side
                               {:optional
-                               {:prompt "Access an additional card?"
+                               {:prompt "Access 1 additional card?"
+                                :waiting-prompt true
                                 :once :per-turn
                                 :async true
                                 :yes-ability {:msg (msg "access 1 additional card")
                                               :effect (effect (access-bonus breached-server 1 :end-of-access)
                                                               (effect-completed eid))}
-                                :no-ability {:msg "decline to access an additional card"}}}
+                                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to access 1 additional card")))}}}
                               card nil)))}]})
 
 (defcard "MirrorMorph: Endless Iteration"

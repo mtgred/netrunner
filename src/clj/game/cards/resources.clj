@@ -4,12 +4,11 @@
    [clojure.string :as str]
    [game.core.access :refer [access-bonus access-n-cards breach-server steal
                              steal-cost-bonus]]
-   [game.core.actions :refer [get-runnable-zones]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
-   [game.core.board :refer [all-active all-active-installed all-installed card->server
-                            server->zone]]
+   [game.core.board :refer [all-active all-active-installed all-installed
+                            all-installed-runner card->server server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp?
                            event? facedown? get-agenda-points get-card get-counters
                            get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
@@ -32,7 +31,7 @@
                              first-installed-trash-own? first-run-event?
                              first-successful-run-on-server? get-turn-damage no-event? second-event? turn-events]]
    [game.core.expose :refer [expose]]
-   [game.core.flags :refer [can-run-server? card-flag? clear-persistent-flag!
+   [game.core.flags :refer [card-flag? clear-persistent-flag!
                             has-flag? in-corp-scored?
                             register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -60,7 +59,8 @@
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
-   [game.core.runs :refer [bypass-ice gain-run-credits get-current-encounter
+   [game.core.runs :refer [bypass-ice can-run-server? get-runnable-zones
+                           gain-run-credits get-current-encounter
                            update-current-encounter
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
@@ -468,13 +468,12 @@
               {:target-server :hq
                :this-card-run true
                :mandatory true
-               :ability {:msg "breach R&D, accessing one additional card"
+               :ability {:msg "breach R&D, accessing 1 additional card"
                          :async true
                          :effect (req (register-events
                                         state side
                                         card [(breach-access-bonus :rd 1 {:duration :end-of-run})])
                                       (breach-server state :runner eid [:rd] nil))}})]})
-
 
 (defcard "Beth Kilrain-Chang"
   (let [ability {:once :per-turn
@@ -1016,11 +1015,12 @@
 
 (defcard "Debbie \"Downtown\" Moreira"
   {:on-install {:req (req (threat-level 4 state))
-                :msg "(Threat) place 2 credits on itself"
+                :msg "place 2 [Credits] on itself"
                 :effect (req (add-counter state side card :credit 2))}
    :events [{:event :play-event
              :req (req (has-subtype? (:card context) "Run"))
              :async true
+             :msg "place 1 [Credits] on itself"
              :effect (req (add-counter state side card :credit 1)
                           (effect-completed state side eid))}]
    :abilities [{:msg "take 1 [Credits]"
@@ -1029,7 +1029,7 @@
                 :effect (req (add-counter state side card :credit -1)
                              (wait-for (gain-credits state side (make-eid state eid) 1)
                                        (trigger-event-sync state side eid :spent-credits-from-card card)))}
-               {:label "run a server"
+               {:label "Run a server"
                 :cost [:click 1]
                 :async true
                 :makes-run true
@@ -1274,22 +1274,23 @@
 
 (defcard "Eru Ayase-Pessoa"
   (let [constant-ability
-        ;; event breach req target run hq
         {:event :breach-server
-         :req (req (and (= :rd target)
+         :req (req (and (threat-level 3 state)
+                        (= :rd target)
                         (= :archives (first (:server run)))))
-         :msg (msg "access an additional card")
+         :msg (msg "access 1 additional card")
          :effect (effect (access-bonus :rd 1))}]
     {:events [constant-ability
               (successful-run-replace-breach
               {:target-server :archives
                :this-card-run true
                :mandatory true
-               :ability {:msg "breach R&D, accessing one additional card"
+               :ability {:msg "breach R&D"
                          :async true
                          :effect (req (breach-server state :runner eid [:rd] nil))}})]
      :abilities [{:cost [:click 1]
                   :msg "make a run on Archives"
+                  :label "Take 1 tag and run Archives"
                   :makes-run true
                   :once :per-turn
                   :async true
@@ -1516,6 +1517,7 @@
 (defcard "Hannah \"Wheels\" Pilintra"
   {:abilities [{:cost [:click 1]
                 :once :per-turn
+                :label "Run a remote server"
                 :async true
                 :prompt "Choose a remote server"
                 :req (req (->> runnable-servers
@@ -1527,7 +1529,7 @@
                                      (map unknown->kw)
                                      (filter is-remote?)
                                      (map remote->name))))
-                :msg "gain [Click] and make a run on remote server"
+                :msg (msg "gain [Click] and make a run on " target)
                 :makes-run true
                 :effect (req (gain-clicks state side 1)
                              (register-events
@@ -1543,9 +1545,10 @@
                              (make-run state side eid target card))}
                {:cost [:click 1 :trash-can]
                 :async true
+                :label "Gain [Click][Click]. Remove 1 tag"
                 :effect (effect (gain-clicks 2)
                                 (lose-tags eid 1))
-                :msg "gain [Click][Click] and remove a tag"}]})
+                :msg "gain [Click][Click] and remove 1 tag"}]})
 
 (defcard "Hard at Work"
   (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -1819,17 +1822,19 @@
 
 (defcard "Lago Paranoá Shelter"
   {:events [{:event :corp-install
-             :optional {:prompt "Rock out?"
+             :optional {:prompt "Trash the top card of the stack?"
+                        :waiting-prompt true
                         :req (req (and (not (ice? (:card target)))
                                        (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
-                        :yes-ability {:msg (msg (let [deck (:deck runner)]
-                                                  (if (pos? (count deck))
-                                                    (str "trash " (str/join ", " (map :title (take 1 deck))) " from their Stack and draw 1 card")
-                                                    "trash the top card from their Stack and draw 1 card - but their Stack is empty")))
+                        :yes-ability {:msg (msg (if (seq (:deck runner))
+                                                  (str "trash "
+                                                       (:title (first (:deck runner)))
+                                                       " from the stack and draw 1 card")
+                                                  "trash no cards from the stack (it is empty)"))
                                       :async true
                                       :effect (req (wait-for (mill state :runner :runner 1)
                                                              (draw state :runner eid 1)))}
-                        :no-ability {:msg "decline to rock out"}}}]})
+                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
 
 (defcard "Laguna Velasco District"
   {:events [{:event :runner-click-draw
@@ -3545,24 +3550,26 @@
      :events [(assoc ability :event :runner-turn-begins)]}))
 
 (defcard "Urban Art Vernissage"
-  (let [is-trojan? (fn [cr] (and (has-subtype? cr "Trojan") (not (has-subtype? cr "Virus"))))
+  (let [is-eligible?
+          (fn [cr] (and (program? cr)
+                        (has-subtype? cr "Trojan")
+                        (not (has-subtype? cr "Virus"))))
         ability {:async true
-                 :label "return a non-virus trojan to place 2 [Credits]"
+                 :label "Return a non-virus trojan program to the grip"
                  :once :per-turn
-                 :req (req (some is-trojan? (all-installed state :runner)))
-                 :choices {:not-self true
-                           :req (req (and (runner? target)
+                 :req (req (some is-eligible? (all-installed-runner state)))
+                 :choices {:req (req (and (runner? target)
                                           (installed? target)
-                                          (is-trojan? target)))}
+                                          (is-eligible? target)))}
                  :msg (msg "add " (:title target) " to the grip and place 2 [Credits] on itself")
-                 :cancel-effect (req (system-msg state :runner "declines to use " (:title card))
+                 :cancel-effect (req (system-msg state :runner (str "declines to use " (:title card)))
                                      (effect-completed state side eid))
                  :effect (req (move state side target :hand)
                               (add-counter state side card :credit 2)
                               (effect-completed state side eid))}]
     {:interactions {:pay-credits {:req (req (= :runner-install (:source-type eid)))
                                   :type :credit}}
-     :flags {:runner-phase-12 (req (some is-trojan? (all-installed state :runner)))}
+     :flags {:runner-phase-12 (req (some is-eligible? (all-installed-runner state)))}
      :events [(assoc ability
                      :event :runner-turn-begins
                      :interactive (req true))]

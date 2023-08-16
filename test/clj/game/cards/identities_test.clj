@@ -7,6 +7,7 @@
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]
+            [clojure.string :as str]
             [clojure.test :refer :all]))
 
 (deftest ^{:card-title "419-amoral-scammer"}
@@ -148,6 +149,43 @@
       (click-prompt state :corp "No")
       (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
       (is (prompt-is-type? state :runner :waiting) "Runner should wait again")))
+
+(deftest a-teia-ip-recovery
+  (do-game
+    (new-game {:corp {:id "A Teia: IP Recovery"
+                      :hand ["Ice Wall" "Vanilla" "PAD Campaign" "Spin Doctor" "Enigma" "Pharos"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (is (no-prompt? state :corp) "No trigger when installing on central servers")
+    (play-from-hand state :corp "Spin Doctor" "New remote")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (is (= 2 (count (core/get-remotes state))) "Could not install more remotes")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Enigma" "Server 1")
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Ignored install costs"
+      (click-card state :corp "Pharos")
+      (click-prompt state :corp "Server 2"))
+    ))
+
+(deftest a-teia-tatu-bola
+  (do-game
+    (new-game {:corp {:id "A Teia: IP Recovery"
+                      :hand ["Tatu-Bola" "Vanilla"]}})
+    (play-from-hand state :corp "Tatu-Bola" "New remote")
+    (click-prompt state :corp "Done")
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (rez state :corp (get-ice state :remote1 0))
+    (run-continue state :encounter-ice)
+    (run-continue state :pass-ice)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Vanilla")
+    (click-card state :corp "Tatu-Bola")
+    (click-prompt state :corp "New remote")))
 
 (deftest acme-consulting-the-truth-you-need-tag-gain-when-rezzing-outermost-ice
     ;; Tag gain when rezzing outermost ice
@@ -655,6 +693,36 @@
       (end-phase-12 state :runner)
       (click-card state :runner "Spec Work")
       (is (= 1 (count (get-runner-facedown state))) "Spec Work installed facedown")))
+
+(deftest arissana-rocha-nahu-street-artist
+  (do-game
+    (new-game {:runner {:id "Arissana Rocha Nahu: Street Artist"
+                        :hand ["Hush" "Cache"]}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (let [ari (get-in @state [:runner :identity])]
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (is (no-prompt? state :runner) "Can't use Arissana ability outside of a run")
+      (run-on state "Archives")
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (changes-val-macro
+        -1 (:credit (get-runner))
+        "No additional costs paid"
+        (click-prompt state :runner "Cache"))
+      (is (= "Cache" (:title (get-program state 0))))
+      (run-continue state)
+      (is (= 1 (count (:discard (get-runner)))) "Cache was trashed at the end of the run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (card-ability state :runner (:identity (get-runner)) 0)
+      (click-prompt state :runner "Hush")
+      (click-card state :runner (get-ice state :hq 0))
+      (is (= "Hush" (:title (first (:hosted (refresh (get-ice state :hq 0)))))))
+      (run-continue state)
+      (is (= 1 (count (:discard (get-runner)))) "Hush is still installed")
+)))
 
 (deftest armand-geist-walker-tech-lord-async-costs-with-sync-abilities
     ;; async costs with sync abilities
@@ -1270,6 +1338,66 @@
                            "Used 1 credit from Smoke"
                            (card-ability state :runner refr 1)
                            (click-card state :runner smoke)))))
+
+(deftest epiphany-analytica-nations-undivided
+  (do-game
+    (new-game {:corp {:id "Epiphany Analytica: Nations Undivided"
+                        :hand ["Project Atlas" "Rashida Jaheem" "Accelerated Beta Test" "Brainstorm" "Chiyashi"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (take-credits state :corp)
+    (let [epiph (get-in @state [:corp :identity])]
+      (changes-val-macro
+        1 (get-counters (refresh epiph) :power)
+        "Got 1 power counter"
+        (run-empty-server state "Server 1")
+        (click-prompt state :runner "Pay 1 [Credits] to trash"))
+      (changes-val-macro
+        0 (get-counters (refresh epiph) :power)
+        "Got no additional power counters"
+        (run-empty-server state "Server 2")
+        (click-prompt state :runner "Steal"))
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
+      ;; R&D is now from top to bottom: A B C D
+      (changes-val-macro
+        -1 (get-counters (refresh epiph) :power)
+        "Spend hosted power counters"
+        (card-ability state :corp (:identity (get-corp)) 0)
+        (is (str/includes? (:msg (prompt-map :corp)) "Accelerated Beta Test, Brainstorm, and Chiyashi"))
+        (click-prompt state :corp "OK")
+        (click-prompt state :corp "Brainstorm")
+        (click-prompt state :corp "HQ"))
+      (is (= "Brainstorm" (:title (get-ice state :hq 0))) "Brainstorm is installed")
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Chiyashi")))))
+
+(deftest epiphany-analytica-nations-undivided-declines
+  (do-game
+    (new-game {:corp {:id "Epiphany Analytica: Nations Undivided"
+                        :hand ["Rashida Jaheem" "Ad Blitz" "Biased Reporting" "Celebrity Gift"]}})
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (let [epiph (get-in @state [:corp :identity])]
+      (run-empty-server state "Server 1")
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Ad Blitz" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Biased Reporting" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Celebrity Gift" (:hand (get-corp))) :deck)
+      (card-ability state :corp (:identity (get-corp)) 0)
+      (is (str/includes? (:msg (prompt-map :corp)) "Ad Blitz, Biased Reporting, and Celebrity Gift"))
+      (click-prompt state :corp "OK")
+      (click-prompt state :corp "Done")
+      (is (no-prompt? state :corp))
+      (is (= (:title (nth (-> @state :corp :deck) 0)) "Ad Blitz"))
+      (is (= (:title (nth (-> @state :corp :deck) 1)) "Biased Reporting"))
+      (is (= (:title (nth (-> @state :corp :deck) 2)) "Celebrity Gift")))))
 
 (deftest exile-streethawk-simultaneous-resolution-prompt-shown-for-interaction-with-customized-secretary
     ;; Simultaneous-resolution prompt shown for interaction with Customized Secretary
@@ -2512,6 +2640,58 @@
       (play-from-hand state :runner "Scrubbed")
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")))
 
+(deftest jinteki-replicating-nightmare-scenarios
+  ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
+  ;; also take into account Front Company, Off the Grid, Marathon
+  (do-game
+    (new-game {:corp {:id "Jinteki: Replicating Perfection"
+                      :hand ["Front Company" "Off the Grid" "Rashida Jaheem"]}
+               :runner {:hand ["Marathon" "Direct Access"]}})
+    (core/gain state :corp :credit 20)
+    (play-from-hand state :corp "Front Company" "New remote")
+    (play-from-hand state :corp "Off the Grid" "New remote")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (let [fc (get-content state :remote1 0)
+          otg (get-content state :remote2 0)
+          rashida (get-content state :remote3 0)]
+      (rez state :corp (refresh fc))
+      (rez state :corp (refresh otg))
+      (rez state :corp (refresh rashida))
+      (take-credits state :corp)
+      ;; still can't run remotes with direct access
+      (is (not (core/can-run-server? state "Server 1")))
+      (is (core/can-run-server? state "R&D"))
+      (play-from-hand state :runner "Direct Access")
+      (is (not (core/can-run-server? state "Server 1")))
+      (click-prompt state :runner "R&D")
+      (is (= :rd (get-in @state [:run :server 0])) "Running on remote vs RP")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (is (= "Direct Access" (-> (get-runner) :deck first :title)) "Direct Access shuffled into stack")
+      ;; still can't run on off the grid, but can run other remotes
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (core/can-run-server? state "Server 1"))
+      (is (core/can-run-server? state "Server 3"))
+      (run-on state "Server 1")
+      (run-continue state :success)
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (play-from-hand state :runner "Marathon")
+      (click-prompt state :runner "Server 3")
+      (run-jack-out state)
+      ;;can't run OTG or Rashida
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (not (core/can-run-server? state "Server 3")))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      ;;can't run OTG or Rashida
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (not (core/can-run-server? state "Server 3")))
+      (click-draw state :runner)
+      (play-from-hand state :runner "Direct Access")
+      (is (not (core/can-run-server? state "Server 2")))
+      (is (core/can-run-server? state "Server 3") "Can run because of direct access"))))
+
+
 (deftest jinteki-restoring-humanity
   ;; Jinteki: Restoring Humanity
   (do-game
@@ -2743,6 +2923,21 @@
       (click-card state :runner (get-content state :remote1 0))
       (is (not (:run @state)) "Run is over")))
 
+(deftest leela-patel-trained-pragmatist-public-agenda
+    ;; agendas with Public subtype are neither rezzed or unrezzed
+    (do-game
+      (new-game {
+                 :corp {:hand ["Ice Wall" "Oaktown Renovation" "Oaktown Renovation"]}
+                 :runner {:id "Leela Patel: Trained Pragmatist"}})
+      (play-from-hand state :corp "Oaktown Renovation" "New remote")
+      (play-from-hand state :corp "Oaktown Renovation" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (take-credits state :corp)
+      (run-empty-server state :remote2)
+      (click-prompt state :runner "Steal")
+      (click-card state :runner (get-content state :remote1 0))
+      (is (= 0 (count (:hand (get-corp)))) "Leela can not bounce Public agenda")))
+
 (deftest leela-patel-trained-pragmatist-upgrades-returned-to-hand-in-the-middle-of-a-run-do-not-break-the-run-issue-2008
     ;; upgrades returned to hand in the middle of a run do not break the run. Issue #2008
     (do-game
@@ -2896,6 +3091,62 @@
         (is (= 4 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
+
+(deftest mercury-chrome-libertador
+  (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand [(qty "Hedge Fund" 2)]}
+                 :runner {:id "Mercury: Chrome Libertador"}})
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (run-empty-server state :rd)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")))
+
+(deftest mercury-chrome-libertador-no-additional-access-when-subs-are-broken
+  (do-game
+      (new-game {:corp {:hand [(qty "Hedge Fund" 2) "Ice Wall"]}
+                 :runner {:id "Mercury: Chrome Libertador"
+                          :hand ["Corroder"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh (get-program state 0))})
+      (core/continue state :corp nil)
+      (run-continue state :success)
+      (click-prompt state :runner "No action")))
+
+(deftest mercury-chrome-libertador-interaction-with-tracker
+  (do-game
+      (new-game {:corp {:hand [(qty "Hedge Fund" 2) "Ice Wall"]}
+                 :runner {:id "Mercury: Chrome Libertador"
+                          :hand ["Tracker"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Tracker")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (click-prompt state :runner "HQ")
+      (card-ability state :runner (get-program state 0) 0)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (fire-subs state (refresh (get-ice state :hq 0)))
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")))
 
 (deftest mirrormorph-endless-iteration-triggers-gain-credit-from-mm
       ;; Gain credit from MM
@@ -3444,6 +3695,7 @@
    (changes-val-macro
     1 (count (:hand (get-corp)))
     "drew 1 card with neh"
+    (click-prompt state :corp "OK")
     (click-prompt state :corp "Ballista")
     (click-prompt state :corp "New remote"))
    (is (= ["Drafter" "Eli 1.0" "Fenris" "Galahad"]

@@ -26,7 +26,7 @@ pom.xml
 /resources/public/img/cards/
 /resources/public/sound/
 /data/andb-*.json
-/data/cards.edn
+/data/cards*.edn
 /data/cycles.edn
 /data/formats.edn
 /data/mwls.edn

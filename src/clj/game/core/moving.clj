@@ -7,7 +7,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :as engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event unregister-events]]
+    [game.core.engine :as engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [get-scoring-owner]]
     [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed? zone-locked?]]
     [game.core.hosting :refer [remove-from-host]]
@@ -497,7 +497,11 @@
                         {:keep-server-alive true
                          :index (card-index state a)
                          :suppress-event true
-                         :swap true})]
+                         :swap true})
+          ;; under the new nsg rules, swapping a card into play triggers an install event
+          ;; TODO - quote exactly where
+          install-event (or (and (installed? a) (not (installed? b)))
+                            (and (installed? b) (not (installed? a))))]
       (trigger-event state side :swap moved-a moved-b)
       (when (and (:run @state)
                  (or (ice? a)
@@ -509,6 +513,24 @@
         (when (in-hand? moved-a) (add-to-currently-drawing state a-side moved-a))
         (when (in-hand? moved-b) (add-to-currently-drawing state b-side moved-b)))
       [(get-card state moved-a) (get-card state moved-b)])))
+
+(defn swap-cards-async
+  "Swaps two cards when one or both aren't installed"
+  [state side eid a b]
+  (let [async-result (swap-cards state side a b)
+        moved-a (first async-result)
+        moved-b (second async-result)
+        install-event (= 1 (count (filter installed? [moved-a moved-b])))]
+    ;; todo - we might need behaviour for runner swap installs down the line, depending on future cards
+    ;; that's a problem for another day
+    (if (and install-event (= :corp side))
+      (do (queue-event
+            state :corp-install
+            {:card (get-card state (if (installed? moved-a) moved-a moved-b))
+             :install-state (:install-state (card-def (if (installed? moved-a) moved-a moved-b)))})
+          (wait-for (checkpoint state nil (make-eid state eid))
+                    (complete-with-result state side eid async-result)))
+      (complete-with-result state side eid async-result))))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side).
