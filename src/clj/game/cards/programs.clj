@@ -2777,10 +2777,10 @@
                                     :duration :end-of-run
                                     :unregister-once-resolved true
                                     :interactive (req true)
+                                    :msg "change the attacked server to HQ"
                                     :req (req (= :archives (-> run :server first)))
                                     :effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                 (trigger-event state :corp :no-action)
-                                                 (system-msg state side (str "uses Sneakdoor Beta to make a successful run on HQ")))}])
+                                                 (trigger-event state :corp :no-action))}])
                                 (make-run eid :archives (get-card state card)))}]})
 
 (defcard "Snitch"
