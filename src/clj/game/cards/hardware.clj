@@ -384,19 +384,15 @@
 (defcard "Capybara"
   {:events [{:event :bypassed-ice
              :async true
-             :effect (req (let [target-ice target]
-                            (continue-ability
-                              state side
-                              {:optional
-                               {:req (req true)
-                                :prompt (str "Remove this hardware from the game to derez " (card-str state target-ice) "?")
-                                :yes-ability
-                                {:async true
-                                 :cost [:remove-from-game]
-                                 :msg (msg "derez " (card-str state target-ice))
-                                 :effect (effect (derez target-ice)
-                                                 (effect-completed eid))}}}
-                              card nil)))}]})
+             :optional
+             {:req (req true)
+              :prompt (msg "Remove this hardware from the game to derez " (:title target) "?")
+              :yes-ability
+              {:async true
+               :cost [:remove-from-game]
+               :msg (msg "derez " (card-str state target))
+               :effect (effect (derez target)
+                               (effect-completed eid))}}}]})
 
 (defcard "Carnivore"
   {:constant-effects [(mu+ 1)]
