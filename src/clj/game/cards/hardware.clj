@@ -389,7 +389,7 @@
                               state side
                               {:optional
                                {:req (req true)
-                                :prompt (str "Remove Capybara from the game to derez " (card-str state target-ice) "?")
+                                :prompt (str "Remove this hardware from the game to derez " (card-str state target-ice) "?")
                                 :yes-ability
                                 {:async true
                                  :cost [:remove-from-game]

@@ -1829,7 +1829,7 @@
              :async true
              :effect (effect (continue-ability
                                {:optional
-                                {:prompt (msg "Trash Laser Pointer to bypass "
+                                {:prompt (msg "Trash this program to bypass "
                                               (card-str state current-ice)
                                               "?")
                                  :yes-ability
@@ -2466,7 +2466,7 @@
                                      (continue-ability
                                        state side
                                        {:optional
-                                        {:prompt "Is Pichação added to the Grip?"
+                                        {:prompt (str "Is " (:title card) " added to the Grip?")
                                          :yes-ability {:msg "appease the rules"
                                                        :cost [:return-to-hand]}}}
                                        card nil)
