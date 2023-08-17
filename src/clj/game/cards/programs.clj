@@ -562,7 +562,8 @@
      :hosted-lost gain-abis}))
 
 (defcard "Bankroll"
-  {:events [{:event :successful-run
+  {:implementation "Bankroll gains credits automatically."
+   :events [{:event :successful-run
              :req (req (not (= "Jak Sinclair" (get-in run [:source-card :title])))) ;; TODO: dirty hack
              :msg "place 1 [Credit] on itself"
              :effect (effect (add-counter card :credit 1))}]
