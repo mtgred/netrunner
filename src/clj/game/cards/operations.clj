@@ -2128,7 +2128,7 @@
              {:prompt "Choose a non-agenda to install"
               :msg "install a non-agenda from hand"
               :choices {:card #(and (not (agenda? %))
-                                    (not (operation? %))
+                                    (corp-installable-type? %)
                                     (in-hand? %))}
               :async true
               :effect (effect (corp-install eid target nil nil))}]

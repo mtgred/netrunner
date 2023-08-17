@@ -328,17 +328,17 @@
                      :msg (msg "install " (:title target) " from the grip")
                      :effect (req (wait-for (runner-install state :runner
                                                             (assoc (make-eid state eid) :source card :source-type :runner-install)
-                                                            (assoc-in target [:special :graffiti-artist] true) nil)
+                                                            (assoc-in target [:special :street-artist] true) nil)
                                             (register-once state side {:once :per-turn} card)
                                             (register-events
                                               state side card
                                               [{:event :run-ends
                                                 :interactive (req true)
                                                 :duration :end-of-run
-                                                :req (req (some #(get-in % [:special :graffiti-artist]) (all-installed state :runner)))
-                                                :effect (req (doseq [program (filter #(get-in % [:special :graffiti-artist]) (all-installed state :runner))]
+                                                :req (req (some #(get-in % [:special :street-artist]) (all-installed state :runner)))
+                                                :effect (req (doseq [program (filter #(get-in % [:special :street-artist]) (all-installed state :runner))]
                                                                (if (has-subtype? program "Trojan")
-                                                                 (update! state :runner (dissoc-in program [:special :graffiti-artist]))
+                                                                 (update! state :runner (dissoc-in program [:special :street-artist]))
                                                                  (do
                                                                    (system-msg state side (str "uses " (:title card) " to trash " (:title program)))
                                                                    (trash-cards state side eid [program] {:cause-card card})))))}])))}

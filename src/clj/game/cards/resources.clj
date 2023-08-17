@@ -3645,7 +3645,7 @@
                                    (and (same-card? targetcard (:basic-action-card corp))
                                         (= "Trash 1 resource if the Runner is tagged" (:label target)))))
                        :value [:credit 2]}]
-   :implementation "Errata from FAQ 3.0.1: should be unique"})
+   :implementation "[Erratum] Should be unique"})
 
 (defcard "Woman in the Red Dress"
   (let [ability {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")

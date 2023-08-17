@@ -11,7 +11,7 @@
                                     lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed get-remotes
                             installable-servers]]
-   [game.core.card :refer [agenda? asset? can-be-advanced? corp? event?
+   [game.core.card :refer [agenda? asset? can-be-advanced? corp? event? corp-installable-type?
                            faceup? fake-identity? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype? ice?
                            identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
@@ -129,7 +129,7 @@
                 :async true
                 :prompt "Choose a non-agenda card to install from HQ"
                 :req (req (not (:run @state)))
-                :choices {:card #(and (not (operation? %))
+                :choices {:card #(and (corp-installable-type? %)
                                       (not (agenda? %))
                                       (in-hand? %)
                                       (corp? %))}
@@ -1697,7 +1697,7 @@
                 :effect (req (doseq [c targets]
                                (move state side c :deck))
                              (shuffle! state side :deck))}]
-   :implementation "Errata from FAQ 3.1: should be unique"})
+   :implementation "[Erratum] Should be unique"})
 
 (defcard "Nanoetching Matrix"
   {:abilities [{:cost [:click 1]
