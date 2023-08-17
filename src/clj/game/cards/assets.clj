@@ -1696,7 +1696,7 @@
                 :effect (req (doseq [c targets]
                                (move state side c :deck))
                              (shuffle! state side :deck))}]
-   :implementation "Errata from FAQ 3.1: should be unique"})
+   :implementation "[Erratum] Should be unique"})
 
 (defcard "Nanoetching Matrix"
   {:abilities [{:cost [:click 1]
