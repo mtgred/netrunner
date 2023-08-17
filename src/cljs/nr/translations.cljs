@@ -36,6 +36,7 @@
      :snapshot "Snapshot"
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
+     :neo "Neo"
      :classic "Classic"
      :casual "Casual"
      :system-gateway "System Gateway"
@@ -468,6 +469,7 @@
      :snapshot "快照"
      :snapshot-plus "快照+"
      :socr "SOCR"
+     :neo "Neo"
      :classic "经典"
      :casual "休闲"}
     :card-type
@@ -860,6 +862,7 @@
      :snapshot "Apshotsnay"
      :snapshot-plus "Apshotsnay Usplay"
      :socr "SOCRYAY"
+     :neo "Neoyay"
      :classic "Assicclay"
      :casual "Asualcay"
      :system-gateway "Emsystay Atewaygay"
@@ -1266,6 +1269,7 @@
      :snapshot "Snapshot"
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
+     :neo "Neo"
      :classic "Classic"
      :casual "Casual"
      :system-gateway "System Gateway"
@@ -1696,6 +1700,7 @@
     :snapshot "스냅샷"
     :snapshot-plus "스냅샷 플러스"
     :socr "SOCR"
+    :neo "Neo"
     :classic "클래식"
     :casual "캐주얼"}
    :card-type
@@ -2097,6 +2102,7 @@
      :snapshot "Snapshot"
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
+     :neo "Neo"
      :classic "Classic"
      :casual "Niekompetytywny"
      :system-gateway "Wejście do Systemu"
@@ -2526,6 +2532,7 @@
      :snapshot "スナップショット"
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
+     :neo "Neo"
      :classic "Classic"
      :casual "Casual"
      :system-gateway "システムゲートウェイ"

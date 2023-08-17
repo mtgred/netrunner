@@ -807,12 +807,12 @@
   {:advancement-requirement (req (- (count-tags state)))})
 
 (defcard "Fujii Asset Retrieval"
-  {:stolen {:async true
-            :msg "do 2 net damage"
-            :effect (effect (damage eid :net 2 {:card card}))}
-   :on-score {:async true
-              :msg "do 2 net damage"
-              :effect (effect (damage eid :net 2 {:card card}))}})
+  (let [ability {:async true
+                 :interactive (req true)
+                 :msg "do 2 net damage"
+                 :effect (effect (damage eid :net 2 {:card card}))}]
+    {:stolen ability
+     :on-score ability}))
 
 (defcard "Genetic Resequencing"
   {:on-score {:choices {:card in-scored?}
@@ -1283,6 +1283,7 @@
             :async true
             :effect (effect (gain-tags eid 1))}
    :abilities [{:cost [:click 1 :tag 1]
+                :req (req (is-scored? state :runner card))
                 :msg "shuffle itself into R&D"
                 :label "Shuffle this agenda into R&D"
                 :effect (effect (move :corp card :deck nil)
@@ -1961,7 +1962,7 @@
                           (continue-ability
                             (let [chosen-ice target]
                               {:prompt "Choose a server"
-                               :choices (req servers)
+                               :choices (req (conj (vec servers) "New remote"))
                                :async true
                                :effect (effect
                                          (continue-ability
