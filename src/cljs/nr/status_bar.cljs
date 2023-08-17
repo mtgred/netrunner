@@ -6,12 +6,15 @@
    [nr.lobby :refer [filter-games leave-game]]
    [nr.player-view :refer [player-view]]
    [nr.translations :refer [tr]]
+   [nr.ws :as ws]
    [reagent.core :as r]))
 
 (defn current-game-count [user games]
-  [:div.float-right
-   (let [c (count (filter-games @user @games (:visible-formats @app-state)))]
-     (tr [:nav/game-count] c))])
+  (r/with-let [c (r/track (fn [] (count (filter-games @user @games (:visible-formats @app-state)))))]
+    [:div.float-right
+     (tr [:nav/game-count] @c)
+     (when (zero? @c)
+       [:a.reconnect-button {:on-click #(ws/chsk-reconnect!)} "Attempt reconnect"])]))
 
 (defn in-game-buttons [user current-game gameid]
   (when (and (:started @current-game)

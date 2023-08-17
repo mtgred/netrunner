@@ -22,6 +22,10 @@
       ([ev] (send-fn ev))
       ([ev ?timeout ?cb] (send-fn ev ?timeout ?cb)))))
 
+(defn chsk-reconnect!
+  []
+  (sente/chsk-reconnect! chsk))
+
 (defmulti event-msg-handler
   "Multimethod to handle Sente `event-msg`s"
   :id)
