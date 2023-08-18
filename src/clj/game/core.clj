@@ -835,8 +835,8 @@
 
 (expose-vars
   [game.core.trace
-   init-trace
-   init-trace-bonus])
+   force-base
+   init-trace])
 
 (expose-vars
   [game.core.turns

@@ -115,7 +115,7 @@
   ([state side effect-type target targets]
    (->> (get-effects state side effect-type target targets)
         (filter number?)
-        (reduce +))))
+        (reduce + 0))))
 
 (defn any-effects
   "Check if any effects return true for pred"

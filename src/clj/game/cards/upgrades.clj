@@ -53,7 +53,6 @@
    [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
-   [game.core.trace :refer [init-trace-bonus]]
    [game.core.update :refer [update!]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
@@ -1472,9 +1471,9 @@
                        :value [:click 1]}]})
 
 (defcard "Rutherford Grid"
-  {:events [{:event :pre-init-trace
-             :req (req this-server)
-             :effect (effect (init-trace-bonus 2))}]})
+  {:static-abilities [{:type :trace-base-strength
+                       :req (req this-server)
+                       :value 2}]})
 
 (defcard "Ryon Knight"
   {:abilities [{:label "Do 1 core damage"

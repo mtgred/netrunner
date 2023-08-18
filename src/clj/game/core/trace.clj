@@ -1,19 +1,13 @@
 (ns game.core.trace
   (:require
     [game.core.costs :refer [total-available-credits]]
-    [game.core.effects :refer [any-effects]]
+    [game.core.effects :refer [any-effects sum-effects get-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [can-trigger? pay register-ability-type resolve-ability trigger-event-simult trigger-event-sync]]
     [game.core.link :refer [get-link]]
     [game.core.prompts :refer [clear-wait-prompt show-trace-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg system-say]]
-    [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [dissoc-in]]))
-
-(defn init-trace-bonus
-  "Applies a bonus base strength of n to the next trace attempt."
-  [state _ n]
-  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))
+    [game.macros :refer [continue-ability effect wait-for]]))
 
 (defn- determine-initiator
   [state {:keys [player]}]
@@ -113,22 +107,25 @@
 
 (defn- reset-trace-modifications
   [state]
-  (swap! state assoc :trace nil)
-  (swap! state dissoc-in [:bonus :trace]))
+  (swap! state assoc :trace nil))
+
+(defn force-base
+  [state value]
+  (swap! state assoc-in [:trace :force-base] value))
 
 (defn init-trace
   ([state side card] (init-trace state side (make-eid state {:source-type :trace}) card {:base 0}))
   ([state side card trace] (init-trace state side (make-eid state {:source-type :trace}) card trace))
   ([state side eid card {:keys [base] :as trace}]
    (reset-trace-modifications state)
-   (wait-for (trigger-event-sync state :corp :pre-init-trace card eid)
+   (wait-for (trigger-event-sync state :corp :initialize-trace card eid)
              (let [force-base (get-in @state [:trace :force-base])
-                   force-link (get-in @state [:trace :force-link])
+                   force-link (first (get-effects state :corp :trace-force-link card [eid]))
                    base (cond force-base force-base
                               (fn? base) (base state :corp (make-eid state) card nil)
                               :else base)
                    link (or force-link (get-link state))
-                   bonus (get-in @state [:bonus :trace] 0)
+                   bonus (sum-effects state :corp :trace-base-strength card [eid])
                    initiator (determine-initiator state trace)
                    eid (assoc eid :source-type :trace)
                    corp-credits #(total-available-credits state :corp % card)
@@ -140,6 +137,7 @@
                                        :link link
                                        :corp-credits corp-credits
                                        :runner-credits runner-credits})]
+               (reset-trace-modifications state)
                (trace-start state side eid card trace)))))
 
 (defn- check-trace

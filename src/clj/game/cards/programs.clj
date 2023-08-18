@@ -53,13 +53,13 @@
                            update-current-encounter]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
-   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.servers :refer [is-central? is-remote? protecting-same-server?
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.threat :refer [threat threat-level]]
+   [game.core.trace :refer [force-base]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [get-virus-counters]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
@@ -1225,7 +1225,7 @@
 
 (defcard "Disrupter"
   {:events
-   [{:event :pre-init-trace
+   [{:event :initialize-trace
      :trash-icon true
      :optional
      {:player :runner
@@ -1233,7 +1233,7 @@
       :prompt "Trash Disrupter to reduce the base trace strength to 0?"
       :yes-ability
       {:cost [:trash-can]
-       :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]})
+       :effect (req (force-base state 0))}}}]})
 
 (defcard "Diwan"
   {:on-install {:prompt "Choose a server"

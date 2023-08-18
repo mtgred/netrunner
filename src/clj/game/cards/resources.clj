@@ -2554,7 +2554,7 @@
                     card nil))}]})
 
 (defcard "Power Tap"
-  {:events [{:event :pre-init-trace
+  {:events [{:event :initialize-trace
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}]})

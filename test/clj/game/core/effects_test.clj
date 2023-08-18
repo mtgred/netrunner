@@ -6,7 +6,7 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest gather-effects
+(deftest gather-effects-test
   (let [start {:active-player :corp
                :eid 0
                :req-called 0}
@@ -45,7 +45,7 @@
         (is (= [:corp :corp :runner :runner] (map #(get-in % [:card :side]) effects))
             "Effects are sorted by active player first")))))
 
-(deftest get-effects
+(deftest get-effects-test
   (let [start {:active-player :corp
                :eid 0
                :req-called 0}
@@ -105,7 +105,7 @@
         (let [effects (e/get-effects state :corp :test-type c2)]
           (is (= [] effects) "Should not return the effect value"))))))
 
-(deftest sum-effects
+(deftest sum-effects-test
   (let [start {:active-player :corp
                :eid 0
                :req-called 0}

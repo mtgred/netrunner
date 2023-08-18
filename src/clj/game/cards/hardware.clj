@@ -818,7 +818,7 @@
                                   :type :custom}}}))
 
 (defcard "Flip Switch"
-  {:events [{:event :pre-init-trace
+  {:events [{:event :initialize-trace
              :optional
              {:req (req (= :runner (:active-player @state)))
               :waiting-prompt true
