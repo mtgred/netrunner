@@ -3872,6 +3872,24 @@
     (is (= 1 (count (:hand (get-runner)))) "Runner should have 1 card in hand")
     (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards")))
 
+(deftest slash-and-burn-agriculture
+  (do-game
+    (new-game {:corp {:deck ["Slash and Burn Agriculture" "PAD Campaign" "Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (let [iw (get-ice state :hq 0)
+          pad (get-content state :remote1 0)
+          agri (first (:hand (get-corp)))]
+      (expend state :corp agri)
+      (changes-val-macro 0 (get-counters (refresh pad) :advancement)
+        "PAD Campaign cannot be advanced"
+        (click-card state :corp pad))
+      (changes-val-macro 2 (get-counters (refresh iw) :advancement)
+        "2 advancement counter placed"
+        (click-card state :corp iw))
+      (is (= 4 (:credit (get-corp))) "Expend cost was payed")
+      (is (= 1 (count (:discard (get-corp)))) "Slash and Burn Agriculture discarded as cost"))))
+
 (deftest ssl-endorsement-gain-credits-when-in-corp-score-area-before-turn-begins
     ;; gain credits when in corp score area before turn begins
     (do-game

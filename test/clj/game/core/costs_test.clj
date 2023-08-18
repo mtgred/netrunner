@@ -219,3 +219,15 @@
        (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
        (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
            "Runner should only get choice of Archives or R&D")))))
+
+(deftest expend-costs-reveal-the-discarded-card
+  (testing "Expend abilities reveal the discarded card"
+    (do-game
+      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                        :hand ["Slash and Burn Agriculture" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [iw (get-ice state :hq 0)
+            agri (first (:hand (get-corp)))]
+        (expend state :corp agri)
+        (click-card state :corp iw)
+        (is (= 5 (:credit (get-corp))) "Expend triggered Hyoubu")))))

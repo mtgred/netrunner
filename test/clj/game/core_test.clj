@@ -217,7 +217,6 @@
   [state side card]
   `(error-wrapper (expend-impl ~state ~side ~card)))
 
-
 (defn card-subroutine-impl
   [state _ card ability]
   (let [ice (get-card state card)]
