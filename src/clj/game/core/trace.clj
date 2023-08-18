@@ -1,6 +1,7 @@
 (ns game.core.trace
   (:require
     [game.core.costs :refer [total-available-credits]]
+    [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [can-trigger? pay register-ability-type resolve-ability trigger-event-simult trigger-event-sync]]
     [game.core.link :refer [get-link]]
@@ -16,9 +17,9 @@
 
 (defn- determine-initiator
   [state {:keys [player]}]
-  (let [constant-effect (get-in @state [:trace :player])]
+  (let [runner? (any-effects state nil :trace-runner-spends-first)]
     (cond
-      (some? constant-effect) constant-effect
+      runner? :runner
       (some? player) player
       :else :corp)))
 

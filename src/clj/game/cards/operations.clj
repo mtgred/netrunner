@@ -2765,9 +2765,10 @@
                      (continue-ability state side (sun serv) card nil)))}}))
 
 (defcard "Surveillance Sweep"
-  {:events [{:event :pre-init-trace
-             :req (req run)
-             :effect (req (swap! state assoc-in [:trace :player] :runner))}]})
+  {:static-abilities
+   [{:type :trace-runner-spends-first
+     :req (req run)
+     :value true}]})
 
 (defcard "Sweeps Week"
   {:on-play
