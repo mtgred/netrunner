@@ -2020,10 +2020,10 @@
               :msg (msg "prevent subroutines on " target " ice from being broken until next turn")}})
 
 (defcard "Utopia Fragment"
-  {:events [{:event :pre-steal-cost
-             :req (req (pos? (get-counters target :advancement)))
-             :effect (req (let [counter (get-counters target :advancement)]
-                            (steal-cost-bonus state side [:credit (* 2 counter)] {:source card :source-type :ability})))}]})
+  {:static-abilities [{:type :steal-additional-cost
+                       :req (req (pos? (get-counters target :advancement)))
+                       :value (req [[:credit (* 2 (get-counters target :advancement))]
+                                    {:source card :source-type :ability}])}]})
 
 (defcard "Vanity Project"
   ;; No special implementation

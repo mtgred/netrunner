@@ -258,18 +258,18 @@
   {:on-trash
    {:req (req (and (= :runner side)
                    (:run @state)))
-    :effect (effect (register-events
+    :effect (effect (register-lingering-effect
                       card
-                      [{:event :pre-steal-cost
-                        :duration :end-of-run
-                        :req (req (or (= (get-zone target) (:previous-zone card))
-                                      (= (central->zone (get-zone target))
-                                         (butlast (:previous-zone card)))))
-                        :effect (effect (steal-cost-bonus [:net 2] {:source card :source-type :ability}))}]))}
-   :events [{:event :pre-steal-cost
-             :req (req (or (in-same-server? card target)
-                           (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:net 2] {:source card :source-type :ability}))}]})
+                      {:type :steal-additional-cost
+                       :duration :end-of-run
+                       :req (req (or (= (get-zone target) (:previous-zone card))
+                                                   (= (central->zone (get-zone target))
+                                                      (butlast (:previous-zone card)))))
+                       :value (req [[:net 2] {:source card :source-type :ability}])}))}
+   :static-abilities [{:type :steal-additional-cost
+                       :req (req (or (in-same-server? card target)
+                                     (from-same-server? card target)))
+                       :value (req [[:net 2] {:source card :source-type :ability}])}]})
 
 (defcard "Bernice Mai"
   {:events [{:event :successful-run
@@ -481,12 +481,14 @@
                 :effect (effect (purge))}]})
 
 (defcard "Daniela Jorge Inácio"
-  (let [pre-steal {:event :pre-steal-cost
-                   :req (req (or (in-same-server? card target)
-                                 (from-same-server? card target)))
-                   :effect
-                   (effect (steal-cost-bonus [:add-random-from-hand-to-bottom-of-deck 2] {:source card :source-type :ability}))}]
-    {:events [{:event :pre-access-card
+  (let [steal-cost {:type :steal-additional-cost
+                    :req (req (or (in-same-server? card target)
+                                  (from-same-server? card target)))
+                    :value (req [[:add-random-from-hand-to-bottom-of-deck 2]
+                                 {:source card :source-type :ability}])}]
+    {:implementation "trash cost not displayed on dialogue"
+     :static-abilities [steal-cost]
+     :events [{:event :pre-access-card
                :req (req (and (rezzed? card)
                               (same-card? target card)))
                ;; It would be lovely to instead use :trash-cost-bonus [:add-random-from-hand-to-bottom-of-deck 2]
@@ -494,15 +496,14 @@
                (req (register-run-flag!
                       state side
                       card :can-trash
-                      (fn [state side card]
+                      (fn [state _ card]
                         (or (not (same-card? target card))
-                                  (can-pay?
-                                    state :runner
-                                    (assoc eid :source card :source-type :ability)
-                                    card nil
-                                    [:add-random-from-hand-to-bottom-of-deck 2])))))}
-              pre-steal]
-     :implementation "trash cost not displayed on dialogue"
+                            (can-pay?
+                              state :runner
+                              (assoc eid :source card :source-type :ability)
+                              card nil
+                              [:add-random-from-hand-to-bottom-of-deck 2])))))}
+              steal-cost]
      :on-trash {:async true
                 :interactive (req true)
                 :req (req (and run (= :runner side)))
@@ -510,14 +511,16 @@
                 :effect
                 (req (wait-for (pay state :runner (make-eid state eid) card :add-random-from-hand-to-bottom-of-deck 2)
                                (system-msg state :runner (:msg async-result))
-                               (register-events state side card [(assoc pre-steal
-                                                                        :req
-                                                                        (req (or (= (:previous-zone card)
-                                                                                    (:zone target))
-                                                                                 ;; special central-servers case
-                                                                                 (= (central->zone (:zone target))
-                                                                                    (butlast (:previous-zone card)))))
-                                                                        :duration :end-of-run)])
+                               (register-lingering-effect
+                                 state side card
+                                 (assoc steal-cost
+                                        :req
+                                        (req (or (= (:previous-zone card)
+                                                    (:zone target))
+                                                 ;; special central-servers case
+                                                 (= (central->zone (:zone target))
+                                                    (butlast (:previous-zone card)))))
+                                        :duration :end-of-run))
                                (effect-completed state side eid)))}}))
 
 (defcard "Daruma"
@@ -1325,35 +1328,27 @@
              :effect (req (trash state :corp eid card {:cause-card card}))}]})
 
 (defcard "Old Hollywood Grid"
-  (let [ohg {:effect (effect
-                       (register-persistent-flag!
-                         card :can-steal
-                         (fn [state _ card]
-                           (if-not (some #(= (:title %) (:title card)) (:scored runner))
-                             ((constantly false)
-                              (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
-                             true))))}]
-    {:on-trash
-     {:req (req (and (= :runner side)
-                     (:run @state)))
-      :effect (effect (register-events
-                        card
-                        [(assoc ohg
-                                :event :pre-steal-cost
-                                :duration :end-of-run
-                                :req (req (or (= (get-zone target)
-                                                 (:previous-zone card))
-                                              (= (central->zone (get-zone target))
-                                                 (butlast (:previous-zone card))))))
-                         {:event :run-ends
-                          :duration :end-of-run
-                          :effect (req (clear-persistent-flag! state side card :can-steal))}]))}
-     :events [(assoc ohg
-                     :event :pre-steal-cost
-                     :req (req (or (in-same-server? card target)
-                                   (from-same-server? card target))))
-              {:event :access
-               :effect (req (clear-persistent-flag! state side card :can-steal))}]}))
+  {:on-trash
+   {:req (req (and (= :runner side)
+                   (:run @state)))
+    :effect (effect (register-lingering-effect
+                      card
+                      {:type :cannot-steal
+                       :duration :end-of-run
+                       :req (req (and (not-any? #(= (:title target) (:title %))
+                                                (:scored runner))
+                                      (or (= (get-zone target)
+                                             (:previous-zone card))
+                                          (= (central->zone (get-zone target))
+                                             (butlast (:previous-zone card))))))
+                       :value true}))}
+   :static-abilities [{:type :cannot-steal
+                       :duration :end-of-run
+                       :req (req (and (not-any? #(= (:title target) (:title %))
+                                                (:scored runner))
+                                      (or (in-same-server? card target)
+                                          (from-same-server? card target))))
+                       :value true}]})
 
 (defcard "Overseer Matrix"
   (let [ability {:event :runner-trash
@@ -1432,18 +1427,20 @@
   {:on-trash
    {:req (req (and (= :runner side)
                    (:run @state)))
-    :effect (effect (register-events
+    :effect (effect (register-lingering-effect
                       card
-                      [{:event :pre-steal-cost
-                        :duration :end-of-run
-                        :req (req (or (= (get-zone target) (:previous-zone card))
-                                      (= (central->zone (get-zone target))
-                                         (butlast (:previous-zone card)))))
-                        :effect (effect (steal-cost-bonus [:credit 5] {:source card :source-type :ability}))}]))}
-   :events [{:event :pre-steal-cost
-             :req (req (or (in-same-server? card target)
-                           (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:credit 5] {:source card :source-type :ability}))}]})
+                      {:type :steal-additional-cost
+                       :duration :end-of-run
+                       :req (req (or (= (get-zone target) (:previous-zone card))
+                                     (= (central->zone (get-zone target))
+                                        (butlast (:previous-zone card)))))
+                       :value (req [[:credit 5]
+                                    {:source card :source-type :ability}])}))}
+   :static-abilities [{:type :steal-additional-cost
+                       :req (req (or (in-same-server? card target)
+                                     (from-same-server? card target)))
+                       :value (req [[:credit 5]
+                                    {:source card :source-type :ability}])}]})
 
 (defcard "Reduced Service"
   {:static-abilities [{:type :run-additional-cost
@@ -1559,18 +1556,20 @@
   {:on-trash
    {:req (req (and (= :runner side)
                    (:run @state)))
-    :effect (effect (register-events
+    :effect (effect (register-lingering-effect
                       card
-                      [{:event :pre-steal-cost
-                        :duration :end-of-run
-                        :req (req (or (= (get-zone target) (:previous-zone card))
-                                      (= (central->zone (get-zone target))
-                                         (butlast (:previous-zone card)))))
-                        :effect (effect (steal-cost-bonus [:click 1] {:source card :source-type :ability}))}]))}
-   :events [{:event :pre-steal-cost
-             :req (req (or (in-same-server? card target)
-                           (from-same-server? card target)))
-             :effect (effect (steal-cost-bonus [:click 1] {:source card :source-type :ability}))}]})
+                      {:type :steal-additional-cost
+                       :duration :end-of-run
+                       :req (req (or (= (get-zone target) (:previous-zone card))
+                                     (= (central->zone (get-zone target))
+                                        (butlast (:previous-zone card)))))
+                       :value (req [[:click 1]
+                                    {:source card :source-type :ability}])}))}
+   :static-abilities [{:type :steal-additional-cost
+                       :req (req (or (in-same-server? card target)
+                                     (from-same-server? card target)))
+                       :value (req [[:click 1]
+                                    {:source card :source-type :ability}])}]})
 
 (defcard "Surat City Grid"
   {:events [{:event :rez

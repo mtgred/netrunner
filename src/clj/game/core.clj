@@ -106,7 +106,6 @@
    num-cards-to-access
    set-only-card-to-access
    steal
-   steal-cost
    steal-cost-bonus
    turn-archives-faceup])
 
@@ -271,6 +270,7 @@
    run-additional-cost-bonus
    run-cost
    score-additional-cost-bonus
+   steal-cost
    trash-cost])
 
 (expose-vars

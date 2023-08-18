@@ -1692,9 +1692,10 @@
 
 (defcard "NAPD Cordon"
   (lockdown
-   {:events [{:event :pre-steal-cost
-              :effect (req (let [counter (get-counters target :advancement)]
-                             (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))] {:source card :source-type :ability})))}]}))
+    {:static-abilities
+     [{:type :steal-additional-cost
+       :value (req [[:credit (+ 4 (* 2 (get-counters target :advancement)))]
+                    {:source card :source-type :ability}])}]}))
 
 (defcard "Neural EMP"
   {:on-play
@@ -1925,8 +1926,8 @@
                       card nil))}})
 
 (defcard "Predictive Algorithm"
-  {:events [{:event :pre-steal-cost
-             :effect (effect (steal-cost-bonus [:credit 2] {:source card :source-type :ability}))}]})
+  {:static-abilities [{:type :steal-additional-cost
+                       :value (req [[:credit 2] {:source card :source-type :ability}])}]})
 
 (defcard "Predictive Planogram"
   {:on-play
