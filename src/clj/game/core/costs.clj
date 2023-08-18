@@ -945,7 +945,7 @@
   (str "add " (quantify (value cost) "random card") " to the bottom of your deck"))
 (defmethod payable? :add-random-from-hand-to-bottom-of-deck
   [cost state side eid card]
-  (<= 0 (- (count (get-in @state [side :hand])) (value cost))))
+  (<= (value cost) (count (get-in @state [side :hand]))))
 (defmethod handler :add-random-from-hand-to-bottom-of-deck
   [cost state side eid card actions]
   (let [deck (if (= :corp side) "R&D" "the stack")
@@ -955,7 +955,7 @@
       (move state side c :deck))
     (complete-with-result
       state side eid
-      {:msg (str "adds " (quantify (value cost) "random cards")
+      {:msg (str "adds " (quantify (value cost) "random card")
                  " to the bottom of " deck)
        :type :add-random-from-hand-to-bottom-of-deck
        :value (value cost)
