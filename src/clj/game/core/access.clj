@@ -5,7 +5,7 @@
     [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
-    [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
+    [game.core.effects :refer [any-effects register-static-abilities register-lingering-effect sum-effects unregister-lingering-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [ability-as-handler can-trigger? checkpoint register-pending-event pay queue-event register-default-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
@@ -180,7 +180,7 @@
   (let [c (move state :runner (dissoc card :advance-counter :new) :scored {:force true})
         _ (when (card-flag? c :has-events-when-stolen true)
             (register-default-events state side c)
-            (register-constant-effects state side c))
+            (register-static-abilities state side c))
         _ (update-all-advancement-requirements state)
         _ (update-all-agenda-points state)
         c (get-card state c)
@@ -1227,7 +1227,7 @@
   ([state side server bonus] (access-bonus state side server bonus (if (:run @state) :end-of-run :end-of-access)))
   ([state side server bonus duration]
    (let [floating-effect
-         (register-floating-effect
+         (register-lingering-effect
            state side nil
            {:type :access-bonus
             :duration duration
@@ -1301,7 +1301,7 @@
       (swap! state assoc-in [:run :did-access] true)
       (max-access state n))
     (wait-for (resolve-ability state side (choose-access access-amount server {:server server}) nil nil)
-              (unregister-floating-effects state side :end-of-access)
+              (unregister-lingering-effects state side :end-of-access)
               (unregister-floating-events state side :end-of-access)
               (effect-completed state side eid))))
 
@@ -1320,6 +1320,6 @@
                (wait-for (resolve-ability state side (choose-access access-amount server (assoc args :server server)) nil nil)
                          (wait-for (trigger-event-sync state side :end-breach-server (:breach @state))
                                    (swap! state assoc :breach nil)
-                                   (unregister-floating-effects state side :end-of-access)
+                                   (unregister-lingering-effects state side :end-of-access)
                                    (unregister-floating-events state side :end-of-access)
                                    (effect-completed state side eid)))))))

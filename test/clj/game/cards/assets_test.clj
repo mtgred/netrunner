@@ -2963,8 +2963,8 @@
         (is (= 2 (count (:scored (get-corp)))) "Two cards in score area")
         (is (= 4 (:agenda-point (get-corp))) "Gained 3 agenda points"))))
 
-(deftest lady-liberty-agenda-constant-effects
-    ;; Agenda constant effects
+(deftest lady-liberty-agenda-static-abilities
+    ;; Agenda static abilities
     (do-game
       (new-game {:corp {:deck ["Lady Liberty" "Self-Destruct Chips"]}})
       (play-from-hand state :corp "Lady Liberty" "New remote")

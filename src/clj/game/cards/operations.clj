@@ -20,7 +20,7 @@
    [game.core.def-helpers :refer [corp-recur defcard do-brain-damage
                                   reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
@@ -294,7 +294,7 @@
 (defcard "Bad Times"
   {:on-play {:req (req tagged)
              :msg "force the Runner to lose 2[mu] until the end of the turn"
-             :effect (req (register-floating-effect
+             :effect (req (register-lingering-effect
                             state :corp card
                             (assoc (mu+ -2) :duration :end-of-turn))
                           (update-mu state))}})
@@ -761,7 +761,7 @@
 
 (defcard "Enforced Curfew"
   {:on-play {:msg "reduce the Runner's maximum hand size by 1"}
-   :constant-effects [(runner-hand-size+ -1)]})
+   :static-abilities [(runner-hand-size+ -1)]})
 
 (defcard "Enforcing Loyalty"
   {:on-play
@@ -780,7 +780,7 @@
 (defcard "Enhanced Login Protocol"
   {:on-play {:msg (str "add an additional cost of [Click]"
                        " to make the first run not through a card ability this turn")}
-   :constant-effects [{:type :run-additional-cost
+   :static-abilities [{:type :run-additional-cost
                        :req (req (and (no-event? state side :run #(:click-run (:cost-args (first %))))
                                       (:click-run (second targets))))
                        :value [:click 1]}]})
@@ -1401,7 +1401,7 @@
 
 (defcard "Lag Time"
   {:on-play {:effect (effect (update-all-ice))}
-   :constant-effects [{:type :ice-strength
+   :static-abilities [{:type :ice-strength
                        :value 1}]
    :leave-play (effect (update-all-ice))})
 
@@ -1502,7 +1502,7 @@
                                    (installed? %))}
              :msg (msg "host itself on " (card-str state target) ". The Runner has an additional tag")
              :effect (effect (install-as-condition-counter eid card target))}
-   :constant-effects [{:type :tags
+   :static-abilities [{:type :tags
                        :value 1}]
    :leave-play (req (system-msg state :corp "trashes MCA Informant"))
    :runner-abilities [{:label "Trash MCA Informant host"
@@ -1711,7 +1711,7 @@
 
 (defcard "NEXT Activation Command"
   (lockdown
-   {:constant-effects [{:type :ice-strength
+   {:static-abilities [{:type :ice-strength
                         :value 2}
                        {:type :prevent-paid-ability
                         :req (req (let [target-card (first targets)
@@ -1808,7 +1808,7 @@
              :msg (msg "give +2 strength to " (card-str state target))
              :async true
              :effect (effect (install-as-condition-counter eid card target))}
-   :constant-effects [{:type :ice-strength
+   :static-abilities [{:type :ice-strength
                        :req (req (same-card? target (:host card)))
                        :value 2}]})
 
@@ -2317,7 +2317,7 @@
 
 (defcard "Rolling Brownout"
   {:on-play {:msg "increase the play cost of operations and events by 1 [Credits]"}
-   :constant-effects [{:type :play-cost
+   :static-abilities [{:type :play-cost
                        :value 1}]
    :events [{:event :play-event
              :once :per-turn
@@ -2331,7 +2331,7 @@
              :msg (msg "host itself as a condition counter on " (card-str state target))
              :async true
              :effect (effect (install-as-condition-counter eid card target))}
-   :constant-effects [{:type :ice-strength
+   :static-abilities [{:type :ice-strength
                        :req (req (same-card? target (:host card)))
                        :value (req (get-counters card :power))}]
    :events [{:event :pass-ice
@@ -2387,7 +2387,7 @@
 
 (defcard "Scarcity of Resources"
   {:on-play {:msg "increase the install cost of resources by 2"}
-   :constant-effects [{:type :install-cost
+   :static-abilities [{:type :install-cost
                        :req (req (resource? target))
                        :value 2}]})
 
@@ -2464,7 +2464,7 @@
 
 (defcard "Service Outage"
   {:on-play {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"}
-   :constant-effects [{:type :run-additional-cost
+   :static-abilities [{:type :run-additional-cost
                        :req (req (no-event? state side :run))
                        :value [:credit 1]}]})
 
@@ -2665,7 +2665,7 @@
                :async true
                :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
                             (install-as-condition-counter state side eid card (get-card state target)))}
-     :constant-effects [{:type :gain-subtype
+     :static-abilities [{:type :gain-subtype
                          :req (req (and (same-card? target (:host card))
                                         (rezzed? target)))
                          :value "Barrier"}]
@@ -2878,7 +2878,7 @@
     :effect (effect (damage eid :meat 2 {:card card}))}})
 
 (defcard "Transparency Initiative"
-  {:constant-effects [{:type :gain-subtype
+  {:static-abilities [{:type :gain-subtype
                        :req (req (and (same-card? target (:host card))
                                       (rezzed? target)))
                        :value "Public"}]

@@ -18,11 +18,11 @@
       (is (= 1 (agenda-points state nil test-card)))
       (is (= 5 (agenda-points state nil (assoc test-card :agendapoints 5)))))
     (testing "agenda-value"
-      (core/register-floating-effect state nil test-card {:type :agenda-value :value 1})
+      (core/register-lingering-effect state nil test-card {:type :agenda-value :value 1})
       (is (= 2 (agenda-points state nil test-card))))
     (testing "all together"
       (let [test-card (assoc test-card :agendapoints 5)]
-        (core/register-floating-effect state nil test-card {:type :agenda-value :value 1})
+        (core/register-lingering-effect state nil test-card {:type :agenda-value :value 1})
         (is (= 6 (agenda-points state nil test-card))) "5 + 1"))
     (testing "points-fn"
       (defmethod core/defcard-impl "Test Card" [_]
@@ -30,7 +30,7 @@
          :agendapoints-runner (req 10)})
       (is (= 5 (agenda-points state :corp test-card)))
       (is (= 10 (agenda-points state :runner test-card)))
-      (core/register-floating-effect state nil test-card {:type :agenda-value :value 1})
+      (core/register-lingering-effect state nil test-card {:type :agenda-value :value 1})
       (is (= 6 (agenda-points state :corp test-card)))
       (is (= 11 (agenda-points state :runner test-card)))))
   (remove-method core/defcard-impl "Test Card"))

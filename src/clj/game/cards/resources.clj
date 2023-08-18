@@ -22,7 +22,7 @@
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty do-net-damage]]
    [game.core.drawing :refer [draw draw-bonus first-time-draw-bonus]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events
                              register-once register-suppress resolve-ability
@@ -166,7 +166,7 @@
               (assoc am :event :agenda-stolen)]}))
 
 (defcard "Access to Globalsec"
-  {:constant-effects [(link+ 1)]})
+  {:static-abilities [(link+ 1)]})
 
 (defcard "Activist Support"
   {:events [{:event :corp-turn-begins
@@ -453,7 +453,7 @@
                                  card nil))}]}))
 
 (defcard "Beach Party"
-  {:constant-effects [(runner-hand-size+ 5)]
+  {:static-abilities [(runner-hand-size+ 5)]
    :events [{:event :runner-turn-begins
              :msg "lose [Click]"
              :effect (effect (lose-clicks 1))}]})
@@ -564,7 +564,7 @@
    :abilities [ability]}))
 
 (defcard "Borrowed Satellite"
-  {:constant-effects [(link+ 1)
+  {:static-abilities [(link+ 1)
                       (runner-hand-size+ 1)]})
 
 (defcard "Bug Out Bag"
@@ -901,7 +901,7 @@
                (set-autoresolve :auto-place-counter "Crypt placing virus counters on itself")]})
 
 (defcard "Cybertrooper Talut"
-  {:constant-effects [(link+ 1)]
+  {:static-abilities [(link+ 1)]
    :events [{:event :runner-install
              :silent (req true)
              :req (req (and (has-subtype? (:card context) "Icebreaker")
@@ -1004,7 +1004,7 @@
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
                 :cost [:trash-can]
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   (let [breaker target]
                                     {:type :breaker-strength
@@ -1119,7 +1119,7 @@
                                  (enable-card state side hosted)))}}))
 
 (defcard "Donut Taganes"
-  {:constant-effects [{:type :play-cost
+  {:static-abilities [{:type :play-cost
                        :value 1}]})
 
 (defcard "Dr. Lovegood"
@@ -1561,7 +1561,7 @@
      :abilities [ability]}))
 
 (defcard "Hernando Cortez"
-  {:constant-effects [{:type :rez-additional-cost
+  {:static-abilities [{:type :rez-additional-cost
                        :req (req (and (<= 10 (:credit corp))
                                       (ice? target)))
                        :value (req [:credit (count (:subroutines target))])}]})
@@ -1640,7 +1640,7 @@
                                 :type :credit}}})
 
 (defcard "Ice Carver"
-  {:constant-effects [{:type :ice-strength
+  {:static-abilities [{:type :ice-strength
                        :req (req (and (get-current-encounter state)
                                       (same-card? current-ice target)))
                        :value -1}]})
@@ -1883,7 +1883,7 @@
                                 (trash state :runner eid card {:cause-card card})
                                 (pay state :runner eid card :credit 1)))}]
     {:flags {:drip-economy true}
-     :constant-effects [(corp-hand-size+ -1)]
+     :static-abilities [(corp-hand-size+ -1)]
      :events [(assoc ability :event :runner-turn-begins)]}))
 
 (defcard "Liberated Account"
@@ -2029,7 +2029,7 @@
              :effect (effect (trash-cards eid (filter program? (:hosted card)) {:cause-card card}))}]})
 
 (defcard "Maxwell James"
-  {:constant-effects [(link+ 1)]
+  {:static-abilities [(link+ 1)]
    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
                 :prompt "Choose a piece of ice protecting a remote server"
                 :choices {:card #(and (ice? %)
@@ -2185,7 +2185,7 @@
 
 (defcard "Network Exchange"
   {:on-install {:msg "increase the install cost of non-innermost ice by 1"}
-   :constant-effects [{:type :install-cost
+   :static-abilities [{:type :install-cost
                        :req (req (ice? target))
                        :value (req (when (pos? (count (:dest-zone (second targets)))) 1))}]})
 
@@ -2387,7 +2387,7 @@
                      (gain-credits eid 1))}))
 
 (defcard "Paparazzi"
-  {:constant-effects [{:type :is-tagged
+  {:static-abilities [{:type :is-tagged
                        :val true}]
    :events [{:event :pre-damage
              :req (req (= target :meat)) :msg "prevent all meat damage"
@@ -2581,7 +2581,7 @@
    :abilities [(set-autoresolve :auto-fire "Psych Mike")]})
 
 (defcard "Public Sympathy"
-  {:constant-effects [(runner-hand-size+ 2)]})
+  {:static-abilities [(runner-hand-size+ 2)]})
 
 (defcard "Rachel Beckman"
   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]}))
@@ -2764,7 +2764,7 @@
                                 (trash-prevent :hardware 1))}]})
 
 (defcard "Safety First"
-  {:constant-effects [(runner-hand-size+ -2)]
+  {:static-abilities [(runner-hand-size+ -2)]
    :events [{:event :runner-turn-ends
              :async true
              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
@@ -3094,7 +3094,7 @@
                             (gain-credits state side eid credits)))}]})
 
 (defcard "The Archivist"
-  {:constant-effects [(link+ 1)]
+  {:static-abilities [(link+ 1)]
    :events [{:event :agenda-scored
              :interactive (req true)
              :trace {:base 1
@@ -3165,7 +3165,7 @@
 
 (defcard "The Black File"
   {:on-install {:msg "prevent the Corp from winning the game unless they are flatlined"}
-   :constant-effects [{:type :cannot-win-on-points
+   :static-abilities [{:type :cannot-win-on-points
                        :req (req (and (= :corp side)
                                       (< (get-counters card :power) 3)))
                        :value true}]
@@ -3214,7 +3214,7 @@
                         card nil)))}]}))
 
 (defcard "The Helpful AI"
-  {:constant-effects [(link+ 1)]
+  {:static-abilities [(link+ 1)]
    :abilities [{:msg (msg "give +2 strength to " (:title target))
                 :label "pump icebreaker"
                 :choices {:card #(and (has-subtype? % "Icebreaker")
@@ -3298,7 +3298,7 @@
                   :effect (effect (play-instant eid target {:ignore-cost true}))}]}))
 
 (defcard "The Source"
-  {:constant-effects [{:type :advancement-requirement
+  {:static-abilities [{:type :advancement-requirement
                        :value 1}]
    :events [{:event :agenda-scored
              :async true
@@ -3418,7 +3418,7 @@
                            card nil)))}]})
 
 (defcard "Theophilius Bagbiter"
-  {:constant-effects [(runner-hand-size+ (req (:credit runner)))]
+  {:static-abilities [(runner-hand-size+ (req (:credit runner)))]
    :on-install {:async true
                 :effect (req (swap! state assoc-in [:runner :hand-size :base] 0)
                              (lose-credits state :runner eid :all))}
@@ -3639,7 +3639,7 @@
    :abilities [(set-autoresolve :auto-fire "Whistleblower")]})
 
 (defcard "Wireless Net Pavilion"
-  {:constant-effects [{:type :card-ability-additional-cost
+  {:static-abilities [{:type :card-ability-additional-cost
                        :req (req (let [targetcard (first targets)
                                        target (second targets)]
                                    (and (same-card? targetcard (:basic-action-card corp))
@@ -3689,7 +3689,7 @@
                 :effect (effect (draw eid 2))}]})
 
 (defcard "Xanadu"
-  {:constant-effects [{:type :rez-cost
+  {:static-abilities [{:type :rez-cost
                        :req (req (ice? target))
                        :value 1}]})
 

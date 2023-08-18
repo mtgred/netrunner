@@ -205,18 +205,18 @@
   (let [card (server-card title)]
     (if (has-subtype? card "Current")
       (let [event-keyword (if (corp? card) :agenda-stolen :agenda-scored)
-            constant-ab {:type :trash-when-expired
-                         :req (req (some #(let [event (:event %)
-                                                context-card (:card %)]
-                                            (or (= event event-keyword)
-                                                (and (or (= :play-event event)
-                                                         (= :play-operation event))
-                                                     (and (not (same-card? card context-card))
-                                                          (has-subtype? context-card "Current")
-                                                          true))))
-                                         targets))
-                         :value trash-or-rfg}]
-        (update ability :constant-effects #(conj (into [] %) constant-ab)))
+            static-ab {:type :trash-when-expired
+                       :req (req (some #(let [event (:event %)
+                                              context-card (:card %)]
+                                          (or (= event event-keyword)
+                                              (and (or (= :play-event event)
+                                                       (= :play-operation event))
+                                                   (and (not (same-card? card context-card))
+                                                        (has-subtype? context-card "Current")
+                                                        true))))
+                                       targets))
+                       :value trash-or-rfg}]
+        (update ability :static-abilities #(conj (into [] %) static-ab)))
       ability)))
 
 (defn add-default-abilities
