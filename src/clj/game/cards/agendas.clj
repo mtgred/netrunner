@@ -78,7 +78,7 @@
                 :interactive (req true)
                 :async true
                 :effect (effect (gain-credits eid (count-ice corp)))}
-     :constant-effects [{:type :ice-strength
+     :static-abilities [{:type :ice-strength
                          :req (req (has-subtype? target subtype))
                          :value 1}]}))
 
@@ -410,7 +410,7 @@
 (defcard "Braintrust"
   {:on-score {:effect (effect (add-counter card :agenda (quot (- (get-counters (:card context) :advancement) 3) 2)))
               :silent (req true)}
-   :constant-effects [{:type :rez-cost
+   :static-abilities [{:type :rez-cost
                        :req (req (ice? target))
                        :value (req (- (get-counters card :agenda)))}]})
 
@@ -680,7 +680,7 @@
     :effect (effect (derez target))}})
 
 (defcard "Eden Fragment"
-  {:constant-effects [{:type :ignore-install-cost
+  {:static-abilities [{:type :ignore-install-cost
                        :req (req (and (ice? target)
                                       (->> (turn-events state side :corp-install)
                                            (map #(:card (first %)))
@@ -1020,7 +1020,7 @@
                      (system-msg state side "uses Improved Tracers to increase the strength of Tracer ice by 1")
                      (system-msg state side "uses Improved Tracers to increase the base strength of all trace subroutines by 1")
                      (update-all-ice state side)))
-   :constant-effects [{:type :ice-strength
+   :static-abilities [{:type :ice-strength
                        :req (req (has-subtype? target "Tracer"))
                        :value 1}]
    :events [{:event :pre-init-trace
@@ -1147,7 +1147,7 @@
 
 (defcard "Medical Breakthrough"
   {:flags {:has-events-when-stolen true}
-   :constant-effects [{:type :advancement-requirement
+   :static-abilities [{:type :advancement-requirement
                        :req (req (= (:title target) "Medical Breakthrough"))
                        :value -1}]})
 
@@ -1562,7 +1562,7 @@
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
                      (system-msg state side "uses Rebranding Team to make all assets gain Advertisement")))
-   :constant-effects [{:type :gain-subtype
+   :static-abilities [{:type :gain-subtype
                        :req (req (asset? target))
                        :value "Advertisement"}]})
 
@@ -1646,7 +1646,7 @@
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
                      (system-msg state side "uses Remote Data Farm to increase their maximum hand size by 2")))
-   :constant-effects [(corp-hand-size+ 2)]})
+   :static-abilities [(corp-hand-size+ 2)]})
 
 (defcard "Remote Enforcement"
   {:on-score
@@ -1728,7 +1728,7 @@
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
                      (system-msg state side "uses Self-Destruct Chips to decrease the Runner's maximum hand size by 1")))
-   :constant-effects [(runner-hand-size+ -1)]})
+   :static-abilities [(runner-hand-size+ -1)]})
 
 (defcard "Send a Message"
   (let [ability
@@ -1859,7 +1859,7 @@
                                 card nil)
                               (effect-completed state side eid))))}]
    :leave-play (effect (update-all-icebreakers))
-   :constant-effects [{:type :breaker-strength
+   :static-abilities [{:type :breaker-strength
                        :value -2
                        :req (req (and run
                                       (has-subtype? target "Icebreaker")
@@ -1894,7 +1894,7 @@
                                (continue-ability state side (sft 1 max-ops) card nil)))}}))
 
 (defcard "Superconducting Hub"
-  {:constant-effects [{:type :hand-size
+  {:static-abilities [{:type :hand-size
                        :req (req (= :corp side))
                        :value 2}]
    :on-score
@@ -2077,7 +2077,7 @@
                              result))}})
 
 (defcard "Water Monopoly"
-  {:constant-effects [{:type :install-cost
+  {:static-abilities [{:type :install-cost
                        :req (req (and (resource? target)
                                       (not (has-subtype? target "Virtual"))
                                       (not (:facedown (second targets)))))

@@ -1585,7 +1585,7 @@
                            (gain-credits state :runner eid 10)))}})
 
 (defcard "Hacktivist Meeting"
-  {:constant-effects [{:type :rez-additional-cost
+  {:static-abilities [{:type :rez-additional-cost
                        :req (req (not (ice? target)))
                        :value [:randomly-trash-from-hand 1]}]})
 
@@ -1985,7 +1985,7 @@
 
 (defcard "Itinerant Protesters"
   {:on-play {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"}
-   :constant-effects [(corp-hand-size+ (req (- (count-bad-pub state))))]})
+   :static-abilities [(corp-hand-size+ (req (- (count-bad-pub state))))]})
 
 (defcard "Jailbreak"
   {:makes-run true
@@ -2619,7 +2619,7 @@
    :on-play {:req (req archives-runnable)
              :async true
              :effect (effect (make-run eid :archives card))}
-   :constant-effects [{:type :agenda-value
+   :static-abilities [{:type :agenda-value
                        :req (req (same-card? (:host card) target))
                        :value -1}]
    :events [{:event :purge
@@ -3675,7 +3675,7 @@
                                  card nil))))}}))
 
 (defcard "Traffic Jam"
-  {:constant-effects [{:type :advancement-requirement
+  {:static-abilities [{:type :advancement-requirement
                        :value (req (->> (:scored corp)
                                         (filter #(= (:title %) (:title target)))
                                         (count)))}]})

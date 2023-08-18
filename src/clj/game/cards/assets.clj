@@ -415,7 +415,7 @@
      :abilities [ability]}))
 
 (defcard "Brain-Taping Warehouse"
-  {:constant-effects [{:type :rez-cost
+  {:static-abilities [{:type :rez-cost
                        :req (req (and (ice? target)
                                       (has-subtype? target "Bioroid")))
                        :value (req (- (:click runner)))}]})
@@ -487,7 +487,7 @@
                      :effect (effect (damage eid :brain (get-counters (get-card state card) :advancement) {:card card}))}))
 
 (defcard "Chairman Hiro"
-  {:constant-effects [(runner-hand-size+ -2)]
+  {:static-abilities [(runner-hand-size+ -2)]
    :on-trash executive-trash-effect})
 
 (defcard "Chekist Scion"
@@ -694,7 +694,7 @@
      :abilities [ability (set-autoresolve :auto-fire "CSR Campaign")]}))
 
 (defcard "Cybernetics Court"
-  {:constant-effects [(corp-hand-size+ 4)]})
+  {:static-abilities [(corp-hand-size+ 4)]})
 
 (defcard "Cybersand Harvester"
   {:events [{:event :rez
@@ -789,7 +789,7 @@
                 :keep-menu-open :while-2-clicks-left
                 :msg "place 1 power counter"
                 :effect (effect (add-counter card :power 1))}]
-   :constant-effects [{:type :install-cost
+   :static-abilities [{:type :install-cost
                        :req (req (and (pos? (get-counters card :power))
                                       (not (get-in @state [:per-turn (:cid card)]))))
                        :value (req (get-counters card :power))}]
@@ -802,7 +802,7 @@
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
 
 (defcard "Dr. Vientiane Keeling"
-  {:constant-effects [(runner-hand-size+ (req (- (get-counters card :power))))]
+  {:static-abilities [(runner-hand-size+ (req (- (get-counters card :power))))]
    :events [{:event :rez
              :req (req (same-card? card (:card context)))
              :msg "place 1 power counter on itself"
@@ -901,7 +901,7 @@
                                  card nil)))}]})
 
 (defcard "Encryption Protocol"
-  {:constant-effects [{:type :trash-cost
+  {:static-abilities [{:type :trash-cost
                        :req (req (installed? target))
                        :value 1}]})
 
@@ -1038,7 +1038,7 @@
              :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Front Company"
-  {:constant-effects [{:type :cannot-run-on-server
+  {:static-abilities [{:type :cannot-run-on-server
                        :req (req (not (pos? (count (turn-events state side :run)))))
                        :value (req (map first (get-remotes state)))}]
    :rez-req (req (= (:active-player @state) :corp))
@@ -1558,7 +1558,7 @@
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
-    {:constant-effects [(runner-hand-size+ 1)]
+    {:static-abilities [(runner-hand-size+ 1)]
      :derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
@@ -2271,7 +2271,7 @@
 
 (defcard "Sandburg"
   {:on-rez {:effect (effect (update-all-ice))}
-   :constant-effects [{:type :ice-strength
+   :static-abilities [{:type :ice-strength
                        :req (req (<= 10 (:credit corp)))
                        :value (req (quot (:credit corp) 5))}]
    :events [{:event :corp-gain
@@ -2484,7 +2484,7 @@
              :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Student Loans"
-  {:constant-effects [{:type :play-additional-cost
+  {:static-abilities [{:type :play-additional-cost
                        :req (req (and (event? target)
                                       (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
                        :value [:credit 2]}]})
@@ -2591,7 +2591,7 @@
                 (hardware? card)
                 (and (resource? card)
                      (has-subtype? card "Virtual"))))]
-    {:constant-effects [{:type :install-cost
+    {:static-abilities [{:type :install-cost
                          :req (req (and (is-techno-target target)
                                         (not (:facedown (second targets)))))
                          :value 1}]
@@ -2638,7 +2638,7 @@
 
 (defcard "The Board"
   {:on-trash executive-trash-effect
-   :constant-effects [{:type :agenda-value
+   :static-abilities [{:type :agenda-value
                        :req (req (= :runner (:scored-side target)))
                        :value -1}]})
 
@@ -2699,7 +2699,7 @@
             :effect (effect (add-icon card target "TMB" (faction-label card))
                             (update! (assoc-in (get-card state card) [:special :trieste-target] target)))}
    :leave-play (effect (remove-icon card))
-   :constant-effects [{:type :prevent-paid-ability
+   :static-abilities [{:type :prevent-paid-ability
                        :req (req
                               (let [[break-card break-ability] targets]
                                 (and
@@ -2906,7 +2906,7 @@
 (defcard "Watchdog"
   (letfn [(not-triggered? [state]
             (no-event? state :runner :rez #(ice? (:card (first %)))))]
-    {:constant-effects [{:type :rez-cost
+    {:static-abilities [{:type :rez-cost
                          :req (req (and (ice? target)
                                         (not-triggered? state)))
                          :value (req (- (count-tags state)))}]

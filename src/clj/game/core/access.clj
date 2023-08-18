@@ -5,7 +5,7 @@
     [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost]]
-    [game.core.effects :refer [any-effects register-constant-effects register-floating-effect sum-effects unregister-floating-effects]]
+    [game.core.effects :refer [any-effects register-static-abilities register-floating-effect sum-effects unregister-floating-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [ability-as-handler can-trigger? checkpoint register-pending-event pay queue-event register-default-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
@@ -180,7 +180,7 @@
   (let [c (move state :runner (dissoc card :advance-counter :new) :scored {:force true})
         _ (when (card-flag? c :has-events-when-stolen true)
             (register-default-events state side c)
-            (register-constant-effects state side c))
+            (register-static-abilities state side c))
         _ (update-all-advancement-requirements state)
         _ (update-all-agenda-points state)
         c (get-card state c)

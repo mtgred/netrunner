@@ -186,7 +186,7 @@
   (letfn [(outermost? [state ice]
             (let [server-ice (:ices (card->server state ice))]
               (same-card? ice (last server-ice))))]
-    {:constant-effects [{:type :tags
+    {:static-abilities [{:type :tags
                          :req (req (and (get-current-encounter state)
                                         (rezzed? current-ice)
                                         (outermost? state current-ice)))
@@ -398,7 +398,7 @@
                                     (or (has-subtype? card "Job")
                                         (has-subtype? card "Connection")))))
           (not-triggered? [state] (no-event? state :runner :runner-install #(az-type? (:card (first %)))))]
-    {:constant-effects [{:type :install-cost
+    {:static-abilities [{:type :install-cost
                          :req (req (and (az-type? target)
                                         (not-triggered? state)))
                          :value -1}]
@@ -459,12 +459,12 @@
              :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
-  {:constant-effects [(corp-hand-size+ (req (:credit corp)))]
+  {:static-abilities [(corp-hand-size+ (req (:credit corp)))]
    :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
    :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
 
 (defcard "Chaos Theory: Wünderkind"
-  {:constant-effects [(mu+ 1)]})
+  {:static-abilities [(mu+ 1)]})
 
 (defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage))))
@@ -501,7 +501,7 @@
               {:effect (req (system-msg state :corp (str "declines to use " (:title card))))}}}]})
 
 (defcard "Cybernetics Division: Humanity Upgraded"
-  {:constant-effects [(hand-size+ -1)]})
+  {:static-abilities [(hand-size+ -1)]})
 
 (defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
@@ -521,7 +521,7 @@
                :req (req (and (= :hq (target-server context))
                               (:flipped card)))
                :effect flip-effect}]
-     :constant-effects [{:type :run-additional-cost
+     :static-abilities [{:type :run-additional-cost
                          :req (req (or
                                      (and (not (:flipped card))
                                           (= :hq (:server (second targets))))
@@ -731,7 +731,7 @@
                                       (effect-completed state side eid))))}]})
 
 (defcard "Haarpsichord Studios: Entertainment Unleashed"
-  {:constant-effects [{:type :cannot-steal
+  {:static-abilities [{:type :cannot-steal
                        :value (req (pos? (event-count state side :agenda-stolen)))}]
    :events [{:event :access
              :req (req (and (agenda? target)
@@ -769,7 +769,7 @@
              :effect (effect (gain-credits eid 1))}]})
 
 (defcard "Haas-Bioroid: Precision Design"
-  {:constant-effects [(corp-hand-size+ 1)]
+  {:static-abilities [(corp-hand-size+ 1)]
    :events [{:event :agenda-scored
              :interactive (req true)
              :optional {:prompt "Add 1 card from Archives to HQ?"
@@ -778,7 +778,7 @@
    :abilities [(set-autoresolve :auto-fire "Haas-Bioroid: Precision Design")]})
 
 (defcard "Haas-Bioroid: Stronger Together"
-  {:constant-effects [{:type :ice-strength
+  {:static-abilities [{:type :ice-strength
                        :req (req (has-subtype? target "Bioroid"))
                        :value 1}]
    :leave-play (effect (update-all-ice))
@@ -857,7 +857,7 @@
                                                       :code (str (subs (:code card) 0 5) "flip")
                                                       :subtype "Digital")))
                          (update-link state))]
-    {:constant-effects [(link+ (req (:flipped card)) 1)
+    {:static-abilities [(link+ (req (:flipped card)) 1)
                         {:type :gain-subtype
                          :req (req (and (same-card? card target) (:flipped card)))
                          :value "Digital"}
@@ -930,7 +930,7 @@
      :abilities [ability]}))
 
 (defcard "Industrial Genomics: Growing Solutions"
-  {:constant-effects [{:type :trash-cost
+  {:static-abilities [{:type :trash-cost
                        :value (req (count (remove :seen (:discard corp))))}]})
 
 (defcard "Information Dynamics: All You Need To Know"
@@ -1066,7 +1066,7 @@
                             (mill state :corp eid :runner 1)))}]})
 
 (defcard "Jinteki: Replicating Perfection"
-  {:constant-effects [{:type :cannot-run-on-server
+  {:static-abilities [{:type :cannot-run-on-server
                        :req (req (no-event? state side :run #(is-central? (:server (first %)))))
                        :value (req (map first (get-remotes state)))}]})
 
@@ -1109,7 +1109,7 @@
   (letfn [(kate-type? [card] (or (hardware? card)
                                  (program? card)))
           (not-triggered? [state] (no-event? state :runner :runner-install #(kate-type? (:card (first %)))))]
-    {:constant-effects [{:type :install-cost
+    {:static-abilities [{:type :install-cost
                          :req (req (and (kate-type? target)
                                         (not-triggered? state)))
                          :value -1}]
@@ -1299,7 +1299,7 @@
                :effect (effect
                         (update! (assoc-in card [:special :mm-actions] []))
                         (update! (assoc-in (get-card state card) [:special :mm-click] false)))}]
-     :constant-effects [{:type :prevent-paid-ability
+     :static-abilities [{:type :prevent-paid-ability
                          :req (req (and (get-in card [:special :mm-click])
                                         (let [cid (:cid target)
                                               ability-idx (nth targets 2 nil)
@@ -1429,7 +1429,7 @@
                             (draw state :corp eid 2)))}]})
 
 (defcard "NBN: The World is Yours*"
-  {:constant-effects [(corp-hand-size+ 1)]})
+  {:static-abilities [(corp-hand-size+ 1)]})
 
 (defcard "Near-Earth Hub: Broadcast Center"
   {:events [{:event :server-created
@@ -1721,7 +1721,7 @@
 (defcard "Reina Roja: Freedom Fighter"
   (letfn [(not-triggered? [state]
             (no-event? state :runner :rez #(ice? (:card (first %)))))]
-    {:constant-effects [{:type :rez-cost
+    {:static-abilities [{:type :rez-cost
                          :req (req (and (ice? target)
                                         (not (rezzed? target))
                                         (not-triggered? state)))
@@ -1946,7 +1946,7 @@
   {})
 
 (defcard "SYNC: Everything, Everywhere"
-  {:constant-effects [{:type :card-ability-additional-cost
+  {:static-abilities [{:type :card-ability-additional-cost
                        :req (req (let [targetcard (first targets)
                                        target (second targets)]
                                    (and (not (:sync-flipped card))

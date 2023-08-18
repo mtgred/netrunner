@@ -94,7 +94,7 @@
                                            (effect-completed eid))}}}]})
 
 (defcard "Akitaro Watanabe"
-  {:constant-effects [{:type :rez-cost
+  {:static-abilities [{:type :rez-cost
                        :req (req (and (ice? target)
                                       (= (card->server state card) (card->server state target))))
                        :value -2}]})
@@ -318,7 +318,7 @@
                                   (trash state :corp eid card {:cause-card card}))))))}]})
 
 (defcard "Breaker Bay Grid"
-  {:constant-effects [{:type :rez-cost
+  {:static-abilities [{:type :rez-cost
                        :req (req (in-same-server? card target))
                        :value -5}]})
 
@@ -439,7 +439,7 @@
                                            (effect-completed state side eid)))))}]})
 
 (defcard "Cold Site Server"
-  {:constant-effects [{:type :run-additional-cost
+  {:static-abilities [{:type :run-additional-cost
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value (req (repeat (get-counters card :power) [:credit 1 :click 1]))}]
    :events [{:event :corp-turn-begins
@@ -464,7 +464,7 @@
                 :effect (effect (pump-ice target (cost-value eid :x-credits) :end-of-turn))}]})
 
 (defcard "Crisium Grid"
-  {:constant-effects [{:type :block-successful-run
+  {:static-abilities [{:type :block-successful-run
                        :req (req this-server)
                        :value true}]})
 
@@ -631,7 +631,7 @@
                  etr]}))
 
 (defcard "Experiential Data"
-  {:constant-effects [{:type :ice-strength
+  {:static-abilities [{:type :ice-strength
                        :req (req (protecting-same-server? card target))
                        :value 1}]})
 
@@ -1098,7 +1098,7 @@
                             (continue-ability state :runner (offer-jack-out) card nil))}}}]})
 
 (defcard "Midway Station Grid"
-  {:constant-effects [{:type :break-sub-additional-cost
+  {:static-abilities [{:type :break-sub-additional-cost
                        :req (req (and ; The card is an icebreaker
                                       (has-subtype? target "Icebreaker")
                                       ; and is using a break ability
@@ -1238,7 +1238,7 @@
                               card nil)))}]})
 
 (defcard "Navi Mumbai City Grid"
-  {:constant-effects [{:type :prevent-paid-ability
+  {:static-abilities [{:type :prevent-paid-ability
                        :req (req (let [target-card (first targets)]
                                    (and run
                                         (= (:side target-card) "Runner")
@@ -1288,7 +1288,7 @@
                    card nil))}}}]})
 
 (defcard "Oaktown Grid"
-  {:constant-effects [{:type :trash-cost
+  {:static-abilities [{:type :trash-cost
                        :req (req (in-same-server? card target))
                        :value 3}]})
 
@@ -1303,7 +1303,7 @@
 
 (defcard "Off the Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :constant-effects [{:type :cannot-run-on-server
+   :static-abilities [{:type :cannot-run-on-server
                        :req (req (rezzed? card))
                        :value (req (second (get-zone card)))}]
    :events [{:event :successful-run
@@ -1392,7 +1392,7 @@
 
 (defcard "Port Anson Grid"
   {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
-   :constant-effects [{:type :jack-out-additional-cost
+   :static-abilities [{:type :jack-out-additional-cost
                        :duration :end-of-run
                        :req (req this-server)
                        :value [:program 1]}]
@@ -1434,7 +1434,7 @@
              :effect (effect (steal-cost-bonus [:credit 5] {:source card :source-type :ability}))}]})
 
 (defcard "Reduced Service"
-  {:constant-effects [{:type :run-additional-cost
+  {:static-abilities [{:type :run-additional-cost
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value (req (repeat (get-counters card :power) [:credit 2]))}]
    :events [{:event :successful-run
@@ -1455,10 +1455,10 @@
 
 (defcard "Research Station"
   {:install-req (req (filter #{"HQ"} targets))
-   :constant-effects [(corp-hand-size+ 2)]})
+   :static-abilities [(corp-hand-size+ 2)]})
 
 (defcard "Ruhr Valley"
-  {:constant-effects [{:type :run-additional-cost
+  {:static-abilities [{:type :run-additional-cost
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value [:click 1]}]})
 
@@ -1476,7 +1476,7 @@
                 :effect (effect (damage eid :brain 1 {:card card}))}]})
 
 (defcard "SanSan City Grid"
-  {:constant-effects [{:type :advancement-requirement
+  {:static-abilities [{:type :advancement-requirement
                        :req (req (in-same-server? card target))
                        :value -1}]})
 
@@ -1719,7 +1719,7 @@
              :req (req (same-server? card target))
              :msg "prevent 1 card from being exposed"
              :effect (effect (expose-prevent 1))}]
-   :constant-effects [{:type :bypass-ice
+   :static-abilities [{:type :bypass-ice
                        :req (req (same-server? card target))
                        :value false}]})
 
@@ -1748,7 +1748,7 @@
                 :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
 
 (defcard "Vovô Ozetti"
-   {:constant-effects [{:type :rez-cost
+   {:static-abilities [{:type :rez-cost
                        :req (req (and (or (ice? target)
                                           (threat-level 4 state))
                                       (= (card->server state card) (card->server state target))))
@@ -1851,7 +1851,7 @@
 
 (defcard "ZATO City Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :constant-effects [{:type :gain-encounter-ability
+   :static-abilities [{:type :gain-encounter-ability
                        :req (req (and (protecting-same-server? card target)
                                       (some #(:printed %) (:subroutines target))
                                       (not (:disabled target))))

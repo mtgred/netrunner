@@ -324,10 +324,10 @@
    get-effects
    get-effect-maps
    get-effect-value
-   register-constant-effects
+   register-static-abilities
    register-floating-effect
    sum-effects
-   unregister-constant-effects
+   unregister-static-abilities
    unregister-effects-for-card
    unregister-floating-effects])
 

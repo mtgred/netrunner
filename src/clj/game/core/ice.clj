@@ -340,7 +340,7 @@
       (pump-fn state side (make-eid state) card targets)))))
 
 (defn ice-strength-bonus
-  "Use in :constant-effect vectors to give the current ice or program a conditional strength bonus"
+  "Use in :static-abilities vectors to give the current ice or program a conditional strength bonus"
   ([bonus]
    {:type :ice-strength
     :req (req (same-card? card target))
@@ -429,7 +429,7 @@
          (reduce (fnil + 0 0)))))
 
 (defn breaker-strength-bonus
-  "Use in :constant-effect vectors to give the current ice or program a conditional strength bonus"
+  "Use in :static-abilities vectors to give the current ice or program a conditional strength bonus"
   ([bonus]
    {:type :breaker-strength
     :req (req (same-card? card target))

@@ -8,7 +8,7 @@
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
-    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.flags :refer [turn-flag? zone-locked?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
@@ -476,9 +476,9 @@
                                                       :abilities abilities
                                                       :runner-abilities runner-abilities))]
                   (unregister-events state side card)
-                  (unregister-constant-effects state side card)
+                  (unregister-static-abilities state side card)
                   (register-events state side card events)
-                  (register-constant-effects state side card)
+                  (register-static-abilities state side card)
                   (complete-with-result state side eid card)))
       (wait-for (runner-install state side (make-eid state eid)
                                 card {:host-card target
@@ -487,7 +487,7 @@
                                                       :abilities abilities
                                                       :corp-abilities corp-abilities))]
                   (unregister-events state side card)
-                  (unregister-constant-effects state side card)
+                  (unregister-static-abilities state side card)
                   (register-events state side card events)
-                  (register-constant-effects state side card)
+                  (register-static-abilities state side card)
                   (complete-with-result state side eid card))))))

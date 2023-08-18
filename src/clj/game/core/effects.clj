@@ -5,11 +5,11 @@
             [game.core.eid :refer [make-eid]]
             [game.utils :refer [same-card? to-keyword]]))
 
-(defn register-constant-effects
+(defn register-static-abilities
   [state _ card]
-  (when (:constant-effects (card-def card))
-    (let [constant-effects (:constant-effects (card-def card))
-          abilities (for [ability constant-effects]
+  (when (:static-abilities (card-def card))
+    (let [static-abilities (:static-abilities (card-def card))
+          abilities (for [ability static-abilities]
                       (assoc
                         (select-keys ability [:type :req :value])
                         :duration :constant
@@ -19,7 +19,7 @@
              #(apply conj (into [] %) abilities))
       abilities)))
 
-(defn unregister-constant-effects
+(defn unregister-static-abilities
   [state _ card]
   (swap! state assoc :effects
          (->> (:effects @state)
