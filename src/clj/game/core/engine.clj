@@ -405,7 +405,7 @@
   (let [s (or player side)
         ab (dissoc ability :choices :waiting-prompt)
         args (-> ability
-                 (select-keys [:priority :cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
@@ -824,16 +824,14 @@
               opponent-events (get-handlers opponent)]
           (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
                     (show-wait-prompt state opponent
-                                      (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                                      {:priority -1})
+                                      (str (side-str active-player) " to resolve " (event-title event) " triggers"))
                     ; let active player activate their events first
                     (wait-for (trigger-event-simult-player state side (make-eid state eid) active-player-events cancel-fn targets)
                               (when after-active-player
                                 (resolve-ability state side eid after-active-player nil nil))
                               (clear-wait-prompt state opponent)
                               (show-wait-prompt state active-player
-                                                (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                                {:priority -1})
+                                                (str (side-str opponent) " to resolve " (event-title event) " triggers"))
                               (wait-for (trigger-event-simult-player state opponent (make-eid state eid) opponent-events cancel-fn targets)
                                         (clear-wait-prompt state active-player)
                                         (effect-completed state side eid))))))))

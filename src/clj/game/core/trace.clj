@@ -35,7 +35,7 @@
         runner-strength (if (corp-start? trace)
                           ((fnil + 0 0) link boost)
                           strength)
-        trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
+        trigger-trace (select-keys trace [:player :other :base :bonus :link :ability :strength])]
     (wait-for (pay state other (make-eid state eid) card [:credit boost])
               (let [payment-str (:msg async-result)]
                 (system-msg state other (str payment-str
@@ -72,7 +72,7 @@
 
 (defn- trace-reply
   "Shows a trace prompt to the second player, after the first has already spent credits to boost."
-  [state side eid card {:keys [player other base bonus link priority] :as trace} boost]
+  [state side eid card {:keys [player other base bonus link] :as trace} boost]
   (let [other-type (if (corp-start? trace) "link" "trace")
         strength (if (corp-start? trace)
                    ((fnil + 0 0 0) base bonus boost)
@@ -86,8 +86,7 @@
               (clear-wait-prompt state other)
               (show-wait-prompt state player
                                 (str (if (corp-start? trace) "Runner" "Corp")
-                                     " to boost " other-type " strength")
-                                {:priority priority})
+                                     " to boost " other-type " strength"))
               (show-trace-prompt state other (make-eid state eid) card
                                  (str "Boost " other-type " strength?")
                                  #(resolve-trace state side eid card trace %)
@@ -95,7 +94,7 @@
 
 (defn- trace-start
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
-  [state side eid card {:keys [player other base bonus priority label] :as trace}]
+  [state side eid card {:keys [player other base bonus label] :as trace}]
   (let [this-type (if (corp-start? trace) "trace" "link")]
     (system-msg state player (str "uses " (:title card)
                                   " to initiate a trace with strength " ((fnil + 0 0) base bonus)
@@ -105,8 +104,7 @@
                                     (str " (" label ")"))))
     (show-wait-prompt state other
                       (str (if (corp-start? trace) "Corp" "Runner")
-                           " to boost " this-type " strength")
-                      {:priority priority})
+                           " to boost " this-type " strength"))
     (show-trace-prompt state player (make-eid state eid) card
                        (str "Boost " this-type " strength?")
                        #(trace-reply state side eid card trace %)

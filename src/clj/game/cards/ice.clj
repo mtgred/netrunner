@@ -711,7 +711,7 @@
 
 (defcard "Archangel"
   {:flags {:rd-reveal (req true)}
-   :access
+   :on-access
    {:optional
     {:req (req (not (in-discard? card)))
      :waiting-prompt true
@@ -1100,10 +1100,10 @@
 (defcard "Chrysalis"
   {:flags {:rd-reveal (req true)}
    :subroutines [(do-net-damage 2)]
-   :access {:async true
-            :req (req (not (in-discard? card)))
-            :msg "force the Runner to encounter Chrysalis"
-            :effect (req (force-ice-encounter state side eid card))}})
+   :on-access {:async true
+               :req (req (not (in-discard? card)))
+               :msg "force the Runner to encounter Chrysalis"
+               :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Chum"
   {:subroutines
@@ -1963,10 +1963,10 @@
                                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                                  card nil)))
                                    (effect-completed state side eid))))}]
-   :access {:async true
-            :req (req (not (in-discard? card)))
-            :msg "force the Runner to encounter Herald"
-            :effect (req (force-ice-encounter state side eid card))}})
+   :on-access {:async true
+               :req (req (not (in-discard? card)))
+               :msg "force the Runner to encounter Herald"
+               :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Himitsu-Bako"
   {:abilities [{:msg "add itself to HQ"
@@ -2209,9 +2209,9 @@
               (assoc ability :event :corp-lose-bad-publicity)]}))
 
 (defcard "It's a Trap!"
-  {:expose {:msg "do 2 net damage"
-            :async true
-            :effect (effect (damage eid :net 2 {:card card}))}
+  {:on-expose {:msg "do 2 net damage"
+               :async true
+               :effect (effect (damage eid :net 2 {:card card}))}
    :subroutines [(assoc runner-trash-installed-sub
                         :effect (req (wait-for (trash state side target {:cause :subroutine})
                                                (system-msg state :corp (str "uses " (:title card) " to trash itself"))
@@ -3351,10 +3351,10 @@
 (defcard "Sapper"
   {:flags {:rd-reveal (req true)}
    :subroutines [trash-program-sub]
-   :access {:async true
-            :req (req (not (in-discard? card)))
-            :msg "force the Runner to encounter Sapper"
-            :effect (req (force-ice-encounter state side eid card))}})
+   :on-access {:async true
+               :req (req (not (in-discard? card)))
+               :msg "force the Runner to encounter Sapper"
+               :effect (req (force-ice-encounter state side eid card))}})
 
 (defcard "Searchlight"
   (let [sub {:label "Trace X - Give the Runner 1 tag"

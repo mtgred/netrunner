@@ -134,15 +134,15 @@
             :cost [:credit 1]
             :msg "do 1 meat damage"
             :effect (effect (damage eid :meat 1 {:card card}))}
-   :access {:optional
-            {:req (req (rezzed? card))
-             :waiting-prompt true
-             :prompt (msg "Pay 2 [Credits] to use " (:title card) " ability?")
-             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
-             :yes-ability {:async true
-                           :cost [:credit 2]
-                           :msg "do 2 meat damage"
-                           :effect (effect (damage eid :meat 2 {:card card}))}}}})
+   :on-access {:optional
+               {:req (req (rezzed? card))
+                :waiting-prompt true
+                :prompt (msg "Pay 2 [Credits] to use " (:title card) " ability?")
+                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
+                :yes-ability {:async true
+                              :cost [:credit 2]
+                              :msg "do 2 meat damage"
+                              :effect (effect (damage eid :meat 2 {:card card}))}}}})
 
 (defcard "Anoetic Void"
   {:events [{:event :approach-server
@@ -470,11 +470,11 @@
 
 (defcard "Cyberdex Virus Suite"
   {:flags {:rd-reveal (req true)}
-   :access {:optional
-            {:waiting-prompt true
-             :prompt "Purge virus counters?"
-             :yes-ability {:msg "purge virus counters"
-                           :effect (effect (purge))}}}
+   :on-access {:optional
+               {:waiting-prompt true
+                :prompt "Purge virus counters?"
+                :yes-ability {:msg "purge virus counters"
+                              :effect (effect (purge))}}}
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
                 :cost [:trash-can]
@@ -590,15 +590,15 @@
                                  (dhq (inc i) n))
                                card nil))})]
     {:flags {:rd-reveal (req true)}
-     :access {:optional
-              {:waiting-prompt true
-               :prompt "Add cards from HQ to the bottom of R&D?"
-               :yes-ability
-               {:async true
-                :msg "add cards in HQ to the bottom of R&D"
-                :effect (effect (continue-ability
-                                  (dhq 1 (count (:hand corp)))
-                                  card nil))}}}}))
+     :on-access {:optional
+                 {:waiting-prompt true
+                  :prompt "Add cards from HQ to the bottom of R&D?"
+                  :yes-ability
+                  {:async true
+                   :msg "add cards in HQ to the bottom of R&D"
+                   :effect (effect (continue-ability
+                                     (dhq 1 (count (:hand corp)))
+                                     card nil))}}}}))
 
 (defcard "Djupstad Grid"
   {:events [{:event :agenda-scored
@@ -662,12 +662,12 @@
 
 (defcard "Forced Connection"
   {:flags {:rd-reveal (req true)}
-   :access {:interactive (req true)
-            :trace {:req (req (not (in-discard? card)))
-                    :base 3
-                    :successful {:msg "give the Runner 2 tags"
-                                 :async true
-                                 :effect (effect (gain-tags :corp eid 2))}}}})
+   :on-access {:interactive (req true)
+               :trace {:req (req (not (in-discard? card)))
+                       :base 3
+                       :successful {:msg "give the Runner 2 tags"
+                                    :async true
+                                    :effect (effect (gain-tags :corp eid 2))}}}})
 
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
@@ -682,7 +682,7 @@
 
 (defcard "Ganked!"
   {:flags {:rd-reveal (req true)}
-   :access
+   :on-access
    {:optional
     {:req (req (and (not (in-discard? card))
                     (some #(and (ice? %)
@@ -821,38 +821,38 @@
 
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
-   :access {:interactive (req true)
-            :player :runner
-            :async true
-            :waiting-prompt true
-            :msg (msg (if (= target "The Corp removes 1 bad publicity")
-                       "remove 1 bad publicity"
-                       (str "force the Runner to " (decapitalize target))))
-            :prompt "Choose one"
-            :choices ["Take 1 tag" "The Corp removes 1 bad publicity"]
-            :effect (req (if (= target "Take 1 tag")
-                           (gain-tags state side eid 1 {:unpreventable true})
-                           (do (lose-bad-publicity state :corp 1)
-                               (effect-completed state side eid))))}})
+   :on-access {:interactive (req true)
+               :player :runner
+               :async true
+               :waiting-prompt true
+               :msg (msg (if (= target "The Corp removes 1 bad publicity")
+                           "remove 1 bad publicity"
+                           (str "force the Runner to " (decapitalize target))))
+               :prompt "Choose one"
+               :choices ["Take 1 tag" "The Corp removes 1 bad publicity"]
+               :effect (req (if (= target "Take 1 tag")
+                              (gain-tags state side eid 1 {:unpreventable true})
+                              (do (lose-bad-publicity state :corp 1)
+                                  (effect-completed state side eid))))}})
 
 (defcard "Intake"
   {:flags {:rd-reveal (req true)}
-   :access {:interactive (req true)
-            :trace {:req (req (not (in-discard? card)))
-                    :base 4
-                    :label "add an installed program or virtual resource to the Grip"
-                    :successful
-                    {:waiting-prompt true
-                     :prompt "Choose a program or virtual resource"
-                     :player :corp
-                     :choices {:card #(and (installed? %)
-                                           (or (program? %)
-                                               (and (resource? %)
-                                                    (has-subtype? % "Virtual"))))}
-                     :msg (msg "move " (:title target) " to the Grip")
-                     :async true
-                     :effect (req (move state :runner target :hand)
-                                  (effect-completed state side eid))}}}})
+   :on-access {:interactive (req true)
+               :trace {:req (req (not (in-discard? card)))
+                       :base 4
+                       :label "add an installed program or virtual resource to the Grip"
+                       :successful
+                       {:waiting-prompt true
+                        :prompt "Choose a program or virtual resource"
+                        :player :corp
+                        :choices {:card #(and (installed? %)
+                                              (or (program? %)
+                                                  (and (resource? %)
+                                                       (has-subtype? % "Virtual"))))}
+                        :msg (msg "move " (:title target) " to the Grip")
+                        :async true
+                        :effect (req (move state :runner target :hand)
+                                     (effect-completed state side eid))}}}})
 
 (defcard "Jinja City Grid"
   (letfn [(install-ice [ice ices grids server]
@@ -1070,24 +1070,24 @@
 
 (defcard "Mavirus"
   {:flags {:rd-reveal (req true)}
-   :access {:optional
-            {:waiting-prompt true
-             :prompt "Purge virus counters?"
-             :yes-ability {:msg (msg "purge virus counters")
-                           :async true
-                           :effect (req (purge state side)
-                                        (if (rezzed? card)
-                                          (do
-                                            (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
-                                            (damage state side eid :net 1 {:card card}))
-                                          (effect-completed state side eid)))}
-             :no-ability {:async true
-                          :effect (req (system-msg state :corp (str "declines to use " (:title card)))
-                                       (if (rezzed? card)
-                                         (do
-                                           (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
-                                           (damage state side eid :net 1 {:card card}))
-                                         (effect-completed state side eid)))}}}
+   :on-access {:optional
+               {:waiting-prompt true
+                :prompt "Purge virus counters?"
+                :yes-ability {:msg (msg "purge virus counters")
+                              :async true
+                              :effect (req (purge state side)
+                                           (if (rezzed? card)
+                                             (do
+                                               (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
+                                               (damage state side eid :net 1 {:card card}))
+                                             (effect-completed state side eid)))}
+                :no-ability {:async true
+                             :effect (req (system-msg state :corp (str "declines to use " (:title card)))
+                                          (if (rezzed? card)
+                                            (do
+                                              (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
+                                              (damage state side eid :net 1 {:card card}))
+                                            (effect-completed state side eid)))}}}
    :abilities [{:label "Purge virus counters"
                 :msg "purge virus counters"
                 :cost [:trash-can]
@@ -1423,10 +1423,10 @@
 
 (defcard "Product Placement"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req (not (in-discard? card)))
-            :msg "gain 2 [Credits]"
-            :async true
-            :effect (effect (gain-credits :corp eid 2))}})
+   :on-access {:req (req (not (in-discard? card)))
+               :msg "gain 2 [Credits]"
+               :async true
+               :effect (effect (gain-credits :corp eid 2))}})
 
 (defcard "Red Herrings"
   {:on-trash
@@ -1597,23 +1597,23 @@
 
 (defcard "Tempus"
   {:flags {:rd-reveal (req true)}
-   :access {:interactive (req true)
-            :trace {:req (req (not (in-discard? card)))
-                    :base 3
-                    :successful
-                    {:waiting-prompt true
-                     :prompt "Choose one"
-                     :player :runner
-                     :choices (req [(when (<= 2 (:click runner))
-                                      "Lose [Click][Click]")
-                                    "Suffer 1 core damage"])
-                     :async true
-                     :msg (msg "force the Runner to " (decapitalize target))
-                     :effect (req (if (and (= target "Lose [Click][Click]")
-                                           (<= 2 (:click runner)))
-                                    (do (lose-clicks state :runner 2)
-                                        (effect-completed state side eid))
-                                    (damage state side eid :brain 1 {:card card})))}}}})
+   :on-access {:interactive (req true)
+               :trace {:req (req (not (in-discard? card)))
+                       :base 3
+                       :successful
+                       {:waiting-prompt true
+                        :prompt "Choose one"
+                        :player :runner
+                        :choices (req [(when (<= 2 (:click runner))
+                                         "Lose [Click][Click]")
+                                       "Suffer 1 core damage"])
+                        :async true
+                        :msg (msg "force the Runner to " (decapitalize target))
+                        :effect (req (if (and (= target "Lose [Click][Click]")
+                                              (<= 2 (:click runner)))
+                                       (do (lose-clicks state :runner 2)
+                                           (effect-completed state side eid))
+                                       (damage state side eid :brain 1 {:card card})))}}}})
 
 (defcard "The Twins"
   {:events [{:event :pass-ice

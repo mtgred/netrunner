@@ -357,15 +357,15 @@
 
 (defcard "Behold!"
   {:flags {:rd-reveal (req true)}
-   :access {:optional
-            {:req (req (not (in-discard? card)))
-             :waiting-prompt true
-             :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
-             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
-             :yes-ability {:async true
-                           :cost [:credit 4]
-                           :msg "give the runner 2 tags"
-                           :effect (req (gain-tags state :corp eid 2))}}}})
+   :on-access {:optional
+               {:req (req (not (in-discard? card)))
+                :waiting-prompt true
+                :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
+                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
+                :yes-ability {:async true
+                              :cost [:credit 4]
+                              :msg "give the runner 2 tags"
+                              :effect (req (gain-tags state :corp eid 2))}}}})
 
 (defcard "Bio-Ethics Association"
   (let [ability {:req (req unprotected)
@@ -422,12 +422,12 @@
 
 (defcard "Breached Dome"
   {:flags {:rd-reveal (req true)}
-   :access {:async true
-            :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                           (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
-                                                        " from the top of the Runner's Stack"))
-                           (wait-for (mill state :corp :runner 1)
-                                     (damage state side eid :meat 1 {:card card}))))}})
+   :on-access {:async true
+               :effect (req (let [c (first (get-in @state [:runner :deck]))]
+                              (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
+                                                           " from the top of the Runner's Stack"))
+                              (wait-for (mill state :corp :runner 1)
+                                        (damage state side eid :meat 1 {:card card}))))}})
 
 (defcard "Broadcast Square"
   {:events [{:event :pre-bad-publicity
@@ -982,10 +982,10 @@
   (letfn [(tag-count [false-flag]
             (int (/ (get-counters false-flag :advancement) 2)))]
     {:advanceable :always
-     :access {:req (req (pos? (get-counters (get-card state card) :advancement)))
-              :msg (msg "give the runner " (quantify (tag-count (get-card state card)) "tag"))
-              :async true
-              :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
+     :on-access {:req (req (pos? (get-counters (get-card state card) :advancement)))
+                 :msg (msg "give the runner " (quantify (tag-count (get-card state card)) "tag"))
+                 :async true
+                 :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
      :abilities [{:cost [:click 1 :advancement 7]
                   :label "Add this asset to your score area as an agenda worth 3 agenda points"
                   :msg "add itself to their score area as an agenda worth 3 agenda points"
@@ -1121,11 +1121,11 @@
 
 (defcard "Gene Splicer"
   {:advanceable :always
-   :access {:req (req (pos? (get-counters (get-card state card) :advancement)))
-            :msg (msg "do " (get-counters (get-card state card) :advancement) " net damage")
-            :async true
-            :effect (effect (damage eid :net (get-counters (get-card state card) :advancement)
-                                    {:card card}))}
+   :on-access {:req (req (pos? (get-counters (get-card state card) :advancement)))
+               :msg (msg "do " (get-counters (get-card state card) :advancement) " net damage")
+               :async true
+               :effect (effect (damage eid :net (get-counters (get-card state card) :advancement)
+                                       {:card card}))}
    :abilities [{:cost [:click 1 :advancement 3]
                 :label "Add this asset to your score area as an agenda worth 1 agenda point"
                 :msg "add itself to their score area as an agenda worth 1 agenda point"
@@ -1165,9 +1165,9 @@
 
 (defcard "Honeyfarm"
   {:flags {:rd-reveal (req true)}
-   :access {:msg "force the Runner to lose 1 [Credits]"
-            :async true
-            :effect (effect (lose-credits :runner eid 1))}})
+   :on-access {:msg "force the Runner to lose 1 [Credits]"
+               :async true
+               :effect (effect (lose-credits :runner eid 1))}})
 
 (defcard "Hostile Architecture"
   (let [valid-trash (fn [target] (and (corp? (:card target)) (installed? (:card target))))
@@ -1780,16 +1780,16 @@
 
 (defcard "News Team"
   {:flags {:rd-reveal (req true)}
-   :access {:async true
-            :msg (msg "force the Runner to " (decapitalize target))
-            :player :runner
-            :prompt "Choose one"
-            :waiting-prompt true
-            :choices ["Take 2 tags" "Add News Team to score area"]
-            :effect (req (if (= target "Take 2 tags")
-                          (gain-tags state :runner eid 2)
-                          (do (as-agenda state :runner card -1)
-                              (effect-completed state side eid))))}})
+   :on-access {:async true
+               :msg (msg "force the Runner to " (decapitalize target))
+               :player :runner
+               :prompt "Choose one"
+               :waiting-prompt true
+               :choices ["Take 2 tags" "Add News Team to score area"]
+               :effect (req (if (= target "Take 2 tags")
+                              (gain-tags state :runner eid 2)
+                              (do (as-agenda state :runner card -1)
+                                  (effect-completed state side eid))))}})
 
 (defcard "NGO Front"
   (letfn [(builder [cost cred]
@@ -1829,19 +1829,19 @@
 
 (defcard "Nightmare Archive"
   {:flags {:rd-reveal (req true)}
-   :access {:async true
-            :msg (msg (if (= target "Suffer 1 core damage")
-                        "do 1 core damage"
-                        (str "force the runner to " (decapitalize target))))
-            :player :runner
-            :prompt "Choose one"
-            :choices ["Suffer 1 core damage" "Add Nightmare Archive to score area"]
-            :effect (req (if (= target "Suffer 1 core damage")
-                           (wait-for (damage state :corp :brain 1 {:card card})
-                                     (move state :corp card :rfg)
-                                     (effect-completed state side eid))
-                           (do (as-agenda state :runner card -1)
-                               (effect-completed state side eid))))}})
+   :on-access {:async true
+               :msg (msg (if (= target "Suffer 1 core damage")
+                           "do 1 core damage"
+                           (str "force the runner to " (decapitalize target))))
+               :player :runner
+               :prompt "Choose one"
+               :choices ["Suffer 1 core damage" "Add Nightmare Archive to score area"]
+               :effect (req (if (= target "Suffer 1 core damage")
+                              (wait-for (damage state :corp :brain 1 {:card card})
+                                        (move state :corp card :rfg)
+                                        (effect-completed state side eid))
+                              (do (as-agenda state :runner card -1)
+                                  (effect-completed state side eid))))}})
 
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw
@@ -2009,8 +2009,8 @@
                                      :async true
                                      :effect (effect (damage eid :net hand {:card card}))}}}
                              card nil)))}]
-    {:expose ab
-     :access ab}))
+    {:on-expose ab
+     :on-access ab}))
 
 (defcard "Public Health Portal"
   (let [ability {:once :per-turn
@@ -2385,7 +2385,7 @@
                      :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
 (defcard "Shi.Kyū"
-  {:access
+  {:on-access
    {:optional
     {:req (req (not (in-deck? card)))
      :waiting-prompt true
@@ -2415,9 +2415,9 @@
 
 (defcard "Shock!"
   {:flags {:rd-reveal (req true)}
-   :access {:msg "do 1 net damage"
-            :async true
-            :effect (effect (damage eid :net 1 {:card card}))}})
+   :on-access {:msg "do 1 net damage"
+               :async true
+               :effect (effect (damage eid :net 1 {:card card}))}})
 
 (defcard "SIU"
   {:derezzed-events [corp-rez-toast]
@@ -2436,26 +2436,26 @@
 
 (defcard "Snare!"
   {:flags {:rd-reveal (req true)}
-   :access {:optional
-            {:req (req (not (in-discard? card)))
-             :waiting-prompt true
-             :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
-             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
-             :yes-ability {:async true
-                           :cost [:credit 4]
-                           :msg "do 3 net damage and give the Runner 1 tag"
-                           :effect (req (wait-for (damage state side :net 3 {:card card})
-                                                  (gain-tags state :corp eid 1)))}}}})
+   :on-access {:optional
+               {:req (req (not (in-discard? card)))
+                :waiting-prompt true
+                :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
+                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
+                :yes-ability {:async true
+                              :cost [:credit 4]
+                              :msg "do 3 net damage and give the Runner 1 tag"
+                              :effect (req (wait-for (damage state side :net 3 {:card card})
+                                                     (gain-tags state :corp eid 1)))}}}})
 
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
-   :access {:optional
-            {:waiting-prompt true
-             :prompt "Place 1 advancement token on a card that can be advanced?"
-             :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
-                           :prompt "Choose a card to place an advancement token on"
-                           :choices {:card can-be-advanced?}
-                           :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
+   :on-access {:optional
+               {:waiting-prompt true
+                :prompt "Place 1 advancement token on a card that can be advanced?"
+                :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
+                              :prompt "Choose a card to place an advancement token on"
+                              :choices {:card can-be-advanced?}
+                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
 
 (defcard "Spin Doctor"
   {:on-rez {:async true
