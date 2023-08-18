@@ -1161,6 +1161,53 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters"))))
 
+(deftest daniela-jorge-inacio
+  (do-game
+      (new-game {:corp {:hand ["Daniela Jorge Inácio" "House of Knives"]}
+                 :runner {:hand [(qty "Sure Gamble" 4)]
+                         :deck ["Unity"]}})
+      (play-from-hand state :corp "House of Knives" "New remote")
+      (play-from-hand state :corp "Daniela Jorge Inácio" "Server 1")
+      (rez state :corp (get-content state :remote1 1))
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (click-card state :runner (get-content state :remote1 1))
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "2 random cards left the grip"
+        (click-prompt state :runner "Pay 2 [Credits] to trash"))
+      (is (= 3 (count (:deck (get-runner)))) "3 cards in the stack")
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "2 random cards left the grip"
+        (click-prompt state :runner "Pay to steal"))
+      (is (= 5 (count (:deck (get-runner)))) "5 cards in the stack")
+      (is (= 1 (count (:scored (get-runner)))) "1 scored agenda")))
+
+(deftest daniela-jorge-inacio-on-central-servers
+  (do-game
+      (new-game {:corp {:hand ["Daniela Jorge Inácio" (qty "House of Knives" 2)]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]
+                         :deck ["Unity"]}})
+      (play-from-hand state :corp "Daniela Jorge Inácio" "HQ")
+      (rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Card from hand")
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "2 random cards left the grip"
+        (click-prompt state :runner "Pay to steal"))
+      (is (= 3 (count (:deck (get-runner)))) "3 cards in the stack")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Daniela Jorge Inácio")
+      (changes-val-macro
+        -2 (count (:hand (get-runner)))
+        "2 random cards left the grip"
+        (click-prompt state :runner "Pay 2 [Credits] to trash"))
+      (click-prompt state :runner "No action" "Can't steal agendas")))
+
 (deftest daruma-swapping-with-another-installed-card
     ;; swapping with another installed card
     (do-game
