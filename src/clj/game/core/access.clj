@@ -28,7 +28,7 @@
 
 (defn access-bonus-count
   [state side kw]
-  (sum-effects state side nil :access-bonus [kw]))
+  (sum-effects state side :access-bonus kw))
 
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
@@ -1232,7 +1232,7 @@
            state side nil
            {:type :access-bonus
             :duration duration
-            :req (req (= server (second targets)))
+            :req (req (= server target))
             :value bonus})]
      floating-effect)))
 

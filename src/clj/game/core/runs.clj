@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
+    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event]]
     [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
@@ -52,7 +52,7 @@
   ([state side card] (get-runnable-zones state side (make-eid state) card nil))
   ([state side card args] (get-runnable-zones state side (make-eid state) card args))
   ([state side eid card {:keys [zones ignore-costs]}]
-   (let [restricted-zones (distinct (flatten (get-effects state side nil :cannot-run-on-server)))
+   (let [restricted-zones (distinct (flatten (get-effects state side :cannot-run-on-server)))
          permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
      (if ignore-costs
        permitted-zones
@@ -326,7 +326,7 @@
                                         :ice ice})
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))
-        applied-encounters (get-effects state nil ice :gain-encounter-ability)
+        applied-encounters (get-effects state nil :gain-encounter-ability ice)
         all-encounters (remove nil? (conj applied-encounters on-encounter))]
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (doseq [on-encounter all-encounters]

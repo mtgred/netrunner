@@ -13,7 +13,7 @@
     (->> [advancementcost
           (when-let [advance-fn (:advancement-requirement (card-def card))]
             (advance-fn state :corp (make-eid state) card nil))
-          (sum-effects state :corp card :advancement-requirement)]
+          (sum-effects state :corp :advancement-requirement card)]
          (reduce (fnil + 0 0))
          (max 0))))
 
@@ -49,9 +49,9 @@
                       (:agendapoints-runner (card-def card)))]
       (if (fn? points-fn)
         (+ (points-fn state side nil card nil)
-           (sum-effects state side card :agenda-value nil))
+           (sum-effects state side :agenda-value card))
         (+ base-points
-           (sum-effects state side card :agenda-value nil))))))
+           (sum-effects state side :agenda-value card))))))
 
 (defn- update-agenda-points-card
   [state side card]
@@ -65,7 +65,7 @@
 (defn- sum-side-agenda-points
   [state side]
   (let [current-points (or (get-in @state [side :agenda-point]) 0)
-        user-adjusted-points (sum-effects state side side :user-agenda-points nil)
+        user-adjusted-points (sum-effects state side :user-agenda-points side)
         scored-points (->> (get-in @state [side :scored])
                            (keep :current-points)
                            (reduce + 0))

@@ -10,8 +10,8 @@
   [state card]
   (when (:title card)
     (let [printed-subtypes (:subtypes (server-card (:title card)))
-          gained-subtypes (flatten (get-effects state nil card :gain-subtype))
-          lost-subtypes (flatten (get-effects state nil card :lose-subtype))
+          gained-subtypes (flatten (get-effects state nil :gain-subtype card))
+          lost-subtypes (flatten (get-effects state nil :lose-subtype card))
           total-gained (frequencies (concat printed-subtypes gained-subtypes))
           total-lost (frequencies lost-subtypes)
           total (reduce

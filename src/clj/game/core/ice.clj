@@ -355,7 +355,7 @@
   "Sums the results from get-effects."
   [state side ice]
   (let [can-lower? (not (any-effects state side :cannot-lower-strength true? {:ice ice}))]
-    (->> (get-effects state side ice :ice-strength)
+    (->> (get-effects state side :ice-strength ice)
          (filter #(and (number? %) (or can-lower? (pos? %))))
          (reduce +))))
 
@@ -425,7 +425,7 @@
     (->> [strength
           (when-let [strfun (:strength-bonus (card-def card))]
             (strfun state side (make-eid state) card nil))
-          (sum-effects state side card :breaker-strength)]
+          (sum-effects state side :breaker-strength card)]
          (reduce (fnil + 0 0)))))
 
 (defn breaker-strength-bonus

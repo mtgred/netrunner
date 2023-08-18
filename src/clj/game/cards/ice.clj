@@ -3450,7 +3450,7 @@
           (name-builder [card] (str (:title card) " (" (:type card) ")"))
           (top-3-names [cards] (map name-builder cards))
           (top-3-types [state card et]
-            (->> (get-effects state :corp card et)
+            (->> (get-effects state :corp et card)
                  first
                  (keep :type)
                  (into #{})
@@ -3484,9 +3484,9 @@
                                    ;; When there are 3 cards in the deck, sub needs 2 or fewer unique types
                                    ;; When there are 2 cards in the deck, sub needs 1 unique type
                                    (if (or (and (<= unique-types 2)
-                                                  (= 3 (count (first (get-effects state :corp card et)))))
+                                                  (= 3 (count (first (get-effects state :corp et card)))))
                                              (and (= unique-types 1)
-                                                  (= 2 (count (first (get-effects state :corp card et))))))
+                                                  (= 2 (count (first (get-effects state :corp et card))))))
                                      (do (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
                                          (gain-credits state :corp eid 3))
                                      (effect-completed state side eid))))}
@@ -3496,7 +3496,7 @@
                               (continue-ability
                                 (let [et (effect-type card)
                                       unique-types (top-3-types state card et)]
-                                  (when (and (= 3 (count (first (get-effects state :corp card et))))
+                                  (when (and (= 3 (count (first (get-effects state :corp et card))))
                                              (= 1 unique-types))
                                     {:choices {:card installed?}
                                      :prompt "Choose an installed card"

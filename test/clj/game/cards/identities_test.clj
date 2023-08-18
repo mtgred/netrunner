@@ -302,10 +302,10 @@
       (is (not (is-tagged? state)) "Runner is not yet tagged when encountering outermost ice")
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
-      (is (= 1 (core/sum-effects state :runner nil :tags nil)) "Runner gains 1 additional tag when ice rezzed")
+      (is (= 1 (core/sum-effects state :runner :tags)) "Runner gains 1 additional tag when ice rezzed")
       (rez state :corp (get-content state :remote1 0))
       (is (rezzed? (get-content state :remote1 0)) "NGO Front now rezzed")
-      (is (= 1 (core/sum-effects state :runner nil :tags nil)) "Runner does not gain a tag when asset rezzed")
+      (is (= 1 (core/sum-effects state :runner :tags)) "Runner does not gain a tag when asset rezzed")
       (run-continue state)
       (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice")))
 
