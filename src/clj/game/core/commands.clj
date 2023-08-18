@@ -256,8 +256,7 @@
               (map :title)
               (string/join ", ")))
     ["Done"]
-    identity
-    {:priority 10}))
+    identity))
 
 (defn command-summon
   [state side args]
