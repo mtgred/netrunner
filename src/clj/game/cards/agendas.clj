@@ -263,18 +263,18 @@
 
 (defcard "Award Bait"
   {:flags {:rd-reveal (req true)}
-   :access {:async true
-            :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
-            :waiting-prompt true
-            :prompt "How many advancement tokens do you want to place?"
-            :choices ["0" "1" "2"]
-            :effect (effect (continue-ability
-                              (let [c (str->int target)]
-                                {:choices {:card can-be-advanced?}
-                                 :msg (msg "place " (quantify c "advancement token")
-                                           " on " (card-str state target))
-                                 :effect (effect (add-prop :corp target :advance-counter c {:placed true}))})
-                              card nil))}})
+   :on-access {:async true
+               :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
+               :waiting-prompt true
+               :prompt "How many advancement tokens do you want to place?"
+               :choices ["0" "1" "2"]
+               :effect (effect (continue-ability
+                                 (let [c (str->int target)]
+                                   {:choices {:card can-be-advanced?}
+                                    :msg (msg "place " (quantify c "advancement token")
+                                              " on " (card-str state target))
+                                    :effect (effect (add-prop :corp target :advance-counter c {:placed true}))})
+                                 card nil))}})
 
 (defcard "Azef Protocol"
   {:additional-cost [:trash-other-installed 1]
@@ -478,10 +478,10 @@
 (defcard "City Works Project"
   (letfn [(meat-damage [s c] (+ 2 (get-counters (get-card s c) :advancement)))]
     {:install-state :face-up
-     :access {:req (req installed)
-              :msg (msg "do " (meat-damage state card) " meat damage")
-              :async true
-              :effect (effect (damage eid :meat (meat-damage state card) {:card card}))}}))
+     :on-access {:req (req installed)
+                 :msg (msg "do " (meat-damage state card) " meat damage")
+                 :async true
+                 :effect (effect (damage eid :meat (meat-damage state card) {:card card}))}}))
 
 (defcard "Clone Retirement"
   {:on-score {:msg "remove 1 bad publicity"
@@ -739,13 +739,13 @@
 
 (defcard "Explode-a-palooza"
   {:flags {:rd-reveal (req true)}
-   :access {:optional
-            {:waiting-prompt true
-             :prompt "Gain 5 [Credits]?"
-             :yes-ability
-             {:msg "gain 5 [Credits]"
-              :async true
-              :effect (effect (gain-credits :corp eid 5))}}}})
+   :on-access {:optional
+               {:waiting-prompt true
+                :prompt "Gain 5 [Credits]?"
+                :yes-ability
+                {:msg "gain 5 [Credits]"
+                 :async true
+                 :effect (effect (gain-credits :corp eid 5))}}}})
 
 (defcard "False Lead"
   {:abilities [{:req (req (<= 2 (:click runner)))
@@ -756,10 +756,10 @@
 
 (defcard "Fetal AI"
   {:flags {:rd-reveal (req true)}
-   :access {:async true
-            :req (req (not (in-discard? card)))
-            :msg "do 2 net damage"
-            :effect (effect (damage eid :net 2 {:card card}))}
+   :on-access {:async true
+               :req (req (not (in-discard? card)))
+               :msg "do 2 net damage"
+               :effect (effect (damage eid :net 2 {:card card}))}
    :steal-cost-bonus (req [:credit 2])})
 
 (defcard "Firmware Updates"
@@ -1548,15 +1548,15 @@
 
 (defcard "Quantum Predictive Model"
   {:flags {:rd-reveal (req true)}
-   :access {:req (req tagged)
-            :player :runner
-            :interactive (req true)
-            :prompt "Quantum Predictive Model will be added to the Corp's score area"
-            :choices ["OK"]
-            :msg "add itself to their score area and gain 1 agenda point"
-            :effect (effect (move :corp card :scored {:force true})
-                            (update-all-agenda-points)
-                            (check-win-by-agenda))}})
+   :on-access {:req (req tagged)
+               :player :runner
+               :interactive (req true)
+               :prompt "Quantum Predictive Model will be added to the Corp's score area"
+               :choices ["OK"]
+               :msg "add itself to their score area and gain 1 agenda point"
+               :effect (effect (move :corp card :scored {:force true})
+                               (update-all-agenda-points)
+                               (check-win-by-agenda))}})
 
 (defcard "Rebranding Team"
   {:move-zone (req (when (and (in-scored? card)
@@ -1909,9 +1909,9 @@
 
 (defcard "TGTBT"
   {:flags {:rd-reveal (req true)}
-   :access {:msg "give the Runner 1 tag"
-            :async true
-            :effect (effect (gain-tags eid 1))}})
+   :on-access {:msg "give the Runner 1 tag"
+               :async true
+               :effect (effect (gain-tags eid 1))}})
 
 (defcard "The Cleaners"
   {:events [{:event :pre-damage
@@ -1931,13 +1931,13 @@
 
 (defcard "The Future Perfect"
   {:flags {:rd-reveal (req true)}
-   :access {:psi {:req (req (not installed))
-                  :not-equal
-                  {:msg "prevent itself from being stolen"
-                   :effect (effect (register-run-flag!
-                                     card :can-steal
-                                     (fn [_ _ c] (not (same-card? c card))))
-                                   (effect-completed eid))}}}})
+   :on-access {:psi {:req (req (not installed))
+                     :not-equal
+                     {:msg "prevent itself from being stolen"
+                      :effect (effect (register-run-flag!
+                                        card :can-steal
+                                        (fn [_ _ c] (not (same-card? c card))))
+                                      (effect-completed eid))}}}})
 
 (defcard "Timely Public Release"
   {:on-score {:silent (req true)

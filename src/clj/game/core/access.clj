@@ -324,7 +324,7 @@
 
 (defn access-ability
   [card cdef]
-  (when-let [acc (:access cdef)]
+  (when-let [acc (:on-access cdef)]
     (assoc (ability-as-handler card acc)
            :condition :accessed)))
 
@@ -339,11 +339,12 @@
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
    (let [cost (if (number? cost) [:credit cost] cost)]
-     {:access {:optional
-               {:req (req (and installed (can-pay? state :corp eid card nil cost)))
-                :waiting-prompt (:waiting-prompt ability)
-                :prompt prompt
-                :yes-ability (dissoc ability :waiting-prompt)}}})))
+     {:on-access
+      {:optional
+       {:req (req (and installed (can-pay? state :corp eid card nil cost)))
+        :waiting-prompt (:waiting-prompt ability)
+        :prompt prompt
+        :yes-ability (dissoc ability :waiting-prompt)}}})))
 
 (defn- access-trigger-events
   "Trigger access effects, then move into trash/steal choice."
@@ -968,7 +969,7 @@
 
 (defn- accessible? [state card]
   (or (agenda? card)
-      (should-trigger? state :corp (make-eid state) card nil (:access (card-def card)))))
+      (should-trigger? state :corp (make-eid state) card nil (:on-access (card-def card)))))
 
 (defn- get-archives-accessible [state]
   ;; only include agendas and cards with an :access ability that can trigger
