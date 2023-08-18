@@ -6461,6 +6461,23 @@
         (fire-subs state (refresh sk)))
       (is (not (:run @state)) "Run ended"))))
 
+(deftest starlit-knight-acme
+  (do-game
+    (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                      :hand ["Starlit Knight" "Vanity Project"]
+                      :credits 20}})
+    (play-from-hand state :corp "Starlit Knight" "HQ")
+    (let [sk (get-ice state :hq 0)]
+      (rez state :corp sk)
+      (play-and-score state "Vanity Project")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (is (= ["Give the Runner 1 tag"
+              "Give the Runner 1 tag"
+              "End the run"]
+             (map :label (:subroutines (refresh sk))))))))
+
 (deftest stavka
   (do-game
    (new-game {:corp {:hand ["Stavka" "Prisec"] :credits 10}
