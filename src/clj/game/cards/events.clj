@@ -17,7 +17,7 @@
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
                           make-result]]
    [game.core.engine :refer [not-used-once? pay register-events
@@ -358,7 +358,7 @@
                                                                     (let [context (first targets)]
                                                                       (not (rezzed? (:ice context))))))))
                                  :effect (effect
-                                           (register-floating-effect
+                                           (register-lingering-effect
                                              card
                                              (let [approached-ice (:ice context)]
                                                {:type :rez-additional-cost
@@ -2300,7 +2300,7 @@
              :req (req this-card-run)
              :effect (req
                        (let [blocked-server (first (:server target))]
-                         (register-floating-effect
+                         (register-lingering-effect
                            state side card
                            {:type :cannot-run-on-server
                             :req (req true)
@@ -3144,7 +3144,7 @@
    :on-play {:prompt "Choose a server"
              :choices (req runnable-servers)
              :async true
-             :effect (effect (register-floating-effect
+             :effect (effect (register-lingering-effect
                                card
                                {:type :rez-additional-cost
                                 :duration :end-of-run
@@ -3235,7 +3235,7 @@
   {:events [{:event :encounter-ice
              :once :per-turn
              :effect (effect
-                       (register-floating-effect
+                       (register-lingering-effect
                          card
                          (let [target-ice (:ice context)]
                            {:type :ice-strength
@@ -3639,7 +3639,7 @@
     :choices {:card #(and (installed? %)
                           (ice? %))}
     :msg (msg "make " (card-str state target) " gain Sentry, Code Gate, and Barrier until the end of the turn")
-    :effect (req (register-floating-effect state side card
+    :effect (req (register-lingering-effect state side card
                  (let [ice target]
                    {:type :gain-subtype
                     :duration :end-of-turn
@@ -3686,7 +3686,7 @@
     :choices (req runnable-servers)
     :makes-run true
     :async true
-    :effect (effect (register-floating-effect
+    :effect (effect (register-lingering-effect
                       card
                       {:type :rez-additional-cost
                        :duration :end-of-run

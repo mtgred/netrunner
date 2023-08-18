@@ -20,7 +20,7 @@
    [game.core.def-helpers :refer [corp-recur defcard do-brain-damage
                                   reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
@@ -294,7 +294,7 @@
 (defcard "Bad Times"
   {:on-play {:req (req tagged)
              :msg "force the Runner to lose 2[mu] until the end of the turn"
-             :effect (req (register-floating-effect
+             :effect (req (register-lingering-effect
                             state :corp card
                             (assoc (mu+ -2) :duration :end-of-turn))
                           (update-mu state))}})

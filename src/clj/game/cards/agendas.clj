@@ -19,7 +19,7 @@
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
                                   offer-jack-out reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability
                              unregister-events]]
@@ -235,12 +235,12 @@
                 :req (req run)
                 :label "increase cost to break subroutines or jack out"
                 :msg "make the Runner trash a card from the grip as an additional cost to jack out or break subroutines for the remainder of the run"
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   {:type :break-sub-additional-cost
                                    :duration :end-of-run
                                    :value (req (repeat (count (:broken-subs (second targets))) [:trash-from-hand 1]))})
-                                (register-floating-effect
+                                (register-lingering-effect
                                   card
                                   {:type :jack-out-additional-cost
                                    :duration :end-of-run
@@ -601,7 +601,7 @@
              :interactive (req true)
              :psi {:req (req (= :hq (target-server context)))
                    :once :per-turn
-                   :not-equal {:effect (effect (register-floating-effect
+                   :not-equal {:effect (effect (register-lingering-effect
                                                  card
                                                  {:type :corp-choose-hq-access
                                                   :duration :end-of-run
@@ -1184,7 +1184,7 @@
   {:on-score {:async true
               :msg "Draw 3 cards and skip their discard step this turn"
               :effect (effect
-                        (register-floating-effect
+                        (register-lingering-effect
                           card
                           {:type :skip-discard
                            :duration :end-of-turn
@@ -1993,7 +1993,7 @@
    :abilities [{:cost [:agenda 1]
                 :req (req run)
                 :msg "prevent this run from becoming successful"
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   {:type :block-successful-run
                                    :duration :end-of-run

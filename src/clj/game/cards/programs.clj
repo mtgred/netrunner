@@ -16,7 +16,7 @@
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [any-effects register-floating-effect
+   [game.core.effects :refer [any-effects register-lingering-effect
                               unregister-effects-for-card]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [ability-as-handler dissoc-req not-used-once? pay
@@ -278,7 +278,7 @@
                      {:cost [:credit cost]
                       :msg (msg "make " (:title current-ice) " gain " ice-type)
                       :effect (effect (register-once {:once :per-turn} card)
-                                      (register-floating-effect
+                                      (register-lingering-effect
                                         card
                                         (let [ice current-ice]
                                           {:type :gain-subtype
@@ -584,7 +584,7 @@
                                  :msg (msg "prevent " (card-str state current-ice) " from ending the run this encounter")
                                  :effect (req
                                            (let [target-ice (:ice (get-current-encounter state))]
-                                             (register-floating-effect
+                                             (register-lingering-effect
                                                state side
                                                card
                                                {:type :auto-prevent-run-end
@@ -2074,7 +2074,7 @@
                               :req (req (and (any-subs-broken-by-card? target card)
                                              run))
                               :effect (req (let [broken-ice target]
-                                             (register-floating-effect
+                                             (register-lingering-effect
                                                state side
                                                card
                                                {:type :prevent-paid-ability
@@ -2250,7 +2250,7 @@
                                :msg (msg "spend [Click] and make " (card-str state ice)
                                          " gain " target
                                          " until the end of the next run this turn")
-                               :effect (effect (register-floating-effect
+                               :effect (effect (register-lingering-effect
                                                  card
                                                  {:type :gain-subtype
                                                   :duration :end-of-next-run
@@ -2275,7 +2275,7 @@
                                   sort))
                :msg (msg "make " (card-str state current-ice) " gain " target)
                :effect (effect (register-once {:once :per-turn} card)
-                               (register-floating-effect
+                               (register-lingering-effect
                                  card
                                  (let [ice current-ice]
                                    {:type :gain-subtype
@@ -2400,7 +2400,7 @@
                 :msg (msg "make " (card-str state current-ice)
                           " gain " target
                           " until end of the encounter")
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   (let [ice current-ice]
                                     {:type :gain-subtype

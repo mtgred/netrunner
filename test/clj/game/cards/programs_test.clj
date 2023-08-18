@@ -3723,7 +3723,7 @@
       (play-from-hand state :runner "Inversificator")
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 1))
-      (core/register-floating-effect
+      (core/register-lingering-effect
         state :corp nil
         (let [ice (get-ice state :hq 1)]
           {:type :gain-subtype

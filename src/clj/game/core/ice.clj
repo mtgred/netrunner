@@ -5,7 +5,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.effects :refer [any-effects get-effects register-floating-effect sum-effects]]
+    [game.core.effects :refer [any-effects get-effects register-lingering-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
     [game.core.flags :refer [card-flag?]]
     [game.core.payment :refer [build-cost-label can-pay? merge-costs]]
@@ -403,7 +403,7 @@
   "Change a piece of ice's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
   ([state side card n] (pump-ice state side card n :end-of-encounter))
   ([state side card n duration]
-   (register-floating-effect
+   (register-lingering-effect
      state side card
      {:type :ice-strength
       :duration duration
@@ -464,7 +464,7 @@
   "Change a breaker's strength by n for the given duration of :end-of-encounter, :end-of-run or :end-of-turn"
   ([state side card n] (pump state side card n :end-of-encounter))
   ([state side card n duration]
-   (let [floating-effect (register-floating-effect
+   (let [floating-effect (register-lingering-effect
                            state side (get-card state card)
                            {:type :breaker-strength
                             :duration duration

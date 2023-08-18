@@ -19,7 +19,7 @@
                                   do-brain-damage do-net-damage offer-jack-out
                                   reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [get-effects register-floating-effect unregister-static-abilities]]
+   [game.core.effects :refer [get-effects register-lingering-effect unregister-static-abilities]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [gather-events pay register-events resolve-ability
                              trigger-event trigger-event-simult unregister-events]]
@@ -610,7 +610,7 @@
                         :yes-ability {:prompt "Select another installed card to trash"
                                       :cost [:trash-other-installed 1]
                                       :msg "prevent its printed subroutines being broken this encounter"
-                                      :effect (effect (register-floating-effect
+                                      :effect (effect (register-lingering-effect
                                                         card {:type :cannot-break-subs-on-ice
                                                               :req (req (same-card? card (:ice context)))
                                                               :value true
@@ -1118,7 +1118,7 @@
                  :unregister-once-resolved true
                  :effect
                  (req (let [target-ice (:ice context)]
-                        (register-floating-effect
+                        (register-lingering-effect
                           state side card
                           {:type :ice-strength
                            :duration :end-of-encounter
@@ -1808,7 +1808,7 @@
   {:subroutines [{:req (req run)
                   :label "Reduce Runner's hand size by 2"
                   :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                  :effect (effect (register-floating-effect
+                  :effect (effect (register-lingering-effect
                                     card
                                     {:type :hand-size
                                      :duration :until-corp-turn-begins
@@ -1854,7 +1854,7 @@
                                             [{:event :run-ends
                                               :duration :end-of-run
                                               :effect (effect (remove-icon card t))}])
-                                          (register-floating-effect state side card (prevent-sub-break-by t))
+                                          (register-lingering-effect state side card (prevent-sub-break-by t))
                                           (effect-completed state side eid)))}
                           card nil))}
                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}}))
@@ -1874,7 +1874,7 @@
                                    (effect-completed eid))
             :effect (effect (derez target)
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
-                            (register-floating-effect
+                            (register-lingering-effect
                              card
                              {:type :prevent-paid-ability
                               :duration :end-of-turn
@@ -2136,7 +2136,7 @@
                 :duration :end-of-run
                 :unregister-once-resolved true
                 :msg (msg "prevent the runner from breaking subroutines on " (:title (:ice context)))
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                  card
                                  (let [encountered-ice (:ice context)]
                                    {:type :cannot-break-subs-on-ice
@@ -2171,7 +2171,7 @@
 (defcard "Interrupt 0"
   (let [sub {:label "Make the Runner pay 1 [Credits] to use icebreaker"
              :msg "make the Runner pay 1 [Credits] to use icebreakers to break subroutines during this run"
-             :effect (effect (register-floating-effect
+             :effect (effect (register-lingering-effect
                                card
                                {:type :break-sub-additional-cost
                                 :duration :end-of-run
@@ -2436,7 +2436,7 @@
                           (active? %))
               :not-self true}
     :effect (req (let [target-subtypes (:subtype target)]
-                   (register-floating-effect
+                   (register-lingering-effect
                      state :corp card
                      {:type :gain-subtype
                       :duration :end-of-run
@@ -2773,7 +2773,7 @@
                                                                 (not= :success (:phase (:run @state))))]
                                          (when can-redirect?
                                            (redirect-run state side target :approach-ice))
-                                         (register-floating-effect
+                                         (register-lingering-effect
                                            state side card
                                            {:type :jack-out-additional-cost
                                             :duration :end-of-run
@@ -3215,7 +3215,7 @@
 (defcard "Red Tape"
   {:subroutines [{:label "Give +3 strength to all ice for the remainder of the run"
                   :msg "give +3 strength to all ice for the remainder of the run"
-                  :effect (effect (register-floating-effect
+                  :effect (effect (register-lingering-effect
                                   card
                                   {:type :ice-strength
                                    :duration :end-of-run
@@ -3461,7 +3461,7 @@
              :effect (req (move state :runner (first (:deck runner)) :deck)
                           (let [t3 (top-3 state)
                                 effect-type (effect-type card)]
-                            (register-floating-effect
+                            (register-lingering-effect
                               state side card
                               {:type effect-type
                                :duration :end-of-encounter
@@ -3559,7 +3559,7 @@
                        :yes-ability {:prompt "Choose another installed card to trash"
                                      :cost [:trash-other-installed 1]
                                      :msg "give itself +5 strength for the remainder of the run"
-                                     :effect (effect (register-floating-effect
+                                     :effect (effect (register-lingering-effect
                                                       card
                                                       {:type :ice-strength
                                                        :duration :end-of-run
@@ -3912,7 +3912,7 @@
                                   " on this ice per encounter for the remainder of this run")
                         :effect
                         (req (wait-for (gain-credits state :runner 2)
-                                       (register-floating-effect
+                                       (register-lingering-effect
                                          state side card
                                          {:type :cannot-break-subs-on-ice
                                           :duration :end-of-run

@@ -27,20 +27,20 @@
 
     (testing "Effect type filtering"
       (reset! state start)
-      (e/register-floating-effect state side corp-card type-1)
-      (e/register-floating-effect state side corp-card type-2)
-      (e/register-floating-effect state side corp-card type-1)
-      (e/register-floating-effect state side corp-card type-2)
+      (e/register-lingering-effect state side corp-card type-1)
+      (e/register-lingering-effect state side corp-card type-2)
+      (e/register-lingering-effect state side corp-card type-1)
+      (e/register-lingering-effect state side corp-card type-2)
       (let [effects (e/gather-effects state :corp :test-type)]
         (is (= 2 (count effects)) "Only 2 effects are returned")))
 
     (testing "Effect sorting"
       (reset! state start)
       (is (= :corp (:active-player @state)) "Corp is active player")
-      (e/register-floating-effect state side corp-card type-1)
-      (e/register-floating-effect state side runner-card type-1)
-      (e/register-floating-effect state side corp-card type-1)
-      (e/register-floating-effect state side runner-card type-1)
+      (e/register-lingering-effect state side corp-card type-1)
+      (e/register-lingering-effect state side runner-card type-1)
+      (e/register-lingering-effect state side corp-card type-1)
+      (e/register-lingering-effect state side runner-card type-1)
       (let [effects (e/gather-effects state :corp :test-type)]
         (is (= [:corp :corp :runner :runner] (map #(get-in % [:card :side]) effects))
             "Effects are sorted by active player first")))))
@@ -67,20 +67,20 @@
     ;; This is testing if the :req is not present, so no need to retest
     (testing ":value static values"
       (reset! state start)
-      (e/register-floating-effect state side c1 f1)
+      (e/register-lingering-effect state side c1 f1)
       (let [effects (e/get-effects state :corp c2 :test-type)]
         (is (= [1] effects) "Should return the static value")))
 
     (testing ":value function values"
       (reset! state start)
-      (e/register-floating-effect state side c1 f2)
+      (e/register-lingering-effect state side c1 f2)
       (let [effects (e/get-effects state :corp c2 :test-type)]
         (is (= [2] effects) "Should return the value returned by the function")))
 
     (testing ":req is present"
       (testing "and is called"
         (reset! state start)
-        (e/register-floating-effect
+        (e/register-lingering-effect
           state side c1
           (assoc f1 :req (fn [& _] (swap! state update :req-called inc))))
         (is (zero? (:req-called @state)) "The req hasn't been called")
@@ -91,7 +91,7 @@
 
       (testing "and returns a truthy value"
         (reset! state start)
-        (e/register-floating-effect
+        (e/register-lingering-effect
           state side c1
           (assoc f1 :req (constantly :true)))
         (let [effects (e/get-effects state :corp c2 :test-type)]
@@ -99,7 +99,7 @@
 
       (testing "and returns a falsey value"
         (reset! state start)
-        (e/register-floating-effect
+        (e/register-lingering-effect
           state side c1
           (assoc f1 :req (constantly nil)))
         (let [effects (e/get-effects state :corp c2 :test-type)]
@@ -121,9 +121,9 @@
 
     (testing "Handles non-numbers"
       (reset! state start)
-      (e/register-floating-effect state side card (f 1))
-      (e/register-floating-effect state side card (f 2))
-      (e/register-floating-effect state side card (f nil))
-      (e/register-floating-effect state side card (f 3))
-      (e/register-floating-effect state side card (f 4))
+      (e/register-lingering-effect state side card (f 1))
+      (e/register-lingering-effect state side card (f 2))
+      (e/register-lingering-effect state side card (f nil))
+      (e/register-lingering-effect state side card (f 3))
+      (e/register-lingering-effect state side card (f 4))
       (is (= 10 (e/sum-effects state side card :test-type)) "Doesn't fail on nils"))))

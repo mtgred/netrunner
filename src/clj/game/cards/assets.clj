@@ -22,7 +22,7 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events]]
@@ -1271,7 +1271,7 @@
                                       (rezzed? %))}
                 :req (req (pos? (get-counters card :power)))
                 :msg "add strength to a rezzed piece of ice"
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   (let [it-target target]
                                     {:type :ice-strength

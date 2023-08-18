@@ -18,8 +18,8 @@
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect
-                              unregister-effects-for-card unregister-floating-effects]]
+   [game.core.effects :refer [register-lingering-effect
+                              unregister-effects-for-card unregister-lingering-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [can-trigger? not-used-once? register-events
                              register-once register-suppress resolve-ability trigger-event
@@ -483,7 +483,7 @@
                 :msg (msg "increase the rez cost of " (card-str state target)
                           " by 2 [Credits] until the end of the turn")
                 :cost [:trash-can]
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   (let [ice target]
                                     {:type :rez-additional-cost
@@ -591,7 +591,7 @@
               :yes-ability
               {:msg (msg "give -6 strength to " (card-str state (:ice context)) " for the remainder of the run")
                :cost [:remove-from-game]
-               :effect (effect (register-floating-effect
+               :effect (effect (register-lingering-effect
                                  card
                                  (let [ice (:ice context)]
                                    {:type :ice-strength
@@ -652,7 +652,7 @@
                             :msg (msg "make a run on " target)
                             :makes-run true
                             :effect (effect (update! (dissoc card :dopp-active))
-                                            (unregister-floating-effects :end-of-run)
+                                            (unregister-lingering-effects :end-of-run)
                                             (unregister-floating-events :end-of-run)
                                             (update-all-icebreakers)
                                             (update-all-ice)
@@ -1990,13 +1990,13 @@
                 :yes-ability
                 {:msg (msg "lower their maximum hand size by 1 and reduce the strength of " (:title current-ice) " to 0")
                  :effect (effect
-                           (register-floating-effect
+                           (register-lingering-effect
                              card
                              {:type :hand-size
                               :duration :until-runner-turn-begins
                               :req (req (= :runner side))
                               :value -1})
-                           (register-floating-effect
+                           (register-lingering-effect
                              :runner card
                              (let [ice current-ice]
                                {:type :ice-strength

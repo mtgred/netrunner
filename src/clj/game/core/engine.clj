@@ -7,7 +7,7 @@
     [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
+    [game.core.effects :refer [get-effect-maps unregister-lingering-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? handler merge-costs]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
@@ -1024,7 +1024,7 @@
             (unregister-floating-events state nil :pending)
             (doseq [duration durations
                     :when duration]
-              (unregister-floating-effects state nil duration)
+              (unregister-lingering-effects state nil duration)
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
 

@@ -1,7 +1,7 @@
 (ns game.core.change-vals
   (:require
     [game.core.agendas :refer [update-all-agenda-points]]
-    [game.core.effects :refer [register-floating-effect]]
+    [game.core.effects :refer [register-lingering-effect]]
     [game.core.engine :refer [trigger-event]]
     [game.core.gaining :refer [base-mod-size deduct gain]]
     [game.core.hand-size :refer [hand-size update-hand-size]]
@@ -28,7 +28,7 @@
 (defn- change-mu
   "Send a system message indicating how mu was changed"
   [state side delta]
-  (register-floating-effect
+  (register-lingering-effect
     state side nil
     {:type :user-available-mu
      :value [:regular delta]})
@@ -59,7 +59,7 @@
 (defn- change-agenda-points
   "Change a player's total agenda points, using floating effects."
   [state side delta]
-  (register-floating-effect
+  (register-lingering-effect
     state side nil
     ;; This is needed as `req` creates/shadows the existing `side` already in scope.
     (let [user-side side]
@@ -75,7 +75,7 @@
 (defn- change-link
   "Change the runner's link, using floating effects."
   [state side delta]
-  (register-floating-effect
+  (register-lingering-effect
     state side nil
     {:type :user-link
      :value delta})
@@ -87,7 +87,7 @@
 (defn- change-hand-size
   "Change the player's hand-size, using floating effects."
   [state side delta]
-  (register-floating-effect
+  (register-lingering-effect
     state side nil
     (let [user-side side]
       {:type :user-hand-size

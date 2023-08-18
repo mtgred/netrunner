@@ -27,7 +27,7 @@
                             (= :while-active (:duration %))))
               (into []))))
 
-(defn register-floating-effect
+(defn register-lingering-effect
   [state _ card ability]
   (let [ability (assoc
                   (select-keys ability [:type :duration :req :value])
@@ -36,7 +36,7 @@
     (swap! state update :effects conj ability)
     ability))
 
-(defn unregister-floating-effects
+(defn unregister-lingering-effects
   [state _ duration]
   (swap! state assoc :effects
          (->> (:effects @state)

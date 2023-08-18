@@ -18,7 +18,7 @@
                              enable-corp-damage-choice]]
    [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed is-basic-advance-action? make-eid]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
@@ -1531,7 +1531,7 @@
                          " and lower the strength of " (:title current-ice)
                          " by 2 for the remainder of the run")
                :async true
-               :effect (effect (register-floating-effect
+               :effect (effect (register-lingering-effect
                                  card
                                  (let [ice current-ice]
                                    {:type :ice-strength
@@ -1747,7 +1747,7 @@
              :once :per-turn
              :msg (msg "make " (:title (:ice context))
                        " gain Code Gate until the end of the run")
-             :effect (effect (register-floating-effect
+             :effect (effect (register-lingering-effect
                                card
                                (let [ice (:ice context)]
                                  {:type :gain-subtype

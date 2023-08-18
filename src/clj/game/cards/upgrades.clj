@@ -18,7 +18,7 @@
    [game.core.def-helpers :refer [corp-rez-toast defcard offer-jack-out
                                   reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [dissoc-req pay register-default-events
                              register-events resolve-ability unregister-events]]
@@ -750,7 +750,7 @@
                                (pos? (count (:hand corp)))))
                 :async true
                 :cost [:trash-from-hand 1]
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   {:type :ice-strength
                                    :duration :end-of-run
@@ -1727,7 +1727,7 @@
   {:events [{:event :subroutines-broken
              :req (req (and this-server (all-subs-broken? target)))
              :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
-             :effect (effect (register-floating-effect
+             :effect (effect (register-lingering-effect
                                card
                                {:type :hand-size
                                 :duration :until-corp-turn-begins

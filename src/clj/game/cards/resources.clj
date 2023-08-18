@@ -22,7 +22,7 @@
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty do-net-damage]]
    [game.core.drawing :refer [draw draw-bonus first-time-draw-bonus]]
-   [game.core.effects :refer [register-floating-effect]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events
                              register-once register-suppress resolve-ability
@@ -1004,7 +1004,7 @@
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
                 :cost [:trash-can]
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   (let [breaker target]
                                     {:type :breaker-strength
