@@ -4285,6 +4285,18 @@
         (is (empty? (:hand (get-corp))) "Enigma removed from HQ")
         (is (zero? (get-counters (refresh tpr) :agenda)) "Agenda counter was spent"))))
 
+(deftest timely-public-release-install-on-new-remote
+    ;; Install on a new remote
+    (do-game
+      (new-game {:corp {:hand ["Timely Public Release" "Enigma"]}})
+      (play-and-score state "Timely Public Release")
+      (let [tpr (get-scored state :corp 0)]
+        (card-ability state :corp (refresh tpr) 0)
+        (click-card state :corp "Enigma")
+        (click-prompt state :corp "New remote")
+        (click-prompt state :corp "0")
+        (is (= "Enigma" (:title (get-ice state :remote2 0))) "Enigma was installed"))))
+
 (deftest timely-public-release-install-on-server-being-run
     ;; Install on server being run
     (testing "when approaching the server"

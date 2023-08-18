@@ -8,7 +8,7 @@
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-corp
-                            all-installed-runner-type get-remote-names server->zone]]
+                            all-installed-runner-type get-remote-names installable-servers server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? facedown? faceup? get-agenda-points
                            get-card get-counters get-title get-zone has-subtype? ice? in-discard? in-hand?
@@ -1962,7 +1962,7 @@
                           (continue-ability
                             (let [chosen-ice target]
                               {:prompt "Choose a server"
-                               :choices (req (conj (vec servers) "New remote"))
+                               :choices (req (installable-servers state chosen-ice))
                                :async true
                                :effect (effect
                                          (continue-ability
