@@ -143,7 +143,7 @@
     (swap! state assoc :effects
            (->> (:effects @state)
                 (remove #(and (same-card? card (:card %))
-                              (= :constant (:duration %))))
+                              (= :while-active (:duration %))))
                 (into [])))))
 
 (defn update-installed-card-indices

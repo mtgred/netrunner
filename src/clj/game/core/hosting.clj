@@ -65,7 +65,7 @@
                  (register-floating-effect
                    state side target
                    {:type :used-mu
-                    :duration :constant
+                    :duration :while-active
                     :value (:memoryunits target)})
                  (update-mu state)))))
        (when-let [hosted-gained (:hosted-gained cdef)]

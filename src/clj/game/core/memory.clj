@@ -146,7 +146,7 @@
           available-mu (merge-available-memory mu-list)
           used-mu-effects (conj (get-effect-maps state :runner :used-mu)
                                 {:type :used-mu
-                                 :duration :constant
+                                 :duration :while-active
                                  :card card
                                  :value mu-cost})
           used-mu (merge-used-memory state used-mu-effects)

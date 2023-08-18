@@ -19,10 +19,10 @@
                      :side :runner
                      :title "Test Card 2"}
         type-1 {:type :test-type
-                :duration :constant
+                :duration :while-active
                 :value 1}
         type-2 {:type :test-type-2
-                :duration :constant
+                :duration :while-active
                 :value (constantly 2)}]
 
     (testing "Effect type filtering"
@@ -58,10 +58,10 @@
             :side :corp
             :title "Test Card 2"}
         f1 {:type :test-type
-            :duration :constant
+            :duration :while-active
             :value 1}
         f2 {:type :test-type
-            :duration :constant
+            :duration :while-active
             :value (constantly 2)}]
 
     ;; This is testing if the :req is not present, so no need to retest
@@ -116,7 +116,7 @@
               :title "Test Card"}
         f (fn [n]
             {:type :test-type
-             :duration :constant
+             :duration :while-active
              :value n})]
 
     (testing "Handles non-numbers"

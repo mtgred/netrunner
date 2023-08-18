@@ -134,7 +134,7 @@
        (register-floating-effect
          state side c
          {:type :used-mu
-          :duration :constant
+          :duration :while-active
           :value (:memoryunits c)})
        (update-mu state))
      (if (and resolve-effect (is-ability? cdef))

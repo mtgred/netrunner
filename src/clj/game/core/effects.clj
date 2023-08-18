@@ -12,7 +12,7 @@
           abilities (for [ability static-abilities]
                       (assoc
                         (select-keys ability [:type :req :value])
-                        :duration :constant
+                        :duration :while-active
                         :card card
                         :uuid (uuid/v1)))]
       (swap! state update :effects
@@ -24,7 +24,7 @@
   (swap! state assoc :effects
          (->> (:effects @state)
               (remove #(and (same-card? card (:card %))
-                            (= :constant (:duration %))))
+                            (= :while-active (:duration %))))
               (into []))))
 
 (defn register-floating-effect

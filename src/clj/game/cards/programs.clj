@@ -2540,7 +2540,7 @@
                                  :effect (effect (add-counter card :power -1))}]
                     :static-abilities [(breaker-strength-bonus (req (get-counters card :power)))
                                        {:type :used-mu
-                                        :duration :constant
+                                        :duration :while-active
                                         :value (req (get-counters card :power))}]}))
 
 (defcard "Reaver"
