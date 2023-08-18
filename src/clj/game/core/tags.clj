@@ -14,8 +14,8 @@
 (defn sum-tag-effects
   [state]
   (+ (or (get-in @state [:runner :tag :base]) 0)
-     (sum-effects state :runner nil :user-tags nil)
-     (sum-effects state :runner nil :tags nil)))
+     (sum-effects state :runner :user-tags)
+     (sum-effects state :runner :tags)))
 
 (defn update-tag-status
   ([state] (update-tag-status state nil))

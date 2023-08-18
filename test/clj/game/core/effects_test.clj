@@ -68,13 +68,13 @@
     (testing ":value static values"
       (reset! state start)
       (e/register-floating-effect state side c1 f1)
-      (let [effects (e/get-effects state :corp c2 :test-type)]
+      (let [effects (e/get-effects state :corp :test-type c2)]
         (is (= [1] effects) "Should return the static value")))
 
     (testing ":value function values"
       (reset! state start)
       (e/register-floating-effect state side c1 f2)
-      (let [effects (e/get-effects state :corp c2 :test-type)]
+      (let [effects (e/get-effects state :corp :test-type c2)]
         (is (= [2] effects) "Should return the value returned by the function")))
 
     (testing ":req is present"
@@ -84,9 +84,9 @@
           state side c1
           (assoc f1 :req (fn [& _] (swap! state update :req-called inc))))
         (is (zero? (:req-called @state)) "The req hasn't been called")
-        (e/get-effects state :corp c2 :test-type)
+        (e/get-effects state :corp :test-type c2)
         (is (= 1 (:req-called @state)) "The req has been called once")
-        (e/get-effects state :corp c2 :test-type)
+        (e/get-effects state :corp :test-type c2)
         (is (= 2 (:req-called @state)) "The req has been called a second time"))
 
       (testing "and returns a truthy value"
@@ -94,7 +94,7 @@
         (e/register-floating-effect
           state side c1
           (assoc f1 :req (constantly :true)))
-        (let [effects (e/get-effects state :corp c2 :test-type)]
+        (let [effects (e/get-effects state :corp :test-type c2)]
           (is (= [1] effects) "Should return the effect value")))
 
       (testing "and returns a falsey value"
@@ -102,7 +102,7 @@
         (e/register-floating-effect
           state side c1
           (assoc f1 :req (constantly nil)))
-        (let [effects (e/get-effects state :corp c2 :test-type)]
+        (let [effects (e/get-effects state :corp :test-type c2)]
           (is (= [] effects) "Should not return the effect value"))))))
 
 (deftest sum-effects
@@ -126,4 +126,4 @@
       (e/register-floating-effect state side card (f nil))
       (e/register-floating-effect state side card (f 3))
       (e/register-floating-effect state side card (f 4))
-      (is (= 10 (e/sum-effects state side card :test-type)) "Doesn't fail on nils"))))
+      (is (= 10 (e/sum-effects state side :test-type card)) "Doesn't fail on nils"))))

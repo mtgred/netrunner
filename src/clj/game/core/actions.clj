@@ -8,7 +8,7 @@
     [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
-    [game.core.effects :refer [any-effects get-effects]]
+    [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]

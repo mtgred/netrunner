@@ -54,8 +54,8 @@
   "Returns a list of vec pairs: [mu-type value]"
   [state]
   (concat [[:regular (or (get-in @state [:runner :memory :base]) 0)]]
-          (get-effects state :runner nil :user-available-mu)
-          (get-effects state :runner nil :available-mu)))
+          (get-effects state :runner :user-available-mu)
+          (get-effects state :runner :available-mu)))
 
 (def type-preds
   {:caissa #(has-subtype? % "Caïssa")

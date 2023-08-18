@@ -12,8 +12,8 @@
 (defn- sum-link-effects
   [state id]
   (+ (or (get-in @state [:runner :identity :baselink]) 0)
-     (sum-effects state :runner nil :user-link nil)
-     (sum-effects state :runner id :link nil)))
+     (sum-effects state :runner :user-link)
+     (sum-effects state :runner :link id)))
 
 (defn update-link
   "Update the runner's link"
