@@ -508,21 +508,17 @@
                 :req (req (and run (= :runner side)))
                 :msg "force the Runner to add 2 random cards from the grip to the bottom of the stack as additional cost to steal agendas from this server or its root"
                 :effect
-                (req (when (can-pay?
-                             state :runner
-                             (assoc eid :source card :source-type :ability)
-                             card nil [:add-random-from-hand-to-bottom-of-deck 2])
-                       (wait-for (pay state :runner (make-eid state eid) card :add-random-from-hand-to-bottom-of-deck 2)
-                                 (system-msg state :runner (:msg async-result))))
-                     (register-events state side card [(assoc pre-steal
-                                                              :req
-                                                              (req (or (= (:previous-zone card)
-                                                                          (:zone target))
-                                                                       ;; special central-servers case
-                                                                       (= (central->zone (:zone target))
-                                                                          (butlast (:previous-zone card)))))
-                                                              :duration :end-of-run)])
-                     (effect-completed state side eid))}}))
+                (req (wait-for (pay state :runner (make-eid state eid) card :add-random-from-hand-to-bottom-of-deck 2)
+                               (system-msg state :runner (:msg async-result))
+                               (register-events state side card [(assoc pre-steal
+                                                                        :req
+                                                                        (req (or (= (:previous-zone card)
+                                                                                    (:zone target))
+                                                                                 ;; special central-servers case
+                                                                                 (= (central->zone (:zone target))
+                                                                                    (butlast (:previous-zone card)))))
+                                                                        :duration :end-of-run)])
+                               (effect-completed state side eid)))}}))
 
 (defcard "Daruma"
   (let [choose-swap
