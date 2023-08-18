@@ -2009,7 +2009,7 @@
                                      :async true
                                      :effect (effect (damage eid :net hand {:card card}))}}}
                              card nil)))}]
-    {:expose ab
+    {:on-expose ab
      :access ab}))
 
 (defcard "Public Health Portal"

@@ -2209,9 +2209,9 @@
               (assoc ability :event :corp-lose-bad-publicity)]}))
 
 (defcard "It's a Trap!"
-  {:expose {:msg "do 2 net damage"
-            :async true
-            :effect (effect (damage eid :net 2 {:card card}))}
+  {:on-expose {:msg "do 2 net damage"
+               :async true
+               :effect (effect (damage eid :net 2 {:card card}))}
    :subroutines [(assoc runner-trash-installed-sub
                         :effect (req (wait-for (trash state side target {:cause :subroutine})
                                                (system-msg state :corp (str "uses " (:title card) " to trash itself"))
