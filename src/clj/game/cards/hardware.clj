@@ -18,8 +18,8 @@
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-floating-effect
-                              unregister-effects-for-card unregister-floating-effects]]
+   [game.core.effects :refer [register-lingering-effect
+                              unregister-effects-for-card unregister-lingering-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [can-trigger? not-used-once? register-events
                              register-once register-suppress resolve-ability trigger-event
@@ -95,7 +95,7 @@
                                       (installed? %))}
                 :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host (get-card state target) (get-card state card)))}
-   :constant-effects [{:type :gain-subtype
+   :static-abilities [{:type :gain-subtype
                        :req (req (same-card? target (:host card)))
                        :value "AI"}]
    :abilities [(break-sub [:lose-click 1] 1 "All" {:req (req true)})]})
@@ -147,7 +147,7 @@
                                            (contains? (card-def current-ice) :on-encounter)))))]}))
 
 (defcard "Akamatsu Mem Chip"
-  {:constant-effects [(mu+ 1)]})
+  {:static-abilities [(mu+ 1)]})
 
 (defcard "Aniccam"
   (let [ability {:async true
@@ -158,7 +158,7 @@
                                   (first-trash? state event-targets?))))
                  :msg "draw 1 card"
                  :effect (effect (draw :runner eid 1))}]
-    {:constant-effects [(mu+ 1)]
+    {:static-abilities [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)
               (assoc ability :event :runner-trash)
               (assoc ability :event :game-trash)]}))
@@ -182,7 +182,7 @@
                                     :effect (effect (move :corp target :rfg))}}} card nil))}]})
 
 (defcard "Astrolabe"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :server-created
              :msg "draw 1 card"
              :async true
@@ -215,7 +215,7 @@
    :in-play [:click-per-turn 1]})
 
 (defcard "Blackguard"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :expose
              :msg (msg "attempt to force the rez of " (:title target))
              :async true
@@ -310,17 +310,17 @@
                           card nil))))]})
 
 (defcard "Box-E"
-  {:constant-effects [(mu+ 2)
+  {:static-abilities [(mu+ 2)
                       (runner-hand-size+ 2)]})
 
 (defcard "Brain Cage"
-  {:constant-effects [(runner-hand-size+ 3)]
+  {:static-abilities [(runner-hand-size+ 3)]
    :on-install {:async true
                 :effect (effect (damage eid :brain 1 {:card card}))}})
 
 (defcard "Brain Chip"
   {:x-fn (req (max (get-in @state [:runner :agenda-point] 0) 0))
-   :constant-effects [(mu+
+   :static-abilities [(mu+
                         (req (pos? ((get-x-fn) state side eid card targets)))
                         ;; [:regular N] is needed to make the mu system work
                         (req [:regular ((get-x-fn) state side eid card targets)]))
@@ -397,7 +397,7 @@
                                (effect-completed eid))}}}]})
 
 (defcard "Carnivore"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :interactions
    {:access-ability
     {:label "Trash card"
@@ -458,7 +458,7 @@
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]})
 
 (defcard "Comet"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :play-event
              :req (req (first-event? state side :play-event))
              :effect (req (system-msg state :runner
@@ -483,7 +483,7 @@
                 :msg (msg "increase the rez cost of " (card-str state target)
                           " by 2 [Credits] until the end of the turn")
                 :cost [:trash-can]
-                :effect (effect (register-floating-effect
+                :effect (effect (register-lingering-effect
                                   card
                                   (let [ice target]
                                     {:type :rez-additional-cost
@@ -492,7 +492,7 @@
                                      :value [:credit 2]})))}]})
 
 (defcard "Cyberdelia"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :subroutines-broken
              :req (req (and (all-subs-broken? target)
                             (first-event? state side :subroutines-broken #(all-subs-broken? (first %)))))
@@ -510,7 +510,7 @@
                                 :type :recurring}}})
 
 (defcard "CyberSolutions Mem Chip"
-  {:constant-effects [(mu+ 2)]})
+  {:static-abilities [(mu+ 2)]})
 
 (defcard "Cybsoft MacroDrive"
   {:recurring 1
@@ -519,7 +519,7 @@
                                 :type :recurring}}})
 
 (defcard "Daredevil"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :run
              :once :per-turn
              :req (req (and (<= 2 (:position target))
@@ -541,7 +541,7 @@
                 :msg (msg "pump the strength of " (get-in card [:host :title]) " by 4")}]})
 
 (defcard "Deep Red"
-  {:constant-effects [(caissa-mu+ 3)]
+  {:static-abilities [(caissa-mu+ 3)]
    :events [{:event :runner-install
              :optional
              {:req (req (has-subtype? (:card context) "Caïssa"))
@@ -562,7 +562,7 @@
                            card nil))}}}]})
 
 (defcard "Demolisher"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       {:type :trash-cost
                        :value -1}]
    :events [{:event :runner-trash
@@ -576,7 +576,7 @@
              :effect (effect (gain-credits :runner eid 1))}]})
 
 (defcard "Desperado"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
              :silent (req true)
              :async true
@@ -591,7 +591,7 @@
               :yes-ability
               {:msg (msg "give -6 strength to " (card-str state (:ice context)) " for the remainder of the run")
                :cost [:remove-from-game]
-               :effect (effect (register-floating-effect
+               :effect (effect (register-lingering-effect
                                  card
                                  (let [ice (:ice context)]
                                    {:type :ice-strength
@@ -620,7 +620,7 @@
                 :effect (effect (host card target)
                                 (unregister-effects-for-card target #(= :used-mu (:type %)))
                                 (update-mu))}]
-   :constant-effects [{:type :breaker-strength
+   :static-abilities [{:type :breaker-strength
                        :req (req (same-card? target (first (:hosted card))))
                        :value 2}]})
 
@@ -632,7 +632,7 @@
               :msg "access 1 additional cards from HQ"})]})
 
 (defcard "Doppelgänger"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :runner-install
              :req (req (same-card? card (:card context)))
              :silent (req true)
@@ -652,7 +652,7 @@
                             :msg (msg "make a run on " target)
                             :makes-run true
                             :effect (effect (update! (dissoc card :dopp-active))
-                                            (unregister-floating-effects :end-of-run)
+                                            (unregister-lingering-effects :end-of-run)
                                             (unregister-floating-events :end-of-run)
                                             (update-all-icebreakers)
                                             (update-all-ice)
@@ -687,11 +687,11 @@
                                 :type :recurring}}})
 
 (defcard "Dyson Mem Chip"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       (link+ 1)]})
 
 (defcard "DZMZ Optimizer"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       {:type :install-cost
                        :req (req (and (program? target)
                                       (no-event? state :runner :runner-install #(program? (:card (first %))))))
@@ -735,7 +735,7 @@
 
 (defcard "Endurance"
   {:data {:counter {:power 3}}
-   :constant-effects [(mu+ 2)]
+   :static-abilities [(mu+ 2)]
    :events [{:event :successful-run
              :req (req (first-event? state :runner :successful-run))
              :msg "place 1 power counter on itself"
@@ -846,7 +846,7 @@
 (defcard "Forger"
   {:interactions {:prevent [{:type #{:tag}
                              :req (req true)}]}
-   :constant-effects [(link+ 1)]
+   :static-abilities [(link+ 1)]
    :abilities [{:msg "avoid 1 tag"
                 :label "Avoid 1 tag"
                 :async true
@@ -1019,7 +1019,7 @@
 (defcard "Ghosttongue"
   {:on-install {:async true
                 :effect (effect (damage eid :brain 1 {:card card}))}
-   :constant-effects [{:type :play-cost
+   :static-abilities [{:type :play-cost
                        :req (req (event? target))
                        :value -1}]})
 
@@ -1034,14 +1034,14 @@
                                        (continue-ability state side (offer-jack-out) card nil)))}]})
 
 (defcard "Grimoire"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :runner-install
              :interactive (req true)
              :req (req (has-subtype? (:card context) "Virus"))
              :effect (effect (add-counter (:card context) :virus 1))}]})
 
 (defcard "Heartbeat"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :interactions {:prevent [{:type #{:net :brain :meat}
                              :req (req true)}]}
    :abilities [{:label "Prevent 1 damage"
@@ -1060,7 +1060,7 @@
                                   (corp? %))}
             :msg (msg "add " (card-str state target) " to HQ")
             :effect (effect (move :corp target :hand))}]
-    {:constant-effects [(mu+ 1)]
+    {:static-abilities [(mu+ 1)]
      :events [(assoc ab :event :agenda-scored)
               (assoc ab :event :agenda-stolen)]}))
 
@@ -1108,13 +1108,13 @@
                 :msg "suffer 1 meat damage"
                 :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
    :data {:counter {:power 2}}
-   :constant-effects [(runner-hand-size+ (req (get-counters card :power)))]})
+   :static-abilities [(runner-hand-size+ (req (get-counters card :power)))]})
 
 (defcard "HQ Interface"
   {:events [(breach-access-bonus :hq 1)]})
 
 (defcard "Keiko"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :spent-credits-from-card
              :req (req (and (not (facedown? target))
                             (has-subtype? target "Companion")
@@ -1141,7 +1141,7 @@
              :effect (effect (gain-credits :runner eid 1))}]})
 
 (defcard "Knobkierie"
-  {:constant-effects [(virus-mu+ 3)]
+  {:static-abilities [(virus-mu+ 3)]
    :events [{:event :successful-run
              :interactive (req true)
              :optional {:req (req (and (first-event? state :runner :successful-run)
@@ -1175,11 +1175,11 @@
                                       :async true
                                       :effect (req (draw state :runner eid 1))}
                         :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
-   :constant-effects [(mu+ 2)]
+   :static-abilities [(mu+ 2)]
    :abilities [(set-autoresolve :auto-fire "LilyPAD")]})
 
 (defcard "LLDS Memory Diamond"
-  {:constant-effects [(link+ 1)
+  {:static-abilities [(link+ 1)
                       (runner-hand-size+ 1)
                       (mu+ 1)]})
 
@@ -1197,7 +1197,7 @@
                                 :type :recurring}}})
 
 (defcard "Logos"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       (runner-hand-size+ 1)]
    :events [{:event :agenda-scored
              :player :runner
@@ -1238,7 +1238,7 @@
                                 (add-counter state side card :power cost))))}]}))
 
 (defcard "Marrow"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       (runner-hand-size+ 3)]
    :on-install {:async true
                 :effect (effect (damage eid :brain 1 {:card card}))}
@@ -1248,7 +1248,7 @@
              :effect (effect (continue-ability (sabotage-ability 1) card nil))}]})
 
 (defcard "Masterwork (v37)"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :run
              :interactive (req true)
              :optional
@@ -1276,13 +1276,13 @@
 
 (defcard "Māui"
   {:x-fn (req (count (get-in corp [:servers :hq :ices])))
-   :constant-effects [(mu+ 2)]
+   :static-abilities [(mu+ 2)]
    :recurring (get-x-fn)
    :interactions {:pay-credits {:req (req (= [:hq] (get-in @state [:run :server])))
                                 :type :recurring}}})
 
 (defcard "Maw"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :post-access-card
              :label "Trash a card from HQ"
              :async true
@@ -1300,7 +1300,7 @@
                             (trash state :corp eid card-to-trash {:cause-card card :cause :forced-to-trash})))}]})
 
 (defcard "Maya"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :post-access-card
              :optional
              {:req (req (in-deck? (second targets)))
@@ -1313,11 +1313,11 @@
                             (gain-tags state :runner eid 1))}}}]})
 
 (defcard "MemStrips"
-  {:constant-effects [(virus-mu+ 3)]})
+  {:static-abilities [(virus-mu+ 3)]})
 
 (defcard "Mind's Eye"
   {:implementation "Power counters added automatically"
-   :constant-effects [(mu+ 1)]
+   :static-abilities [(mu+ 1)]
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :rd (target-server context)))
@@ -1328,7 +1328,7 @@
                 :effect (req (breach-server state side eid [:rd] {:no-root true}))}]})
 
 (defcard "Mirror"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :successful-run
              :async true
              :req (req (= :rd (target-server context)))
@@ -1352,7 +1352,7 @@
                                   (continue-ability state side (when (< n 3) (mh (inc n))) card nil)))})]
     {:interactions {:prevent [{:type #{:net :brain}
                                :req (req true)}]}
-     :constant-effects [(mu+ 3)]
+     :static-abilities [(mu+ 3)]
      :on-install {:async true
                   :effect (effect (continue-ability (mhelper 1) card nil))}
      :abilities [{:msg "prevent 1 brain or net damage"
@@ -1442,7 +1442,7 @@
                             card nil))}]})
 
 (defcard "Obelus"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       (runner-hand-size+ (req (count-tags state)))]
    :events [{:event :run-ends
              :once :per-turn
@@ -1521,12 +1521,12 @@
          :msg "gain 1 [Credits]"
          :effect (req (wait-for (gain-credits state :runner 1)
                                 (continue-ability state side install-ability card nil)))}]
-    {:constant-effects [(mu+ 1)]
+    {:static-abilities [(mu+ 1)]
      :events [(assoc gain-credit-ability :event :agenda-scored)
               (assoc gain-credit-ability :event :agenda-stolen)]}))
 
 (defcard "Paragon"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
              :interactive (get-autoresolve :auto-fire (complement never?))
              :silent (get-autoresolve :auto-fire never?)
@@ -1559,7 +1559,7 @@
 (defcard "Patchwork"
   (let [patchwork-ability {:once :per-turn
                            :effect (effect (update! (assoc-in card [:special :patchwork] true)))}]
-    {:constant-effects [(mu+ 1)]
+    {:static-abilities [(mu+ 1)]
      :interactions
      {:pay-credits
       {:req (req (and (or (= :play (:source-type eid))
@@ -1597,7 +1597,7 @@
        :cost-reduction true}}}))
 
 (defcard "Pennyshaver"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
              :silent (req true)
              :async true
@@ -1634,7 +1634,7 @@
                                                    (draw state :corp eid 1)))}
               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card)))
                                            (effect-completed eid))}}}]
-    {:constant-effects [(mu+ 1)
+    {:static-abilities [(mu+ 1)
                         (link+ 1)]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
@@ -1704,7 +1704,7 @@
                                 :type :recurring}}})
 
 (defcard "Q-Coherence Chip"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events (let [e {:async true
                     :interactive (req true)
                     :req (req (and (installed? (:card target))
@@ -1738,7 +1738,7 @@
   {:events [(breach-access-bonus :rd 1)]})
 
 (defcard "Rabbit Hole"
-  {:constant-effects [(link+ 1)]
+  {:static-abilities [(link+ 1)]
    :on-install
    {:optional
     {:req (req (some #(when (= (:title %) (:title card)) %) (:deck runner)))
@@ -1799,7 +1799,7 @@
                 :effect (effect (move :corp target :deck {:front true}))}})]})
 
 (defcard "Reflection"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       (link+ 1)]
    :events [{:event :jack-out
              :async true
@@ -1915,7 +1915,7 @@
                                (update-breaker-strength state side t)))}]})
 
 (defcard "Security Nexus"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       (link+ 1)]
    :events [{:event :encounter-ice
              :interactive (req true)
@@ -1981,7 +1981,7 @@
                             ((:value %) state side eid (get-card state (:card %)) (cons target targets))))
                    (reduce +)
                    (abs))))]
-    {:constant-effects [(mu+ 2)]
+    {:static-abilities [(mu+ 2)]
      :events [{:event :encounter-ice
                :interactive (req true)
                :optional
@@ -1990,13 +1990,13 @@
                 :yes-ability
                 {:msg (msg "lower their maximum hand size by 1 and reduce the strength of " (:title current-ice) " to 0")
                  :effect (effect
-                           (register-floating-effect
+                           (register-lingering-effect
                              card
                              {:type :hand-size
                               :duration :until-runner-turn-begins
                               :req (req (= :runner side))
                               :value -1})
-                           (register-floating-effect
+                           (register-lingering-effect
                              :runner card
                              (let [ice current-ice]
                                {:type :ice-strength
@@ -2013,7 +2013,7 @@
                                 :type :recurring}}})
 
 (defcard "Simulchip"
-  {:constant-effects [{:type :card-ability-additional-cost
+  {:static-abilities [{:type :card-ability-additional-cost
                        :req (req (and (same-card? card target)
                                       (let [pred (fn [targets]
                                                    (some #(and (runner? (:card %))
@@ -2048,7 +2048,7 @@
 (defcard "Skulljack"
   {:on-install {:async true
                 :effect (effect (damage eid :brain 1 {:card card}))}
-   :constant-effects [{:type :trash-cost
+   :static-abilities [{:type :trash-cost
                        :value -1}]})
 
 (defcard "Solidarity Badge"
@@ -2086,7 +2086,7 @@
                              (effect-completed eid))}]})
 
 (defcard "Spinal Modem"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :recurring 2
    :events [{:event :successful-trace
              :req (req run)
@@ -2097,7 +2097,7 @@
                                 :type :recurring}}})
 
 (defcard "Sports Hopper"
-  {:constant-effects [(link+ 1)]
+  {:static-abilities [(link+ 1)]
    :abilities [{:label "Draw 3 cards"
                 :msg "draw 3 cards"
                 :async true
@@ -2127,7 +2127,7 @@
                                   card nil))}]})
 
 (defcard "Supercorridor"
-  {:constant-effects [(mu+ 2)
+  {:static-abilities [(mu+ 2)
                       (runner-hand-size+ 1)]
    :events [{:event :runner-turn-ends
              :interactive (get-autoresolve :auto-fire (complement never?))
@@ -2145,7 +2145,7 @@
    :abilities [(set-autoresolve :auto-fire "Supercorridor")]})
 
 (defcard "Swift"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :play-event
              :req (req (and (has-subtype? (:card context) "Run")
                             (first-event? state side :play-event #(has-subtype? (:card (first %)) "Run"))))
@@ -2153,13 +2153,13 @@
              :effect (effect (gain-clicks 1))}]})
 
 (defcard "T400 Memory Diamond"
-  {:constant-effects [(mu+ 1)
+  {:static-abilities [(mu+ 1)
                       {:type :hand-size
                        :req (req (= :runner side))
                        :value 1}]})
 
 (defcard "The Gauntlet"
-  {:constant-effects [(mu+ 2)]
+  {:static-abilities [(mu+ 2)]
    :events [{:event :breach-server
              :req (req (= :hq target))
              :effect (req (let [broken-ice
@@ -2180,12 +2180,12 @@
   {:hosting {:card #(and (has-subtype? % "Icebreaker")
                          (installed? %))}
    :on-install {:effect (effect (update-breaker-strength (:host card)))}
-   :constant-effects [{:type :breaker-strength
+   :static-abilities [{:type :breaker-strength
                        :req (req (same-card? target (:host card)))
                        :value 1}]})
 
 (defcard "The Toolbox"
-  {:constant-effects [(mu+ 2)
+  {:static-abilities [(mu+ 2)
                       (link+ 2)]
    :recurring 2
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
@@ -2249,7 +2249,7 @@
                                         (access-card state side eid (nth (:deck corp) (dec (str->int target))) "an unseen card")))}})]})
 
 (defcard "Turntable"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [{:event :agenda-stolen
              :interactive (req true)
              :req (req (seq (:scored corp)))
@@ -2273,7 +2273,7 @@
                  :once :per-turn
                  :async true
                  :effect (effect (draw eid 1))}]
-    {:constant-effects [(mu+ 1)]
+    {:static-abilities [(mu+ 1)]
      :flags {:runner-turn-draw true
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                        (cons (get-in @state [:runner :identity])
@@ -2313,12 +2313,12 @@
                  :once :per-turn
                  :async true
                  :effect (effect (draw eid 1))}]
-    {:constant-effects [(mu+ 1)]
+    {:static-abilities [(mu+ 1)]
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
 (defcard "Virtuoso"
-  {:constant-effects [(mu+ 1)]
+  {:static-abilities [(mu+ 1)]
    :events [(assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
              :req (req (and (:marked-server target)
@@ -2378,7 +2378,7 @@
 
 (defcard "Zamba"
   {:implementation "Credit gain is automatic"
-   :constant-effects [(mu+ 2)]
+   :static-abilities [(mu+ 2)]
    :events [{:event :expose
              :async true
              :effect (effect (gain-credits :runner eid 1))

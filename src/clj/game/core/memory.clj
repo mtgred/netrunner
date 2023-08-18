@@ -6,7 +6,7 @@
    [game.core.toasts :refer [toast]]))
 
 (defn mu+
-  "For use in :constant-effects and register-floating-effect.
+  "For use in :static-abilities and register-lingering-effect.
   Returns an effect map for :available-mu.
   Takes either the mu value or a :req 5-fn and the value.
   If :value is a function, it must return [:regular N] where N is a number."
@@ -20,7 +20,7 @@
              [:else (throw (Exception. (str "mu+ needs a vector, number, or function: " value)))])}))
 
 (defn virus-mu+
-  "For use in :constant-effects and register-floating-effect.
+  "For use in :static-abilities and register-lingering-effect.
   Returns an effect map for :available-mu
   Takes either the mu value or a :req 5-fn and the value.
   If :value is a function, it must return [:virus N] where N is a number."
@@ -31,7 +31,7 @@
                           [:else (throw (Exception. (str "virus-mu+ needs a vector, number, or function: " value)))]))))
 
 (defn caissa-mu+
-  "For use in :constant-effects and register-floating-effect.
+  "For use in :static-abilities and register-lingering-effect.
   Returns an effect map for :available-mu.
   Takes either the mu value or a :req 5-fn and the value.
   If :value is a function, it must return [:caissa N] where N is a number."
@@ -146,7 +146,7 @@
           available-mu (merge-available-memory mu-list)
           used-mu-effects (conj (get-effect-maps state :runner :used-mu)
                                 {:type :used-mu
-                                 :duration :constant
+                                 :duration :while-active
                                  :card card
                                  :value mu-cost})
           used-mu (merge-used-memory state used-mu-effects)

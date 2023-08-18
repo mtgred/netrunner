@@ -5,7 +5,7 @@
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [active? card-index condition-counter? convert-to-agenda corp? facedown? fake-identity? get-card get-title get-zone has-subtype? ice? in-hand? in-play-area? installed? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.engine :as engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [get-scoring-owner]]
@@ -68,8 +68,8 @@
                           (when (active? newh)
                             (unregister-events state side h)
                             (register-default-events state side newh)
-                            (unregister-constant-effects state side h)
-                            (register-constant-effects state side newh))
+                            (unregister-static-abilities state side h)
+                            (register-static-abilities state side newh))
                           [newh]))
         hosted (seq (mapcat (if same-zone? update-hosted trash-hosted) (:hosted card)))
         ;; Set :seen correctly
@@ -143,7 +143,7 @@
     (swap! state assoc :effects
            (->> (:effects @state)
                 (remove #(and (same-card? card (:card %))
-                              (= :constant (:duration %))))
+                              (= :while-active (:duration %))))
                 (into [])))))
 
 (defn update-installed-card-indices
@@ -447,10 +447,10 @@
         (update-installed-card-indices state :corp (:zone b))
         (doseq [new-card [a-new b-new]]
           (unregister-events state side new-card)
-          (unregister-constant-effects state side new-card)
+          (unregister-static-abilities state side new-card)
           (when (rezzed? new-card)
             (do (register-default-events state side new-card)
-                (register-constant-effects state side new-card)))
+                (register-static-abilities state side new-card)))
           (doseq [h (:hosted new-card)]
             (let [newh (-> h
                            (assoc-in [:zone] '(:onhost))
@@ -458,8 +458,8 @@
               (update! state side newh)
               (unregister-events state side h)
               (register-default-events state side newh)
-              (unregister-constant-effects state side h)
-              (register-constant-effects state side newh))))
+              (unregister-static-abilities state side h)
+              (register-static-abilities state side newh))))
         (trigger-event state side :swap a-new b-new)))))
 
 (defn swap-ice
@@ -539,9 +539,9 @@
   (let [new-stolen (move state :runner scored :scored)
         new-scored (move state :corp stolen :scored)]
     (unregister-events state side stolen)
-    (unregister-constant-effects state side stolen)
+    (unregister-static-abilities state side stolen)
     (register-default-events state side new-scored)
-    (register-constant-effects state side new-scored)
+    (register-static-abilities state side new-scored)
     (when-not (card-flag? scored :has-events-when-stolen true)
       (deactivate state :corp new-stolen))
     (trigger-event state side :swap new-stolen new-scored)

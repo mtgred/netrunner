@@ -324,12 +324,12 @@
    get-effects
    get-effect-maps
    get-effect-value
-   register-constant-effects
-   register-floating-effect
+   register-static-abilities
+   register-lingering-effect
    sum-effects
-   unregister-constant-effects
+   unregister-static-abilities
    unregister-effects-for-card
-   unregister-floating-effects])
+   unregister-lingering-effects])
 
 (expose-vars
   [game.core.eid

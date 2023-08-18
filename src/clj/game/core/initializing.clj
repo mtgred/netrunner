@@ -4,7 +4,7 @@
     [game.core.card :refer [get-card map->Card program? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
-    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
+    [game.core.effects :refer [register-static-abilities register-lingering-effect unregister-static-abilities]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-default-events register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
@@ -65,7 +65,7 @@
   ([state side card] (deactivate state side card nil))
   ([state side {:keys [cid disabled installed rezzed] :as card} keep-counter]
    (unregister-events state side card)
-   (unregister-constant-effects state side card)
+   (unregister-static-abilities state side card)
    (trigger-leave-effect state side card)
    (when (and (find-cid cid (all-active-installed state side))
               (not disabled)
@@ -127,14 +127,14 @@
              :req (req (not (:disabled card)))
              :effect r}])))
      (register-default-events state side c)
-     (register-constant-effects state side c)
+     (register-static-abilities state side c)
      ;; Facedown cards can't be initialized
      (when (and (program? card)
                 (not no-mu))
-       (register-floating-effect
+       (register-lingering-effect
          state side c
          {:type :used-mu
-          :duration :constant
+          :duration :while-active
           :value (:memoryunits c)})
        (update-mu state))
      (if (and resolve-effect (is-ability? cdef))
