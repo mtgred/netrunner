@@ -64,6 +64,7 @@
     (?reply-fn {:msg "Unhandled event"})))
 
 (defmethod -msg-handler :chsk/ws-ping [_])
+(defmethod -msg-handler :chsk/ws-pong [_])
 ;; NOTE - :chsk/uidport-close is handled in game.clj
 (defmethod -msg-handler :chsk/uidport-open
   [{uid :uid
