@@ -329,10 +329,10 @@
                                       {:optional
                                        {:prompt "Reveal it to gain 2 [Credits]?"
                                         :waiting-prompt true
-                                        :msg (msg "reveal " (:title top-card)
-                                                  " from the top of R&D and gain 2 [Credits]")
                                         :yes-ability
                                         {:async true
+                                         :msg (msg "reveal " (:title top-card)
+                                                   " from the top of R&D and gain 2 [Credits]")
                                          :effect (req (wait-for (reveal state side (make-eid state eid) top-card)
                                                                 (gain-credits state :corp eid 2)))}
                                         :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to reveal the top card of R&D")))}}}
