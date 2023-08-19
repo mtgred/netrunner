@@ -1209,6 +1209,14 @@
         (card-ability state :corp (refresh ch) 0))
       (is (= 1 (count (:discard (get-corp)))) "Cybersand Harvester got trashed"))))
 
+(deftest cybersand-harvester-cant-be-trashed-when-no-credits
+  (do-game
+    (new-game {:corp {:deck ["Cybersand Harvester"]}})
+    (play-from-hand state :corp "Cybersand Harvester" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (is (= "Cybersand Harvester" (:title (get-content state :remote1 0))) "Cybersand Harveste was not trashed")))
+
 (deftest daily-business-show-full-test
     ;; Full test
     (do-game
