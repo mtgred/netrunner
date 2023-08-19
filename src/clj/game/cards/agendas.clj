@@ -1203,7 +1203,7 @@
                                  (gain-credits state side eid extra))
                              (effect-completed state side eid))))}]
     {:static-abilities [{:type :trace-force-link
-                         :req (req (= 1 (count (turn-events state side :pre-init-trace))))
+                         :req (req (= 1 (count (turn-events state side :initialize-trace))))
                          :value 0}]
      :events [(assoc nq :event :successful-trace)
               (assoc nq :event :unsuccessful-trace)]}))

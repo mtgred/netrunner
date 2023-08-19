@@ -5115,7 +5115,7 @@
       (is (= 1 (:agenda-point (get-corp))))
       (is (zero? (:agenda-point (get-runner))))
       (take-credits state :runner)
-      (core/purge state :corp)
+      (purge state :corp)
       (is (= 1 (:agenda-point (get-corp))))
       (is (= 1 (:agenda-point (get-runner))))))
 

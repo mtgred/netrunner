@@ -700,6 +700,10 @@
   ([state side n args]
    (core/draw state side (core/make-eid state) n args)))
 
+(defn purge
+  [state side]
+  (core/purge state side (core/make-eid state)))
+
 (defn print-log [state]
   (->> (:log @state)
        (map :text)

@@ -848,7 +848,7 @@
       (is (changes-credits (get-corp) 4
                            (click-prompt state :corp "Yes")))
       (is (changes-credits (get-corp) 0
-                           (core/purge state :corp)))
+                           (purge state :corp)))
       (take-credits state :corp)
       (take-credits state :runner)
       (is (changes-credits (get-corp) 4
@@ -866,7 +866,7 @@
     (do-game
       (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
       (core/gain state :corp :click 10)
-      (core/purge state :corp)
+      (purge state :corp)
       (play-and-score state "Cyberdex Sandbox")
       (is (changes-credits
             (get-corp) 0

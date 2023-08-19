@@ -18,7 +18,7 @@
       (core/add-counter state :runner (get-program state 0) :virus 3)
       (take-credits state :runner)
       (is (= 2 (:credit (get-runner))) "Runner initial credits")
-      (core/purge state :corp)
+      (purge state :corp)
       (click-prompt state :runner "Yes")
       (is (= 9 (:credit (get-runner))) "Runner gained 9 credits")
       (is (= 1 (count (:discard (get-runner)))) "Acacia has trashed")))
@@ -36,7 +36,7 @@
       (let [llds (get-program state 1)]
         (changes-val-macro 0 (:credit (get-runner))
                            "Runner didn't get credits before deciding on LLDS"
-                           (core/purge state :corp)
+                           (purge state :corp)
                            (click-prompt state :runner "Yes"))
         (changes-val-macro -3 (:credit (get-runner))
                            "Runner pays 3 for LLDS"
@@ -60,7 +60,7 @@
         (core/add-counter state :corp sandstone :virus 1)
         (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
         (is (= 7 (:credit (get-runner))) "Runner credits should be 7")
-        (core/purge state :corp)
+        (purge state :corp)
         (click-prompt state :runner "Yes")
         (is (= 8 (:credit (get-runner))) "Runner gained 1 credit from Sandstone's virus counter"))))
 

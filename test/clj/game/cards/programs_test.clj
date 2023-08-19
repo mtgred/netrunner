@@ -1597,7 +1597,7 @@
     (play-from-hand state :runner "Reaver")
     (take-credits state :runner)
     (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
-    (core/purge state :corp)
+    (purge state :corp)
     (is (= "Clot" (-> (get-runner) :discard first :title)) "Clot was trashed on purge")
     (is (= 1 (count (:hand (get-runner)))) "Reaver triggered when Clot was trashed")
     ))
@@ -2460,7 +2460,7 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (= 4 (:credit (get-corp))) "Diwan charged 1cr + 1cr to install a second ice protecting the named server")
     (core/gain state :corp :click 1)
-    (core/purge state :corp)
+    (purge state :corp)
     (starting-hand state :corp ["Fire Wall"])
     (play-from-hand state :corp "Fire Wall" "HQ") ; 2cr cost from normal install cost
     (is (= "Diwan" (-> (get-runner) :discard first :title)) "Diwan was trashed from purge")
@@ -4013,7 +4013,7 @@
     (is (= 5 (:credit (get-corp))) "Corp lost 1 credit")
     (click-prompt state :runner "No action")
     (take-credits state :runner)
-    (core/purge state :corp)
+    (purge state :corp)
     (is (empty? (get-program state)) "Lamprey trashed by purge")))
 
 (deftest laser-pointer
