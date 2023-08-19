@@ -2514,13 +2514,11 @@
                 :effect (effect (host card target)
                                 (unregister-effects-for-card target #(= :used-mu (:type %)))
                                 (update-mu))}]
-   :events [{:event :pre-purge
-             :effect (req (when-let [c (first (:hosted card))]
-                            (update! state side (assoc-in card [:special :numpurged] (get-counters c :virus)))))}
-            {:event :purge
-             :req (req (pos? (get-in card [:special :numpurged] 0)))
-             :effect (req (when-let [c (first (:hosted card))]
-                            (add-counter state side c :virus 1)))}]})
+   :static-abilities
+   [{:type :prevent-purge-virus-counters
+     :req (req (pos? (get-counters (first (:hosted card)) :virus)))
+     :value (req {:card (first (:hosted card))
+                  :quantity 1})}]})
 
 (defcard "Propeller"
   (auto-icebreaker {:data {:counter {:power 4}}

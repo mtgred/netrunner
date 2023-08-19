@@ -587,7 +587,8 @@
   {:on-score {:optional
               {:prompt "Purge virus counters?"
                :yes-ability {:msg "purge virus counters"
-                             :effect (effect (purge))}}}
+                             :async true
+                             :effect (effect (purge eid))}}}
    :events [{:event :purge
              :req (req (first-event? state :corp :purge))
              :once :per-turn

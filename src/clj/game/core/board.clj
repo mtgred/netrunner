@@ -99,13 +99,13 @@
                              installed-corp-cards
                              hosted-cards)]
       (if (empty? unchecked)
-        (reverse (persistent! installed))
+        (persistent! installed)
         (let [[card & remaining] unchecked]
           (recur
             (if (installed? card)
               (conj! installed card)
               installed)
-            (into remaining (:hosted card))))))))
+            (into (vec remaining) (:hosted card))))))))
 
 (defn all-installed-runner-type
   "Returns a list of all installed, non-facedown runner cards of the requested type."
