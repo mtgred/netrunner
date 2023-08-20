@@ -253,6 +253,16 @@
       (is (= 2 (count (:hand (get-runner)))) "Card was added to grip")
       (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed"))))
 
+(deftest asmund-pudlat-nothing-to-install-trashes-asmund-next-turn
+  (do-game
+    (new-game {:runner {:hand ["Asmund Pudlat"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Asmund Pudlat")
+    (click-prompt state :runner "Cancel")
+    (take-credits state :corp)
+    (click-prompt state :runner "Done")
+    (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed")))
+
 (deftest avgustina-ivanovskaya
   ;; First time each turn you install a virus program, resist 1
   (do-game

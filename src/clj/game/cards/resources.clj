@@ -316,7 +316,12 @@
              :effect (req (host state side card target)
                           (if (> x 1)
                             (continue-ability state side (search-and-host (dec x)) card nil)
-                            (effect-completed state side eid)))})]
+                            (effect-completed state side eid)))})
+          (trash-if-empty [state side eid card]
+            (if-not (empty? (:hosted (get-card state card)))
+              (effect-completed state side eid)
+              (do (system-msg state side (str "trashes " (get-title card)))
+                  (trash state side eid card {:unpreventable true :source-card card}))))]
     {:on-install {:msg "shuffle the stack"
                   :async true
                   :effect (req (wait-for (resolve-ability state side
@@ -332,15 +337,12 @@
                 :choices {:req (req (same-card? card (:host target)))}
                 :msg (msg "add " (get-title target) " to the grip")
                 :once :per-turn
-                :cancel-effect (effect (system-msg (str "declines to use " (get-title card)))
-                                       (effect-completed eid))
+                :cancel-effect (req (system-msg state side (str "declines to use " (get-title card)))
+                                    (trash-if-empty state side eid card))
                 :async true
                 :waiting-prompt true
                 :effect (req (move state side target :hand)
-                             (if-not (empty? (:hosted (get-card state card)))
-                               (effect-completed state side eid)
-                               (do (system-msg state side (str "trashes " (get-title card)))
-                                   (trash state side eid card {:unpreventable true :source-card card}))))}]}))
+                             (trash-if-empty state side eid card))}]}))
 
 (defcard "Assimilator"
   {:abilities [{:label "Turn a facedown card faceup"
