@@ -7,10 +7,14 @@
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
    [taoensso.timbre :as timbre]))
 
-(defn filter-uid-from-log-arg [arg] (if (string? arg)
-                                      (clojure.string/replace arg #"u_.*/c_" "u_[REDACTED]/c_")
-                                      arg))
-(timbre/merge-config! {:middleware [(fn [data] (assoc data :vargs (map filter-uid-from-log-arg (:vargs data ))))]})
+(defn redact-uid-middleware
+  "Timbre middelware to remove UIDs from Sente log lines"
+  [data]
+  (letfn [(filter-uid-from-log-arg [arg] (if (string? arg)
+                                          (clojure.string/replace arg #"u_.*/c_" "u_[REDACTED]/c_")
+                                          arg))]
+    (assoc data :vargs (map filter-uid-from-log-arg (:vargs data )))))
+(timbre/merge-config! {:middleware [redact-uid-middleware]})
 (sente/set-min-log-level! :info)
 
 (let [chsk-server (sente/make-channel-socket-server!
