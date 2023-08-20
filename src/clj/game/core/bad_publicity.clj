@@ -16,7 +16,6 @@
 
 (defn- resolve-bad-publicity
   [state side eid n]
-  (trigger-event state side :pre-resolve-bad-publicity n)
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
         (toast state :corp (str "Took " n " bad publicity!") "info")
