@@ -703,6 +703,7 @@
              :effect (effect (add-counter :corp card :credit 2))}]
    :abilities [{:label "Take all hosted credits"
                 :cost [:trash-can]
+                :req (req (pos? (get-counters card :credit)))
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}
