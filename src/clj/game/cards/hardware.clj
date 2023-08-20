@@ -1679,7 +1679,7 @@
                 :once :per-turn
                 :cost [:credit 1]
                 :req (req (pos? (count (:deck runner))))
-                :msg (msg "reveal the top card of the stack: " (:title (first (:deck runner))))
+                :msg (msg "reveal " (:title (first (:deck runner))) " from the top of the stack")
                 :async true
                 :effect
                 (req

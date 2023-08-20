@@ -1283,13 +1283,14 @@
                          :no-ability {:async true
                                       :effect (req (wait-for
                                                      (reveal state side topcard)
-                                                     (system-msg (str "reveals and trashes "
-                                                                      (:title topcard)))
+                                                     (system-msg (str "reveals "
+                                                                      (:title topcard)
+                                                                      " from the top of the stack and trashes it"))
                                                      (trash eid topcard {:unpreventable true
                                                                          :cause-card card})))}}}
                        card nil)
                      (wait-for (reveal state side topcard)
-                               (system-msg state side (str "reveals and trashes " (:title topcard)))
+                               (system-msg state side (str "reveals " (:title topcard) " from the top of the stack and trashes it"))
                                (trash state side eid topcard {:unpreventable true :cause-card card})))))}})
 
 (defcard "Exclusive Party"
@@ -1303,7 +1304,7 @@
 
 (defcard "Executive Wiretaps"
   {:on-play
-   {:msg (msg "reveal cards in HQ: " (enumerate-str (sort (map :title (:hand corp)))))
+   {:msg (msg "reveal " (enumerate-str (sort (map :title (:hand corp)))) " from HQ")
     :async true
     :effect (effect (reveal eid (:hand corp)))}})
 
@@ -1403,7 +1404,9 @@
                                     :choices {:card #(and (in-hand? %)
                                                           (same-card? :title card %))
                                               :max n}
-                                    :msg (msg "reveal " (count targets) " copies of itself,"
+                                    :msg (msg "reveal "
+                                              (quantify (count targets) "cop" "y" "ies")
+                                              " of itself,"
                                               " forcing the Corp to trash " (quantify (count targets) "additional card")
                                               " from the top of R&D")
                                     :effect (req (wait-for
@@ -1849,9 +1852,10 @@
                      (if (seq programs)
                        (wait-for (trash-cards state side programs {:unpreventable true
                                                                    :cause-card card})
-                                 (system-msg state side (str "trashes "
+                                 (system-msg state side (str "reveals "
                                                              (enumerate-str (map :title programs))
-                                                             " and gains "
+                                                             " from the top of the stack,"
+                                                             " trashes them, and gains "
                                                              (count programs) " [Credits]"))
                                  (wait-for (gain-credits state side (count programs))
                                            (doseq [c others]
@@ -1899,9 +1903,9 @@
     :effect (req (wait-for
                    (resolve-ability state :corp (reorder-choice :corp (take 4 (:deck corp))) card targets)
                    (let [top-4 (take 4 (get-in @state [:corp :deck]))]
-                     (system-msg state :runner (str " reveals (top:) "
+                     (system-msg state :runner (str "reveals "
                                                     (enumerate-str (map :title top-4))
-                                                    " from the top of R&D"))
+                                                    " from the top of R&D (top->bottom)"))
                      (reveal state :runner eid top-4))))}})
 
 (defcard "Interdiction"
@@ -2065,8 +2069,8 @@
                                                          (first async-result)
                                                          " [Credit] and reveals "
                                                          (if revealed
-                                                           (str "(top:) " (enumerate-str (map :title revealed))
-                                                                " from the top of R&D")
+                                                           (str (enumerate-str (map :title revealed))
+                                                                " from the top of R&D (top->bottom)")
                                                            "no cards")))
                           (wait-for
                             (resolve-ability
@@ -3806,8 +3810,7 @@
        :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
        :unsuccessful
        {:async true
-        :msg (msg "reveal all cards in HQ" (when-let [hand (seq (:hand corp))]
-                                             (str ": " (enumerate-str (map :title hand)))))
+        :msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
         :effect (req (wait-for
                        (reveal state side (:hand corp))
                        (continue-ability state :runner (choose-cards (set (:hand corp)) #{}) card nil)))}}}}))

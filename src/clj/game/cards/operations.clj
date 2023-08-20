@@ -241,7 +241,7 @@
                              from-archives (map :title (filter in-discard? targets))]
                          (system-msg
                            state side
-                           (str "uses " (:title card) " to shuffle "
+                           (str "uses " (:title card) " to reveal "
                                 (enumerate-str
                                   (filter identity
                                           [(when (not-empty from-hq)
@@ -250,7 +250,7 @@
                                            (when (not-empty from-archives)
                                              (str (enumerate-str from-archives)
                                                   " from Archives"))]))
-                                " into R&D and gain "
+                                ", shuffle them into R&D and gain "
                                 (* 2 (count targets)) " [Credits]")))
                        (effect-completed state side eid))))}
              card nil)))}})
@@ -461,7 +461,7 @@
    {:choices {:max 5
               :card #(and (corp? %)
                           (in-hand? %))}
-    :msg (msg "reveal " (enumerate-str (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
+    :msg (msg "reveal " (enumerate-str (map :title (sort-by :title targets))) " from HQ and gain " (* 2 (count targets)) " [Credits]")
     :async true
     :effect (req (wait-for
                    (reveal state side targets)
@@ -601,7 +601,7 @@
     :choices (req (conj (vec (filter agenda? (:deck corp))) "None"))
     :msg (msg (if (= "None" target)
                 "shuffle R&D"
-                (str "add " (:title target) " to HQ and shuffle R&D")))
+                (str "reveal " (:title target) " from R&D and add it to HQ")))
     :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
                                   (swap! state assoc-in [:corp :register :cannot-score]
                                          (filter agenda? (all-installed state :corp)))
@@ -865,8 +865,8 @@
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
     :async true
-    :effect (req (system-msg state side (str "adds " (:title target) " to HQ and shuffle R&D"))
-                 (wait-for (reveal state side target)
+    :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
+    :effect (req (wait-for (reveal state side target)
                            (shuffle! state side :deck)
                            (move state side target :hand)
                            (effect-completed state side eid)))}})
@@ -906,10 +906,10 @@
                        numtargets (count (filter #(= type (:type %)) (:hand runner)))]
                    (system-msg
                      state :corp
-                     (str "uses Focus Group to choose " target
-                          " and reveal the Runner's Grip ("
+                     (str "uses " (:title card) " to choose " target
+                          " and reveal "
                           (enumerate-str (map :title (sort-by :title (:hand runner))))
-                          ")"))
+                          " from the grip"))
                    (wait-for
                      (reveal state side (:hand runner))
                      (continue-ability
@@ -1340,9 +1340,9 @@
                                    (let [x (- target (second targets))]
                                      (system-msg
                                        state :corp
-                                       (str "uses " (:title card) " to reveal the Runner's Grip ( "
+                                       (str "uses " (:title card) " to reveal "
                                             (enumerate-str (map :title (sort-by :title (:hand runner))))
-                                            " ) and trash up to " x " resources or events"))
+                                            " from the grip and trash up to " x " resources or events"))
                                      (continue-ability state side (iop (dec x)) card nil))))}
        :unsuccessful {:msg "take 1 bad publicity"
                       :async true
@@ -1659,19 +1659,22 @@
                                    (map :title))]
                    (wait-for (trash state :corp target {:cause-card card})
                              (shuffle! state :corp :deck)
-                             (system-msg state side (str "uses Mutate to trash " (:title target)))
+                             (system-msg state side (str "uses " (:title card) " to trash " (:title target)))
                              (wait-for
                                (reveal state side revealed-cards)
-                               (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D"))
+                               (system-msg state side (str "reveals " (enumerate-str titles) " from R&D"))
                                (let [ice (first r)
                                      zone (zone->name (second (get-zone target)))]
                                  (if ice
-                                   (do (system-msg state side (str "uses Mutate to install and rez " (:title ice) " from R&D at no cost"))
+                                   (do (system-msg state side (str "uses " (:title card) 
+                                                                   " to install and rez "
+                                                                   (:title ice)
+                                                                   " from R&D at no cost"))
                                        (corp-install state side eid ice zone {:ignore-all-cost true
                                                                               :install-state :rezzed-no-cost
                                                                               :display-message false
                                                                               :index index}))
-                                   (do (system-msg state side "does not find any ice to install from R&D")
+                                   (do (system-msg state side (str "uses " (:title card) " to shuffle R&D"))
                                        (effect-completed state side eid))))))))}})
 
 (defcard "Mutually Assured Destruction"
@@ -1836,7 +1839,7 @@
   {:on-play {:prompt "Choose a card"
              ;; we need the req or the prompt will still show
              :waiting-prompt true
-             :msg (msg "add " (:title target) " to HQ and shuffle R&D")
+             :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
              :choices (req (sort-by :title (filter #(or (operation? %) (agenda? %)) (:deck corp))))
              :async true
              :effect (req (wait-for (reveal state side target)
@@ -2362,9 +2365,9 @@
                                     (not (identity? target))))}
     :async true
     :effect (req (system-msg state side
-                             (str "uses Salem's Hospitality to reveal the Runner's Grip ( "
+                             (str "uses " (:title card) " to reveal "
                                   (enumerate-str (map :title (sort-by :title (:hand runner))))
-                                  " ) and trash any copies of " target))
+                                  " from the grip and trash any copies of " target))
                  (let [cards (filter #(= target (:title %)) (:hand runner))]
                    (wait-for
                      (reveal state side cards)
@@ -2441,7 +2444,7 @@
                             {:async true
                              :prompt "Choose a server"
                              :choices ["Archives" "R&D" "HQ"]
-                             :msg (msg "reveal " (:title chosen-ice) " and install it, paying 3 [Credit] less")
+                             :msg (msg "reveal " (:title chosen-ice) " from R&D and install it, paying 3 [Credit] less")
                              :effect (req (wait-for
                                             (reveal state side chosen-ice)
                                             (shuffle! state side :deck)
@@ -2639,8 +2642,8 @@
     :prompt "Choose one"
     :choices ["Event" "Hardware" "Program" "Resource"]
     :msg (msg "name " target
-              ", revealing " (enumerate-str (map :title (:hand runner)))
-              " in the Runner's Grip, and gains "
+              ", reveal " (enumerate-str (map :title (:hand runner)))
+              " from the grip, and gain "
               (* 2 (count (filter #(is-type? % target) (:hand runner)))) " [Credits]")
     :async true
     :effect (req (wait-for
@@ -2709,7 +2712,7 @@
              {:req (req (not-last-turn? state :runner :made-run))
               :prompt (msg "Add " (:title card) " to HQ?")
               :yes-ability
-              {:msg "add itself to HQ"
+              {:msg "reveal and add itself to HQ"
                :async true
                :effect (req (wait-for (reveal state side (make-eid state eid) card))
                             (move state side card :hand)

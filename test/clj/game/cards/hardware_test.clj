@@ -3773,7 +3773,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Prognostic Q-Loop")
         (card-ability state :runner (get-hardware state 0) 1)
-        (is (last-log-contains? state "reveal the top card of the stack: Au Revoir") "Correctly prints the revealed card")))
+        (is (last-log-contains? state "reveal Au Revoir from the top of the stack") "Correctly prints the revealed card")))
     (testing "when the revealed card is not a hardware"
       (do-game
         (new-game {:runner {:deck ["Sure Gamble"]
@@ -3781,7 +3781,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Prognostic Q-Loop")
         (card-ability state :runner (get-hardware state 0) 1)
-        (is (last-log-contains? state "reveal the top card of the stack: Sure Gamble") "Correctly prints the revealed card"))))
+        (is (last-log-contains? state "reveal Sure Gamble from the top of the stack") "Correctly prints the revealed card"))))
 
 (deftest prognostic-q-loop-doesn-t-fire-with-an-empty-deck
     ;; Doesn't fire with an empty deck

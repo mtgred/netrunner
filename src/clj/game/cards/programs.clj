@@ -731,7 +731,8 @@
                                   (wait-for
                                     (reveal state side (make-eid state eid) cards)
                                     (system-msg state side (str payment-str
-                                                                " to use " (:title card) " to reveal "
+                                                                " to use " (:title card)
+                                                                " to force the Corp to reveal they drew "
                                                                 (enumerate-str (map :title cards))))
                                     (effect-completed state side eid))))))}}}]})
 
@@ -1048,7 +1049,7 @@
                                                     card nil))))}))]
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-                  :msg (msg "reveal the top cards of the stack: " (enumerate-str (map :title (take 5 (:deck runner)))))
+                  :msg (msg "reveal " (enumerate-str (map :title (take 5 (:deck runner)))) " from the top of the stack")
                   :waiting-prompt true
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -1357,8 +1358,7 @@
                  {:target-server :hq
                   :duration :end-of-run
                   :ability
-                  {:msg (msg "reveal all cards in HQ: "
-                             (enumerate-str (map :title (:hand corp))))
+                  {:msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
                    :async true
                    :effect (effect (reveal eid (:hand corp)))}})]
     {:abilities [{:cost [:click 1]
@@ -2576,7 +2576,7 @@
   {:events [{:event :pre-access-card
              :req (req (get-in card [:special :rng-guess]))
              :async true
-             :msg (msg "reveal " (:title target))
+             :msg (msg "reveal " (:title target) " from " (zone->name (get-zone target)))
              :effect (req (wait-for
                             (reveal state side target)
                             (continue-ability
@@ -2818,7 +2818,8 @@
                    :msg (msg "reveal " (->> (:deck corp)
                                             (take 3)
                                             (map :title)
-                                            (enumerate-str)))
+                                            (enumerate-str))
+                             " from the top of R&D")
                    :effect (req (wait-for
                                  (reveal state side (take 3 (:deck corp)))
                                  (continue-ability
@@ -2886,7 +2887,7 @@
 (defcard "Surveillance Network Key"
   {:implementation "Only implemented for click to draw"
    :events [{:event :corp-click-draw
-             :msg (msg "reveal the card just drawn: " (:title target))}]})
+             :msg (msg "reveal that they drew " (:title target))}]})
 
 (defcard "Switchblade"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"

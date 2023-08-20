@@ -1134,7 +1134,7 @@
       "Runner uses Bug"
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "3"))
-    (is (last-log-contains? state "Runner pays 6 \\[Credits] to use Bug to reveal Hedge Fund, Hedge Fund, and Hedge Fund."))))
+    (is (last-log-contains? state "Runner pays 6 \\[Credits] to use Bug to force the Corp to reveal they drew Hedge Fund, Hedge Fund, and Hedge Fund."))))
 
 (deftest buzzsaw
   ;; Buzzsaw
@@ -2763,7 +2763,7 @@
     (is (= "Choose a breach replacement ability" (:msg (prompt-map :runner)))
         "Replacement effect is optional")
     (click-prompt state :runner "Expert Schedule Analyzer")
-    (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal all cards in HQ:")
+    (is (last-log-contains? state "Runner uses Expert Schedule Analyzer to reveal Hedge Fund, Hedge Fund, and Hedge Fund from HQ")
         "All of HQ is revealed correctly")))
 
 (deftest faerie-trash-after-encounter-is-over-not-before

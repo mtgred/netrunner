@@ -1422,7 +1422,7 @@
                 :cost [:click 1 :tag 1]
                 :msg (msg (if (= target "No action")
                             "search R&D, but does not find an operation"
-                            (str "add " (:title target) " to the top of R&D")))
+                            (str "reveal " (:title target) " and add it to the top of R&D")))
                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
                 :async true
                 :effect (req (if (= target "No action")
@@ -2015,7 +2015,7 @@
 
 (defcard "Public Health Portal"
   (let [ability {:once :per-turn
-                 :label "Reveal top card of R&D and gain 2 [Credits] (start of turn)"
+                 :label "Reveal the top card of R&D and gain 2 [Credits] (start of turn)"
                  :interactive (req true)
                  :msg (msg "reveal " (:title (first (:deck corp)))
                            " from the top of R&D"
@@ -2573,9 +2573,9 @@
 (defcard "Tech Startup"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
-   :abilities [{:label "Install an asset from R&D"
-                :prompt "Choose an asset to install"
-                :msg (msg "install " (:title target))
+   :abilities [{:label "Search R&D for an asset to install"
+                :prompt "Choose an asset"
+                :msg (msg "reveal " (:title target) " from R&D and install it")
                 :req (req (seq (filter asset? (:deck corp))))
                 :choices (req (filter asset? (:deck corp)))
                 :async true

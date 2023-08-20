@@ -2559,8 +2559,8 @@
         (take-credits state :corp)
         (let [hand    (:hand (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to shuffle.+"
-                           "from HQ into R&D")]
+              log-str (str "Corp uses Gatekeeper to reveal.+"
+                           " from HQ and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -2581,8 +2581,8 @@
         (take-credits state :corp)
         (let [discard    (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to shuffle.+"
-                           "from Archives into R&D")]
+              log-str (str "Corp uses Gatekeeper to reveal.+"
+                           " from Archives and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -2606,8 +2606,8 @@
         (let [hand    (:hand (get-corp))
               discard (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to shuffle.+ from HQ "
-                           "and .+ from Archives into R&D")]
+              log-str (str "Corp uses Gatekeeper to reveal.+ from HQ "
+                           "and .+ from Archives and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -6296,7 +6296,7 @@
     (let [sm (get-ice state :hq 0)]
       (rez state :corp sm))
     (run-continue state)
-    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), and Sure Gamble \\(Event\\).") "3 top cards revelaed")))
+    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), and Sure Gamble \\(Event\\) from the top of the stack.") "3 top cards revelaed")))
 
 (deftest slot-machine-subroutines
   ;; Subroutines

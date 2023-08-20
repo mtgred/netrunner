@@ -906,7 +906,7 @@
                 :label "Reveal the top card of the Stack"
                 :async true
                 :effect (req (if-let [revealed-card (-> runner :deck first)]
-                               (do (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal "
+                               (do (system-msg state side (str "uses " (:title card) " to reveal "
                                                                (:title revealed-card) " from the top of the Stack"))
                                    (reveal state side eid revealed-card))
                                (effect-completed state side eid)))}
@@ -914,7 +914,7 @@
                 :label "Reveal a random card from the Grip"
                 :async true
                 :effect (req (if-let [revealed-card (-> runner :hand shuffle first)]
-                               (do (system-msg state side (str "uses Hyoubu Institute: Absolute Clarity to reveal "
+                               (do (system-msg state side (str "uses " (:title card) " to reveal "
                                                                (:title revealed-card) " from the Grip"))
                                    (reveal state side eid revealed-card))
                                (effect-completed state side eid)))}]})

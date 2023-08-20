@@ -214,7 +214,7 @@
 ;; Expend Helper - this is a dummy cost just for cost strings
 (defmethod cost-name :expend [_] :expend)
 (defmethod value :expend [cost] 1)
-(defmethod label :expend [cost] "reveal and trash itself from HQ")
+(defmethod label :expend [cost] "reveal from HQ and trash itself")
 (defmethod payable? :expend
   [cost state side eid card]
   (in-hand? (get-card state card)))
