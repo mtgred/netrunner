@@ -320,18 +320,18 @@
   [cost state side eid card actions]
   (if-not (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost)))
     (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) nil)
-              (complete-with-result state side eid {:msg (str "gains " (value cost) "bad publicity")
+              (complete-with-result state side eid {:msg (str "gains " (value cost) " bad publicity")
                                                     :type :tag-or-bad-pub
                                                     :value (value cost)}))
     (continue-ability
       state side
       {:prompt "Choose one"
        :choices [(str "Remove " (quantify (value cost) "tag"))
-                 (str "Gain " (value cost) "bad publicity")]
+                 (str "Gain " (value cost) " bad publicity")]
        :async true
        :effect (req (if (= target (str "Gain " (value cost) "bad publicity"))
                       (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) nil)
-                                (complete-with-result state side eid {:msg (str "gains " (value cost) "bad publicity")
+                                (complete-with-result state side eid {:msg (str "gains " (value cost) " bad publicity")
                                                                       :type :tag-or-bad-pub
                                                                       :value (value cost)}))
                       (wait-for (lose-tags state side (value cost))
