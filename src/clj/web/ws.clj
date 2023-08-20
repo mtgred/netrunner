@@ -4,7 +4,14 @@
    [web.app-state :refer [register-user! deregister-user!]]
    [web.user :refer [active-user?]]
    [taoensso.sente :as sente]
-   [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
+   [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
+   [taoensso.timbre :as timbre]))
+
+(defn filter-uid-from-log-arg [arg] (if (string? arg)
+                                      (clojure.string/replace arg #"u_.*/c_" "u_[REDACTED]/c_")
+                                      arg))
+(timbre/merge-config! {:middleware [(fn [data] (assoc data :vargs (map filter-uid-from-log-arg (:vargs data ))))]})
+(sente/set-min-log-level! :info)
 
 (let [chsk-server (sente/make-channel-socket-server!
                     (get-sch-adapter)

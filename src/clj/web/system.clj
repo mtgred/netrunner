@@ -35,8 +35,6 @@
 
 (read-write/print-time-literals-clj!)
 
-(sente/set-min-log-level! :info)
-
 (defmethod aero/reader 'ig/ref
   [_ _ value]
   (ig/ref value))
