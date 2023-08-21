@@ -2994,11 +2994,7 @@
 
 (defcard "Under the Bus"
   {:on-play
-   {:req (req (and (last-turn? state :runner :accessed-cards)
-                   (not-empty (filter
-                                #(and (resource? %)
-                                      (has-subtype? % "Connection"))
-                                (all-active-installed state :runner)))))
+   {:req (req (last-turn? state :runner :accessed-cards))
     :prompt "Choose a connection to trash"
     :choices {:card #(and (runner? %)
                           (resource? %)
@@ -3007,7 +3003,9 @@
     :msg (msg "trash " (:title target) " and take 1 bad publicity")
     :async true
     :effect (req (wait-for (trash state side target {:cause-card card})
-                           (gain-bad-publicity state :corp eid 1)))}})
+                           (gain-bad-publicity state :corp eid 1)))
+    :cancel-effect (effect (system-msg (str "uses " (:title card) " to take 1 bad publicity"))
+                           (gain-bad-publicity eid 1))}})
 
 (defcard "Violet Level Clearance"
   {:on-play

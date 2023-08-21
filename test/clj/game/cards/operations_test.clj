@@ -5072,6 +5072,19 @@
     (is (= 1 (count (:discard (get-runner)))) "Runner has 1 trashed card")
     (is (= 1 (count-bad-pub state)) "Corp takes 1 bad pub")))
 
+(deftest under-the-bus-under-the-bus-can-be-played-with-no-connections
+  ;; Under the Bus
+  (do-game
+    (new-game {:corp {:deck ["Under the Bus"]}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (is (zero? (count-bad-pub state)) "Corp has no bad pub")
+    (play-from-hand state :corp "Under the Bus")
+    (click-prompt state :corp "Done")
+    (is (= 1 (count-bad-pub state)) "Corp takes 1 bad pub")))
+
 (deftest under-the-bus-with-replacement-effects
     ;; With replacement effects
     (do-game
