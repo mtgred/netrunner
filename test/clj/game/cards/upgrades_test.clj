@@ -1228,6 +1228,15 @@
       (click-prompt state :runner "No")
       (is (= "Pay 4 [Credits] to use Snare! ability?" (:msg (prompt-map :corp))))))
 
+(deftest daruma-works-only-on-runs-on-its-server
+    (do-game
+      (new-game {:corp {:hand ["Daruma"]}})
+      (play-from-hand state :corp "Daruma" "New remote")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (is (no-prompt? state :runner))))
+
 (deftest daruma-swapping-with-a-card-in-hq
     ;; swapping with a card in HQ
     (do-game

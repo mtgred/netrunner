@@ -548,6 +548,7 @@
           :no-ability {:effect (effect (clear-wait-prompt :runner))}}}]
     {:events [{:event :approach-server
                :interactive (req true)
+               :req (req this-server)
                :async true
                :effect (req (wait-for (resolve-ability state :corp (make-eid state eid) ability card nil)
                                       (continue-ability state :runner (offer-jack-out) card nil)))}]}))
