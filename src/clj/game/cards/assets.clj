@@ -1848,25 +1848,24 @@
   {:events [{:event :corp-mandatory-draw
              :interactive (req true)
              :msg (msg (if (-> corp :deck count pos?)
-                         (str "reveal and draw "
+                         (str "reveal "
                               (-> corp :deck first :title)
-                              " from R&D")
-                         "reveal and draw no cards from R&D (it is empty)"))
+                              " from the top of R&D and add it to HQ")
+                         "reveal no cards from R&D (it is empty)"))
              :async true
              :effect (req (wait-for
                             (reveal state side (-> corp :deck first))
-                            (wait-for
-                              (draw state side 1)
-                              (continue-ability
-                                state side
-                                {:prompt "Choose a card in HQ to add to the top of R&D"
-                                 :async true
-                                 :choices {:card #(and (in-hand? %)
-                                                       (corp? %))}
-                                 :msg "add 1 card from HQ to the top of R&D"
-                                 :effect (effect (move target :deck {:front true})
-                                                 (effect-completed eid))}
-                                card nil))))}]})
+                            (move state :corp (-> corp :deck first) :hand)
+                            (continue-ability
+                              state side
+                              {:prompt "Choose a card in HQ to add to the top of R&D"
+                               :async true
+                               :choices {:card #(and (in-hand? %)
+                                                     (corp? %))}
+                               :msg "add 1 card from HQ to the top of R&D"
+                               :effect (effect (move target :deck {:front true})
+                                               (effect-completed eid))}
+                              card nil)))}]})
 
 (defcard "PAD Campaign"
   (let [ability {:msg "gain 1 [Credits]"
