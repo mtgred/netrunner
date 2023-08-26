@@ -3801,7 +3801,7 @@
     (dotimes [_ 12]
       (run-continue state))
     (click-prompt state :runner "Gain 4 [Credits]")
-    (click-prompt state :runner "Install a program from your stack")
+    (click-prompt state :runner "Install a program from the stack")
     (click-prompt state :runner "D4v1d")
     (click-prompt state :runner "Charge a card")
     (click-card state :runner "D4v1d")
@@ -4161,7 +4161,8 @@
       (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
       (is (= 3 (count (:deck (get-runner)))) "Starts with 3 cards in deck")
       (play-from-hand state :runner "Labor Rights")
-      (is (last-log-contains? state "Runner trashes the top 3 cards of their stack"))
+      (is (last-log-contains? state "Runner trashes"))
+      (is (last-log-contains? state "from the top of the stack"))
       (is (last-log-contains? state "Lawyer Up"))
       (is (last-log-contains? state "Sure Gamble"))
       (is (last-log-contains? state "Knifed"))
@@ -4182,8 +4183,8 @@
       (is (empty? (:discard (get-runner))) "Starts with no cards in discard")
       (is (= 1 (count (:deck (get-runner)))) "Starts with 1 card in deck")
       (play-from-hand state :runner "Labor Rights")
-      (is (last-log-contains? state "Runner trashes the top 1 cards of their stack"))
-      (is (empty? (:deck (get-runner))) "Milled 1 cards")
+      (is (last-log-contains? state "Runner trashes Sure Gamble from the top of the stack"))
+      (is (empty? (:deck (get-runner))) "Milled 1 card")
       (is (= 1 (count (:discard (get-runner)))) "2 cards in deck - 1x trashed")
       (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
       (is (empty? (:deck (get-runner))) "No cards in deck")
@@ -5803,7 +5804,7 @@
     (is (no-prompt? state :runner))))
 
 (deftest reshape
-  ;; Reshape - Swap 2 pieces of unrezzed ice
+  ;; Reshape - Swap 2 unrezzed pieces of ice
   (do-game
     (new-game {:corp {:deck [(qty "Vanilla" 2) "Paper Wall"]}
                :runner {:deck ["Reshape"]}})
@@ -5921,9 +5922,9 @@
       (trash-from-hand state :runner "Easy Mark")
       (take-credits state :corp)
       (play-run-event state "Rip Deal" :hq)
-      (is (= "Add cards from Heap to Grip?" (:msg (prompt-map :runner))))
+      (is (= "Add cards from heap to grip?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (is (= "Choose 1 card to add from the heap to the grip" (:msg (prompt-map :runner))))
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
       (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
@@ -5959,7 +5960,7 @@
         (click-prompt state :runner "End the run")
         (run-continue-until state :success)
         (click-prompt state :runner "Yes")
-        (is (= "Choose 2 cards to move from the Heap to your Grip" (:msg (prompt-map :runner)))))
+        (is (= "Choose 2 cards to add from the heap to the grip" (:msg (prompt-map :runner)))))
       (click-card state :runner "Easy Mark")
       (click-card state :runner "Sure Gamble")
       (is (= 2 (-> (get-runner) :hand count)))
@@ -5978,9 +5979,9 @@
       (play-from-hand state :corp "Anoetic Void" "HQ")
       (take-credits state :corp)
       (play-run-event state "Rip Deal" :hq)
-      (is (= "Add cards from Heap to Grip?" (:msg (prompt-map :runner))))
+      (is (= "Add cards from heap to grip?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
-      (is (= "Choose 1 card to move from the Heap to your Grip" (:msg (prompt-map :runner))))
+      (is (= "Choose 1 card to add from the heap to the grip" (:msg (prompt-map :runner))))
       (click-card state :runner "Easy Mark")
       (is (= 1 (-> (get-runner) :hand count)))
       (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
@@ -6244,7 +6245,7 @@
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Corroder")
         (click-card state :runner "Mass-Driver")
-        (is (= "Choose a program to install from your Grip" (:msg (prompt-map :runner))) "Grip is only option")
+        (is (= "Choose a program to install" (:msg (prompt-map :runner))) "Grip is only option")
         (click-card state :runner "Engolo")
         (is (= "Engolo" (:title (get-program state 0))) "Engolo is now installed")
         (is (= (+ credits 2 -5) (:credit (get-runner))) "Scavenge should give discount"))))
@@ -6754,7 +6755,7 @@
       (rez state :corp (refresh (get-content state :remote1 0)))
       (take-credits state :corp)
       (play-from-hand state :runner "Test Run")
-      (is (= "Install a program from your Stack?" (:msg (prompt-map :runner))) "Stack is only option")
+      (is (= "Install a program from the stack?" (:msg (prompt-map :runner))) "Stack is only option")
       (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
       (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack")))
 

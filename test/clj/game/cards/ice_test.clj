@@ -1642,7 +1642,7 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= "Choose 2 cards in your Grip to add to the top of the Stack (second card targeted will be topmost)"
+      (is (= "Choose 2 cards in the grip to add to the top of the stack (second card targeted will be topmost)"
              (:msg (prompt-map :runner)))
           "Runner is prompted")
       (click-card state :runner "Easy Mark")
@@ -1662,7 +1662,7 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= "Choose 1 card in your Grip to add to the top of the Stack (second card targeted will be topmost)"
+      (is (= "Choose 1 card in the grip to add to the top of the stack (second card targeted will be topmost)"
              (:msg (prompt-map :runner)))
           "Runner is prompted")
       (click-card state :runner "Sure Gamble")
@@ -4556,8 +4556,8 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (fire-subs state (get-ice state :archives 0))
-    (is (= ["Swap two pieces of ice"] (prompt-buttons :corp)) "Only ice option")
-    (click-prompt state :corp "Swap two pieces of ice")
+    (is (= ["Swap 2 pieces of ice"] (prompt-buttons :corp)) "Only ice option")
+    (click-prompt state :corp "Swap 2 pieces of ice")
     (click-card state :corp "Ice Wall")
     (click-card state :corp "Vanilla")
     (is (= "Vanilla" (:title (get-ice state :hq 0))))
@@ -4577,8 +4577,8 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (fire-subs state (get-ice state :archives 0))
-    (is (= ["Swap two non-ice"] (prompt-buttons :corp)) "Only non-ice option")
-    (click-prompt state :corp "Swap two non-ice")
+    (is (= ["Swap 2 non-ice"] (prompt-buttons :corp)) "Only non-ice option")
+    (click-prompt state :corp "Swap 2 non-ice")
     (click-card state :corp "Allele Repression")
     (click-card state :corp "Hostile Takeover")
     (is (= "Hostile Takeover" (:title (get-content state :remote1 0))))
@@ -4603,7 +4603,7 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (fire-subs state (get-ice state :archives 0))
-    (is (= ["Swap two pieces of ice" "Swap two non-ice"] (prompt-buttons :corp)) "Both options available")))
+    (is (= ["Swap 2 pieces of ice" "Swap 2 non-ice"] (prompt-buttons :corp)) "Both options available")))
 
 (deftest mic
   ;; M.I.C.

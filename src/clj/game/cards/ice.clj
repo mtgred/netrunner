@@ -887,9 +887,9 @@
 
 (defcard "Bloodletter"
   {:subroutines [{:async true
-                  :label "Runner trashes 1 program or top 2 cards of their Stack"
+                  :label "Runner trashes 1 program or top 2 cards of the stack"
                   :effect (req (if (empty? (filter program? (all-active-installed state :runner)))
-                                 (do (system-msg state :runner "trashes the top 2 cards of their Stack")
+                                 (do (system-msg state :runner "trashes the top 2 cards of the stack")
                                      (mill state :runner eid :runner 2))
                                  (continue-ability
                                    state :runner
@@ -898,12 +898,12 @@
                                     :choices (req [(when (seq (filter program? (all-active-installed state :runner)))
                                                      "Trash 1 program")
                                                    (when (<= 1 (count (:deck runner)))
-                                                     "Trash top 2 of Stack")])
+                                                     "Trash the top 2 cards of the stack")])
                                     :async true
-                                    :effect (req (if (= target "Trash top 2 of Stack")
-                                                   (do (system-msg state :runner "trashes the top 2 cards of their Stack")
-                                                       (mill state :runner eid :runner 2))
-                                                   (continue-ability state :runner trash-program-sub card nil)))}
+                                    :effect (req (if (= target "Trash 1 program")
+                                                   (continue-ability state :runner trash-program-sub card nil)
+                                                   (do (system-msg state :runner "trashes the top 2 cards of the stack")
+                                                       (mill state :runner eid :runner 2))))}
                                    card nil)))}]})
 
 (defcard "Bloom"
@@ -1263,12 +1263,12 @@
                             (continue-ability
                               :runner
                               (let [n (min 2 (count (:hand runner)))]
-                                {:prompt (str "Choose " (quantify n "card") " in your Grip to add to the top of the Stack (second card targeted will be topmost)")
+                                {:prompt (str "Choose " (quantify n "card") " in the grip to add to the top of the stack (second card targeted will be topmost)")
                                  :choices {:max n
                                            :all true
                                            :card #(and (in-hand? %)
                                                        (runner? %))}
-                                 :msg (msg "add " (quantify n "card") " from their Grip to the top of the Stack")
+                                 :msg (msg "add " (quantify n "card") " from the grip to the top of the stack")
                                  :effect (req (doseq [c targets]
                                                 (move state :runner c :deck {:front true})))})
                               card nil))}
@@ -2695,21 +2695,21 @@
    :static-abilities [(ice-strength-bonus (req (protecting-hq? card)) 3)]})
 
 (defcard "Metamorph"
-  {:subroutines [{:label "Swap two pieces of ice or swap two installed non-ice"
-                  :msg "swap two pieces of ice or swap two installed non-ice"
+  {:subroutines [{:label "Swap 2 pieces of ice or swap 2 installed non-ice"
+                  :msg "swap 2 pieces of ice or swap 2 installed non-ice"
                   :async true
                   :prompt "Choose one"
                   :waiting-prompt true
                   :req (req (or (<= 2 (count (filter ice? (all-installed state :corp))))
                                 (<= 2 (count (remove ice? (all-installed state :corp))))))
                   :choices (req [(when (<= 2 (count (filter ice? (all-installed state :corp))))
-                                   "Swap two pieces of ice")
+                                   "Swap 2 pieces of ice")
                                  (when (<= 2 (count (remove ice? (all-installed state :corp))))
-                                   "Swap two non-ice")])
+                                   "Swap 2 non-ice")])
                   :effect (effect
                             (continue-ability
-                              (if (= target "Swap two pieces of ice")
-                                {:prompt "Choose the two pieces of ice to swap"
+                              (if (= target "Swap 2 pieces of ice")
+                                {:prompt "Choose 2 pieces of ice to swap"
                                  :choices {:card #(and (installed? %)
                                                        (ice? %))
                                            :not-self true
@@ -2768,7 +2768,7 @@
                           :waiting-prompt true
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                           :msg (msg "redirect the run to " target
-                                    " and for the remainder of the run, the runner must add 1 installed card to the bottom of their stack as an additional cost to jack out")
+                                    " and for the remainder of the run, the runner must add 1 installed card to the bottom of the stack as an additional cost to jack out")
                           :effect (req (let [can-redirect? (and (:run @state)
                                                                 (= 1 (count (:encounters @state)))
                                                                 (not= :success (:phase (:run @state))))]
@@ -4093,14 +4093,14 @@
 
 (defcard "Weir"
   {:subroutines [runner-loses-click
-                 {:label "Runner trashes 1 card from their Grip"
+                 {:label "Runner trashes 1 card from the grip"
                   :req (req (pos? (count (:hand runner))))
-                  :prompt "Choose a card to trash from your Grip"
+                  :prompt "Choose a card to trash"
                   :player :runner
                   :choices (req (:hand runner))
                   :not-distinct true
                   :async true
-                  :effect (effect (system-msg :runner (str "trashes " (:title target) " from their Grip"))
+                  :effect (effect (system-msg :runner (str "trashes " (:title target) " from the grip"))
                                   (trash :runner eid target {:cause :subroutine}))}]})
 
 (defcard "Wendigo"

@@ -5504,7 +5504,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Djinn")
       (card-ability state :runner (get-program state 0) 1)
-      (is (= "Choose a non-Icebreaker program in your grip" (:msg (prompt-map :runner))))
+      (is (= "Choose a non-Icebreaker program" (:msg (prompt-map :runner))))
       (click-card state :runner "Customized Secretary")
       (is (= "Choose a program to host" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Parasite")

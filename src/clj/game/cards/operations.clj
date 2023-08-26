@@ -1261,12 +1261,12 @@
   {:events [{:event :runner-install
              :req (req (first-event? state side :runner-install))
              :player :runner
-             :prompt "Choose a card from your grip to trash"
+             :prompt "Choose a card to trash"
              :choices {:card #(and (runner? %)
                                    (in-hand? %))}
              :async true
              :msg (msg "force the Runner to trash"
-                       (:title target) " from their grip")
+                       (:title target) " from the grip")
              :effect (effect (trash :runner eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))}]})
 
 (defcard "Hunter Seeker"
@@ -2747,7 +2747,7 @@
 
 (defcard "Sunset"
   (letfn [(sun [serv]
-            {:prompt "Choose two pieces of ice to swap"
+            {:prompt "Choose 2 pieces of ice to swap"
              :choices {:card #(and (= serv (get-zone %))
                                    (ice? %))
                        :max 2}

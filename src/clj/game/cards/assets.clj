@@ -2604,10 +2604,10 @@
                :effect (effect (gain-credits :corp eid 1))}]}))
 
 (defcard "Tenma Line"
-  {:abilities [{:label "Swap 2 pieces of installed ice"
+  {:abilities [{:label "Swap 2 installed pieces of ice"
                 :cost [:click]
                 :keep-menu-open :while-clicks-left
-                :prompt "Choose two pieces of ice to swap positions"
+                :prompt "Choose 2 pieces of ice to swap positions"
                 :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
                 :choices {:card #(and (installed? %)
                                       (ice? %))

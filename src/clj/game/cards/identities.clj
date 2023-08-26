@@ -313,7 +313,7 @@
 (defcard "Arissana Rocha Nahu: Street Artist"
   {:abilities [{:req (req (and run (not-used-once? state {:once :per-turn} card)))
                 :async true
-                :label "Install a program from your grip"
+                :label "Install a program from the grip"
                 :effect
                 (effect
                   (continue-ability
@@ -363,12 +363,12 @@
                               card nil)))}]})
 
 (defcard "Ayla \"Bios\" Rahim: Simulant Specialist"
-  {:abilities [{:label "Add 1 hosted card to your grip"
+  {:abilities [{:label "Add 1 hosted card to the grip"
                 :cost [:click 1]
                 :async true
                 :prompt "Choose a hosted card"
                 :choices (req (cancellable (:hosted card)))
-                :msg "move a hosted card to their Grip"
+                :msg "add a hosted card to the grip"
                 :effect (effect (move target :hand)
                                 (effect-completed eid))}]
    :events [{:event :pre-start-game
@@ -831,15 +831,15 @@
                              card-type (:type itarget)]
                          (if (some #(is-type? % (:type itarget)) (:hand runner))
                            {:optional
-                            {:prompt (str "Install another " card-type " from your Grip?")
+                            {:prompt (str "Install another " card-type " from the grip?")
                              :yes-ability
-                             {:prompt (str "Choose another " card-type " to install from your Grip")
+                             {:prompt (str "Choose a " card-type " to install")
                               :choices {:card #(and (is-type? % card-type)
                                                     (in-hand? %))}
                               :msg (msg "install " (:title target))
                               :async true
                               :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}}}
-                           {:prompt (str "You have no " card-type "s in hand")
+                           {:prompt (str "You have no " card-type " in hand")
                             :choices ["Carry on!"]
                             :prompt-type :bogus}))
                        card nil))}]})
@@ -1078,7 +1078,7 @@
              :effect (effect (gain-credits :corp eid 1))}]})
 
 (defcard "Kabonesa Wu: Netspace Thrillseeker"
-  {:abilities [{:label "Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
+  {:abilities [{:label "Install a non-virus program from the stack, lowering the cost by 1 [Credit]"
                 :cost [:click 1]
                 :prompt "Choose a program"
                 :choices (req (cancellable
@@ -1138,14 +1138,14 @@
                                            (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                      [:credit (install-cost state side % {:cost-bonus -1})]))
                                      (:hand runner))
-                           {:prompt "Choose an icebreaker to install from your Grip"
+                           {:prompt "Choose an icebreaker to install"
                             :choices
                             {:req (req (and (in-hand? target)
                                             (has-subtype? target "Icebreaker")
                                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                       [:credit (install-cost state side target {:cost-bonus -1})])))}
                             :async true
-                            :msg (msg "install " (:title target) ", lowering the cost by 1 [Credits]")
+                            :msg (msg "install " (:title target) " from the grip, lowering the cost by 1 [Credits]")
                             :effect (effect (runner-install eid target {:cost-bonus -1}))})
                          card nil))}]})
 
@@ -1219,8 +1219,8 @@
 (defcard "MaxX: Maximum Punk Rock"
   (let [ability {:msg (msg (let [deck (:deck runner)]
                              (if (pos? (count deck))
-                               (str "trash " (enumerate-str (map :title (take 2 deck))) " from their Stack and draw 1 card")
-                               "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
+                               (str "trash " (enumerate-str (map :title (take 2 deck))) " from the stack and draw 1 card")
+                               "trash the top 2 cards from the stack and draw 1 card - but the stack is empty")))
                  :label "trash and draw cards"
                  :once :per-turn
                  :async true
@@ -1522,13 +1522,13 @@
   {:events [{:event :encounter-ice
              :optional
              {:req (req (pos? (count (:hand runner))))
-              :prompt "Trash a card in your grip to lower the strength of encountered ice by 2?"
+              :prompt "Trash a card in the grip to lower the strength of encountered ice by 2?"
               :once :per-turn
               :yes-ability
-              {:prompt "Choose a card in your grip to trash"
+              {:prompt "Choose a card to trash"
                :choices {:card in-hand?}
                :msg (msg "trash " (:title target)
-                         " and lower the strength of " (:title current-ice)
+                         " from the grip to lower the strength of " (:title current-ice)
                          " by 2 for the remainder of the run")
                :async true
                :effect (effect (register-lingering-effect
@@ -1892,12 +1892,12 @@
                              (first-successful-run-on-server? state :hq)
                              (<= 2 (count (:discard runner)))
                              (not (zone-locked? state :runner :discard))))
-              :prompt "Choose 2 cards in your heap?"
+              :prompt "Choose 2 cards in the heap?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:interactive (req true)
                :async true
-               :prompt "Choose 2 cards in your heap"
+               :prompt "Choose 2 cards in the heap"
                :show-discard true
                :choices {:max 2
                          :all true
@@ -1914,7 +1914,7 @@
                             :msg (msg (let [[chosen other](if (= target c1)
                                                             [c1 c2]
                                                             [c2 c1])]
-                                        (str "add " (:title other) " to their grip."
+                                        (str "add " (:title other) " from the heap to the grip."
                                              " Corp removes " (:title chosen) " from the game")))
                             :effect (req (let [[chosen other] (if (= target c1)
                                                                 [c1 c2]
@@ -1973,8 +1973,8 @@
    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                     (has-most-faction? state :corp "Jinteki")
                                     (<= 2 (count (filter ice? (all-installed state :corp))))))}
-   :abilities [{:prompt "Choose two pieces of installed ice to swap"
-                :label "swap two pieces of installed ice"
+   :abilities [{:prompt "Choose 2 installed pieces of ice to swap"
+                :label "swap 2 installed pieces of ice"
                 :choices {:card #(and (installed? %)
                                       (ice? %))
                           :max 2
@@ -2139,7 +2139,7 @@
                             (corp? (:card target))
                             (pos? (count (:discard runner)))
                             (not (zone-locked? state :runner :discard))))
-             :msg (msg "shuffle " (:title (last (:discard runner))) " into their Stack")
+             :msg (msg "shuffle " (:title (last (:discard runner))) " into the stack")
              :effect (effect (move :runner (last (:discard runner)) :deck)
                              (shuffle! :runner :deck)
                              (trigger-event :searched-stack nil))}]})

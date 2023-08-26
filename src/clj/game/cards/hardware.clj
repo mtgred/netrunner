@@ -236,28 +236,28 @@
                               (rez state :corp eid target))))}]})
 
 (defcard "Bookmark"
-  {:abilities [{:label "Host up to 3 cards from your Grip facedown"
+  {:abilities [{:label "Host up to 3 cards from the grip facedown"
                 :cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :msg "host up to 3 cards from their Grip facedown"
+                :msg "host up to 3 cards from the grip facedown"
                 :choices {:max 3
                           :card #(and (runner? %)
                                       (in-hand? %))}
                 :effect (req (doseq [c targets]
                                (host state side (get-card state card) c {:facedown true})))}
-               {:label "Add all hosted cards to Grip"
+               {:label "Add all hosted cards to the grip"
                 :cost [:click 1]
-                :msg "add all hosted cards to their Grip"
+                :msg "add all hosted cards to the grip"
                 :effect (req (doseq [c (:hosted card)]
                                (move state side c :hand)))}
-               {:label "Add all hosted cards to Grip"
+               {:label "Add all hosted cards to the grip"
                 :trash-icon true
                 :effect (req (doseq [c (:hosted card)]
                                (move state side c :hand))
                              (continue-ability
                                state side
                                {:cost [:trash-can]
-                                :msg "add all hosted cards to their Grip"}
+                                :msg "add all hosted cards to the grip"}
                                (get-card state card) nil))}]})
 
 (defcard "Boomerang"
@@ -359,7 +359,7 @@
                 :label "trash and install cards"
                 :cost [:click 1]
                 :async true
-                :prompt "Choose any number of cards to trash from your grip"
+                :prompt "Choose any number of cards to trash from the grip"
                 :choices {:max (req (count (:hand runner)))
                           :card #(and (runner? %)
                                       (in-hand? %))}
@@ -436,8 +436,8 @@
      :abilities [ability]}))
 
 (defcard "Clone Chip"
-  {:abilities [{:prompt "Choose a program to install from your Heap"
-                :label "install card from heap"
+  {:abilities [{:prompt "Choose a program to install"
+                :label "Install program from the heap"
                 :show-discard true
                 :req (req (and (not (zone-locked? state :runner :discard))
                                (not (install-locked? state side))
@@ -461,9 +461,9 @@
                                       (str "can play another event without spending a [Click] by clicking on Comet"))
                           (update! state side (assoc card :comet-event true)))}]
    :abilities [{:async true
-                :label "play an event in hand twice"
+                :label "Play an event in the grip twice"
                 :req (req (:comet-event card))
-                :prompt "Choose an Event in your Grip to play"
+                :prompt "Choose an event to play"
                 :choices {:card #(and (event? %)
                                       (in-hand? %))}
                 :msg (msg "play " (:title target))
@@ -1198,7 +1198,7 @@
    :events [{:event :agenda-scored
              :player :runner
              :prompt "Choose a card"
-             :msg "add 1 card to their Grip from their Stack"
+             :msg "add 1 card from the stack to the grip"
              :choices (req (cancellable (:deck runner)))
              :effect (effect (trigger-event :searched-stack nil)
                              (shuffle! :deck)
@@ -1762,7 +1762,7 @@
                                   :prompt "How much damage do you want to prevent?"
                                   :choices {:number (req (min n (count (:deck runner))))}
                                   :msg (msg "trash " (enumerate-str (map :title (take target (:deck runner))))
-                                            " from their Stack and prevent " target " damage")
+                                            " from the stack and prevent " target " damage")
                                   :cost [:trash-can]
                                   :effect (effect (damage-prevent :net target)
                                                   (damage-prevent :brain target)
@@ -1812,10 +1812,10 @@
                :interactive (req (hardware-and-in-deck? (:card context) runner))
                :silent (req (not (hardware-and-in-deck? (:card context) runner)))
                :optional
-               {:prompt (msg "Search the stack for another copy of " (:title (:card context)) " and add it to your grip?")
+               {:prompt (msg "Search the stack for another copy of " (:title (:card context)) " and add it to the grip?")
                 :req (req (hardware-and-in-deck? (:card context) runner))
                 :yes-ability
-                {:msg (msg "add a copy of " (:title (:card context)) " to their grip")
+                {:msg (msg "add a copy of " (:title (:card context)) " from the stack to the grip")
                  :effect (effect (trigger-event :searched-stack nil)
                            (shuffle! :deck)
                            (move (some #(when (= (:title %) (:title (:card context))) %) (:deck runner)) :hand))}}}]}))
@@ -1931,7 +1931,7 @@
 
 (defcard "Severnius Stim Implant"
   (letfn [(implant-fn [srv kw]
-            {:prompt "Choose at least 2 cards in your Grip to trash"
+            {:prompt "Choose at least 2 cards to trash"
              :cost [:click 1]
              :choices {:max (req (count (:hand runner)))
                        :card #(and (runner? %)
@@ -2104,8 +2104,8 @@
 (defcard "Spy Camera"
   {:abilities [{:cost [:click 1]
                 :async true
-                :label "Look at the top X cards of your Stack"
-                :msg "look at the top X cards of their Stack and rearrange them"
+                :label "Look at the top X cards of the stack"
+                :msg "look at the top X cards of the stack and rearrange them"
                 :waiting-prompt true
                 :effect (req (let [n (count (filter #(= (:title %) (:title card))
                                                     (all-active-installed state :runner)))
@@ -2370,7 +2370,7 @@
 (defcard "Window"
   {:abilities [{:cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :msg "draw 1 card from the bottom of their Stack"
+                :msg "draw 1 card from the bottom of the stack"
                 :effect (effect (move (last (:deck runner)) :hand))}]})
 
 (defcard "Zamba"
