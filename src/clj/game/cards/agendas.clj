@@ -293,7 +293,8 @@
                                       (if (seq remaining)
                                         (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
                                         (do (system-msg state :corp
-                                                        (str "uses Bacterial Programming to add " (quantify (count to-hq) "card")
+                                                        (str "uses " (:title card)
+                                                             " to add " (quantify (count to-hq) "card")
                                                              " to HQ, discard " (count to-trash)
                                                              ", and arrange the top cards of R&D"))
                                             (effect-completed state :corp eid))))
@@ -314,7 +315,7 @@
           {:interactive (req true)
            :optional
            {:waiting-prompt true
-            :prompt "Arrange the top 7 cards of R&D?"
+            :prompt "Look at the top 7 cards of R&D?"
             :yes-ability
             {:async true
              :effect (req (let [c (take 7 (:deck corp))]
