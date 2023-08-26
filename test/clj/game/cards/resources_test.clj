@@ -1332,7 +1332,7 @@
       (play-from-hand state :runner "Corroder")
       (is (last-n-log-contains? state 3 "Runner spends \\[Click\\] and pays 0 \\[Credits\\] to install Dadiana Chacon."))
       (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to suffer 3 meat damage."))
-      (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, Corroder due to meat damage."))
+      (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, and Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder."))))
 
 (deftest daeg-first-net-cat

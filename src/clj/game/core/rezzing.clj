@@ -1,6 +1,5 @@
 (ns game.core.rezzing
   (:require
-    [clojure.string :as string]
     [game.core.card :refer [asset? condition-counter? get-card ice? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
@@ -18,7 +17,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [to-keyword]]))
+    [game.utils :refer [enumerate-str to-keyword]]))
 
 (defn get-rez-cost
   [state side card {:keys [ignore-cost alternative-cost cost-bonus]}]
@@ -41,7 +40,7 @@
       (effect-completed state side eid)
       (wait-for (trash-cards state side hosted-cards {:unpreventable true :game-trash true})
                 (when (pos? (count hosted-cards))
-                  (system-msg state side (str "trashes " (string/join ", " (map #(card-str state %) hosted-cards))
+                  (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) hosted-cards))
                                               " because " (:title card)
                                               " cannot host cards")))
                 (effect-completed state side eid)))))
