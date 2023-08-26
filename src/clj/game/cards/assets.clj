@@ -271,8 +271,8 @@
                                    :choices {:number (req (get-counters card :advancement))}
                                    :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
                                                    (add-prop :corp card :advance-counter (- target) {:placed true})
-                                                   (system-msg (str "uses Anson Rose to move "
-                                                                    (quantify target "advancement token")
+                                                   (system-msg (str "uses " (:title card) " to move "
+                                                                    (quantify target "advancement counter")
                                                                     " to " (card-str state ice))))}}}
                                 card nil)))}]
      :abilities [ability]}))
@@ -290,7 +290,7 @@
                   :async true
                   :effect (req (let [cnt (get-counters target :advancement)]
                                  (set-prop state side target :advance-counter (dec cnt))
-                                 (system-msg state :corp (str "uses API-S Keeper Isobel to remove an advancement token from "
+                                 (system-msg state :corp (str "uses " (:title card) " to remove 1 advancement counter from "
                                                               (card-str state target) " and gains 3 [Credits]"))
                                  (gain-credits state :corp eid 3)))}]}))
 
@@ -424,8 +424,9 @@
   {:flags {:rd-reveal (req true)}
    :on-access {:async true
                :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                              (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
-                                                           " from the top of the Runner's Stack"))
+                              (system-msg state :corp (str "uses " (:title card) " to do 1 meat damage"
+                                                           " and to trash " (:title c)
+                                                           " from the top of the stack"))
                               (wait-for (mill state :corp :runner 1)
                                         (damage state side eid :meat 1 {:card card}))))}})
 
@@ -742,7 +743,7 @@
                                            :all true}
                                  :effect (req (doseq [c (reverse targets)]
                                                 (system-msg state side
-                                                            (str "uses Daily Business Show to add the "
+                                                            (str "uses " (:title card) " to add the "
                                                                  (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
                                                                  " card drawn to the bottom of R&D"))
                                                 (move state side c :deck)
@@ -919,7 +920,7 @@
                 :async true
                 :effect (req (let [counters (get-counters card :power)
                                    credits (* 2 counters)]
-                               (system-msg state side (str "uses Estelle Moon to draw " (quantify counters "card")
+                               (system-msg state side (str "uses " (:title card) " to draw " (quantify counters "card")
                                                            " and gain " credits " [Credits]"))
                                (wait-for (draw state side counters)
                                          (gain-credits state side eid credits))))}]})
@@ -2739,7 +2740,7 @@
              :effect (req (add-counter state side card :power -1)
                           (if (not (pos? (get-counters (get-card state card) :power)))
                             (wait-for (trash state side card {:cause-card card})
-                                      (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
+                                      (system-msg state :corp (str "uses " (:title card) " to do 4 meat damage"))
                                       (damage state side eid :meat 4 {:card card}))
                             (effect-completed state side eid)))}]})
 

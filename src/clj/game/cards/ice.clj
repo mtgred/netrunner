@@ -645,7 +645,7 @@
   {:subroutines [{:async true
                   :label "Trash the top 3 cards of the stack"
                   :effect (req (system-msg state :corp
-                                           (str "uses Aimor to trash "
+                                           (str "uses " (:title card) " to trash "
                                                 (enumerate-str (map :title (take 3 (:deck runner))))
                                                 " from the top of the stack and trash itself"))
                                (wait-for (mill state :corp :runner 3)
@@ -2036,10 +2036,10 @@
                                      (wait-for
                                        (resolve-ability state side (hort 1) card nil)
                                        (do (system-msg state side
-                                                       (str "uses Hortum to add 2 cards to HQ from R&D, "
+                                                       (str "uses " (:title card) " to add 2 cards to HQ from R&D, "
                                                             "shuffle R&D, and end the run"))
                                            (end-run state side eid card)))
-                                     (do (system-msg state side (str "uses Hortum to end the run"))
+                                     (do (system-msg state side (str "uses " (:title card) " to end the run"))
                                          (end-run state side eid card))))}]})))
 
 (defcard "Hourglass"
@@ -2441,7 +2441,7 @@
                       :duration :end-of-run
                       :req (req (same-card? card target))
                       :value (:subtypes target)})
-                   (system-msg state :corp (str "uses Loki to choose " (card-str state target)))
+                   (system-msg state :corp (str "uses " (:title card) " to choose " (card-str state target)))
                    (doseq [sub (:subroutines target)]
                      (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
                    (register-events
@@ -2841,7 +2841,7 @@
              :async true
              :effect (req (if (= target (str "Take " net-dmg " net damage"))
                             (do (system-msg state :corp
-                                            (str "uses Mlinzi to do "
+                                            (str "uses " (:title card) " to do "
                                                  net-dmg " net damage"))
                                 (damage state :runner eid :net net-dmg {:card card}))
                             (wait-for (pay state :runner (make-eid state eid) card [:trash-from-deck mill-cnt])
@@ -3489,7 +3489,7 @@
                                                   (= 3 (count (first (get-effects state :corp et card)))))
                                              (and (= unique-types 1)
                                                   (= 2 (count (first (get-effects state :corp et card))))))
-                                     (do (system-msg state :corp (str "uses Slot Machine to gain 3 [Credits]"))
+                                     (do (system-msg state :corp (str "uses " (:title card) " to gain 3 [Credits]"))
                                          (gain-credits state :corp eid 3))
                                      (effect-completed state side eid))))}
                    {:label "Place 3 advancement tokens"

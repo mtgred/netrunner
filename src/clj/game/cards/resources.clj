@@ -2933,7 +2933,7 @@
                                 (system-msg state side "takes 1 core damage from Stim Dealer"))
                             (do (add-counter state side card :power 1)
                                 (gain-clicks state side 1)
-                                (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})
+                                (system-msg state side (str "uses " (:title card) " to gain [Click]")))))}]})
 
 (defcard "Stoneship Chart Room"
   {:abilities [{:label "Draw 2 cards"
@@ -3206,7 +3206,7 @@
                                    :all true}
                          :effect
                          (req (system-msg state side
-                                          (str "uses The Class Act to add the "
+                                          (str "uses " (:title card) " to add the "
                                                (pprint/cl-format nil "~:R"
                                                                  (inc (first (keep-indexed #(when (same-card? target %2) %1) cards))))
                                                " card on the top of the stack to the bottom"))
@@ -3685,7 +3685,7 @@
              :effect (req (lose-clicks state side 1)
                           (if (get-in @state [:per-turn (:cid card)])
                             (effect-completed state side eid)
-                            (do (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
+                            (do (system-msg state side (str "uses " (:title card) " to draw 2 cards and lose [Click]"))
                                 (draw state side eid 2))))}]
    :abilities [{:msg "draw 2 cards and lose [Click]"
                 :once :per-turn

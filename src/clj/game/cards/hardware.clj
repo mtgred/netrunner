@@ -339,7 +339,7 @@
          :effect (req (if (= "No action" target)
                         (effect-completed state side eid)
                         (do (system-msg state side
-                                        (str "uses Buffer Drive to add " target
+                                        (str "uses " (:title card) " to add " target
                                              " to the bottom of the stack"))
                             (move state side (find-card target (:discard (:runner @state))) :deck)
                             (effect-completed state side eid))))}]
@@ -1229,8 +1229,9 @@
                :effect (req (let [target (some #(when (pred %) (:card %)) targets)
                                   cost (trash-cost state side target)]
                               (when cost
-                                (system-msg state side (str "uses Mâché to place " cost
-                                                            " power counters on itself"))
+                                (system-msg state side (str "uses " (:title card) " to place "
+                                                            (quantify cost "power counter")
+                                                            " on itself"))
                                 (add-counter state side card :power cost))))}]}))
 
 (defcard "Marrow"

@@ -810,10 +810,10 @@
              :req (req (same-card? (:ice context) (:host card)))
              :async true
              :effect (req (if (pos? (ice-strength state side (:ice context)))
-                            (do (system-msg state side "uses Chisel to place 1 virus counter on itself")
+                            (do (system-msg state side (str "uses " (:title card) " to place 1 virus counter on itself"))
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
-                            (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
+                            (do (system-msg state side (str "uses " (:title card) " to trash " (card-str state (:ice context))))
                                 (trash state side eid (:ice context) {:cause-card card}))))}]})
 
 (defcard "Cat's Cradle"
@@ -3005,7 +3005,7 @@
                                    (>= (get-virus-counters state card) 5)
                                    (not (and (card-flag? h :untrashable-while-rezzed true)
                                              (rezzed? h))))
-                            (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
+                            (do (system-msg state :runner (str "uses " (:title card) " to trash " (card-str state h)))
                                 (unregister-events state side card)
                                 (trash state :runner eid h {:cause-card card}))
                             (effect-completed state side eid))))]

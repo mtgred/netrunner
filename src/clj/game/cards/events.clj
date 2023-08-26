@@ -295,7 +295,7 @@
                                       (str "looks at the top 2 cards of the stack"
                                            (when-not (string? target)
                                              " and adds one to the bottom of the stack")))
-                          (system-msg state side "uses Blueberry!™ Diesel to draw 2 cards")
+                          (system-msg state side (str "uses " (:title card) " to draw 2 cards"))
                           (draw state :runner eid 2))}})
 
 (defcard "Bravado"
@@ -743,7 +743,7 @@
                                                :async true
                                                :effect (effect (trash eid (assoc c :seen true) {:cause-card card}))}}}
                                 card nil)
-                              (do (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
+                              (do (system-msg state side (str "uses " (:title card) " to trash " title " at no cost"))
                                   (trash state side eid (assoc c :seen true) nil)))))}]})
 
 (defcard "Credit Kiting"
@@ -1112,7 +1112,7 @@
                            (if-let [target async-result]
                              (if (or (asset? target)
                                      (upgrade? target))
-                               (do (system-msg state :runner (str "uses Drive By to trash " (:title target)))
+                               (do (system-msg state :runner (str "uses " (:title card) " to trash " (:title target)))
                                    (trash state :runner eid (assoc target :seen true) {:cause-card card}))
                                (effect-completed state side eid))
                              (effect-completed state side eid))))}})
@@ -1152,7 +1152,7 @@
                                    cards-to-trash (filter #(is-type? % target) cards-to-reveal)
                                    credits (* 4 (count cards-to-trash))]
                                (system-msg state side
-                                           (str "uses Embezzle to reveal "
+                                           (str "uses " (:title card) " to reveal "
                                                 (enumerate-str (map :title cards-to-reveal))
                                                 " from HQ"))
                                (wait-for
@@ -1160,7 +1160,7 @@
                                  (if (pos? credits)
                                    (do (system-msg
                                          state side
-                                         (str " uses Embezzle to trash "
+                                         (str "uses " (:title card) " to trash "
                                               (enumerate-str (map :title cards-to-trash))
                                               " from HQ and gain "
                                               credits " [Credits]"))
@@ -2196,7 +2196,7 @@
                               (doseq [ice diff]
                                 (derez state :runner ice))
                               (when-not (empty? diff)
-                                (system-msg state :runner (str "uses Leave No Trace to derez " (enumerate-str (map :title diff)))))))}]}))
+                                (system-msg state :runner (str "uses " (:title card) " to derez " (enumerate-str (map :title diff)))))))}]}))
 
 (defcard "Legwork"
   {:makes-run true
@@ -2864,7 +2864,7 @@
                         (install-cards state side eid card (rest to-install) titles))
               (do
                 (move state side (find-latest state card) :rfg)
-                (system-msg state :runner (str "uses Reboot to install " (enumerate-str titles) " facedown"))
+                (system-msg state :runner (str "uses " (:title card) " to install " (enumerate-str titles) " facedown"))
                 (effect-completed state side eid))))]
     {:makes-run true
      :on-play {:rfg-instead-of-trashing true

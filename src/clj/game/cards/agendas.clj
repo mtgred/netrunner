@@ -399,10 +399,10 @@
                        (let [from (take target (shuffle (:hand runner)))]
                          (doseq [c from]
                            (move state :runner c :deck))
-                         (system-msg state side (str "uses Brain Rewiring to pay " target
+                         (system-msg state side (str "uses " (:title card) " to pay " target
                                                      " [Credits] and add " (quantify target "card")
-                                                     " from the Runner's Grip"
-                                                     " to the bottom of their Stack."
+                                                     " from the grip"
+                                                     " to the bottom of the stack."
                                                      " The Runner draws 1 card"))
                          (draw state :runner eid 1)))
                      (effect-completed state side eid)))}}}})
@@ -1018,8 +1018,8 @@
 (defcard "Improved Tracers"
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
-                     (system-msg state side "uses Improved Tracers to increase the strength of Tracer ice by 1")
-                     (system-msg state side "uses Improved Tracers to increase the base strength of all trace subroutines by 1")
+                     (system-msg state side (str "uses " (:title card) " to increase the strength of Tracer ice by 1"))
+                     (system-msg state side (str "uses " (:title card) " to increase the base strength of all trace subroutines by 1"))
                      (update-all-ice state side)))
    :static-abilities [{:type :ice-strength
                        :req (req (has-subtype? target "Tracer"))
@@ -1132,7 +1132,7 @@
 (defcard "Mandatory Upgrades"
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
-                     (system-msg state side "uses Mandatory Upgrades to gain an addition [Click] per turn")
+                     (system-msg state side (str "uses " (:title card) " to gain 1 addition [Click] per turn"))
                      (when (= :corp (:active-player @state))
                        (gain-clicks state :corp 1))
                      (gain state :corp :click-per-turn 1)))
@@ -1200,7 +1200,7 @@
   (let [nq {:async true
             :effect (req (let [extra (int (/ (:runner-spent target) 2))]
                            (if (pos? extra)
-                             (do (system-msg state :corp (str "uses Net Quarantine to gain " extra " [Credits]"))
+                             (do (system-msg state :corp (str "uses " (:title card) " to gain " extra " [Credits]"))
                                  (gain-credits state side eid extra))
                              (effect-completed state side eid))))}]
     {:static-abilities [{:type :trace-force-link
@@ -1314,8 +1314,9 @@
   (let [pp {:req (req (pos? (count (:hand runner))))
             :async true
             :effect (req (let [c (first (shuffle (:hand runner)))]
-                           (system-msg state side (str "uses Personality Profiles to force the Runner to trash "
-                                                       (:title c) " from their Grip at random"))
+                           (system-msg state side (str "uses " (:title card) " to force the Runner"
+                                                       " to trash " (:title c)
+                                                       " from the grip at random"))
                            (trash state side eid c {:cause-card card})))}]
     {:events [(assoc pp :event :searched-stack)
               (assoc pp
@@ -1448,7 +1449,7 @@
    :move-zone (req (when (and (in-scored? card)
                               (= :runner (:scored-side card))
                               (not= (first (:previous-zone card)) :discard))
-                     (system-msg state side "uses Project Vacheron to host 4 agenda counters on Project Vacheron")
+                     (system-msg state side (str "uses " (:title card) " to place 4 agenda counters on itself"))
                      (add-counter state side (get-card state card) :agenda 4)))
    :events [{:event :runner-turn-begins
              :req (req (pos? (get-counters card :agenda)))
@@ -1560,7 +1561,7 @@
 (defcard "Rebranding Team"
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
-                     (system-msg state side "uses Rebranding Team to make all assets gain Advertisement")))
+                     (system-msg state side (str "uses " (:title card) " to make all assets gain Advertisement"))))
    :static-abilities [{:type :gain-subtype
                        :req (req (asset? target))
                        :value "Advertisement"}]})
@@ -1644,7 +1645,7 @@
 (defcard "Remote Data Farm"
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
-                     (system-msg state side "uses Remote Data Farm to increase their maximum hand size by 2")))
+                     (system-msg state side (str "uses " (:title card) " to increase their maximum hand size by 2"))))
    :static-abilities [(corp-hand-size+ 2)]})
 
 (defcard "Remote Enforcement"
@@ -1726,7 +1727,8 @@
 (defcard "Self-Destruct Chips"
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
-                     (system-msg state side "uses Self-Destruct Chips to decrease the Runner's maximum hand size by 1")))
+                     (system-msg state side (str "uses " (:title card)
+                                                 " to decrease the Runner's maximum hand size by 1"))))
    :static-abilities [(runner-hand-size+ -1)]})
 
 (defcard "Send a Message"

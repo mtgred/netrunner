@@ -413,7 +413,7 @@
              :prompt "Name a Runner card type"
              :choices ["Event" "Resource" "Program" "Hardware" "None"]
              :effect (effect (update! (assoc card :card-target (if (= "None" target) nil target)))
-                             (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
+                             (system-msg (str "uses " (:title card) " to name " target)))}
             {:event :runner-install
              :req (req (and (:card-target card)
                             (is-type? (:card context) (:card-target card))
@@ -565,7 +565,7 @@
                                   (swap! state assoc-in [:run :did-trash] true))
                                 (swap! state assoc-in [:runner :register :trashed-card] true)
                                 (system-msg state :runner
-                                            (str "uses Edward Kim: Humanity's Hammer to"
+                                            (str "uses " (:title card) " to"
                                                  " trash " (:title target)
                                                  " at no cost"))
                                 (trash state side eid target nil))))}]})
@@ -670,7 +670,7 @@
                       (wait-for (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
                                 (if-let [msg (:msg async-result)]
                                   (do (system-msg state :runner
-                                                  (str "uses Freedom Khumalo: Crypto-Anarchist to"
+                                                  (str "uses " (:title card) " to"
                                                        " trash " (:title accessed-card)
                                                        " at no cost, spending " msg))
                                       (trash state side eid (assoc accessed-card :seen true) {:accessed true}))
@@ -889,7 +889,7 @@
                :async true
                :effect (req (wait-for (draw state :runner 1)
                                       (wait-for (lose-credits state :runner (make-eid state eid) 1)
-                                                (system-msg state :runner "uses Hoshiko Shiro: Mahou Shoujo to draw 1 card and lose 1 [Credits]")
+                                                (system-msg state :runner (str "uses " (:title card) " to draw 1 card and lose 1 [Credits]"))
                                                 (effect-completed state side eid))))}]
      :abilities [{:label "flip identity"
                   :msg "flip their identity manually"
@@ -1024,16 +1024,16 @@
                                (update! state side (assoc (get-card state card) :biotech-used true))
                                (case flip
                                  "The Brewery"
-                                 (do (system-msg state side "uses The Brewery to do 2 net damage")
+                                 (do (system-msg state side (str "uses " flip " to do 2 net damage"))
                                      (update! state side (assoc card :code "brewery" :face :brewery))
                                      (damage state side eid :net 2 {:card card}))
                                  "The Tank"
-                                 (do (system-msg state side "uses The Tank to shuffle Archives into R&D")
+                                 (do (system-msg state side (str "uses " flip " to shuffle Archives into R&D"))
                                      (shuffle-into-deck state side :discard)
                                      (update! state side (assoc card :code "tank" :face :tank))
                                      (effect-completed state side eid))
                                  "The Greenhouse"
-                                 (do (system-msg state side (str "uses The Greenhouse to place 4 advancement tokens "
+                                 (do (system-msg state side (str "uses " flip " to place 4 advancement counters "
                                                                  "on a card that can be advanced"))
                                      (update! state side (assoc card :code "greenhouse" :face :greenhouse))
                                      (continue-ability
@@ -1061,8 +1061,8 @@
                             (= target :net)
                             (pos? (last targets))))
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                            (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
-                                                         " from the top of the Runner's Stack"))
+                            (system-msg state :corp (str "uses " (:title card) " to trash " (:title c)
+                                                         " from the top of the stack"))
                             (mill state :corp eid :runner 1)))}]})
 
 (defcard "Jinteki: Replicating Perfection"
