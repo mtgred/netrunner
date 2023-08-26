@@ -721,7 +721,7 @@
       (click-prompt state :runner "Steal")
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
-      (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
+      (is (-> (get-runner) :discard count zero?) "heap should be empty")
       (click-prompt state :corp "Sure Gamble")
       (is (not (no-prompt? state :corp)) "Corp guessed right so should have another choice")
       (click-prompt state :corp "Sure Gamble")
@@ -731,7 +731,7 @@
       (is (not (no-prompt? state :corp)) "Even when the runner has no cards in hand, Corp must choose again")
       (click-prompt state :corp "Sure Gamble")
       (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
-      (is (= 5 (-> (get-runner) :discard count)) "Runner's heap should have 5 cards")))
+      (is (= 5 (-> (get-runner) :discard count)) "heap should have 5 cards")))
 
 (deftest complete-image-incorrectly-guessing
     ;; Incorrectly guessing
@@ -745,10 +745,10 @@
       (click-prompt state :runner "Steal")
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
-      (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
+      (is (-> (get-runner) :discard count zero?) "heap should be empty")
       (click-prompt state :corp "Easy Mark")
       (is (no-prompt? state :corp) "Corp guessed incorrectly so shouldn't have another choice")
-      (is (= 1 (-> (get-runner) :discard count)) "Runner's heap should have 1 card")))
+      (is (= 1 (-> (get-runner) :discard count)) "heap should have 1 card")))
 
 (deftest complete-image-not-enough-agenda-points
     ;; Not enough agenda points
@@ -793,7 +793,7 @@
       (click-prompt state :runner "Steal")
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
-      (is (-> (get-runner) :discard count zero?) "Runner's heap should be empty")
+      (is (-> (get-runner) :discard count zero?) "heap should be empty")
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (is (not (no-prompt? state :corp)) "Corp guessed right so should have another choice")
       (click-prompt state :corp "Yes") ;; Chronos Protocol
@@ -805,7 +805,7 @@
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
-      (is (= 5 (-> (get-runner) :discard count)) "Runner's heap should have 5 cards")))
+      (is (= 5 (-> (get-runner) :discard count)) "heap should have 5 cards")))
 
 (deftest consulting-visit
   ;; Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation
@@ -1718,7 +1718,7 @@
       (play-from-hand state :corp "Focus Group")
       (is (= 5 (:credit (get-corp))))
       (click-prompt state :corp "Hardware")
-      (is (no-prompt? state :corp) "No hardware in Runner's Grip so just end the interaction")
+      (is (no-prompt? state :corp) "No hardware in the grip so just end the interaction")
       (is (= 5 (:credit (get-corp))))))
 
 (deftest focus-group-can-t-afford-to-pay-to-place-advancement-tokens-gracefully-end
@@ -2110,7 +2110,7 @@
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (take-credits state :runner)
-      (is (zero? (-> (get-runner) :discard count)) "Runner's heap should be empty")
+      (is (zero? (-> (get-runner) :discard count)) "heap should be empty")
       (play-from-hand state :corp "Hellion Beta Test")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
@@ -4243,7 +4243,7 @@
     (click-prompt state :runner "0")
     (click-card state :corp (get-resource state 0))
     (click-prompt state :runner "No")
-    (is (= 1 (-> (get-runner) :discard count)) "Scrubber should be in Runner's heap after losing Snatch and Grab trace")))
+    (is (= 1 (-> (get-runner) :discard count)) "Scrubber should be in heap after losing Snatch and Grab trace")))
 
 (deftest special-report
   ;; NGO Front

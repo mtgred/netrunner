@@ -387,7 +387,7 @@
   {:on-score
    {:optional
     {:waiting-prompt true
-     :prompt "Pay credits to add random cards from Runner's Grip to the bottom of their Stack?"
+     :prompt "Pay credits to add random cards from the grip to the bottom of the stack?"
      :yes-ability
      {:prompt "How many credits do you want to pay?"
       :choices {:number (req (min (:credit corp)
@@ -471,7 +471,7 @@
 (defcard "Chronos Project"
   {:on-score
    {:req (req (not (zone-locked? state :runner :discard)))
-    :msg "remove all cards in the Runner's Heap from the game"
+    :msg "remove all cards in the heap from the game"
     :interactive (req true)
     :effect (effect (move-zone :runner :discard :rfg))}})
 

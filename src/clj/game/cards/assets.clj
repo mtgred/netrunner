@@ -234,8 +234,8 @@
                                               :successful
                                               {:choices {:card #(and (installed? %)
                                                                      (runner? %))}
-                                               :label "add an installed card to the Grip"
-                                               :msg (msg "add " (:title target) " to the Runner's Grip")
+                                               :label "add 1 installed card to the grip"
+                                               :msg (msg "add " (:title target) " to the grip")
                                                :effect (effect (move :runner target :hand))}}}}})]
     {:events [{:event :agenda-scored
                :interactive (req true)
@@ -1321,14 +1321,14 @@
 (defcard "Kala Ghoda Real TV"
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
-   :abilities [{:msg "look at the top card of the Runner's Stack"
+   :abilities [{:msg "look at the top card of the stack"
                 :effect (effect (continue-ability
-                                  {:prompt (req (->> runner :deck first :title (str "The top card of the Runner's Stack is ")))
+                                  {:prompt (req (->> runner :deck first :title (str "The top card of the stack is ")))
                                    :choices ["OK"]}
                                   card nil))}
                {:async true
-                :label "Trash the top card of the Runner's Stack"
-                :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
+                :label "Trash the top card of the stack"
+                :msg (msg "trash " (:title (first (:deck runner))) " from the stack")
                 :cost [:trash-can]
                 :effect (effect (mill :corp eid :runner 1))}]})
 

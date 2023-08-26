@@ -828,10 +828,10 @@
     (click-prompt state :corp "Keep")
     (click-prompt state :runner "Keep")
     (take-credits state :corp)
-    (is (= 2 (count (get-in @state [:runner :hand]))) "There are 2 cards in the runner's Grip")
+    (is (= 2 (count (get-in @state [:runner :hand]))) "There are 2 cards in the grip")
     (card-ability state :runner (:identity (get-runner)) 0)
     (click-prompt state :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
-    (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the runner's Grip")))
+    (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the grip")))
 
 (deftest az-mccaffrey-mechanical-prodigy
   ;; Az McCaffrey: Mechanical Prodigy

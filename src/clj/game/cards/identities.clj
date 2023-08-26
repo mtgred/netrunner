@@ -486,12 +486,12 @@
               :prompt "Choose the first card to trash?"
               :yes-ability
               {:async true
-               :msg (msg "look at the Runner's Grip ( "
+               :msg (msg "look at the grip ( "
                          (enumerate-str (map :title (sort-by :title (:hand runner))))
                          " ) and choose the card that is trashed")
                :effect
                (effect (continue-ability
-                         {:prompt "Choose a card to trash"
+                         {:prompt "Choose 1 card to trash"
                           :choices (req (:hand runner))
                           :not-distinct true
                           :msg (msg "choose " (:title target) " to trash")

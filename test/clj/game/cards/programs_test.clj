@@ -2596,7 +2596,7 @@
             -1 (:credit (get-runner))
             "Break costs 1"
             (card-ability state :runner echelon 0)
-            (click-prompt state :runner "Add installed program to the top of the Runner's Stack"))
+            (click-prompt state :runner "Add installed program to the top of the stack"))
           (is (no-prompt? state :runner) "Only breaks 1 sub at a time"))))
     (testing "Gains str per icebreaker"
       (do-game state

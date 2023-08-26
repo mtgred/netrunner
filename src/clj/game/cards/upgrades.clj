@@ -1828,7 +1828,7 @@
               :yes-ability {:async true
                             :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
                             :choices {:card #(has-subtype? % "Icebreaker")}
-                            :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                            :msg (msg "add " (:title target) " to the bottom of the stack")
                             :effect (req (wait-for (trash state side card {:cause-card card})
                                                    (move state :runner target :deck)
                                                    (effect-completed state side eid)))}}}]})

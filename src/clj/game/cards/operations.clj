@@ -1194,7 +1194,7 @@
             {:choices {:card #(and (installed? %)
                                    (runner? %)
                                    (not (has-subtype? % "Virtual")))}
-             :msg "add an installed non-virtual card to the Runner's Grip"
+             :msg "add 1 installed non-virtual card to the grip"
              :effect (effect (move :runner target :hand true))}}}})
 
 (defcard "Hedge Fund"
@@ -2465,7 +2465,7 @@
     :choices {:card #(and (installed? %)
                           (runner? %))
               :max 2}
-    :msg (msg (str "move " (enumerate-str (map :title targets)) " to the Runner's Grip"))
+    :msg (msg (str "move " (enumerate-str (map :title targets)) " to the grip"))
     :effect (req (doseq [c targets]
                    (move state :runner c :hand)))}})
 

@@ -306,10 +306,10 @@
    :prompt "Choose a card"
    :choices {:card #(and (installed? %)
                          (runner? %))}
-   :msg "add 1 installed card to the Runner's Grip"
+   :msg "add 1 installed card to the grip"
    :effect (effect (move :runner target :hand true)
                    (system-msg (str "adds " (:title target)
-                                    " to the Runner's Grip")))})
+                                    " to the grip")))})
 
 (def trash-program-sub
   {:prompt "Choose a program to trash"
@@ -1061,7 +1061,7 @@
                   :async true
                   :effect (req (wait-for (gain-credits state :runner 2)
                                          (gain-credits state :corp eid 2)))}
-                 (do-psi {:label "Do 1 net damage for each card in the Runner's grip"
+                 (do-psi {:label "Do 1 net damage for each card in the grip"
                           :msg (msg "do " (count (get-in @state [:runner :hand])) " net damage")
                           :effect (effect (damage eid :net (count (get-in @state [:runner :hand])) {:card card}))})]})
 
@@ -3097,10 +3097,10 @@
 (defcard "Owl"
   {:subroutines [{:choices {:card #(and (installed? %)
                                         (program? %))}
-                  :label "Add installed program to the top of the Runner's Stack"
-                  :msg "add an installed program to the top of the Runner's Stack"
+                  :label "Add installed program to the top of the stack"
+                  :msg "add 1 installed program to the top of the stack"
                   :effect (effect (move :runner target :deck {:front true})
-                                  (system-msg (str "adds " (:title target) " to the top of the Runner's Stack")))}]})
+                                  (system-msg (str "adds " (:title target) " to the top of the stack")))}]})
 
 (defcard "Pachinko"
   {:subroutines [end-the-run-if-tagged
@@ -3399,8 +3399,8 @@
 (defcard "Sherlock 1.0"
   (let [sub (trace-ability 4 {:choices {:card #(and (installed? %)
                                                     (program? %))}
-                              :label "Add an installed program to the top of the Runner's Stack"
-                              :msg (msg "add " (:title target) " to the top of the Runner's Stack")
+                              :label "Add 1 installed program to the top of the stack"
+                              :msg (msg "add " (:title target) " to the top of the stack")
                               :effect (effect (move :runner target :deck {:front true}))})]
     {:subroutines [sub
                    sub]
@@ -3409,8 +3409,8 @@
 (defcard "Sherlock 2.0"
   (let [sub (trace-ability 4 {:choices {:card #(and (installed? %)
                                                     (program? %))}
-                              :label "Add an installed program to the bottom of the Runner's Stack"
-                              :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                              :label "Add 1 installed program to the bottom of the stack"
+                              :msg (msg "add " (:title target) " to the bottom of the stack")
                               :effect (effect (move :runner target :deck))})]
     {:subroutines [sub
                    sub
