@@ -753,7 +753,7 @@
 
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
-             :msg (msg "reveal " (:title target))
+             :msg (msg "force the Corp to reveal that they drew " (:title target))
              :async true
              :effect (effect (reveal eid target))}]})
 
@@ -1253,7 +1253,7 @@
              :silent (req true)
              :async true
              :effect (req (let [target (first (shuffle (:hand corp)))]
-                            (system-msg state :runner (str "uses Enhanced Vision to force the Corp to reveal " (:title target)))
+                            (system-msg state :runner (str "uses " (:title card) " to force the Corp to reveal " (:title target) " from HQ"))
                             (reveal state :corp eid target)))
              :req (req (genetics-trigger? state side :successful-run))}]})
 
@@ -1384,7 +1384,7 @@
 (defcard "Find the Truth"
   {:implementation "Corporation can click Find the Truth for explicit card reveals"
    :events [{:event :post-runner-draw
-             :msg (msg "reveal that they drew: "
+             :msg (msg "reveal that they drew "
                        (enumerate-str (map :title runner-currently-drawing)))
              :async true
              :effect (req (let [current-draws runner-currently-drawing]
@@ -1686,7 +1686,7 @@
                                (wait-for
                                  (reveal state :corp (make-eid state eid) targets)
                                  (system-msg state side
-                                             (str "uses Investigator Inez Delgado to reveal " cards " from " target))
+                                             (str "uses " (:title card) " to reveal " cards " from " target))
                                  (effect-completed state side eid))))}]})
 
 (defcard "Jackpot!"
@@ -1862,7 +1862,7 @@
     {:abilities [{:cost [:click 1]
                   :keep-menu-open :while-clicks-left
                   :label "Reveal the top 4 cards of the stack"
-                  :msg (msg "reveal from the top of the stack: " (enumerate-str (map :title (take 4 (:deck runner)))))
+                  :msg (msg "reveal " (enumerate-str (map :title (take 4 (:deck runner)))) " from the top of the stack")
                   :async true
                   :effect (req (let [from (take 4 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -2302,7 +2302,8 @@
                 :async true
                 :effect (req (let [c (first (get-in @state [:runner :deck]))]
                                (system-msg state side (str "uses " (:title card) " to name " target
-                                                           " and reveal " (:title c)))
+                                                           " and reveal " (:title c)
+                                                           " from the top of the stack"))
                                (wait-for
                                  (reveal state side c)
                                  (if (is-type? c target)
@@ -3651,7 +3652,7 @@
    :implementation "[Erratum] Should be unique"})
 
 (defcard "Woman in the Red Dress"
-  (let [ability {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
+  (let [ability {:msg (msg "reveal " (:title (first (:deck corp))) " from the top of R&D")
                  :label "Reveal the top card of R&D (start of turn)"
                  :once :per-turn
                  :req (req (:runner-phase-12 @state))

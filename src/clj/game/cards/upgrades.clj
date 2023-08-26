@@ -232,7 +232,7 @@
    :abilities [{:cost [:click 1]
                 :req (req (pos? (count (:deck corp))))
                 :async true
-                :msg (msg (str "reveal " (enumerate-str (map :title (take 3 (:deck corp)))) " from R&D"))
+                :msg (msg (str "reveal " (enumerate-str (map :title (take 3 (:deck corp)))) " from the top of R&D"))
                 :label "Add 1 card from top 3 of R&D to HQ"
                 :waiting-prompt true
                 :effect (req
@@ -244,7 +244,7 @@
                                :async true
                                :choices (take 3 (:deck corp))
                                :not-distinct true
-                               :msg "secretly add card to HQ"
+                               :msg "add 1 of the revealed cards to HQ"
                                :effect (effect (move target :hand)
                                                (continue-ability
                                                  (let [from (take 2 (get-in @state [:corp :deck]))]
@@ -998,7 +998,7 @@
               {:prompt "Choose a card"
                :choices (req (cancellable (filter #(not (agenda? %)) (:deck corp))
                                           :sorted))
-               :msg (msg "reveal " (:title target) " and add it to HQ")
+               :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
                :async true
                :effect (req (wait-for
                               (reveal state side target)
@@ -1243,6 +1243,7 @@
                                    (in-discard? %)
                                    (not (:seen %)))}
              :async true
+             :msg (msg "reveal " (:title target) " from Archives")
              :effect
              (req (wait-for (reveal state side target)
                             (update! state side (assoc target :seen true))
@@ -1633,7 +1634,7 @@
                :choices {:req (req (and (in-hand? target)
                                         (ice? target)
                                         (same-card? :title current-ice target)))}
-               :msg (msg "trash a copy of " (:title target) " from HQ and force the Runner to encounter it again")
+               :msg (msg "reveal a copy of " (:title target) " from HQ, trash it and force the Runner to encounter it again")
                :effect (req (wait-for
                               (reveal state side target)
                               (wait-for (trash state side (make-eid state eid) (assoc target :seen true) {:cause-card card})

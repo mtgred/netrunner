@@ -1450,8 +1450,7 @@
 (defcard "Engram Flush"
   (let [sub {:async true
              :label "Reveal the grip"
-             :msg (msg "reveal " (quantify (count (:hand runner)) "card")
-                       " from grip: " (enumerate-str (map :title (:hand runner))))
+             :msg (msg "reveal " (enumerate-str (map :title (:hand runner))) " from the grip")
              :effect (effect (reveal eid (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
@@ -1746,7 +1745,7 @@
                             :cancel-effect (effect (shuffle! :deck)
                                                    (effect-completed eid))
                             :msg (msg
-                                   "shuffle "
+                                   "reveal "
                                    (enumerate-str
                                      (filter identity
                                              [(when-let [h (->> targets
@@ -1761,7 +1760,7 @@
                                                                 not-empty)]
                                                 (str (enumerate-str d)
                                                      " from Archives"))]))
-                                   " into R&D")}
+                                   " and shuffle them into R&D")}
         draw-reveal-shuffle {:async true
                              :label "Draw cards, reveal and shuffle agendas"
                              :effect (req (wait-for (resolve-ability state side draw-ab card nil)
@@ -2477,8 +2476,9 @@
     {:subroutines [(end-the-run-unless-runner-pays [:credit 2])
                    {:label "Reveal the top 3 cards of the Stack"
                     :async true
-                    :effect (req (system-msg state side (str "uses Loot Box to reveal the top 3 cards of the stack: "
-                                                             (enumerate-str (top-3-names state))))
+                    :effect (req (system-msg state side (str "uses " (:title card) " to reveal "
+                                                             (enumerate-str (top-3-names state))
+                                                             " from the top of the stack"))
                               (wait-for
                                 (reveal state side (top-3 state))
                                 (continue-ability
@@ -3128,9 +3128,9 @@
                     :async true
                     :effect (req (let [n (count (filter #(is-type? % target) (:hand runner)))]
                                    (system-msg state side
-                                               (str "uses Peeping Tom to name " target ", then reveals "
+                                               (str "uses " (:title card) " to name " target ", reveal "
                                                     (enumerate-str (map :title (:hand runner)))
-                                                    " in the Runner's Grip. Peeping Tom gains " n " subroutines"))
+                                                    " from the grip, and gain " (quantify n "subroutine")))
                                    (wait-for
                                      (reveal state side (:hand runner))
                                      (gain-variable-subs state side card n sub)
@@ -3468,9 +3468,10 @@
                                :duration :end-of-encounter
                                :value t3})
                             (system-msg state side
-                                        (str "uses Slot Machine to put the top card of the stack to the bottom,"
-                                             " then reveal the top 3 cards in the stack: "
-                                             (enumerate-str (top-3-names t3))))
+                                        (str "uses " (:title card) " to put the top card of the stack to the bottom,"
+                                             " then reveal "
+                                             (enumerate-str (top-3-names t3))
+                                             " from the top of the stack"))
                             (reveal state side eid t3)))})]
     {:on-encounter (ability)
      :abilities [(ability)]
@@ -3507,17 +3508,16 @@
                                 card nil))}]}))
 
 (defcard "Snoop"
-  {:on-encounter {:msg (msg "reveal the Runner's Grip ("
+  {:on-encounter {:msg (msg "reveal "
                             (enumerate-str (map :title (:hand runner)))
-                            ")")
+                            " from the grip")
                   :async true
                   :effect (effect (reveal eid (:hand runner)))}
    :abilities [{:async true
                 :req (req (pos? (get-counters card :power)))
                 :cost [:power 1]
-                :label "Reveal all cards in Grip and trash 1 card"
-                :msg (msg "look at all cards in Grip and trash " (:title target)
-                          " using 1 power counter")
+                :label "Reveal all cards in the grip and trash 1 card"
+                :msg (msg "reveal all cards in the grip and trash " (:title target))
                 :choices (req (cancellable (:hand runner) :sorted))
                 :prompt "Choose a card to trash"
                 :effect (effect (reveal (:hand runner))
@@ -4043,7 +4043,9 @@
 (defcard "Waiver"
   {:subroutines [(trace-ability
                    5 {:label "Reveal the grip and trash cards"
-                      :msg (msg "reveal all cards in the grip: " (enumerate-str (map :title (:hand runner))))
+                      :msg (msg "reveal "
+                                (enumerate-str (map :title (:hand runner)))
+                                " from the grip")
                       :async true
                       :effect (req (wait-for
                                      (reveal state side (:hand runner))
@@ -4075,9 +4077,9 @@
                :req (req (and run this-server))
                :yes-ability {:prompt "Choose a piece of ice"
                              :async true
-                             :msg (msg "reveal they added " (:title target) " to HQ from R&D")
+                             :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
                              :choices (req (cancellable (filter #(ice? %) (:deck corp)) :sorted))
-                             :cancel-effect (effect (system-msg "uses Wave to shuffle R&D")
+                             :cancel-effect (effect (system-msg (str "uses " (:title card) " to shuffle R&D"))
                                                     (shuffle! :deck))
                              :effect (req (wait-for (reveal state side target)
                                                     (shuffle! state side :deck)

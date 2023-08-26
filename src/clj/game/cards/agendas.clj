@@ -778,7 +778,7 @@
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 5))}
    :abilities [{:cost [:agenda 1]
-                :label "reveal and draw"
+                :label "Reveal the top card of R&D and draw 2 cards"
                 :once :per-turn
                 :msg (msg "reveal " (:title (first (:deck corp))) " and draw 2 cards")
                 :async true
