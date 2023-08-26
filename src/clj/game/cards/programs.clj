@@ -53,13 +53,13 @@
                            update-current-encounter]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
-   [game.core.sabotage :refer [sabotage-ability]]
    [game.core.servers :refer [is-central? is-remote? protecting-same-server?
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.threat :refer [threat threat-level]]
+   [game.core.trace :refer [force-base]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [get-virus-counters]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
@@ -1225,7 +1225,7 @@
 
 (defcard "Disrupter"
   {:events
-   [{:event :pre-init-trace
+   [{:event :initialize-trace
      :trash-icon true
      :optional
      {:player :runner
@@ -1233,7 +1233,7 @@
       :prompt "Trash Disrupter to reduce the base trace strength to 0?"
       :yes-ability
       {:cost [:trash-can]
-       :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]})
+       :effect (req (force-base state 0))}}}]})
 
 (defcard "Diwan"
   {:on-install {:prompt "Choose a server"
@@ -2514,13 +2514,11 @@
                 :effect (effect (host card target)
                                 (unregister-effects-for-card target #(= :used-mu (:type %)))
                                 (update-mu))}]
-   :events [{:event :pre-purge
-             :effect (req (when-let [c (first (:hosted card))]
-                            (update! state side (assoc-in card [:special :numpurged] (get-counters c :virus)))))}
-            {:event :purge
-             :req (req (pos? (get-in card [:special :numpurged] 0)))
-             :effect (req (when-let [c (first (:hosted card))]
-                            (add-counter state side c :virus 1)))}]})
+   :static-abilities
+   [{:type :prevent-purge-virus-counters
+     :req (req (pos? (get-counters (first (:hosted card)) :virus)))
+     :value (req {:card (first (:hosted card))
+                  :quantity 1})}]})
 
 (defcard "Propeller"
   (auto-icebreaker {:data {:counter {:power 4}}

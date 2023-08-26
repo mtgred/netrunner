@@ -4,7 +4,7 @@
     [game.core.board :refer [all-active]]
     [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [card-ability-cost trash-cost]]
+    [game.core.cost-fns :refer [card-ability-cost trash-cost steal-cost]]
     [game.core.effects :refer [any-effects register-static-abilities register-lingering-effect sum-effects unregister-lingering-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [ability-as-handler can-trigger? checkpoint register-pending-event pay queue-event register-default-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
@@ -166,14 +166,6 @@
   ([state _ costs source]
     (swap! state update-in [:bonus :steal-cost] #(conj % [costs source]))))
 
-(defn steal-cost
-  "Gets a vector of costs and their sources for stealing the given agenda."
-  [state side card]
-  (-> (when-let [costfun (:steal-cost-bonus (card-def card))]
-        [[(costfun state side (make-eid state) card nil) {:source card :source-type :ability}]])
-      (concat (get-in @state [:bonus :steal-cost]))
-      vec))
-
 (defn steal
   "Moves a card to the runner's :scored area, triggering events from the completion of the steal."
   [state side eid card]
@@ -211,9 +203,8 @@
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid card]
-  (trigger-event state side :pre-steal-cost card)
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
-  (let [additional-costs (steal-cost state side card)
+  (let [additional-costs (steal-cost state side eid card)
         cost (merge-costs (mapv first additional-costs))
         cost-strs (build-cost-string cost)
         can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)

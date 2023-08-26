@@ -2556,7 +2556,7 @@
                     card nil))}]})
 
 (defcard "Power Tap"
-  {:events [{:event :pre-init-trace
+  {:events [{:event :initialize-trace
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}]})
@@ -3301,15 +3301,16 @@
 
 (defcard "The Source"
   {:static-abilities [{:type :advancement-requirement
-                       :value 1}]
+                       :value 1}
+                      {:type :steal-additional-cost
+                       :value (req [[:credit 3]
+                                    {:source card :source-type :ability}])}]
    :events [{:event :agenda-scored
              :async true
              :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}
             {:event :agenda-stolen
              :async true
-             :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}
-            {:event :pre-steal-cost
-             :effect (effect (steal-cost-bonus [:credit 3] {:source card :source-type :ability}))}]})
+             :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}]})
 
 (defcard "The Supplier"
   (let [ability {:label "Install a hosted card (start of turn)"

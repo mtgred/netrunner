@@ -553,7 +553,8 @@
 (defcard "Cyberdex Trial"
   {:on-play
    {:msg "purge virus counters"
-    :effect (effect (purge))}})
+    :async true
+    :effect (effect (purge eid))}})
 
 (defcard "Death and Taxes"
   {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
@@ -1692,9 +1693,10 @@
 
 (defcard "NAPD Cordon"
   (lockdown
-   {:events [{:event :pre-steal-cost
-              :effect (req (let [counter (get-counters target :advancement)]
-                             (steal-cost-bonus state side [:credit (+ 4 (* 2 counter))] {:source card :source-type :ability})))}]}))
+    {:static-abilities
+     [{:type :steal-additional-cost
+       :value (req [[:credit (+ 4 (* 2 (get-counters target :advancement)))]
+                    {:source card :source-type :ability}])}]}))
 
 (defcard "Neural EMP"
   {:on-play
@@ -1925,8 +1927,8 @@
                       card nil))}})
 
 (defcard "Predictive Algorithm"
-  {:events [{:event :pre-steal-cost
-             :effect (effect (steal-cost-bonus [:credit 2] {:source card :source-type :ability}))}]})
+  {:static-abilities [{:type :steal-additional-cost
+                       :value (req [[:credit 2] {:source card :source-type :ability}])}]})
 
 (defcard "Predictive Planogram"
   {:on-play
@@ -2278,18 +2280,19 @@
                              (system-msg state side "uses Reverse Infection to gain 2 [Credits]")
                              (effect-completed state side eid))
                    (let [pre-purge-virus (number-of-virus-counters state)]
-                     (purge state side)
-                     (let [post-purge-virus (number-of-virus-counters state)
-                           num-virus-purged (- pre-purge-virus post-purge-virus)
-                           num-to-trash (quot num-virus-purged 3)]
-                       (wait-for (mill state :corp :runner num-to-trash)
-                                 (system-msg state side
-                                             (str "uses Reverse Infection to purge "
-                                                  (quantify num-virus-purged "virus counter")
-                                                  " and trash "
-                                                  (quantify num-to-trash "card")
-                                                  " from the top of the stack"))
-                                 (effect-completed state side eid))))))}})
+                     (wait-for
+                       (purge state side)
+                       (let [post-purge-virus (number-of-virus-counters state)
+                             num-virus-purged (- pre-purge-virus post-purge-virus)
+                             num-to-trash (quot num-virus-purged 3)]
+                         (wait-for (mill state :corp :runner num-to-trash)
+                                   (system-msg state side
+                                               (str "uses Reverse Infection to purge "
+                                                    (quantify num-virus-purged "virus counter")
+                                                    " and trash "
+                                                    (quantify num-to-trash "card")
+                                                    " from the top of the stack"))
+                                   (effect-completed state side eid)))))))}})
 
 (defcard "Rework"
   {:on-play
@@ -2764,9 +2767,10 @@
                      (continue-ability state side (sun serv) card nil)))}}))
 
 (defcard "Surveillance Sweep"
-  {:events [{:event :pre-init-trace
-             :req (req run)
-             :effect (req (swap! state assoc-in [:trace :player] :runner))}]})
+  {:static-abilities
+   [{:type :trace-runner-spends-first
+     :req (req run)
+     :value true}]})
 
 (defcard "Sweeps Week"
   {:on-play

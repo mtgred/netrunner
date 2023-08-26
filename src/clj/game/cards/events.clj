@@ -2659,9 +2659,10 @@
                                                           (:discard runner))))))}})
 
 (defcard "Power to the People"
-  {:events [{:event :pre-steal-cost
+  {:events [{:event :access
              :duration :end-of-turn
              :once :per-turn
+             :unregister-once-resolved true
              :msg "gain 7 [Credits]"
              :async true
              :effect (effect (gain-credits eid 7))}]})

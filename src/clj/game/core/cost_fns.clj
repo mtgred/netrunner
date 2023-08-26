@@ -152,3 +152,11 @@
     (if (some #(= (cost-name %) :credit) costs)
       (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement] %) costs)
       (map #(if (= (cost-name %) :x-credits) [:x-credits nil stealth-requirement] %) costs))))
+
+(defn steal-cost
+  "Gets a vector of costs and their sources for stealing the given agenda."
+  [state side eid card]
+  (-> (when-let [costfun (:steal-cost-bonus (card-def card))]
+        [[(costfun state side eid card nil) {:source card :source-type :ability}]])
+      (concat (get-effects state side :steal-additional-cost card))
+      vec))

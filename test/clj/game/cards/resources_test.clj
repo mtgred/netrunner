@@ -2018,7 +2018,7 @@
       (play-from-hand state :runner "Dummy Box")
       (play-from-hand state :runner "Clot")
       (take-credits state :runner)
-      (core/purge state :corp)
+      (purge state :corp)
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent purge trash")))
 
 (deftest dummy-box-don-t-prevent-trashing-from-hand
@@ -2337,9 +2337,9 @@
     (core/lose state :corp :credit 5)
     (core/gain state :corp :click 3)
     (is (= 3 (:credit (get-corp))))
-    (core/purge state :corp)
+    (purge state :corp)
     (is (= 1 (:credit (get-corp))) "Lost 2c when purging")
-    (core/purge state :corp)
+    (purge state :corp)
     (is (= 1 (:credit (get-corp))) "Lost no credits when purging, only had 1c")))
 
 (deftest film-critic-prevent-corp-trashed-execs-going-to-runner-scored-issues-1181-1042
@@ -6285,7 +6285,7 @@
        (is (no-prompt? state :runner) "Runner done waiting for Corp to pick their Nihilist poison")
        (is (no-prompt? state :corp) "Corp has no more prompts")
        (take-credits state :runner)
-       (core/purge state :corp)
+       (purge state :corp)
        (take-credits state :corp)
        (is (not (no-prompt? state :runner)) "Runner gets a prompt cuz we don't know what they have"))))
 
@@ -6327,7 +6327,7 @@
       (let [sandstone (get-ice state :hq 0)
             nihilist (get-resource state 0)]
         (rez state :corp sandstone)
-        (core/purge state :corp)
+        (purge state :corp)
         (core/add-counter state :corp sandstone :virus 2)
         (is (= 0 (get-counters (refresh nihilist) :virus)) "The Nihilist has 0 virus counters")
         (is (= 2 (get-counters (refresh sandstone) :virus)) "Sandstone has 2 virus counters")

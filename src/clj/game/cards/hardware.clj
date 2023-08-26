@@ -70,18 +70,14 @@
 ;; Card definitions
 
 (defcard "Acacia"
-  {:events [{:event :pre-purge
-             :effect (req (let [counters (number-of-virus-counters state)]
-                            (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}
-            {:event :purge
+  {:events [{:event :purge
              :optional
              {:player :runner
               :waiting-prompt true
-              :prompt "Trash Acacia to gain 1 [Credits] for each virus counter been removed?"
+              :prompt "Trash Acacia to gain 1 [Credits] for each purged virus counter?"
               :yes-ability
               {:async true
-               :effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
-                                              (number-of-virus-counters state))]
+               :effect (req (let [counters (:total-purged-counters context)]
                               (wait-for (trash state side card {:cause-card card})
                                         (system-msg state side (str "trashes Acacia and gains " counters " [Credit]"))
                                         (gain-credits state side eid counters))))}}}]})
@@ -818,7 +814,7 @@
                                   :type :custom}}}))
 
 (defcard "Flip Switch"
-  {:events [{:event :pre-init-trace
+  {:events [{:event :initialize-trace
              :optional
              {:req (req (= :runner (:active-player @state)))
               :waiting-prompt true

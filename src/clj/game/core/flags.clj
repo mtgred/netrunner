@@ -233,10 +233,10 @@
 
 (defn can-steal?
   "Checks if the runner can steal agendas"
-  [state side card]
-  (and (not (any-effects state side :cannot-steal true? card))
-       (check-flag-types? state side card :can-steal [:current-turn :current-run])
-       (check-flag-types? state side card :can-steal [:current-turn :persistent])))
+  [state side agenda]
+  (and (not (any-effects state side :cannot-steal true? agenda))
+       (check-flag-types? state side agenda :can-steal [:current-turn :current-run])
+       (check-flag-types? state side agenda :can-steal [:current-turn :persistent])))
 
 (defn can-trash?
   "Checks if the runner can trash cards"

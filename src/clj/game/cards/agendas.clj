@@ -52,7 +52,6 @@
    [game.core.tags :refer [gain-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
-   [game.core.trace :refer [init-trace-bonus]]
    [game.core.update :refer [update!]]
    [game.core.winning :refer [check-win-by-agenda]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
@@ -588,7 +587,8 @@
   {:on-score {:optional
               {:prompt "Purge virus counters?"
                :yes-ability {:msg "purge virus counters"
-                             :effect (effect (purge))}}}
+                             :async true
+                             :effect (effect (purge eid))}}}
    :events [{:event :purge
              :req (req (first-event? state :corp :purge))
              :once :per-turn
@@ -1022,10 +1022,10 @@
                      (update-all-ice state side)))
    :static-abilities [{:type :ice-strength
                        :req (req (has-subtype? target "Tracer"))
-                       :value 1}]
-   :events [{:event :pre-init-trace
-             :req (req (= :subroutine (:source-type (second targets))))
-             :effect (effect (init-trace-bonus 1))}]})
+                       :value 1}
+                      {:type :trace-base-strength
+                       :req (req (= :subroutine (:source-type (second targets))))
+                       :value 1}]})
 
 (defcard "Jumon"
   {:events
@@ -1202,12 +1202,10 @@
                              (do (system-msg state :corp (str "uses Net Quarantine to gain " extra " [Credits]"))
                                  (gain-credits state side eid extra))
                              (effect-completed state side eid))))}]
-    {:events [{:event :pre-init-trace
-               :once :per-turn
-               :silent (req true)
-               :msg "reduce Runner's base link to zero"
-               :effect (req (swap! state assoc-in [:trace :force-link] 0))}
-              (assoc nq :event :successful-trace)
+    {:static-abilities [{:type :trace-force-link
+                         :req (req (= 1 (count (turn-events state side :initialize-trace))))
+                         :value 0}]
+     :events [(assoc nq :event :successful-trace)
               (assoc nq :event :unsuccessful-trace)]}))
 
 (defcard "New Construction"
@@ -2020,10 +2018,10 @@
               :msg (msg "prevent subroutines on " target " ice from being broken until next turn")}})
 
 (defcard "Utopia Fragment"
-  {:events [{:event :pre-steal-cost
-             :req (req (pos? (get-counters target :advancement)))
-             :effect (req (let [counter (get-counters target :advancement)]
-                            (steal-cost-bonus state side [:credit (* 2 counter)] {:source card :source-type :ability})))}]})
+  {:static-abilities [{:type :steal-additional-cost
+                       :req (req (pos? (get-counters target :advancement)))
+                       :value (req [[:credit (* 2 (get-counters target :advancement))]
+                                    {:source card :source-type :ability}])}]})
 
 (defcard "Vanity Project"
   ;; No special implementation

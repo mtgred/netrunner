@@ -2547,7 +2547,8 @@
 (defcard "Macrophage"
   {:subroutines [(trace-ability 4 {:label  "Purge virus counters"
                                    :msg    "purge virus counters"
-                                   :effect (effect (purge))})
+                                   :async true
+                                   :effect (effect (purge eid))})
                  (trace-ability 3 {:label   "Trash a virus"
                                    :prompt  "Choose a virus to trash"
                                    :choices {:card #(and (installed? %)
