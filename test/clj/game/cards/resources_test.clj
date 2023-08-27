@@ -1332,7 +1332,7 @@
       (play-from-hand state :runner "Corroder")
       (is (last-n-log-contains? state 3 "Runner spends \\[Click\\] and pays 0 \\[Credits\\] to install Dadiana Chacon."))
       (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to suffer 3 meat damage."))
-      (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, Corroder due to meat damage."))
+      (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, and Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder."))))
 
 (deftest daeg-first-net-cat
@@ -3704,7 +3704,7 @@
      (rez state :corp meta)
      (run-continue state)
      (fire-subs state (get-ice state :remote1 0))
-     (click-prompt state :corp "Swap two non-ice")
+     (click-prompt state :corp "Swap 2 non-ice")
      (click-card state :corp "NGO Front")
      (click-card state :corp "Hokusai Grid")
      ;; hokusai is now in server 1, ngo in server 2
@@ -3840,7 +3840,7 @@
       (is (= 2 (:click (get-runner))) "Failed Darwin didn't use a click")
       (is (= 1 (count (:hand (get-runner)))))
       (click-prompt state :runner "Done")
-      (card-ability state :runner lib 1) ; Add a program hosted on London Library to your Grip
+      (card-ability state :runner lib 1) ; Add a program hosted on London Library to the grip
       (click-card state :runner (find-card "Study Guide" (:hosted (refresh lib))))
       (is (= 2 (count (:hand (get-runner)))) "Return Study Guide to hand")
       (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")

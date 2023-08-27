@@ -105,7 +105,7 @@
          :async true
          :effect (req (if (:did-steal context)
                         (do (gain-tags state :corp eid 2)
-                            (system-msg state :corp (str "uses AMAZE Amusements to give the Runner 2 tags")))
+                            (system-msg state :corp (str "uses " (:title card) " to give the Runner 2 tags")))
                         (effect-completed state side eid)))}]
   {:events [ability]
    :on-trash
@@ -1033,7 +1033,7 @@
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [:else
-                             (system-msg state :corp "uses Manegarm Skunkworks to end the run")
+                             (system-msg state :corp (str "uses " (:title card) " to end the run"))
                              (end-run state :corp eid card)]))}]})
 
 (defcard "Manta Grid"
@@ -1463,7 +1463,7 @@
             :async true
             :effect (req (let [spent (str->int target)]
                            (add-counter state :corp card :power spent)
-                           (system-msg state :corp (str "uses Reduced Service to place "
+                           (system-msg state :corp (str "uses " (:title card) " to place "
                                                         (quantify spent "power counter")
                                                         " on itself"))
                            (lose-credits state :corp eid spent)))}})
@@ -1828,7 +1828,7 @@
               :yes-ability {:async true
                             :prompt "Choose an icebreaker used to break at least 1 subroutine during this run"
                             :choices {:card #(has-subtype? % "Icebreaker")}
-                            :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                            :msg (msg "add " (:title target) " to the bottom of the stack")
                             :effect (req (wait-for (trash state side card {:cause-card card})
                                                    (move state :runner target :deck)
                                                    (effect-completed state side eid)))}}}]})

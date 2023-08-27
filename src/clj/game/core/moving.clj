@@ -463,7 +463,7 @@
         (trigger-event state side :swap a-new b-new)))))
 
 (defn swap-ice
-  "Swaps two pieces of ice."
+  "Swaps 2 pieces of ice."
   [state side a b]
   (let [pred? (every-pred corp? installed? ice?)]
     (when (and (pred? a)

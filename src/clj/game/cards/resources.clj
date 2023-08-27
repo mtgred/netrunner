@@ -642,8 +642,8 @@
                 :effect (effect (add-counter card :power 1))}
                {:cost [:click 1]
                 :keep-menu-open :while-clicks-left
-                :label "Install a program from your Grip"
-                :prompt "Choose a program to install from your Grip"
+                :label "Install a program from the grip"
+                :prompt "Choose a program to install"
                 :choices
                 {:async true
                  :req (req (and (program? target)
@@ -651,7 +651,7 @@
                                 (can-pay? state :runner (assoc eid :source card :source-type :runner-install) target nil
                                           [:credit (install-cost state side target
                                                                  {:cost-bonus (- (get-counters card :power))})])))}
-                :msg (msg "install " (:title target))
+                :msg (msg "install " (:title target) " from the grip")
                 :effect (req (wait-for (runner-install state side target {:cost-bonus (- (get-counters card :power))})
                                        (when (pos? (get-counters card :power))
                                          (add-counter state side card :power -1))
@@ -1055,14 +1055,14 @@
             (filter #(same-card? :faction (:identity runner) %)
                     (:discard runner)))]
     {:implementation "Place counters manually for programs or pieces of hardware trashed manually (e.g. by being over MU)"
-     :abilities [{:label "Add a card from your heap to your grip"
+     :abilities [{:label "Add a card from the heap to the grip"
                   :req (req (and (seq (eligible-cards runner))
                                  (not (zone-locked? state :runner :discard))))
                   :cost [:click 1 :power 3]
                   :prompt "Choose a card to add to grip"
                   :choices (req (eligible-cards runner))
                   :effect (effect (move target :hand))
-                  :msg (msg "add " (:title target) " to grip")}
+                  :msg (msg "add " (:title target) " from the heap to the grip")}
                  {:label "Place 1 power counter"
                   :once :per-turn
                   :effect (effect (add-counter card :power 1))
@@ -1622,8 +1622,8 @@
                               :effect (req (wait-for (runner-install state side (first cards) {:facedown true})
                                                      (continue-ability state side (ri (rest cards)) card nil)))}))]
                    {:async true
-                    :label "Install the top 3 cards of your Stack facedown"
-                    :msg "install the top 3 cards of their Stack facedown"
+                    :label "Install the top 3 cards of the stack facedown"
+                    :msg "install the top 3 cards of the stack facedown"
                     :cost [:trash-can]
                     :effect (effect (continue-ability (ri (take 3 (:deck runner))) card nil))})]}))
 
@@ -2056,16 +2056,16 @@
    :events [(trash-on-empty :credit)]})
 
 (defcard "Motivation"
-  (let [ability {:label "Look at the top card of your Stack (start of turn)"
+  (let [ability {:label "Look at the top card of the stack (start of turn)"
                  :req (req (:runner-phase-12 @state))
                  :once :per-turn
                  :optional
                  {:waiting-prompt true
-                  :prompt "Look at the top card of your Stack?"
+                  :prompt "Look at the top card of the stack?"
                   :autoresolve (get-autoresolve :auto-fire)
                   :yes-ability
-                  {:prompt (req (->> runner :deck first :title (str "The top card of your Stack is ")))
-                   :msg "look at the top card of their Stack"
+                  {:prompt (req (->> runner :deck first :title (str "The top card of the stack is ")))
+                   :msg "look at the top card of the stack"
                    :choices ["OK"]}}}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner)))}
@@ -2344,11 +2344,11 @@
 (defcard "Paige Piper"
   (letfn [(pphelper [title cards]
             {:optional
-             {:prompt (str "Search the Stack for additional copies of " title "?")
+             {:prompt (str "Search the stack for additional copies of " title "?")
               :yes-ability
-              {:prompt (str "How many copies of " title " would you like to find?")
+              {:prompt (str "How many copies of " title " would you like to get?")
                :choices (take (inc (count cards)) ["0" "1" "2" "3" "4" "5"])
-               :msg "shuffle their Stack"
+               :msg "shuffle the stack"
                :async true
                :effect (req (let [target (str->int target)]
                               (trigger-event state side :searched-stack nil)
@@ -2356,7 +2356,7 @@
                               (when (pos? target)
                                 (system-msg state side (str "adds "
                                                             (quantify target "cop" "y" "ies")
-                                                            " of " title " to the Heap")))
+                                                            " of " title " to the heap")))
                               (trash-cards state side eid (take target cards) {:unpreventable true :cause-card card})))}}})]
     {:events [{:event :runner-install
                :interactive (req true)
@@ -2604,7 +2604,7 @@
 (defcard "Reclaim"
   {:abilities
    [{:async true
-     :label "Install a program, piece of hardware, or virtual resource from your Heap"
+     :label "Install a program, piece of hardware, or Virtual resource from the heap"
      :req (req (and (not (zone-locked? state :runner :discard))
                     (not (install-locked? state :runner))
                     (not-empty (filter #(and (or (program? %)
@@ -2615,7 +2615,7 @@
                                                        [:credit (install-cost state side %)]))
                                        (:discard runner)))))
      :cost [:click 1 :trash-can :trash-from-hand 1]
-     :msg "install a program, piece of hardware, or virtual resource from the Heap"
+     :msg "install a program, piece of hardware, or Virtual resource from the heap"
      :effect
      (effect
        (continue-ability
@@ -2677,7 +2677,7 @@
 
 (defcard "Rolodex"
   {:on-install {:async true
-                :msg "look at the top 5 cards of their Stack"
+                :msg "look at the top 5 cards of the stack"
                 :waiting-prompt true
                 :effect (effect (continue-ability
                                   (let [from (take 5 (:deck runner))]
@@ -2688,7 +2688,7 @@
               :effect (req (system-msg state :runner
                                        (str "trashes "
                                             (enumerate-str (map :title (take 3 (:deck runner))))
-                                            " from their Stack due to Rolodex being trashed"))
+                                            " from the stack due to " (:title card) " being trashed"))
                            (mill state :runner eid :runner 3))}})
 
 (defcard "Rosetta 2.0"
@@ -2933,7 +2933,7 @@
                                 (system-msg state side "takes 1 core damage from Stim Dealer"))
                             (do (add-counter state side card :power 1)
                                 (gain-clicks state side 1)
-                                (system-msg state side "uses Stim Dealer to gain [Click]"))))}]})
+                                (system-msg state side (str "uses " (:title card) " to gain [Click]")))))}]})
 
 (defcard "Stoneship Chart Room"
   {:abilities [{:label "Draw 2 cards"
@@ -3122,7 +3122,7 @@
                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                 [:credit (install-cost state side % {:cost-bonus -1})]))
                                 (:hand runner)))
-                :prompt "Choose a program or piece of hardware to install from your Grip"
+                :prompt "Choose a program or piece of hardware to install"
                 :choices
                 {:req (req (and (or (hardware? target)
                                     (program? target))
@@ -3135,7 +3135,7 @@
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
                                                 target {:no-msg true
                                                         :cost-bonus -1}))
-                :msg (msg "install " (:title target) ", lowering its cost by 1 [Credits]")}]})
+                :msg (msg "install " (:title target) " from the grip, lowering its cost by 1 [Credits]")}]})
 
 (defcard "The Back"
   {:implementation "Placing power counters is manual"
@@ -3161,7 +3161,7 @@
                                          (in-discard? target)
                                          (has-trash-ability? target)))}
                 :msg (msg "shuffle " (enumerate-str (map :title targets))
-                          " into their Stack")
+                          " into the stack")
                 :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)
                              (effect-completed state side eid))}]})
@@ -3206,7 +3206,7 @@
                                    :all true}
                          :effect
                          (req (system-msg state side
-                                          (str "uses The Class Act to add the "
+                                          (str "uses " (:title card) " to add the "
                                                (pprint/cl-format nil "~:R"
                                                                  (inc (first (keep-indexed #(when (same-card? target %2) %1) cards))))
                                                " card on the top of the stack to the bottom"))
@@ -3294,9 +3294,9 @@
                   :cost [:click 1 :forfeit]
                   :req (req (and (pos? (count (events runner)))
                                  (not (zone-locked? state :runner :discard))))
-                  :label "Play an event from your Heap, ignoring all costs"
+                  :label "Play an event from the heap, ignoring all costs"
                   :prompt "Choose an event to play"
-                  :msg (msg "play " (:title target) " from the Heap, ignoring all costs")
+                  :msg (msg "play " (:title target) " from the heap, ignoring all costs")
                   :choices (req (cancellable (events runner) :sorted))
                   :effect (effect (play-instant eid target {:ignore-cost true}))}]}))
 
@@ -3685,7 +3685,7 @@
              :effect (req (lose-clicks state side 1)
                           (if (get-in @state [:per-turn (:cid card)])
                             (effect-completed state side eid)
-                            (do (system-msg state side "uses Wyldside to draw 2 cards and lose [Click]")
+                            (do (system-msg state side (str "uses " (:title card) " to draw 2 cards and lose [Click]"))
                                 (draw state side eid 2))))}]
    :abilities [{:msg "draw 2 cards and lose [Click]"
                 :once :per-turn

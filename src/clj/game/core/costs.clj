@@ -20,8 +20,7 @@
    [game.core.update :refer [update!]]
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability req wait-for]]
-   [game.utils :refer [quantify same-card?]]
-   [clojure.string :as string]))
+   [game.utils :refer [enumerate-str quantify same-card?]]))
 
 ;; Click
 (defmethod cost-name :click [_] :click)
@@ -272,7 +271,7 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "forfeits " (quantify (value cost) "agenda")
-                                         " (" (string/join ", " (map :title targets)) ")")
+                                         " (" (enumerate-str (map :title targets)) ")")
                                :type :forfeit
                                :value (value cost)
                                :targets targets})))}
@@ -400,7 +399,7 @@
                     state side eid
                     {:msg (str "removes " (quantify (value cost) "installed program")
                                " from the game"
-                               " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                               " (" (enumerate-str (map #(card-str state %) targets)) ")")
                      :type :rfg-program
                      :value (value cost)
                      :targets targets}))}
@@ -432,7 +431,7 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed card")
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
                                :type :trash-other-installed
                                :value (count async-result)
                                :targets targets})))}
@@ -463,7 +462,7 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed card")
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
                                :type :trash-installed
                                :value (count async-result)
                                :targets targets})))}
@@ -492,7 +491,7 @@
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed piece")
                                          " of hardware"
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
                                :type :hardware
                                :value (count async-result)
                                :targets targets})))}
@@ -502,7 +501,7 @@
 (defmethod cost-name :derez-other-harmonic [_] :derez-other-harmonic)
 (defmethod value :derez-other-harmonic [[_ cost-value]] cost-value)
 (defmethod label :derez-other-harmonic [cost]
-  (str "derez " (value cost) " harmonic ice"))
+  (str "derez " (value cost) " Harmonic ice"))
 (defmethod payable? :derez-other-harmonic
   [cost state side eid card]
   (<= 0 (- (count (filter #(and (rezzed? %)
@@ -525,7 +524,7 @@
                   (complete-with-result
                     state side eid
                     {:msg (str "derezzes " (count targets)
-                               " Harmonic ice (" (string/join ", " (map #(card-str state %) targets)) ")")
+                               " Harmonic ice (" (enumerate-str (map #(card-str state %) targets)) ")")
                      :type :derez
                      :value (count targets)
                      :targets targets}))}
@@ -553,7 +552,7 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed program")
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
                                :type :program
                                :value (count async-result)
                                :targets targets})))}
@@ -581,7 +580,7 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed resource")
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
                                :type :resource
                                :value (count async-result)
                                :targets targets})))}
@@ -612,7 +611,7 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed connection resource")
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
                                :type :connection
                                :value (count async-result)
                                :targets targets})))}
@@ -640,7 +639,7 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "installed rezzed ice" "")
-                                         " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
                                :type :ice
                                :value (count async-result)
                                :targets targets})))}
@@ -678,12 +677,11 @@
   [cost state side eid card actions]
   (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                         (in-hand? %))
-        prompt-hand (if (= :corp side) "HQ" "your grip")
-        hand (if (= :corp side) "HQ" "their grip")]
+        prompt-hand (if (= :corp side) "HQ" "the grip")
+        hand (if (= :corp side) "HQ" "the grip")]
     (continue-ability
       state side
-      {:prompt (str "Choose " (quantify (value cost) "card")
-                    " in " prompt-hand " to trash")
+      {:prompt (str "Choose " (quantify (value cost) "card") " to trash")
        :choices {:all true
                  :max (value cost)
                  :card select-fn}
@@ -694,7 +692,7 @@
                                 {:msg (str "trashes " (quantify (count async-result) "card")
                                            (when (and (= :runner side)
                                                       (pos? (count async-result)))
-                                             (str " (" (string/join ", " (map #(card-str state %) targets)) ")"))
+                                             (str " (" (enumerate-str (map #(card-str state %) targets)) ")"))
                                            " from " hand)
                                  :type :trash-from-hand
                                  :value (count async-result)
@@ -737,7 +735,7 @@
                            (if (= :runner side) "their grip" "HQ")
                            (when (and (= :runner side)
                                       (pos? (count async-result)))
-                             (str " (" (string/join ", " (map :title async-result)) ")")))
+                             (str " (" (enumerate-str (map :title async-result)) ")")))
                  :type :trash-entire-hand
                  :value (count async-result)
                  :targets async-result}))))
@@ -746,7 +744,7 @@
 (defmethod cost-name :trash-hardware-from-hand [_] :trash-hardware-from-hand)
 (defmethod value :trash-hardware-from-hand [[_ cost-value]] cost-value)
 (defmethod label :trash-hardware-from-hand [cost]
-  (str "trash " (quantify (value cost) "piece") " of hardware in your grip"))
+  (str "trash " (quantify (value cost) "piece") " of hardware in the grip"))
 (defmethod payable? :trash-hardware-from-hand
   [cost state side eid card]
   (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) (value cost))))
@@ -754,7 +752,7 @@
   [cost state side eid card actions]
   (continue-ability
     state side
-    {:prompt (str "Choose " (quantify (value cost) "piece") " of hardware to trash from your grip")
+    {:prompt (str "Choose " (quantify (value cost) "piece") " of hardware to trash")
      :async true
      :choices {:all true
                :max (value cost)
@@ -764,7 +762,7 @@
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "piece")
                                          " of hardware"
-                                         " (" (string/join ", " (map :title targets)) ")"
+                                         " (" (enumerate-str (map :title targets)) ")"
                                          " from their grip")
                                :type :trash-hardware-from-hand
                                :value (count async-result)
@@ -775,7 +773,7 @@
 (defmethod cost-name :trash-program-from-hand [_] :trash-program-from-hand)
 (defmethod value :trash-program-from-hand [[_ cost-value]] cost-value)
 (defmethod label :trash-program-from-hand [cost]
-  (str "trash " (quantify (value cost) "program") " in your grip"))
+  (str "trash " (quantify (value cost) "program") " in the grip"))
 (defmethod payable? :trash-program-from-hand
   [cost state side eid card]
   (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) (value cost))))
@@ -783,7 +781,7 @@
   [cost state side eid card actions]
   (continue-ability
     state side
-    {:prompt (str "Choose " (quantify (value cost) "program") " to trash from your grip")
+    {:prompt (str "Choose " (quantify (value cost) "program") " to trash")
      :async true
      :choices {:all true
                :max (value cost)
@@ -792,8 +790,8 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "program")
-                                         " (" (string/join ", " (map :title targets)) ")"
-                                         " from their grip")
+                                         " (" (enumerate-str (map :title targets)) ")"
+                                         " from the grip")
                                :type :trash-program-from-hand
                                :value (count async-result)
                                :targets async-result})))}
@@ -803,7 +801,7 @@
 (defmethod cost-name :trash-resource-from-hand [_] :trash-resource-from-hand)
 (defmethod value :trash-resource-from-hand [[_ cost-value]] cost-value)
 (defmethod label :trash-resource-from-hand [cost]
-  (str "trash " (quantify (value cost) "resource") " in your grip"))
+  (str "trash " (quantify (value cost) "resource") " in the grip"))
 (defmethod payable? :trash-resource-from-hand
   [cost state side eid card]
   (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) (value cost))))
@@ -811,7 +809,7 @@
   [cost state side eid card actions]
   (continue-ability
     state side
-    {:prompt (str "Choose " (quantify (value cost) "resource") " to trash from your grip")
+    {:prompt (str "Choose " (quantify (value cost) "resource") " to trash")
      :async true
      :choices {:all true
                :max (value cost)
@@ -820,8 +818,8 @@
                             (complete-with-result
                               state side eid
                               {:msg (str "trashes " (quantify (count async-result) "resource")
-                                         " (" (string/join ", " (map :title targets)) ")"
-                                         " from their grip")
+                                         " (" (enumerate-str (map :title targets)) ")"
+                                         " from the grip")
                                :type :trash-resource-from-hand
                                :value (count async-result)
                                :targets async-result})))}
@@ -901,7 +899,7 @@
                     (complete-with-result
                       state side eid
                       {:msg (str "shuffles " (quantify (count cards) "card")
-                                 " (" (string/join ", " (map :title cards)) ")"
+                                 " (" (enumerate-str (map :title cards)) ")"
                                  " into " (if (= :corp side) "R&D" "the stack"))
                        :type :shuffle-installed-to-stack
                        :value (count cards)
@@ -932,7 +930,7 @@
                         state side eid
                         {:msg (str "adds " (quantify (count cards) "installed card")
                                    " to the bottom of " deck
-                                   " (" (string/join ", " (map #(card-str state %) targets)) ")")
+                                   " (" (enumerate-str (map #(card-str state %) targets)) ")")
                          :type :add-installed-to-bottom-of-deck
                          :value (count cards)
                          :targets cards})))}

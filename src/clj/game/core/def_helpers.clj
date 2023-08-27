@@ -53,7 +53,7 @@
    (when (not-empty remaining)
      {:prompt (str "Choose a card to move next "
                    (if (= dest "bottom") "under " "onto ")
-                   (if (= reorder-side :corp) "R&D" "your Stack"))
+                   (if (= reorder-side :corp) "R&D" "the stack"))
       :choices remaining
       :async true
       :effect (req (let [chosen (cons target chosen)]
@@ -74,9 +74,9 @@
   ([reorder-side wait-side chosen original] (reorder-final reorder-side wait-side chosen original nil))
   ([reorder-side wait-side chosen original dest]
    {:prompt (if (= dest "bottom")
-              (str "The bottom cards of " (if (= reorder-side :corp) "R&D" "your Stack")
+              (str "The bottom cards of " (if (= reorder-side :corp) "R&D" "the stack")
                    " will be " (enumerate-str (map :title (reverse chosen))) ".")
-              (str "The top cards of " (if (= reorder-side :corp) "R&D" "your Stack")
+              (str "The top cards of " (if (= reorder-side :corp) "R&D" "the stack")
                    " will be " (enumerate-str (map :title chosen)) "."))
    :choices ["Done" "Start over"]
    :async true

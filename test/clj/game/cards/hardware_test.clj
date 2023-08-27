@@ -1788,7 +1788,7 @@
         (rez state :corp (get-ice state :hq 0))
         (run-continue state)
         (card-ability state :runner (first (:hosted (refresh fo))) 0)
-        (click-prompt state :runner "Add installed program to the top of the Runner's Stack")
+        (click-prompt state :runner "Add installed program to the top of the stack")
         (click-card state :runner fo)
         (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
         (take-credits state :runner)

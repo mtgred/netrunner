@@ -1,6 +1,5 @@
 (ns game.core.flags
   (:require
-    [clojure.string :as string]
     [game.core.board :refer [all-active all-installed]]
     [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed?]]
     [game.core.card-defs :refer [card-def]]
@@ -9,7 +8,7 @@
     [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
-    [game.utils :refer [same-card? same-side?]]))
+    [game.utils :refer [enumerate-str same-card? same-side?]]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -251,7 +250,7 @@
   (let [cards (->> @state :stack :current-turn :can-run (map :card))]
     (if (empty? cards)
       true
-      (do (when-not silent (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
+      (do (when-not silent (toast state side (str "Cannot run due to " (enumerate-str (map :title cards))))
         false))))))
 
 (defn can-access?
@@ -265,7 +264,7 @@
   (let [cards (get-preventing-cards state side card :can-access [:current-run :current-turn :persistent])]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot access " (card-str state card) " because of " (string/join ", " (map :title cards))) "info")
+      (do (toast state side (str "Cannot access " (card-str state card) " because of " (enumerate-str (map :title cards))) "info")
           false))))
 
 (defn can-advance?

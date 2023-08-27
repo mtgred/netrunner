@@ -3884,7 +3884,7 @@
      (rez state :corp (get-content state :remote1 0))
      (take-credits state :corp)
      (starting-hand state :runner [])
-     (is (empty? (:hand (get-runner))) "Runner's grip is empty to start")
+     (is (empty? (:hand (get-runner))) "grip is empty to start")
      (is (= 4 (:credit (get-corp))) "Corp starts with 4 credits")
      (take-credits state :runner)
      (is (= 1 (count (:hand (get-runner)))) "Runner drew 1 card")
@@ -3910,10 +3910,10 @@
      (play-from-hand state :runner "The Class Act")
      (core/move state :runner (find-card "Motivation" (:hand (get-runner))) :deck {:front true})
      (is (= "Motivation" (-> (get-runner) :deck first :title)) "Motivation is on top of deck")
-     (is (empty? (:hand (get-runner))) "Runner's grip is empty to start")
+     (is (empty? (:hand (get-runner))) "grip is empty to start")
      (is (= 4 (:credit (get-corp))) "Corp starts with 4 credits")
      (core/lose state :runner :click 3)
-     (is (empty? (:hand (get-runner))) "Runner's grip is still empty")
+     (is (empty? (:hand (get-runner))) "grip is still empty")
      (core/end-turn state :runner nil)
      (click-card state :runner "Motivation")
      (is (no-prompt? state :runner) "Runner done being classy")
@@ -5514,7 +5514,7 @@
     (is (= 2 (:credit (get-runner))) "Runner did not spend an extra credit")))
 
 (deftest tenma-line
-  ;; Tenma Line - Swap 2 pieces of installed ice
+  ;; Tenma Line - Swap 2 installed pieces of ice
   (do-game
     (new-game {:corp {:deck ["Tenma Line" "Harvester"
                              "Aimor" "Lockdown"]}})

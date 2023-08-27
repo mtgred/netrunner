@@ -17,7 +17,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [abs dissoc-in quantify]]
+    [game.utils :refer [abs dissoc-in enumerate-str quantify]]
     [clojure.string :as string]))
 
 (defn- turn-message
@@ -83,7 +83,7 @@
     (trigger-event state side phase nil)
     (if (not-empty start-cards)
       (toast state side
-             (str "You may use " (string/join ", " (map :title start-cards))
+             (str "You may use " (enumerate-str (map :title start-cards))
                   (if (= side :corp)
                     " between the start of your turn and your mandatory draw."
                     " before taking your first click."))
@@ -111,7 +111,7 @@
              :effect (req (system-msg state side
                                       (str "discards "
                                            (if (= :runner side)
-                                             (string/join ", " (map :title targets))
+                                             (enumerate-str (map :title targets))
                                              (quantify (count targets) "card"))
                                            " from " (if (= :runner side) "their Grip" "HQ")
                                            " at end of turn"))

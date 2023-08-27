@@ -153,7 +153,7 @@
     :help "Add card \"n\" to your hand (from outside the game)"}
    {:name "/swap-ice"
     :usage "/swap-ice"
-    :help "Swap the position of two installed pieces of ice (Corp only)"}
+    :help "Swap the position of 2 installed pieces of ice (Corp only)"}
    {:name "/swap-installed"
     :usage "/swap-installed"
     :help "Swap the position of two installed non-ice (Corp only)"}

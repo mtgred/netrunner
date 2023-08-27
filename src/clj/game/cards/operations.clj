@@ -1194,7 +1194,7 @@
             {:choices {:card #(and (installed? %)
                                    (runner? %)
                                    (not (has-subtype? % "Virtual")))}
-             :msg "add an installed non-virtual card to the Runner's Grip"
+             :msg "add 1 installed non-virtual card to the grip"
              :effect (effect (move :runner target :hand true))}}}})
 
 (defcard "Hedge Fund"
@@ -1261,12 +1261,12 @@
   {:events [{:event :runner-install
              :req (req (first-event? state side :runner-install))
              :player :runner
-             :prompt "Choose a card from your grip to trash"
+             :prompt "Choose a card to trash"
              :choices {:card #(and (runner? %)
                                    (in-hand? %))}
              :async true
              :msg (msg "force the Runner to trash"
-                       (:title target) " from their grip")
+                       (:title target) " from the grip")
              :effect (effect (trash :runner eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))}]})
 
 (defcard "Hunter Seeker"
@@ -2173,8 +2173,9 @@
                      (add-prop state side c :advance-counter (- (get-counters c :advancement)) {:placed true}))
                    (add-prop state side target :advance-counter total-adv {:placed true})
                    (update-all-ice state side)
-                   (system-msg state side (str "uses Red Planet Couriers to move " total-adv
-                                               " advancement tokens to " (card-str state target)))
+                   (system-msg state side (str "uses " (:title card) " to move "
+                                               (quantify total-adv "advancement counter")
+                                               " to " (card-str state target)))
                    (effect-completed state side eid)))}})
 
 (defcard "Replanting"
@@ -2280,7 +2281,7 @@
     :async true
     :effect (req (if (= target "Gain 2 [Credits]")
                    (wait-for (gain-credits state side 2)
-                             (system-msg state side "uses Reverse Infection to gain 2 [Credits]")
+                             (system-msg state side (str "uses " (:title card) " to gain 2 [Credits]"))
                              (effect-completed state side eid))
                    (let [pre-purge-virus (number-of-virus-counters state)]
                      (wait-for
@@ -2290,7 +2291,7 @@
                              num-to-trash (quot num-virus-purged 3)]
                          (wait-for (mill state :corp :runner num-to-trash)
                                    (system-msg state side
-                                               (str "uses Reverse Infection to purge "
+                                               (str "uses " (:title card) " to purge "
                                                     (quantify num-virus-purged "virus counter")
                                                     " and trash "
                                                     (quantify num-to-trash "card")
@@ -2354,7 +2355,7 @@
     :async true
     :effect (req (let [bp-lost (max 0 (min (:agendapoints (last (:rfg corp)))
                                            (count-bad-pub state)))]
-                   (system-msg state side (str "uses Sacrifice to lose " bp-lost
+                   (system-msg state side (str "uses " (:title card) " to lose " bp-lost
                                                " bad publicity and gain " bp-lost " [Credits]"))
                    (if (pos? bp-lost)
                      (wait-for (lose-bad-publicity state side bp-lost)
@@ -2464,7 +2465,7 @@
     :choices {:card #(and (installed? %)
                           (runner? %))
               :max 2}
-    :msg (msg (str "move " (enumerate-str (map :title targets)) " to the Runner's Grip"))
+    :msg (msg (str "move " (enumerate-str (map :title targets)) " to the grip"))
     :effect (req (doseq [c targets]
                    (move state :runner c :hand)))}})
 
@@ -2746,7 +2747,7 @@
 
 (defcard "Sunset"
   (letfn [(sun [serv]
-            {:prompt "Choose two pieces of ice to swap"
+            {:prompt "Choose 2 pieces of ice to swap"
              :choices {:card #(and (= serv (get-zone %))
                                    (ice? %))
                        :max 2}
@@ -2754,7 +2755,7 @@
              :effect (req (if (= (count targets) 2)
                             (do (swap-ice state side (first targets) (second targets))
                                 (system-msg state side
-                                            (str "uses Sunset to swap "
+                                            (str "uses " (:title card) " to swap "
                                                  (card-str state (first targets))
                                                  " with "
                                                  (card-str state (second targets))))
@@ -2806,7 +2807,7 @@
                :choices {:card-title (req (and (runner? target)
                                                (not (identity? target))))}
                :effect (effect (update! (assoc-in card [:special :marketing-target] target))
-                               (system-msg (str "uses Targeted Marketing to name " target)))}
+                               (system-msg (str "uses " (:title card) " to name " target)))}
      :events [(assoc gaincr :event :runner-install)
               (assoc gaincr :event :play-event)]}))
 
@@ -2867,7 +2868,7 @@
                      (gain-tags state :corp eid tags)
                      (system-msg
                        state side
-                       (str "uses Threat Level Alpha to give the Runner " (quantify tags "tag")))))}}}})
+                       (str "uses " (:title card) " to give the Runner " (quantify tags "tag")))))}}}})
 
 (defcard "Too Big to Fail"
   {:on-play

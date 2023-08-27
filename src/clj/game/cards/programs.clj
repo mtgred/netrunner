@@ -75,19 +75,19 @@
                                 (strength-pump 1 1)]}))
 
 (defn- swap-with-in-hand
-  "Swap with a deva program from your grip
+  "Swap with a deva program from the grip
   (Deva suite: Aghora, Sadyojata, Vamadeva)"
   [card-name break-req]
   (auto-icebreaker
     {:abilities [(break-sub 1 1 "All" break-req)
                  (strength-pump 1 1)
                  {:req (req (seq (filter #(has-subtype? % "Deva") (:hand runner))))
-                  :label "Swap with a deva program from your Grip"
+                  :label "Swap with a deva program from the grip"
                   :cost [:credit 2]
-                  :prompt (str "Choose a deva program in your Grip to swap with " card-name)
+                  :prompt (str "Choose a deva program to swap with " card-name)
                   :choices {:card #(and (in-hand? %)
                                         (has-subtype? % "Deva"))}
-                  :msg (msg "swap in " (:title target) " from their Grip")
+                  :msg (msg "swap in " (:title target) " from the grip")
                   :effect (req (if-let [hostcard (:host card)]
                                  (let [hosted (host state side (get-card state hostcard) target)]
                                    (card-init state side hosted {:resolve-effect false
@@ -697,12 +697,12 @@
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
                               :player :runner ; Needed for when the run is ended by the Corp
-                              :prompt "Choose a non-virus program to add to the top of your stack"
+                              :prompt "Choose a non-virus program to add to the top of the stack"
                               :choices {:card #(and (installed? %)
                                                     (program? %)
                                                     (not (facedown? %))
                                                     (not (has-subtype? % "Virus")))}
-                              :msg (msg "add " (:title target) " to the top of the Stack")
+                              :msg (msg "add " (:title target) " to the top of the stack")
                               :effect (effect (move (get-card state target) :deck {:front true}))}]}))
 
 (defcard "Breach"
@@ -810,10 +810,10 @@
              :req (req (same-card? (:ice context) (:host card)))
              :async true
              :effect (req (if (pos? (ice-strength state side (:ice context)))
-                            (do (system-msg state side "uses Chisel to place 1 virus counter on itself")
+                            (do (system-msg state side (str "uses " (:title card) " to place 1 virus counter on itself"))
                                 (add-counter state side card :virus 1)
                                 (effect-completed state side eid))
-                            (do (system-msg state side (str "uses Chisel to trash " (card-str state (:ice context))))
+                            (do (system-msg state side (str "uses " (:title card) " to trash " (card-str state (:ice context))))
                                 (trash state side eid (:ice context) {:cause-card card}))))}]})
 
 (defcard "Cat's Cradle"
@@ -1132,8 +1132,8 @@
                 :effect (effect
                           (continue-ability
                             {:waiting-prompt true
-                             :prompt "Choose a card to install from your Grip"
-                             :msg (msg "install " (:title target) " at no cost")
+                             :prompt "Choose a card to install"
+                             :msg (msg "install " (:title target) " from the grip at no cost")
                              :choices {:req (req (and (in-hand? target)
                                                       (or (hardware? target)
                                                           (program? target)
@@ -1251,9 +1251,9 @@
                                                          :cause-card card}))}]})
 
 (defcard "Djinn"
-  {:abilities [{:label "Search the stack for a virus program and add it to your Grip"
+  {:abilities [{:label "Search the stack for a virus program and add it to the grip"
                 :prompt "Choose a Virus"
-                :msg (msg "add " (:title target) " to their Grip")
+                :msg (msg "add " (:title target) " from the stack to the grip")
                 :choices (req (cancellable (filter #(and (program? %)
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
@@ -1264,12 +1264,12 @@
                                 (move target :hand))}
                {:label "Install and host a non-Icebreaker program"
                 :cost [:click 1]
-                :prompt "Choose a non-Icebreaker program in your grip"
+                :prompt "Choose a non-Icebreaker program"
                 :choices {:req (req (and (program? target)
                                          (runner-can-install? state side target false)
                                          (not (has-subtype? target "Icebreaker"))
                                          (in-hand? target)))}
-                :msg (msg "install and host " (:title target))
+                :msg (msg "install from the grip and host " (:title target))
                 :async true
                 :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
                {:label "Host an installed non-Icebreaker program (manual)"
@@ -2692,11 +2692,11 @@
 
 (defcard "Savoir-faire"
   {:abilities [{:cost [:credit 2]
-                :label "install a program"
+                :label "Install a program"
                 :once :per-turn
                 :req (req (not (install-locked? state side)))
-                :msg (msg "install " (:title target))
-                :prompt "Choose a program to install from your grip"
+                :msg (msg "install " (:title target) " from the grip")
+                :prompt "Choose a program to install"
                 :choices {:card #(and (program? %)
                                       (in-hand? %))}
                 :async true
@@ -2735,7 +2735,7 @@
                                   {:prompt "Choose a program to install"
                                    :msg (req (if (not= target "No install")
                                                (str "install " (:title target))
-                                               (str "shuffle their Stack")))
+                                               (str "shuffle the stack")))
                                    :choices (req (conj (filter #(can-pay? state side
                                                                           (assoc eid :source card :source-type :runner-install)
                                                                           % nil [:credit (install-cost state side %)])
@@ -2987,14 +2987,14 @@
                 (effect
                   (continue-ability
                     {:cost [:click 1 :remove-from-game]
-                     :label "Reshuffle cards from Heap back into Stack"
+                     :label "Reshuffle cards from heap into stack"
                      :show-discard true
                      :choices {:max (min (get-counters card :power) (count (:discard runner)))
                                :all true
                                :card #(and (runner? %)
                                            (in-discard? %))}
                      :msg (msg "shuffle " (enumerate-str (map :title targets))
-                               " into their Stack")
+                               " into the stack")
                      :effect (req (doseq [c targets] (move state side c :deck))
                                   (shuffle! state side :deck))}
                     card nil))}]})
@@ -3005,7 +3005,7 @@
                                    (>= (get-virus-counters state card) 5)
                                    (not (and (card-flag? h :untrashable-while-rezzed true)
                                              (rezzed? h))))
-                            (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
+                            (do (system-msg state :runner (str "uses " (:title card) " to trash " (card-str state h)))
                                 (unregister-events state side card)
                                 (trash state :runner eid h {:cause-card card}))
                             (effect-completed state side eid))))]

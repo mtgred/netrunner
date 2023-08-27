@@ -1,6 +1,5 @@
 (ns game.core.damage
   (:require
-    [clojure.string :as string]
     [game.core.card :refer [get-title]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult]]
@@ -11,7 +10,7 @@
     [game.core.say :refer [system-msg]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [dissoc-in side-str]]
+    [game.utils :refer [dissoc-in enumerate-str side-str]]
     [jinteki.utils :refer [str->int]]))
 
 (defn damage-bonus
@@ -122,7 +121,7 @@
                                          (concat chosen-cards))]
                   (when (= dmg-type :brain)
                     (swap! state update-in [:runner :brain-damage] #(+ % n)))
-                  (when-let [trashed-msg (string/join ", " (map get-title cards-trashed))]
+                  (when-let [trashed-msg (enumerate-str (map get-title cards-trashed))]
                     (system-msg state :runner (str "trashes " trashed-msg " due to " (damage-name dmg-type) " damage")))
                   (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
                   (swap! state update-in [:stats :corp :damage dmg-type] (fnil + 0) n)
