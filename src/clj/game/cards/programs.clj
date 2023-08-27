@@ -3053,7 +3053,7 @@
                                             :msg "draw 1 card"
                                             :effect (req (draw state :corp eid 1))}
                               :no-ability {:player :corp
-                                           :effect (req (system-msg (str "declines to use " (:title card) " to draw 1 card")))}}}
+                                           :effect (req (system-msg state side (str "declines to use " (:title card) " to draw 1 card")))}}}
         runner-draw {:label "Each player draws 1 card (manual)"
                      :optional {:prompt "Draw 1 card?"
                                 :waiting-prompt true
@@ -3066,7 +3066,7 @@
                                                                        corp-draw
                                                                        card nil)))}
                                 :no-ability {:async true
-                                             :effect (req (system-msg (str "declines to use " (:title card) " to draw 1 card"))
+                                             :effect (req (system-msg state side (str "declines to use " (:title card) " to draw 1 card"))
                                                           (continue-ability
                                                             state side
                                                             corp-draw

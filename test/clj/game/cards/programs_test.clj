@@ -7281,15 +7281,16 @@
 
 (deftest umbrella
   (do-game
-      (new-game {:corp {:deck ["Hedge Fund"]
+      (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
                       :hand ["Fairchild 3.0" "Quandary"]
                         :credits 10}
-                 :runner {:deck ["Sure Gamble"]
+                 :runner {:deck [(qty "Sure Gamble" 2)]
                           :hand ["Umbrella" "Hush"]
                           :credits 20}})
-    (play-from-hand state :corp "Quandary" "HQ")
+      (play-from-hand state :corp "Quandary" "HQ")
       (play-from-hand state :corp "Fairchild 3.0" "R&D")
       (take-credits state :corp)
+      (core/gain state :runner :click 1)
       (play-from-hand state :runner "Umbrella")
       (play-from-hand state :runner "Hush")
       (click-card state :runner (get-ice state :rd 0))
@@ -7313,7 +7314,20 @@
         (changes-val-macro
           1 (count (:hand (get-corp)))
           "Corp drew 1 card"
-          (click-prompt state :corp "Yes")))))
+          (click-prompt state :corp "Yes"))
+        (core/continue state :corp nil)
+        (run-jack-out state)
+        (run-on state "R&D")
+        (run-continue state)
+        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh umb)})
+        (changes-val-macro
+          0 (count (:hand (get-runner)))
+          "Runner declined to draw"
+          (click-prompt state :runner "No"))
+        (changes-val-macro
+          0 (count (:hand (get-corp)))
+          "Corp declined to draw"
+          (click-prompt state :corp "No")))))
 
 (deftest unity
   ;; Unity
