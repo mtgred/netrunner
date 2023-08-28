@@ -4622,12 +4622,14 @@
       (is (nil? (:run @state)) "M.I.C. ended the run")
       (core/gain state :runner :click 1)
       (run-on state "HQ")
+      (run-continue state)
       (changes-val-macro
         -1 (:click (get-runner))
         "Runner spent 1 click to pay M.I.C. ability"
         (card-ability state :corp mic 0)
         (click-prompt state :runner "Spend [Click]"))
       (is (:run @state) "Run is still going")
+      (is (= :movement (:phase (:run @state))) "Encounter with M.I.C. is over")
       (is (= 1 (count (:discard (get-corp)))) "M.I.C. got trashed"))))
 
 (deftest mind-game-server-redirection

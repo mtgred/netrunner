@@ -30,7 +30,7 @@
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [hand-size]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-sub add-sub! any-subs-broken? break-sub ice-strength-bonus
+   [game.core.ice :refer [add-sub add-sub! any-subs-broken? break-sub get-current-ice ice-strength-bonus
                           remove-sub! remove-subs! resolve-subroutine
                           set-current-ice unbroken-subroutines-choice update-all-ice update-all-icebreakers
                           update-ice-strength]]
@@ -49,7 +49,7 @@
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
-   [game.core.runs :refer [bypass-ice continue encounter-ends end-run
+   [game.core.runs :refer [bypass-ice encounter-ends end-run
                            force-ice-encounter get-current-encounter prevent-access
                            redirect-run set-next-phase]]
    [game.core.say :refer [system-msg]]
@@ -167,27 +167,28 @@
                           (effect-completed state side eid)))})
 
 (defn end-the-run-unless-runner-pays
-  [cost]
-  {:player :runner
-   :async true
-   :label (str "End the run unless the Runner pays " (build-cost-label cost))
-   :prompt "Choose one"
-   :waiting-prompt true
-   :choices (req ["End the run"
-                  (when (can-pay? state :runner eid card nil cost)
-                    (capitalize (cost->string cost)))])
-   :msg (msg (if (= "End the run" target)
-               (decapitalize target)
-               (str "force the runner to " (decapitalize target))))
-   :effect (req (if (= "End the run" target)
-                  (end-run state :corp eid card)
-                  (wait-for (pay state :runner (make-eid state eid) card cost)
-                    (when-let [payment-str (:msg async-result)]
-                      (system-msg state :runner
-                                  (str payment-str
-                                       " due to " (:title card)
-                                       " subroutine")))
-                    (effect-completed state side eid))))})
+  ([cost] (end-the-run-unless-runner-pays cost "subroutine"))
+  ([cost reason]
+   {:player :runner
+    :async true
+    :label (str "End the run unless the Runner pays " (build-cost-label cost))
+    :prompt "Choose one"
+    :waiting-prompt true
+    :choices (req ["End the run"
+                   (when (can-pay? state :runner eid card nil cost)
+                     (capitalize (cost->string cost)))])
+    :msg (msg (if (= "End the run" target)
+                (decapitalize target)
+                (str "force the runner to " (decapitalize target))))
+    :effect (req (if (= "End the run" target)
+                   (end-run state :corp eid card)
+                   (wait-for (pay state :runner (make-eid state eid) card cost)
+                             (when-let [payment-str (:msg async-result)]
+                               (system-msg state :runner
+                                           (str payment-str
+                                                " due to " (:title card)
+                                                " " reason)))
+                             (effect-completed state side eid))))}))
 
 (defn end-the-run-unless-corp-pays
   [cost]
@@ -2513,11 +2514,10 @@
                 :cost [:trash-can]
                 :effect (req (wait-for (resolve-ability
                                          state side
-                                         (end-the-run-unless-runner-pays [:click 1])
+                                         (end-the-run-unless-runner-pays [:click 1] "ability")
                                          card nil)
-                                       (when (and current-ice run)
-                                         (continue state :corp nil)
-                                         (continue state :runner nil))))}]
+                                       (when (and run (= (get-current-ice state) card))
+                                         (encounter-ends state side eid))))}]
    :subroutines [runner-loses-click
                  runner-loses-click
                  end-the-run]})
