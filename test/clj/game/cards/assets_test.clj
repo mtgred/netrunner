@@ -2551,6 +2551,24 @@
     (click-prompt state :runner "Pay 4 [Credits] to trash")
     (is (= 2 (count (:discard (get-runner)))) "Took 0 more meat damage")))
 
+(deftest hostile-architecture-trash-other
+  (do-game
+    (new-game {:corp {:hand ["Hostile Architecture" "Bladderwort"]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (core/gain state :corp :credit 1)
+    (core/gain state :runner :credit 50)
+    (play-from-hand state :corp "Bladderwort" "New remote")
+    (play-from-hand state :corp "Hostile Architecture" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Pay 3 [Credits] to trash")
+    (is (= 2 (count (:discard (get-runner)))) "Took 2 meat damage")
+    (run-empty-server state "Server 2")
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (is (= 2 (count (:discard (get-runner)))) "Took 0 more meat damage")))
+
 (deftest hostile-infrastructure-basic-behavior
     ;; Basic behavior
     (do-game
