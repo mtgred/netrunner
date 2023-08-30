@@ -1894,9 +1894,9 @@
                              (not (zone-locked? state :runner :discard))))
               :prompt "Choose 2 cards in the heap?"
               :autoresolve (get-autoresolve :auto-fire)
+              :interactive (req true)
               :yes-ability
-              {:interactive (req true)
-               :async true
+              {:async true
                :prompt "Choose 2 cards in the heap"
                :show-discard true
                :choices {:max 2
