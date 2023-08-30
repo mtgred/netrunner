@@ -24,7 +24,8 @@
                                        (:client-id ring-req)))})
       {:keys [ch-recv send-fn connected-uids
               ajax-post-fn ajax-get-or-ws-handshake-fn]} chsk-server]
-  (defonce handshake-handler ajax-get-or-ws-handshake-fn)
+  (defonce handshake-handler (fn [& args] (try (apply ajax-get-or-ws-handshake-fn args)
+                                               (catch Exception _ (println "Caught an error in the handshake handler")))))
   (defonce post-handler ajax-post-fn)
   (defonce connected-sockets connected-uids)
   (defonce ch-chsk ch-recv)
