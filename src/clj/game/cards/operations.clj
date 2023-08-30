@@ -1550,8 +1550,8 @@
 (defcard "Mindscaping"
   {:on-play {:prompt "Choose one"
              :waiting-prompt true
-             :choices ["Do 1 net damage per tag (up to 3)"
-                       "Gain 4 [Credits] and draw 2 cards"]
+             :choices ["Gain 4 [Credits] and draw 2 cards"
+                       "Do 1 net damage per tag (up to 3)"]
              :msg (msg (if (= target "Do 1 net damage per tag (up to 3)")
                          (str "do " (min 3 (count-tags state)) " net damage")
                          (decapitalize target)))
