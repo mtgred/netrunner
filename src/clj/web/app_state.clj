@@ -4,11 +4,13 @@
 
 (defonce app-state
   (atom {:lobbies {}
+         :lobby-updates {}
          :users {}}))
 
 (defn register-user
   [app-state uid user]
-  (assoc-in app-state [:users uid] (assoc user :uid uid :lobby-updates true)))
+  (merge app-state {:users (assoc (:users app-state) uid (assoc user :uid uid))
+                    :lobby-updates (assoc (:lobby-updates app-state) uid true)}))
 
 (defn uid->lobby
   ([uid] (uid->lobby (:lobbies @app-state) uid))
@@ -60,8 +62,12 @@
 
 (defn pause-lobby-updates
   [uid]
-  (swap! app-state assoc-in [:users uid :lobby-updates] false))
+  (swap! app-state assoc-in [:lobby-updates uid] false))
 
 (defn continue-lobby-updates
   [uid]
-  (swap! app-state assoc-in [:users uid :lobby-updates] true))
+  (swap! app-state assoc-in [:lobby-updates uid] true))
+
+(defn receive-lobby-updates?
+  [uid]
+  (get-in @app-state [:lobby-updates uid] false))

@@ -188,9 +188,8 @@
   Filters the list per each users block list."
   ([]
    (let [user-cache (:users @app-state/app-state)
-         uids (ws/connected-uids)
-         users (map #(get user-cache %) uids)
-         users (filter #(:lobby-updates %) users)]
+         uids (filter #(app-state/receive-lobby-updates? %) (ws/connected-uids))
+         users (map #(get user-cache %) uids)]
      (broadcast-lobby-list users)))
   ([users]
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
