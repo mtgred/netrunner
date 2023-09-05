@@ -43,6 +43,13 @@
 
 (defn connected-uids [] (seq (:any @connected-sockets)))
 
+(defonce log-connected-uid-counts
+  (go (while true
+    (<! (timeout 30000))
+    (println (str "connected uids -"
+                  " :ajax " (count (:ajax @connected-sockets))
+                  " :ws " (count (:ws @connected-sockets)))))))
+
 (defonce ratelimiter
   (go (while true
         (<! (timeout (int buffer-clear-timer-ms)))
