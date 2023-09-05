@@ -3593,7 +3593,7 @@
                (wait-for (mill state :runner (make-eid state eid) :runner 4)
                          (let [trashed-cards async-result]
                            (system-msg state side
-                                       (str "uses " (:title card) "to trash "
+                                       (str "uses " (:title card) " to trash "
                                             (enumerate-str (map :title trashed-cards))
                                             " from the top of the stack"))
                            (continue-ability
