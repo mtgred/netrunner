@@ -947,6 +947,7 @@
                                                     (filter #(and (or (program? %)
                                                                       (and (resource? %)
                                                                            (has-subtype? % "Virtual")))
+                                                                  (runner-can-install? state side % nil)
                                                                   (can-pay? state side
                                                                             (assoc eid :source card :source-type :runner-install)
                                                                             % nil [:credit (install-cost state side % {:cost-bonus -2})]))
