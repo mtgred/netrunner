@@ -865,8 +865,7 @@
               {:event :runner-turn-ends
                :async true
                :location :discard
-               :req (req (and (not (install-locked? state :runner))
-                              (not (zone-locked? state :runner :discard))))
+               :req (req (runner-can-install? state side card nil))
                :effect (effect
                          (continue-ability
                            {:optional
@@ -2605,15 +2604,14 @@
   {:abilities
    [{:async true
      :label "Install a program, piece of hardware, or Virtual resource from the heap"
-     :req (req (and (not (zone-locked? state :runner :discard))
-                    (not (install-locked? state :runner))
-                    (not-empty (filter #(and (or (program? %)
-                                                 (hardware? %)
-                                                 (and (resource? %)
-                                                      (has-subtype? % "Virtual")))
-                                             (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
-                                                       [:credit (install-cost state side %)]))
-                                       (:discard runner)))))
+     :req (req (some #(and (or (program? %)
+                               (hardware? %)
+                               (and (resource? %)
+                                    (has-subtype? % "Virtual")))
+                           (runner-can-pay-and-install?
+                             state side
+                             (assoc eid :source card :source-type :runner-install) % nil))
+                     (:discard runner)))
      :cost [:click 1 :trash-can :trash-from-hand 1]
      :msg "install a program, piece of hardware, or Virtual resource from the heap"
      :effect
@@ -2980,10 +2978,13 @@
    :abilities [{:async true
                 :label "install a hosted card"
                 :trash-icon true
-                :req (req (and (not (install-locked? state side))
-                               (pos? (count (:hosted card)))
-                               (pos? (count (filter #(and (not (event? (get-card state %)))
-                                                          (runner-can-pay-and-install? state side (assoc eid :source card :source-type :runner-install) (get-card state %) {:cost-bonus -1})) (:hosted card))))))
+                :req (req (some #(and (not (event? (get-card state %)))
+                                           (runner-can-pay-and-install?
+                                             state side
+                                             (assoc eid :source card :source-type :runner-install)
+                                             (get-card state %)
+                                             {:cost-bonus -1}))
+                                (seq (:hosted card))))
                 :effect (req (set-aside state side eid (:hosted card))
                              (let [set-aside-cards (get-set-aside state side eid)]
                                (wait-for (trash state side card {:cause :ability-cost :cause-card card})

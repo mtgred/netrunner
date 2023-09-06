@@ -35,7 +35,7 @@
                           get-strength ice-strength pump pump-ice set-current-ice strength-pump
                           unbroken-subroutines-choice update-all-icebreakers update-breaker-strength]]
    [game.core.initializing :refer [ability-init card-init]]
-   [game.core.installing :refer [install-locked? runner-can-install?
+   [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
                                  runner-install]]
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability]]
@@ -107,9 +107,10 @@
              :location :discard
              :req (req (and (in-discard? card)
                             (has-subtype? (:ice context) ice-type)
-                            (not (install-locked? state :runner))
-                            (not (zone-locked? state :runner :discard))
-                            (can-pay? state :runner (assoc eid :source card :source-type :runner-install) card nil [:credit (install-cost state side card)])))
+                            (runner-can-pay-and-install?
+                              state :runner
+                              (assoc eid :source card :source-type :runner-install)
+                              card nil)))
              :effect (effect
                        (continue-ability
                          {:req (req (and (not-any? #(and (= title (:title %))
@@ -1120,12 +1121,12 @@
   {:events [{:event :successful-run
              :silent (req true)
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:req (req (and (not (install-locked? state side))
-                               (some #(and (or (hardware? %)
-                                               (program? %)
-                                               (resource? %))
-                                           (<= (install-cost state side %) (get-counters card :power)))
-                                     (:hand runner))))
+   :abilities [{:req (req (some #(and (or (hardware? %)
+                                          (program? %)
+                                          (resource? %))
+                                      (runner-can-install? state side % nil)
+                                      (<= (install-cost state side %) (get-counters card :power)))
+                                (:hand runner)))
                 :label "install a card from the grip"
                 :cost [:trash-can]
                 :async true

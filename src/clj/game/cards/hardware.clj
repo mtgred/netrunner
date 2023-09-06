@@ -37,8 +37,7 @@
    [game.core.ice :refer [all-subs-broken? any-subs-broken? break-sub pump
                           reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]
-   [game.core.installing :refer [install-locked? runner-can-install?
-                                 runner-can-pay-and-install? runner-install]]
+   [game.core.installing :refer [runner-can-install? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [get-link link+]]
    [game.core.memory :refer [caissa-mu+ mu+ update-mu virus-mu+]]
    [game.core.moving :refer [mill move swap-agendas trash trash-cards]]
@@ -439,12 +438,11 @@
   {:abilities [{:prompt "Choose a program to install"
                 :label "Install program from the heap"
                 :show-discard true
-                :req (req (and (not (zone-locked? state :runner :discard))
-                               (not (install-locked? state side))
-                               (some #(and (program? %)
-                                           (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                     [:credit (install-cost state side %)]))
-                                     (:discard runner))))
+                :req (req (some #(and (program? %)
+                                      (runner-can-pay-and-install?
+                                        state side
+                                        (assoc eid :source card :source-type :runner-install) % nil))
+                                (:discard runner)))
                 :choices {:req (req (and (program? target)
                                          (in-discard? target)
                                          (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
@@ -2023,12 +2021,12 @@
                        :value [:program 1]}]
    :abilities [{:async true
                 :label "Install a program from the heap"
-                :req (req (and (not (install-locked? state side))
-                               (not (zone-locked? state :runner :discard))
-                               (some #(and (program? %)
-                                           (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                     [:credit (install-cost state side % {:cost-bonus -3})]))
-                                     (:discard runner))))
+                :req (req (some #(and (program? %)
+                                      (runner-can-pay-and-install?
+                                        state side
+                                        (assoc eid :source card :source-type :runner-install)
+                                        % {:cost-bonus -3}))
+                                (:discard runner)))
                 :cost [:trash-can]
                 :msg "install a program"
                 :effect
