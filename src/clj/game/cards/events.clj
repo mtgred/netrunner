@@ -1930,6 +1930,7 @@
               :effect (effect (gain-credits eid 4))}
              {:msg "install a program from the stack"
               :async true
+              :req (req (not (install-locked? state side)))
               :effect (effect (continue-ability
                                 {:prompt "Choose a program to install"
                                  :msg (req (if (not= target "No install")
