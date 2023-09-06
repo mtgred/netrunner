@@ -203,8 +203,9 @@
               :effect (effect (lose-tags eid 1))}
              {:msg "install a card from the grip, paying 1 [Credits] less"
               :async true
+              :req (req (not (install-locked? state side)))
               :effect (effect (continue-ability
-                                {:prompt (str "Choose a card to install")
+                                {:prompt "Choose a card to install"
                                  :waiting-prompt true
                                  :choices {:req (req (and (or (hardware? target)
                                                               (program? target)
