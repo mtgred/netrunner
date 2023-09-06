@@ -9,8 +9,9 @@
 
 (defn register-user
   [app-state uid user]
-  (merge app-state {:users (assoc (:users app-state) uid (assoc user :uid uid))
-                    :lobby-updates (assoc (:lobby-updates app-state) uid true)}))
+  (-> app-state
+      (assoc-in [:users uid] (assoc user :uid uid))
+      (assoc-in [:lobby-updates uid] true)))
 
 (defn uid->lobby
   ([uid] (uid->lobby (:lobbies @app-state) uid))
