@@ -203,8 +203,9 @@
               :effect (effect (lose-tags eid 1))}
              {:msg "install a card from the grip, paying 1 [Credits] less"
               :async true
+              :req (req (not (install-locked? state side)))
               :effect (effect (continue-ability
-                                {:prompt (str "Choose a card to install")
+                                {:prompt "Choose a card to install"
                                  :waiting-prompt true
                                  :choices {:req (req (and (or (hardware? target)
                                                               (program? target)
@@ -1952,7 +1953,8 @@
               :effect (effect (continue-ability (charge-ability state side eid card) card nil))
               :msg "charge a card"}]
         choice (fn choice [abis rem]
-                 {:prompt "Choose an ability to resolve"
+                 {:prompt (str "Choose an ability to resolve (" rem " remaining)")
+                  :waiting-prompt true
                   :choices (map #(capitalize (:msg %)) abis)
                   :async true
                   :effect (req (let [chosen (some #(when (= target (capitalize (:msg %))) %) abis)]
