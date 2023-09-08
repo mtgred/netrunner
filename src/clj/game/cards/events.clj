@@ -3792,21 +3792,21 @@
 
 (defcard "White Hat"
   (letfn [(finish-choice [choices]
-            (let [choices (filter #(not= "None" %) choices)]
+            (let [choices (filter #(not= "Done" %) choices)]
               (when (not-empty choices)
                 {:effect (req (doseq [c choices]
                                 (move state :corp c :deck))
                               (shuffle! state :corp :deck))
                  :msg (str "shuffle " (enumerate-str (map :title choices)) " into R&D")})))
-          (choose-cards [hand chosen]
-            {:prompt "Choose a card in HQ to shuffle into R&D"
+          (choose-cards [choices chosen]
+            {:prompt (str "Choose a card in HQ to shuffle into R&D (" (- 2 (count chosen)) " remaining)")
              :player :runner
-             :choices (conj (vec (set/difference hand chosen))
-                            "None")
+             :choices (concat choices ["Done"])
+             :not-distinct true
              :async true
              :effect (req (if (and (empty? chosen)
-                                   (not= "None" target))
-                            (continue-ability state side (choose-cards hand (conj chosen target)) card nil)
+                                   (not= "Done" target))
+                            (continue-ability state side (choose-cards (remove-once #(= % target) choices) (conj chosen target)) card nil)
                             (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
     {:on-play
      {:trace
@@ -3817,7 +3817,7 @@
         :msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
         :effect (req (wait-for
                        (reveal state side (:hand corp))
-                       (continue-ability state :runner (choose-cards (set (:hand corp)) #{}) card nil)))}}}}))
+                       (continue-ability state :runner (choose-cards (:hand corp) #{}) card nil)))}}}}))
 
 (defcard "Wildcat Strike"
   {:on-play
