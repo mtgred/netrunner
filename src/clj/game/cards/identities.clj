@@ -599,9 +599,9 @@
                                            {:prompt "Choose a card to install"
                                             :waiting-prompt true
                                             :not-distinct true
-                                            :choices (req (conj
+                                            :choices (req (concat
                                                             (filter #(corp-installable-type? %) top)
-                                                            "Done"))
+                                                            ["Done"]))
                                             :async true
                                             :effect (req (if-not (= target "Done")
                                                            (do (system-msg

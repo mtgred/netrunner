@@ -2398,7 +2398,7 @@
 (defcard "Patron"
   (let [ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :once :per-turn
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
@@ -2829,7 +2829,7 @@
 (defcard "Security Testing"
   (let [ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :interactive (req true)
                  :msg (msg "target " target)
                  :req (req (and (:runner-phase-12 @state)
@@ -3503,7 +3503,7 @@
                             (zone->name (second (get-zone target)))))
         ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :interactive (req true)
                  :waiting-prompt true
                  :msg (msg "target " target)
