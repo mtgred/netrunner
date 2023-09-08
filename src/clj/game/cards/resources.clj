@@ -1845,14 +1845,13 @@
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
             {:waiting-prompt true
-             :prompt "Choose a Program to add to the Grip"
-             :choices (cons "None" (filter program? cards))
+             :prompt "Choose a Program to add to the grip"
+             :choices (concat (filter program? cards) ["None"])
              :async true
-             :msg (msg (if (= target "None")
-                         "add no program to the Grip"
-                         (str "add " (-> target :title) " to the Grip")))
-             :effect (req (when (not= target "None")
-                            (move state side target :hand))
+             :effect (req (if (= "None" target)
+                            (system-msg state side (str "declines to use " (get-title card) " to add a program from the top of the stack to the grip"))
+                            (do (system-msg state side (str "uses " (get-title card) " to add " (-> target :title) " from the top of the stack to the grip"))
+                                (move state side target :hand)))
                           (continue-ability
                             state side
                             (when-let [to-bottom (not-empty (remove #(= % target) cards))]
