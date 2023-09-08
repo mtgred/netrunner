@@ -4064,8 +4064,8 @@
    (play-from-hand state :corp "Extract")
    (click-card state :corp (get-content state :remote1 0))
    (click-prompt state :corp "Yes")
-   (is (= ["No install"] (prompt-buttons :corp)) "Sole option available is Done")
-   (click-prompt state :corp "No install")))
+   (is (= ["Done"] (prompt-buttons :corp)) "Sole option available is Done")
+   (click-prompt state :corp "Done")))
 
 (deftest ob-superheavy-logistics-public-agendas
   ;; If no cards in R&D match the search cost, ability can be declined
