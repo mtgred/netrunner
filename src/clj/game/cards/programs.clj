@@ -3168,18 +3168,23 @@
         (fn [trashed-card]
           {:prompt (msg "Choose a " (:type trashed-card) " to install")
            :req (req (not (install-locked? state side)))
-           :msg (req (if (= target "No install")
+           :msg (msg (if (= target "Done")
                        "shuffle the stack"
-                       (str "install " (:title target) " paying 3 [Credits] less")))
-           :choices (req (conj (filter #(can-pay? state side
+                       (str "install " (:title target) " from the stack, paying 3 [Credits] less")))
+           :choices (req (concat
+                           (->> (:deck runner)
+                                (filter
+                                  #(and (is-type? % (:type trashed-card))
+                                        (can-pay? state side
                                                   (assoc eid :source card :source-type :runner-install)
-                                                  % nil [:credit (install-cost state side % {:cost-bonus -3})])
-                                       (sort-by :title (filter #(is-type? % (:type trashed-card)) (:deck runner))))
-                               "No install"))
+                                                  % nil [:credit (install-cost state side % {:cost-bonus -3})])))
+                                (sort-by :title)
+                                (seq))
+                           ["Done"]))
            :async true
            :effect (req (trigger-event state side :searched-stack nil)
                         (shuffle! state side :deck)
-                        (if (= target "No install")
+                        (if (= target "Done")
                           (effect-completed state side eid)
                           (runner-install state side (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3})))})]
     {:events [{:event :successful-run
