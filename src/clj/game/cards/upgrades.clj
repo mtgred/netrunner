@@ -425,7 +425,7 @@
                 :async true
                 :effect (req (wait-for
                                (trash state :corp (make-eid state eid) card {:cause-card card})
-                               (swap! state update-in [:run :position] inc)
+                               (swap!* state update-in [:run :position] inc)
                                (set-next-phase state :approach-ice)
                                (update-all-ice state side)
                                (update-all-icebreakers state side)
@@ -921,7 +921,7 @@
                                  :prompt-type :bogus}
                                 card nil)))}
               {:event :post-corp-draw
-               :effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw]))}]}))
+               :effect (req (swap!* state dissoc-in [:per-turn :jinja-city-grid-draw]))}]}))
 
 (defcard "K. P. Lynn"
   {:events [{:event :pass-all-ice
@@ -1042,7 +1042,7 @@
              :req (req (and (:successful target)
                             (= (target-server target) (second (get-zone card)))
                             (or (< (:credit runner) 6) (zero? (:click runner)))))
-             :effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]})
+             :effect (req (swap!* state update-in [:corp :extra-click-temp] (fnil inc 0)))}]})
 
 (defcard "Marcus Batty"
   {:abilities [{:label "Start a Psi game to resolve a subroutine"
@@ -1658,14 +1658,14 @@
               :yes-ability
               {:async true
                :msg "do 1 core damage instead of net damage"
-               :effect (req (swap! state update :damage dissoc :damage-replace :defer-damage)
+               :effect (req (swap!* state update :damage dissoc :damage-replace :defer-damage)
                             (wait-for (pay state :corp (make-eid state eid) card :credit 2)
                                       (system-msg state side (:msg async-result))
                                       (wait-for (damage state side :brain 1 {:card card})
-                                                (swap! state assoc-in [:damage :damage-replace] true)
+                                                (swap!* state assoc-in [:damage :damage-replace] true)
                                                 (effect-completed state side eid))))}
               :no-ability
-              {:effect (req (swap! state update :damage dissoc :damage-replace))}}}]})
+              {:effect (req (swap!* state update :damage dissoc :damage-replace))}}}]})
 
 (defcard "Traffic Analyzer"
   {:events [{:event :rez

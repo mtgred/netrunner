@@ -15,7 +15,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [req]]
-    [game.utils :refer [make-cid server-card to-keyword]]
+    [game.utils :refer [make-cid server-card to-keyword swap!*]]
     [jinteki.utils :refer [make-label]]))
 
 (defn subroutines-init
@@ -204,7 +204,7 @@
 (defn reset-card
   "Resets a card back to its original state - retaining any data in the :persistent key"
   ([state side {:keys [cid persistent previous-zone printed-title seen title zone]}]
-   (swap! state update :per-turn dissoc cid)
+   (swap!* state update :per-turn dissoc cid)
    (let [s-card (server-card (or printed-title title))
          new-card (make-card s-card cid)]
      (update! state side (assoc new-card

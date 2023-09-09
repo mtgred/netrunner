@@ -24,7 +24,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [dissoc-in in-coll? to-keyword]]))
+    [game.utils :refer [dissoc-in in-coll? to-keyword swap!*]]))
 
 (defn install-locked?
   "Checks if installing is locked"
@@ -285,7 +285,7 @@
        (corp-install state side eid card server (assoc args :host-card server))
        ;; A server was selected
        :else
-       (do (swap! state dissoc-in [:corp :install-list])
+       (do (swap!* state dissoc-in [:corp :install-list])
            (corp-install-pay state side eid card server args))))))
 
 ;; Unused in the corp install system, necessary for card definitions
@@ -368,7 +368,7 @@
     (play-sfx state side "install-runner")
     (when (and (not facedown)
                (resource? card))
-      (swap! state assoc-in [:runner :register :installed-resource] true))
+      (swap!* state assoc-in [:runner :register :installed-resource] true))
     (when (and (not facedown)
                (has-subtype? installed-card "Icebreaker"))
       (update-breaker-strength state side installed-card))

@@ -3,7 +3,8 @@
    [cond-plus.core :refer [cond+]]
    [game.core.card :refer [has-subtype? virus-program? program?]]
    [game.core.effects :refer [get-effect-maps get-effect-value get-effects]]
-   [game.core.toasts :refer [toast]]))
+   [game.core.toasts :refer [toast]]
+   [game.utils :refer [swap!*]]))
 
 (defn mu+
   "For use in :static-abilities and register-lingering-effect.
@@ -134,7 +135,7 @@
      (when changed?
        (when (neg? (- (:available new-mu) (:used new-mu)))
          (toast state :runner "You have exceeded your memory units!"))
-       (swap! state update-in [:runner :memory] merge new-mu))
+       (swap!* state update-in [:runner :memory] merge new-mu))
      changed?)))
 
 (defn sufficient-mu?

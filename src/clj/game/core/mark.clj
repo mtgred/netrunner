@@ -3,11 +3,12 @@
     [game.core.say :refer [system-msg]]
     [game.core.servers :refer [central->name]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [req]]))
+    [game.macros :refer [req]]
+    [game.utils :refer [swap!*]]))
 
 (defn set-mark
   [state new-mark]
-  (swap! state assoc :mark new-mark))
+  (swap!* state assoc :mark new-mark))
 
 (defn is-mark?
   [state s]

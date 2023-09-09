@@ -425,7 +425,7 @@
           :async true
           :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
           :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card})
-                                 (swap! state assoc-in [:runner :register :trashed-card] true)
+                                 (swap!* state assoc-in [:runner :register :trashed-card] true)
                                  (damage state :runner eid :meat 1 {:unboostable true})))}]))}})
 
 (defcard "Calling in Favors"
@@ -698,8 +698,8 @@
 (defcard "Corporate Scandal"
   {:on-play {:msg "give the Corp 1 additional bad publicity"
              :implementation "No enforcement that this Bad Pub cannot be removed"
-             :effect (req (swap! state update-in [:corp :bad-publicity :additional] inc))}
-   :leave-play (req (swap! state update-in [:corp :bad-publicity :additional] dec))})
+             :effect (req (swap!* state update-in [:corp :bad-publicity :additional] inc))}
+   :leave-play (req (swap!* state update-in [:corp :bad-publicity :additional] dec))})
 
 (defcard "Creative Commission"
   {:on-play {:msg (msg "gain 5 [Credits]"
@@ -1238,7 +1238,7 @@
                    (some #{:archives} (:successful-run runner-reg))))
     :rfg-instead-of-trashing true
     :msg "take an additional turn after this one"
-    :effect (req (swap! state update-in [:runner :extra-turns] (fnil inc 0)))}})
+    :effect (req (swap!* state update-in [:runner :extra-turns] (fnil inc 0)))}})
 
 (defcard "Escher"
   (letfn [(es [] {:async true
@@ -2848,7 +2848,7 @@
                    ;; Move the selected ID to [:runner :identity] and set the zone
                    (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))
                          num-old-blanks (:num-disabled old-runner-identity)]
-                     (swap! state assoc-in [side :identity] new-id)
+                     (swap!* state assoc-in [side :identity] new-id)
                      (card-init state side new-id)
                      (when num-old-blanks
                        (dotimes [_ num-old-blanks]
@@ -3073,7 +3073,7 @@
                                                   (in-discard? %))}
                             :effect (req (doseq [c targets]
                                            (move state side c :hand))
-                                         (swap! state assoc-in [:run :prevent-hand-access] true)
+                                         (swap!* state assoc-in [:run :prevent-hand-access] true)
                                          (effect-completed state side eid))}
                            card nil)))}}}]
     {:makes-run true
@@ -3260,9 +3260,9 @@
                             this-card-run))
              :silent (req true)
              :msg "access cards from the bottom of R&D"
-             :effect (req (swap! state assoc-in [:runner :rd-access-fn] reverse))}
+             :effect (req (swap!* state assoc-in [:runner :rd-access-fn] reverse))}
             {:event :run-ends
-             :effect (req (swap! state assoc-in [:runner :rd-access-fn] seq))}]})
+             :effect (req (swap!* state assoc-in [:runner :rd-access-fn] seq))}]})
 
 (defcard "Singularity"
   {:makes-run true
@@ -3512,7 +3512,7 @@
                :effect (req (when-not (get-in card [:special :ss-target])
                               (update! state side (assoc-in card [:special :ss-target] target)))
                             (let [new-pump (assoc (second targets) :duration :end-of-run)]
-                              (swap! state assoc :effects
+                              (swap!* state assoc :effects
                                      (->> (:effects @state)
                                           (remove #(= (:uuid %) (:uuid new-pump)))
                                           (#(conj % new-pump))

@@ -801,7 +801,7 @@
                             (not (get-in @state [:per-turn (:cid card)]))))
              :msg (msg "increase the install cost of " (:title (:card context))
                        " by " (get-counters card :power) " [Credits]")
-             :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
+             :effect (req (swap!* state assoc-in [:per-turn (:cid card)] true))}]})
 
 (defcard "Dr. Vientiane Keeling"
   {:static-abilities [(runner-hand-size+ (req (- (get-counters card :power))))]
@@ -1140,7 +1140,7 @@
                            (prevent-draw state :runner)))}
    :events [{:event :runner-turn-begins
              :effect (effect (max-draw :runner 2))}]
-   :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))})
+   :leave-play (req (swap!* state update-in [:runner :register] dissoc :max-draw :cannot-draw))})
 
 (defcard "Ghost Branch"
   (advance-ambush 0 {:async true
@@ -2648,7 +2648,7 @@
   {:events [{:event :runner-turn-begins
              :effect (req (prevent-current state side))}]
    :on-rez {:effect (req (prevent-current state side))}
-   :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))})
+   :leave-play (req (swap!* state assoc-in [:runner :register :cannot-play-current] false))})
 
 (defcard "The Root"
   {:recurring 3

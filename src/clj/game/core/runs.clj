@@ -19,7 +19,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
-    [game.utils :refer [dissoc-in same-card?]]
+    [game.utils :refer [dissoc-in same-card? swap!*]]
     [jinteki.utils :refer [count-bad-pub other-side]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]))
@@ -77,25 +77,25 @@
   [state key value]
   (when-let [encounter (get-current-encounter state)]
     (let [updated-encounter (assoc encounter key value)]
-      (swap! state update :encounters #(conj (pop %) updated-encounter)))))
+      (swap!* state update :encounters #(conj (pop %) updated-encounter)))))
 
 (defn clear-encounter
   [state]
   (when-let [encounter (get-current-encounter state)]
-    (swap! state update :encounters pop)
-    (swap! state assoc :per-encounter nil)
+    (swap!* state update :encounters pop)
+    (swap!* state assoc :per-encounter nil)
     (effect-completed state nil (:eid encounter))))
 
 (defn set-phase
   [state phase]
-  (swap! state assoc-in [:run :phase] phase)
-  (swap! state dissoc-in [:run :next-phase])
-  (swap! state assoc-in [:run :no-action] false)
+  (swap!* state assoc-in [:run :phase] phase)
+  (swap!* state dissoc-in [:run :next-phase])
+  (swap!* state assoc-in [:run :no-action] false)
   phase)
 
 (defn set-next-phase
   [state phase]
-  (swap! state assoc-in [:run :next-phase] phase)
+  (swap!* state assoc-in [:run :next-phase] phase)
   phase)
 
 (defmulti start-next-phase
@@ -119,10 +119,10 @@
                   (can-run-server? state server)
                   (can-pay? state :runner eid card "a run" costs))
        (effect-completed state side eid)
-       (do (swap! state dissoc-in [:end-run :ended])
+       (do (swap!* state dissoc-in [:end-run :ended])
            (when click-run
-             (swap! state assoc-in [:runner :register :click-type] :run)
-             (swap! state assoc-in [:runner :register :made-click-run] true)
+             (swap!* state assoc-in [:runner :register :click-type] :run)
+             (swap!* state assoc-in [:runner :register :made-click-run] true)
              (play-sfx state side "click-run"))
            (wait-for
              (pay state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
@@ -138,7 +138,7 @@
                                                     (when ignore-costs ", ignoring all costs"))))
                    ;; s is a keyword for the server, like :hq or :remote1
                    (let [run-id (make-eid state)]
-                     (swap! state assoc
+                     (swap!* state assoc
                             :per-run nil
                             :run {:run-id run-id
                                   :server s
@@ -158,9 +158,9 @@
                                        (make-eid state eid)
                                        (+ (or (get-in @state [:runner :next-run-credit]) 0)
                                           (count-bad-pub state)))
-                     (swap! state assoc-in [:runner :next-run-credit] 0)
-                     (swap! state update-in [:runner :register :made-run] conj (first s))
-                     (swap! state update-in [:stats side :runs :started] (fnil inc 0))
+                     (swap!* state assoc-in [:runner :next-run-credit] 0)
+                     (swap!* state update-in [:runner :register :made-run] conj (first s))
+                     (swap!* state update-in [:stats side :runs :started] (fnil inc 0))
                      (queue-event state :run {:server s
                                               :position n
                                               :cost-args cost-args})
@@ -174,7 +174,7 @@
 
 (defn toggle-auto-no-action
   [state _ _]
-  (swap! state update-in [:run :corp-auto-no-action] not)
+  (swap!* state update-in [:run :corp-auto-no-action] not)
   (when (and (rezzed? (get-current-ice state))
              (or (= :approach-ice (:phase (:run @state)))
                  (= :encounter-ice (:phase (:run @state)))))
@@ -253,7 +253,7 @@
   (set-phase state :approach-ice)
   (set-current-ice state)
   (reset-all-ice state side)
-  (swap! state assoc-in [:run :approached-ice?] true)
+  (swap!* state assoc-in [:run :approached-ice?] true)
   (check-auto-no-action state)
   (let [eid (make-phase-eid state eid)
         ice (get-current-ice state)
@@ -278,7 +278,7 @@
 (defmethod continue :approach-ice
   [state side _]
   (if-not (get-in @state [:run :no-action])
-    (do (swap! state assoc-in [:run :no-action] side)
+    (do (swap!* state assoc-in [:run :no-action] side)
         (when (= :corp side)
           (system-msg state side "has no further action")))
     (let [eid (make-phase-eid state nil)
@@ -322,7 +322,7 @@
 
 (defn encounter-ice
   [state side eid ice]
-  (swap! state update :encounters conj {:eid eid
+  (swap!* state update :encounters conj {:eid eid
                                         :ice ice})
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))
@@ -384,11 +384,11 @@
         passed-all-ice (or (zero? new-position)
                            (= :initiation previous-phase))]
     (set-phase state :movement)
-    (swap! state assoc-in [:run :no-action] false)
+    (swap!* state assoc-in [:run :no-action] false)
     (when pass-ice?
       (system-msg state :runner (str "passes " (card-str state ice)))
       (queue-event state :pass-ice {:ice (get-card state ice)}))
-    (swap! state assoc-in [:run :position] new-position)
+    (swap!* state assoc-in [:run :position] new-position)
     (when passed-all-ice
       (queue-event state :pass-all-ice {:ice (get-card state ice)}))
     (check-auto-no-action state)
@@ -449,7 +449,7 @@
 (defmethod continue :movement
   [state side _]
   (if-not (get-in @state [:run :no-action])
-    (do (swap! state assoc-in [:run :no-action] side)
+    (do (swap!* state assoc-in [:run :no-action] side)
         (when (= :runner side)
           (system-msg state side "will continue the run")))
     (let [eid (make-phase-eid state nil)]
@@ -496,7 +496,7 @@
                      :movement)
                    phase)]
        (do (trigger-event state side :pre-redirect-server (:server (:run @state)) dest)
-           (swap! state update :run
+           (swap!* state update :run
                   assoc
                   :position num-ice
                   :server [(second dest)])
@@ -509,13 +509,13 @@
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
   [state _ eid n]
-  (swap! state update-in [:runner :run-credit] (fnil + 0 0) n)
+  (swap!* state update-in [:runner :run-credit] (fnil + 0 0) n)
   (gain-credits state :runner eid n))
 
 (defn gain-next-run-credits
   "Add temporary credits for the next run to be initiated."
   [state _ n]
-  (swap! state update-in [:runner :next-run-credit] (fnil + 0 0) n))
+  (swap!* state update-in [:runner :next-run-credit] (fnil + 0 0) n))
 
 ;;; Ending runs
 (defn add-run-effect
@@ -523,7 +523,7 @@
   (let [ability {:card card
                  :mandatory (:mandatory props)
                  :ability ability}]
-    (swap! state update-in [:run :run-effects] conj ability)))
+    (swap!* state update-in [:run :run-effects] conj ability)))
 
 (defn successful-run-replace-breach
   [props]
@@ -591,7 +591,7 @@
   "Prevents the runner from accessing cards or breaching the server this run.
    This will cancel any run effects and not trigger breach/access routines."
   [state _]
-  (swap! state assoc-in [:run :prevent-access] true))
+  (swap!* state assoc-in [:run :prevent-access] true))
 
 (defn complete-run
   "This does all of the breach related stuff"
@@ -630,8 +630,8 @@
   (wait-for (checkpoint state nil (make-eid state eid))
             (if (any-effects state side :block-successful-run)
               (effect-completed state side eid)
-              (do (swap! state update-in [:runner :register :successful-run] conj (-> @state :run :server first))
-                  (swap! state assoc-in [:run :successful] true)
+              (do (swap!* state update-in [:runner :register :successful-run] conj (-> @state :run :server first))
+                  (swap!* state assoc-in [:run :successful] true)
                   ;; if the server is a mark, add it to the successful run
                   (let [marked (when (is-mark? state (first (:server (:run @state))))
                                  {:marked-server true})
@@ -649,13 +649,13 @@
 
 (defn end-run-prevent
   [state _]
-  (swap! state update-in [:end-run :end-run-prevent] (fnil inc 0)))
+  (swap!* state update-in [:end-run :end-run-prevent] (fnil inc 0)))
 
 (defn- register-unsuccessful-run
   [state side eid]
   (let [run (:run @state)]
-    (swap! state update-in [:runner :register :unsuccessful-run] conj (first (:server run)))
-    (swap! state assoc-in [:run :unsuccessful] true)
+    (swap!* state update-in [:runner :register :unsuccessful-run] conj (first (:server run)))
+    (swap!* state assoc-in [:run :unsuccessful] true)
     (wait-for (handle-end-run state side (make-eid state eid))
               (queue-event state :unsuccessful-run run)
               (checkpoint state nil eid))))
@@ -678,7 +678,7 @@
   ([state side eid card {:keys [unpreventable] :as args}]
    (if (or (:run @state)
            (get-current-encounter state))
-     (do (swap! state update-in [:end-run] dissoc :end-run-prevent)
+     (do (swap!* state update-in [:end-run] dissoc :end-run-prevent)
          (let [prevent (get-prevent-list state :runner :end-run)
                auto-prevent (any-effects state side :auto-prevent-run-end true? card [card])]
            (if auto-prevent
@@ -702,7 +702,7 @@
 
 (defn jack-out-prevent
   [state side]
-  (swap! state update-in [:jack-out :jack-out-prevent] (fnil inc 0))
+  (swap!* state update-in [:jack-out :jack-out-prevent] (fnil inc 0))
   (prevent-jack-out state side))
 
 (defn- resolve-jack-out
@@ -714,7 +714,7 @@
 (defn jack-out
   "The runner decides to jack out."
   ([state side eid]
-   (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
+   (swap!* state update-in [:jack-out] dissoc :jack-out-prevent)
    (let [cost (jack-out-cost state side)]
      (if (can-pay? state side eid nil "jack out" cost)
        (wait-for (pay state :runner nil cost)
@@ -759,16 +759,16 @@
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side eid]
-  (swap! state assoc-in [:end-run :ended] true)
+  (swap!* state assoc-in [:end-run :ended] true)
   (when (get-current-encounter state)
     (queue-event state :end-of-encounter {:ice (get-current-ice state)}))
   (let [run (:run @state)
         run-eid (:eid run)]
-    (swap! state assoc-in [:runner :register :last-run] run)
-    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-    (swap! state assoc-in [:runner :run-credit] 0)
-    (swap! state assoc :run nil)
-    (swap! state dissoc-in [:end-run :ended])
+    (swap!* state assoc-in [:runner :register :last-run] run)
+    (swap!* state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+    (swap!* state assoc-in [:runner :run-credit] 0)
+    (swap!* state assoc :run nil)
+    (swap!* state dissoc-in [:end-run :ended])
     (queue-event state :run-ends run)
     (wait-for (checkpoint state nil (make-eid state eid) {:durations [:end-of-encounter :end-of-run :end-of-next-run]})
               (clear-encounter state)
@@ -782,10 +782,10 @@
 (defn forced-encounter-cleanup
   "Trigger appropriate events for the end of an encounter outside of a run"
   [state side eid]
-  (swap! state dissoc-in [:end-run :ended])
+  (swap!* state dissoc-in [:end-run :ended])
   (wait-for (checkpoint state nil (make-eid state eid) {:durations [:end-of-encounter :end-of-run]})
             (reset-all-ice state side)
-            (swap! state assoc :per-encounter nil)
+            (swap!* state assoc :per-encounter nil)
             (clear-run-register! state)
             (effect-completed state side eid)))
 
@@ -804,7 +804,7 @@
           (and (not (:ended (:end-run @state)))
                (or (:run @state)
                    (get-current-encounter state)))
-          (do (swap! state assoc-in [:end-run :ended] true)
+          (do (swap!* state assoc-in [:end-run :ended] true)
               (when (:run @state)
                 (prevent-access state side))
               (if (and (get-current-encounter state)

@@ -8,11 +8,12 @@
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.to-string :refer [card-str]]
-    [game.macros :refer [wait-for]]))
+    [game.macros :refer [wait-for]]
+    [game.utils :refer [swap!*]]))
 
 (defn expose-prevent
   [state _ n]
-  (swap! state update-in [:expose :expose-prevent] #(+ (or % 0) n)))
+  (swap!* state update-in [:expose :expose-prevent] #(+ (or % 0) n)))
 
 (defn- resolve-expose
   [state side eid target]
@@ -27,7 +28,7 @@
   ([state side target] (expose state side (make-eid state) target))
   ([state side eid target] (expose state side eid target nil))
   ([state side eid target {:keys [unpreventable]}]
-    (swap! state update :expose dissoc :expose-prevent)
+    (swap!* state update :expose dissoc :expose-prevent)
     (if (or (rezzed? target)
             (nil? target))
       (effect-completed state side eid) ; cannot expose faceup cards

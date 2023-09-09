@@ -2,7 +2,8 @@
   (:require
    [cljc.java-time.instant :as inst]
    [clojure.string :as str]
-   [game.core.toasts :refer [toast]]))
+   [game.core.toasts :refer [toast]]
+   [game.utils :refer [swap!*]]))
 
 (defn make-message
   "Create a message map, along with timestamp if none is provided."
@@ -22,8 +23,8 @@
   [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))
         message (make-message {:user author :text text})]
-    (swap! state update :log conj message)
-    (swap! state assoc :typing false)))
+    (swap!* state update :log conj message)
+    (swap!* state assoc :typing false)))
 
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
@@ -35,7 +36,7 @@
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
   [state text]
   (let [message (make-system-message text)]
-    (swap! state update :log conj message)))
+    (swap!* state update :log conj message)))
 
 (defn system-msg
   "Prints a message to the log without a username."
@@ -73,7 +74,7 @@
   Each SFX comes with a unique ID, so each client can track for themselves which sounds have already been played.
   The sfx queue has size limited to 3 to limit the sound torrent tabbed out or lagged players will experience."
   [state _ sfx]
-  (swap! state (fn [state]
+  (swap!* state (fn [state]
                  (if-let [current-id (:sfx-current-id state)]
                    (-> state
                        (update :sfx conj {:id (inc current-id) :name sfx})

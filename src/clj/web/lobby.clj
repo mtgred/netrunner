@@ -5,7 +5,7 @@
    [clojure.string :as str]
    [crypto.password.bcrypt :as bcrypt]
    [game.core :as core]
-   [game.utils :refer [server-card]]
+   [game.utils :refer [server-card swap!*]]
    [jinteki.utils :refer [select-non-nil-keys side-from-str superuser?]]
    [jinteki.validator :as validator]
    [medley.core :refer [find-first random-uuid]]
@@ -317,7 +317,7 @@
       (if lobby?
         (when-let [state (:state lobby?)]
           (let [side (side-from-str (:side (player? uid lobby) ""))]
-            (swap! state update side dissoc :user)))
+            (swap!* state update side dissoc :user)))
         (close-lobby! db lobby))
       (send-lobby-state lobby?)
       (broadcast-lobby-list)
@@ -478,7 +478,7 @@
       (do (when-let [player (player? uid lobby?)]
             (let [side (side-from-str (:side player))]
               (when-let [state (:state lobby?)]
-                (swap! state assoc-in [side :user] user))))
+                (swap!* state assoc-in [side :user] user))))
           (send-lobby-state lobby?)
           (send-lobby-ting lobby?)
           (broadcast-lobby-list)

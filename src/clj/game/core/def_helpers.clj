@@ -17,7 +17,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
-    [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword]]
+    [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword swap!*]]
     [jinteki.utils :refer [other-side]]))
 
 (defn combine-abilities
@@ -83,22 +83,22 @@
    :effect (req
              (cond
                (and (= dest "bottom") (= target "Done"))
-               (do (swap! state update-in [reorder-side :deck]
+               (do (swap!* state update-in [reorder-side :deck]
                           #(vec (concat (drop (count chosen) %) (reverse chosen))))
                    (when (and (= :corp reorder-side)
                               (:run @state)
                               (:access @state))
-                     (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                     (swap!* state assoc-in [:run :shuffled-during-access :rd] true))
                    (clear-wait-prompt state wait-side)
                    (effect-completed state side eid))
 
                (= target "Done")
-               (do (swap! state update-in [reorder-side :deck]
+               (do (swap!* state update-in [reorder-side :deck]
                           #(vec (concat chosen (drop (count chosen) %))))
                    (when (and (= :corp reorder-side)
                               (:run @state)
                               (:access @state))
-                     (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                     (swap!* state assoc-in [:run :shuffled-during-access :rd] true))
                    (clear-wait-prompt state wait-side)
                    (effect-completed state side eid))
 
@@ -242,9 +242,9 @@
 
 (defmacro defcard
   [title ability]
-  `(do (swap! card-defs-cache dissoc ~title)
+  `(do (swap!* card-defs-cache dissoc ~title)
        (defmethod card-defs/defcard-impl ~title [~'_]
          (or (get @card-defs-cache ~title)
              (let [ability# (add-default-abilities ~title ~ability)]
-               (swap! card-defs-cache assoc ~title ability#)
+               (swap!* card-defs-cache assoc ~title ability#)
                ability#)))))

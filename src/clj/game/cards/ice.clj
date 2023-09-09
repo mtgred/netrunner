@@ -1668,7 +1668,7 @@
                                 (move state side (get-card state card)
                                       [:servers (target-server run) :ices]
                                       {:front true})
-                                (swap! state assoc-in [:run :position] 1)
+                                (swap!* state assoc-in [:run :position] 1)
                                 (set-next-phase state :encounter-ice)
                                 (set-current-ice state)
                                 (update-all-ice state side)
@@ -2159,7 +2159,7 @@
                        :duration :end-of-encounter
                        :unregister-once-resolved true
                        :msg (msg "can jack out again after encountering " (:title encountered-ice))
-                       :effect (req (swap! state update :run dissoc :cannot-jack-out))
+                       :effect (req (swap!* state update :run dissoc :cannot-jack-out))
                        :req (req (same-card? encountered-ice (:ice context)))}])))}]))}]})
 
 (defcard "Information Overload"
@@ -3036,7 +3036,7 @@
              :msg (str "force the runner to lose a [Click], if able. "
                        "Corp gains an additional [Click] to spend during their next turn")
              :effect (req (lose-clicks state :runner 1)
-                          (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
+                          (swap!* state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
     {:subroutines [sub
                    sub]}))
 
@@ -3593,7 +3593,7 @@
                                       [{:event :encounter-ice
                                         :duration :end-of-run
                                         :unregister-once-resolved true
-                                        :effect (req (swap! state update :run dissoc :cannot-jack-out))}])
+                                        :effect (req (swap!* state update :run dissoc :cannot-jack-out))}])
                                      (if (and (= 1 (count (:encounters @state)))
                                               (not= :success (:phase run)))
                                        (do (redirect-run state side "Archives" :approach-ice)
@@ -3891,7 +3891,7 @@
   {:subroutines [(do-brain-damage 2)
                  (combine-abilities trash-installed-sub (gain-credits-sub 3))
                  end-the-run]
-   :runner-abilities [(bioroid-break 1 1 {:additional-ability {:effect (req (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}})]})
+   :runner-abilities [(bioroid-break 1 1 {:additional-ability {:effect (req (swap!* state update-in [:corp :extra-click-temp] (fnil inc 0)))}})]})
 
 (defcard "Tyrant"
   (zero-to-hero end-the-run))

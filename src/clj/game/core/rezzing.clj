@@ -17,7 +17,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [enumerate-str to-keyword]]))
+    [game.utils :refer [enumerate-str to-keyword swap!*]]))
 
 (defn get-rez-cost
   [state side card {:keys [ignore-cost alternative-cost cost-bonus]}]
@@ -80,7 +80,7 @@
                       (do (update-ice-strength state side card)
                           (play-sfx state side "rez-ice"))
                       (play-sfx state side "rez-other"))
-                    (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
+                    (swap!* state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                     (when-let [card-ability (:on-rez cdef)]
                       (register-pending-event state :rez card card-ability))
                     (queue-event state :rez {:card (get-card state card)

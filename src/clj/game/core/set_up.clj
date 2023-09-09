@@ -16,7 +16,7 @@
    [game.core.state :refer [new-state]]
    [game.macros :refer [wait-for]]
    [game.quotes :as quotes]
-   [game.utils :refer [server-card]]))
+   [game.utils :refer [server-card swap!*]]))
 
 (defn build-card
   [card]
@@ -40,7 +40,7 @@
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
         (mul state side (make-eid state) card nil))))
-  (swap! state assoc-in [side :keep] :mulligan)
+  (swap!* state assoc-in [side :keep] :mulligan)
   (system-msg state side "takes a mulligan")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
@@ -52,7 +52,7 @@
 (defn keep-hand
   "Choose not to mulligan."
   [state side _]
-  (swap! state assoc-in [side :keep] :keep)
+  (swap!* state assoc-in [side :keep] :keep)
   (system-msg state side "keeps their hand")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
@@ -113,12 +113,12 @@
 
 (defn- create-basic-action-cards
   [state]
-  (swap! state
+  (swap!* state
          assoc-in [:corp :basic-action-card]
          (make-card {:side "Corp"
                      :type "Basic Action"
                      :title "Corp Basic Action Card"}))
-  (swap! state
+  (swap!* state
          assoc-in [:runner :basic-action-card]
          (make-card {:side "Runner"
                      :type "Basic Action"
@@ -131,7 +131,7 @@
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
     (when-let [messages (seq (:messages game))]
-      (swap! state assoc :log (into [] messages))
+      (swap!* state assoc :log (into [] messages))
       (system-say state nil "[hr]"))
     (card-init state :corp corp-identity)
     (implementation-msg state corp-identity)
@@ -143,5 +143,5 @@
               (wait-for (trigger-event-sync state :runner :pre-start-game nil)
                         (init-hands state)
                         (fake-checkpoint state)))
-    (swap! state assoc :history [(:hist-state (public-states state))])
+    (swap!* state assoc :history [(:hist-state (public-states state))])
     state))

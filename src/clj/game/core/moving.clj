@@ -19,7 +19,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for when-let*]]
-    [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
+    [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword swap!*]]
     [medley.core :refer [insert-nth]]))
 
 ;; Helpers for move
@@ -29,7 +29,7 @@
   (doseq [s [:runner :corp]]
     (if host
       (remove-from-host state side card)
-      (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(same-card? card %) coll))))))
+      (swap!* state update-in (cons s (vec zone)) (fn [coll] (remove-once #(same-card? card %) coll))))))
 
 (defn uninstall
   "Triggers :uninstall effects"
@@ -138,9 +138,9 @@
                             (conj all-effects current-effect)))
                         []
                         (:effects @state))]
-      (swap! state assoc :effects (into [] new-effects)))
+      (swap!* state assoc :effects (into [] new-effects)))
     ;; Moving the card has changed the cid
-    (swap! state assoc :effects
+    (swap!* state assoc :effects
            (->> (:effects @state)
                 (remove #(and (same-card? card (:card %))
                               (= :while-active (:duration %))))
@@ -149,7 +149,7 @@
 (defn update-installed-card-indices
   [state side server]
   (when (seq (get-in @state (cons side server)))
-    (swap! state update-in (cons side server)
+    (swap!* state update-in (cons side server)
            #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %)))))
 
 (defn- update-run-position
@@ -167,10 +167,10 @@
       (cond
         (and (protecting-run-server? old-card)
              (inward-position? old-card))
-        (swap! state update-in [:run :position] dec)
+        (swap!* state update-in [:run :position] dec)
         (and (protecting-run-server? moved-card)
              (inward-position? moved-card))
-        (swap! state update-in [:run :position] inc)))))
+        (swap!* state update-in [:run :position] inc)))))
 
 (defn move
   "Moves the given card to the given new zone."
@@ -198,7 +198,7 @@
            (let [pos-to-move-to (cond index index
                                       front 0
                                       :else (count (get-in @state (cons side dest))))]
-             (swap! state update-in (cons side dest) #(vec (insert-nth pos-to-move-to moved-card %))))
+             (swap!* state update-in (cons side dest) #(vec (insert-nth pos-to-move-to moved-card %))))
            (when (seq zone)
              (update-installed-card-indices state side zone))
            (update-installed-card-indices state side dest)
@@ -209,7 +209,7 @@
                         (is-remote? z)
                         (empty? (get-in @state (conj z :content)))
                         (empty? (get-in @state (conj z :ices))))
-               (swap! state dissoc-in z)))
+               (swap!* state dissoc-in z)))
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (when-not suppress-event
@@ -250,7 +250,7 @@
 ;;; Trashing
 (defn trash-prevent
   [state _ type n]
-  (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
+  (swap!* state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn- prevent-trash-impl
   [state side eid {:keys [zone type] :as card} {:keys [unpreventable cause game-trash] :as args}]
@@ -274,7 +274,7 @@
       (let [ktype (keyword (string/lower-case type))]
         (when (and (not unpreventable)
                    (not= cause :ability-cost))
-          (swap! state update-in [:trash :trash-prevent] dissoc ktype))
+          (swap!* state update-in [:trash :trash-prevent] dissoc ktype))
         (let [type (->> ktype name (str "trash-") keyword)
               prevent (get-prevent-list state :runner type)]
           ;; Check for prevention effects
@@ -289,7 +289,7 @@
                                (clear-wait-prompt state :corp)
                                (if-let [_ (get-in @state [:trash :trash-prevent ktype])]
                                  (do (system-msg state :runner (str "prevents the trashing of " (:title card)))
-                                     (swap! state update-in [:trash :trash-prevent] dissoc ktype)
+                                     (swap!* state update-in [:trash :trash-prevent] dissoc ktype)
                                      (effect-completed state side eid))
                                  (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
                                      (complete-with-result state side eid card))))))
@@ -378,11 +378,11 @@
                                        acc))
                                    []
                                    trashlist)]
-                 (swap! state update-in [:trash :trash-list] dissoc eid)
+                 (swap!* state update-in [:trash :trash-list] dissoc eid)
                  (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))
-                   (swap! state assoc-in [side :register :trashed-card] true))
+                   (swap!* state assoc-in [side :register :trashed-card] true))
                  ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
-                 (swap! state assoc-in [:corp :discard]
+                 (swap!* state assoc-in [:corp :discard]
                         (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
                  (let [;; The trash event will be determined by who is performing the
                        ;; trash. `:game-trash` in this case refers to when a checkpoint
@@ -441,8 +441,8 @@
             b-index (card-index state b)
             a-new (assoc a :zone (:zone b))
             b-new (assoc b :zone (:zone a))]
-        (swap! state update-in (cons :corp (:zone a)) assoc a-index b-new)
-        (swap! state update-in (cons :corp (:zone b)) assoc b-index a-new)
+        (swap!* state update-in (cons :corp (:zone a)) assoc a-index b-new)
+        (swap!* state update-in (cons :corp (:zone b)) assoc b-index a-new)
         (update-installed-card-indices state :corp (:zone a))
         (update-installed-card-indices state :corp (:zone b))
         (doseq [new-card [a-new b-new]]
@@ -473,12 +473,12 @@
 
 (defn remove-from-currently-drawing
   [state side card]
-  (swap! state update-in [side :register :currently-drawing]
+  (swap!* state update-in [side :register :currently-drawing]
          (fn [mrd] (conj (pop mrd) (remove-once #(= (:cid %) (:cid card)) (peek mrd))))))
 
 (defn add-to-currently-drawing
   [state side card]
-  (swap! state update-in [side :register :currently-drawing] #(conj (pop %) (conj (peek %) card))))
+  (swap!* state update-in [side :register :currently-drawing] #(conj (pop %) (conj (peek %) card))))
 
 (defn swap-cards
   "Swaps two cards when one or both aren't installed"

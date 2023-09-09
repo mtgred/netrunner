@@ -5,7 +5,7 @@
    [cond-plus.core :refer [cond+]]
    [game.core.effects :refer [any-effects]]
    [game.core.say :refer [play-sfx system-msg system-say]]
-   [game.utils :refer [dissoc-in]]
+   [game.utils :refer [dissoc-in swap!*]]
    [jinteki.utils :refer [other-side]]))
 
 (defn win
@@ -17,7 +17,7 @@
           duration (duration/to-minutes (duration/between started now))]
       (system-msg state side "wins the game")
       (play-sfx state side "game-end")
-      (swap! state (fn [state]
+      (swap!* state (fn [state]
                      (-> state
                          (assoc-in [:stats :time :ended] now)
                          (assoc-in [:stats :time :elapsed] duration)
@@ -41,7 +41,7 @@
           duration (duration/to-minutes (duration/between started now))]
       (system-say state nil "The game is a tie!")
       (play-sfx state nil "game-end")
-      (swap! state (fn [state]
+      (swap!* state (fn [state]
                      (-> state
                          (assoc-in [:stats :time :ended] now)
                          (assoc-in [:stats :time :elapsed] duration)
@@ -72,12 +72,12 @@
 (defn clear-win
   "Clears the current win condition. Requires both sides to have issued the command"
   [state side]
-  (swap! state assoc-in [side :clear-win] true)
+  (swap!* state assoc-in [side :clear-win] true)
   (when (and (-> @state :runner :clear-win) (-> @state :corp :clear-win))
     (system-msg state side "cleared the win condition")
-    (swap! state dissoc-in [:runner :clear-win])
-    (swap! state dissoc-in [:corp :clear-win])
-    (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
+    (swap!* state dissoc-in [:runner :clear-win])
+    (swap!* state dissoc-in [:corp :clear-win])
+    (swap!* state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
 
 (defn side-win
   [state side]

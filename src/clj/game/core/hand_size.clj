@@ -1,6 +1,7 @@
 (ns game.core.hand-size
   (:require
-    [game.core.effects :refer [sum-effects]]))
+    [game.core.effects :refer [sum-effects]]
+    [game.utils :refer [swap!*]]))
 
 (defn hand-size
   [state side]
@@ -20,7 +21,7 @@
         new-total (sum-hand-size-effects state side)
         changed? (not= old-total new-total)]
     (when changed?
-      (swap! state assoc-in [side :hand-size :total] new-total))
+      (swap!* state assoc-in [side :hand-size :total] new-total))
     changed?))
 
 (defn hand-size+

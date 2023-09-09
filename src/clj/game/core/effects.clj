@@ -3,7 +3,7 @@
             [game.core.card :refer [get-card]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
-            [game.utils :refer [same-card? to-keyword]]))
+            [game.utils :refer [same-card? to-keyword swap!*]]))
 
 (defn register-static-abilities
   [state _ card]
@@ -15,13 +15,13 @@
                         :duration :while-active
                         :card card
                         :uuid (uuid/v1)))]
-      (swap! state update :effects
+      (swap!* state update :effects
              #(apply conj (into [] %) abilities))
       abilities)))
 
 (defn unregister-static-abilities
   [state _ card]
-  (swap! state assoc :effects
+  (swap!* state assoc :effects
          (->> (:effects @state)
               (remove #(and (same-card? card (:card %))
                             (= :while-active (:duration %))))
@@ -33,12 +33,12 @@
                   (select-keys ability [:type :duration :req :value])
                   :card card
                   :uuid (uuid/v1))]
-    (swap! state update :effects conj ability)
+    (swap!* state update :effects conj ability)
     ability))
 
 (defn unregister-lingering-effects
   [state _ duration]
-  (swap! state assoc :effects
+  (swap!* state assoc :effects
          (->> (:effects @state)
               (remove #(= duration (:duration %)))
               (into []))))
@@ -46,7 +46,7 @@
 (defn unregister-effects-for-card
   ([state _ card] (unregister-effects-for-card state nil card identity))
   ([state _ card pred]
-   (swap! state assoc :effects
+   (swap!* state assoc :effects
           (->> (:effects @state)
                (remove #(and (same-card? card (:card %))
                              (pred %)))

@@ -6,7 +6,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.eid :refer [make-eid]]
    [game.core.servers :refer [is-remote? zones->sorted-names]]
-   [game.utils :refer [dissoc-in to-keyword]]))
+   [game.utils :refer [dissoc-in to-keyword swap!*]]))
 
 (defn corp-servers-cards [state]
   (for [server (vals (:servers (:corp @state)))
@@ -194,4 +194,4 @@
     (let [zone [:corp :servers (first remote)]]
       (when (and (empty? (get-in @state (conj zone :content)))
                  (empty? (get-in @state (conj zone :ices))))
-        (swap! state dissoc-in zone)))))
+        (swap!* state dissoc-in zone)))))

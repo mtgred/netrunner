@@ -130,7 +130,7 @@
                                                           :effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install) card nil))}
                                         ;; Add a register to note that the player was already asked about installing,
                                         ;; to prevent multiple copies from prompting multiple times.
-                                        (= target "No") {:effect (req (swap! state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}
+                                        (= target "No") {:effect (req (swap!* state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}
                                         ;; mark that we never want to install this heap breaker while another copy is installed
                                         :else {:effect (req
                                                          (let [heap-breakers (filter #(= title (:title %)) (all-active-installed state :runner))]
@@ -839,17 +839,17 @@
    {:effect (req (let [agendas (->> (turn-events state :corp :corp-install)
                                     (filter #(agenda? (:card (first %))))
                                     (map first))]
-                   (swap! state assoc-in [:corp :register :cannot-score] agendas)))}
+                   (swap!* state assoc-in [:corp :register :cannot-score] agendas)))}
    :events [{:event :purge
              :async true
              :msg "trash itself"
-             :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
+             :effect (req (swap!* state update-in [:corp :register] dissoc :cannot-score)
                           (trash state :runner eid card {:cause :purge
                                                          :cause-card card}))}
             {:event :corp-install
              :req (req (agenda? (:card context)))
-             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
-   :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))})
+             :effect (req (swap!* state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
+   :leave-play (req (swap!* state update-in [:corp :register] dissoc :cannot-score))})
 
 (defcard "Collective Consciousness"
   {:events [{:event :rez
@@ -927,7 +927,7 @@
                 :msg "redirect the run"
                 :effect (req (let [dest (second (get-zone target))
                                    tgtndx (card-index state target)]
-                               (swap! state update-in [:run]
+                               (swap!* state update-in [:run]
                                       #(assoc % :position tgtndx :server [dest]))
                                (set-current-ice state)
                                (trash state side eid card {:unpreventable true
@@ -2781,7 +2781,7 @@
                                     :interactive (req true)
                                     :msg "change the attacked server to HQ"
                                     :req (req (= :archives (-> run :server first)))
-                                    :effect (req (swap! state assoc-in [:run :server] [:hq])
+                                    :effect (req (swap!* state assoc-in [:run :server] [:hq])
                                                  (trigger-event state :corp :no-action))}])
                                 (make-run eid :archives (get-card state card)))}]})
 
@@ -2871,7 +2871,7 @@
              :msg (msg "swap " (card-str state cice)
                        " and " (card-str state target))
              :effect (req (let [tgtndx (card-index state target)]
-                            (when run (swap! state assoc-in [:run :position] (inc tgtndx)))
+                            (when run (swap!* state assoc-in [:run :position] (inc tgtndx)))
                             (swap-ice state side cice target)))})]
     {:abilities [{:cost [:credit 2]
                   :msg "swap a piece of Barrier ice"

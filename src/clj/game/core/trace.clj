@@ -7,7 +7,8 @@
     [game.core.link :refer [get-link]]
     [game.core.prompts :refer [clear-wait-prompt show-trace-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg system-say]]
-    [game.macros :refer [continue-ability effect wait-for]]))
+    [game.macros :refer [continue-ability effect wait-for]]
+    [game.utils :refer [swap!*]]))
 
 (defn- determine-initiator
   [state {:keys [player]}]
@@ -107,11 +108,11 @@
 
 (defn- reset-trace-modifications
   [state]
-  (swap! state assoc :trace nil))
+  (swap!* state assoc :trace nil))
 
 (defn force-base
   [state value]
-  (swap! state assoc-in [:trace :force-base] value))
+  (swap!* state assoc-in [:trace :force-base] value))
 
 (defn init-trace
   ([state side card] (init-trace state side (make-eid state {:source-type :trace}) card {:base 0}))

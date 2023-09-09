@@ -10,7 +10,7 @@
                                  runner-can-pay-and-install?]]
    [game.core.payment :refer [can-pay?]]
    [game.core.play-instants :refer [can-play-instant?]]
-   [game.utils :refer [dissoc-in]]
+   [game.utils :refer [dissoc-in time+ deep-select-keys]]
    [jinteki.utils :refer [select-non-nil-keys]]
    [medley.core :refer [update-existing]]))
 
@@ -451,12 +451,22 @@
      :spect-state (strip-for-spectators replay-state corp-state runner-state)
      :hist-state replay-state}))
 
+(defn strip-unsent
+  [state-map unsent-changes send-all]
+  (if send-all ; If swap!* detected a function that's not assoc/assoc-in/update/update-in/dissoc/dissoc-in, then diff over entire state
+    state-map
+    (deep-select-keys state-map unsent-changes)))
+
 (defn public-diffs [old-state new-state]
   (let [{old-corp :corp-state old-runner :runner-state
          old-spect :spect-state old-hist :hist-state} (when old-state (public-states (atom old-state)))
         {new-corp :corp-state new-runner :runner-state
-         new-spect :spect-state new-hist :hist-state} (public-states new-state)]
-    {:runner-diff (differ/diff old-runner new-runner)
-     :corp-diff (differ/diff old-corp new-corp)
-     :spect-diff (differ/diff old-spect new-spect)
-     :hist-diff (differ/diff old-hist new-hist)}))
+         new-spect :spect-state new-hist :hist-state} (public-states new-state)
+        uc (:unsent-changes @new-state)
+        sa (:unsent-changes-send-all @new-state)]
+    (println "sa:" sa)
+    (time+ 500
+           {:runner-diff (differ/diff (strip-unsent old-runner uc sa) (strip-unsent new-runner uc sa))
+            :corp-diff (differ/diff (strip-unsent old-corp uc sa) (strip-unsent new-corp uc sa))
+            :spect-diff (differ/diff (strip-unsent old-spect uc sa) (strip-unsent new-spect uc sa))
+            :hist-diff (differ/diff (strip-unsent old-hist uc sa) (strip-unsent new-hist uc sa))})))

@@ -6,7 +6,7 @@
    [game.core.diffs :as diffs]
    [game.core.say :refer [make-system-message system-msg]]
    [game.core.winning :refer [win]]
-   [game.utils :refer [in-coll?]]
+   [game.utils :refer [in-coll? swap!*]]
    [jinteki.utils :refer [other-side]]
    [monger.operators :refer :all]
    [monger.query :as mq]
@@ -247,14 +247,14 @@
   (select-keys user [:username :emailhash]))
 
 (defn set-inactive-left [state user side now]
-  (swap! state assoc-in [:angel-arena-info :inactivity-warning]
+  (swap!* state assoc-in [:angel-arena-info :inactivity-warning]
          {:stage :inactive-left
           :inactive-user (strip-user user)
           :inactive-side side
           :warning-time now}))
 
 (defn set-inactive-pre-start [state now]
-  (swap! state assoc-in [:angel-arena-info :inactivity-warning]
+  (swap!* state assoc-in [:angel-arena-info :inactivity-warning]
          {:stage :inactive-pre-start
           :inactive-side nil
           :inactive-user nil
@@ -262,7 +262,7 @@
           :period-to-react -1}))
 
 (defn set-inactive-start [state user side now]
-  (swap! state assoc-in [:angel-arena-info :inactivity-warning]
+  (swap!* state assoc-in [:angel-arena-info :inactivity-warning]
          {:stage :inactive-warning
           :inactive-user (strip-user user)
           :inactive-side side
@@ -270,10 +270,10 @@
           :period-to-react inactive-period-countdown}))
 
 (defn set-inactive-countdown [state]
-  (swap! state assoc-in [:angel-arena-info :inactivity-warning :stage] :inactive-countdown))
+  (swap!* state assoc-in [:angel-arena-info :inactivity-warning :stage] :inactive-countdown))
 
 (defn reset-inactive [state]
-  (swap! state update :angel-arena-info dissoc :inactivity-warning))
+  (swap!* state update :angel-arena-info dissoc :inactivity-warning))
 
 (defn player-left-lobby [lobby]
   (let [{:keys [original-players players]} lobby

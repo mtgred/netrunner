@@ -1,14 +1,15 @@
 (ns game.main
   (:require [cheshire.generate :refer [add-encoder encode-str]]
             [game.core :as core]
-            [game.core.toasts :refer [toast]]))
+            [game.core.toasts :refer [toast]]
+            [game.utils :refer [swap!*]]))
 
 (add-encoder java.lang.Object encode-str)
 
 (defn set-action-id
   "Creates a unique action id for each server response - used in client lock"
   [state side]
-  (swap! state update-in [side :aid] (fnil inc 0)))
+  (swap!* state update-in [side :aid] (fnil inc 0)))
 
 (defn handle-action
   "Ensures the user is allowed to do command they are trying to do"
@@ -46,5 +47,5 @@
                     (= _id (get-in @state [:corp :user :_id])) :corp
                     (= _id (get-in @state [:runner :user :_id])) :runner
                     :else nil)]
-    (swap! state assoc-in [side :user] user)
+    (swap!* state assoc-in [side :user] user)
     (handle-notification state (str username " rejoined the game."))))

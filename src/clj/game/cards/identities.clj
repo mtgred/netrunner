@@ -66,8 +66,8 @@
 ;;; Helper functions for Draft cards
 (def draft-points-target
   "Set each side's agenda points target at 6, per draft format rules"
-  (req (swap! state assoc-in [:runner :agenda-point-req] 6)
-       (swap! state assoc-in [:corp :agenda-point-req] 6)))
+  (req (swap!* state assoc-in [:runner :agenda-point-req] 6)
+       (swap!* state assoc-in [:corp :agenda-point-req] 6)))
 
 (defn- has-most-faction?
   "Checks if the faction has a plurality of rezzed / installed cards"
@@ -203,7 +203,7 @@
                                                 (map #(assoc % :zone [:play-area]))
                                                 (into []))]
                             ;; Add directives to :play-area - assumed to be empty
-                            (swap! state assoc-in [:runner :play-area] directives)
+                            (swap!* state assoc-in [:runner :play-area] directives)
                             (continue-ability
                               state side
                               {:prompt (str "Choose 3 starting directives")
@@ -217,7 +217,7 @@
                                                 (make-eid state eid) c
                                                 {:ignore-all-cost true
                                                  :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
-                                            (swap! state assoc-in [:runner :play-area] []))}
+                                            (swap!* state assoc-in [:runner :play-area] []))}
                               card nil)))}]})
 
 (defcard "AgInfusion: New Miracles for a New World"
@@ -460,8 +460,8 @@
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
   {:static-abilities [(corp-hand-size+ (req (:credit corp)))]
-   :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
-   :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
+   :effect (req (swap!* state assoc-in [:corp :hand-size :base] 0))
+   :leave-play (req (swap!* state assoc-in [:corp :hand-size :base] 5))})
 
 (defcard "Chaos Theory: Wünderkind"
   {:static-abilities [(mu+ 1)]})
@@ -469,7 +469,7 @@
 (defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage))))
    :effect (effect (enable-corp-damage-choice))
-   :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))
+   :leave-play (req (swap!* state update-in [:damage] dissoc :damage-choose-corp))
    :events [{:event :corp-phase-12
              :effect (effect (enable-corp-damage-choice))}
             {:event :runner-phase-12
@@ -562,8 +562,8 @@
              :effect (req (if (in-discard? target)
                             (effect-completed state side eid)
                             (do (when run
-                                  (swap! state assoc-in [:run :did-trash] true))
-                                (swap! state assoc-in [:runner :register :trashed-card] true)
+                                  (swap!* state assoc-in [:run :did-trash] true))
+                                (swap!* state assoc-in [:runner :register :trashed-card] true)
                                 (system-msg state :runner
                                             (str "uses " (:title card) " to"
                                                  " trash " (:title target)
@@ -675,7 +675,7 @@
                                                        " at no cost, spending " msg))
                                       (trash state side eid (assoc accessed-card :seen true) {:accessed true}))
                                   ;; Player cancelled ability
-                                  (do (swap! state dissoc-in [:per-turn (:cid card)])
+                                  (do (swap!* state dissoc-in [:per-turn (:cid card)])
                                       (access-non-agenda state side eid accessed-card :skip-trigger-event true)))))))}}})
 
 (defcard "Fringe Applications: Tomorrow, Today"
@@ -959,7 +959,7 @@
                                  empty?)))
              :msg "put 1 charge counter on itself"
              :effect (req (add-counter state side card :power 1)
-                          (swap! state assoc-in [:corp :agenda-point-req]
+                          (swap!* state assoc-in [:corp :agenda-point-req]
                                  (dec (get-in @state [:corp :agenda-point-req])))
                           (check-win-by-agenda state))}]})
 
@@ -1332,7 +1332,7 @@
                                 :effect (req (wait-for (corp-install state side target (zone->name (target-server run))
                                                                      {:ignore-all-cost true
                                                                       :front true})
-                                                       (swap! state assoc-in [:run :position] 1)
+                                                       (swap!* state assoc-in [:run :position] 1)
                                                        (set-next-phase state :approach-ice)
                                                        (update-all-ice state side)
                                                        (update-all-icebreakers state side)
@@ -1500,7 +1500,7 @@
                   :async true
                   :effect (req (wait-for (draw state side (- 5 (count (:hand corp))) {:suppress-event true})
                                          (update! state side (dissoc card :fill-hq))
-                                         (swap! state assoc :turn-events nil)
+                                         (swap!* state assoc :turn-events nil)
                                          (effect-completed state side eid)))}]}))
 
 (defcard "Nisei Division: The Next Generation"
@@ -1681,7 +1681,7 @@
              :choices ["HQ" "R&D"]
              :msg (msg "change the attacked server to " target)
              :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
-                            (swap! state assoc-in [:run :server] [target-server])
+                            (swap!* state assoc-in [:run :server] [target-server])
                             (trigger-event state :corp :no-action)))}
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})

@@ -9,7 +9,8 @@
     [game.core.memory :refer [available-mu update-mu]]
     [game.core.say :refer [system-msg]]
     [game.core.tags :refer [update-tag-status]]
-    [game.macros :refer [req]]))
+    [game.macros :refer [req]]
+    [game.utils :refer [swap!*]]))
 
 (defn- change-msg
   "Send a system message indicating the property change"
@@ -103,7 +104,7 @@
   [state side key delta]
   (if (neg? delta)
     (deduct state side [key (- delta)])
-    (swap! state update-in [side key] (partial + delta)))
+    (swap!* state update-in [side key] (partial + delta)))
   (change-msg state side key (get-in @state [side key]) delta))
 
 (defn change

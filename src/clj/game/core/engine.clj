@@ -16,7 +16,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll? remove-once same-card? server-cards side-str to-keyword]]
+    [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll? remove-once same-card? server-cards side-str to-keyword swap!*]]
     [jinteki.utils :refer [other-side]]
     [game.core.memory :refer [update-mu]]
     [game.core.to-string :refer [card-str]]))
@@ -216,7 +216,7 @@
 
 (defn register-ability-type
   [kw ability-fn]
-  (swap! ability-types assoc kw ability-fn))
+  (swap!* ability-types assoc kw ability-fn))
 
 (defn select-ability-kw
   [ability]
@@ -313,7 +313,7 @@
   "Register ability as having happened if :once specified"
   [state _ {:keys [once once-key]} {:keys [cid]}]
   (when once
-    (swap! state assoc-in [once (or once-key cid)] true)))
+    (swap!* state assoc-in [once (or once-key cid)] true)))
 
 (defn- do-effect
   "Trigger the effect"
@@ -470,7 +470,7 @@
                    :uuid (uuid/v1)})
                 (into []))]
        (when (seq abilities)
-         (swap! state update :suppress #(apply conj % abilities)))
+         (swap!* state update :suppress #(apply conj % abilities)))
        abilities))))
 
 (defn unregister-suppress
@@ -478,7 +478,7 @@
   ([state side card] (unregister-suppress state side card (:suppress (card-def card))))
   ([state _ card events]
    (let [abilities (map :event events)]
-     (swap! state assoc :suppress
+     (swap!* state assoc :suppress
             (->> (:suppress @state)
                  (remove #(and (same-card? card (:card %))
                                (in-coll? abilities (:event %))))
@@ -487,7 +487,7 @@
 (defn unregister-suppress-by-uuid
   "Removes a single event handler with matching uuid"
   [state _ uuid]
-  (swap! state assoc :suppress (remove-once #(= uuid (:uuid %)) (:suppress @state))))
+  (swap!* state assoc :suppress (remove-once #(= uuid (:uuid %)) (:suppress @state))))
 
 
 (defn- default-locations
@@ -535,7 +535,7 @@
   [state _ card events]
   (when (seq events)
     (let [abilities (into [] (for [ability events] (build-event-ability ability card)))]
-      (swap! state update :events #(apply conj % abilities))
+      (swap!* state update :events #(apply conj % abilities))
       abilities)))
 
 (defn register-default-events
@@ -564,7 +564,7 @@
                     (let [cdef (card-def card)]
                       (remove :location (concat (:events cdef) (:derezzed-events cdef)))))
          abilities (map :event events)]
-     (swap! state assoc :events
+     (swap!* state assoc :events
             (->> (:events @state)
                  (remove #(and (same-card? card (:card %))
                                (in-coll? abilities (:event %))
@@ -576,7 +576,7 @@
   "Removes all event handlers with a non-persistent duration"
   [state _ duration]
   (when (not= :default-duration duration)
-    (swap! state assoc :events
+    (swap!* state assoc :events
            (->> (:events @state)
                 (remove #(= duration (:duration %)))
                 (into [])))))
@@ -584,7 +584,7 @@
 (defn unregister-event-by-uuid
   "Removes a single event handler with matching uuid"
   [state _ uuid]
-  (swap! state assoc :events (remove-once #(= uuid (:uuid %)) (:events @state))))
+  (swap!* state assoc :events (remove-once #(= uuid (:uuid %)) (:events @state))))
 
 ;; triggering events
 (defn- get-side
@@ -656,9 +656,9 @@
 
 (defn- log-event
   [state event targets]
-  (swap! state update :turn-events #(cons [event targets] %))
+  (swap!* state update :turn-events #(cons [event targets] %))
   (when (:run @state)
-    (swap! state update-in [:run :events] #(cons [event targets] %))))
+    (swap!* state update-in [:run :events] #(cons [event targets] %))))
 
 (defn trigger-event
   "Resolves all abilities registered as handlers for the given event key, passing them
@@ -842,7 +842,7 @@
   ([state event] (queue-event state event nil))
   ([state event context-map]
    (when (keyword? event)
-     (swap! state update-in [:queued-events event] conj (assoc context-map :event event)))))
+     (swap!* state update-in [:queued-events event] conj (assoc context-map :event event)))))
 
 (defn- gather-queued-event-handlers
   [state event-maps]
@@ -968,7 +968,7 @@
       (log-event state event context-map))
     (when-not (empty? event-maps)
       (let [handlers (create-handlers state eid event-maps)]
-        (swap! state assoc
+        (swap!* state assoc
                :queued-events {}
                :events (->> (:events @state)
                             (remove #(= :pending (:duration %)))

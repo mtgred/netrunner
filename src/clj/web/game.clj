@@ -7,6 +7,7 @@
    [game.core :as core]
    [game.core.diffs :as diffs]
    [game.main :as main]
+   [game.utils :refer [swap!*]]
    [jinteki.utils :refer [side-from-str]]
    [medley.core :refer [find-first]]
    [web.app-state :as app-state]
@@ -33,15 +34,19 @@
           :when (some? uid)]
     (ws/chsk-send! uid [:game/diff (game-diff-json gameid side diffs)])))
 
+(defonce counting (atom 0))
 (defn update-and-send-diffs!
   "Updates the old-states atom with the new game state, then sends a :game/diff
   message to game clients."
   [f {state :state :as lobby} & args]
   (when (and state @state)
+    (println "called update-and-send-diffs! number" (swap! counting inc))
     (let [old-state @state
           _ (apply f state args)
           diffs (diffs/public-diffs old-state state)]
       (swap! state update :history conj (:hist-diff diffs))
+      (swap! state assoc :unsent-changes (hash-set :rid)) ; Reset unsent changes for keeping diffs small TODO: handle :rid somewhere else
+      (swap! state assoc :unsent-changes-send-all false) ; Reset unsent changes for keeping diffs small
       (send-state-diffs lobby diffs))))
 
 (defn select-state [side {:keys [runner-state corp-state spect-state]}]
@@ -79,8 +84,8 @@
   (if (and (= (:format game) "system-gateway")
            (every? is-starter-deck? (:players game)))
     (do
-      (swap! (:state game) assoc-in [:runner :agenda-point-req] 6)
-      (swap! (:state game) assoc-in [:corp :agenda-point-req] 6)
+      (swap!* (:state game) assoc-in [:runner :agenda-point-req] 6)
+      (swap!* (:state game) assoc-in [:corp :agenda-point-req] 6)
       game)
     game))
 

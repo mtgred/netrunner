@@ -17,7 +17,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [abs dissoc-in enumerate-str quantify]]
+    [game.utils :refer [abs dissoc-in enumerate-str quantify swap!*]]
     [clojure.string :as string]))
 
 (defn- turn-message
@@ -44,7 +44,7 @@
                (system-msg state side "makes mandatory start of turn draw")
                (wait-for (draw state side 1 nil)
                          (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
-             (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+             (swap!* state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
              (when (= side :corp)
                (update-all-advancement-requirements state)))))
 
@@ -53,21 +53,21 @@
   [state side _]
   ; Don't clear :turn-events until the player clicks "Start Turn"
   ; Fix for Hayley triggers
-  (swap! state assoc :turn-events nil)
+  (swap!* state assoc :turn-events nil)
 
   ; Functions to set up state for undo-turn functionality
-  (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
-  (swap! state assoc :turn-state (dissoc @state :log :turn-state))
+  (doseq [s [:runner :corp]] (swap!* state dissoc-in [s :undo-turn]))
+  (swap!* state assoc :turn-state (dissoc @state :log :turn-state))
 
   (when (= side :corp)
-    (swap! state update-in [:turn] inc))
+    (swap!* state update-in [:turn] inc))
 
   (doseq [c (filter :new (all-installed-and-scored state side))]
     (update! state side (dissoc c :new)))
 
-  (swap! state assoc :active-player side :per-turn nil :end-turn false)
+  (swap!* state assoc :active-player side :per-turn nil :end-turn false)
   (doseq [s [:runner :corp]]
-    (swap! state assoc-in [s :register] nil))
+    (swap!* state assoc-in [s :register] nil))
 
   (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
         start-cards (filter #(card-flag-fn? state side % phase true)
@@ -78,8 +78,8 @@
     (cond
       (neg? extra-clicks) (lose state side :click (abs extra-clicks))
       (pos? extra-clicks) (gain state side :click extra-clicks))
-    (swap! state dissoc-in [side :extra-click-temp])
-    (swap! state assoc phase true)
+    (swap!* state dissoc-in [side :extra-click-temp])
+    (swap!* state assoc phase true)
     (trigger-event state side phase nil)
     (if (not-empty start-cards)
       (toast state side
@@ -130,7 +130,7 @@
      (turn-message state side false)
      (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
                (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
-               (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
+               (swap!* state assoc-in [side :register-last-turn] (-> @state side :register))
                (unregister-lingering-effects state side :end-of-turn)
                (unregister-floating-events state side :end-of-turn)
                (unregister-lingering-effects state side :end-of-next-run)
@@ -153,14 +153,14 @@
                    (update! state side (assoc (get-card state card) :rezzed true))))
                ;; Update strength of all ice every turn
                (update-all-ice state side)
-               (swap! state assoc :end-turn true)
-               (swap! state update-in [side :register] dissoc :cannot-draw)
-               (swap! state update-in [side :register] dissoc :drawn-this-turn)
-               (swap! state assoc :mark nil)
+               (swap!* state assoc :end-turn true)
+               (swap!* state update-in [side :register] dissoc :cannot-draw)
+               (swap!* state update-in [side :register] dissoc :drawn-this-turn)
+               (swap!* state assoc :mark nil)
                (clear-turn-register! state)
                (when-let [extra-turns (get-in @state [side :extra-turns])]
                  (when (pos? extra-turns)
                    (start-turn state side nil)
-                   (swap! state update-in [side :extra-turns] dec)
+                   (swap!* state update-in [side :extra-turns] dec)
                    (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
                (effect-completed state side eid)))))

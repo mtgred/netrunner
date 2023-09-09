@@ -45,6 +45,8 @@
    turn-events
    turn-state
    typing
+   unsent-changes
+   unsent-changes-send-all
    winner
    winning-deck-id
    winning-user])
@@ -53,13 +55,14 @@
   "Returns a progressively-increasing integer to identify a new remote server."
   [state]
   (let [current-rid (:rid @state)]
-    (swap! state update :rid inc)
+    (swap! state update :rid inc) ;;TODO: Fix cyclic dependency when this is swap!*
     current-rid))
 
 (defn new-state
   [gameid room fmt now options corp runner]
   (map->State
     {:gameid gameid
+     :unsent-changes (hash-set :rid)
      :log []
      :active-player :runner
      :end-turn true

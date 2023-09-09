@@ -5,7 +5,7 @@
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [when-let*]]
-    [game.utils :refer [pluralize side-str]]
+    [game.utils :refer [pluralize side-str swap!*]]
     [jinteki.utils :refer [other-side]]
     [medley.core :refer [find-first]]))
 
@@ -104,7 +104,7 @@
   (let [selected (get-in @state [side :selected 0])
         cards (map #(dissoc % :selected) (:cards selected))
         prompt (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt])))]
-    (swap! state update-in [side :selected] #(vec (rest %)))
+    (swap!* state update-in [side :selected] #(vec (rest %)))
     (when prompt
       (remove-from-prompt-queue state side prompt))
     (if (seq cards)
@@ -130,7 +130,7 @@
            ability (if all (update-in ability [:choices] dissoc :min) ability) ; ignore :min if :all is set
            min-choices (get-in ability [:choices :min])
            max-choices (get-in ability [:choices :max])]
-       (swap! state update-in [side :selected]
+       (swap!* state update-in [side :selected]
               #(conj (vec %) {:ability (-> ability
                                            (dissoc :choices :waiting-prompt)
                                            (assoc :card card))

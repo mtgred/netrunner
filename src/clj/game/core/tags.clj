@@ -9,7 +9,7 @@
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [pluralize quantify]]))
+    [game.utils :refer [pluralize quantify swap!*]]))
 
 (defn sum-tag-effects
   [state]
@@ -29,13 +29,13 @@
                    :is-tagged is-tagged?}
          changed? (not= old-tags new-tags)]
      (when changed?
-       (swap! state update-in [:runner :tag] merge new-tags)
+       (swap!* state update-in [:runner :tag] merge new-tags)
        (trigger-event state :runner :tags-changed new-total old-total is-tagged?))
      changed?)))
 
 (defn tag-prevent
   [state side eid n]
-  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
+  (swap!* state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
   (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n)))
 
 (defn- number-of-tags-to-gain
@@ -60,7 +60,7 @@
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
   ([state side eid n] (gain-tags state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
-   (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
+   (swap!* state update-in [:tag] dissoc :tag-bonus :tag-prevent)
    (wait-for (trigger-event-simult state side :pre-tag nil card)
              (let [n (number-of-tags-to-gain state side n args)
                    prevent (get-prevent-list state :runner :tag)]
@@ -69,7 +69,7 @@
                         (cards-can-prevent? state :runner prevent :tag))
                  (do (system-msg state :runner "has the option to avoid tags")
                      (show-wait-prompt state :corp "Runner to prevent tags")
-                     (swap! state assoc-in [:prevent :current] :tag)
+                     (swap!* state assoc-in [:prevent :current] :tag)
                      (show-prompt
                        state :runner nil
                        (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
@@ -90,7 +90,7 @@
   [state side eid n]
   (if (= n :all)
     (lose-tags state side eid (get-in @state [:runner :tag :base]))
-    (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
+    (do (swap!* state update-in [:stats :runner :lose :tag] (fnil + 0) n)
         (deduct state :runner [:tag {:base n}])
         (update-tag-status state)
         (trigger-event-sync state side eid :runner-lose-tag n side))))

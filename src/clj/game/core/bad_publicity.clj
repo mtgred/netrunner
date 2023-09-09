@@ -7,11 +7,12 @@
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
-    [game.macros :refer [wait-for]]))
+    [game.macros :refer [wait-for]]
+    [game.utils :refer [swap!*]]))
 
 (defn bad-publicity-prevent
   [state side n]
-  (swap! state update-in [:bad-publicity :bad-publicity-prevent] (fnil #(+ % n) 0))
+  (swap!* state update-in [:bad-publicity :bad-publicity-prevent] (fnil #(+ % n) 0))
   (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:bad-publicity ~n)))
 
 (defn- resolve-bad-publicity
@@ -35,7 +36,7 @@
   ([state side n] (gain-bad-publicity state side (make-eid state) n nil))
   ([state side eid n] (gain-bad-publicity state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
-   (swap! state update-in [:bad-publicity] dissoc :bad-publicity-bonus :bad-publicity-prevent)
+   (swap!* state update-in [:bad-publicity] dissoc :bad-publicity-bonus :bad-publicity-prevent)
    (wait-for (trigger-event-sync state side :pre-bad-publicity card)
              (let [n (bad-publicity-count state side n args)
                    prevent (get-prevent-list state :corp :bad-publicity)]
@@ -44,7 +45,7 @@
                         (cards-can-prevent? state :corp prevent :bad-publicity))
                  (do (system-msg state :corp "has the option to avoid bad publicity")
                      (show-wait-prompt state :runner "Corp to prevent bad publicity")
-                     (swap! state assoc-in [:prevent :current] :bad-publicity)
+                     (swap!* state assoc-in [:prevent :current] :bad-publicity)
                      (show-prompt
                        state :corp nil
                        (str "Avoid " (when (< 1 n) "any of the ") n " bad publicity?") ["Done"]

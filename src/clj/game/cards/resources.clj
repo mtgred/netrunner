@@ -878,7 +878,7 @@
                                            :effect (effect (runner-install :runner eid card {:ignore-all-cost true}))}
                              ;; Add a register to note that the player was already asked about installing,
                              ;; to prevent multiple copies from prompting multiple times.
-                             :no-ability {:effect (req (swap! state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
+                             :no-ability {:effect (req (swap!* state assoc-in [:runner :register :crowdfunding-prompt] true))}}}
                            card nil))}]}))
 
 (defcard "Crypt"
@@ -1357,7 +1357,7 @@
           (host-agenda? [agenda]
             {:optional {:prompt (str "Host " (:title agenda) " on Film Critic?")
                         :yes-ability {:effect (req (host state side card agenda)
-                                                   (swap! state dissoc :access))
+                                                   (swap!* state dissoc :access))
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
     {:events [{:event :access
                :req (req (and (empty? (filter agenda? (:hosted card)))
@@ -2196,7 +2196,7 @@
             {:event :breach-server
              :req (req (and (= target :archives)
                             (seq (filter :trash (:discard corp)))))
-             :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
+             :effect (req (swap!* state assoc-in [:per-turn (:cid card)] true))}
             {:event :pre-trash
              :req (req (let [cards (map first (rest (turn-events state side :pre-trash)))]
                          (and (empty? (filter :trash cards))
@@ -2204,11 +2204,11 @@
              :once :per-turn
              :msg (msg "reveal " (card-str state target {:visible true}))
              :async true
-             :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] true)
+             :effect (req (swap!* state assoc-in [:runner :register :must-trash-with-credits] true)
                           (reveal state side eid target))}
             {:event :post-access-card
              :req (req (get-in @state [:runner :register :must-trash-with-credits]))
-             :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}]})
+             :effect (req (swap!* state assoc-in [:runner :register :must-trash-with-credits] false))}]})
 
 (defcard "New Angeles City Hall"
   {:interactions {:prevent [{:type #{:tag}
@@ -2463,7 +2463,7 @@
                                  target
                                  {:cost-bonus (discount state card)
                                   :custom-message #(str (build-spend-msg % "install") (:title target) " using " (:title card))})
-                            (swap! state assoc-in [:per-turn (:cid card)] true))})]})
+                            (swap!* state assoc-in [:per-turn (:cid card)] true))})]})
 
 (defcard "Penumbral Toolkit"
   {:data {:counter {:credit 4}}
@@ -2901,7 +2901,7 @@
                       :msg (msg "approach " (card-str state target))
                       :effect (req (wait-for (trash state side card {:unpreventable true :cause-card card})
                                              (let [dest (second (get-zone target))]
-                                               (swap! state update-in [:run]
+                                               (swap!* state update-in [:run]
                                                       #(assoc % :position (inc run-position) :server [dest]))
                                                (set-next-phase state :approach-ice)
                                                (update-all-ice state side)
@@ -2918,12 +2918,12 @@
 
 (defcard "Starlight Crusade Funding"
   {:on-install {:msg "ignore additional costs on Double events"
-                :effect (req (swap! state assoc-in [:runner :register :double-ignore-additional] true))}
+                :effect (req (swap!* state assoc-in [:runner :register :double-ignore-additional] true))}
    :events [{:event :runner-turn-begins
              :msg "lose [Click] and ignore additional costs on Double events"
              :effect (req (lose-clicks state :runner 1)
-                          (swap! state assoc-in [:runner :register :double-ignore-additional] true))}]
-   :leave-play (req (swap! state update-in [:runner :register] dissoc :double-ignore-additional))})
+                          (swap!* state assoc-in [:runner :register :double-ignore-additional] true))}]
+   :leave-play (req (swap!* state update-in [:runner :register] dissoc :double-ignore-additional))})
 
 (defcard "Stim Dealer"
   {:events [{:event :runner-turn-begins
@@ -3373,9 +3373,9 @@
              :keep-menu-open :while-clicks-left
              :msg (msg "bounce off of " name " for a token (shortcut)")
              :effect (req (add-counter state :runner card :power 1)
-                          (swap! state assoc-in [:runner :register :made-click-run] true)
-                          (swap! state update-in [:runner :register :unsuccessful-run] conj server)
-                          (swap! state update-in [:runner :register :made-run] conj server))})]
+                          (swap!* state assoc-in [:runner :register :made-click-run] true)
+                          (swap!* state update-in [:runner :register :unsuccessful-run] conj server)
+                          (swap!* state update-in [:runner :register :made-run] conj server))})]
     {:events [{:event :agenda-stolen
                :effect (effect (update! (assoc card :agenda-stolen true)))
                :silent (req true)}
@@ -3424,9 +3424,9 @@
 (defcard "Theophilius Bagbiter"
   {:static-abilities [(runner-hand-size+ (req (:credit runner)))]
    :on-install {:async true
-                :effect (req (swap! state assoc-in [:runner :hand-size :base] 0)
+                :effect (req (swap!* state assoc-in [:runner :hand-size :base] 0)
                              (lose-credits state :runner eid :all))}
-   :leave-play (req (swap! state assoc-in [:runner :hand-size :base] 5))})
+   :leave-play (req (swap!* state assoc-in [:runner :hand-size :base] 5))})
 
 (defcard "Thunder Art Gallery"
   (let [first-event-check (fn [state fn1 fn2]

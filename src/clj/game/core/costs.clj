@@ -20,7 +20,7 @@
    [game.core.update :refer [update!]]
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability req wait-for]]
-   [game.utils :refer [enumerate-str quantify same-card?]]))
+   [game.utils :refer [enumerate-str quantify same-card? swap!*]]))
 
 ;; Click
 (defmethod cost-name :click [_] :click)
@@ -36,8 +36,8 @@
   [cost state side eid card actions]
   (let [a (keep :action actions)]
     (when (not (some #{:steal-cost} a))
-      (swap! state assoc :click-state (dissoc @state :log)))
-    (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
+      (swap!* state assoc :click-state (dissoc @state :log)))
+    (swap!* state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
@@ -45,7 +45,7 @@
               ;; sending the idx is mandatory to make wage workers functional
               ;; and so we can look through the events and figure out WHICH abilities were used
               ;; I don't think it will break anything
-              (swap! state assoc-in [side :register :spent-click] true)
+              (swap!* state assoc-in [side :register :spent-click] true)
               (complete-with-result state side eid {:msg (str "spends " (label cost))
                                                     :type :click
                                                     :value (value cost)}))))
@@ -65,12 +65,12 @@
   (<= 0 (- (get-in @state [side :click]) (value cost))))
 (defmethod handler :lose-click
   [cost state side eid card actions]
-  (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
+  (swap!* state update-in [:stats side :lose :click] (fnil + 0) (value cost))
   (deduct state side [:click (value cost)])
   (wait-for (trigger-event-sync state side (make-eid state eid)
                                 (if (= side :corp) :corp-spent-click :runner-spent-click)
                                 nil (value cost))
-            (swap! state assoc-in [side :register :spent-click] true)
+            (swap!* state assoc-in [side :register :spent-click] true)
             (complete-with-result state side eid {:msg (str "loses " (lose-click-label cost))
                                                   :type :lose-click
                                                   :value (value cost)})))
@@ -142,7 +142,7 @@
                               state side (make-eid state eid)
                               (if (= side :corp) :corp-spent-credits :runner-spent-credits)
                               (value cost))
-                            (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
+                            (swap!* state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
                             (complete-with-result state side eid
                                                   {:msg (str "pays " (:msg pay-async-result))
                                                    :type :credit
@@ -154,7 +154,7 @@
                       state side (make-eid state eid)
                       (if (= side :corp) :corp-spent-credits :runner-spent-credits)
                       (value cost))
-                    (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
+                    (swap!* state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
                     (complete-with-result state side eid {:msg (str "pays " (value cost) " [Credits]")
                                                           :type :credit
                                                           :value (value cost)})))
@@ -189,7 +189,7 @@
            (and (pos? cost)
                 (pos? (count (provider-func))))
            (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost stealth-value) card nil)
-                     (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
+                     (swap!* state update-in [:stats side :spent :credit] (fnil + 0) cost)
                      (complete-with-result state side eid {:msg (str "pays " (:msg async-result))
                                                            :type :x-credits
                                                            :value (:number async-result)
@@ -200,7 +200,7 @@
                            state side (make-eid state eid)
                            (if (= side :corp) :corp-spent-credits :runner-spent-credits)
                            cost)
-                         (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
+                         (swap!* state update-in [:stats side :spent :credit] (fnil + 0) cost)
                          (complete-with-result state side eid {:msg (str "pays " cost " [Credits]")
                                                                :type :x-credits
                                                                :value cost})))

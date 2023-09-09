@@ -2,12 +2,13 @@
   (:require
     [medley.core :refer [find-first]]
     [game.core.card :refer [basic-action?]]
-    [game.core.prompt-state :refer [remove-from-prompt-queue]]))
+    [game.core.prompt-state :refer [remove-from-prompt-queue]]
+    [game.utils :refer [swap!*]]))
 
 (defn make-eid
   ([state] (make-eid state nil))
   ([state existing-eid]
-   (assoc existing-eid :eid (:eid (swap! state update :eid inc)))))
+   (assoc existing-eid :eid (:eid (swap!* state update :eid inc)))))
 
 (defn eid-set-defaults
   "Set default values for fields in the `eid` if they are not already set."
@@ -33,7 +34,7 @@
   [state eid effect]
   (if (get-in @state [:effect-completed (:eid eid)])
     (throw (Exception. (str "Eid has already been registered")))
-    (swap! state assoc-in [:effect-completed (:eid eid)] effect)))
+    (swap!* state assoc-in [:effect-completed (:eid eid)] effect)))
 
 (defn clear-eid-wait-prompt
   [state side eid]
@@ -48,7 +49,7 @@
     (clear-eid-wait-prompt state side eid))
   (when-let [handler (get-in @state [:effect-completed (:eid eid)])]
     (let [results (handler eid)]
-      (swap! state update :effect-completed dissoc (:eid eid))
+      (swap!* state update :effect-completed dissoc (:eid eid))
       results)))
 
 (defn make-result

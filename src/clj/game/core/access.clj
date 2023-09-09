@@ -16,7 +16,7 @@
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [get-server-type name-zone zone->name]]
     [game.core.update :refer [update!]]
-    [game.utils :refer [quantify same-card?]]
+    [game.utils :refer [quantify same-card? swap!*]]
     [game.macros :refer [continue-ability req wait-for]]
     [jinteki.utils :refer [add-cost-to-label]]
     [clojure.set :as clj-set]
@@ -24,7 +24,7 @@
 
 (defn no-trash-or-steal
   [state]
-  (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
+  (swap!* state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
 
 (defn access-bonus-count
   [state side kw]
@@ -43,7 +43,7 @@
                                   (not (in-discard? c)))
                          (no-trash-or-steal state))
                        (let [accessed-card (:access @state)]
-                         (swap! state dissoc :access)
+                         (swap!* state dissoc :access)
                          (trigger-event-sync state side eid :post-access-card c accessed-card))))))
 
 ;;; Accessing rules
@@ -68,7 +68,7 @@
   [state side eid c & {:keys [skip-trigger-event]}]
   (wait-for
     (trigger-event-sync state side (when-not skip-trigger-event :pre-trash) c)
-    (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
+    (swap!* state update-in [:stats :runner :access :cards] (fnil inc 0))
     ; Don't show the access prompt if:
     (if (or ; 1) accessing cards in Archives
             (in-discard? c)
@@ -129,12 +129,12 @@
                           (= target (first trash-cost-str))
                           (wait-for (pay state side (make-eid state trash-eid) card [:credit trash-cost])
                                     (when (:breach @state)
-                                      (swap! state assoc-in [:breach :did-trash] true))
+                                      (swap!* state assoc-in [:breach :did-trash] true))
                                     (when (:run @state)
-                                      (swap! state assoc-in [:run :did-trash] true)
+                                      (swap!* state assoc-in [:run :did-trash] true)
                                       (when must-trash?
-                                        (swap! state assoc-in [:run :did-access] true)))
-                                    (swap! state assoc-in [:runner :register :trashed-card] true)
+                                        (swap!* state assoc-in [:run :did-access] true)))
+                                    (swap!* state assoc-in [:runner :register :trashed-card] true)
                                     (system-msg state side (str (:msg async-result) " to trash "
                                                                 (:title card) " from "
                                                                 (name-zone :corp (get-zone card))))
@@ -149,10 +149,10 @@
                                 ability (access-ab ability-card)]
                             (when (and (:breach @state)
                                        (:trash? ability true))
-                              (swap! state assoc-in [:breach :did-trash] true))
+                              (swap!* state assoc-in [:breach :did-trash] true))
                             (when (and (:run @state)
                                        (:trash? ability true))
-                              (swap! state assoc-in [:run :did-trash] true))
+                              (swap!* state assoc-in [:run :did-trash] true))
                             (wait-for (resolve-ability state side (make-eid state ability-eid) ability ability-card [card])
                                       (let [card (first async-result)]
                                         (access-end state side eid card {:trashed (in-discard? card)}))))))}
@@ -164,7 +164,7 @@
   for example [:credit 2 :click 1]."
   ([state _ costs] (steal-cost-bonus state nil costs nil))
   ([state _ costs source]
-    (swap! state update-in [:bonus :steal-cost] #(conj % [costs source]))))
+    (swap!* state update-in [:bonus :steal-cost] #(conj % [costs source]))))
 
 (defn steal
   "Moves a card to the runner's :scored area, triggering events from the completion of the steal."
@@ -178,12 +178,12 @@
         c (get-card state c)
         points (get-agenda-points c)]
     (system-msg state :runner (str "steals " (:title c) " and gains " (quantify points "agenda point")))
-    (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
+    (swap!* state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
     (play-sfx state side "agenda-steal")
     (when (:breach @state)
-      (swap! state assoc-in [:breach :did-steal] true))
+      (swap!* state assoc-in [:breach :did-steal] true))
     (when (:run @state)
-      (swap! state assoc-in [:run :did-steal] true))
+      (swap!* state assoc-in [:run :did-steal] true))
     (when-let [on-stolen (:stolen (card-def c))]
       (register-pending-event state :agenda-stolen c on-stolen))
     (queue-event state :agenda-stolen {:card c
@@ -203,7 +203,7 @@
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid card]
-  (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
+  (swap!* state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [additional-costs (steal-cost state side eid card)
         cost (merge-costs (mapv first additional-costs))
         cost-strs (build-cost-string cost)
@@ -262,10 +262,10 @@
                             ability (access-ab ability-card)]
                         (when (and (:breach @state)
                                    (:trash? ability true))
-                          (swap! state assoc-in [:breach :did-trash] true))
+                          (swap!* state assoc-in [:breach :did-trash] true))
                         (when (and (:run @state)
                                    (:trash? ability true))
-                          (swap! state assoc-in [:run :did-trash] true))
+                          (swap!* state assoc-in [:run :did-trash] true))
                         (wait-for (resolve-ability state side (make-eid state ability-eid) ability ability-card [card])
                                   (let [card (first async-result)]
                                     (trigger-event state side :no-steal card)
@@ -343,7 +343,7 @@
   (let [cdef (card-def c)
         c (assoc c :seen true)
         access-effect (access-ability c cdef)]
-    (swap! state assoc-in [:runner :register :accessed-cards] true)
+    (swap!* state assoc-in [:runner :register :accessed-cards] true)
     (wait-for (msg-handle-access state side c title args)
               (wait-for (trigger-event-simult
                           state side :access
@@ -370,7 +370,7 @@
   "Applies a cost to the next access. costs can be a vector of [:key value] pairs,
   for example [:credit 2 :click 1]."
   [state _ costs]
-  (swap! state update-in [:bonus :access-cost] #(merge-costs (concat % costs))))
+  (swap!* state update-in [:bonus :access-cost] #(merge-costs (concat % costs))))
 
 (defn access-cost
   "Gets a vector of costs for accessing the given card."
@@ -380,7 +380,7 @@
 (defn- refused-access-cost
   "The runner refused to pay (or could not pay) to access"
   [state side eid]
-  (swap! state dissoc :access)
+  (swap!* state dissoc :access)
   (effect-completed state side eid))
 
 (defn- access-pay
@@ -426,24 +426,24 @@
   ([state side eid card title] (access-card state side eid card title nil))
   ([state side eid card title args]
    ;; Indicate that we are in the access step.
-   (swap! state assoc :access card)
+   (swap!* state assoc :access card)
    ;; Reset counters for increasing costs of trash, steal, and access.
-   (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
+   (swap!* state update :bonus dissoc :trash :steal-cost :access-cost)
    (when (:breach @state)
      (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
                     (second (get-zone card)))]
-       (swap! state update-in [:breach :cards-accessed zone] (fnil inc 0))))
+       (swap!* state update-in [:breach :cards-accessed zone] (fnil inc 0))))
    (when (:run @state)
      (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
                     (second (get-zone card)))]
-       (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
+       (swap!* state update-in [:run :cards-accessed zone] (fnil inc 0))))
    ;; First trigger pre-access-card, then move to determining if we can trash or steal.
    (wait-for (trigger-event-sync state side :pre-access-card card)
              (access-pay state side eid card title args))))
 
 (defn set-only-card-to-access
   [state _ card]
-  (swap! state assoc-in [:run :only-card-to-access] card))
+  (swap!* state assoc-in [:run :only-card-to-access] card))
 
 (defn get-only-card-to-access
   [state]
@@ -612,7 +612,7 @@
                                              (set (filter already-accessed-fn root))
                                              (conj already-accessed (:cid card-to-access)))]
                       (when shuffled-during-run
-                        (swap! state update-in [:run :shuffled-during-access] dissoc :rd))
+                        (swap!* state update-in [:run :shuffled-during-access] dissoc :rd))
                       (continue-ability
                         state side
                         (access-helper-rd
@@ -1211,7 +1211,7 @@
         new-max (if current-max
                   (min current-max n)
                   n)]
-    (swap! state assoc-in [:run :max-access] new-max)))
+    (swap!* state assoc-in [:run :max-access] new-max)))
 
 (defn access-bonus
   "Increase the number of cards to be accessed in server during this run by n.
@@ -1290,7 +1290,7 @@
   [state side eid server n]
   (let [access-amount (num-cards-to-access state side (first server) n)]
     (when (:run @state)
-      (swap! state assoc-in [:run :did-access] true)
+      (swap!* state assoc-in [:run :did-access] true)
       (max-access state n))
     (wait-for (resolve-ability state side (choose-access access-amount server {:server server}) nil nil)
               (unregister-lingering-effects state side :end-of-access)
@@ -1303,15 +1303,15 @@
   ([state side eid server args]
    (system-msg state side (str "breaches " (zone->name server)))
    (wait-for (trigger-event-sync state side :breach-server (first server))
-             (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
+             (swap!* state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)
                    access-amount (num-cards-to-access state side (first server) nil)]
                (turn-archives-faceup state side server)
                (when (:run @state)
-                 (swap! state assoc-in [:run :did-access] true))
+                 (swap!* state assoc-in [:run :did-access] true))
                (wait-for (resolve-ability state side (choose-access access-amount server (assoc args :server server)) nil nil)
                          (wait-for (trigger-event-sync state side :end-breach-server (:breach @state))
-                                   (swap! state assoc :breach nil)
+                                   (swap!* state assoc :breach nil)
                                    (unregister-lingering-effects state side :end-of-access)
                                    (unregister-floating-events state side :end-of-access)
                                    (effect-completed state side eid)))))))
