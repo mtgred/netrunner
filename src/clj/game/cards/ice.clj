@@ -3152,6 +3152,7 @@
              :req (req (and (same-card? (:ice context) card)
                             (<= 4 (count (:hand runner)))))
              :msg "give the Runner 1 tag"
+             :async true
              :effect (effect (gain-tags eid 1))}]})
 
 (defcard "Ping"
@@ -4038,6 +4039,7 @@
    :events [{:event :end-of-encounter
              :req (req (all-subroutines-not-broken-by state side card "Decoder" context))
              :msg "give the Runner 1 tag"
+             :async true
              :effect (effect (gain-tags eid 1))}]})
 
 (defcard "Waiver"
