@@ -2659,12 +2659,12 @@
                             (not= (:title (:card context)) "Magnet")))
              :msg "gain 3 [Credits]"
              :async true
-             :effect (effect (gain-credits eid 3))}
+             :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
              :req (req (same-card? target (:host card)))
              :msg "gain 3 [Credits]"
              :async true
-             :effect (effect (gain-credits eid 3))}]})
+             :effect (effect (gain-credits :runner eid 3))}]})
 
 (defcard "Sadyojata"
   (swap-with-in-hand "Sadyojata"

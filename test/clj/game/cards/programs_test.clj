@@ -6166,9 +6166,10 @@
 (deftest saci-magnet
     ;; Saci should not trigger on Magent rez but should on Magnet derez
     (do-game
-      (new-game {:corp {:hand ["Magnet"]}
-                 :runner {:hand ["Saci" "Emergency Shutdown"]}})
+      (new-game {:corp {:hand ["Magnet" "Ice Wall" "Divert Power"]}
+                 :runner {:hand ["Saci"]}})
       (play-from-hand state :corp "Magnet" "R&D")
+      (play-from-hand state :corp "Ice Wall" "Archives")
       (take-credits state :corp)
       (let [magnet (get-ice state :rd 0)]
         (play-from-hand state :runner "Saci")
@@ -6180,12 +6181,12 @@
           (rez state :corp magnet))
         (run-continue state)
         (card-subroutine state :corp (refresh magnet) 0)
-        (run-empty-server state :hq)
-        (play-from-hand state :runner "Emergency Shutdown")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Divert Power")
         (changes-val-macro
           3 (:credit (get-runner))
           "Gained 3 credits on derez"
-          (click-card state :runner (refresh magnet))))))
+          (click-card state :corp (refresh magnet))))))
 
 (deftest sadyojata-swap-ability
     ;; Swap ability
