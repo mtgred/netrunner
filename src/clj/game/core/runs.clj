@@ -176,8 +176,7 @@
   [state _ _]
   (swap! state update-in [:run :corp-auto-no-action] not)
   (when (and (rezzed? (get-current-ice state))
-             (or (= :approach-ice (:phase (:run @state)))
-                 (= :encounter-ice (:phase (:run @state)))))
+             (#{:approach-ice :encounter-ice} (:phase (:run @state))))
     (continue state :corp nil)))
 
 (defn check-auto-no-action
@@ -376,8 +375,7 @@
         current-server (:server (:run @state))
         ice (get-current-ice state)
         ;; pass ice if coming from the Approach Ice or Encounter Ice phase and the Ice has not moved from the position
-        pass-ice? (and (or (= :approach-ice previous-phase)
-                           (= :encounter-ice previous-phase))
+        pass-ice? (and (#{:approach-ice :encounter-ice} previous-phase)
                        (get-card state ice)
                        (= (second (get-zone ice)) (first current-server)))
         new-position (if pass-ice? (dec pos) pos)

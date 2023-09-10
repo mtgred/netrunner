@@ -38,8 +38,7 @@
                   :show-discard show-discard
                   :cancel-effect cancel-effect
                   :end-effect end-effect}]
-     (when (or (= prompt-type :waiting)
-               (= prompt-type :run)
+     (when (or (#{:waiting :run} prompt-type)
                (:number choices)
                (:card-title choices)
                (#{:credit :counter} choices)

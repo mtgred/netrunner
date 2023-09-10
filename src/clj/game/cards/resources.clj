@@ -1488,7 +1488,7 @@
 (defcard "Guru Davinder"
   {:flags {:cannot-pay-net true}
    :events [{:event :pre-damage
-             :req (req (and (or (= target :meat) (= target :net))
+             :req (req (and (#{:meat :net} target)
                             (pos? (last targets))))
              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
              :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
@@ -3403,8 +3403,7 @@
                           (effect-completed state side eid))}
             {:event :breach-server
              :async true
-             :req (req (and (or (= :rd target)
-                                (= :hq target))
+             :req (req (and (#{:rd :hq} target)
                             (< 0 (get-counters card :power))))
              :effect (req
                        (let [target-server target]

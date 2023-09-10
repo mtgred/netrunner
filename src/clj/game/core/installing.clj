@@ -115,8 +115,7 @@
   "Prints the correct install message."
   [state side card server install-state cost-str args]
   (when (:display-message args true)
-    (let [card-name (if (or (= :rezzed-no-cost install-state)
-                            (= :face-up install-state)
+    (let [card-name (if (or (#{:rezzed-no-cost :face-up} install-state)
                             (rezzed? card))
                       (:title card)
                       (if (ice? card) "ice" "a card"))

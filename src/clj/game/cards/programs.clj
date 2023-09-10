@@ -601,8 +601,7 @@
                                                               ;; MIC is included for paint effects.
                                                               ;; TODO - fix this, add :cause :subroutine to a bunch of
                                                               ;; end the run effects
-                                                              (if (or (= "Border Control" (:title target-ice))
-                                                                      (= "M.I.C." (:title target-ice)))
+                                                              (if (#{"Border Control" "M.I.C."} (:title target-ice))
                                                                 (not (some #(and
                                                                               (same-card? target (:card (first %)))
                                                                               (= (:cause (first %)) :ability-cost))
@@ -2581,8 +2580,7 @@
                             (continue-ability
                               state side
                               (let [guess (get-in card [:special :rng-guess])]
-                                (when (or (= guess (:cost target))
-                                          (= guess (get-advancement-requirement target)))
+                                (when (#{(:cost target) (get-advancement-requirement target)} guess)
                                   {:prompt "Choose one"
                                    :waiting-prompt true
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
