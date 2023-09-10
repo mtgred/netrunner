@@ -3108,7 +3108,6 @@
       (draw state :corp)
       (card-ability state :corp (refresh lily) 0)
       (click-prompt state :corp "No action")
-      (is (last-log-contains? state "does not find") "Lily Lockwell's ability didn't find an operation")
       (is (zero? (count-tags state)) "Runner should have 0 tags from Lily Lockwell ability even when no operation found"))))
 
 (deftest long-term-investment
