@@ -1088,12 +1088,12 @@
 (defcard "Gaslight"
   (let [search-for-operation {:prompt "Choose an operation to add to HQ"
                               :waiting-prompt true
-                              :msg (msg (if (= target "No action")
-                                          "search R&D, but does not find an operation"
-                                          (str "add " (get-title target) " to HQ")))
-                              :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
+                              :msg (msg (if (= target "Done")
+                                          "shuffle R&D"
+                                          (str "add " (get-title target) " from R&D to HQ")))
+                              :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "Done"))
                               :async true
-                              :effect (req (if (= target "No action")
+                              :effect (req (if (= target "Done")
                                              (do (shuffle! state :corp :deck)
                                                  (effect-completed state side eid))
                                              (wait-for
@@ -1103,14 +1103,14 @@
                                                (effect-completed state side eid))))}
         ability {:once :per-turn
                  :async true
-                 :label "Trash this asset to search R&D for an operation (start of turn)"
+                 :label "Search R&D for an operation (start of turn)"
                  :interactive (req true)
                  :req (req (:corp-phase-12 @state))
                  :effect
                  (effect
                    (continue-ability
                      {:optional
-                      {:prompt "Trash Gaslight to search R&D for an operation?"
+                      {:prompt "Trash this asset to search R&D for an operation?"
                        :yes-ability
                        {:async true
                         :effect (req (wait-for (trash state side card {:cause-card card})
