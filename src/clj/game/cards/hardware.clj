@@ -951,9 +951,10 @@
                                                               (filter #(and (or (program? %)
                                                                                 (and (resource? %)
                                                                                      (has-subtype? % "Virtual")))
-                                                                            (can-pay? state side
-                                                                                      (assoc eid :source card :source-type :runner-install)
-                                                                                      % nil [:credit (install-cost state side % {:cost-bonus -2})]))
+                                                                            (runner-can-pay-and-install?
+                                                                              state side
+                                                                              (assoc eid :source card :source-type :runner-install)
+                                                                              % {:cost-bonus -2}))
                                                                       set-aside-cards)
                                                               ["Done"]))
                                               :effect (req (if (= "Done" target)
