@@ -2655,7 +2655,8 @@
   {:hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :rez
-             :req (req (same-card? (:card context) (:host card)))
+             :req (req (and (same-card? (:card context) (:host card))
+                            (not= (:title (:card context)) "Magnet")))
              :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits eid 3))}
