@@ -3357,6 +3357,7 @@
     (starting-hand state :corp ["Psychokinesis" "Psychokinesis" "Psychokinesis"])
     ;; Test installing an Upgrade
     (play-from-hand state :corp "Psychokinesis")
+    (click-prompt state :corp "OK")
     (is (not-any? #{"Mwanza City Grid"} (prompt-buttons :corp))
         "Mwanza City Grid is not on the list of installable cards")
     (click-prompt state :corp (find-card "Caprice Nisei" (:deck (get-corp))))
@@ -3366,6 +3367,7 @@
     ;; Test installing an Asset
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
+    (click-prompt state :corp "OK")
     (click-prompt state :corp (find-card "Adonis Campaign" (:deck (get-corp))))
     (click-prompt state :corp "New remote")
     (is (= "Adonis Campaign" (:title (get-content state :remote2 0)))
@@ -3373,6 +3375,7 @@
     ;; Test installing an Agenda
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
+    (click-prompt state :corp "OK")
     (click-prompt state :corp (find-card "Global Food Initiative" (:deck (get-corp))))
     (click-prompt state :corp "New remote")
     (is (= "Global Food Initiative" (:title (get-content state :remote3 0)))
@@ -3381,6 +3384,7 @@
     (core/gain state :corp :click 1)
     (core/move state :corp (find-card "Psychokinesis" (:discard (get-corp))) :hand)
     (play-from-hand state :corp "Psychokinesis")
+    (click-prompt state :corp "OK")
     (click-prompt state :corp "None")
     (is (nil? (:title (get-content state :remote4 0)))
         "Nothing is installed by Psychokinesis")))
