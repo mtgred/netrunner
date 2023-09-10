@@ -905,7 +905,7 @@
                               (let [ices (filter #(and (ice? %)
                                                        (get-card state %))
                                                  corp-currently-drawing)
-                                    grids (filterv #(= "Jinja City Grid" (:title %))
+                                    grids (filterv #(= (:title card) (:title %))
                                                    (all-active-installed state :corp))]
                                 (continue-ability
                                   state side
