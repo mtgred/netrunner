@@ -1934,20 +1934,25 @@
               :req (req (not (install-locked? state side)))
               :effect (effect (continue-ability
                                 {:prompt "Choose a program to install"
-                                 :msg (req (if (not= target "No install")
-                                             (str "install " (:title target))
-                                             (str "shuffle the stack")))
-                                 :choices (req (conj (filter #(can-pay? state side
+                                 :msg (msg (if (= target "Done")
+                                             "shuffle the stack"
+                                             (str "install " (:title target) " from the stack")))
+                                 :choices (req (concat
+                                                 (->> (:deck runner)
+                                                      (filter
+                                                        #(and (program? %)
+                                                              (can-pay? state side
                                                                         (assoc eid :source card :source-type :runner-install)
-                                                                        % nil [:credit (install-cost state side %)])
-                                                             (vec (sort-by :title (filter program? (:deck runner)))))
-                                                     "No install"))
+                                                                        % nil [:credit (install-cost state side %)])))
+                                                      (sort-by :title)
+                                                      (seq))
+                                                 ["Done"]))
                                  :async true
                                  :effect (req (trigger-event state side :searched-stack nil)
                                               (shuffle! state side :deck)
-                                              (if (not= target "No install")
-                                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                                                (effect-completed state side eid)))}
+                                              (if (= target "Done")
+                                                (effect-completed state side eid)
+                                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)))}
                                 card nil))}
              {:async true
               :effect (effect (continue-ability (charge-ability state side eid card) card nil))
