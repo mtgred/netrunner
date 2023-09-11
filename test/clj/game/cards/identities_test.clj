@@ -4760,6 +4760,7 @@
       (play-from-hand state :corp "Accelerated Beta Test" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
       (click-prompt state :corp "Yes")
+      (click-prompt state :corp "OK")
       (click-prompt state :corp "Eli 1.0")
       (click-prompt state :corp "Archives")
       (click-prompt state :corp "Yes")
