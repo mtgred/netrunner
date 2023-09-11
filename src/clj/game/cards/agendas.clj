@@ -111,6 +111,7 @@
              :prompt "Choose a card to install and rez at no cost"
              :choices (cancellable (filter ice? choices) :sorted)
              :cancel-effect (effect (unregister-events card)
+                                    (system-msg (str "declines to use " (get-title card) " to install any of the top 3 cards or R&D"))
                                     (trash-cards eid choices {:unpreventable true :cause-card card}))
              :effect (req (wait-for (corp-install state side target nil
                                                   {:ignore-all-cost true
