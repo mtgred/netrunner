@@ -3380,12 +3380,12 @@
     (click-prompt state :corp "New remote")
     (is (= "Global Food Initiative" (:title (get-content state :remote3 0)))
         "Global Food Initiative installed by Psychokinesis")
-    ;; Test selecting "None"
+    ;; Test selecting "Cancel"
     (core/gain state :corp :click 1)
     (core/move state :corp (find-card "Psychokinesis" (:discard (get-corp))) :hand)
     (play-from-hand state :corp "Psychokinesis")
     (click-prompt state :corp "OK")
-    (click-prompt state :corp "None")
+    (click-prompt state :corp "Cancel")
     (is (nil? (:title (get-content state :remote4 0)))
         "Nothing is installed by Psychokinesis")))
 

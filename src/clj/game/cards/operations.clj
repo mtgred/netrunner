@@ -2033,11 +2033,10 @@
                   :waiting-prompt true
                   :async true
                   :choices
-                  (req (concat (filter #(and (corp-installable-type? %)
+                  (cancellable (filter #(and (corp-installable-type? %)
                                              (some #{"New remote"} (installable-servers state %)))
-                                       top-five)
-                             ["None"]))
-                  :msg (msg "install a card from the top of the stack in a remote server")
+                                       top-five) :sorted)
+                  :msg "install a card from the top of the R&D in a remote server"
                   :effect (effect (continue-ability (install-card target) card nil))
                   :cancel-effect (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
                                          (effect-completed eid))}
