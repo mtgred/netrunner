@@ -59,8 +59,8 @@
     ;; Set up
     (starting-hand state :corp ["Accelerated Beta Test"])
     (play-and-score state "Accelerated Beta Test")
-    (is (= "Look at the top 3 cards of R&D?" (:msg (prompt-map :corp))))
     (click-prompt state :corp "Yes")
+    (click-prompt state :corp "OK")
     (is (= ["Enigma" "Done"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
     (click-prompt state :corp "Enigma")
     (click-prompt state :corp "HQ")
@@ -72,9 +72,10 @@
     (move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
     (move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
     (play-and-score state "Accelerated Beta Test")
-    (is (= "Look at the top 3 cards of R&D?" (:msg (prompt-map :corp))))
     (click-prompt state :corp "Yes")
-    (click-prompt state :corp "I have no regrets")
+    (click-prompt state :corp "OK")
+    (is (= ["Done"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
+    (click-prompt state :corp "Done")
     (is (= 2 (count (:discard (get-corp)))))))
 
 (deftest advanced-concept-hopper

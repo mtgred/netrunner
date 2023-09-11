@@ -106,10 +106,10 @@
     :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Accelerated Beta Test"
-  (letfn [(abt [titles choices]
+  (letfn [(abt [choices]
             {:async true
-             :prompt (str "The top 3 cards of R&D: " titles)
-             :choices (concat (filter ice? choices) ["Done"])
+             :prompt "Choose a card to install and rez at no cost"
+             :choices (concat (sort-by get-title (filter ice? choices)) ["Done"])
              :effect (req (if (= target "Done")
                             (do (unregister-events state side card)
                                 (trash-cards state side eid choices {:unpreventable true :cause-card card}))
@@ -124,19 +124,11 @@
                                               (trash-cards state side eid choices {:unpreventable true :cause-card card}))
                                           ;; There are still ice left
                                           (seq (filter ice? choices))
-                                          (continue-ability
-                                            state side (abt titles choices) card nil)
+                                          (continue-ability state side (abt choices) card nil)
                                           ;; Trash what's left
                                           :else
                                           (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true :cause-card card})))))))})
-          (suffer [titles choices]
-            {:prompt (str "The top 3 cards of R&D: " titles
-                          ". None are ice. Say goodbye!")
-             :choices ["I have no regrets"]
-             :async true
-             :effect (effect (system-msg (str "trashes " (quantify (count choices) "card")))
-                             (trash-cards eid choices {:unpreventable true :cause-card card}))})]
+                                              (trash-cards state side eid choices {:unpreventable true :cause-card card})))))))})]
     {:on-score
      {:interactive (req true)
       :optional
@@ -148,14 +140,15 @@
                        state side card
                        [{:event :corp-shuffle-deck
                          :effect (effect (update! (assoc-in card [:special :shuffle-occurred] true)))}])
-                  (let [choices (take 3 (:deck corp))
-                        titles (enumerate-str (map :title choices))]
-                    (continue-ability
-                      state side
-                      (if (seq (filter ice? choices))
-                        (abt titles choices)
-                        (suffer titles choices))
-                      card nil)))}}}}))
+                  (let [choices (take 3 (:deck corp))]
+                    (wait-for
+                      (resolve-ability state side
+                                       {:async true
+                                        :prompt (str "The top cards of R&D are (top->bottom): "
+                                                     (enumerate-str (map get-title choices)))
+                                        :choices ["OK"]}
+                                       card nil)
+                      (continue-ability state side (abt choices) card nil))))}}}}))
 
 (defcard "Advanced Concept Hopper"
   {:events
