@@ -313,6 +313,7 @@
             :prompt "Look at the top 7 cards of R&D?"
             :yes-ability
             {:async true
+             :msg "look at the top 7 cards of R&D"
              :effect (req (let [c (take 7 (:deck corp))]
                             (when (and
                                    (:access @state)
