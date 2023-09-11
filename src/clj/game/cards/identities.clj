@@ -585,6 +585,7 @@
             (assoc ability :event :agenda-stolen :req (req true))]
    :abilities [{:label "Look at the top 3 cards of R&D"
                 :cost [:power 1 :click 1]
+                :msg "look at the top 3 cards of R&D"
                 :effect (req (let [top (take 3 (:deck corp))]
                                (wait-for (resolve-ability state side
                                                           {:async true
@@ -597,19 +598,16 @@
                                            {:prompt "Choose a card to install"
                                             :waiting-prompt true
                                             :not-distinct true
-                                            :choices (req (conj
-                                                            (filter #(corp-installable-type? %) top)
-                                                            "Done"))
+                                            :choices (cancellable (filter #(corp-installable-type? %) top))
                                             :async true
-                                            :effect (req (if-not (= target "Done")
-                                                           (do (system-msg
-                                                                 state side
-                                                                 (str "uses " (get-title card) " to install the "
-                                                                      (pprint/cl-format nil "~:R"
-                                                                        (inc (first (keep-indexed #(when (same-card? target %2) %1) top))))
-                                                                      " card"))
-                                                               (corp-install state side eid target nil))
-                                                           (effect-completed state side eid)))}
+                                            :cancel-effect
+                                            (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
+                                                    (effect-completed eid))
+                                            :msg (msg "install the "
+                                                      (pprint/cl-format nil "~:R"
+                                                        (inc (first (keep-indexed #(when (same-card? target %2) %1) top))))
+                                                      " card from the top of R&D")
+                                            :effect (effect (corp-install eid target nil))}
                                            card nil))))}]}))
 
 (defcard "Esâ Afontov: Eco-Insurrectionist"

@@ -1393,7 +1393,7 @@
       (card-ability state :corp (:identity (get-corp)) 0)
       (is (str/includes? (:msg (prompt-map :corp)) "Ad Blitz, Biased Reporting, and Celebrity Gift"))
       (click-prompt state :corp "OK")
-      (click-prompt state :corp "Done")
+      (click-prompt state :corp "Cancel")
       (is (no-prompt? state :corp))
       (is (= (:title (nth (-> @state :corp :deck) 0)) "Ad Blitz"))
       (is (= (:title (nth (-> @state :corp :deck) 1)) "Biased Reporting"))
