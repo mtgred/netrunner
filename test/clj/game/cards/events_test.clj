@@ -1728,8 +1728,7 @@
     (is (no-prompt? state :runner) "No more accesses after 3")))
 
 (deftest deep-dive-single-card
-  ;;there is only a single card to access - the runner doesn't see a menu,
-  ;; or get offered to spend a click.
+  ;;there is only a single card to access - the runner isn't offered to spend a click.
   (do-game
     (new-game {:corp {:deck ["Fire Wall" "Brainstorm" "Chiyashi"
                              "DNA Tracker" "Excalibur" "PAD Campaign"]}
@@ -1747,6 +1746,8 @@
     (run-empty-server state "HQ")
     (click-prompt state :runner "No action")
     (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "OK")
+    (click-prompt state :runner "PAD Campaign")
     (click-prompt state :runner "No action")
     (is (no-prompt? state :runner) "Access not completed or offered second access")
     (is (no-prompt? state :corp) "Corp stuck waiting for runner")
@@ -1777,6 +1778,7 @@
     (click-prompt state :runner "No action")
     ;;access pad campaign, do not trash it, then refuse the second access
     (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "OK")
     (click-prompt state :runner "PAD Campaign")
     (click-prompt state :runner "No action")
     (click-prompt state :runner "No")
@@ -1787,9 +1789,11 @@
     (is (= 96 (:click (get-runner))) "Shouldn't spend a click with Deep Dive")
     ;;access marilyn campaign, trash it, then access pad campaign
     (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "OK")
     (click-prompt state :runner "Marilyn Campaign")
     (click-prompt state :runner "Pay 3 [Credits] to trash")
     (click-prompt state :runner "Yes")
+    (click-prompt state :runner "PAD Campaign")
     (click-prompt state :runner "Pay 4 [Credits] to trash")
     (is (no-prompt? state :runner)
         "Runner should not be waiting on a prompt")
@@ -1817,6 +1821,7 @@
     (run-empty-server state "HQ")
     (click-prompt state :runner "No action")
     (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "OK")
     (click-prompt state :runner "Ikawah Project")
     (click-prompt state :runner "Pay to steal")
     (is (no-prompt? state :runner)
@@ -1861,6 +1866,7 @@
     (run-empty-server state "HQ")
     ;;steal better citizen and effcom
     (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "OK")
     (click-prompt state :runner "Better Citizen Program")
     (click-prompt state :runner "Steal")
     (click-prompt state :runner "Yes")
@@ -1897,6 +1903,7 @@
     ;;steal bacterial, then later, jumon
     (play-from-hand state :runner "Deep Dive")
     (is (not (:run @state)))
+    (click-prompt state :runner "OK")
     (click-prompt state :runner "Bacterial Programming")
     (click-prompt state :runner "Steal")
     (is (not (:run @state)))
@@ -1945,6 +1952,7 @@
     (play-from-hand state :runner "Daily Casts")
     (is (= nil (:phase (get-run))) "There is no run")
     (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "OK")
     (click-prompt state :runner "Degree Mill")
     (click-prompt state :runner "Pay to steal")
     (is (not (:run @state)))
@@ -1978,6 +1986,7 @@
     (run-empty-server state "HQ")
     ;;play from hand, and attempt to steal ikawah - this should cost us 1 click and 2 credits
     (play-from-hand state :runner "Deep Dive")
+    (click-prompt state :runner "OK")
     (click-prompt state :runner "Bellona")
     (click-prompt state :runner "Pay to steal")
     ;;runner should now have 95 clicks and 93 credits
