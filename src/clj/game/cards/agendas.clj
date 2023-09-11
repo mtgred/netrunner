@@ -109,26 +109,25 @@
   (letfn [(abt [choices]
             {:async true
              :prompt "Choose a card to install and rez at no cost"
-             :choices (concat (sort-by get-title (filter ice? choices)) ["Done"])
-             :effect (req (if (= target "Done")
-                            (do (unregister-events state side card)
-                                (trash-cards state side eid choices {:unpreventable true :cause-card card}))
-                            (wait-for (corp-install state side target nil
-                                                    {:ignore-all-cost true
-                                                     :install-state :rezzed-no-cost})
-                                      (let [choices (remove-once #(= target %) choices)]
-                                        (cond
-                                          ;; Shuffle ends the ability
-                                          (get-in (get-card state card) [:special :shuffle-occurred])
-                                          (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true :cause-card card}))
-                                          ;; There are still ice left
-                                          (seq (filter ice? choices))
-                                          (continue-ability state side (abt choices) card nil)
-                                          ;; Trash what's left
-                                          :else
-                                          (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true :cause-card card})))))))})]
+             :choices (cancellable (filter ice? choices) :sorted)
+             :cancel-effect (effect (unregister-events card)
+                                    (trash-cards eid choices {:unpreventable true :cause-card card}))
+             :effect (req (wait-for (corp-install state side target nil
+                                                  {:ignore-all-cost true
+                                                   :install-state :rezzed-no-cost})
+                                    (let [choices (remove-once #(= target %) choices)]
+                                      (cond
+                                        ;; Shuffle ends the ability
+                                        (get-in (get-card state card) [:special :shuffle-occurred])
+                                        (do (unregister-events state side card)
+                                            (trash-cards state side eid choices {:unpreventable true :cause-card card}))
+                                        ;; There are still ice left
+                                        (seq (filter ice? choices))
+                                        (continue-ability state side (abt choices) card nil)
+                                        ;; Trash what's left
+                                        :else
+                                        (do (unregister-events state side card)
+                                            (trash-cards state side eid choices {:unpreventable true :cause-card card}))))))})]
     {:on-score
      {:interactive (req true)
       :optional

@@ -61,7 +61,7 @@
     (play-and-score state "Accelerated Beta Test")
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "OK")
-    (is (= ["Enigma" "Done"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
+    (is (= ["Enigma" "Cancel"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
     (click-prompt state :corp "Enigma")
     (click-prompt state :corp "HQ")
     (is (no-prompt? state :corp))
@@ -74,8 +74,8 @@
     (play-and-score state "Accelerated Beta Test")
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "OK")
-    (is (= ["Done"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
-    (click-prompt state :corp "Done")
+    (is (= ["Cancel"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
+    (click-prompt state :corp "Cancel")
     (is (= 2 (count (:discard (get-corp)))))))
 
 (deftest advanced-concept-hopper
