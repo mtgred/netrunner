@@ -198,12 +198,14 @@
     :req (req (not-empty (:deck corp)))
     :effect (effect (continue-ability
                       {:prompt "Choose a card to install"
-                       :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
+                       :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))) :sorted)
                        :async true
                        :effect (effect (corp-install eid target nil
                                                      {:ignore-all-cost true
                                                       :install-state :rezzed-no-cost}))
-                       :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
+                       :cancel-effect (effect (system-msg (str "declines to use "
+                                                               (get-title card)
+                                                               " to install any of the top 5 cards of R&D"))
                                               (effect-completed eid))}
                       card nil))}})
 
