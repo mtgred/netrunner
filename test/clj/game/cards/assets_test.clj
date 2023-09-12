@@ -1353,7 +1353,7 @@
         (take-credits state :runner)
         (click-prompt state :corp "Daily Business Show")
         (click-card state :corp "Merger")
-        (is (no-prompt? state :corp))))
+        (click-prompt state :corp "Carry on!")))
     (testing "Political Dealings first"
       (do-game
         (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
@@ -1371,6 +1371,7 @@
         (click-prompt state :corp "Political Dealings")
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
+        (click-prompt state :corp "Carry on!")
         (click-card state :corp "Ice Wall")
         (is (no-prompt? state :corp))))
     (testing "further interactions that could happen"
@@ -1394,7 +1395,7 @@
         (click-prompt state :corp "Political Dealings")
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
-        (is (= "Jinja City Grid" (:title (:card (prompt-map :corp)))))
+        (click-prompt state :corp "Carry on!")
         (is (= ["Enigma" "None"] (prompt-buttons :corp)))
         (click-prompt state :corp "Enigma")
         (is (= ["Daily Business Show" "Jinja City Grid"] (prompt-titles :corp)))
