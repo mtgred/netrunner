@@ -3987,6 +3987,15 @@
       (is (faceup? (get-content state :remote3 0))
           "Oaktown Renovation installed face up")))
 
+(deftest political-dealings-no-agendas-drawn
+  (do-game
+    (new-game {:corp {:hand ["Political Dealings"]
+                      :deck [(qty "Hedge Fund" 3)]}})
+    (play-from-hand state :corp "Political Dealings" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (draw state :corp)
+    (click-prompt state :corp "Carry on!")))
+
 (deftest prana-condenser
   ;; Prāna Condenser
   (do-game

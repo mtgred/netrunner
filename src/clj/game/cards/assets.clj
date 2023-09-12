@@ -1942,7 +1942,7 @@
             (when-let [agenda (first agendas)]
               {:optional
                {:prompt (msg "Reveal and install " (:title agenda) "?")
-                :yes-ability {:msg (msg "reveal " (:title agenda))
+                :yes-ability {:msg (msg "reveal they drew " (:title agenda))
                               :async true
                               :effect (req (wait-for
                                              (reveal state side agenda)
@@ -1956,8 +1956,21 @@
                              :effect (effect (continue-ability (pdhelper (next agendas)) card nil))}}}))]
     {:events [{:event :corp-draw
                :async true
-               :req (req (seq (filter agenda? corp-currently-drawing)))
-               :effect (effect (continue-ability (pdhelper (filter agenda? corp-currently-drawing)) card nil))}]}))
+               :effect (req (cond
+                              ;; if agendas were drawn, do the full routine
+                              (some agenda? corp-currently-drawing)
+                              (let [agendas (filter #(and (agenda? %)
+                                                          (get-card state %))
+                                                    corp-currently-drawing)]
+                                (continue-ability state side (pdhelper agendas) card nil))
+                              ;; else show a fake prompt so the runner can't infer that agendas weren't drawn
+                              :else
+                              (continue-ability
+                                state :corp
+                                {:prompt "You did not draw any agenda"
+                                 :choices ["Carry on!"]
+                                 :prompt-type :bogus}
+                                card nil)))}]}))
 
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}
