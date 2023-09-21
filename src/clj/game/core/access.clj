@@ -408,8 +408,7 @@
           {:async true
            :prompt prompt-str
            :choices choices
-           :effect (req (if (or (= "OK" target)
-                                (= "No action" target))
+           :effect (req (if (#{"OK" "No action"} target)
                           (refused-access-cost state side eid)
                           (wait-for (pay state side accessed-card cost)
                                     (if-let [payment-str (:msg async-result)]

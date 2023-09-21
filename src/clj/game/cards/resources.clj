@@ -1488,7 +1488,7 @@
 (defcard "Guru Davinder"
   {:flags {:cannot-pay-net true}
    :events [{:event :pre-damage
-             :req (req (and (or (= target :meat) (= target :net))
+             :req (req (and (#{:meat :net} target)
                             (pos? (last targets))))
              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
              :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
@@ -2398,7 +2398,7 @@
 (defcard "Patron"
   (let [ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :once :per-turn
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
@@ -2829,7 +2829,7 @@
 (defcard "Security Testing"
   (let [ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :interactive (req true)
                  :msg (msg "target " target)
                  :req (req (and (:runner-phase-12 @state)
@@ -3403,8 +3403,7 @@
                           (effect-completed state side eid))}
             {:event :breach-server
              :async true
-             :req (req (and (or (= :rd target)
-                                (= :hq target))
+             :req (req (and (#{:rd :hq} target)
                             (< 0 (get-counters card :power))))
              :effect (req
                        (let [target-server target]
@@ -3503,7 +3502,7 @@
                             (zone->name (second (get-zone target)))))
         ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :interactive (req true)
                  :waiting-prompt true
                  :msg (msg "target " target)

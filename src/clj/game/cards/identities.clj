@@ -410,10 +410,12 @@
 
 (defcard "Azmari EdTech: Shaping the Future"
   {:events [{:event :corp-turn-ends
-             :prompt "Name a Runner card type"
+             :prompt "Choose a card type"
              :choices ["Event" "Resource" "Program" "Hardware" "None"]
-             :effect (effect (update! (assoc card :card-target (if (= "None" target) nil target)))
-                             (system-msg (str "uses " (:title card) " to name " target)))}
+             :effect (req (update! state side (assoc card :card-target (if (= "None" target) nil target)))
+                          (if (= "None" target)
+                            (system-msg state side (str "declines to use " (:title card)))
+                            (system-msg state side (str "uses " (:title card) " to name " target))))}
             {:event :runner-install
              :req (req (and (:card-target card)
                             (is-type? (:card context) (:card-target card))
@@ -597,9 +599,9 @@
                                            {:prompt "Choose a card to install"
                                             :waiting-prompt true
                                             :not-distinct true
-                                            :choices (req (conj
+                                            :choices (req (concat
                                                             (filter #(corp-installable-type? %) top)
-                                                            "Done"))
+                                                            ["Done"]))
                                             :async true
                                             :effect (req (if-not (= target "Done")
                                                            (do (system-msg

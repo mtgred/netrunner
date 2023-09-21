@@ -2004,8 +2004,7 @@
    :events [{:event :successful-run
              :silent (req true)
              :async true
-             :req (req (and (or (= :hq (target-server context))
-                                (= :rd (target-server context)))
+             :req (req (and (#{:hq :rd} (target-server context))
                             this-card-run))
              :effect (effect (register-events
                               card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
@@ -3407,8 +3406,7 @@
               :interactive (req true)
               :async true
               :req (req (let [zone (first (:zone (:card context)))]
-                          (or (= :hand zone)
-                              (= :deck zone))))
+                          (#{:hand :deck} zone)))
               :effect (effect (continue-ability
                                 {:optional {:prompt "Draw 2 cards?"
                                             :waiting-prompt true
@@ -3441,8 +3439,7 @@
               :interactive (req true)
               :async true
               :req (req (let [zone (first (:zone (:card context)))]
-                          (or (= :hand zone)
-                              (= :deck zone))))
+                          (#{:hand :deck} zone)))
               :effect (effect (continue-ability
                                 {:optional {:prompt "Gain 2 [Credits]?"
                                             :waiting-prompt true

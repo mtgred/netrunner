@@ -1421,10 +1421,11 @@
             :msg "draw 3 cards"}
    :abilities [{:label "Search R&D for an operation"
                 :prompt "Choose an operation to add to the top of R&D"
+                :waiting-prompt true
                 :cost [:click 1 :tag 1]
                 :msg (msg (if (= target "No action")
-                            "search R&D, but does not find an operation"
-                            (str "reveal " (:title target) " and add it to the top of R&D")))
+                            "shuffle R&D"
+                            (str "reveal " (:title target) " from R&D and add it to the top of R&D")))
                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
                 :async true
                 :effect (req (if (= target "No action")

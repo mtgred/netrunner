@@ -811,8 +811,7 @@
         (let [active-player (:active-player @state)
               opponent (other-side active-player)
               is-player (fn [player ability]
-                          (or (= player (get-side ability))
-                              (= player (get-ability-side ability))))
+                          (#{(get-side ability) (get-ability-side ability)} player))
               card-abilities (if (and (some? card-abilities)
                                       (not (sequential? card-abilities)))
                                [card-abilities]
@@ -954,8 +953,7 @@
 
 (defn- is-player
   [player {:keys [handler]}]
-  (or (= player (get-side handler))
-      (= player (get-ability-side handler))))
+  (#{(get-side handler) (get-ability-side handler)} player))
 
 (defn- filter-handlers
   [handlers player-side]
