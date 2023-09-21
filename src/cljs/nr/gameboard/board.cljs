@@ -1759,21 +1759,59 @@
               (:minutes @remaining) "m:"
               (:seconds @remaining) "s remaining")]))})))
 
+(defn- time-since
+  "Helper method for match duration. Computes how much time since game start"
+  [start]
+  (let [start-time (-> start
+                       (inst/parse))
+        now (inst/now)
+        diff (duration/between start-time now)
+        total-seconds (duration/get diff chrono/seconds)
+        minutes (abs (quot total-seconds 60))
+        seconds (mod (abs total-seconds) 60)]
+    {:minutes minutes :seconds seconds}))
+
+(defn match-duration
+  "Component which displays a readout of the time since the start of the match."
+  [start-date hidden]
+  (let [duration (r/atom nil)
+        interval (r/atom nil)]
+    (r/create-class
+      {:component-did-mount
+       (fn []
+         (reset! interval
+                 ;; Update timer at most every 1 sec
+                 (js/setInterval #(reset! duration (time-since start-date)) 1000)))
+       :component-will-unmount
+       (fn []
+         (js/clearInterval @interval)
+         (reset! interval nil))
+       :reagent-render
+       (fn []
+         (when (not @hidden)
+           [:span.float-center.timer
+            (str
+              (:minutes @duration) "m:"
+              (:seconds @duration) "s")])
+         )})))
+
 (defn starting-timestamp [start-date timer]
   ;; I don't like using js/Date, but `toLocalTimeString`
   ;; is just too convenient
   (let [start-time-string (str (tr [:game.game-start "Game start"])
                                ": " (.toLocaleTimeString (js/Date. start-date)))
-        hide-remaining (r/atom false)]
+        hide-timer (r/atom false)]
     (fn []
       [:div.panel.blue-shade.timestamp
        [:span.float-center start-time-string]
-       (when timer
-         [:<>
-          [:span.pm {:on-click #(swap! hide-remaining not)}
-           (if @hide-remaining "+" "-")]
-          [:span {:on-click #(swap! hide-remaining not)}
-           [time-remaining start-date timer hide-remaining]]])])))
+       [:<>
+        [:span.pm {:on-click #(swap! hide-timer not)}
+         (if @hide-timer "+" "-")]
+        (if timer [:span {:on-click #(swap! hide-timer not)}
+                        [time-remaining start-date timer hide-timer]]
+                  [:span {:on-click #(swap! hide-timer not)}
+                        [match-duration start-date hide-timer]])]])))
+
 
 (defn- handle-click [{:keys [render-board?]} e]
   (when render-board?
@@ -2060,7 +2098,7 @@
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
-                                  :me me :opponent opponent :prompt-state prompt-state}])]]
+                                  :me            me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
                  [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
