@@ -2694,7 +2694,7 @@
                    (last (filter #(= (:cid card) (get-in % [:persistent :from-cid]))
                                  (get-in @state [:runner :rfg]))))]
     {:abilities [{:req (req (not (install-locked? state side)))
-                  :label "install a program from the stack"
+                  :label "Install a program from the stack"
                   :async true
                   :cost [:click 1 :rfg-program 1]
                   :effect
@@ -2712,16 +2712,16 @@
                                                                          state side %
                                                                          {:cost-bonus (- (:cost (find-rfg state card)))})])))
                                             (sort-by :title)
-                                            (into []))
-                                       ["No install"]))
-                       :msg (msg "search the stack"
-                                 (if (= target "No install")
-                                   ", but does not find a program to install"
-                                   (str "and install " (:title target)
-                                        ", lowering its cost by " (:cost (find-rfg state card)))))
+                                            (seq))
+                                       ["Done"]))
+                       :msg (msg (if (= target "Done")
+                                   "shuffle the stack"
+                                   (str "install " (:title target)
+                                        " from the stack, lowering its cost by "
+                                        (:cost (find-rfg state card)))))
                        :effect (req (trigger-event state side :searched-stack nil)
                                     (shuffle! state side :deck)
-                                    (if (= target "No install")
+                                    (if (= target "Done")
                                       (effect-completed state side eid)
                                       (runner-install state side (assoc eid :source card :source-type :runner-install)
                                                       target {:cost-bonus (- (:cost (find-rfg state card)))})))}

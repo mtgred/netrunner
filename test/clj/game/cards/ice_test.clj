@@ -1971,7 +1971,7 @@
       (click-prompt state :corp "Program")
       (card-subroutine state :corp ef 0)
       (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
-      (is (= 2 (count (prompt-buttons :corp))) "Only options: Corroder and None")
+      (is (= 2 (count (prompt-buttons :corp))) "Only options: Corroder and Done")
       (click-prompt state :corp "Corroder")
       (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")

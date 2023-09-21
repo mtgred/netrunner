@@ -3073,7 +3073,7 @@
       (click-prompt state :runner "OK")
       (is (= ["Corroder" "Magnum Opus" nil] (prompt-titles :runner)) "No Torch in list because can't afford")
       (is (zero? (count (:discard (get-runner)))))
-      (click-prompt state :runner "No install")
+      (click-prompt state :runner "Done")
       (is (zero? (count (get-program state))))
       (is (= 11 (count (:discard (get-runner)))))))
 

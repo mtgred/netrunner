@@ -7590,7 +7590,7 @@
     (click-card state :runner (get-program state 0))
     (is (= 1 (count (:discard (get-runner)))) "Paricia was trashed")
     (is (= 1 (count (:choices (prompt-map :runner)))))
-    (click-prompt state :runner "No install")))
+    (click-prompt state :runner "Done")))
 
 (deftest world-tree-trashing-facedown-card
   (do-game
@@ -7602,7 +7602,7 @@
     (play-from-hand state :runner "World Tree")
     (run-empty-server state "Archives")
     (click-card state :runner (get-program state 0))
-    (click-prompt state :runner "No install")
+    (click-prompt state :runner "Done")
     (take-credits state :runner)
     (take-credits state :corp)
     (run-empty-server state "Archives")

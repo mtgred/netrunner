@@ -1566,10 +1566,9 @@
   (letfn [(resolve-install []
             (req
               (shuffle! state side :deck)
-              (system-msg state side "shuffles R&D")
-              ;; if it has an additional cost, the rez needs to be optional
-              (if (= "No install" target)
+              (if (= "Done" target)
                 (effect-completed state side eid)
+                ;; if it has an additional cost, the rez needs to be optional
                 (let [add-costs (rez-additional-cost-bonus state side target)
                       inst-target target]
                   (cond
@@ -1586,7 +1585,7 @@
                                                                  {:ignore-all-cost true
                                                                   :no-warning true
                                                                   :install-state :rezzed-no-rez-cost}))}
-                        :no-ability {:msg "install a card ignoring all credit costs"
+                        :no-ability {:msg "install a card from R&D ignoring all credit costs"
                                      :async true
                                      :effect (req (corp-install state side eid inst-target nil
                                                                 {:ignore-all-cost true}))}}}
@@ -1596,7 +1595,7 @@
                     (pos? (count add-costs))
                     (continue-ability
                       state side
-                      {:msg "install a card without paying additional costs to rez"
+                      {:msg "install a card from R&D without paying additional costs to rez"
                        :async true
                        :effect (req (corp-install state side eid inst-target nil
                                                   {:ignore-all-cost true
@@ -1629,19 +1628,25 @@
                         (str "Install a " target-cost "-cost card from your deck?")
                         (str "Shuffle your deck (search for a " target-cost "-cost card from your deck?)"))
               :once :per-turn
+              :waiting-prompt true
               :yes-ability
-              {:msg (msg "search R&D for a " (str target-cost) "-cost card")
+              {:msg (msg "search R&D for a " target-cost "-cost card")
                :async true
                :effect (req (if (>= target-cost 0)
                               (continue-ability
                                 state side
                                 {:prompt "Choose a card to install and rez"
-                                 :choices (req (conj (filter #(and (= target-cost (:cost %))
-                                                                   (or (asset? %)
-                                                                       (upgrade? %)
-                                                                       (ice? %)))
-                                                             (vec (sort-by :title (:deck corp))))
-                                                     "No install"))
+                                 :choices (req (concat
+                                                 (->> (:deck corp)
+                                                      (filter
+                                                        #(and (or (asset? %)
+                                                                  (upgrade? %)
+                                                                  (ice? %))
+                                                              (= target-cost (:cost %))))
+                                                      (sort-by :title)
+                                                      (seq))
+                                                 ["Done"]))
+                                 :msg "shuffle R&D"
                                  :async true
                                  :effect (resolve-install)}
                                 card nil)
@@ -1660,7 +1665,6 @@
                            (not (used-this-turn? (:cid card) state))))
                :async true
                :interactive (req true)
-               :waiting "Corp to make a decision"
                :effect (req (let [target-cost (dec (:cost (:card target)))]
                               (continue-ability
                                 state side
