@@ -2379,6 +2379,22 @@
       (click-prompt state :runner "No action")
   )))
 
+(deftest formicary-with-trojan-doesnt-reset-mu-when-moving
+  ;; Rezzing and moving Formicary with trojan doesn't make the trojan mu-cost disappear
+  (do-game
+    (new-game {:corp {:deck ["Formicary"]}
+               :runner {:deck ["Saci"]}})
+    (play-from-hand state :corp "Formicary" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Saci")
+    (click-card state :runner (get-ice state :rd 0))
+    (run-on state "HQ")
+    (is (zero? (get-in @state [:run :position])) "Now approaching server")
+    (run-continue state)
+    (changes-val-macro 0 (core/available-mu state)
+                       "Available MU should not change"
+                       (click-prompt state :corp "Yes"))))
+
 (deftest free-lunch-basic-behavior
   ;; Basic behavior
   (do-game
