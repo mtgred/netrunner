@@ -6163,6 +6163,31 @@
           "Gained 3 credits on derez"
           (card-ability state :runner (get-resource state 0) 0)))))
 
+(deftest saci-magnet
+    ;; Saci should not trigger on Magent rez but should on Magnet derez
+    (do-game
+      (new-game {:corp {:hand ["Magnet" "Ice Wall" "Divert Power"]}
+                 :runner {:hand ["Saci"]}})
+      (play-from-hand state :corp "Magnet" "R&D")
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (take-credits state :corp)
+      (let [magnet (get-ice state :rd 0)]
+        (play-from-hand state :runner "Saci")
+        (click-card state :runner magnet)
+        (run-on state "R&D")
+        (changes-val-macro
+          0 (:credit (get-runner))
+          "Should not gain 3 credits on rez"
+          (rez state :corp magnet))
+        (run-continue state)
+        (card-subroutine state :corp (refresh magnet) 0)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Divert Power")
+        (changes-val-macro
+          3 (:credit (get-runner))
+          "Gained 3 credits on derez"
+          (click-card state :corp (refresh magnet))))))
+
 (deftest sadyojata-swap-ability
     ;; Swap ability
     (testing "Doesnt work if no Deva in hand"
