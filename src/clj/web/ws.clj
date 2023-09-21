@@ -23,12 +23,14 @@
                                    (or (-> ring-req :session :uid)
                                        (:client-id ring-req)))})
       {:keys [ch-recv send-fn connected-uids
-              ajax-post-fn ajax-get-or-ws-handshake-fn]} chsk-server]
+              ajax-post-fn ajax-get-or-ws-handshake-fn private]} chsk-server
+      conns_ (:conns_ private)]
   (defonce handshake-handler (fn [& args] (try (apply ajax-get-or-ws-handshake-fn args)
                                                (catch Exception _ (println "Caught an error in the handshake handler")))))
   (defonce post-handler ajax-post-fn)
   (defonce connected-sockets connected-uids)
   (defonce ch-chsk ch-recv)
+  (defonce connections_ conns_) ; internal sente info, ideally don't use this outside of debugging
   (defn chsk-send! [uid ev] (send-fn uid ev)))
 
 ;; Maximum throughput is 25,000 client updates a second
@@ -47,9 +49,25 @@
 (defonce log-connected-uid-counts
   (go (while true
     (<! (timeout 30000))
-    (println (str "connected uids -"
-                  " :ajax " (count (:ajax @connected-sockets))
-                  " :ws " (count (:ws @connected-sockets)))))))
+    (let [ajax-uid-count (count (:ajax @connected-sockets))
+          ajax-conn-counts (seq (map count (:ajax @connections_)))
+          ajax-conn-total (reduce + ajax-conn-counts)
+          ajax-conn-max (apply max (conj ajax-conn-counts 0))
+          ws-uid-count (count (:ws @connected-sockets))
+          ws-conn-counts (seq (map count (:ws @connections_)))
+          ws-conn-total (reduce + ws-conn-counts)
+          ws-conn-max (apply max (conj ws-conn-counts 0))
+          ]
+      (println (str "connected -"
+                    " :ajax { "
+                    " uid: " ajax-uid-count
+                    " conn: " ajax-conn-total
+                    " conn-max: " ajax-conn-max
+                    " } :ws { "
+                    " uid: " ws-uid-count
+                    " conn: " ws-conn-total
+                    " conn-max: " ws-conn-max
+                    " }"))))))
 
 (defonce ratelimiter
   (go (while true
