@@ -4394,6 +4394,19 @@
       (is (= 1 (core/get-virus-counters state (second (:hosted (refresh m)))))
           "Second parasite gains a virus counter on rezzed Magnet"))))
 
+(deftest magnet-should-not-reset-program-mu
+  ;; Rezzing Magnet should not affect MU cost of hosted programs
+  (do-game
+    (new-game {:corp {:deck ["Magnet"]}
+               :runner {:deck ["Saci"]}})
+    (play-from-hand state :corp "Magnet" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Saci")
+    (click-card state :runner (get-ice state :rd 0))
+    (changes-val-macro 0 (core/available-mu state)
+                       "Available MU should not change"
+                       (rez state :corp (get-ice state :rd 0)))))
+
 (deftest marker
   ;; Marker
   (do-game
