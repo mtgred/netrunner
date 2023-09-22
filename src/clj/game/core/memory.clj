@@ -2,7 +2,7 @@
   (:require
    [cond-plus.core :refer [cond+]]
    [game.core.card :refer [has-subtype? virus-program? program?]]
-   [game.core.effects :refer [get-effect-maps get-effect-value get-effects]]
+   [game.core.effects :refer [get-effect-maps get-effect-value get-effects register-lingering-effect]]
    [game.core.toasts :refer [toast]]))
 
 (defn mu+
@@ -153,3 +153,13 @@
           total-available (:regular available-mu)
           total-used (combine-used-mu available-mu used-mu)]
       (<= 0 (- total-available total-used)))))
+
+(defn init-mu-cost
+  "(re) establish lingering effect of program using up memory"
+  [state card]
+  (register-lingering-effect
+    state :runner card
+    {:type :used-mu
+     :duration :while-active
+     :value (:memoryunits card)})
+  (update-mu state))

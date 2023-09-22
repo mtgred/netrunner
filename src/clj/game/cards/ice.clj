@@ -38,7 +38,7 @@
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-list
                                  corp-install-msg]]
-   [game.core.memory :refer [available-mu update-mu]]
+   [game.core.memory :refer [available-mu init-mu-cost]]
    [game.core.moving :refer [as-agenda mill move swap-cards swap-cards-async
                              swap-ice swap-installed trash
                              trash-cards]]
@@ -2572,13 +2572,7 @@
               (when (not= (:title hc) "Hush")
                 (unregister-events state side hc)
                 (unregister-static-abilities state side hc)
-                (when (program? hc)
-                  (register-lingering-effect
-                    state side hc
-                    {:type :used-mu
-                     :duration :while-active
-                     :value (:memoryunits hc)})
-                  (update-mu state))
+                (init-mu-cost state hc)
                 (update! state side (dissoc hc :abilities)))))]
     {:on-rez {:async true
               :effect (req (let [magnet card]

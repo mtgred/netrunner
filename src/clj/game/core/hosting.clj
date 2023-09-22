@@ -2,11 +2,11 @@
   (:require
     [game.core.card :refer [assoc-host-zones corp? get-card program? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-static-abilities register-lingering-effect unregister-static-abilities]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [register-default-events unregister-events]]
     [game.core.initializing :refer [card-init]]
-    [game.core.memory :refer [update-mu]]
+    [game.core.memory :refer [init-mu-cost]]
     [game.core.update :refer [update! update-hosted!]]
     [game.utils :refer [remove-once]]))
 
@@ -62,12 +62,7 @@
                (register-static-abilities state side target)
                (when (and (program? target)
                           (not no-mu))
-                 (register-lingering-effect
-                   state side target
-                   {:type :used-mu
-                    :duration :while-active
-                    :value (:memoryunits target)})
-                 (update-mu state)))))
+                 (init-mu-cost state target)))))
        (when-let [hosted-gained (:hosted-gained cdef)]
          (hosted-gained state side (make-eid state) (get-card state card) [target]))
        ;; Update all static abilities and floating effects
