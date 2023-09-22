@@ -6520,6 +6520,20 @@
    (is (= 2 (count (:discard (get-runner)))) "Both rezekis trashed")
    (is (= 1 (count (:discard (get-corp)))) "Prisec trashed")))
 
+(deftest stavka-outside-of-run
+  ;; Stavka should not gain strength if rez ability triggered outside of run
+  (do-game
+   (new-game {:corp {:hand ["Stavka" "Prisec"]}})
+   (play-from-hand state :corp "Stavka" "HQ")
+   (play-from-hand state :corp "Prisec" "HQ")
+   (let [sta (get-ice state :hq 0)]
+     (rez state :corp sta)
+     (changes-val-macro
+       0 (get-strength (refresh sta))
+       "Stavka gains no strength outside of a run"
+       (click-prompt state :corp "Yes")
+       (click-card state :corp "Prisec")))))
+
 (deftest surveyor
   ;; Surveyor ice strength
   (do-game
