@@ -3546,8 +3546,9 @@
                    :choices (req (cancellable
                                    (filter program? ((if (= where "Heap") :discard :deck) runner))))
                    :async true
-                   :effect (req (trigger-event state side :searched-stack nil)
-                                (shuffle! state side :deck)
+                   :effect (req (when (= where "Stack")
+                                  (trigger-event state side :searched-stack nil)
+                                  (shuffle! state side :deck))
                                 (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
                                                           target {:ignore-all-cost true})
                                           (if async-result
