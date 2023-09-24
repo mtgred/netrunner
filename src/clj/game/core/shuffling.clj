@@ -5,7 +5,7 @@
     [game.core.moving :refer [move move-zone]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability msg req]]
-    [game.utils :refer [enumerate-str quantify]]))
+    [game.utils :refer [enumerate-str quantify swap!*]]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
@@ -16,8 +16,8 @@
                (:run @state)
                (= :corp side)
                (= :deck kw))
-      (swap! state assoc-in [:run :shuffled-during-access :rd] true))
-    (swap! state update-in [side kw] shuffle)))
+      (swap!* state assoc-in [:run :shuffled-during-access :rd] true))
+    (swap!* state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck
   [state side & args]
@@ -52,9 +52,9 @@
 (defn shuffle-deck
   "Shuffle R&D/Stack."
   [state side {:keys [close]}]
-  (swap! state update-in [side :deck] shuffle)
+  (swap!* state update-in [side :deck] shuffle)
   (if close
     (do
-      (swap! state update-in [side] dissoc :view-deck)
+      (swap!* state update-in [side] dissoc :view-deck)
       (system-msg state side "stops looking at their deck and shuffles it"))
     (system-msg state side "shuffles their deck")))

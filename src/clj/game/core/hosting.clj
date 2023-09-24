@@ -8,7 +8,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.memory :refer [update-mu]]
     [game.core.update :refer [update! update-hosted!]]
-    [game.utils :refer [remove-once]]))
+    [game.utils :refer [remove-once swap!*]]))
 
 (defn remove-from-host
   "Removes a card from its host."
@@ -30,9 +30,9 @@
          (when-let [host-card (get-card state host)]
            (update! state side (update host-card :hosted
                                        (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
-         (swap! state update-in (cons s (vec zone))
+         (swap!* state update-in (cons s (vec zone))
                 (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
-     (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))
+     (swap!* state update-in (cons side (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))
      (let [card (get-card state card)
            card (assoc-host-zones card)
            target (assoc target
@@ -78,5 +78,5 @@
                                (conj all-effects current-effect)))
                            []
                            (:effects @state))]
-         (swap! state assoc :effects (into [] new-effects)))
+         (swap!* state assoc :effects (into [] new-effects)))
        (get-card state target)))))

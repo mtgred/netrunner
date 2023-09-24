@@ -8,7 +8,7 @@
     [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
-    [game.utils :refer [enumerate-str same-card? same-side?]]))
+    [game.utils :refer [enumerate-str same-card? same-side? swap!*]]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -44,7 +44,7 @@
 (defn- register-flag!
   "Register a flag of the specific type."
   [state _ card flag-type flag condition]
-  (swap! state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
+  (swap!* state update-in [:stack flag-type flag] #(conj % {:card card :condition condition})))
 
 (defn- check-flag?
   "Flag condition will ask for permission to do something, e.g. :can-rez, :can-advance
@@ -75,12 +75,12 @@
 (defn- clear-all-flags!
   "Clears all flags of specified type"
   [state flag-type]
-  (swap! state assoc-in [:stack flag-type] nil))
+  (swap!* state assoc-in [:stack flag-type] nil))
 
 (defn- clear-flag-for-card!
   "Remove all entries for specified card for flag-type and flag"
   [state _ card flag-type flag]
-  (swap! state update-in [:stack flag-type flag]
+  (swap!* state update-in [:stack flag-type flag]
          (fn [flag-map] (remove #(= (get-cid %) (:cid card)) flag-map))))
 
 ;; Currently unused
@@ -156,19 +156,19 @@
 ;;; Functions for preventing specific game actions.
 ;;; TODO: look into migrating these to turn-flags and run-flags.
 (defn prevent-draw [state _]
-  (swap! state assoc-in [:runner :register :cannot-draw] true))
+  (swap!* state assoc-in [:runner :register :cannot-draw] true))
 
 (defn prevent-jack-out [state _]
-  (swap! state assoc-in [:run :cannot-jack-out] true))
+  (swap!* state assoc-in [:run :cannot-jack-out] true))
 
 (defn prevent-current [state _]
-  (swap! state assoc-in [:runner :register :cannot-play-current] true))
+  (swap!* state assoc-in [:runner :register :cannot-play-current] true))
 
 (defn lock-zone [state _ cid tside tzone]
-  (swap! state update-in [tside :locked tzone] #(conj % cid)))
+  (swap!* state update-in [tside :locked tzone] #(conj % cid)))
 
 (defn release-zone [state _ cid tside tzone]
-  (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
+  (swap!* state update-in [tside :locked tzone] #(remove #{cid} %)))
 
 ;; TODO: this can probably be made into costant/floating effects too
 (defn zone-locked?

@@ -1,6 +1,7 @@
 (ns game.core.link
   (:require
-    [game.core.effects :refer [sum-effects]]))
+    [game.core.effects :refer [sum-effects]]
+    [game.utils :refer [swap!*]]))
 
 (defn get-link
   ([state] (get-link state nil))
@@ -24,7 +25,7 @@
          new-link (sum-link-effects state id)
          changed? (not= old-link new-link)]
      (when changed?
-       (swap! state assoc-in [:runner :link] new-link))
+       (swap!* state assoc-in [:runner :link] new-link))
      changed?)))
 
 (defn link+

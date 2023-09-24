@@ -1,4 +1,6 @@
-(ns game.core.toasts)
+(ns game.core.toasts
+  (:require
+    [game.utils :refer [swap!*]]))
 
 (defn toast
   "Adds a message to toast with specified severity (default as a warning) to the toast message list.
@@ -15,9 +17,9 @@
    ;; Allows passing just the toast msg-type as the options parameter
    (if message
      ;; normal toast - add to list
-     (swap! state update-in [side :toast] #(conj % {:msg message :type msg-type :options options}))
+     (swap!* state update-in [side :toast] #(conj % {:msg message :type msg-type :options options}))
      ;; no message - remove top toast from list
-     (swap! state update-in [side :toast] rest))))
+     (swap!* state update-in [side :toast] rest))))
 
 (defn show-error-toast
   [state side]

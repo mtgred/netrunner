@@ -1,7 +1,7 @@
 (ns game.core.update
   (:require [game.core.card :refer [get-card ice?]]
             [game.core.finding :refer [get-scoring-owner]]
-            [game.utils :refer [to-keyword same-card?]]))
+            [game.utils :refer [to-keyword same-card? swap!*]]))
 
 (declare update-hosted!)
 
@@ -11,7 +11,7 @@
   (cond
     (= type "Identity")
     (when (= side (to-keyword (:side card)))
-      (swap! state assoc-in [side :identity] card)
+      (swap!* state assoc-in [side :identity] card)
       card)
 
     host
@@ -22,7 +22,7 @@
     (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
               [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
           (when (not-empty tail)
-            (swap! state assoc-in z (vec (concat head [card] (rest tail))))
+            (swap!* state assoc-in z (vec (concat head [card] (rest tail))))
             card))))
 
 (defn update-hosted!

@@ -166,7 +166,7 @@
      :req (req (and (= target :archives)
                     (not= (:max-access run) 0)
                     (not-empty (:discard corp))))
-     :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+     :effect (req (swap!* state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                   (continue-ability
                     state side
                     {:optional
@@ -700,7 +700,7 @@
   {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
 
 (defcard "Ekomind"
-  (let [update-base-mu (fn [state n] (swap! state assoc-in [:runner :memory :base] n))]
+  (let [update-base-mu (fn [state n] (swap!* state assoc-in [:runner :memory :base] n))]
     {:effect (req (update-base-mu state (count (get-in @state [:runner :hand])))
                   (add-watch state :ekomind (fn [_k ref old new]
                                               (let [hand-size (count (get-in new [:runner :hand]))]
@@ -820,7 +820,7 @@
               :player :runner
               :yes-ability {:msg "reduce the base trace strength to 0"
                             :cost [:trash-can]
-                            :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]
+                            :effect (req (swap!* state assoc-in [:trace :force-base] 0))}}}]
    :abilities [{:label "Jack out"
                 :req (req (and (or run
                                    (get-current-encounter state))
@@ -968,7 +968,7 @@
                                       (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI")))}
                 :effect (req (when-let [host (get-card state (:host card))]
-                               (swap! state assoc :effects
+                               (swap!* state assoc :effects
                                       (reduce
                                         (fn [effects e]
                                           (conj effects
@@ -988,14 +988,14 @@
              :effect (req (let [last-pump (assoc (second targets)
                                                  :duration :end-of-turn
                                                  :original-duration (:duration (last (:effects @state))))]
-                            (swap! state assoc :effects
+                            (swap!* state assoc :effects
                                    (->> (:effects @state)
                                         (remove #(= (:uuid last-pump) (:uuid %)))
                                         (#(conj % last-pump))
                                         (into []))))
                           (update-breaker-strength state side target))}]
    :leave-play (req (when-let [host (get-card state (:host card))]
-                      (swap! state assoc :effects
+                      (swap!* state assoc :effects
                              (reduce
                                (fn [effects e]
                                  (conj effects
@@ -2206,7 +2206,7 @@
                 :msg "suffer 2 meat damage"
                 :effect (effect (enable-runner-damage-choice)
                                 (damage eid :meat 2 {:unboostable true :card card}))}
-   :leave-play (req (swap! state update :damage dissoc :damage-choose-runner))
+   :leave-play (req (swap!* state update :damage dissoc :damage-choose-runner))
    :events [{:event :pre-resolve-damage
              :async true
              :req (req (and (pos? (last targets))

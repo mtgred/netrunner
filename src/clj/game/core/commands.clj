@@ -35,7 +35,7 @@
    [game.core.winning :refer [clear-win]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer [dissoc-in enumerate-str quantify safe-split
-                       same-card? same-side? server-card string->num]]
+                       same-card? same-side? server-card string->num swap!*]]
    [jinteki.utils :refer [str->int]]))
 
 (defn- constrain-value
@@ -57,10 +57,10 @@
                      (map->Card {:title "/adv-counter command"}) nil)))
 
 (defn command-save-replay [state _]
-  (swap! state assoc-in [:options :save-replay] true))
+  (swap!* state assoc-in [:options :save-replay] true))
 
 (defn command-bug-report [state side]
-  (swap! state update :bug-reported (fnil inc -1))
+  (swap!* state update :bug-reported (fnil inc -1))
   (let [title "[EDITME] Please give a short description of your bug here"
         body (str "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state)
                   "?b=" (:bug-reported @state) "\n\n"
@@ -157,7 +157,7 @@
     {:optional
      {:prompt "Rez all cards and turn cards in archives faceup?"
       :yes-ability {:async true
-                    :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                    :effect (req (swap!* state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                                  (rez-all state side eid (remove rezzed? (all-installed state side))))}}}
     (map->Card {:title "/rez-all command"}) nil))
 
@@ -189,7 +189,7 @@
   "Resets the entire game state to how it was at end-of-turn if both players agree"
   [state side]
   (when-let [turn-state (:turn-state @state)]
-    (swap! state assoc-in [side :undo-turn] true)
+    (swap!* state assoc-in [side :undo-turn] true)
     (when (and (-> @state :runner :undo-turn) (-> @state :corp :undo-turn))
       (reset! state (assoc turn-state :log (:log @state) :turn-state turn-state :history (:history @state)))
       (doseq [s [:runner :corp]]
@@ -209,7 +209,7 @@
 (defn command-close-prompt [state side]
   (when-let [prompt (-> @state side :prompt first)]
     (remove-from-prompt-queue state side prompt)
-    (swap! state dissoc-in [side :selected])
+    (swap!* state dissoc-in [side :selected])
     (effect-completed state side (:eid prompt))))
 
 (defn command-install-ice
@@ -266,7 +266,7 @@
             card (when (and s-card (same-side? (:side s-card) side))
                    (build-card s-card))]
         (when card
-          (swap! state update-in [side :hand] #(concat % [(assoc card :zone [:hand])]))))
+          (swap!* state update-in [side :hand] #(concat % [(assoc card :zone [:hand])]))))
       (catch Exception ex
         (toast state side (str card-name " isn't a real card"))))))
 
@@ -280,7 +280,7 @@
         (if card
           (let [new-id (-> card :title server-card make-card (assoc :zone [:identity] :type "Identity"))]
             (disable-identity state side)
-            (swap! state assoc-in [side :identity] new-id)
+            (swap!* state assoc-in [side :identity] new-id)
             (card-init state side new-id {:resolve-effect true :init-data true}))
           (toast state side (str card-name " isn't a valid card"))))
       (catch Exception ex
@@ -296,7 +296,7 @@
         (if card
           (let [new-id (-> card :title server-card make-card (assoc :zone [:identity] :type "Identity"))]
             (disable-identity state side)
-            (swap! state assoc-in [side :identity] new-id)
+            (swap!* state assoc-in [side :identity] new-id)
             (card-init state side new-id {:resolve-effect true :init-data true}))
           (toast state side (str card-name " isn't a valid card"))))
       (catch Exception ex
@@ -354,7 +354,7 @@
         nil)
       (case command
         "/adv-counter" #(command-adv-counter %1 %2 value)
-        "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (constrain-value value -1000 1000))
+        "/bp"         #(swap!* %1 assoc-in [%2 :bad-publicity :base] (constrain-value value -1000 1000))
         "/bug"        command-bug-report
         "/card-info"  #(resolve-ability %1 %2
                                         {:effect (effect (system-msg (str "shows card-info of "
@@ -369,10 +369,10 @@
                                          :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                         (map->Card {:title "/charge command"}) nil)
         "/clear-win"  clear-win
-        "/click"      #(swap! %1 assoc-in [%2 :click] (constrain-value value 0 1000))
+        "/click"      #(swap!* %1 assoc-in [%2 :click] (constrain-value value 0 1000))
         "/close-prompt" command-close-prompt
         "/counter"    #(command-counter %1 %2 args)
-        "/credit"     #(swap! %1 assoc-in [%2 :credit] (constrain-value value 0 1000))
+        "/credit"     #(swap!* %1 assoc-in [%2 :credit] (constrain-value value 0 1000))
         "/deck"       #(toast %1 %2 "/deck number takes the format #n")
         "/derez"      command-derez
         "/disable-card" #(resolve-ability %1 %2
@@ -406,11 +406,11 @@
                           (jack-out state side (make-eid state))))
         "/link"       (fn [state side]
                         (when (= side :runner)
-                          (swap! state assoc-in [:runner :link] (constrain-value value 0 1000))))
+                          (swap!* state assoc-in [:runner :link] (constrain-value value 0 1000))))
         "/mark"       #(when (= %2 :runner) (identify-mark %1))
         "/memory"     (fn [state side]
                         (when (= side :runner)
-                          (swap! state assoc-in [:runner :memory :used] (constrain-value value -1000 1000))))
+                          (swap!* state assoc-in [:runner :memory :used] (constrain-value value -1000 1000))))
         "/move-bottom"  #(resolve-ability %1 %2
                                           {:prompt "Choose a card in hand to put on the bottom of your deck"
                                             :effect (effect (move target :deck))
@@ -491,7 +491,7 @@
                                                               (not (ice? c))))}
                                 :effect (effect (swap-installed (first targets) (second targets)))}
                                 (map->Card {:title "/swap-installed command"}) nil))
-        "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (constrain-value value 0 1000))
+        "/tag"        #(swap!* %1 assoc-in [%2 :tag :base] (constrain-value value 0 1000))
         "/take-core" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (constrain-value value 0 1000)
                                                     {:card (map->Card {:title "/damage command" :side %2})}))
         "/take-meat"  #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :meat  (constrain-value value 0 1000)

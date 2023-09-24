@@ -604,7 +604,7 @@
                 "shuffle R&D"
                 (str "reveal " (:title target) " from R&D and add it to HQ")))
     :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
-                                  (swap! state assoc-in [:corp :register :cannot-score]
+                                  (swap!* state assoc-in [:corp :register :cannot-score]
                                          (filter agenda? (all-installed state :corp)))
                                   (register-events
                                     state side card
@@ -1297,7 +1297,7 @@
              :rfg-instead-of-trashing true
              :async true
              :effect (req (wait-for (damage state :runner :brain 1 {:card card})
-                                    (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+                                    (swap!* state update-in [:runner :extra-click-temp] (fnil dec 0))
                                     (effect-completed state side eid)))}})
 
 (defcard "Interns"
@@ -2319,7 +2319,7 @@
     :choices ["Suffer 1 core damage" "Get 3 fewer [Click] on the next turn"]
     :effect (req (if (= target "Suffer 1 core damage")
                    (pay state :runner eid card [:brain 1])
-                   (do (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
+                   (do (swap!* state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
                        (effect-completed state side eid))))}})
 
 (defcard "Rolling Brownout"

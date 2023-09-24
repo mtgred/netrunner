@@ -12,7 +12,7 @@
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [req effect msg continue-ability wait-for]]
-    [game.utils :refer [same-card? pluralize quantify remove-once]]
+    [game.utils :refer [same-card? pluralize quantify remove-once swap!*]]
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]))
 
@@ -38,7 +38,7 @@
   [state key value]
   (when-let [encounter (get-current-encounter state)]
     (let [updated-encounter (assoc encounter key value)]
-      (swap! state update :encounters #(conj (pop %) updated-encounter)))))
+      (swap!* state update :encounters #(conj (pop %) updated-encounter)))))
 
 (defn set-current-ice
   ([state]
@@ -51,7 +51,7 @@
          (set-current-ice state (nth run-ice (dec pos)))))))
   ([state card]
    (when (:run @state)
-     (swap! state assoc-in [:run :current-ice] (get-card state card)))))
+     (swap!* state assoc-in [:run :current-ice] (get-card state card)))))
 
 (defn active-ice?
   "Ice is active when installed and rezzed or is the current encounter"

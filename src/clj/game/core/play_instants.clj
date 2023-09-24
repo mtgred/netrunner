@@ -14,7 +14,7 @@
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [same-card? to-keyword]]))
+    [game.utils :refer [same-card? to-keyword swap!*]]))
 
 (defn async-rfg
   ([state side eid card] (async-rfg state side eid card nil))
@@ -65,11 +65,11 @@
                                                         (str "removes " (:title c) " from the game instead of trashing it")))
                                           (when (has-subtype? card "Terminal")
                                             (lose state side :click (-> @state side :click))
-                                            (swap! state assoc-in [:corp :register :terminal] true))
+                                            (swap!* state assoc-in [:corp :register :terminal] true))
                                           (effect-completed state side eid)))
                               (do (when (has-subtype? card "Terminal")
                                     (lose state side :click (-> @state side :click))
-                                    (swap! state assoc-in [:corp :register :terminal] true))
+                                    (swap!* state assoc-in [:corp :register :terminal] true))
                                   (effect-completed state side eid)))))))))
 
 (defn play-instant-costs
@@ -128,7 +128,7 @@
              moved-card (move state side (assoc card :seen true) :play-area)]
          ;; Only mark the register once costs have been paid and card has been moved
          (when (has-subtype? card "Run")
-           (swap! state assoc-in [:runner :register :click-type] :run))
+           (swap!* state assoc-in [:runner :register :click-type] :run))
          (wait-for (pay state side (make-eid state eid) moved-card costs {:action :play-instant})
                    (let [payment-str (:msg async-result)
                          cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]

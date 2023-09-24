@@ -322,7 +322,7 @@
                             (when (and
                                    (:access @state)
                                    (:run @state))
-                              (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                              (swap!* state assoc-in [:run :shuffled-during-access :rd] true))
                             (continue-ability state :corp (trash-step c '()) card nil)))}}}]
       {:on-score arrange-rd
        :stolen arrange-rd})))

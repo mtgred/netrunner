@@ -5,7 +5,8 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [sum-effects]]
     [game.core.eid :refer [make-eid]]
-    [game.core.update :refer [update!]]))
+    [game.core.update :refer [update!]]
+    [game.utils :refer [swap!*]]))
 
 (defn- advancement-requirement
   [state {:keys [advancementcost] :as card}]
@@ -72,7 +73,7 @@
         total-points (+ user-adjusted-points scored-points)
         changed? (not= current-points total-points)]
     (when changed?
-      (swap! state assoc-in [side :agenda-point] total-points))
+      (swap!* state assoc-in [side :agenda-point] total-points))
     changed?))
 
 (defn- update-side-agenda-points

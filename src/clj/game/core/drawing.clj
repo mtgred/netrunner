@@ -9,13 +9,13 @@
     [game.core.set-aside :refer [set-aside-for-me get-set-aside]]
     [game.core.winning :refer [win-decked]]
     [game.macros :refer [req wait-for]]
-    [game.utils :refer [quantify safe-zero?]]
+    [game.utils :refer [quantify safe-zero? swap!*]]
     [jinteki.utils :refer [other-side]]))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
   [state side n]
-  (swap! state assoc-in [side :register :max-draw] n))
+  (swap!* state assoc-in [side :register :max-draw] n))
 
 (defn remaining-draws
   "Calculate remaining number of cards that can be drawn this turn if a maximum exists"
@@ -27,7 +27,7 @@
 (defn draw-bonus
   "Registers a bonus of n draws to the next draw (Daily Business Show)"
   [state _ n]
-  (swap! state update-in [:bonus :draw] (fnil #(+ % n) 0)))
+  (swap!* state update-in [:bonus :draw] (fnil #(+ % n) 0)))
 
 (defn first-time-draw-bonus
   [side n]
@@ -53,7 +53,7 @@
                                    (min n (remaining-draws state side))
                                    n)
              deck-count (count (get-in @state [side :deck]))]
-         (swap! state update :bonus dissoc :draw);; clear bonus draws
+         (swap!* state update :bonus dissoc :draw);; clear bonus draws
          (when (and (= side :corp) (< deck-count draws-after-prevent))
            (win-decked state))
          (when (< draws-after-prevent draws-wanted)
@@ -70,16 +70,16 @@
              (set-aside-for-me state side set-aside-eid to-draw)
              (let [drawn (get-set-aside state side set-aside-eid)
                    drawn-count (count drawn)]
-               (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
+               (swap!* state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
                (if (not no-update-draw-stats)
-                 (swap! state update-in [:stats side :gain :card] (fnil + 0) n))
+                 (swap!* state update-in [:stats side :gain :card] (fnil + 0) n))
                (if suppress-event
                  (do
                    (doseq [c (get-set-aside state side set-aside-eid)]
                      (move state side c :hand))
                    (effect-completed state side eid))
                  (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
-                   (swap! state update-in [side :register :currently-drawing] conj drawn)
+                   (swap!* state update-in [side :register :currently-drawing] conj drawn)
                    (queue-event state draw-event {:cards drawn
                                                   :count drawn-count})
                    (wait-for
@@ -88,7 +88,7 @@
                        (move state side c :hand))
                      (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :post-corp-draw :post-runner-draw) drawn-count)
                                (let [eid (make-result eid (-> @state side :register :currently-drawing (peek)))]
-                                 (swap! state update-in [side :register :currently-drawing] pop)
+                                 (swap!* state update-in [side :register :currently-drawing] pop)
                                  (effect-completed state side eid))))))
                (when (safe-zero? (remaining-draws state side))
                  (prevent-draw state side))))))))))

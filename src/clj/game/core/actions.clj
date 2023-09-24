@@ -27,7 +27,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards]]))
+    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards swap!*]]))
 
 ;;; Neutral actions
 (defn- do-play-ability [state side card ability ability-idx targets]
@@ -213,8 +213,8 @@
       (let [c (update-in target [:selected] not)]
         (update! state side c)
         (if (:selected c)
-          (swap! state update-in [side :selected 0 :cards] #(conj % c))
-          (swap! state update-in [side :selected 0 :cards]
+          (swap!* state update-in [side :selected 0 :cards] #(conj % c))
+          (swap!* state update-in [side :selected 0 :cards]
                  (fn [coll] (remove-once #(same-card? % target) coll))))
         (let [selected (get-in @state [side :selected 0])
               prompt (first (get-in @state [side :prompt]))
@@ -506,26 +506,26 @@
   "Allows the player to view their deck by making the cards in the deck public."
   [state side _]
   (system-msg state side "looks at their deck")
-  (swap! state assoc-in [side :view-deck] true))
+  (swap!* state assoc-in [side :view-deck] true))
 
 (defn close-deck
   "Closes the deck view and makes cards in deck private again."
   [state side _]
   (system-msg state side "stops looking at their deck")
-  (swap! state update-in [side] dissoc :view-deck))
+  (swap!* state update-in [side] dissoc :view-deck))
 
 (defn generate-install-list
   [state _ {:keys [card]}]
   (let [card (get-card state card)]
     (if card
       (if (:expend card)
-        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
-        (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
-      (swap! state dissoc-in [:corp :install-list]))))
+        (swap!* state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
+        (swap!* state assoc-in [:corp :install-list] (installable-servers state card)))
+      (swap!* state dissoc-in [:corp :install-list]))))
 
 (defn generate-runnable-zones
   [state _ _]
-  (swap! state assoc-in [:runner :runnable-list] (zones->sorted-names (get-runnable-zones state))))
+  (swap!* state assoc-in [:runner :runnable-list] (zones->sorted-names (get-runnable-zones state))))
 
 (defn advance
   "Advance a corp card that can be advanced.
@@ -560,7 +560,7 @@
                                  " and gains " (quantify points "agenda point")))
     (implementation-msg state card)
     (set-prop state :corp (get-card state c) :advance-counter 0)
-    (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+    (swap!* state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
     (play-sfx state side "agenda-score")
     (when-let [on-score (:on-score (card-def c))]
       (register-pending-event state :agenda-scored c on-score))

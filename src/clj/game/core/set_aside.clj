@@ -3,16 +3,17 @@
     [game.core.card :refer [in-set-aside?]]
     [game.core.eid :refer [effect-completed]]
     [game.core.moving :refer [move swap-cards]]
+    [game.utils :refer [swap!*]]
     [clojure.string :as string]))
 
 (defn set-aside
   "move a group of cards to the set-aside zone. Does not call effect-completed on the eid"
   ([state side eid cards] (set-aside state side eid cards true true))
-   ;(swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
+   ;(swap!* state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
    ;(doseq [c cards] (move state side c :set-aside))
    ;(effect-completed state side eid))
   ([state side eid cards corp-vis runner-vis]
-   (swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
+   (swap!* state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
    (doseq [c cards]
      (move state side (assoc c
                              :set-aside-visibility {:corp-can-see corp-vis :runner-can-see runner-vis}
