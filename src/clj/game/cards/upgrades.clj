@@ -905,7 +905,7 @@
                               (let [ices (filter #(and (ice? %)
                                                        (get-card state %))
                                                  corp-currently-drawing)
-                                    grids (filterv #(= "Jinja City Grid" (:title %))
+                                    grids (filterv #(= (:title card) (:title %))
                                                    (all-active-installed state :corp))]
                                 (continue-ability
                                   state side
@@ -1285,12 +1285,10 @@
                                  (< (count (:hand runner)) 2))
                              (not-empty (:hand corp))
                              (pos? (count (take 5 (:deck corp))))))
-              :prompt (msg "Look at the top "
-                           (quantify (count (take 5 (:deck corp))) "card")
-                           " of R&D and swap one with a card from HQ?")
+              :prompt "Look at the top 5 cards of R&D?"
               :yes-ability
               {:async true
-               :msg (msg "look at the top " (quantify (count (take 5 (:deck corp))) "card") " of R&D")
+               :msg "look at the top 5 cards of R&D"
                :effect
                (effect
                  (continue-ability

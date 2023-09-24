@@ -3561,6 +3561,21 @@
         (click-prompt state :runner "Yes"))
       (is (= 1 (count (:hand (get-runner)))) "No cards left to draw")))
 
+(deftest levy-advanced-research-lab
+  (do-game
+      (new-game {:runner {:hand ["Levy Advanced Research Lab"]
+                          :deck [(qty "Sure Gamble" 3) "Ika"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Levy Advanced Research Lab")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (last-log-contains? state "Sure Gamble"))
+      (is (last-log-contains? state "Ika"))
+      (click-prompt state :runner "Ika")
+      (click-prompt state :runner "Sure Gamble")
+      (click-prompt state :runner "Sure Gamble")
+      (click-prompt state :runner "Sure Gamble")
+      (is (find-card "Ika" (:hand (get-runner))) "Ika was added to the grip")))
+
 (deftest lewi-guilherme
   ;; Lewi Guilherme - lower corp hand size by 1, pay 1 credit when turn begins or trash
   (do-game

@@ -1455,9 +1455,8 @@
              :effect (effect (reveal eid (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
+                    :msg (msg "name " target)
                     :effect (req (let [cardtype target]
-                                   (system-msg state side
-                                               (str "uses " (:title card) " to name " target))
                                    (register-events
                                      state side card
                                      [{:event :corp-reveal
@@ -1471,9 +1470,10 @@
                                                    ; there are cards with the named card type
                                                    (some #(is-type? % cardtype) targets)))
                                        :prompt "Choose revealed card to trash"
-                                       :choices (req (concat (filter #(is-type? % cardtype) targets) ["None"]))
-                                       :msg (msg "trash " (:title target) " from grip")
-                                       :effect (req (if (= "None" target)
+                                       :choices (req (concat (filter #(is-type? % cardtype) targets) ["Done"]))
+                                       :not-distinct true
+                                       :msg (msg "trash " (:title target) " from the grip")
+                                       :effect (req (if (= "Done" target)
                                                       (effect-completed state side eid)
                                                       (trash state side eid target {:cause :subroutine})))}])))}
      :subroutines [sub

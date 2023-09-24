@@ -1971,7 +1971,7 @@
       (click-prompt state :corp "Program")
       (card-subroutine state :corp ef 0)
       (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
-      (is (= 2 (count (prompt-buttons :corp))) "Only options: Corroder and None")
+      (is (= 2 (count (prompt-buttons :corp))) "Only options: Corroder and Done")
       (click-prompt state :corp "Corroder")
       (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
@@ -2378,6 +2378,22 @@
       (click-prompt state :runner "Spend [Click][Click]")
       (click-prompt state :runner "No action")
   )))
+
+(deftest formicary-with-trojan-doesnt-reset-mu-when-moving
+  ;; Rezzing and moving Formicary with trojan doesn't make the trojan mu-cost disappear
+  (do-game
+    (new-game {:corp {:deck ["Formicary"]}
+               :runner {:deck ["Saci"]}})
+    (play-from-hand state :corp "Formicary" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Saci")
+    (click-card state :runner (get-ice state :rd 0))
+    (run-on state "HQ")
+    (is (zero? (get-in @state [:run :position])) "Now approaching server")
+    (run-continue state)
+    (changes-val-macro 0 (core/available-mu state)
+                       "Available MU should not change"
+                       (click-prompt state :corp "Yes"))))
 
 (deftest free-lunch-basic-behavior
   ;; Basic behavior

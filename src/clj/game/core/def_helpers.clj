@@ -209,8 +209,7 @@
                        :req (req (some #(let [event (:event %)
                                               context-card (:card %)]
                                           (or (= event event-keyword)
-                                              (and (or (= :play-event event)
-                                                       (= :play-operation event))
+                                              (and (#{:play-event :play-operation} event)
                                                    (and (not (same-card? card context-card))
                                                         (has-subtype? context-card "Current")
                                                         true))))

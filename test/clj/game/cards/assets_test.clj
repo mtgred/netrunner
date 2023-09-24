@@ -1353,7 +1353,7 @@
         (take-credits state :runner)
         (click-prompt state :corp "Daily Business Show")
         (click-card state :corp "Merger")
-        (is (no-prompt? state :corp))))
+        (click-prompt state :corp "Carry on!")))
     (testing "Political Dealings first"
       (do-game
         (new-game {:corp {:identity "Near-Earth Hub: Broadcast Center"
@@ -1371,6 +1371,7 @@
         (click-prompt state :corp "Political Dealings")
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
+        (click-prompt state :corp "Carry on!")
         (click-card state :corp "Ice Wall")
         (is (no-prompt? state :corp))))
     (testing "further interactions that could happen"
@@ -1394,7 +1395,7 @@
         (click-prompt state :corp "Political Dealings")
         (click-prompt state :corp "Yes")
         (click-prompt state :corp "New remote")
-        (is (= "Jinja City Grid" (:title (:card (prompt-map :corp)))))
+        (click-prompt state :corp "Carry on!")
         (is (= ["Enigma" "None"] (prompt-buttons :corp)))
         (click-prompt state :corp "Enigma")
         (is (= ["Daily Business Show" "Jinja City Grid"] (prompt-titles :corp)))
@@ -3108,7 +3109,6 @@
       (draw state :corp)
       (card-ability state :corp (refresh lily) 0)
       (click-prompt state :corp "No action")
-      (is (last-log-contains? state "does not find") "Lily Lockwell's ability didn't find an operation")
       (is (zero? (count-tags state)) "Runner should have 0 tags from Lily Lockwell ability even when no operation found"))))
 
 (deftest long-term-investment
@@ -3986,6 +3986,15 @@
           "Oaktown Renovation installed by Political Dealings")
       (is (faceup? (get-content state :remote3 0))
           "Oaktown Renovation installed face up")))
+
+(deftest political-dealings-no-agendas-drawn
+  (do-game
+    (new-game {:corp {:hand ["Political Dealings"]
+                      :deck [(qty "Hedge Fund" 3)]}})
+    (play-from-hand state :corp "Political Dealings" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (draw state :corp)
+    (click-prompt state :corp "Carry on!")))
 
 (deftest prana-condenser
   ;; Prāna Condenser

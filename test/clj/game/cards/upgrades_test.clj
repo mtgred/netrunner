@@ -3015,7 +3015,6 @@
       (click-prompt state :runner "Yes")
       (is (= "Guess a number" (:msg (prompt-map :runner))))
       (click-prompt state :runner "3")
-      (is (= "Look at the top 5 cards of R&D and swap one with a card from HQ?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes")
       (is (= "Choose a card in R&D" (:msg (prompt-map :corp))))
       (is (= ["Accelerated Beta Test" "Brainstorm" "Chiyashi" "DNA Tracker" "Enigma"]

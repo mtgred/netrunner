@@ -1561,8 +1561,7 @@
     {:static-abilities [(mu+ 1)]
      :interactions
      {:pay-credits
-      {:req (req (and (or (= :play (:source-type eid))
-                          (= :runner-install (:source-type eid)))
+      {:req (req (and (#{:play :runner-install} (:source-type eid))
                       ;; We need at least one card (that is not the card played) in hand
                       (not-empty (remove (partial same-card? target) (:hand runner)))
                       ;; Patchwork wasn't used in the traditional way

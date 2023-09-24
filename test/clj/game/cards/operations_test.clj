@@ -2870,7 +2870,7 @@
         (card-side-ability state :runner eli 0)
         (is (no-prompt? state :runner) "Can't use break ability on Eli")
         (card-ability state :runner smc 0) ; Can still use SMC
-        (click-prompt state :runner "No install")
+        (click-prompt state :runner "Done")
         (changes-val-macro -6 (:credit (get-runner))
                            "Paid 4+2 to pump and break 6 strength Eli"
                            (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})))))

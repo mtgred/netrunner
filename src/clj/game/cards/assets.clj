@@ -1088,12 +1088,12 @@
 (defcard "Gaslight"
   (let [search-for-operation {:prompt "Choose an operation to add to HQ"
                               :waiting-prompt true
-                              :msg (msg (if (= target "No action")
-                                          "search R&D, but does not find an operation"
-                                          (str "add " (get-title target) " to HQ")))
-                              :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
+                              :msg (msg (if (= target "Done")
+                                          "shuffle R&D"
+                                          (str "add " (get-title target) " from R&D to HQ")))
+                              :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "Done"))
                               :async true
-                              :effect (req (if (= target "No action")
+                              :effect (req (if (= target "Done")
                                              (do (shuffle! state :corp :deck)
                                                  (effect-completed state side eid))
                                              (wait-for
@@ -1103,14 +1103,14 @@
                                                (effect-completed state side eid))))}
         ability {:once :per-turn
                  :async true
-                 :label "Trash this asset to search R&D for an operation (start of turn)"
+                 :label "Search R&D for an operation (start of turn)"
                  :interactive (req true)
                  :req (req (:corp-phase-12 @state))
                  :effect
                  (effect
                    (continue-ability
                      {:optional
-                      {:prompt "Trash Gaslight to search R&D for an operation?"
+                      {:prompt "Trash this asset to search R&D for an operation?"
                        :yes-ability
                        {:async true
                         :effect (req (wait-for (trash state side card {:cause-card card})
@@ -1421,10 +1421,11 @@
             :msg "draw 3 cards"}
    :abilities [{:label "Search R&D for an operation"
                 :prompt "Choose an operation to add to the top of R&D"
+                :waiting-prompt true
                 :cost [:click 1 :tag 1]
                 :msg (msg (if (= target "No action")
-                            "search R&D, but does not find an operation"
-                            (str "reveal " (:title target) " and add it to the top of R&D")))
+                            "shuffle R&D"
+                            (str "reveal " (:title target) " from R&D and add it to the top of R&D")))
                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
                 :async true
                 :effect (req (if (= target "No action")
@@ -1942,7 +1943,7 @@
             (when-let [agenda (first agendas)]
               {:optional
                {:prompt (msg "Reveal and install " (:title agenda) "?")
-                :yes-ability {:msg (msg "reveal " (:title agenda))
+                :yes-ability {:msg (msg "reveal they drew " (:title agenda))
                               :async true
                               :effect (req (wait-for
                                              (reveal state side agenda)
@@ -1956,8 +1957,21 @@
                              :effect (effect (continue-ability (pdhelper (next agendas)) card nil))}}}))]
     {:events [{:event :corp-draw
                :async true
-               :req (req (seq (filter agenda? corp-currently-drawing)))
-               :effect (effect (continue-ability (pdhelper (filter agenda? corp-currently-drawing)) card nil))}]}))
+               :effect (req (cond
+                              ;; if agendas were drawn, do the full routine
+                              (some agenda? corp-currently-drawing)
+                              (let [agendas (filter #(and (agenda? %)
+                                                          (get-card state %))
+                                                    corp-currently-drawing)]
+                                (continue-ability state side (pdhelper agendas) card nil))
+                              ;; else show a fake prompt so the runner can't infer that agendas weren't drawn
+                              :else
+                              (continue-ability
+                                state :corp
+                                {:prompt "You did not draw any agenda"
+                                 :choices ["Carry on!"]
+                                 :prompt-type :bogus}
+                                card nil)))}]}))
 
 (defcard "Prāna Condenser"
   {:interactions {:prevent [{:type #{:net}

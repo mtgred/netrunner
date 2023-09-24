@@ -1489,7 +1489,7 @@
     (effect
       (continue-ability
         (let [top-ten (take 10 (:deck runner))]
-          {:prompt (str "The top cards of the stack are " (enumerate-str (map :title top-ten)))
+          {:prompt (str "The top cards of the stack are (top->bottom): " (enumerate-str (map :title top-ten)))
            :choices ["OK"]
            :async true
            :effect
@@ -1502,21 +1502,26 @@
                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                         [:credit (install-cost state side % {:cost-bonus -5})])))
                                 (sort-by :title)
-                                (into []))
-                           ["No install"])
+                                (seq))
+                           ["Done"])
                 :async true
-                :effect (req (if (not= target "No install")
-                               (let [number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck))
-                                     to-trash (remove #(same-card? % target) top-ten)]
-                                 (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
-                                                           target {:cost-bonus -5})
-                                           (if (= number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck)))
-                                             (do (system-msg state side (str "trashes " (enumerate-str (map :title to-trash))))
-                                                 (trash-cards state side eid to-trash {:unpreventable true :cause-card card}))
-                                             (do (system-msg state side "does not have to trash cards because the stack was shuffled")
-                                                 (effect-completed state side eid)))))
-                               (do (system-msg state side (str "trashes " (enumerate-str (map :title top-ten))))
-                                   (trash-cards state side eid top-ten {:unpreventable true :cause-card card}))))}
+                :effect
+                (req (letfn [(log-and-trash-cards [cards]
+                               (system-msg state side
+                                           (str "uses " (get-title card)
+                                                " to trash "
+                                                (enumerate-str (map :title cards))
+                                                " from the top of the stack"))
+                               (trash-cards state side eid cards {:unpreventable true :cause-card card}))]
+                       (if (= target "Done")
+                         (log-and-trash-cards top-ten)
+                       (let [number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck))]
+                       (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
+                                                 target {:cost-bonus -5})
+                                 (if (= number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck)))
+                                   (log-and-trash-cards (remove #(same-card? % target) top-ten))
+                                   (do (system-msg state side "does not have to trash cards because the stack was shuffled")
+                                       (effect-completed state side eid))))))))}
                card nil))})
         card nil))}})
 
@@ -1931,20 +1936,25 @@
               :req (req (not (install-locked? state side)))
               :effect (effect (continue-ability
                                 {:prompt "Choose a program to install"
-                                 :msg (req (if (not= target "No install")
-                                             (str "install " (:title target))
-                                             (str "shuffle the stack")))
-                                 :choices (req (conj (filter #(can-pay? state side
+                                 :msg (msg (if (= target "Done")
+                                             "shuffle the stack"
+                                             (str "install " (:title target) " from the stack")))
+                                 :choices (req (concat
+                                                 (->> (:deck runner)
+                                                      (filter
+                                                        #(and (program? %)
+                                                              (can-pay? state side
                                                                         (assoc eid :source card :source-type :runner-install)
-                                                                        % nil [:credit (install-cost state side %)])
-                                                             (vec (sort-by :title (filter program? (:deck runner)))))
-                                                     "No install"))
+                                                                        % nil [:credit (install-cost state side %)])))
+                                                      (sort-by :title)
+                                                      (seq))
+                                                 ["Done"]))
                                  :async true
                                  :effect (req (trigger-event state side :searched-stack nil)
                                               (shuffle! state side :deck)
-                                              (if (not= target "No install")
-                                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                                                (effect-completed state side eid)))}
+                                              (if (= target "Done")
+                                                (effect-completed state side eid)
+                                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)))}
                                 card nil))}
              {:async true
               :effect (effect (continue-ability (charge-ability state side eid card) card nil))
@@ -2001,8 +2011,7 @@
    :events [{:event :successful-run
              :silent (req true)
              :async true
-             :req (req (and (or (= :hq (target-server context))
-                                (= :rd (target-server context)))
+             :req (req (and (#{:hq :rd} (target-server context))
                             this-card-run))
              :effect (effect (register-events
                               card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
@@ -3404,8 +3413,7 @@
               :interactive (req true)
               :async true
               :req (req (let [zone (first (:zone (:card context)))]
-                          (or (= :hand zone)
-                              (= :deck zone))))
+                          (#{:hand :deck} zone)))
               :effect (effect (continue-ability
                                 {:optional {:prompt "Draw 2 cards?"
                                             :waiting-prompt true
@@ -3438,8 +3446,7 @@
               :interactive (req true)
               :async true
               :req (req (let [zone (first (:zone (:card context)))]
-                          (or (= :hand zone)
-                              (= :deck zone))))
+                          (#{:hand :deck} zone)))
               :effect (effect (continue-ability
                                 {:optional {:prompt "Gain 2 [Credits]?"
                                             :waiting-prompt true
@@ -3536,8 +3543,9 @@
                    :choices (req (cancellable
                                    (filter program? ((if (= where "Heap") :discard :deck) runner))))
                    :async true
-                   :effect (req (trigger-event state side :searched-stack nil)
-                                (shuffle! state side :deck)
+                   :effect (req (when (= where "Stack")
+                                  (trigger-event state side :searched-stack nil)
+                                  (shuffle! state side :deck))
                                 (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
                                                           target {:ignore-all-cost true})
                                           (if async-result
@@ -3789,21 +3797,21 @@
 
 (defcard "White Hat"
   (letfn [(finish-choice [choices]
-            (let [choices (filter #(not= "None" %) choices)]
+            (let [choices (filter #(not= "Done" %) choices)]
               (when (not-empty choices)
                 {:effect (req (doseq [c choices]
                                 (move state :corp c :deck))
                               (shuffle! state :corp :deck))
                  :msg (str "shuffle " (enumerate-str (map :title choices)) " into R&D")})))
-          (choose-cards [hand chosen]
-            {:prompt "Choose a card in HQ to shuffle into R&D"
+          (choose-cards [choices chosen]
+            {:prompt (str "Choose a card in HQ to shuffle into R&D (" (- 2 (count chosen)) " remaining)")
              :player :runner
-             :choices (conj (vec (set/difference hand chosen))
-                            "None")
+             :choices (concat choices ["Done"])
+             :not-distinct true
              :async true
              :effect (req (if (and (empty? chosen)
-                                   (not= "None" target))
-                            (continue-ability state side (choose-cards hand (conj chosen target)) card nil)
+                                   (not= "Done" target))
+                            (continue-ability state side (choose-cards (remove-once #(= % target) choices) (conj chosen target)) card nil)
                             (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
     {:on-play
      {:trace
@@ -3814,7 +3822,7 @@
         :msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
         :effect (req (wait-for
                        (reveal state side (:hand corp))
-                       (continue-ability state :runner (choose-cards (set (:hand corp)) #{}) card nil)))}}}}))
+                       (continue-ability state :runner (choose-cards (:hand corp) #{}) card nil)))}}}}))
 
 (defcard "Wildcat Strike"
   {:on-play

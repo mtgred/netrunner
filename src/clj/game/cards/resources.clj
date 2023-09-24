@@ -1488,7 +1488,7 @@
 (defcard "Guru Davinder"
   {:flags {:cannot-pay-net true}
    :events [{:event :pre-damage
-             :req (req (and (or (= target :meat) (= target :net))
+             :req (req (and (#{:meat :net} target)
                             (pos? (last targets))))
              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
              :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
@@ -1845,14 +1845,13 @@
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
             {:waiting-prompt true
-             :prompt "Choose a Program to add to the Grip"
-             :choices (cons "None" (filter program? cards))
+             :prompt "Choose a Program to add to the grip"
+             :choices (concat (filter program? cards) ["None"])
              :async true
-             :msg (msg (if (= target "None")
-                         "add no program to the Grip"
-                         (str "add " (-> target :title) " to the Grip")))
-             :effect (req (when (not= target "None")
-                            (move state side target :hand))
+             :effect (req (if (= "None" target)
+                            (system-msg state side (str "declines to use " (get-title card) " to add a program from the top of the stack to the grip"))
+                            (do (system-msg state side (str "uses " (get-title card) " to add " (-> target :title) " from the top of the stack to the grip"))
+                                (move state side target :hand)))
                           (continue-ability
                             state side
                             (when-let [to-bottom (not-empty (remove #(= % target) cards))]
@@ -2398,7 +2397,7 @@
 (defcard "Patron"
   (let [ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :once :per-turn
                  :req (req (and (:runner-phase-12 @state)
                                 (not (used-this-turn? (:cid card) state))))
@@ -2694,7 +2693,7 @@
                    (last (filter #(= (:cid card) (get-in % [:persistent :from-cid]))
                                  (get-in @state [:runner :rfg]))))]
     {:abilities [{:req (req (not (install-locked? state side)))
-                  :label "install a program from the stack"
+                  :label "Install a program from the stack"
                   :async true
                   :cost [:click 1 :rfg-program 1]
                   :effect
@@ -2712,16 +2711,16 @@
                                                                          state side %
                                                                          {:cost-bonus (- (:cost (find-rfg state card)))})])))
                                             (sort-by :title)
-                                            (into []))
-                                       ["No install"]))
-                       :msg (msg "search the stack"
-                                 (if (= target "No install")
-                                   ", but does not find a program to install"
-                                   (str "and install " (:title target)
-                                        ", lowering its cost by " (:cost (find-rfg state card)))))
+                                            (seq))
+                                       ["Done"]))
+                       :msg (msg (if (= target "Done")
+                                   "shuffle the stack"
+                                   (str "install " (:title target)
+                                        " from the stack, lowering its cost by "
+                                        (:cost (find-rfg state card)))))
                        :effect (req (trigger-event state side :searched-stack nil)
                                     (shuffle! state side :deck)
-                                    (if (= target "No install")
+                                    (if (= target "Done")
                                       (effect-completed state side eid)
                                       (runner-install state side (assoc eid :source card :source-type :runner-install)
                                                       target {:cost-bonus (- (:cost (find-rfg state card)))})))}
@@ -2829,7 +2828,7 @@
 (defcard "Security Testing"
   (let [ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :interactive (req true)
                  :msg (msg "target " target)
                  :req (req (and (:runner-phase-12 @state)
@@ -3403,8 +3402,7 @@
                           (effect-completed state side eid))}
             {:event :breach-server
              :async true
-             :req (req (and (or (= :rd target)
-                                (= :hq target))
+             :req (req (and (#{:rd :hq} target)
                             (< 0 (get-counters card :power))))
              :effect (req
                        (let [target-server target]
@@ -3503,7 +3501,7 @@
                             (zone->name (second (get-zone target)))))
         ability {:prompt "Choose a server"
                  :label "Choose a server (start of turn)"
-                 :choices (req (conj servers "No server"))
+                 :choices (req (concat servers ["No server"]))
                  :interactive (req true)
                  :waiting-prompt true
                  :msg (msg "target " target)

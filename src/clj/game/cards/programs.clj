@@ -601,8 +601,7 @@
                                                               ;; MIC is included for paint effects.
                                                               ;; TODO - fix this, add :cause :subroutine to a bunch of
                                                               ;; end the run effects
-                                                              (if (or (= "Border Control" (:title target-ice))
-                                                                      (= "M.I.C." (:title target-ice)))
+                                                              (if (#{"Border Control" "M.I.C."} (:title target-ice))
                                                                 (not (some #(and
                                                                               (same-card? target (:card (first %)))
                                                                               (= (:cause (first %)) :ability-cost))
@@ -2581,8 +2580,7 @@
                             (continue-ability
                               state side
                               (let [guess (get-in card [:special :rng-guess])]
-                                (when (or (= guess (:cost target))
-                                          (= guess (get-advancement-requirement target)))
+                                (when (#{(:cost target) (get-advancement-requirement target)} guess)
                                   {:prompt "Choose one"
                                    :waiting-prompt true
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
@@ -2656,15 +2654,16 @@
   {:hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :rez
-             :req (req (same-card? (:card context) (:host card)))
+             :req (req (and (same-card? (:card context) (:host card))
+                            (not= (:title (:card context)) "Magnet")))
              :msg "gain 3 [Credits]"
              :async true
-             :effect (effect (gain-credits eid 3))}
+             :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
              :req (req (same-card? target (:host card)))
              :msg "gain 3 [Credits]"
              :async true
-             :effect (effect (gain-credits eid 3))}]})
+             :effect (effect (gain-credits :runner eid 3))}]})
 
 (defcard "Sadyojata"
   (swap-with-in-hand "Sadyojata"
@@ -2729,25 +2728,30 @@
 
 (defcard "Self-modifying Code"
   {:abilities [{:req (req (not (install-locked? state side)))
-                :label "install a program"
+                :label "Install a program from the stack"
                 :cost [:trash-can :credit 2]
                 :async true
                 :effect (effect (continue-ability
                                   {:prompt "Choose a program to install"
-                                   :msg (req (if (not= target "No install")
-                                               (str "install " (:title target))
-                                               (str "shuffle the stack")))
-                                   :choices (req (conj (filter #(can-pay? state side
+                                   :msg (msg (if (= target "Done")
+                                               "shuffle the stack"
+                                               (str "install " (:title target) " from the stack")))
+                                   :choices (req (concat
+                                                   (->> (:deck runner)
+                                                        (filter
+                                                          #(and (program? %)
+                                                                (can-pay? state side
                                                                           (assoc eid :source card :source-type :runner-install)
-                                                                          % nil [:credit (install-cost state side %)])
-                                                               (vec (sort-by :title (filter program? (:deck runner)))))
-                                                       "No install"))
+                                                                          % nil [:credit (install-cost state side %)])))
+                                                        (sort-by :title)
+                                                        (seq))
+                                                  ["Done"]))
                                    :async true
                                    :effect (req (trigger-event state side :searched-stack nil)
                                                 (shuffle! state side :deck)
-                                                (if (not= target "No install")
-                                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                                                  (effect-completed state side eid)))}
+                                                (if (= target "Done")
+                                                  (effect-completed state side eid)
+                                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)))}
                                   card nil))}]})
 
 (defcard "Sharpshooter"
@@ -3163,18 +3167,23 @@
         (fn [trashed-card]
           {:prompt (msg "Choose a " (:type trashed-card) " to install")
            :req (req (not (install-locked? state side)))
-           :msg (req (if (= target "No install")
+           :msg (msg (if (= target "Done")
                        "shuffle the stack"
-                       (str "install " (:title target) " paying 3 [Credits] less")))
-           :choices (req (conj (filter #(can-pay? state side
+                       (str "install " (:title target) " from the stack, paying 3 [Credits] less")))
+           :choices (req (concat
+                           (->> (:deck runner)
+                                (filter
+                                  #(and (is-type? % (:type trashed-card))
+                                        (can-pay? state side
                                                   (assoc eid :source card :source-type :runner-install)
-                                                  % nil [:credit (install-cost state side % {:cost-bonus -3})])
-                                       (sort-by :title (filter #(is-type? % (:type trashed-card)) (:deck runner))))
-                               "No install"))
+                                                  % nil [:credit (install-cost state side % {:cost-bonus -3})])))
+                                (sort-by :title)
+                                (seq))
+                           ["Done"]))
            :async true
            :effect (req (trigger-event state side :searched-stack nil)
                         (shuffle! state side :deck)
-                        (if (= target "No install")
+                        (if (= target "Done")
                           (effect-completed state side eid)
                           (runner-install state side (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3})))})]
     {:events [{:event :successful-run

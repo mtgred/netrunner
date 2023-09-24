@@ -4064,8 +4064,8 @@
    (play-from-hand state :corp "Extract")
    (click-card state :corp (get-content state :remote1 0))
    (click-prompt state :corp "Yes")
-   (is (= ["No install"] (prompt-buttons :corp)) "Sole option available is Done")
-   (click-prompt state :corp "No install")))
+   (is (= ["Done"] (prompt-buttons :corp)) "Sole option available is Done")
+   (click-prompt state :corp "Done")))
 
 (deftest ob-superheavy-logistics-public-agendas
   ;; If no cards in R&D match the search cost, ability can be declined
@@ -4750,6 +4750,27 @@
       (click-card state :runner (refresh iw))
       (click-card state :runner (refresh rime)))
     (is (= 2 (core/get-strength (refresh (get-ice state :archives 0)))) "Ice Wall retains strength")))
+
+(deftest tao-salonga-swapping-ice-with-trojan-doesnt-reset-mu
+  ;;Tāo Salonga swapping ice with trojan doesn't make the trojan mu-cost disappear
+  (do-game
+    (new-game {:corp {:hand ["Palisade" "Ice Wall" "House of Knives"]}
+               :runner {:id "Tāo Salonga: Telepresence Magician"
+                        :hand ["Saci"]}})
+    (play-from-hand state :corp "Palisade" "Archives")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (take-credits state :corp)
+    (let [palisade (get-ice state :archives 0)
+          iw (get-ice state :remote1 0)]
+      (play-from-hand state :runner "Saci")
+      (click-card state :runner iw)
+      (run-empty-server state "HQ")
+      (changes-val-macro 0 (core/available-mu state)
+                         "Available MU should not change"
+                         (click-prompt state :runner "Steal")
+                         (click-prompt state :runner "Yes")
+                         (click-card state :runner (refresh palisade))
+                         (click-card state :runner (refresh iw))))))
 
 (deftest the-foundry-refining-the-process-interaction-with-accelerated-beta-test
     ;; interaction with Accelerated Beta Test
