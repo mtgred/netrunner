@@ -6,7 +6,7 @@
                              get-only-card-to-access]]
    [game.core.actions :refer [play-ability]]
    [game.core.board :refer [all-active all-active-installed all-installed]]
-   [game.core.card :refer [active? corp? event? facedown? get-card get-counters
+   [game.core.card :refer [active? corp? event? facedown? get-card get-counters get-title
                            get-zone hardware? has-subtype? ice? in-deck? in-discard?
                            in-hand? in-scored? installed? program? resource? rezzed?
                            runner? virus-program? faceup?]]
@@ -927,16 +927,20 @@
                               (continue-ability state side
                                                 (shuffle-next set-aside-cards target to-shuffle)
                                                 card nil)))}))]
-    {:abilities [{:label "Install a card from the top of the stack"
+    {:abilities [{:label "Install a card from among the top 6 cards of the stack"
                   :cost [:trash-can]
-                  :msg "install a card from the top of the stack"
                   :async true
                   :waiting-prompt true
                   :effect (req (set-aside state side eid (take 6 (:deck runner)))
                                (let [set-aside-cards (sort-by :title (get-set-aside state side eid))]
+                                 (system-msg state side (str "uses " (get-title card)
+                                                             " to set aside "
+                                                             (enumerate-str (map get-title set-aside-cards))
+                                                             " from the top of the stack"))
                                  (wait-for (resolve-ability state side
                                                             {:async true
-                                                             :prompt (msg "The set aside cards are: " (enumerate-str (map :title set-aside-cards)))
+                                                             :prompt (str "The set aside cards are: "
+                                                                          (enumerate-str (map get-title set-aside-cards)))
                                                              :choices ["OK"]}
                                                             card nil)
                                            (continue-ability
@@ -947,13 +951,13 @@
                                                               (filter #(and (or (program? %)
                                                                                 (and (resource? %)
                                                                                      (has-subtype? % "Virtual")))
-                                                                            (can-pay? state side
-                                                                                      (assoc eid :source card :source-type :runner-install)
-                                                                                      % nil [:credit (install-cost state side % {:cost-bonus -2})]))
+                                                                            (runner-can-pay-and-install?
+                                                                              state side
+                                                                              (assoc eid :source card :source-type :runner-install)
+                                                                              % {:cost-bonus -2}))
                                                                       set-aside-cards)
-                                                              ["No install"]))
-                                              :cancel-effect (effect (continue-ability (shuffle-next set-aside-cards nil nil) card nil))
-                                              :effect (req (if (= "No install" target)
+                                                              ["Done"]))
+                                              :effect (req (if (= "Done" target)
                                                              (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)
                                                              (let [set-aside-cards (remove-once #(= % target) set-aside-cards)
                                                                    new-eid (assoc eid :source card :source-type :runner-install)]

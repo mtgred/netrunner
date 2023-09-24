@@ -862,71 +862,68 @@
   (letfn [(shuffle-back [state cards-to-shuffle]
             (doseq [c cards-to-shuffle]
               (move state :corp c :deck))
-            (system-msg state :corp (str "shuffles R&D"))
+            (system-msg state :corp "shuffles R&D")
             (shuffle! state :corp :deck))
           (deep-dive-access [cards]
             ;; Accesses a card from a set of given cards.
             ;; Returns the set of unchosen cards as async-result
-            {:async true
+            {:prompt "Choose a card to access"
+             :waiting-prompt true
+             :not-distinct true
+             :choices cards
+             :async true
              :effect (req (wait-for
-                           (resolve-ability
-                            state side
-                            (if (= 1 (count cards))
-                              ;; Only show a menu if there's more than one card
-                              {:async true
-                               :msg (msg "access " (:title (first cards)))
-                               :effect (req (wait-for
-                                             (access-card state side (first cards))
-                                             (effect-completed state side eid)))}
-                              {:prompt "Choose a card to access"
-                               :waiting-prompt true
-                               :not-distinct true
-                               :choices cards
-                               :async true
-                               :effect (req (wait-for
-                                             (access-card state side target)
-                                             (let [new-cards (remove #(same-card? % target) cards)]
-                                               (effect-completed
-                                                state side (make-result eid new-cards)))))})
-                            card nil)
-                           (effect-completed state side (make-result eid async-result))))})]
+                            (access-card state side target)
+                            (let [new-cards (remove #(same-card? % target) cards)]
+                              (effect-completed state side (make-result eid new-cards)))))})]
     {:on-play
      {:req (req (and (some #{:hq} (:successful-run runner-reg))
                      (some #{:rd} (:successful-run runner-reg))
                      (some #{:archives} (:successful-run runner-reg))
-                     (pos? (count (:deck corp)))))
+                     (seq (:deck corp))))
       :async true
-      :msg (req
-             (let [top-8-msg (seq (take 8 (:deck corp)))]
-               (str "set aside "
-                    (if top-8-msg
-                      (str (enumerate-str (map :title top-8-msg)) " from the top of R&D")
-                      ;; note - this should never happen
-                      "no cards"))))
       :effect (req (set-aside state :corp eid (take 8 (:deck corp)))
                    (let [top-8 (sort-by :title (get-set-aside state :corp eid))]
+                     (system-msg state side (str "uses " (get-title card)
+                                                 " to set aside "
+                                                 (enumerate-str (map get-title top-8))
+                                                 " from the top of R&D"))
                      (wait-for
-                      (resolve-ability state side (deep-dive-access top-8) card nil)
-                      (if (pos? (count async-result))
-                        (wait-for (resolve-ability
-                                   state side
-                                   {:optional
-                                    {:prompt "Pay [Click] to access another card?"
-                                     :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:click 1]))
-                                     :no-ability
-                                     {:effect (effect (system-msg (str "declines to use " (:title card) " to access another card")))}
-                                     :yes-ability
-                                     {:async true
-                                      :cost [:click 1]
-                                      :msg "access another card"
-                                      :effect (req (wait-for
-                                                    (resolve-ability state side (deep-dive-access async-result) card nil)
-                                                    (effect-completed state side eid)))}}}
-                                   card nil)
-                                  (do (shuffle-back state (get-set-aside state :corp eid))
-                                      (effect-completed state side eid)))
-                        (do (shuffle-back state (get-set-aside state :corp eid))
-                            (effect-completed state side eid))))))}}))
+                       (resolve-ability state side
+                                        {:async true
+                                         :prompt (str "The set aside cards are: "
+                                                      (enumerate-str (map get-title top-8)))
+                                         :choices ["OK"]}
+                                        card nil)
+                       (wait-for
+                         (resolve-ability state side (deep-dive-access top-8) card nil)
+                         (if (seq async-result)
+                           (wait-for
+                             (resolve-ability state side
+                                              {:optional
+                                                {:prompt "Pay [Click] to access another card?"
+                                                :req (req (can-pay? state :runner
+                                                                    (assoc eid :source card :source-type :ability)
+                                                                    card nil [:click 1]))
+                                                :no-ability
+                                                {:effect (effect (system-msg (str "declines to use "
+                                                                                  (:title card)
+                                                                                  " to access another card")))}
+                                                :yes-ability
+                                                {:async true
+                                                  :cost [:click 1]
+                                                  :msg "access another card"
+                                                  :effect
+                                                  (req (wait-for
+                                                         (resolve-ability state side
+                                                                          (deep-dive-access async-result)
+                                                                          card nil)
+                                                         (effect-completed state side eid)))}}}
+                                              card nil)
+                                              (do (shuffle-back state (get-set-aside state :corp eid))
+                                                  (effect-completed state side eid)))
+                           (do (shuffle-back state (get-set-aside state :corp eid))
+                               (effect-completed state side eid)))))))}}))
 
 (defcard "Déjà Vu"
   {:on-play

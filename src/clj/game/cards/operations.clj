@@ -10,9 +10,9 @@
                             installable-servers server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
                            event? facedown? faceup? get-advancement-requirement
-                           get-card get-counters get-zone hardware? has-subtype? ice? identity? in-discard?
-                           in-hand? installed? is-type? operation? program? resource? rezzed? runner?
-                           upgrade?]]
+                           get-card get-counters get-title get-zone hardware? has-subtype? ice? identity?
+                           in-discard? in-hand? installed? is-type? operation? program? resource?
+                           rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
@@ -2008,32 +2008,41 @@
                      (effect-completed state side eid))))}})
 
 (defcard "Psychokinesis"
-  (letfn [(choose-card [state cards]
-            (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
-                                        cards)]
-              {:prompt "Choose an agenda, asset, or upgrade to install"
-               :choices (conj (vec allowed-cards) "None")
-               :async true
-               :effect (req (if (or (= target "None")
-                                    (ice? target)
-                                    (operation? target))
-                              (do (system-msg state side (str "declines to use " (:title card) " to install a card"))
-                                  (effect-completed state side eid))
-                              (continue-ability state side (install-card target) card nil)))}))
-          (install-card [chosen]
+  (letfn [(install-card [chosen]
             {:prompt "Choose a remote server"
+             :waiting-prompt true
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
              :effect (effect (corp-install eid chosen target nil))})]
     {:on-play
-     {:req (req (pos? (count (:deck corp))))
-      :msg (msg "look at the top " (quantify (count (take 5 (:deck corp))) "card") " of R&D")
-      :waiting-prompt true
+     {:req (req (seq (:deck corp)))
       :async true
-      :effect (effect (continue-ability
-                        (let [top-5 (take 5 (:deck corp))]
-                          (choose-card state top-5))
-                        card nil))}}))
+      :msg "look at the top 5 cards of R&D"
+      :effect
+      (effect
+        (continue-ability
+          (let [top-five (take 5 (:deck corp))]
+            {:prompt (str "The top cards of R&D are (top->bottom): " (enumerate-str (map get-title top-five)))
+             :waiting-prompt true
+             :choices ["OK"]
+             :async true
+             :effect
+             (effect
+               (continue-ability
+                 {:prompt "Choose an agenda, asset, or upgrade to install"
+                  :waiting-prompt true
+                  :async true
+                  :choices
+                  (cancellable (filter #(and (corp-installable-type? %)
+                                             (some #{"New remote"} (installable-servers state %)))
+                                       top-five) :sorted)
+                  :msg "install a card from the top of the R&D in a remote server"
+                  :effect (effect (continue-ability (install-card target) card nil))
+                  :cancel-effect (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
+                                         (effect-completed eid))}
+                 card nil))})
+          card nil))}}))
+
 
 (defcard "Public Trail"
   {:on-play

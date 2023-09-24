@@ -106,37 +106,29 @@
     :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Accelerated Beta Test"
-  (letfn [(abt [titles choices]
+  (letfn [(abt [choices]
             {:async true
-             :prompt (str "The top 3 cards of R&D: " titles)
-             :choices (concat (filter ice? choices) ["Done"])
-             :effect (req (if (= target "Done")
-                            (do (unregister-events state side card)
-                                (trash-cards state side eid choices {:unpreventable true :cause-card card}))
-                            (wait-for (corp-install state side target nil
-                                                    {:ignore-all-cost true
-                                                     :install-state :rezzed-no-cost})
-                                      (let [choices (remove-once #(= target %) choices)]
-                                        (cond
-                                          ;; Shuffle ends the ability
-                                          (get-in (get-card state card) [:special :shuffle-occurred])
-                                          (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true :cause-card card}))
-                                          ;; There are still ice left
-                                          (seq (filter ice? choices))
-                                          (continue-ability
-                                            state side (abt titles choices) card nil)
-                                          ;; Trash what's left
-                                          :else
-                                          (do (unregister-events state side card)
-                                              (trash-cards state side eid choices {:unpreventable true :cause-card card})))))))})
-          (suffer [titles choices]
-            {:prompt (str "The top 3 cards of R&D: " titles
-                          ". None are ice. Say goodbye!")
-             :choices ["I have no regrets"]
-             :async true
-             :effect (effect (system-msg (str "trashes " (quantify (count choices) "card")))
-                             (trash-cards eid choices {:unpreventable true :cause-card card}))})]
+             :prompt "Choose a card to install and rez at no cost"
+             :choices (cancellable (filter ice? choices) :sorted)
+             :cancel-effect (effect (unregister-events card)
+                                    (system-msg (str "declines to use " (get-title card) " to install any of the top 3 cards or R&D"))
+                                    (trash-cards eid choices {:unpreventable true :cause-card card}))
+             :effect (req (wait-for (corp-install state side target nil
+                                                  {:ignore-all-cost true
+                                                   :install-state :rezzed-no-cost})
+                                    (let [choices (remove-once #(= target %) choices)]
+                                      (cond
+                                        ;; Shuffle ends the ability
+                                        (get-in (get-card state card) [:special :shuffle-occurred])
+                                        (do (unregister-events state side card)
+                                            (trash-cards state side eid choices {:unpreventable true :cause-card card}))
+                                        ;; There are still ice left
+                                        (seq (filter ice? choices))
+                                        (continue-ability state side (abt choices) card nil)
+                                        ;; Trash what's left
+                                        :else
+                                        (do (unregister-events state side card)
+                                            (trash-cards state side eid choices {:unpreventable true :cause-card card}))))))})]
     {:on-score
      {:interactive (req true)
       :optional
@@ -148,14 +140,15 @@
                        state side card
                        [{:event :corp-shuffle-deck
                          :effect (effect (update! (assoc-in card [:special :shuffle-occurred] true)))}])
-                  (let [choices (take 3 (:deck corp))
-                        titles (enumerate-str (map :title choices))]
-                    (continue-ability
-                      state side
-                      (if (seq (filter ice? choices))
-                        (abt titles choices)
-                        (suffer titles choices))
-                      card nil)))}}}}))
+                  (let [choices (take 3 (:deck corp))]
+                    (wait-for
+                      (resolve-ability state side
+                                       {:async true
+                                        :prompt (str "The top cards of R&D are (top->bottom): "
+                                                     (enumerate-str (map get-title choices)))
+                                        :choices ["OK"]}
+                                       card nil)
+                      (continue-ability state side (abt choices) card nil))))}}}}))
 
 (defcard "Advanced Concept Hopper"
   {:events
@@ -205,12 +198,14 @@
     :req (req (not-empty (:deck corp)))
     :effect (effect (continue-ability
                       {:prompt "Choose a card to install"
-                       :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
+                       :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))) :sorted)
                        :async true
                        :effect (effect (corp-install eid target nil
                                                      {:ignore-all-cost true
                                                       :install-state :rezzed-no-cost}))
-                       :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
+                       :cancel-effect (effect (system-msg (str "declines to use "
+                                                               (get-title card)
+                                                               " to install any of the top 5 cards of R&D"))
                                               (effect-completed eid))}
                       card nil))}})
 
@@ -318,6 +313,7 @@
             :prompt "Look at the top 7 cards of R&D?"
             :yes-ability
             {:async true
+             :msg "look at the top 7 cards of R&D"
              :effect (req (let [c (take 7 (:deck corp))]
                             (when (and
                                    (:access @state)
