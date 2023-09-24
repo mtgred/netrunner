@@ -23,7 +23,7 @@
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability
                              unregister-events]]
-   [game.core.events :refer [first-event? no-event? run-events run-event-count turn-events]]
+   [game.core.events :refer [first-event? first-run-event? no-event? run-events run-event-count turn-events]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [in-runner-scored? is-scored? register-run-flag!
                             register-turn-flag! when-scored? zone-locked?]]
@@ -1849,12 +1849,18 @@
                                  :waiting-prompt true
                                  :choices {:req (req (some #{target} rezzed-targets))}
                                  :once :per-turn
-                                 :msg (msg "derezzes " (card-str state target) " to gain 1 [Credits]")
+                                 :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
                                  :async true
                                  :effect (effect (derez target)
                                                  (gain-credits eid 1))}
                                 card nil)
-                              (effect-completed state side eid))))}]
+                              (effect-completed state side eid))))}
+            {:event :derez
+             :req (req (and run
+                            (first-run-event?
+                              state side :derez
+                              (fn [targets] (ice? (first targets))))))
+             :msg "lower strength of each installed icebreaker by 2"}]
    :leave-play (effect (update-all-icebreakers))
    :static-abilities [{:type :breaker-strength
                        :value -2
