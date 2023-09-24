@@ -4,13 +4,13 @@
     [game.core.card :refer [get-card map->Card program? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
-    [game.core.effects :refer [register-static-abilities register-lingering-effect unregister-static-abilities]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-default-events register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.gaining :refer [gain lose]]
     [game.core.ice :refer [add-sub]]
-    [game.core.memory :refer [update-mu]]
+    [game.core.memory :refer [init-mu-cost]]
     [game.core.payment :refer [add-cost-label-to-ability]]
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
@@ -131,12 +131,7 @@
      ;; Facedown cards can't be initialized
      (when (and (program? card)
                 (not no-mu))
-       (register-lingering-effect
-         state side c
-         {:type :used-mu
-          :duration :while-active
-          :value (:memoryunits c)})
-       (update-mu state))
+       (init-mu-cost state c))
      (if (and resolve-effect (is-ability? cdef))
        (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
        (effect-completed state side eid))
