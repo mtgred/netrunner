@@ -1953,13 +1953,7 @@
                 :choices {:card #(and (ice? %)
                                       (or (in-hand? %)
                                           (in-discard? %)))}
-                :msg (msg "install "
-                          (if (and (in-discard? target)
-                                   (or (faceup? target)
-                                       (not (facedown? target))))
-                            (:title target)
-                            "ice")
-                          " from " (zone->name (get-zone target)))
+                :msg (msg (corp-install-msg target))
                 :async true
                 :effect (effect
                           (continue-ability
