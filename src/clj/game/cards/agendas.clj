@@ -977,7 +977,7 @@
               :effect (effect (corp-install eid target nil nil))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                      (effect-completed eid))
-              :msg (msg "install " (card-str state target))}})
+              :msg (msg (corp-install-msg target))}})
 
 (defcard "Hyperloop Extension"
   (let [he {:msg "gain 3 [Credits]"
