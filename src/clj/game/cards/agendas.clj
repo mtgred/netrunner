@@ -977,7 +977,7 @@
               :effect (effect (corp-install eid target nil nil))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                      (effect-completed eid))
-              :msg (msg "install " (card-str state target))}})
+              :msg (msg (corp-install-msg target))}})
 
 (defcard "Hyperloop Extension"
   (let [he {:msg "gain 3 [Credits]"
@@ -1953,13 +1953,7 @@
                 :choices {:card #(and (ice? %)
                                       (or (in-hand? %)
                                           (in-discard? %)))}
-                :msg (msg "install "
-                          (if (and (in-discard? target)
-                                   (or (faceup? target)
-                                       (not (facedown? target))))
-                            (:title target)
-                            "ice")
-                          " from " (zone->name (get-zone target)))
+                :msg (msg (corp-install-msg target))
                 :async true
                 :effect (effect
                           (continue-ability
