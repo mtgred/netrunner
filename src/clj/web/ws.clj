@@ -3,6 +3,7 @@
    [clojure.core.async :refer [<! >! chan go timeout]]
    [web.app-state :refer [register-user! deregister-user!]]
    [web.user :refer [active-user?]]
+   [taoensso.encore :as enc]
    [taoensso.sente :as sente]
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
    [taoensso.timbre :as timbre]))
@@ -48,7 +49,7 @@
 
 (defonce log-connected-uid-counts
   (go (while true
-    (<! (timeout 30000))
+    (<! (timeout (enc/ms :mins 5)))
     (let [ajax-uid-count (count (:ajax @connected-sockets))
           ajax-conn-counts (seq (map count (:ajax @connections_)))
           ajax-conn-total (reduce + ajax-conn-counts)
