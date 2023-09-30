@@ -3563,13 +3563,14 @@
                        :yes-ability {:prompt "Choose another installed card to trash"
                                      :cost [:trash-other-installed 1]
                                      :msg "give itself +5 strength for the remainder of the run"
-                                     :effect (effect (register-lingering-effect
-                                                      card
-                                                      {:type :ice-strength
-                                                       :duration :end-of-run
-                                                       :req (req (same-card? target card))
-                                                       :value 5})
-                                                     (update-ice-strength card))}}}
+                                     :effect (req (when (:run @state)
+                                                       (register-lingering-effect
+                                                         state side card
+                                                         {:type :ice-strength
+                                                          :duration :end-of-run
+                                                          :req (req (same-card? target card))
+                                                          :value 5})
+                                                       (update-ice-strength state side card)))}}}
    :subroutines [trash-program-sub
                  trash-program-sub]})
 
