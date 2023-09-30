@@ -14,7 +14,7 @@
         (sente/make-channel-socket-client!
           "/chsk"
           ?csrf-token
-          {:type :ajax
+          {:type :auto
            :wrap-recv-evs? false})]
     (def chsk chsk)
     (def ch-chsk ch-recv)
