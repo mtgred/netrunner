@@ -140,6 +140,17 @@
       (click-card state :corp "Breaking News")
       (click-prompt state :corp "BOOM!")))
 
+(deftest accelerated-diagnostics-trashes-unplayed-cards
+    ;; No additional costs
+    (do-game
+      (new-game {:corp {:deck [(qty "Ice Wall" 4)]
+                        :hand ["Accelerated Diagnostics"]}})
+      (play-from-hand state :corp "Accelerated Diagnostics")
+      (click-prompt state :corp "OK")
+      (click-prompt state :corp "Cancel")
+      (is (= 4 (count (:discard (get-corp)))))
+      (is (= 3 (count (filter #(not (:seen %)) (:discard (get-corp))))) "3 face down cards in archives")))
+
 (deftest ad-blitz
   ;; Launch Campaign
   (do-game
