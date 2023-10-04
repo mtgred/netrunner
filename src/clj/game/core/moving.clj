@@ -539,12 +539,14 @@
     ;; todo - we might need behaviour for runner swap installs down the line, depending on future cards
     ;; that's a problem for another day
     (if (and install-event (= :corp side))
-      (do (queue-event
-            state :corp-install
-            {:card (get-card state (if (installed? moved-a) moved-a moved-b))
-             :install-state (:install-state (card-def (if (installed? moved-a) moved-a moved-b)))})
-          (wait-for (checkpoint state nil (make-eid state eid))
-                    (complete-with-result state side eid async-result)))
+      (let [installed-card (if (installed? moved-a) moved-a moved-b)
+            cdef (card-def installed-card)]
+        (queue-event state :corp-install {:card (get-card state installed-card)
+                                          :install-state (:install-state cdef)})
+        (wait-for (checkpoint state nil (make-eid state eid))
+                  (when-let [dre (:derezzed-events cdef)]
+                    (register-events state side installed-card (map #(assoc % :condition :derezzed) dre)))
+                  (complete-with-result state side eid async-result)))
       (complete-with-result state side eid async-result))))
 
 (defn swap-agendas
