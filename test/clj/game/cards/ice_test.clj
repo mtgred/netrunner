@@ -6794,6 +6794,20 @@
       "Corp gained no credits"
       (click-prompt state :corp "OK"))))
 
+(deftest tatu-bola-formicary
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Formicary"]}})
+    (play-from-hand state :corp "Tatu-Bola" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (rez state :corp (get-ice state :rd 0))
+    (run-continue state)
+    (run-continue state :movement)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Formicary")
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
   ;; Thimblerig does not open a prompt if it's the only piece of ice
   (do-game
