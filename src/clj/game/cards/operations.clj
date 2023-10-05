@@ -98,17 +98,18 @@
 
 (defcard "Accelerated Diagnostics"
   (letfn [(ad [st si e c cards]
-            (when-let [cards (filterv #(and (operation? %)
+            (when-let [choices (filterv #(and (operation? %)
                                             (can-pay? st si (assoc e :source c :source-type :play)
                                                       c nil [:credit (play-cost st si %)]))
                                       cards)]
               {:async true
                :prompt "Choose an operation to play"
-               :choices (cancellable cards)
+               :choices (cancellable choices)
                :msg (msg "play " (:title target))
                :effect (req (wait-for (play-instant state side target {:no-additional-cost true})
-                                      (let [cards (filterv #(not (same-card? % target)) cards)]
-                                        (continue-ability state side (ad state side eid card cards) card nil))))}))]
+                                      (let [remaining (filterv #(not (same-card? % target)) cards)]
+                                        (continue-ability state side (ad state side eid card remaining) card nil))))
+               :cancel-effect (effect (trash-cards eid cards {:unpreventable true :cause-card card}))}))]
     {:on-play
      {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
       :choices ["OK"]
