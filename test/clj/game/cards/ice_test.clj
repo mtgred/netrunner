@@ -2395,6 +2395,61 @@
                        "Available MU should not change"
                        (click-prompt state :corp "Yes"))))
 
+(deftest formicary-tatu-swap
+  ;; swapping Formicary in from Tatu-Bola ability should register Formicary ability
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Formicary"]}})
+    (play-from-hand state :corp "Tatu-Bola" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (rez state :corp (get-ice state :rd 0))
+    (run-continue state)
+    (run-continue state :movement)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Formicary")
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+
+(deftest formicary-project-yagi-uda-swap
+  ;; swapping Formicary in via Project Yagi-Uda should register Formicary ability
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Formicary" "Project Yagi-Uda"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+    (let [pyu (get-content state :remote1 0)]
+      (advance state pyu 4)
+      (score state :corp (refresh pyu)))
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp (get-ice state :rd 0))
+    (click-card state :corp (find-card "Formicary" (:hand (get-corp))))
+    (click-prompt state :runner "No")
+    (run-continue state)
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+
+(deftest formicary-tenma-line-swap
+  ;; swapping Formicary via Tenma Line should keep Formicary ability
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Formicary" "Tenma Line"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Tenma Line" "New remote")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Formicary" "HQ")
+    (let [iw (get-ice state :rd 0)
+          fc (get-ice state :hq 0)
+          tl (get-content state :remote1 0)]
+      (rez state :corp tl)
+      (card-ability state :corp (refresh tl) 0)
+      (click-card state :corp iw)
+      (click-card state :corp fc))
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+
 (deftest free-lunch-basic-behavior
   ;; Basic behavior
   (do-game
@@ -6793,20 +6848,6 @@
       0 (:credit (get-corp))
       "Corp gained no credits"
       (click-prompt state :corp "OK"))))
-
-(deftest tatu-bola-formicary
-  (do-game
-    (new-game {:corp {:hand ["Tatu-Bola" "Formicary"]}})
-    (play-from-hand state :corp "Tatu-Bola" "R&D")
-    (take-credits state :corp)
-    (run-on state "R&D")
-    (rez state :corp (get-ice state :rd 0))
-    (run-continue state)
-    (run-continue state :movement)
-    (click-prompt state :corp "Yes")
-    (click-prompt state :corp "Formicary")
-    (run-continue state)
-    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
 
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
   ;; Thimblerig does not open a prompt if it's the only piece of ice

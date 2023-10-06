@@ -451,9 +451,11 @@
         (doseq [new-card [a-new b-new]]
           (unregister-events state side new-card)
           (unregister-static-abilities state side new-card)
-          (when (rezzed? new-card)
+          (if (rezzed? new-card)
             (do (register-default-events state side new-card)
-                (register-static-abilities state side new-card)))
+                (register-static-abilities state side new-card))
+            (when-let [dre (:derezzed-events (card-def new-card))]
+              (register-events state side new-card (map #(assoc % :condition :derezzed) dre))))
           (doseq [h (:hosted new-card)]
             (let [newh (-> h
                            (assoc-in [:zone] '(:onhost))
@@ -508,6 +510,10 @@
           install-event (or (and (installed? a) (not (installed? b)))
                             (and (installed? b) (not (installed? a))))]
       (trigger-event state side :swap moved-a moved-b)
+      (doseq [moved [moved-a moved-b]]
+        (when (installed? moved)
+          (when-let [dre (:derezzed-events (card-def moved))]
+            (register-events state side moved (map #(assoc % :condition :derezzed) dre)))))
       (when (and (:run @state)
                  (or (ice? a)
                      (ice? b)))
@@ -534,8 +540,6 @@
         (queue-event state :corp-install {:card (get-card state installed-card)
                                           :install-state (:install-state cdef)})
         (wait-for (checkpoint state nil (make-eid state eid))
-                  (when-let [dre (:derezzed-events cdef)]
-                    (register-events state side installed-card (map #(assoc % :condition :derezzed) dre)))
                   (complete-with-result state side eid async-result)))
       (complete-with-result state side eid async-result))))
 
