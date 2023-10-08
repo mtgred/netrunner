@@ -238,25 +238,6 @@
   (auto-icebreaker {:abilities abilities
                     :static-abilities [(breaker-strength-bonus (req (available-mu state)))]}))
 
-(defn- break-multiple-types
-  "Single ability to break multiple types of ice
-  (Greek/Philosopher suite: Adept, Sage, Savant)"
-  [first-qty first-type second-qty second-type]
-  {:break-cost [:credit 2]
-   :cost [:credit 2]
-   :req (req (and (active-encounter? state)
-                  (or (has-subtype? current-ice first-type)
-                      (has-subtype? current-ice second-type))))
-   :label (str "break "
-               (quantify first-qty (str first-type " subroutine")) " or "
-               (quantify second-qty (str second-type " subroutine")))
-   :effect (effect
-             (continue-ability
-               (if (has-subtype? current-ice first-type)
-                 (break-sub nil first-qty first-type {:all (< 1 first-qty)})
-                 (break-sub nil second-qty second-type {:all (< 1 second-qty)}))
-               card nil))})
-
 (defn- give-ice-subtype
   "Make currently encountered ice gain chosen type until end of encounter
   (Wrestling suite: Laamb, Engolo)"
@@ -396,9 +377,8 @@
                    (strength-pump 2 2)))
 
 (defcard "Adept"
-  (mu-based-strength [(break-multiple-types
-                        1 "Barrier"
-                        1 "Sentry")]))
+  (auto-icebreaker (mu-based-strength [(break-sub 2 1 "Sentry")
+                                       (break-sub 2 1 "Barrier")])))
 
 (defcard "Afterimage"
   (auto-icebreaker {:implementation "Stealth credit restriction not enforced"
@@ -2671,9 +2651,8 @@
                                      (<= (get-strength current-ice) (get-strength card))))}))
 
 (defcard "Sage"
-  (mu-based-strength [(break-multiple-types
-                        1 "Barrier"
-                        1 "Code Gate")]))
+  (auto-icebreaker (mu-based-strength [(break-sub 2 1 "Code Gate")
+                                       (break-sub 2 1 "Barrier")])))
 
 (defcard "Sahasrara"
   {:recurring 2
@@ -2686,9 +2665,8 @@
                     (strength-pump 2 2)))
 
 (defcard "Savant"
-  (mu-based-strength [(break-multiple-types
-                        2 "Code Gate"
-                        1 "Sentry")]))
+  (auto-icebreaker (mu-based-strength [(break-sub 2 1 "Sentry")
+                                       (break-sub 2 2 "Code Gate")])))
 
 (defcard "Savoir-faire"
   {:abilities [{:cost [:credit 2]
