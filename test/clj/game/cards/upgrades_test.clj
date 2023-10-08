@@ -1987,11 +1987,13 @@
         (rez state :corp la-costa)
         (take-credits state :corp)
         (take-credits state :runner)
+        (end-phase-12 state :corp)
         (is (not (no-prompt? state :corp)) "The Corp is prompted to place one advancement token on a card")
         (click-card state :corp la-costa)
         (is (= 1 (get-counters (refresh la-costa) :advancement)) "Clicking on La Costa Grid advances itself")
         (take-credits state :corp)
         (take-credits state :runner)
+        (end-phase-12 state :corp)
         (click-card state :corp breaking-news)
         (is (= 1 (get-counters (refresh breaking-news) :advancement)) "Clicking on a card in La Costa Grid's server advances it"))))
 
@@ -2006,6 +2008,7 @@
         (let [[remote-mvt] (get-content state :remote2)]
           (take-credits state :corp)
           (take-credits state :runner)
+          (end-phase-12 state :corp)
           (click-card state :corp remote-mvt)
           (is (not (no-prompt? state :corp)) "Clicking a card in a different remote does not clear the prompt")
           (is (zero? (get-counters (refresh remote-mvt) :advancement)) "Clicking a card in a different remote does not advance it"))
@@ -2014,6 +2017,7 @@
         (let [[central-mvt] (get-content state :hq)]
           (take-credits state :corp)
           (take-credits state :runner)
+          (end-phase-12 state :corp)
           (click-card state :corp central-mvt)
           (is (not (no-prompt? state :corp)) "Clicking a card in a central does not clear the prompt")
           (is (zero? (get-counters (refresh central-mvt) :advancement)) "Clicking a card in a central does not advance it"))
@@ -2022,6 +2026,7 @@
         (let [[vanilla] (get-ice state :remote1)]
           (take-credits state :corp)
           (take-credits state :runner)
+          (end-phase-12 state :corp)
           (click-card state :corp vanilla)
           (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
@@ -2030,6 +2035,7 @@
         (let [[remote-vanilla] (get-ice state :remote2)]
           (take-credits state :corp)
           (take-credits state :runner)
+          (end-phase-12 state :corp)
           (click-card state :corp remote-vanilla)
           (is (not (no-prompt? state :corp)) "Clicking an ice protecting La Costa Grid does not clear the prompt")
           (is (zero? (get-counters (refresh remote-vanilla) :advancement)) "Clicking a an ice protecting La Costa Grid does not advance it"))
@@ -2038,6 +2044,7 @@
         (let [[central-vanilla] (get-ice state :hq)]
           (take-credits state :corp)
           (take-credits state :runner)
+          (end-phase-12 state :corp)
           (click-card state :corp central-vanilla)
           (is (not (no-prompt? state :corp)) "Clicking an ice protecting HQ does not clear the prompt")
           (is (zero? (get-counters (refresh central-vanilla) :advancement)) "Clicking a an ice protecting HQ does not advance it")))))
@@ -2056,6 +2063,7 @@
           (rez state :corp la-costa)
           (take-credits state :corp)
           (take-credits state :runner)
+          (end-phase-12 state :corp)
           (click-card state :corp beale)
           (is (= 1 (get-counters (refresh beale) :advancement)) "Clicking on a hosted card in the La Costa Grid server advances it")))))
 
@@ -2072,6 +2080,7 @@
       (play-from-hand state :corp "Project Beale" "Server 2")
       (take-credits state :corp)
       (take-credits state :runner)
+      (end-phase-12 state :corp)
       (is (= "Choose a card in Server 2" (:msg (prompt-map :corp))))
       (click-card state :corp "Project Beale")
       (is (last-n-log-contains? state 2 "La Costa Grid to place 1 advancement counter on a card in Server 2"))
