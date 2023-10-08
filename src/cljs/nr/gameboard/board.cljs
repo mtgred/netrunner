@@ -1190,8 +1190,11 @@
               (= "Claim" (capitalize reason))
               (tr [:game.win-claimed] turn)
 
+              (= "Agenda" (capitalize reason))
+              (tr [:game.win-points] turn)
+
               :else
-              (tr [:game.win-points] turn))]
+              (tr [:game.win-other] turn reason))]
            [:div (tr [:game.time-taken] time)]
            [:br]
            [build-game-stats (get-in @game-state [:stats :corp]) (get-in @game-state [:stats :runner])]
