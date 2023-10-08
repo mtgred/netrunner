@@ -967,6 +967,7 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
     {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
      :derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
 
