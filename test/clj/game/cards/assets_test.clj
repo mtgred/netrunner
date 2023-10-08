@@ -5295,7 +5295,7 @@
       (is (= 1 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
       (take-credits state :runner)
       (is (= 0 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
-      (is (= "Superdeep Borehole extinction event" (:reason @state)) "Win condition reports borehole"))))
+      (is (= "Superdeep Borehole" (:reason @state)) "Win condition reports borehole"))))
 
 (deftest superdeep-borehole-doesn't-instantly-win
   (do-game
