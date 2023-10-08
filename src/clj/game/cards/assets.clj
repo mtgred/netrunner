@@ -2519,7 +2519,7 @@
                             (not (pos? (get-counters (get-card state card) :bad-publicity)))
                             (:borehole-valid (:special card))))
              :msg "win the game"
-             :effect (req (win state :corp "Superdeep Borehole extinction event"))}]})
+             :effect (req (win state :corp (:title card)))}]})
 
 (defcard "Sundew"
   ; If this a run event then handle in :begin-run as we do not know the server
