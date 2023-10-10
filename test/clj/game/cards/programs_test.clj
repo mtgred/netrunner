@@ -53,16 +53,16 @@
   ;; Adept
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                      :hand ["Ice Wall" "Cobra"]
+                      :hand ["Spiderweb" "Cobra"]
                       :credits 10}
                :runner {:deck ["Adept" "Box-E"]
                         :credits 20}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Spiderweb" "HQ")
     (play-from-hand state :corp "Cobra" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Adept")
     (let [adept (get-program state 0)
-          iw (get-ice state :hq 0)
+          sw (get-ice state :hq 0)
           cobra (get-ice state :rd 0)]
       (is (= 2 (core/available-mu state)))
       (is (= 4 (get-strength (refresh adept))) "+2 strength for 2 unused MU")
@@ -70,11 +70,17 @@
       (is (= 4 (core/available-mu state)))
       (is (= 6 (get-strength (refresh adept))) "+4 strength for 4 unused MU")
       (run-on state :hq)
-      (rez state :corp iw)
+      (rez state :corp sw)
       (run-continue state)
-      (card-ability state :runner (refresh adept) 0)
-      (click-prompt state :runner "End the run")
-      (is (:broken (first (:subroutines (refresh iw)))) "Broke a barrier subroutine")
+      (changes-val-macro
+        -6 (:credit (get-runner))
+        "Spent 6 credits to break 3 barrier subs"
+        (card-ability state :runner (refresh adept) 0)
+        (print-prompts)
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run")
+        (click-prompt state :runner "End the run"))
+      (is (:broken (first (:subroutines (refresh sw)))) "Broke a barrier subroutine")
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state :rd)
