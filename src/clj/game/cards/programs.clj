@@ -235,27 +235,22 @@
   "Strength depends on available memory units
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [abilities]
-  (auto-icebreaker {:abilities abilities
-                    :static-abilities [(breaker-strength-bonus (req (available-mu state)))]}))
+  {:abilities abilities
+   :static-abilities [(breaker-strength-bonus (req (available-mu state)))]})
 
 (defn- break-multiple-types
   "Single ability to break multiple types of ice
   (Greek/Philosopher suite: Adept, Sage, Savant)"
   [first-qty first-type second-qty second-type]
-  {:break-cost [:credit 2]
-   :cost [:credit 2]
-   :req (req (and (active-encounter? state)
-                  (or (has-subtype? current-ice first-type)
-                      (has-subtype? current-ice second-type))))
-   :label (str "break "
-               (quantify first-qty (str first-type " subroutine")) " or "
-               (quantify second-qty (str second-type " subroutine")))
-   :effect (effect
-             (continue-ability
-               (if (has-subtype? current-ice first-type)
-                 (break-sub nil first-qty first-type {:all (< 1 first-qty)})
-                 (break-sub nil second-qty second-type {:all (< 1 second-qty)}))
-               card nil))})
+  (break-sub 2
+             (req
+               (cond (has-subtype? current-ice first-type) first-qty
+                     (has-subtype? current-ice second-type) second-qty
+                     :else (throw (ex-info "What are we encountering?" current-ice))))
+             (hash-set first-type second-type)
+             {:label (str "break "
+                          (quantify first-qty (str first-type " subroutine")) " or "
+                          (quantify second-qty (str second-type " subroutine")))}))
 
 (defn- give-ice-subtype
   "Make currently encountered ice gain chosen type until end of encounter
@@ -308,14 +303,14 @@
     {:abilities [(break-sub (:break-cost break) (:break break) (:breaks break)
                             {:req (req (and (#{:hq :rd :archives} (target-server run))
                                             (<= (get-strength current-ice) (get-strength card))
-                                            (has-subtype? current-ice (:breaks break))))})
+                                            (has-subtype? current-ice (first (:breaks break)))))})
                  pump]}))
 
 (defn- return-and-derez
   "Return to grip to derez current ice
   (Bird suite: Golden, Peregrine, Saker)"
   [break pump]
-  (let [ice-type (:breaks break)]
+  (let [ice-type (first (:breaks break))]
     (auto-icebreaker
       {:abilities [break
                    pump
@@ -332,7 +327,7 @@
   "Trash to bypass current ice
   (Fraud suite: Abagnale, Demara, Lustig)"
   [break pump]
-  (let [ice-type (:breaks break)]
+  (let [ice-type (first (:breaks break))]
     (auto-icebreaker
       {:abilities [break
                    pump
