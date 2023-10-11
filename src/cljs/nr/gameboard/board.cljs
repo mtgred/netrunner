@@ -16,7 +16,7 @@
    [nr.appstate :refer [app-state]]
    [nr.cardbrowser :refer [card-as-text]]
    [nr.end-of-game-stats :refer [build-game-stats]]
-   [nr.gameboard.actions :refer [send-command toast]]
+   [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
@@ -1691,9 +1691,7 @@
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
            (set! (.-cursor (.-style (.-body js/document))) "default"))
          (when (= "card-title" @prompt-type)
-           (-> "#card-title" js/$ .focus))
-         (doseq [{:keys [msg type options]} (get-in @game-state [side :toast])]
-           (toast msg type options)))
+           (-> "#card-title" js/$ .focus)))
 
        :reagent-render
        (fn [{:keys [side run encounters prompt-state me] :as button-pane-args}]
