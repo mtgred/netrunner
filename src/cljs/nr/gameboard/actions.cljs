@@ -8,7 +8,9 @@
                                parse-state]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [toastr-options]]
-   [nr.ws :as ws]))
+   [nr.ws :as ws]
+   [reagent.core :as r]
+   [reagent.ratom :as ratom]))
 
 (defn reset-game! [state]
   (reset! game-state (assoc state :side (get-side state)))
@@ -115,3 +117,9 @@
     (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state)) msg))
     (when-not (or (= "error" toast-type) (= "exception" toast-type))
       (send-command "toast"))))
+
+(defonce side (r/cursor game-state [:side]))
+(defonce me-toasts (ratom/reaction (get-in @game-state [@side :toast])))
+(defn handle-toasts-changed [] (doseq [{:keys [msg type options]} @me-toasts]
+                                 (toast msg type options)))
+(defonce watch-toasts (r/track! handle-toasts-changed))
