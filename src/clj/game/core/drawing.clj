@@ -29,6 +29,18 @@
   [state _ n]
   (swap! state update-in [:bonus :draw] (fnil #(+ % n) 0)))
 
+(defn click-draw-bonus
+  "Registers a bonus of n draws to the next draw done by a click (Laguna Velasco District)"
+  [state _ n]
+  (swap! state update-in [:bonus :click-draw] (fnil #(+ % n) 0)))
+
+(defn use-bonus-click-draws!
+  "Returns value of click-draw bonus and reset it"
+  [state]
+  (let [bonus-click-draws (get-in @state [:bonus :click-draw] 0)]
+    (swap! state update :bonus dissoc :click-draw)
+    bonus-click-draws))
+
 (defn first-time-draw-bonus
   [side n]
   (let [event (keyword (str "pre-" (name side) "-draw"))]

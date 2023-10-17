@@ -21,7 +21,7 @@
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty do-net-damage]]
-   [game.core.drawing :refer [draw draw-bonus first-time-draw-bonus]]
+   [game.core.drawing :refer [draw click-draw-bonus]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events
@@ -1840,7 +1840,7 @@
 (defcard "Laguna Velasco District"
   {:events [{:event :runner-click-draw
              :msg "draw 1 additional card"
-             :effect (effect (draw-bonus 1))}]})
+             :effect (effect (click-draw-bonus 1))}]})
 
 (defcard "Levy Advanced Research Lab"
   (letfn [(lab-keep [cards]
@@ -3586,8 +3586,7 @@
   {:events [{:event :runner-click-draw
              :req (req (genetics-trigger? state side :runner-click-draw))
              :msg "draw 1 additional card"
-             :async true
-             :effect (effect (draw-bonus 1))}]})
+             :effect (effect (click-draw-bonus 1))}]})
 
 (defcard "Virus Breeding Ground"
   {:events [{:event :runner-turn-begins
