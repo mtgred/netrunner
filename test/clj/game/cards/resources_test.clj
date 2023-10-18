@@ -6234,6 +6234,19 @@
     "Draw 1 card at the start of turn"
     (take-credits state :runner))))
 
+(deftest the-class-act-draw-bonus
+  ;; The Class Act - Issue #7182 - Not receiving bonus draw from Verbal Plasticity
+  (do-game
+    (new-game {:runner {:deck [(qty "Sure Gamble" 10)]
+                        :hand ["The Class Act" "Verbal Plasticity"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Verbal Plasticity")
+    (play-from-hand state :runner "The Class Act")
+    (click-draw state :runner)
+    (is (not (no-prompt? state :runner)) "The Class Act is prompting the runner to choose")
+    (is (= 3 (count (:set-aside (get-runner)))) "The Class Act set aside 3 cards")))
+
 (deftest the-helpful-ai
   ;; The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn
   (do-game
