@@ -2786,30 +2786,27 @@
                                 (make-run eid :archives (get-card state card)))}]})
 
 (defcard "Sneakdoor Prime A"
-         {:abilities [{:cost [:click 2]
-                       :prompt "Choose a server"
-                       :choices (req (cancellable
-                                       (->> runnable-servers
-                                            (map unknown->kw)
-                                            (filter is-remote?)
-                                            (map remote->name))))
-                       :msg "make a run on a remote server"
-                       :makes-run true
-                       :async true
-                       :effect (effect (register-events
-                                         card
-                                         [{:event :pre-successful-run
-                                           :duration :end-of-run
-                                           :unregister-once-resolved true
-                                           :prompt "Choose a server"
-                                           :choices (req (->> servers
-                                                              (map unknown->kw)
-                                                              (filter is-central?)
-                                                              (map central->name)))
-                                           :msg (msg "change the attacked server to " target)
-                                           :effect (req (swap! state assoc-in [:run :server] [(unknown->kw target)])
-                                                        (trigger-event state :corp :no-action))}])
-                                       (make-run eid target card))}]})
+  {:abilities [{:cost [:click 2]
+                :prompt "Choose a server"
+                :choices (req (cancellable
+                                (->> runnable-servers
+                                     (map unknown->kw)
+                                     (filter is-remote?)
+                                     (map remote->name))))
+                :msg "make a run on a remote server"
+                :makes-run true
+                :async true
+                :effect (req (let [initial-server target]
+                                  (register-events state side card
+                                    [{:event :pre-successful-run
+                                      :duration :end-of-run
+                                      :unregister-once-resolved true
+                                      :req (req (= (unknown->kw initial-server) (-> run :server first)))
+                                      :prompt "Choose a server"
+                                      :choices (req ["Archives" "R&D" "HQ"])
+                                      :msg (msg "change the attacked server to " target)
+                                      :effect (req (swap! state assoc-in [:run :server] [(unknown->kw target)]))}])
+                                  (make-run state side eid initial-server card)))}]})
 
 (defcard "Sneakdoor Prime B"
   {:abilities [{:cost [:click 2]
@@ -2822,17 +2819,17 @@
                 :msg "make a run on central server"
                 :makes-run true
                 :async true
-                :effect (effect (register-events
-                                  card
-                                  [{:event :pre-successful-run
-                                    :duration :end-of-run
-                                    :unregister-once-resolved true
-                                    :prompt "Choose a server"
-                                    :choices (req (cancellable remotes))
-                                    :msg (msg "change the attacked server to " target)
-                                    :effect (req (swap! state assoc-in [:run :server] [(unknown->kw target)])
-                                                 (trigger-event state :corp :no-action))}])
-                          (make-run eid target card))}]})
+                :effect (req (let [initial-server target]
+                               (register-events state side card
+                                 [{:event :pre-successful-run
+                                   :duration :end-of-run
+                                   :unregister-once-resolved true
+                                   :req (req (= (unknown->kw initial-server) (-> run :server first)))
+                                   :prompt "Choose a server"
+                                   :choices (req (cancellable remotes))
+                                   :msg (msg "change the attacked server to " target)
+                                   :effect (req (swap! state assoc-in [:run :server] [(unknown->kw target)]))}])
+                               (make-run state side eid initial-server card)))}]})
 
 (defcard "Snitch"
   {:events [{:event :approach-ice
