@@ -6633,6 +6633,25 @@
           (run-continue state :success)
           (is (= :archives (get-in @state [:run :server 0])) "Run continues on Archives")))))
 
+(deftest sneakdoor-prime-a
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "PAD Campaign" 3)]}
+               :runner {:hand ["Sneakdoor Prime A"]
+                        :credits 10}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sneakdoor Prime A")
+    (card-ability state :runner (get-program state 0) 0)
+    (is (= ["Server 1" "Server 2" "Cancel"] (prompt-buttons :runner)) "Only remotes available")
+    (click-prompt state :runner "Server 1")
+    (run-continue state)
+    (is (= ["Archives" "R&D" "HQ"] (prompt-buttons :runner)) "Only centrals available")
+    (click-prompt state :runner "HQ")
+    (is (= :hq (get-in @state [:run :server 0])) "Run continues on HQ")
+    (is (= ["Pay 4 [Credits] to trash" "No action"] (prompt-buttons :runner)) "Runner accessing card in HQ")))
+
 (deftest sneakdoor-prime-b
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
