@@ -2060,15 +2060,20 @@
     (is (no-prompt? state :corp))))
 
 (deftest kimberlite-standard-functionality
+  ;; Kimberlite Field trashes runner card based on printed costs of each card
   (do-game
-    (new-game {:corp {:hand ["Kimberlite Field" "Echo Chamber"]}
+    (new-game {:corp {:hand ["Kimberlite Field" "Echo Chamber" "Breaker Bay Grid" "TechnoCo"]}
                :runner {:hand ["Amina" "Paperclip"] :credits 15}})
     (play-from-hand state :corp "Echo Chamber" "New remote")
+    (play-from-hand state :corp "Breaker Bay Grid" "Server 1")
+    (play-from-hand state :corp "TechnoCo" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Amina")
     (play-from-hand state :runner "Paperclip")
     (take-credits state :runner)
+    (rez state :corp (get-content state :remote1 1)) ;; lowers Echo Chamber cost - KF should use printed
     (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0)) ;; increases Amina + Paperclip cost - KF should use printed
     (play-and-score state "Kimberlite Field")
     (click-card state :corp "Echo Chamber")
     (click-card state :corp "Amina")
