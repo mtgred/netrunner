@@ -1048,7 +1048,7 @@
     :choices {:card #(rezzed? %)}
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (req (let [target-cost (rez-cost state :corp target)]
+    :effect (req (let [target-cost (:cost target)]
                    (wait-for (trash state side target {:cause-card card})
                              (continue-ability
                                state side
