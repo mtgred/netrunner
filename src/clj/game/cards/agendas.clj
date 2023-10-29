@@ -1048,14 +1048,14 @@
     :choices {:card #(rezzed? %)}
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (req (let [target-cost (rez-cost state :corp target)]
+    :effect (req (let [target-cost (:cost target)]
                    (wait-for (trash state side target {:cause-card card})
                              (continue-ability
                                state side
                                {:prompt (str "Choose a runner card that costs " target-cost " or less to trash")
                                 :choices {:card #(and (installed? %)
                                                       (runner? %)
-                                                      (<= (install-cost state :runner %) target-cost))}
+                                                      (<= (:cost %) target-cost))}
                                 :msg (msg "trash " (:title target))
                                 :async true
                                 :effect (effect (trash eid target))}
