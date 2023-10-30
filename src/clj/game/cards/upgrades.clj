@@ -47,7 +47,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->zone from-same-server? in-same-server?
                               is-central? protecting-same-server? same-server?
-                              target-server unknown->kw zone->name]]
+                              same-zone? target-server unknown->kw zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags]]
    [game.core.threat :refer [threat-level]]
@@ -1838,10 +1838,14 @@
                  (corp? (:card target))
                  (installed? (:card target))))]
     {:on-trash {:async true
-                :once-per-instance false
                 :interactive (req true)
-                :msg "gain 2 [Credits]"
-                :effect (effect (gain-credits eid 2))}
+                :effect (req (doseq [t targets]
+                               (let [trashing (:card t)]
+                                 (when (and (same-zone? (:zone trashing) (:previous-zone card))
+                                            (corp? trashing)
+                                            (installed? trashing))
+                                   (gain-credits state side eid 2)
+                                   (system-msg state :corp (str "uses " (:title card) " to gain 2 [Credits]"))))))}
      :events [{:event :runner-trash
                :async true
                :once-per-instance false

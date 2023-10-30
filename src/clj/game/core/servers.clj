@@ -100,14 +100,19 @@
   [zone]
   (or (#{:hq :rd :archives} zone) :remote))
 
+(defn same-zone?
+  "True if the two zones are IN or PROTECTING the same server."
+  [zone1 zone2]
+  (and zone1
+       zone2
+       (= (second zone1) (second zone2))))
+
 (defn same-server?
   "True if the two cards are IN or PROTECTING the same server."
   [card1 card2]
   (and card1
        card2
-       (let [zone1 (get-zone card1)
-             zone2 (get-zone card2)]
-         (= (second zone1) (second zone2)))))
+       (same-zone? (get-zone card1) (get-zone card2))))
 
 (defn protecting-same-server?
   "True if an ice is protecting the server that the card is in or protecting."
