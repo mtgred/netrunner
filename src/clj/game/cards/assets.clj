@@ -1172,31 +1172,25 @@
                :effect (effect (lose-credits :runner eid 1))}})
 
 (defcard "Hostile Architecture"
-  (let [valid-trash (fn [target] (and (corp? (:card target)) (installed? (:card target))))
-        ability
-        {:event :runner-trash
-         :async true
-         :once :per-turn
-         :once-per-instance false
-         :req (req (and (valid-trash target)
-                        (first-event? state side :runner-trash #(valid-trash (first %)))))
-         :msg "do 2 meat damage"
-         :effect (effect (damage :corp eid :meat 2 {:card card}))}]
-    {:on-trash (assoc ability :req (req (and (= :runner side)
-                                             (no-event? state side :runner-trash #(valid-trash (first %))))))
-     :events [ability]}))
-
+  (letfn [(valid-trash [target]
+            (and (corp? (:card target))
+                 (installed? (:card target))))]
+    {:events [{:event :runner-trash
+               :async true
+               :once :per-turn
+               :once-per-instance false
+               :req (req (and (valid-trash target)
+                              (first-event? state side :runner-trash #(valid-trash (first %)))))
+               :msg "do 2 meat damage"
+               :effect (effect (damage :corp eid :meat 2 {:card card}))}]}))
 
 (defcard "Hostile Infrastructure"
-  (let [ability
-        {:event :runner-trash
-         :async true
-         :once-per-instance false
-         :req (req (corp? (:card target)))
-         :msg "do 1 net damage"
-         :effect (effect (damage :corp eid :net 1 {:card card}))}]
-    {:on-trash (assoc ability :req (req (= :runner side)))
-     :events [ability]}))
+  {:events [{:event :runner-trash
+             :async true
+             :once-per-instance false
+             :req (req (corp? (:card target)))
+             :msg "do 1 net damage"
+             :effect (effect (damage :corp eid :net 1 {:card card}))}]})
 
 (defcard "Hyoubu Research Facility"
   {:events [{:event :reveal-spent-credits

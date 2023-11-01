@@ -2573,7 +2573,8 @@
 (deftest hostile-infrastructure-basic-behavior
     ;; Basic behavior
     (do-game
-      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}})
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
       (core/gain state :runner :credit 50)
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
       (rez state :corp (get-content state :remote1 0))

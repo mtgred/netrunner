@@ -343,11 +343,23 @@
                                   :cause-card cause-card
                                   :accessed accessed}]
                                 trash-effect))
-      (let [once-per (:once-per-instance trash-effect)]
-        (-> trash-effect
-            (assoc :once-per-instance (if (some? once-per) once-per true)
-                   :condition :inactive)
-            (dissoc-req))))))
+      (-> trash-effect
+          (assoc :once-per-instance true
+                 :condition :inactive)
+          (dissoc-req)))))
+
+(defn set-duration-on-trash-events
+  [state card trash-event]
+  (swap! state assoc :events
+         (reduce
+           (fn [acc cur]
+             (let [event (if (and (same-card? card (:card cur))
+                                  (= trash-event (:event cur)))
+                           (assoc cur :duration trash-event)
+                           cur)]
+               (conj acc event)))
+           []
+           (:events @state))))
 
 (defn trash-cards
   "Attempts to trash each given card, and then once all given cards have been either
@@ -359,6 +371,18 @@
      (wait-for (prevent-trash state side (make-eid state eid) cards args)
                (let [trashlist async-result
                      _ (update-current-ice-to-trash state trashlist)
+                     ;; The trash event will be determined by who is performing the
+                     ;; trash. `:game-trash` in this case refers to when a checkpoint
+                     ;; sees a card has been trashed and it has hosted cards, so it
+                     ;; trashes each hosted card. (Rule 10.3.1g)
+                     ;; This doesn't count as either player trashing the card, but
+                     ;; the cards are counted as trashed by the engine and so
+                     ;; abilities that don't care who performed the trash (Simulchip
+                     ;; for example) still need it either logged or watchable.
+                     trash-event (cond
+                                   game-trash :game-trash
+                                   (= side :corp) :corp-trash
+                                   (= side :runner) :runner-trash)
                      ;; No card should end up in the opponent's discard pile, so instead
                      ;; of using `side`, we use the card's `:side`.
                      move-card (fn [card]
@@ -374,7 +398,8 @@
                      moved-cards (reduce
                                    (fn [acc card]
                                      (if-let [card (get-card? state card)]
-                                       (let [moved-card (move-card card)
+                                       (let [_ (set-duration-on-trash-events state card trash-event)
+                                             moved-card (move-card card)
                                              trash-effect (get-trash-effect state side eid card args)]
                                          (update-indicies card)
                                          (conj acc [moved-card trash-effect]))
@@ -387,19 +412,7 @@
                  ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                  (swap! state assoc-in [:corp :discard]
                         (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
-                 (let [;; The trash event will be determined by who is performing the
-                       ;; trash. `:game-trash` in this case refers to when a checkpoint
-                       ;; sees a card has been trashed and it has hosted cards, so it
-                       ;; trashes each hosted card. (Rule 10.3.1g)
-                       ;; This doesn't count as either player trashing the card, but
-                       ;; the cards are counted as trashed by the engine and so
-                       ;; abilities that don't care who performed the trash (Simulchip
-                       ;; for example) still need it either logged or watchable.
-                       trash-event (cond
-                                     game-trash :game-trash
-                                     (= side :corp) :corp-trash
-                                     (= side :runner) :runner-trash)
-                       eid (make-result eid (mapv first moved-cards))]
+                 (let [eid (make-result eid (mapv first moved-cards))]
                    (doseq [[card trash-effect] moved-cards
                            :when trash-effect]
                      (register-pending-event state trash-event card trash-effect))
@@ -410,7 +423,7 @@
                                                      :accessed accessed}))
                    (if suppress-checkpoint
                      (effect-completed state nil eid)
-                     (checkpoint state nil eid nil))))))))
+                     (checkpoint state nil eid {:duration trash-event}))))))))
 
 (defmethod engine/move* :trash-cards [state side eid _action cards args]
   (trash-cards state side eid cards args))

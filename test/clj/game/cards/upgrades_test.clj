@@ -4632,26 +4632,29 @@
 
 (deftest yakov-multiple-trashed
   (do-game
-    (new-game {:corp {:hand ["Yakov Erikovich Avdakov" "NGO Front"
+    (new-game {:corp {:hand ["Yakov Erikovich Avdakov" (qty "NGO Front" 2)
                              "Prisec" "Mutually Assured Destruction"]
                       :credits 15}})
-    (core/gain state :corp :click 5)
+    (core/gain state :corp :click 6)
     (play-from-hand state :corp "Yakov Erikovich Avdakov" "New remote")
     (play-from-hand state :corp "NGO Front" "Server 1")
     (play-from-hand state :corp "Prisec" "Server 1")
+    (play-from-hand state :corp "NGO Front" "New remote")
     (rez state :corp (get-content state :remote1 0))
     (rez state :corp (get-content state :remote1 1))
     (rez state :corp (get-content state :remote1 2))
+    (rez state :corp (get-content state :remote2 0))
     (changes-val-macro
       -3 (:click (get-corp))
       "Spent 3 clicks to go MAD"
       (play-from-hand state :corp "Mutually Assured Destruction"))
     (changes-val-macro
       +6 (:credit (get-corp))
-      "trashed 3 cards"
+      "trashed 4 cards - 3 in Yakov server"
       (click-card state :corp (get-content state :remote1 0))
       (click-card state :corp (get-content state :remote1 1))
       (click-card state :corp (get-content state :remote1 2))
+      (click-card state :corp (get-content state :remote2 0))
       (click-prompt state :corp "Yakov Erikovich Avdakov")
       (click-prompt state :corp "Yakov Erikovich Avdakov"))
     (is (no-prompt? state :corp))))

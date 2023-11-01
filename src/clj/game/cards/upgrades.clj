@@ -1382,15 +1382,12 @@
                         :msg (str "give the Runner " (quantify n "tag"))
                         :effect (effect (gain-tags :corp eid n))})
                      card nil))}]
-    {:on-trash
-     {:async true
-      :interactive (req true)
-      :req (req (= :runner side))
-      :effect (req (when (:run @state)
-                     (register-events
-                       state side card
-                       [(assoc ability :duration :end-of-run)]))
-                   (continue-ability state side (dissoc-req ability) card targets))}
+    {:on-trash {:silent (req true)
+                :req (req (= :runner side))
+                :effect (req (when run
+                               (register-events
+                                 state side card
+                                 [(assoc ability :duration :end-of-run)])))}
      :events [ability]}))
 
 (defcard "Panic Button"
@@ -1783,7 +1780,9 @@
                        :card #(and (runner? %)
                                    (installed? %))}
              :msg (msg "force the Runner to trash " (enumerate-str (map :title targets)))
-             :effect (req (trash-cards state :runner eid targets {:unpreventable true :cause-card card :cause :forced-to-trash}))})
+             :effect (req (trash-cards state :runner eid targets {:unpreventable true
+                                                                  :cause-card card
+                                                                  :cause :forced-to-trash}))})
           (ability []
             {:trace {:base 4
                      :successful
@@ -1798,11 +1797,7 @@
                                           (when (pos? n)
                                             (wt n)))
                                         card nil))}}})]
-    {:on-trash {:async true
-                :once-per-instance true
-                :req (req (= side :runner))
-                :effect (effect (continue-ability (ability) card nil))}
-     :events [{:event :runner-trash
+    {:events [{:event :runner-trash
                :async true
                :once-per-instance true
                :req (req (some (fn [target]
@@ -1833,34 +1828,30 @@
                                                    (effect-completed state side eid)))}}}]})
 
 (defcard "Yakov Erikovich Avdakov"
-  (letfn [(valid-target-fn [target card]
-            (and (same-server? card (:card target))
-                 (corp? (:card target))
-                 (installed? (:card target))))]
-    {:on-trash {:async true
-                :once-per-instance false
-                :interactive (req true)
-                :msg "gain 2 [Credits]"
-                :effect (effect (gain-credits eid 2))}
-     :events [{:event :runner-trash
+  (letfn [(valid-target-fn [context card]
+            (and (same-server? card (:card context))
+                 (corp? (:card context))
+                 (installed? (:card context))))]
+    {:events [{:event :runner-trash
                :async true
                :once-per-instance false
                :interactive (req true)
-               :req (req (valid-target-fn target card))
+               :req (req (valid-target-fn context card))
                :msg "gain 2 [Credits]"
                :effect (effect (gain-credits eid 2))}
               {:event :corp-trash
                :interactive (req true)
                :once-per-instance false
-               :req (req (let [cause (:cause target)
-                               cause-card (:cause-card target)]
-                           (and (or
-                                  (corp? (:source eid))
-                                  (= :ability-cost cause)
-                                  (= :subroutine cause)
-                                  (and (corp? cause-card) (not= cause :opponent-trashes))
-                                  (and (runner? cause-card) (= cause :forced-to-trash)))
-                                (valid-target-fn target card))))
+               :req (req (let [cause (:cause context)
+                               cause-card (:cause-card context)]
+                           (and (or (corp? (:source eid))
+                                    (= :ability-cost cause)
+                                    (= :subroutine cause)
+                                    (and (corp? cause-card)
+                                         (not= cause :opponent-trashes))
+                                    (and (runner? cause-card)
+                                         (= cause :forced-to-trash)))
+                                (valid-target-fn context card))))
                :async true
                :msg "gain 2 [Credits]"
                :effect (effect (gain-credits eid 2))}]}))
