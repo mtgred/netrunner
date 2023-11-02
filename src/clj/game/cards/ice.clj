@@ -781,6 +781,7 @@
                               {:prompt "Choose one"
                                :waiting-prompt true
                                :player :runner
+                               :async true
                                :choices (req ["Take 1 net damage"
                                               (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [:credit 2]) "Pay 2 [Credits]")])
                                :effect
