@@ -477,13 +477,13 @@
              (and (in-discard? card)
                   (faceup? card)))))))
 
-;; CR 1.5
+;; CR 1.8
 ;; 10.1.3. Some abilities add a card to a player’s score area “as an agenda”. When this
 ;;    happens, the card loses all its previous properties and gains only those
 ;;    properties specified in the effect converting it. This conversion lasts until the
 ;;    card moves to a zone that is not a score area, at which point it returns to being
 ;;    its original printed card. If this happens in any way other than by agenda
-;;    forfeit, the card is immediately trashed. See rule 8.2.5.
+;;    forfeit, the card is immediately trashed.
 
 (defn convert-to-agenda
   [{:keys [cid code host hosted side title zone implementation]} n]
@@ -499,7 +499,7 @@
      :type "Agenda"
      :zone zone}))
 
-;; CR 1.5
+;; CR 1.8
 ;; 10.1.4. Some abilities can convert a card into a counter. When this happens, the card
 ;;    loses all its previous properties and gains only those properties specified in the
 ;;    effect converting it. This conversion lasts until the counter moves to another

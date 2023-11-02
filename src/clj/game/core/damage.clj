@@ -4,7 +4,7 @@
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
-    [game.core.moving :refer [trash-cards]]
+    [game.core.moving :refer [trash-cards get-trash-event]]
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
@@ -135,8 +135,10 @@
                                                           :card card
                                                           :damage-type dmg-type
                                                           :cards-trashed cards-trashed})
-                              (wait-for (checkpoint state nil (make-eid state eid) {:duration :damage})
-                                        (complete-with-result state side eid cards-trashed)))))))))
+                              (let [trash-event (get-trash-event side false)
+                                    args {:durations [:damage trash-event]}]
+                                (wait-for (checkpoint state nil (make-eid state eid) args)
+                                          (complete-with-result state side eid cards-trashed))))))))))
 
 (defn damage-count
   "Calculates the amount of damage to do, taking into account prevention and boosting effects."
