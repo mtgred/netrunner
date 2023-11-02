@@ -674,6 +674,7 @@
 
 (defn- trigger-event-sync-next
   [state side eid handlers event targets]
+  (prn :trigger-event-sync-next eid (some? (first handlers)))
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
       (wait-for (resolve-ability state side (make-eid state (assoc eid :source card :source-type :ability)) (dissoc-req (:ability to-resolve)) card targets)
@@ -691,6 +692,7 @@
     (effect-completed state side eid)
     (do (log-event state event targets)
         (let [handlers (gather-events state side eid event targets nil)]
+          (prn :handlers (count handlers))
           (trigger-event-sync-next state side eid handlers event targets)))))
 
 (defn- trigger-event-simult-player

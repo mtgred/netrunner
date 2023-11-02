@@ -144,6 +144,7 @@
                              :user {:username "Runner"}
                              :deck {:identity (:identity runner)
                                     :cards (:deck runner)}}]})]
+     (prn :made-state (some? state))
      (when-not dont-start-game
        (if (#{:both :corp} mulligan)
          (click-prompt state :corp "Mulligan")

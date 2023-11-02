@@ -107,6 +107,7 @@
     `(let [eid?# ~eid?
            use-eid# (and (map? eid?#) (:eid eid?#))
            new-eid# (if use-eid# eid?# (game.core.eid/make-eid ~state))]
+       (prn :new-eid# new-eid#)
        (game.core.eid/register-effect-completed
          ~state new-eid#
          (fn ~(if (vector? binds) binds [binds])

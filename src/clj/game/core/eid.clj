@@ -31,9 +31,12 @@
 
 (defn register-effect-completed
   [state eid effect]
+  (prn (:eid eid) effect)
   (if (get-in @state [:effect-completed (:eid eid)])
-    (throw (Exception. (str "Eid has already been registered")))
-    (swap! state assoc-in [:effect-completed (:eid eid)] effect)))
+    (throw (ex-info "Eid has already been registered" eid))
+    (swap! state assoc-in [:effect-completed (:eid eid)] effect))
+  (prn :newly-set-eid-effect (:eid eid) (get-in @state [:effect-completed (:eid eid)]))
+  )
 
 (defn clear-eid-wait-prompt
   [state side eid]
@@ -46,10 +49,18 @@
   [state _ eid]
   (doseq [side [:corp :runner]]
     (clear-eid-wait-prompt state side eid))
-  (when-let [handler (get-in @state [:effect-completed (:eid eid)])]
-    (let [results (handler eid)]
-      (swap! state update :effect-completed dissoc (:eid eid))
-      results)))
+  #_(assert (nil? (get-in @state [:effect-completed :next-eid]))
+        "There is no currently paused eid")
+  (prn :effect-completed (:eid eid)
+       (some? (get-in @state [:effect-completed (:eid eid)])))
+  (when (get-in @state [:effect-completed (:eid eid)])
+    (prn (:eid eid))
+    (swap! state update-in [:effect-completed :next-eid] #(cons eid %)))
+  (prn :next-eid??? (get-in @state [:effect-completed :next-eid]))
+  #_(when-let [handler (get-in @state [:effect-completed (:eid eid)])]
+    (handler eid)
+    (swap! state update :effect-completed dissoc (:eid eid)))
+  nil)
 
 (defn make-result
   [eid result]
@@ -59,4 +70,21 @@
   "Calls `effect-complete` with `make-result` and also returns the argument"
   [state side eid result]
   (effect-completed state side (make-result eid result))
-  result)
+  nil)
+
+(defn state-continue
+  [state]
+  (prn :state-continue)
+  (loop [[next-eid] (get-in @state [:effect-completed :next-eid])
+         handler (get-in @state [:effect-completed (:eid next-eid)])]
+    (prn :next-eid next-eid
+         :handler handler)
+    (when-not next-eid
+      (prn (:effect-completed @state)))
+    (when next-eid
+      (swap! state update-in [:effect-completed :next-eid] next)
+      (when handler
+        (handler next-eid))
+      (swap! state update :effect-completed dissoc (:eid next-eid))
+      (recur (get-in @state [:effect-completed :next-eid])
+             (get-in @state [:effect-completed (:eid next-eid)])))))

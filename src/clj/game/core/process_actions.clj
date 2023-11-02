@@ -11,7 +11,7 @@
    [game.core.change-vals :refer [change]]
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.commands :refer [parse-command]]
-   [game.core.eid :refer [make-eid]]
+   [game.core.eid :refer [make-eid state-continue]]
    [game.core.moving :refer [trash]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [check-for-empty-server continue handle-end-run
@@ -90,4 +90,6 @@
   (when-let [c (get commands command)]
     (c state side args)
     (checkpoint+clean-up state)
+    (prn :process-action command side)
+    (state-continue state)
     true))
