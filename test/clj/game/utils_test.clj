@@ -7,16 +7,18 @@
 (defmacro error-wrapper [form]
   `(try ~form
         (catch clojure.lang.ExceptionInfo ex#
-          (let [msg# (.getMessage ^Throwable ex#)
-                form# (:form (ex-data ex#))
-                pred# (:pred (ex-data ex#))
-                values# (:values (ex-data ex#))
-                result# (:result (ex-data ex#))]
-            (do-report {:type :fail
-                        :message msg#
-                        :expected form#
-                        :actual (list '~'not (cons pred# values#))})
-            result#))))
+          (if (:form (ex-data ex#))
+            (let [msg# (ex-message ex#)
+                  form# (:form (ex-data ex#))
+                  pred# (:pred (ex-data ex#))
+                  values# (:values (ex-data ex#))
+                  result# (:result (ex-data ex#))]
+              (do-report {:type :fail
+                          :message msg#
+                          :expected form#
+                          :actual (list '~'not (cons pred# values#))})
+              result#)
+            (throw ex#)))))
 
 (defn is'-predicate
   [msg form]

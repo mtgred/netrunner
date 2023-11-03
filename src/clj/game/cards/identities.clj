@@ -211,13 +211,33 @@
                                          :all true
                                          :card #(and (runner? %)
                                                      (in-play-area? %))}
-                               :effect (req (doseq [c targets]
+                               :effect (req (wait-for
                                               (runner-install
                                                 state side
-                                                (make-eid state eid) c
+                                                (make-eid state eid) (first targets)
                                                 {:ignore-all-cost true
-                                                 :custom-message (fn [_] (str "starts with " (:title c) " in play"))}))
-                                            (swap! state assoc-in [:runner :play-area] []))}
+                                                 :custom-message (fn [_] (str "starts with " (:title (first targets)) " in play"))})
+                                              (wait-for
+                                                (runner-install
+                                                  state side
+                                                  (make-eid state eid) (second targets)
+                                                  {:ignore-all-cost true
+                                                   :custom-message (fn [_] (str "starts with " (:title (second targets)) " in play"))})
+                                                (wait-for
+                                                  (runner-install
+                                                  state side
+                                                  (make-eid state eid) (-> targets
+                                                                           next
+                                                                           next
+                                                                           first)
+                                                  {:ignore-all-cost true
+                                                   :custom-message (fn [_] (str "starts with " (:title (-> targets
+                                                                           next
+                                                                           next
+                                                                           first)) " in play"))})
+                                                  (swap! state assoc-in [:runner :play-area] [])
+                                                  (effect-completed state nil eid))))
+                                            )}
                               card nil)))}]})
 
 (defcard "AgInfusion: New Miracles for a New World"

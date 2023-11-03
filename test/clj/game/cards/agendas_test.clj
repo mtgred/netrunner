@@ -44,20 +44,20 @@
   (do-game
      (new-game {:corp {:hand ["Above the Law"]}
                 :runner {:hand ["Armitage Codebusting"]}})
-     #_(take-credits state :corp)
-     #_(play-from-hand state :runner "Armitage Codebusting")
-     #_(take-credits state :runner)
-     #_(play-and-score state "Above the Law")
-     #_(click-card state :corp "Armitage Codebusting")
-     #_(is (find-card "Armitage Codebusting" (:discard (get-runner)))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Armitage Codebusting")
+     (take-credits state :runner)
+     (play-and-score state "Above the Law")
+     (click-card state :corp "Armitage Codebusting")
+     (is (find-card "Armitage Codebusting" (:discard (get-runner)))
          "Armitage Codebusting is trashed")))
 
 (deftest accelerated-beta-test
   ;; Accelerated Beta Test
   (do-game
-    (new-game {:corp {:deck ["Accelerated Beta Test" "Enigma" (qty "Hedge Fund" 2)]}})
+    (new-game {:corp {:deck ["Enigma" (qty "Hedge Fund" 2)]
+                      :hand ["Accelerated Beta Test"]}})
     ;; Set up
-    (starting-hand state :corp ["Accelerated Beta Test"])
     (play-and-score state "Accelerated Beta Test")
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "OK")
@@ -806,13 +806,14 @@
     (new-game {:corp {:deck [(qty "Corporate Sales Team" 2)]}})
     (is (= 5 (:credit (get-corp))))
     (play-and-score state "Corporate Sales Team")
+    (is (= 5 (:credit (get-corp))))
     (let [scored-cst (get-scored state :corp 0)]
-      (core/end-turn state :corp nil)
-      (core/start-turn state :runner nil)
+      (end-turn state :corp)
+      (start-turn state :runner)
       (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
       (is (= 9 (get-counters (refresh scored-cst) :credit)))
-      (core/end-turn state :runner nil)
-      (core/start-turn state :corp nil)
+      (end-turn state :runner)
+      (start-turn state :corp)
       (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
       (is (= 8 (get-counters (refresh scored-cst) :credit))))))
 
@@ -1394,9 +1395,8 @@
 (deftest flower-sermon
   ;; Flower Sermon
   (do-game
-      (new-game {:corp {:deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+      (new-game {:corp {:hand ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
                                "DNA Tracker" "Excalibur" "Fire Wall" "Flower Sermon"]}})
-      (draw state :corp)
       (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
@@ -1920,15 +1920,15 @@
                   (play-and-score state "Illicit Sales")
                   (click-prompt state :corp answer)
                   (is (= (:credit (get-corp)) (+ credits credits-gained)))))))]
-    (doall (map illicit-sales-test
-                [[0 "No" 0]
-                 [0 "Yes" 3]
-                 [1 "No" 3]
-                 [1 "Yes" 6]
-                 [2 "No" 6]
-                 [2 "Yes" 9]
-                 [3 "No" 9]
-                 [3 "Yes" 12]]))))
+    (run! illicit-sales-test
+          [[0 "No" 0]
+           [0 "Yes" 3]
+           [1 "No" 3]
+           [1 "Yes" 6]
+           [2 "No" 6]
+           [2 "Yes" 9]
+           [3 "No" 9]
+           [3 "Yes" 12]])))
 
 (deftest improved-protein-source
   ;; Improved Protein Source
@@ -1990,7 +1990,7 @@
     (play-and-score state "Jumon")
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Project Atlas" "Server 2")
-    (core/end-turn state :corp nil)
+    (end-turn state :corp)
     (let [pa (get-content state :remote2 0)
           iw (get-ice state :remote2 0)]
       (is (zero? (get-counters (refresh pa) :advancement)) "Project Atlas starts with no counters")
@@ -1999,12 +1999,12 @@
       (click-card state :corp pa)
       (is (= 2 (get-counters (refresh pa) :advancement)) "Project Atlas gains 2 counters")
       (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall doesn't gain any counters")
-      (core/start-turn state :runner nil)
+      (start-turn state :runner)
       (take-credits state :runner)
       (play-from-hand state :corp "Crisium Grid" "Server 2")
       (let [cg (get-content state :remote2 1)]
         (is (zero? (get-counters (refresh cg) :advancement)) "Crisium Grid starts with no counters")
-        (core/end-turn state :corp nil)
+        (end-turn state :corp)
         (click-card state :corp cg)
         (is (= 2 (get-counters (refresh cg) :advancement)) "Crisium Grid gains 2 counters")))))
 
@@ -2486,13 +2486,13 @@
     (let [credits (:credit (get-corp))]
       (is (= credits (:credit (get-corp))) (str "Corp has " credits " credits"))
       (is (= 1 (get-link state)) "Runner has 1 link")
-      (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
+      (trace state 1)
       (click-prompt state :corp "0")
       (is (zero? (:link (get-prompt state :runner))) "Runner has 0 link during first trace")
       (click-prompt state :runner "3")
       (is (= (inc credits) (:credit (get-corp))) "Corp gained a credit from NQ")
       ; second trace of turn - no link reduction
-      (core/init-trace state :corp (map->Card {:title "/trace command" :side :corp}) {:base 1})
+      (trace state 1)
       (click-prompt state :corp "0")
       (is (= 1 (:link (get-prompt state :runner))) "Runner has 1 link during later traces")
       (click-prompt state :runner "2")
@@ -2626,13 +2626,13 @@
   (do-game
     (new-game {:corp {:hand ["Ontological Dependence"]}})
     (play-from-hand state :corp "Ontological Dependence" "New remote")
-    (let [conj (get-content state :remote1 0)]
-      (advance state conj 2)
-      (score state :corp (refresh conj))
+    (let [onto (get-content state :remote1 0)]
+      (advance state onto 2)
+      (score state :corp (refresh onto))
       (is (some? (get-content state :remote1 0))
           "Corp can't score with 2 advancements because of no core damage")
       (damage state :corp :brain 2)
-      (score state :corp (refresh conj))
+      (is (score state :corp (refresh onto)))
       (is (not (some? (get-content state :remote1 0)))
           "Corp can score with 2 advancements because of 2 core damage"))))
 
@@ -3323,10 +3323,9 @@
 (deftest rebranding-team
   ;; Rebranding Team
   (do-game
-    (new-game {:corp {:deck ["Rebranding Team" "Launch Campaign" "City Surveillance"
+    (new-game {:corp {:hand ["Rebranding Team" "Launch Campaign" "City Surveillance"
                              "Jackson Howard" "Museum of History" "Advanced Assembly Lines"]}})
     (play-and-score state "Rebranding Team")
-    (click-draw state :runner)
     (is (has-subtype? (find-card "Advanced Assembly Lines" (:hand (get-corp))) "Advertisement"))
     ; #2608 part 2 - retain Advertisement always
     (trash-from-hand state :corp "Advanced Assembly Lines")
@@ -3539,7 +3538,8 @@
 (deftest remote-data-farm-logging-when-entering-the-corp-score-area
   ;; Remote Data Farm - logging when entering the Corp's score area
   (do-game
-    (new-game {:corp {:deck ["Remote Data Farm" "Project Beale" "Exchange of Information" "Exchange of Information"]}})
+    (new-game {:corp {:deck ["Remote Data Farm" "Project Beale"
+                             "Exchange of Information" "Exchange of Information"]}})
     (play-from-hand state :corp "Remote Data Farm" "New remote")
     (take-credits state :corp)
     (run-empty-server state "Server 1")
@@ -3647,7 +3647,8 @@
       (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
       (click-card state :runner (get-ice state :hq 0))
       (click-card state :runner (get-ice state :rd 0))
-      (is (empty? (:effect-completed @state)) "All score and Leela effects resolved")))
+      (is (= {:next-eid nil} (:effect-completed @state))
+          "All score and Leela effects resolved")))
 
 (deftest restructured-datapool
   ;; Restructured Datapool

@@ -161,7 +161,7 @@
    :effect (req (wait-for (pay state :runner (make-eid state eid) card cost)
                           (when-let [payment-str (:msg async-result)]
                             (system-msg state :runner
-					(str payment-str
+                                        (str payment-str
                                              " due to " (:title card)
                                              " subroutine")))
                           (effect-completed state side eid)))})
@@ -645,13 +645,15 @@
 (defcard "Aimor"
   {:subroutines [{:async true
                   :label "Trash the top 3 cards of the stack"
-                  :effect (req (system-msg state :corp
-                                           (str "uses " (:title card) " to trash "
-                                                (enumerate-str (map :title (take 3 (:deck runner))))
-                                                " from the top of the stack and trash itself"))
-                               (wait-for (mill state :corp :runner 3)
-                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
-                                         (encounter-ends state side eid)))}]})
+                  :effect (req (system-msg
+                                 state :corp
+                                 (str "uses " (:title card) " to trash "
+                                      (enumerate-str (map :title (take 3 (:deck runner))))
+                                      " from the top of the stack and trash itself"))
+                               (wait-for
+                                 (mill state :corp (make-eid state eid) :runner 3)
+                                 (wait-for (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                           (encounter-ends state side eid))))}]})
 
 (defcard "Akhet"
   (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))

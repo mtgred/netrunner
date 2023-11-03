@@ -315,23 +315,26 @@
                                  card
                                  [{:event :pass-ice
                                    :duration :end-of-run
-                                   :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] conj (:cid (:ice context)))))}])
+                                   :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] (fnil conj #{}) (:cid (:ice context)))))}])
                          (make-run eid target (get-card state card)))}
      :events [{:event :run-ends
                :silent (req true)
                :msg (msg "gain "
-                      (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
+                      (+ 6 (count (get-in card [:special :bravado-passed]))
                          (get-in card [:special :bravado-moved] 0))
                       " [Credits]")
                :async true
-               :effect (effect (gain-credits :runner eid (+ 6 (count (distinct (get-in card [:special :bravado-passed])))
-                                                            (get-in card [:special :bravado-moved] 0))))}
+               :effect (req (let [qty (+ 6 (count (get-in card [:special :bravado-passed]))
+                                         (get-in card [:special :bravado-moved] 0))]
+                              (gain-credits state :runner eid qty)))}
               {:event :card-moved
                :silent (req true)
-               :req (req (in-coll? (get-in card [:special :bravado-passed] []) (:cid target)))
-               :effect (effect (update! (update-in card [:special :bravado-moved] (fnil inc 0)))
-                         (update! (update-in (get-card state card) [:special :bravado-passed]
-                                             (fn [cids] (remove #(= % (:cid target)) cids)))))}]}))
+               :req (req (get (get-in card [:special :bravado-passed])
+                              (:cid (second targets))))
+               :effect (req (let [card (update! state side (update-in card [:special :bravado-moved] (fnil inc 0)))]
+                              (update! state side
+                                       (update-in card [:special :bravado-passed]
+                                                  disj (:cid (second targets))))))}]}))
 
 (defcard "Bribery"
   {:makes-run true

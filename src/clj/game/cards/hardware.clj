@@ -2011,17 +2011,18 @@
                                 :type :recurring}}})
 
 (defcard "Simulchip"
-  {:static-abilities [{:type :card-ability-additional-cost
-                       :req (req (and (same-card? card target)
-                                      (let [pred (fn [targets]
-                                                   (some #(and (runner? (:card %))
-                                                               (installed? (:card %))
-                                                               (program? (:card %)))
-                                                         targets))]
-                                        (zero? (+ (event-count state nil :runner-trash pred)
-                                                  (event-count state nil :corp-trash pred)
-                                                  (event-count state nil :game-trash pred))))))
-                       :value [:program 1]}]
+  {:static-abilities
+   [{:type :card-ability-additional-cost
+     :req (req (and (same-card? card target)
+                    (let [pred (fn [targets]
+                                 (some #(and (runner? (:card %))
+                                             (installed? (:card %))
+                                             (program? (:card %)))
+                                       targets))]
+                      (zero? (+ (event-count state nil :runner-trash pred)
+                                (event-count state nil :corp-trash pred)
+                                (event-count state nil :game-trash pred))))))
+     :value [:program 1]}]
    :abilities [{:async true
                 :label "Install a program from the heap"
                 :req (req (some #(and (program? %)

@@ -23,14 +23,13 @@
    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
    [game.core.winning :refer [concede]]))
 
-(defn checkpoint+clean-up
+(defn run-clean-up
   [state]
-  (fake-checkpoint state)
   ;; End the run if running an empty remote
   (when (or (check-for-empty-server state)
             (:ended (:end-run @state)))
     (handle-end-run state :corp nil)
-    (fake-checkpoint state)))
+    true))
 
 (defn command-parser
   [state side {:keys [user text] :as args}]
@@ -89,7 +88,7 @@
   [command state side args]
   (when-let [c (get commands command)]
     (c state side args)
-    (checkpoint+clean-up state)
-    (prn :process-action command side)
-    (state-continue state)
+    (state-continue state fake-checkpoint)
+    (when (run-clean-up state)
+      (state-continue state fake-checkpoint))
     true))

@@ -62,12 +62,9 @@
     (clear-wait-prompt state :corp)))
 
 (defn- init-hands [state]
-  (prn :draw-corp)
   (draw state :corp (make-eid state) 5 {:suppress-event true})
-  (prn :draw-runner)
   (draw state :runner (make-eid state) 5 {:suppress-event true})
   (doseq [side [:corp :runner]]
-    (prn :showing side)
     (when (-> @state side :identity :title)
       (show-prompt state side nil "Keep hand?"
                    ["Keep" "Mulligan"]
@@ -75,8 +72,6 @@
                       (keep-hand state side nil)
                       (mulligan state side nil))
                    {:prompt-type :mulligan})))
-    (prn (-> @state :corp :identity :title)
-         (-> @state :runner :identity :title))
   (when (and (-> @state :corp :identity :title)
              (-> @state :runner :identity :title))
     (show-wait-prompt state :runner "Corp to keep hand or mulligan")))
@@ -145,14 +140,11 @@
     (create-basic-action-cards state)
     (fake-checkpoint state)
     (let [eid (make-eid state)]
-      (prn :corp-pre-start-game eid)
       (wait-for (trigger-event-sync state :corp :pre-start-game nil)
-                (prn :runner-pre-start-game)
                 (wait-for (trigger-event-sync state :runner :pre-start-game nil)
-                          (prn :post-start-game)
                           (init-hands state)
                           (fake-checkpoint state)
-                          (effect-completed state eid))))
-    (state-continue state)
+                          (effect-completed state nil eid))))
+    (state-continue state fake-checkpoint)
     (swap! state assoc :history [(:hist-state (public-states state))])
     state))

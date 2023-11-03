@@ -212,7 +212,7 @@
 
 (declare do-ability resolve-ability-eid check-ability pay prompt! check-choices do-choices)
 
-(def ability-types (atom {}))
+(defonce ability-types (atom {}))
 
 (defn register-ability-type
   [kw ability-fn]
@@ -674,7 +674,6 @@
 
 (defn- trigger-event-sync-next
   [state side eid handlers event targets]
-  (prn :trigger-event-sync-next eid (some? (first handlers)))
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
       (wait-for (resolve-ability state side (make-eid state (assoc eid :source card :source-type :ability)) (dissoc-req (:ability to-resolve)) card targets)
@@ -692,7 +691,6 @@
     (effect-completed state side eid)
     (do (log-event state event targets)
         (let [handlers (gather-events state side eid event targets nil)]
-          (prn :handlers (count handlers))
           (trigger-event-sync-next state side eid handlers event targets)))))
 
 (defn- trigger-event-simult-player
@@ -1063,8 +1061,8 @@
                         :unpreventable true})
                 (doseq [card cards-to-trash]
                   (system-say state (to-keyword (:side card))
-                              (str (card-str state card) " is trashed."))
-                  (effect-completed state nil eid)))
+                              (str (card-str state card) " is trashed.")))
+                (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
 (defn check-restrictions
@@ -1072,11 +1070,12 @@
   ;; memory limit check
   (update-mu state)
   (let [{:keys [available used]} (-> @state :runner :memory)
-        available-mu (- available used)]
+        available-mu (- available used)
+        new-eid (make-eid state eid)]
     (wait-for
       (resolve-ability
         state :runner
-        (make-eid state eid)
+        new-eid
         (when (neg? available-mu)
           {:prompt (format "Insufficient MU. Trash %s MU of installed programs." (- available-mu))
            :choices {:max (count (all-installed-runner-type state :program))
@@ -1105,7 +1104,7 @@
        (check-win-by-agenda state)
        ;; d: uniqueness/console check
        (wait-for
-         (check-unique-and-consoles state nil)
+         (check-unique-and-consoles state nil (make-eid state eid))
          ;; e: restrictions on card abilities or game rules, MU
          (wait-for
            (check-restrictions state nil (make-eid state eid))

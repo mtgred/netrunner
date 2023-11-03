@@ -413,9 +413,9 @@
                  :options {:dont-start-game true}})
       (is (= 4 (count (get-in @state [:runner :play-area]))) "All directives are in the runner's play area")
       (is (zero? (count (get-in @state [:runner :hand]))))
-      (click-card state :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
-      (click-card state :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
-      (click-card state :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
+      (click-card state :runner (find-card "Neutralize All Threats" (:play-area (get-runner))))
+      (click-card state :runner (find-card "Safety First" (:play-area (get-runner))))
+      (click-card state :runner (find-card "Always Be Running" (:play-area (get-runner))))
       (is (= 3 (count (get-resource state))) "3 directives were installed")
       (is (zero? (count (get-in @state [:runner :play-area]))) "The play area is empty")
       (let [nat (find-card "Neutralize All Threats" (get-resource state))
@@ -436,7 +436,7 @@
       (click-card state :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
       (click-prompt state :corp "Keep")
       (click-prompt state :runner "Keep")
-      (core/start-turn state :corp nil)
+      (start-turn state :corp)
       (is (= 5 (:credit (get-corp))) "Pālanā does not gain credit from Adam's starting Directives")))
 
 (deftest adam-compulsive-hacker-neutralize-all-threats-interaction-with-advanceable-traps
@@ -451,7 +451,7 @@
       (click-card state :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
       (click-prompt state :corp "Keep")
       (click-prompt state :runner "Keep")
-      (core/start-turn state :corp nil)
+      (start-turn state :corp)
       (play-from-hand state :corp "Cerebral Overwriter" "New remote")
       (advance state (get-content state :remote1 0) 2)
       (take-credits state :corp)
@@ -2201,7 +2201,7 @@
      (take-credits state :corp)
      (run-empty-server state :hq)
      (click-prompt state :runner "No action")
-     (core/end-turn state :runner nil)
+     (end-turn state :runner)
      (is (= 0 (get-link state)) "Hoshiko is not flipped yet")
      (click-prompt state :runner "Hoshiko Shiro: Untold Protagonist")
      (is (:flipped (refresh ho)) "Only Hoshiko flip has been resolved")
@@ -2531,7 +2531,7 @@
                         :deck ["Braintrust"]}
                  :options {:dont-start-turn true}})
       (click-prompt state :corp "The Brewery")
-      (core/start-turn state :corp nil)
+      (start-turn state :corp)
       (card-ability state :corp (:identity (get-corp)) 1)
       (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Brewery flip")))
 
@@ -2542,7 +2542,7 @@
                         :deck ["Braintrust"]}
                  :options {:dont-start-turn true}})
       (click-prompt state :corp "The Greenhouse")
-      (core/start-turn state :corp nil)
+      (start-turn state :corp)
       (play-from-hand state :corp "Braintrust" "New remote")
       (take-credits state :corp)
       (take-credits state :runner)
@@ -2559,7 +2559,7 @@
                         :deck [(qty "Hedge Fund" 3)]}
                  :options {:dont-start-turn true}})
       (click-prompt state :corp "The Tank")
-      (core/start-turn state :corp nil)
+      (start-turn state :corp)
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
@@ -2832,7 +2832,7 @@
                  :corp {:deck [(qty "Hedge Fund" 5)]}
                  :options {:start-as :runner}})
       (core/lose state :runner :click 4)
-      (core/end-turn state :runner nil)
+      (end-turn state :runner)
       (is (= "Draw 1 card?" (:msg (prompt-map :runner))))
       (is (= 5 (count (:hand (get-runner)))))
       (click-prompt state :runner "Yes")
@@ -2850,7 +2850,7 @@
       (core/lose state :runner :click 3)
       (play-from-hand state :runner "Chameleon")
       (click-prompt state :runner "Barrier")
-      (core/end-turn state :runner nil)
+      (end-turn state :runner)
       (is (= 5 (count (:hand (get-runner)))))
       (click-prompt state :runner "Chameleon")
       (is (= "Draw 1 card?" (:msg (prompt-map :runner))))))
@@ -2863,7 +2863,7 @@
                  :corp {:deck [(qty "Hedge Fund" 5)]}
                  :options {:start-as :runner}})
       (core/lose state :runner :click 4)
-      (core/end-turn state :runner nil)
+      (end-turn state :runner)
       (is (= "Draw 1 card?" (:msg (prompt-map :runner))))
       (is (= 5 (count (:hand (get-runner)))))
       (click-prompt state :runner "No")
@@ -2877,7 +2877,7 @@
                  :corp {:deck [(qty "Hedge Fund" 4)]}
                  :options {:start-as :runner}})
       (core/lose state :runner :click 4)
-      (core/end-turn state :runner nil)
+      (end-turn state :runner)
       (is (no-prompt? state :runner) "No prompt")))
 
 (deftest leela-patel-trained-pragmatist-complicated-interaction-with-mutiple-gang-sign
@@ -3122,7 +3122,7 @@
       (run-on state :hq)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh (get-program state 0))})
+      (auto-pump-and-break state (get-program state 0))
       (core/continue state :corp nil)
       (run-continue state :success)
       (click-prompt state :runner "No action")))

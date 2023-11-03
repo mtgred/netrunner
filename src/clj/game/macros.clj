@@ -103,14 +103,14 @@
         expr (next body)
         abnormal? (#{'apply 'handler 'payable?} (first action))
         to-take (if abnormal? 4 3)
+        fn-name (gensym (name (first action)))
         [_ state _ eid?] (if abnormal? (next action) action)]
     `(let [eid?# ~eid?
            use-eid# (and (map? eid?#) (:eid eid?#))
            new-eid# (if use-eid# eid?# (game.core.eid/make-eid ~state))]
-       (prn :new-eid# new-eid#)
        (game.core.eid/register-effect-completed
          ~state new-eid#
-         (fn ~(if (vector? binds) binds [binds])
+         (fn ~fn-name ~(if (vector? binds) binds [binds])
            ~@expr))
        (if use-eid#
          (~@(take to-take action) new-eid# ~@(drop (inc to-take) action))
