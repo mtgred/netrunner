@@ -267,7 +267,7 @@
                     ;; everything is queued, then we perform the actual checkpoint.
                     (forfeit state side (make-eid state eid) agenda {:msg false
                                                                      :suppress-checkpoint true}))
-                  (wait-for (checkpoint state nil (make-eid state eid) nil)
+                  (wait-for (checkpoint state nil (make-eid state eid) {:durations [:game-trash]})
                             (complete-with-result
                               state side eid
                               {:msg (str "forfeits " (quantify (value cost) "agenda")

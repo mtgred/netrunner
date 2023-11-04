@@ -131,6 +131,9 @@
     moved-card))
 
 (defn- update-effects
+  "If a card moves within a zone (ice changes positions, card moves between servers),
+  then we should update it in the relevant :effects maps. We determine this by comparing
+  the :cid. Otherwise, remove the events with `:while-active` duration."
   [state {:keys [cid] :as card} moved-card]
   (if (= cid (:cid moved-card))
     ;; Moving the card hasn't changed the cid
@@ -156,7 +159,7 @@
            #(into [] (map-indexed (fn [idx card] (assoc card :index idx)) %)))))
 
 (defn- update-run-position
-  "If there is an active run, update the Runner's position if any ice was moved to or from an inward position"
+  "If there is an active run, update the Runner's position if any ice was moved to or from an inward position."
   [state old-card moved-card]
   (when-let* [run (:run @state)
               position (:position run)
@@ -324,7 +327,7 @@
      (complete-with-result state side eid acc))))
 
 (defn get-trash-effect
-  "Criteria for abilities that trigger when the card is trashed"
+  "Criteria for abilities that trigger when the card is trashed."
   [state side eid card {:keys [accessed cause cause-card host-trashed]}]
   (let [trash-effect (:on-trash (card-def card))]
     (when (and card
@@ -343,11 +346,44 @@
                                   :cause-card cause-card
                                   :accessed accessed}]
                                 trash-effect))
-      (let [once-per (:once-per-instance trash-effect)]
-        (-> trash-effect
-            (assoc :once-per-instance (if (some? once-per) once-per true)
-                   :condition :inactive)
-            (dissoc-req))))))
+      (-> trash-effect
+          (assoc :once-per-instance true
+                 :condition :inactive)
+          (dissoc-req)))))
+
+(defn set-duration-on-trash-events
+  "CR 1.8 9.1.8g: If an active card moves to a zone where it is inactive, an ability of
+  that card with a trigger condition that is met by this zone change remains active in
+  the card’s new location until any corresponding instances of the ability resolve.
+
+  This means that we must update all of the relevant `:X-trash` conditional abilities to
+  last until the checkpoint, as calling `move` on a card will unregister all of its
+  `:while-active` conditional abilities."
+  [state card trash-event]
+  (swap! state assoc :events
+         (reduce
+           (fn [acc cur]
+             (let [event (if (and (same-card? card (:card cur))
+                                  (= trash-event (:event cur)))
+                           (assoc cur :duration trash-event)
+                           cur)]
+               (conj acc event)))
+           []
+           (:events @state))))
+
+(defn get-trash-event
+  "The trash event will be determined by who is performing the trash.
+
+  `:game-trash` in this case refers to when a checkpoint sees a card has been trashed
+  and it has hosted cards, so it trashes each hosted card. (CR 1.8 10.3.1g) This doesn't
+  count as either player trashing the card, but the cards are counted as trashed by the
+  engine and so abilities that don't care who performed the trash (Simulchip for
+  example) still need it either logged or watchable."
+  [side game-trash]
+  (cond
+    game-trash :game-trash
+    (= side :corp) :corp-trash
+    (= side :runner) :runner-trash))
 
 (defn trash-cards
   "Attempts to trash each given card, and then once all given cards have been either
@@ -359,6 +395,7 @@
      (wait-for (prevent-trash state side (make-eid state eid) cards args)
                (let [trashlist async-result
                      _ (update-current-ice-to-trash state trashlist)
+                     trash-event (get-trash-event side game-trash)
                      ;; No card should end up in the opponent's discard pile, so instead
                      ;; of using `side`, we use the card's `:side`.
                      move-card (fn [card]
@@ -374,7 +411,8 @@
                      moved-cards (reduce
                                    (fn [acc card]
                                      (if-let [card (get-card? state card)]
-                                       (let [moved-card (move-card card)
+                                       (let [_ (set-duration-on-trash-events state card trash-event)
+                                             moved-card (move-card card)
                                              trash-effect (get-trash-effect state side eid card args)]
                                          (update-indicies card)
                                          (conj acc [moved-card trash-effect]))
@@ -387,19 +425,7 @@
                  ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                  (swap! state assoc-in [:corp :discard]
                         (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
-                 (let [;; The trash event will be determined by who is performing the
-                       ;; trash. `:game-trash` in this case refers to when a checkpoint
-                       ;; sees a card has been trashed and it has hosted cards, so it
-                       ;; trashes each hosted card. (Rule 10.3.1g)
-                       ;; This doesn't count as either player trashing the card, but
-                       ;; the cards are counted as trashed by the engine and so
-                       ;; abilities that don't care who performed the trash (Simulchip
-                       ;; for example) still need it either logged or watchable.
-                       trash-event (cond
-                                     game-trash :game-trash
-                                     (= side :corp) :corp-trash
-                                     (= side :runner) :runner-trash)
-                       eid (make-result eid (mapv first moved-cards))]
+                 (let [eid (make-result eid (mapv first moved-cards))]
                    (doseq [[card trash-effect] moved-cards
                            :when trash-effect]
                      (register-pending-event state trash-event card trash-effect))
@@ -410,7 +436,7 @@
                                                      :accessed accessed}))
                    (if suppress-checkpoint
                      (effect-completed state nil eid)
-                     (checkpoint state nil eid nil))))))))
+                     (checkpoint state nil eid {:duration trash-event}))))))))
 
 (defmethod engine/move* :trash-cards [state side eid _action cards args]
   (trash-cards state side eid cards args))
@@ -585,7 +611,7 @@
                (queue-event state (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) {:card card})
                (if suppress-checkpoint
                  (complete-with-result state side eid card)
-                 (checkpoint state nil (make-result eid card) nil))))))
+                 (checkpoint state nil (make-result eid card) {:duration :game-trash}))))))
 
 (defn flip-facedown
   "Flips a runner card facedown, either manually (if it's hosted) or by calling move to facedown"

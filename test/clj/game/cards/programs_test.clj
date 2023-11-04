@@ -76,7 +76,6 @@
         -6 (:credit (get-runner))
         "Spent 6 credits to break 3 barrier subs"
         (card-ability state :runner (refresh adept) 0)
-        (print-prompts)
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "End the run"))
