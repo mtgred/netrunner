@@ -147,6 +147,7 @@
       (fn [lobby]
         (let [player-usernames (->> (:players lobby)
                                     (map #(get-in % [:user :username]))
+                                    (filter some?)
                                     (map str/lower-case)
                                     (set))
               user-blocked-players?
