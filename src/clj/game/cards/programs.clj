@@ -832,8 +832,8 @@
 (defcard "Clot"
   {:on-install
    {:effect (req (let [agendas (->> (turn-events state :corp :corp-install)
-                                    (filter #(agenda? (:card (first %))))
-                                    (map first))]
+                                    (map #(:card (first %)))
+                                    (filter agenda?))]
                    (swap! state assoc-in [:corp :register :cannot-score] agendas)))}
    :events [{:event :purge
              :async true
