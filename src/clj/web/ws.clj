@@ -16,7 +16,6 @@
                                           arg))]
     (assoc data :vargs (map filter-uid-from-log-arg (:vargs data )))))
 (timbre/merge-config! {:middleware [redact-uid-middleware]})
-(sente/set-min-log-level! :info)
 
 (let [chsk-server (sente/make-channel-socket-server!
                     (get-sch-adapter)
@@ -59,16 +58,16 @@
           ws-conn-total (reduce + ws-conn-counts)
           ws-conn-max (apply max (conj ws-conn-counts 0))
           ]
-      (println (str "connected -"
-                    " :ajax { "
-                    " uid: " ajax-uid-count
-                    " conn: " ajax-conn-total
-                    " conn-max: " ajax-conn-max
-                    " } :ws { "
-                    " uid: " ws-uid-count
-                    " conn: " ws-conn-total
-                    " conn-max: " ws-conn-max
-                    " }"))))))
+      (timbre/info (str "connected -"
+                        " :ajax { "
+                        " uid: " ajax-uid-count
+                        " conn: " ajax-conn-total
+                        " conn-max: " ajax-conn-max
+                        " } :ws { "
+                        " uid: " ws-uid-count
+                        " conn: " ws-conn-total
+                        " conn-max: " ws-conn-max
+                        " }"))))))
 
 (defonce ratelimiter
   (go (while true
