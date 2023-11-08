@@ -1592,6 +1592,49 @@
                            (card-ability state :runner refr 1)
                            (click-card state :runner cl)))))
 
+(deftest clot
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand [(qty "Hostile Takeover" 2)]}
+               :runner {:deck ["Clot"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [ht (get-content state :remote1 0)]
+      (advance state ht)
+      (advance state ht))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clot")
+    (take-credits state :runner)
+    (changes-val-macro 1 (count (:scored (get-corp))) "Clot should not block score for agenda installed previous turn"
+                       (score state :corp (get-content state :remote1 0)))
+    (changes-val-macro 0 (count (:scored (get-corp))) "Clot should not allow score for agenda on same turn it was installed"
+                       (play-from-hand state :corp "Hostile Takeover" "New remote")
+                       (let [ht2 (get-content state :remote2 0)]
+                         (advance state ht2)
+                         (advance state ht2)
+                         (score state :corp ht2)))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (changes-val-macro 1 (count (:scored (get-corp))) "Clot should not block score on turn after agenda is installed"
+                       (score state :corp (get-content state :remote2 0)))))
+
+(deftest clot-from-smc-should-prevent-score
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hostile Takeover"]}
+               :runner {:deck ["Clot"]
+                        :hand ["Self-modifying Code"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (changes-val-macro 0 (count (:scored (get-corp))) "Clot should block on same turn even when installed after agenda"
+                       (let [ht (get-content state :remote1 0)]
+                         (advance state ht)
+                         (advance state ht)
+                         (card-ability state :runner (get-program state 0) 0)
+                         (click-prompt state :runner "Clot")
+                         (score state :corp ht)))))
+
 (deftest clot-trashed-on-purge-triggers-reaver
   (do-game
     (new-game {:corp {:deck ["Hedge Fund"]}
@@ -1604,8 +1647,7 @@
     (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
     (purge state :corp)
     (is (= "Clot" (-> (get-runner) :discard first :title)) "Clot was trashed on purge")
-    (is (= 1 (count (:hand (get-runner)))) "Reaver triggered when Clot was trashed")
-    ))
+    (is (= 1 (count (:hand (get-runner)))) "Reaver triggered when Clot was trashed")))
 
 (deftest conduit
   ;; Conduit
