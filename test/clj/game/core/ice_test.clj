@@ -7,7 +7,7 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
-(deftest auto-pump-and-break
+(deftest auto-pump-and-break-test
   (testing "update after ice updates subs"
     (do-game
       (new-game {:corp {:hand ["Tour Guide" (qty "PAD Campaign" 2)]
@@ -199,7 +199,7 @@
         (is (not-empty (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh utae)))) "Auto pump is active")
         (is (empty? (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh utae)))) "No auto break dynamic ability")))))
 
-(deftest bioroid-break-abilities
+(deftest bioroid-break-abilities-test
   ;; The click-to-break ablities on bioroids shouldn't create an undo-click
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

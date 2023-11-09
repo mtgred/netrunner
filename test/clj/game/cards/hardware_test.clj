@@ -3968,7 +3968,7 @@
           (card-subroutine state :corp dm 0)
           (card-ability state :runner rr1 0)
           (click-prompt state :runner "1")
-          (is (last-n-log-contains? state 2 "Sure Gamble")
+          (is (last-n-log-contains? state 1 "Sure Gamble")
               "Ramujan did log trashed card names")
           (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
           (run-continue state)

@@ -11,7 +11,7 @@
    [game.core.change-vals :refer [change]]
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.commands :refer [parse-command]]
-   [game.core.eid :refer [make-eid state-continue]]
+   [game.core.eid :refer [make-eid]]
    [game.core.moving :refer [trash]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [check-for-empty-server continue handle-end-run
@@ -23,13 +23,14 @@
    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
    [game.core.winning :refer [concede]]))
 
-(defn run-clean-up
+(defn checkpoint+clean-up
   [state]
+  (fake-checkpoint state)
   ;; End the run if running an empty remote
   (when (or (check-for-empty-server state)
             (:ended (:end-run @state)))
     (handle-end-run state :corp nil)
-    true))
+    (fake-checkpoint state)))
 
 (defn command-parser
   [state side {:keys [user text] :as args}]
@@ -88,7 +89,5 @@
   [command state side args]
   (when-let [c (get commands command)]
     (c state side args)
-    (state-continue state fake-checkpoint)
-    (when (run-clean-up state)
-      (state-continue state fake-checkpoint))
+    (checkpoint+clean-up state)
     true))

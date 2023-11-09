@@ -6,7 +6,7 @@
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.diffs :refer [public-states]]
    [game.core.drawing :refer [draw]]
-   [game.core.eid :refer [make-eid state-continue effect-completed]]
+   [game.core.eid :refer [make-eid effect-completed]]
    [game.core.engine :refer [trigger-event trigger-event-sync]]
    [game.core.initializing :refer [card-init make-card]]
    [game.core.player :refer [new-corp new-runner]]
@@ -145,6 +145,5 @@
                           (init-hands state)
                           (fake-checkpoint state)
                           (effect-completed state nil eid))))
-    (state-continue state fake-checkpoint)
     (swap! state assoc :history [(:hist-state (public-states state))])
     state))

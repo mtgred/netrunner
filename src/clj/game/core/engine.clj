@@ -1070,12 +1070,11 @@
   ;; memory limit check
   (update-mu state)
   (let [{:keys [available used]} (-> @state :runner :memory)
-        available-mu (- available used)
-        new-eid (make-eid state eid)]
+        available-mu (- available used)]
     (wait-for
       (resolve-ability
         state :runner
-        new-eid
+        (make-eid state eid)
         (when (neg? available-mu)
           {:prompt (format "Insufficient MU. Trash %s MU of installed programs." (- available-mu))
            :choices {:max (count (all-installed-runner-type state :program))

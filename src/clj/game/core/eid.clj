@@ -46,8 +46,9 @@
   [state _ eid]
   (doseq [side [:corp :runner]]
     (clear-eid-wait-prompt state side eid))
-  (when (get-in @state [:effect-completed (:eid eid)])
-    (swap! state update-in [:effect-completed :next-eid] #(cons eid %)))
+  (when-let [handler (get-in @state [:effect-completed (:eid eid)])]
+    (handler eid)
+    (swap! state update :effect-completed dissoc (:eid eid)))
   nil)
 
 (defn make-result
@@ -59,16 +60,3 @@
   [state side eid result]
   (effect-completed state side (make-result eid result))
   nil)
-
-(defn state-continue
-  ([state] (state-continue state identity))
-  ([state update-state]
-   (update-state state)
-   (loop [[next-eid] (get-in @state [:effect-completed :next-eid])]
-     (when next-eid
-       (swap! state update-in [:effect-completed :next-eid] next)
-       (when-let [handler (get-in @state [:effect-completed (:eid next-eid)])]
-         (swap! state update :effect-completed dissoc (:eid next-eid))
-         (handler next-eid)
-         (update-state state))
-       (recur (get-in @state [:effect-completed :next-eid]))))))

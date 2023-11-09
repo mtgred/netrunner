@@ -3647,7 +3647,7 @@
       (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
       (click-card state :runner (get-ice state :hq 0))
       (click-card state :runner (get-ice state :rd 0))
-      (is (= {:next-eid nil} (:effect-completed @state))
+      (is (= {} (:effect-completed @state))
           "All score and Leela effects resolved")))
 
 (deftest restructured-datapool

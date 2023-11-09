@@ -7,7 +7,7 @@
             [game.core.card :refer [get-card installed? rezzed? active? get-counters get-title]]
             [game.core.ice :refer [active-ice?]]
             [game.utils :as utils :refer [server-card]]
-            [game.core.eid :as eid :refer [state-continue]]
+            [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]
@@ -159,7 +159,6 @@
          (click-prompt state :runner "Mulligan")
          (click-prompt state :runner "Keep"))
        (when-not dont-start-turn (core/start-turn state :corp nil)))
-     (state-continue state fake-checkpoint)
      ;; Gotta move cards where they need to go
      (doseq [side [:corp :runner]]
        (let [side-map (if (= :corp side) corp runner)]
@@ -183,7 +182,6 @@
      (when-let [tags (:tags runner)]
        (swap! state assoc-in [:runner :tag :base] tags))
      (when (= start-as :runner) (take-credits state :corp))
-     (state-continue state fake-checkpoint)
      (core/fake-checkpoint state)
      state)))
 
@@ -272,8 +270,6 @@
 (defn gain-tags
   [state side n]
   (core/gain-tags state side (core/make-eid state) n)
-  (core/fake-checkpoint state)
-  (state-continue state fake-checkpoint)
   (core/fake-checkpoint state))
 
 (defn remove-tag
@@ -725,35 +721,29 @@
 (defn damage
   [state side dmg-type qty]
   (core/damage state side (core/make-eid state) dmg-type qty nil)
-  (core/fake-checkpoint state)
-  (state-continue state fake-checkpoint)
   (core/fake-checkpoint state))
 
 (defn move
   ([state side card location] (move state side card location nil))
   ([state side card location args]
    (core/move state side card location args)
-   (core/fake-checkpoint state)
-   (state-continue state fake-checkpoint)))
+   (core/fake-checkpoint state)))
 
 (defn draw
   ([state side] (draw state side 1 nil))
   ([state side n] (draw state side n nil))
   ([state side n args]
-   (core/draw state side (core/make-eid state) n args)
-   (state-continue state fake-checkpoint)))
+   (core/draw state side (core/make-eid state) n args)))
 
 (defn purge
   [state side]
-  (core/purge state side (core/make-eid state))
-  (state-continue state fake-checkpoint))
+  (core/purge state side (core/make-eid state)))
 
 (defn trace
   [state base]
   (core/init-trace state :corp
                    (map->Card {:title "/trace command" :side :corp})
-                   {:base base})
-  (state-continue state fake-checkpoint))
+                   {:base base}))
 
 (defn print-log [state]
   (->> (:log @state)
