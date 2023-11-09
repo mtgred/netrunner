@@ -143,7 +143,7 @@
              :effect (req (let [original-server (zone->name (second (get-zone (:card context))))]
                             (continue-ability
                               state side
-                              {:prompt "Choose a card to install in another remote server"
+                              {:prompt "Choose a card to install in or protecting another remote server"
                                :waiting-prompt true
                                :choices {:card #(and (corp? %)
                                                      (corp-installable-type? %)
@@ -154,6 +154,7 @@
                                                 state side
                                                 {:prompt "Choose a remote server"
                                                  :waiting-prompt true
+                                                 :msg "install a card from HQ ignoring all costs"
                                                  :choices (req (conj (vec (filter #(not= original-server %)
                                                                                   (get-remote-names state))) "New remote"))
                                                  :async true
