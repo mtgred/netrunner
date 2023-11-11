@@ -26,7 +26,7 @@
                              first-successful-run-on-server? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-host? card-flag? lock-zone release-zone zone-locked?]]
+   [game.core.flags :refer [can-host? can-trash? card-flag? lock-zone release-zone zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-credits]]
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [all-subs-broken-by-card? all-subs-broken?
@@ -1671,7 +1671,8 @@
 (defcard "Imp"
   {:data {:counter {:virus 2}}
    :interactions {:access-ability {:label "Trash card"
-                                   :req (req (not (get-in @state [:per-turn (:cid card)])))
+                                   :req (req (and (can-trash? state :runner target)
+                                                  (not (get-in @state [:per-turn (:cid card)]))))
                                    :cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn

@@ -3518,6 +3518,21 @@
                    "Ice Wall"
                    "Oberth Protocol"]))))
 
+(deftest imp-cannot-trash-flag-interaction
+  ;; Interaction with :can-trash flag
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas"]}
+               :runner {:hand ["Imp" "Pinhole Threading"]}})
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Imp")
+    (play-from-hand state :runner "Pinhole Threading")
+    (click-prompt state :runner "Archives")
+    (run-continue state)
+    (click-card state :runner "Project Atlas")
+    (is (= ["No action"] (prompt-buttons :runner)))
+    (click-prompt state :runner "No action")))
+
 (deftest imp-vs-an-ambush
     ;; vs an ambush
     (do-game
