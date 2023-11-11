@@ -28,7 +28,7 @@
                              run-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-card]]
-   [game.core.flags :refer [card-flag? in-corp-scored? register-run-flag!
+   [game.core.flags :refer [can-trash? card-flag? in-corp-scored? register-run-flag!
                             zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
                               lose-credits]]
@@ -396,7 +396,8 @@
    :interactions
    {:access-ability
     {:label "Trash card"
-     :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+     :req (req (and (can-trash? state :runner target)
+                    (not (get-in @state [:per-turn (:cid card)]))
                     (<= 2 (count (:hand runner)))))
      :cost [:trash-from-hand 2]
      :msg (msg "trash " (:title target) " at no cost")
