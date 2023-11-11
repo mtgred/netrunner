@@ -27,7 +27,7 @@
                              turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid find-latest]]
-   [game.core.flags :refer [any-flag-fn? can-rez?
+   [game.core.flags :refer [any-flag-fn? can-rez? can-trash?
                             clear-all-flags-for-card! clear-run-flag! clear-turn-flag!
                             in-corp-scored? register-run-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -424,7 +424,8 @@
         card
         [{:event :access
           :duration :end-of-turn
-          :req (req (not (in-discard? target)))
+          :req (req (and (can-trash? state :runner target)
+                         (not (in-discard? target))))
           :interactive (req true)
           :async true
           :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
@@ -953,6 +954,7 @@
              :effect (effect (make-run eid target card))}
    :interactions {:access-ability
                   {:label "Trash card"
+                   :req (req (can-trash? state :runner target))
                    :msg (msg "trash " (:title target) " at no cost")
                    :async true
                    :effect (effect (trash eid (assoc target :seen true) {:cause-card card}))}}})
