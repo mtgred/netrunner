@@ -11,7 +11,7 @@
                             all-installed-runner card->server server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp?
                            event? facedown? get-agenda-points get-card get-counters
-                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
+                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand? in-scored?
                            installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
@@ -1698,7 +1698,8 @@
             {:event :card-moved
              :interactive (req true)
              :optional
-             {:req (req (= :runner (:scored-side (second targets))))
+             {:req (req (and (in-scored? (second targets))
+                          (= :runner (:scored-side (second targets)))))
               :waiting-prompt true
               :prompt (msg "Trash " (:title card) "?")
               :yes-ability
