@@ -59,7 +59,7 @@
                                     {:unpreventable true
                                      :host-trashed true
                                      :game-trash true})
-                       ())
+                       nil)
         update-hosted (fn [h]
                         (let [newz (flatten (list dest))
                               newh (-> h

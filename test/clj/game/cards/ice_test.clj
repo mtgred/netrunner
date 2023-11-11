@@ -202,7 +202,7 @@
         (core/gain state :runner :credit 5)
         (run-on state :hq)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (auto-pump state cor)
         (card-ability state :runner (refresh cor) 0)
         (click-prompt state :runner "End the run")
         (is (no-prompt? state :runner) "No option to break second sub")))))
@@ -226,22 +226,23 @@
 (deftest anansi-no-net-damage-when-breaking-all-subs
   ;; no net damage when breaking all subs
   (do-game
-    (new-game {:corp {:deck ["Anansi"]}
-               :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]}})
+    (new-game {:corp {:deck ["Anansi"]
+                      :credits 15}
+               :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]
+                        :credits 15}})
     (play-from-hand state :corp "Anansi" "HQ")
-    (core/gain state :corp :credit 8)
     (take-credits state :corp)
     (play-from-hand state :runner "Mongoose")
-    (core/gain state :runner :credit 7)
     (let [anansi (get-ice state :hq 0)
           mongoose (get-program state 0)]
       (run-on state :hq)
       (rez state :corp anansi)
-      (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "3 net damage from passing Anansi"
-                         (core/continue state :corp nil)))))
+      (run-continue state :encounter-ice)
+      (auto-pump-and-break state mongoose)
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "3 net damage from passing Anansi"
+        (run-continue state)))))
 
 (deftest anansi-anansi-and-border-control-issue-4769
   ;; Anansi and Border Control. Issue #4769
@@ -259,17 +260,19 @@
           corroder (get-program state 0)]
       (run-on state :hq)
       (rez state :corp anansi)
-      (run-continue state)
-      (changes-val-macro -3 (count (:hand (get-runner)))
-                         "3 net damage from passing Anansi"
-                         (run-continue state))
+      (run-continue state :encounter-ice)
+      (changes-val-macro
+        -3 (count (:hand (get-runner)))
+        "3 net damage from passing Anansi"
+        (run-continue state :movement))
       (rez state :corp border)
-      (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-      (core/continue state :corp nil)
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "No further net damage"
-                         (card-ability state :corp (refresh border) 0))
+      (run-continue state :approach-ice)
+      (run-continue state :encounter-ice)
+      (auto-pump-and-break state corroder)
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "No further net damage"
+        (card-ability state :corp (refresh border) 0))
       (is (nil? (get-run)) "Run ended"))))
 
 (deftest anansi-runner-has-to-pay-2c-to-draw-card-issue-5335
@@ -288,9 +291,10 @@
       (run-continue state)
       (card-subroutine state :corp anansi 1)
       (click-prompt state :corp "No")
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "No new card from Anansi"
-                         (click-prompt state :runner "Yes"))
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "No new card from Anansi"
+        (click-prompt state :runner "Yes"))
       (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
 (deftest anansi-2nd-sub-test-runner-clicks-yes
@@ -526,9 +530,8 @@
       (changes-val-macro
         -4 (:credit (get-runner))
         "spent 4 to break"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh unity)})
-        (core/continue state :corp nil))
+        (auto-pump-and-break state unity)
+        (core/process-action "continue" state :corp nil))
       (run-jack-out state)
       (run-on state :hq)
       (run-continue state :encounter-ice)
@@ -537,8 +540,7 @@
       (changes-val-macro
         0 (:credit (get-runner))
         "can't break"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh unity)}))
+        (auto-pump-and-break state unity))
       (changes-val-macro
         1 (:credit (get-corp))
         "gained 1"
@@ -843,8 +845,7 @@
       (changes-val-macro
         0 (:credit (get-corp))
         "Never gained money from bailiff"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state cor)
         (click-prompt state :runner "Yes")))))
 
 (deftest bailiff-interaction-with-hippo-sub-boost-with-cleaver
@@ -865,8 +866,7 @@
       (changes-val-macro
         +0 (:credit (get-corp))
         "Gained 0 credits from bailiff + sub boost being broken with cleaver + hippo"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state cor)
         (click-prompt state :runner "Yes")))))
 
 (deftest bailiff-interaction-with-hippo-sub-boost-with-corroder
@@ -887,8 +887,7 @@
       (changes-val-macro
         +1 (:credit (get-corp))
         "Gained 1 credit from bailiff + sub boost being broken with corroder + hippo"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state (refresh cor))
         (click-prompt state :runner "Yes")))))
 
 (deftest bailiff-sub-boost-auto-break
@@ -908,11 +907,9 @@
         (changes-val-macro
           +2 (:credit (get-corp))
           "Gained 2c from the runner breaking"
-          (core/play-dynamic-ability state :runner
-                                     {:dynamic "auto-pump-and-break" :card (refresh cor)})
-          (is (and (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 \\[Credits\\]")
-                   (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 \\[Credits\\]"))
-              "Correct messages"))))))
+          (auto-pump-and-break state cor))
+        (is (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 \\[Credits\\]"))
+        (is (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 \\[Credits\\]"))))))
 
 (deftest ballista
   ;; Ballista
@@ -1387,8 +1384,8 @@
       (changes-val-macro
         +4 (count (:discard (get-runner)))
         "milled 4 with Chiyashi (2 + 2, ice trashed before third mill)"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-        (core/continue state :corp nil)
+        (auto-pump-and-break state corroder)
+        (core/process-action "continue" state :corp nil)
         (click-prompt state :runner "Yes")
         (run-jack-out state))
       (run-on state "R&D")
@@ -1396,16 +1393,16 @@
       (changes-val-macro
         +7 (count (:discard (get-runner)))
         "milled 6 with Chiyashi, and trashed crypsis"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh crypsis)})
-        (core/continue state :corp nil)
+        (auto-pump-and-break state crypsis)
+        (core/process-action "continue" state :corp nil)
         (run-jack-out state))
       (run-on state "R&D")
       (run-continue state)
       (changes-val-macro
         0 (count (:discard (get-runner)))
         "milled 0 with Chiyashi, no AI is installed"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-        (core/continue state :corp nil)
+        (auto-pump-and-break state corroder)
+        (core/process-action "continue" state :corp nil)
         (run-jack-out state)))))
 
 (deftest chrysalis
@@ -1465,8 +1462,8 @@
       (run-continue-until state :encounter-ice icewall)
       (is (= 3 (get-strength (refresh icewall))) "Ice Wall now at 3 strength")
       (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-      (core/continue state :corp nil)
+      (auto-pump-and-break state corroder)
+      (core/process-action "continue" state :corp nil)
       (run-continue-until state :encounter-ice enigma)
       (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
       (run-continue state :movement)
@@ -1510,10 +1507,11 @@
       (run-continue-until state :approach-ice icewall)
       (rez state :corp icewall)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "No Damage from Ice Wall ending the run"
-                         (core/continue state :corp nil)))))
+      (auto-pump-and-break state corroder)
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "No Damage from Ice Wall ending the run"
+        (core/process-action "continue" state :corp nil)))))
 
 (deftest congratulations
   ;; Congratulations!
@@ -2788,7 +2786,7 @@
       (changes-val-macro
         -4 (:credit (get-runner))
         "Paid 2c + 2c for breaking"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state cor)
         (is (and (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
                  (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs"))
             "Correct messages")))))
@@ -2810,7 +2808,7 @@
       (changes-val-macro
         -4 (:credit (get-runner))
         "Paid 2c + 2c for breaking"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)})))))
+        (auto-pump-and-break state pc)))))
 
 (deftest gold-farmer-hippo-interaction-with-corroder
   ;; Hippo interaction with Corroder
@@ -2830,7 +2828,7 @@
       (changes-val-macro
         -3 (:credit (get-runner))
         "Only got taxed once by Gold Farmer"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state cor)
         (click-prompt state :runner "Yes")))))
 
 (deftest gold-farmer-hippo-interaction-with-laamb
@@ -2851,7 +2849,7 @@
       (changes-val-macro
         -2 (:credit (get-runner))
         "Never got taxed by Gold Farmer"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lam)})
+        (auto-pump-and-break state lam)
         (click-prompt state :runner "Yes")))))
 
 (deftest gold-farmer-hippo-interaction-with-paperclip
@@ -2872,7 +2870,7 @@
       (changes-val-macro
         -2 (:credit (get-runner))
         "Never got taxed by Gold Farmer"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)})
+        (auto-pump-and-break state pc)
         (click-prompt state :runner "Yes")))))
 
 (deftest gold-farmer-gold-farmer-does-not-trigger-when-breaking-with-grappling-hook-4975
@@ -5453,7 +5451,7 @@
           runner-credits (:credit (get-runner))]
       (rez state :corp pachinko)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+      (auto-pump-and-break state corroder)
       (is (= (- runner-credits 4) (:credit (get-runner))) "Autopump subtracted correct amount of credits"))))
 
 (deftest pachinko-etr-with-tags
@@ -5504,7 +5502,7 @@
           corroder (get-program state 0)]
       (rez state :corp paperwall)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+      (auto-pump-and-break state corroder)
       (is (nil? (get-ice state :hq 0)) "Paper Wall was trashed"))))
 
 (deftest peeping-tom
@@ -5858,17 +5856,19 @@
       (rez state :corp sai)
       (run-continue state)
       (click-prompt state :corp "Event")
-      (changes-val-macro -6 (count (:hand (get-runner)))
-                         "6 damage in total"
-                         (core/play-unbroken-subroutines state :corp {:card (refresh sai)}))
+      (changes-val-macro
+        -6 (count (:hand (get-runner)))
+        "6 damage in total"
+        (fire-subs state (refresh sai)))
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue state)
       (click-prompt state :corp "Hardware")
-      (changes-val-macro -3 (count (:hand (get-runner)))
-                         "3 damage in total"
-                         (core/play-unbroken-subroutines state :corp {:card (refresh sai)})))))
+      (changes-val-macro
+        -3 (count (:hand (get-runner)))
+        "3 damage in total"
+        (fire-subs state (refresh sai))))))
 
 (deftest saisentan-preventing-damage
   ;; Preventing damage
@@ -5886,19 +5886,23 @@
       (rez state :corp sai)
       (run-continue state)
       (click-prompt state :corp "Event")
-      (core/play-unbroken-subroutines state :corp {:card (refresh sai)})
-      (changes-val-macro -1 (count (:hand (get-runner)))
-                         "Let through first sub damage"
-                         (click-prompt state :runner "Done"))
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "Prevent special damage"
-                         (card-ability state :runner cal 0))
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "Prevent second sub damage"
-                         (card-ability state :runner cal 0))
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "Prevent third sub damage"
-                         (card-ability state :runner cal 0))
+      (fire-subs state (refresh sai))
+      (changes-val-macro
+        -1 (count (:hand (get-runner)))
+        "Let through first sub damage"
+        (click-prompt state :runner "Done"))
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Prevent special damage"
+        (card-ability state :runner cal 0))
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Prevent second sub damage"
+        (card-ability state :runner cal 0))
+      (changes-val-macro
+        0 (count (:hand (get-runner)))
+        "Prevent third sub damage"
+        (card-ability state :runner cal 0))
       (is (no-prompt? state :runner) "No more damage prevention triggers"))))
 
 (deftest salvage-subroutine-gaining-ability
@@ -7391,7 +7395,7 @@
       (card-ability state :runner carm 0)
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub")
-      (core/play-unbroken-subroutines state :corp {:card (refresh ut-hq)})
+      (fire-subs state (refresh ut-hq))
       (is (= 2 (count (:hand (get-runner)))) "Runner took no net damage")
       (is (= 1 (count-tags state)) "Runner took 1 tag")
       (changes-val-macro 2 (count (:hand (get-corp)))
@@ -7452,7 +7456,7 @@
       (card-ability state :runner carm 0)
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub")
-      (core/play-unbroken-subroutines state :corp {:card (refresh ut)})
+      (fire-subs state (refresh ut))
       (is (= 2 (count (:hand (get-runner)))) "Runner took no net damage")
       (is (= 1 (count-tags state)) "Runner took 1 tag")
       (changes-val-macro 2 (count (:hand (get-corp)))

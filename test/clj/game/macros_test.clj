@@ -73,7 +73,7 @@
          {:type (if (= actual-change# ~change-amt) :pass :fail)
           :actual actual-change#
           :expected ~change-amt
-          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " (cons 'do '~body-form))}))))
+          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) "\n" ~msg " " (cons 'do '~body-form))}))))
 
 (defmacro changes-val [change-amt val-form & body-form]
   `(changes-val-macro ~change-amt ~val-form "" ~@body-form))

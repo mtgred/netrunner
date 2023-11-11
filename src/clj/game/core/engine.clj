@@ -212,7 +212,7 @@
 
 (declare do-ability resolve-ability-eid check-ability pay prompt! check-choices do-choices)
 
-(def ability-types (atom {}))
+(defonce ability-types (atom {}))
 
 (defn register-ability-type
   [kw ability-fn]
@@ -1061,8 +1061,8 @@
                         :unpreventable true})
                 (doseq [card cards-to-trash]
                   (system-say state (to-keyword (:side card))
-                              (str (card-str state card) " is trashed."))
-                  (effect-completed state nil eid)))
+                              (str (card-str state card) " is trashed.")))
+                (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
 (defn check-restrictions
@@ -1103,7 +1103,7 @@
        (check-win-by-agenda state)
        ;; d: uniqueness/console check
        (wait-for
-         (check-unique-and-consoles state nil)
+         (check-unique-and-consoles state nil (make-eid state eid))
          ;; e: restrictions on card abilities or game rules, MU
          (wait-for
            (check-restrictions state nil (make-eid state eid))

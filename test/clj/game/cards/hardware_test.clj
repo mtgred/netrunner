@@ -184,7 +184,8 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
+      (doseq [card (:hand (get-runner))]
+        (trash state :runner card))
       (is (= 0 (count (:hand (get-runner)))) "The runner has not drawn a card")))
 
 (deftest aniccam-trashing-an-event-along-with-some-non-events-triggers-aniccam
@@ -194,7 +195,8 @@
                           :deck ["Corroder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
+      (doseq [card (:hand (get-runner))]
+        (trash state :runner card))
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
 
 (deftest aniccam-aniccam-must-not-trigger-a-second-time-in-one-turn
@@ -258,15 +260,6 @@
       (play-from-hand state :runner "Aniccam")
       (play-from-hand state :runner "Easy Mark")
       (is (find-card "Corroder" (:hand (get-runner))) "The runner has drawn a card")))
-
-(deftest aniccam-event-play-trash-events
-    ;; Event play/trash events
-    (do-game
-      (new-game {:runner {:hand ["Aniccam" "Sure Gamble" "Dirty Laundry"]
-                          :deck ["Corroder"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Aniccam")
-      (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))))
 
 (deftest aniccam-trashing-a-current-triggers-aniccam
     ;; Trashing a current triggers Aniccam
@@ -848,7 +841,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (let [[target] (:hand (get-runner))]
-        (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
+        (doseq [card (:hand (get-runner))]
+          (trash state :runner card))
         (click-prompt state :runner (:title target))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -863,7 +857,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (let [[target] (:hand (get-runner))]
-        (core/trash-cards state :runner (core/make-eid state) (:hand (get-runner)))
+        (doseq [card (:hand (get-runner))]
+          (trash state :runner card))
         (click-prompt state :runner (:title target))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -878,7 +873,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
       (let [[target] (take 3 (:deck (get-runner)))]
-        (core/trash-cards state :runner (core/make-eid state) (take 3 (:deck (get-runner))))
+        (doseq [card (take 3 (:deck (get-runner)))]
+          (trash state :runner card))
         (click-prompt state :runner (:title target))
         (is (= 2 (count (:deck (get-runner)))))
         (is (= 2 (count (:discard (get-runner)))))
@@ -3972,7 +3968,7 @@
           (card-subroutine state :corp dm 0)
           (card-ability state :runner rr1 0)
           (click-prompt state :runner "1")
-          (is (second-last-log-contains? state "Sure Gamble")
+          (is (last-n-log-contains? state 1 "Sure Gamble")
               "Ramujan did log trashed card names")
           (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
           (run-continue state)
@@ -4480,21 +4476,22 @@
                  :runner {:hand ["Simulchip" "Chisel"]
                           :credits 20}})
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (take-credits state :corp)
-      (core/gain state :runner :click 5)
-      (play-from-hand state :runner "Chisel")
-      (click-card state :runner "Ice Wall")
-      (run-on state "HQ")
-      (rez state :corp (get-ice state :hq 0))
-      (run-continue-until state :movement)
-      (run-jack-out state)
-      (run-on state "HQ")
-      (run-continue-until state :movement)
-      (run-jack-out state)
-      (play-from-hand state :runner "Simulchip")
-      (card-ability state :runner (get-hardware state 0) 0)
-      (is (= "Choose a target for Simulchip" (:msg (prompt-map :runner)))
-          "Runner has ability target prompt")))
+      (let [iw (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (core/gain state :runner :click 5)
+        (play-from-hand state :runner "Chisel")
+        (click-card state :runner "Ice Wall")
+        (run-on state "HQ")
+        (rez state :corp (refresh iw))
+        (run-continue-until state :movement)
+        (run-jack-out state)
+        (run-on state "HQ")
+        (run-continue-until state :movement)
+        (run-jack-out state)
+        (play-from-hand state :runner "Simulchip")
+        (card-ability state :runner (get-hardware state 0) 0)
+        (is (= "Choose a target for Simulchip" (:msg (prompt-map :runner)))
+            "Runner has ability target prompt"))))
 
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run

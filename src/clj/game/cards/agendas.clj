@@ -997,7 +997,8 @@
                              {:optional
                               {:prompt "Take 1 bad publicity?"
                                :yes-ability {:msg "take 1 bad publicity"
-                                             :effect (effect (gain-bad-publicity :corp 1))}}}
+                                             :async true
+                                             :effect (effect (gain-bad-publicity :corp eid 1))}}}
                              card nil)
                            (let [n (* 3 (count-bad-pub state))]
                              (system-msg state side (str "uses " (:title card) " to gain " n " [Credits]"))

@@ -2,17 +2,17 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.test :refer :all]
-            [game.core :as core]
+            [game.core :as core :refer [map->Card]]
             [game.core.board :refer [server-list]]
             [game.core.card :refer [get-card installed? rezzed? active? get-counters get-title]]
             [game.core.ice :refer [active-ice?]]
             [game.utils :as utils :refer [server-card]]
             [game.core.eid :as eid]
             [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
-            [game.macros :refer [wait-for]]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :as jutils]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [game.core.checkpoint :refer [fake-checkpoint]]))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -59,6 +59,13 @@
   (is' (no-prompt? state :corp) "Corp has prompts open")
   (is' (no-prompt? state :runner) "Runner has prompts open"))
 
+(defn start-turn
+  [state side]
+  (core/process-action "start-turn" state side nil))
+
+(defn end-turn [state side]
+  (core/process-action "end-turn" state side nil))
+
 (defmacro take-credits
   "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
   If all clicks are used up, end turn and start the opponent's turn."
@@ -69,8 +76,8 @@
       (dotimes [_# (or ~n (get-in @~state [~side :click]))]
         (core/process-action "credit" ~state ~side nil))
       (when (zero? (get-in @~state [~side :click]))
-        (core/process-action "end-turn" ~state ~side nil)
-        (core/process-action "start-turn" ~state other# nil)))))
+        (end-turn ~state ~side)
+        (start-turn ~state other#)))))
 
 ;; Deck construction helpers
 (defn qty [card amt]
@@ -262,8 +269,8 @@
 
 (defn gain-tags
   [state side n]
-  (wait-for (core/gain-tags state side n)
-            (core/fake-checkpoint state)))
+  (core/gain-tags state side (core/make-eid state) n)
+  (core/fake-checkpoint state))
 
 (defn remove-tag
   [state side]
@@ -384,13 +391,12 @@
    (let [encounter (core/get-current-encounter state)]
      (is' (some? encounter) "There is an encounter happening")
      (ensure-no-prompts state)
-     (is' (not (:no-action encounter)) "No player has pressed continue yet")
      (when (and (some? encounter)
                 (no-prompt? state :runner)
-                (no-prompt? state :corp)
-                (not (:no-action encounter)))
+                (no-prompt? state :corp))
        (core/process-action "continue" state :corp nil)
-       (core/process-action "continue" state :runner nil)
+       (when-not (:no-action encounter)
+         (core/process-action "continue" state :runner nil))
        (when-not (= :any phase)
          (is (= phase (:phase (:run @state))) "Run is in the correct phase"))))))
 
@@ -407,22 +413,21 @@
      (let [run (:run @state)]
        (is' (some? run) "There is a run happening")
        (ensure-no-prompts state)
-       (is' (not (:no-action run)) "No player has pressed continue yet")
        (is' (not= :success (:phase run))
             "The run has not reached the server yet")
        (when (and (some? run)
                   (no-prompt? state :runner)
                   (no-prompt? state :corp)
-                  (not (:no-action run))
                   (not= :success (:phase run)))
          (core/process-action "continue" state :corp nil)
-         (core/process-action "continue" state :runner nil)
+         (when-not (:no-action run)
+           (core/process-action "continue" state :runner nil))
          (when-not (= :any phase)
-           (is (= phase (:phase (:run @state))) "Run is in the correct phase")))))))
+           (is' (= phase (:phase (:run @state))) "Run is in the correct phase")))))))
 
 (defmacro run-continue
   "No action from corp and continue for runner to proceed in current run."
-  ([state] `(error-wrapper (run-continue-impl ~state :any)))
+  ([state] `(run-continue ~state :any))
   ([state phase] `(error-wrapper (run-continue-impl ~state ~phase))))
 
 (defn run-jack-out-impl
@@ -452,7 +457,7 @@
 (defn run-continue-until-impl
   [state phase ice]
   (is' (some? (:run @state)) "There is a run happening")
-  (is' (some #(= phase %) [:approach-ice :encounter-ice :movement :success]) "Valid phase")
+  (is' (#{:approach-ice :encounter-ice :movement :success} phase) "Valid phase")
   (run-continue-impl state)
   (while (and (:run @state)
               (or (not= phase (:phase (:run @state)))
@@ -462,7 +467,6 @@
                         (zero? (:position (:run @state)))))
               (no-prompt? state :runner)
               (no-prompt? state :corp)
-              (not (:no-action (:run @state)))
               (not= :success (:phase (:run @state))))
     (run-continue-impl state))
   (when (and (= :success phase)
@@ -489,6 +493,36 @@
 (defmacro fire-subs
   [state card]
   `(error-wrapper (fire-subs-impl ~state ~card)))
+
+(defn auto-pump-impl
+  [state card]
+  (let [breaker (get-card state card)]
+    (is' (active-ice? state) "Ice is active")
+    (is' (core/get-current-encounter state) "Subroutines can be resolved")
+    (when (and (active-ice? state)
+               (core/get-current-encounter state))
+      (core/process-action "dynamic-ability" state :runner {:dynamic "auto-pump"
+                                                            :card breaker}))
+))
+
+(defmacro auto-pump
+  [state card]
+  `(error-wrapper (auto-pump-impl ~state ~card)))
+
+(defn auto-pump-and-break-impl
+  [state card]
+  (let [breaker (get-card state card)]
+    (is' (active-ice? state) "Ice is active")
+    (is' (core/get-current-encounter state) "Subroutines can be resolved")
+    (when (and (active-ice? state)
+               (core/get-current-encounter state))
+      (core/process-action "dynamic-ability" state :runner {:dynamic "auto-pump-and-break"
+                                                            :card breaker}))
+))
+
+(defmacro auto-pump-and-break
+  [state card]
+  `(error-wrapper (auto-pump-and-break-impl ~state ~card)))
 
 (defn play-run-event-impl
   [state card server]
@@ -690,9 +724,10 @@
   (core/fake-checkpoint state))
 
 (defn move
-  [state side card location]
-  (core/move state side card location)
-  (core/fake-checkpoint state))
+  ([state side card location] (move state side card location nil))
+  ([state side card location args]
+   (core/move state side card location args)
+   (core/fake-checkpoint state)))
 
 (defn draw
   ([state side] (draw state side 1 nil))
@@ -703,6 +738,12 @@
 (defn purge
   [state side]
   (core/purge state side (core/make-eid state)))
+
+(defn trace
+  [state base]
+  (core/init-trace state :corp
+                   (map->Card {:title "/trace command" :side :corp})
+                   {:base base}))
 
 (defn print-log [state]
   (->> (:log @state)

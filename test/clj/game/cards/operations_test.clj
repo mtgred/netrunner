@@ -4667,7 +4667,7 @@
       (click-prompt state :runner "Steal")
       (click-prompt state :corp "Yes")
       (click-card state :corp "Surveillance Sweep")
-      (core/end-turn state :runner nil)
+      (end-turn state :runner)
       (is (prompt-is-type? state :runner :waiting) "Runner is waiting on Corp")))
 
 (deftest sweeps-week

@@ -105,7 +105,7 @@
             bot (first (:hosted (get-ice state :hq 0)))]
         (is (= 2 (get-counters (refresh imp) :virus)) "Imp starts with 2 virus counters")
         (is (= 1 (get-counters (refresh bot) :virus)) "Botulus starts with 1 virus counter")
-        (core/do-purge state :corp nil)
+        (purge state :corp)
         (is (= 1 (count (:discard (get-runner)))) "Clot got trashed")
         (is (= 0 (get-counters (refresh imp) :virus)) "Imp has zero counters after purge")
         (is (= 0 (get-counters (refresh bot) :virus)) "Botulus has zero counters after purge")

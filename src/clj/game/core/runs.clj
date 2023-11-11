@@ -666,7 +666,6 @@
      (handle-end-run state side eid)
      (register-unsuccessful-run state side eid))))
 
-
 ;; todo - ideally we should be able to know not just the card ending the run, but the cause as well
 ;; ie subroutine, card ability (like the trash on bc), or something else
 ;; this matters for cards like banner

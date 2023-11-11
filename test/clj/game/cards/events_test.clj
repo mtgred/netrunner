@@ -541,7 +541,7 @@
         (run-continue state)
         (rez state :corp iwall2)
         (is (not (rezzed? (refresh iwall2))) "Second Ice Wall is not rezzed")
-        (core/jack-out state :runner nil)
+        (run-jack-out state)
         ;; Do another run, where the ice should rez
         (run-on state "HQ")
         (rez state :corp iwall1)
@@ -722,11 +722,12 @@
         (rez state :corp aimor)
         (run-continue state)
         (fire-subs state (refresh aimor))
-        (is (= 1 (count (:discard (get-corp)))) "Aimor was trashed")
-        (changes-val-macro 6 (:credit (get-runner))
-                           "Gained 6 credits from Bravado"
-                           ;; Trashed Aimor does not count
-                           (run-continue state)))))
+        (is (find-card "Aimor" (:discard (get-corp))) "Aimor was trashed")
+        (changes-val-macro
+          6 (:credit (get-runner))
+          "Gained 6 credits from Bravado"
+          ;; Trashed Aimor does not count
+          (run-continue state)))))
 
 (deftest bravado-also-gaining-credits-on-unsuccessful-runs
     ;; Also gaining credits on unsuccessful runs
@@ -1400,7 +1401,7 @@
       (let [mayfly (get-program state 0)
             deck (count (:deck (get-runner)))]
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
-        (core/continue state :corp nil)
+        (core/process-action "continue" state :corp nil)
         (run-jack-out state)
         (click-prompt state :runner "Compile")
         (is (= (inc deck) (count (:deck (get-runner)))) "Mayfly should be back in stack"))))
@@ -1424,7 +1425,7 @@
       (click-prompt state :runner "Mayfly")
       (let [mayfly (get-program state 0)]
         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
-        (core/continue state :corp nil)
+        (core/process-action "continue" state :corp nil)
         (run-jack-out state)
         (click-prompt state :runner "Mayfly")
         (is (zero? (count (:deck (get-runner)))) "Mayfly should not be back in the stack"))))
