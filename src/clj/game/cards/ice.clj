@@ -78,6 +78,7 @@
          new-subs (->> (range total)
                        (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
                        :subroutines
+                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
                        (into []))
          new-card (assoc new-card :subroutines new-subs)]
      (update! state :corp new-card)
@@ -90,6 +91,7 @@
          new-subs (->> (range total)
                        (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) card)
                        :subroutines
+                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
                        (into []))
          new-card (assoc card :subroutines new-subs)]
      (update! state :corp new-card)
