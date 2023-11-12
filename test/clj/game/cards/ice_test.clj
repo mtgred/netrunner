@@ -2050,6 +2050,19 @@
    (is (empty? (:discard (get-corp))))
    (is (not (:run @state)) "Run ended")))
 
+(deftest envelopment-sub-indexed-correctly-7201
+  ;; Envelopment should only have one trash subroutine at index 0 after running out of counters
+  (do-game
+    (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+    (play-from-hand state :corp "Envelopment" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (dotimes [_ 4]
+      (take-credits state :runner)
+      (take-credits state :corp))
+    (is (= 1 (count (:subroutines (get-ice state :hq 0)))))
+    (is (= 0 (:index (first (:subroutines (get-ice state :hq 0))))))))
+
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
