@@ -42,6 +42,8 @@
                :view lobby-or-game}]
      ["/replay/:rid" {:name :nav/replay-lobby
                :view lobby-or-game}]
+     ["/bug-report/:rid" {:name :nav/bug-report
+                      :view lobby-or-game}]
      ["/help" {:name :nav/help
                :view help}]
      ["/account" {:name :nav/account
