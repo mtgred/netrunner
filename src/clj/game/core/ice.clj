@@ -219,17 +219,13 @@
   (update! state :corp (dont-resolve-all-subroutines ice)))
 
 (defn reset-sub
-  [ice sub]
-  (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (dissoc sub :broken :fired :resolve))))
-
-(defn reset-sub!
-  [state ice sub]
-  (update! state :corp (reset-sub ice sub)))
+  [sub]
+  (dissoc sub :broken :fired :resolve))
 
 (defn reset-all-subs
   "Mark all broken/fired subroutines as unbroken/unfired"
   [ice]
-  (reduce reset-sub ice (:subroutines ice)))
+  (update ice :subroutines #(into [] (map reset-sub %))))
 
 (defn reset-all-subs!
   "Marks all broken subroutines as unbroken, update!s state"

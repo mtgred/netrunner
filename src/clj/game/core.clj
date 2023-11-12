@@ -520,7 +520,6 @@
    reset-all-subs
    reset-all-subs!
    reset-sub
-   reset-sub!
    resolve-subroutine
    resolve-subroutine!
    resolve-unbroken-subs!
