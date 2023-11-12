@@ -519,7 +519,6 @@
    reset-all-ice
    reset-all-subs
    reset-all-subs!
-   reset-sub
    resolve-subroutine
    resolve-subroutine!
    resolve-unbroken-subs!

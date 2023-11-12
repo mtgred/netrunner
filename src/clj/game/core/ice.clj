@@ -218,14 +218,11 @@
   [state ice]
   (update! state :corp (dont-resolve-all-subroutines ice)))
 
-(defn reset-sub
-  [sub]
-  (dissoc sub :broken :fired :resolve))
-
 (defn reset-all-subs
   "Mark all broken/fired subroutines as unbroken/unfired"
   [ice]
-  (update ice :subroutines #(into [] (map reset-sub %))))
+  (letfn [(reset-sub [sub] (dissoc sub :broken :fired :resolve))]
+    (update ice :subroutines #(into [] (map reset-sub %)))))
 
 (defn reset-all-subs!
   "Marks all broken subroutines as unbroken, update!s state"
