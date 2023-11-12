@@ -75,11 +75,12 @@
                                 (:variable %))
                           (:subroutines card))
          new-card (assoc card :subroutines old-subs)
-         new-subs (->> (range total)
-                       (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
-                       :subroutines
-                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
-                       (into []))
+         new-subs (if (pos? total)
+                    (->> (range total)
+                         (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
+                         :subroutines
+                         (into []))
+                    (into [] (map-indexed (fn [idx sub] (assoc sub :index idx)) (:subroutines new-card))))
          new-card (assoc new-card :subroutines new-subs)]
      (update! state :corp new-card)
      (trigger-event state side :subroutines-changed (get-card state new-card)))))
@@ -91,7 +92,6 @@
          new-subs (->> (range total)
                        (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) card)
                        :subroutines
-                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
                        (into []))
          new-card (assoc card :subroutines new-subs)]
      (update! state :corp new-card)
