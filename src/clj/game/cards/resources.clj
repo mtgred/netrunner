@@ -9,7 +9,7 @@
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active all-active-installed all-installed
                             all-installed-runner card->server server->zone]]
-   [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp?
+   [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp? condition-counter?
                            event? facedown? get-agenda-points get-card get-counters
                            get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand?
                            installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
@@ -1826,7 +1826,9 @@
              :optional {:prompt "Trash the top card of the stack?"
                         :waiting-prompt true
                         :req (req (and (not (ice? (:card target)))
-                                       (first-event? state side :corp-install #(not (ice? (:card (first %)))))))
+                                       (not (condition-counter? (:card target)))
+                                       (first-event? state side :corp-install #(and (not (ice? (:card (first %))))
+                                                                                    (not (condition-counter? (:card (first %))))))))
                         :yes-ability {:msg (msg (if (seq (:deck runner))
                                                   (str "trash "
                                                        (:title (first (:deck runner)))

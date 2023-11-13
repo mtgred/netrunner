@@ -3538,12 +3538,16 @@
   (do-game
       (new-game {:runner {:hand ["Lago Paranoá Shelter"]
                           :deck [(qty "Sure Gamble" 3)]}
-                 :corp {:hand ["PAD Campaign" "Crisium Grid" "Ice Wall" "Spin Doctor"]}})
+                 :corp {:hand ["PAD Campaign" "Crisium Grid" "Ice Wall" "Spin Doctor" "Eavesdrop"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Lago Paranoá Shelter")
       (take-credits state :runner)
+      (core/gain-clicks state :corp 1)
       (play-from-hand state :corp "Ice Wall" "HQ")
       (is (no-prompt? state :runner) "Ice don't trigger Lago Paranoá Shelter")
+      (play-from-hand state :corp "Eavesdrop")
+      (click-card state :corp "Ice Wall")
+      (is (no-prompt? state :runner) "Condition counters don't trigger Lago Paranoá Shelter")
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (changes-val-macro
         1 (count (:discard (get-runner)))
