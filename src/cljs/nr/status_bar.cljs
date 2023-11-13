@@ -9,11 +9,11 @@
    [nr.ws :as ws]
    [reagent.core :as r]))
 
-(defn current-game-count [user games]
+(defn current-game-count [user games connected?]
   (r/with-let [c (r/track (fn [] (count (filter-games @user @games (:visible-formats @app-state)))))]
     [:div.float-right
      (tr [:nav/game-count] @c)
-     (when (zero? @c)
+     (when (not @connected?)
        [:a.reconnect-button {:on-click #(ws/chsk-reconnect!)} "Attempt reconnect"])]))
 
 (defn in-game-buttons [user current-game gameid]
@@ -67,9 +67,10 @@
   (r/with-let [user (r/cursor app-state [:user])
                games (r/cursor app-state [:games])
                gameid (r/cursor app-state [:gameid])
-               current-game (r/cursor app-state [:current-game])]
+               current-game (r/cursor app-state [:current-game])
+               connected? (r/cursor app-state [:connected])]
     [:div
-     [current-game-count user games]
+     [current-game-count user games connected?]
      [in-game-buttons user current-game gameid]
      [replay-and-spectator-buttons gameid]
      [spectator-list current-game]]))

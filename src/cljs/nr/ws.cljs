@@ -10,7 +10,7 @@
 
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
-  (let [{:keys [chsk ch-recv send-fn]}
+  (let [{:keys [chsk ch-recv send-fn state]}
         (sente/make-channel-socket-client!
           "/chsk"
           ?csrf-token
@@ -18,6 +18,9 @@
            :wrap-recv-evs? false})]
     (def chsk chsk)
     (def ch-chsk ch-recv)
+    (def ch-state state)
+    (add-watch ch-state :watch-connection (fn [_ _ _ state]
+                                            (swap! app-state assoc :connected (:open? state))))
     (defn ws-send!
       ([ev] (send-fn ev))
       ([ev ?timeout ?cb] (send-fn ev ?timeout ?cb)))))
