@@ -3,7 +3,6 @@
             [game.core.rezzing :as rezzing]
             [game.core.card-defs :refer [card-def]]
             [game.core.card :refer :all]
-            [game.core.cost-fns :refer [rez-additional-cost-bonus]]
             [game.core-test :refer :all]
             [game.utils-test :refer :all]
             [game.macros-test :refer :all]

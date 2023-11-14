@@ -1588,8 +1588,7 @@
               (if (= "Done" target)
                 (effect-completed state side eid)
                 ;; if it has an additional cost, the rez needs to be optional
-                (let [add-costs (remove #(= :credit (first %))
-                                        (rez-additional-cost-bonus state side target))
+                (let [add-costs (rez-additional-cost-bonus state side target #(not (= :credit (first %))))
                       inst-target target]
                   (cond
                     (and (pos? (count add-costs))
