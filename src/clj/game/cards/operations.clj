@@ -1777,18 +1777,18 @@
                            (last-turn? state :runner :stole-agenda)))
              :effect (req
                        (wait-for (gain-tags state :corp (make-eid state eid) 2)
-                                 (if (threat-level 3 state)
-                                   (continue-ability
+                                 (continue-ability
                                      state side
                                      {:optional
                                       {:prompt "Pay 5 [Credit] to give the Runner 2 tags?"
+                                       :req (req (and (threat-level 3 state)
+                                                      (can-pay? state :corp eid card nil [:credit 5])))
                                        :waiting-prompt true
                                        :yes-ability {:async true
                                                      :cost [:credit 5]
                                                      :msg "give the Runner 2 tags"
                                                      :effect (req (gain-tags state :corp eid 2))}}}
-                                     card nil)
-                                   (effect-completed state side eid))))}})
+                                     card nil)))}})
 
 (defcard "Oversight AI"
   {:on-play {:choices {:card #(and (ice? %)

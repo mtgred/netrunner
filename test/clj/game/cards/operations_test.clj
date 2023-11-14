@@ -2998,6 +2998,18 @@
       (click-prompt state :corp "Yes"))
     (is (= 5 (:credit (get-corp))) "Corp spent 5 additional credits")))
 
+(deftest oppo-research-threat-ability-cannot-pay
+  (do-game
+    (new-game {:corp {:hand ["Oppo Research" "Salvo Testing"]
+                      :credits 2}})
+    (play-from-hand state :corp "Salvo Testing" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Oppo Research")
+    (is (no-prompt? state :corp) "Corp cannot pay the additional 5 credits")))
+
 (deftest oppo-research-threat-ability-tag-prevention
   (do-game
     (new-game {:corp {:hand ["Oppo Research" "Salvo Testing"]
