@@ -20,7 +20,6 @@
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed is-basic-advance-action? make-eid]]
-   [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
    [game.core.events :refer [event-count first-event?
                              first-successful-run-on-server? no-event? not-last-turn? run-events turn-events]]
@@ -1266,10 +1265,11 @@
                                {:prompt "Access 1 additional card?"
                                 :waiting-prompt true
                                 :once :per-turn
-                                :async true
-                                :yes-ability {:msg (msg "access 1 additional card")
-                                              :effect (effect (access-bonus breached-server 1 :end-of-access)
-                                                              (effect-completed eid))}
+                                :yes-ability
+                                {:msg (msg "access 1 additional card")
+                                 :async true
+                                 :effect (req (access-bonus state side breached-server 1 :end-of-access)
+                                              (effect-completed state side eid))}
                                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to access 1 additional card")))}}}
                               card nil)))}]})
 
@@ -2175,7 +2175,6 @@
              {:req (req (and (#{:hq :rd} (target-server context))
                           (pos? (total-cards-accessed context))))
               :prompt "Gain 1 [Credits] for each card you accessed?"
-              :async true
               :once :per-turn
               :yes-ability
               {:msg (msg "gain " (total-cards-accessed context) " [Credits]")

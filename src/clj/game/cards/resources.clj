@@ -2576,7 +2576,6 @@
                                        (first-successful-run-on-server? state :rd)
                                        (pos? (total-cards-accessed target :deck))))
                         :prompt "Gain 1 [Credits] for each card you accessed from R&D?"
-                        :async true
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability
                         {:msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")

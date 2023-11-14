@@ -339,8 +339,7 @@
    get-ability-targets
    is-basic-advance-action?
    make-eid
-   make-result
-   register-effect-completed])
+   make-result])
 
 (expose-vars
   [game.core.engine

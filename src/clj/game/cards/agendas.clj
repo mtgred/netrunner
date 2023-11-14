@@ -429,7 +429,6 @@
     {:on-score
      {:optional
       {:prompt "Take 1 bad publicity?"
-       :async true
        :yes-ability {:async true
                      :msg "take 1 bad publicity"
                      :effect (req (wait-for (gain-bad-publicity state :corp 1)

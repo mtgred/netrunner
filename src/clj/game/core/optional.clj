@@ -44,6 +44,7 @@
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
   [state side {:keys [eid optional] :as ability} card targets]
+  (assert (not (contains? optional :async)) "Put :async in the :yes-ability")
   (if (can-trigger? state side eid optional card targets)
     (resolve-ability
       state side

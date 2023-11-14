@@ -7,10 +7,14 @@
             [game.macros-test :refer :all]
             [clojure.test :refer :all]))
 
+(defmethod core/defcard-impl "jnet Test Card" [_] {})
+(defmethod core/defcard-impl "jnet Test Card 2" [_]
+  {:agendapoints-corp (req 5)
+   :agendapoints-runner (req 10)})
+
 (deftest agenda-points-test
-  (defmethod core/defcard-impl "Test Card" [_] {})
   (before-each [state (new-game)
-                test-card {:title "Test Card" :agendapoints 1}]
+                test-card {:title "jnet Test Card" :agendapoints 1}]
     (testing "basic functionality"
       (is (nil? (agenda-points state nil nil)) "requires card to exist"))
     (testing "base points"
@@ -25,12 +29,9 @@
         (core/register-lingering-effect state nil test-card {:type :agenda-value :value 1})
         (is (= 6 (agenda-points state nil test-card))) "5 + 1"))
     (testing "points-fn"
-      (defmethod core/defcard-impl "Test Card" [_]
-        {:agendapoints-corp (req 5)
-         :agendapoints-runner (req 10)})
-      (is (= 5 (agenda-points state :corp test-card)))
-      (is (= 10 (agenda-points state :runner test-card)))
-      (core/register-lingering-effect state nil test-card {:type :agenda-value :value 1})
-      (is (= 6 (agenda-points state :corp test-card)))
-      (is (= 11 (agenda-points state :runner test-card)))))
-  (remove-method core/defcard-impl "Test Card"))
+      (let [test-card {:title "jnet Test Card 2" :agendapoints 1}]
+        (is (= 5 (agenda-points state :corp test-card)))
+        (is (= 10 (agenda-points state :runner test-card)))
+        (core/register-lingering-effect state nil test-card {:type :agenda-value :value 1})
+        (is (= 6 (agenda-points state :corp test-card)))
+        (is (= 11 (agenda-points state :runner test-card)))))))

@@ -1117,7 +1117,6 @@
     (effect (continue-ability
               {:optional
                {:player :runner
-                :async true
                 :waiting-prompt true
                 :prompt "Access the installed card?"
                 :yes-ability
@@ -1731,7 +1730,6 @@
    {:optional
     {:prompt "Have each player gain 2 [Credits]?"
      :waiting-prompt true
-     :async true
      :yes-ability
      {:msg "gain 7 [Credits]. The Runner gains 2 [Credits]"
       :async true

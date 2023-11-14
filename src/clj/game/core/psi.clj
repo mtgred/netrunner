@@ -54,6 +54,7 @@
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
   [state side {:keys [eid psi] :as ability} card targets]
+  (assert (not (contains? psi :async)) "Put :async in the :equal/:not-equal.")
   (if (can-trigger? state side eid psi card targets)
     (resolve-ability
       state side

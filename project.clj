@@ -8,12 +8,10 @@
   :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
   :test-paths ["test/clj"]
 
-  :aot [web.core]
   :jar-name "netrunner.jar"
   :jar-exclusions [#"public/img/cards/*"]
   :uberjar-name "netrunner-standalone.jar"
   :uberjar-exclusions [#"public/img/cards/*"]
-  :omit-source true
   :main web.core
 
   :repl-options {:timeout 180000

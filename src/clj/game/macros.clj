@@ -98,8 +98,8 @@
 (defmacro wait-for
   [& body]
   (let [[binds action] (if (vector? (first body))
-                       (first body)
-                       [[{'async-result :result}] (first body)])
+                         (first body)
+                         [[{'async-result :result}] (first body)])
         expr (next body)
         abnormal? (#{'apply 'handler 'payable?} (first action))
         to-take (if abnormal? 4 3)
