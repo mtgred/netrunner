@@ -31,14 +31,17 @@
                          (effect-completed state side eid))))]
      (let [autoresolve-fn (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
-                                (autoresolve-fn state side eid card targets))]
+                                (autoresolve-fn state side eid card targets))
+           choices [(when (can-pay? state side eid card (:title card) (:cost (:yes-ability ability)))
+                      "Yes")
+                    "No"]]
        (case autoresolve-answer
          "Yes" (prompt-fn {:value "Yes"})
          "No" (prompt-fn {:value "No"})
          (do (when autoresolve-fn
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
-             (show-prompt state side eid card message ["Yes" "No"]
+             (show-prompt state side eid card message choices
                           prompt-fn (assoc ability :targets targets))))))))
 
 (defn- check-optional

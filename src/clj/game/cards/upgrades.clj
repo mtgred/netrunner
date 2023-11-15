@@ -619,6 +619,7 @@
                      :req (req (and this-server tagged))
                      :successful
                      {:msg "do 1 meat damage"
+                      :async true
                       :effect (effect (damage eid :meat 1 {:card card
                                                            :unpreventable true}))}}}]})
 

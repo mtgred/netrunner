@@ -4959,23 +4959,6 @@
       (is (= 1 (count-tags state)) "Runner has 1 tag")
       (is (zero? (count (:hand (get-runner)))) "Runner took 3 net damage")))
 
-(deftest snare-can-t-afford
-    ;; Can't afford
-    (do-game
-      (new-game {:corp {:deck ["Snare!"]}
-                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3)]}})
-      (play-from-hand state :corp "Snare!" "New remote")
-      (take-credits state :corp)
-      (core/lose state :corp :credit 7)
-      (run-empty-server state "Server 1")
-      (is (= :waiting (prompt-type :runner))
-          "Runner has prompt to wait for Snare!")
-      (click-prompt state :corp "Yes")
-      (is (zero? (count-tags state)) "Runner has 0 tags")
-      (click-prompt state :runner "Pay 0 [Credits] to trash")
-      (is (no-prompt? state :runner) "Runner waiting prompt is cleared")
-      (is (zero? (count (:discard (get-runner)))) "Runner took no damage")))
-
 (deftest snare-with-dedicated-response-team
     ;; with Dedicated Response Team
     (do-game

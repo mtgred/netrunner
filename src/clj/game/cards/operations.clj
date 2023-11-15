@@ -1891,6 +1891,7 @@
             {:choices {:card #(and (hardware? %)
                                    (<= (:cost %) max-cost))}
              :msg (msg "trash " (:title target))
+             :async true
              :effect (effect (trash eid target {:cause-card card}))})
           card nil))}}}})
 
@@ -2875,10 +2876,11 @@
      {:label "Give the Runner X tags"
       :async true
       :effect (req (let [tags (max 1 (count-tags state))]
-                     (gain-tags state :corp eid tags)
-                     (system-msg
-                       state side
-                       (str "uses " (:title card) " to give the Runner " (quantify tags "tag")))))}}}})
+                     (wait-for (gain-tags state :corp (make-eid state eid) tags)
+                               (system-msg
+                                 state side
+                                 (str "uses " (:title card) " to give the Runner " (quantify tags "tag")))
+                               (effect-completed state nil eid))))}}}})
 
 (defcard "Too Big to Fail"
   {:on-play
