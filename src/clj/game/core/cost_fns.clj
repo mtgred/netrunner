@@ -41,11 +41,13 @@
           (max 0)))))
 
 (defn rez-additional-cost-bonus
-  [state side card]
-  (merge-costs
-    (concat (:additional-cost card)
-            (:additional-cost (card-def card))
-            (get-effects state side :rez-additional-cost card))))
+  ([state side card] (rez-additional-cost-bonus state side card nil))
+  ([state side card pred]
+   (let [costs (merge-costs
+                 (concat (:additional-cost card)
+                         (:additional-cost (card-def card))
+                         (get-effects state side :rez-additional-cost card)))]
+     (if pred (filterv pred costs) costs))))
 
 (defn score-additional-cost-bonus
   [state side card]

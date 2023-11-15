@@ -4053,6 +4053,28 @@
    (is (= "Corporate Town" (:title (get-content state :remote3 0))) "Installed C. Town in remote")
    (is (rezzed? (get-content state :remote3 0)) "rezzed C. Town")))
 
+(deftest ob-superheavy-logistics-additional-rez-costs
+  ;; should waive additional credit costs to rez (ie tread lightly)
+  (do-game
+    (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                      :hand ["Mavirus" "Ice Wall"]
+                      :deck [(qty "Ping" 5) ]
+                      :credits 10}
+               :runner {:hand ["Tread Lightly"]}})
+    (play-from-hand state :corp "Mavirus" "New remote")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tread Lightly")
+    (click-prompt state :runner "Server 1")
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (changes-val-macro
+      0 (:credit (get-corp))
+      "Ob should not pay extra credit costs"
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Ping")
+      (click-prompt state :corp "Server 1"))))
+
 (deftest ob-superheavy-logistics-fail-to-find
   ;; If no cards in R&D match the search cost, ability can be declined
   (do-game

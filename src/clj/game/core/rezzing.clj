@@ -26,7 +26,7 @@
       (= :all-costs ignore-cost) [:credit 0]
       alternative-cost alternative-cost
       :else (let [cost (rez-cost state side card {:cost-bonus cost-bonus})
-                  additional-costs (rez-additional-cost-bonus state side card)]
+                  additional-costs (rez-additional-cost-bonus state side card (when ignore-cost #(not (= :credit (first %)))))]
               (concat
                 (when-not ignore-cost
                   [:credit cost])
