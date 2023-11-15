@@ -616,6 +616,7 @@
         :break n
         :breaks subtypes
         :break-cost cost
+        :auto-break-sort (:auto-break-sort args)
         :cost-req (:cost-req args)
         :break-cost-bonus (:break-cost-bonus args)
         :additional-ability (:additional-ability args)
@@ -662,6 +663,7 @@
       :cost-req (:cost-req args)
       :pump strength
       :pump-bonus (:pump-bonus args)
+      :auto-pump-sort (:auto-break-sort args)
       :msg (msg "increase its strength from " (get-strength card)
                 " to " (+ (get-pump-strength
                             state side

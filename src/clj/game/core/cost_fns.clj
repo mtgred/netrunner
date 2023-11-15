@@ -123,18 +123,20 @@
   "Returns a list of all costs (printed and additional) required to use a given ability"
   ([state side ability card] (card-ability-cost state side ability card nil))
   ([state side ability card targets]
-   (concat (:cost ability)
-           (:additional-cost ability)
-           (get-effects state side :card-ability-additional-cost card (cons ability targets)))))
+   (merge-costs
+     (concat (:cost ability)
+             (:additional-cost ability)
+             (get-effects state side :card-ability-additional-cost card (cons ability targets))))))
 
 (defn break-sub-ability-cost
   ([state side ability card] (break-sub-ability-cost state side ability card nil))
   ([state side ability card targets]
-   (concat (:break-cost ability)
-           (:additional-cost ability)
-           (when-let [break-fn (:break-cost-bonus ability)]
-             (break-fn state side (make-eid state) card targets))
-           (get-effects state side :break-sub-additional-cost card (cons ability targets)))))
+   (merge-costs
+     (concat (:break-cost ability)
+             (:additional-cost ability)
+             (when-let [break-fn (:break-cost-bonus ability)]
+               (break-fn state side (make-eid state) card targets))
+             (get-effects state side :break-sub-additional-cost card (cons ability targets))))))
 
 (defn jack-out-cost
   [state side]
