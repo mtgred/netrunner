@@ -143,6 +143,7 @@
 (defn- check-trace
   "Checks if there is a trace to resolve"
   [state side {:keys [eid trace] :as ability} card targets]
+  (assert (not (contains? trace :async)) "Put :async in the :successful/:unsuccessful")
   (if (can-trigger? state side eid ability card targets)
     (resolve-ability
       state side
