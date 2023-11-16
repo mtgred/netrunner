@@ -2195,9 +2195,7 @@
    :abilities [(set-autoresolve :auto-fire "Nyashia")]})
 
 (defcard "Odore"
-  (auto-icebreaker {:abilities [(break-sub 2 0 "Sentry"
-                                           {:req (req (> 3 (count (filter #(has-subtype? % "Virtual")
-                                                                          (all-active-installed state :runner)))))})
+  (auto-icebreaker {:abilities [(break-sub 2 0 "Sentry")
                                 (break-sub 0 1 "Sentry"
                                            {:label "Break 1 Sentry subroutine (Virtual restriction)"
                                             :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
@@ -2556,7 +2554,7 @@
 (defcard "Revolver"
   (auto-icebreaker
    {:data {:counter {:power 6}}
-    :abilities [(break-sub [:power 1] 1 "Sentry")
+    :abilities [(break-sub [:power 1] 1 "Sentry" {:auto-break-sort 1})
                 (break-sub [:trash-can] 1 "Sentry")
                 (strength-pump 2 3)]}))
 
