@@ -1698,7 +1698,7 @@
                  :waiting-prompt true
                  :interactive (req true)
                  :choices (req (cancellable (filter ice? (:deck corp)) true))
-                 :msg (msg "install from HQ and rez " (card-str state target) ", paying a total of 3 [Credits] less")
+                 :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
                  :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3})
                                         (shuffle! state :corp :deck)
                                         (system-msg state side (str "shuffles R&D"))
