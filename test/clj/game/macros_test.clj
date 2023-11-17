@@ -101,3 +101,25 @@
   (assert (every? #(= 'testing (first %)) testing-blocks))
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
+
+#_{:clj-kondo/ignore [:unused-binding]}
+(defmacro changed? [bindings & body]
+  `(throw (ex-info "changed? should only be used in `is` asserts." {})))
+
+(defmethod clojure.test/assert-expr 'changed?
+  [msg [_changed bindings & body]]
+  (let [exprs (take-nth 2 bindings)
+        amts (take-nth 2 (drop 1 bindings))
+        init-binds (repeatedly gensym)
+        end-binds (repeatedly gensym)]
+    `(let [~@(interleave init-binds exprs)]
+       (do ~@body)
+       (let [~@(interleave end-binds exprs)]
+         (doseq [[amt# expr# init# end#] ~(mapv vector amts (map #(list `quote %) exprs) init-binds end-binds)
+                 :let [expected# (+ init# amt#)
+                       actual-change# (- (- init# end#))]]
+           (clojure.test/do-report
+             {:type (if (= actual-change# amt#) :pass :fail)
+              :actual actual-change#
+              :expected (- expected#)
+              :message (format "%s\n%s => (%s to %s)" ~msg expr# init# end#)}))))))

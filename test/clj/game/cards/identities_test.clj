@@ -367,7 +367,7 @@
       (is (= 1 (count-tags state)) "Acme gives real tags")
       (click-prompt state :runner "Take 1 tag")
       (is (= 2 (count-tags state)))
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+      (auto-pump-and-break state (get-program state 0))
       (core/continue state :corp nil)
       (run-continue state)
       (click-prompt state :runner "No action")
@@ -1736,7 +1736,7 @@
       (run-continue state)
       (changes-val-macro 2 (:credit (get-corp))
         "Corp gains credits when gold farmer is broken"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)}))))
+        (auto-pump-and-break state (get-program state 0)))))
 
 (deftest gamenet-where-dreams-are-real-gain-credits-from-f2p
     ;; Gain credits from F2P

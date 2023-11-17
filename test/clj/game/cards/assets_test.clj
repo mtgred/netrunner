@@ -5836,15 +5836,13 @@
       (changes-val-macro
         0 (:credit (get-runner))
         "spent no money not breaking"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh prog)})
+        (auto-pump-and-break state (refresh prog))
         (is (= 2 (count (remove :broken (:subroutines (refresh ice))))) "No subs broken"))
       ;;auto-pump to match strength
       (changes-val-macro
         -2 (:credit (get-runner))
         "spent 2c matching strength"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump" :card (refresh prog)}))
+        (auto-pump state (refresh prog)))
       ;; still can't break subs
       (changes-val-macro
         0 (:credit (get-runner))
@@ -5931,8 +5929,7 @@
         (changes-val-macro
           0 (:credit (get-runner))
           "spent no money not breaking with Paperclip"
-          (core/play-dynamic-ability state :runner
-                                     {:dynamic "auto-pump-and-break" :card (refresh fracter)})
+          (auto-pump-and-break state (refresh fracter))
           (is (= 2 (count (remove :broken (:subroutines (refresh barrier))))) "No subs broken"))
         (run-continue state)
         (run-jack-out state))
@@ -5944,8 +5941,7 @@
         (changes-val-macro
           0 (:credit (get-runner))
           "spent no money not breaking with Black Orchestra"
-          (core/play-dynamic-ability state :runner
-                                     {:dynamic "auto-pump-and-break" :card (refresh decoder)})
+          (auto-pump-and-break state (refresh decoder))
           (is (= 2 (count (remove :broken (:subroutines (refresh code-gate))))) "No subs broken"))
         (run-continue state)
         (run-jack-out state))
@@ -5957,8 +5953,7 @@
         (changes-val-macro
           0 (:credit (get-runner))
           "spent no money not breaking with MKUltra"
-          (core/play-dynamic-ability state :runner
-                                     {:dynamic "auto-pump-and-break" :card (refresh killer)})
+          (auto-pump-and-break state (refresh killer))
           (is (= 3 (count (remove :broken (:subroutines (refresh sentry))))) "No subs broken"))
         (run-continue state)
         (run-jack-out state)))))

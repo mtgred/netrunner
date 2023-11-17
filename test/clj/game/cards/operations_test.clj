@@ -2881,7 +2881,7 @@
         (click-prompt state :runner "Done")
         (changes-val-macro -6 (:credit (get-runner))
                            "Paid 4+2 to pump and break 6 strength Eli"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})))))
+                           (auto-pump-and-break state (refresh cor))))))
 
 (deftest next-activation-command-strength-bonus-doesn-t-persist-after-trash-issue-4710
     ;; Strength bonus doesn't persist after trash. Issue #4710
@@ -3745,7 +3745,7 @@
         (is (= 1 (core/get-strength (refresh icew))) "Ice Wall starts at 1 str")
         (run-on state :hq)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corr)})
+        (auto-pump-and-break state (refresh corr))
         (core/continue state :corp nil)
         (run-jack-out state)
         (is (= 2 (core/get-strength (refresh icew))) "Ice Wall gained 1 str from Rover Algorithm")

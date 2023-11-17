@@ -82,7 +82,7 @@
         (rez state :corp afshar)
         (run-continue state)
         (is (not-empty (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh gord)))) "Autobreak is active")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh gord)})
+        (auto-pump-and-break state (refresh gord))
         (is (empty? (remove :broken (:subroutines (refresh afshar)))) "All subroutines broken"))))
   (testing "Auto break handles pump abilities with variable strength"
     (do-game
@@ -105,7 +105,7 @@
         (changes-val-macro
           -5 (:credit (get-runner))
           "Auto break costs 5"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh unity)}))
+          (auto-pump-and-break state (refresh unity)))
         (is (= 7 (:current-strength (refresh unity))) "Unity's strength is 7 after pumping twice")
         (is (zero? (count (remove :broken (:subroutines (refresh ice))))) "All subroutines have been broken"))))
   (testing "Auto break handles break abilities with variable cost"
@@ -156,7 +156,7 @@
         (changes-val-macro
           -3 (:credit (get-runner))
           "Pump costs 3"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh corroder)}))
+          (auto-pump state (refresh corroder)))
         (is (= 5 (:current-strength (refresh corroder))) "Breaker strength equals ice strength")
         (is (not (some #{:broken} (:subroutines fire-wall))) "No subroutines have been broken")
         (is (empty? (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh corroder)))) "No auto pump ability since breaker is at strength"))))
@@ -180,7 +180,7 @@
         (changes-val-macro
           -2 (:credit (get-runner))
           "Auto pump costs 2"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh unity)}))
+          (auto-pump state (refresh unity)))
         (is (= 7 (:current-strength (refresh unity))) "Unity's strength is 7 after pumping twice"))))
   (testing "Auto pump available even with no active break ability"
     (do-game

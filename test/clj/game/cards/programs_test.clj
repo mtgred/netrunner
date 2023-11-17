@@ -808,7 +808,7 @@
           (run-continue state)
           (changes-val-macro -12 (:credit (get-runner))
                              "Paid 12 to fully break Macrophage with Black Orchestra"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+                             (auto-pump-and-break state (refresh bo)))
           (is (= 10 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 10")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "No pumping, breaking more than once"
@@ -827,7 +827,7 @@
           (run-continue state)
           (changes-val-macro -6 (:credit (get-runner))
                              "Paid 6 to fully break Aiki with Black Orchestra"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+                             (auto-pump-and-break state (refresh bo)))
           (is (= 6 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping and breaking once"
@@ -846,7 +846,7 @@
           (run-continue state)
           (changes-val-macro -3 (:credit (get-runner))
                              "Paid 3 to fully break Enigma with Black Orchestra"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+                             (auto-pump-and-break state (refresh bo)))
           (is (= 4 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 6")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "No auto-break on unbreakable subs"
@@ -881,7 +881,7 @@
           (is (installed? bo) "Black Orchestra is installed")
           (changes-val-macro -6 (:credit (get-runner))
                              "Paid 6 to fully break Macrophage with Black Orchestra"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh bo)}))
+                             (auto-pump-and-break state (refresh bo)))
           (is (= 6 (get-strength (refresh bo))) "Pumped Black Orchestra up to str 10")
           (is (= 0 (count (remove :broken (:subroutines (core/get-current-ice state))))) "Broken all subroutines")))))
 
@@ -1008,7 +1008,7 @@
         (run-on state :hq)
         (rez state :corp spi)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh brah)})
+        (auto-pump-and-break state (refresh brah))
         (core/continue state :corp nil)
         (is (= 0 (count (:deck (get-runner)))) "Stack is empty.")
         (click-card state :runner par)
@@ -1998,7 +1998,7 @@
         (run-on state "HQ")
         (rez state :corp (refresh iw))
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh crypsis)})
+        (auto-pump-and-break state (refresh crypsis))
         (core/continue state :corp nil)
         (is (= 0 (get-counters (refresh crypsis) :virus)) "Used up virus token on Crypsis"))))
 
@@ -2018,7 +2018,7 @@
         (run-continue state)
         (changes-val-macro 1 (get-counters (refresh curu) :power)
           "Placed 1 power counter on Curupira"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh curu)}))
+          (auto-pump-and-break state (refresh curu)))
         (core/continue state :corp nil)
         (run-jack-out state))
       (run-on state "HQ")
@@ -2763,7 +2763,7 @@
       (run-continue state)
       (changes-val-macro 0 (:credit (get-runner))
                          "Broke Enigma for 0c"
-                         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+                         (auto-pump-and-break state (get-program state 0))
                          (core/continue state :corp nil))
       (run-jack-out state)
       (take-credits state :runner)
@@ -2772,7 +2772,7 @@
       (run-continue state)
       (changes-val-macro -2 (:credit (get-runner))
                          "Broke Enigma for 2c"
-                         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+                         (auto-pump-and-break state (get-program state 0))
                          (core/continue state :corp nil))))
 
 (deftest euler-correct-log-test
@@ -2787,7 +2787,7 @@
       (run-on state :hq)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+      (auto-pump-and-break state (get-program state 0))
       (is (second-last-log-contains? state "Runner pays 0 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct log with correct cost")
       (core/continue state :corp nil)
       (run-jack-out state)
@@ -2795,7 +2795,7 @@
       (take-credits state :corp)
       (run-on state :hq)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (get-program state 0)})
+      (auto-pump-and-break state (get-program state 0))
       (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct second log with correct cost")
       (core/continue state :corp nil)))
 
@@ -2865,7 +2865,7 @@
         (run-on state :archives)
         (rez state :corp (get-ice state :archives 0))
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh fae)})
+        (auto-pump-and-break state (refresh fae))
         (core/continue state :corp nil)
         (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
 
@@ -4249,11 +4249,12 @@
       (run-on state "HQ")
       (rez state :corp tithe)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lm)})
+      (auto-pump-and-break state (refresh lm))
       (core/continue state :corp nil)
       (run-continue state)
       (rez state :corp an)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lm)})
+      (run-continue-until state :encounter-ice)
+      (auto-pump-and-break state (refresh lm))
       (run-continue-until state :success)
       (run-on state "R&D")
       (rez state :corp (get-ice state :rd 0))
@@ -4575,7 +4576,7 @@
         (is (= 2 (get-strength (refresh maven))) "+1 str from Datasucker")
         (run-on state "HQ")
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh maven)})
+        (auto-pump-and-break state (refresh maven))
         (is (second-last-log-contains? state "Runner pays 4 \\[Credits\\] to use Maven to break all 2 subroutines on Border Control.") "Correct log with autopump ability")
         (core/continue state :corp nil)
         (run-jack-out state)
@@ -4602,7 +4603,7 @@
         (changes-val-macro
           -7 (:credit (get-runner))
           "Paid 7 to fully break Anansi with Mayfly"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)}))
+          (auto-pump-and-break state (refresh mayfly)))
         (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")
         (core/continue state :corp nil)
         (run-jack-out state)
@@ -4624,7 +4625,7 @@
       (let [mayfly (get-program state 0)]
         (run-on state "HQ")
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
+        (auto-pump-and-break state (refresh mayfly))
         (core/continue state :corp nil)
         (run-jack-out state)
         (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
@@ -4643,7 +4644,7 @@
         (is (= 4 (count (:hand (get-runner)))) "Runner has 4 cards in hand")
         (run-on state "HQ")
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mimic)})
+        (auto-pump-and-break state (refresh mimic))
         (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Mimic to break all 2 subroutines on Pup") "Correct log with autopump ability")
         (core/continue state :corp nil)
         (run-jack-out state)
@@ -4685,7 +4686,7 @@
         (run-on state "HQ")
         (run-continue state)
         (is (= 2 (count (:abilities (refresh mimic)))) "Auto pump and break ability on Mimic is available")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mimic)})
+        (auto-pump-and-break state (refresh mimic))
         (is (second-last-log-contains? state "Runner pays 3 \\[Credits\\] to use Mimic to break all 3 subroutines on Zed 2.0") "Correct log with autopump ability")
         (core/continue state :corp nil)
         (run-jack-out state)
@@ -4794,7 +4795,7 @@
           (run-continue state)
           (changes-val-macro -3 (:credit (get-runner))
                              "Paid 3 to fully break Rototurret with MKUltra"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+                             (auto-pump-and-break state (refresh pc)))
           (is (= 3 (get-strength (refresh pc))) "Pumped MKUltra up to str 3")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines")))))
 
@@ -5029,7 +5030,7 @@
         (run-continue state)
         (changes-val-macro -5 (:credit (get-runner))
                            "Paid 3 to pump and 2 to break"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)}))
+                           (auto-pump-and-break state (refresh odore)))
         (core/continue state :corp nil)
         (run-jack-out state)
         (dotimes [_ 3] (play-from-hand state :runner "Logic Bomb"))
@@ -5037,7 +5038,7 @@
         (run-continue state)
         (changes-val-macro -3 (:credit (get-runner))
                            "Paid 3 to pump and 0 to break"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh odore)})))))
+                           (auto-pump-and-break state (refresh odore))))))
 
 (deftest orca
   ;; Orca
@@ -5056,7 +5057,7 @@
       (rez state :corp sais)
       (run-continue state)
       (click-prompt state :corp "Event")
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh orca)})
+      (auto-pump-and-break state (refresh orca))
       (changes-val-macro 1
         (get-counters (refresh hotel) :power)
         "Charged Earthrise Hotel"
@@ -5066,7 +5067,7 @@
       (run-on state "HQ")
       (run-continue state)
       (click-prompt state :corp "Event")
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh orca)})
+      (auto-pump-and-break state (refresh orca))
       (is (no-prompt? state :runner) "No second prompt to charge"))))
 
 (deftest orca-triggers-when-breaking-with-itself-only
@@ -5091,7 +5092,7 @@
       (card-ability state :runner (get-hardware state 0) 0)
       (click-prompt state :runner "Do 1 net damage")
       (click-prompt state :runner "Do 1 net damage")
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh orca)})
+      (auto-pump-and-break state (refresh orca))
       (is (no-prompt? state :runner) "No prompt to charge"))))
 
 (deftest origami
@@ -5285,7 +5286,7 @@
           (run-continue state)
           (changes-val-macro -1 (:credit (get-runner))
                              "Paid 1 to fully break Vanilla with Paperclip"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+                             (auto-pump-and-break state (refresh pc)))
           (is (= 2 (get-strength (refresh pc))) "Pumped Paperclip up to str 2")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping for >1 and breaking for 1"
@@ -5304,7 +5305,7 @@
           (run-continue state)
           (changes-val-macro -4 (:credit (get-runner))
                              "Paid 4 to fully break Fire Wall with Paperclip"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+                             (auto-pump-and-break state (refresh pc)))
           (is (= 5 (get-strength (refresh pc))) "Pumped Paperclip up to str 5")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping for 1 and breaking for >1"
@@ -5323,7 +5324,7 @@
           (run-continue state)
           (changes-val-macro -3 (:credit (get-runner))
                              "Paid 3 to fully break Spiderweb with Paperclip"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+                             (auto-pump-and-break state (refresh pc)))
           (is (= 4 (get-strength (refresh pc))) "Pumped Paperclip up to str 4")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "Pumping for >1 and breaking for >1"
@@ -5342,7 +5343,7 @@
           (run-continue state)
           (changes-val-macro -7 (:credit (get-runner))
                              "Paid 7 to fully break Chiyashi with Paperclip"
-                             (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)}))
+                             (auto-pump-and-break state (refresh pc)))
           (is (= 8 (get-strength (refresh pc))) "Pumped Paperclip up to str 8")
           (is (= 0 (count (remove :broken (:subroutines (get-ice state :hq 0))))) "Broken all subroutines"))))
     (testing "No auto-pump on unbreakable subs"
@@ -5693,7 +5694,7 @@
         (is (= 4 (count (:abilities (refresh penr)))) "Auto pump and break ability on Penrose active")
         (changes-val-macro 0 (:credit (get-runner))
                            "Used 1 credit from Cloak"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)})
+                           (auto-pump-and-break state (refresh penr))
                            (click-card state :runner cl))
         (core/continue state :corp nil)
         (run-continue state :approach-ice)
@@ -5701,7 +5702,7 @@
         (run-continue state)
         (changes-val-macro -2 (:credit (get-runner))
                            "Paid 2 credits to break all subroutines on Enigma"
-                           (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh penr)}))
+                           (auto-pump-and-break state (refresh penr)))
         (core/continue state :corp nil)
         (run-jack-out state)
         (take-credits state :runner)
@@ -6013,14 +6014,12 @@
      (rez state :corp anansi)
      (run-continue state)
      ;; boost/break
-     (changes-val-macro
-       -4 (:credit (get-runner))
-       "Spent 4 credits matching Anansi strength"
-       (changes-val-macro
-         -3 (get-counters (refresh revolver) :power)
-         "Used 3 counters from revolver"
-         (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh revolver)})
-         (core/continue state :corp nil)))
+     (is (changed?
+           [(:credit (get-runner)) -4
+            (get-counters (refresh revolver) :power) -3]
+           (auto-pump-and-break state (refresh revolver))
+           (core/continue state :corp nil))
+         "Pumping changes stuff")
      (is (= 0 (count (:discard (get-runner)))) "0 cards in discard"))))
 
 (deftest revolver-manual-breaking
@@ -6474,7 +6473,7 @@
         (run-continue state)
         (changes-val-macro -1 (:credit (get-runner))
           "No need to pump strength"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh shi)}))
+          (auto-pump-and-break state (refresh shi)))
         (core/continue state :corp nil)
         (run-jack-out state)
         (take-credits state :runner)
@@ -6487,7 +6486,7 @@
         (run-continue state)
         (changes-val-macro -3 (:credit (get-runner))
           "Pump strength and break sub"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh shi)})))))
+          (auto-pump-and-break state (refresh shi))))))
 
 (deftest shiv
   ;; Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link
@@ -6827,7 +6826,7 @@
         (rez state :corp sp)
         (run-continue state)
         (is (= 1 (get-strength (refresh snow))) "Snowball starts at 1 strength")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh snow)})
+        (auto-pump-and-break state (refresh snow))
         (is (= 5 (get-strength (refresh snow))) "Snowball was pumped once and gained 3 strength from breaking")
         (core/process-action "continue" state :corp nil)
         (is (= 4 (get-strength (refresh snow))) "+3 until-end-of-run strength"))))
@@ -7399,7 +7398,7 @@
             credits (:credit (get-corp))]
         (run-on state "HQ")
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh tycoon)})
+        (auto-pump-and-break state (refresh tycoon))
         (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
         (core/continue state :corp nil)
         (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used"))))
@@ -7431,7 +7430,7 @@
         (run-on state "R&D")
         (rez state :corp fc3)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh umb)})
+        (auto-pump-and-break state (refresh umb))
         (changes-val-macro
           1 (count (:hand (get-runner)))
           "Runner drew 1 card"
@@ -7444,7 +7443,7 @@
         (run-jack-out state)
         (run-on state "R&D")
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh umb)})
+        (auto-pump-and-break state (refresh umb))
         (changes-val-macro
           0 (count (:hand (get-runner)))
           "Runner declined to draw"

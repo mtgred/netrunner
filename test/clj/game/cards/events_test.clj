@@ -1401,7 +1401,7 @@
       (click-prompt state :runner "Mayfly")
       (let [mayfly (get-program state 0)
             deck (count (:deck (get-runner)))]
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
+        (auto-pump-and-break state (refresh mayfly))
         (core/process-action "continue" state :corp nil)
         (run-jack-out state)
         (click-prompt state :runner "Compile")
@@ -1425,7 +1425,7 @@
       (click-prompt state :runner "Stack")
       (click-prompt state :runner "Mayfly")
       (let [mayfly (get-program state 0)]
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mayfly)})
+        (auto-pump-and-break state (refresh mayfly))
         (core/process-action "continue" state :corp nil)
         (run-jack-out state)
         (click-prompt state :runner "Mayfly")
