@@ -206,12 +206,12 @@
   (let [encounter (get-current-encounter state)
         ice (get-current-ice state)]
     (update-current-encounter state :ending true)
+    (when (:bypass encounter)
+      (queue-event state :bypassed-ice ice)
+      (system-msg state :runner (str "bypasses " (:title ice))))
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
-              (when (:bypass encounter)
-                (queue-event state :bypassed-ice ice)
-                (system-msg state :runner (str "bypasses " (:title ice))))
               (let [run (:run @state)
                     phase (:phase run)]
                 (cond
