@@ -1781,8 +1781,7 @@
                                      state side
                                      {:optional
                                       {:prompt "Pay 5 [Credit] to give the Runner 2 tags?"
-                                       :req (req (and (threat-level 3 state)
-                                                      (can-pay? state :corp eid card nil [:credit 5])))
+                                       :req (req (threat-level 3 state))
                                        :waiting-prompt true
                                        :yes-ability {:async true
                                                      :cost [:credit 5]
