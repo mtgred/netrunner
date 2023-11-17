@@ -3008,7 +3008,8 @@
     (click-prompt state :runner "Steal")
     (take-credits state :runner)
     (play-from-hand state :corp "Oppo Research")
-    (is (no-prompt? state :corp) "Corp cannot pay the additional 5 credits")))
+    (is (= 1 (count (:choices (prompt-map :corp)))) "Corp cannot pay the additional 5 credits")
+    (click-prompt state :corp "No")))
 
 (deftest oppo-research-threat-ability-tag-prevention
   (do-game
