@@ -223,6 +223,24 @@
                          "3 net damage from passing Anansi"
                          (run-continue state)))))
 
+(deftest anansi-no-net-damage-when-bypassing-and-derezzing-ice-with-capybara
+  ;; No net damage when bypassing and derezzing with Capybara
+  (do-game
+    (new-game {:corp {:deck ["Anansi"]}
+               :runner {:hand [(qty "Sure Gamble" 4) "Inside Job" "Capybara"]}})
+    (play-from-hand state :corp "Anansi" "HQ")
+    (core/gain state :corp :credit 8)
+    (take-credits state :corp)
+    (let [anansi (get-ice state :hq 0)]
+      (play-from-hand state :runner "Capybara")
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "HQ")
+      (rez state :corp anansi)
+      (changes-val-macro 0 (count (:hand (get-runner)))
+                         "No net damage from bypassing and derezzing Anansi"
+                         (run-continue state)
+                         (click-prompt state :runner "Yes")))))
+
 (deftest anansi-no-net-damage-when-breaking-all-subs
   ;; no net damage when breaking all subs
   (do-game
