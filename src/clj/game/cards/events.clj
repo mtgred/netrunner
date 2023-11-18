@@ -2678,6 +2678,7 @@
 
 (defcard "Power to the People"
   {:events [{:event :access
+             :req (req (agenda? target))
              :duration :end-of-turn
              :once :per-turn
              :unregister-once-resolved true
