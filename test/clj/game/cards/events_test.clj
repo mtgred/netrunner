@@ -5184,13 +5184,19 @@
 (deftest power-to-the-people
   ;; Power to the People - Gain 7c the first time you access an agenda
   (do-game
-    (new-game {:corp {:deck ["NAPD Contract" "Hostile Takeover"]}
+    (new-game {:corp {:deck ["NAPD Contract" "Hostile Takeover" "PAD Campaign"]}
                :runner {:deck ["Power to the People"]}})
     (play-from-hand state :corp "NAPD Contract" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
     (core/lose state :runner :credit 2)
     (play-from-hand state :runner "Power to the People")
     (is (= 3 (:credit (get-runner))) "Can't afford to steal NAPD")
+    (changes-val-macro
+        0 (:credit (get-runner))
+        "No credits gained from accessing non-agenda cards"
+        (run-empty-server state "Server 2"))
+    (click-prompt state :runner "No action")
     (run-empty-server state "Server 1")
     (is (= 10 (:credit (get-runner))) "Gained 7c on access, can steal NAPD")
     (click-prompt state :runner "Pay to steal")
