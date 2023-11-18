@@ -289,6 +289,18 @@
      [tag {:src (str "/img/" card-back "-" s ".png")
            :alt alt}])))
 
+(defn sort-archives
+  [cards] (->> cards (sort-by get-title) (sort-by #(not (faceup? %)))))
+
+(defn sort-heap
+  [cards] (sort-by get-title cards))
+
+(defn sort-archives?
+  [] (get-in @app-state [:options :archives-sorted] false))
+
+(defn sort-heap?
+  [] (get-in @app-state [:options :heap-sorted] false))
+
 (defn card-img
   "Build an image of the card (is always face-up). Only shows the zoomed card image, does not do any interaction."
   [{:keys [code] :as card}]
@@ -889,7 +901,7 @@
         [:div
          [:a {:on-click #(close-popup % (:popup @s) nil false false)} (tr [:game.close "Close"])]]
         (doall
-          (for [card @discard]
+          (for [card (if (sort-heap?) (sort-heap @discard) @discard)]
             ^{:key (:cid card)}
             [card-view card]))]])))
 
@@ -920,7 +932,7 @@
                          face-up (count (filter faceup? @discard))]
                      (tr [:game.face-down-count] total face-up))]]
           (doall
-            (for [[idx c] (map-indexed vector @discard)]
+            (for [[idx c] (map-indexed vector (if (sort-archives?) (sort-archives @discard) @discard))]
               ^{:key idx}
               [:div (draw-card c false)]))]]))))
 
