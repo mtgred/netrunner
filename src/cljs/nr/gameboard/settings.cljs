@@ -17,6 +17,21 @@
         (tr [:ingame-settings.stack-cards "Stack cards"])]]]
 
      [:section
+      [:h4 (tr [:ingame-settings.card-stacking "Sorting"])]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :archives-sorted])
+                        :on-change #(swap! app-state assoc-in [:options :archives-sorted] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Sort Archives"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :heap-sorted])
+                        :on-change #(swap! app-state assoc-in [:options :heap-sorted] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Sort Heap"])]]]
+
+     [:section
       [:h4 (tr [:ingame-settings.runner-board-order "Runner board order"])]
       (doall (for [option [{:name (tr [:ingame-settings.runner-classic "classic"]) :ref "jnet"}
                            {:name (tr [:ingame-settings.runner-reverse "reversed"]) :ref "irl"}]]
