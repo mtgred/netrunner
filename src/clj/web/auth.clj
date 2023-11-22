@@ -161,8 +161,9 @@
 
 (defn profile-keys []
   [:background :pronouns :language :default-format :show-alt-art :blocked-users
-   :alt-arts :card-resolution :deckstats :gamestats :card-zoom
-   :pin-zoom :card-back :stacked-cards :sides-overlap :archives-sorted :heap-sorted])
+   :alt-arts :card-resolution :deckstats :gamestats :card-zoom :pin-zoom
+   :card-back :stacked-cards :sides-overlap :archives-sorted :heap-sorted
+   :labeled-cards :labeled-unrezzed-cards])
 
 (defn update-profile-handler
   [{db :system/db

@@ -46,6 +46,8 @@
            [:li "bbbbbbbbba: Language translations."]
            [:li "Seojun Park: Language translations."]
            [:li "PopTartNZ: High-resolution card images."]
+           [:li "Rhahi: Labelling and other QoL functionality ported with permission from "
+            [:a {:href "https://addons.mozilla.org/en-US/firefox/addon/cyberfeeder/" :target "_blank"} "Cyberfeeder"] " Firefox plugin"]
            (make-artists)
            ]
 

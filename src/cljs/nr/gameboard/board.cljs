@@ -1953,7 +1953,9 @@
         active-player (r/cursor game-state [:active-player])
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])
-        custom-bg-url (r/cursor app-state [:options :custom-bg-url])]
+        custom-bg-url (r/cursor app-state [:options :custom-bg-url])
+        labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
+        labeled-cards (r/cursor app-state [:options :labeled-cards])]
 
     (go (while true
           (let [zoom (<! zoom-channel)]
@@ -2037,7 +2039,9 @@
                  runner-rig (r/cursor game-state [:runner :rig])
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview
-              [:div.gameboard
+              [:div {:class [:gameboard
+                             (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
+                             (when @labeled-cards :show-card-labels)]}
                (let [me-keep (r/cursor game-state [me-side :keep])
                      op-keep (r/cursor game-state [op-side :keep])
                      me-quote (r/cursor game-state [me-side :quote])
