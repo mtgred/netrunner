@@ -14,7 +14,7 @@
     (play-from-hand state :corp "Caprice Nisei" "R&D")
     (rez state :corp (get-content state :hq 0))
     (is (:rezzed (get-content state :hq 0)) "First Caprice rezzed")
-    (rez state :corp (get-content state :rd 0))
+    (rez state :corp (get-content state :rd 0) {:expect-rez false})
     (is (not (:rezzed (get-content state :rd 0))) "Second Caprice could not be rezzed")))
 
 (deftest runner-install-program
@@ -100,7 +100,7 @@
     (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
     (play-from-hand state :corp "Corporate Town" "New remote")
     (let [ctown (get-content state :remote2 0)]
-      (rez state :corp ctown)
+      (rez state :corp ctown {:expect-rez false})
       (click-card state :corp (get-scored state :corp 0))
       (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn"))))
 

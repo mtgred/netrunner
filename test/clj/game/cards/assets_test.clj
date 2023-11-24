@@ -1129,7 +1129,7 @@
     (play-from-hand state :corp "Corporate Town" "New remote")
     (let [ct (get-content state :remote2 0)
           ht (get-scored state :corp 0)]
-      (rez state :corp ct)
+      (rez state :corp ct {:expect-rez false})
       (click-card state :corp ht)
       (take-credits state :corp)
       (play-from-hand state :runner "Data Dealer")
@@ -1415,7 +1415,7 @@
         (is (rezzed? (refresh dq)) "Can rez on Corp turn")
         (derez state :corp dq)
         (take-credits state :corp)
-        (rez state :corp dq)
+        (rez state :corp dq {:expect-rez false})
         (is (not (rezzed? (refresh dq))) "Cannot rez on Runner turn"))))
 
 (deftest daily-quest-runner-gains-credits-on-successful-runs
@@ -1549,7 +1549,7 @@
         (rez state :corp server)
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 1 credit from Dedicated Server"
-                           (rez state :corp iw)
+                           (rez state :corp iw {:expect-rez false})
                            (click-card state :corp server)))))
 
 (deftest director-haas
@@ -2110,7 +2110,7 @@
       (is (rezzed? (refresh fc)) "Can rez on Corp turn")
       (derez state :corp fc)
       (take-credits state :corp)
-      (rez state :corp fc)
+      (rez state :corp fc {:expect-rez false})
       (is (not (rezzed? (refresh fc))) "Cannot rez on Runner turn")
       (take-credits state :runner)
       (rez state :corp fc)
@@ -2531,7 +2531,8 @@
 (deftest hostile-architecture-basic
   ;; Basic behavior
   (do-game
-    (new-game {:corp {:hand [(qty "Hostile Architecture" 4)]}})
+    (new-game {:corp {:hand [(qty "Hostile Architecture" 4)]
+                      :credits 15}})
     (core/gain state :runner :credit 50)
     (play-from-hand state :corp "Hostile Architecture" "New remote")
     (play-from-hand state :corp "Hostile Architecture" "New remote")
@@ -2589,7 +2590,8 @@
 (deftest hostile-infrastructure-overwrite-by-corp
     ;; Overwrite by Corp
     (do-game
-      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}})
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]
+                        :credits 15}})
       (core/gain state :runner :credit 50)
       (core/gain state :corp :click 3)
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
@@ -2632,7 +2634,7 @@
     (play-and-score state "Hostile Takeover")
     (play-from-hand state :corp "Ibrahim Salem" "New remote")
     (let [ibrahim (get-content state :remote2 0)]
-      (rez state :corp (refresh ibrahim))
+      (rez state :corp (refresh ibrahim) {:expect-rez false})
       (click-card state :corp (-> (get-corp) :scored first))
       (doseq [[i [card-type card-name]]
               (map-indexed vector ['("Event" "Sure Gamble")
@@ -3483,12 +3485,12 @@
         (rez state :corp mumba)
         (changes-val-macro 0 (:credit (get-corp))
                            "Used 1 credit from Mumba"
-                           (rez state :corp iw)
+                           (rez state :corp iw {:expect-rez false})
                            (click-card state :corp mumba))
         (is (no-prompt? state :corp) "Rezzing done")
         (changes-val-macro -1 (:credit (get-corp)) ; 1 credit left on Mumba
                            "Used 1 credit from Mumba"
-                           (rez state :corp pad)
+                           (rez state :corp pad {:expect-rez false})
                            (click-card state :corp mumba)))))
 
 (deftest mumba-temple-derez-test
@@ -5288,7 +5290,8 @@
 (deftest superdeep-borehole-doesn't-instantly-win
   (do-game
     (new-game {:corp {:hand ["Superdeep Borehole"]
-                      :deck [(qty "Hedge Fund" 50)]}})
+                      :deck [(qty "Hedge Fund" 50)]
+                      :credits 6}})
     (play-from-hand state :corp "Superdeep Borehole" "New remote")
     (rez state :corp (get-content state :remote1 0))
     (is (= nil (:reason @state)) "no win happened yet")
@@ -5661,7 +5664,6 @@
       (play-from-hand state :corp "The Board" "New remote")
       (play-from-hand state :corp "The Board" "New remote")
       (rez state :corp (get-content state :remote1 0))
-      (rez state :corp (get-content state :remote2 0))
       (take-credits state :corp)
       (core/gain state :runner :credit 14)
       (is (zero? (:agenda-point (get-runner))) "Runner has 0 agenda points")
@@ -5722,7 +5724,7 @@
           (is (= 1 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")
           (changes-val-macro 0 (:credit (get-corp))
                              "Used 1 credit from The Root to rez"
-                             (rez state :corp (refresh iw))
+                             (rez state :corp (refresh iw) {:expect-rez false})
                              (click-card state :corp root))
           (is (= 0 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")))))
 
@@ -6457,7 +6459,7 @@
     (new-game {:corp {:deck ["Zealous Judge"]}})
     (play-from-hand state :corp "Zealous Judge" "New remote")
     (let [judge (get-content state :remote1 0)]
-      (rez state :corp judge)
+      (rez state :corp judge {:expect-rez false})
       (is (not (rezzed? (refresh judge))) "Zealous Judge can't be rezzed until Runner is tagged")
       (gain-tags state :runner 1)
       (rez state :corp judge)

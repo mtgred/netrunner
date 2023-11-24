@@ -1966,7 +1966,7 @@
         (changes-val-macro
           0 (:credit (get-corp))
           "Used 3 credits from Khondi Plaza"
-          (rez state :corp en)
+          (rez state :corp en {:expect-rez false})
           (dotimes [_ 3] (click-card state :corp kh))))))
 
 (deftest la-costa-grid-la-costa-grid-cannot-be-installed-in-a-central-server
@@ -3065,7 +3065,7 @@
     (take-credits state :runner)
     (let [oberth (get-content state :remote2 0)
           oak (get-content state :remote2 1) ]
-      (rez state :corp (refresh oberth))
+      (rez state :corp (refresh oberth) {:expect-rez false})
       (click-card state :corp (get-scored state :corp 0))
       (advance state oak)
       (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on itself"))))

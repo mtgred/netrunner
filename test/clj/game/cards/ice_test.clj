@@ -1104,11 +1104,11 @@
     (new-game {:corp {:hand ["Bloop" "Echo"]}})
     (play-from-hand state :corp "Bloop" "HQ")
     (play-from-hand state :corp "Echo" "R&D")
-    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
     (is (not (rezzed? (get-ice state :hq 0))) "did not rez bloop, couldn't pay the cost")
     (is (no-prompt? state :corp))
     (rez state :corp (get-ice state :rd 0))
-    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
     (click-card state :corp (get-ice state :rd 0))
     (is (not (rezzed? (get-ice state :rd 0))) "derezzed echo")
     (is (rezzed? (get-ice state :hq 0)) "rezzed bloop")))
@@ -7020,11 +7020,11 @@
       (score-agenda state :corp ht)
       (is (= 1 (count (:scored (get-corp)))) "Agenda scored")
       (is (= 12 (:credit (get-corp))) "Gained 7 credits")
-      (rez state :corp ti)
+      (rez state :corp ti {:expect-rez false})
       (click-prompt state :corp "No") ; don't use alternative cost
       (is (= 3 (:credit (get-corp))) "Spent 9 to Rez")
       (derez state :corp (refresh ti))
-      (rez state :corp ti)
+      (rez state :corp ti {:expect-rez false})
       (click-prompt state :corp "Yes") ; use alternative cost
       (click-card state :corp "Hostile Takeover")
       (is (= 3 (:credit (get-corp))) "Still on 3c")
@@ -7522,7 +7522,7 @@
     (changes-val-macro
       -1 (count-tags state)
       "Removed 1 tag"
-      (rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0) {:expect-rez false})
       (click-prompt state :corp "Remove 1 tag"))
     (is (zero? (count-bad-pub state)) "Got no bad publicity")
     (take-credits state :corp)

@@ -2669,8 +2669,7 @@
           clone (get-content state :remote2 0)]
       (is (= 2 (get-counters (refresh ronin) :advancement)) "2 advancements placed on Ronin")
       (is (= 2 (get-counters (refresh clone) :advancement)) "2 advancements placed on Ronin")
-      (rez state :corp (refresh ronin))
-      (is (not (rezzed? (refresh ronin))) "Ronin did not rez")
+      (rez state :corp (refresh ronin) {:expect-rez false})
       (score state :corp (refresh clone))
       (is (empty? (:scored (get-corp))) "Clone Retirement not scored")
       (is (zero? (:agenda-point (get-corp))))
@@ -2689,11 +2688,9 @@
     (click-card state :corp (find-card "Ronin" (:hand (get-corp))))
     (let [ronin (get-content state :remote1 0)]
       (is (= 3 (get-counters (refresh ronin) :advancement)) "3 advancements placed on Ronin")
-      (rez state :corp (refresh ronin))
-      (is (not (rezzed? (refresh ronin))) "Ronin did not rez")
+      (rez state :corp (refresh ronin) {:expect-rez false})
       (take-credits state :corp)
-      (rez state :corp (refresh ronin))
-      (is (not (rezzed? (refresh ronin))) "Ronin did not rez on the Runner's turn")
+      (rez state :corp (refresh ronin) {:expect-rez false})
       (take-credits state :runner)
       (rez state :corp (refresh ronin))
       (is (rezzed? (refresh ronin)) "Ronin now rezzed")
