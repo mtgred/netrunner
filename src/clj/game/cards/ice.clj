@@ -4136,8 +4136,9 @@
                   :effect (effect (end-run :corp eid card))}]})
 
 (defcard "Winchester"
-  (let [ab {:req (req (protecting-hq? card))
-            :effect (req (reset-variable-subs state :corp card 1 (trace-ability 3 end-the-run) {:back true}))}]
+  (let [ab {:effect (req (reset-variable-subs state :corp card
+                                              (if (protecting-hq? card) 1 0)
+                                              (trace-ability 3 end-the-run) {:back true}))}]
     {:subroutines [(trace-ability 4 trash-program-sub)
                    (trace-ability 3 trash-hardware-sub)]
      :on-rez ab

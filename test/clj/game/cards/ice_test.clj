@@ -7909,9 +7909,10 @@
       (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ"))))
 
 (deftest winchester-2-subs-when-moved-with-tao
-  ;; 2 subs when moved with Thimblerig
+  ;; 2 subs when moved with Tāo
   (do-game
-    (new-game {:corp {:deck ["Winchester" "Thimblerig" "Merger"]}
+    (new-game {:corp {:deck ["Winchester" "Thimblerig" "Merger"]
+                      :credits 6}
                :runner {:id "Tāo Salonga: Telepresence Magician"}})
     (play-from-hand state :corp "Winchester" "HQ")
     (play-from-hand state :corp "Thimblerig" "R&D")
