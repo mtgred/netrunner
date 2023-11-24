@@ -4137,9 +4137,9 @@
                       :credits 100}
                :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
     (play-from-hand state :corp "Karunā" "HQ")
-    (rez state :corp (get-ice state :hq 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :hq 0))
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)
@@ -4173,7 +4173,7 @@
                       :credits 100}
                :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)
@@ -4192,7 +4192,7 @@
                :runner {:hand []
                         :deck [(qty "Sure Gamble" 3)]}})
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)
@@ -4211,7 +4211,7 @@
                :runner {:hand []
                         :deck ["Sure Gamble"]}})
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)

@@ -429,7 +429,8 @@
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (rez state :corp v0 {:press-continue true})
+        (rez state :corp v0)
+        (core/continue state :corp nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
 
 (deftest auto-no-action-auto-no-action-on-toggling-setting
@@ -533,7 +534,8 @@
     (play-from-hand state :runner "Devil Charm")
     (run-on state :rd)
     (core/continue state :runner nil)
-    (rez state :corp (get-ice state :rd 0) {:press-continue true})
+    (rez state :corp (get-ice state :rd 0))
+    (core/continue state :corp nil)
     (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
 
 (deftest multi-access-correct-handling-of-multi-accesses-with-draws-in-between-accesses

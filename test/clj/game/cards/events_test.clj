@@ -309,15 +309,16 @@
 (deftest apocalypse-with-hostile-infrastructure-should-take-damage-equal-to-2x-cards-on-the-table
     ;; with Hostile Infrastructure - should take damage equal to 2x cards on the table
     (do-game
-      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 2) (qty "Ice Wall" 2)]}
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 2) (qty "Ice Wall" 2)]
+                        :credits 100}
                  :runner {:deck ["Apocalypse" (qty "Sure Gamble" 9)]}})
       (core/gain state :corp :click 1)
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
-      (rez state :corp (get-content state :remote1 0) {:ignore-cost true})
-      (rez state :corp (get-content state :remote4 0) {:ignore-cost true})
+      (rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote4 0))
       (take-credits state :corp)
       (draw state :runner 5)
       (is (= 10 (count (:hand (get-runner)))) "Runner has 9 cards in hand")
