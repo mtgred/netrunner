@@ -52,16 +52,15 @@
 
 (def sfx-last-played (atom nil))
 
-(defn update-audio [{:keys [gameid sfx sfx-current-id]}]
+(defn update-audio [{:keys [sfx sfx-current-id]}]
   ;; When it's the first game played with this state or when the sound history comes from different game,
   ;; we skip the cacophony
   (let [sfx-last-played @sfx-last-played]
     (when (and (get-in @app-state [:options :sounds])
-               (some? sfx-last-played)
-               (= gameid (:gameid sfx-last-played)))
+               (some? sfx-last-played))
       ;; Skip the SFX from queue with id smaller than the one last played, queue the rest
       (let [sfx-to-play (reduce (fn [sfx-list {:keys [id name]}]
-                                  (if (> id (:id sfx-last-played))
+                                  (if (> id sfx-last-played)
                                     (conj sfx-list name)
                                     sfx-list))
                                 []
@@ -69,5 +68,5 @@
         (play-sfx sfx-to-play))))
   ;; Remember the most recent sfx id as last played so we don't repeat it later
   (when sfx-current-id
-    (reset! sfx-last-played {:gameid gameid :id sfx-current-id})))
+    (reset! sfx-last-played sfx-current-id)))
 

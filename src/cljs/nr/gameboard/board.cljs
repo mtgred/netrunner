@@ -1293,14 +1293,6 @@
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
-(defn audio-component [_input]
-  (r/with-let [sfx-state (r/track #(select-keys @game-state [:sfx :sfx-current-id]))]
-    (r/create-class
-      {:display-name "audio-component"
-       :component-did-update (fn [] (update-audio @sfx-state))
-       ;; make this component rebuild when sfx changes.
-       :reagent-render (fn [sfx] @sfx nil)})))
-
 (defn get-run-ices []
   (let [server (-> (:run @game-state)
                    :server
@@ -2077,8 +2069,6 @@
                  [hand-view op-side op-hand op-hand-size op-hand-count (atom nil) (= @side :spectator)]]
 
                 [:div.inner-leftpane
-                 [audio-component sfx]
-
                  [:div.left-inner-leftpane
                   [:div
                    [stats-view opponent]
@@ -2118,3 +2108,6 @@
               (when (:replay @game-state)
                 [:div.bottompane
                  [replay-panel]])])))})))
+
+(defonce sfx (r/track #(select-keys @game-state [:sfx :sfx-current-id])))
+(defonce trigger-sfx (r/track! #(update-audio @sfx)))
