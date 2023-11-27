@@ -8,13 +8,25 @@
   (fn []
     [:div.settings
      [:section
-      [:h4 (tr [:ingame-settings.card-stacking "Card stacking"])]
+      [:h4 (tr [:ingame-settings.card-stacking "Card settings"])]
       [:div
        [:label [:input {:type "checkbox"
                         :value true
                         :checked (get-in @app-state [:options :stacked-cards])
                         :on-change #(swap! app-state assoc-in [:options :stacked-cards] (.. % -target -checked))}]
-        (tr [:ingame-settings.stack-cards "Stack cards"])]]]
+        (tr [:ingame-settings.stack-cards "Stack cards"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :labeled-unrezzed-cards])
+                        :on-change #(swap! app-state assoc-in [:options :labeled-unrezzed-cards] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Label unrezzed cards"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :labeled-cards])
+                        :on-change #(swap! app-state assoc-in [:options :labeled-cards] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Label face up cards"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.card-stacking "Sorting"])]
