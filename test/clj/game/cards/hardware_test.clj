@@ -1050,7 +1050,7 @@
       (play-from-hand state :runner "Buffer Drive")
       (click-credit state :runner)
       (run-on state "HQ")
-      (rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 0) {:expect-rez false})
       (click-card state :corp "Hostile Takeover")
       (run-continue state)
       (card-ability state :runner (get-program state 0) 2)

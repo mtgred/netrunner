@@ -309,15 +309,16 @@
 (deftest apocalypse-with-hostile-infrastructure-should-take-damage-equal-to-2x-cards-on-the-table
     ;; with Hostile Infrastructure - should take damage equal to 2x cards on the table
     (do-game
-      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 2) (qty "Ice Wall" 2)]}
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 2) (qty "Ice Wall" 2)]
+                        :credits 100}
                  :runner {:deck ["Apocalypse" (qty "Sure Gamble" 9)]}})
       (core/gain state :corp :click 1)
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-from-hand state :corp "Ice Wall" "New remote")
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
-      (rez state :corp (get-content state :remote1 0) {:ignore-cost true})
-      (rez state :corp (get-content state :remote4 0) {:ignore-cost true})
+      (rez state :corp (get-content state :remote1 0))
+      (rez state :corp (get-content state :remote4 0))
       (take-credits state :corp)
       (draw state :runner 5)
       (is (= 10 (count (:hand (get-runner)))) "Runner has 9 cards in hand")
@@ -536,10 +537,10 @@
       (click-prompt state :runner "HQ")
       (let [iwall1 (get-ice state :hq 0)
             iwall2 (get-ice state :hq 1)]
-        (rez state :corp iwall1)
+        (rez state :corp iwall1 {:expect-rez false})
         (is (not (rezzed? (refresh iwall1))) "First Ice Wall is not rezzed")
         (run-continue state)
-        (rez state :corp iwall2)
+        (rez state :corp iwall2 {:expect-rez false})
         (is (not (rezzed? (refresh iwall2))) "Second Ice Wall is not rezzed")
         (run-jack-out state)
         ;; Do another run, where the ice should rez
@@ -781,7 +782,7 @@
     (click-prompt state :runner "HQ")
     (let [iw1 (get-ice state :hq 1)
           iw2 (get-ice state :hq 0)]
-      (rez state :corp iw1)
+      (rez state :corp iw1 {:expect-rez false})
       (is (not (rezzed? (refresh iw1))) "Foremost Ice Wall is not rezzed")
       (rez state :corp iw2)
       (is (rezzed? (refresh iw2)) "Final Ice Wall is rezzed"))))
@@ -1009,7 +1010,7 @@
       (is (not (no-prompt? state :runner)) "Can't target card in central server")
       (click-card state :runner v2)
       (is (:icon (refresh v2)) "Vanilla has an icon")
-      (rez state :corp v2)
+      (rez state :corp v2 {:expect-rez false})
       (is (not (rezzed? (refresh v2))) "Prevented remote ice from rezzing")
       (take-credits state :runner)
       (is (nil? (:icon (refresh v2))))
@@ -1018,7 +1019,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Careful Planning")
       (click-card state :runner pad)
-      (rez state :corp pad)
+      (rez state :corp pad {:expect-rez false})
       (is (:icon (refresh pad)) "PAD Campaign has an icon")
       (is (not (rezzed? (refresh pad))) "Prevented remote server contents from rezzing")
       (take-credits state :runner)
@@ -1656,7 +1657,7 @@
       (click-prompt state :corp "No")
       (let [iw (get-ice state :hq 0)]
         (is (:run @state) "Run has been initiated")
-        (rez state :corp iw)
+        (rez state :corp iw {:expect-rez false})
         (is (not (rezzed? (refresh iw))) "Corp can't rez ice this run"))))
 
 (deftest data-breach
@@ -3234,7 +3235,7 @@
       (play-from-hand state :runner "Hacktivist Meeting")
       (rez state :corp jackson)
       (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active")
-      (rez state :corp sundew)
+      (rez state :corp sundew {:expect-rez false})
       (is (not (rezzed? (refresh sundew))) "Sundew is not rezzed as corp has no cards in hand")
       (is (= "Unable to pay for Sundew." (-> @state :corp :toast first :msg)) "Corp gets the correct toast"))))
 
@@ -3770,7 +3771,7 @@
       (rez state :corp jeeves)
       (is (rezzed? (refresh jeeves)) "Jeeves is rezzed.  Interdiction not active when on Peddler")
       (play-from-hand state :runner "Interdiction")
-      (rez state :corp jackson)
+      (rez state :corp jackson {:expect-rez false})
       (is (not (rezzed? (refresh jackson))) "Jackson is not rezzed"))))
 
 (deftest into-the-depths
@@ -5140,7 +5141,7 @@
         (click-card state :runner project-kusanagi)
         (is (= -1 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
         (take-credits state :runner)
-        (rez state :corp corporate-town)
+        (rez state :corp corporate-town {:expect-rez false})
         (click-card state :corp (refresh project-kusanagi)))
       (is (zero? (:agenda-point (get-corp))) "Forfeiting agenda did not refund extra agenda points")
       (is (= 1 (count (:discard (get-runner)))) "Political Graffiti is in the Heap")))
@@ -6069,7 +6070,7 @@
       (is (= 9 (hand-size :corp)) "Corp has +4 hand size")
       (is (= 5 (hand-size :runner)) "Runner has +0 hand size")
       ;; Additional costs to rez should now be applied again
-      (rez state :corp (get-content state :remote7 0))
+      (rez state :corp (get-content state :remote7 0) {:expect-rez false})
       (click-card state :corp (get-in (get-corp) [:scored 0]))
       (is (zero? (count (:scored (get-corp)))) "Agenda was auto-forfeit to rez Oberth")
       (derez state :corp (get-content state :remote4 0))
@@ -6146,7 +6147,7 @@
     (click-prompt state :runner "HQ")
     (let [archer (get-ice state :hq 0)
           credits (:credit (get-corp))]
-      (rez state :corp archer)
+      (rez state :corp archer {:expect-rez false})
       (click-card state :corp (get-scored state :corp 0))
       (is (no-prompt? state :corp) "Only 1 agenda required to rez")
       (is (= (- credits (* 2 (:cost archer))) (:credit (get-corp))) "Rezzing Archer costs double")

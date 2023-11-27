@@ -548,17 +548,21 @@
    (get-in @state [:runner :play-area pos])))
 
 (defn rez-impl
-  [state card & args]
-  (let [card (get-card state card)]
-    (is' (installed? card) (str (:title card) " is installed"))
-    (is' (not (rezzed? card)) (str (:title card) " is unrezzed"))
-    (when (and (installed? card)
-               (not (rezzed? card)))
-      (core/process-action "rez" state :corp (merge {:card card} (first args))))))
+  ([state card] (rez-impl state card nil))
+  ([state card {:keys [expect-rez] :or {expect-rez true}}]
+   (let [card (get-card state card)]
+     (is' (installed? card) (str (:title card) " is installed"))
+     (is' (not (rezzed? card)) (str (:title card) " is unrezzed"))
+     (when (and (installed? card)
+                (not (rezzed? card)))
+       (core/process-action "rez" state :corp {:card card})
+       (if expect-rez
+         (is' (rezzed? (get-card state card)) (str (:title card) " is rezzed"))
+         (is' (not (rezzed? (get-card state card))) (str (:title card) " is still unrezzed")))))))
 
 (defmacro rez
-  [state _ card & args]
-  `(error-wrapper (rez-impl ~state ~card ~@args)))
+  [state _ card & opts]
+  `(error-wrapper (rez-impl ~state ~card ~@opts)))
 
 (defn derez-impl
   [state side card]

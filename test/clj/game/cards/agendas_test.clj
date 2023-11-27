@@ -2206,7 +2206,8 @@
     (new-game {:corp {:deck ["Mandatory Seed Replacement"
                              "Ice Wall" "Fire Wall"
                              "Kakugo" "Chum"
-                             "RSVP" "Sensei"]}})
+                             "RSVP" "Sensei"]
+                      :credits 100}})
     (click-draw state :corp)
     (core/gain state :corp :click 10 :credit 10)
     (play-from-hand state :corp "Ice Wall" "Archives")
@@ -2264,7 +2265,7 @@
       (let [arc (get-ice state :hq 0)
             mu (get-scored state :corp 0)]
         (is (= 4 (:click (get-corp))) "Corp should start turn with 4 clicks")
-        (rez state :corp arc)
+        (rez state :corp arc {:expect-rez false})
         (click-card state :corp (refresh mu))
         (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice"))))
 
