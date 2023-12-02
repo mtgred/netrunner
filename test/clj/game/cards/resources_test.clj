@@ -3404,12 +3404,19 @@
     (take-credits state :corp)
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (is (:runner-phase-12 @state) "Runner is in Step 1.2")
-    (card-ability state :runner (get-resource state 0) 0)
-    (is (= 5 (:click (get-runner))) "Gained extra click from Joshua")
     (end-phase-12 state :runner)
+    (click-prompt state :runner "Yes")
+    (is (= 5 (:click (get-runner))) "Gained extra click from Joshua")
     (is (zero? (count-tags state)) "Runner has no tags during turn")
     (take-credits state :runner)
-    (is (= 1 (count-tags state)) "Took 1 tag")))
+    (is (= 1 (count-tags state)) "Took 1 tag")
+    (take-credits state :corp)
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "No")
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (remove-tag state :runner)
+    (take-credits state :runner)
+    (is (zero? (count-tags state)) "Runner has no tags during turn")))
 
 (deftest kasi-string
   ;; Kasi String
