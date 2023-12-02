@@ -1768,7 +1768,10 @@
      :events [{:event :runner-turn-begins
                :optional {:prompt "Gain [Click]?"
                           :once :per-turn
-                          :yes-ability ability}}
+                          :yes-ability ability
+                          :no-ability
+                          {:effect (effect (system-msg (str "declines to use " (:title card) " to gain [Click]"))
+                                           (update! (assoc-in card [:special :joshua-b] false)))}}}
               {:event :runner-turn-ends
                :interactive (req true)
                :req (req (get-in card [:special :joshua-b]))
