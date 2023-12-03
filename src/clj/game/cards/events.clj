@@ -194,13 +194,6 @@
   (let [all [{:async true
               :effect (effect (draw eid 2))
               :msg "draw 2 cards"}
-             {:effect (effect (add-counter (get-card state card) :credit 4)
-                              (effect-completed eid))
-              :async true
-              :msg "place 4 [Credits] for paying trash costs"}
-             {:msg "remove 1 tag"
-              :async true
-              :effect (effect (lose-tags eid 1))}
              {:msg "install a card from the grip, paying 1 [Credits] less"
               :async true
               :req (req (not (install-locked? state side)))
@@ -215,7 +208,14 @@
                                                                     [:credit (install-cost state side target {:cost-bonus -1})])))}
                                  :async true
                                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -1}))}
-                                card nil))}]
+                                card nil))}
+             {:msg "remove 1 tag"
+              :async true
+              :effect (effect (lose-tags eid 1))}
+             {:effect (effect (add-counter (get-card state card) :credit 4)
+                              (effect-completed eid))
+              :async true
+              :msg "place 4 [Credits] for paying trash costs"}]
         choice (fn choice [abis rem]
                  {:prompt (str "Choose an ability to resolve (" rem " remaining)")
                   :waiting-prompt true
