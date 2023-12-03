@@ -27,7 +27,7 @@
    [game.core.events :refer [event-count first-event? first-trash? no-event?
                              run-events]]
    [game.core.expose :refer [expose]]
-   [game.core.finding :refer [find-card]]
+   [game.core.finding :refer [find-card find-latest]]
    [game.core.flags :refer [can-trash? card-flag? in-corp-scored? register-run-flag!
                             zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
@@ -233,6 +233,52 @@
                                                          " and is not forced to rez " cname)}}}
                                 card nil)
                               (rez state :corp eid target))))}]})
+
+(defcard "BMI Buffer"
+  (let [grip-program-trash?
+        (fn [card]
+          (and (runner? card)
+               (program? card)
+               (in-discard? card)
+               (= (first (:previous-zone card)) :hand)))
+        triggered-ability
+        {:async true
+         :effect (req (doseq [c (filter grip-program-trash? (mapv #(find-latest state (:card %)) targets))]
+                        (host state side (get-card state card) c))
+                      (effect-completed state side eid))}]
+    {:events [(assoc triggered-ability :event :runner-trash)
+              (assoc triggered-ability :event :corp-trash)]
+     :abilities [{:cost [:click 2]
+                  :label "Install a hosted program"
+                  :prompt "Choose a program to install"
+                  :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install)
+                                                                % nil [:credit (install-cost state side %)])
+                                                     (:hosted card))))
+                  :msg (msg "install " (:title target))
+                  :async true
+                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target))}]}))
+
+(defcard "BMI Buffer 2"
+  (let [grip-program-trash?
+        (fn [card]
+          (and (runner? card)
+               (program? card)
+               (in-discard? card)
+               (= (first (:previous-zone card)) :hand)))
+        triggered-ability
+        {:async true
+         :effect (req (doseq [c (filter grip-program-trash? (mapv #(find-latest state (:card %)) targets))]
+                        (host state side (get-card state card) c))
+                      (effect-completed state side eid))}]
+    {:events [(assoc triggered-ability :event :runner-trash)
+              (assoc triggered-ability :event :corp-trash)]
+     :abilities [{:cost [:click 2]
+                  :label "Install a hosted program"
+                  :prompt "Choose a program to install"
+                  :choices (req (:hosted card))
+                  :msg (msg "install " (:title target))
+                  :async true
+                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-all-cost true}))}]}))
 
 (defcard "Bookmark"
   {:abilities [{:label "Host up to 3 cards from the grip facedown"

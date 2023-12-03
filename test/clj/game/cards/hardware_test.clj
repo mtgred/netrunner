@@ -418,6 +418,45 @@
         (click-card state :runner "Ice Wall")
         (click-prompt state :corp "No"))))
 
+(deftest bmi-buffer
+  (do-game
+    (new-game {:runner {:hand ["Abaasy" "BMI Buffer" "Freelance Coding Contract"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "BMI Buffer")
+    (play-from-hand state :runner "Freelance Coding Contract")
+    (click-card state :runner (find-card "Abaasy" (:hand (get-runner))))
+    (click-prompt state :runner "Done")
+    (is (= 0 (count (filter #(= (:type %) "Program") (:discard (get-runner))))) "No programs in Heap")
+    (is (nil? (get-program state 0)) "Abaasy not installed")
+    (let [bmi (get-hardware state 0)]
+      (is (= 1 (count (:hosted bmi))) "BMI Buffer hosting Abaasy")
+      (changes-val-macro -2 (:credit (get-runner))
+                         "BMI Buffer requires install cost paid"
+                         (card-ability state :runner bmi 0)
+                         (click-prompt state :runner "Abaasy"))
+      (is (= 0 (count (:hosted (refresh bmi)))) "BMI Buffer no longer hosting Abaasy")
+      (is (= "Abaasy" (:title (get-program state 0))) "Abaasy is installed"))))
+
+(deftest bmi-buffer-2
+  ;; BMI Buffer 2 installs ignoring all costs
+  (do-game
+    (new-game {:runner {:hand ["Abaasy" "BMI Buffer 2" "Freelance Coding Contract"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "BMI Buffer 2")
+    (play-from-hand state :runner "Freelance Coding Contract")
+    (click-card state :runner (find-card "Abaasy" (:hand (get-runner))))
+    (click-prompt state :runner "Done")
+    (is (= 0 (count (filter #(= (:type %) "Program") (:discard (get-runner))))) "No programs in Heap")
+    (is (nil? (get-program state 0)) "Abaasy not installed")
+    (let [bmi (get-hardware state 0)]
+      (is (= 1 (count (:hosted bmi))) "BMI Buffer 2 hosting Abaasy")
+      (changes-val-macro 0 (:credit (get-runner))
+                         "BMI Buffer 2 ignores install cost"
+                         (card-ability state :runner bmi 0)
+                         (click-prompt state :runner "Abaasy"))
+      (is (= 0 (count (:hosted (refresh bmi)))) "BMI Buffer 2 no longer hosting Abaasy")
+      (is (= "Abaasy" (:title (get-program state 0))) "Abaasy is installed"))))
+
 (deftest bookmark-click-ability
     ;; Click ability
     (do-game
