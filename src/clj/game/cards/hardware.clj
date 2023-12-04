@@ -2058,8 +2058,8 @@
              :interactive (req (pos? (get-counters (get-card state card) :power)))
              :prompt "Choose one"
              :waiting-prompt true
-             :choices (req [(when (pos? (count-real-tags state)) "Remove 1 tag")
-                            "Draw 1 card"
+             :choices (req ["Draw 1 card"
+                            (when (pos? (count-real-tags state)) "Remove 1 tag")
                             "Done"])
              :effect (req (if (= target "Draw 1 card")
                             (do (add-counter state side card :power -1)
