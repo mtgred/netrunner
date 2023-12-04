@@ -2041,7 +2041,8 @@
              :choices (req runnable-servers)
              :effect (effect (make-run eid target card))}
    :events [{:event :successful-run
-             :req (req this-card-run)
+             :req (req (and this-card-run
+                            (not (zone-locked? state :runner :discard))))
              :prompt "Choose 1 card to add to the grip"
              :waiting-prompt true
              :choices (req (cancellable (:discard runner) :sorted))
@@ -2983,7 +2984,7 @@
                :this-card-run true
                :ability
                {:async true
-               :req (req (not (zone-locked? state :runner :discard)))
+                :req (req (not (zone-locked? state :runner :discard)))
                 :prompt "Choose a program to install"
                 :msg (msg "install " (:title target))
                 :choices (req (filter program? (:discard runner)))
@@ -3615,6 +3616,7 @@
                              {:prompt "Choose a card to install"
                               :waiting-prompt true
                               :async true
+                              :req (req (not (zone-locked? state :runner :discard)))
                               :choices (req (cancellable (filter #(and (not (event? %))
                                                                        (runner-can-install? state side % nil)
                                                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -3})])

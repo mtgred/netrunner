@@ -32,7 +32,7 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [break-sub update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [make-card]]
-   [game.core.installing :refer [corp-install runner-can-pay-and-install? runner-install]]
+   [game.core.installing :refer [corp-install install-locked? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [link+ update-link]]
    [game.core.mark :refer [identify-mark-ability]]
    [game.core.memory :refer [mu+]]
@@ -331,7 +331,9 @@
              :effect (effect (draw eid 1))}]})
 
 (defcard "Arissana Rocha Nahu: Street Artist"
-  {:abilities [{:req (req (and run (not-used-once? state {:once :per-turn} card)))
+  {:abilities [{:req (req (and run
+                               (not-used-once? state {:once :per-turn} card)
+                               (not (install-locked? state side))))
                 :async true
                 :label "Install a program from the grip"
                 :effect
