@@ -3616,6 +3616,7 @@
                              {:prompt "Choose a card to install"
                               :waiting-prompt true
                               :async true
+                              :req (req (not (zone-locked? state :runner :discard)))
                               :choices (req (cancellable (filter #(and (not (event? %))
                                                                        (runner-can-install? state side % nil)
                                                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil [:credit (install-cost state side % {:cost-bonus -3})])
