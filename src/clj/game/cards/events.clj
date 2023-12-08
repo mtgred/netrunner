@@ -1736,7 +1736,8 @@
 (defcard "In the Groove"
   {:events [{:event :runner-install
              :duration :end-of-turn
-             :req (req (<= 1 (:cost (:card context))))
+             :req (req (and (<= 1 (:cost (:card context)))
+                            (not (:facedown context))))
              :interactive (req (or (has-subtype? (:card context) "Cybernetic")
                                    (first-event? state side :runner-install)))
              :async true

@@ -3562,6 +3562,20 @@
                          (click-card state :runner (find-card "Imp" (:hand (get-runner))))
                          (click-prompt state :runner "Draw 1 card"))))
 
+(deftest in-the-groove-reboot-interaction
+  ;; In the Groove should not trigger off facedown installs
+  (do-game
+    (new-game {:runner {:hand ["In the Groove" "Reboot"]
+                        :discard ["Sure Gamble" "Paperclip" "Clot"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "In the Groove")
+    (play-run-event state "Reboot" :archives)
+    (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+    (click-card state :runner (find-card "Paperclip" (:discard (get-runner))))
+    (click-card state :runner (find-card "Clot" (:discard (get-runner))))
+    (click-prompt state :runner "Done")
+    (is (no-prompt? state :runner) "No In the Groove prompts should be available.")))
+
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
   (do-game
