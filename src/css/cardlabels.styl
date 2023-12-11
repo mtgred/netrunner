@@ -11,6 +11,9 @@ showLabel()
   width: 100%
   z-index: 11
 
+  &:empty
+    display: none
+
   &:hover
     white-space: unset
     text-overflow: unset
@@ -40,22 +43,23 @@ iceLabelForRunner()
 
 .gameboard
   &.show-unrezzed-card-labels
-    .me
-      .card
-        &:hover
-          .cardname
-            z-index: 12
-            background-color: rgb(50,50,50)
-        img + .cardname
-          showLabel()
-      .content
-        img + .cardname
-          border-top-right-radius: card-border-radius
-          border-top-left-radius: card-border-radius
+    .centralpane
+      .me
+        .card
+          &:hover
+            .cardname
+              z-index: 12
+              background-color: rgb(50,50,50)
+          img + .cardname
+            showLabel()
+        .content
+          img + .cardname
+            border-top-right-radius: card-border-radius
+            border-top-left-radius: card-border-radius
 
-      .ices
-        img + .cardname
-          iceLabelForCorp()
+        .ices
+          img + .cardname
+            iceLabelForCorp()
 
   &.show-card-labels
     .card
