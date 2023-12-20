@@ -543,6 +543,7 @@
                        :pronouns (get-in @app-state [:options :pronouns])
                        :language (get-in @app-state [:options :language])
                        :sounds (get-in @app-state [:options :sounds])
+                       :default-format (get-in @app-state [:options :default-format])
                        :lobby-sounds (get-in @app-state [:options :lobby-sounds])
                        :volume (get-in @app-state [:options :sounds-volume])
                        :show-alt-art (get-in @app-state [:options :show-alt-art])
