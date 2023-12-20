@@ -10,7 +10,7 @@
    [nr.gameboard.state :refer [game-state not-spectator?]]
    [nr.help :refer [command-info]]
    [nr.translations :refer [tr]]
-   [nr.utils :refer [influence-dot render-message]]
+   [nr.utils :refer [highlight-side influence-dot render-message]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [reagent.dom :as rdom]))
@@ -175,9 +175,10 @@
          [indicate-action]
          [command-menu !input-ref state]]))))
 
-
 (defn log-messages []
-  (let [log (r/cursor game-state [:log])]
+  (let [log (r/cursor game-state [:log])
+        corp (r/cursor game-state [:corp :user :username])
+        runner (r/cursor game-state [:runner :user :username])]
     (r/create-class
       {:display-name "log-messages"
 
@@ -211,7 +212,7 @@
                  (fn [{:keys [user text timestamp]}]
                    ^{:key timestamp}
                    (if (= user "__system__")
-                     [:div.system (render-message text)]
+                     [:div.system (render-message (highlight-side text @corp @runner))]
                      [:div.message
                       [avatar user {:opts {:size 38}}]
                       [:div.content

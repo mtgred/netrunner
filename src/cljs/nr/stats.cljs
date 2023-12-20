@@ -10,8 +10,8 @@
    [nr.avatar :refer [avatar]]
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.translations :refer [tr tr-format tr-lobby tr-side]]
-   [nr.utils :refer [day-word-with-time-formatter faction-icon
-                     format-date-time notnum->zero num->percent render-message
+   [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
+                     highlight-side notnum->zero num->percent render-message
                      set-scroll-top store-scroll-top]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -129,7 +129,9 @@
      :component-will-unmount #(store-scroll-top % log-scroll-top)
      :reagent-render
      (fn [state _log-scroll-top]
-       (let [game (:view-game @state)]
+       (let [game (:view-game @state)
+             corp (get-in game [:corp :player :username])
+             runner (get-in game [:runner :player :username])]
          [:div {:style {:overflow "auto"}}
           [:div.panel.messages
            (if (seq (:log game))
@@ -137,7 +139,7 @@
                       (fn [i msg]
                         (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
                           (if (= (:user msg) "__system__")
-                            [:div.system {:key i} (render-message (:text msg))]
+                            [:div.system {:key i} (render-message (highlight-side (:text msg) corp runner))]
                             [:div.message {:key i}
                              [avatar (:user msg) {:opts {:size 38}}]
                              [:div.content

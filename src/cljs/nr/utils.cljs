@@ -292,12 +292,7 @@
 (defn render-cards
   "Render all cards in a given text or HTML fragment input"
   [input]
-  (cond
-    (re-find (contains-card-pattern) (or input ""))
-    (render-input input (card-patterns))
-    (string? input) [:<> input]
-    (vector? input) input
-    :else [:<>]))
+  (render-input input (card-patterns)))
 
 (defn render-specials
   "Render all special codes in a given text or HTML fragment input"
@@ -307,9 +302,19 @@
 (defn render-message
   "Render icons, cards and special codes in a message"
   [input]
-  (if (string? input)
-    (render-specials (render-icons (render-cards input)))
-    input))
+  (render-specials (render-icons (render-cards input))))
+
+(defn highlight-patterns-impl [corp runner]
+  (letfn [(regex-of [player-name] (re-pattern (str "(?i)" (regex-escape player-name))))]
+    (->> {corp [:span.corp-username corp]
+          runner [:span.runner-username runner]}
+         (filter (fn [[k _]] (not-empty k)))
+         (map (fn [[k v]] [(regex-of k) v]))
+         (sort-by (comp count str first) >))))
+(def highlight-patterns (memoize highlight-patterns-impl))
+
+(defn highlight-side [message corp runner]
+  (render-input message (highlight-patterns corp runner)))
 
 (defn cond-button
   [text cond f]
