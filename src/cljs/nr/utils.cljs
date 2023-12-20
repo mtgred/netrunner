@@ -304,17 +304,22 @@
   [input]
   (render-specials (render-icons (render-cards input))))
 
-(defn highlight-patterns-impl [corp runner]
+(defn- player-highlight-patterns-impl [corp runner]
   (letfn [(regex-of [player-name] (re-pattern (str "(?i)" (regex-escape player-name))))]
     (->> {corp [:span.corp-username corp]
           runner [:span.runner-username runner]}
          (filter (fn [[k _]] (not-empty k)))
          (map (fn [[k v]] [(regex-of k) v]))
          (sort-by (comp count str first) >))))
-(def highlight-patterns (memoize highlight-patterns-impl))
+(def player-highlight-patterns (memoize player-highlight-patterns-impl))
 
-(defn highlight-side [message corp runner]
-  (render-input message (highlight-patterns corp runner)))
+(defn render-player-highlight [message corp runner]
+  (render-input message (player-highlight-patterns corp runner)))
+
+(defn player-highlight-option-class []
+  (case (get-in @app-state [:options :log-player-highlight])
+    "blue-red" "log-player-highlight-red-blue"
+               nil))
 
 (defn cond-button
   [text cond f]

@@ -11,8 +11,8 @@
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.translations :refer [tr tr-format tr-lobby tr-side]]
    [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
-                     highlight-side notnum->zero num->percent render-message
-                     set-scroll-top store-scroll-top]]
+                     notnum->zero num->percent player-highlight-option-class
+                     render-message render-player-highlight set-scroll-top store-scroll-top]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -133,13 +133,13 @@
              corp (get-in game [:corp :player :username])
              runner (get-in game [:runner :player :username])]
          [:div {:style {:overflow "auto"}}
-          [:div.panel.messages
+          [:div.panel.messages {:class (player-highlight-option-class)}
            (if (seq (:log game))
              (doall (map-indexed
                       (fn [i msg]
                         (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
                           (if (= (:user msg) "__system__")
-                            [:div.system {:key i} (render-message (highlight-side (:text msg) corp runner))]
+                            [:div.system {:key i} (render-message (render-player-highlight (:text msg) corp runner))]
                             [:div.message {:key i}
                              [avatar (:user msg) {:opts {:size 38}}]
                              [:div.content
