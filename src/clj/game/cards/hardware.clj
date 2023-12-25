@@ -115,7 +115,7 @@
                                     :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}]
     {:data {:counter {:power 3}}
      :interactions {:prevent [{:type #{:net}
-                               :req (req true)}]}
+                               :req (req run)}]}
      :events [(trash-on-empty :power)
               {:event :encounter-ice
                :req (req (contains? (card-def current-ice) :on-encounter))

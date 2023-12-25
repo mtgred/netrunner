@@ -126,6 +126,19 @@
         (card-ability state :runner airbladex 0))
       (is (= 1 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter"))))
 
+(deftest airbladex-jsrd-ed-no-prevent-prompt-outside-run
+  (do-game
+    (new-game {:runner {:hand ["AirbladeX (JSRF Ed.)" (qty "Sure Gamble" 3)]}
+               :corp {:hand ["Reaper Function"]}})
+    (play-from-hand state :corp "Reaper Function" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "AirbladeX (JSRF Ed.)")
+    (take-credits state :runner)
+    (end-phase-12 state :corp)
+    (click-prompt state :corp "Yes")
+    (is (no-prompt? state :runner) "No damage prevention prompt outside of run")))
+
 (deftest akamatsu-mem-chip
   ;; Akamatsu Mem Chip - Gain 1 memory
   (do-game

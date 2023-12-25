@@ -152,9 +152,10 @@
   "for a preventable damage instance, handles all damage prevention effects that a player can use for it"
   ([state side eid type n player]
    (let [interrupts (get-prevent-list state player type)
+         cards-can-prevent (cards-can-prevent? state player interrupts type nil {:side side})
          other-player (if (= player :corp) :runner :corp)
          already-prevented (or (get-in @state [:damage :damage-prevent type]) 0)]
-     (if (and (cards-can-prevent? state player interrupts type nil {:side side})
+     (if (and cards-can-prevent
               (> n already-prevented))
        ;; player can prevent damage
        (do (system-msg state player "has the option to prevent damage")
