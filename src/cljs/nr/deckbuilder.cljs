@@ -137,7 +137,7 @@
   "Parse a single line of a deck string"
   [line]
   (let [clean (s/trim line)
-        [_ qty-str card-name _ card-params] (re-matches #"(\d+)[^\s]*\s+([^\[]+)(\[(.*)\])?" clean)]
+        [_ qty-str card-name card-params] (re-matches #"(\d+)[^\s]*\s+(([^\[]+)|(\[(.*)\]))" clean)]
     (if (and qty-str
              (not (js/isNaN (str->int qty-str)))
              card-name)
