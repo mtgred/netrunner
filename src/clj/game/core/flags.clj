@@ -330,7 +330,7 @@
    (ab-can-prevent? state side (make-eid state) card req-fn target args))
   ([state side eid card req-fn target args]
    (cond
-     req-fn (req-fn state side eid card (list (assoc args :prevent-target target)))
+     req-fn (if (req-fn state side eid card (list (assoc args :prevent-target target))) true false)
      :else false)))
 
 (defn get-card-prevention
