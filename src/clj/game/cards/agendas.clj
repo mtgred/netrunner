@@ -198,7 +198,7 @@
     :req (req (not-empty (:deck corp)))
     :effect (effect (continue-ability
                       {:prompt "Choose a card to install"
-                       :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))) :sorted)
+                       :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
                        :async true
                        :effect (effect (corp-install eid target nil
                                                      {:ignore-all-cost true
