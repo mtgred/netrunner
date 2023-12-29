@@ -475,10 +475,11 @@
                         2500)))))
 
 (defmethod continue :default
-  [_ _ _]
+  [state _ _]
   (.println *err* (with-out-str
                     (print-stack-trace
-                      (Exception. "Continue clicked at the wrong time")
+                      (Exception.
+                        (str "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
                       2500))))
 
 (defn redirect-run
