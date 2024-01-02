@@ -322,6 +322,11 @@
                          "taking their first steps into Organized Play as well as experienced "
                          "players who want a slimmed-down deckbuilding challenge. "
                          "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
+            {:id "sunset"
+             :title "What is the Sunset format?"
+             :content [:ul
+                        [:p "Sunset is essentially Standard with an extended, experimental banlist added to it."
+                         "Refer to the " [:a {:href "https://nullsignal.games/blog/introducing-sunset/"} "Sunset Announcement"] "."]]}
             {:id "system-gateway"
              :title "What is the System Gateway format?"
              :content [:ul
