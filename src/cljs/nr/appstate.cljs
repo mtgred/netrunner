@@ -14,6 +14,7 @@
   (let [default-visible-formats #{"standard"
                                   "system-gateway"
                                   "startup"
+                                  "sunset"
                                   "eternal"
                                   "snapshot"
                                   "snapshot-plus"
