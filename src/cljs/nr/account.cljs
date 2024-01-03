@@ -50,6 +50,7 @@
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
   (swap! app-state assoc-in [:options :log-top] (:log-top @s))
+  (swap! app-state assoc-in [:options :log-player-highlight] (:log-player-highlight @s))
   (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
@@ -61,6 +62,7 @@
   (.setItem js/localStorage "sounds_volume" (:volume @s))
   (.setItem js/localStorage "log-width" (:log-width @s))
   (.setItem js/localStorage "log-top" (:log-top @s))
+  (.setItem js/localStorage "log-player-highlight" (:log-player-highlight @s))
   (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
   (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
   (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
@@ -373,7 +375,25 @@
            [:h4 (tr [:settings.log-size "Log size"])]
            [:div
             [log-width-option s]
-            [log-top-option s]]]
+            [log-top-option s]]
+           [:br]
+           [:h4 (tr [:settings.log-player-highlight "Log player highlight"])]
+           [:div
+            [:div.radio
+             [:label [:input {:name "log-player-highlight"
+                              :type "radio"
+                              :value "blue-red"
+                              :checked (= "blue-red" (:log-player-highlight @s))
+                              :on-change #(swap! s assoc :log-player-highlight (.. % -target -value))}]
+              (tr [:settings.log-player-highlight-red-blue "Corp: Blue / Runner: Red"])]]
+
+            [:div.radio
+             [:label [:input {:name "log-player-highlight"
+                              :type "radio"
+                              :value "none"
+                              :checked (= "none" (:log-player-highlight @s))
+                              :on-change #(swap! s assoc :log-player-highlight (.. % -target -value))}]
+              (tr [:settings.log-player-highlight-none "None"])]]]]
 
           (let [custom-bg-selected (= (:background @s) "custom-bg" )
                 custom-bg-url (r/atom (:custom-bg-url @s))]
@@ -556,6 +576,7 @@
                        :runner-board-order (get-in @app-state [:options :runner-board-order])
                        :log-width (get-in @app-state [:options :log-width])
                        :log-top (get-in @app-state [:options :log-top])
+                       :log-player-highlight (get-in @app-state [:options :log-player-highlight])
                        :gamestats (get-in @app-state [:options :gamestats])
                        :deckstats (get-in @app-state [:options :deckstats])
                        :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
