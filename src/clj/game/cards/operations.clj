@@ -2034,7 +2034,7 @@
                   :choices
                   (cancellable (filter #(and (corp-installable-type? %)
                                              (some #{"New remote"} (installable-servers state %)))
-                                       top-five) :sorted)
+                                       top-five))
                   :msg "install a card from the top of the R&D in a remote server"
                   :effect (effect (continue-ability (install-card target) card nil))
                   :cancel-effect (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
