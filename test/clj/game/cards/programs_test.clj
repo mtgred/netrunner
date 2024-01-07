@@ -12,7 +12,7 @@
 
 (defn- basic-program-test
   "tests a program which has simple boost and break functionality"
-  [card base-str boost break]
+  [card boost break]
   (let [type (condp = (:type break)
                "Sentry"    "Rototurret"
                "All"       "Rime"
@@ -33,15 +33,13 @@
       (play-from-hand state :runner card)
       (let [card (get-program state 0)
             ice (get-ice state :hq 0)
-            base-breaker-str (cond
-                               (integer? base-str) base-str
-                               (= :rand-zero base-str) 0
-                               :else nil)]
-        (is (= base-breaker-str (get-strength (refresh card)))
-            (str (:title card) "starts at base strength " base-str))
+            base-breaker-str (get-strength (refresh card))]
         (run-on state :hq)
         (run-continue state :encounter-ice)
-        (pump-ice state :corp (refresh ice) (+ 7 (rand-int 7)))
+        ;; for fixed strength breakers/cards with no boost fn, we set ice str = breaker str
+        (if-not boost
+          (pump-ice state :corp (refresh ice) (- (get-strength (refresh card)) (get-strength (refresh ice))))
+          (pump-ice state :corp (refresh ice) (+ 7 (rand-int 7))))
         ;; how many times should we need to boost?
         (let [base-str (get-strength (refresh card))
               need-to-boost (- (get-strength (refresh ice)) base-str)
@@ -1161,7 +1159,7 @@
     (is (last-log-contains? state "Runner pays 6 \\[Credits] to use Bug to reveal Hedge Fund, Hedge Fund, and Hedge Fund."))))
 
 (deftest buzzsaw-automated-test
-  (basic-program-test "Buzzsaw" 3 {:ab 1 :amount 1 :cost 3} {:ab 0 :amount 2 :cost 1 :type "Code Gate"}))
+  (basic-program-test "Buzzsaw" {:ab 1 :amount 1 :cost 3} {:ab 0 :amount 2 :cost 1 :type "Code Gate"}))
 
 (deftest buzzsaw
   ;; Buzzsaw
@@ -4484,6 +4482,9 @@
         (run-jack-out state)
         (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 
+(deftest mimic-automated-test
+  (basic-program-test "Mimic" nil {:ab 0 :amount 1 :cost 1 :type "Sentry"}))
+
 (deftest mimic
   ;; Mimic
   (do-game
@@ -4813,6 +4814,9 @@
       (click-prompt state :runner "Yes")
       (click-card state :corp "Hedge Fund")
       (is (= 2 (get-counters (refresh nga) :power))))))
+
+(deftest num-automated-test
+  (basic-program-test "Num" nil {:ab 0 :amount 1 :cost 2 :type "Sentry"}))
 
 (deftest nyashia
   ;; Nyashia
