@@ -3738,7 +3738,7 @@
    :tag-count (fn [[base additional total]]
                 (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
    :agenda-count (fn [[agenda-point]] (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s")))
-   :link-strength "Link Strength"
+   :link-strength "Мощность канала"
    :credit-count (fn [[credit run-credit]] (str credit " Credit" (if (not= credit 1) "s" "")
                                                 (when (pos? run-credit)
                                                   (str " (" run-credit " for run)"))))
@@ -3746,73 +3746,73 @@
    :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
    :mu-count (fn [[unused available]] (str unused " of " available " MU unused"))
    :special-mu-count (fn [[unused available mu-type]] (str unused " of " available " " mu-type " MU unused"))
-   :indicate-action "Indicate action"
+   :indicate-action "Обозначить действие"
    :spec-count (fn [[c]] (str c " Spectator" (when (> c 1) "s")))
-   :spec-view "Spectator View"
-   :runner-view "Runner View"
-   :corp-view "Corp View"
-   :leave-replay "Leave Replay"
-   :leave "Leave Game"
-   :rig-irl "Rig layout: IRL"
-   :rig-jnet "Rig layout: jnet"
-   :unstack-cards "Unstack cards"
-   :stack-cards "Stack cards"
-   :unmute "Unmute spectators"
-   :mute "Mute spectators"
-   :concede "Concede"
-   :inactivity "Game closed due to inactivity"
-   :server "Server"
-   :unimplemented "Unimplemented"
-   :abilities "Abilities"
-   :let-subs-fire "Let unbroken subroutines fire"
-   :subs "Subroutines"
-   :actions "Actions"
-   :fire-unbroken "Fire unbroken subroutines"
-   :stack "Stack"
+   :spec-view "Перспектива зрителя"
+   :runner-view "Перспектива Бегущего"
+   :corp-view "Перспектива Корпорации"
+   :leave-replay "Выйти из повтора"
+   :leave "Выйти из игры"
+   :rig-irl "Раскладка рига: настольная"
+   :rig-jnet "Раскладка рига: jnet"
+   :unstack-cards "Не складывать карты стопкой"
+   :stack-cards "Складывать карты стопкой"
+   :unmute "Включить сообщения зрителей"
+   :mute "Выключить сообщения зрителей"
+   :concede "Сдаться"
+   :inactivity "Игра закрыта из-за отсутствия активности"
+   :server "Сервер"
+   :unimplemented "Не реализовано"
+   :abilities "Способности"
+   :let-subs-fire "Разрешить выполнение не сломанных подпрограмм"
+   :subs "Подпрограммы"
+   :actions "Действия"
+   :fire-unbroken "Выполнить не сломанные подпрограммы"
+   :stack "Стек"
    :r&d "R&D"
-   :shuffle "Shuffle"
-   :show "Show"
-   :close-shuffle "Close & Shuffle"
-   :heap "Heap"
+   :shuffle "Перемешать"
+   :show "Показать"
+   :close-shuffle "Закрыть и перемешать"
+   :heap "Куча"
    :card-count (fn [[size]] (str size " card" (when (not= 1 size) "s") "."))
    :face-down-count (fn [[total face-up]] (str total " cards, " (- total face-up) " face-down."))
    :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-   :initiation "Initiation"
-   :approach-ice "Approach ice"
-   :encounter-ice "Encounter ice"
-   :pass-ice "Pass ice"
-   :movement "Movement"
-   :approach-server "Approach server"
-   :corp-phase-43 "Corp phase 4.3"
-   :access-server "Access server"
-   :breach-server "Breach server"
-   :success "Success"
-   :end-of-run "End of run"
-   :run-ends "Run ends"
-   :no-current-run "No current run"
-   :current-phase "Current phase"
-   :unknown-phase "Unknown phase"
-   :rez "Rez"
-   :action-access "Action before access"
-   :no-further "No further actions"
-   :continue "Continue"
-   :continue-to "Continue to"
-   :stop-auto-pass "Stop auto-passing priority"
-   :auto-pass "Auto-pass priority"
-   :jack-out "Jack Out"
-   :undo-click "Undo Click"
-   :pass-continue "Pass ice and continue"
-   :pass-jack "Pass ice and jack out"
-   :trace "Trace"
-   :credits "credits"
-   :card "Card"
-   :time-taken (fn [[t]] (str "Time taken: " t " minutes"))
-   :win-decked (fn [[turn]] (str "wins due to the Corp being decked on turn " turn))
-   :win-flatlined (fn [[turn]] (str "wins by flatline on turn " turn))
-   :win-conceded (fn [[turn]] (str "wins by concession on turn " turn))
-   :win-claimed (fn [[turn]] (str "wins by claim on turn " turn))
-   :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))
-   :win-other (fn [[turn reason]] (str "wins by " reason " on turn " turn))}
+   :initiation "Инициация"
+   :approach-ice "Приблизиться ко льду"
+   :encounter-ice "Встретиться со льдом"
+   :pass-ice "Пройти лёд"
+   :movement "Движение"
+   :approach-server "Приблизиться к серверу"
+   :corp-phase-43 "Фаза Корпорации 4.3"
+   :access-server "Получить доступ к серверу"
+   :breach-server "Взломать сервер"
+   :success "Успех"
+   :end-of-run "Конец забега"
+   :run-ends "Забег завершается"
+   :no-current-run "Нет активного забега"
+   :current-phase "Текущая фаза"
+   :unknown-phase "Неизвестная фаза"
+   :rez "Развернуть"
+   :action-access "Действие перед доступом"
+   :no-further "Нет дальнейших действий"
+   :continue "Продолжить"
+   :continue-to "Продолжить к"
+   :stop-auto-pass "Прекратить автопередачу приоритета"
+   :auto-pass "Автопередача приоритета"
+   :jack-out "Отключиться"
+   :undo-click "Отменить клик"
+   :pass-continue "Пройти лёд и продолжить"
+   :pass-jack "Пройти лёд и отключиться"
+   :trace "Отследить"
+   :credits "кредитов"
+   :card "Карта"
+   :time-taken (fn [[t]] (str "Затраченное время: " t " минут"))
+   :win-decked (fn [[turn]] (str "побеждает. Соперник не смог взять карту из R&D на " turn " ходу"))
+   :win-flatlined (fn [[turn]] (str "побеждает. Соперник получил флетлайн на " turn " ходу"))
+   :win-conceded (fn [[turn]] (str "побеждает. Соперник сдался на " turn " ходу"))
+   :win-claimed (fn [[turn]] (str "wins by claim on turn " turn " ходу"))
+   :win-points (fn [[turn]] (str "побеждает, засчитав победные очки на " turn " ходу"))
+   :win-other (fn [[turn reason]] (str "побеждает из-за " reason " на " turn " ходу"))}
    }
    })
 
