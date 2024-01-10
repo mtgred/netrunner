@@ -4,6 +4,9 @@
             [game.utils :refer [side-str]]
             [clojure.test :refer :all]
             [clojure.string :refer [join]]
+            [kaocha.report :as k.report]
+            [kaocha.output :as k.output]
+            [kaocha.hierarchy :as k.hierarchy]
             [game.utils-test :refer :all]))
 
 (defn- dont-use-me [s]
@@ -111,15 +114,44 @@
   (let [exprs (take-nth 2 bindings)
         amts (take-nth 2 (drop 1 bindings))
         init-binds (repeatedly gensym)
-        end-binds (repeatedly gensym)]
-    `(let [~@(interleave init-binds exprs)]
-       (do ~@body)
-       (let [~@(interleave end-binds exprs)]
-         (doseq [[amt# expr# init# end#] ~(mapv vector amts (map #(list `quote %) exprs) init-binds end-binds)
-                 :let [expected# (+ init# amt#)
-                       actual-change# (- (- init# end#))]]
-           (clojure.test/do-report
-             {:type (if (= actual-change# amt#) :pass :fail)
-              :actual actual-change#
-              :expected (- expected#)
-              :message (format "%s\n%s => (%s to %s)" ~msg expr# init# end#)}))))))
+        end-binds (repeatedly gensym)
+        pairs (mapv vector
+                    amts
+                    (map #(list `quote %) exprs)
+                    init-binds
+                    end-binds)]
+    `(let [~@(interleave init-binds exprs)
+           _# (do ~@body)
+           ~@(interleave end-binds exprs)]
+       (doseq [[amt# expr# init# end#] ~pairs
+               :let [expected# (+ init# amt#)
+                     actual-change# (- end# init#)]]
+         (clojure.test/do-report
+           {:type (if (= actual-change# amt#) :pass :changed-fail)
+            :expected amt#
+            :actual actual-change#
+            :message (format "%s\n%s => (%s to %s)" ~msg expr# init# end#)})))))
+
+(defn report-failed-change [m]
+  (with-test-out
+    (println (str "\n" (k.output/colored :red "FAIL")
+                  " in " (testing-vars-str m)))
+    (when (seq *testing-contexts*)
+      (println (testing-contexts-str)))
+    (when-let [message (:message m)] 
+      (println message))
+    (println "expected diff:" (pr-str (:expected m)))
+    (println "  actual diff:" (pr-str (:actual m)))))
+
+(do
+  (k.hierarchy/derive! :changed-fail :kaocha/known-key)
+  (k.hierarchy/derive! :changed-fail :kaocha/fail-type)
+  nil)
+
+(defmethod k.report/fail-summary :changed-fail [m]
+  (report-failed-change m))
+
+;; Just in case someone uses a non-kaocha runner
+(defmethod clojure.test/report :changed-fail [m]
+  (inc-report-counter :fail)
+  (report-failed-change m))
