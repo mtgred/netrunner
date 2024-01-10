@@ -250,14 +250,13 @@
       (take-credits state :corp)
       (run-empty-server state :remote3)
       (click-prompt state :runner "Steal")
-      (changes-val-macro
-        -1 (get-counters (get-content state :remote1 0) :power)
-        "Embolus loses a power counter even tho GMF is resolved first and ends the run"
-        (run-empty-server state :remote2)
-        (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
-        (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
-        (click-prompt state :corp "Giordano Memorial Field")
-        (click-prompt state :runner "End the run"))))
+      (is (changed? [(get-counters (get-content state :remote1 0) :power) -1]
+            (run-empty-server state :remote2)
+            (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
+            (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
+            (click-prompt state :corp "Giordano Memorial Field")
+            (click-prompt state :runner "End the run"))
+          "Embolus loses a power counter even tho GMF is resolved first and ends the run")))
 
 (deftest replace-access-you-may-only
     ;; 'You may' only

@@ -164,11 +164,10 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "Enigma" "Server 1")
-    (changes-val-macro
-      0 (:credit (get-corp))
-      "Ignored install costs"
-      (click-card state :corp "Pharos")
-      (click-prompt state :corp "Server 2"))
+    (is (changed? [(:credit (get-corp)) 0]
+          (click-card state :corp "Pharos")
+          (click-prompt state :corp "Server 2"))
+        "Ignored install costs")
     ))
 
 (deftest a-teia-tatu-bola
@@ -706,10 +705,9 @@
       (is (no-prompt? state :runner) "Can't use Arissana ability outside of a run")
       (run-on state "Archives")
       (card-ability state :runner (:identity (get-runner)) 0)
-      (changes-val-macro
-        -1 (:credit (get-runner))
-        "No additional costs paid"
-        (click-prompt state :runner "Cache"))
+      (is (changed? [(:credit (get-runner)) -1]
+            (click-prompt state :runner "Cache"))
+          "No additional costs paid")
       (is (= "Cache" (:title (get-program state 0))))
       (run-continue state)
       (is (= 1 (count (:discard (get-runner)))) "Cache was trashed at the end of the run")
@@ -734,14 +732,12 @@
       (take-credits state :corp)
       (play-from-hand state :runner "The Class Act")
       (play-from-hand state :runner "All-nighter")
-      (changes-val-macro
-        -1 (:click (get-runner))
-        "While resolving the cost, runner doesn't gain any clicks"
-        (card-ability state :runner (get-resource state 1) "Gain [Click][Click]"))
-      (changes-val-macro
-        2 (:click (get-runner))
-        "After resolving the cost, runner gains 2 clicks"
-        (click-card state :runner "Magnum Opus"))
+      (is (changed? [(:click (get-runner)) -1]
+            (card-ability state :runner (get-resource state 1) "Gain [Click][Click]"))
+          "While resolving the cost, runner doesn't gain any clicks")
+      (is (changed? [(:click (get-runner)) 2]
+            (click-card state :runner "Magnum Opus"))
+          "After resolving the cost, runner gains 2 clicks")
       (is (last-n-log-contains? state 2 "Runner uses Armand \"Geist\" Walker: Tech Lord")
           "Geist prints first")
       (is (second-last-log-contains? state "Runner uses The Class Act")
@@ -914,12 +910,11 @@
     (run-jack-out state)
     (take-credits state :runner)
     (take-credits state :corp)
-    (changes-val-macro
-      +1 (get-counters (get-resource state 0) :power)
-      "Gained 1 power counter from charging hotel"
-      (run-on state :rd)
-      (is (not (no-prompt? state :runner)) "prompt to charge")
-      (click-card state :runner "Earthrise Hotel"))
+    (is (changed? [(get-counters (get-resource state 0) :power) +1]
+          (run-on state :rd)
+          (is (not (no-prompt? state :runner)) "prompt to charge")
+          (click-card state :runner "Earthrise Hotel"))
+        "Gained 1 power counter from charging hotel")
     (run-jack-out state)))
 
 (deftest cerebral-imaging-infinite-frontiers
@@ -1016,18 +1011,18 @@
     (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
         (take-credits state :corp)
-        (changes-val-macro -1 (:credit (get-runner))
-                           "Paid 1c to run on HQ"
-                           (run-on state :hq))
+        (is (changed? [(:credit (get-runner)) -1]
+              (run-on state :hq))
+            "Paid 1c to run on HQ")
         (is (last-log-contains? state "spends \\[Click\\] and pays 1 \\[Credits\\] to make a run on HQ") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-front-side-flipping-costs-1-click
       ;; Flipping costs 1 click
     (do-game
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
-        (changes-val-macro -1 (:click (get-corp))
-                           "Paid 1 click to flip Earth Station"
-                           (card-ability state :corp (get-in @state [:corp :identity]) 0))
+        (is (changed? [(:click (get-corp)) -1]
+              (card-ability state :corp (get-in @state [:corp :identity]) 0))
+            "Paid 1 click to flip Earth Station")
         (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
         (is (last-log-contains? state "Corp spends \\[Click\\] to use Earth Station: SEA Headquarters to flip their identity to Earth Station: Ascending to Orbit.") "Should have correct log with click price")))
 
@@ -1037,9 +1032,9 @@
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
         (take-credits state :corp)
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Paid nothing to run on HQ"
-                           (run-on state :hq))))
+        (is (changed? [(:credit (get-runner)) 0]
+              (run-on state :hq))
+            "Paid nothing to run on HQ")))
 
 (deftest earth-station-sea-headquarters-flip-side-can-t-use-ability-to-flip-back-to-front-side
       ;; Can't use ability to flip back to front side
@@ -1047,9 +1042,9 @@
         (new-game {:corp {:id "Earth Station: SEA Headquarters"}})
         (card-ability state :corp (get-in @state [:corp :identity]) 0)
         (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
-        (changes-val-macro 0 (:click (get-corp))
-                           "Paid 1 click to flip Earth Station"
-                           (card-ability state :corp (get-in @state [:corp :identity]) 0))
+        (is (changed? [(:click (get-corp)) 0]
+              (card-ability state :corp (get-in @state [:corp :identity]) 0))
+            "Paid 1 click to flip Earth Station")
         (is (:flipped (get-in @state [:corp :identity])) "Earth Station is still on flip side")))
 
 (deftest earth-station-sea-headquarters-flip-side-additional-cost-to-run-a-remote
@@ -1061,9 +1056,9 @@
         (play-from-hand state :corp "PAD Campaign" "New remote")
         (take-credits state :corp)
         (core/gain state :runner :credit 10)
-        (changes-val-macro -6 (:credit (get-runner))
-                           "Paid 6c to run on remote server"
-                           (run-on state :remote1))
+        (is (changed? [(:credit (get-runner)) -6]
+              (run-on state :remote1))
+            "Paid 6c to run on remote server")
         (is (last-log-contains? state "spends \\[Click\\] and pays 6 \\[Credits\\] to make a run on Server 1") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-flip-side-flip-back-on-successful-hq-run
@@ -1076,9 +1071,9 @@
         (take-credits state :corp)
         (core/gain state :runner :credit 10)
         (is (:flipped (get-in @state [:corp :identity])) "Corp ID is on the flip side")
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Paid nothing to run on HQ"
-                           (run-empty-server state :hq))
+        (is (changed? [(:credit (get-runner)) 0]
+              (run-empty-server state :hq))
+            "Paid nothing to run on HQ")
         (is (not (:flipped (get-in @state [:corp :identity]))) "Corp ID is on the front side")))
 
 (deftest earth-station-sea-headquarters-cannot-install-more-than-one-remote
@@ -1334,10 +1329,10 @@
       (play-from-hand state :runner "Refractor")
       (let [smoke (get-in @state [:runner :identity])
             refr (get-program state 0)]
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used 1 credit from Smoke"
-                           (card-ability state :runner refr 1)
-                           (click-card state :runner smoke)))))
+        (is (changed? [(:credit (get-runner)) 0]
+              (card-ability state :runner refr 1)
+              (click-card state :runner smoke))
+            "Used 1 credit from Smoke"))))
 
 (deftest epiphany-analytica-nations-undivided
   (do-game
@@ -1347,16 +1342,14 @@
     (play-from-hand state :corp "Project Atlas" "New remote")
     (take-credits state :corp)
     (let [epiph (get-in @state [:corp :identity])]
-      (changes-val-macro
-        1 (get-counters (refresh epiph) :power)
-        "Got 1 power counter"
-        (run-empty-server state "Server 1")
-        (click-prompt state :runner "Pay 1 [Credits] to trash"))
-      (changes-val-macro
-        0 (get-counters (refresh epiph) :power)
-        "Got no additional power counters"
-        (run-empty-server state "Server 2")
-        (click-prompt state :runner "Steal"))
+      (is (changed? [(get-counters (refresh epiph) :power) 1]
+            (run-empty-server state "Server 1")
+            (click-prompt state :runner "Pay 1 [Credits] to trash"))
+          "Got 1 power counter")
+      (is (changed? [(get-counters (refresh epiph) :power) 0]
+            (run-empty-server state "Server 2")
+            (click-prompt state :runner "Steal"))
+          "Got no additional power counters")
       (take-credits state :runner)
       (core/move state :corp (find-card "Accelerated Beta Test" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Brainstorm" (:hand (get-corp))) :deck)
@@ -1365,14 +1358,13 @@
       (is (= (:title (nth (-> @state :corp :deck) 1)) "Brainstorm"))
       (is (= (:title (nth (-> @state :corp :deck) 2)) "Chiyashi"))
       ;; R&D is now from top to bottom: A B C D
-      (changes-val-macro
-        -1 (get-counters (refresh epiph) :power)
-        "Spend hosted power counters"
-        (card-ability state :corp (:identity (get-corp)) 0)
-        (is (str/includes? (:msg (prompt-map :corp)) "Accelerated Beta Test, Brainstorm, and Chiyashi"))
-        (click-prompt state :corp "OK")
-        (click-prompt state :corp "Brainstorm")
-        (click-prompt state :corp "HQ"))
+      (is (changed? [(get-counters (refresh epiph) :power) -1]
+            (card-ability state :corp (:identity (get-corp)) 0)
+            (is (str/includes? (:msg (prompt-map :corp)) "Accelerated Beta Test, Brainstorm, and Chiyashi"))
+            (click-prompt state :corp "OK")
+            (click-prompt state :corp "Brainstorm")
+            (click-prompt state :corp "HQ"))
+          "Spend hosted power counters")
       (is (= "Brainstorm" (:title (get-ice state :hq 0))) "Brainstorm is installed")
       (is (= (:title (nth (-> @state :corp :deck) 0)) "Accelerated Beta Test"))
       (is (= (:title (nth (-> @state :corp :deck) 1)) "Chiyashi")))))
@@ -1734,9 +1726,9 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (changes-val-macro 2 (:credit (get-corp))
-        "Corp gains credits when gold farmer is broken"
-        (auto-pump-and-break state (get-program state 0)))))
+      (is (changed? [(:credit (get-corp)) 2]
+            (auto-pump-and-break state (get-program state 0)))
+          "Corp gains credits when gold farmer is broken")))
 
 (deftest gamenet-where-dreams-are-real-gain-credits-from-f2p
     ;; Gain credits from F2P
@@ -1747,10 +1739,10 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (changes-val-macro 1 (:credit (get-corp))
-        "Corp gains credits when F2P is used"
-        (card-side-ability state :runner (get-ice state :hq 0) 0)
-        (click-prompt state :runner "Add an installed Runner card to the grip"))))
+      (is (changed? [(:credit (get-corp)) 1]
+            (card-side-ability state :runner (get-ice state :hq 0) 0)
+            (click-prompt state :runner "Add an installed Runner card to the grip"))
+          "Corp gains credits when F2P is used")))
 
 (deftest gamenet-where-dreams-are-real-gain-credits-from-bellona-steal
     ;; Gain credits from Bellona steal
@@ -1759,9 +1751,9 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
-      (changes-val-macro 1 (:credit (get-corp))
-        "Corp gains credits when Bellona is stolen"
-        (click-prompt state :runner "Pay to steal"))))
+      (is (changed? [(:credit (get-corp)) 1]
+            (click-prompt state :runner "Pay to steal"))
+          "Corp gains credits when Bellona is stolen")))
 
 (deftest gamenet-where-dreams-are-real-gain-credits-from-napd-cordon-steal
     ;; Gain credits from NAPD cordon steal
@@ -1771,9 +1763,9 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
-      (changes-val-macro 1 (:credit (get-corp))
-        "Corp gains credits when agenda is stolen with NAPD Cordon"
-        (click-prompt state :runner "Pay to steal"))))
+      (is (changed? [(:credit (get-corp)) 1]
+            (click-prompt state :runner "Pay to steal"))
+          "Corp gains credits when agenda is stolen with NAPD Cordon")))
 
 (deftest gamenet-where-dreams-are-real-gain-credits-from-traces
     ;; Gain credits from traces
@@ -1785,11 +1777,11 @@
         (run-on state "HQ")
         (rez state :corp uroboros)
         (run-continue state)
-        (changes-val-macro 1 (:credit (get-corp))
-          "Corp gains credits when a trace is paid into"
-          (card-subroutine state :corp (refresh uroboros) 0)
-          (click-prompt state :corp "0")
-          (click-prompt state :runner "1")))))
+        (is (changed? [(:credit (get-corp)) 1]
+              (card-subroutine state :corp (refresh uroboros) 0)
+              (click-prompt state :corp "0")
+              (click-prompt state :runner "1"))
+            "Corp gains credits when a trace is paid into"))))
 
 (deftest gamenet-where-dreams-are-real-gain-credits-from-psi-games
     ;; Gain credits from psi games
@@ -1800,10 +1792,10 @@
         (take-credits state :corp)
         (rez state :corp caprice)
         (run-on state "Server 1")
-        (changes-val-macro 1 (:credit (get-corp))
-          "Corp gains credits when a psi game is paid into"
-          (click-prompt state :corp "0 [Credits]")
-          (click-prompt state :runner "1 [Credits]")))))
+        (is (changed? [(:credit (get-corp)) 1]
+              (click-prompt state :corp "0 [Credits]")
+              (click-prompt state :runner "1 [Credits]"))
+            "Corp gains credits when a psi game is paid into"))))
 
 (deftest gamenet-where-dreams-are-real-no-credits-from-trashing
     ;; No credits from trashing
@@ -1813,9 +1805,9 @@
       (take-credits state :corp)
       (run-on state "Server 1")
       (run-continue state)
-      (changes-val-macro 0 (:credit (get-corp))
-        "Corp gains no credits when a trash cost is paid"
-        (click-prompt state :runner "Pay 4 [Credits] to trash"))))
+      (is (changed? [(:credit (get-corp)) 0]
+            (click-prompt state :runner "Pay 4 [Credits] to trash"))
+          "Corp gains no credits when a trash cost is paid")))
 
 (deftest gamenet-where-dreams-are-real-no-credits-from-runner-cards
     ;; No credits from runner cards
@@ -1825,9 +1817,9 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
       (run-on state "HQ")
-      (changes-val-macro 0 (:credit (get-corp))
-        "Corp gains no credits when an icebreaker is used"
-        (card-ability state :runner (get-program state 0) 1))))
+      (is (changed? [(:credit (get-corp)) 0]
+            (card-ability state :runner (get-program state 0) 1))
+          "Corp gains no credits when an icebreaker is used")))
 
 (deftest gamenet-where-dreams-are-real-no-credits-from-the-source
     ;; No credits from the source
@@ -1838,9 +1830,9 @@
       (play-from-hand state :runner "The Source")
       (run-on state "HQ")
       (run-continue state)
-      (changes-val-macro 0 (:credit (get-corp))
-        "Corp gains no credits when the source's additional cost is paid"
-        (click-prompt state :runner "Pay to steal"))))
+      (is (changed? [(:credit (get-corp)) 0]
+            (click-prompt state :runner "Pay to steal"))
+          "Corp gains no credits when the source's additional cost is paid")))
 
 (deftest gamenet-no-trigger-when-runner-at-zero-credits
   ;; no trigger when runner at zero credits
@@ -1854,10 +1846,9 @@
    (let [rime (get-ice state :hq 0)]
      (rez state :corp rime)
      (run-continue state :encounter-ice)
-     (changes-val-macro
-      0 (:credit (get-corp))
-      "Corp does not gain credits when the Runner loses zero credits"
-      (card-subroutine state :corp (refresh rime) 0)))))
+     (is (changed? [(:credit (get-corp)) 0]
+           (card-subroutine state :corp (refresh rime) 0))
+         "Corp does not gain credits when the Runner loses zero credits"))))
 
 (deftest grndl-power-unleashed
   ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
@@ -2029,10 +2020,10 @@
       (click-prompt state :runner "Yes")
       (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
       (let [rara (get-program state 0)]
-        (changes-val-macro 0 (:credit (get-runner))
-                           "Used 2 credits from Sahasrara to install Corroder"
-                           (click-card state :runner rara)
-                           (click-card state :runner rara)))
+        (is (changed? [(:credit (get-runner)) 0]
+              (click-card state :runner rara)
+              (click-card state :runner rara))
+            "Used 2 credits from Sahasrara to install Corroder"))
       (is (empty? (:hand (get-runner))) "Installed Sahasrara and Corroder.")))
 
 (deftest hayley-kaplan-universal-scholar-fake-prompt-when-nothing-to-install
@@ -3016,10 +3007,9 @@
       (play-from-hand state :corp "Crisium Grid" "R&D")
       (rez state :corp (get-content state :rd 0))
       (take-credits state :corp)
-      (changes-val-macro
-        0 (count (:hand (get-runner)))
-        "Crisium blocks ability"
-        (run-empty-server state "R&D"))
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (run-empty-server state "R&D"))
+          "Crisium blocks ability")
       (is (zero? (count-tags state)) "Took no tags for ability being blocked")))
 
 (deftest los-data-hijacker
@@ -3029,19 +3019,17 @@
     (testing "Ability works"
       (do-game state
         (play-from-hand state :corp "Ice Wall" "HQ")
-        (changes-val-macro
-          2 (:credit (get-runner))
-          "Gains 2 from ice rez"
-          (rez state :corp (get-ice state :hq 0)))))
+        (is (changed? [(:credit (get-runner)) 2]
+              (rez state :corp (get-ice state :hq 0)))
+            "Gains 2 from ice rez")))
     (testing "Only works on first rez per turn"
       (do-game state
         (play-from-hand state :corp "Ice Wall" "HQ")
         (play-from-hand state :corp "Ice Wall" "R&D")
         (rez state :corp (get-ice state :hq 0))
-        (changes-val-macro
-          0 (:credit (get-runner))
-          "Does not gain"
-          (rez state :corp (get-ice state :rd 0)))))))
+        (is (changed? [(:credit (get-runner)) 0]
+              (rez state :corp (get-ice state :rd 0)))
+            "Does not gain")))))
 
 (deftest maxx-maximum-punk-rock
   ;; MaxX
@@ -3156,10 +3144,9 @@
         (click-draw state :corp)
         (click-credit state :corp)
         (play-from-hand state :corp "Hedge Fund")
-        (changes-val-macro
-          5 (:credit (get-corp))
-          "Gained 1 credit from MM ability"
-          (click-prompt state :corp "Gain 1 [Credits]"))))
+        (is (changed? [(:credit (get-corp)) 5]
+              (click-prompt state :corp "Gain 1 [Credits]"))
+            "Gained 1 credit from MM ability")))
 
 (deftest mirrormorph-endless-iteration-triggers-gain-click-from-using-asset-ability
       ;; Gain click from using Asset ability
@@ -3251,10 +3238,9 @@
         (click-credit state :corp)
         (click-draw state :corp)
         (play-from-hand state :corp "Blue Level Clearance")
-        (changes-val-macro
-          4 (:credit (get-corp))
-          "Gained 1 credit from MM ability"
-          (click-prompt state :corp "Gain 1 [Credits]"))))
+        (is (changed? [(:credit (get-corp)) 4]
+              (click-prompt state :corp "Gain 1 [Credits]"))
+            "Gained 1 credit from MM ability")))
 
 (deftest mirrormorph-endless-iteration-triggers-trigger-mirrormorph-with-mcaap
       ;; Trigger Mirrormorph with MCAAP
@@ -3275,9 +3261,9 @@
           (card-ability state :corp mcaap 0)
           (click-credit state :corp)
           (card-ability state :corp mcaap 1)
-          (changes-val-macro 1 (:credit (get-corp))
-                             "Gained 1 credit from MM ability"
-                             (click-prompt state :corp "Gain 1 [Credits]")))))
+          (is (changed? [(:credit (get-corp)) 1]
+                (click-prompt state :corp "Gain 1 [Credits]"))
+              "Gained 1 credit from MM ability"))))
 
 (deftest mirrormorph-endless-iteration-does-not-trigger-using-same-asset-ability-multiple-times
       ;; Using same Asset ability multiple times
@@ -3403,18 +3389,18 @@
       (play-from-hand state :corp "Blood in the Water" "New remote")
       (play-from-hand state :corp "Merger" "New remote")
       (play-from-hand state :corp "Blood in the Water" "New remote")
-      (changes-val-macro 0 (get-counters (refresh issuaq) :power)
-        "No power counter added to ID when agenda is scored on the same turn it's installed"
-        (score state :corp (get-content state :remote1 0)))
+      (is (changed? [(get-counters (refresh issuaq) :power) 0]
+            (score state :corp (get-content state :remote1 0)))
+          "No power counter added to ID when agenda is scored on the same turn it's installed")
       (take-credits state :corp)
       (take-credits state :runner)
       (advance state (get-content state :remote2 0) 3)
-      (changes-val-macro 0 (get-counters (refresh issuaq) :power)
-        "No power counter added to ID when agenda is scored on the same turn it's advanced"
-        (score state :corp (get-content state :remote2 0)))
-      (changes-val-macro 1 (get-counters (refresh issuaq) :power)
-        "1 power counter added to ID"
-        (score state :corp (get-content state :remote3 0)))
+      (is (changed? [(get-counters (refresh issuaq) :power) 0]
+            (score state :corp (get-content state :remote2 0)))
+          "No power counter added to ID when agenda is scored on the same turn it's advanced")
+      (is (changed? [(get-counters (refresh issuaq) :power) 1]
+            (score state :corp (get-content state :remote3 0)))
+          "1 power counter added to ID")
       (is (= :corp (:winner @state))))))
 
 (deftest issuaq-adaptics-sustaining-diversity-with-employee-strike
@@ -3430,9 +3416,9 @@
       (advance state (get-content state :remote1 0) 3)
       (take-credits state :corp)
       (take-credits state :runner)
-      (changes-val-macro 1 (get-counters (refresh issuaq) :power)
-        "1 power counter added to ID"
-        (score state :corp (get-content state :remote1 0)))
+      (is (changed? [(get-counters (refresh issuaq) :power) 1]
+            (score state :corp (get-content state :remote1 0)))
+          "1 power counter added to ID")
       (take-credits state :corp)
       (play-from-hand state :runner "Employee Strike")
       (take-credits state :runner)
@@ -3615,10 +3601,9 @@
        (rez state :corp (refresh dr2))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
-       (changes-val-macro
-         2 (:credit (get-corp))
-         "Gain 2 credit from NBN: Reality Plus"
-         (click-prompt state :corp "Gain 2 [Credits]"))
+       (is (changed? [(:credit (get-corp)) 2]
+             (click-prompt state :corp "Gain 2 [Credits]"))
+           "Gain 2 credit from NBN: Reality Plus")
        (run-continue-until state :approach-ice)
        (rez state :corp (refresh dr))
        (run-continue state)
@@ -3638,10 +3623,9 @@
        (rez state :corp (refresh dr2))
        (run-continue state)
        (click-prompt state :runner "Take 1 tag")
-       (changes-val-macro
-         2 (count (:hand (get-corp)))
-         "Draw 2 cards from NBN: Reality Plus"
-         (click-prompt state :corp "Draw 2 cards"))
+       (is (changed? [(count (:hand (get-corp))) 2]
+             (click-prompt state :corp "Draw 2 cards"))
+           "Draw 2 cards from NBN: Reality Plus")
        (run-continue-until state :approach-ice)
        (rez state :corp (refresh dr))
        (run-continue state)
@@ -3654,22 +3638,19 @@
    (new-game {:corp {:id "Near-Earth Hub: Broadcast Center"
                      :hand [(qty "Advanced Assembly Lines" 5) "PAD Campaign"]
                      :deck [(qty "Advanced Assembly Lines" 5)]}})
-   (changes-val-macro
-    0 (count (:hand (get-corp)))
-    "Draw 1 card (net 0) with NEH"
-    (play-from-hand state :corp "Advanced Assembly Lines" "New remote"))
-   (changes-val-macro
-    -1 (count (:hand (get-corp)))
-    "NEH does not fire twice"
-    (play-from-hand state :corp "Advanced Assembly Lines" "New remote"))
+   (is (changed? [(count (:hand (get-corp))) 0]
+         (play-from-hand state :corp "Advanced Assembly Lines" "New remote"))
+       "Draw 1 card (net 0) with NEH")
+   (is (changed? [(count (:hand (get-corp))) -1]
+         (play-from-hand state :corp "Advanced Assembly Lines" "New remote"))
+       "NEH does not fire twice")
    (take-credits state :corp)
    (rez state :corp (get-content state :remote1 0))
-   (changes-val-macro
-    0 (count (:hand (get-corp)))
-    "NEH on runner turn draws 1"
-    (card-ability state :corp (get-content state :remote1 0) 0)
-    (click-card state :corp "PAD Campaign")
-    (click-prompt state :corp "New remote"))))
+   (is (changed? [(count (:hand (get-corp))) 0]
+         (card-ability state :corp (get-content state :remote1 0) 0)
+         (click-card state :corp "PAD Campaign")
+         (click-prompt state :corp "New remote"))
+       "NEH on runner turn draws 1")))
 
 (deftest near-earth-hub-install-from-rnd
   ;; NEH does not fail when installing from R&D
@@ -3692,21 +3673,19 @@
    (run-on state :hq)
    (run-continue state)
    (fire-subs state (get-ice state :hq 0))
-   (changes-val-macro
-    1 (count (:hand (get-corp)))
-    "drew 1 card with neh"
-    (click-prompt state :corp "OK")
-    (click-prompt state :corp "Ballista")
-    (click-prompt state :corp "New remote"))
+   (is (changed? [(count (:hand (get-corp))) 1]
+         (click-prompt state :corp "OK")
+         (click-prompt state :corp "Ballista")
+         (click-prompt state :corp "New remote"))
+       "drew 1 card with neh")
    (is (= ["Drafter" "Eli 1.0" "Fenris" "Galahad"]
           (map :title (:deck (get-corp)))) "Deck is DEFG")
    (is (= ["Chum"]
           (map :title (:hand (get-corp)))) "Hand is chummy")
-   (changes-val-macro
-    -1 (count (:hand (get-corp)))
-    "installed 1 card with architect"
-    (click-card state :corp "Chum")
-    (click-prompt state :corp "New remote"))
+   (is (changed? [(count (:hand (get-corp))) -1]
+         (click-card state :corp "Chum")
+         (click-prompt state :corp "New remote"))
+       "installed 1 card with architect")
    (is (= "Chum" (:title (get-ice state :remote2 0))))
    (is (= "Ballista" (:title (get-ice state :remote1 0))))))
 
@@ -3941,10 +3920,9 @@
                :corp {:hand ["Hedge Fund"] :deck ["Hedge Fund"] :discard ["Hedge Fund"]}})
     (take-credits state :corp)
     (run-on state (zone->name (:mark @state)))
-    (changes-val-macro
-      1 (:click (get-runner))
-      "gained 1 click from running the mark"
-      (run-continue state))))
+    (is (changed? [(:click (get-runner)) 1]
+          (run-continue state))
+        "gained 1 click from running the mark")))
 
 (deftest nyusha-sable-sintashta-with-virtuoso
   ;; Multiple cards setting a mark are idempotent
@@ -4068,12 +4046,11 @@
     (play-from-hand state :runner "Tread Lightly")
     (click-prompt state :runner "Server 1")
     (card-ability state :corp (get-content state :remote1 0) 0)
-    (changes-val-macro
-      0 (:credit (get-corp))
-      "Ob should not pay extra credit costs"
-      (click-prompt state :corp "Yes")
-      (click-prompt state :corp "Ping")
-      (click-prompt state :corp "Server 1"))))
+    (is (changed? [(:credit (get-corp)) 0]
+          (click-prompt state :corp "Yes")
+          (click-prompt state :corp "Ping")
+          (click-prompt state :corp "Server 1"))
+        "Ob should not pay extra credit costs")))
 
 (deftest ob-superheavy-logistics-fail-to-find
   ;; If no cards in R&D match the search cost, ability can be declined
@@ -4329,10 +4306,9 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
-      (changes-val-macro
-        1 (:credit (get-corp))
-        "Gain 1 credit from Blue Sun"
-        (click-card state :corp "Ice Wall"))))
+      (is (changed? [(:credit (get-corp)) 1]
+            (click-card state :corp "Ice Wall"))
+          "Gain 1 credit from Blue Sun")))
 
 (deftest rene-loup-arcemont-party-animal
   ;; "René \"Loup\" Arcemont: Party Animal"
@@ -4697,19 +4673,18 @@
     (play-from-hand state :runner "Fan Site")
     (gain-tags state :runner 1)
     (is (= 1 (count-tags state)) "Runner has 1 tag")
-    (changes-val-macro -3 (:credit (get-runner))
-                       "Paid 3c to remove tag"
-                       (remove-tag state :runner))
+    (is (changed? [(:credit (get-runner)) -3]
+          (remove-tag state :runner))
+        "Paid 3c to remove tag")
     (is (= 0 (count-tags state)) "Runner removed tag")
     (take-credits state :runner)
     (gain-tags state :runner 1)
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (swap! state assoc-in [:corp :credit] 0)
-    (changes-val-macro
-      0 (:credit (get-runner))
-                       "Paid 0c to trash resource"
-                       (trash-resource state)
-                       (click-card state :corp (get-resource state 0)))
+    (is (changed? [(:credit (get-runner)) 0]
+          (trash-resource state)
+          (click-card state :corp (get-resource state 0)))
+        "Paid 0c to trash resource")
     (is (= ["Fan Site"] (map :title (:discard (get-runner)))) "Trashed Fan Site")))
 
 (deftest tao-salonga-telepresence-magician
@@ -4787,12 +4762,12 @@
       (play-from-hand state :runner "Saci")
       (click-card state :runner iw)
       (run-empty-server state "HQ")
-      (changes-val-macro 0 (core/available-mu state)
-                         "Available MU should not change"
-                         (click-prompt state :runner "Steal")
-                         (click-prompt state :runner "Yes")
-                         (click-card state :runner (refresh palisade))
-                         (click-card state :runner (refresh iw))))))
+      (is (changed? [(core/available-mu state) 0]
+            (click-prompt state :runner "Steal")
+            (click-prompt state :runner "Yes")
+            (click-card state :runner (refresh palisade))
+            (click-card state :runner (refresh iw)))
+          "Available MU should not change"))))
 
 (deftest the-foundry-refining-the-process-interaction-with-accelerated-beta-test
     ;; interaction with Accelerated Beta Test
@@ -4899,13 +4874,10 @@
     (take-credits state :corp)
     (run-empty-server state "HQ")
     (click-prompt state :runner "Steal")
-    (changes-val-macro
-      -2 (:credit (get-runner))
-      "paid creds to not suffer"
-      (changes-val-macro
-        -1 (:click (get-runner))
-        "paid click to not suffer"
-        (click-prompt state :runner "Pay [Click] and 2 [Credits]")))
+    (is (changed? [(:credit (get-runner)) -2
+           (:click (get-runner)) -1]
+          (click-prompt state :runner "Pay [Click] and 2 [Credits]"))
+        "paid creds to not suffer")
     (is (= 0 (:brain-damage (get-runner))) "Runner took no core damage")))
 
 (deftest thule-subsea-safety-below-cannot-pay
@@ -4927,13 +4899,10 @@
     (take-credits state :corp)
     (run-empty-server state "HQ")
     (click-prompt state :runner "Steal")
-    (changes-val-macro
-      0 (:credit (get-runner))
-      "didn't pay credits"
-      (changes-val-macro
-        0 (:click (get-runner))
-        "didn't pay clicks"
-        (click-prompt state :runner "Suffer 1 core damage")))
+    (is (changed? [(:credit (get-runner)) 0
+           (:click (get-runner)) 0]
+          (click-prompt state :runner "Suffer 1 core damage"))
+        "didn't pay credits")
     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")))
 
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
@@ -4944,10 +4913,10 @@
       (play-from-hand state :corp "Ice Wall" "New remote")
       (let [iw (get-ice state :remote1 0)
             bwbi (get-in @state [:corp :identity])]
-        (changes-val-macro 0 (:credit (get-corp))
-                           "Used 1 credit from Weyland BWBI to advance Ice Wall"
-                           (click-advance state :corp (refresh iw))
-                           (click-card state :corp bwbi)))))
+        (is (changed? [(:credit (get-corp)) 0]
+              (click-advance state :corp (refresh iw))
+              (click-card state :corp bwbi))
+            "Used 1 credit from Weyland BWBI to advance Ice Wall"))))
 
 (deftest weyland-consortium-builder-of-nations-1-meat-damage-per-turn-at-most
     ;; 1 meat damage per turn at most
@@ -5047,19 +5016,16 @@
       (let [ngo1 (get-content state :remote1 0)
             ngo2 (get-content state :remote2 0)
             oaktown (get-content state :remote3 0)]
-        (changes-val-macro
-          3 (:credit (get-corp))
-          "Gain 2 + 2 - 1 = 3 credits from Weyland Built to Last + Oaktown ability"
-          (advance state (refresh oaktown) 1))
-        (changes-val-macro
-          0 (:credit (get-corp))
-          "Gain 2 - 1 - 1 = 0 credits net from double advancing Weyland Built to Last ability"
-          (advance state (refresh ngo1) 1)
-          (advance state (refresh ngo1) 1))
-        (changes-val-macro
-          1 (:credit (get-corp))
-          "Gain 2 - 1 = 1 credits from Weyland Built to Last ability"
-          (advance state (refresh ngo2) 1)))))
+        (is (changed? [(:credit (get-corp)) 3]
+              (advance state (refresh oaktown) 1))
+            "Gain 2 + 2 - 1 = 3 credits from Weyland Built to Last + Oaktown ability")
+        (is (changed? [(:credit (get-corp)) 0]
+              (advance state (refresh ngo1) 1)
+              (advance state (refresh ngo1) 1))
+            "Gain 2 - 1 - 1 = 0 credits net from double advancing Weyland Built to Last ability")
+        (is (changed? [(:credit (get-corp)) 1]
+              (advance state (refresh ngo2) 1))
+            "Gain 2 - 1 = 1 credits from Weyland Built to Last ability"))))
 
 (deftest whizzard-master-gamer
   ;; Whizzard
@@ -5138,6 +5104,6 @@
      (click-prompt state :runner "No action")
      (click-prompt state :runner "No action")
      (click-prompt state :runner "No action")
-     (changes-val-macro 3 (:credit (get-runner))
-                        "Gain 3 credits from ID ability"
-                        (click-prompt state :runner "Yes"))))
+     (is (changed? [(:credit (get-runner)) 3]
+           (click-prompt state :runner "Yes"))
+         "Gain 3 credits from ID ability")))

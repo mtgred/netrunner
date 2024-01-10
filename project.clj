@@ -73,7 +73,7 @@
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.4"]
                                   [cider/piggieback "0.5.3"]
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
-                                  [rewrite-clj "1.0.699-alpha"]
+                                  [rewrite-clj "1.1.45"]
                                   [criterium "0.4.6"]
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]

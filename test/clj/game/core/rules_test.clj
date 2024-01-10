@@ -526,20 +526,20 @@
        ;; with nothing done, ftt and fisk will both want to prompt on a successful central run, so will need to be ordered
        ;; this will remain the case after one of them is set to 'Ask'
        (run-empty-server state "Archives")
-       (changes-val-macro 1 (count (get-in @state [:corp :hand]))
-         "Corp drew 1 card"
-         (click-prompt state :runner "Laramy Fisk: Savvy Investor")
-         (click-prompt state :runner "Yes"))
+       (is (changed? [(count (get-in @state [:corp :hand])) 1]
+             (click-prompt state :runner "Laramy Fisk: Savvy Investor")
+             (click-prompt state :runner "Yes"))
+           "Corp drew 1 card")
        ;; resolve FTT
        (click-prompt state :runner "Yes")
        (click-prompt state :runner "OK")
        (set-fisk-autoresolve "Ask")
        (pass-turn-runner-corp)
        (run-empty-server state "Archives")
-       (changes-val-macro 1 (count (get-in @state [:corp :hand]))
-         "Corp drew 1 card"
-         (click-prompt state :runner "Laramy Fisk: Savvy Investor")
-         (click-prompt state :runner "Yes"))
+       (is (changed? [(count (get-in @state [:corp :hand])) 1]
+             (click-prompt state :runner "Laramy Fisk: Savvy Investor")
+             (click-prompt state :runner "Yes"))
+           "Corp drew 1 card")
        ;; resolve FTT
        (click-prompt state :runner "Yes")
        (click-prompt state :runner "OK")
@@ -567,9 +567,9 @@
        (run-empty-server state "Archives")
        (click-prompt state :runner "Find the Truth")
        (click-prompt state :runner "Yes")
-       (changes-val-macro 1 (count (get-in @state [:corp :hand]))
-                          "Fisk triggers after closing FTT prompt"
-                          (click-prompt state :runner "OK"))
+       (is (changed? [(count (get-in @state [:corp :hand])) 1]
+             (click-prompt state :runner "OK"))
+           "Fisk triggers after closing FTT prompt")
        (is (no-prompt? state :runner) "No prompts displaying"))))
 
 (deftest autoresolve-ensure-autoresolve-does-not-break-prompts-with-a-req
