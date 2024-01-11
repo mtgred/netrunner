@@ -494,20 +494,10 @@
   [state card]
   `(error-wrapper (fire-subs-impl ~state ~card)))
 
-(defn auto-pump-impl
-  [state card]
-  (let [breaker (get-card state card)]
-    (is' (active-ice? state) "Ice is active")
-    (is' (core/get-current-encounter state) "Subroutines can be resolved")
-    (when (and (active-ice? state)
-               (core/get-current-encounter state))
-      (core/process-action "dynamic-ability" state :runner {:dynamic "auto-pump"
-                                                            :card breaker}))
-))
-
 (defmacro auto-pump
   [state card]
-  `(error-wrapper (auto-pump-impl ~state ~card)))
+  `(core/process-action "dynamic-ability" ~state :runner {:dynamic "auto-pump"
+                                                        :card (get-card ~state ~card)}))
 
 (defn auto-pump-and-break-impl
   [state card]
@@ -517,8 +507,7 @@
     (when (and (active-ice? state)
                (core/get-current-encounter state))
       (core/process-action "dynamic-ability" state :runner {:dynamic "auto-pump-and-break"
-                                                            :card breaker}))
-))
+                                                            :card breaker}))))
 
 (defmacro auto-pump-and-break
   [state card]

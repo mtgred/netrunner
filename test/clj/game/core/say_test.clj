@@ -160,10 +160,9 @@
       (testing "Can increase link"
         (do-game
           (new-game)
-          (changes-val-macro
-            1 (get-link state)
-            "Link increases by 1"
-            (core/command-parser state :runner {:user user :text "/link 1"}))))
+          (is (changed? [(get-link state) 1]
+                (core/command-parser state :runner {:user user :text "/link 1"}))
+              "Link increases by 1")))
 
       (testing "/link sizes"
         (do-game

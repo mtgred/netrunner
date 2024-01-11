@@ -432,7 +432,7 @@
       (let [laamb (get-program state 0)]
         (is (= 2 (get-strength (refresh laamb))) "Laamb starts at 2 strength")
         (is (= 6 (:credit (get-runner))) "Spent 4 to install")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh laamb)})
+        (auto-pump state (refresh laamb))
         (is (= 8 (get-strength (refresh laamb))) "Laamb is at 8 strength")
         (is (= 3 (:credit (get-runner))) "Spent 3 to pump"))))
 
@@ -451,7 +451,7 @@
       (let [ank (get-program state 0)]
         (is (zero? (get-strength (refresh ank))) "Ankusa starts at 1 strength")
         (is (= 4 (:credit (get-runner))) "Spent 6 to install")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
+        (auto-pump state (refresh ank))
         (is (= 3 (get-strength (refresh ank))) "Ankusa is at 3 strength")
         (is (= 1 (:credit (get-runner))) "Spent 3 to pump"))))
 
@@ -472,36 +472,38 @@
        ;; it should still do so, even if it was already set to 'Ask'
        (dotimes [_ 3]
          (run-jackson)
-         (is (changes-credits (get-runner) 1 ; triggering Aeneas should grant a credit
-                              (click-prompt state :runner "Yes")))
+         (is (changed? [(:credit (get-runner)) 1]
+               ; triggering Aeneas should grant a credit
+               (click-prompt state :runner "Yes")))
          (is (no-prompt? state :runner) "No Aeneas prompt displaying")
          (run-jackson)
-         (is (changes-credits (get-runner) 0 ; not triggering Aeneas should not grant a credit
-                              (click-prompt state :runner "No")))
+         (is (changed? [(:credit (get-runner)) 0]
+               ; not triggering Aeneas should not grant a credit
+               (click-prompt state :runner "No")))
          (is (no-prompt? state :runner) "No Aeneas prompt displaying")
          (card-ability state :runner (get-aeneas1) 0)
          (click-prompt state :runner "Ask"))
        ;; if aeneas is set to always/never fire, we should get to run without being prompted
        (card-ability state :runner (get-aeneas1) 0)
        (click-prompt state :runner "Never")
-       (is (changes-credits (get-runner) 0
-                            (run-jackson)))
+       (is (changed? [(:credit (get-runner)) 0]
+             (run-jackson)))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        (card-ability state :runner (get-aeneas1) 0)
        (click-prompt state :runner "Always")
-       (is (changes-credits (get-runner) 1
-                            (run-jackson)))
+       (is (changed? [(:credit (get-runner)) 1]
+             (run-jackson)))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        ;; should also be able to play a new aeneas which doesn't care about the first one's autoresolve
        (play-from-hand state :runner "Aeneas Informant")
-       (is (changes-credits (get-runner) 2
-                            (do (run-jackson)
-                                (click-prompt state :runner "Yes"))))
+       (is (changed? [(:credit (get-runner)) 2]
+             (run-jackson)
+             (click-prompt state :runner "Yes")))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        (card-ability state :runner (get-resource state 1) 0)
        (click-prompt state :runner "Never")
-       (is (changes-credits (get-runner) 1
-                            (run-jackson)))
+       (is (changed? [(:credit (get-runner)) 1]
+             (run-jackson)))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying"))))
 
 (deftest autoresolve-fisk-ftt-with-and-without-autoresolve
@@ -526,20 +528,20 @@
        ;; with nothing done, ftt and fisk will both want to prompt on a successful central run, so will need to be ordered
        ;; this will remain the case after one of them is set to 'Ask'
        (run-empty-server state "Archives")
-       (changes-val-macro 1 (count (get-in @state [:corp :hand]))
-         "Corp drew 1 card"
-         (click-prompt state :runner "Laramy Fisk: Savvy Investor")
-         (click-prompt state :runner "Yes"))
+       (is (changed? [(count (get-in @state [:corp :hand])) 1]
+             (click-prompt state :runner "Laramy Fisk: Savvy Investor")
+             (click-prompt state :runner "Yes"))
+           "Corp drew 1 card")
        ;; resolve FTT
        (click-prompt state :runner "Yes")
        (click-prompt state :runner "OK")
        (set-fisk-autoresolve "Ask")
        (pass-turn-runner-corp)
        (run-empty-server state "Archives")
-       (changes-val-macro 1 (count (get-in @state [:corp :hand]))
-         "Corp drew 1 card"
-         (click-prompt state :runner "Laramy Fisk: Savvy Investor")
-         (click-prompt state :runner "Yes"))
+       (is (changed? [(count (get-in @state [:corp :hand])) 1]
+             (click-prompt state :runner "Laramy Fisk: Savvy Investor")
+             (click-prompt state :runner "Yes"))
+           "Corp drew 1 card")
        ;; resolve FTT
        (click-prompt state :runner "Yes")
        (click-prompt state :runner "OK")
@@ -567,9 +569,9 @@
        (run-empty-server state "Archives")
        (click-prompt state :runner "Find the Truth")
        (click-prompt state :runner "Yes")
-       (changes-val-macro 1 (count (get-in @state [:corp :hand]))
-                          "Fisk triggers after closing FTT prompt"
-                          (click-prompt state :runner "OK"))
+       (is (changed? [(count (get-in @state [:corp :hand])) 1]
+             (click-prompt state :runner "OK"))
+           "Fisk triggers after closing FTT prompt")
        (is (no-prompt? state :runner) "No prompts displaying"))))
 
 (deftest autoresolve-ensure-autoresolve-does-not-break-prompts-with-a-req
