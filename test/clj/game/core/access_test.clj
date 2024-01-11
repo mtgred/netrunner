@@ -2,8 +2,7 @@
   (:require
    [clojure.test :refer :all]
    [game.core :as core]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest rd-access
   (testing "Nothing in R&D, no upgrades"

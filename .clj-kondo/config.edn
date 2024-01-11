@@ -113,6 +113,7 @@
            game.core/msg game.macros/msg
            game.core/wait-for game.macros/wait-for
            game.test-framework/deftest-pending clojure.test/deftest
+           game.test-framework/dont-use-me clj-kondo.lint-as/def-catch-all
            game.core/expose-vars potemkin/import-vars
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->

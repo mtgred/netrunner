@@ -7,7 +7,6 @@
    [game.core.eid :refer :all]
    [game.test-framework :refer :all]
    [game.utils :as utils]
-   [game.utils-test :refer :all]
    [jinteki.validator :refer [legal?]]))
 
 (deftest account-siphon-use-ability

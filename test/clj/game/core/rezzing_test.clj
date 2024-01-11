@@ -4,8 +4,7 @@
    [game.core :as core]
    [game.core.card :refer :all]
    [game.core.rezzing :as rezzing]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest get-rez-cost-test
   (before-each [state (new-game)

@@ -5,8 +5,7 @@
    [game.core.card :refer :all]
    [game.core.flags :as flags]
    [game.macros :refer [req]]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest can-score?-test
   (defmethod core/defcard-impl "Test Card" [_] {})

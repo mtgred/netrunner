@@ -3,8 +3,7 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest corp-basic-actions-gain-1-credit
     ;; Gain 1 credit

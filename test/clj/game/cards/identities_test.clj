@@ -7,8 +7,7 @@
    [game.core.mark :refer [is-mark?]]
    [game.core.servers :refer [unknown->kw zone->name]]
    [game.test-framework :refer :all]
-   [game.utils :as utils]
-   [game.utils-test :refer :all]))
+   [game.utils :as utils]))
 
 (deftest ^{:card-title "419-amoral-scammer"}
   FourHundredAndNineTeen-amoral-scammer

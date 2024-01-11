@@ -5,7 +5,6 @@
    [game.core :as core]
    [game.core.card :refer :all]
    [game.test-framework :refer :all]
-   [game.utils-test :refer :all]
    [jinteki.validator :refer [legal?]]))
 
 (deftest activist-support

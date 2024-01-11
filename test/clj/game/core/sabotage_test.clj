@@ -5,8 +5,7 @@
    [game.core.eid :as eid]
    [game.core.mark :as m]
    [game.core.sabotage :as s]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest sabotage-test
   (testing "Choosing only from HQ"

@@ -6,8 +6,7 @@
    [game.core.card :refer :all]
    [game.macros :refer [req]]
    [game.test-framework :refer :all]
-   [game.utils :as utils]
-   [game.utils-test :refer :all]))
+   [game.utils :as utils]))
 
 (deftest abaasy
   ;; Abaasy

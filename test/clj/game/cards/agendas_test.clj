@@ -4,8 +4,7 @@
    [game.core :as core]
    [game.core.card :refer :all]
    [game.core.eid :refer [make-eid]]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest ^{:card-title "15-minutes"}
   fifteen-minutes

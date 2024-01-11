@@ -4,8 +4,7 @@
    [game.core :as core]
    [game.core.card :refer :all]
    [game.test-framework :refer :all]
-   [game.utils :as utils]
-   [game.utils-test :refer :all]))
+   [game.utils :as utils]))
 
 (deftest run-timing-with-no-ice
     ;; with no ice

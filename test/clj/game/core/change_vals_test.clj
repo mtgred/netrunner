@@ -3,8 +3,7 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest change-test
   (testing "base vs additional"

@@ -3,8 +3,7 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash

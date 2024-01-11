@@ -10,13 +10,11 @@
                            rezzed?]]
    [game.core.eid :as eid]
    [game.core.ice :refer [active-ice?]]
+   [game.test-framework.asserts]
    [game.utils :as utils]
-   [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
+   [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
-   [jinteki.utils :as jutils]
-   [kaocha.hierarchy :as k.hierarchy]
-   [kaocha.output :as k.output]
-   [kaocha.report :as k.report]))
+   [jinteki.utils :as jutils]))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -43,6 +41,118 @@
              '[game.cards.resources]
              '[game.cards.upgrades])))
 (load-all-cards)
+
+;;; helper functions for prompt interaction
+(defn get-prompt
+  [state side]
+  (-> @state side :prompt seq first))
+
+(defn prompt-is-type?
+  [state side prompt-type]
+  (let [prompt (get-prompt state side)]
+    (= prompt-type (:prompt-type prompt))))
+
+(defn prompt-is-card?
+  [state side card]
+  (let [prompt (get-prompt state side)]
+    (and (:cid card)
+         (get-in prompt [:card :cid])
+         (= (:cid card) (get-in prompt [:card :cid])))))
+
+(defn no-prompt?
+  [state side]
+  (let [prompt (get-prompt state side)]
+    (or (empty? prompt)
+        (= :run (:prompt-type prompt)))))
+
+(defn expect-type
+  [type-name choice]
+  (str "Expected a " type-name ", received [ " choice
+                                            " ] of type " (type choice) "."))
+
+(defn click-card-impl
+  [state side card]
+  (let [prompt (get-prompt state side)]
+    (cond
+      ;; Card and prompt types are correct
+      (and (prompt-is-type? state side :select)
+           (or (map? card)
+               (string? card)))
+      (if (map? card)
+        (core/process-action "select" state side {:card card})
+        (let [all-cards (core/get-all-cards state)
+              matching-cards (filter #(= card (core/get-title %)) all-cards)]
+          (if (= (count matching-cards) 1)
+            (core/process-action "select" state side {:card (first matching-cards)})
+            (is' (= 1 (count matching-cards))
+                 (str "Expected to click card [ " card
+                      " ] but found " (count matching-cards)
+                      " matching cards. Current prompt is: " prompt)))))
+      ;; Prompt isn't a select so click-card shouldn't be used
+      (not (prompt-is-type? state side :select))
+      (is' (true? (prompt-is-type? state side :select))
+           (str "click-card should only be used with prompts "
+                "requiring the user to click on cards on table"))
+      ;; Prompt is a select, but card isn't correct type
+      (not (or (map? card)
+               (string? card)))
+      (is' (true? (or (map? card) (string? card))) (expect-type "card string or map" card)))))
+
+(defn click-prompt-impl
+  [state side choice & args]
+  (let [prompt (get-prompt state side)
+        choices (:choices prompt)]
+    (cond
+      ;; Integer prompts
+      (or (= choices :credit)
+          (:counter choices)
+          (:number choices))
+      (try
+        (let [parsed-number (Integer/parseInt choice)]
+          (when-not (core/process-action "choice" state side {:choice parsed-number})
+            (is' (not true) (str "Parsed number " parsed-number " is incorrect somehow"))))
+        (catch Exception _
+          (is' (number? (Integer/parseInt choice)) (expect-type "number string" choice))))
+
+      (= :trace (:prompt-type prompt))
+      (try
+        (let [int-choice (Integer/parseInt choice)
+              under (<= int-choice (:choices prompt))]
+          (when-not (and under
+                         (core/process-action "choice" state side {:choice int-choice}))
+            (is' (<= int-choice (:choices prompt))
+                 (str (utils/side-str side) " expected to pay [ "
+                      int-choice " ] to trace but couldn't afford it."))))
+        (catch Exception _
+          (is' (number? (Integer/parseInt choice))
+               (expect-type "number string" choice))))
+
+      ;; List of card titles for auto-completion
+      (:card-title choices)
+      (when-not (core/process-action "choice" state side {:choice choice})
+        (is' (true? (or (map? choice) (string? choice))) (expect-type "card string or map" choice)))
+
+      ;; Default text prompt
+      :else
+      (let [choice-fn #(or (= choice (:value %))
+                           (= choice (get-in % [:value :title]))
+                           (utils/same-card? choice (:value %)))
+            idx (or (:idx (first args)) 0)
+            chosen (nth (filter choice-fn choices) idx nil)]
+        (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
+          (is' (= choice (mapv :value choices))
+               (str (utils/side-str side) " expected to click [ "
+                    (pr-str (if (string? choice) choice (:title choice "")))
+                    " ] but couldn't find it. Current prompt is: " (pr-str prompt))))))))
+(defmacro click-card
+  "Resolves a 'select prompt' by clicking a card. Takes a card map or a card name."
+  [state side card]
+  `(error-wrapper (click-card-impl ~state ~side ~card)))
+
+(defmacro click-prompt
+  "Clicks a button in a prompt. {choice} is a string or map only, no numbers."
+  [state side choice & args]
+  `(error-wrapper (click-prompt-impl ~state ~side ~choice ~@args)))
 
 ;; General utilities necessary for starting a new game
 (defn find-card
@@ -748,26 +858,6 @@
        (str/join " ")
        (prn)))
 
-(defn- dont-use-me [s]
-  `(throw (ex-info (str '~s " should only be used in do-game") {})))
-
-(defmacro refresh [_]
-  (dont-use-me (first &form)))
-(defmacro prompt-map [_]
-  (dont-use-me (first &form)))
-(defmacro prompt-type [_]
-  (dont-use-me (first &form)))
-(defmacro prompt-buttons [_]
-  (dont-use-me (first &form)))
-(defmacro prompt-titles [_]
-  (dont-use-me (first &form)))
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
-(defmacro prompt-fmt [_]
-  (dont-use-me (first &form)))
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
-(defmacro print-prompts []
-  (dont-use-me (first &form)))
-
 (defmacro do-game [s & body]
   `(let [~'state ~s
          ~'get-corp (fn [] (:corp @~'state))
@@ -812,53 +902,37 @@
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
 
+(defn escape-log-string [s]
+  ; (str/escape s {\[ "\\[" \] "\\]"})
+  s)
+
+(defn last-log-contains?
+  [state content]
+  (->> (-> @state :log last :text)
+       (re-find (re-pattern (escape-log-string content)))
+       some?))
+
+(defn second-last-log-contains?
+  [state content]
+  (->> (-> @state :log butlast last :text)
+       (re-find (re-pattern (escape-log-string content)))
+       some?))
+
+(defn last-n-log-contains?
+  [state n content]
+  (->> (-> @state :log reverse (nth n) :text)
+       (re-find (re-pattern (escape-log-string content)))
+       some?))
+
+(defn bad-usage [n]
+  `(throw (new IllegalArgumentException (str ~n " should only be used inside 'is'"))))
+
 #_{:clj-kondo/ignore [:unused-binding]}
-(defmacro changed? [bindings & body]
-  `(throw (ex-info "changed? should only be used in `is` asserts." {})))
-
-(defmethod clojure.test/assert-expr 'changed?
-  [msg [_changed bindings & body]]
-  (let [exprs (take-nth 2 bindings)
-        amts (take-nth 2 (drop 1 bindings))
-        init-binds (repeatedly gensym)
-        end-binds (repeatedly gensym)
-        pairs (mapv vector
-                    amts
-                    (map #(list `quote %) exprs)
-                    init-binds
-                    end-binds)]
-    `(let [~@(interleave init-binds exprs)
-           _# (do ~@body)
-           ~@(interleave end-binds exprs)]
-       (doseq [[amt# expr# init# end#] ~pairs
-               :let [expected# (+ init# amt#)
-                     actual-change# (- end# init#)]]
-         (clojure.test/do-report
-           {:type (if (= actual-change# amt#) :pass :changed-fail)
-            :expected amt#
-            :actual actual-change#
-            :message (format "%s\n%s => (%s to %s)" ~msg expr# init# end#)})))))
-
-(defn report-failed-change [m]
-  (with-test-out
-    (println (str "\n" (k.output/colored :red "FAIL")
-                  " in " (testing-vars-str m)))
-    (when (seq *testing-contexts*)
-      (println (testing-contexts-str)))
-    (when-let [message (:message m)] 
-      (println message))
-    (println "expected diff:" (pr-str (:expected m)))
-    (println "  actual diff:" (pr-str (:actual m)))))
-
-(do
-  (k.hierarchy/derive! :changed-fail :kaocha/known-key)
-  (k.hierarchy/derive! :changed-fail :kaocha/fail-type)
-  nil)
-
-(defmethod k.report/fail-summary :changed-fail [m]
-  (report-failed-change m))
-
-;; Just in case someone uses a non-kaocha runner
-(defmethod clojure.test/report :changed-fail [m]
-  (inc-report-counter :fail)
-  (report-failed-change m))
+(defmacro changed?
+  "bindings & body
+  Each binding pair must be an expression and a number.
+  The expression will be evaluated before the body and then after, and the two results
+  will be compared. If the difference is equal to the binding's number, then the test is
+  a pass. Otherwise, it will be a failure. Each binding pair generates a new assertion."
+  [bindings & body]
+  (bad-usage "changed?"))

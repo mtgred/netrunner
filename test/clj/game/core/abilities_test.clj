@@ -7,7 +7,6 @@
    [game.core.card-defs :refer :all]
    [game.core.eid :as eid]
    [game.test-framework :refer :all]
-   [game.utils-test :refer :all]
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [add-cost-to-label]]))
 

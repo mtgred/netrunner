@@ -2,8 +2,7 @@
   (:require
    [clojure.test :refer :all]
    [game.core :as core]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest mulligan-responses
   (let [setup {:corp {:deck ["Ice Wall" "Hedge Fund" "IPO" "NGO Front" "PAD Campaign"

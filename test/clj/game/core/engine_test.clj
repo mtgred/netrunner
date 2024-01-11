@@ -3,8 +3,7 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.engine :as e]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest first-trash
   (doseq [first-trash [:runner :corp]

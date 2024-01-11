@@ -4,8 +4,7 @@
    [game.core :as core]
    [game.core.subtypes :refer :all]
    [game.macros :refer [req]]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest subtypes-for-card-test
   (before-each [state (new-game {:runner {:hand ["Stimhack"]}})

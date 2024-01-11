@@ -4,8 +4,7 @@
    [game.core :as core]
    [game.core.agendas :refer [agenda-points]]
    [game.macros :refer [req]]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (defmethod core/defcard-impl "jnet Test Card" [_] {})
 (defmethod core/defcard-impl "jnet Test Card 2" [_]

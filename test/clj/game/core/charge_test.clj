@@ -5,8 +5,7 @@
    [game.core.card :refer [get-counters]]
    [game.core.charge :as c]
    [game.core.eid :as eid]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest charge-test
   (testing "Charging a card"

@@ -5,8 +5,7 @@
    [game.core.card :refer :all]
    [game.core.eid :refer [make-eid]]
    [game.test-framework :refer :all]
-   [game.utils :as utils]
-   [game.utils-test :refer :all]))
+   [game.utils :as utils]))
 
 (deftest twenty-four-seven-news-cycle-breaking-news-interaction
     ;; Breaking News interaction

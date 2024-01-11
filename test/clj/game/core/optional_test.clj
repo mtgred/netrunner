@@ -3,8 +3,7 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.macros :refer [req]]
-   [game.test-framework :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest optional-req
   (let [spy (atom [])]
