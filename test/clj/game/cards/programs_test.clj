@@ -2011,8 +2011,7 @@
                         :hand ["Customized Secretary"]
                         :credits 50}})
     (take-credits state :corp)
-    (is (changes-val
-          1 (count (core/turn-events state :runner :runner-shuffle-deck))
+    (is (changed? [(count (core/turn-events state :runner :runner-shuffle-deck)) 1]
           (play-from-hand state :runner "Customized Secretary")))))
 
 (deftest customized-secretary-shuffles-stack-when-last-program-is-hosted
@@ -5754,7 +5753,8 @@
       (take-credits state :corp)
       (let [phero (get-program state 0)
             inti (get-program state 1)]
-        (is (changes-credits (get-runner) -2 (card-ability state :runner inti 1)))
+        (is (changed? [(:credit (get-runner)) -2]
+              (card-ability state :runner inti 1)))
         (is (changed? [(:credit (get-runner)) 0]
               (run-on state "HQ")
               (card-ability state :runner inti 1)

@@ -2211,20 +2211,24 @@
                          :hand [(qty "Sure Gamble" 2)]}})
      (let [hy (get-in @state [:corp :identity])]
        (dotimes [i 2]
-         (is (changes-credits (get-corp) 1 (card-ability state :corp hy i))) ; triggering ID ability triggers a reveal so gains a cred
-         (is (changes-credits (get-corp) 0 (card-ability state :corp hy i))) ; triggering ID ability second time in a turn doesn't
+         (is (changed? [(:credit (get-corp)) 1]
+               (card-ability state :corp hy i))) ; triggering ID ability triggers a reveal so gains a cred
+         (is (changed? [(:credit (get-corp)) 0]
+               (card-ability state :corp hy i))) ; triggering ID ability second time in a turn doesn't
          (is (= 1 (:click (get-corp))) "Using ability twice cost 2 clicks")
          (take-credits state :corp)
          (take-credits state :runner))
        (core/move state :runner (first (:deck (get-runner))) :hand)
        (is (= 0 (count (:deck (get-runner)))) "Runner deck is empty")
-       (is (changes-credits (get-corp) 0 (card-ability state :corp hy 0)))  ; stack is empty, so revealing nothing gains nothing
+       (is (changed? [(:credit (get-corp)) 0]
+             (card-ability state :corp hy 0)))  ; stack is empty, so revealing nothing gains nothing
        (take-credits state :corp)
        (dotimes [_ 3]
          (play-from-hand state :runner "Sure Gamble"))
        (take-credits state :runner)
        (is (= 0 (count (:hand (get-runner)))) "Runner hand is empty")
-       (is (changes-credits (get-corp) 0 (card-ability state :corp hy 1))))))
+       (is (changed? [(:credit (get-corp)) 0]
+             (card-ability state :corp hy 1))))))
 
 (deftest hyoubu-institute-absolute-clarity-estrike-interaction
     ;; EStrike interaction
@@ -2234,21 +2238,23 @@
                 :runner {:deck [(qty "Employee Strike" 3) "Enhanced Vision"]}})
      (take-credits state :corp)
      (play-from-hand state :runner "Enhanced Vision")
-     (is (changes-credits (get-corp) 1
-                          (run-empty-server state "Archives")))
+     (is (changed? [(:credit (get-corp)) 1]
+           (run-empty-server state "Archives")))
      (take-credits state :runner)
      (take-credits state :corp)
      (play-from-hand state :runner "Employee Strike")
-     (is (changes-credits (get-corp) 0
-                          (run-empty-server state "Archives")))
+     (is (changed? [(:credit (get-corp)) 0]
+           (run-empty-server state "Archives")))
      (take-credits state :runner)
      (core/gain state :corp :click 3)
      (play-from-hand state :corp "Celebrity Gift")
-     (is (changes-credits (get-corp) 2 ; get 2 creds from celeb gift, but nothing from hyoubu trigger due to estrike
-                          (do (click-card state :corp (first (:hand (get-corp))))
-                              (click-prompt state :corp "Done"))))
+     (is (changed? [(:credit (get-corp)) 2]
+           ; get 2 creds from celeb gift, but nothing from hyoubu trigger due to estrike
+           (click-card state :corp (first (:hand (get-corp))))
+           (click-prompt state :corp "Done")))
      (play-from-hand state :corp "Scarcity of Resources")
-     (is (changes-credits (get-corp) 0 (card-ability state :corp (get-in @state [:corp :identity]) 1)))))
+     (is (changed? [(:credit (get-corp)) 0]
+           (card-ability state :corp (get-in @state [:corp :identity]) 1)))))
 
 (deftest hyoubu-institute-absolute-clarity-slot-machine-grail-reflection-fast-track
     ;; Slot Machine, grail, Reflection, Fast Track
@@ -2268,29 +2274,29 @@
        (run-continue state)
        (card-ability state :corp (refresh gal) 0) ;reveal grail ice
        (click-card state :corp (find-card "Galahad" (:hand (get-corp))))
-       (is (changes-credits (get-corp) 1
-                            (click-prompt state :corp "Done")))
-       (is (changes-credits (get-corp) 0
-                            (run-continue state :movement)
-                            (run-jack-out state))) ; triggers reflection, but trigger already done this turn
+       (is (changed? [(:credit (get-corp)) 1]
+             (click-prompt state :corp "Done")))
+       (is (changed? [(:credit (get-corp)) 0]
+             (run-continue state :movement)
+             (run-jack-out state))) ; triggers reflection, but trigger already done this turn
        (take-credits state :runner)
        (take-credits state :corp)
        (run-on state "R&D")
        (rez state :corp sm)
-       (is (changes-credits (get-corp) 0
-                            (run-continue state))) ;trigger slot machine
+       (is (changed? [(:credit (get-corp)) 0]
+             (run-continue state))) ;trigger slot machine
        (run-continue state :movement)
        (run-jack-out state)
        (take-credits state :runner)
        (take-credits state :corp)
        (run-on state "Archives")
-       (is (changes-credits (get-corp) 1
-                            (run-jack-out state))) ; triggers reflection
+       (is (changed? [(:credit (get-corp)) 1]
+             (run-jack-out state))) ; triggers reflection
        (take-credits state :runner)
        (core/move state :corp (find-card "House of Knives" (:hand (get-corp))) :deck)
        (play-from-hand state :corp "Fast Track")
-       (is (changes-credits (get-corp) 1
-                            (click-prompt state :corp "House of Knives"))))))
+       (is (changed? [(:credit (get-corp)) 1]
+             (click-prompt state :corp "House of Knives"))))))
 
 (deftest iain-stirling-retired-spook
   ;; Iain Stirling - Gain 2 credits when behind

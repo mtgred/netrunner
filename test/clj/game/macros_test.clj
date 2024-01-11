@@ -10,24 +10,24 @@
             [game.utils-test :refer :all]))
 
 (defn- dont-use-me [s]
-  `(throw (ex-info (str ~s " should only be used in do-game") {})))
+  `(throw (ex-info (str '~s " should only be used in do-game") {})))
 
 (defmacro refresh [_]
-  (dont-use-me "refresh"))
+  (dont-use-me (first &form)))
 (defmacro prompt-map [_]
-  (dont-use-me "prompt-map"))
+  (dont-use-me (first &form)))
 (defmacro prompt-type [_]
-  (dont-use-me "prompt-type"))
+  (dont-use-me (first &form)))
 (defmacro prompt-buttons [_]
-  (dont-use-me "prompt-buttons"))
+  (dont-use-me (first &form)))
 (defmacro prompt-titles [_]
-  (dont-use-me "prompt-titles"))
+  (dont-use-me (first &form)))
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defmacro prompt-fmt [_]
-  (dont-use-me "prompt-fmt"))
+  (dont-use-me (first &form)))
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defmacro print-prompts []
-  (dont-use-me "print-prompts"))
+  (dont-use-me (first &form)))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -66,38 +66,6 @@
                            (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
      ~@body))
-
-(defmacro changes-val-macro [change-amt val-form msg & body-form]
-  `(let [start-val# ~val-form]
-     (do ~@body-form)
-     (let [end-val# ~val-form
-           actual-change# (- end-val# start-val#)]
-       (clojure.test/do-report
-         {:type (if (= actual-change# ~change-amt) :pass :fail)
-          :actual actual-change#
-          :expected ~change-amt
-          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) "\n" ~msg " " (cons 'do '~body-form))}))))
-
-(defmacro changes-val [change-amt val-form & body-form]
-  `(changes-val-macro ~change-amt ~val-form "" ~@body-form))
-
-(defmethod clojure.test/assert-expr 'changes-val [msg form]
-  (let [change-amt (nth form 1)
-        val-form (nth form 2)
-        body-form (drop 3 form)]
-    `(changes-val-macro ~change-amt ~val-form ~msg ~@body-form)))
-
-(defmacro changes-credits [side change-amt & body-form]
-  `(changes-val-macro ~change-amt (:credit ~side) "" ~@body-form))
-
-;; Enables you to do this:
-;; (is (changes-credits (get-runner) -5
-;;   (play-from-hand state :runner "Magnum Opus")))
-(defmethod clojure.test/assert-expr 'changes-credits [msg form]
-  (let [side (nth form 1)
-        change-amt (nth form 2)
-        body-form (drop 3 form)]
-    `(changes-val-macro ~change-amt (:credit ~side) ~msg ~@body-form)))
 
 (defmacro before-each
   [let-bindings & testing-blocks]

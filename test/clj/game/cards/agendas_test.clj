@@ -157,8 +157,8 @@
    (play-and-score state "Architect Deployment Test") ;makes a remote 1
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Enigma")
-   (is (changes-credits (get-corp) 0
-                        (click-prompt state :corp "New remote")))
+   (is (changed? [(:credit (get-corp)) 0]
+         (click-prompt state :corp "New remote")))
    (is (faceup? (get-ice state :remote2 0)) "Enigma was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
@@ -167,8 +167,8 @@
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
    (click-prompt state :corp "Rashida Jaheem")
-   (is (changes-credits (get-corp) 0
-                        (click-prompt state :corp "Server 2")))
+   (is (changed? [(:credit (get-corp)) 0]
+         (click-prompt state :corp "Server 2")))
    (is (faceup? (get-content state :remote2 0)) "Rashida Jaheem was installed and rezzed, both at no cost")
    (play-and-score state "Architect Deployment Test")
    (click-prompt state :corp "OK")
@@ -845,21 +845,21 @@
       (new-game {:corp {:deck ["Cyberdex Virus Suite" "Cyberdex Sandbox" "Cyberdex Trial"]}})
       (play-and-score state "Cyberdex Sandbox")
       (core/gain state :corp :click 10)
-      (is (changes-credits (get-corp) 4
-                           (click-prompt state :corp "Yes")))
-      (is (changes-credits (get-corp) 0
-                           (purge state :corp)))
+      (is (changed? [(:credit (get-corp)) 4]
+            (click-prompt state :corp "Yes")))
+      (is (changed? [(:credit (get-corp)) 0]
+            (purge state :corp)))
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (changes-credits (get-corp) 4
-                           (play-from-hand state :corp "Cyberdex Trial")))
+      (is (changed? [(:credit (get-corp)) 4]
+            (play-from-hand state :corp "Cyberdex Trial")))
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
       (let [cvs (get-content state :hq 0)]
         (rez state :corp cvs)
-        (is (changes-credits (get-corp) 4
-                             (card-ability state :corp cvs 0))))))
+        (is (changed? [(:credit (get-corp)) 4]
+              (card-ability state :corp cvs 0))))))
 
 (deftest cyberdex-sandbox-only-triggers-on-the-first-purge-each-turn-5174
     ;; Only triggers on the first purge each turn #5174
@@ -868,8 +868,7 @@
       (core/gain state :corp :click 10)
       (purge state :corp)
       (play-and-score state "Cyberdex Sandbox")
-      (is (changes-credits
-            (get-corp) 0
+      (is (changed? [(:credit (get-corp)) 0]
             (click-prompt state :corp "Yes")))))
 
 (deftest dedicated-neural-net-corp-chooses-card-to-access-issue-4874

@@ -3492,8 +3492,8 @@
      (take-credits state :corp)
      (let [rs (get-content state :hq 0)]
        (rez state :corp rs)
-       (is (changes-credits (get-corp) -4
-                            (click-prompt state :corp "4")))
+       (is (changed? [(:credit (get-corp)) -4]
+             (click-prompt state :corp "4")))
        (is (= 4 (get-counters (refresh rs) :power)) "4 counters placed on Reduced Service")
        (play-from-hand state :runner "Dirty Laundry")
        (is (not (some #{"HQ"} (prompt-buttons :runner)))
@@ -3502,14 +3502,14 @@
        (is (= 4 (get-counters (refresh rs) :power)) "No counter removed by only making a run")
        (run-continue state)
        (is (= 3 (get-counters (refresh rs) :power)) "1 counters removed from Reduced Service by successful run")
-       (is (changes-credits (get-runner) -6
-                            (run-on state :hq)))
+       (is (changed? [(:credit (get-runner)) -6]
+             (run-on state :hq)))
        (run-continue state)
        (is (= 2 (get-counters (refresh rs) :power)) "1 counters removed from Reduced Service by successful run")
        (click-prompt state :runner "Pay 2 [Credits] to trash")
        (is (= 1 (count (:discard (get-corp)))) "Reduced Service trashed")
-       (is (changes-credits (get-runner) 0
-                            (run-on state :hq)))
+       (is (changed? [(:credit (get-runner)) 0]
+             (run-on state :hq)))
        (is (:run @state) "Runner got to run without paying anything after trashing reduced service"))))
 
 (deftest research-station

@@ -1282,8 +1282,8 @@
       (take-credits state :runner)
       (is (< (:credit (get-runner)) 6)
           "Chacon can trigger because runner has < 6 creds")
-      (is (changes-credits (get-runner) 1
-                           (take-credits state :corp)))
+      (is (changed? [(:credit (get-runner)) 1]
+            (take-credits state :corp)))
       (run-empty-server state :hq)
       (click-prompt state :runner "No action")
       (take-credits state :runner)
@@ -6142,9 +6142,10 @@
      (is (not (no-prompt? state :corp)) "The Class Act is insisting the corp waits")
      (click-card state :runner (find-card "Sure Gamble" (:set-aside (get-runner))))
      (is (= 2 (count (:deck (get-runner)))) "The Class Act put a card back")
-     (is (changes-credits (get-runner) 1
-                          (do (click-prompt state :runner "Yes") ; runner prompted to trigger Paragon
-                              (click-prompt state :runner "Yes"))))
+     (is (changed? [(:credit (get-runner)) 1]
+           (click-prompt state :runner "Yes")
+           ; runner prompted to trigger Paragon
+           (click-prompt state :runner "Yes")))
      (is (no-prompt? state :runner) "The Class Act is done prompting the runner to choose")
      (is (no-prompt? state :corp) "The Class Act is not insisting the corp waits")
      (is (= 2 (count (:deck (get-runner)))) "Deck still has 2 cards")))

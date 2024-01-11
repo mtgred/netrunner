@@ -3517,8 +3517,8 @@
              (click-prompt state :runner "Draw 1 card"))
            "Drew card from In the Groove"))
      (play-from-hand state :runner "Clone Chip")
-     (is (changes-credits (get-runner) 1
-                          (click-prompt state :runner "Gain 1 [Credits]")))
+     (is (changed? [(:credit (get-runner)) 1]
+           (click-prompt state :runner "Gain 1 [Credits]")))
      (play-from-hand state :runner "Sacrificial Construct")
      (is (no-prompt? state :runner) "No prompt because Sacrificial Construct is not expensive")
      (take-credits state :runner)
@@ -3536,8 +3536,8 @@
      (is (= 0 (:brain-damage (get-runner))) "No core damage taken yet")
      (click-prompt state :runner "Brain Cage")
      (is (= 1 (:brain-damage (get-runner))) "Core damage taken")
-     (is (changes-credits (get-runner) 1
-                             (click-prompt state :runner "Gain 1 [Credits]")))))
+     (is (changed? [(:credit (get-runner)) 1]
+           (click-prompt state :runner "Gain 1 [Credits]")))))
 
 (deftest in-the-groove-hayley-kaplan-interaction
     ;; Hayley Kaplan interaction
@@ -5493,7 +5493,7 @@
     (click-prompt state :runner "HQ")
     (run-continue state)
     (is (changed? [(:credit (get-runner)) +3
-           (count (:hand (get-runner))) 0]
+                   (count (:hand (get-runner))) 0]
           (click-prompt state :runner "No action"))
         "gained 3 credits from raindrop")))
 
@@ -5523,8 +5523,8 @@
      (is (= 1 (get-link state)) "1 link")
      (is (empty? (:discard (get-runner))))
      (is (= "Rebirth" (-> (get-runner) :rfg first :title)))
-     (is (changes-credits (get-runner) -4
-                          (play-from-hand state :runner "Magnum Opus")))))
+     (is (changed? [(:credit (get-runner)) -4]
+           (play-from-hand state :runner "Magnum Opus")))))
 
   (deftest rebirth-kate-install-hardware-before-prevents-discount
     ;; Rebirth - Installing Hardware before does prevent Kate's discount"
@@ -5536,8 +5536,8 @@
      (play-from-hand state :runner "Rebirth")
      (click-prompt state :runner kate)
      (is (= kate (get-in (get-runner) [:identity :title])) "Rebirthed into Kate")
-     (is (changes-credits (get-runner) -1
-                          (play-from-hand state :runner "Akamatsu Mem Chip"))
+     (is (changed? [(:credit (get-runner)) -1]
+           (play-from-hand state :runner "Akamatsu Mem Chip"))
          "Discount not applied for 2nd install")))
 
   (deftest rebirth-kate-install-resource-before-get-discount
@@ -5550,8 +5550,8 @@
      (play-from-hand state :runner "Rebirth")
      (click-prompt state :runner kate)
      (is (= kate (get-in (get-runner) [:identity :title])) "Rebirthed into Kate")
-     (is (changes-credits (get-runner) 0
-                          (play-from-hand state :runner "Akamatsu Mem Chip"))
+     (is (changed? [(:credit (get-runner)) 0]
+           (play-from-hand state :runner "Akamatsu Mem Chip"))
          "Discount is applied for 2nd install (since it is the first Hardware / Program)")))
 
   (deftest rebirth-whizzard
@@ -5566,8 +5566,8 @@
      (click-prompt state :runner whizzard)
      (card-ability state :runner (:identity (get-runner)) 0)
      (is (= 6 (:credit (get-runner))) "Took a Whizzard credit")
-     (is (changes-credits (get-corp) -1
-                          (rez state :corp (get-ice state :rd 0)))
+     (is (changed? [(:credit (get-corp)) -1]
+           (rez state :corp (get-ice state :rd 0)))
          "Reina is no longer active")))
 
   (deftest rebirth-lose-link
@@ -5613,14 +5613,14 @@
      (play-from-hand state :corp "Ice Wall" "HQ")
      (play-from-hand state :corp "Ice Wall" "R&D")
      (take-credits state :corp)
-     (is (changes-credits (get-corp) -1
-                          (rez state :corp (get-ice state :hq 0)))
+     (is (changed? [(:credit (get-corp)) -1]
+           (rez state :corp (get-ice state :hq 0)))
          "Only pay 1 to rez ice wall when against Whizzard")
      (play-from-hand state :runner "Rebirth")
      (click-prompt state :runner reina)
      (is (= reina (get-in (get-runner) [:identity :title])) "Rebirthed into Reina")
-     (is (changes-credits (get-corp) -1
-                          (rez state :corp (get-ice state :rd 0)))
+     (is (changed? [(:credit (get-corp)) -1]
+           (rez state :corp (get-ice state :rd 0)))
          "Additional cost from Reina not applied for 2nd ice rez")))
 
   (deftest rebirth-reina-rezzing-asset-before-get-additional-cost
@@ -5632,14 +5632,14 @@
      (play-from-hand state :corp "Ice Wall" "HQ")
      (play-from-hand state :corp "Mark Yale" "New remote")
      (take-credits state :corp)
-     (is (changes-credits (get-corp) -1
-                          (rez state :corp (get-content state :remote1 0)))
+     (is (changed? [(:credit (get-corp)) -1]
+           (rez state :corp (get-content state :remote1 0)))
          "Only pay 1 to rez Mark Yale")
      (play-from-hand state :runner "Rebirth")
      (click-prompt state :runner reina)
      (is (= reina (get-in (get-runner) [:identity :title])) "Rebirthed into Reina")
-     (is (changes-credits (get-corp) -2
-                          (rez state :corp (get-ice state :hq 0)))
+     (is (changed? [(:credit (get-corp)) -2]
+           (rez state :corp (get-ice state :hq 0)))
          "Additional cost from Reina applied for 1st ice rez")))
 
   (deftest rebirth-only-legal-identities

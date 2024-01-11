@@ -472,36 +472,38 @@
        ;; it should still do so, even if it was already set to 'Ask'
        (dotimes [_ 3]
          (run-jackson)
-         (is (changes-credits (get-runner) 1 ; triggering Aeneas should grant a credit
-                              (click-prompt state :runner "Yes")))
+         (is (changed? [(:credit (get-runner)) 1]
+               ; triggering Aeneas should grant a credit
+               (click-prompt state :runner "Yes")))
          (is (no-prompt? state :runner) "No Aeneas prompt displaying")
          (run-jackson)
-         (is (changes-credits (get-runner) 0 ; not triggering Aeneas should not grant a credit
-                              (click-prompt state :runner "No")))
+         (is (changed? [(:credit (get-runner)) 0]
+               ; not triggering Aeneas should not grant a credit
+               (click-prompt state :runner "No")))
          (is (no-prompt? state :runner) "No Aeneas prompt displaying")
          (card-ability state :runner (get-aeneas1) 0)
          (click-prompt state :runner "Ask"))
        ;; if aeneas is set to always/never fire, we should get to run without being prompted
        (card-ability state :runner (get-aeneas1) 0)
        (click-prompt state :runner "Never")
-       (is (changes-credits (get-runner) 0
-                            (run-jackson)))
+       (is (changed? [(:credit (get-runner)) 0]
+             (run-jackson)))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        (card-ability state :runner (get-aeneas1) 0)
        (click-prompt state :runner "Always")
-       (is (changes-credits (get-runner) 1
-                            (run-jackson)))
+       (is (changed? [(:credit (get-runner)) 1]
+             (run-jackson)))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        ;; should also be able to play a new aeneas which doesn't care about the first one's autoresolve
        (play-from-hand state :runner "Aeneas Informant")
-       (is (changes-credits (get-runner) 2
-                            (do (run-jackson)
-                                (click-prompt state :runner "Yes"))))
+       (is (changed? [(:credit (get-runner)) 2]
+             (run-jackson)
+             (click-prompt state :runner "Yes")))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying")
        (card-ability state :runner (get-resource state 1) 0)
        (click-prompt state :runner "Never")
-       (is (changes-credits (get-runner) 1
-                            (run-jackson)))
+       (is (changed? [(:credit (get-runner)) 1]
+             (run-jackson)))
        (is (no-prompt? state :runner) "No Aeneas prompt displaying"))))
 
 (deftest autoresolve-fisk-ftt-with-and-without-autoresolve

@@ -3502,19 +3502,22 @@
                (card-ability state :runner (get-hardware state 0) 0)
                (click-prompt state :runner setting))]
        (doseq [set-to ["Never" "Ask" "Always"]]
-         (is (changes-credits (get-runner) 0
-                              (do (toggle-paragon set-to)
-                                  (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
-                                  (is (no-prompt? state :runner) "No Paragon prompt")))
+         (is (changed? [(:credit (get-runner)) 0]
+               (toggle-paragon set-to)
+               (run-empty-server state "Archives")
+               ; on first loop this actually triggers paragon, but we say 'no'
+               (is (no-prompt? state :runner) "No Paragon prompt"))
              "Paragon does not fire"))
        (take-credits state :runner)
        (take-credits state :corp)
        ;; paragon is now set to 'Always'
-       (is (changes-credits (get-runner) 1
-                              (do (run-empty-server state "Archives") ; on first loop this actually triggers paragon, but we say 'no'
-                                  (click-prompt state :runner "Yes") ; prompt to add a card to bottom
-                                  (is (no-prompt? state :runner) "No Paragon prompt")))
-             "Paragon fires automatically"))))
+       (is (changed? [(:credit (get-runner)) 1]
+             (run-empty-server state "Archives")
+             ; on first loop this actually triggers paragon, but we say 'no'
+             (click-prompt state :runner "Yes")
+             ; prompt to add a card to bottom
+             (is (no-prompt? state :runner) "No Paragon prompt"))
+           "Paragon fires automatically"))))
 
 (deftest patchwork-play-an-event
     ;; Play an event
