@@ -1,18 +1,22 @@
-(ns game.core-test
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.test :refer :all]
-            [game.core :as core :refer [map->Card]]
-            [game.core.board :refer [server-list]]
-            [game.core.card :refer [get-card installed? rezzed? active? get-counters get-title]]
-            [game.core.ice :refer [active-ice?]]
-            [game.utils :as utils :refer [server-card]]
-            [game.core.eid :as eid]
-            [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.utils :as jutils]
-            [clojure.string :as str]
-            [game.core.checkpoint :refer [fake-checkpoint]]))
+(ns game.test-framework
+  (:require
+   [clojure.edn :as edn]
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [clojure.test :refer :all]
+   [game.core :as core :refer [map->Card]]
+   [game.core.board :refer [server-list]]
+   [game.core.card :refer [active? get-card get-counters get-title installed?
+                           rezzed?]]
+   [game.core.eid :as eid]
+   [game.core.ice :refer [active-ice?]]
+   [game.utils :as utils]
+   [game.utils-test :refer [click-prompt error-wrapper is' no-prompt?]]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :as jutils]
+   [kaocha.hierarchy :as k.hierarchy]
+   [kaocha.output :as k.output]
+   [kaocha.report :as k.report]))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -86,7 +90,7 @@
 
 (defn card-vec->card-map
   [side [card amt]]
-  (let [loaded-card (if (string? card) (server-card card) card)]
+  (let [loaded-card (if (string? card) (utils/server-card card) card)]
     (when-not loaded-card
       (throw (Exception. (str card " not found in @all-cards"))))
     (when (not= side (:side loaded-card))
@@ -114,7 +118,7 @@
           :discard (when-let [discard (:discard corp)]
                      (flatten discard))
           :identity (when-let [id (or (:id corp) (:identity corp))]
-                      (server-card id))
+                      (utils/server-card id))
           :credits (:credits corp)
           :bad-pub (:bad-pub corp)}
    :runner {:deck (or (transform "Runner" (conj (:deck runner)
@@ -126,7 +130,7 @@
             :discard (when-let [discard (:discard runner)]
                        (flatten discard))
             :identity (when-let [id (or (:id runner) (:identity runner))]
-                        (server-card id))
+                        (utils/server-card id))
             :credits (:credits runner)
             :tags (:tags runner)}
    :mulligan (:mulligan options)
@@ -497,7 +501,7 @@
 (defmacro auto-pump
   [state card]
   `(core/process-action "dynamic-ability" ~state :runner {:dynamic "auto-pump"
-                                                        :card (get-card ~state ~card)}))
+                                                          :card (get-card ~state ~card)}))
 
 (defn auto-pump-and-break-impl
   [state card]
@@ -743,3 +747,118 @@
        (map :text)
        (str/join " ")
        (prn)))
+
+(defn- dont-use-me [s]
+  `(throw (ex-info (str '~s " should only be used in do-game") {})))
+
+(defmacro refresh [_]
+  (dont-use-me (first &form)))
+(defmacro prompt-map [_]
+  (dont-use-me (first &form)))
+(defmacro prompt-type [_]
+  (dont-use-me (first &form)))
+(defmacro prompt-buttons [_]
+  (dont-use-me (first &form)))
+(defmacro prompt-titles [_]
+  (dont-use-me (first &form)))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro prompt-fmt [_]
+  (dont-use-me (first &form)))
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+(defmacro print-prompts []
+  (dont-use-me (first &form)))
+
+(defmacro do-game [s & body]
+  `(let [~'state ~s
+         ~'get-corp (fn [] (:corp @~'state))
+         ~'get-runner (fn [] (:runner @~'state))
+         ~'get-run (fn [] (:run @~'state))
+         ~'hand-size (fn [side#] (core/hand-size ~'state side#))
+         ~'refresh (fn [card#]
+                     ;; ;; uncommenting the below two assertions causes a looot of tests to fail
+                     ;; (is ~'card "card passed to refresh should not be nil")
+                     (let [~'ret (get-card ~'state card#)]
+                       ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
+                       ~'ret))
+         ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
+         ~'prompt-type (fn [side#] (:prompt-type (~'prompt-map side#)))
+         ~'prompt-buttons (fn [side#] (->> (~'prompt-map side#) :choices (map :value)))
+         ~'prompt-titles (fn [side#] (map :title (~'prompt-buttons side#)))
+         ~'prompt-fmt (fn [side#]
+                        (let [prompt# (~'prompt-map side#)
+                              choices# (:choices prompt#)
+                              choices# (cond
+                                         (nil? choices#) nil
+                                         (sequential? choices#) choices#
+                                         :else [choices#])
+                              card# (:card prompt#)
+                              prompt-type# (:prompt-type prompt#)]
+                          (str (utils/side-str side#) ": " (:msg prompt# "") "\n"
+                               (when prompt-type# (str "Type: " prompt-type# "\n"))
+                               (when card# (str "Card: " (:title card#) "\n"))
+                               (str/join "\n" (map #(str "[ " (or (get-in % [:value :title])
+                                                                  (:value %)
+                                                                  %
+                                                                  "nil") " ]") choices#))
+                               "\n")))
+         ~'print-prompts (fn []
+                           (print (~'prompt-fmt :corp))
+                           (println (~'prompt-fmt :runner)))]
+     ~@body))
+
+(defmacro before-each
+  [let-bindings & testing-blocks]
+  (assert (every? #(= 'testing (first %)) testing-blocks))
+  (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
+    `(do ~@bundles)))
+
+#_{:clj-kondo/ignore [:unused-binding]}
+(defmacro changed? [bindings & body]
+  `(throw (ex-info "changed? should only be used in `is` asserts." {})))
+
+(defmethod clojure.test/assert-expr 'changed?
+  [msg [_changed bindings & body]]
+  (let [exprs (take-nth 2 bindings)
+        amts (take-nth 2 (drop 1 bindings))
+        init-binds (repeatedly gensym)
+        end-binds (repeatedly gensym)
+        pairs (mapv vector
+                    amts
+                    (map #(list `quote %) exprs)
+                    init-binds
+                    end-binds)]
+    `(let [~@(interleave init-binds exprs)
+           _# (do ~@body)
+           ~@(interleave end-binds exprs)]
+       (doseq [[amt# expr# init# end#] ~pairs
+               :let [expected# (+ init# amt#)
+                     actual-change# (- end# init#)]]
+         (clojure.test/do-report
+           {:type (if (= actual-change# amt#) :pass :changed-fail)
+            :expected amt#
+            :actual actual-change#
+            :message (format "%s\n%s => (%s to %s)" ~msg expr# init# end#)})))))
+
+(defn report-failed-change [m]
+  (with-test-out
+    (println (str "\n" (k.output/colored :red "FAIL")
+                  " in " (testing-vars-str m)))
+    (when (seq *testing-contexts*)
+      (println (testing-contexts-str)))
+    (when-let [message (:message m)] 
+      (println message))
+    (println "expected diff:" (pr-str (:expected m)))
+    (println "  actual diff:" (pr-str (:actual m)))))
+
+(do
+  (k.hierarchy/derive! :changed-fail :kaocha/known-key)
+  (k.hierarchy/derive! :changed-fail :kaocha/fail-type)
+  nil)
+
+(defmethod k.report/fail-summary :changed-fail [m]
+  (report-failed-change m))
+
+;; Just in case someone uses a non-kaocha runner
+(defmethod clojure.test/report :changed-fail [m]
+  (inc-report-counter :fail)
+  (report-failed-change m))

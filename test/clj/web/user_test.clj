@@ -1,7 +1,7 @@
 (ns web.user-test
-  (:require 
-   [web.user :refer :all]
-   [clojure.test :refer [deftest is]]))
+  (:require
+   [clojure.test :refer [deftest is]]
+   [web.user :refer :all]))
 
 (deftest valid-username?-test
   (is (valid-username? "test"))

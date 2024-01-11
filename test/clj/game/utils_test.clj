@@ -1,8 +1,8 @@
 (ns game.utils-test
   (:require
-    [clojure.test :refer :all]
-    [game.core :as core]
-    [game.utils :as utils :refer [same-card? side-str]]))
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.utils :as utils :refer [same-card? side-str]]))
 
 (defmacro error-wrapper [form]
   `(try ~form
