@@ -3400,6 +3400,7 @@
   {:events [{:event :spent-credits-from-card
              :req (req (and
                          (installed? target)
+                         (runner? target)
                          (first-event? state side :spent-credits-from-card #(installed? (first %)))))
              :async true
              :msg "place a power counter on itself"
