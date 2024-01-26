@@ -69,19 +69,20 @@
   (wait-for
     (trigger-event-sync state side (when-not skip-trigger-event :pre-trash) c)
     (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
-    ; Don't show the access prompt if:
-    (if (or ; 1) accessing cards in Archives
-            (in-discard? c)
-            ; 2) Edward Kim's auto-trash flag is true
-            (and (operation? c)
-                 (card-flag? c :can-trash-operation true))
-            ; 3) card has already been trashed but hasn't been updated
-            (find-cid (:cid c) (get-in @state [:corp :discard])))
+    ;; Don't show the access prompt if:
+    (if (or ;; 1) accessing seen cards in Archives
+          (and (in-discard? c) (:seen c))
+          ;; 2) Edward Kim's auto-trash flag is true
+          (and (operation? c)
+               (card-flag? c :can-trash-operation true))
+          ;; 3) card has been moved to trash but hasn't been updated
+          (and (not (in-discard? c))
+               (find-cid (:cid c) (get-in @state [:corp :discard]))))
       (access-end state side eid c)
       ; Otherwise, show the access prompt
       (let [card (assoc c :seen true)
             ; Trash costs
-            trash-cost (trash-cost state side card)
+            trash-cost (when-not (in-discard? c) (trash-cost state side card))
             trash-eid (assoc eid :source card :source-type :runner-trash-corp-cards)
             ; Runner cannot trash (eg Trebuchet)
             can-trash (can-trash? state side c)
@@ -349,7 +350,7 @@
   "Trigger access effects, then move into trash/steal choice."
   [state side eid c title args]
   (let [cdef (card-def c)
-        c (assoc c :seen true)
+        c (assoc c :seen (or (:seen c) (not (in-discard? c))))
         access-effect (access-ability c cdef)]
     (swap! state assoc-in [:runner :register :accessed-cards] true)
     (wait-for (msg-handle-access state side c title args)
