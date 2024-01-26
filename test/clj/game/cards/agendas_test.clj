@@ -458,11 +458,9 @@
     (click-prompt state :runner "Bacterial Programming")
     (click-prompt state :runner "Steal")
     (click-prompt state :corp "Yes")
-    (doseq [_ (range 7)
-              ;; Get the first card listed in the prompt choice
-              ;; TODO make this function
-              :let [card (first (prompt-titles :corp))]]
-      (click-prompt state :corp card))
+    (dotimes [_ 7]
+      (let [card (first (prompt-titles :corp))]
+        (click-prompt state :corp card)))
     (click-prompt state :corp "Done") ; Finished with trashing
     (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
     (dotimes [_ 7]
@@ -496,11 +494,11 @@
       (click-prompt state :runner "Steal")
       (click-prompt state :corp "Yes")
       ;; Move all 7 cards to trash
-      (doseq [_ (range 7)
+      (dotimes [_ 7]
               ;; Get the first card listed in the prompt choice
               ;; TODO make this function
-              :let [card (first (prompt-titles :corp))]]
-        (click-prompt state :corp card))
+        (let [card (first (prompt-titles :corp))]
+          (click-prompt state :corp card)))
       (click-prompt state :corp "Done") ; Finished with trashing
       (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
       ;; Run and prompts should be over now
