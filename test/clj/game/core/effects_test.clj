@@ -1,10 +1,9 @@
 (ns game.core.effects-test
-  (:require [game.core :as core]
-            [game.core.effects :as e]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.effects :as e]
+   [game.test-framework :refer :all]))
 
 (deftest gather-effects-test
   (let [start {:active-player :corp

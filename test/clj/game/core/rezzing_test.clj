@@ -1,12 +1,10 @@
 (ns game.core.rezzing-test
-  (:require [game.core :as core]
-            [game.core.rezzing :as rezzing]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.card :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.rezzing :as rezzing]
+   [game.test-framework :refer :all]))
 
 (deftest get-rez-cost-test
   (before-each [state (new-game)

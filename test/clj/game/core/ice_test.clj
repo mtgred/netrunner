@@ -1,11 +1,8 @@
 (ns game.core.ice-test
-  (:require [game.core :as core]
-            [game.utils :as utils]
-            [jinteki.utils :as jutils]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.test-framework :refer :all]))
 
 (deftest auto-pump-and-break-test
   (testing "update after ice updates subs"

@@ -1,10 +1,9 @@
 (ns game.core.rules-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.test-framework :refer :all]))
 
 (deftest corp-rez-unique
   ;; Rezzing a second copy of a unique Corp card

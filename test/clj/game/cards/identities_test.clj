@@ -1,14 +1,13 @@
 (ns game.cards.identities-test
-  (:require [game.core :as core]
-            [game.core.servers :refer [unknown->kw zone->name]]
-            [game.core.card :refer :all]
-            [game.core.mark :refer [is-mark?]]
-            [game.utils :as utils]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.string :as str]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.string :as str]
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.mark :refer [is-mark?]]
+   [game.core.servers :refer [unknown->kw zone->name]]
+   [game.test-framework :refer :all]
+   [game.utils :as utils]))
 
 (deftest ^{:card-title "419-amoral-scammer"}
   FourHundredAndNineTeen-amoral-scammer
@@ -700,27 +699,25 @@
                :corp {:hand ["Ice Wall"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
-    (let [ari (get-in @state [:runner :identity])]
-      (card-ability state :runner (:identity (get-runner)) 0)
-      (is (no-prompt? state :runner) "Can't use Arissana ability outside of a run")
-      (run-on state "Archives")
-      (card-ability state :runner (:identity (get-runner)) 0)
-      (is (changed? [(:credit (get-runner)) -1]
-            (click-prompt state :runner "Cache"))
-          "No additional costs paid")
-      (is (= "Cache" (:title (get-program state 0))))
-      (run-continue state)
-      (is (= 1 (count (:discard (get-runner)))) "Cache was trashed at the end of the run")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (run-on state "Archives")
-      (card-ability state :runner (:identity (get-runner)) 0)
-      (click-prompt state :runner "Hush")
-      (click-card state :runner (get-ice state :hq 0))
-      (is (= "Hush" (:title (first (:hosted (refresh (get-ice state :hq 0)))))))
-      (run-continue state)
-      (is (= 1 (count (:discard (get-runner)))) "Hush is still installed")
-)))
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (is (no-prompt? state :runner) "Can't use Arissana ability outside of a run")
+    (run-on state "Archives")
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (is (changed? [(:credit (get-runner)) -1]
+                  (click-prompt state :runner "Cache"))
+        "No additional costs paid")
+    (is (= "Cache" (:title (get-program state 0))))
+    (run-continue state)
+    (is (= 1 (count (:discard (get-runner)))) "Cache was trashed at the end of the run")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (click-prompt state :runner "Hush")
+    (click-card state :runner (get-ice state :hq 0))
+    (is (= "Hush" (:title (first (:hosted (refresh (get-ice state :hq 0)))))))
+    (run-continue state)
+    (is (= 1 (count (:discard (get-runner)))) "Hush is still installed")))
 
 (deftest armand-geist-walker-tech-lord-async-costs-with-sync-abilities
     ;; async costs with sync abilities
@@ -1375,21 +1372,20 @@
                         :hand ["Rashida Jaheem" "Ad Blitz" "Biased Reporting" "Celebrity Gift"]}})
     (play-from-hand state :corp "Rashida Jaheem" "New remote")
     (take-credits state :corp)
-    (let [epiph (get-in @state [:corp :identity])]
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
-      (take-credits state :runner)
-      (core/move state :corp (find-card "Ad Blitz" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Biased Reporting" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Celebrity Gift" (:hand (get-corp))) :deck)
-      (card-ability state :corp (:identity (get-corp)) 0)
-      (is (str/includes? (:msg (prompt-map :corp)) "Ad Blitz, Biased Reporting, and Celebrity Gift"))
-      (click-prompt state :corp "OK")
-      (click-prompt state :corp "Cancel")
-      (is (no-prompt? state :corp))
-      (is (= (:title (nth (-> @state :corp :deck) 0)) "Ad Blitz"))
-      (is (= (:title (nth (-> @state :corp :deck) 1)) "Biased Reporting"))
-      (is (= (:title (nth (-> @state :corp :deck) 2)) "Celebrity Gift")))))
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (take-credits state :runner)
+    (core/move state :corp (find-card "Ad Blitz" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Biased Reporting" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Celebrity Gift" (:hand (get-corp))) :deck)
+    (card-ability state :corp (:identity (get-corp)) 0)
+    (is (str/includes? (:msg (prompt-map :corp)) "Ad Blitz, Biased Reporting, and Celebrity Gift"))
+    (click-prompt state :corp "OK")
+    (click-prompt state :corp "Cancel")
+    (is (no-prompt? state :corp))
+    (is (= (:title (nth (-> @state :corp :deck) 0)) "Ad Blitz"))
+    (is (= (:title (nth (-> @state :corp :deck) 1)) "Biased Reporting"))
+    (is (= (:title (nth (-> @state :corp :deck) 2)) "Celebrity Gift"))))
 
 (deftest exile-streethawk-simultaneous-resolution-prompt-shown-for-interaction-with-customized-secretary
     ;; Simultaneous-resolution prompt shown for interaction with Customized Secretary
@@ -2356,13 +2352,13 @@
     (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
                       :deck ["House of Knives"]}})
     (play-from-hand state :corp "House of Knives" "New remote")
-    (let [issuaq (get-in @state [:corp :identity])]
-      (let [hok (get-content state :remote1 0)]
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (score-agenda state :corp hok)
-        (is (= 0 (get-counters (refresh issuaq) :power)) "Issuaq has no power counters")
-        (is (= 7 (:agenda-point-req (get-corp))) "Corp still requires 7 points to win")))))
+    (let [issuaq (get-in @state [:corp :identity])
+          hok (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (score-agenda state :corp hok)
+      (is (= 0 (get-counters (refresh issuaq) :power)) "Issuaq has no power counters")
+      (is (= 7 (:agenda-point-req (get-corp))) "Corp still requires 7 points to win"))))
 
 (deftest issuaq-adaptics-single-score
   ;; Issuaq Adaptics - Adjust point requirement when a single agenda is scored
@@ -2370,15 +2366,15 @@
     (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
                       :deck ["Project Kusanagi", "Seamless Launch"]}})
     (play-from-hand state :corp "Project Kusanagi" "New remote")
-    (let [issuaq (get-in @state [:corp :identity])]
-      (let [pk (get-content state :remote1 0)]
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (play-from-hand state :corp "Seamless Launch")
-        (click-card state :corp pk)
-        (score state :corp (refresh pk))
-        (is (= 6 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 1")
-        (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter")))))
+    (let [issuaq (get-in @state [:corp :identity])
+          pk (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Seamless Launch")
+      (click-card state :corp pk)
+      (score state :corp (refresh pk))
+      (is (= 6 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 1")
+      (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter"))))
 
 
 (deftest issuaq-adaptics-multiple-score
@@ -2388,19 +2384,19 @@
                         :deck [(qty "Project Kusanagi" 2) (qty "Seamless Launch" 2)]}})
       (play-from-hand state :corp "Project Kusanagi" "New remote")
       (play-from-hand state :corp "Project Kusanagi" "New remote")
-      (let [issuaq (get-in @state [:corp :identity])]
-        (let [pk1 (get-content state :remote1 0)]
-          (let [pk2 (get-content state :remote2 0)]
-          (take-credits state :corp)
-          (take-credits state :runner)
-          (play-from-hand state :corp "Seamless Launch")
-          (click-card state :corp pk1)
-          (play-from-hand state :corp "Seamless Launch")
-          (click-card state :corp pk2)
-          (score state :corp (refresh pk1))
-          (score state :corp (refresh pk2))
-          (is (= 5 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 2")
-          (is (= 2 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 2 power counters"))))))
+      (let [issuaq (get-in @state [:corp :identity])
+            pk1 (get-content state :remote1 0)
+            pk2 (get-content state :remote2 0)]
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Seamless Launch")
+        (click-card state :corp pk1)
+        (play-from-hand state :corp "Seamless Launch")
+        (click-card state :corp pk2)
+        (score state :corp (refresh pk1))
+        (score state :corp (refresh pk2))
+        (is (= 5 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 2")
+        (is (= 2 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 2 power counters"))))
 
 (deftest jemison-astronautics-sacrifice-audacity-success
   ;; Jemison Astronautics - Place advancements when forfeiting agendas

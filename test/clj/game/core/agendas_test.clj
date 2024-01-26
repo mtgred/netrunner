@@ -1,11 +1,10 @@
 (ns game.core.agendas-test
-  (:require [game.core :as core]
-            [game.macros :refer [req]]
-            [game.core.agendas :refer [agenda-points]]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.agendas :refer [agenda-points]]
+   [game.macros :refer [req]]
+   [game.test-framework :refer :all]))
 
 (defmethod core/defcard-impl "jnet Test Card" [_] {})
 (defmethod core/defcard-impl "jnet Test Card 2" [_]

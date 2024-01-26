@@ -2,10 +2,8 @@
   (:require
    [clojure.test :refer :all]
    [game.core :as core]
-   [game.core-test :refer :all]
    [game.core.card :refer :all]
-   [game.macros-test :refer :all]
-   [game.utils-test :refer :all]))
+   [game.test-framework :refer :all]))
 
 (deftest trash-existing-programs-test
   (do-game

@@ -1,12 +1,11 @@
 (ns game.cards.resources-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]
-            [jinteki.validator :refer [legal?]]
-            [clojure.string :as str]))
+  (:require
+   [clojure.string :as str]
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.test-framework :refer :all]
+   [jinteki.validator :refer [legal?]]))
 
 (deftest activist-support
   ;; Activist Support - Take tag if you have none; Corp gains bad pub if they have none

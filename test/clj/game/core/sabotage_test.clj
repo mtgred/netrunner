@@ -1,12 +1,11 @@
 (ns game.core.sabotage-test
-  (:require [game.core :as core]
-            [game.core.eid :as eid]
-            [game.core.sabotage :as s]
-            [game.core.mark :as m]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.eid :as eid]
+   [game.core.mark :as m]
+   [game.core.sabotage :as s]
+   [game.test-framework :refer :all]))
 
 (deftest sabotage-test
   (testing "Choosing only from HQ"

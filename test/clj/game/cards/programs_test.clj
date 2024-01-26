@@ -1,13 +1,12 @@
 (ns game.cards.programs-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.macros :refer [req]]
-            [game.utils :as utils]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.string :as str]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.string :as str]
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.macros :refer [req]]
+   [game.test-framework :refer :all]
+   [game.utils :as utils]))
 
 (deftest abaasy
   ;; Abaasy

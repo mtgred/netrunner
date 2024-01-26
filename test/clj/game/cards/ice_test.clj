@@ -1,10 +1,9 @@
 (ns game.cards.ice-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.test-framework :refer :all]))
 
 (deftest ablative-barrier-no-threat
   (do-game
@@ -2782,9 +2781,9 @@
       (run-continue state)
       (is (changed? [(:credit (get-runner)) -4]
             (auto-pump-and-break state cor)
-            (is (and (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
-                 (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs"))
-            "Correct messages"))
+            (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+                "Correct messages")
+            (is (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")))
           "Paid 2c + 2c for breaking"))))
 
 (deftest gold-farmer-interaction-with-paperclip
