@@ -3,7 +3,8 @@
    [clojure.string :as str]
    [game.core.actions :refer [click-advance click-credit click-draw click-run
                               close-deck do-purge generate-install-list
-                              generate-runnable-zones move-card play play-ability play-corp-ability
+                              generate-runnable-zones move-card expend-ability
+                              play play-ability play-corp-ability
                               play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag
                               resolve-prompt score select trash-resource view-deck]]
    [game.core.card :refer [get-card]]
@@ -65,6 +66,7 @@
    "move" #'move-card
    "mulligan" #'mulligan
    "play" #'play
+   "expend" #'expend-ability
    "purge" #'do-purge
    "remove-tag" #'remove-tag
    "rez" #(rez %1 %2 (make-eid %1) (:card %3) (dissoc %3 :card))

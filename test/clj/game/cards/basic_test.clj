@@ -1,26 +1,25 @@
 (ns game.cards.basic-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.test-framework :refer :all]))
 
 (deftest corp-basic-actions-gain-1-credit
     ;; Gain 1 credit
     (do-game
       (new-game)
-      (changes-val-macro 1 (:credit (get-corp))
-                         "Gain 1 credit"
-                         (click-credit state :corp))))
+      (is (changed? [(:credit (get-corp)) 1]
+            (click-credit state :corp))
+          "Gain 1 credit")))
 
 (deftest corp-basic-actions-draw-card
     ;; Draw card
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 10)]}})
-      (changes-val-macro 1 (count (:hand (get-corp)))
-                         "Drew 1 card"
-                         (click-draw state :corp))))
+      (is (changed? [(count (:hand (get-corp))) 1]
+            (click-draw state :corp))
+          "Drew 1 card")))
 
 (deftest corp-basic-actions-install-agenda
     ;; Install agenda
@@ -54,9 +53,9 @@
     ;; Play operation
     (do-game
       (new-game {:corp {:deck ["Hedge Fund"]}})
-      (changes-val-macro 4 (:credit (get-corp))
-                         "Gained 4c from Hedge Fund"
-                         (play-from-hand state :corp "Hedge Fund"))))
+      (is (changed? [(:credit (get-corp)) 4]
+            (play-from-hand state :corp "Hedge Fund"))
+          "Gained 4c from Hedge Fund")))
 
 (deftest corp-basic-actions-advance-installed-ice
     ;; Advance installed ice
@@ -105,7 +104,7 @@
             bot (first (:hosted (get-ice state :hq 0)))]
         (is (= 2 (get-counters (refresh imp) :virus)) "Imp starts with 2 virus counters")
         (is (= 1 (get-counters (refresh bot) :virus)) "Botulus starts with 1 virus counter")
-        (core/do-purge state :corp nil)
+        (purge state :corp)
         (is (= 1 (count (:discard (get-runner)))) "Clot got trashed")
         (is (= 0 (get-counters (refresh imp) :virus)) "Imp has zero counters after purge")
         (is (= 0 (get-counters (refresh bot) :virus)) "Botulus has zero counters after purge")
@@ -116,18 +115,18 @@
     ;; Gain 1 credit
     (do-game
       (new-game {:options {:start-as :runner}})
-      (changes-val-macro 1 (:credit (get-runner))
-                         "Gain 1 credit"
-                         (click-credit state :runner))))
+      (is (changed? [(:credit (get-runner)) 1]
+            (click-credit state :runner))
+          "Gain 1 credit")))
 
 (deftest runner-basic-actions-draw-card
     ;; Draw card
     (do-game
       (new-game {:options {:start-as :runner}
                  :runner {:deck [(qty "Sure Gamble" 10)]}})
-      (changes-val-macro 1 (count (:hand (get-runner)))
-                         "Drew 1 card"
-                         (click-draw state :runner))))
+      (is (changed? [(count (:hand (get-runner))) 1]
+            (click-draw state :runner))
+          "Drew 1 card")))
 
 (deftest runner-basic-actions-install-program
     ;; Install program
@@ -158,9 +157,9 @@
     (do-game
       (new-game {:options {:start-as :runner}
                  :runner {:deck ["Sure Gamble"]}})
-      (changes-val-macro 4 (:credit (get-runner))
-                         "Gained 4c from Sure Gamble"
-                         (play-from-hand state :runner "Sure Gamble"))))
+      (is (changed? [(:credit (get-runner)) 4]
+            (play-from-hand state :runner "Sure Gamble"))
+          "Gained 4c from Sure Gamble")))
 
 (deftest runner-basic-actions-run-hq
     ;; Run HQ

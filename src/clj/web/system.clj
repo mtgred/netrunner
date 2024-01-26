@@ -65,6 +65,7 @@
 (defmethod ig/init-key :web/app-state [_ _]
   (reset! app-state/app-state
           {:lobbies {}
+           :lobby-updates {}
            :users {}})
   (reset! angel-arena/arena-queue []))
 

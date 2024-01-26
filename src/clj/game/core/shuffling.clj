@@ -1,12 +1,11 @@
 (ns game.core.shuffling
   (:require
-    [clojure.string :as string]
     [game.core.card :refer [corp? in-discard?]]
     [game.core.engine :refer [trigger-event]]
     [game.core.moving :refer [move move-zone]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability msg req]]
-    [game.utils :refer [quantify]]))
+    [game.utils :refer [enumerate-str quantify]]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
@@ -39,7 +38,7 @@
       :msg (msg "shuffle "
                 (let [seen (filter :seen targets)
                       m (count (filter #(not (:seen %)) targets))]
-                  (str (string/join ", " (map :title seen))
+                  (str (enumerate-str (map :title seen))
                        (when (pos? m)
                          (str (when-not (empty? seen) " and ")
                               (quantify m "unseen card")))))

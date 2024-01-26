@@ -10,6 +10,7 @@
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
+   [nr.translations :refer [tr-data]]
    [reagent.dom :as rd]))
 
 ;; Dot definitions
@@ -62,7 +63,7 @@
   [faction id]
   (letfn [(icon-span [css-faction]
             [:span.faction-icon {:class css-faction
-                                 :title id}])]
+                                 :title (str faction " - " id)}])]
     (case faction
       "Adam" (icon-span "adam")
       "Anarch" (icon-span "anarch")
@@ -122,20 +123,22 @@
   {"standard" "Standard"
    "system-gateway" "System Gateway"
    "startup" "Startup"
+   "sunset" "Sunset"
    "eternal" "Eternal"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
-   "classic" "Classic"
+   "neo" "Neo"
    "casual" "Casual"})
 
 (def format->slug
   {"Standard" "standard"
    "System Gateway" "system-gateway"
    "Startup" "startup"
+   "Sunset" "sunset"
    "Eternal" "eternal"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
-   "Classic" "classic"
+   "Neo" "neo"
    "Casual" "casual"})
 
 (defn regex-escape
@@ -151,7 +154,7 @@
 (def icon-patterns
   "A sequence of icon pattern pairs consisting of an regex, used to match icon
   codes, and the span fragment that should replace it"
-  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon)}])
+  (letfn [(span-of [icon] [:span {:class (str "anr-icon " icon) :title (str " " icon) :aria-label (str icon) :role "img" }])
           (regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
     (->> {"[credit]" "credit"
           "[credits]" "credit"
@@ -194,14 +197,21 @@
   "A sequence of card pattern pairs consisting of a regex, used to match a card
   name in text, and the span fragment that should replace it"
   []
-  (letfn [(span-of [title] [:span {:class "fake-link" :data-card-title title} title])]
-    (->> (:all-cards-and-flips @app-state)
-         (vals)
-         (remove :replaced_by)
-         (map (fn [c] [(:title c) (span-of (:title c))]))
-         (sort-by (comp count str first) >))))
+  (letfn [(span-of [title tr-title] [:span {:class "fake-link" :data-card-title title} tr-title])]
+    (distinct (concat
+     (->> (:all-cards-and-flips @app-state)
+          (vals)
+          (remove :replaced_by)
+          (map (fn [c] [(:title c) (span-of (:title c) (:title c))]))
+          (sort-by (comp count str first) >))
+     (->> (:all-cards-and-flips @app-state)
+          (vals)
+          (remove :replaced_by)
+          (map (fn [c] [(tr-data :title c) (span-of (:title c) (tr-data :title c))]))
+          (sort-by (comp count str first) >))))))
 
-(def card-patterns (memoize card-patterns-impl))
+(def card-patterns-memo (memoize card-patterns-impl))
+(defn card-patterns [] (card-patterns-memo (:cards-loaded @app-state)))
 
 (defn contains-card-pattern-impl
   "A card pattern regex, used to match a card name in text to check if the rest
@@ -211,10 +221,11 @@
     (->> (:all-cards-and-flips @app-state)
          (vals)
          (filter #(not (:replaced_by %)))
-         (map (fn [k] (regex-escape (:title k))))
+         (map (fn [k] (join "|" (map regex-escape (distinct [(:title k) (tr-data :title k)])))))
          (join "|"))))
 
-(def contains-card-pattern (memoize contains-card-pattern-impl))
+(def contains-card-pattern-memo (memoize contains-card-pattern-impl))
+(defn contains-card-pattern [] (contains-card-pattern-memo (:cards-loaded @app-state)))
 
 (def special-patterns
   (letfn [(regex-of [icon-code] (re-pattern (str "(?i)" (regex-escape icon-code))))]
@@ -283,12 +294,7 @@
 (defn render-cards
   "Render all cards in a given text or HTML fragment input"
   [input]
-  (cond
-    (re-find (contains-card-pattern) (or input ""))
-    (render-input input (card-patterns))
-    (string? input) [:<> input]
-    (vector? input) input
-    :else [:<>]))
+  (render-input input (card-patterns)))
 
 (defn render-specials
   "Render all special codes in a given text or HTML fragment input"
@@ -298,9 +304,24 @@
 (defn render-message
   "Render icons, cards and special codes in a message"
   [input]
-  (if (string? input)
-    (render-specials (render-icons (render-cards input)))
-    input))
+  (render-specials (render-icons (render-cards input))))
+
+(defn- player-highlight-patterns-impl [corp runner]
+  (letfn [(regex-of [player-name] (re-pattern (str "(?i)" (regex-escape player-name))))]
+    (->> {corp [:span.corp-username corp]
+          runner [:span.runner-username runner]}
+         (filter (fn [[k _]] (not-empty k)))
+         (map (fn [[k v]] [(regex-of k) v]))
+         (sort-by (comp count str first) >))))
+(def player-highlight-patterns (memoize player-highlight-patterns-impl))
+
+(defn render-player-highlight [message corp runner]
+  (render-input message (player-highlight-patterns corp runner)))
+
+(defn player-highlight-option-class []
+  (case (get-in @app-state [:options :log-player-highlight])
+    "blue-red" "log-player-highlight-red-blue"
+               nil))
 
 (defn cond-button
   [text cond f]

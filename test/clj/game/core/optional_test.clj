@@ -1,10 +1,9 @@
 (ns game.core.optional-test
-  (:require [game.core :as core]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [game.macros :refer [req]]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.macros :refer [req]]
+   [game.test-framework :refer :all]))
 
 (deftest optional-req
   (let [spy (atom [])]

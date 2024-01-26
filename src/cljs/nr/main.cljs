@@ -5,7 +5,7 @@
    [nr.navbar :refer [navbar navigate]]
    [nr.routes :as routes]
    [nr.status-bar :refer [status]]
-   [nr.ws :refer [start-router!]]
+   [nr.ws :refer [start-router! lobby-updates-pause! lobby-updates-continue!]]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]
    [reagent.dom :as rdom]
@@ -20,21 +20,34 @@
       (.getAttribute (str "data-" tag))))
 
 (defn pages []
-  (r/create-class
-    {:display-name "main-pages"
-     :component-did-mount
-     (fn []
-       (let [ver (get-server-data "version")
-             rid (get-server-data "replay-id")]
-         (swap! app-state assoc :app-version ver)
-         (swap! app-state assoc :replay-id rid)
-         (when rid
-           (navigate "/play"))))
-     :reagent-render
-     (fn []
-       [:div#main
-        [:div.item
-         [(-> @routes/current-view :data :view)]]])}))
+  (r/with-let
+    [visibilitychange-fn (fn []
+                           (if (identical? (.-visibilityState js/document) "visible")
+                             (lobby-updates-continue!)
+                             (lobby-updates-pause!)))]
+    (r/create-class
+      {:display-name "main-pages"
+       :component-did-mount
+       (fn []
+         (let [ver (get-server-data "version")
+               rid (get-server-data "replay-id")]
+           (swap! app-state assoc :app-version ver)
+           (swap! app-state assoc :replay-id rid)
+           (when rid
+             (navigate "/play"))
+           (-> js/document (.addEventListener
+                             "visibilitychange"
+                             visibilitychange-fn))))
+       :component-will-unmount
+       (fn []
+         (-> js/document (.removeEventListener
+                           "visibilitychange"
+                           visibilitychange-fn)))
+       :reagent-render
+       (fn []
+         [:div#main
+          [:div.item
+           [(-> @routes/current-view :data :view)]]])})))
 
 (defn main-window []
   [:<>

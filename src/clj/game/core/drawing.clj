@@ -1,7 +1,7 @@
 (ns game.core.drawing
   (:require
     [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-sync]]
+    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult trigger-event-sync]]
     [game.core.events :refer [first-event?]]
     [game.core.flags :refer [prevent-draw]]
     [game.core.moving :refer [move]]
@@ -29,6 +29,18 @@
   [state _ n]
   (swap! state update-in [:bonus :draw] (fnil #(+ % n) 0)))
 
+(defn click-draw-bonus
+  "Registers a bonus of n draws to the next draw done by a click (Laguna Velasco District)"
+  [state _ n]
+  (swap! state update-in [:bonus :click-draw] (fnil #(+ % n) 0)))
+
+(defn use-bonus-click-draws!
+  "Returns value of click-draw bonus and reset it"
+  [state]
+  (let [bonus-click-draws (get-in @state [:bonus :click-draw] 0)]
+    (swap! state update :bonus dissoc :click-draw)
+    bonus-click-draws))
+
 (defn first-time-draw-bonus
   [side n]
   (let [event (keyword (str "pre-" (name side) "-draw"))]
@@ -45,8 +57,7 @@
   ([state side eid n {:keys [suppress-event no-update-draw-stats]}]
    (if (zero? n)
      (effect-completed state side eid)
-     (do
-       (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
+     (wait-for (trigger-event-simult state side (make-eid state eid) (if (= side :corp) :pre-corp-draw :pre-runner-draw) nil n)
        (let [n (+ n (get-in @state [:bonus :draw] 0))
              draws-wanted n
              active-player (get-in @state [:active-player])

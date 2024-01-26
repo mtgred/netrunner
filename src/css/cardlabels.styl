@@ -1,0 +1,122 @@
+card-border-radius = 3.5px
+
+showLabel()
+  position: absolute
+  background: linear-gradient(180deg, rgba(20,20,20,0.85) 0%, rgba(20,20,20,0.7) 65%, rgba(20,20,20,0) 100%)
+  text-shadow: 0 0 3px black
+  white-space: nowrap
+  text-overflow: clip
+  overflow: hidden
+  padding: 0.1rem
+  width: 100%
+  z-index: 11
+
+  &:empty
+    display: none
+
+  &:hover
+    white-space: unset
+    text-overflow: unset
+    overflow: unset
+    font-size: 0.7em
+    z-index: 15
+
+iceLabel()
+  background: linear-gradient(270deg, rgba(20,20,20,0.85) 0%, rgba(20,20,20,0.7) 65%, rgba(20,20,20,0) 100%)
+  border-top-right-radius: card-border-radius
+  border-bottom-right-radius: card-border-radius
+  writing-mode: vertical-rl
+  width: unset
+  z-index: unset // ensures the label doesn't sit above hosted cards
+
+iceLabelForCorp()
+  iceLabel()
+  right: 0
+  top: 0
+  bottom: 0
+
+iceLabelForRunner()
+  iceLabel()
+  top: 0
+  bottom: 0
+  transform: scale(-1, -1)
+
+.gameboard
+  &.show-unrezzed-card-labels
+    .centralpane
+      .me
+        .card
+          &:hover
+            img + .cardname
+              z-index: 12
+              background-color: rgb(50,50,50)
+          img + .cardname
+            showLabel()
+        .content
+          img + .cardname
+            border-top-right-radius: card-border-radius
+            border-top-left-radius: card-border-radius
+
+        .ices
+          img + .cardname
+            iceLabelForCorp()
+
+  &.show-card-labels
+    .card
+      &:hover
+        .cardname // ensure label visible when card is hovered
+          z-index: 15 !important
+          background-color: rgb(50,50,50) !important
+      div + .cardname
+        showLabel()
+        border-top-left-radius: card-border-radius
+        border-top-right-radius: card-border-radius
+
+    .discard, .prompt-card-preview
+      .card
+        div + .cardname
+          z-index: -1 // hide label for top of discard
+    .scored
+      .card-wrapper + .header
+        z-index: -1 // hide score area label once agenda pops in
+    .rfg
+      .header
+        top: auto
+        bottom: 0
+
+    .me
+      .hand-controls
+        .header
+          top: auto
+          bottom: 0
+      .ices
+        div + .cardname
+          iceLabelForCorp()
+        .additional-subtypes
+          right: 8px
+          top: 10px
+          white-space: nowrap
+    .opponent
+      .ices
+        div + .cardname
+          iceLabelForRunner()
+        .strength // move strength indicator out of label
+          z-index: 15
+          top: 0.4em
+          left: unset
+          right: 0.4em
+        .additional-subtypes // move subtypes out of moved strength
+          top: 30px
+    .ices
+      .hosted
+        div + .cardname
+          z-index: 13
+          right: auto
+          top: auto
+          bottom: auto
+          width: 100%
+          writing-mode: unset
+          transform: unset
+    .identity
+      .additional-subtypes
+        top: 15px

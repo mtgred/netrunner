@@ -146,7 +146,7 @@
     (filter
       (fn [lobby]
         (let [player-usernames (->> (:players lobby)
-                                    (map #(get-in % [:user :username]))
+                                    (keep #(get-in % [:user :username]))
                                     (map str/lower-case)
                                     (set))
               user-blocked-players?
@@ -188,7 +188,7 @@
   Filters the list per each users block list."
   ([]
    (let [user-cache (:users @app-state/app-state)
-         uids (ws/connected-uids)
+         uids (filter #(app-state/receive-lobby-updates? %) (ws/connected-uids))
          users (map #(get user-cache %) uids)]
      (broadcast-lobby-list users)))
   ([users]
@@ -651,3 +651,14 @@
     (if (and lobby (in-lobby? uid lobby))
       (update-in lobbies [gameid :mute-spectators] not)
       lobbies)))
+
+(defmethod ws/-msg-handler :lobby/pause-updates
+  [{{user :user} :ring-req
+    uid :uid}]
+  (app-state/pause-lobby-updates uid))
+
+(defmethod ws/-msg-handler :lobby/continue-updates
+  [{{user :user} :ring-req
+    uid :uid}]
+  (app-state/continue-lobby-updates uid)
+  (send-lobby-list uid))

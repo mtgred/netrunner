@@ -1,15 +1,14 @@
 (ns game.core.abilities-test
-  (:require [game.core :as core]
-            [game.core.eid :as eid]
-            [game.core.card :refer :all]
-            [game.cards.ice :as ice]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [game.core.card-defs :refer :all]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.utils :refer [add-cost-to-label]]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.cards.ice :as ice]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.card-defs :refer :all]
+   [game.core.eid :as eid]
+   [game.test-framework :refer :all]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :refer [add-cost-to-label]]))
 
 (deftest combine-abilities
   (testing "Combining 2 abilities"

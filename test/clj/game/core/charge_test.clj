@@ -1,12 +1,11 @@
 (ns game.core.charge-test
-  (:require [game.core :as core]
-            [game.core.card :refer [get-counters]]
-            [game.core.charge :as c]
-            [game.core.eid :as eid]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer [get-counters]]
+   [game.core.charge :as c]
+   [game.core.eid :as eid]
+   [game.test-framework :refer :all]))
 
 (deftest charge-test
   (testing "Charging a card"

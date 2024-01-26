@@ -10,6 +10,7 @@
   :kaocha/fail-fast? false
   :kaocha/reporter #profile {:default kaocha.report.progress/report
                              :ci kaocha.report/result}
+  :bindings {kaocha.stacktrace/*stacktrace-filters* []}
   :kaocha/plugins [:kaocha.plugin/randomize
                    :kaocha.plugin/filter
                    :kaocha.plugin/capture-output

@@ -149,7 +149,7 @@
     (let [cost-type (cost-name cost)
           cost-string (label cost)]
       (cond
-        (or (= :click cost-type) (= :lose-click cost-type)) (str "spend " cost-string)
+        (#{:click :lose-click} cost-type) (str "spend " cost-string)
         (= :credit cost-type) (str "pay " cost-string)
         :else cost-string))))
 

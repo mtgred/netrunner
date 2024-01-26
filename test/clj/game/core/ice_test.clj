@@ -1,13 +1,10 @@
 (ns game.core.ice-test
-  (:require [game.core :as core]
-            [game.utils :as utils]
-            [jinteki.utils :as jutils]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.test-framework :refer :all]))
 
-(deftest auto-pump-and-break
+(deftest auto-pump-and-break-test
   (testing "update after ice updates subs"
     (do-game
       (new-game {:corp {:hand ["Tour Guide" (qty "PAD Campaign" 2)]
@@ -82,7 +79,7 @@
         (rez state :corp afshar)
         (run-continue state)
         (is (not-empty (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh gord)))) "Autobreak is active")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh gord)})
+        (auto-pump-and-break state (refresh gord))
         (is (empty? (remove :broken (:subroutines (refresh afshar)))) "All subroutines broken"))))
   (testing "Auto break handles pump abilities with variable strength"
     (do-game
@@ -102,10 +99,9 @@
         (run-on state :hq)
         (run-continue state)
         (is (= "5 [Credits]" (get-in (refresh unity) [:abilities 2 :cost-label])) "Auto Break label lists cost as 5 credits")
-        (changes-val-macro
-          -5 (:credit (get-runner))
-          "Auto break costs 5"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh unity)}))
+        (is (changed? [(:credit (get-runner)) -5]
+              (auto-pump-and-break state (refresh unity)))
+            "Auto break costs 5")
         (is (= 7 (:current-strength (refresh unity))) "Unity's strength is 7 after pumping twice")
         (is (zero? (count (remove :broken (:subroutines (refresh ice))))) "All subroutines have been broken"))))
   (testing "Auto break handles break abilities with variable cost"
@@ -123,19 +119,17 @@
       (run-continue state :encounter-ice)
       (let [marjanah (get-program state 0)]
         (is (= "2 [Credits]" (get-in (refresh marjanah) [:abilities 2 :cost-label])) "Auto Break label lists cost as 2 credits")
-        (changes-val-macro
-          -2 (:credit (get-runner))
-          "Break costs 2"
-          (card-ability state :runner (refresh marjanah) 2))
+        (is (changed? [(:credit (get-runner)) -2]
+              (card-ability state :runner (refresh marjanah) 2))
+            "Break costs 2")
         (run-continue state :movement)
         (run-continue state nil)
         (run-on state :hq)
         (run-continue state :encounter-ice)
         (is (= "1 [Credits]" (get-in (refresh marjanah) [:abilities 2 :cost-label])) "Auto Break label lists cost as 1 credit")
-        (changes-val-macro
-          -1 (:credit (get-runner))
-          "Break costs 1 after run"
-          (card-ability state :runner (refresh marjanah) 2)))))
+        (is (changed? [(:credit (get-runner)) -1]
+              (card-ability state :runner (refresh marjanah) 2))
+            "Break costs 1 after run"))))
   (testing "Basic auto pump test"
     (do-game
       (new-game {:runner {:hand ["Corroder"]
@@ -153,10 +147,9 @@
             fire-wall (get-ice state :hq 0)]
         (is (not-empty (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh corroder)))) "Auto pump is active")
         (is (= "3 [Credits]" (get-in (refresh corroder) [:abilities 3 :cost-label])) "Auto pump label lists cost as 3 credits")
-        (changes-val-macro
-          -3 (:credit (get-runner))
-          "Pump costs 3"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh corroder)}))
+        (is (changed? [(:credit (get-runner)) -3]
+              (auto-pump state (refresh corroder)))
+            "Pump costs 3")
         (is (= 5 (:current-strength (refresh corroder))) "Breaker strength equals ice strength")
         (is (not (some #{:broken} (:subroutines fire-wall))) "No subroutines have been broken")
         (is (empty? (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh corroder)))) "No auto pump ability since breaker is at strength"))))
@@ -177,10 +170,9 @@
         (run-on state :hq)
         (run-continue state)
         (is (= "2 [Credits]" (get-in (refresh unity) [:abilities 3 :cost-label])) "Auto Break label lists cost as 2 credits")
-        (changes-val-macro
-          -2 (:credit (get-runner))
-          "Auto pump costs 2"
-          (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh unity)}))
+        (is (changed? [(:credit (get-runner)) -2]
+              (auto-pump state (refresh unity)))
+            "Auto pump costs 2")
         (is (= 7 (:current-strength (refresh unity))) "Unity's strength is 7 after pumping twice"))))
   (testing "Auto pump available even with no active break ability"
     (do-game
@@ -199,7 +191,7 @@
         (is (not-empty (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh utae)))) "Auto pump is active")
         (is (empty? (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh utae)))) "No auto break dynamic ability")))))
 
-(deftest bioroid-break-abilities
+(deftest bioroid-break-abilities-test
   ;; The click-to-break ablities on bioroids shouldn't create an undo-click
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

@@ -53,7 +53,7 @@
    (when (not-empty remaining)
      {:prompt (str "Choose a card to move next "
                    (if (= dest "bottom") "under " "onto ")
-                   (if (= reorder-side :corp) "R&D" "your Stack"))
+                   (if (= reorder-side :corp) "R&D" "the stack"))
       :choices remaining
       :async true
       :effect (req (let [chosen (cons target chosen)]
@@ -74,9 +74,9 @@
   ([reorder-side wait-side chosen original] (reorder-final reorder-side wait-side chosen original nil))
   ([reorder-side wait-side chosen original dest]
    {:prompt (if (= dest "bottom")
-              (str "The bottom cards of " (if (= reorder-side :corp) "R&D" "your Stack")
+              (str "The bottom cards of " (if (= reorder-side :corp) "R&D" "the stack")
                    " will be " (enumerate-str (map :title (reverse chosen))) ".")
-              (str "The top cards of " (if (= reorder-side :corp) "R&D" "your Stack")
+              (str "The top cards of " (if (= reorder-side :corp) "R&D" "the stack")
                    " will be " (enumerate-str (map :title chosen)) "."))
    :choices ["Done" "Start over"]
    :async true
@@ -205,18 +205,17 @@
   (let [card (server-card title)]
     (if (has-subtype? card "Current")
       (let [event-keyword (if (corp? card) :agenda-stolen :agenda-scored)
-            constant-ab {:type :trash-when-expired
-                         :req (req (some #(let [event (:event %)
-                                                context-card (:card %)]
-                                            (or (= event event-keyword)
-                                                (and (or (= :play-event event)
-                                                         (= :play-operation event))
-                                                     (and (not (same-card? card context-card))
-                                                          (has-subtype? context-card "Current")
-                                                          true))))
-                                         targets))
-                         :value trash-or-rfg}]
-        (update ability :constant-effects #(conj (into [] %) constant-ab)))
+            static-ab {:type :trash-when-expired
+                       :req (req (some #(let [event (:event %)
+                                              context-card (:card %)]
+                                          (or (= event event-keyword)
+                                              (and (#{:play-event :play-operation} event)
+                                                   (and (not (same-card? card context-card))
+                                                        (has-subtype? context-card "Current")
+                                                        true))))
+                                       targets))
+                       :value trash-or-rfg}]
+        (update ability :static-abilities #(conj (into [] %) static-ab)))
       ability)))
 
 (defn add-default-abilities
@@ -242,9 +241,9 @@
 
 (defmacro defcard
   [title ability]
-  `(defmethod card-defs/defcard-impl ~title [~'_]
-     (if-let [cached-ability# (get card-defs-cache ~title)]
-       cached-ability#
-       (let [ability# (add-default-abilities ~title ~ability)]
-         (swap! card-defs-cache assoc ~title ability#)
-         ability#))))
+  `(do (swap! card-defs-cache dissoc ~title)
+       (defmethod card-defs/defcard-impl ~title [~'_]
+         (or (get @card-defs-cache ~title)
+             (let [ability# (add-default-abilities ~title ~ability)]
+               (swap! card-defs-cache assoc ~title ability#)
+               ability#)))))

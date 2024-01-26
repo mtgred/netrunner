@@ -3,7 +3,7 @@
     [game.core.card :refer [get-zone has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
-    [game.core.effects :refer [unregister-constant-effects]]
+    [game.core.effects :refer [unregister-static-abilities]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [checkpoint dissoc-req merge-costs-paid pay queue-event resolve-ability should-trigger? unregister-events]]
     [game.core.flags :refer [can-run? zone-locked?]]
@@ -59,7 +59,7 @@
                               (let [trash-or-move (if (= zone :rfg) async-rfg trash)]
                                 (wait-for (trash-or-move state side c {:unpreventable true})
                                           (unregister-events state side card)
-                                          (unregister-constant-effects state side card)
+                                          (unregister-static-abilities state side card)
                                           (when (= zone :rfg)
                                             (system-msg state side
                                                         (str "removes " (:title c) " from the game instead of trashing it")))

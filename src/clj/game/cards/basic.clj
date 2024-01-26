@@ -5,7 +5,7 @@
    [game.core.card :refer [agenda? asset? event? get-card hardware? ice?
                            in-hand? operation? program? resource? upgrade?]]
    [game.core.def-helpers :refer [defcard]]
-   [game.core.drawing :refer [draw]]
+   [game.core.drawing :refer [draw use-bonus-click-draws!]]
    [game.core.eid :refer [effect-completed]]
    [game.core.engine :refer [trigger-event]]
    [game.core.flags :refer [can-advance? untrashable-while-resources?]]
@@ -104,8 +104,9 @@
                {:label "Purge virus counters"
                 :cost [:click 3]
                 :msg "purge all virus counters"
-                :effect (effect (purge)
-                                (play-sfx "virus-purge"))}]})
+                :async true
+                :effect (req (play-sfx state side "virus-purge")
+                             (purge state side eid))}]})
 
 (defcard "Runner Basic Action Card"
   {:abilities [{:label "Gain 1 [Credits]"
@@ -124,7 +125,7 @@
                 :effect (req (trigger-event state side :runner-click-draw (-> @state side :deck (nth 0)))
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                              (play-sfx state side "click-card")
-                             (draw state side eid 1))}
+                             (draw state side eid (+ 1 (use-bonus-click-draws! state))))}
                {:label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
                 :req (req (and (not-empty (:hand runner))

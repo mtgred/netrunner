@@ -22,9 +22,10 @@
                                archives-runnable tagged this-card-run this-server
                                corp-currently-drawing runner-currently-drawing])
              (game.macros/wait-for [async-result])
-             (game.macros-test/do-game [state get-corp get-runner get-run refresh hand-size
-                                        prompt-map prompt-button prompt-type prompt-buttons
-                                        prompt-titles prompt-fmt])
+             (game.test-framework/do-game [state get-corp get-runner get-run refresh
+                                           hand-size prompt-map prompt-button
+                                           prompt-type prompt-buttons prompt-titles
+                                           prompt-fmt])
              (game.core/req [state side eid card targets target context
                              runner corp run run-server run-ices run-position
                              current-ice corp-reg corp-reg-last runner-reg
@@ -104,14 +105,15 @@
      create-index {:arities {3 {:args [:any :any :any]}
                              4 {:args [:any :any :any :any]}}}}}}
   }
- :lint-as {game.macros-test/before-each clojure.core/let
+ :lint-as {game.test-framework/before-each clojure.core/let
            reagent.core/with-let clojure.core/let
            game.macros/when-let* clojure.core/let
            game.core/req game.macros/req
            game.core/effect game.macros/effect
            game.core/msg game.macros/msg
            game.core/wait-for game.macros/wait-for
-           game.macros-test/deftest-pending clojure.test/deftest
+           game.test-framework/deftest-pending clojure.test/deftest
+           game.test-framework/dont-use-me clj-kondo.lint-as/def-catch-all
            game.core/expose-vars potemkin/import-vars
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->

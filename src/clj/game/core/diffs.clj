@@ -199,6 +199,10 @@
     (not-empty (select-non-nil-keys prompt prompt-keys))
     nil))
 
+(defn toast-summary
+  [toast same-side?]
+  (if same-side? toast nil))
+
 (def player-keys
   [:aid
    :user
@@ -234,6 +238,7 @@
       (update :scored cards-summary state side)
       (update :set-aside cards-summary state side)
       (update :prompt-state prompt-summary same-side?)
+      (update :toast toast-summary same-side?)
       (select-non-nil-keys (into player-keys additional-keys))))
 
 (def corp-keys

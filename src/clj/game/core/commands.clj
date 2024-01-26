@@ -34,8 +34,8 @@
    [game.core.update :refer [update!]]
    [game.core.winning :refer [clear-win]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
-   [game.utils :refer [dissoc-in quantify safe-split same-card? same-side?
-                       server-card string->num]]
+   [game.utils :refer [dissoc-in enumerate-str quantify safe-split
+                       same-card? same-side? server-card string->num]]
    [jinteki.utils :refer [str->int]]))
 
 (defn- constrain-value
@@ -179,6 +179,8 @@
   (when-let [click-state (:click-state @state)]
     (when (= (:active-player @state) side)
       (reset! state (assoc click-state :log (:log @state) :click-state click-state :run nil :history (:history @state)))
+      (doseq [c (filter #(not (has-subtype? % "Lockdown")) (:play-area (side @state)))]
+        (move state side c (:previous-zone c) {:suppress-event true}))
       (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
@@ -248,14 +250,13 @@
     state side
     nil
     (str "The top " (quantify n "card")
-         " of your deck " (if (< 1 n) "are" "is") " (top first): "
+         " of your deck " (if (< 1 n) "are" "is") " (top->bottom): "
          (->> (get-in @state [side :deck])
               (take n)
               (map :title)
-              (string/join ", ")))
+              (enumerate-str)))
     ["Done"]
-    identity
-    {:priority 10}))
+    identity))
 
 (defn command-summon
   [state side args]
@@ -465,8 +466,8 @@
                                          {:effect (effect (system-msg (str
                                                                        (if (= :corp %2)
                                                                          "shows cards from HQ: "
-                                                                         "shows cards from the Grip: ")
-                                                                       (string/join ", " (sort (map :title (:hand (if (= side :corp) corp runner))))))))}
+                                                                         "shows cards from the grip: ")
+                                                                       (enumerate-str (sort (map :title (:hand (if (= side :corp) corp runner))))))))}
                                          nil nil)
         "/summon"     #(command-summon %1 %2 args)
         "/swap-ice"   #(when (= %2 :corp)

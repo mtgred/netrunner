@@ -1,11 +1,10 @@
 (ns game.core.subtypes-test
-  (:require [game.core :as core]
-            [game.macros :refer [req]]
-            [game.core.subtypes :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.subtypes :refer :all]
+   [game.macros :refer [req]]
+   [game.test-framework :refer :all]))
 
 (deftest subtypes-for-card-test
   (before-each [state (new-game {:runner {:hand ["Stimhack"]}})

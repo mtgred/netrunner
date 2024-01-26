@@ -2,7 +2,7 @@
   (:require
     [game.core.card :refer [active?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-constant-effects unregister-constant-effects]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [register-default-events resolve-ability unregister-events]]
     [game.core.initializing :refer [card-init deactivate]]
@@ -13,7 +13,7 @@
   [state side]
   (let [id (update! state side (assoc (get-in @state [side :identity]) :disabled true))]
     (unregister-events state side id)
-    (unregister-constant-effects state side id)
+    (unregister-static-abilities state side id)
     (when-let [leave-play (:leave-play (card-def id))]
       (leave-play state side (make-eid state) id nil))))
 
@@ -43,7 +43,7 @@
     (when effect
       (effect state side (make-eid state) id nil))
     (register-default-events state side id)
-    (register-constant-effects state side id)))
+    (register-static-abilities state side id)))
 
 (defn enable-identity
   "Enables the side's identity"

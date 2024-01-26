@@ -1,9 +1,8 @@
 (ns game.core.costs-test
-  (:require [game.core :as core]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.test-framework :refer :all]))
 
 (deftest merge-costs
   (testing "Non-damage costs"
@@ -98,7 +97,7 @@
             clo (get-program state 1)
             nm (get-resource state 0)]
         (is (= 2 (get-strength (refresh cor))) "Corroder starts at 2 strength")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (auto-pump state (refresh cor))
         (click-card state :runner clo)
         (click-prompt state :runner "Place 1 [Credits] on Net Mercur")
         (is (= 5 (get-strength (refresh cor))) "Corroder is at 5 strength")
@@ -119,7 +118,7 @@
         (rez state :corp hive)
         (run-continue state)
         (is (= 2 (get-strength (refresh cor))) "Corroder starts at 2 strength")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state (refresh cor))
         (is (= 3 (get-strength (refresh cor))) "Corroder now at 3 strength")
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
         (is (second-last-log-contains? state "Runner pays 6 \\[Credits\\] to increase the strength of Corroder to 3 and break all 5 subroutines on Hive.") "Should write correct pump & break price to log"))))
@@ -136,10 +135,10 @@
             hive (get-ice state :hq 0)]
         (rez state :corp hive)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (auto-pump state (refresh cor))
         (is (= 3 (get-strength (refresh cor))) "Corroder now at 3 strength")
         (is (last-log-contains? state "Runner pays 1 \\[Credits\\] to increase the strength of Corroder to 3.") "Should write correct pump price to log")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state (refresh cor))
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
         (is (second-last-log-contains? state "Runner pays 5 \\[Credits\\] to use Corroder to break all 5 subroutines on Hive.") "Should write correct break price to log"))))
   (testing "Inability to pay for auto-pump"
@@ -155,7 +154,7 @@
             hive (get-ice state :hq 0)]
         (rez state :corp hive)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (auto-pump state (refresh cor))
         (is (= 2 (get-strength (refresh cor))) "Corroder still at 2 strength"))))
   (testing "Auto-pump with stealth"
     (do-game
@@ -174,12 +173,12 @@
             mantle2 (get-program state 2)]
         (rez state :corp engine)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh hou)})
+        (auto-pump state (refresh hou))
         (is (clojure.string/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
         (click-card state :runner mantle1)
         (click-card state :runner mantle2)
         (is (= 10 (get-strength (refresh hou))) "Houdini is at 10 strength")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh hou)})
+        (auto-pump-and-break state (refresh hou))
         (is (empty? (remove :broken (:subroutines (refresh engine)))) "Engine is now fully broken"))))
   (testing "Auto-pump and break some subs manually first"
     (do-game
@@ -194,13 +193,13 @@
             hive (get-ice state :hq 0)]
         (rez state :corp hive)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (auto-pump state (refresh cor))
         (is (= 3 (get-strength (refresh cor))) "Corroder is now at 3 strength")
         (card-ability state :runner (refresh cor) 0)
         (click-prompt state :runner "End the run")
         (click-prompt state :runner "Done")
         (is (= 4 (count (remove :broken (:subroutines (refresh hive))))) "Only broken 1 sub")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state (refresh cor))
         (is (empty? (remove :broken (:subroutines (refresh hive)))) "Hive is now fully broken")
         (is (second-last-log-contains? state "Runner pays 4 \\[Credits\\] to use Corroder to break the remaining 4 subroutines on Hive.") "Should write correct price to log")))))
 
@@ -219,3 +218,15 @@
        (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner should only get choice of Archives or R&D")
        (is (not (some #{"HQ"} (-> (get-runner) :prompt first :choices)))
            "Runner should only get choice of Archives or R&D")))))
+
+(deftest expend-costs-reveal-the-discarded-card
+  (testing "Expend abilities reveal the discarded card"
+    (do-game
+      (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                        :hand ["Slash and Burn Agriculture" "Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (let [iw (get-ice state :hq 0)
+            agri (first (:hand (get-corp)))]
+        (expend state :corp agri)
+        (click-card state :corp iw)
+        (is (= 5 (:credit (get-corp))) "Expend triggered Hyoubu")))))

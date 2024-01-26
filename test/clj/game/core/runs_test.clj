@@ -1,11 +1,10 @@
 (ns game.core.runs-test
-  (:require [game.core :as core]
-            [game.utils :as utils]
-            [game.core-test :refer :all]
-            [game.core.card :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.test-framework :refer :all]
+   [game.utils :as utils]))
 
 (deftest run-timing-with-no-ice
     ;; with no ice
@@ -250,14 +249,13 @@
       (take-credits state :corp)
       (run-empty-server state :remote3)
       (click-prompt state :runner "Steal")
-      (changes-val-macro
-        -1 (get-counters (get-content state :remote1 0) :power)
-        "Embolus loses a power counter even tho GMF is resolved first and ends the run"
-        (run-empty-server state :remote2)
-        (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
-        (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
-        (click-prompt state :corp "Giordano Memorial Field")
-        (click-prompt state :runner "End the run"))))
+      (is (changed? [(get-counters (get-content state :remote1 0) :power) -1]
+            (run-empty-server state :remote2)
+            (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
+            (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
+            (click-prompt state :corp "Giordano Memorial Field")
+            (click-prompt state :runner "End the run"))
+          "Embolus loses a power counter even tho GMF is resolved first and ends the run")))
 
 (deftest replace-access-you-may-only
     ;; 'You may' only
@@ -393,7 +391,7 @@
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state (refresh cor))
         (is (= :movement (:phase (:run @state))) "Movement before approaching server")
         (core/continue state :runner nil)
         (is (= :movement (:phase (:run @state))) "Still before approaching server, waiting on Corp")
@@ -422,14 +420,15 @@
         (is (= (refresh v1) (core/get-current-ice state)) "Approaching v1")
         (core/continue state :runner nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice")
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
+        (auto-pump-and-break state (refresh cor))
         (is (= :movement (:phase (:run @state))) "Movement phase")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Approaching ice")
         (is (= (refresh v0) (core/get-current-ice state)) "Approaching v0")
         (core/continue state :runner nil)
         (is (= :approach-ice (:phase (:run @state))) "Still approaching ice, waiting on Corp")
-        (rez state :corp v0 {:press-continue true})
+        (rez state :corp v0)
+        (core/continue state :corp nil)
         (is (= :encounter-ice (:phase (:run @state))) "Encountering ice"))))
 
 (deftest auto-no-action-auto-no-action-on-toggling-setting
@@ -533,7 +532,8 @@
     (play-from-hand state :runner "Devil Charm")
     (run-on state :rd)
     (core/continue state :runner nil)
-    (rez state :corp (get-ice state :rd 0) {:press-continue true})
+    (rez state :corp (get-ice state :rd 0))
+    (core/continue state :corp nil)
     (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
 
 (deftest multi-access-correct-handling-of-multi-accesses-with-draws-in-between-accesses

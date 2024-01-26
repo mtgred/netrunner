@@ -17,7 +17,7 @@
 (defn- resolve-expose
   [state side eid target]
   (system-msg state side (str "exposes " (card-str state target {:visible true})))
-  (if-let [ability (:expose (card-def target))]
+  (if-let [ability (:on-expose (card-def target))]
     (wait-for (resolve-ability state side ability target nil)
               (trigger-event-sync state side (make-result eid target) :expose target))
     (trigger-event-sync state side (make-result eid target) :expose target)))
@@ -36,7 +36,7 @@
                   (if (and (not unpreventable)
                            (cards-can-prevent? state :corp prevent :expose))
                     (do (system-msg state :corp "has the option to prevent a card from being exposed")
-                        (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
+                        (show-wait-prompt state :runner "Corp to prevent the expose")
                         (show-prompt state :corp nil
                                      (str "Prevent " (:title target) " from being exposed?") ["Done"]
                                      (fn [_]
@@ -44,8 +44,7 @@
                                        (if (get-in @state [:expose :expose-prevent])
                                          (effect-completed state side (make-result eid false))
                                          (do (system-msg state :corp "will not prevent a card from being exposed")
-                                             (resolve-expose state side eid target))))
-                                     {:priority 10}))
+                                             (resolve-expose state side eid target))))))
                     (if-not (get-in @state [:expose :expose-prevent])
                       (resolve-expose state side eid target)
                       (effect-completed state side (make-result eid false)))))))))

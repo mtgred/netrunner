@@ -1,13 +1,10 @@
 (ns game.core.rezzing-test
-  (:require [game.core :as core]
-            [game.core.rezzing :as rezzing]
-            [game.core.card-defs :refer [card-def]]
-            [game.core.card :refer :all]
-            [game.core.cost-fns :refer [rez-additional-cost-bonus]]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.rezzing :as rezzing]
+   [game.test-framework :refer :all]))
 
 (deftest get-rez-cost-test
   (before-each [state (new-game)
@@ -38,17 +35,15 @@
     (play-from-hand state :corp "Advanced Assembly Lines" "Server 1")
     (play-from-hand state :corp "NGO Front" "New remote")
     (rez state :corp (get-content state :remote1 0))
-    (changes-val-macro
-      -1 (:credit (get-corp))
-      "Corp pays 1 credit to rez AAL"
-      (rez state :corp (get-content state :remote1 1)))
+    (is (changed? [(:credit (get-corp)) -1]
+          (rez state :corp (get-content state :remote1 1)))
+        "Corp pays 1 credit to rez AAL")
     (is (= :waiting (prompt-type :runner)))
     (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
     (is (= ["Advanced Assembly Lines" "Surat City Grid"] (sort (prompt-titles :corp))))
-    (changes-val-macro
-      3 (:credit (get-corp))
-      "Corp gains 3 from choosing AAL first"
-      (click-prompt state :corp "Advanced Assembly Lines"))
+    (is (changed? [(:credit (get-corp)) 3]
+          (click-prompt state :corp "Advanced Assembly Lines"))
+        "Corp gains 3 from choosing AAL first")
     (click-prompt state :corp "Yes")
     (click-card state :corp "NGO Front")
     (is (rezzed? (get-content state :remote1 0)))

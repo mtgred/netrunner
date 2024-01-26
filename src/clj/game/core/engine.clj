@@ -7,7 +7,7 @@
     [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [get-effect-maps unregister-floating-effects]]
+    [game.core.effects :refer [get-effect-maps unregister-lingering-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? handler merge-costs]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
@@ -212,7 +212,7 @@
 
 (declare do-ability resolve-ability-eid check-ability pay prompt! check-choices do-choices)
 
-(def ability-types (atom {}))
+(defonce ability-types (atom {}))
 
 (defn register-ability-type
   [kw ability-fn]
@@ -405,7 +405,7 @@
   (let [s (or player side)
         ab (dissoc ability :choices :waiting-prompt)
         args (-> ability
-                 (select-keys [:priority :cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
@@ -638,8 +638,7 @@
   "Prepare the list of the given player's handlers for this event.
   Gather all registered handlers from the state, then append the card-abilities if appropriate,
   then filter to remove suppressed handlers and those whose req is false.
-  This is essentially Phase 9.3 and 9.6.7a of CR 1.1:
-  http://nisei.net/files/Comprehensive_Rules_1.1.pdf"
+  This is essentially 9.6.2, 9.6.5, and 9.6.15 of CR 1.8."
   ([state side event targets] (gather-events state side event targets nil))
   ([state side event targets card-abilities] (gather-events state side (make-eid state) event targets card-abilities))
   ([state side eid event targets card-abilities]
@@ -811,8 +810,7 @@
         (let [active-player (:active-player @state)
               opponent (other-side active-player)
               is-player (fn [player ability]
-                          (or (= player (get-side ability))
-                              (= player (get-ability-side ability))))
+                          (#{(get-side ability) (get-ability-side ability)} player))
               card-abilities (if (and (some? card-abilities)
                                       (not (sequential? card-abilities)))
                                [card-abilities]
@@ -824,16 +822,14 @@
               opponent-events (get-handlers opponent)]
           (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
                     (show-wait-prompt state opponent
-                                      (str (side-str active-player) " to resolve " (event-title event) " triggers")
-                                      {:priority -1})
+                                      (str (side-str active-player) " to resolve " (event-title event) " triggers"))
                     ; let active player activate their events first
                     (wait-for (trigger-event-simult-player state side (make-eid state eid) active-player-events cancel-fn targets)
                               (when after-active-player
                                 (resolve-ability state side eid after-active-player nil nil))
                               (clear-wait-prompt state opponent)
                               (show-wait-prompt state active-player
-                                                (str (side-str opponent) " to resolve " (event-title event) " triggers")
-                                                {:priority -1})
+                                                (str (side-str opponent) " to resolve " (event-title event) " triggers"))
                               (wait-for (trigger-event-simult-player state opponent (make-eid state eid) opponent-events cancel-fn targets)
                                         (clear-wait-prompt state active-player)
                                         (effect-completed state side eid))))))))
@@ -956,8 +952,7 @@
 
 (defn- is-player
   [player {:keys [handler]}]
-  (or (= player (get-side handler))
-      (= player (get-ability-side handler))))
+  (#{(get-side handler) (get-ability-side handler)} player))
 
 (defn- filter-handlers
   [handlers player-side]
@@ -1024,7 +1019,7 @@
             (unregister-floating-events state nil :pending)
             (doseq [duration durations
                     :when duration]
-              (unregister-floating-effects state nil duration)
+              (unregister-lingering-effects state nil duration)
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
 
@@ -1066,8 +1061,8 @@
                         :unpreventable true})
                 (doseq [card cards-to-trash]
                   (system-say state (to-keyword (:side card))
-                              (str (card-str state card) " is trashed."))
-                  (effect-completed state nil eid)))
+                              (str (card-str state card) " is trashed.")))
+                (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
 (defn check-restrictions
@@ -1108,7 +1103,7 @@
        (check-win-by-agenda state)
        ;; d: uniqueness/console check
        (wait-for
-         (check-unique-and-consoles state nil)
+         (check-unique-and-consoles state nil (make-eid state eid))
          ;; e: restrictions on card abilities or game rules, MU
          (wait-for
            (check-restrictions state nil (make-eid state eid))

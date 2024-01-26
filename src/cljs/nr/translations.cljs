@@ -36,6 +36,8 @@
      :snapshot "Snapshot"
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
+     :sunset "Sunset"
+     :neo "Neo"
      :classic "Classic"
      :casual "Casual"
      :system-gateway "System Gateway"
@@ -70,7 +72,7 @@
      :zezir "Ze/zir"
      :xe "Xe/xem"}
     :chat
-    {:title "Play Android: Netrunner in your browser"
+    {:title "Play Netrunner in your browser"
      :channels "Channels"
      :send "Send"
      :placeholder "Say something..."
@@ -273,6 +275,7 @@
     :block "Block user"
     :update-profile "Update Profile"
     :nisei "NISEI"
+    :nsg "NSG"
     :ffg "FFG"
     :api-keys "API Keys"
     :delete-api-key "Delete"
@@ -434,9 +437,442 @@
    :win-flatlined (fn [[turn]] (str "wins by flatline on turn " turn))
    :win-conceded (fn [[turn]] (str "wins by concession on turn " turn))
    :win-claimed (fn [[turn]] (str "wins by claim on turn " turn))
-   :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))}
+   :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))
+   :win-other (fn [[turn reason]] (str "wins by " reason " on turn " turn))}
    }
 
+   :pt
+   {:missing ":pt missing text"
+    :side
+    {:corp "Corp"
+     :runner "Runner"
+     :any-side "Qualquer lado"
+     :all "Todos"}
+    :faction
+    {:all "Todos"
+     :any-faction "Qualquer facção"
+     :anarch "Anarquista"
+     :criminal "Criminosos"
+     :shaper "Modeladores"
+     :adam "Adam"
+     :apex "Apex"
+     :sunny-lebeau "Sunny Lebeau"
+     :jinteki "Jinteki"
+     :haas-bioroid "Haas-Bioroid"
+     :nbn "NBN"
+     :weyland-consortium "Consórcio Weyland"
+     :neutral "Neutro"}
+    :format
+    {:all "All"
+     :any-format "Qualquer Formato"
+     :standard "Standard"
+     :eternal "Eternal"
+     :core-experience "Core Experience"
+     :snapshot "Snapshot"
+     :snapshot-plus "Snapshot Plus"
+     :socr "SOCR"
+     :classic "Classico"
+     :casual "Casual"
+     :system-gateway "System Gateway"
+     :startup "Startup"}
+    :card-type
+    {:all "Todos"
+     :identity "Identidade"
+     :agenda "Agenda"
+     :asset "Ativo"
+     :upgrade "Upgrade"
+     :operation "Operação"
+     :ice "GELO"
+     :event "Evento"
+     :hardware "Hardware"
+     :resource "Recurso"
+     :program "Programa"}
+    :pronouns
+    {:none "Não especificado"
+     :any "Qualquer"
+     :myodb "Prefiro não especificar"
+     :blank "[blank]"
+     :they "Elu/Delu"
+     :she "Ela/Dela"
+     :shethey "Ela/Delu"
+     :he "Ele/Dele"
+     :hethey "Ele/Delu"
+     :it "Elx"
+     :ne "Ne/nem"
+     :ve "Ve/ver"
+     :ey "Ey/em"
+     :zehir "Ze/hir"
+     :zezir "Ze/zir"
+     :xe "Xe/xem"}
+    :chat
+    {:title "Jogue Android: Netrunner no seu browser"
+     :channels "Canais"
+     :send "Enviar"
+     :placeholder "Diga alguma coisa..."
+     :delete "Deletar Mensagem"
+     :delete-all "Deletar todas as mensagens do usuário"
+     :block "Bloquear Usuário"
+     :cancel "Cancelar"}
+    :nav
+    {:chat "Chat"
+     :cards "Cartas"
+     :deck-builder "Construtor de Baralhos"
+     :play "Jogar"
+     :help "Ajuda"
+     :settings "Configurações"
+     :stats "Estatisticas"
+     :about "Sobre"
+     :tournaments "Torneios"
+     :admin "Admin"
+     :users "Usuários"
+     :features "Features"
+     :game-count (fn [[cnt]] (str cnt " Jogo" (when (not= cnt 1) "s")))}
+    :menu
+    {:settings :pt.nav/settings
+     :logout "Ejetar"
+     :admin :pt.nav/admin
+     :moderator "Moderadores"
+     :donor "Doadores"}
+    :card-browser
+    {:search-hint "Procure cartas"
+     :sort "Ordenar por"
+     :format "Formato"
+     :set "Set"
+     :side "Lado"
+     :faction "Facção"
+     :type "Tipo"
+     :clear "Limapr"
+     :select-art "Selecionar Arte"
+     :selected-art "Arte Alternativa Selecionada"
+     :update-success "Atualizar Arte"
+     :update-failure "Falha ao atualizar Arte"
+     :memory "Memória"
+     :cost "Custo"
+     :trash-cost "Custo de exclusão"
+     :strength "Força"
+     :advancement "Avanços necessarios"
+     :agenda-points "Pontos de Agenda"
+     :min-deck "Tamanho minimo de baralho"
+     :inf-limit "Limite de Influencia"
+     :influence "Influencia"
+     :sort-by {:faction "Facção"
+              :name "Nome"
+              :type "Tipo"
+              :influence "Influencia"
+              :cost "Custo"
+              :set-number "Numero do set"}
+     }
+    :deck-builder
+    {:loading-msg "Carregando coleção de baralhos..."
+     :new-corp "Novo baralho de Corp"
+     :new-runner "Novo baralho de Runner"
+     :import-button "Importar baralho"
+     :reset "Resetar"
+     :import-title "Insira um ID de baralho público do NRDB ou URL"
+     :import "Importar"
+     :cancel "Cancelar"
+     :import-placeholder "NRDB ID"
+     :deck-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Baralho" " Baralhos")))
+     :filtered "(filtered)"
+     :save "Salvar"
+     :confirm-delete "Confirmar exclusão"
+     :edit "Editar"
+     :delete "Deletar"
+     :copy "Copiar"
+     :deck-copy-suffix "cópia"
+     :clear-stats "Limpar estatísticas"
+     :create-game "Criar Partida"
+     :deck-name "Nome do Baralho"
+     :format "Formato"
+     :identity "Identitidade"
+     :deck-notes "Notas do baralho"
+     :decklist "Lista"
+     :decklist-inst "(Digite ou cole a lista do baralho, ela sera filtrada)"
+     :notes "Notas"
+     :add-to-deck "Adicionar ao baralho"
+     :add-cards "Adicionar cartas"
+     :card-name "Nome da carta"
+     :no-decks "Não há baralhos"
+     :cards "cards"
+     :min "minimo"
+     :max "maximo"
+     :influence "Influencia"
+     :agenda-points "Pontos de Agenda"
+     :deck-points "Pontos do Baralho"
+     :hash "Hash do torneio"
+     :why "Por que?"
+     :legal "legal"
+     :illegal "ilegal"
+     :games "Partidas"
+     :completed "Completas"
+     :won "Vitórias"
+     :lost "Derrotas"}
+   :lobby
+    {:no-games "Não há jogos"
+     :tournament "Torneio"
+     :competitive "Competitivo"
+     :casual "Casual"
+     :new-game "Novo jogo"
+     :reload "Recarregar lista"
+     :load-replay "Carregar replay"
+     :start-replay "Começar replay"
+     :save-replay "Salvar replay"
+     :replay-link-error "Link do replay inválido."
+     :replay-invalid-file "Selecione um arquivo de replay válido."
+     :create "Criar"
+     :cancel "Cancelar"
+     :title "Titulo"
+     :side "Lado"
+     :format "Formato"
+     :options "Opções"
+     :spectators "Permitir espectadore"
+     :hidden "Tornar infomrações escondidas dos jogadores visivel para os espectadores"
+     :password-protected "Protegido por senha"
+     :password "Senha"
+     :start "Começar"
+     :leave "Sair"
+     :swap "Trocar lados"
+     :waiting "Eseprando jogador selecionar baralho"
+     :players "Jogadores"
+     :deck-selected "Baralho selecionado"
+     :select-deck "Selecionar baralho"
+     :chat "Chat"
+     :select-title "Selecione seu baralho"
+     :spectator-count (fn [[cnt]] (str cnt " Espectador" (when (not= cnt 1) "es")))
+     :closed-msg "Lobby fechado por inatividade"
+     :title-error "Por favor insira o titulo do jogo."
+     :password-error "Por favor insira a senha do jogo."
+     :too-little-data "Falta de dados"
+     :completion-rate "Taxa de finalização de jogos"
+     :watch "Assistir"
+     :join "Entrar"
+     :rejoin "Re-Entrar"
+     :as-corp "Como Corp"
+     :as-runner "Como Runner"
+     :private "PRIVADO"
+     :reset "Resetar Nome do Jogo"
+     :delete "Deletar Jogo"
+     :password-for "Senha para"
+     :invalid-password "Senha invalida"
+     :not-allowed "Não autorizado"
+     :aborted "Conecção abortada"
+     :lobby.api-access "Permitir acesso API para informações do jogo"
+     :lobby.api-requires-key "(Requer uma Chave de API nas Configurações)"
+     :game-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Jogo" " Jogos")))
+     :filtered "(filtrado)"}
+   :settings
+   {:invalid-password "Usuário ou senha inválidos"
+    :invalid-email "Nenhuma conta com esse email existe"
+    :updated "Perfil atualizar - Favor atualizar a página"
+    :updating "Atualizando perfil..."
+    :get-log-width "Puxando largura atual do log"
+    :get-log-top "Puxando topo do log atual"
+    :email-title "Alterar titulo do email"
+    :current-email "Email atual"
+    :desired-email "Email desejado"
+    :email-placeholder "Endereço de Email"
+    :enter-valid "Por favor, insira um endereço de email válido"
+    :update "Atualizar"
+    :cancel "Cancelar"
+    :email "Email"
+    :change-email "Trocar email"
+    :avatar "Avatar"
+    :change-avatar "Trocar avatar no gravatar.com"
+    :pronouns "Pronomes"
+    :language "Idioma"
+    :sounds "Soms"
+    :enable-lobby-sounds "Permitir sons do lobby"
+    :enable-game-sounds "Permitir sons do jogo"
+    :volume "Volume"
+    :layout-options "Opções de layout"
+    :stacked-cards "Empilhar cartas (ativo automaticamente)"
+    :runner-layout "Layout de Runner na perspectiva da Corp"
+    :runner-classic "Layout do rig do Runner é o clássico da JNet (De cima para baixo: Programas, Hardware, Recursos)"
+    :runner-reverse "Layout do rig do Runner invertido (De cima para baixo: Recursos, Hardware, Programas)"
+    :background "Background da partida"
+    :card-backs "Verso das cartas"
+    :game-stats "Estatísticas de Vitória/Derrota em Jogo"
+    :deck-stats "Estatísticas dos Decks"
+    :always "Sempre"
+    :comp-only "Apenas Lobby Competitivo"
+    :none "Nenhum"
+    :alt-art "Artes Alternativas"
+    :show-alt "Mostrar artes alternativas das cartas"
+    :high-res "Habilitar imagem das cartas em alta resolução"
+    :card-images "Imagens das Cartas"
+    :set-all "Set all cards to"
+    :set "Set"
+    :reset "Reset All to Official Art"
+    :blocked "Usuários bloqueados"
+    :user-name "Nome de usuário"
+    :block "Bloquear usuário"
+    :update-profile "Atualizar Perfil"
+    :nisei "NISEI"
+    :ffg "FFG"
+    :api-keys "API Keys"
+    :delete-api-key "Deletar"
+    :create-api-key "Criar API Key"}
+  :stats
+  {:game-stats "Estatísticas de Jogo"
+   :corp-stats "Estatísticas de Corp"
+   :runner-stats "Estatísticas de Runner"
+   :clear-stats "Limpar Estatísticas"
+   :no-log "Nenhum log disponível"
+   :view-log "Visualizar log"
+   :winner "Vencedor"
+   :no-games "Sem partidass"
+   :all-games "Mostrar todas partidas"
+   :shared-games "Mostrar apenas compartilhadas"
+   :started "Iniciadas"
+   :ended "Terminadas"
+   :completed "Completadas"
+   :not-completed "Não Completadas"
+   :won "Vitórias"
+   :lost "Derrotas"
+   :turn-count (fn [[cnt]] (str cnt " turno" (when (not= cnt 1) "s")))
+   :lobby "Lobby"
+   :format "Formato"
+   :win-method "Método de vitórias"
+   :view-games "Retornar para Estatísticas"
+   :share "Compartilhar replay"
+   :launch "Carregar Replay"
+   :download "Baixar replay"
+   :unavailable "Replay indisponível"
+   :filtered "(filtrado)"
+   :log-count (fn [[cnt]] (str cnt " Log" (when (not= cnt 1) "s")))
+   :clicks-gained "Clicks ganhos"
+   :credits-gained "Créditos ganos"
+   :credits-spent "Créditos gastos"
+   :credits-click "Créditos por Click"
+   :cards-drawn "Cards Compradas"
+   :cards-click "Cards Compradas por Click"
+   :damage-done "Dano Causado"
+   :cards-rezzed "Cartas Ativadas"
+   :tags-gained "Marcas Recebidas"
+   :runs-made "Corres Feitos"
+   :cards-accessed "Cartas Acessadas"}
+  :log
+  {:game-log "Game Log"
+   :annotating "Anotações"
+   :shared "Anotações compartilhadas"}
+  :annotations
+  {:remote-annotations-fail "Não foi possível pegar anotações remotas."
+   :turn-placeholder "Notas para este turno"
+   :click-placeholder "Notas para este Click"
+   :available-annotations "Anotações disponíeis"
+   :annotations-no-published-annotations "Sem anotações publicadas."
+   :annotations.available-annotations "Anotações disponíveis"
+   :notes.publish "Publicar"
+   :notes.clear-annotations "Limpar anotações locais"
+   :import-local "Importar arquivo de anotações local"
+   :load-local "Carregar"
+   :save-local "Salvar"
+   :clear "Limpar"}
+  :game
+  {:keep "Manter"
+   :mulligan "Mulligan"
+   :close "Fechar"
+   :start "Começar Partida"
+   :remove-tag "Remover Marca"
+   :run "Corre"
+   :purge "Expurgar"
+   :trash-resource "Excluir Recurso"
+   :draw "Comprar"
+   :gain-credit "Ganhar Crédito"
+   :game-start "Começar partida"
+   :start-turn "Iniciar Turno"
+   :end-turn "Fim do Turno"
+   :mandatory-draw "Compra obrigatória"
+   :take-clicks "Receber Clicks"
+   :hq "QG"
+   :grip "Mão"
+   :rfg "Removido do jogo"
+   :play-area "Área de Jogo"
+   :current "Current"
+   :scored-area "Área de Pontuação"
+   :archives "Arquivos"
+   :max-hand "Tamanho de mão máximo"
+   :brain-damage "Dano Letal"
+   :tag-count (fn [[base additional total]]
+                (str base (when (pos? additional) (str " + " additional)) " Marca" (if (not= total 1) "s" "")))
+   :agenda-count (fn [[agenda-point]] (str agenda-point " Pontos de Agenda" (when (not= agenda-point 1) "s")))
+   :link-strength "Força de Link"
+   :credit-count (fn [[credit run-credit]] (str credit " Crédito" (if (not= credit 1) "s" "")
+                                                (when (pos? run-credit)
+                                                  (str " (" run-credit " para corre)"))))
+   :click-count (fn [[click]] (str click " Click" (if (not= click 1) "s" "")))
+   :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Publicidade Negativa"))
+   :mu-count (fn [[unused available]] (str unused " of " available " MU unused"))
+   :special-mu-count (fn [[unused available mu-type]] (str unused " de " available " " mu-type " MU não utilizada"))
+   :indicate-action "Indicar ação"
+   :spec-count (fn [[c]] (str c " Espectador" (when (> c 1) "es")))
+   :spec-view "Visão de Espectador"
+   :runner-view "Visão de Runner"
+   :corp-view "Visão de Corp"
+   :leave-replay "Sair do Replay"
+   :leave "Sair da Partida"
+   :rig-irl "Rig layout: IRL"
+   :rig-jnet "Rig layout: jnet"
+   :unstack-cards "Desempilhar cartas"
+   :stack-cards "Empilhar Cartas"
+   :unmute "Desmutar espectadores"
+   :mute "Mutar espectadores"
+   :concede "Conceder"
+   :inactivity "Partida fechada por inatividade"
+   :server "Servidor"
+   :unimplemented "Não implementado"
+   :abilities "Habilidades"
+   :let-subs-fire "Executar sub-rotinas não quebradas"
+   :subs "Sub-rotinas"
+   :actions "Ações"
+   :fire-unbroken "Executar sub-rotinas"
+   :stack "Pilha"
+   :r&d "P&D"
+   :shuffle "Embaralhar"
+   :show "Mostrar"
+   :close-shuffle "Fechar & Embaralhar"
+   :heap "Heap"
+   :card-count (fn [[size]] (str size " carta" (when (not= 1 size) "s") "."))
+   :face-down-count (fn [[total face-up]] (str total " cartas, " (- total face-up) " virada para baixo."))
+   :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
+   :initiation "Iniciação"
+   :approach-ice "Aproximar do gelo"
+   :encounter-ice "Encontrar gelo"
+   :pass-ice "Passar do gelo"
+   :movement "Movivemento"
+   :approach-server "Aproximar do Servidor"
+   :corp-phase-43 "Corp fase 4.3"
+   :access-server "Accessar servidor"
+   :breach-server "Violar servidor"
+   :success "Successo"
+   :end-of-run "Terminar o corre"
+   :run-ends "Corre terminou"
+   :no-current-run "Sem corre no momento"
+   :current-phase "Current phase"
+   :unknown-phase "Unknown phase"
+   :rez "Ativar"
+   :action-access "Ação antes do acesso"
+   :no-further "Sem mais ações"
+   :continue "Continuar"
+   :continue-to "Continuar para"
+   :stop-auto-pass "Para de passar prioridade"
+   :auto-pass "Passar prioridade automaticamente"
+   :jack-out "Ejetar"
+   :undo-click "Desfazer Click"
+   :pass-continue "Passar o gelo e continuar"
+   :pass-jack "Passar o gelo e ejetar"
+   :trace "Rastrear"
+   :credits "creditos"
+   :card "Carta"
+   :time-taken (fn [[t]] (str "Tempo consumido: " t " minutos"))
+   :win-decked (fn [[turn]] (str "venceu pois a Corp zerou o deck no turno " turn))
+   :win-flatlined (fn [[turn]] (str "venceu por linha reta no turno " turn))
+   :win-conceded (fn [[turn]] (str "venceu por concessão no turno " turn))
+   :win-claimed (fn [[turn]] (str "venceu por objetivo no turno " turn))
+   :win-points (fn [[turn]] (str "venceu por pontos de agenda no turno " turn))
+   :win-other (fn [[turn reason]] (str "venceu por " reason " no turno " turn))}
+   }
+   
    :zh-simp
    {:missing ":zh-simp missing text"
     :side
@@ -467,6 +903,8 @@
      :snapshot "快照"
      :snapshot-plus "快照+"
      :socr "SOCR"
+     :sunset "Sunset"
+     :neo "Neo"
      :classic "经典"
      :casual "休闲"}
     :card-type
@@ -690,6 +1128,7 @@
     :block "屏蔽"
     :update-profile "保存设置"
     :nisei "NISEI"
+    :nsg "NSG"
     :ffg "FFG"}
   :stats
   {:game-stats "胜负统计"
@@ -825,7 +1264,8 @@
    :win-decked (fn [[turn]] (str "于第" turn "回合因公司无牌可抽获胜"))
    :win-flatlined (fn [[turn]] (str "于第" turn "回合通过杀死潜袭者获胜"))
    :win-conceded (fn [[turn]] (str "于第" turn "回合因对手投降而获胜"))
-   :win-points (fn [[turn]] (str "于第" turn "回合通过议案分数获胜"))}
+   :win-points (fn [[turn]] (str "于第" turn "回合通过议案分数获胜"))
+   :win-other (fn [[turn reason]] (str "wins by " reason " on turn " turn))}
    }
 
    :la-pig
@@ -858,6 +1298,8 @@
      :snapshot "Apshotsnay"
      :snapshot-plus "Apshotsnay Usplay"
      :socr "SOCRYAY"
+     :sunset "Sunset"
+     :neo "Neoyay"
      :classic "Assicclay"
      :casual "Asualcay"
      :system-gateway "Emsystay Atewaygay"
@@ -892,7 +1334,7 @@
      :zezir "Ezay/irzay"
      :xe "Exay/emxay"}
     :chat
-    {:title "Ayplay Android: Etrunnernay inyay ouryay owserbray"
+    {:title "Ayplay Etrunnernay inyay ouryay owserbray"
      :channels "Annelschay"
      :send "Endsay"
      :placeholder "Aysay omethingsay..."
@@ -1087,6 +1529,7 @@
     :update-profile "Updateyay Ofilepray"
     :nisei "ISEINAY"
     :ffg "FFGYAY"
+    :nsg "NSGYAY"
     :api-keys "APIYAY Eyskay"
     :delete-api-key "Eleteday"
     :create-api-key "Eatecray APIYAY Eykay"}
@@ -1230,7 +1673,8 @@
    :win-flatlined (fn [[turn]] (str "insway ybay atlineflay onyay urntay " turn))
    :win-conceded (fn [[turn]] (str "insway ybay oncessionay onyay urntay " turn))
    :win-claimed (fn [[turn]] (str "insway ybay laimcay onyay urntay " turn))
-   :win-points (fn [[turn]] (str "insway ybay oringcay agendayay ointspay onyay urntay " turn))}
+   :win-points (fn [[turn]] (str "insway ybay oringcay agendayay ointspay onyay urntay " turn))
+   :win-other (fn [[turn reason]] (str "insway ybay " reason " onyay urntay " turn))}
    }
 
   :fr
@@ -1263,6 +1707,8 @@
      :snapshot "Snapshot"
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
+     :sunset "Sunset"
+     :neo "Neo"
      :classic "Classic"
      :casual "Casual"
      :system-gateway "System Gateway"
@@ -1297,7 +1743,7 @@
      :zezir "Ze/zir"
      :xe "Xe/xem"}
     :chat
-    {:title "Joue à Android: Netrunner dans ton navigateur"
+    {:title "Joue à Netrunner dans ton navigateur"
      :channels "Canaux"
      :send "Envoyer"
      :placeholder "Dire quelque chose..."
@@ -1497,6 +1943,7 @@
     :block "Bloquer l'utilisateur"
     :update-profile "Mettre à jour le profil"
     :nisei "NISEI"
+    :nsg "NSG"
     :ffg "FFG"
     :api-keys "Clés API"
     :delete-api-key "Effacer"
@@ -1658,12 +2105,13 @@
    :win-flatlined (fn [[turn]] (str "gagne par mort clinique au tour " turn))
    :win-conceded (fn [[turn]] (str "gagne par concession au tour " turn))
    :win-claimed (fn [[turn]] (str "gagne par réclamation au tour " turn))
-   :win-points (fn [[turn]] (str "gagne aux points de projet au tour " turn))}
+   :win-points (fn [[turn]] (str "gagne aux points de projet au tour " turn))
+   :win-other (fn [[turn reason]] (str "gagne par " reason " au tour " turn))}
    }
 
 
   :ko
-  {:missing ":kr 텍스트를 찾을 수 없음"
+  {:missing ":ko 텍스트를 찾을 수 없음"
    :side
    {:corp "기업"
     :runner "러너"
@@ -1692,6 +2140,8 @@
     :snapshot "스냅샷"
     :snapshot-plus "스냅샷 플러스"
     :socr "SOCR"
+    :sunset "Sunset"
+    :neo "Neo"
     :classic "클래식"
     :casual "캐주얼"}
    :card-type
@@ -1917,6 +2367,7 @@
    :block "사용자 차단"
    :update-profile "프로필 갱신"
    :nisei "NISEI"
+   :nsg "NSG"
    :ffg "FFG"}
   :stats
   {:game-stats "게임 기록"
@@ -2092,6 +2543,8 @@
      :snapshot "Snapshot"
      :snapshot-plus "Snapshot Plus"
      :socr "SOCR"
+     :sunset "Sunset"
+     :neo "Neo"
      :classic "Classic"
      :casual "Niekompetytywny"
      :system-gateway "Wejście do Systemu"
@@ -2326,6 +2779,7 @@
     :block "Zablokuj użytkownika"
     :update-profile "Aktualizuj profil"
     :nisei "NISEI"
+    :nsg "NSG"
     :ffg "FFG"
     :api-keys "Klucze API"
     :delete-api-key "Usuń"
@@ -2487,8 +2941,444 @@
    :win-flatlined (fn [[turn]] (str "wygrywa przez wypłaszczenie w " turn " turze."))
    :win-conceded (fn [[turn]] (str "wygrywa przez poddanie się przeciwnika w " turn " turze."))
    :win-claimed (fn [[turn]] (str "wygrywa przez zgłoszenie wygranej w " turn " turze."))
-   :win-points (fn [[turn]] (str "wygrywa przez zdobycie punktów zwycięstwa w " turn " turze."))}
+   :win-points (fn [[turn]] (str "wygrywa przez zdobycie punktów zwycięstwa w " turn " turze."))
+   :win-other (fn [[turn reason]] (str "wygrywa przez " reason " w " turn " turze."))}
    } 
+
+   :ja
+   {:missing ":ja missing text"
+    :side
+    {:corp "コーポ"
+     :runner "ランナー"
+     :any-side "Any Side"
+     :all "全部"}
+    :faction
+    {:all "全部"
+     :any-faction "Any Faction"
+     :anarch "アナーク"
+     :criminal "クリミナル"
+     :shaper "シェイパー"
+     :adam "アダム"
+     :apex "エイペックス"
+     :sunny-lebeau "サニー・ルボー"
+     :jinteki "ジンテキ"
+     :haas-bioroid "ハース＝バイオロイド"
+     :nbn "NBN"
+     :weyland-consortium "ウェイランド・コンソーシアム"
+     :neutral "中立"}
+    :format
+    {:all "全部"
+     :any-format "Any Format"
+     :standard "スタンダード"
+     :eternal "エターナル"
+     :core-experience "Core Experience"
+     :snapshot "スナップショット"
+     :snapshot-plus "Snapshot Plus"
+     :socr "SOCR"
+     :sunset "Sunset"
+     :neo "Neo"
+     :classic "Classic"
+     :casual "Casual"
+     :system-gateway "システムゲートウェイ"
+     :startup "スタートアップ"}
+    :card-type
+    {:all "全部"
+     :identity "ID"
+     :agenda "計画書"
+     :asset "資材"
+     :upgrade "強化"
+     :operation "任務"
+     :ice "アイス"
+     :event "イベント"
+     :hardware "ハードウェア"
+     :resource "リソース"
+     :program "プログラム"}
+    :pronouns
+    {:none "Unspecified"
+     :any "Any"
+     :myodb "Prefer not to say"
+     :blank "[blank]"
+     :they "They/them"
+     :she "She/her"
+     :shethey "She/they"
+     :he "He/him"
+     :hethey "He/they"
+     :it "It"
+     :ne "Ne/nem"
+     :ve "Ve/ver"
+     :ey "Ey/em"
+     :zehir "Ze/hir"
+     :zezir "Ze/zir"
+     :xe "Xe/xem"}
+    :chat
+    {:title "Play Netrunner in your browser"
+     :channels "Channels"
+     :send "Send"
+     :placeholder "Say something..."
+     :delete "Delete Message"
+     :delete-all "Delete All Messages From User"
+     :block "Block User"
+     :cancel "Cancel"}
+    :nav
+    {:chat "チャット"
+     :cards "カード"
+     :deck-builder "デッキビルダー"
+     :play "対戦"
+     :help "ヘルプ"
+     :settings "設定"
+     :stats "統計"
+     :about "このサイトについて"
+     :tournaments "大会"
+     :admin "Admin"
+     :users "Users"
+     :features "Features"
+     :game-count (fn [[cnt]] (str "ルーム数 " cnt))}
+    :menu
+    {:settings :ja.nav/settings
+     :logout "ジャックアウト"
+     :admin :ja.nav/admin
+     :moderator "Moderator"
+     :donor "Donor"}
+    :card-browser
+    {:search-hint "カード名検索"
+     :sort "並び順"
+     :format "フォーマット"
+     :set "カードセット"
+     :side "プレイヤーサイド"
+     :faction "派閥"
+     :type "カードタイプ"
+     :clear "クリア"
+     :select-art "Select Art"
+     :selected-art "Selected Alt Art"
+     :update-success "Updated Art"
+     :update-failure "Failed to Update Art"
+     :memory "MU"
+     :cost "コスト"
+     :trash-cost "トラッシュコスト"
+     :strength "強度"
+     :advancement "アドバンス要求"
+     :agenda-points "計画ポイント"
+     :min-deck "最小デッキ枚数"
+     :inf-limit "影響値上限"
+     :influence "影響値"
+     :sort-by {:faction "派閥"
+              :name "カード名"
+              :type "タイプ"
+              :influence "影響値"
+              :cost "コスト"
+              :set-number "セット番号"}
+     }
+    :deck-builder
+    {:loading-msg "デッキ一覧を読み込み中……"
+     :new-corp "新規コーポ"
+     :new-runner "新規ランナー"
+     :import-button "デッキのインポート"
+     :reset "リセット"
+     :import-title "公開済みNetrunnerDB Deck ID or URL"
+     :import "インポート"
+     :cancel "キャンセル"
+     :import-placeholder "NetrunnerDB ID"
+     :deck-count (fn [[cnt]] (str "デッキ数 " cnt))
+     :filtered "(絞り込み)"
+     :save "保存"
+     :confirm-delete "削除の実行"
+     :edit "編集"
+     :delete "削除"
+     :copy "コピー"
+     :deck-copy-suffix "コピー"
+     :clear-stats "統計を削除"
+     :create-game "対戦の開始"
+     :deck-name "デッキ名"
+     :format "フォーマット"
+     :identity "ID"
+     :deck-notes "メモ"
+     :decklist "カードリスト"
+     :decklist-inst "({枚数}[半角スペース]{カード名（英語）}で入力)"
+     :notes "メモ"
+     :add-to-deck "追加"
+     :add-cards "カードの追加"
+     :card-name "カード名"
+     :no-decks "デッキ未登録"
+     :cards "枚"
+     :min "下限"
+     :max "上限"
+     :influence "影響値"
+     :agenda-points "計画ポイント"
+     :deck-points "デッキポイント"
+     :hash "大会ハッシュ"
+     :why "Why?"
+     :legal "適正"
+     :illegal "違反"
+     :games "ゲーム"
+     :completed "完了"
+     :won "勝利"
+     :lost "敗北"}
+   :lobby
+    {:no-games "No games"
+     :tournament "Tournament"
+     :competitive "Competitive"
+     :casual "Casual"
+     :new-game "ルーム作成"
+     :reload "リロード"
+     :load-replay "リプレイ読込"
+     :start-replay "再生"
+     :save-replay "リプレイの保存"
+     :replay-link-error "Replay link invalid."
+     :replay-invalid-file "Select a valid replay file."
+     :create "作成"
+     :cancel "キャンセル"
+     :title "ルーム名"
+     :side "サイド"
+     :format "フォーマット"
+     :options "設定"
+     :spectators "観戦の許可"
+     :hidden "非公開情報を観戦者に公開"
+     :password-protected "パスワードを設定する"
+     :password "パスワード"
+     :start "開始"
+     :leave "退出"
+     :swap "サイド変更"
+     :waiting "デッキ選択待ち"
+     :players "プレイヤー"
+     :deck-selected "デッキ選択完了"
+     :select-deck "デッキ選択"
+     :chat "チャット"
+     :select-title "デッキを選択"
+     :spectator-count (fn [[cnt]] (str "観戦中 " cnt "人"))
+     :closed-msg "操作が行われていないルームを閉じました。"
+     :title-error "ルーム名を修正してください。"
+     :password-error "パスワードを修正してください。"
+     :too-little-data "Too little data"
+     :completion-rate "対戦完了率"
+     :watch "観戦"
+     :join "入室"
+     :rejoin "再入室"
+     :as-corp "コーポとして"
+     :as-runner "ランナーとして"
+     :private "非公開"
+     :reset "Reset Game Name"
+     :delete "Delete Game"
+     :password-for "パスワード"
+     :invalid-password "不正なパスワード"
+     :not-allowed "Not allowed"
+     :aborted "Connection aborted"
+     :lobby.api-access "Allow API access to game information"
+     :lobby.api-requires-key "(Requires an API Key in Settings)"
+     :game-count (fn [[cnt]] (str "ルーム数 " cnt))
+     :filtered "(絞り込み)"}
+   :settings
+   {:invalid-password "Invalid login or password"
+    :invalid-email "No account with that email address exists"
+    :updated "Profile updated - Please refresh your browser"
+    :updating "Updating profile..."
+    :get-log-width "Get current log width"
+    :get-log-top "Get current log top"
+    :email-title "Change email address"
+    :current-email "Current email"
+    :desired-email "Desired email"
+    :email-placeholder "Email address"
+    :enter-valid "Please enter a valid email address"
+    :update "Update"
+    :cancel "Cancel"
+    :email "Email"
+    :change-email "Change email"
+    :avatar "Avatar"
+    :change-avatar "Change on gravatar.com"
+    :pronouns "Pronouns"
+    :language "Language"
+    :sounds "Sounds"
+    :enable-lobby-sounds "Enable lobby sounds"
+    :enable-game-sounds "Enable game sounds"
+    :volume "Volume"
+    :layout-options "Layout options"
+    :stacked-cards "Card stacking (on by default)"
+    :runner-layout "Runner layout from Corp perspective"
+    :runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"
+    :runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"
+    :background "Game board background"
+    :card-backs "Card backs"
+    :game-stats "Game Win/Lose statistics"
+    :deck-stats "Deck statistics"
+    :always "Always"
+    :comp-only "Competitive Lobby Only"
+    :none "None"
+    :alt-art "Alt arts"
+    :show-alt "Show alternate card arts"
+    :high-res "Enable high-resolution card images"
+    :card-images "Card images"
+    :set-all "Set all cards to"
+    :set "Set"
+    :reset "Reset All to Official Art"
+    :blocked "Blocked users"
+    :user-name "User name"
+    :block "Block user"
+    :update-profile "Update Profile"
+    :nisei "NISEI"
+    :nsg "NSG"
+    :ffg "FFG"
+    :api-keys "API Keys"
+    :delete-api-key "Delete"
+    :create-api-key "Create API Key"}
+  :stats
+  {:game-stats "対戦統計"
+   :corp-stats "コーポ統計"
+   :runner-stats "ランナー統計"
+   :clear-stats "統計を削除"
+   :no-log "No log available"
+   :view-log "ログを見る"
+   :winner "勝者"
+   :no-games "No games"
+   :all-games "全てのログを表示"
+   :shared-games "シェアログのみ表示"
+   :started "開始"
+   :ended "終了"
+   :completed "完了"
+   :not-completed "未完了"
+   :won "勝利"
+   :lost "敗北"
+   :turn-count (fn [[cnt]] (str "ターン数 " cnt))
+   :lobby "ロビー"
+   :format "フォーマット"
+   :win-method "勝利方法"
+   :view-games "統計画面に戻る"
+   :share "Share Replay"
+   :launch "Launch Replay"
+   :download "Download Replay"
+   :unavailable "Replay unavailable"
+   :filtered "(絞り込み)"
+   :log-count (fn [[cnt]] (str "ログ数 " cnt))
+   :clicks-gained "得たクリック"
+   :credits-gained "得たクレジット"
+   :credits-spent "消費したクレジット"
+   :credits-click "クリックで得たクレジット"
+   :cards-drawn "ドロー"
+   :cards-click "クリックでしたドロー"
+   :damage-done "与えたダメージ"
+   :cards-rezzed "レゾしたカード"
+   :tags-gained "受けたタグ"
+   :runs-made "行ったラン"
+   :cards-accessed "アクセスしたカード"}
+  :log
+  {:game-log "Game Log"
+   :annotating "Annotating"
+   :shared "Shared Annotations"}
+  :annotations
+  {:remote-annotations-fail "Could not get remote annotations."
+   :turn-placeholder "Notes for this turn"
+   :click-placeholder "Notes for this click"
+   :available-annotations "Available annotations"
+   :annotations-no-published-annotations "No published annotations."
+   :annotations.available-annotations "Available annotations"
+   :notes.publish "Publish"
+   :notes.clear-annotations "Clear local annotations"
+   :import-local "Import local annotation file"
+   :load-local "Load"
+   :save-local "Save"
+   :clear "Clear"}
+  :game
+  {:keep "キープ"
+   :mulligan "マリガン"
+   :close "閉じる"
+   :start "ゲーム開始"
+   :remove-tag "タグを除去"
+   :run "ラン"
+   :purge "ウィルスカウンター破棄"
+   :trash-resource "リソースをトラッシュ"
+   :draw "ドロー"
+   :gain-credit "クレジットを得る"
+   :game-start "ゲーム開始"
+   :start-turn "ターンの開始"
+   :end-turn "ターンの終了"
+   :mandatory-draw "強制ドロー"
+   :take-clicks "クリックを受け取る"
+   :hq "HQ"
+   :grip "グリップ"
+   :rfg "除外"
+   :play-area "プレイエリア"
+   :current "現状"
+   :scored-area "得点エリア"
+   :archives "アーカイブ"
+   :max-hand "手札上限"
+   :brain-damage "コアダメージ"
+   :tag-count (fn [[base additional total]]
+                (str base (when (pos? additional) (str " + " additional)) " タグ"))
+   :agenda-count (fn [[agenda-point]] (str agenda-point " 計画点"))
+   :link-strength "リンク強度"
+   :credit-count (fn [[credit run-credit]] (str credit " クレジット")
+                                                (when (pos? run-credit)
+                                                  (str " (ランの間のみ " run-credit ")")))
+   :click-count (fn [[click]] (str click " クリック"))
+   :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str "+" additional)) " 悪名"))
+   :mu-count (fn [[unused available]] (str unused "/" available " 未使用MU"))
+   :special-mu-count (fn [[unused available mu-type]] (str unused "/" available " 未使用 " mu-type " MU"))
+   :indicate-action "アクションします！"
+   :spec-count (fn [[c]] (str "観戦中 " c "人"))
+   :spec-view "観戦者視点"
+   :runner-view "ランナー視点"
+   :corp-view "コーポ視点"
+   :leave-replay "リプレイから退出"
+   :leave "ルームを退出"
+   :rig-irl "Rig layout: IRL"
+   :rig-jnet "Rig layout: jnet"
+   :unstack-cards "Unstack cards"
+   :stack-cards "Stack cards"
+   :unmute "Unmute spectators"
+   :mute "Mute spectators"
+   :concede "降参する"
+   :inactivity "操作が行われていないルームを閉じました。"
+   :server "サーバー"
+   :unimplemented "未実装"
+   :abilities "能力"
+   :let-subs-fire "未ブレイクサブルーチン解決を許可"
+   :subs "サブルーチン"
+   :actions "アクション"
+   :fire-unbroken "未ブレイクサブルーチンを解決する"
+   :stack "スタック"
+   :r&d "R&D"
+   :shuffle "シャッフルする"
+   :show "中を確認する"
+   :close-shuffle "閉じてシャフルする"
+   :heap "ヒープ"
+   :card-count (fn [[size]] (str size " 枚"))
+   :face-down-count (fn [[total face-up]] (str total " 枚(裏向き " (- total face-up) " 枚)"))
+   :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
+   :initiation "ラン開始"
+   :approach-ice "アイスにアプローチ"
+   :encounter-ice "エンカウント中"
+   :pass-ice "アイスを通過"
+   :movement "移動"
+   :approach-server "サーバーにアプローチ"
+   :corp-phase-43 "コーポフェーズ4.3"
+   :access-server "サーバーにアクセス"
+   :breach-server "サーバーに侵入"
+   :success "ランの成功"
+   :end-of-run "ランの終了"
+   :run-ends "ラン終了"
+   :no-current-run "ラン以外"
+   :current-phase "現在のフェーズ"
+   :unknown-phase "不明フェーズ"
+   :rez "レゾ"
+   :action-access "アクセス前アクション"
+   :no-further "これ以上アクションしない"
+   :continue "次へ進む"
+   :continue-to "次へ："
+   :stop-auto-pass "自動通過処理を停止"
+   :auto-pass "自動通過処理"
+   :jack-out "ジャックアウト"
+   :undo-click "クリックを取り消す"
+   :pass-continue "アイスを通過してラン続行"
+   :pass-jack "アイスを通過してジャックアウト"
+   :trace "トレース"
+   :credits "クレジット"
+   :card "カード"
+   :time-taken (fn [[t]] (str "経過した時間: " t "分"))
+   :win-decked (fn [[turn]] (str "コーポのデッキ切れによる勝利 " turn " ターン"))
+   :win-flatlined (fn [[turn]] (str "フラットラインによる勝利 " turn " ターン"))
+   :win-conceded (fn [[turn]] (str "降参による勝利 " turn " ターン"))
+   :win-claimed (fn [[turn]] (str "wins by claim on turn " turn))
+   :win-points (fn [[turn]] (str "計画ポイントによる勝利 " turn " ターン"))
+   :win-other (fn [[turn reason]] (str "wins by " reason " on turn " turn))}
+   }
    })
 
 (defn opts [] {:dict translation-dictionary})
@@ -2510,3 +3400,6 @@
 (def tr-lobby (partial tr-string "lobby"))
 (def tr-pronouns (partial tr-string "pronouns"))
 (def tr-watch-join (partial tr-string "lobby"))
+
+(defn tr-data [key data]
+  (or (get-in data [:localized key]) (key data)))

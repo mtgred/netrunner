@@ -16,10 +16,11 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string]]
+    [game.core.expend :refer [expend]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
-    [game.core.runs :refer [continue total-run-cost]]
+    [game.core.runs :refer [can-run-server? continue get-runnable-zones total-run-cost]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
@@ -32,8 +33,8 @@
 (defn- do-play-ability [state side card ability ability-idx targets]
   (let [cost (seq (card-ability-cost state side ability card targets))]
     (when (or (nil? cost)
-              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}}) card (:title card) cost))
-      (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx}})]
+              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx :ability-targets targets}}) card (:title card) cost))
+      (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx :ability-targets targets}})]
         (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
 
 (defn play-ability
@@ -46,6 +47,14 @@
                         (any-effects state side :prevent-paid-ability true? card [ab ability]))]
     (when-not cannot-play
       (do-play-ability state side card ab ability targets))))
+
+(defn expend-ability
+  "Called when the player clicks a card from hand."
+  [state side {:keys [card]}]
+  (let [card (get-card state card)
+        eid (make-eid state {:source card :source-type :ability})
+        expend-ab (expend (:expend card))]
+    (resolve-ability state side eid expend-ab card nil)))
 
 (defn play
   "Called when the player clicks a card from hand."
@@ -219,7 +228,17 @@
   (let [card (get-card state (:card args))
         eid (make-eid state {:source card :source-type :ability})
         current-ice (get-current-ice state)
-        pump-ability (some #(when (:pump %) %) (:abilities (card-def card)))
+        can-pump (fn [ability]
+                   (when (:pump ability)
+                     ((:req ability) state side eid card nil)))
+        [pump-ability pump-cost]
+        (some->> (:abilities (card-def card))
+                 (keep #(when (can-pump %)
+                          [% (:cost %)]))
+                 (seq)
+                 (sort-by #(-> % first :auto-pump-sort))
+                 (apply min-key #(let [costs (second %)]
+                                   (reduce (fnil + 0 0) 0 (mapv second costs)))))
         cost-req (or (:cost-req pump-ability) identity)
         pump-strength (get-pump-strength state side pump-ability card)
         strength-diff (when (and current-ice
@@ -233,7 +252,7 @@
                      0)
         total-pump-cost (when (and pump-ability
                                    times-pump)
-                          (repeat times-pump (cost-req [(:cost pump-ability)])))]
+                          (repeat times-pump (cost-req [pump-cost])))]
     (when (can-pay? state side eid card (:title card) total-pump-cost)
       (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [_ times-pump]
@@ -354,7 +373,14 @@
           can-pump (fn [ability]
                      (when (:pump ability)
                        ((:req ability) state side eid card nil)))
-          pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+          [pump-ability pump-cost]
+          (some->> (:abilities (card-def card))
+                   (keep #(when (can-pump %)
+                            [% (:cost %)]))
+                   (seq)
+                   (sort-by #(-> % first :auto-pump-sort))
+                   (apply min-key #(let [costs (second %)]
+                                     (reduce (fnil + 0 0) 0 (mapv second costs)))))
           pump-cost-req (or (:cost-req pump-ability) identity)
           pump-strength (get-pump-strength state side pump-ability card)
           strength-diff (when (and current-ice
@@ -368,15 +394,21 @@
                        0)
           total-pump-cost (when (and pump-ability
                                      times-pump)
-                            (repeat times-pump (pump-cost-req [(:cost pump-ability)])))
+                            (repeat times-pump (pump-cost-req [pump-cost])))
           ;; break all subs
           can-break (fn [ability]
                       (when (and (:break-req ability)
                                  (not (any-effects state side :prevent-paid-ability true? card [ability])))
                         ((:break-req ability) state side eid card nil)))
-          break-ability (some #(when (can-break %) %) (:abilities (card-def card)))
+          [break-ability break-cost]
+          (some->> (:abilities (card-def card))
+                   (keep #(when (can-break %)
+                            [% (break-sub-ability-cost state side % card current-ice)]))
+                   (seq)
+                   (sort-by #(-> % first :auto-break-sort))
+                   (apply min-key #(let [costs (second %)]
+                                     (reduce (fnil + 0 0) 0 (mapv second costs)))))
           break-cost-req (or (:cost-req break-ability) identity)
-          break-cost (break-sub-ability-cost state side break-ability card current-ice)
           subs-broken-at-once (when break-ability
                                 (:break break-ability 1))
           unbroken-subs (when (:subroutines current-ice)
@@ -419,8 +451,8 @@
                               (continue state side nil))))))))
 
 (def dynamic-abilities
-  {"auto-pump" play-auto-pump
-   "auto-pump-and-break" play-auto-pump-and-break})
+  {"auto-pump" #'play-auto-pump
+   "auto-pump-and-break" #'play-auto-pump-and-break})
 
 (defn play-dynamic-ability
   "Triggers an ability that was dynamically added to a card's data but is not necessarily present in its
@@ -509,21 +541,10 @@
   [state _ {:keys [card]}]
   (let [card (get-card state card)]
     (if card
-      (swap! state assoc-in [:corp :install-list] (installable-servers state card))
+      (if (:expend card)
+        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
+        (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
       (swap! state dissoc-in [:corp :install-list]))))
-
-(defn get-runnable-zones
-  ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
-  ([state side] (get-runnable-zones state side (make-eid state) nil nil))
-  ([state side card] (get-runnable-zones state side (make-eid state) card nil))
-  ([state side card args] (get-runnable-zones state side (make-eid state) card args))
-  ([state side eid card {:keys [zones ignore-costs]}]
-   (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))
-         permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
-     (if ignore-costs
-       permitted-zones
-       (filter #(can-pay? state :runner eid card nil (total-run-cost state side card {:server (unknown->kw %)}))
-               permitted-zones)))))
 
 (defn generate-runnable-zones
   [state _ _]

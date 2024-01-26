@@ -1,6 +1,5 @@
 (ns game.core.flags
   (:require
-    [clojure.string :as string]
     [game.core.board :refer [all-active all-installed]]
     [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed?]]
     [game.core.card-defs :refer [card-def]]
@@ -9,7 +8,7 @@
     [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
-    [game.utils :refer [same-card? same-side?]]))
+    [game.utils :refer [enumerate-str same-card? same-side?]]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -154,35 +153,6 @@
   [state side card flag]
   (clear-flag-for-card! state side card :persistent flag))
 
-;;; Functions related to servers that can be run
-(defn prevent-run-on-server
-  "Adds specified server to list of servers that cannot be run on.
-  The causing card is also specified"
-  [state card & servers]
-  (doseq [server servers]
-    (swap! state assoc-in [:runner :register :cannot-run-on-server server (:cid card)] true)))
-
-(defn enable-run-on-server
-  "Removes specified server from list of server for the associated card.
-  If other cards are associated with the same server that server will still be unable to be run
-  on."
-  [state card & servers]
-  (doseq [server servers]
-    (let [card-map (get-in @state [:runner :register :cannot-run-on-server server])
-          reduced-card-map (dissoc card-map (:cid card))]
-      (if (empty? reduced-card-map)
-        ;; removes server if no cards block it, otherwise updates the map
-        (swap! state update-in [:runner :register :cannot-run-on-server] dissoc server)
-        (swap! state assoc-in [:runner :register :cannot-run-on-server server]
-               reduced-card-map)))))
-
-(defn can-run-server?
-  "Returns true if the specified server can be run on. Specified server must be string form."
-  [state server]
-  (not-any? #{server}
-            (map zone->name (keys (get-in @state [:runner :register :cannot-run-on-server])))))
-
-
 ;;; Functions for preventing specific game actions.
 ;;; TODO: look into migrating these to turn-flags and run-flags.
 (defn prevent-draw [state _]
@@ -200,6 +170,7 @@
 (defn release-zone [state _ cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
+;; TODO: this can probably be made into costant/floating effects too
 (defn zone-locked?
   [state side zone]
   (seq (get-in @state [side :locked zone])))
@@ -261,10 +232,10 @@
 
 (defn can-steal?
   "Checks if the runner can steal agendas"
-  [state side card]
-  (and (not (any-effects state side :cannot-steal true? card))
-       (check-flag-types? state side card :can-steal [:current-turn :current-run])
-       (check-flag-types? state side card :can-steal [:current-turn :persistent])))
+  [state side agenda]
+  (and (not (any-effects state side :cannot-steal true? agenda))
+       (check-flag-types? state side agenda :can-steal [:current-turn :current-run])
+       (check-flag-types? state side agenda :can-steal [:current-turn :persistent])))
 
 (defn can-trash?
   "Checks if the runner can trash cards"
@@ -279,7 +250,7 @@
   (let [cards (->> @state :stack :current-turn :can-run (map :card))]
     (if (empty? cards)
       true
-      (do (when-not silent (toast state side (str "Cannot run due to " (string/join ", " (map :title cards))))
+      (do (when-not silent (toast state side (str "Cannot run due to " (enumerate-str (map :title cards))))
         false))))))
 
 (defn can-access?
@@ -293,7 +264,7 @@
   (let [cards (get-preventing-cards state side card :can-access [:current-run :current-turn :persistent])]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot access " (card-str state card) " because of " (string/join ", " (map :title cards))) "info")
+      (do (toast state side (str "Cannot access " (card-str state card) " because of " (enumerate-str (map :title cards))) "info")
           false))))
 
 (defn can-advance?
@@ -359,7 +330,7 @@
    (ab-can-prevent? state side (make-eid state) card req-fn target args))
   ([state side eid card req-fn target args]
    (cond
-     req-fn (req-fn state side eid card (list (assoc args :prevent-target target)))
+     req-fn (if (req-fn state side eid card (list (assoc args :prevent-target target))) true false)
      :else false)))
 
 (defn get-card-prevention

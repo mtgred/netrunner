@@ -1,14 +1,14 @@
 (ns game.core.runs
   (:require
     [game.core.access :refer [breach-server]]
-    [game.core.board :refer [server->zone]]
+    [game.core.board :refer [get-zones server->zone]]
     [game.core.card :refer [get-card get-zone rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
-    [game.core.flags :refer [can-run? can-run-server? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
+    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event]]
+    [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
@@ -20,7 +20,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
     [game.utils :refer [dissoc-in same-card?]]
-    [jinteki.utils :refer [count-bad-pub]]
+    [jinteki.utils :refer [count-bad-pub other-side]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]))
 
@@ -45,6 +45,23 @@
   [state eid]
   (or eid
       (make-eid state (:eid (:run @state)))))
+
+(defn get-runnable-zones
+  ([state] (get-runnable-zones state :runner (make-eid state) nil nil))
+  ([state side] (get-runnable-zones state side (make-eid state) nil nil))
+  ([state side card] (get-runnable-zones state side (make-eid state) card nil))
+  ([state side card args] (get-runnable-zones state side (make-eid state) card args))
+  ([state side eid card {:keys [zones ignore-costs]}]
+   (let [restricted-zones (distinct (flatten (get-effects state side :cannot-run-on-server)))
+         permitted-zones (remove (set restricted-zones) (or zones (get-zones state)))]
+     (if ignore-costs
+       permitted-zones
+       (filter #(can-pay? state :runner eid card nil (total-run-cost state side card {:server (unknown->kw %)}))
+               permitted-zones)))))
+
+(defn can-run-server?
+  [state server]
+  (some #{(unknown->kw server)} (seq (get-runnable-zones state))))
 
 (defn get-current-encounter
   [state]
@@ -159,8 +176,7 @@
   [state _ _]
   (swap! state update-in [:run :corp-auto-no-action] not)
   (when (and (rezzed? (get-current-ice state))
-             (or (= :approach-ice (:phase (:run @state)))
-                 (= :encounter-ice (:phase (:run @state)))))
+             (#{:approach-ice :encounter-ice} (:phase (:run @state))))
     (continue state :corp nil)))
 
 (defn check-auto-no-action
@@ -190,11 +206,12 @@
   (let [encounter (get-current-encounter state)
         ice (get-current-ice state)]
     (update-current-encounter state :ending true)
+    (when (:bypass encounter)
+      (queue-event state :bypassed-ice ice)
+      (system-msg state :runner (str "bypasses " (:title ice))))
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
-              (when (:bypass encounter)
-                (system-msg state :runner (str "bypasses " (:title ice))))
               (let [run (:run @state)
                     phase (:phase run)]
                 (cond
@@ -308,7 +325,7 @@
                                         :ice ice})
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))
-        applied-encounters (get-effects state nil ice :gain-encounter-ability)
+        applied-encounters (get-effects state nil :gain-encounter-ability ice)
         all-encounters (remove nil? (conj applied-encounters on-encounter))]
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (doseq [on-encounter all-encounters]
@@ -358,8 +375,7 @@
         current-server (:server (:run @state))
         ice (get-current-ice state)
         ;; pass ice if coming from the Approach Ice or Encounter Ice phase and the Ice has not moved from the position
-        pass-ice? (and (or (= :approach-ice previous-phase)
-                           (= :encounter-ice previous-phase))
+        pass-ice? (and (#{:approach-ice :encounter-ice} previous-phase)
                        (get-card state ice)
                        (= (second (get-zone ice)) (first current-server)))
         new-position (if pass-ice? (dec pos) pos)
@@ -459,10 +475,11 @@
                         2500)))))
 
 (defmethod continue :default
-  [_ _ _]
+  [state _ _]
   (.println *err* (with-out-str
                     (print-stack-trace
-                      (Exception. "Continue clicked at the wrong time")
+                      (Exception.
+                        (str "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
                       2500))))
 
 (defn redirect-run
@@ -650,6 +667,9 @@
      (handle-end-run state side eid)
      (register-unsuccessful-run state side eid))))
 
+;; todo - ideally we should be able to know not just the card ending the run, but the cause as well
+;; ie subroutine, card ability (like the trash on bc), or something else
+;; this matters for cards like banner
 (defn end-run
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
   ([state side eid card] (end-run state side eid card nil))
@@ -657,20 +677,25 @@
    (if (or (:run @state)
            (get-current-encounter state))
      (do (swap! state update-in [:end-run] dissoc :end-run-prevent)
-         (let [prevent (get-prevent-list state :runner :end-run)]
-           (if (and (not unpreventable)
-                    (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
-             (do (system-msg state :runner "has the option to prevent the run from ending")
-                 (show-wait-prompt state :corp "Runner to prevent the run from ending")
-                 (show-prompt state :runner nil
-                              (str "Prevent the run from ending?") ["Done"]
-                              (fn [_]
-                                (clear-wait-prompt state :corp)
-                                (if-let [_ (get-in @state [:end-run :end-run-prevent])]
-                                  (effect-completed state side eid)
-                                  (do (system-msg state :runner "will not prevent the run from ending")
-                                      (resolve-end-run state side eid))))))
-             (resolve-end-run state side eid))))
+         (let [prevent (get-prevent-list state :runner :end-run)
+               auto-prevent (any-effects state side :auto-prevent-run-end true? card [card])]
+           (if auto-prevent
+             (do (end-run-prevent state side)
+                 (system-msg state (other-side side) "prevents the run from ending")
+                 (effect-completed state side eid))
+             (if (and (not unpreventable)
+                      (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
+               (do (system-msg state :runner "has the option to prevent the run from ending")
+                   (show-wait-prompt state :corp "Runner to prevent the run from ending")
+                   (show-prompt state :runner nil
+                                (str "Prevent the run from ending?") ["Done"]
+                                (fn [_]
+                                  (clear-wait-prompt state :corp)
+                                  (if-let [_ (get-in @state [:end-run :end-run-prevent])]
+                                    (effect-completed state side eid)
+                                    (do (system-msg state :runner "will not prevent the run from ending")
+                                        (resolve-end-run state side eid))))))
+               (resolve-end-run state side eid)))))
      (effect-completed state side eid))))
 
 (defn jack-out-prevent

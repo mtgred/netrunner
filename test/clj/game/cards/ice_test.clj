@@ -1,10 +1,38 @@
 (ns game.cards.ice-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.test-framework :refer :all]))
+
+(deftest ablative-barrier-no-threat
+  (do-game
+    (new-game {:corp {:hand ["Ablative Barrier" "Ablative Barrier" "City Works Project"]
+                      :discard ["Vanilla"]}})
+    (play-from-hand state :corp "Ablative Barrier" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (is (no-prompt? state :corp) "no prompt to pull a card with ablative")))
+
+(deftest ablative-barrier-threat-trigger
+  (do-game
+    (new-game {:corp {:hand [(qty "Ablative Barrier" 2) "Ice Wall" "City Works Project"]
+                      :discard ["Vanilla"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ablative Barrier" "HQ")
+    (play-from-hand state :corp "Ablative Barrier" "HQ")
+    (play-and-score state "City Works Project")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 1))
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Archives")
+    (is (= "Vanilla" (:title (get-ice state :archives 0))))
+    (run-continue state)
+    (rez state :corp (get-ice state :hq 0))
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :corp "R&D")))
 
 (deftest afshar-subroutines
   ;; Subroutines
@@ -173,7 +201,7 @@
         (core/gain state :runner :credit 5)
         (run-on state :hq)
         (run-continue state)
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh cor)})
+        (auto-pump state cor)
         (card-ability state :runner (refresh cor) 0)
         (click-prompt state :runner "End the run")
         (is (no-prompt? state :runner) "No option to break second sub")))))
@@ -190,29 +218,47 @@
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "HQ")
       (rez state :corp anansi)
-      (changes-val-macro -3 (count (:hand (get-runner)))
-                         "3 net damage from passing Anansi"
-                         (run-continue state)))))
+      (is (changed? [(count (:hand (get-runner))) -3]
+            (run-continue state))
+          "3 net damage from passing Anansi"))))
+
+(deftest anansi-no-net-damage-when-bypassing-and-derezzing-ice-with-capybara
+  ;; No net damage when bypassing and derezzing with Capybara
+  (do-game
+    (new-game {:corp {:deck ["Anansi"]}
+               :runner {:hand [(qty "Sure Gamble" 4) "Inside Job" "Capybara"]}})
+    (play-from-hand state :corp "Anansi" "HQ")
+    (core/gain state :corp :credit 8)
+    (take-credits state :corp)
+    (let [anansi (get-ice state :hq 0)]
+      (play-from-hand state :runner "Capybara")
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "HQ")
+      (rez state :corp anansi)
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (run-continue state)
+            (click-prompt state :runner "Yes"))
+          "No net damage from bypassing and derezzing Anansi"))))
 
 (deftest anansi-no-net-damage-when-breaking-all-subs
   ;; no net damage when breaking all subs
   (do-game
-    (new-game {:corp {:deck ["Anansi"]}
-               :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]}})
+    (new-game {:corp {:deck ["Anansi"]
+                      :credits 15}
+               :runner {:deck [(qty "Sure Gamble" 4) "Mongoose"]
+                        :credits 15}})
     (play-from-hand state :corp "Anansi" "HQ")
-    (core/gain state :corp :credit 8)
     (take-credits state :corp)
     (play-from-hand state :runner "Mongoose")
-    (core/gain state :runner :credit 7)
     (let [anansi (get-ice state :hq 0)
           mongoose (get-program state 0)]
       (run-on state :hq)
       (rez state :corp anansi)
-      (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh mongoose)})
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "3 net damage from passing Anansi"
-                         (core/continue state :corp nil)))))
+      (run-continue state :encounter-ice)
+      (auto-pump-and-break state mongoose)
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (run-continue state))
+          "3 net damage from passing Anansi"))))
 
 (deftest anansi-anansi-and-border-control-issue-4769
   ;; Anansi and Border Control. Issue #4769
@@ -230,17 +276,17 @@
           corroder (get-program state 0)]
       (run-on state :hq)
       (rez state :corp anansi)
-      (run-continue state)
-      (changes-val-macro -3 (count (:hand (get-runner)))
-                         "3 net damage from passing Anansi"
-                         (run-continue state))
+      (run-continue state :encounter-ice)
+      (is (changed? [(count (:hand (get-runner))) -3]
+            (run-continue state :movement))
+          "3 net damage from passing Anansi")
       (rez state :corp border)
-      (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-      (core/continue state :corp nil)
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "No further net damage"
-                         (card-ability state :corp (refresh border) 0))
+      (run-continue state :approach-ice)
+      (run-continue state :encounter-ice)
+      (auto-pump-and-break state corroder)
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (card-ability state :corp (refresh border) 0))
+          "No further net damage")
       (is (nil? (get-run)) "Run ended"))))
 
 (deftest anansi-runner-has-to-pay-2c-to-draw-card-issue-5335
@@ -259,9 +305,9 @@
       (run-continue state)
       (card-subroutine state :corp anansi 1)
       (click-prompt state :corp "No")
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "No new card from Anansi"
-                         (click-prompt state :runner "Yes"))
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (click-prompt state :runner "Yes"))
+          "No new card from Anansi")
       (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
 (deftest anansi-2nd-sub-test-runner-clicks-yes
@@ -279,9 +325,9 @@
       (run-continue state)
       (card-subroutine state :corp anansi 1)
       (click-prompt state :corp "No")
-      (changes-val-macro 1 (count (:hand (get-runner)))
-                         "New card from Anansi"
-                         (click-prompt state :runner "Yes"))
+      (is (changed? [(count (:hand (get-runner))) 1]
+            (click-prompt state :runner "Yes"))
+          "New card from Anansi")
       (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
 (deftest anansi-2nd-sub-test-runner-clicks-no
@@ -299,9 +345,9 @@
       (run-continue state)
       (card-subroutine state :corp anansi 1)
       (click-prompt state :corp "No")
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "No new card from Anansi"
-                         (click-prompt state :runner "No"))
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (click-prompt state :runner "No"))
+          "No new card from Anansi")
       (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 
 (deftest anemone-happy-path
@@ -313,17 +359,14 @@
     (play-from-hand state :corp "Anemone" "HQ")
     (let [anem (get-ice state :hq 0)]
       (take-credits state :corp)
-      (changes-val-macro
-        2 (count (:discard (get-runner)))
-        "Runner takes 2 net damage"
-        (changes-val-macro
-          1 (count (:discard (get-corp)))
-          "Corporation discards a card"
-          (run-on state :hq)
-          (rez state :corp anem)
-          (click-prompt state :corp "Yes")
-          (is (= :select (prompt-type :corp)))
-          (click-card state :corp "Hedge Fund"))))))
+      (is (changed? [(count (:discard (get-runner))) 2
+             (count (:discard (get-corp))) 1]
+            (run-on state :hq)
+            (rez state :corp anem)
+            (click-prompt state :corp "Yes")
+            (is (= :select (prompt-type :corp)))
+            (click-card state :corp "Hedge Fund"))
+          "Runner takes 2 net damage"))))
 
 (deftest anemone-wrong-server
   (do-game
@@ -376,12 +419,11 @@
         (run-on state :remote1)
         (rez state :corp ansel)
         (run-continue state :encounter-ice)
-        (changes-val-macro
-          -1 (:click (get-runner))
-          "Runner loses a single click"
-          (card-side-ability state :runner (refresh ansel) 0)
-          (is (= "Break a subroutine" (:msg (prompt-map :runner))))
-          (click-prompt state :runner "Trash an installed Runner card"))
+        (is (changed? [(:click (get-runner)) -1]
+              (card-side-ability state :runner (refresh ansel) 0)
+              (is (= "Break a subroutine" (:msg (prompt-map :runner))))
+              (click-prompt state :runner "Trash an installed Runner card"))
+            "Runner loses a single click")
         (is (:broken (first (:subroutines (refresh ansel)))))))
     (testing "First sub is trash installed card"
       (do-game state
@@ -494,29 +536,22 @@
       (rez state :corp (refresh anvil))
       (run-continue state)
       (click-prompt state :corp "No")
-      (changes-val-macro
-        -4 (:credit (get-runner))
-        "spent 4 to break"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh unity)})
-        (core/continue state :corp nil))
+      (is (changed? [(:credit (get-runner)) -4]
+            (auto-pump-and-break state unity)
+            (core/process-action "continue" state :corp nil))
+          "spent 4 to break")
       (run-jack-out state)
       (run-on state :hq)
       (run-continue state :encounter-ice)
       (click-prompt state :corp "Yes")
       (click-card state :corp (refresh iwall))
-      (changes-val-macro
-        0 (:credit (get-runner))
-        "can't break"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh unity)}))
-      (changes-val-macro
-        1 (:credit (get-corp))
-        "gained 1"
-        (changes-val-macro
-          -1 (:credit (get-runner))
-          "lost 1"
-          (fire-subs state (core/get-current-ice state))))
+      (is (changed? [(:credit (get-runner)) 0]
+            (auto-pump-and-break state unity))
+          "can't break")
+      (is (changed? [(:credit (get-corp)) 1
+             (:credit (get-runner)) -1]
+            (fire-subs state (core/get-current-ice state)))
+          "gained 1")
       (click-card state :runner (refresh unity))
       (is (= 1 (count (:discard (get-runner)))) "trashed unity"))))
 
@@ -620,6 +655,65 @@
       (is (= 2 (get-counters (refresh ab) :advancement)))
       (rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
+
+(deftest attini
+  (do-game
+    (new-game {:corp {:hand ["Attini"]
+                      :credits 10}
+               :runner {:hand ["Sure Gamble" "Caldera"]
+                        :credits 10}})
+    (play-from-hand state :corp "Attini" "Archives")
+    (take-credits state :corp)
+    (let [att (get-ice state :archives 0)]
+      (play-from-hand state :runner "Caldera")
+      (run-on state "Archives")
+      (rez state :corp (refresh att))
+      (run-continue state)
+      (fire-subs state att)
+      (is (changed? [(:credit (get-runner)) -2]
+            (click-prompt state :runner "Pay 2 [Credits]"))
+          "Runner lost 2 credits")
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (click-prompt state :runner "Take 1 net damage")
+            (card-ability state :runner (get-resource state 0) 0))
+          "Runner prevented 1 net damage")
+      (is (changed? [(count (:hand (get-runner))) -1]
+            (click-prompt state :runner "Take 1 net damage")
+            (click-prompt state :runner "Done"))
+          "Runner got 1 damage"))))
+
+(deftest attini-threat-ability
+  (do-game
+    (new-game {:corp {:hand ["Attini" "Obokata Protocol"]
+                      :credits 10}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-and-score state "Obokata Protocol")
+    (play-from-hand state :corp "Attini" "HQ")
+    (take-credits state :corp)
+    (let [att (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp (refresh att))
+      (run-continue state)
+      (is (changed? [(count (:hand (get-runner))) -3]
+            (fire-subs state att))
+          "Runner took 3 damage and couldn't choose to spend credits"))))
+
+(deftest ^:kaocha/pending attini-threat-ability-cannot-spend-credits
+  (do-game
+    (new-game {:corp {:hand ["Attini" "Obokata Protocol"]
+                      :credits 10}
+               :runner {:hand [(qty "Sure Gamble" 3) "Caldera"]}})
+    (play-and-score state "Obokata Protocol")
+    (play-from-hand state :corp "Attini" "HQ")
+    (take-credits state :corp)
+    (let [att (get-ice state :hq 0)]
+      (play-from-hand state :runner "Caldera")
+      (run-on state "HQ")
+      (rez state :corp (refresh att))
+      (run-continue state)
+      (is (changed? [(count (:hand (get-runner))) -3]
+            (fire-subs state att))
+          "Runner took 3 damage and couldn't prevent any of them by spending credits"))))
 
 (deftest authenticator-encounter-decline-to-take-tag
   (do-game
@@ -726,13 +820,12 @@
       (run-on state "HQ")
       (rez state :corp blf)
       (run-continue state)
-      (changes-val-macro
-        +1 (:credit (get-corp))
-        "Gained 1c from subroutines being broken"
-        (card-ability state :runner cor 0)
-        (click-prompt state :runner "End the run")
-        (is (last-log-contains? state "Corp uses Bailiff to gain 1 \\[Credits\\]")
-            "Correct message")))))
+      (is (changed? [(:credit (get-corp)) +1]
+            (card-ability state :runner cor 0)
+            (click-prompt state :runner "End the run")
+            (is (last-log-contains? state "Corp uses Bailiff to gain 1 \\[Credits\\]")
+            "Correct message"))
+          "Gained 1c from subroutines being broken"))))
 
 (deftest bailiff-interaction-with-hippo
   (do-game
@@ -747,12 +840,10 @@
       (run-on state "HQ")
       (rez state :corp blf)
       (run-continue state)
-      (changes-val-macro
-        0 (:credit (get-corp))
-        "Never gained money from bailiff"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
-        (click-prompt state :runner "Yes")))))
+      (is (changed? [(:credit (get-corp)) 0]
+            (auto-pump-and-break state cor)
+            (click-prompt state :runner "Yes"))
+          "Never gained money from bailiff"))))
 
 (deftest bailiff-interaction-with-hippo-sub-boost-with-cleaver
   (do-game
@@ -769,12 +860,10 @@
     (let [cor (get-program state 0)]
       (run-on state "HQ")
       (run-continue state)
-      (changes-val-macro
-        +0 (:credit (get-corp))
-        "Gained 0 credits from bailiff + sub boost being broken with cleaver + hippo"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
-        (click-prompt state :runner "Yes")))))
+      (is (changed? [(:credit (get-corp)) +0]
+            (auto-pump-and-break state cor)
+            (click-prompt state :runner "Yes"))
+          "Gained 0 credits from bailiff + sub boost being broken with cleaver + hippo"))))
 
 (deftest bailiff-interaction-with-hippo-sub-boost-with-corroder
   (do-game
@@ -791,12 +880,10 @@
     (let [cor (get-program state 0)]
       (run-on state "HQ")
       (run-continue state)
-      (changes-val-macro
-        +1 (:credit (get-corp))
-        "Gained 1 credit from bailiff + sub boost being broken with corroder + hippo"
-        (core/play-dynamic-ability state :runner
-                                   {:dynamic "auto-pump-and-break" :card (refresh cor)})
-        (click-prompt state :runner "Yes")))))
+      (is (changed? [(:credit (get-corp)) +1]
+            (auto-pump-and-break state (refresh cor))
+            (click-prompt state :runner "Yes"))
+          "Gained 1 credit from bailiff + sub boost being broken with corroder + hippo"))))
 
 (deftest bailiff-sub-boost-auto-break
   (do-game
@@ -812,14 +899,11 @@
       (let [cor (get-program state 0)]
         (run-on state "HQ")
         (run-continue state)
-        (changes-val-macro
-          +2 (:credit (get-corp))
-          "Gained 2c from the runner breaking"
-          (core/play-dynamic-ability state :runner
-                                     {:dynamic "auto-pump-and-break" :card (refresh cor)})
-          (is (and (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 \\[Credits\\]")
-                   (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 \\[Credits\\]"))
-              "Correct messages"))))))
+        (is (changed? [(:credit (get-corp)) +2]
+              (auto-pump-and-break state cor))
+            "Gained 2c from the runner breaking")
+        (is (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 \\[Credits\\]"))
+        (is (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 \\[Credits\\]"))))))
 
 (deftest ballista
   ;; Ballista
@@ -996,11 +1080,11 @@
     (new-game {:corp {:hand ["Bloop" "Echo"]}})
     (play-from-hand state :corp "Bloop" "HQ")
     (play-from-hand state :corp "Echo" "R&D")
-    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
     (is (not (rezzed? (get-ice state :hq 0))) "did not rez bloop, couldn't pay the cost")
     (is (no-prompt? state :corp))
     (rez state :corp (get-ice state :rd 0))
-    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
     (click-card state :corp (get-ice state :rd 0))
     (is (not (rezzed? (get-ice state :rd 0))) "derezzed echo")
     (is (rezzed? (get-ice state :hq 0)) "rezzed bloop")))
@@ -1090,10 +1174,9 @@
       (rez state :corp bran)
       (run-continue state)
       (card-subroutine state :corp bran 0)
-      (changes-val-macro
-        0 (:credit (get-corp))
-        "Mausolus installed for free"
-        (click-card state :corp "Mausolus"))
+      (is (changed? [(:credit (get-corp)) 0]
+            (click-card state :corp "Mausolus"))
+          "Mausolus installed for free")
       (is (= 2 (count (get-ice state :hq))) "2 pieces of ice protecting HQ")
       (is (= 2 (:position (get-run))) "Runner position moved along Bran position")
       (card-subroutine state :corp (get-ice state :hq 1) 1)
@@ -1291,29 +1374,26 @@
       ;; is active, so it does not fire for the last subroutine
       (run-on state "HQ")
       (run-continue state)
-      (changes-val-macro
-        +4 (count (:discard (get-runner)))
-        "milled 4 with Chiyashi (2 + 2, ice trashed before third mill)"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-        (core/continue state :corp nil)
-        (click-prompt state :runner "Yes")
-        (run-jack-out state))
+      (is (changed? [(count (:discard (get-runner))) +4]
+            (auto-pump-and-break state corroder)
+            (core/process-action "continue" state :corp nil)
+            (click-prompt state :runner "Yes")
+            (run-jack-out state))
+          "milled 4 with Chiyashi (2 + 2, ice trashed before third mill)")
       (run-on state "R&D")
       (run-continue state)
-      (changes-val-macro
-        +7 (count (:discard (get-runner)))
-        "milled 6 with Chiyashi, and trashed crypsis"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh crypsis)})
-        (core/continue state :corp nil)
-        (run-jack-out state))
+      (is (changed? [(count (:discard (get-runner))) +7]
+            (auto-pump-and-break state crypsis)
+            (core/process-action "continue" state :corp nil)
+            (run-jack-out state))
+          "milled 6 with Chiyashi, and trashed crypsis")
       (run-on state "R&D")
       (run-continue state)
-      (changes-val-macro
-        0 (count (:discard (get-runner)))
-        "milled 0 with Chiyashi, no AI is installed"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-        (core/continue state :corp nil)
-        (run-jack-out state)))))
+      (is (changed? [(count (:discard (get-runner))) 0]
+            (auto-pump-and-break state corroder)
+            (core/process-action "continue" state :corp nil)
+            (run-jack-out state))
+          "milled 0 with Chiyashi, no AI is installed"))))
 
 (deftest chrysalis
   ;; Chrysalis
@@ -1372,8 +1452,8 @@
       (run-continue-until state :encounter-ice icewall)
       (is (= 3 (get-strength (refresh icewall))) "Ice Wall now at 3 strength")
       (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-      (core/continue state :corp nil)
+      (auto-pump-and-break state corroder)
+      (core/process-action "continue" state :corp nil)
       (run-continue-until state :encounter-ice enigma)
       (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
       (run-continue state :movement)
@@ -1394,9 +1474,9 @@
       (run-continue state)
       (card-subroutine state :corp (refresh chum) 0)
       (run-continue-until state :encounter-ice pachinko)
-      (changes-val-macro -3 (count (:hand (get-runner)))
-                         "3 Damage from passing an unbroken ice"
-                         (run-continue state)))))
+      (is (changed? [(count (:hand (get-runner))) -3]
+            (run-continue state))
+          "3 Damage from passing an unbroken ice"))))
 
 (deftest chum-net-damage-from-ice-ending-the-run
   ;; Net damage from ice ending the run
@@ -1417,10 +1497,10 @@
       (run-continue-until state :approach-ice icewall)
       (rez state :corp icewall)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "No Damage from Ice Wall ending the run"
-                         (core/continue state :corp nil)))))
+      (auto-pump-and-break state corroder)
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (core/process-action "continue" state :corp nil))
+          "No Damage from Ice Wall ending the run"))))
 
 (deftest congratulations
   ;; Congratulations!
@@ -1549,7 +1629,7 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= "Choose 2 cards in your Grip to add to the top of the Stack (second card targeted will be topmost)"
+      (is (= "Choose 2 cards in the grip to add to the top of the stack (second card targeted will be topmost)"
              (:msg (prompt-map :runner)))
           "Runner is prompted")
       (click-card state :runner "Easy Mark")
@@ -1569,7 +1649,7 @@
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
-      (is (= "Choose 1 card in your Grip to add to the top of the Stack (second card targeted will be topmost)"
+      (is (= "Choose 1 card in the grip to add to the top of the stack (second card targeted will be topmost)"
              (:msg (prompt-map :runner)))
           "Runner is prompted")
       (click-card state :runner "Sure Gamble")
@@ -1595,7 +1675,7 @@
   ;; Data Mine - do one net and trash
   (do-game
     (new-game {:corp {:deck ["Data Mine"]}})
-    (play-from-hand state :corp "Data Mine" "Server 1")
+    (play-from-hand state :corp "Data Mine" "New remote")
     (take-credits state :corp)
     (let [dm (get-ice state :remote1 0)]
       (run-on state "Server 1")
@@ -1615,9 +1695,9 @@
       (run-on state "HQ")
       (rez state :corp dw)
       (run-continue state)
-      (changes-val-macro -3 (:credit (get-runner))
-                         "Runner pays 3 credits on Data Ward encounter"
-                         (click-prompt state :runner "Pay 3 [Credits]"))
+      (is (changed? [(:credit (get-runner)) -3]
+            (click-prompt state :runner "Pay 3 [Credits]"))
+          "Runner pays 3 credits on Data Ward encounter")
       (is (no-prompt? state :runner) "Runner doesn't have a prompt"))))
 
 (deftest data-ward-runner-takes-1-tag-on-encounter
@@ -1631,9 +1711,9 @@
       (run-on state "HQ")
       (rez state :corp dw)
       (run-continue state)
-      (changes-val-macro 1 (count-tags state)
-                         "Runner takes 1 tag on Data Ward encounter"
-                         (click-prompt state :runner "Take 1 tag"))
+      (is (changed? [(count-tags state) 1]
+            (click-prompt state :runner "Take 1 tag"))
+          "Runner takes 1 tag on Data Ward encounter")
       (is (no-prompt? state :runner) "Runner doesn't have a prompt"))))
 
 (deftest data-ward-data-ward-ends-run-only-if-runner-is-tagged
@@ -1701,10 +1781,9 @@
     (let [diviner (get-ice state :hq 0)]
       (rez state :corp diviner)
       (run-continue state)
-      (changes-val-macro
-        1 (count (:discard (get-runner)))
-        "1 card is trashed"
-        (fire-subs state diviner))
+      (is (changed? [(count (:discard (get-runner))) 1]
+            (fire-subs state diviner))
+          "1 card is trashed")
       (is (get-run) "Corroder has an even cost, so run continues")))
   (testing "Basic Test with Odd Cost Trash"
     (do-game
@@ -1771,10 +1850,9 @@
         (card-subroutine state :corp drafter 1)
         (is (= :select (prompt-type :corp)))
         (click-card state :corp "Wotan")
-          (changes-val-macro
-            0 (:credit (get-corp))
-            "Costs no credits to install a second ice on HQ"
-            (click-prompt state :corp "HQ"))
+          (is (changed? [(:credit (get-corp)) 0]
+                (click-prompt state :corp "HQ"))
+              "Costs no credits to install a second ice on HQ")
           (is (= "Wotan" (:title (get-ice state :hq 1)))
               "Wotan is now installed in the outermost position protecting HQ"))))
     (testing "from HQ"
@@ -1791,10 +1869,9 @@
           (card-subroutine state :corp drafter 1)
           (is (= :select (prompt-type :corp)))
           (click-card state :corp "Fairchild")
-          (changes-val-macro
-            0 (:credit (get-corp))
-            "Costs no credits to install a second ice on HQ"
-            (click-prompt state :corp "HQ"))
+          (is (changed? [(:credit (get-corp)) 0]
+                (click-prompt state :corp "HQ"))
+              "Costs no credits to install a second ice on HQ")
           (is (= "Fairchild" (:title (get-ice state :hq 1)))
               "Fairchild is now installed in the outermost position protecting HQ")))))
 
@@ -1860,9 +1937,9 @@
       (run-continue-until state :approach-ice eula)
       (rez state :corp eula)
       (run-continue state)
-      (changes-val-macro -3 (:credit (get-runner))
-                         "Runner should only lose 3 credits"
-                         (card-side-ability state :runner eula 0)))))
+      (is (changed? [(:credit (get-runner)) -3]
+            (card-side-ability state :runner eula 0))
+          "Runner should only lose 3 credits"))))
 
 (deftest engram-flush
   ;; Engram Flush
@@ -1878,7 +1955,7 @@
       (click-prompt state :corp "Program")
       (card-subroutine state :corp ef 0)
       (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
-      (is (= 2 (count (prompt-buttons :corp))) "Only options: Corroder and None")
+      (is (= 2 (count (prompt-buttons :corp))) "Only options: Corroder and Done")
       (click-prompt state :corp "Corroder")
       (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
@@ -1959,6 +2036,19 @@
    (is (empty? (:discard (get-corp))))
    (is (not (:run @state)) "Run ended")))
 
+(deftest envelopment-sub-indexed-correctly-7201
+  ;; Envelopment should only have one trash subroutine at index 0 after running out of counters
+  (do-game
+    (new-game {:corp {:hand ["Envelopment"] :credits 10}})
+    (play-from-hand state :corp "Envelopment" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (dotimes [_ 4]
+      (take-credits state :runner)
+      (take-credits state :corp))
+    (is (= 1 (count (:subroutines (get-ice state :hq 0)))))
+    (is (= 0 (:index (first (:subroutines (get-ice state :hq 0))))))))
+
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
@@ -2001,18 +2091,18 @@
     (let [f2p (get-ice state :hq 0)]
       (rez state :corp (refresh f2p))
       (run-continue state)
-      (changes-val-macro -2 (:credit (get-runner))
-                         "Pay 2c to break sub"
-                         (card-side-ability state :runner f2p 0)
-                         (click-prompt state :runner "Add an installed Runner card to the grip"))
+      (is (changed? [(:credit (get-runner)) -2]
+            (card-side-ability state :runner f2p 0)
+            (click-prompt state :runner "Add an installed Runner card to the grip"))
+          "Pay 2c to break sub")
       (card-subroutine state :corp (refresh f2p) 0)
-      (changes-val-macro 1 (count (:hand (get-runner)))
-                         "Bounce Inti to hand"
-                         (click-card state :corp "Inti"))
+      (is (changed? [(count (:hand (get-runner))) 1]
+            (click-card state :corp "Inti"))
+          "Bounce Inti to hand")
       (card-subroutine state :corp (refresh f2p) 0)
-      (changes-val-macro 1 (count (:hand (get-runner)))
-                         "Bounce Scrubber to hand"
-                         (click-card state :corp "Scrubber"))
+      (is (changed? [(count (:hand (get-runner))) 1]
+            (click-card state :corp "Scrubber"))
+          "Bounce Scrubber to hand")
       (card-subroutine state :corp (refresh f2p) 0)
       (is (no-prompt? state :corp) "F2P doesn't fire if no installed cards"))))
 
@@ -2039,6 +2129,27 @@
       (is (= "Choose an installed card to trash" (:msg (prompt-map :runner))))
       (click-card state :runner "Clone Chip")
       (is (empty? (get-hardware state)) "Sac Con trashed"))))
+
+(deftest fairchild-1-0-runner-cannoy-pay
+  ;; Fairchild 1.0 - runner has no credits nor cards installed
+  (do-game
+    (new-game {:corp {:deck ["Fairchild 1.0"]}
+               :runner {:credits 1}})
+    (play-from-hand state :corp "Fairchild 1.0" "HQ")
+    (take-credits state :corp)
+    (let [fc1 (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp fc1)
+      (run-continue state)
+      (card-subroutine state :corp fc1 0)
+      (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
+      (is (changed? [(:credit (get-runner)) -1]
+            (click-prompt state :runner "Pay 1 [Credits]"))
+          "Paid 1c for subroutine")
+      (card-subroutine state :corp fc1 1)
+      (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
+      (click-prompt state :runner "Trash an installed card")
+      (click-prompt state :runner "Done"))))
 
 (deftest fairchild-2-0
   ;; Fairchild 2.0
@@ -2234,6 +2345,107 @@
       (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
       (is (get-run) "The run is still in progress"))))
 
+(deftest formicary-autoresolve-qol-test
+  ;; checks that if autoresolve is set to never, the prompt will be silent
+  ;; this means you can prevent the runner from inferring formicary exists even with 2-3 of them
+  ;; on the field
+  (do-game
+    (new-game {:corp {:deck [(qty "Formicary" 2) "Manegarm Skunkworks"]}})
+    (play-from-hand state :corp "Formicary" "HQ")
+    (play-from-hand state :corp "Formicary" "Archives")
+    (play-from-hand state :corp "Manegarm Skunkworks" "HQ")
+    (take-credits state :corp)
+    (let [f1 (get-ice state :hq 0)
+          f2 (get-ice state :archives 0)
+          skunk (get-content state :hq 0)]
+      ;; Never resolve
+      (card-ability state :corp f1 0)
+      (click-prompt state :corp "Never")
+      (card-ability state :corp f2 0)
+      (click-prompt state :corp "Never")
+      (run-on state "R&D")
+      (run-continue state)
+      (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is on HQ")
+      (is (not (get-run)) "The run has ended without prompting for Formicary")
+      (run-on state "HQ")
+      (rez state :corp skunk)
+      (run-continue state)
+      (run-continue state)
+      (click-prompt state :runner "Spend [Click][Click]")
+      (click-prompt state :runner "No action")
+  )))
+
+(deftest formicary-with-trojan-doesnt-reset-mu-when-moving
+  ;; Rezzing and moving Formicary with trojan doesn't make the trojan mu-cost disappear
+  (do-game
+    (new-game {:corp {:deck ["Formicary"]}
+               :runner {:deck ["Saci"]}})
+    (play-from-hand state :corp "Formicary" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Saci")
+    (click-card state :runner (get-ice state :rd 0))
+    (run-on state "HQ")
+    (is (zero? (get-in @state [:run :position])) "Now approaching server")
+    (run-continue state)
+    (is (changed? [(core/available-mu state) 0]
+          (click-prompt state :corp "Yes"))
+        "Available MU should not change")))
+
+(deftest formicary-tatu-swap
+  ;; swapping Formicary in from Tatu-Bola ability should register Formicary ability
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Formicary"]}})
+    (play-from-hand state :corp "Tatu-Bola" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (rez state :corp (get-ice state :rd 0))
+    (run-continue state)
+    (run-continue state :movement)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Formicary")
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+
+(deftest formicary-project-yagi-uda-swap
+  ;; swapping Formicary in via Project Yagi-Uda should register Formicary ability
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Formicary" "Project Yagi-Uda"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+    (let [pyu (get-content state :remote1 0)]
+      (advance state pyu 4)
+      (score state :corp (refresh pyu)))
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp (get-ice state :rd 0))
+    (click-card state :corp (find-card "Formicary" (:hand (get-corp))))
+    (click-prompt state :runner "No")
+    (run-continue state)
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+
+(deftest formicary-tenma-line-swap
+  ;; swapping Formicary via Tenma Line should keep Formicary ability
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Formicary" "Tenma Line"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Tenma Line" "New remote")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Formicary" "HQ")
+    (let [iw (get-ice state :rd 0)
+          fc (get-ice state :hq 0)
+          tl (get-content state :remote1 0)]
+      (rez state :corp tl)
+      (card-ability state :corp (refresh tl) 0)
+      (click-card state :corp iw)
+      (click-card state :corp fc))
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+
 (deftest free-lunch-basic-behavior
   ;; Basic behavior
   (do-game
@@ -2414,8 +2626,8 @@
         (take-credits state :corp)
         (let [hand    (:hand (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to shuffle.+"
-                           "from HQ into R&D")]
+              log-str (str "Corp uses Gatekeeper to reveal.+"
+                           " from HQ and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -2436,8 +2648,8 @@
         (take-credits state :corp)
         (let [discard    (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to shuffle.+"
-                           "from Archives into R&D")]
+              log-str (str "Corp uses Gatekeeper to reveal.+"
+                           " from Archives and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -2461,8 +2673,8 @@
         (let [hand    (:hand (get-corp))
               discard (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to shuffle.+ from HQ "
-                           "and .+ from Archives into R&D")]
+              log-str (str "Corp uses Gatekeeper to reveal.+ from HQ "
+                           "and .+ from Archives and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -2526,11 +2738,10 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -3 (:credit (get-runner))
-        "Paid 3c for subroutine"
-        (card-subroutine state :corp gf 0)
-        (click-prompt state :runner "Pay 3 [Credits]")))))
+      (is (changed? [(:credit (get-runner)) -3]
+            (card-subroutine state :corp gf 0)
+            (click-prompt state :runner "Pay 3 [Credits]"))
+          "Paid 3c for subroutine"))))
 
 (deftest gold-farmer-lose-credit-for-breaking
   ;; Lose credit for breaking
@@ -2546,14 +2757,13 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -2 (:credit (get-runner))
-        "Paid 1c + 1c for breaking"
-        (card-ability state :runner cor 0)
-        (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")
-        (click-prompt state :runner "Done")
-        (is (last-log-contains? state "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
-            "Correct message")))))
+      (is (changed? [(:credit (get-runner)) -2]
+            (card-ability state :runner cor 0)
+            (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")
+            (click-prompt state :runner "Done")
+            (is (last-log-contains? state "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+            "Correct message"))
+          "Paid 1c + 1c for breaking"))))
 
 (deftest gold-farmer-message-on-auto-pump-and-break
   ;; Message on auto-pump-and-break
@@ -2569,13 +2779,12 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -4 (:credit (get-runner))
-        "Paid 2c + 2c for breaking"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
-        (is (and (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
-                 (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs"))
-            "Correct messages")))))
+      (is (changed? [(:credit (get-runner)) -4]
+            (auto-pump-and-break state cor)
+            (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+                "Correct messages")
+            (is (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")))
+          "Paid 2c + 2c for breaking"))))
 
 (deftest gold-farmer-interaction-with-paperclip
   ;; Interaction with Paperclip
@@ -2591,10 +2800,9 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -4 (:credit (get-runner))
-        "Paid 2c + 2c for breaking"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)})))))
+      (is (changed? [(:credit (get-runner)) -4]
+            (auto-pump-and-break state pc))
+          "Paid 2c + 2c for breaking"))))
 
 (deftest gold-farmer-hippo-interaction-with-corroder
   ;; Hippo interaction with Corroder
@@ -2611,11 +2819,10 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -3 (:credit (get-runner))
-        "Only got taxed once by Gold Farmer"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh cor)})
-        (click-prompt state :runner "Yes")))))
+      (is (changed? [(:credit (get-runner)) -3]
+            (auto-pump-and-break state cor)
+            (click-prompt state :runner "Yes"))
+          "Only got taxed once by Gold Farmer"))))
 
 (deftest gold-farmer-hippo-interaction-with-laamb
   ;; Hippo interaction with Laamb
@@ -2632,11 +2839,10 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -2 (:credit (get-runner))
-        "Never got taxed by Gold Farmer"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh lam)})
-        (click-prompt state :runner "Yes")))))
+      (is (changed? [(:credit (get-runner)) -2]
+            (auto-pump-and-break state lam)
+            (click-prompt state :runner "Yes"))
+          "Never got taxed by Gold Farmer"))))
 
 (deftest gold-farmer-hippo-interaction-with-paperclip
   ;; Hippo interaction with Paperclip
@@ -2653,11 +2859,10 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -2 (:credit (get-runner))
-        "Never got taxed by Gold Farmer"
-        (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh pc)})
-        (click-prompt state :runner "Yes")))))
+      (is (changed? [(:credit (get-runner)) -2]
+            (auto-pump-and-break state pc)
+            (click-prompt state :runner "Yes"))
+          "Never got taxed by Gold Farmer"))))
 
 (deftest gold-farmer-gold-farmer-does-not-trigger-when-breaking-with-grappling-hook-4975
   ;; Gold Farmer does not trigger when breaking with Grappling Hook #4975
@@ -2673,11 +2878,10 @@
       (run-on state "HQ")
       (rez state :corp gf)
       (run-continue state)
-      (changes-val-macro
-        -1 (:credit (get-runner))
-        "Get taxed 1c for breaking with Grappling Hook"
-        (card-ability state :runner gh 0)
-        (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")))))
+      (is (changed? [(:credit (get-runner)) -1]
+            (card-ability state :runner gh 0)
+            (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))
+          "Get taxed 1c for breaking with Grappling Hook"))))
 
 (deftest gyri-labyrinth
   ;; Gyri Labyrinth - reduce runner handsize by 2 until beginning of corp's next turn
@@ -3249,9 +3453,9 @@
       ;; Inazuma subs prevented break on next piece of ice
       (card-ability state :runner bukhgalter "Break 1 Sentry subroutine")
       (is (no-prompt? state :runner) "Bukhgalter can't break so no prompt")
-      (changes-val-macro -2 (count (:hand (get-runner)))
-                         "2 net damage from Cortex Lock"
-                         (fire-subs state (refresh cortex-lock)))
+      (is (changed? [(count (:hand (get-runner))) -2]
+            (fire-subs state (refresh cortex-lock)))
+          "2 net damage from Cortex Lock")
       ;; Next piece of ice is fine to break again
       (run-continue-until state :approach-ice ice-wall)
       (rez state :corp ice-wall)
@@ -3303,26 +3507,23 @@
       (run-continue-until state :approach-ice battlement)
       (rez state :corp battlement)
       (run-continue state)
-      (changes-val-macro
-        -1 (:credit (get-runner))
-        "Runner loses 1 credit only for boosting strength"
-        (card-ability state :runner corroder 1))
-      (changes-val-macro
-        -2 (:credit (get-runner))
-        "Runner should lose 2 credits, 1 for Interrupt 0, 1 for base ability"
-        (card-ability state :runner corroder 0)
-        (click-prompt state :runner "End the run")
-        (click-prompt state :runner "Done"))
+      (is (changed? [(:credit (get-runner)) -1]
+            (card-ability state :runner corroder 1))
+          "Runner loses 1 credit only for boosting strength")
+      (is (changed? [(:credit (get-runner)) -2]
+            (card-ability state :runner corroder 0)
+            (click-prompt state :runner "End the run")
+            (click-prompt state :runner "Done"))
+          "Runner should lose 2 credits, 1 for Interrupt 0, 1 for base ability")
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue-until state :encounter-ice battlement)
-      (changes-val-macro
-        -1 (:credit (get-runner))
-        "Runner should lose 1 for base ability as Interrupt 0 sub ends at end of run"
-        (card-ability state :runner corroder 0)
-        (click-prompt state :runner "End the run")
-        (click-prompt state :runner "Done"))
+      (is (changed? [(:credit (get-runner)) -1]
+            (card-ability state :runner corroder 0)
+            (click-prompt state :runner "End the run")
+            (click-prompt state :runner "Done"))
+          "Runner should lose 1 for base ability as Interrupt 0 sub ends at end of run")
       (run-continue state :movement)
       (run-jack-out state))))
 
@@ -3387,10 +3588,54 @@
     (play-from-hand state :corp "Mind Game" "New remote")
     (rez state :corp (get-ice state :remote2 0))
     (rez state :corp (get-ice state :remote3 0))
-    (changes-val-macro
-      -5 (:credit (get-corp))
-      "7 - 2 = 5 credits"
-      (rez state :corp (get-ice state :remote1 0)))))
+    (is (changed? [(:credit (get-corp)) -5]
+          (rez state :corp (get-ice state :remote1 0)))
+        "7 - 2 = 5 credits")))
+
+(deftest jaguarundi-no-threat
+  (do-game
+    (new-game {:corp {:hand ["City Works Project" "Jaguarundi"]}})
+    (play-and-score state "City Works Project")
+    (play-from-hand state :corp "Jaguarundi" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (is (no-prompt? state :runner) "no jaguarundi prompt")
+    (fire-subs state (get-ice state :hq 0))
+    (is (= 1 (count-tags state)))
+    (is (= 1 (:brain-damage (get-runner))))))
+
+(deftest jaguarundi-jesminder-interaction
+  (do-game
+    (new-game {:corp {:hand ["Jaguarundi"]}
+               :runner {:id "Jesminder Sareen: Girl Behind the Curtain"}})
+    (play-from-hand state :corp "Jaguarundi" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (is (changed? [(:brain-damage (get-runner)) 0]
+          (fire-subs state (get-ice state :hq 0)))
+        "Got no core damage")))
+
+(deftest jaguarundi-threat-ability
+  (do-game
+    (new-game {:corp {:hand ["City Works Project" "Hostile Takeover" "Jaguarundi"]}})
+    (core/gain state :corp :click 10)
+    (core/gain state :corp :credit 10)
+    (play-and-score state "City Works Project")
+    (play-and-score state "Hostile Takeover")
+    (is (= 2 (count (:scored (get-corp)))))
+    (play-from-hand state :corp "Jaguarundi" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (is (changed? [(:click (get-runner)) -1]
+          (click-prompt state :runner "Spend [Click]"))
+        "spent a click on jag")
+    (is (no-prompt? state :runner) "no jaguarundi prompt")))
 
 (deftest jua-encounter-effect-prevent-runner-from-installing-cards-for-the-rest-of-the-turn
   ;; Encounter effect - Prevent Runner from installing cards for the rest of the turn
@@ -3644,32 +3889,26 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp (get-hardware state 0))
       (is (= :select (prompt-type :corp)) "Hardware cannot be selected")
-      (changes-val-macro 2 (:credit (get-runner))
-        "Runner gained 2 Credits thanks to Klevetnik's on-rez ability"
-        (click-card state :corp nfl1))
-      (changes-val-macro 0 (:credit (get-runner))
-        "No Free Lunch was blanked"
-        (card-ability state :runner (refresh nfl1) 0))
-      (changes-val-macro 0 (:credit (get-runner))
-        "Both No Free Lunches were blanked"
-        (card-ability state :runner (refresh nfl2) 0))
+      (is (changed? [(:credit (get-runner)) 2]
+            (click-card state :corp nfl1))
+          "Runner gained 2 Credits thanks to Klevetnik's on-rez ability")
+      (is (changed? [(:credit (get-runner)) 0]
+            (card-ability state :runner (refresh nfl1) 0))
+          "No Free Lunch was blanked")
+      (is (changed? [(:credit (get-runner)) 3]
+            (card-ability state :runner (refresh nfl2) 0))
+          "Other No Free Lunch was not blanked")
       (run-continue state)
       (card-subroutine state :corp klev 0)
       (is (not (:run @state)) "The run should have ended")
       (take-credits state :runner)
-      (changes-val-macro 0 (:credit (get-runner))
-        "No Free Lunch still blank"
-        (card-ability state :runner (refresh nfl1) 0))
-      (changes-val-macro 0 (:credit (get-runner))
-        "Both No Free Lunches still blank"
-        (card-ability state :runner (refresh nfl2) 0))
+      (is (changed? [(:credit (get-runner)) 0]
+            (card-ability state :runner (refresh nfl1) 0))
+          "No Free Lunch still blank")
       (take-credits state :corp)
-      (changes-val-macro 3 (:credit (get-runner))
-        "No Free Lunch unblanked"
-        (card-ability state :runner (refresh nfl1) 0))
-      (changes-val-macro 3 (:credit (get-runner))
-        "Both No Free Lunches unblanked"
-        (card-ability state :runner (refresh nfl2) 0)))))
+      (is (changed? [(:credit (get-runner)) 3]
+            (card-ability state :runner (refresh nfl1) 0))
+          "No Free Lunch unblanked"))))
 
 (deftest klevetnik-wrong-server
   (do-game
@@ -3708,23 +3947,23 @@
       (click-prompt state :runner "Yes")
       (rez state :corp klev)
       (click-prompt state :corp "Yes")
-      (changes-val-macro 2 (:credit (get-runner))
-        "Runner gained 2 Credits thanks to Klevetnik's on-rez ability"
-        (click-card state :corp nfl))
-      (changes-val-macro 0 (:credit (get-runner))
-        "No Free Lunch was blanked"
-        (card-ability state :runner (refresh nfl) 0))
+      (is (changed? [(:credit (get-runner)) 2]
+            (click-card state :corp nfl))
+          "Runner gained 2 Credits thanks to Klevetnik's on-rez ability")
+      (is (changed? [(:credit (get-runner)) 0]
+            (card-ability state :runner (refresh nfl) 0))
+          "No Free Lunch was blanked")
       (run-continue state)
       (card-subroutine state :corp klev 0)
       (take-credits state :corp) ;; End of the Corp current turn
-      (changes-val-macro 0 (:credit (get-runner))
-        "No Free Lunch still blank"
-        (card-ability state :runner (refresh nfl) 0))
+      (is (changed? [(:credit (get-runner)) 0]
+            (card-ability state :runner (refresh nfl) 0))
+          "No Free Lunch still blank")
       (take-credits state :runner)
       (take-credits state :corp) ;; End of the Corp next turn
-      (changes-val-macro 3 (:credit (get-runner))
-        "No Free Lunch unblanked"
-        (card-ability state :runner (refresh nfl) 0)))))
+      (is (changed? [(:credit (get-runner)) 3]
+            (card-ability state :runner (refresh nfl) 0))
+          "No Free Lunch unblanked"))))
 
 (deftest komainu-subroutine-gain-loss-ability
   ;; Subroutine gain/loss ability
@@ -3851,9 +4090,9 @@
                       :credits 100}
                :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
     (play-from-hand state :corp "Karunā" "HQ")
-    (rez state :corp (get-ice state :hq 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :hq 0))
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)
@@ -3887,7 +4126,7 @@
                       :credits 100}
                :runner {:hand [(qty "Sure Gamble" 3) (qty "Easy Mark" 3)]}})
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)
@@ -3906,7 +4145,7 @@
                :runner {:hand []
                         :deck [(qty "Sure Gamble" 3)]}})
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)
@@ -3925,7 +4164,7 @@
                :runner {:hand []
                         :deck ["Sure Gamble"]}})
     (play-from-hand state :corp "Loki" "R&D")
-    (rez state :corp (get-ice state :rd 0) {:ignore-cost :all-costs})
+    (rez state :corp (get-ice state :rd 0))
     (take-credits state :corp)
     (run-on state "R&D")
     (run-continue state)
@@ -4192,6 +4431,22 @@
       (is (= 1 (core/get-virus-counters state (second (:hosted (refresh m)))))
           "Second parasite gains a virus counter on rezzed Magnet"))))
 
+(deftest magnet-should-not-reset-program-mu
+  ;; Rezzing Magnet should not affect MU cost of hosted programs
+  (do-game
+    (new-game {:corp {:deck ["Magnet"]}
+               :runner {:deck ["Saci"]}})
+    (play-from-hand state :corp "Magnet" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Saci")
+    (click-card state :runner (get-ice state :rd 0))
+    (is (changed? [(core/available-mu state) 0]
+          (rez state :corp (get-ice state :rd 0)))
+        "Available MU should not change")
+    (is (changed? [(core/available-mu state) 0]
+          (derez state :corp (get-ice state :rd 0)))
+        "Available MU should not change")))
+
 (deftest marker
   ;; Marker
   (do-game
@@ -4227,11 +4482,10 @@
    (let [money (get-ice state :hq 0)]
      (rez state :corp (refresh money))
      (run-continue state)
-     (changes-val-macro
-      2 (:credit (get-corp))
-      "gained 2c from Maskirovka"
-      (fire-subs state (refresh money))
-      (is (not (:run @state)) "Run ended")))))
+     (is (changed? [(:credit (get-corp)) 2]
+           (fire-subs state (refresh money))
+           (is (not (:run @state)) "Run ended"))
+         "gained 2c from Maskirovka"))))
 
 (deftest masvingo
   ;; Masvingo
@@ -4339,21 +4593,19 @@
     (new-game {:corp {:hand ["Mestnichestvo"] :credits 10}})
     (play-from-hand state :corp "Mestnichestvo" "HQ")
     (let [mes (get-ice state :hq 0)]
-      (core/advance state :corp {:card (refresh mes)})
+      (click-advance state :corp (refresh mes))
       (take-credits state :corp)
       (run-on state :hq)
       (rez state :corp (refresh mes))
       (run-continue state)
-      (changes-val-macro
-        -3 (:credit (get-runner))
-        "Runner lost 3 from encounter effect"
-        (is (= 1 (get-counters (refresh mes) :advancement)) "Starts with 1 counter")
-        (click-prompt state :corp "Yes")
-        (is (= 0 (get-counters (refresh mes) :advancement)) "Spend a counter for the ability"))
-      (changes-val-macro
-        -2 (:credit (get-runner))
-        "Runner loses remaining credits from subroutines"
-        (fire-subs state (refresh mes))))
+      (is (changed? [(:credit (get-runner)) -3]
+            (is (= 1 (get-counters (refresh mes) :advancement)) "Starts with 1 counter")
+            (click-prompt state :corp "Yes")
+            (is (= 0 (get-counters (refresh mes) :advancement)) "Spend a counter for the ability"))
+          "Runner lost 3 from encounter effect")
+      (is (changed? [(:credit (get-runner)) -2]
+            (fire-subs state (refresh mes)))
+          "Runner loses remaining credits from subroutines"))
     (is (not (:run @state)) "Run ended")))
 
 (deftest metamorph-with-two-installed-ice
@@ -4370,8 +4622,8 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (fire-subs state (get-ice state :archives 0))
-    (is (= ["Swap two pieces of ice"] (prompt-buttons :corp)) "Only ice option")
-    (click-prompt state :corp "Swap two pieces of ice")
+    (is (= ["Swap 2 pieces of ice"] (prompt-buttons :corp)) "Only ice option")
+    (click-prompt state :corp "Swap 2 pieces of ice")
     (click-card state :corp "Ice Wall")
     (click-card state :corp "Vanilla")
     (is (= "Vanilla" (:title (get-ice state :hq 0))))
@@ -4391,8 +4643,8 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (fire-subs state (get-ice state :archives 0))
-    (is (= ["Swap two non-ice"] (prompt-buttons :corp)) "Only non-ice option")
-    (click-prompt state :corp "Swap two non-ice")
+    (is (= ["Swap 2 non-ice"] (prompt-buttons :corp)) "Only non-ice option")
+    (click-prompt state :corp "Swap 2 non-ice")
     (click-card state :corp "Allele Repression")
     (click-card state :corp "Hostile Takeover")
     (is (= "Hostile Takeover" (:title (get-content state :remote1 0))))
@@ -4417,7 +4669,32 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (fire-subs state (get-ice state :archives 0))
-    (is (= ["Swap two pieces of ice" "Swap two non-ice"] (prompt-buttons :corp)) "Both options available")))
+    (is (= ["Swap 2 pieces of ice" "Swap 2 non-ice"] (prompt-buttons :corp)) "Both options available")))
+
+(deftest mic
+  ;; M.I.C.
+  (do-game
+    (new-game {:corp {:hand ["M.I.C."]}})
+    (play-from-hand state :corp "M.I.C." "HQ")
+    (take-credits state :corp)
+    (let [mic (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp mic)
+      (run-continue state)
+      (is (changed? [(:click (get-runner)) -2]
+            (fire-subs state mic))
+          "Runner lost 2 clicks")
+      (is (nil? (:run @state)) "M.I.C. ended the run")
+      (core/gain state :runner :click 1)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (changed? [(:click (get-runner)) -1]
+            (card-ability state :corp mic 0)
+            (click-prompt state :runner "Spend [Click]"))
+          "Runner spent 1 click to pay M.I.C. ability")
+      (is (:run @state) "Run is still going")
+      (is (= :movement (:phase (:run @state))) "Encounter with M.I.C. is over")
+      (is (= 1 (count (:discard (get-corp)))) "M.I.C. got trashed"))))
 
 (deftest mind-game-server-redirection
   ;; Server redirection
@@ -5153,7 +5430,7 @@
           runner-credits (:credit (get-runner))]
       (rez state :corp pachinko)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+      (auto-pump-and-break state corroder)
       (is (= (- runner-credits 4) (:credit (get-runner))) "Autopump subtracted correct amount of credits"))))
 
 (deftest pachinko-etr-with-tags
@@ -5204,7 +5481,7 @@
           corroder (get-program state 0)]
       (rez state :corp paperwall)
       (run-continue state)
-      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh corroder)})
+      (auto-pump-and-break state corroder)
       (is (nil? (get-ice state :hq 0)) "Paper Wall was trashed"))))
 
 (deftest peeping-tom
@@ -5257,6 +5534,41 @@
       (is (= 3 (get-counters (refresh pha) :advancement)) "Pharos has 3 adv tokens")
       (is (= 10 (get-strength (refresh pha))) "Pharos is now at 10 strength"))))
 
+(deftest phonuetria-tag-only-when-passing-itself
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund" "Phoneutria" "Vanilla"]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Phoneutria" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 1))
+    (rez state :corp (get-ice state :hq 0))
+    (is (changed? [(count-tags state) 0]
+          (run-continue state :encounter-ice)
+          (run-continue state :pass-ice)
+          (run-continue state :approach-ice))
+        "gained no tag for passing vanilla")
+    (run-continue state :encounter-ice)
+    (is (changed? [(count-tags state) 1]
+          (run-continue state :pass-ice))
+        "gained 1 tag for phoneutria")))
+
+(deftest phonuetria-no-tag
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund" "Phoneutria"]}
+               :runner {:hand [(qty "Sure Gamble" 3)]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Phoneutria" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (is (changed? [(count-tags state) 0]
+          (run-continue state :encounter-ice)
+          (run-continue state :pass-ice))
+        "gained no tag for passing phoneutria")))
+
 (deftest ping
   ;; Ping
   (do-game
@@ -5286,20 +5598,17 @@
     (run-on state :hq)
     (let [p1 (get-ice state :hq 1)
           p2 (get-ice state :hq 0)]
-      (changes-val-macro
-        -1 (:click (get-runner))
-        "lost a click to the rez"
-        (rez state :corp (refresh p1)))
+      (is (changed? [(:click (get-runner)) -1]
+            (rez state :corp (refresh p1)))
+          "lost a click to the rez")
       (run-continue state)
       (rez state :corp (refresh p2))
-      (changes-val-macro
-        -2 (:credit (get-runner))
-        "lost 1 credit for 1 rezzed harmonic"
-        (fire-subs state (refresh p1)))
-      (changes-val-macro
-        -1 (:click (get-runner))
-        "spent 1 click"
-        (click-prompt state :runner "Spend [Click]")))))
+      (is (changed? [(:credit (get-runner)) -2]
+            (fire-subs state (refresh p1)))
+          "lost 1 credit for 1 rezzed harmonic")
+      (is (changed? [(:click (get-runner)) -1]
+            (click-prompt state :runner "Spend [Click]"))
+          "spent 1 click"))))
 
 (deftest pulse-run-last-click
   ;; Pulse - cannot spend click when running last click
@@ -5332,10 +5641,9 @@
       (take-credits state :corp)
       (run-on state "R&D")
       (run-continue state)
-      (changes-val-macro
-        3 (core/get-strength (refresh iw))
-        "Ice Wal should gain strengh"
-        (fire-subs state red-tape)))))
+      (is (changed? [(core/get-strength (refresh iw)) 3]
+            (fire-subs state red-tape))
+          "Ice Wal should gain strengh"))))
 
 (deftest red-tape-strength-after-rez
   ;; Red Tape
@@ -5351,11 +5659,10 @@
       (take-credits state :corp)
       (run-on state "R&D")
       (run-continue state)
-      (changes-val-macro
-        3 (core/get-strength (refresh iw))
-        "Ice Wall should gain strengh"
-        (fire-subs state red-tape)
-        (rez state :corp iw)))))
+      (is (changed? [(core/get-strength (refresh iw)) 3]
+            (fire-subs state red-tape)
+            (rez state :corp iw))
+          "Ice Wall should gain strengh"))))
 
 
 (deftest resistor-strength-based-on-tags
@@ -5520,17 +5827,17 @@
       (rez state :corp sai)
       (run-continue state)
       (click-prompt state :corp "Event")
-      (changes-val-macro -6 (count (:hand (get-runner)))
-                         "6 damage in total"
-                         (core/play-unbroken-subroutines state :corp {:card (refresh sai)}))
+      (is (changed? [(count (:hand (get-runner))) -6]
+            (fire-subs state (refresh sai)))
+          "6 damage in total")
       (run-continue state :movement)
       (run-jack-out state)
       (run-on state "HQ")
       (run-continue state)
       (click-prompt state :corp "Hardware")
-      (changes-val-macro -3 (count (:hand (get-runner)))
-                         "3 damage in total"
-                         (core/play-unbroken-subroutines state :corp {:card (refresh sai)})))))
+      (is (changed? [(count (:hand (get-runner))) -3]
+            (fire-subs state (refresh sai)))
+          "3 damage in total"))))
 
 (deftest saisentan-preventing-damage
   ;; Preventing damage
@@ -5548,19 +5855,19 @@
       (rez state :corp sai)
       (run-continue state)
       (click-prompt state :corp "Event")
-      (core/play-unbroken-subroutines state :corp {:card (refresh sai)})
-      (changes-val-macro -1 (count (:hand (get-runner)))
-                         "Let through first sub damage"
-                         (click-prompt state :runner "Done"))
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "Prevent special damage"
-                         (card-ability state :runner cal 0))
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "Prevent second sub damage"
-                         (card-ability state :runner cal 0))
-      (changes-val-macro 0 (count (:hand (get-runner)))
-                         "Prevent third sub damage"
-                         (card-ability state :runner cal 0))
+      (fire-subs state (refresh sai))
+      (is (changed? [(count (:hand (get-runner))) -1]
+            (click-prompt state :runner "Done"))
+          "Let through first sub damage")
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (card-ability state :runner cal 0))
+          "Prevent special damage")
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (card-ability state :runner cal 0))
+          "Prevent second sub damage")
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (card-ability state :runner cal 0))
+          "Prevent third sub damage")
       (is (no-prompt? state :runner) "No more damage prevention triggers"))))
 
 (deftest salvage-subroutine-gaining-ability
@@ -6047,7 +6354,7 @@
     (let [sm (get-ice state :hq 0)]
       (rez state :corp sm))
     (run-continue state)
-    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal the top 3 cards in the stack: Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), and Sure Gamble \\(Event\\).") "3 top cards revelaed")))
+    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), and Sure Gamble \\(Event\\) from the top of the stack.") "3 top cards revelaed")))
 
 (deftest slot-machine-subroutines
   ;; Subroutines
@@ -6063,10 +6370,9 @@
         (let [sm (get-ice state :hq 0)]
           (rez state :corp sm)
           (run-continue state)
-          (changes-val-macro
-            0 (:credit (get-corp))
-            "Corp does not gain any credits when runner has 1 or less cards in deck"
-            (card-subroutine state :corp sm 1)))))
+          (is (changed? [(:credit (get-corp)) 0]
+                (card-subroutine state :corp sm 1))
+              "Corp does not gain any credits when runner has 1 or less cards in deck"))))
     (testing "2 same cards in deck"
       (do-game
         (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
@@ -6078,10 +6384,9 @@
         (let [sm (get-ice state :hq 0)]
           (rez state :corp sm)
           (run-continue state)
-          (changes-val-macro
-            3 (:credit (get-corp))
-            "Corp gains credits when runner has 2 same cards in deck"
-            (card-subroutine state :corp sm 1)))))
+          (is (changed? [(:credit (get-corp)) 3]
+                (card-subroutine state :corp sm 1))
+              "Corp gains credits when runner has 2 same cards in deck"))))
     (testing "2 different cards in deck. Issue #4884"
       (do-game
         (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
@@ -6093,10 +6398,9 @@
         (let [sm (get-ice state :hq 0)]
           (rez state :corp sm)
           (run-continue state)
-          (changes-val-macro
-            0 (:credit (get-corp))
-            "Corp does not gain any credits when runner has 2 cards with different types in deck"
-            (card-subroutine state :corp sm 1)))))
+          (is (changed? [(:credit (get-corp)) 0]
+                (card-subroutine state :corp sm 1))
+              "Corp does not gain any credits when runner has 2 cards with different types in deck"))))
     (testing "Enough cards in deck"
       (do-game
         (new-game {:corp {:hand ["Slot Machine" "Ice Wall"]}
@@ -6107,10 +6411,9 @@
         (let [sm (get-ice state :hq 0)]
           (rez state :corp sm)
           (run-continue state)
-          (changes-val-macro
-            3 (:credit (get-corp))
-            "Corp does not gain any credits when runner has 1 or less cards in deck"
-            (card-subroutine state :corp sm 1))))))
+          (is (changed? [(:credit (get-corp)) 3]
+                (card-subroutine state :corp sm 1))
+              "Corp does not gain any credits when runner has 1 or less cards in deck")))))
   (testing "Subroutine 3 should only fire when there are at least 2 cards in deck"
     (testing "Only 1 card in deck"
       (do-game
@@ -6137,11 +6440,10 @@
               sm (get-ice state :hq 0)]
           (rez state :corp sm)
           (run-continue state)
-          (changes-val-macro
-            3 (get-counters (refresh iw) :advancement)
-            "Corp does not gain any credits when runner has 1 or less cards in deck"
-            (card-subroutine state :corp sm 2)
-            (click-card state :corp iw)))))))
+          (is (changed? [(get-counters (refresh iw) :advancement) 3]
+                (card-subroutine state :corp sm 2)
+                (click-card state :corp iw))
+              "Corp does not gain any credits when runner has 1 or less cards in deck"))))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run
@@ -6180,6 +6482,53 @@
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
 
+(deftest starlit-knight
+  (do-game
+    (new-game {:corp {:hand ["Starlit Knight" "Vanity Project"]
+                      :credits 20}})
+    (play-from-hand state :corp "Starlit Knight" "HQ")
+    (take-credits state :corp)
+    (let [sk (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp sk)
+      (run-continue state)
+      (is (changed? [(count-tags state) 2]
+            (fire-subs state (refresh sk)))
+          "Runner got 2 tags")
+      (run-continue state :movement)
+      (run-jack-out state)
+      (take-credits state :runner)
+      (play-and-score state "Vanity Project")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (is (= ["Give the Runner 1 tag"
+              "Give the Runner 1 tag"
+              "End the run"
+              "End the run"]
+             (map :label (:subroutines (refresh sk)))))
+      (is (changed? [(count-tags state) 2]
+            (fire-subs state (refresh sk)))
+          "Runner got 2 more tags")
+      (is (not (:run @state)) "Run ended"))))
+
+(deftest starlit-knight-acme
+  (do-game
+    (new-game {:corp {:id "Acme Consulting: The Truth You Need"
+                      :hand ["Starlit Knight" "Vanity Project"]
+                      :credits 20}})
+    (play-from-hand state :corp "Starlit Knight" "HQ")
+    (let [sk (get-ice state :hq 0)]
+      (rez state :corp sk)
+      (play-and-score state "Vanity Project")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-continue state)
+      (is (= ["Give the Runner 1 tag"
+              "Give the Runner 1 tag"
+              "End the run"]
+             (map :label (:subroutines (refresh sk))))))))
+
 (deftest stavka
   (do-game
    (new-game {:corp {:hand ["Stavka" "Prisec"] :credits 10}
@@ -6192,17 +6541,29 @@
    (run-on state :hq)
    (let [sta (get-ice state :hq 0)]
      (rez state :corp sta)
-     (changes-val-macro
-      5 (get-strength (refresh sta))
-      "Stavka gains 5str"
-      (click-prompt state :corp "Yes")
-      (click-card state :corp "Prisec"))
+     (is (changed? [(get-strength (refresh sta)) 5]
+           (click-prompt state :corp "Yes")
+           (click-card state :corp "Prisec"))
+         "Stavka gains 5str")
      (run-continue state)
      (fire-subs state (refresh sta))
      (click-card state :corp (get-program state 0))
      (click-card state :corp (get-program state 0)))
    (is (= 2 (count (:discard (get-runner)))) "Both rezekis trashed")
    (is (= 1 (count (:discard (get-corp)))) "Prisec trashed")))
+
+(deftest stavka-outside-of-run
+  ;; Stavka should not gain strength if rez ability triggered outside of run
+  (do-game
+   (new-game {:corp {:hand ["Stavka" "Prisec"]}})
+   (play-from-hand state :corp "Stavka" "HQ")
+   (play-from-hand state :corp "Prisec" "HQ")
+   (let [sta (get-ice state :hq 0)]
+     (rez state :corp sta)
+     (is (changed? [(get-strength (refresh sta)) 0]
+           (click-prompt state :corp "Yes")
+           (click-card state :corp "Prisec"))
+         "Stavka gains no strength outside of a run"))))
 
 (deftest surveyor
   ;; Surveyor ice strength
@@ -6336,10 +6697,9 @@
       (click-prompt state :runner "The Corp trashes a program")
       (click-card state :corp "Corroder")
       (is (find-card "Corroder" (:discard (get-runner))))
-      (changes-val-macro
-        -3 (:credit (get-runner))
-        "Costs 3"
-        (click-prompt state :runner "Pay 3 [Credits]")))))
+      (is (changed? [(:credit (get-runner)) -3]
+            (click-prompt state :runner "Pay 3 [Credits]"))
+          "Costs 3"))))
 
 (deftest swordsman-can-t-be-broken-with-ai
   ;; Can't be broken with AI
@@ -6416,6 +6776,35 @@
               "End the run unless the Runner shuffles the grip into the stack"
               "Done"]
              (prompt-buttons :runner))))))
+
+(deftest tatu-bola
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Guard"]}})
+    (play-from-hand state :corp "Tatu-Bola" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (run-continue state)
+    (run-continue state :movement)
+    (is (changed? [(:credit (get-corp)) 4]
+          (click-prompt state :corp "Yes")
+          (click-prompt state :corp "Guard"))
+        "Corp gained 4 credits")
+    (is (= "Tatu-Bola" (-> (get-corp) :hand first :title)))
+    (is (= "Guard" (:title (get-ice state :archives 0))))))
+
+(deftest tatu-bola-fake-prompt
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Hedge Fund"]}})
+    (play-from-hand state :corp "Tatu-Bola" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (run-continue state)
+    (run-continue state)
+    (is (changed? [(:credit (get-corp)) 0]
+          (click-prompt state :corp "OK"))
+        "Corp gained no credits")))
 
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
   ;; Thimblerig does not open a prompt if it's the only piece of ice
@@ -6553,11 +6942,11 @@
       (score-agenda state :corp ht)
       (is (= 1 (count (:scored (get-corp)))) "Agenda scored")
       (is (= 12 (:credit (get-corp))) "Gained 7 credits")
-      (rez state :corp ti)
+      (rez state :corp ti {:expect-rez false})
       (click-prompt state :corp "No") ; don't use alternative cost
       (is (= 3 (:credit (get-corp))) "Spent 9 to Rez")
       (derez state :corp (refresh ti))
-      (rez state :corp ti)
+      (rez state :corp ti {:expect-rez false})
       (click-prompt state :corp "Yes") ; use alternative cost
       (click-card state :corp "Hostile Takeover")
       (is (= 3 (:credit (get-corp))) "Still on 3c")
@@ -6718,8 +7107,8 @@
           ngo (get-content state :remote2 0)]
       (rez state :corp tg)
       (is (= 3 (count (:subroutines (refresh tg)))) "Tour Guide has a total of 3 subs")
-      (core/advance state :corp {:card (refresh ngo)})
-      (core/advance state :corp {:card (refresh ngo)})
+      (click-advance state :corp (refresh ngo))
+      (click-advance state :corp (refresh ngo))
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 1 [Credits] to trash")
@@ -6778,6 +7167,36 @@
       (is (= 1 (count (:choices (prompt-map :runner)))) "Only one choice in prompt")
       (click-prompt state :runner "No action")
       (is (= 0 (count (:discard (get-corp)))) "PAD Campaign didn't get trashed"))))
+
+(deftest tree-line
+  (do-game
+    (new-game {:corp {:hand ["Tree Line"]}})
+    (play-from-hand state :corp "Tree Line" "HQ")
+    (let [tl (get-ice state :hq 0)]
+      (rez state :corp tl)
+      (is (changed? [(core/get-strength (refresh tl)) 1]
+            (advance state tl 1))
+          "Tree Line got 1 strength")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (changed? [(:credit (get-corp)) 1]
+            (fire-subs state (refresh tl)))
+          "Corp got 1 credit")
+      (is (not (:run @state)) "Run ended"))))
+
+(deftest tree-line-expend
+  (do-game
+    (new-game {:corp {:hand ["Tree Line" "Enigma"]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (let [enigma (get-ice state :hq 0)
+          tl (first (:hand (get-corp)))]
+      (expend state :corp tl)
+      (is (changed? [(get-counters (refresh enigma) :advancement) 3]
+            (click-card state :corp enigma))
+          "Enigma got 3 advancement counters")
+      (is (= 4 (:credit (get-corp))) "Expend cost was payed")
+      (is (= 1 (count (:discard (get-corp)))) "Tree Line discarded as cost"))))
 
 (deftest troll-giving-the-runner-a-choice-on-successful-trace-shouldn-t-make-runner-pay-trace-first-5335
   ;; Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335
@@ -6860,12 +7279,11 @@
                       :hand ["Turnpike"]}})
     (play-from-hand state :corp "Turnpike" "HQ")
     (take-credits state :corp)
-    (changes-val-macro
-      -1 (:credit (get-runner))
-      "Runner loses 1 credit to Turnpike"
-      (run-on state "HQ")
-      (rez state :corp (get-ice state :hq 0))
-      (run-continue state))))
+    (is (changed? [(:credit (get-runner)) -1]
+          (run-on state "HQ")
+          (rez state :corp (get-ice state :hq 0))
+          (run-continue state))
+        "Runner loses 1 credit to Turnpike")))
 
 (deftest tyr-click-gain-by-bioroid-breaking
   ;; Click gain by bioroid breaking
@@ -6919,26 +7337,26 @@
           carm (get-program state 0)]
       (run-on state :hq)
       (rez state :corp ut-hq)
-      (changes-val-macro 2 (:credit (get-runner))
-        "Runner gained 2 Credits"
-        (click-prompt state :corp "Yes"))
+      (is (changed? [(:credit (get-runner)) 2]
+            (click-prompt state :corp "Yes"))
+          "Runner gained 2 Credits")
       (run-continue state)
       (card-ability state :runner carm 0)
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub")
-      (core/play-unbroken-subroutines state :corp {:card (refresh ut-hq)})
+      (fire-subs state (refresh ut-hq))
       (is (= 2 (count (:hand (get-runner)))) "Runner took no net damage")
       (is (= 1 (count-tags state)) "Runner took 1 tag")
-      (changes-val-macro 2 (count (:hand (get-corp)))
-        "Corp drew 2 cards"
-        (click-prompt state :corp "Yes"))
+      (is (changed? [(count (:hand (get-corp))) 2]
+            (click-prompt state :corp "Yes"))
+          "Corp drew 2 cards")
       (run-continue state)
       (run-jack-out state)
       (run-on state :rd)
       (rez state :corp ut-rd)
-      (changes-val-macro 0 (:credit (get-runner))
-        "Runner gained no Credits"
-        (click-prompt state :corp "No"))
+      (is (changed? [(:credit (get-runner)) 0]
+            (click-prompt state :corp "No"))
+          "Runner gained no Credits")
       (run-continue state)
       (card-ability state :runner carm 0)
       (click-prompt state :runner "Do 2 net damage")
@@ -6980,19 +7398,19 @@
           carm (get-program state 0)]
       (run-on state :hq)
       (rez state :corp ut)
-      (changes-val-macro 2 (:credit (get-runner))
-        "Runner gained 2 Credits"
-        (click-prompt state :corp "Yes"))
+      (is (changed? [(:credit (get-runner)) 2]
+            (click-prompt state :corp "Yes"))
+          "Runner gained 2 Credits")
       (run-continue state)
       (card-ability state :runner carm 0)
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub")
-      (core/play-unbroken-subroutines state :corp {:card (refresh ut)})
+      (fire-subs state (refresh ut))
       (is (= 2 (count (:hand (get-runner)))) "Runner took no net damage")
       (is (= 1 (count-tags state)) "Runner took 1 tag")
-      (changes-val-macro 2 (count (:hand (get-corp)))
-        "Corp drew 2 cards"
-        (click-prompt state :corp "Yes"))
+      (is (changed? [(count (:hand (get-corp))) 2]
+            (click-prompt state :corp "Yes"))
+          "Corp drew 2 cards")
       (run-continue state)
       ;; Swap Unsmiling Tsarevna with the innermost ice
       (click-card state :corp (get-ice state :hq 0))
@@ -7001,6 +7419,54 @@
       (card-ability state :runner carm 0)
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub"))))
+
+(deftest valentao-no-choice-without-tags
+  (do-game
+    (new-game {:corp {:hand ["Valentão"]}})
+    (play-from-hand state :corp "Valentão" "HQ")
+    (is (changed? [(count-bad-pub state) 1]
+          (rez state :corp (get-ice state :hq 0)))
+        "Corp got 1 bad publicity")))
+
+(deftest valentao-spend-tag
+  (do-game
+    (new-game {:corp {:hand [(qty "Valentão" 2)]
+                      :credits 20}
+               :runner {:hand ["Paparazzi"]}})
+    (play-from-hand state :corp "Valentão" "HQ")
+    (play-from-hand state :corp "Valentão" "R&D")
+    (gain-tags state :runner 1)
+    (is (changed? [(count-tags state) -1]
+          (rez state :corp (get-ice state :hq 0) {:expect-rez false})
+          (click-prompt state :corp "Remove 1 tag"))
+        "Removed 1 tag")
+    (is (zero? (count-bad-pub state)) "Got no bad publicity")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paparazzi")
+    (is (changed? [(count-bad-pub state) 1]
+          (rez state :corp (get-ice state :rd 0)))
+        "Corp got 1 bad publicity even if runner is considered tagged")))
+
+(deftest valentao-subs
+  (do-game
+    (new-game {:corp {:hand ["Valentão"]
+                      :credits 10}})
+    (play-from-hand state :corp "Valentão" "HQ")
+    (take-credits state :corp)
+    (let [val (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp val)
+      (run-continue state)
+      (is (changed? [(:credit (get-runner)) -2
+             (:credit (get-corp)) 2]
+            (fire-subs state (refresh val)))
+          "Runner lost 2 credits")
+      (is (not (:run @state)) "Run ended")
+      (core/gain state :runner :credit 10)
+      (run-on state :hq)
+      (run-continue state)
+      (fire-subs state (refresh val))
+      (is (:run @state) "Run didn't end"))))
 
 (deftest vampyronassa
   ;; Vampyronassa
@@ -7013,23 +7479,19 @@
       (run-on state :hq)
       (rez state :corp vam)
       (run-continue state)
-      (changes-val-macro
-        -2 (:credit (get-runner))
-        "Runner loses 2 credits"
-        (card-subroutine state :corp vam 0))
-      (changes-val-macro
-        2 (:credit (get-corp))
-        "Corp gains 2 credits"
-        (card-subroutine state :corp vam 1))
-      (changes-val-macro
-        -2 (count (:hand (get-runner)))
-        "Runner suffers 2 net damage"
-        (card-subroutine state :corp vam 2))
-      (changes-val-macro
-        2 (count (:hand (get-corp)))
-        "Corp draws 2 cards"
-        (card-subroutine state :corp vam 3)
-        (click-prompt state :corp "2")))))
+      (is (changed? [(:credit (get-runner)) -2]
+            (card-subroutine state :corp vam 0))
+          "Runner loses 2 credits")
+      (is (changed? [(:credit (get-corp)) 2]
+            (card-subroutine state :corp vam 1))
+          "Corp gains 2 credits")
+      (is (changed? [(count (:hand (get-runner))) -2]
+            (card-subroutine state :corp vam 2))
+          "Runner suffers 2 net damage")
+      (is (changed? [(count (:hand (get-corp))) 2]
+            (card-subroutine state :corp vam 3)
+            (click-prompt state :corp "2"))
+          "Corp draws 2 cards"))))
 
 (deftest vampyronassa-draw-no-cards
   ;; Vampyronassa - choose to skip drawing cards
@@ -7042,11 +7504,10 @@
       (run-on state :hq)
       (rez state :corp vam)
       (run-continue state)
-      (changes-val-macro
-        0 (count (:hand (get-corp)))
-        "Corp draws no cards"
-        (card-subroutine state :corp vam 3)
-        (click-prompt state :corp "0")))))
+      (is (changed? [(count (:hand (get-corp))) 0]
+            (card-subroutine state :corp vam 3)
+            (click-prompt state :corp "0"))
+          "Corp draws no cards"))))
 
 
 (deftest vasilisa
@@ -7061,14 +7522,50 @@
           ngo (get-content state :remote1 0)]
       (rez state :corp vas)
       (run-continue state)
-      (changes-val-macro
-        -1 (:credit (get-corp))
-        "paid 1c to place a token on ngo front"
-        (click-prompt state :corp "Yes")
-        (click-card state :corp (refresh ngo))
-        (is (= 1 (get-counters (refresh ngo) :advancement)) "ngo has a counter"))
+      (is (changed? [(:credit (get-corp)) -1]
+            (click-prompt state :corp "Yes")
+            (click-card state :corp (refresh ngo))
+            (is (= 1 (get-counters (refresh ngo) :advancement)) "ngo has a counter"))
+          "paid 1c to place a token on ngo front")
       (card-subroutine state :corp (refresh vas) 0)
       (is (= 1 (count-tags state)) "Runner took 1 tag"))))
+
+(deftest virtual-service-agent
+  (do-game
+    (new-game {:corp {:hand ["Virtual Service Agent"]}
+               :runner {:hand ["Nanuq" "Buzzsaw"]
+                        :credits 20}})
+    (play-from-hand state :corp "Virtual Service Agent" "HQ")
+    (take-credits state :corp)
+    (let [vsa (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp vsa)
+      (run-continue state)
+      (is (changed? [(:credit (get-runner)) -1]
+            (fire-subs state (refresh vsa)))
+          "Runner lost 1 credit")
+      (is (changed? [(count-tags state) 1]
+            (run-continue state :movement))
+          "Runner got 1 tag from not breaking any sub")
+      (run-jack-out state)
+      (play-from-hand state :runner "Nanuq")
+      (run-on state :hq)
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "Runner loses 1 [Credits]")
+      (is (changed? [(count-tags state) 1]
+            (run-continue state :movement))
+          "Runner got 1 tag")
+      (run-jack-out state)
+      (play-from-hand state :runner "Buzzsaw")
+      (core/gain state :runner :click 1)
+      (run-on state :hq)
+      (run-continue state)
+      (card-ability state :runner (get-program state 1) 0)
+      (click-prompt state :runner "Runner loses 1 [Credits]")
+      (is (changed? [(count-tags state) 0]
+            (run-continue state :movement))
+          "Runner got no tag"))))
 
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
@@ -7103,16 +7600,14 @@
     (is (no-prompt? state :corp) "No prompt to search from ice on another server")
     (rez state :corp (get-ice state :hq 0))
     (click-prompt state :corp "Yes")
-    (changes-val-macro
-      1 (:credit (get-corp))
-      "gained 1c from Hyoubu Institute because of card been revealed"
-      (click-prompt state :corp "Ice Wall"))
+    (is (changed? [(:credit (get-corp)) 1]
+          (click-prompt state :corp "Ice Wall"))
+        "gained 1c from Hyoubu Institute because of card been revealed")
     (is (find-card "Ice Wall" (:hand (get-corp))))
     (run-continue state)
-    (changes-val-macro
-      2 (:credit (get-corp))
-      "gained 2c from wave"
-      (card-subroutine state :corp (get-ice state :hq 0) 0))))
+    (is (changed? [(:credit (get-corp)) 2]
+          (card-subroutine state :corp (get-ice state :hq 0) 0))
+        "gained 2c from wave")))
 
 (deftest wendigo
   ;; Morph ice gain and lose subtypes from normal advancements and placed advancements
@@ -7314,9 +7809,10 @@
       (is (= 3 (count (:subroutines (get-ice state :hq 0)))) "Winchester has 3 subroutines on HQ"))))
 
 (deftest winchester-2-subs-when-moved-with-tao
-  ;; 2 subs when moved with Thimblerig
+  ;; 2 subs when moved with Tāo
   (do-game
-    (new-game {:corp {:deck ["Winchester" "Thimblerig" "Merger"]}
+    (new-game {:corp {:deck ["Winchester" "Thimblerig" "Merger"]
+                      :credits 6}
                :runner {:id "Tāo Salonga: Telepresence Magician"}})
     (play-from-hand state :corp "Winchester" "HQ")
     (play-from-hand state :corp "Thimblerig" "R&D")
