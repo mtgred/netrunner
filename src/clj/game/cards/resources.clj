@@ -2649,6 +2649,7 @@
    {:access-ability
     {:label "Remove card from game"
      :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                    (not (in-discard? target))
                     (:trash target)
                     (can-pay? state :runner (assoc eid :source card :source-type :ability)
                               card (:title target) [:credit (trash-cost state side target)])))

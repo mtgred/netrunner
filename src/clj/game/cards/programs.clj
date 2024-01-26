@@ -1590,7 +1590,8 @@
 (defcard "Imp"
   {:data {:counter {:virus 2}}
    :interactions {:access-ability {:label "Trash card"
-                                   :req (req (not (get-in @state [:per-turn (:cid card)])))
+                                   :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                                                  (not (in-discard? target))))
                                    :cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn

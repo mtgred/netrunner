@@ -537,6 +537,7 @@
      :label "Trash card"
      :req (req (and (not (:disabled card))
                     (not (agenda? target))
+                    (not (in-discard? target))
                     (<= (play-cost state side target)
                         (number-of-runner-virus-counters state))))
      :waiting-prompt true
