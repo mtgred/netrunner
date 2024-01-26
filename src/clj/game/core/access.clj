@@ -1084,7 +1084,7 @@
                    nil nil))))
 
         facedown-cards-fn
-        (req (let [accessed (first (shuffle (facedown-cards state already-accessed)))
+        (req (let [accessed (first (shuffle (facedown-cards state already-accessed-fn)))
                    already-accessed (conj already-accessed (:cid accessed))
                    access-amount {:total-mod (access-bonus-count state side :total)
                                   :chosen (inc chosen)}]
