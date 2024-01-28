@@ -1672,6 +1672,7 @@
   {:data {:counter {:virus 2}}
    :interactions {:access-ability {:label "Trash card"
                                    :req (req (and (can-trash? state :runner target)
+                                                  (not (in-discard? target))
                                                   (not (get-in @state [:per-turn (:cid card)]))))
                                    :cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")

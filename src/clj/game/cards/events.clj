@@ -954,8 +954,9 @@
              :effect (effect (make-run eid target card))}
    :interactions {:access-ability
                   {:label "Trash card"
-                   :req (req (can-trash? state :runner target))
                    :msg (msg "trash " (:title target) " at no cost")
+                   :req (req (and (can-trash? state :runner target)
+                                  (not (in-discard? target)))) ;;for if the run gets diverted
                    :async true
                    :effect (effect (trash eid (assoc target :seen true) {:cause-card card}))}}})
 

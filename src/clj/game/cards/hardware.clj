@@ -443,6 +443,7 @@
    {:access-ability
     {:label "Trash card"
      :req (req (and (can-trash? state :runner target)
+                    (not (in-discard? target))
                     (not (get-in @state [:per-turn (:cid card)]))
                     (<= 2 (count (:hand runner)))))
      :cost [:trash-from-hand 2]

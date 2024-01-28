@@ -446,6 +446,30 @@
    (is (= 0 (count (:discard (get-corp)))) "No card trashed")
    (is (= 0 (count (:scored (get-corp)))) "Azef Protocol not scored")))
 
+(deftest bacterial-programming-stolen-from-archives-should-not-give-duplicate-accesses
+  ;; there used to be an issue where you could randomly access the same cards indefinitely
+  (do-game
+    (new-game {:corp {:discard ["Hedge Fund" "Bacterial Programming"]
+                      :hand ["Bellona"]
+                      :deck ["IPO" "NGO Front" "Rashida Jaheem" "Tithe"
+                             "Ice Wall" "Fire Wall" "Enigma"]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (click-prompt state :runner "Bacterial Programming")
+    (click-prompt state :runner "Steal")
+    (click-prompt state :corp "Yes")
+    (dotimes [_ 7]
+      (let [card (first (prompt-titles :corp))]
+        (click-prompt state :corp card)))
+    (click-prompt state :corp "Done") ; Finished with trashing
+    (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
+    (dotimes [_ 7]
+      (click-prompt state :runner "Facedown card in Archives")
+      (click-prompt state :runner "No action"))
+    ;;(click-prompt state :runner "Everything else") - this only shows up if an agenda is in archives
+    (is (no-prompt? state :corp) "Bacterial Programming prompts finished")
+    (is (not (:run @state)) "No run is active")))
+
 (deftest bacterial-programming-scoring-should-not-cause-a-run-to-exist-for-runner
     ;; Scoring should not cause a run to exist for runner.
     (do-game
@@ -470,11 +494,11 @@
       (click-prompt state :runner "Steal")
       (click-prompt state :corp "Yes")
       ;; Move all 7 cards to trash
-      (doseq [_ (range 7)
+      (dotimes [_ 7]
               ;; Get the first card listed in the prompt choice
               ;; TODO make this function
-              :let [card (first (prompt-titles :corp))]]
-        (click-prompt state :corp card))
+        (let [card (first (prompt-titles :corp))]
+          (click-prompt state :corp card)))
       (click-prompt state :corp "Done") ; Finished with trashing
       (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
       ;; Run and prompts should be over now

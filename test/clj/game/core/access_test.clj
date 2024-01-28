@@ -493,6 +493,7 @@
       (click-prompt state :corp "No")
       (is (= ["Bryan Stinson" "Facedown card in Archives"] (prompt-buttons :runner)))
       (click-prompt state :runner "Facedown card in Archives")
+      (click-prompt state :runner "No action")
       (is (second-last-log-contains? state "Runner accesses Hedge Fund from Archives."))
       (is (accessing state "Bryan Stinson"))
       (is (= ["Pay 5 [Credits] to trash" "No action"] (prompt-buttons :runner)))
