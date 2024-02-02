@@ -509,7 +509,7 @@
                             :effect (effect (shuffle! :deck)
                                             (corp-install eid chosen-ice target
                                                           {:ignore-all-cost true
-                                                           :install-state :rezzed-no-rez-cost}))})
+                                                           :install-state :rezzed-no-cost}))})
                          card nil))}
                     {:prompt "You have no ice in R&D"
                      :choices ["Carry on!"]
@@ -541,7 +541,7 @@
                             :effect (effect (shuffle! :deck)
                                             (corp-install eid chosen-ice target
                                                           {:ignore-all-cost true
-                                                           :install-state :rezzed-no-rez-cost}))})
+                                                           :install-state :rezzed-no-cost}))})
                          card nil))}
                     {:prompt "You have no ice in R&D"
                      :choices ["Carry on!"]
