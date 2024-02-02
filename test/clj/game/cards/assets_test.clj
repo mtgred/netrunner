@@ -1566,15 +1566,27 @@
   ;; Docklands Crackdown
   (letfn [(dlcd-test [number]
             (do-game
-              (new-game {:corp {:deck ["Docklands Crackdown"]}
-                         :runner {:deck ["Cache"]}})
+              (new-game {:corp {:hand ["Docklands Crackdown" (qty "Vanilla" 2)]}
+                         :runner {:hand [(qty "Gachapon" 2)]}})
               (play-from-hand state :corp "Docklands Crackdown" "New remote")
               (let [dlcd (get-content state :remote1 0)]
                 (rez state :corp dlcd)
                 (core/add-counter state :corp dlcd :power number)
                 (take-credits state :corp)
-                (play-from-hand state :runner "Cache")
-                (is (= (- 4 number) (:credit (get-runner)))))))]
+                (take-credits state :runner)
+                (is (changed? [(:credit (get-corp)) 0]
+                      (play-from-hand state :corp "Vanilla" "HQ"))
+                    "No additional cost for installing the first Corp card")
+                (is (changed? [(:credit (get-corp)) 0]
+                      (play-from-hand state :corp "Vanilla" "R&D"))
+                    "No additional cost for installing the next Corp card")
+                (take-credits state :corp)
+                (is (changed? [(:credit (get-runner)) (- number)]
+                      (play-from-hand state :runner "Gachapon"))
+                    "Additional cost for installing the first Runner card")
+                (is (changed? [(:credit (get-runner)) 0]
+                      (play-from-hand state :runner "Gachapon"))
+                    "No additional cost for installing the next Runner card"))))]
     (doall (map dlcd-test [0 1 2 3 4]))))
 
 (deftest dr-vientiane-keeling

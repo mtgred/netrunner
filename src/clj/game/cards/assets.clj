@@ -787,21 +787,21 @@
    :on-trash executive-trash-effect})
 
 (defcard "Docklands Crackdown"
-  {:abilities [{:cost [:click 2]
-                :keep-menu-open :while-2-clicks-left
-                :msg "place 1 power counter"
-                :effect (effect (add-counter card :power 1))}]
-   :static-abilities [{:type :install-cost
-                       :req (req (and (pos? (get-counters card :power))
-                                      (not (get-in @state [:per-turn (:cid card)]))))
-                       :value (req (get-counters card :power))}]
-   :events [{:event :runner-install
-             :silent (req true)
-             :req (req (and (pos? (get-counters card :power))
-                            (not (get-in @state [:per-turn (:cid card)]))))
-             :msg (msg "increase the install cost of " (:title (:card context))
-                       " by " (get-counters card :power) " [Credits]")
-             :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]})
+  (letfn [(not-triggered? [state] (no-event? state :runner :runner-install))]
+    {:abilities [{:cost [:click 2]
+                  :keep-menu-open :while-2-clicks-left
+                  :msg "place 1 power counter in itself"
+                  :effect (effect (add-counter card :power 1))}]
+     :static-abilities [{:type :install-cost
+                         :req (req (and (runner? target)
+                                        (not-triggered? state)))
+                         :value (req (get-counters card :power))}]
+     :events [{:event :runner-install
+               :silent (req true)
+               :req (req (and (pos? (get-counters card :power))
+                              (not-triggered? state)))
+               :msg (msg "increase the install cost of " (:title (:card context))
+                         " by " (get-counters card :power) " [Credits]")}]}))
 
 (defcard "Dr. Vientiane Keeling"
   {:static-abilities [(runner-hand-size+ (req (- (get-counters card :power))))]
