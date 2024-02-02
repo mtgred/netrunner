@@ -1312,7 +1312,7 @@
                                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                       [:credit (install-cost state side target {:cost-bonus 1})])))}
                             :msg (msg "install " (:title target) " from the grip, paying 1 [Credit] more")
-                            :effect (effect (runner-install eid target {:cost-bonus 1}))}}}
+                            :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus 1}))}}}
             {:event :runner-install
              :async true
              :interactive (req true)

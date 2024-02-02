@@ -2920,6 +2920,22 @@
       (is (= 6 (count (:hand (get-runner)))) "Hayley install")
       (is (no-prompt? state :runner))))
 
+(deftest masterwork-v37-interaction-with-paladin-poemu
+  ;; Masterwork (v37) should be able to spend credits hosted on Paladin Poemu
+  (do-game
+    (new-game {:runner {:hand ["Masterwork (v37)" "Acacia" "Paladin Poemu"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Masterwork (v37)")
+    (play-from-hand state :runner "Paladin Poemu")
+    (let [pp (get-resource state 0)]
+      (core/add-counter state :runner (refresh pp) :credit 2)
+      (run-on state "HQ")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Acacia")
+      (is (changed? [(get-counters (refresh pp) :credit) -1]
+            (click-card state :runner pp))
+          "Spent 1 credit from Paladin Poemu"))))
+
 (deftest maui-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
