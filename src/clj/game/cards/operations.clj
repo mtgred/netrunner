@@ -1283,10 +1283,10 @@
    {:on-play {:prompt "Choose a server"
               :choices (req servers)
               :msg (msg "choose " target)
-              :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))}
+              :effect (effect (update! (assoc card :card-target target)))}
     :events [{:event :successful-run
               :psi {:req (req (= (zone->name (get-in @state [:run :server]))
-                                 (get-in card [:special :hyoubu-precog-target])))
+                                 (:card-target card)))
                     :not-equal {:msg "end the run"
                                 :async true
                                 :effect (effect (end-run eid card))}}}]}))
@@ -2807,14 +2807,14 @@
                              (gain-tags state :corp eid 1 nil)))}]}))
 
 (defcard "Targeted Marketing"
-  (let [gaincr {:req (req (= (:title (:card context)) (get-in card [:special :marketing-target])))
+  (let [gaincr {:req (req (= (:title (:card context)) (:card-target card)))
                 :async true
-                :msg (msg "gain 10 [Credits] from " (:marketing-target card))
+                :msg "gain 10 [Credits]"
                 :effect (effect (gain-credits :corp eid 10))}]
     {:on-play {:prompt "Name a Runner card"
                :choices {:card-title (req (and (runner? target)
                                                (not (identity? target))))}
-               :effect (effect (update! (assoc-in card [:special :marketing-target] target))
+               :effect (effect (update! (assoc card :card-target target))
                                (system-msg (str "uses " (:title card) " to name " target)))}
      :events [(assoc gaincr :event :runner-install)
               (assoc gaincr :event :play-event)]}))

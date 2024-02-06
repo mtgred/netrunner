@@ -3313,21 +3313,21 @@
              :async true
              :msg "do 1 net damage"
              :effect (req (wait-for (damage state side :net 1 {:card card})
-                                    (let [choice (get-in card [:special :saisentan])
+                                    (let [choice (:card-target card)
                                           cards async-result
                                           dmg (some #(when (= (:type %) choice) %) cards)]
                                       (if dmg
-                                        (do (system-msg state :corp (str "uses " (:title card) " to deal a second net damage"))
+                                        (do (system-msg state :corp (str "uses " (:title card) " to deal 1 additional net damage"))
                                             (damage state side eid :net 1 {:card card}))
                                         (effect-completed state side eid)))))}]
     {:on-encounter {:waiting-prompt true
                     :prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :msg (msg "choose the card type " target)
-                    :effect (effect (update! (assoc-in card [:special :saisentan] target)))}
+                    :effect (effect (update! (assoc card :card-target target)))}
      :events [{:event :end-of-encounter
-               :req (req (get-in card [:special :saisentan]))
-               :effect (effect (update! (dissoc-in card [:special :saisentan])))}]
+               :req (req (:card-target card))
+               :effect (effect (update! (dissoc card :card-target)))}]
      :subroutines [sub
                    sub
                    sub]}))
