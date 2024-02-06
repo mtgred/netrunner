@@ -1283,10 +1283,10 @@
    {:on-play {:prompt "Choose a server"
               :choices (req servers)
               :msg (msg "choose " target)
-              :effect (effect (update! (assoc-in card [:special :hyoubu-precog-target] target)))}
+              :effect (effect (update! (assoc card :card-target target)))}
     :events [{:event :successful-run
               :psi {:req (req (= (zone->name (get-in @state [:run :server]))
-                                 (get-in card [:special :hyoubu-precog-target])))
+                                 (:card-target card)))
                     :not-equal {:msg "end the run"
                                 :async true
                                 :effect (effect (end-run eid card))}}}]}))
