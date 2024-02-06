@@ -2807,14 +2807,14 @@
                              (gain-tags state :corp eid 1 nil)))}]}))
 
 (defcard "Targeted Marketing"
-  (let [gaincr {:req (req (= (:title (:card context)) (get-in card [:special :marketing-target])))
+  (let [gaincr {:req (req (= (:title (:card context)) (:card-target card)))
                 :async true
-                :msg (msg "gain 10 [Credits] from " (:marketing-target card))
+                :msg "gain 10 [Credits]"
                 :effect (effect (gain-credits :corp eid 10))}]
     {:on-play {:prompt "Name a Runner card"
                :choices {:card-title (req (and (runner? target)
                                                (not (identity? target))))}
-               :effect (effect (update! (assoc-in card [:special :marketing-target] target))
+               :effect (effect (update! (assoc card :card-target target))
                                (system-msg (str "uses " (:title card) " to name " target)))}
      :events [(assoc gaincr :event :runner-install)
               (assoc gaincr :event :play-event)]}))
