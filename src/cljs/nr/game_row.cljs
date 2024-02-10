@@ -97,8 +97,12 @@
 
 (defn rejoin-button [lobby-state user game current-game editing]
   (when (can-rejoin? user game current-game editing)
-    [:button {:on-click #(do (join-game lobby-state game "rejoin")
-                             (resume-sound))}
+    [:button {:on-click #(if (:password game)
+                           (authenticated
+                             (fn [_]
+                               (swap! lobby-state assoc :password-game {:game game :action "rejoin"})))
+                           (do (join-game lobby-state game "rejoin")
+                               (resume-sound)))}
      (tr [:lobby.rejoin "Rejoin"])]))
 
 (defn mod-menu-popup [s user {gameid :gameid}]
