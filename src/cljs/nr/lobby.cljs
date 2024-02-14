@@ -151,7 +151,7 @@
 (defn- on-change-format-visibility
   "Handle change event for format-toggle input"
   [slug evt]
-  (.preventDefault evt)
+  (.stopPropagation evt)
   (if (format-visible? slug)
     (swap! app-state update-in [:visible-formats] difference #{slug})
     (swap! app-state update-in [:visible-formats] union #{slug}))
@@ -164,7 +164,9 @@
                               :type "checkbox"
                               :on-change #(on-change-format-visibility slug %)
                               :checked (format-visible? slug)}]
-     [:label {:for id} (-> slug slug->format tr-format)]]))
+     [:label {:for id
+              :on-click #(.stopPropagation %)}
+      (-> slug slug->format tr-format)]]))
 
 (defn new-game-button [s games gameid user]
   [cond-button (tr [:lobby.new-game "New game"])
