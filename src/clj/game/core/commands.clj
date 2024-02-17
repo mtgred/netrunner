@@ -176,9 +176,9 @@
 (defn command-undo-click
   "Resets the game state back to start of the click"
   [state side]
-  (when-let [click-state (:click-state @state)]
+  (when-let [click-state (peek (:click-states @state))]
     (when (= (:active-player @state) side)
-      (reset! state (assoc click-state :log (:log @state) :click-state click-state :run nil :history (:history @state)))
+      (reset! state (assoc click-state :log (:log @state) :click-states (pop (:click-states @state)) :run nil :history (:history @state)))
       (doseq [c (filter #(not (has-subtype? % "Lockdown")) (:play-area (side @state)))]
         (move state side c (:previous-zone c) {:suppress-event true}))
       (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
