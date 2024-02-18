@@ -328,7 +328,7 @@
        :choices [(str "Remove " (quantify (value cost) "tag"))
                  (str "Gain " (value cost) " bad publicity")]
        :async true
-       :effect (req (if (= target (str "Gain " (value cost) "bad publicity"))
+       :effect (req (if (= target (str "Gain " (value cost) " bad publicity"))
                       (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) nil)
                                 (complete-with-result state side eid {:msg (str "gains " (value cost) " bad publicity")
                                                                       :type :tag-or-bad-pub
