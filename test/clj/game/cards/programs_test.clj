@@ -3726,36 +3726,31 @@
         (is (no-prompt? state :corp) "Corp shouldn't have a prompt")
         (is (no-prompt? state :runner) "Runner shouldn't have a prompt"))))
 
-(deftest inversificator-shouldn-t-fire-ice-s-on-pass-ability-5143
-    ;; shouldn't fire ice's on-pass ability #5143
+(deftest inversificator-should-fire-ice-s-on-pass-ability
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Kakugo" "Quandary"]
                         :credits 20}
-                 :runner {:hand ["Sure Gamble" "Inversificator"]
+                 :runner {:id "Rielle \"Kit\" Peddler: Transhuman"
+                          :hand ["Sure Gamble" "Inversificator"]
                           :credits 20}})
       (play-from-hand state :corp "Quandary" "HQ")
       (play-from-hand state :corp "Kakugo" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Inversificator")
-      (run-on state "HQ")
-      (rez state :corp (get-ice state :hq 1))
-      (core/register-lingering-effect
-        state :corp nil
-        (let [ice (get-ice state :hq 1)]
-          {:type :gain-subtype
-           :req (req (utils/same-card? ice target))
-           :value "Code Gate"}))
-      (run-continue state :encounter-ice)
-      (let [inv (get-program state 0)]
-        (card-ability state :runner (refresh inv) 1)
-        (card-ability state :runner (refresh inv) 0)
-        (click-prompt state :runner "End the run")
-        (run-continue state)
-        (click-prompt state :runner "Yes")
-        (click-card state :runner (get-ice state :hq 1))
-        (click-card state :runner (get-ice state :hq 0))
-        (is (= 1 (count (:hand (get-runner))))))))
+      (is (changed? [(count (:hand (get-runner))) -1]
+            (run-on state "HQ")
+            (rez state :corp (get-ice state :hq 1))
+            (run-continue state :encounter-ice)
+            (let [inv (get-program state 0)]
+              (card-ability state :runner (refresh inv) 1)
+              (card-ability state :runner (refresh inv) 0)
+              (click-prompt state :runner "End the run")
+              (run-continue state)
+              (click-prompt state :runner "Yes")
+              (click-card state :runner (get-ice state :hq 1))
+              (click-card state :runner (get-ice state :hq 0))))
+          "Kakugo should still do 1 net damage even though it was swapped")))
 
 (deftest inversificator-async-issue-with-thimblerig-5042
     ;; Async issue with Thimblerig #5042
