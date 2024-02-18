@@ -3381,6 +3381,15 @@
    }
 
    :ru
+   (defn ru-quant [group1 group2 group3]
+  (fn [[cnt]]
+    (let [group (if (contains? #{5 6 7 8 9 10 11 12 13 14} (rem cnt 100))
+                  group1
+                  (condp contains? (rem cnt 10)
+                    #{0 5 6 7 8 9} group1
+                    #{1} group2
+                    #{2 3 4} group3))]
+      (str cnt " " group))))
    {:missing ":ru missing text"
     :side
     {:corp "Корпорация"
@@ -3467,7 +3476,7 @@
      :admin "Администратор"
      :users "Пользователи"
      :features "Возможности"
-     :game-count (fn [[cnt]] (str cnt (if (= 1 cnt) " игра" " игр")))}
+     :game-count (ru-quant "игр" "игра" "игры")}
     :menu
     {:settings :en.nav/settings
      :logout "Отключиться"
@@ -3513,7 +3522,7 @@
      :import "Импортировать"
      :cancel "Отмена"
      :import-placeholder "ID с NRDB"
-     :deck-count (fn [[cnt]] (str cnt (if (= 1 cnt) " колода" " колод")))
+     :deck-count (ru-quant "колод" "колода" "колоды")
      :filtered "(filtered)"
      :save "Сохранить"
      :confirm-delete "Подтвердить удаление"
@@ -3579,7 +3588,7 @@
      :select-deck "Выбрать колоду"
      :chat "Чат"
      :select-title "Выберите вашу колоду"
-     :spectator-count (fn [[cnt]] (if (= 1 cnt) " зритель" " зрителей")))
+     :spectator-count (ru-quant "зрителей" "зритель" "зрителя")
      :closed-msg "Лобби закрыто из-за отсутствия активности"
      :title-error "Пожалуйста, введите название игры."
      :password-error "Пожалуйста, введите пароль."
@@ -3599,8 +3608,8 @@
      :aborted "Соединение разорвано"
      :lobby.api-access "Разрешить доступ к данным игры через API"
      :lobby.api-requires-key "(Требуется ключ API в Настройках)"
-     :game-count (fn [[cnt]] (str cnt (if (= 1 cnt) " игра" " игр")))
-     :filtered "(filtered)"}
+     :game-count (ru-quant "игр" "игра" "игры")
+     :filtered "(с фильтром)"}
    :settings
    {:invalid-password "Неправильный логин или пароль"
     :invalid-email "Учётной записи с таким адресом электронной почты не существует"
@@ -3671,7 +3680,7 @@
    :not-completed "Не завершено"
    :won "Выиграно"
    :lost "Проиграно"
-   :turn-count (fn [[cnt]] (str cnt " ход" (when (not= cnt 1) "ов")))
+   :turn-count (ru-quant "ходов" "ход" "хода")
    :lobby "Лобби"
    :format "Формат"
    :win-method "Способ победы"
@@ -3681,7 +3690,7 @@
    :download "Скачать повтор"
    :unavailable "Повтор недоступен"
    :filtered "(отфильтровано)"
-   :log-count (fn [[cnt]] (str cnt " журнал" (when (not= cnt 1) "ов")))
+   :log-count (ru-quant "журналов" "журнал" "журнала")
    :clicks-gained "Получено кликов"
    :credits-gained "Получено кредитов"
    :credits-spent "Потрачено кредитов"
@@ -3736,18 +3745,18 @@
    :max-hand "Макс. размер руки"
    :brain-damage "Критический урон"
    :tag-count (fn [[base additional total]]
-                (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
-   :agenda-count (fn [[agenda-point]] (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s")))
+                (str base (when (pos? additional) (str " + " additional)) (ru-quant "меток" "метка" "метки")))
+   :agenda-count (fn [[agenda-point]] (str agenda-point (ru-quant "победных очков" "победное очко" "победных очка")))
    :link-strength "Мощность канала"
-   :credit-count (fn [[credit run-credit]] (str credit " Credit" (if (not= credit 1) "s" "")
+   :credit-count (fn [[credit run-credit]] (str credit (ru-quant "кредитов" "кредит" "кредита"))
                                                 (when (pos? run-credit)
-                                                  (str " (" run-credit " for run)"))))
-   :click-count (fn [[click]] (str click " Click" (if (not= click 1) "s" "")))
-   :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
-   :mu-count (fn [[unused available]] (str unused " of " available " MU unused"))
-   :special-mu-count (fn [[unused available mu-type]] (str unused " of " available " " mu-type " MU unused"))
+                                                  (str " (" run-credit " для забега)"))))
+   :click-count (fn [[click]] (str click (ru-quant "кликов" "клик" "клика")))
+   :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) (ru-quant "плохих репутаций" "плохая репутация" "плохих репутации")))
+   :mu-count (fn [[unused available]] (str unused " из " available " свободных ЯП"))
+   :special-mu-count (fn [[unused available mu-type]] (str unused " из " available " " mu-type " свободных ЯП"))
    :indicate-action "Обозначить действие"
-   :spec-count (fn [[c]] (str c " Spectator" (when (> c 1) "s")))
+   :spec-count (fn [[c]] (str c (ru-quant "зрителей" "зритель" "зрителя")))
    :spec-view "Перспектива зрителя"
    :runner-view "Перспектива Бегущего"
    :corp-view "Перспектива Корпорации"
@@ -3774,8 +3783,8 @@
    :show "Показать"
    :close-shuffle "Закрыть и перемешать"
    :heap "Куча"
-   :card-count (fn [[size]] (str size " card" (when (not= 1 size) "s") "."))
-   :face-down-count (fn [[total face-up]] (str total " cards, " (- total face-up) " face-down."))
+   :card-count (fn [[size]] (str size (ru-quant "карт" "карта" "карты") "."))
+   :face-down-count (fn [[total face-up]] (str total (ru-quant "карт" "карта" "карты") ", " (- total face-up) " лицом вниз."))
    :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
    :initiation "Инициация"
    :approach-ice "Приблизиться ко льду"
@@ -3810,7 +3819,7 @@
    :win-decked (fn [[turn]] (str "побеждает. Соперник не смог взять карту из R&D на " turn " ходу"))
    :win-flatlined (fn [[turn]] (str "побеждает. Соперник получил флетлайн на " turn " ходу"))
    :win-conceded (fn [[turn]] (str "побеждает. Соперник сдался на " turn " ходу"))
-   :win-claimed (fn [[turn]] (str "wins by claim on turn " turn " ходу"))
+   :win-claimed (fn [[turn]] (str "объявляет победу на  " turn " ходу"))
    :win-points (fn [[turn]] (str "побеждает, засчитав победные очки на " turn " ходу"))
    :win-other (fn [[turn reason]] (str "побеждает из-за " reason " на " turn " ходу"))}
    }
