@@ -396,14 +396,11 @@
                           ;; * run ends
                           ;; * run is moved to another server
                           ;; * phase changed
-                          ;; * ice moves
                           ;; * server becomes empty
                           {:cancel-fn (fn [state]
                                         (or (:ended (:end-run @state))
                                             (not= current-server (:server (:run @state)))
                                             (:next-phase (:run @state))
-                                            (and pass-ice?
-                                                 (not (same-card? ice (nth (get-run-ices state) (dec pos) nil))))
                                             (check-for-empty-server state)))})
               (reset-all-ice state side)
               (cond
