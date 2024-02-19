@@ -7447,6 +7447,17 @@
           (rez state :corp (get-ice state :rd 0)))
         "Corp got 1 bad publicity even if runner is considered tagged")))
 
+(deftest valentao-choosing-bad-pub-with-tags
+  (do-game
+    (new-game {:corp {:hand ["Valentão"]}})
+    (play-from-hand state :corp "Valentão" "HQ")
+    (gain-tags state :runner 1)
+    (is (changed? [(count-bad-pub state) 1
+                   (count-tags state) 0]
+          (rez state :corp (get-ice state :hq 0) {:expect-rez false})
+          (click-prompt state :corp "Gain 1 bad publicity"))
+        "Corp gained 1 bad publicity")))
+
 (deftest valentao-subs
   (do-game
     (new-game {:corp {:hand ["Valentão"]
