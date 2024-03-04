@@ -22,7 +22,7 @@
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [dissoc-req pay register-default-events
                              register-events resolve-ability unregister-events]]
-   [game.core.events :refer [first-event? first-run-event? turn-events]]
+   [game.core.events :refer [first-event? first-run-event? no-event? turn-events]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
@@ -342,7 +342,6 @@
                                           " +3 strength for the remainder of the run?")
                              :waiting-prompt true
                              :once :per-turn
-                             :async true
                              :yes-ability {:choices {:card #(and (ice? %)
                                                                  (rezzed? %)
                                                                  (not (same-card? % rezzed-card)))}

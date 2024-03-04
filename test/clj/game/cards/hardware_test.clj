@@ -161,9 +161,9 @@
     (click-prompt state :runner "Yes")
     (is (:run @state) "Run has started")
     (run-continue state)
-    (changes-val-macro -2 (:click (get-runner))
-                       "Costs 2 clicks"
-                       (click-prompt state :runner "Yes"))
+    (is (changed? [(:click (get-runner)) -2]
+                  (click-prompt state :runner "Yes"))
+        "Costs 2 clicks")
     (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
 
 (deftest amanuensis
@@ -5072,9 +5072,9 @@
       (is (= ["Hardware" "Program" "Resource" "Cancel"] (prompt-buttons :runner)))
       (click-prompt state :runner "Program")
       (is (= ["Install Corroder" "Install Femme Fatale" "No install"] (prompt-buttons :runner)))
-      (changes-val-macro 0 (:credit (get-runner))
-                         "Install at no cost"
-                         (click-prompt state :runner "Install Femme Fatale"))
+      (is (changed? [(:credit (get-runner)) 0]
+                    (click-prompt state :runner "Install Femme Fatale"))
+          "Install at no cost")
       (is (= "Femme Fatale" (:title (get-program state 0))) "Femme Fatale is installed")
       (is (second-last-log-contains? state (str "Runner uses The Wizard's Chest"
                                                 " to reveal Legwork, Corroder, Ice Carver, Prepaid VoicePAD, Femme Fatale from the top of the stack"

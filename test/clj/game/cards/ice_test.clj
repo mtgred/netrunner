@@ -5830,7 +5830,7 @@
       (gain-tags state :runner 1)
       (run-on state :hq)
       (is (changed? [(count-tags state) -1]
-                    (rez state :corp pir)
+                    (rez state :corp pir {:expect-rez false})
                     (click-prompt state :corp "Remove 1 tag"))
           "Corp removed 1 tag to rez Piranhas"))))
 

@@ -4002,7 +4002,7 @@
                      (click-card state :corp "Hedge Fund"))
            "Corp discarded 1 card from HQ")
        (is (= 0 (:position (get-run))) "Run should still be at position 0")
-       (is (utils/same-card? tithe (core/get-current-ice state)))
+       (is (same-card? tithe (core/get-current-ice state)))
        (run-continue state)
        (run-jack-out state)
        (run-on state "R&D")
@@ -4026,7 +4026,7 @@
                      (click-prompt state :corp "Pay 1 [Credit]"))
            "Corp spent 1 Credit")
        (is (= 0 (:position (get-run))) "Run should still be at position 0")
-       (is (utils/same-card? ws (core/get-current-ice state))))))
+       (is (same-card? ws (core/get-current-ice state))))))
 
 (deftest slash-and-burn-agriculture
   (do-game

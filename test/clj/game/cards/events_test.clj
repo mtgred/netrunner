@@ -7417,7 +7417,7 @@
     (let [bloop (get-ice state :hq 0)
           echo (get-ice state :archives 0)]
       (rez state :corp echo)
-      (rez state :corp bloop)
+      (rez state :corp bloop {:expect-rez false})
       (click-card state :corp (refresh echo))
       (take-credits state :corp)
       (play-from-hand state :runner "Window of Opportunity")

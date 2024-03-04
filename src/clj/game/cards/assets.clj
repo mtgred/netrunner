@@ -496,8 +496,8 @@
                  :optional {:once :per-turn
                             :prompt "Remove 1 hosted advancement counter to gain 4 [Credits] and draw 1 card?"
                             :req (req (pos? (get-counters card :advancement)))
-                            :async true
                             :yes-ability {:msg "remove 1 hosted advancement counter from itself to gain 4 [Credits] and draw 1 card"
+                                          :async true
                                           :effect (req
                                                     (add-prop state :corp card :advance-counter -1)
                                                     (wait-for

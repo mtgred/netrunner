@@ -22,7 +22,7 @@
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
-   [game.core.engine :refer [pay register-events resolve-ability]]
+   [game.core.engine :refer [pay register-events resolve-ability should-trigger?]]
    [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
                              turn-events]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?

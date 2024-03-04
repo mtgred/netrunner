@@ -162,6 +162,21 @@
 (defn- faceup-archives-types [corp]
   (count (distinct (map :type (filter faceup? (:discard corp))))))
 
+(defn maybe-draw-sub
+  "Ability to (maybe) draw a set number of cards"
+  [qty]
+  {:async true
+   :label (str "You may draw " (quantify qty "card"))
+   :effect (effect (maybe-draw eid card qty))})
+
+(defn draw-up-to-sub
+  "Ability to draw between 0 and n cards"
+  ([qty] (draw-up-to-sub qty nil))
+  ([qty args]
+   {:async true
+    :label (str "Draw up to " (quantify qty "card"))
+    :effect (effect (draw-up-to eid card qty args))}))
+
 (defn runner-pays
   "Ability to pay to avoid a subroutine by paying a resource"
   [cost]
@@ -1786,15 +1801,7 @@
   (grail-ice end-the-run))
 
 (defcard "Gatekeeper"
-  (let [draw-ab {:async true
-                 :prompt "How many cards do you want to draw?"
-                 :waiting-prompt true
-                 :choices {:number (req 3)
-                           :max (req 3)
-                           :default (req 1)}
-                 :msg (msg "draw " (quantify target "card"))
-                 :effect (effect (draw eid target))}
-        reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas into R&D"
+  (let [reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas into R&D"
                             :show-discard true
                             :choices {:card #(and (corp? %)
                                                   (or (in-hand? %)
@@ -1829,7 +1836,7 @@
                                    " and shuffle them into R&D")}
         draw-reveal-shuffle {:async true
                              :label "Draw cards, reveal and shuffle agendas"
-                             :effect (req (wait-for (resolve-ability state side draw-ab card nil)
+                             :effect (req (wait-for (draw-up-to state side card 3)
                                                     (continue-ability state side reveal-and-shuffle card nil)))}]
     {:static-abilities [(ice-strength-bonus (req (= :this-turn (:rezzed card))) 6)]
      :subroutines [draw-reveal-shuffle
@@ -4230,13 +4237,7 @@
                                        (effect-completed state side eid)))}]
     {:subroutines [(give-tags 1)
                    (do-net-damage 2)
-                   {:label "Draw 2 cards"
-                    :optional
-                    {:prompt "Draw 2 cards?"
-                     :yes-ability
-                     {:async true
-                      :msg "draw 2 cards"
-                      :effect (effect (draw eid 2))}}}]
+                   (maybe-draw-sub 2)]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"
                :waiting-prompt true
@@ -4273,15 +4274,7 @@
   {:subroutines [(runner-loses-credits 2)
                  (gain-credits-sub 2)
                  (do-net-damage 2)
-                 {:async true
-                  :label "Draw up to 2 cards"
-                  :prompt "How many cards do you want to draw?"
-                  :waiting-prompt true
-                  :choices {:number (req 2)
-                            :max (req 2)
-                            :default (req 2)}
-                  :msg (msg "draw " (quantify target "card"))
-                  :effect (effect (draw eid target))}]})
+                 (draw-up-to-sub 2)]})
 
 (defcard "Vanilla"
   {:subroutines [end-the-run]})

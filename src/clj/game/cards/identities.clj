@@ -1582,9 +1582,9 @@
               (effect (continue-ability
                         {:optional
                          {:prompt (str "Trash " (:title (first (:deck corp))) "?")
-                          :async true
                           :yes-ability
                           {:msg "trash the top card of R&D"
+                           :async true
                            :effect (req (mill state :corp eid :corp 1))}}}
                         card nil))}]
     {:events [(assoc abi1 :event :expend-resolved)
