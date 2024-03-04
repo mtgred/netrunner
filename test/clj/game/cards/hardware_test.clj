@@ -146,6 +146,43 @@
     (play-from-hand state :runner "Akamatsu Mem Chip")
     (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
+
+(deftest alarm-clock
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Alarm Clock"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Alarm Clock")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "Yes")
+    (is (:run @state) "Run has started")
+    (run-continue state)
+    (changes-val-macro -2 (:click (get-runner))
+                       "Costs 2 clicks"
+                       (click-prompt state :runner "Yes"))
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
+
+(deftest amanuensis
+  (do-game
+    (new-game {:runner {:hand ["Amanuensis"]
+                        :deck [(qty "Sure Gamble" 2)]}})
+    (take-credits state :corp)
+    (gain-tags state :runner 1)
+    (play-from-hand state :runner "Amanuensis")
+    (is (changed? [(get-counters (get-hardware state 0) :power) 1]
+                  (take-credits state :runner))
+        "Amanuensis gains a power counter at end of turn")
+    (take-credits state :corp)
+    (remove-tag state :runner)
+    (is (changed? [(get-counters (get-hardware state 0) :power) -1
+                   (count (:hand (get-runner))) 2]
+                  (click-prompt state :runner "Yes"))
+        "Spend a power counter when removing a tag to draw 2 cards")))
+
 (deftest aniccam-trash-trash-before-and-after-install-does-not-trigger
   ;; Aniccam
   (doseq [first-side [:corp :runner]
@@ -1234,6 +1271,42 @@
       (click-card state :runner (find-card "Aumakua" (:hand (get-runner))))
       (is (= 1 (count (:discard (get-corp)))))
       (is (zero? (count (:hand (get-runner)))))))
+
+(deftest cataloguer
+  (do-game
+    (new-game {:corp {:deck ["Whitespace" "Hedge Fund" "Spin Doctor" "Offworld Office"]}
+               :runner {:hand ["Cataloguer"]}})
+    (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (is (zero? (count (:hand (get-corp)))))
+    (is (= 4 (count (:deck (get-corp)))))
+    (play-from-hand state :runner "Cataloguer")
+
+    (is (changed? [(get-counters (get-hardware state 0) :power) 0]
+                  (card-ability state :runner (get-hardware state 0) 0))
+        "No successful run on R&D this turn, can not use Cataloguer ability yet")
+
+    (run-empty-server state "R&D")
+
+    (is (changed? [(get-counters (get-hardware state 0) :power) -1]
+                  (click-prompt state :runner "Cataloguer")))
+
+    (click-prompt state :runner (find-card "Spin Doctor" (:deck (get-corp))))
+    (click-prompt state :runner (find-card "Hedge Fund" (:deck (get-corp))))
+    (click-prompt state :runner (find-card "Offworld Office" (:deck (get-corp))))
+    (click-prompt state :runner (find-card "Whitespace" (:deck (get-corp))))
+    ;; try starting over
+    (click-prompt state :runner "Start over")
+    (click-prompt state :runner (find-card "Whitespace" (:deck (get-corp))))
+    (click-prompt state :runner (find-card "Hedge Fund" (:deck (get-corp))))
+    (click-prompt state :runner (find-card "Spin Doctor" (:deck (get-corp))))
+    (click-prompt state :runner (find-card "Offworld Office" (:deck (get-corp))))
+    (click-prompt state :runner "Done")
+
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "Steal")
+
+    (is (nil? (get-hardware state 0)) "Cataloguer trashed after running out of power counters")))
 
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn begins trash 1 card, then draw or remove tag
@@ -2493,6 +2566,47 @@
       (core/add-counter state :runner (refresh hm) :power -3)
       (core/update-hand-size state :runner)
       (is (= 5 (hand-size :runner))))))
+
+(deftest jeitinho
+  (do-game
+    (new-game {:runner {:hand [(qty "Jeitinho" 3)]}
+               :corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Hedge Fund"]}})
+    (dotimes [n 3]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Jeitinho")
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (click-prompt state :runner "No action")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (is (= (+ 1 n) (count (:scored (get-runner)))) "Jeitinho moved to score area")
+      (is (zero? (:agenda-point (get-runner))) "Jeitinho scored for 0 agenda point"))
+    (is (= "Jeitinho assassination event" (:reason @state)) "Win condition reports jeitinho")))
+
+(deftest jeitinho-threat
+  (do-game
+    (new-game {:runner {:discard ["Jeitinho"]}
+               :corp {:hand ["Authenticator" "Bellona"]}})
+    (play-from-hand state :corp "Authenticator" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :runner) "No prompt when under threat level")
+    (run-jack-out state)
+    (take-credits state :runner)
+    (play-and-score state "Bellona")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (is (changed? [(count (:discard (get-runner))) -1
+                   (count (get-hardware state)) 1]
+                  (click-prompt state :runner "Yes"))
+        "Jeitinho was installed from the heap")))
 
 (deftest keiko
   ;; Keiko
@@ -4938,6 +5052,33 @@
               (click-card state :runner tt)
               (click-card state :runner tt))
             "Used 2 credits from The Toolbox"))))
+
+(deftest the-wizards-chest
+  (do-game
+    (new-game {:runner {:hand ["The Wizard's Chest"]
+                        :discard ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Wizard's Chest")
+    (let [chest (get-hardware state 0)]
+      ;; TODO: make this a helper or something for consistently ordered starting deck
+      (doseq [card-name ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]]
+        (core/move state :runner (find-card card-name (get-in @state [:runner :discard])) :deck))
+      (card-ability state :runner chest 0)
+      (is (no-prompt? state :runner) "Cannot trigger The Wizard's Chest until all centrals ran")
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (run-empty-server state "HQ")
+      (card-ability state :runner (refresh chest) 0)
+      (is (= ["Hardware" "Program" "Resource" "Cancel"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Program")
+      (is (= ["Install Corroder" "Install Femme Fatale" "No install"] (prompt-buttons :runner)))
+      (changes-val-macro 0 (:credit (get-runner))
+                         "Install at no cost"
+                         (click-prompt state :runner "Install Femme Fatale"))
+      (is (= "Femme Fatale" (:title (get-program state 0))) "Femme Fatale is installed")
+      (is (second-last-log-contains? state (str "Runner uses The Wizard's Chest"
+                                                " to reveal Legwork, Corroder, Ice Carver, Prepaid VoicePAD, Femme Fatale from the top of the stack"
+                                                " and install Femme Fatale, ignoring all costs."))))))
 
 (deftest time-bomb
   (do-game

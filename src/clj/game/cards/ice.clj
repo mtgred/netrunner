@@ -4,7 +4,8 @@
    [cond-plus.core :refer [cond+]]
    [game.core.access :refer [access-bonus access-card breach-server max-access]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
-   [game.core.board :refer [all-active-installed all-installed all-installed-runner-type card->server
+   [game.core.board :refer [all-active-installed all-installed all-installed-runner 
+                            all-installed-runner-type card->server
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index
                            corp? corp-installable-type? faceup?
@@ -18,12 +19,13 @@
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
                                   do-brain-damage do-net-damage offer-jack-out
                                   reorder-choice get-x-fn]]
-   [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [get-effects register-lingering-effect unregister-static-abilities]]
+   [game.core.drawing :refer [draw maybe-draw draw-up-to]]
+   [game.core.effects :refer [get-effects register-lingering-effect unregister-effects-for-card unregister-static-abilities]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-   [game.core.engine :refer [gather-events pay register-events resolve-ability
-                             trigger-event trigger-event-simult unregister-events]]
-   [game.core.events :refer [run-events]]
+   [game.core.engine :refer [gather-events pay register-default-events register-events
+                             resolve-ability trigger-event trigger-event-simult unregister-events
+                             ]]
+   [game.core.events :refer [first-event? run-events]]
    [game.core.finding :refer [find-cid]]
    [game.core.flags :refer [can-rez? card-flag? prevent-draw prevent-jack-out
                             register-run-flag! register-turn-flag! run-flag? zone-locked?]]
@@ -155,6 +157,10 @@
    :msg "end the run"
    :async true
    :effect (effect (end-run :corp eid card))})
+
+;; helper for the faceup-archives-count cards
+(defn- faceup-archives-types [corp]
+  (count (distinct (map :type (filter faceup? (:discard corp))))))
 
 (defn runner-pays
   "Ability to pay to avoid a subroutine by paying a resource"
@@ -958,6 +964,19 @@
                                  (gain-credits state :corp eid num-ice)))}
                  end-the-run]})
 
+(defcard "Boto"
+  (let [discard-card-to-end-the-run-sub
+        {:label "Trash 1 card from HQ to end the run"
+         :optional {:prompt "Trash 1 card from HQ to end the run?"
+                    :yes-ability {:cost [:trash-from-hand 1]
+                                  :msg "end the run"
+                                  :async true
+                                  :effect (effect (end-run eid card))}}}]
+    {:static-abilities [(ice-strength-bonus (req (if (threat-level 4 state) 2 0)))]
+    :subroutines [(do-net-damage 2)
+                  discard-card-to-end-the-run-sub
+                  discard-card-to-end-the-run-sub]}))
+
 (defcard "Brainstorm"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-brain-damage 1)))}
    :events [{:event :run-ends
@@ -1035,6 +1054,15 @@
 (defcard "Caduceus"
   {:subroutines [(trace-ability 3 (gain-credits-sub 3))
                  (trace-ability 2 end-the-run)]})
+
+(defcard "Capacitor"
+  {:static-abilities [(ice-strength-bonus (req (if (is-tagged? state) 2 0)))]
+   :subroutines [{:label "Gain 1 [Credits] for each tag the Runner has"
+                  :async true
+                  :msg (msg "Gain " (count-tags state) " [Credits]")
+                  :req (req (pos? (count-tags state)))
+                  :effect (effect (gain-credits :corp eid (count-tags state)))}
+                 end-the-run]})
 
 (defcard "Cell Portal"
   {:subroutines [{:async true
@@ -1148,6 +1176,38 @@
                           :choices {:card installed?}
                           :effect (effect (add-prop target :advance-counter 1 {:placed true})
                                           (end-run eid card))})]})
+
+(defcard "Cloud Eater"
+  {:subroutines [trash-installed-sub
+                 (give-tags 2)
+                 (do-net-damage 3)]
+   :events [{:event :end-of-encounter
+             :req (req (and (= :this-turn (:rezzed card))
+                            (same-card? (:ice context) card)))
+             :msg "force the Runner to choose a subroutine to resolve"
+             :effect (effect (continue-ability
+                               {:prompt "Choose one"
+                                :player :runner
+                                :choices (req [(when (seq (all-installed-runner state)) "Corp trashes 1 Runner card")
+                                               (when-not (forced-to-avoid-tags? state side) "Take 2 tags")
+                                               (when (can-pay? state :runner eid card nil :net 3)
+                                                 "Suffer 3 net damage")])
+                                :async true
+                                :effect (req
+                                          (continue-ability
+                                            state :runner
+                                            (cond
+                                              (= target "Corp trashes 1 Runner card")
+                                              trash-installed-sub
+                                              (= target "Take 2 tags")
+                                              {:effect (effect (gain-tags :runner eid 2 {:unpreventable true}))
+                                               :msg "give the Runner 2 tags"}
+                                              (= target "Suffer 3 net damage")
+                                              {:effect (req (wait-for (pay state :runner (make-eid state eid) card [:net 3])
+                                                                      (system-msg state :runner (:msg async-result))
+                                                                      (effect-completed state side eid)))})
+                                            card nil))}
+                               card nil))}]})
 
 (defcard "Cobra"
   {:subroutines [trash-program-sub (do-net-damage 2)]})
@@ -1912,6 +1972,75 @@
                   :effect  (effect (move :runner target :rfg))}
                  end-the-run]})
 
+(defcard "Hammer"
+  {:implementation "Breaking restriction not implemented"
+   :subroutines [(give-tags 1)
+                 {:label "Trash 1 resource or piece of hardware"
+                  :msg (msg "trash " (:title target))
+                  :prompt "Choose a resource of piece of hardware"
+                  :choices {:req (req (and (installed? target)
+                                           (or (hardware? target)
+                                               (resource? target))))}
+                  :async true
+                  :effect (effect (trash eid target {:cause :subroutine}))}
+                 {:label "Trash 1 program that is not a decoder, fracter or killer"
+                  :prompt "Choose a program that is not a decoder, fracter or killer"
+                  :msg (msg "trash " (:title target))
+                  :choices {:card #(and (installed? %)
+                                        (program? %)
+                                        (not (has-subtype? % "Decoder"))
+                                        (not (has-subtype? % "Fracter"))
+                                        (not (has-subtype? % "Killer")))}
+                  :async true
+                  :effect (effect (trash eid target {:cause :subroutine}))}]})
+
+(defcard "Descent"
+  (let [shuffle-ab
+        {:label "Draw 1 card and shuffle 2 agendas in HQ and/or Archives into R&D"
+         :msg "draw 1 card"
+         :effect
+         (req (wait-for
+                (draw state side 1)
+                (continue-ability
+                  state side
+                  {:prompt "Choose up to 2 agendas in HQ and/or Archives"
+                   :choices {:max 2
+                   :card #(and (agenda? %)
+                               (or (in-hand? %)
+                                   (in-discard? %)))}
+                   :async true
+                   :show-discard true
+                   :effect
+                   (req (wait-for
+                          (reveal state side targets)
+                          (doseq [c targets]
+                            (move state :corp c :deck))
+                          (shuffle! state :corp :deck)
+                          (let [from-hq (map :title (filter in-hand? targets))
+                                from-archives (map :title (filter in-discard? targets))]
+                            (system-msg
+                              state side
+                              (str "uses " (:title card) " to reveal "
+                                   (enumerate-str
+                                     (filter identity
+                                             [(when (not-empty from-hq)
+                                                (str (enumerate-str from-hq)
+                                                     " from HQ"))
+                                              (when (not-empty from-archives)
+                                                (str (enumerate-str from-archives)
+                                                     " from Archives"))]))
+                                   ", shuffle them into R&D")))
+                          (effect-completed state side eid)))}
+                card nil)))}]
+    {:events [{:event :corp-turn-begins
+               :interactive (req true)
+               :req (req (rezzed? card))
+               :optional {:prompt (msg "Add " (card-str state card) " to HQ?")
+                          :yes-ability {:effect (req (move state side card :hand))
+                                        :msg (msg "add " (card-str state card) " to HQ")}}}]
+     :expend shuffle-ab
+     :subroutines [end-the-run]}))
+
 (defcard "Harvester"
   (let [sub {:label "Runner draws 3 cards and discards down to maximum hand size"
              :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
@@ -2434,6 +2563,21 @@
                   :msg "prevent the Runner from drawing cards"
                   :effect (effect (prevent-draw))}]})
 
+(defcard "Logjam"
+  {:advanceable :always
+   :static-abilities [(ice-strength-bonus (req (get-counters card :advancement)))]
+   :on-rez {:msg (msg "place " (quantify (inc (faceup-archives-types corp)) "advancement counter") " on itself")
+            :effect (effect (add-prop card
+                                      :advance-counter
+                                      (inc (faceup-archives-types corp))
+                                      {:placed true}))}
+   :subroutines [{:msg "gain 2 [Credits] and end the run"
+                  :async true
+                  :effect (req (wait-for (gain-credits state :corp 2)
+                                         (end-run state side eid card)))}
+                 end-the-run
+                 end-the-run]})
+
 (defcard "Loki"
   {:on-encounter
    {:req (req (<= 2 (count (filter ice? (all-active-installed state :corp)))))
@@ -2510,6 +2654,65 @@
 
 (defcard "Lycan"
   (morph-ice "Sentry" "Code Gate" trash-program-sub))
+
+(defcard "Lycian Multi-Munition"
+  (letfn [(ice-subtype-choice [choices]
+            {:prompt "Choose an ice subtype"
+             :waiting-prompt true
+             :choices choices
+             :effect (req (if (= target "Done")
+                            (effect-completed state side eid)
+                            (let [new-choices (->> choices
+                                                   (remove #{target})
+                                                   (#(conj % "Done"))
+                                                   distinct)]
+                              ;; note this is a lingering ability and persists so
+                              ;; long as the card is rezzed
+                              ;; if the card is hushed, it will not derez, so the subtypes will stay!
+                              ;; - nbkelly, jan '24
+                              (system-msg state side (str "uses " (:title card) " to make itself gain " target))
+                              (register-lingering-effect
+                                state side card
+                                (let [ice card]
+                                  {:type :gain-subtype
+                                   :req (req (same-card? ice target))
+                                   :value target}))
+                              (continue-ability
+                                state side
+                                (ice-subtype-choice new-choices)
+                                card nil))))})]
+    {:on-rez {:effect (effect (continue-ability (ice-subtype-choice ["Barrier" "Code Gate" "Sentry"]) card nil))}
+     :derez-effect {:effect (req (unregister-effects-for-card state side card #(= :gain-subtype (:type %))))}
+     :static-abilities [{:type :gain-subtype
+                         :req (req (and (same-card? card target) (:subtype-target card)))
+                         :value (req (:subtype-target card))}]
+     :events [{:event :runner-turn-ends
+               :req (req (rezzed? card))
+               :effect (effect (derez :corp card))}
+              {:event :corp-turn-ends
+               :req (req (rezzed? card))
+               :effect (effect (derez :corp card))}]
+     :subroutines [{:label "(Code Gate) Force the Runner to lose [Click] and 1 [Credit]"
+                    :msg "force the Runner to lose [Click] and 1 [Credit]"
+                    :req (req (has-subtype? card "Code Gate"))
+                    :effect (req (wait-for
+                                   (lose-clicks state :runner 1)
+                                   (lose-credits state :runner (make-eid state eid) 1)))}
+                   {:label "(Sentry) Trash a program"
+                    :prompt "Choose a program to trash"
+                    :req (req (has-subtype? card "Sentry"))
+                    :msg (msg "trash " (:title target))
+                    :choices {:card #(and (installed? %)
+                                          (program? %))}
+                    :async true
+                    :effect (effect (trash eid target {:cause :subroutine}))}
+                   {:label "(Barrier) Gain 1 [Credit] and end the run"
+                    :msg "gain 1 [Credit] and end the run"
+                    :req (req (has-subtype? card "Barrier"))
+                    :async true
+                    :effect (req (wait-for
+                                   (gain-credits state :corp 1)
+                                   (end-run state :corp eid card)))}]}))
 
 (defcard "M.I.C."
   {:abilities [{:label "End the run unless the Runner spends [Click]"
@@ -3169,6 +3372,14 @@
             :effect (effect (gain-tags :corp eid 1))}
    :subroutines [end-the-run]})
 
+(defcard "Piranhas"
+  {:additional-cost [:tag-or-bad-pub]
+   :subroutines [(maybe-draw-sub 1)
+                 (do-net-damage 1)
+                 (assoc end-the-run
+                        :label "End the run if there are more cards in HQ than in the grip"
+                        :req (req (> (count (:hand corp)) (count (:hand runner)))))]})
+
 (defcard "Pop-up Window"
   {:on-encounter (gain-credits-sub 1)
    :subroutines [(end-the-run-unless-runner-pays [:credit 1])]})
@@ -3385,6 +3596,7 @@
                        :value true}]
    :subroutines [end-the-run]})
 
+
 (defcard "Sensei"
   {:subroutines [{:label "Give encountered ice \"End the run\""
                   :msg "give encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run"
@@ -3399,6 +3611,29 @@
                                {:event :end-of-encounter
                                 :duration :end-of-run
                                 :effect (effect (remove-sub! (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
+
+(defcard "Seraph"
+  (let [encounter-ab
+        {:prompt "Choose one"
+         :player :runner
+         :waiting-prompt true
+         :choices (req ["Lose 3 [Credits]"
+                        (when (>= (count (:hand runner)) 2)
+                          "Suffer 2 net damage")
+                        (when-not (forced-to-avoid-tags? state side)
+                          "Take 1 tag")])
+         :msg (msg "force the Runner to " (decapitalize target) " on encountering it")
+         :effect (req (cond
+                        (= "Lose 3 [Credits]" target)
+                          (lose-credits state :runner eid 3)
+                        (= "Suffer 2 net damage" target)
+                          (pay state :runner eid card [:net 2])
+                        (= "Take 1 tag" target)
+                          (gain-tags state :runner eid 1 {:unpreventable true})))}]
+    {:on-encounter encounter-ab
+     :subroutines [(runner-loses-credits 3)
+                   (do-net-damage 2)
+                   (give-tags 1)]}))
 
 (defcard "Shadow"
   (wall-ice [(gain-credits-sub 2)
@@ -3534,6 +3769,25 @@
 
 (defcard "Snowflake"
   {:subroutines [(do-psi end-the-run)]})
+
+(defcard "Sorocaban Blade"
+  {:events [{:event :corp-trash
+             :silent (req true)
+             :once-per-instance true
+             :req (req (and
+                         (get-current-encounter state)
+                         (some #(and (runner? %) (installed? %)) (map :card targets))))
+             :effect (req (update! state side (assoc-in card [:special :sorocaban-blade] true)))}
+            {:event :end-of-encounter
+             :silent (req true)
+             :req (req true)
+             :effect
+             (req (update! state side (dissoc-in card [:special :sorocaban-blade])))}]
+   :subroutines [trash-resource-sub
+                 (assoc trash-hardware-sub
+                        :req (req (not (get-in card [:special :sorocaban-blade]))))
+                 (assoc trash-program-sub
+                        :req (req (not (get-in card [:special :sorocaban-blade]))))]})
 
 (defcard "Special Offer"
   {:subroutines [{:label "Gain 5 [Credits] and trash this ice"
@@ -3856,6 +4110,51 @@
   {:subroutines [runner-trash-installed-sub
                  runner-trash-installed-sub
                  runner-trash-installed-sub]})
+
+(defcard "Tributary"
+  {:subroutines [{:label "Draw 1 card and install a piece of ice from HQ protecting another server"
+                  :async true
+                  :effect (req (wait-for
+                                 (maybe-draw state side card 1)
+                                 (continue-ability
+                                   state side
+                                   {:choices {:card #(and (ice? %)
+                                                          (in-hand? %))}
+                                    :prompt "Choose a piece of ice to install"
+                                    :effect (req (let [this (zone->name (second (get-zone card)))
+                                                       nice target]
+                                                   (continue-ability state side
+                                                                     {:prompt (str "Choose a location to install " (:title target))
+                                                                      :choices (req (remove #(= this %) (corp-install-list state nice)))
+                                                                      :async true
+                                                                      :effect (effect (corp-install eid nice target {:ignore-install-cost true}))}
+                                                                     card nil)))}
+                                   card nil)))}
+                 {:label "Give +2 strength to each piece of ice for the remainder of the run"
+                  :msg "give +2 strength to each piece of ice for the remainder of the run"
+                  :effect (effect (register-lingering-effect
+                                    card
+                                    {:type :ice-strength
+                                     :duration :end-of-run
+                                     :value 2})
+                                  (update-all-ice))}]
+   :events [{:event :run
+             :req (req (and (first-event? state side :run)))
+             :effect (req (let [target-server (:server run)]
+                            (continue-ability
+                              state side
+                              {:optional
+                               {:prompt (msg "Move " (:title card) " to the outermost position of " (zone->name target-server) "?")
+                                :yes-ability {:once :per-turn
+                                              :msg (msg "move itself to the outermost position of " (zone->name target-server))
+                                              :effect (req (let [moved (move state side card (conj [:servers (first target-server)] :ices))]
+                                                                 (redirect-run state side target-server)
+                                                                 ;;ugly hack - TODO: figure out why the event gets disabled after the card moves!
+                                                                 ;;- maybe this should be inserted into move? -nbkelly, Jan '24
+                                                                 (unregister-events state side moved)
+                                                                 (register-default-events state side moved)
+                                                                 (effect-completed state side eid)))}}}
+                              card nil)))}]})
 
 (defcard "Troll"
   {:on-encounter

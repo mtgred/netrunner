@@ -6,7 +6,7 @@
                              installed-access-trigger
                              steal-cost-bonus]]
    [game.core.bad-publicity :refer [lose-bad-publicity]]
-   [game.core.board :refer [all-active-installed all-installed card->server
+   [game.core.board :refer [all-active-installed all-installed all-installed-corp card->server
                             get-remotes server->zone server-list]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? get-card get-counters get-zone
@@ -41,7 +41,7 @@
    [game.core.props :refer [add-counter add-prop set-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
-   [game.core.rezzing :refer [rez]]
+   [game.core.rezzing :refer [rez derez]]
    [game.core.runs :refer [end-run force-ice-encounter jack-out redirect-run
                            set-next-phase start-next-phase]]
    [game.core.say :refer [system-msg]]
@@ -59,26 +59,35 @@
    [jinteki.utils :refer :all]))
 
 ;; Helpers
-(def mobile-sysop-event
-  {:event :corp-turn-ends
-   :optional {:prompt (msg "Move " (:title card) " to another server?")
-              :waiting-prompt true
-              :yes-ability {:async true
-                            :effect (effect (continue-ability
-                                              {:prompt "Choose a server"
-                                               :waiting-prompt true
-                                               :choices (server-list state)
-                                               :msg (msg "move itself to " target)
-                                               :effect (req (let [c (move state side card
-                                                                          (conj (server->zone state target) :content))]
-                                                              (unregister-events state side card)
-                                                              (register-default-events state side c)))}
-                                              card nil))}}})
+(defn mobile-sysop-event
+  ([] (mobile-sysop-event :corp-turn-ends))
+  ([ev] (mobile-sysop-event ev nil))
+  ([ev callback] {:event ev
+         :optional
+         {:prompt (msg "Move " (:title card) " to another server?")
+          :waiting-prompt true
+          :yes-ability
+          {:async true
+           :effect (effect (continue-ability
+                             {:prompt "Choose a server"
+                              :waiting-prompt true
+                              :choices (server-list state)
+                              :msg (msg "move itself to " target)
+                              :async true
+                              :effect (req (let [c (move state side card
+                                                         (conj (server->zone state target) :content))]
+                                             (unregister-events state side card)
+                                             (register-default-events state side c)
+                                             (if callback
+                                               (continue-ability state side callback c nil)
+                                               (effect-completed state side eid))
+                                             ))}
+                             card nil))}}}))
 
 ;; Card definitions
 
 (defcard "Adrian Seis"
-  {:events [mobile-sysop-event
+  {:events [(mobile-sysop-event)
             {:event :successful-run
              :interactive (req true)
              :psi {:req (req this-server)
@@ -315,6 +324,34 @@
                                               (str "gains 5 [Credits] and draws 1 card. "
                                                    "Black Level Clearance is trashed"))
                                   (trash state :corp eid card {:cause-card card}))))))}]})
+
+(defcard "Brasília Government Grid"
+  {:events [{:event :rez
+             :req (req (and (ice? (:card context))
+                            this-server run
+                            (some #(and (ice? %)
+                                        (not (same-card? % (:card context))))
+                                  (all-active-installed state :corp))))
+             :effect (req
+                       (let [rezzed-card (:card context)]
+                         (continue-ability
+                           state side
+                           {:optional
+                            {:prompt (str "Derez another ice to give "
+                                          (:title rezzed-card)
+                                          " +3 strength for the remainder of the run?")
+                             :waiting-prompt true
+                             :once :per-turn
+                             :async true
+                             :yes-ability {:choices {:card #(and (ice? %)
+                                                                 (rezzed? %)
+                                                                 (not (same-card? % rezzed-card)))}
+                                           :async true
+                                           :msg (msg "derez " (card-str state target) " to give " (card-str state rezzed-card) " +3 strength for the remainder of the run")
+                                           :effect (req (derez state side (get-card state target))
+                                                        (pump-ice state side rezzed-card 3 :end-of-run)
+                                                        (effect-completed state side eid))}}}
+                           card nil)))}]})
 
 (defcard "Breaker Bay Grid"
   {:static-abilities [{:type :rez-cost
@@ -859,6 +896,29 @@
                         :async true
                         :effect (req (move state :runner target :hand)
                                      (effect-completed state side eid))}}}})
+
+(defcard "Isaac Liberdade"
+  (let [ability {:interactive (req true)
+                 :req (req (some #(and (ice? %)
+                                       (zero? (get-counters % :advancement))
+                                       (same-server? card %))
+                                 (all-installed-corp state)))
+                 :effect
+                 (effect
+                   (continue-ability
+                     {:prompt "Choose a piece of ice protecting this server to place 1 advancement counter on"
+                      :waiting-prompt true
+                      :choices {:card #(and (ice? %)
+                                            (zero? (get-counters % :advancement))
+                                            (same-server? % card))}
+                      :msg (msg "place 1 advancement counter on " (card-str state target))
+                      :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+                     card nil))}]
+    {:static-abilities [{:type :ice-strength
+                         :req (req (and (ice? target)
+                                        (= (card->server state card) (card->server state target))))
+                         :value (req (if (pos? (get-counters target :advancement)) 2 0))}]
+     :events [(mobile-sysop-event :corp-turn-ends ability)]}))
 
 (defcard "Jinja City Grid"
   (letfn [(install-ice [ice ices grids server]
@@ -1617,6 +1677,19 @@
                                            (effect-completed state side eid))
                                        (damage state side eid :brain 1 {:card card})))}}}})
 
+(defcard "The Holo Man"
+  (let [abi
+        {:cost [:click :credit 4]
+         :label "Place advancement counters on a card in or protecting this server"
+         :once :per-turn
+         :choices {:req (req (same-server? card target))}
+         :effect
+         (req (let [n (if (no-event? state side :corp-install #(= [:hand] (:previous-zone (:card (first %))))) 3 2)]
+                (system-msg state side (str "uses " (card-str state card) " to place " (quantify n "advancement counter") " on " (card-str state target)))
+                (add-prop state side eid target :advance-counter n {:placed true})))}]
+    {:abilities [abi]
+     :events [(mobile-sysop-event :corp-turn-begins)]}))
+
 (defcard "The Twins"
   {:events [{:event :pass-ice
              :optional
@@ -1767,7 +1840,7 @@
                                           (threat-level 4 state))
                                       (= (card->server state card) (card->server state target))))
                         :value -2}]
-    :events [mobile-sysop-event]})
+    :events [(mobile-sysop-event)]})
 
 (defcard "Warroid Tracker"
   (letfn [(wt [n]

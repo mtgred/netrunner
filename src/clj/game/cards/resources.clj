@@ -3,12 +3,12 @@
    [clojure.pprint :as pprint]
    [clojure.string :as str]
    [game.core.access :refer [access-bonus access-n-cards breach-server steal
-                             steal-cost-bonus]]
+                             num-cards-to-access steal-cost-bonus]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active all-active-installed all-installed
-                            all-installed-runner card->server server->zone]]
+                            all-installed-runner card->server get-all-cards server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp? condition-counter?
                            event? facedown? get-agenda-points get-card get-counters
                            get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand? in-scored?
@@ -31,6 +31,7 @@
                              first-installed-trash-own? first-run-event?
                              first-successful-run-on-server? get-turn-damage no-event? second-event? turn-events]]
    [game.core.expose :refer [expose]]
+   [game.core.finding :refer [find-cid]]
    [game.core.flags :refer [card-flag? clear-persistent-flag!
                             has-flag? in-corp-scored?
                             register-persistent-flag! register-turn-flag! zone-locked?]]
@@ -38,7 +39,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [break-sub break-subroutine! get-strength pump
+   [game.core.ice :refer [break-sub break-subroutine! get-strength ice-strength pump pump-ice
                           unbroken-subroutines-choice update-all-ice
                           update-all-icebreakers update-breaker-strength]]
    [game.core.identities :refer [disable-card enable-card]]
@@ -59,7 +60,7 @@
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
-   [game.core.runs :refer [bypass-ice can-run-server? get-runnable-zones
+   [game.core.runs :refer [active-encounter? bypass-ice can-run-server? get-runnable-zones
                            gain-run-credits get-current-encounter
                            update-current-encounter
                            make-run set-next-phase
@@ -262,6 +263,23 @@
              :effect (req (toast state :runner "Reminder: Always Be Running requires a run on the first click" "info"))}]
    :abilities [(assoc (break-sub [:lose-click 2] 1 "All" {:req (req true)}) :once :per-turn)]})
 
+(defcard "Amelia Earhart"
+  {:flags {:runner-phase-12 (req true)}
+   :events [{:event :run-ends
+             :req (req (and (#{:hq :rd} (target-server context))
+                            (>= (total-cards-accessed context) 3)))
+             :effect (effect (add-counter (get-card state card) :power 1))}
+            {:event :runner-turn-begins
+             :optional
+             {:prompt (str "Trash this resource to force the Corp to lose 10 [Credits]?")
+              :yes-ability
+              {:req (req (>= (get-counters (get-card state card) :power) 3))
+               :msg "trash itself and force the Corp to lose 10 [Credits]"
+               :async true
+               :effect (req (wait-for
+                              (trash state side card {:cause-card card})
+                              (lose-credits state :corp eid (min 10 (:credit corp)))))}}}]})
+
 (defcard "Angel Arena"
   {:on-install {:prompt "How many credits do you want to spend?"
                 :choices :credit
@@ -299,6 +317,21 @@
                 :effect (effect (trigger-event :searched-stack nil)
                                 (shuffle! :deck)
                                 (runner-install eid target nil))}]})
+
+(defcard "Arruaceiras Crew"
+  {:abilities [{:req (req (active-encounter? state))
+                :cost [:gain-tag 1]
+                :once :per-turn
+                :label "Give encountered ice -2 strength"
+                :msg (msg "give " (card-str state current-ice) " -2 strength for the remainder of the encounter")
+                :effect (effect (pump-ice current-ice -2 :end-of-encounter))}
+               {:label "Trash encountered ice"
+                :async true
+                :req (req (and (active-encounter? state)
+                               (not (pos? (ice-strength state side current-ice)))))
+                :cost [:trash-can :credit 2]
+                :effect (effect (trash eid current-ice {:cause-card card}))
+                :msg (msg "trash " (card-str state current-ice))}]})
 
 (defcard "Asmund Pudlat"
   (letfn [(search-and-host [x]
@@ -1425,6 +1458,21 @@
                 :async true
                 :effect (effect (draw eid 1))}]})
 
+(defcard "Friend of a Friend"
+  {:abilities [{:label "Gain 5 [Credits] and remove 1 tag"
+                :msg "gain 5 [Credits] and remove 1 tag"
+                :cost [:click 1 :trash-can]
+                :async true
+                :effect (req (wait-for (gain-credits state side (make-eid state eid) 5)
+                                       (lose-tags state :runner eid 1)))}
+               {:label "Gain 9 [Credits] and take 1 tag"
+                :msg "gain 9 [Credits] and take 1 tag"
+                :cost [:click 1 :trash-can]
+                :req (req (not tagged))
+                :async true
+                :effect (req (wait-for (gain-credits state side (make-eid state eid) 9)
+                                       (gain-tags state :runner eid 1)))}]})
+
 (defcard "Gang Sign"
   {:events [{:event :agenda-scored
              :async true
@@ -1780,6 +1828,19 @@
                :msg "gain 1 tag"}]
      :abilities [ability]}))
 
+(defcard "Juli Moreira Lee"
+  {:data {:counter {:power 4}}
+   :events [(trash-on-empty :power)
+            {:event :runner-spent-click
+             :req (req (let [all-cards (get-all-cards state)]
+                         (and (resource? (find-cid (first target) all-cards))
+                              (first-event? state side :runner-spent-click
+                                            #(resource?
+                                               (find-cid (first (first %)) all-cards))))))
+             :msg "gain [Click]"
+             :effect (effect (add-counter card :power -1)
+                             (gain-clicks 1))}]})
+
 (defcard "Kasi String"
   {:events [{:event :run-ends
              :optional
@@ -2033,6 +2094,36 @@
              :interactive (req true)
              :async true
              :effect (effect (trash-cards eid (filter program? (:hosted card)) {:cause-card card}))}]})
+
+(defcard "Manuel Lattes de Moura"
+  {:static-abilities [{:type :basic-ability-additional-trash-cost
+                       :req (req (and (same-card? card target)
+                                      (= :corp side)
+                                      (threat-level 3 state)))
+                       :value [:trash-from-hand 1]}]
+   :events [{:event :breach-server
+             :req (req (and tagged run
+                            (or (= target :rd) (= target :hq))))
+             :msg "access 1 additional card"
+             :effect (effect (access-bonus target 1))}]})
+
+(defcard "\"Pretty\" Mary da Silva"
+  {:implementation "only works after other abilities increasing the number of accesses have resolved"
+   :events [{:event :breach-server
+             :async true
+             :interactive (req true)
+             :req (req (= :rd target))
+             :effect (req
+                       (let [num-access (:random-access-limit (num-cards-to-access state side :rd nil))]
+                         (continue-ability
+                           state side
+                           (when (>= num-access 2)
+                             {:optional
+                              {:prompt "Access 1 additional card?"
+                               :yes-ability
+                               {:msg "access 1 additional card"
+                                :effect (effect (access-bonus :rd 1))}}})
+                           card nil)))}]})
 
 (defcard "Maxwell James"
   {:static-abilities [(link+ 1)]
@@ -3588,6 +3679,28 @@
 (defcard "Utopia Shard"
   (shard-constructor "Utopia Shard" :hq "force the Corp to discard 2 cards from HQ at random"
                      (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp))) {:cause-card card}))))
+
+(defcard "Valentina Ferreira Carvalho"
+  {:on-install {:prompt "Choose one"
+                :choices (req [(when tagged "Remove 1 tag")
+                               "Gain 2 [Credits]"
+                               "Done"])
+                :req (req (and (threat-level 3 state)
+                               (= (:active-player @state) :runner)))
+                :effect (req (cond
+                               (= "Remove 1 tag" target) (do (lose-tags state :runner eid 1)
+                                                             (system-msg state :runner (str "uses " (:title card)
+                                                                                            " to " (decapitalize target))))
+                               (= "Gain 2 [Credits]" target) (do (gain-credits state :runner eid 2)
+                                                                 (system-msg state :runner (str "uses " (:title card)
+                                                                                                " to " (decapitalize target))))
+                               :else (effect-completed state side eid)))}
+   :events [{:event :runner-lose-tag
+             :player :runner
+             :msg "gain 1 [Credits]"
+             :async true
+             :interactive (req true)
+             :effect (req (gain-credits state :runner eid 1))}]})
 
 (defcard "Verbal Plasticity"
   {:events [{:event :runner-click-draw

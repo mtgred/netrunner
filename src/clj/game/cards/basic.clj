@@ -6,24 +6,25 @@
                            in-hand? operation? program? resource? upgrade?]]
    [game.core.def-helpers :refer [defcard]]
    [game.core.drawing :refer [draw use-bonus-click-draws!]]
-   [game.core.eid :refer [effect-completed]]
-   [game.core.engine :refer [trigger-event]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.effects :refer [get-effects]]
+   [game.core.engine :refer [pay resolve-ability trigger-event]]
    [game.core.flags :refer [can-advance? untrashable-while-resources?]]
    [game.core.gaining :refer [gain-credits]]
    [game.core.installing :refer [corp-can-pay-and-install? corp-install
                                  runner-can-pay-and-install? runner-install]]
    [game.core.moving :refer [trash]]
+   [game.core.payment :refer [build-cost-string can-pay? merge-costs]]
    [game.core.play-instants :refer [can-play-instant? play-instant]]
    [game.core.props :refer [add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.runs :refer [make-run]]
-   [game.core.say :refer [play-sfx]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.tags :refer [lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.macros :refer [effect msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
-
 ;; Card definitions
 
 (defcard "Corp Basic Action Card"
@@ -96,11 +97,38 @@
                 :req (req tagged)
                 :prompt "Choose a resource to trash"
                 :msg (msg "trash " (:title target))
-                :choices {:req (req (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
-                                             (> (count (filter resource? (all-active-installed state :runner))) 1))
-                                      (and (resource? target) (not (untrashable-while-resources? target)))
-                                      (resource? target)))}
-                :effect (effect (trash eid target nil))}
+                ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
+                :choices {:req (req (and (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
+                                                  (> (count (filter resource? (all-active-installed state :runner))) 1))
+                                           (and (resource? target) (not (untrashable-while-resources? target)))
+                                           (resource? target))
+                                         (let [additional-costs (merge-costs (into [] (concat (get-effects state side :additional-trash-cost target) (get-effects state side :basic-ability-additional-trash-cost target))))
+                                               can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)]
+                                           (or (empty? additional-costs) can-pay))))}
+                :effect (req
+                          (let [additional-costs (merge-costs (into [] (get-effects state side :basic-ability-additional-trash-cost target)))
+                                cost-strs (build-cost-string additional-costs)
+                                can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)]
+                            (if (empty? additional-costs)
+                              (trash state side eid target nil)
+                              (let [target-card target]
+                                (wait-for (resolve-ability
+                                            state side
+                                            {:prompt (str "Pay the additional cost to trash " (:title target-card) "?")
+                                             :choices [(when can-pay cost-strs) "No"]
+                                             :async true
+                                             :effect (req (if (= target "No")
+                                                            (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target-card)))
+                                                                (effect-completed state side eid))
+                                                            (wait-for (pay state side (make-eid state
+                                                                                                (assoc eid :additional-costs additional-costs :source card :source-type :trash-card))
+                                                                           nil additional-costs 0)
+                                                                      (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target-card)))
+                                                                      (complete-with-result state side eid target-card))))}
+                                            card nil)
+                                          (if async-result
+                                            (trash state side eid target nil)
+                                            (effect-completed state side eid)))))))}
                {:label "Purge virus counters"
                 :cost [:click 3]
                 :msg "purge all virus counters"

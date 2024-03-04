@@ -3845,6 +3845,57 @@
       (play-from-hand state :runner "Datasucker")
       (is (zero? (count-tags state)) "Runner took no tag for milling")))
 
+(deftest nuvem-sa
+  (do-game
+    (new-game {:corp {:id "Nuvem SA: Law of the Land"
+                      :deck [(qty "Hedge Fund" 20)]
+                      :hand [(qty "Hedge Fund" 2) "Ice Wall" "Tree Line" "Hasty Relocation"]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= "The top card of R&D is: Hedge Fund" (:msg (get-prompt state :corp))))
+    (click-prompt state :corp "OK")
+    (is (changed? [(:credit (get-corp)) 2
+                   (count (:deck (get-corp))) -1
+                   (count (:discard (get-corp))) 1]
+          (click-prompt state :corp "Yes"))
+        "Corp gains 2 credits to trash top of R&D")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (expend state :corp (find-card "Tree Line" (:hand (get-corp))))
+    (click-card state :corp (get-ice state :hq 0))
+    (is (= "The top card of R&D is: Hedge Fund" (:msg (get-prompt state :corp))))
+    (click-prompt state :corp "OK")
+    (is (changed? [(:credit (get-corp)) 0
+                   (count (:deck (get-corp))) -1
+                   (count (:discard (get-corp))) 1]
+          (click-prompt state :corp "Yes"))
+        "Corp doesn't gain credits after trashing second card from R&D")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= "The top card of R&D is: Hedge Fund" (:msg (get-prompt state :corp))))
+    (click-prompt state :corp "OK")
+    (is (changed? [(:credit (get-corp)) 0
+                   (count (:deck (get-corp))) 0
+                   (count (:discard (get-corp))) 0]
+          (click-prompt state :corp "No"))
+        "Corp can choose to not trash top of R&D")
+    (is (changed? [(:credit (get-corp)) 2]
+          (play-from-hand state :corp "Hasty Relocation"))
+        "Corp gains 2 credits from R&D trash even when not from ID trash ability")))
+
+(deftest nuvem-sa-only-trigger-on-corp-turn
+  (do-game
+    (new-game {:corp   {:id "Nuvem SA: Law of the Land"
+                        :deck [(qty "Hedge Fund" 20)]
+                        :hand ["Hedge Fund"]}
+               :runner {:hand ["Cookbook" "Gravedigger"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cookbook")
+    (play-from-hand state :runner "Gravedigger")
+    (click-prompt state :runner "Yes")
+    (is (changed? [(:credit (get-corp)) 0]
+          (card-ability state :runner (get-program state 0) 0))
+        "Nuvem should not fire on Runner's turn")))
+
 (deftest null-whistleblower
   ;; Null
   (do-game
@@ -4380,6 +4431,28 @@
         (score state :corp (refresh house))
         (is (= 1 (:agenda-point (get-corp))) "House of Knives was able to be scored")))))
 
+(deftest sebastiao-pessoa
+  (do-game
+    (new-game {:corp {:hand [(qty "Hedge Fund" 3)]}
+               :runner {:id "Sebastião Souza Pessoa: Activist Organiser"
+                        :hand ["Verbal Plasticity" "Professional Contacts" "Smartware Distributor"]}})
+    (gain-tags state :runner 1)
+    (is (changed? [(:credit (get-runner)) 0]
+                  (click-card state :runner (find-card "Verbal Plasticity" (:hand (get-runner)))))
+        "Verbal Plasticity is not a Connection")
+    (is (changed? [(:credit (get-runner)) -3]
+                  (click-card state :runner (find-card "Professional Contacts" (:hand (get-runner)))))
+        "Install Professional Contacts paying 2 less")
+    (is (= "Professional Contacts" (:title (get-resource state 0))) "Professional Contacts is installed")
+    (gain-tags state :runner 1)
+    (is (no-prompt? state :runner) "No prompt when Seb already has tags")
+    (is (changed? [(count (:hand (get-corp))) -1]
+                  (trash-resource state)
+                  (click-card state :corp (get-resource state 0))
+                  (click-prompt state :corp "Trash 1 card from your hand")
+                  (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp)))))
+        "The corp has to trash a card from HQ to trash a resource")))
+
 (deftest seidr-laboratories-destiny-defined
   ;; Seidr Laboratories: Destiny Defined
   (do-game
@@ -4906,6 +4979,42 @@
           (click-prompt state :runner "Suffer 1 core damage"))
         "didn't pay credits")
     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 core damage")))
+
+(deftest thunderbolt-armaments
+  (do-game
+    (new-game {:corp {:id "Thunderbolt Armaments: Peace Through Power"
+                      :deck ["Tithe" "Swordsman" "Vanilla"]}
+               :runner {:hand ["Smartware Distributor"]}})
+    (play-from-hand state :corp "Tithe" "HQ")
+    (play-from-hand state :corp "Swordsman" "R&D")
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (let [tithe (get-ice state :hq 0)
+          sw (get-ice state :rd 0)
+          van (get-ice state :archives 0)]
+      (take-credits state :corp)
+      (core/gain state :runner :click 1)
+      (play-from-hand state :runner "Smartware Distributor")
+      (run-on state :archives)
+      (rez state :corp van)
+      (run-continue state)
+      (is (= 0 (get-strength (refresh van))) "No strength buff to Vanilla")
+      (fire-subs state van)
+      (run-on state :hq)
+      (rez state :corp tithe)
+      (run-continue state)
+      (is (= 2 (get-strength (refresh tithe))) "Tithe strength is buffed")
+      (is (= 3 (count (:subroutines (refresh tithe)))) "Tithe has 3 subroutines")
+      (card-subroutine state :corp tithe 2)
+      (click-prompt state :runner "End the run")
+      (run-on state :rd)
+      (rez state :corp sw)
+      (run-continue state)
+      (is (= 3 (get-strength (refresh sw))) "Swordsman strength is buffed")
+      (is (= 3 (count (:subroutines (refresh sw)))) "Swordsman has 3 subroutines")
+      (card-subroutine state :corp sw 2)
+      (click-prompt state :runner "Trash 1 installed card")
+      (click-card state :runner "Smartware Distributor")
+      (is (:run @state) "Run continues"))))
 
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt

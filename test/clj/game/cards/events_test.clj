@@ -405,6 +405,18 @@
         (is (= (+ 2 hand) (count (:hand (get-corp)))) "Calvin Baley draws 2 cards")
         (is (no-prompt? state :corp) "No Jinja City Grid"))))
 
+(deftest ashen-epilogue
+  (do-game
+    (new-game {:runner {:hand ["Ashen Epilogue" (qty "Sure Gamble" 5)]
+                        :deck [(qty "Sure Gamble" 20)]
+                        :discard [(qty "Sure Gamble" 20)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ashen Epilogue")
+    (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+    (is (= 5 (count (:hand (get-runner)))) "Grip is full")
+    (is (= 35 (count (:deck (get-runner)))) "Stack is back")
+    (is (= 6 (count (:rfg (get-runner)))))))
+
 (deftest bahia-bands
   (do-game
       (new-game {:corp {:hand ["PAD Campaign"]}
@@ -823,6 +835,21 @@
       (play-from-hand state :runner "Build Script")
       (is (= (inc credits) (:credit (get-runner))) "Gained 1 credit")
       (is (= (+ 2 hand) (count (:hand (get-runner)))) "Drew 2 cards"))))
+
+(deftest burner
+  (do-game
+    (new-game {:corp {:hand [(qty "Hedge Fund" 4)]}
+               :runner {:hand ["Burner"]}})
+    (take-credits state :corp)
+    (play-run-event state "Burner" :hq)
+    (is (last-log-contains? state "reveals Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
+    (is (changed? [(count (:deck (get-corp))) 2
+                   (count (:hand (get-corp))) -2]
+                  (click-prompt state :runner "Hedge Fund")
+                  (click-prompt state :runner "Top of R&D")
+                  (click-prompt state :runner "Hedge Fund")
+                  (click-prompt state :runner "Bottom of R&D"))
+        "2 cards added to R&D")))
 
 (deftest by-any-means-full-test
     ;; Full test
@@ -2803,6 +2830,25 @@
                 "Runner should shuffle the stack")
       (is (= ["Magnum Opus"] (map :title (:hand (get-runner)))) "Magnum Opus is in the hand"))))
 
+(deftest eye-for-an-eye
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Enigma"]}
+               :runner {:hand ["Eye for an Eye" (qty "Sure Gamble" 2)]}})
+    (take-credits state :corp)
+    (gain-tags state :runner 1)
+    (play-from-hand state :runner "Eye for an Eye")
+    (is (not (:run @state)) "Cannot play Eye for an Eye when tagged")
+    (remove-tag state :runner)
+    (play-run-event state "Eye for an Eye" :hq)
+    (click-prompt state :runner "[Eye for an Eye] Trash 1 card from your hand: Trash card")
+    (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+    (click-prompt state :runner "[Eye for an Eye] Trash 1 card from your hand: Trash card")
+    (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
+    (is (not (:run @state)) "Run ended")
+    (is (= 1 (count-tags state)))
+    (is (= 2 (count (:discard (get-corp)))))
+    (is (= 3 (count (:discard (get-runner)))) "Whole world is blind")))
+
 (deftest falsified-credentials
   ;; Falsified Credentials - Expose card in remote
   ;; server and correctly guess its type to gain 5 creds
@@ -4570,7 +4616,35 @@
     (is (= "Self-modifying Code" (:title (get-program state 1))) "SMC should be installed")
     (click-card state :runner "Cloak")
     (is (= "Cloak" (:title (get-program state 2))) "Cloak should be installed")
-    (is (no-prompt? state :runner)) "Runner should have no more prompts"))
+    (is (no-prompt? state :runner) "Runner should have no more prompts")))
+
+(deftest meeting-of-minds
+  (do-game
+    (new-game {:runner {:hand [(qty "Meeting of Minds" 2) "Liberated Account" "Kati Jones" "Always Be Running" "Crypt"]
+                        :deck ["The Class Act" "Cookbook" "Smartware Distributor"]
+                        :credits 10}})
+    (take-credits state :corp)
+    ;; Choosing virtual
+    (play-from-hand state :runner "Meeting of Minds")
+    (click-prompt state :runner "Virtual")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "Cookbook")
+    (is (changed? [(:credit (get-runner)) 2]
+                  (click-card state :runner "Cookbook")
+                  (click-card state :runner "Always Be Running")
+                  (click-prompt state :runner "Done"))
+        "Runner gained 2 credits")
+    (is (no-prompt? state :runner))
+    ;; Choosing connection
+    (play-from-hand state :runner "Meeting of Minds")
+    (click-prompt state :runner "Connection")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "The Class Act")
+    (is (changed? [(:credit (get-runner)) 2]
+                  (click-card state :runner "The Class Act")
+                  (click-card state :runner "Kati Jones")
+                  (click-prompt state :runner "Done"))
+        "Runner gained 2 credits")))
 
 (deftest mining-accident
   ;; Mining Accident
@@ -5315,6 +5389,67 @@
       (run-continue state)
       (is (not (= "Trash Burke Bugs?" (:msg (prompt-map :runner))))
           "Runner has no prompt trash ice")))
+
+(deftest privileged-access
+  (do-game
+    (new-game {:runner {:hand ["Privileged Access"]
+                        :discard ["Verbal Plasticity" "Rachel Beckman"]}})
+    (take-credits state :corp)
+    (gain-tags state :runner 1)
+    (play-from-hand state :runner "Privileged Access")
+    (is (not (:run @state)) "Cannot play Privileged Access when tagged")
+    (remove-tag state :runner)
+    (play-from-hand state :runner "Privileged Access")
+    (is (changed? [(count-tags state) 1]
+                  (run-continue state)
+                  (is (= ["Verbal Plasticity" nil] (prompt-titles :runner)))
+                  (is (changed? [(:credit (get-runner)) -1]
+                                (click-prompt state :runner "Verbal Plasticity"))
+                      "Install Verbal Plasticity from heap for 2 credits less")
+                  (is (= "Verbal Plasticity" (get-title (get-resource state 0)))))
+        "Gain a tag from successful run on Archives")
+    (is (not (:run @state)) "Run ended")))
+
+(deftest privileged-access-threat
+  (do-game
+    (new-game {:corp {:hand ["Obokata Protocol"]}
+               :runner {:hand ["Privileged Access"]
+                        :discard ["Cleaver" "Orca"]}})
+    (play-and-score state "Obokata Protocol")
+    (take-credits state :corp)
+    (play-run-event state "Privileged Access" :archives)
+    (click-prompt state :runner "Privileged Access (resource)")
+    (click-prompt state :runner "Done")
+    (is (= ["Cleaver" nil] (prompt-titles :runner)))
+    (click-prompt state :runner "Cleaver")
+    (is (= "Cleaver" (get-title (get-program state 0))))
+    (is (not (:run @state)) "Run ended")))
+
+(deftest privileged-access-jesminder
+  (do-game
+    (new-game {:runner {:id "Jesminder Sareen: Girl Behind the Curtain"
+                        :hand ["Privileged Access"]
+                        :discard ["Verbal Plasticity"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Privileged Access")
+    (run-continue state)
+    (is (no-prompt? state :runner))
+    (is (zero? (count-tags state)) "No tag gained during the run")))
+
+(deftest privileged-access-jarogniew-mercs
+  (do-game
+    (new-game {:corp {:hand ["Obokata Protocol"]}
+               :runner {:hand ["Privileged Access"]
+                        :discard ["Jarogniew Mercs" "Marjanah"]}})
+    (play-and-score state "Obokata Protocol")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Privileged Access")
+    (run-continue state)
+    ;; resolving program installation first
+    (click-prompt state :runner "Privileged Access (program)")
+    (click-prompt state :runner "Marjanah")
+    (click-prompt state :runner "Jarogniew Mercs")
+    (is (no-prompt? state :runner))))
 
 (deftest process-automation
   ;; Process Automation
@@ -6435,6 +6570,41 @@
     (click-prompt state :runner "HQ")
     (is (:run @state) "Run should be initiated")))
 
+(deftest spree
+  (do-game
+    (new-game {:corp {:hand [(qty "Ice Wall" 3)]}
+               :runner {:hand ["Botulus" "Tranquilizer" "Spree"]}})
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Botulus")
+    (click-card state :runner (get-ice state :hq 0))
+    (play-from-hand state :runner "Tranquilizer")
+    (click-card state :runner (get-ice state :rd 0))
+    (play-from-hand state :runner "Spree")
+    (click-prompt state :runner "Archives")
+    (is (:run @state) "Run should be initiated")
+    (let [spree (-> (get-runner) :play-area first)
+          hq (get-ice state :hq 0)
+          ar (get-ice state :archives 0)
+          rd (get-ice state :rd 0)]
+      (is (= 3 (get-counters (refresh spree) :power)) "Spree has 3 power counters")
+      (is (changed? [(get-counters (refresh spree) :power) -1
+                     (-> (refresh hq) :hosted count) -1
+                     (-> (refresh ar) :hosted count) 1]
+                    (card-ability state :runner (refresh spree) 0)
+                    (click-card state :runner (-> (refresh hq) :hosted first))
+                    (click-card state :runner (refresh ar)))
+          "Spend a counter to move a trojan to ice in attacked server")
+      (is (changed? [(-> (refresh rd) :hosted count) 0
+                     (-> (refresh hq) :hosted count) 0
+                     (-> (refresh ar) :hosted count) 0]
+                    (card-ability state :runner (refresh spree) 0)
+                    (click-card state :runner (-> (refresh rd) :hosted first))
+                    (click-card state :runner (refresh hq)))
+          "Cannot move a trojan to ice in a server that is not under attack"))))
+
 (deftest steelskin-scarring
   (do-game
     (new-game {:runner {:hand ["Steelskin Scarring"] :deck [(qty "Sure Gamble" 45)]}})
@@ -6981,6 +7151,26 @@
             (rez state :corp icewall))
           "Paid 4 credits to rez Ice Wall"))))
 
+(deftest trick-shot
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Spin Doctor"]}
+               :runner {:hand ["Trick Shot"]}})
+    (play-from-hand state :corp "Spin Doctor" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Trick Shot")
+    (is (= :rd (first (get-in @state [:run :server]))))
+    (let [ts (-> (get-runner) :play-area first)]
+      (is (= 4 (get-counters (refresh ts) :credit)) "Trick Shot has 4 credits on it")
+      (is (changed? [(get-counters (refresh ts) :credit) 2]
+                    (run-continue state))
+          "Trick Shot gains 2 credits on successful run")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Server 1")
+      (is (= :remote1 (first (get-in @state [:run :server]))))
+      (is (= 6 (get-counters (refresh ts) :credit)) "Trick Shot still has 6 credits on it"))))
+
 (deftest uninstall
   ;; Uninstall
   (do-game
@@ -7216,3 +7406,57 @@
       (is (= (+ credits 18) (:credit (get-runner))) "Runner should gain credits from trash")
       (is (= "Monolith" (-> (get-runner) :discard first :title))
           "Monolith should be trashed"))))
+
+(deftest window-of-opportunity
+  (do-game
+    (new-game {:corp {:hand ["Echo" "Bloop"]
+                      :credits 20}
+               :runner {:hand ["Window of Opportunity" "Simulchip" "Fermenter" "The Class Act"]}})
+    (play-from-hand state :corp "Bloop" "HQ")
+    (play-from-hand state :corp "Echo" "Archives")
+    (let [bloop (get-ice state :hq 0)
+          echo (get-ice state :archives 0)]
+      (rez state :corp echo)
+      (rez state :corp bloop)
+      (click-card state :corp (refresh echo))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Window of Opportunity")
+      (click-prompt state :runner "HQ")
+      (is (= 2 (-> (prompt-map :runner) :choices count)) "Runner has 2 choices")
+      (is (changed? [(:credit (get-runner)) -1]
+                    (click-prompt state :runner "Fermenter"))
+          "Runner paid Fermenter install cost")
+      (is (= "Fermenter" (:title (get-program state 0))) "Fermenter is installed")
+      (is (= [:hq] (:server (:run @state))) "Running on HQ")
+      (is (not (no-prompt? state :runner)) "Window of Opportunity prompt to select ice to derez")
+      (click-card state :runner bloop)
+      (is (not (rezzed? (refresh bloop))) "Bloop derezzed")
+      (run-continue state)
+      (run-jack-out state)
+      (is (changed? [(:credit (get-corp)) 0]
+                    (click-prompt state :corp "Yes"))
+          "Corp re-rezzed Bloop ignoring all costs")
+      (is (no-prompt? state :runner) "No Bloop prompt to derez an Harmonic ice")
+      (is (rezzed? (refresh bloop))))))
+
+(deftest window-of-opportunity-bogus-prompt
+  (do-game
+    (new-game {:runner {:hand ["Window of Opportunity" "Smartware Distributor"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Window of Opportunity")
+    (click-prompt state :runner "HQ")
+    (click-prompt state :runner "OK")
+    (is (= [:hq] (:server (:run @state))) "Running on HQ")))
+
+(deftest window-of-opportunity-no-derez
+  (do-game
+    (new-game {:corp {:hand ["Vanilla"]}
+               :runner {:hand ["Window of Opportunity" "Simulchip"]}})
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Window of Opportunity")
+    (click-prompt state :runner "Archives")
+    (click-prompt state :runner "Simulchip")
+    (is (= "Simulchip" (:title (get-hardware state 0))) "Simulchip is installed")
+    (is (= [:archives] (:server (:run @state))) "Running on Archives")
+    (is (no-prompt? state :runner) "No Window of Opportunity prompt")))

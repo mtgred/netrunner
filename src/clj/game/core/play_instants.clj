@@ -48,7 +48,8 @@
                             (assoc card :rfg-instead-of-trashing true)
                             card)
                           {:resolve-effect true :init-data true});;:resolve-effect is true as a temporary solution to allow Direct Access to blank IDs
-          play-event (if (= side :corp) :play-operation :play-event)]
+          play-event (if (= side :corp) :play-operation :play-event)
+          resolved-event (if (= side :corp) :play-operation-resolved :play-event-resolved)]
       (queue-event state play-event {:card card :event play-event})
       (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
                 (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
@@ -66,11 +67,15 @@
                                           (when (has-subtype? card "Terminal")
                                             (lose state side :click (-> @state side :click))
                                             (swap! state assoc-in [:corp :register :terminal] true))
-                                          (effect-completed state side eid)))
+                                          ;; this is explicit support for nuvem,
+                                          ;; which wants 'after the op finishes resolving' as an event
+                                          (queue-event state resolved-event {:card card :event resolved-event})
+                                          (checkpoint state nil eid {:duration resolved-event})))
                               (do (when (has-subtype? card "Terminal")
                                     (lose state side :click (-> @state side :click))
                                     (swap! state assoc-in [:corp :register :terminal] true))
-                                  (effect-completed state side eid)))))))))
+                                  (queue-event state resolved-event {:card card :event resolved-event})
+                                  (checkpoint state nil eid {:duration resolved-event})))))))))
 
 (defn play-instant-costs
   [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs]}]

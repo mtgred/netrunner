@@ -547,7 +547,36 @@
       (is (nil? (get-run)) "Run has ended")
       (is (empty? (get-content state :remote1)) "Black Level Clearance has been trashed")))
 
-(deftest breaker-bay-grid
+(deftest brasilia-government-grid
+  (do-game
+    (new-game {:corp {:hand ["Brasília Government Grid" "Rime" (qty "Vanilla" 2)]}})
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Brasília Government Grid" "New remote")
+    (play-from-hand state :corp "Rime" "Server 1")
+    (play-from-hand state :corp "Vanilla" "Server 1")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (let [rime (get-ice state :remote1 0)
+          van1 (get-ice state :remote1 1)
+          van2 (get-ice state :hq 0)]
+      (rez state :corp van2)
+      (run-on state "Server 1")
+      (rez state :corp (get-content state :remote1 0))
+      (rez state :corp van1)
+      (click-prompt state :corp "Yes")
+      (is (changed? [(get-strength (refresh van1)) 3]
+                    (click-card state :corp van2))
+          "Vanilla protecting Server 1 got +3 strength")
+      (is (not (rezzed? (refresh van2))) "Vanilla on HQ was derezzed")
+      (run-continue state)
+      (rez state :corp van2)
+      (is (no-prompt? state :corp) "No prompt when rezzing ice protecting other servers")
+      (run-continue state)
+      (rez state :corp rime)
+      (is (no-prompt? state :corp) "Brasília Government Grid ability is once per turn")
+  )))
+
+(deftest buneaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
     (new-game {:corp {:deck [(qty "Breaker Bay Grid" 2) "Off the Grid" "Strongbox"]}})
@@ -1860,6 +1889,31 @@
     (click-prompt state :corp "0") ; trace
     (click-prompt state :runner "5")
     (is (no-prompt? state :corp) "Prompt closes after lost trace")))
+
+(deftest isaac-liberdade
+  (do-game
+    (new-game {:corp {:hand ["Isaac Liberdade" "Ice Wall" "Tithe"]}})
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Isaac Liberdade" "New remote")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (play-from-hand state :corp "Tithe" "R&D")
+    (let [il (get-content state :remote1 0)
+          iw (get-ice state :remote1 0)
+          tithe (get-ice state :rd 0)]
+      (rez state :corp iw)
+      (rez state :corp tithe)
+      (click-advance state :corp iw)
+      (is (changed? [(get-strength (refresh iw)) 2]
+                    (rez state :corp il))
+          "Ice Wall got +2 strength")
+      (take-credits state :corp)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "R&D")
+      (is (not (no-prompt? state :corp)) "Corp has Isaac Liberdade prompt")
+      (is (changed? [(get-strength (refresh tithe)) 2
+                     (get-counters (refresh tithe) :advancement) 1]
+                    (click-card state :corp tithe))
+          "Tithe got +2 strength and 1 advancement counter"))))
 
 (deftest jinja-city-grid-single-draws
     ;; Single draws
@@ -3843,6 +3897,38 @@
     (click-prompt state :corp "0") ; trace
     (click-prompt state :runner "4")
     (click-prompt state :runner "Pay 0 [Credits] to trash")))
+
+(deftest the-holo-man
+  (do-game
+    (new-game {:corp {:hand ["The Holo Man" "Vanilla" "Rashida Jaheem"]
+                      :credits 10}})
+    (play-from-hand state :corp "The Holo Man" "HQ")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "The Holo Man is waiting")
+    (end-phase-12 state :corp)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Server 1")
+    (let [rash (get-content state :remote1 0)
+          thm (get-content state :remote1 1)]
+      (is (changed? [(get-counters (refresh rash) :advancement) 3]
+                    (card-ability state :corp (refresh thm) 0)
+                    (click-card state :corp rash))
+          "Corp placed 3 advancement counters on Rashida")
+      (card-ability state :corp (refresh thm) 0)
+      (is (no-prompt? state :corp) "The Holo Man ability is once per turn")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (end-phase-12 state :corp)
+      (click-prompt state :corp "No")
+      (play-from-hand state :corp "Vanilla" "Server 1")
+      (let [van (get-ice state :remote1 0)]
+        (is (changed? [(get-counters (refresh van) :advancement) 2]
+                      (card-ability state :corp (refresh thm) 0)
+                      (click-card state :corp van))
+            "Corp placed 2 advancement counters on Vanilla")))))
 
 (deftest the-twins
   ;; The Twins

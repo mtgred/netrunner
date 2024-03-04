@@ -30,7 +30,7 @@
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [break-sub update-all-ice update-all-icebreakers]]
+   [game.core.ice :refer [add-extra-sub! break-sub pump-ice remove-sub! update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [make-card]]
    [game.core.installing :refer [corp-install install-locked? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [link+ update-link]]
@@ -38,14 +38,14 @@
    [game.core.memory :refer [mu+]]
    [game.core.moving :refer [mill move swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
-   [game.core.payment :refer [can-pay? cost-name merge-costs]]
+   [game.core.payment :refer [build-cost-label can-pay? cost-name cost->string merge-costs]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.revealing :refer [conceal-hand reveal reveal-hand]]
    [game.core.rezzing :refer [rez]]
-   [game.core.runs :refer [get-current-encounter make-run redirect-run
+   [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg]]
@@ -1565,6 +1565,32 @@
                                (update-all-ice)
                                (trash eid target {:unpreventable true}))}}}]})
 
+(defcard "Nuvem SA: Law of the Land"
+  (let [abi2 {:once :per-turn
+              :event :corp-trash
+              :req (req (and (= :corp (:active-player @state))
+                             (= [:deck] (:zone (:card target)))))
+              :msg "gain 2 [Credits]"
+              :async true
+              :effect (effect (gain-credits :corp eid 2))}
+        abi1 {:prompt (msg "The top card of R&D is: " (:title (first (:deck corp))))
+              :async true
+              :msg "look at the top card of R&D"
+              :choices ["OK"]
+              :req (req (seq (:deck corp)))
+              :effect
+              (effect (continue-ability
+                        {:optional
+                         {:prompt (str "Trash " (:title (first (:deck corp))) "?")
+                          :async true
+                          :yes-ability
+                          {:msg "trash the top card of R&D"
+                           :effect (req (mill state :corp eid :corp 1))}}}
+                        card nil))}]
+    {:events [(assoc abi1 :event :expend-resolved)
+              (assoc abi1 :event :play-operation-resolved)
+              abi2]}))
+
 (defcard "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
   {:events [(assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
@@ -1820,6 +1846,25 @@
                   :effect (effect (continue-ability (install-card target) card nil))}]
      :events [{:event :corp-turn-begins
                :effect (req (clear-persistent-flag! state side card :can-rez))}]}))
+
+(defcard "Sebastião Souza Pessoa: Activist Organiser"
+  {:static-abilities [{:type :basic-ability-additional-trash-cost
+                       :req (req (and (resource? target) (has-subtype? target "Connection") (= :corp side)))
+                       :value [:trash-from-hand 1]}]
+   :events [{:event :runner-gain-tag
+             :async true
+             :req (req (and (not (install-locked? state side))
+                            (= (second targets) (count-tags state)))) ;; every tag is one that was just gained
+             :prompt "Choose a connection to install, paying 2 [Credits] less"
+             :player :runner
+             :choices
+             {:req (req (and (has-subtype? target "Connection")
+                             (resource? target)
+                             (in-hand? target)
+                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                       [:credit (install-cost state side target {:cost-bonus -2})])))}
+             :msg (msg "install " (:title target) " from the grip, paying 2 [Credit] less")
+             :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -2}))}]})
 
 (defcard "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"
@@ -2104,6 +2149,53 @@
                                                          (effect-completed state :runner eid))
                                                (damage state side eid :brain 1 {:card card})))}
                                card nil))}]})
+
+(defcard "Thunderbolt Armaments: Peace Through Power"
+  (let [thunderbolt-sub
+        {:player :runner
+         :async true
+         :label (str "End the run unless the Runner pays " (build-cost-label [:trash-installed 1]))
+         :prompt "Choose one"
+         :waiting-prompt true
+         :choices (req ["End the run"
+                        (when (can-pay? state :runner eid card nil [:trash-installed 1])
+                          (capitalize (cost->string [:trash-installed 1])))])
+         :msg (msg (if (= "End the run" target)
+                     (decapitalize target)
+                     (str "force the runner to " (decapitalize target))))
+         :effect (req (if (= "End the run" target)
+                        (end-run state :corp eid card)
+                        (wait-for (pay state :runner (make-eid state eid) card [:trash-installed 1])
+                                  (when-let [payment-str (:msg async-result)]
+                                    (system-msg state :runner
+                                                (str payment-str
+                                                     " due to " (:title card)
+                                                     " subroutine")))
+                                  (effect-completed state side eid))))}]
+    {:events [{:event :run-ends
+               :effect (req (let [cid (:cid card)
+                                  ices (get-in card [:special :thunderbolt-armaments])]
+                              (doseq [i ices]
+                                (when-let [ice (get-card state i)]
+                                  (remove-sub! state side ice #(= cid (:from-cid %))))))
+                            (update! state side (dissoc-in card [:special :thunderbolt-armaments])))}
+              {:event :rez
+               :req (req (and run
+                              (ice? (:card context))
+                              (or (has-subtype? (:card context) "AP")
+                                  (has-subtype? (:card context) "Destroyer"))))
+               :msg (msg "give " (card-str state (:card context))
+                         " +1 strength and \""
+                         (:label thunderbolt-sub)
+                         "\" after its other subroutines")
+               :async true
+               :effect (effect (add-extra-sub! (get-card state (:card context))
+                                               thunderbolt-sub
+                                               (:cid card) {:front false})
+                               (update! (update-in card [:special :thunderbolt-armaments]
+                                                   #(conj % (:card context))))
+                               (pump-ice (:card context) 1 :end-of-run)
+                               (effect-completed eid))}]}))
 
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored

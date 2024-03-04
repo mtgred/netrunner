@@ -16,7 +16,7 @@
 
 (defn threat
   ([threshold accept-ab]
-   (threat accept-ab nil))
+   (threat threshold accept-ab nil))
   ([threshold accept-ab reject-ab]
    {:req (req true)
     :async true
