@@ -199,7 +199,7 @@
     :rfg-instead-of-trashing true
     :async true
     :effect (req (shuffle-into-deck state :runner :hand :discard)
-                 (let [top-5 (vec (take 5 (:deck runner)))]
+                 (let [top-5 (take 5 (get-in @state [:runner :deck]))]
                    (doseq [c top-5]
                      (move state side c :rfg))
                    (system-msg state side
