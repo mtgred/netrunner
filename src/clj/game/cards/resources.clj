@@ -272,9 +272,9 @@
             {:event :runner-turn-begins
              :optional
              {:prompt (str "Trash this resource to force the Corp to lose 10 [Credits]?")
+              :req (req (>= (get-counters (get-card state card) :power) 3))
               :yes-ability
-              {:req (req (>= (get-counters (get-card state card) :power) 3))
-               :msg "trash itself and force the Corp to lose 10 [Credits]"
+              {:msg "trash itself and force the Corp to lose 10 [Credits]"
                :async true
                :effect (req (wait-for
                               (trash state side card {:cause-card card})
