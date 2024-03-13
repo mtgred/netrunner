@@ -2671,7 +2671,7 @@
                             (effect-completed state side eid)
                             (let [new-choices (->> choices
                                                    (remove #{target})
-                                                   (#(conj % "Done"))
+                                                   (cons "Done")
                                                    distinct)]
                               ;; note this is a lingering ability and persists so
                               ;; long as the card is rezzed
@@ -2702,9 +2702,11 @@
      :subroutines [{:label "(Code Gate) Force the Runner to lose [Click] and 1 [Credit]"
                     :msg "force the Runner to lose [Click] and 1 [Credit]"
                     :req (req (has-subtype? card "Code Gate"))
+                    :async true
                     :effect (req (wait-for
+                                   (lose-credits state :runner 1)
                                    (lose-clicks state :runner 1)
-                                   (lose-credits state :runner (make-eid state eid) 1)))}
+                                   (effect-completed state side eid)))}
                    {:label "(Sentry) Trash a program"
                     :prompt "Choose a program to trash"
                     :req (req (has-subtype? card "Sentry"))
