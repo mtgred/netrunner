@@ -4297,11 +4297,11 @@
                       :hand ["Stoke the Embers" "NGO Front" "Restore"]
                       :discard ["Stoke the Embers"]}})
     (play-from-hand state :corp "NGO Front" "New remote")
-    (is (changed? [(:credit (get-corp)) 4
+    (is (changed? [(:credit (get-corp)) 3
                    (get-counters (refresh (get-content state :remote1 0)) :advancement) 1]
                   (play-and-score state "Stoke the Embers")
                   (click-card state :corp "NGO Front"))
-        "Corp gained 4 credits and put 1 advancement counter on a card")
+        "Corp gained 3 credits and put 1 advancement counter on a card")
     (play-from-hand state :corp "Restore")
     (click-card state :corp (find-card "Stoke the Embers" (:discard (get-corp))))
     (click-prompt state :corp "New remote")

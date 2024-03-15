@@ -2073,7 +2073,7 @@
                                :effect (effect (add-prop :corp target :advance-counter 1
                                                          {:placed true}))}
                               card nil)))})]
-    {:on-score (score-abi 4)
+    {:on-score (score-abi 3)
      :derezzed-events [{:event :corp-install
                         :optional
                         {:prompt "Reveal this agenda to gain 2 [Credits] and place 1 advancement counter on an installed card?"
@@ -2084,7 +2084,7 @@
                          :yes-ability
                          {:msg (msg "reveal itself from " (zone->name (:previous-zone card)))
                           :effect (req (wait-for (reveal state side target)
-                                        (continue-ability state side (score-abi 2) card nil)))}}}]}))
+                                                 (continue-ability state side (score-abi 2) card nil)))}}}]}))
 
 (defcard "Successful Field Test"
   (letfn [(sft [n max-ops]
