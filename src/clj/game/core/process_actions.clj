@@ -19,7 +19,7 @@
    [game.core.say :refer [indicate-action say system-msg system-say]]
    [game.core.set-up :refer [keep-hand mulligan]]
    [game.core.shuffling :refer [shuffle-deck]]
-   [game.core.toasts :refer [toast]]
+   [game.core.toasts :refer [ack-toast]]
    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
    [game.core.winning :refer [concede]]))
 
@@ -78,7 +78,7 @@
    "start-turn" #'start-turn
    "subroutine" #'play-subroutine
    "system-msg" #(system-msg %1 %2 (:msg %3))
-   "toast" #'toast
+   "toast" #'ack-toast
    "toggle-auto-no-action" #'toggle-auto-no-action
    "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) (dissoc %3 :card))
    "trash-resource" #'trash-resource
