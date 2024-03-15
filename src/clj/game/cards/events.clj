@@ -2849,6 +2849,7 @@
                         runner-identity (:identity runner)
                         format (:format @state)
                         is-swappable #(and (= "Identity" (:type %))
+                                           (= "Runner" (:side %))
                                            (= (:faction runner-identity) (:faction %))
                                            (not (is-draft-id? %))
                                            (not= (:title runner-identity) (:title %))
