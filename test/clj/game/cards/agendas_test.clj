@@ -4297,7 +4297,7 @@
                       :hand ["Stoke the Embers" "NGO Front" "Restore"]
                       :discard ["Stoke the Embers"]}})
     (play-from-hand state :corp "NGO Front" "New remote")
-    (is (changed? [(:credit (get-corp)) 4
+    (is (changed? [(:credit (get-corp)) 3
                    (get-counters (refresh (get-content state :remote1 0)) :advancement) 1]
                   (play-and-score state "Stoke the Embers")
                   (click-card state :corp "NGO Front"))
