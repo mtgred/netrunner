@@ -129,8 +129,8 @@
                             :yes-ability
                             {:cost [:credit 2]
                              :msg "give the Runner -1 allotted [Click] for their next turn"
-                             :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0)))}}}
-                          card nil)))}]
+                             :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0)))}}})
+                        card nil))}]
   {:on-play {:req (req (or (last-turn? state :runner :trashed-card)
                            (last-turn? state :runner :stole-agenda)))
              :prompt "Choose a card to install"
