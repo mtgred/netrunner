@@ -1847,7 +1847,7 @@
      :events [{:event :corp-turn-begins
                :effect (req (clear-persistent-flag! state side card :can-rez))}]}))
 
-(defcard "Sebastião Souza Pessoa: Activist Organiser"
+(defcard "Sebastião Souza Pessoa: Activist Organizer"
   {:static-abilities [{:type :basic-ability-additional-trash-cost
                        :req (req (and (resource? target) (has-subtype? target "Connection") (= :corp side)))
                        :value [:trash-from-hand 1]}]

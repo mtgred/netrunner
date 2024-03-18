@@ -4434,7 +4434,7 @@
 (deftest sebastiao-pessoa
   (do-game
     (new-game {:corp {:hand [(qty "Hedge Fund" 3)]}
-               :runner {:id "Sebastião Souza Pessoa: Activist Organiser"
+               :runner {:id "Sebastião Souza Pessoa: Activist Organizer"
                         :hand ["Verbal Plasticity" "Professional Contacts" "Smartware Distributor"]}})
     (gain-tags state :runner 1)
     (is (changed? [(:credit (get-runner)) 0]
