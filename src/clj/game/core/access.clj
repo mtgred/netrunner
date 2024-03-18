@@ -1302,7 +1302,7 @@
   ([state side eid server] (breach-server state side eid server nil))
   ([state side eid server args]
    (system-msg state side (str "breaches " (zone->name server)))
-   (wait-for (trigger-event-sync state side :breach-server (first server))
+   (wait-for (trigger-event-simult state side :breach-server nil (first server))
              (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)
                    access-amount (num-cards-to-access state side (first server) nil)]

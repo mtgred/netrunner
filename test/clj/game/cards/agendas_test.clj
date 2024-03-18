@@ -1267,6 +1267,31 @@
       (is (= 4 (:click (get-corp))) "Should gain 2 clicks, not 3")
       (is (= 1 (get-counters (refresh eu-scored) :agenda)) "Should still have 1 agenda counter"))))
 
+(deftest eminent-domain
+  (do-game
+    (new-game {:corp {:deck [(qty "Archer" 10)]
+                      :hand ["Eminent Domain"]}})
+    (play-and-score state "Eminent Domain")
+    (is (changed? [(:credit (get-corp)) 0]
+          (click-prompt state :corp "Yes")
+          (click-prompt state :corp "Archer")
+          (click-prompt state :corp "HQ")
+          (is (= "Archer" (get-title (get-ice state :hq 0))))
+          (is (rezzed? (get-ice state :hq 0))))
+        "Eminent Domain allows install and rez from R&D at no cost")))
+
+(deftest eminent-domain-expend-ability
+  (do-game
+    (new-game {:corp {:hand ["Eminent Domain" "Pharos" "Tithe" "Ice Wall"]}})
+    (play-from-hand state :corp "Tithe" "HQ")
+    (is (changed? [(:credit (get-corp)) -4]
+          (expend state :corp (find-card "Eminent Domain" (:hand (get-corp))))
+          (click-card state :corp "Pharos")
+          (click-prompt state :corp "HQ")
+          (is (= "Pharos" (get-title (get-ice state :hq 1))))
+          (is (rezzed? (get-ice state :hq 1))))
+        "Eminent Domain expend allows install and rez reducing total cost by 5")))
+
 (deftest encrypted-portals
   ;; Encrypted Portals
   (do-game
@@ -2099,6 +2124,20 @@
     (is (= 1 (count (:discard (get-runner)))) "clippy trashed")
     (is (no-prompt? state :corp))))
 
+(deftest kingmaking
+  (do-game
+    (new-game {:corp {:hand ["Kingmaking"]
+                      :deck ["House of Knives" "Project Atlas" "Hedge Fund"]}})
+    (is (changed? [(count (:deck (get-corp))) -3
+                   (count (:hand (get-corp))) 1
+                   (:agenda-point (get-corp)) 3]
+                  (play-and-score state "Kingmaking")
+                  (click-card state :corp "Project Atlas")
+                  (is (not (no-prompt? state :corp)) "Couldn't choose 2-points agenda")
+                  (click-card state :corp "House of Knives"))
+        "Corp drew 3 cards (2 of which moved to the score area)")
+    (is (zero? (get-counters (get-scored state :runner 1) :agenda)) "House of Knives should have 0 agenda counters")))
+
 (deftest license-acquisition
   ;; License Acquisition
   (do-game
@@ -2131,6 +2170,39 @@
       (click-card state :corp (find-card "Corporate Troubleshooter" (:discard (get-corp))))
       (click-prompt state :corp "New remote")
       (is (some? (get-content state :remote8 0))))))
+
+(deftest lightning-laboratory
+  (do-game
+    (new-game {:corp {:hand ["Lightning Laboratory" "Archer" "Bloop" "Rime"]}})
+    (core/gain state :corp :click 1)
+    (play-and-score state "Lightning Laboratory")
+    (play-from-hand state :corp "Archer" "HQ")
+    (play-from-hand state :corp "Bloop" "HQ")
+    (play-from-hand state :corp "Rime" "HQ")
+    (let [ll (get-scored state :corp 0)
+          archer (get-ice state :hq 0)
+          bloop (get-ice state :hq 1)
+          rime (get-ice state :hq 2)]
+      (is (= 1 (get-counters (refresh ll) :agenda)) "Lightning Laboratory should have 1 agenda counter")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp archer)
+      (click-card state :corp bloop)
+      (is (rezzed? (refresh archer)))
+      (is (rezzed? (refresh bloop)))
+      (rez state :corp rime)
+      (run-continue state)
+      (run-continue state)
+      (run-jack-out state)
+      (is (no-prompt? state :corp) "No Lightning Laboratory prompt at the end of the run")
+      (take-credits state :runner)
+      (is (not (no-prompt? state :corp)) "Corp has Lightning Laboratory prompt")
+      (click-card state :corp archer)
+      (click-card state :corp rime)
+      (is (not (rezzed? (refresh archer))))
+      (is (not (rezzed? (refresh rime))))
+      (is (rezzed? (refresh bloop))))))
 
 (deftest longevity-serum-basic-behavior
     ;; Basic behavior
@@ -3766,6 +3838,32 @@
       (is (no-prompt? state :corp))
       (is (no-prompt? state :runner))))
 
+(deftest see-how-they-run-win-psi
+  (do-game
+    (new-game {:corp {:hand ["See How They Run"]}
+               :runner {:hand ["Sure Gamble"]}})
+    (is (changed? [(count-tags state) 1
+                   (count (:hand (get-runner))) -1
+                   (count (:discard (get-runner))) 1
+                   (:brain-damage (get-runner)) 1]
+                  (play-and-score state "See How They Run")
+                  (click-prompt state :corp "0 [Credits]")
+                  (click-prompt state :runner "1 [Credits]"))
+        "Runner gained 1 tag and got 1 core damage")))
+
+(deftest see-how-they-run-lose-psi
+  (do-game
+    (new-game {:corp {:hand ["See How They Run"]}
+               :runner {:hand ["Sure Gamble"]}})
+    (is (changed? [(count-tags state) 1
+                   (count (:hand (get-runner))) -1
+                   (count (:discard (get-runner))) 1
+                   (:brain-damage (get-runner)) 0]
+                  (play-and-score state "See How They Run")
+                  (click-prompt state :corp "0 [Credits]")
+                  (click-prompt state :runner "0 [Credits]"))
+        "Runner gained 1 tag and got 1 net damage")))
+
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
   (do-game
@@ -3885,6 +3983,50 @@
     (play-and-score state "Show of Force")
     (is (= 1 (count (:hand (get-runner)))) "Runner should have 1 card in hand")
     (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards")))
+
+(deftest sisyphus-protocol-trash-from-hq
+  (do-game
+    (new-game {:corp {:hand ["Sisyphus Protocol" "Tithe" "Hedge Fund"]}})
+    (play-and-score state "Sisyphus Protocol")
+    (play-from-hand state :corp "Tithe" "R&D")
+    (take-credits state :corp)
+     (let [tithe (get-ice state :rd 0)]
+       (run-on state "R&D")
+       (rez state :corp tithe)
+       (run-continue state)
+       (run-continue state)
+       (is (= 0 (:position (get-in @state [:run]))) "Passed Tithe")
+       (is (changed? [(count (:hand (get-corp))) -1
+                      (count (:discard (get-corp))) 1]
+                     (click-prompt state :corp "Trash 1 card from HQ")
+                     (click-card state :corp "Hedge Fund"))
+           "Corp discarded 1 card from HQ")
+       (is (= 0 (:position (get-run))) "Run should still be at position 0")
+       (is (same-card? tithe (core/get-current-ice state)))
+       (run-continue state)
+       (run-jack-out state)
+       (run-on state "R&D")
+       (run-continue state)
+       (run-continue state)
+       (is (no-prompt? state :corp) "Sisyphus Protocol ability is only the first time each turn"))))
+
+(deftest sisyphus-protocol-pay-credits
+  (do-game
+    (new-game {:corp {:hand ["Sisyphus Protocol" "Whitespace"]}})
+    (play-and-score state "Sisyphus Protocol")
+    (play-from-hand state :corp "Whitespace" "HQ")
+    (take-credits state :corp)
+     (let [ws (get-ice state :hq 0)]
+       (run-on state "HQ")
+       (rez state :corp ws)
+       (run-continue state)
+       (run-continue state)
+       (is (= 0 (:position (get-in @state [:run]))) "Passed Whitespace")
+       (is (changed? [(:credit (get-corp)) -1]
+                     (click-prompt state :corp "Pay 1 [Credit]"))
+           "Corp spent 1 Credit")
+       (is (= 0 (:position (get-run))) "Run should still be at position 0")
+       (is (same-card? ws (core/get-current-ice state))))))
 
 (deftest slash-and-burn-agriculture
   (do-game
@@ -4149,6 +4291,27 @@
       (click-card state :corp (find-card "Sting!" (:scored (get-corp))))
       (is (= 1 (-> (get-runner) :discard count)) "Runner should take no damage from the agendas swap")))
 
+(deftest stoke-the-embers
+  (do-game
+    (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                      :hand ["Stoke the Embers" "NGO Front" "Restore"]
+                      :discard ["Stoke the Embers"]}})
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (is (changed? [(:credit (get-corp)) 3
+                   (get-counters (refresh (get-content state :remote1 0)) :advancement) 1]
+                  (play-and-score state "Stoke the Embers")
+                  (click-card state :corp "NGO Front"))
+        "Corp gained 4 credits and put 1 advancement counter on a card")
+    (play-from-hand state :corp "Restore")
+    (click-card state :corp (find-card "Stoke the Embers" (:discard (get-corp))))
+    (click-prompt state :corp "New remote")
+    (is (changed? [(:credit (get-corp)) 3
+                   (get-counters (refresh (get-content state :remote3 0)) :advancement) 1]
+                  (click-prompt state :corp "Yes")
+                  (is (last-n-log-contains? state 3 "reveal itself from Archives"))
+                  (click-card state :corp (get-content state :remote3 0)))
+        "Corp gained 2 credits (+1 from Hyobu because the agenda was revealed) and put 1 advancement counter on a card")))
+
 (deftest successful-field-test
   ;; Successful Field Test
   (do-game
@@ -4211,6 +4374,32 @@
     ;; Accesses TGTBT and can steal
     (click-prompt state :runner "Steal")
     (is (= 2 (count-tags state)) "Runner took 1 tag from accessing and stealing")))
+
+(deftest the-basalt-spire
+  (do-game
+    (new-game {:corp {:deck ["Hedge Fund"]
+                      :hand [(qty "The Basalt Spire" 2)]
+                      :discard ["Ice Wall"]}})
+    (play-and-score state "The Basalt Spire")
+    (let [tbs (get-scored state :corp 0)]
+      (is (= 2 (get-counters (refresh tbs) :agenda)))
+      (is (changed? [(get-counters (refresh tbs) :agenda) -1
+                     (count (:discard (get-corp))) 1
+                     (count (:deck (get-corp))) -1]
+            (card-ability state :corp (refresh tbs) 0))
+          "The Basalt Spire costs agenda counter and top of R&D to play")
+      (is (changed? [(count (:hand (get-corp))) 1
+                     (count (:discard (get-corp))) -1]
+            (click-card state :corp "Hedge Fund"))
+          "The Basalt Spire ability recurs a card"))
+    (play-from-hand state :corp "The Basalt Spire" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 2")
+    (click-prompt state :runner "Steal")
+    (is (changed? [(count (:hand (get-corp))) 1
+                   (count (:discard (get-corp))) -1]
+          (click-card state :corp "Ice Wall"))
+        "The Basalt Spire can recur a card on steal")))
 
 (deftest the-cleaners
   ;; The Cleaners

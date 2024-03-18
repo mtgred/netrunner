@@ -44,7 +44,7 @@
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
-   [game.core.runs :refer [end-run jack-out-prevent]]
+   [game.core.runs :refer [end-run force-ice-encounter jack-out-prevent]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
@@ -322,6 +322,18 @@
                             (continue-ability state :corp (trash-step c '()) card nil)))}}}]
       {:on-score arrange-rd
        :stolen arrange-rd})))
+
+(defcard "The Basalt Spire"
+  {:on-score {:effect (effect (add-counter card :agenda 2))
+              :silent (req true)}
+   :stolen {:async true
+            :effect (effect (continue-ability (corp-recur) card nil))}
+   :flags {:has-abilities-when-stolen true}
+   :abilities [{:label "Add 1 card from Archives to HQ"
+                :cost [:trash-from-deck 1 :agenda 1]
+                :once :per-turn
+                :msg "add 1 card from Archives to HQ"
+                :effect (effect (continue-ability (corp-recur) card nil))}]})
 
 (defcard "Bellona"
   {:steal-cost-bonus (req [:credit 5])
@@ -712,6 +724,42 @@
                 :effect (effect (gain-clicks 2))
                 :msg "gain [Click][Click]"}]})
 
+(defcard "Eminent Domain"
+  (let [expend-abi {:req (req (some corp-installable-type? (:hand corp)))
+                    :cost [:credit 1]
+                    :prompt "Choose 1 card to install and rez"
+                    :choices {:card #(and (in-hand? %)
+                                          (corp-installable-type? %))}
+                    :msg "install and rez 1 card from HQ, paying 5 [Credits] less"
+                    :async true
+                    :effect (req (corp-install state side (make-eid state eid) target nil
+                                               {:install-state :rezzed
+                                                :combined-credit-discount 5}))}
+        score-abi {:interactive (req true)
+                   :optional
+                   {:prompt "Search R&D for 1 card to install and rez, ignoring all costs?"
+                    :yes-ability
+                    {:async true
+                     :effect (effect
+                               (continue-ability
+                                 {:async true
+                                  :prompt "Choose a card to install"
+                                  :choices (req (concat
+                                                  (->> (:deck corp)
+                                                       (filter #(corp-installable-type? %))
+                                                       (sort-by :title)
+                                                       (seq))
+                                                  ["Done"]))
+                                  :effect (req (shuffle! state side :deck)
+                                               (if (= "Done" target)
+                                                 (effect-completed state side eid)
+                                                 (corp-install state side eid target nil
+                                                               {:install-state :rezzed-no-cost
+                                                                :ignore-all-cost true})))}
+                                 card nil))}}}]
+    {:on-score score-abi
+     :expend expend-abi}))
+
 (defcard "Encrypted Portals"
   (ice-boost-agenda "Code Gate"))
 
@@ -1061,6 +1109,32 @@
                                 :effect (effect (trash eid target))}
                                card nil))))}})
 
+(defcard "Kingmaking"
+  (let [add-abi
+        {:prompt "Choose 1 agenda worth 1 or less points"
+         :req (req (seq (:hand corp)))
+         :async true
+         ;; we want a prompt even if there are no valid targets,
+         ;; to make sure we don't give away hidden info
+         :choices {:card #(and (agenda? %)
+                               (in-hand? %)
+                               (>= 1 (:agendapoints %)))}
+         :waiting-prompt true
+         :msg (msg "add " (:title target) " from HQ to their score area")
+         :effect (req
+                   (let [c (move state :corp target :scored)]
+                        (card-init state :corp c {:resolve-effect false
+                                                  :init-data true}))
+                      (update-all-advancement-requirements state)
+                      (update-all-agenda-points state)
+                      (check-win-by-agenda state side)
+                      (effect-completed state side eid))
+         :cancel-effect (effect (system-msg (str "declines to use " (:title card))))}]
+    {:on-score {:async true
+                :effect (req (wait-for
+                               (draw state side 3)
+                               (continue-ability state side add-abi card nil)))}}))
+
 (defcard "Labyrinthine Servers"
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :power 2))}
@@ -1081,6 +1155,60 @@
               :msg (msg "install and rez " (:title target) ", ignoring all costs")
               :async true
               :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}})
+
+(defcard "Lightning Laboratory"
+  ;; TODO - I feel this card is OVERLY verbose
+  ;; maybe it could be condensed? I'm not sure
+  (letfn [(ice-derez [zone]
+            {:event :runner-turn-ends
+             :req (req (seq (filter #(= (:zone %) [:servers zone :ices])
+                                    (all-active-installed state :corp))))
+             :effect (req (let [derez-count
+                                (min 2 (count (filter #(= (:zone %) [:servers zone :ices])
+                                                      (all-active-installed state :corp))))]
+                            (continue-ability
+                              state side
+                              {:prompt (msg "Choose " derez-count " pieces of ice protecting " (zone->name [zone]) " to derez")
+                               :choices {:card #(and (ice? %)
+                                                     (rezzed? %)
+                                                     (= (second (get-zone %)) zone))
+                                         :max derez-count
+                                         :min derez-count}
+                               :msg (msg "derez " (enumerate-str (map #(card-str state %) targets)))
+                               :effect (req (doseq [t targets]
+                                              (derez state side t)))}
+                              card nil)))})
+          (ice-free-rez [state side targets card zone eid]
+            (if (zero? (count targets))
+              (do (register-events
+                    state side card
+                    [(ice-derez zone)])
+                  (effect-completed state side eid))
+              (wait-for (rez state :corp (make-eid state eid) (first targets) {:ignore-cost :all-costs})
+                        (ice-free-rez state side (drop 1 targets) card zone eid))))]
+    {:on-score {:effect (effect (add-counter card :agenda 1))
+                :silent (req true)}
+     :events [{:event :run
+               :async true
+               :optional
+               {:prompt (msg "Remove 1 hosted agenda counter to rez up to 2 ice protecting " (zone->name (:server context)) ", ignoring all costs?")
+                :yes-ability
+                {:cost [:agenda 1]
+                 :effect (req (let [current-server (first (:server (:run @state)))]
+                                (continue-ability
+                                  state side
+                                  {:prompt (msg "Choose up to 2 ice protecting " (zone->name current-server))
+                                   :choices {:card #(and (ice? %)
+                                                         (not (rezzed? %))
+                                                         (= (second (get-zone %)) current-server))
+                                             :max 2}
+                                   :msg (msg "rez " (enumerate-str (map :title targets)) ", ignoring all costs")
+                                   :async true
+                                   :cancel-effect (req
+                                                    (system-msg state side (str "declines to use " (:title card)))
+                                                    (ice-free-rez state side [] card current-server eid))
+                                   :effect (req (ice-free-rez state side targets card current-server eid))}
+                                  card nil)))}}}]}))
 
 (defcard "Longevity Serum"
   {:on-score
@@ -1720,6 +1848,23 @@
               :async true
               :effect (effect (trash eid target {:cause-card card}))}})
 
+(defcard "See How They Run"
+  {:on-score {:interactive (req true)
+              :msg "give the runner 1 tag"
+              :async true
+              :effect (req (wait-for
+                             (gain-tags state :runner 1)
+                             (continue-ability
+                               state side
+                               {:msg "start a psi game (do 1 core damage / do 1 net damage)"
+                                :psi {:not-equal {:msg "do 1 core damage"
+                                                  :async true
+                                                  :effect (effect (damage eid :brain 1 {:card card}))}
+                                      :equal {:async true
+                                              :msg "do 1 net damage"
+                                              :effect (effect (damage eid :net 1 {:card card}))}}}
+                               card nil)))}})
+
 (defcard "Self-Destruct Chips"
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
@@ -1772,6 +1917,35 @@
   {:on-score {:async true
               :msg "do 2 meat damage"
               :effect (effect (damage eid :meat 2 {:card card}))}})
+
+(defcard "Sisyphus Protocol"
+  {:events [{:event :pass-ice
+             :req (req (and (rezzed? (:ice context))
+                            (or (has-subtype? (:ice context) "Code Gate")
+                                (has-subtype? (:ice context) "Sentry"))
+                            (first-event? state side :pass-ice
+                                          (fn [targets]
+                                            (let [context (first targets)]
+                                              (and (rezzed? (:ice context))
+                                                   (or (has-subtype? (:ice context) "Code Gate")
+                                                       (has-subtype? (:ice context) "Sentry"))))))))
+             :prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
+             :choices (req [(when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 1]) "Pay 1 [Credit]")
+                            (when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:trash-from-hand 1]) "Trash 1 card from HQ")
+                            "Done"])
+             :async true
+             :effect (req (if (= target "Done")
+                            (effect-completed state side eid)
+                            (let [enc-ice current-ice]
+                              (continue-ability
+                                state side
+                                (assoc {:msg (msg "make the runner encounter " (card-str state enc-ice) " again")
+                                        :async true
+                                        :effect (req (force-ice-encounter state side eid enc-ice))}
+                                        :cost (if (= target "Pay 1 [Credit]")
+                                                [:credit 1]
+                                                [:trash-from-hand 1]))
+                                card nil))))}]})
 
 (defcard "Slash and Burn Agriculture"
   {:expend {:req (req (some #(can-be-advanced? %) (all-installed state :corp)))
@@ -1880,6 +2054,38 @@
      :stolen {:msg (msg "deal " (inc (count-opp-stings state :runner)) " net damage")
               :async true
               :effect (effect (damage eid :net (inc (count-opp-stings state :runner)) {:card card}))}}))
+
+(defcard "Stoke the Embers"
+  (letfn [(score-abi
+            [cred-gain]
+            {:msg (msg "gain " cred-gain" [Credits]")
+             :interactive (req true)
+             :async true
+             :effect (req (wait-for
+                            (gain-credits state side (make-eid state eid) cred-gain)
+                            (continue-ability
+                              state side
+                              {:req (req (seq (all-installed-corp state)))
+                               :choices {:card #(installed? %)}
+                               :waiting-prompt true
+                               :msg (msg "place 1 advancement counter on "
+                                         (card-str state target))
+                               :effect (effect (add-prop :corp target :advance-counter 1
+                                                         {:placed true}))}
+                              card nil)))})]
+    {:on-score (score-abi 3)
+     :derezzed-events [{:event :corp-install
+                        :optional
+                        {:prompt "Reveal this agenda to gain 2 [Credits] and place 1 advancement counter on an installed card?"
+                         :req (req (and
+                                     (not= [:hand] (:previous-zone card))
+                                     (same-card? (:card target) card)))
+                         :waiting-prompt true
+                         :yes-ability
+                         {:msg (msg "reveal itself from " (zone->name (:previous-zone card)))
+                          :effect (req (wait-for
+                                         (reveal state side target)
+                                         (continue-ability state side (score-abi 2) card nil)))}}}]}))
 
 (defcard "Successful Field Test"
   (letfn [(sft [n max-ops]

@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [all-stealth install-cost min-stealth rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn]]
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect
                               unregister-effects-for-card]]
@@ -23,7 +23,7 @@
                              print-msg register-events register-once
                              trigger-event trigger-event-simult unregister-events]]
    [game.core.events :refer [run-events first-event? first-installed-trash? run-events
-                             first-successful-run-on-server? turn-events]]
+                             first-successful-run-on-server? no-event? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
    [game.core.flags :refer [can-host? can-trash? card-flag? lock-zone release-zone zone-locked?]]
@@ -40,7 +40,7 @@
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability]]
    [game.core.memory :refer [available-mu update-mu]]
-   [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash
+   [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards
                              trash-prevent]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value]]
@@ -156,6 +156,11 @@
      :effect (effect (pump card strength)
                      (continue-ability (break-sub nil strength subtype {:repeatable false}) (get-card state card) nil))
      :pump strength}))
+
+(defn- cond-breaker
+  "The breakers which rely on an event having happened"
+  [keyword fn]
+  {:req (req (not (no-event? state side keyword fn)))})
 
 (def heap-breaker-auto-pump-and-break
   "Implements auto-pump-and-break for heap breakers. Updates an icebreaker's
@@ -675,6 +680,16 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
                                 (strength-pump 3 4 :end-of-run {:label "add 4 strength (using at least 1 stealth [Credits])" :cost-req (min-stealth 1)})]}))
 
+(defcard "Boi-tatá"
+  (letfn [(was-a-runner-card?
+            [target]
+            (runner? (:card (first target))))]
+    (auto-icebreaker {:implementation "Effect only applies for printed abilities"
+                      :abilities [(break-sub 1 2 "Sentry" (cond-breaker :runner-trash was-a-runner-card?))
+                                  (break-sub 2 2 "Sentry")
+                                  (strength-pump 2 3 :end-of-encounter (cond-breaker :runner-trash was-a-runner-card?))
+                                  (strength-pump 3 3)]})))
+
 (defcard "Botulus"
   {:implementation "[Erratum] Program: Virus - Trojan"
    :data {:counter {:virus 1}}
@@ -846,6 +861,14 @@
              :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
    :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))})
 
+(defcard "Coalescence"
+  {:abilities [{:cost [:power 1]
+                :req (req (= (:active-player @state) :runner))
+                :async true
+                :effect (effect (gain-credits eid 2))
+                :msg "gain 2 [Credits]"}]
+   :data {:counter {:power 2}}})
+
 (defcard "Collective Consciousness"
   {:events [{:event :rez
              :req (req (ice? (:card target)))
@@ -1004,6 +1027,44 @@
                                                        (do (system-msg state :runner payment-str)
                                                            (effect-completed state side eid))
                                                        (trash state side eid card {:cause-card card}))))}]}))
+
+(defcard "Cupellation"
+  {:events [;; Note - we don't actually have access events for inactive cards in archives
+            ;; because of this, we need to perform this evil hack - nbkelly, jan '24
+            {:event :end-breach-server
+             :async true
+             :interactive (req true)
+             :req (req (and (= (:from-server target) :archives)
+                            ;; can-pay-credit           ;;todo - assert that we can pay the credit
+                            (seq (filter #(and (:seen %) (not (agenda? %))) (:discard corp)))
+                            (empty? (filter corp? (:hosted card)))))
+             :prompt "1 [Credits]: Host a card from archives?"
+             :choices (req (cancellable (filter #(and (:seen %) (not (agenda? %)))
+                                                (:discard corp))
+                                        :sorted))
+             :cost [:credit 1]
+             :msg (msg "host " (:title target) " on itself")
+             :effect (req (host state side (assoc card :seen true) target)
+                          (effect-completed state side eid))}
+            {:event :breach-server
+             :async true
+             :optional {:req (req (= :hq target)
+                                  (seq (filter corp? (:hosted card))))
+                        :prompt "Trash this program to access 2 additional cards from HQ?"
+                        :yes-ability {:async true
+                                      :effect (effect (access-bonus :hq 2)
+                                                      (effect-completed eid))
+                                      :cost [:credit 1 :trash-can]
+                                      :msg "access 2 additional cards from HQ"}}}]
+   :interactions {:access-ability {:label "Host a card"
+                                   :req (req (and (empty? (filter corp? (:hosted card)))
+                                                  (not (agenda? target))))
+                                   :cost [:credit 1]
+                                   :msg (msg "host " (:title target) " on itself")
+                                   :async true
+                                   :effect (req (host state side (assoc card :seen true) target)
+                                                (swap! state dissoc :access)
+                                                (effect-completed state side eid))}}})
 
 (defcard "Curupira"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
@@ -1590,6 +1651,72 @@
                        (lock-zone state side lock :runner :discard)))
                    (flip-facedown state side card)))}})
 
+(defcard "Heliamphora"
+  (let [traps-we-care-about #{"Mavirus" "Cyberdeck Virus Suite" "Breached Dome"
+                              "Honeyfarm" "Increased Drop Rates" "News Team"
+                              "Nightmare Archive" "Shi.Kyū" "Shock!"
+                              "Space Camp"}]
+    ;; TODO - we should probably just add a flag to the cdef of all archives activated ambushes
+    ;; instead of manually listing them. It might come in handy later, too -nbkelly
+  {:events [{:event :breach-server
+             :async true
+             :interactive (req true)
+             :req (req (and (= target :archives)
+                            (not-empty (:discard corp))))
+             :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                          (update! state side (assoc-in card [:special :host-available] true))
+                          (continue-ability
+                            state side
+                            {:optional
+                             {:prompt "Host a card on this program instead of accessing it?"
+                              :yes-ability {:prompt "Choose a card in Archives"
+                                            :choices (req (:discard corp))
+                                            :msg (msg "host " (:title target) " on itself instead of accessing it")
+                                            :effect (effect
+                                                      (update! (assoc-in card [:special :host-available] false))
+                                                      (host card target))}}}
+                            card nil))}
+            {:event :pre-access-card
+             :req (req (and
+                         (get-in card [:special :host-available])
+                         (in-discard? target)
+                         (or (agenda? target)
+                             (not (:seen target))
+                             (contains? traps-we-care-about (:title target)))))
+             :async true
+             ;; note that it's possible for cards to get added to archives mid-access (even by this card)
+             ;; because of this, we can't just treat this like archives interface
+             ;; and we need special rules to handle these cards (and we also might as well explicitly
+             ;; handle archives poison, too)
+             :effect (req (let [target-card target
+                                is-facedown? (not (:seen target))
+                                is-agenda? (agenda? target)
+                                is-trap? (contains? traps-we-care-about (:title target))]
+                            (continue-ability
+                              state side
+                              (cond
+                                is-facedown?
+                                {:optional
+                                 {:prompt (msg "Host face-down card on this program instead of accessing it?")
+                                  :yes-ability {:msg (msg "host a facedown card on itself instead of accessing it")
+                                                :effect (effect (update! (assoc-in card [:special :host-available] false))
+                                                                (host card target-card))}}}
+                                (or is-agenda? is-trap?)
+                                {:optional
+                                 {:prompt (msg "Host " (:title target-card) " on this program instead of accessing it?")
+                                  :yes-ability {:msg (msg "host a " (:title target-card) " on itself instead of accessing it")
+                                                :effect (effect (update! (assoc-in card [:special :host-available] false))
+                                                                (host card target-card))}}}
+                                _ nil)
+                                card nil)))}
+            {:event :purge
+             :msg "force the Corp to trash 2 cards from HQ at random, then trash itself"
+             :async true
+             :effect (req (wait-for
+                            (trash-cards state :corp (make-eid state eid)
+                                         (take 2 (shuffle (:hand corp))) {:cause-card card})
+                            (trash state :runner eid card {:cause :purge :cause-card card})))}]}))
+
 (defcard "Hemorrhage"
   {:events [{:event :successful-run
              :silent (req true)
@@ -1893,6 +2020,31 @@
                 :msg "prevent a piece of hardware from being trashed"
                 :effect (effect (trash-prevent :hardware 1))}]})
 
+(defcard "Lobisomem"
+  (auto-icebreaker {:data {:counter {:power 1}}
+                    :abilities [(break-sub 1 1 "Code Gate")
+                                {:label "Break X Barrier subroutines"
+                                 :cost [:x-credits :power 1]
+                                 :break-cost [:x-credits :power 1]
+                                 :req (req (and
+                                             (active-encounter? state)
+                                             (<= (get-strength current-ice) (get-strength card))))
+                                 :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                                             " on " (card-str state current-ice))
+                                 :effect (effect
+                                             (continue-ability
+                                               (when (pos? (cost-value eid :x-credits))
+                                                 (break-sub nil (cost-value eid :x-credits) "Barrier"))
+                                               card nil))}
+                                (strength-pump 1 2)]
+                    :events [{:event :subroutines-broken
+                              :req (req (and (all-subs-broken-by-card? target card)
+                                             (has-subtype? target "Code Gate")))
+                              :msg "place 1 power counter on itself"
+                              :async true
+                              :effect (effect (add-counter card :power 1)
+                                              (effect-completed eid))}]}))
+
 (defcard "Lustig"
   (trash-to-bypass (break-sub 1 1 "Sentry")
                    (strength-pump 3 5)))
@@ -1916,6 +2068,28 @@
                               :msg "gain 1 [Credits]"
                               :async true
                               :effect (effect (gain-credits :runner eid 1))}]}))
+
+(defcard "Malandragem"
+  {:data {:counter {:power 2}}
+   :events [(rfg-on-empty :power)
+            {:event :encounter-ice
+             :interactive (req true)
+             :ability-name "Malandragem (rfg)"
+             :optional {:prompt "Remove this program from the game to bypass encountered ice?"
+                        :req (req (threat-level 4 state))
+                        :yes-ability {:cost [:remove-from-game]
+                                      :msg (msg "bypass " (card-str state current-ice))
+                                      :effect (req (bypass-ice state))}}}
+            {:event :encounter-ice
+             :interactive (req true)
+             :ability-name "Malandragem (Power counter)"
+             :optional {:prompt "Spend 1 power counter to bypass encountered ice?"
+                        :once :per-turn
+                        :req (req (and (>= 3 (ice-strength state side current-ice))
+                                       (<= 1 (get-counters (get-card state card) :power))))
+                        :yes-ability {:cost [:power 1]
+                                      :msg (msg "bypass " (card-str state current-ice))
+                                      :effect (req (bypass-ice state))}}}]})
 
 (defcard "Mammon"
   (auto-icebreaker {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
@@ -2102,6 +2276,62 @@
 
 (defcard "Musaazi"
   (virus-breaker "Sentry"))
+
+(defcard "Muse"
+  (letfn [(trojan-auto-hosts?
+            ;; NOTE - this function will theoretically need to be maintained if more cards like this are ever printed - nbkelly, jan '24
+            [card]
+            (not (or (has-subtype? card "Caïssa")
+                     (= (:title card) "Ika"))))
+          (muse-abi [where]
+            {:prompt "Choose a non-daemon program"
+             :msg (msg (if (= target "Done")
+                         (str "shuffle the stack")
+                         (str "install " (:title target))))
+             :choices (req (concat
+                             (->> (where runner)
+                                  (filter
+                                    #(and (program? %)
+                                          (not (has-subtype? % "Daemon"))
+                                          (can-pay? state side
+                                                    (assoc eid :source card :source-type :runner-install)
+                                                    % nil [:credit (install-cost state side %)])))
+                                  (sort-by :title)
+                                  (seq))
+                             ["Done"]))
+             :async true
+             :effect (req (when (= :deck where)
+                            (trigger-event state side :searched-stack nil)
+                            (shuffle! state side :deck))
+                          (if (not= target "Done")
+                            ;; does the card need to be installed on muse?
+                            (if-not (has-subtype? target "Trojan")
+                              (runner-install state side (assoc eid :source card :source-type :runner-install) target {:host-card (get-card state card)})
+                              ;;otherwise, pick a target card to host the trojan on
+                              (if (trojan-auto-hosts? target)
+                                ;; if the trojan does it for free, so be it
+                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
+                                ;; do it the hard way
+                                (let [target-card target]
+                                  (continue-ability
+                                    state side
+                                    {:prompt (msg "Choose an ice to host " (:title target-card))
+                                     :choices {:card #(and (installed? %)
+                                                           (ice? %))}
+                                     :async true
+                                     :effect (req (runner-install state side (assoc eid :source card :source-type :runner-install) target-card {:host-card (get-card state target)}))}
+                                    card nil))))
+                            ;; declined to install
+                            (effect-completed state side eid)))})]
+    {:on-install {:async true
+                  :prompt "Choose where to install from"
+                  :choices (req ["Grip" "Stack"
+                                 (when-not (zone-locked? state :runner :discard) "Heap")])
+                  :msg (msg "search the " target " for a non-daemon program to install")
+                  :effect (effect (continue-ability
+                                    (muse-abi (if (= "Stack" target) :deck
+                                                  (if (= "Grip" target) :hand :discard)))
+                                    card nil))}}))
 
 (defcard "Na'Not'K"
   (auto-icebreaker {:static-abilities [(breaker-strength-bonus (req (count run-ices)))]
@@ -2444,6 +2674,28 @@
    :interactions {:pay-credits {:req (req (= :hq (get-in @state [:run :server 0])))
                                 :type :recurring}}})
 
+(defcard "Physarum Entangler"
+  {:hosting {:card #(and (ice? %)
+                         (can-host? %))}
+   :events [{:event :purge
+             :async true
+             :msg "trash itself"
+             :effect (req (trash state :runner eid card {:cause :purge
+                                                         :cause-card card}))}
+            {:event :encounter-ice
+             :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
+                                     " [Credits] to bypass encountered ice?")
+                        :req (req (and (not (has-subtype? current-ice "Barrier"))
+                                       (same-card? current-ice (:host card))
+                                       (can-pay? state :runner eid (:ice context) nil [:credit (count (:subroutines (get-card state current-ice)))])))
+                        :yes-ability {:async true
+                                      :msg (msg "bypass " (card-str state current-ice))
+                                      :effect (req (wait-for
+                                                     (pay state side (make-eid state eid) card [:credit (count (:subroutines (get-card state current-ice)))])
+                                                     (system-msg state :runner (:msg async-result))
+                                                     (bypass-ice state)
+                                                     (effect-completed state side eid)))}}}]})
+
 (defcard "Pichação"
   ;; TODO - there's not really a way to tell if an event happened during a run?
   ;; this can be cleaned up a little later
@@ -2487,6 +2739,12 @@
                           (:card-target (get-card state card))))
              :msg "place 2 virus counters on itself"
              :effect (effect (add-counter :runner card :virus 2))}]})
+
+(defcard "Pressure Spike"
+  (auto-icebreaker {:implementation "Once per run restriction not enforced"
+                    :abilities [(break-sub 1 1 "Barrier")
+                                (strength-pump 2 3)
+                                (strength-pump 2 9 :end-of-encounter {:req (req (threat-level 4 state))})]}))
 
 (defcard "Progenitor"
   {:abilities [{:label "Install and host a virus program"

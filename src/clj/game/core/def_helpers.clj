@@ -114,7 +114,6 @@
     :req (if (:req args)
            (:req args)
            (req (= server target)))
-    :silent (req true)
     :msg msg
     :effect (effect (access-bonus :runner server bonus))}))
 
@@ -141,6 +140,15 @@
    :async true
    :msg (str "do " dmg " core damage")
    :effect (effect (damage eid :brain dmg {:card card}))})
+
+(defn rfg-on-empty
+  "Used in :event maps for effects like Malandragem"
+  [counter-type]
+  {:event :counter-added
+   :req (req (and (same-card? card target)
+                  (not (pos? (get-counters card counter-type)))))
+   :effect (effect (system-msg (str "removes " (:title card) " from the game"))
+                   (move card :rfg))})
 
 (defn trash-on-empty
   "Used in :event maps for effects like Daily Casts"

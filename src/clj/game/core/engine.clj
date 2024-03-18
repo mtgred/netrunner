@@ -716,7 +716,12 @@
                                           (not (and silent-fn
                                                     (silent-fn state side (make-eid state) card event-targets))))
                                        handlers)
-                    titles (map :card non-silent)
+                    titles (map (fn [{:keys [card ability]}]
+                                  ;; Showing ability name in prompt if card has multiple listeners to the same event, e.g. Privileged Access
+                                  (if-let [abi-name (:ability-name ability)]
+                                    (assoc card :title abi-name)
+                                    card))
+                                non-silent)
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))
                                                card (card-for-ability state %)]
                                            (and interactive-fn
@@ -752,7 +757,11 @@
                   {:prompt "Choose a trigger to resolve"
                    :choices titles
                    :async true
-                   :effect (req (let [to-resolve (some #(when (same-card? target (:card %)) %) handlers)
+                   :effect (req (let [same-card-ability? (fn [chosen-card {:keys [ability card]}]
+                                                           (if-let [abi-name (:ability-name ability)]
+                                                             (= abi-name (:title chosen-card))
+                                                             (same-card? chosen-card card)))
+                                      to-resolve (some #(when (same-card-ability? target %) %) handlers)
                                       ability-to-resolve (dissoc-req (:ability to-resolve))
                                       the-card (card-for-ability state to-resolve)]
                                   (wait-for
@@ -764,7 +773,7 @@
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
-                                                          (remove-once #(same-card? target (:card %)) handlers))
+                                                          (remove-once #(same-card-ability? target %) handlers))
                                                         nil event-targets)
                                       (effect-completed state side eid)))))})))]
 

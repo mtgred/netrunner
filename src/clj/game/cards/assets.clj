@@ -491,6 +491,28 @@
   {:static-abilities [(runner-hand-size+ -2)]
    :on-trash executive-trash-effect})
 
+(defcard "Charlotte Caçador"
+  (let [ability {:label "Gain 4 [Credits] and draw 1 card"
+                 :optional {:once :per-turn
+                            :prompt "Remove 1 hosted advancement counter to gain 4 [Credits] and draw 1 card?"
+                            :req (req (pos? (get-counters card :advancement)))
+                            :yes-ability {:msg "remove 1 hosted advancement counter from itself to gain 4 [Credits] and draw 1 card"
+                                          :async true
+                                          :effect (req
+                                                    (add-prop state :corp card :advance-counter -1)
+                                                    (wait-for
+                                                      (gain-credits state side 4)
+                                                      (draw state side eid 1)))}}}
+        trash-ab {:cost [:advancement 1 :trash-can]
+                  :label "Gain 3 [Credits]"
+                  :msg (msg "gain 3 [Credits]")
+                  :effect (req (gain-credits state :corp eid 3))}]
+    {:advanceable :always
+     :flags {:corp-phase-12 (req true)}
+     :derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability trash-ab]}))
+
 (defcard "Chekist Scion"
   (advance-ambush 0 {:msg (msg "give the Runner " (quantify (inc (get-counters (get-card state card) :advancement)) "tag"))
                      :async true
@@ -587,6 +609,53 @@
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
      :abilities [ability]}))
+
+(defcard "Cohort Guidance Program"
+  (let [abi {:prompt "Choose one"
+             :interactive (req true)
+             :choices (req [(when (seq (:hand corp)) "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
+                            (when (some #(not (:seen %)) (:discard corp))
+                              "Turn 1 facedown card in Archives faceup to place 1 advancement counter")
+                            "Done"])
+             :async true
+             :effect (req (if (= target "Done")
+                            (effect-completed state side eid)
+                            (continue-ability
+                              state side
+                              (if (= target "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
+                                {:prompt "Choose a card to trash"
+                                 :msg "trash a card from HQ to gain 2 [Credits] and draw 1 card"
+                                 :choices {:max 1
+                                           :all true
+                                           :card #(and (corp? %)
+                                                       (in-hand? %))}
+                                 :effect (req (wait-for (trash-cards state side targets {:cause-card card})
+                                                        (wait-for (gain-credits state side 2)
+                                                                  (draw state side eid 1))))}
+                                {:prompt "Choose a card to turn faceup"
+                                 :choices {:card #(and (in-discard? %)
+                                                       (corp? %)
+                                                       (not (:seen %)))}
+                                 :msg (msg "turn " (:title target) " in Archives faceup")
+                                 :show-discard true
+                                 :async true
+                                 :effect (req (update! state side (assoc target :seen true))
+                                              (continue-ability
+                                                state side
+                                                {:prompt "Choose an installed card"
+                                                 :choices {:card #(and (corp? %)
+                                                                       (installed? %))}
+                                                 :msg (msg "place 1 advancement counter on "
+                                                           (card-str state target))
+                                                 :effect (effect
+                                                           (add-prop target
+                                                                     :advance-counter 1
+                                                                     {:placed true}))}
+                                                card nil))})
+                              card nil)))}]
+    {:flags {:corp-phase-12 (req true)}
+     :derezzed-events [corp-rez-toast]
+     :events [(assoc abi :event :corp-turn-begins)]}))
 
 (defcard "Commercial Bankers Group"
   (let [ability {:req (req unprotected)
@@ -1165,6 +1234,39 @@
                 :cost [:click 1 :advancement 1]
                 :effect (effect (gain-clicks 2))}]})
 
+(defcard "Hearts and Minds"
+  (let [political {:req (req unprotected)
+                   :prompt "Choose a card you can advance to place 1 advancement counter on"
+                   :choices {:card #(and (can-be-advanced? %)
+                                         (installed? %))}
+                   :msg (msg "place 1 advancement counter on " (card-str state target))
+                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (req true)}
+     :abilities [{:label "Move 1 hosted advancement counter to another card you can advance (start of turn)"
+                  :once :per-turn
+                  :waiting-prompt true
+                  :prompt "Choose an installed card to move 1 hosted advancement counter from"
+                  :choices {:card #(and (installed? %)
+                                        (get-counters % :advancement))}
+                  :effect (effect
+                            (continue-ability
+                              (let [from-ice target]
+                                {:prompt "Choose an installed card you can advance"
+                                 :choices {:card #(and (installed? %)
+                                                       (can-be-advanced? %)
+                                                       (not (same-card? from-ice %)))}
+                                 :msg (msg "move 1 hosted advancement counter from "
+                                           (card-str state from-ice)
+                                           " to "
+                                           (card-str state target))
+                                 :effect (effect (add-prop :corp target :advance-counter 1)
+                                                 (add-prop :corp from-ice :advance-counter -1)
+                                                 (continue-ability political card nil))
+                                 :cancel-effect (effect (continue-ability political card nil))})
+                              card nil))
+                  :cancel-effect (effect (continue-ability political card nil))}]}))
+
 (defcard "Honeyfarm"
   {:flags {:rd-reveal (req true)}
    :on-access {:msg "force the Runner to lose 1 [Credits]"
@@ -1287,6 +1389,32 @@
                 :cost [:remove-from-game]
                 :async true
                 :effect (effect (shuffle-into-rd-effect eid card 3))}]})
+
+(defcard "Janaína \"JK\" Dumont Kindelán"
+  (let [ability {:label "Place 3 [Credits] on this asset (start of turn)"
+                 :once :per-turn
+                 :msg "place 3 [Credits] on itself"
+                 :effect (effect (add-counter card :credit 3 {:placed true}))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (req true)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability
+                 {:cost [:click 1]
+                  :label "Take all hosted credits and add this asset to HQ. Install 1 card from HQ"
+                  :async true
+                  :msg (msg "take " (get-counters (get-card state card) :credit) " [Credits] and add itself to HQ")
+                  :effect (req (wait-for (gain-credits state side (make-eid state eid)
+                                                       (get-counters (get-card state card) :credit))
+                                         (move state :corp card :hand)
+                                         (continue-ability
+                                           state side
+                                           {:async true
+                                            :prompt "Choose 1 card to install"
+                                            :choices {:card #(and (corp-installable-type? %)
+                                                                  (in-hand? %))}
+                                            :msg (msg (corp-install-msg target))
+                                            :effect (effect (corp-install eid target nil nil))}
+                                           card nil)))}]}))
 
 (defcard "Jeeves Model Bioroids"
   (let [ability {:label "Gain [Click]"
@@ -2662,6 +2790,18 @@
    :on-rez {:effect (req (prevent-current state side))}
    :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))})
 
+(defcard "The Powers That Be"
+  {:events [{:event :agenda-scored
+             :prompt "Choose a card from Archives or HQ to install, ignoring all costs"
+             :show-discard true
+             :interactive (req true)
+             :async true
+             :choices {:card #(and (corp-installable-type? %)
+                                   (or (in-hand? %)
+                                       (in-discard? %)))}
+             :msg (msg (corp-install-msg target))
+             :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}]})
+
 (defcard "The Root"
   {:recurring 3
    :interactions {:pay-credits {:req (req (or (#{:advance :corp-install :rez} (:source-type eid))
@@ -2917,6 +3057,37 @@
                                 (has-subtype? (:card context) "Bioroid")))
                  :effect (req (add-one (:cid card) state (get-card state (:card context))))}]})))
 
+(defcard "Warm Reception"
+  (let [install {:prompt "Choose a card to install"
+                 :async true
+                 :choices {:card #(and (corp-installable-type? %)
+                                       (in-hand? %))}
+                 :msg (msg (corp-install-msg target))
+                 :effect
+                 (req (wait-for (corp-install state side (make-eid state eid) target nil nil)
+                                (let [installed-card async-result]
+                                  (register-turn-flag!
+                                    state side
+                                    card :can-score
+                                    (fn [state _ card]
+                                      (if (same-card? card installed-card)
+                                        ((constantly false) (toast state :corp "Cannot score due to Warm Reception." "Warning"))
+                                        true)))
+                                  (effect-completed state side eid))))}
+        derez {:label "Derez another card (start of turn)"
+               :req (req unprotected)
+               :prompt "Choose another card to derez"
+               :choices {:not-self true
+                         :card #(rezzed? %)}
+               :msg (msg "derez itself to derez " (card-str state target))
+               :effect (effect (derez card)
+                               (derez target))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [{:event :corp-turn-begins
+               :async true
+               :effect (req (wait-for (resolve-ability state side install card nil)
+                                      (continue-ability state side derez card nil)))}]}))
+
 (defcard "Watchdog"
   (letfn [(not-triggered? [state]
             (no-event? state :runner :rez #(ice? (:card (first %)))))]
@@ -2948,6 +3119,25 @@
                                              " from Archives to the bottom of R&D")
                                    :effect (effect (move target :deck))}
                                   card nil))}]})
+
+(defcard "Working Prototype"
+  {:events [{:event :rez
+             :silent (req true)
+             :effect (effect (add-counter card :power 1))}]
+   :abilities [{:cost [:click 1 :power 1]
+                :label "Gain 3 [Credits]"
+                :msg "gain 3 [Credits]"
+                :effect (req (gain-credits state side eid 3))}
+               {:cost [:click 1 :power 5]
+                :label "Gain 6 [Credits] and add a resource to the top of the stack"
+                :prompt "Choose a resource"
+                :choices {:card #(resource? %)}
+                :async true
+                :msg (msg "gain 6 [Credits] and add " (:title target) " to the top of the stack")
+                :effect (req
+                          (wait-for (gain-credits state side 6)
+                                    (move state :runner target :deck {:front true})
+                                    (effect-completed state side eid)))}]})
 
 (defcard "Worlds Plaza"
   {:abilities [{:label "Install an asset on this asset"

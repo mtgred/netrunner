@@ -347,6 +347,8 @@
 
 (defn force-ice-encounter
   [state side eid ice]
+  ;; clears the broken subs out of the prompt, otherwise they can get stuck with some cards
+  (reset-all-subs! state (get-card state ice))
   (show-run-prompts state (str "encountering " (:title ice)) ice)
   (wait-for (encounter-ice state side (make-eid state eid) ice)
             (clear-run-prompts state)

@@ -757,6 +757,29 @@
       (is (= ["Bacterial Programming"] (mapv :title (get-scored state :runner))) "Runner shouldn't score Chairman Hiro")
       (is (= ["Chairman Hiro"] (mapv :title (:discard (get-corp)))) "Chairman Hiro should be in Archives")))
 
+(deftest charlotte-cacador
+  (do-game
+    (new-game {:corp {:hand ["Charlotte Caçador"]
+                      :deck [(qty "Hedge Fund" 5)]}})
+    (play-from-hand state :corp "Charlotte Caçador" "New remote")
+    (let [cc (get-content state :remote1 0)]
+      (advance state cc 2)
+      (rez state :corp cc)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp has opportunity to use Charlotte Caçador")
+      (end-phase-12 state :corp)
+      (is (changed? [(:credit (get-corp)) 4
+                     (count (:hand (get-corp))) 2
+                     (get-counters (refresh cc) :advancement) -1]
+                    (click-prompt state :corp "Yes"))
+          "Corp gaind 4 credits and drew 1 card (+1 when the turn started)")
+      (is (changed? [(:credit (get-corp)) 3
+                     (count (:discard (get-corp))) 1]
+                    (card-ability state :corp (refresh cc) 1))
+          "Corp gaind 3 credits")
+      (is (nil? (refresh cc)) "Charlotte Caçador got trashed"))))
+
 (deftest chekist-scion
   ;; Chekist Scion
   (do-game
@@ -989,6 +1012,35 @@
         (is (zero? (:credit (get-runner))))
         (is (zero? (count (:deck (get-runner)))))
         (is (no-prompt? state :corp)))))
+
+(deftest cohort-guidance-program
+    (do-game
+      (new-game {:corp {:hand ["Cohort Guidance Program" "NGO Front" "PAD Campaign"]
+                        :deck [(qty "Hedge Fund" 5)]}})
+      (play-from-hand state :corp "Cohort Guidance Program" "New remote")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (let [cgp (get-content state :remote1 0)
+            ngo (get-content state :remote2 0)]
+        (rez state :corp cgp)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (:corp-phase-12 @state) "Corp has opportunity to use Cohort Guidance Program")
+        (end-phase-12 state :corp)
+        (is (changed? [(:credit (get-corp)) 2
+                       (count (:discard (get-corp))) 1
+                       (count (:hand (get-corp))) 1]
+                      (click-prompt state :corp "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
+                      (click-card state :corp "PAD Campaign"))
+            "Corp discarded 1 card, gained 2 credits, and drew 1 card")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (end-phase-12 state :corp)
+        (is (changed? [(get-counters (refresh ngo) :advancement) 1]
+                      (click-prompt state :corp "Turn 1 facedown card in Archives faceup to place 1 advancement counter")
+                      (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
+                      (click-card state :corp ngo))
+            "Corp turned 1 facedown card in Archived to advance 1 card")
+        (is (empty? (remove #(:seen %) (:discard (get-corp)))) "PAD Campaign was turned faceup"))))
 
 (deftest commercial-bankers-group
   ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice
@@ -2507,6 +2559,46 @@
       (is (= 1 (get-counters (refresh haa) :advancement)) "Can't use twice in a turn")
       (is (= 2 (:click (get-corp))) "Didn't spend a click"))))
 
+(deftest hearts-and-minds-behind-ice
+  (do-game
+    (new-game {:corp {:hand ["Hearts and Minds" "Vanilla" "NGO Front" "Project Atlas"]}})
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Hearts and Minds" "New remote")
+    (play-from-hand state :corp "Vanilla" "Server 1")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (let [ham (get-content state :remote1 0)
+          ngo (get-content state :remote2 0)
+          atlas (get-content state :remote3 0)]
+    (rez state :corp ham)
+    (click-advance state :corp ngo)
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+    (card-ability state :corp ham 0)
+    (is (changed? [(get-counters (refresh ngo) :advancement) -1
+                   (get-counters (refresh atlas) :advancement) 1]
+                  (click-card state :corp ngo)
+                  (click-card state :corp atlas))
+        "Advancement counter moved from NGO Front to Project Atlas")
+    (is (no-prompt? state :corp) "No additional prompt because Hearts and Minds is behind ice"))))
+
+(deftest hearts-and-minds
+  (do-game
+    (new-game {:corp {:hand ["Hearts and Minds" "NGO Front"]}})
+    (play-from-hand state :corp "Hearts and Minds" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [ham (get-content state :remote1 0)
+          ngo (get-content state :remote2 0)]
+    (rez state :corp ham)
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (card-ability state :corp ham 0)
+    (click-prompt state :corp "Done")
+    (is (changed? [(get-counters (refresh ngo) :advancement) 1]
+                  (click-card state :corp ngo))
+        "NGO Front got 1 advancement counter"))))
+
 (deftest honeyfarm
   ;; Honeyfarm - lose one credit on access
   (do-game
@@ -2786,6 +2878,26 @@
               (is (nil? (refresh jhow)))
               (is (nil? (:run @state))))
             "A server vanishing by mid-run does not trigger Desperado even if players proceed to access"))))
+
+(deftest janaina-jk-dumont-kindelan
+  (do-game
+    (new-game {:corp {:hand ["Janaína \"JK\" Dumont Kindelán" "NGO Front"]}})
+    (play-from-hand state :corp "Janaína \"JK\" Dumont Kindelán" "New remote")
+    (let [jk (get-content state :remote1 0)]
+      (rez state :corp jk)
+      (dotimes [n 2]
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+        (end-phase-12 state :corp)
+        (is (= (* 3 (inc n)) (get-counters (refresh jk) :credit))))
+      (is (changed? [(:credit (get-corp)) 6]
+                    (card-ability state :corp jk 1)
+                    (click-card state :corp "NGO Front")
+                    (click-prompt state :corp "New remote"))
+          "Corp gained 6 credits and installed 1 card from HQ")
+      (is (nil? (get-content state :remote1 0)) "JK returned to hand")
+      (is (= "NGO Front" (:title (get-content state :remote2 0)))))))
 
 (deftest jeeves-model-bioroids-cases-where-jeeves-should-trigger
     ;; Cases where Jeeves should trigger
@@ -5691,6 +5803,23 @@
     (play-from-hand state :runner "Rumor Mill")
     (is (find-card "Rumor Mill" (:hand (get-runner))) "Rumor Mill should still be in hand after trying to play it")))
 
+(deftest the-powers-that-be
+  (do-game
+    (new-game {:corp {:deck ["The Powers That Be" (qty "False Lead" 2) "Anansi"]
+                      :discard ["Vanilla"]}})
+    (play-from-hand state :corp "The Powers That Be" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-and-score state "False Lead")
+    (click-card state :corp "Anansi")
+    (click-prompt state :corp "R&D")
+    (is (= "Anansi" (:title (get-ice state :rd 0))))
+    (play-and-score state "False Lead")
+    (is (changed? [(:credit (get-corp)) 0]
+                  (click-card state :corp "Vanilla")
+                  (click-prompt state :corp "R&D"))
+        "Corp paid no install cost")
+    (is (= "Vanilla" (:title (get-ice state :rd 1))))))
+
 (deftest the-root-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -6329,6 +6458,41 @@
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
       (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))
 
+(deftest warm-reception
+  (do-game
+    (new-game {:corp {:hand ["Warm Reception" "Shipment from Tennin" "Hostile Takeover" "Vanilla"]}})
+    (play-from-hand state :corp "Warm Reception" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (let [wr (get-content state :remote1 0)
+          van (get-ice state :hq 0)]
+      (rez state :corp wr)
+      (rez state :corp van)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (click-card state :corp (find-card "Hostile Takeover" (:hand (get-corp))))
+      (click-prompt state :corp "New remote")
+      (click-card state :corp van)
+      (is (not (rezzed? (refresh van))) "Vanilla derezzed")
+      (is (not (rezzed? (refresh wr))) "Warm Reception derezzed")
+      (play-from-hand state :corp "Shipment from Tennin")
+      (click-card state :corp "Hostile Takeover")
+      (score state :corp (refresh (get-content state :remote2 0)))
+      (is (empty? (:scored (get-corp))) "Agenda not scored")
+      (is (zero? (:agenda-point (get-corp)))))))
+
+(deftest warm-reception-protected-by-ice
+  (do-game
+    (new-game {:corp {:hand ["Warm Reception" "Hostile Takeover" "Vanilla"]}})
+    (play-from-hand state :corp "Warm Reception" "New remote")
+    (play-from-hand state :corp "Vanilla" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-card state :corp (find-card "Hostile Takeover" (:hand (get-corp))))
+    (click-prompt state :corp "New remote")
+    (is (no-prompt? state :corp) "Corp should have no prompt")))
+
 (deftest watchdog
   ;; Watchdog - Reduce rez cost of first piece of ice per turn by number of Runner tags
   (do-game
@@ -6365,6 +6529,35 @@
       (click-card state :corp (find-card "Global Food Initiative" (:discard (get-corp))))
       (is (= 1 (count (:discard (get-corp)))) "Only card in discard placed in bottom of R&D")
       (is (= "Global Food Initiative" (-> (get-corp) :deck last :title)) "GFI last card in deck"))))
+
+(deftest working-prototype
+  (do-game
+    (new-game {:corp {:hand ["Working Prototype" "Rime"]}
+               :runner {:hand ["Smartware Distributor"]}})
+    (play-from-hand state :corp "Working Prototype" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Smartware Distributor")
+    (take-credits state :runner)
+    (let [wp (get-content state :remote1 0)]
+      (is (changed? [(get-counters (refresh wp) :power) 1]
+                    (rez state :corp wp))
+          "Power counter added")
+      (play-from-hand state :corp "Rime" "HQ")
+      (is (changed? [(get-counters (refresh wp) :power) 1]
+                    (rez state :corp (get-ice state :hq 0)))
+          "Power counter added")
+      (core/add-counter state :corp wp :power 4)
+      (is (changed? [(get-counters (refresh wp) :power) -1
+                     (:credit (get-corp)) 3]
+                    (card-ability state :corp (refresh wp) 0))
+          "Power counter removed to gain 3 credits")
+      (is (changed? [(get-counters (refresh wp) :power) -5
+                     (:credit (get-corp)) 6]
+                    (card-ability state :corp (refresh wp) 1)
+                    (click-card state :corp (get-resource state 0)))
+          "5 power counters removed to gain 6 credits")
+      (is (empty (get-resource state)))
+      (is (= "Smartware Distributor" (:title (first (:deck (get-runner)))))))))
 
 (deftest worlds-plaza
   ;; Worlds Plaza

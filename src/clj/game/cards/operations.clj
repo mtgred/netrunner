@@ -22,7 +22,7 @@
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
-   [game.core.engine :refer [pay register-events resolve-ability]]
+   [game.core.engine :refer [pay register-events resolve-ability should-trigger?]]
    [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
                              turn-events]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
@@ -52,7 +52,7 @@
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
                                 shuffle-into-rd-effect]]
    [game.core.tags :refer [gain-tags]]
-   [game.core.threat :refer [threat-level]]
+   [game.core.threat :refer [threat threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
@@ -76,7 +76,7 @@
                                     :effect (effect (trash eid card nil))})))
 
 ;; helper for the faceup-archives-count cards
-(defn faceup-archives-types [corp]
+(defn- faceup-archives-types [corp]
   (count (distinct (map :type (filter faceup? (:discard corp))))))
 
 ;; Card definitions
@@ -115,6 +115,33 @@
       :choices ["OK"]
       :async true
       :effect (effect (continue-ability (ad state side eid card (take 3 (:deck corp))) card nil))}}))
+
+(defcard "Active Policing"
+  (let [lose-click-abi
+        {:msg "give the Runner -1 allotted [Click] for their next turn"
+         :async true
+         :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+                      (continue-ability
+                        state side
+                        (when (threat-level 3 state)
+                          {:optional
+                           {:prompt "Pay 2 [credits] to give the Runner -1 allotted [Click] for their next turn?"
+                            :yes-ability
+                            {:cost [:credit 2]
+                             :msg "give the Runner -1 allotted [Click] for their next turn"
+                             :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0)))}}})
+                        card nil))}]
+  {:on-play {:req (req (or (last-turn? state :runner :trashed-card)
+                           (last-turn? state :runner :stole-agenda)))
+             :prompt "Choose a card to install"
+             :choices {:card #(and (corp-installable-type? %)
+                                   (in-hand? %))}
+             :async true
+             :msg (msg (corp-install-msg target))
+             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card from HQ"))
+                                    (continue-ability lose-click-abi card nil))
+             :effect (req (wait-for (corp-install state side target nil nil)
+                                    (continue-ability state side lose-click-abi card nil)))}}))
 
 (defcard "Ad Blitz"
   (letfn [(ab [n total]
@@ -427,6 +454,41 @@
     :async true
     :effect (effect (damage eid :meat 7 {:card card}))}})
 
+(defcard "Bring Them Home"
+  (letfn [(hide-away [cards]
+            {:msg (msg "place " (enumerate-str (map :title cards))
+                       " from the grip to the top of the stack")
+             :async true
+             :effect (req (doseq [c (shuffle cards)]
+                            (move state :runner c :deck {:front true}))
+                          (continue-ability
+                            state side
+                            {:optional
+                             {:prompt "Shuffle 1 random card from the grip into the stack?"
+                              :req (req (threat-level 3 state))
+                              :waiting-prompt true
+                              :yes-ability
+                              {:cost [:credit 2]
+                               :req (req (seq (:hand runner)))
+                                :effect(req (let [target-card (first (shuffle (:hand runner)))]
+                                              (wait-for
+                                                (reveal state side target-card)
+                                                (system-msg state side (str "shuffles " (:title target-card) " into the stack"))
+                                                (move state :runner target-card :deck)
+                                                (shuffle! state :runner :deck))))}}}
+                            card nil))})]
+    {:on-play
+     {:async true
+      :req (req (and (pos? (count (:hand runner)))
+                     (or (last-turn? state :runner :trashed-card)
+                         (last-turn? state :runner :stole-agenda))))
+      :effect (req
+                (let [chosen-cards (take 2 (shuffle (:hand runner)))]
+                  (continue-ability
+                    state side
+                    (hide-away chosen-cards)
+                    card nil)))}}))
+
 (defcard "Building Blocks"
   {:on-play
    {:req (req (pos? (count (filter #(has-subtype? % "Barrier") (:hand corp)))))
@@ -440,6 +502,31 @@
                    (reveal state side target)
                    (corp-install state side eid target nil {:ignore-all-cost true
                                                             :install-state :rezzed-no-cost})))}})
+
+(defcard "Business As Usual"
+  (let [faux-purge {:choices {:req (req (and (installed? target)
+                                             (pos? (get-counters target :virus))))}
+                    :effect (effect (add-counter target :virus (* -1 (get-counters target :virus))))
+                    :msg (msg "remove all virus counters from " (card-str state target))}
+        kaguya {:choices {:max 2
+                          :card #(and (corp? %)
+                                      (installed? %)
+                                      (can-be-advanced? %))}
+                      :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
+                      :effect (req (doseq [t targets]
+                                     (add-prop state :corp t :advance-counter 1 {:placed true})))}]
+  {:on-play
+   {:prompt "Choose one"
+    :choices (req ["Place 1 advancement counter on each of up to 2 cards you can advance"
+                   (when (seq (get-all-installed state)) "Remove all virus counters from a card")
+                   (when (threat-level 3 state) "Do both")])
+    :async true
+    :effect (req (if (or (= target "Remove all virus counters from a card") (= target "Do both"))
+                   (wait-for (resolve-ability state side faux-purge card nil)
+                             (continue-ability
+                               state side (when (= target "Do both") kaguya)
+                               card nil))
+                   (continue-ability state side kaguya card nil)))}}))
 
 (defcard "Casting Call"
   {:on-play {:choices {:card #(and (agenda? %)
@@ -543,6 +630,16 @@
     :effect (effect (shuffle! :deck)
                     (system-msg "shuffles their deck")
                     (play-instant eid target nil))}})
+
+(defcard "Corporate Hospitality"
+  {:on-play {:msg "gain 6 [Credits] and draw 2 cards"
+             :async true
+             :effect (req (wait-for (gain-credits state side 6)
+                                    (wait-for (draw state side (make-eid state eid) 2)
+                                              (continue-ability
+                                                state side
+                                                (corp-recur)
+                                                card nil))))}})
 
 (defcard "Corporate Shuffle"
   {:on-play
@@ -2667,6 +2764,36 @@
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")
     :async true
     :effect (effect (gain-credits eid (* 3 (count (:scored runner)))))}})
+
+(defcard "Sudden Commandment"
+  (let [play-instant-second {:optional
+                             {:prompt (msg "Pay 3 [Credits] to gain [Click]?")
+                              :waiting-prompt true
+                              :req (req (threat-level 3 state))
+                              :yes-ability {:cost [:credit 3]
+                                            :msg (msg "gain [Click]")
+                                            :effect (effect (gain-clicks 1))}}}
+        play-instant-first {:prompt (msg "Choose a non-terminal operation")
+                            :choices (req (conj (filter #(and (operation? %)
+                                                              (not (has-subtype? % "Terminal"))
+                                                              (should-trigger? state :corp (assoc eid :source % :source-type :play) % nil (or (:on-play (card-def %)) {}))
+                                                              (can-pay? state side (assoc eid :source % :source-type :play) % nil [:credit (play-cost state side % nil)]))
+                                                        (:hand corp))
+                                                "Done"))
+                            :async true
+                            :effect (req
+                                      (let [is-first-mandate? (first-event? state side :play-operation #(has-subtype? (:card (first %)) "Mandate"))]
+                                        (if (= target "Done")
+                                          (continue-ability state side (when is-first-mandate? play-instant-second) card nil)
+                                          (wait-for (play-instant state side (assoc (make-eid state eid) :source target :source-type :play) target nil)
+                                                    (continue-ability state side (when is-first-mandate? play-instant-second) card nil)))))}]
+    {:on-play {:msg "Draw 2 cards"
+               :async true
+               :effect (req (wait-for (draw state side (make-eid state eid) 2)
+                                      (continue-ability
+                                        state side
+                                        play-instant-first
+                                        card nil)))}}))
 
 (defcard "Sub Boost"
   (let [new-sub {:label "[Sub Boost]: End the run"}]
