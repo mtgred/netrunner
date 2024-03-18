@@ -902,6 +902,7 @@
                                        (zero? (get-counters % :advancement))
                                        (same-server? card %))
                                  (all-installed-corp state)))
+                 :async true
                  :effect
                  (effect
                    (continue-ability
