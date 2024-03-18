@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eux -o pipefail
+
+docker-compose logs --tail=500 --no-log-prefix --follow server
