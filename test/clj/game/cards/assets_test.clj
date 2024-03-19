@@ -2559,6 +2559,22 @@
       (is (= 1 (get-counters (refresh haa) :advancement)) "Can't use twice in a turn")
       (is (= 2 (:click (get-corp))) "Didn't spend a click"))))
 
+(deftest hearts-and-minds
+  (do-game
+    (new-game {:corp {:hand ["Hearts and Minds" "NGO Front"]}})
+    (play-from-hand state :corp "Hearts and Minds" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [ham (get-content state :remote1 0)
+          ngo (get-content state :remote2 0)]
+    (rez state :corp ham)
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (card-ability state :corp ham 0)
+    (click-prompt state :corp "Done")
+    (is (changed? [(get-counters (refresh ngo) :advancement) 1]
+                  (click-card state :corp ngo))
+        "NGO Front got 1 advancement counter"))))
+
 (deftest hearts-and-minds-behind-ice
   (do-game
     (new-game {:corp {:hand ["Hearts and Minds" "Vanilla" "NGO Front" "Project Atlas"]}})
@@ -2582,22 +2598,6 @@
                   (click-card state :corp atlas))
         "Advancement counter moved from NGO Front to Project Atlas")
     (is (no-prompt? state :corp) "No additional prompt because Hearts and Minds is behind ice"))))
-
-(deftest hearts-and-minds
-  (do-game
-    (new-game {:corp {:hand ["Hearts and Minds" "NGO Front"]}})
-    (play-from-hand state :corp "Hearts and Minds" "New remote")
-    (play-from-hand state :corp "NGO Front" "New remote")
-    (let [ham (get-content state :remote1 0)
-          ngo (get-content state :remote2 0)]
-    (rez state :corp ham)
-    (take-credits state :corp)
-    (take-credits state :runner)
-    (card-ability state :corp ham 0)
-    (click-prompt state :corp "Done")
-    (is (changed? [(get-counters (refresh ngo) :advancement) 1]
-                  (click-card state :corp ngo))
-        "NGO Front got 1 advancement counter"))))
 
 (deftest honeyfarm
   ;; Honeyfarm - lose one credit on access
