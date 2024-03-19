@@ -493,19 +493,23 @@
 
 (defcard "Charlotte Caçador"
   (let [ability {:label "Gain 4 [Credits] and draw 1 card"
-                 :optional {:once :per-turn
-                            :prompt "Remove 1 hosted advancement counter to gain 4 [Credits] and draw 1 card?"
-                            :req (req (pos? (get-counters card :advancement)))
-                            :yes-ability {:msg "remove 1 hosted advancement counter from itself to gain 4 [Credits] and draw 1 card"
-                                          :async true
-                                          :effect (req
-                                                    (add-prop state :corp card :advance-counter -1)
-                                                    (wait-for
-                                                      (gain-credits state side 4)
-                                                      (draw state side eid 1)))}}}
+                 :interactive (req true)
+                 :optional
+                 {:once :per-turn
+                  :prompt "Remove 1 hosted advancement counter to gain 4 [Credits] and draw 1 card?"
+                  :req (req (pos? (get-counters card :advancement)))
+                  :yes-ability
+                  {:msg "remove 1 hosted advancement counter from itself to gain 4 [Credits] and draw 1 card"
+                   :async true
+                   :effect (req
+                             (add-prop state :corp card :advance-counter -1)
+                             (wait-for
+                               (gain-credits state side 4)
+                               (draw state side eid 1)))}}}
         trash-ab {:cost [:advancement 1 :trash-can]
                   :label "Gain 3 [Credits]"
                   :msg (msg "gain 3 [Credits]")
+                  :async true
                   :effect (req (gain-credits state :corp eid 3))}]
     {:advanceable :always
      :flags {:corp-phase-12 (req true)}
