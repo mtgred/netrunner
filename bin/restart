@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+set -eux -o pipefail
+bin/down && bin/up
