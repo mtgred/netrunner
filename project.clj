@@ -18,8 +18,8 @@
                  :init-ns web.dev
                  :init (go)}
 
-  :dependencies [[org.clojure/clojure "1.10.3"]
-                 [org.clojure/clojurescript "1.10.891"
+  :dependencies [[org.clojure/clojure "1.11.2"]
+                 [org.clojure/clojurescript "1.11.132"
                   :exclusions [org.clojure/google-closure-library
                                org.clojure/data.json
                                org.clojure/tools.reader
@@ -33,8 +33,6 @@
                  [ring/ring-devel "1.9.4" :exclusions [org.clojure/java.classpath]]
                  [ring/ring-anti-forgery "1.3.0"]
                  [ring/ring-json "0.5.1"]
-                 [puppetlabs/ring-middleware "1.3.1"
-                  :exclusions [prismatic/schema org.bouncycastle/bcpkix-jdk15on]]
                  [ring-cors "0.1.13"]
                  [compojure "1.6.2"]
                  [hiccup "1.0.5"]

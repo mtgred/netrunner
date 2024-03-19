@@ -493,19 +493,23 @@
 
 (defcard "Charlotte Caçador"
   (let [ability {:label "Gain 4 [Credits] and draw 1 card"
-                 :optional {:once :per-turn
-                            :prompt "Remove 1 hosted advancement counter to gain 4 [Credits] and draw 1 card?"
-                            :req (req (pos? (get-counters card :advancement)))
-                            :yes-ability {:msg "remove 1 hosted advancement counter from itself to gain 4 [Credits] and draw 1 card"
-                                          :async true
-                                          :effect (req
-                                                    (add-prop state :corp card :advance-counter -1)
-                                                    (wait-for
-                                                      (gain-credits state side 4)
-                                                      (draw state side eid 1)))}}}
+                 :interactive (req true)
+                 :optional
+                 {:once :per-turn
+                  :prompt "Remove 1 hosted advancement counter to gain 4 [Credits] and draw 1 card?"
+                  :req (req (pos? (get-counters card :advancement)))
+                  :yes-ability
+                  {:msg "remove 1 hosted advancement counter from itself to gain 4 [Credits] and draw 1 card"
+                   :async true
+                   :effect (req
+                             (add-prop state :corp card :advance-counter -1)
+                             (wait-for
+                               (gain-credits state side 4)
+                               (draw state side eid 1)))}}}
         trash-ab {:cost [:advancement 1 :trash-can]
                   :label "Gain 3 [Credits]"
                   :msg (msg "gain 3 [Credits]")
+                  :async true
                   :effect (req (gain-credits state :corp eid 3))}]
     {:advanceable :always
      :flags {:corp-phase-12 (req true)}
@@ -1240,32 +1244,37 @@
                    :choices {:card #(and (can-be-advanced? %)
                                          (installed? %))}
                    :msg (msg "place 1 advancement counter on " (card-str state target))
-                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
+                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+        ability {:req (req (:corp-phase-12 @state))
+                 :label "Move 1 hosted advancement counter to another card you can advance (start of turn)"
+                 :once :per-turn
+                 :waiting-prompt true
+                 :prompt "Choose an installed card to move 1 hosted advancement counter from"
+                 :choices {:card #(and (installed? %)
+                                       (get-counters % :advancement))}
+                 :async true
+                 :effect (effect
+                           (continue-ability
+                             (let [from-ice target]
+                               {:prompt "Choose an installed card you can advance"
+                                :choices {:card #(and (installed? %)
+                                                      (can-be-advanced? %)
+                                                      (not (same-card? from-ice %)))}
+                                :msg (msg "move 1 hosted advancement counter from "
+                                          (card-str state from-ice)
+                                          " to "
+                                          (card-str state target))
+                                :async true
+                                :effect (effect (add-prop :corp target :advance-counter 1)
+                                                (add-prop :corp from-ice :advance-counter -1)
+                                                (continue-ability political card nil))
+                                :cancel-effect (effect (continue-ability political card nil))})
+                             card nil))
+                 :cancel-effect (effect (continue-ability political card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
-     :abilities [{:label "Move 1 hosted advancement counter to another card you can advance (start of turn)"
-                  :once :per-turn
-                  :waiting-prompt true
-                  :prompt "Choose an installed card to move 1 hosted advancement counter from"
-                  :choices {:card #(and (installed? %)
-                                        (get-counters % :advancement))}
-                  :effect (effect
-                            (continue-ability
-                              (let [from-ice target]
-                                {:prompt "Choose an installed card you can advance"
-                                 :choices {:card #(and (installed? %)
-                                                       (can-be-advanced? %)
-                                                       (not (same-card? from-ice %)))}
-                                 :msg (msg "move 1 hosted advancement counter from "
-                                           (card-str state from-ice)
-                                           " to "
-                                           (card-str state target))
-                                 :effect (effect (add-prop :corp target :advance-counter 1)
-                                                 (add-prop :corp from-ice :advance-counter -1)
-                                                 (continue-ability political card nil))
-                                 :cancel-effect (effect (continue-ability political card nil))})
-                              card nil))
-                  :cancel-effect (effect (continue-ability political card nil))}]}))
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "Honeyfarm"
   {:flags {:rd-reveal (req true)}

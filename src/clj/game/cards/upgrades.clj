@@ -62,27 +62,22 @@
 (defn mobile-sysop-event
   ([] (mobile-sysop-event :corp-turn-ends))
   ([ev] (mobile-sysop-event ev nil))
-  ([ev callback] {:event ev
-         :optional
-         {:prompt (msg "Move " (:title card) " to another server?")
-          :waiting-prompt true
-          :yes-ability
-          {:async true
-           :effect (effect (continue-ability
-                             {:prompt "Choose a server"
-                              :waiting-prompt true
-                              :choices (server-list state)
-                              :msg (msg "move itself to " target)
-                              :async true
-                              :effect (req (let [c (move state side card
-                                                         (conj (server->zone state target) :content))]
-                                             (unregister-events state side card)
-                                             (register-default-events state side c)
-                                             (if callback
-                                               (continue-ability state side callback c nil)
-                                               (effect-completed state side eid))
-                                             ))}
-                             card nil))}}}))
+  ([ev callback]
+   {:event ev
+    :optional
+    {:prompt (msg "Move " (:title card) " to another server?")
+     :waiting-prompt true
+     :yes-ability
+     {:prompt "Choose a server"
+      :waiting-prompt true
+      :choices (req (server-list state))
+      :msg (msg "move itself to " target)
+      :async true
+      :effect (req (let [c (move state side card
+                                 (conj (server->zone state target) :content))]
+                     (unregister-events state side card)
+                     (register-default-events state side c)
+                     (continue-ability state side callback c nil)))}}}))
 
 ;; Card definitions
 

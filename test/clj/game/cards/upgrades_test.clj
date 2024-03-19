@@ -1892,7 +1892,8 @@
 
 (deftest isaac-liberdade
   (do-game
-    (new-game {:corp {:hand ["Isaac Liberdade" "Ice Wall" "Tithe"]}})
+    (new-game {:corp {:hand ["Isaac Liberdade" "Ice Wall" "Tithe"]
+                      :credits 10}})
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Isaac Liberdade" "New remote")
     (play-from-hand state :corp "Ice Wall" "Server 1")

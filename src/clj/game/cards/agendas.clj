@@ -1192,6 +1192,7 @@
                :async true
                :optional
                {:prompt (msg "Remove 1 hosted agenda counter to rez up to 2 ice protecting " (zone->name (:server context)) ", ignoring all costs?")
+                :req (req (pos? (get-counters card :agenda)))
                 :yes-ability
                 {:cost [:agenda 1]
                  :effect (req (let [current-server (first (:server (:run @state)))]

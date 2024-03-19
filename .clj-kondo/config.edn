@@ -52,58 +52,6 @@
                               game.core/effect game.core/wait-for]}
   :unused-namespace {:exclude ["game.core.*"]}
   :refer-all {:level :off}
-  :type-mismatch
-  {:namespaces
-   {monger.collection
-    {insert {:arities {3 {:args [:any :any :map]}
-                       4 {:args [:any :any :map :any]}}}
-     insert-and-return {:arities {3 {:args [:any :any :map]}
-                                  4 {:args [:any :any :map :any]}}}
-     insert-batch {:arities {3 {:args [:any :any :seq]}
-                             4 {:args [:any :any :seq :any]}}}
-     find {:arities {2 {:args [:any :any]}
-                     3 {:args [:any :any :any]}
-                     4 {:args [:any :any :any :any]}}}
-     find-maps {:arities {2 {:args [:any :any]}
-                          3 {:args [:any :any :any]}
-                          4 {:args [:any :any :any :any]}}}
-     find-seq {:arities {2 {:args [:any :any]}
-                         3 {:args [:any :any :any]}
-                         4 {:args [:any :any :any :any]}}}
-     find-one {:arities {3 {:args [:any :any :any]}
-                         4 {:args [:any :any :any :any]}}}
-     find-one-as-map {:arities {3 {:args [:any :any :any]}
-                                4 {:args [:any :any :any :any]}
-                                5 {:args [:any :any :any :any :any]}}}
-     find-and-modify {:arities {5 {:args [:any :any :any :any :any]}}}
-     find-by-id {:arities {3 {:args [:any :any :any]}
-                           4 {:args [:any :any :any :any]}}}
-     find-map-by-id {:arities {3 {:args [:any :any :any]}
-                               4 {:args [:any :any :any :any]}
-                               5 {:args [:any :any :any :any :any]}}}
-     count {:arities {2 {:args [:any :any]}
-                      3 {:args [:any :any :any]}}}
-     any?  {:arities {2 {:args [:any :any]}
-                      3 {:args [:any :any :any]}}}
-     empty?  {:arities {2 {:args [:any :any]}}}
-     update {:arities {4 {:args [:any :any :any :any]}
-                       5 {:args [:any :any :any :any :any]}}}
-     upsert {:arities {4 {:args [:any :any :any :any]}
-                       5 {:args [:any :any :any :any :any]}}}
-     update-by-id {:arities {4 {:args [:any :any :any :any]}
-                             5 {:args [:any :any :any :any :any]}}}
-     update-by-ids {:arities {4 {:args [:any :any :any :any]}
-                              5 {:args [:any :any :any :any :any]}}}
-     save {:arities {3 {:args [:any :any :any]}
-                     4 {:args [:any :any :any :any]}}}
-     save-and-return {:arities {3 {:args [:any :any :any]}
-                                4 {:args [:any :any :any :any]}}}
-     remove {:arities {2 {:args [:any :any]}
-                       3 {:args [:any :any :any]}}}
-     remove-by-id {:arities {3 {:args [:any :any :any]}}}
-     purge-many {:arities {2 {:args [:any :any]}}}
-     create-index {:arities {3 {:args [:any :any :any]}
-                             4 {:args [:any :any :any :any]}}}}}}
   }
  :lint-as {game.test-framework/before-each clojure.core/let
            reagent.core/with-let clojure.core/let

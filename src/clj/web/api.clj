@@ -1,7 +1,6 @@
 (ns web.api
   (:require
    [cheshire.generate :refer [add-encoder encode-str]]
-   [puppetlabs.ring-middleware.core :refer [wrap-add-cache-headers]]
    [reitit.core :as r]
    [reitit.ring :as ring]
    [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -37,6 +36,20 @@
 (comment
   ((ring/ring-handler (base-routes)) {:request-method :get :uri "/"})
   )
+
+;; Taken from puppetlabs/ring-middleware
+(defn wrap-add-cache-headers
+  "Adds cache control invalidation headers to GET and PUT requests if they are handled by the handler"
+  [handler]
+  (fn [request]
+    (let [request-method (:request-method request)
+          response       (handler request)]
+      (when-not (nil? response)
+        (if (or
+             (= request-method :get)
+             (= request-method :put))
+          (assoc-in response [:headers "cache-control"] "no-store")
+          response)))))
 
 (defn api-routes []
   (ring/router

@@ -1,6 +1,4 @@
-(ns game.core.toasts
-  (:require
-    [clj-uuid :as uuid]))
+(ns game.core.toasts)
 
 (defn toast
   "Adds a message to toast with specified severity (default as a warning) to the toast message list.
@@ -15,13 +13,14 @@
   ([state side message msg-type] (toast state side message msg-type nil))
   ([state side message msg-type options]
    ;; Allows passing just the toast msg-type as the options parameter
-   (when  message
+   (when message
      ;; normal toast - add to list
-     (swap! state update-in [side :toast] #(conj % {:msg message :type msg-type :options options :id (uuid/v4)})))))
+     (swap! state update-in [side :toast] #(conj % {:msg message :type msg-type :options options :id (random-uuid)})))))
 
 (defn ack-toast
   ([state side {:keys [id]}]
-   (swap! state update-in [side :toast] (fn [toasts] (remove #(= (:id %) (uuid/as-uuid id)) toasts)))))
+   (when-let [id (when (string? id) (parse-uuid id))]
+     (swap! state update-in [side :toast] (fn [toasts] (remove #(= (:id %) id) toasts))))))
 
 (defn show-error-toast
   [state side]
