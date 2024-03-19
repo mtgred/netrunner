@@ -1832,7 +1832,12 @@
   {:data {:counter {:power 4}}
    :events [(trash-on-empty :power)
             {:event :runner-spent-click
+             :once :per-turn
              :req (req (let [all-cards (get-all-cards state)]
+                         ;; TODO - assert this works when (e.g.) using the last click on lib-acc
+                         ;; and having it trashed (all-cards wont find it)
+                         ;; also asset that the first-event? fn actually works right...
+                         ;; -nbk, mar '24
                          (and (resource? (find-cid (first target) all-cards))
                               (first-event? state side :runner-spent-click
                                             #(resource?
