@@ -1199,18 +1199,18 @@
    :events [{:event :end-of-encounter
              :req (req (and (= :this-turn (:rezzed card))
                             (same-card? (:ice context) card)))
-             :msg "force the Runner to choose a subroutine to resolve"
+             :msg "force the Runner to choose an effect"
              :effect (effect (continue-ability
                                {:prompt "Choose one"
                                 :player :runner
-                                :choices (req [(when (seq (all-installed-runner state)) "Corp trashes 1 Runner card")
+                                :choices (req ["Corp trashes 1 Runner card"
                                                (when-not (forced-to-avoid-tags? state side) "Take 2 tags")
                                                (when (can-pay? state :runner eid card nil :net 3)
                                                  "Suffer 3 net damage")])
                                 :async true
                                 :effect (req
                                           (continue-ability
-                                            state :runner
+                                            state (if (= target "Corp trashes 1 Runner card") :corp :runner)
                                             (cond
                                               (= target "Corp trashes 1 Runner card")
                                               trash-installed-sub

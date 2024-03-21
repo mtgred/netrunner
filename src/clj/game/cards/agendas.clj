@@ -18,7 +18,7 @@
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
                                   offer-jack-out reorder-choice get-x-fn]]
-   [game.core.drawing :refer [draw]]
+   [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability
@@ -1129,10 +1129,11 @@
                       (update-all-agenda-points state)
                       (check-win-by-agenda state side)
                       (effect-completed state side eid))
-         :cancel-effect (effect (system-msg (str "declines to use " (:title card))))}]
+         :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                (effect-completed eid))}]
     {:on-score {:async true
                 :effect (req (wait-for
-                               (draw state side 3)
+                               (draw-up-to state side card 3)
                                (continue-ability state side add-abi card nil)))}}))
 
 (defcard "Labyrinthine Servers"
