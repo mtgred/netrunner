@@ -2216,7 +2216,10 @@
       (click-card state :corp rime)
       (is (not (rezzed? (refresh archer))))
       (is (not (rezzed? (refresh rime))))
-      (is (rezzed? (refresh bloop))))))
+      (is (rezzed? (refresh bloop)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (no-prompt? state :corp) "no repeat prompt"))))
 
 (deftest longevity-serum-basic-behavior
     ;; Basic behavior

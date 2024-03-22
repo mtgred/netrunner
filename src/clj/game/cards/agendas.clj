@@ -1165,7 +1165,6 @@
              :req (req (seq (filter #(= (:zone %) [:servers zone :ices])
                                     (all-active-installed state :corp))))
              :duration :end-of-turn
-             :unregister-once-resolved true
              :effect (req (let [derez-count
                                 (min 2 (count (filter #(= (:zone %) [:servers zone :ices])
                                                       (all-active-installed state :corp))))]
