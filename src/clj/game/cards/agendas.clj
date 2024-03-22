@@ -732,7 +732,7 @@
                                           (corp-installable-type? %))}
                     :msg "install and rez 1 card from HQ, paying 5 [Credits] less"
                     :async true
-                    :effect (req (corp-install state side (make-eid state eid) target nil
+                    :effect (req (corp-install state side eid target nil
                                                {:install-state :rezzed
                                                 :combined-credit-discount 5}))}
         score-abi {:interactive (req true)
