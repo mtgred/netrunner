@@ -2042,6 +2042,21 @@
                     (dotimes [_ 3] (click-prompt state :runner "No action")))
           "Cupellation and its hosted card are trashed"))))
 
+(deftest cupellation-disables-cards
+  (do-game
+    (new-game {:runner {:hand ["Cupellation"]}
+               :corp {:hand ["Marilyn Campaign"]}})
+    (play-from-hand state :corp "Marilyn Campaign" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cupellation")
+    (is (= 8 (get-counters (get-content state :remote1 0) :credit)) "Marilyn Campaign should start with 8 credits")
+    (run-on state "Server 1")
+    (run-continue state)
+    (click-prompt state :runner "[Cupellation] 1 [Credits]: Host a card")
+    (take-credits state :runner)
+    (is (= 8 (get-counters (first (:hosted (get-program state 0))) :credit)))))
+
 (deftest curupira
   (do-game
     (new-game {:runner {:hand ["Curupira"]

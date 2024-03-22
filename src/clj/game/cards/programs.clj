@@ -29,6 +29,7 @@
    [game.core.flags :refer [can-host? can-trash? card-flag? lock-zone release-zone zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-credits]]
    [game.core.hosting :refer [host]]
+   [game.core.identities :refer [disable-card enable-card]]
    [game.core.ice :refer [all-subs-broken-by-card? all-subs-broken?
                           any-subs-broken-by-card? auto-icebreaker break-sub
                           break-subroutine! break-subroutines-msg breaker-strength-bonus dont-resolve-subroutine!
@@ -1044,12 +1045,13 @@
                                         :sorted))
              :cost [:credit 1]
              :msg (msg "host " (:title target) " on itself")
-             :effect (req (host state side (assoc card :seen true) target)
+             :effect (req (disable-card state side (get-card state target))
+                          (host state side (assoc card :seen true) target)
                           (effect-completed state side eid))}
             {:event :breach-server
              :async true
-             :optional {:req (req (= :hq target)
-                                  (seq (filter corp? (:hosted card))))
+             :optional {:req (req (and (= :hq target)
+                                       (seq (filter corp? (:hosted card)))))
                         :prompt "Trash this program to access 2 additional cards from HQ?"
                         :yes-ability {:async true
                                       :effect (effect (access-bonus :hq 2)
@@ -1062,9 +1064,12 @@
                                    :cost [:credit 1]
                                    :msg (msg "host " (:title target) " on itself")
                                    :async true
-                                   :effect (req (host state side (assoc card :seen true) target)
-                                                (swap! state dissoc :access)
-                                                (effect-completed state side eid))}}})
+                                   :effect (req
+                                             (disable-card state side (get-card state target))
+                                             (host state side (assoc card :seen true)
+                                                   (get-card state target))
+                                             (swap! state dissoc :access)
+                                             (effect-completed state side eid))}}})
 
 (defcard "Curupira"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
