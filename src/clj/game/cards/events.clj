@@ -4140,7 +4140,7 @@
                   (if (seq targets-in-the-grip)
                     {:prompt "Choose 1 program or piece of hardware"
                      :waiting-prompt true
-                     :choices (req targets-in-the-grip)
+                     :choices (req (cancellable targets-in-the-grip))
                      :async true
                      :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target))
                      :msg (msg "install " (:title target) " from the grip")}
