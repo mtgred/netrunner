@@ -1914,7 +1914,8 @@
       (is (changed? [(get-strength (refresh tithe)) 2
                      (get-counters (refresh tithe) :advancement) 1]
                     (click-card state :corp tithe))
-          "Tithe got +2 strength and 1 advancement counter"))))
+          "Tithe got +2 strength and 1 advancement counter")
+      (is (no-prompt? state :runner) "No lingering prompt"))))
 
 (deftest jinja-city-grid-single-draws
     ;; Single draws
