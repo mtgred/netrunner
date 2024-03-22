@@ -7118,6 +7118,18 @@
                   (click-prompt state :runner "Gain 2 [Credits]"))
         "Threat 3: Runner can gain 2 credits when installing Valentina")))
 
+(deftest valentina-ferreira-carvalho-op-tag
+  (do-game
+    (new-game {:runner {:hand ["Valentina Ferreira Carvalho"]}
+               :corp {:hand ["End of the Line"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Valentina Ferreira Carvalho")
+    (gain-tags state :runner 1)
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-runner)) 0]
+                  (play-from-hand state :corp "End of the Line"))
+        "Runner does NOT gain a credit from EOTL")))
+
 (deftest verbal-plasticity
   ;; Verbal Plasticity
   (do-game

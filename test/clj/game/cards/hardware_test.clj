@@ -183,6 +183,20 @@
                   (click-prompt state :runner "Yes"))
         "Spend a power counter when removing a tag to draw 2 cards")))
 
+(deftest amanuensis-corp-spend-tag
+  (do-game
+    (new-game {:runner {:hand ["Amanuensis"]
+                        :deck [(qty "Sure Gamble" 2)]}
+               :corp {:hand ["End of the Line"]}})
+    (take-credits state :corp)
+    (gain-tags state :runner 1)
+    (play-from-hand state :runner "Amanuensis")
+    (is (changed? [(get-counters (get-hardware state 0) :power) 1]
+                  (take-credits state :runner))
+        "Amanuensis gains a power counter at end of turn")
+    (play-from-hand state :corp "End of the Line")
+    (is (no-prompt? state :runner) "No runner prompt for amen")))
+
 (deftest aniccam-trash-trash-before-and-after-install-does-not-trigger
   ;; Aniccam
   (doseq [first-side [:corp :runner]
