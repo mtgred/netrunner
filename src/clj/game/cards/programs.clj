@@ -2746,10 +2746,10 @@
              :effect (effect (add-counter :runner card :virus 2))}]})
 
 (defcard "Pressure Spike"
-  (auto-icebreaker {:implementation "Once per run restriction not enforced"
-                    :abilities [(break-sub 1 1 "Barrier")
-                                (strength-pump 2 3)
-                                (strength-pump 2 9 :end-of-encounter {:req (req (threat-level 4 state))})]}))
+  {:implementation "Once per run restriction not enforced. Auto-breaking disabled for this card."
+   :abilities [(break-sub 1 1 "Barrier")
+               (strength-pump 2 3)
+               (strength-pump 2 9 :end-of-encounter {:req (req (threat-level 4 state))})]}_)
 
 (defcard "Progenitor"
   {:abilities [{:label "Install and host a virus program"
