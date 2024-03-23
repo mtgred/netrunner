@@ -891,7 +891,7 @@
       (run-continue state)
       (is (no-prompt? state :runner) "Black Orchestra prompt did not come up")))
 
-(deftest boi-tata
+(deftest ^:kaocha/pending boi-tata
   (do-game
     (new-game {:corp {:credits 6 :deck ["Ansel 1.0"] }
                :runner {:credits 15

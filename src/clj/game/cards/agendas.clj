@@ -1943,7 +1943,7 @@
                                   (assoc {:msg (msg "make the runner encounter " (card-str state enc-ice) " again")
                                           :async true
                                           :effect (req
-                                                    (force-ice-encounter state side eid enc-ice))}
+                                                    (force-ice-encounter state side eid enc-ice :encounter-ice))}
                                          :cost (if (= target "Pay 1 [Credit]")
                                                  [:credit 1]
                                                  [:trash-from-hand 1]))
