@@ -1922,33 +1922,32 @@
               :effect (effect (damage eid :meat 2 {:card card}))}})
 
 (defcard "Sisyphus Protocol"
-  {:events [{:event :pass-ice
-             :req (req (and (rezzed? (:ice context))
-                            (or (has-subtype? (:ice context) "Code Gate")
-                                (has-subtype? (:ice context) "Sentry"))
-                            (first-event? state side :pass-ice
-                                          (fn [targets]
-                                            (let [context (first targets)]
-                                              (and (rezzed? (:ice context))
-                                                   (or (has-subtype? (:ice context) "Code Gate")
-                                                       (has-subtype? (:ice context) "Sentry"))))))))
-             :prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
-             :choices (req [(when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 1]) "Pay 1 [Credit]")
-                            (when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:trash-from-hand 1]) "Trash 1 card from HQ")
-                            "Done"])
-             :async true
-             :effect (req (if (= target "Done")
-                            (effect-completed state side eid)
-                            (let [enc-ice current-ice]
-                              (continue-ability
-                                state side
-                                (assoc {:msg (msg "make the runner encounter " (card-str state enc-ice) " again")
-                                        :async true
-                                        :effect (req (force-ice-encounter state side eid enc-ice))}
-                                        :cost (if (= target "Pay 1 [Credit]")
-                                                [:credit 1]
-                                                [:trash-from-hand 1]))
-                                card nil))))}]})
+  (letfn [(rezzed-gate-or-sentry [context]
+            (and (rezzed? (:ice context))
+                 (or (has-subtype? (:ice context) "Code Gate")
+                     (has-subtype? (:ice context) "Sentry"))))]
+    {:events [{:event :pass-ice
+               :req (req (and (rezzed-gate-or-sentry context)
+                              (first-event? state side :pass-ice
+                                            #(rezzed-gate-or-sentry (first %)))))
+               :prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
+               :choices (req [(when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 1]) "Pay 1 [Credit]")
+                              (when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:trash-from-hand 1]) "Trash 1 card from HQ")
+                              "Done"])
+               :async true
+               :effect (req (if (= target "Done")
+                              (effect-completed state side eid)
+                              (let [enc-ice current-ice]
+                                (continue-ability
+                                  state side
+                                  (assoc {:msg (msg "make the runner encounter " (card-str state enc-ice) " again")
+                                          :async true
+                                          :effect (req
+                                                    (force-ice-encounter state side eid enc-ice))}
+                                         :cost (if (= target "Pay 1 [Credit]")
+                                                 [:credit 1]
+                                                 [:trash-from-hand 1]))
+                                  card nil))))}]}))
 
 (defcard "Slash and Burn Agriculture"
   {:expend {:req (req (some #(can-be-advanced? %) (all-installed state :corp)))
