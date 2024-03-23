@@ -685,11 +685,11 @@
   (letfn [(was-a-runner-card?
             [target]
             (runner? (:card (first target))))]
-    (auto-icebreaker {:implementation "Effect only applies for printed abilities"
-                      :abilities [(break-sub 1 2 "Sentry" (cond-breaker :runner-trash was-a-runner-card?))
-                                  (break-sub 2 2 "Sentry")
-                                  (strength-pump 2 3 :end-of-encounter (cond-breaker :runner-trash was-a-runner-card?))
-                                  (strength-pump 3 3)]})))
+    {:implementation "Effect only applies for printed abilities"
+     :abilities [(break-sub 1 2 "Sentry" (cond-breaker :runner-trash was-a-runner-card?))
+                 (break-sub 2 2 "Sentry")
+                 (strength-pump 2 3 :end-of-encounter (cond-breaker :runner-trash was-a-runner-card?))
+                 (strength-pump 3 3)]}))
 
 (defcard "Botulus"
   {:implementation "[Erratum] Program: Virus - Trojan"
@@ -2749,7 +2749,7 @@
   {:implementation "Once per run restriction not enforced. Auto-breaking disabled for this card."
    :abilities [(break-sub 1 1 "Barrier")
                (strength-pump 2 3)
-               (strength-pump 2 9 :end-of-encounter {:req (req (threat-level 4 state))})]}_)
+               (strength-pump 2 9 :end-of-encounter {:req (req (threat-level 4 state))})]})
 
 (defcard "Progenitor"
   {:abilities [{:label "Install and host a virus program"
