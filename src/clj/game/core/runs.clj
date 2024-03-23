@@ -346,16 +346,24 @@
     (encounter-ice state side eid ice)))
 
 (defn force-ice-encounter
-  [state side eid ice]
-  ;; clears the broken subs out of the prompt, otherwise they can get stuck with some cards
-  (reset-all-subs! state (get-card state ice))
-  (show-run-prompts state (str "encountering " (:title ice)) ice)
-  (wait-for (encounter-ice state side (make-eid state eid) ice)
-            (clear-run-prompts state)
-            (if (and (not (:run @state))
-                     (empty? (:encounters @state)))
-              (forced-encounter-cleanup state :runner eid)
-              (effect-completed state side eid))))
+  ([state side eid ice] (force-ice-encounter state side eid ice nil))
+  ([state side eid ice new-state]
+   ;; clears the broken subs out of the prompt, otherwise they can get stuck with some cards
+   (reset-all-subs! state (get-card state ice))
+   (show-run-prompts state (str "encountering " (:title ice)) ice)
+   ;; do we need to mess with the run state
+   (let [old-state (get-in @state [:run :phase])]
+     (when new-state
+       (set-phase state new-state))
+     (wait-for (encounter-ice state side (make-eid state eid) ice)
+               ;; reset the state if needed
+               (clear-run-prompts state)
+               (if (and (not (:run @state))
+                        (empty? (:encounters @state)))
+                 (forced-encounter-cleanup state :runner eid)
+                 (do (when (and new-state (= new-state (get-in @state [:run :phase])))
+                       (set-phase state old-state))
+                     (effect-completed state side eid)))))))
 
 (defmethod continue :encounter-ice
   [state side _]

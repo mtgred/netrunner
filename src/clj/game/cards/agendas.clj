@@ -18,7 +18,7 @@
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
                                   offer-jack-out reorder-choice get-x-fn]]
-   [game.core.drawing :refer [draw]]
+   [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability
@@ -732,7 +732,7 @@
                                           (corp-installable-type? %))}
                     :msg "install and rez 1 card from HQ, paying 5 [Credits] less"
                     :async true
-                    :effect (req (corp-install state side (make-eid state eid) target nil
+                    :effect (req (corp-install state side eid target nil
                                                {:install-state :rezzed
                                                 :combined-credit-discount 5}))}
         score-abi {:interactive (req true)
@@ -1129,10 +1129,11 @@
                       (update-all-agenda-points state)
                       (check-win-by-agenda state side)
                       (effect-completed state side eid))
-         :cancel-effect (effect (system-msg (str "declines to use " (:title card))))}]
+         :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                (effect-completed eid))}]
     {:on-score {:async true
                 :effect (req (wait-for
-                               (draw state side 3)
+                               (draw-up-to state side card 3)
                                (continue-ability state side add-abi card nil)))}}))
 
 (defcard "Labyrinthine Servers"
@@ -1163,6 +1164,7 @@
             {:event :runner-turn-ends
              :req (req (seq (filter #(= (:zone %) [:servers zone :ices])
                                     (all-active-installed state :corp))))
+             :duration :end-of-turn
              :effect (req (let [derez-count
                                 (min 2 (count (filter #(= (:zone %) [:servers zone :ices])
                                                       (all-active-installed state :corp))))]
@@ -1920,33 +1922,32 @@
               :effect (effect (damage eid :meat 2 {:card card}))}})
 
 (defcard "Sisyphus Protocol"
-  {:events [{:event :pass-ice
-             :req (req (and (rezzed? (:ice context))
-                            (or (has-subtype? (:ice context) "Code Gate")
-                                (has-subtype? (:ice context) "Sentry"))
-                            (first-event? state side :pass-ice
-                                          (fn [targets]
-                                            (let [context (first targets)]
-                                              (and (rezzed? (:ice context))
-                                                   (or (has-subtype? (:ice context) "Code Gate")
-                                                       (has-subtype? (:ice context) "Sentry"))))))))
-             :prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
-             :choices (req [(when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 1]) "Pay 1 [Credit]")
-                            (when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:trash-from-hand 1]) "Trash 1 card from HQ")
-                            "Done"])
-             :async true
-             :effect (req (if (= target "Done")
-                            (effect-completed state side eid)
-                            (let [enc-ice current-ice]
-                              (continue-ability
-                                state side
-                                (assoc {:msg (msg "make the runner encounter " (card-str state enc-ice) " again")
-                                        :async true
-                                        :effect (req (force-ice-encounter state side eid enc-ice))}
-                                        :cost (if (= target "Pay 1 [Credit]")
-                                                [:credit 1]
-                                                [:trash-from-hand 1]))
-                                card nil))))}]})
+  (letfn [(rezzed-gate-or-sentry [context]
+            (and (rezzed? (:ice context))
+                 (or (has-subtype? (:ice context) "Code Gate")
+                     (has-subtype? (:ice context) "Sentry"))))]
+    {:events [{:event :pass-ice
+               :req (req (and (rezzed-gate-or-sentry context)
+                              (first-event? state side :pass-ice
+                                            #(rezzed-gate-or-sentry (first %)))))
+               :prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
+               :choices (req [(when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:credit 1]) "Pay 1 [Credit]")
+                              (when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [:trash-from-hand 1]) "Trash 1 card from HQ")
+                              "Done"])
+               :async true
+               :effect (req (if (= target "Done")
+                              (effect-completed state side eid)
+                              (let [enc-ice current-ice]
+                                (continue-ability
+                                  state side
+                                  (assoc {:msg (msg "make the runner encounter " (card-str state enc-ice) " again")
+                                          :async true
+                                          :effect (req
+                                                    (force-ice-encounter state side eid enc-ice :encounter-ice))}
+                                         :cost (if (= target "Pay 1 [Credit]")
+                                                 [:credit 1]
+                                                 [:trash-from-hand 1]))
+                                  card nil))))}]}))
 
 (defcard "Slash and Burn Agriculture"
   {:expend {:req (req (some #(can-be-advanced? %) (all-installed state :corp)))

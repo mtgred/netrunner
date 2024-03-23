@@ -180,8 +180,8 @@
 (defcard "Amanuensis"
   {:static-abilities [(mu+ 1)]
    :events [{:event :runner-lose-tag
-             :req (req (= :runner side))
              :optional {:prompt "Remove 1 power counter to draw 2 cards?"
+                        :req (req (= :runner (second targets)))
                         :yes-ability {:cost [:power 1]
                                       :msg "draw 2 cards"
                                       :async true

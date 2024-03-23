@@ -7422,7 +7422,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Window of Opportunity")
       (click-prompt state :runner "HQ")
-      (is (= 2 (-> (prompt-map :runner) :choices count)) "Runner has 2 choices")
+      (is (= 3 (-> (prompt-map :runner) :choices count)) "Runner has 3 choices (done is a choice)")
       (is (changed? [(:credit (get-runner)) -1]
                     (click-prompt state :runner "Fermenter"))
           "Runner paid Fermenter install cost")

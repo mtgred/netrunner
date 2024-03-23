@@ -2132,11 +2132,25 @@
                    (count (:hand (get-corp))) 1
                    (:agenda-point (get-corp)) 3]
                   (play-and-score state "Kingmaking")
+                  (click-prompt state :corp "3")
                   (click-card state :corp "Project Atlas")
                   (is (not (no-prompt? state :corp)) "Couldn't choose 2-points agenda")
                   (click-card state :corp "House of Knives"))
         "Corp drew 3 cards (2 of which moved to the score area)")
     (is (zero? (get-counters (get-scored state :runner 1) :agenda)) "House of Knives should have 0 agenda counters")))
+
+(deftest kingmaking-draw-n
+  (dotimes [n 4]
+    (do-game
+      (new-game {:corp {:hand ["Kingmaking" "Hedge Fund"]
+                        :deck ["House of Knives" "Project Atlas" "Hedge Fund"]}})
+      (is (changed? [(count (:deck (get-corp))) (- n)
+                     (count (:hand (get-corp))) (- n 1)]
+                    (play-and-score state "Kingmaking")
+                    (click-prompt state :corp (str n))
+                    (click-prompt state :corp "Done"))
+          (str "Corp drew " n " cards")))))
+
 
 (deftest license-acquisition
   ;; License Acquisition
@@ -2202,7 +2216,10 @@
       (click-card state :corp rime)
       (is (not (rezzed? (refresh archer))))
       (is (not (rezzed? (refresh rime))))
-      (is (rezzed? (refresh bloop))))))
+      (is (rezzed? (refresh bloop)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (no-prompt? state :corp) "no repeat prompt"))))
 
 (deftest longevity-serum-basic-behavior
     ;; Basic behavior

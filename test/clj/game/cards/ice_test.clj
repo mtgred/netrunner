@@ -1577,7 +1577,7 @@
                     (card-subroutine state :corp (refresh ce) 2))
           "Runner suffered 3 net damage")
       (run-continue state :movement)
-      (is (= 1 (count (prompt-buttons :runner))) "Runner doesn't have the option to suffer net damage or trash installed cards")
+      (is (= 2 (count (prompt-buttons :runner))) "Runner doesn't have the option to suffer net damage")
       (is (changed? [(count-tags state) 2]
                     (click-prompt state :runner "Take 2 tags"))
           "Runner got 2 tags")

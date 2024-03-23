@@ -77,7 +77,8 @@
                                  (conj (server->zone state target) :content))]
                      (unregister-events state side card)
                      (register-default-events state side c)
-                     (continue-ability state side callback c nil)))}}}))
+                     (wait-for (resolve-ability state side callback c nil)
+                               (effect-completed state side eid))))}}}))
 
 ;; Card definitions
 
@@ -897,18 +898,13 @@
                                        (zero? (get-counters % :advancement))
                                        (same-server? card %))
                                  (all-installed-corp state)))
-                 :async true
-                 :effect
-                 (effect
-                   (continue-ability
-                     {:prompt "Choose a piece of ice protecting this server to place 1 advancement counter on"
-                      :waiting-prompt true
-                      :choices {:card #(and (ice? %)
-                                            (zero? (get-counters % :advancement))
-                                            (same-server? % card))}
-                      :msg (msg "place 1 advancement counter on " (card-str state target))
-                      :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
-                     card nil))}]
+                 :prompt "Choose a piece of ice protecting this server to place 1 advancement counter on"
+                 :waiting-prompt true
+                 :choices {:req (req (and (ice? target)
+                                          (zero? (get-counters target :advancement))
+                                          (same-server? target card)))}
+                 :msg (msg "place 1 advancement counter on " (card-str state target))
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
     {:static-abilities [{:type :ice-strength
                          :req (req (and (ice? target)
                                         (= (card->server state card) (card->server state target))))
