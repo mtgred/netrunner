@@ -39,7 +39,7 @@
    [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
                                  runner-install]]
    [game.core.link :refer [get-link]]
-   [game.core.mark :refer [identify-mark-ability]]
+   [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu update-mu]]
    [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards
                              trash-prevent]]
@@ -3341,7 +3341,8 @@
                :effect trash-if-5}]}))
 
 (defcard "Tunnel Vision"
-  (auto-icebreaker {:events [(assoc identify-mark-ability :event :runner-turn-begins)]
+  (auto-icebreaker {:events [mark-changed-event
+                             (assoc identify-mark-ability :event :runner-turn-begins)]
                     :abilities [(break-sub 2 2 "All" {:req (req (= (:mark @state) (first (:server run))))})
                                 (strength-pump 2 2)]}))
 

@@ -47,7 +47,7 @@
    [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
                                  runner-install]]
    [game.core.link :refer [get-link link+]]
-   [game.core.mark :refer [identify-mark-ability is-mark?]]
+   [game.core.mark :refer [identify-mark-ability mark-changed-event is-mark?]]
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-faceup forfeit mill move
                              remove-from-currently-drawing trash trash-cards
@@ -410,7 +410,8 @@
                                     (all-active-installed state :runner))
                   ordered (sort-by :index stitches)]
               (= (:index (first ordered)) (:index card))))]
-    {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+    {:events [mark-changed-event
+              (assoc identify-mark-ability :event :runner-turn-begins)
               {:event :encounter-ice
                :async true
                :interactive (req true)
@@ -1695,7 +1696,8 @@
                        :value -1}]})
 
 (defcard "Info Bounty"
-  {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+  {:events [mark-changed-event
+            (assoc identify-mark-ability :event :runner-turn-begins)
             {:event :run-ends
               :async true
               :interactive (req true)

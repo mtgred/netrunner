@@ -34,7 +34,7 @@
    [game.core.initializing :refer [make-card]]
    [game.core.installing :refer [corp-install install-locked? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [link+ update-link]]
-   [game.core.mark :refer [identify-mark-ability]]
+   [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [mu+]]
    [game.core.moving :refer [mill move swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
@@ -1592,7 +1592,8 @@
               abi2]}))
 
 (defcard "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
-  {:events [(assoc identify-mark-ability :event :runner-turn-begins)
+  {:events [mark-changed-event
+            (assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
              :interactive (req true)
              :req (req (and (:marked-server target)
