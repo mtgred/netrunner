@@ -3968,7 +3968,6 @@
                        (effect-completed eid))}
             {:event :run-ends
              :req (req (and (not (get-in card [:special :run-again]))
-                            (= :rd (target-server context))
                             this-card-run))
              :prompt "Choose a remote server to run"
              :choices (req (cancellable
