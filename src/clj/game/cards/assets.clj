@@ -3093,6 +3093,7 @@
                                (derez target))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
+               :interactive (req true)
                :async true
                :effect (req (wait-for (resolve-ability state side install card nil)
                                       (continue-ability state side derez card nil)))}]}))
