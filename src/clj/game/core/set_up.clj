@@ -7,13 +7,16 @@
    [game.core.diffs :refer [public-states]]
    [game.core.drawing :refer [draw]]
    [game.core.eid :refer [make-eid effect-completed]]
-   [game.core.engine :refer [trigger-event trigger-event-sync]]
+   [game.core.engine :refer [resolve-ability trigger-event trigger-event-sync]]
    [game.core.initializing :refer [card-init make-card]]
+   [game.core.moving :refer [move]]
    [game.core.player :refer [new-corp new-runner]]
    [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
    [game.core.say :refer [system-msg system-say implementation-msg]]
    [game.core.shuffling :refer [shuffle-into-deck]]
+   [game.core.shuffling :refer [shuffle-into-deck shuffle!]]
    [game.core.state :refer [new-state]]
+   [game.macros :refer [req wait-for msg continue-ability]]
    [game.macros :refer [wait-for]]
    [game.quotes :as quotes]
    [game.utils :refer [server-card]]))
@@ -75,6 +78,40 @@
   (when (and (-> @state :corp :identity :title)
              (-> @state :runner :identity :title))
     (show-wait-prompt state :runner "Corp to keep hand or mulligan")))
+
+(defn- init-hands-first-five [state]
+  (letfn [(card-not-in-hand? [card hand]
+            (not (some #(= (:title card) (:title %)) hand)))
+          (select-card-abi [x]
+            (when (pos? x)
+              {:prompt (str "Choose a card to add to hand (" x " remaining), or click 'done' for random cards")
+               :choices (req (conj (sort-by :title
+                                            (filter #(card-not-in-hand? % (get-in @state [side :hand]))
+                                                    (get-in @state [side :deck]))) "Done"))
+               :async true
+               :waiting-prompt true
+               :msg (msg (if (= target "Done")
+                           (str "add " x " random cards to their " (if (= side :runner) "Grip" "HQ"))
+                           (str "add a card to their " (if (= side :runner) "Grip" "HQ"))))
+               :effect (req (if (= target "Done")
+                              (do (shuffle! state side :deck)
+                                  (draw state side eid x {:suppress-event true}))
+                              (do (move state side target :hand)
+                                  (shuffle! state side :deck)
+                                  (continue-ability
+                                    state side
+                                    (select-card-abi (dec x))
+                                    card nil))))}))]
+    (wait-for (resolve-ability
+                state :corp
+                (select-card-abi 5)
+                (get-in @state [:corp :identity]) nil)
+              (keep-hand state :corp nil)
+              (wait-for (resolve-ability
+                          state :runner
+                          (select-card-abi 5)
+                          (get-in @state [:runner :identity]) nil)
+                        (keep-hand state :runner nil)))))
 
 (defn- init-game-state
   "Initialises the game state"
@@ -142,7 +179,9 @@
     (let [eid (make-eid state)]
       (wait-for (trigger-event-sync state :corp :pre-start-game nil)
                 (wait-for (trigger-event-sync state :runner :pre-start-game nil)
-                          (init-hands state)
+                          (if-not (:first-five game)
+                            (init-hands state)
+                            (init-hands-first-five state))
                           (fake-checkpoint state)
                           (effect-completed state nil eid))))
     (swap! state assoc :history [(:hist-state (public-states state))])

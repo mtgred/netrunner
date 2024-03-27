@@ -84,6 +84,11 @@
     [:div.infobox.blue-shade
      [:p "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."]]))
 
+(defn first-five-info-box [current-game]
+  (when (:first-five @current-game)
+    [:div.infobox.blue-shade
+     [:p "This lobby is running in first-five mode. This means that instead of draws and mulligans, players will decide their opening hands."]]))
+
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
     (if (< 1 (count @players))
@@ -191,6 +196,7 @@
      [:div.content
       [:h2 (:title @current-game)]
       [singleton-info-box current-game]
+      [first-five-info-box current-game]
       (when-not (every? :deck @players)
         [:div.flash-message
          (tr [:lobby.waiting "Waiting players deck selection"])])

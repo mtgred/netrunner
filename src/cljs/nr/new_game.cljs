@@ -11,6 +11,7 @@
 (def new-game-keys
   [:allow-spectator
    :api-access
+   :first-five
    :format
    :password
    :room
@@ -69,11 +70,17 @@
                   :checked (= @side-state option)}]
          (tr-side option)]]))])
 
-(defn singleton-only [options fmt-state]
+(defn singleton-only [options]
   [:label
    [:input {:type "checkbox" :checked (:singleton @options)
             :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
    (tr [:lobby.singleton "Singleton"])])
+
+(defn first-five-mode [options]
+  [:label
+   [:input {:type "checkbox" :checked (:first-five @options)
+            :on-change #(swap! options assoc :first-five (.. % -target -checked))}]
+   (tr [:lobby.first-five "First Five Mode"])])
 
 (defn format-section [fmt-state options]
   [:section
@@ -85,7 +92,7 @@
       (for [[k v] slug->format]
         ^{:key k}
         [:option {:value k} (tr-format v)]))]
-   [singleton-only options fmt-state]
+   [singleton-only options]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
     [:p "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]
@@ -187,6 +194,10 @@
 (defn options-section [options user]
   [:section
    [:h3 (tr [:lobby.options "Options"])]
+   [first-five-mode options]
+   [:div.infobox.blue-shade
+    {:style {:display (if (:first-five @options) "block" "none")}}
+    [:p "This will allow each player to choose their starting hand, instead of the regular draw/mulligan system."]]
    [allow-spectators options]
    [toggle-hidden-info options]
    [password-input options]
@@ -202,6 +213,7 @@
                               :title (str (:username @user) "'s game")})
                options (r/atom {:allow-spectator true
                                 :api-access false
+                                :first-five false
                                 :password ""
                                 :protected false
                                 :save-replay (not= "casual" (:room @lobby-state))
