@@ -22,7 +22,7 @@
   [{uid :uid
     user :user
     {:keys [gameid now
-            allow-spectator api-access format mute-spectators password room save-replay
+            allow-spectator api-access first-five format mute-spectators password room save-replay
             side singleton spectatorhands timer title]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
@@ -38,6 +38,7 @@
      ;; options
      :allow-spectator allow-spectator
      :api-access api-access
+     :first-five first-five
      :format format
      :mute-spectators mute-spectators
      :password (when (not-empty password) (bcrypt/encrypt password))
@@ -109,6 +110,7 @@
   [:allow-spectator
    :api-access
    :date
+   :first-five
    :format
    :gameid
    :messages
