@@ -193,21 +193,31 @@
    {:interactive (req true)
     :async true
     :msg "look at the top 5 cards of R&D"
-    :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 5 (:deck corp)))))
-    :choices ["OK"]
-    :req (req (not-empty (:deck corp)))
-    :effect (effect (continue-ability
-                      {:prompt "Choose a card to install"
-                       :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
-                       :async true
-                       :effect (effect (corp-install eid target nil
-                                                     {:ignore-all-cost true
-                                                      :install-state :rezzed-no-cost}))
-                       :cancel-effect (effect (system-msg (str "declines to use "
-                                                               (get-title card)
-                                                               " to install any of the top 5 cards of R&D"))
-                                              (effect-completed eid))}
-                      card nil))}})
+    ;; this is explicitly so the prompt shows up before we look at the menu
+    :effect (req (continue-ability
+                   state side
+                   {:prompt (msg "The top cards of R&D are (top->bottom): "
+                                 (enumerate-str (map :title (take 5 (:deck corp)))))
+                    :choices ["OK"]
+                    :async true
+                    :req (req (not-empty (:deck corp)))
+                    :effect (effect (continue-ability
+                                      {:prompt "Choose a card to install"
+                                       :choices (cancellable (filter corp-installable-type?
+                                                                     (take 5 (:deck corp))))
+                                       :async true
+                                       :effect (effect (corp-install
+                                                         eid target nil
+                                                         {:ignore-all-cost true
+                                                          :install-state :rezzed-no-cost}))
+                                       :cancel-effect
+                                       (effect (system-msg
+                                                 (str "declines to use "
+                                                      (get-title card)
+                                                      " to install any of the top 5 cards of R&D"))
+                                               (effect-completed eid))}
+                                      card nil))}
+                   card nil))}})
 
 (defcard "Armed Intimidation"
   {:on-score

@@ -42,7 +42,7 @@
    [game.core.installing :refer [install-as-condition-counter install-locked?
                                  runner-can-install? runner-install]]
    [game.core.link :refer [get-link]]
-   [game.core.mark :refer [identify-mark-ability]]
+   [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-facedown forfeit mill move
                              swap-ice trash trash-cards]]
@@ -543,11 +543,13 @@
 
 (defcard "Carpe Diem"
   {:makes-run true
+   :events [mark-changed-event]
    :on-play
    {:async true
     :effect (req (wait-for
                    (resolve-ability state side identify-mark-ability card nil)
                    (let [marked-server (:mark @state)]
+                     (update! state :runner (assoc card :card-target (central->name marked-server)))
                      (system-msg state side (str "uses " (:title card) " to gain 4 [Credits]"))
                      (wait-for (gain-credits state :runner 4)
                                (continue-ability
@@ -3968,7 +3970,6 @@
                        (effect-completed eid))}
             {:event :run-ends
              :req (req (and (not (get-in card [:special :run-again]))
-                            (= :rd (target-server context))
                             this-card-run))
              :prompt "Choose a remote server to run"
              :choices (req (cancellable

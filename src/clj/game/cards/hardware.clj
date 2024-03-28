@@ -66,7 +66,7 @@
    [jinteki.utils :refer :all]
    [game.core.set-aside :refer [set-aside get-set-aside]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.mark :refer [identify-mark-ability]]))
+   [game.core.mark :refer [identify-mark-ability mark-changed-event]]))
 
 ;; Card definitions
 
@@ -2525,7 +2525,8 @@
 
 (defcard "Virtuoso"
   {:static-abilities [(mu+ 1)]
-   :events [(assoc identify-mark-ability :event :runner-turn-begins)
+   :events [mark-changed-event
+            (assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
              :req (req (and (:marked-server target)
                             (first-event? state side :successful-run #(:marked-server (first %)))))
