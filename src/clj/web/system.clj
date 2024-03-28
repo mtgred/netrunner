@@ -14,6 +14,7 @@
    [game.cards.programs]
    [game.cards.resources]
    [game.cards.upgrades]
+   [game.cards.unhinged]
    [game.quotes :refer [load-quotes!]]
    [integrant.core :as ig]
    [jinteki.cards :as cards]
