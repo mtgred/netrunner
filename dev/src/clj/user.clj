@@ -19,6 +19,12 @@
    reset
    restart])
 
+(defmacro spy [item]
+  `(do (println "SPY:" '~item)
+       (let [result# ~item]
+         (println "RESULT:" result#)
+         result#)))
+
 (import-vars
   [kaocha.repl
    run])

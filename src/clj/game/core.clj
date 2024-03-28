@@ -620,7 +620,6 @@
    build-spend-msg
    can-pay?
    cost->string
-   cost-name
    cost-target
    cost-targets
    cost-value
@@ -735,8 +734,7 @@
    successful-run
    successful-run-replace-breach
    toggle-auto-no-action
-   total-cards-accessed
-   total-run-cost])
+   total-cards-accessed])
 
 
 (expose-vars

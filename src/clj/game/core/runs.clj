@@ -12,7 +12,7 @@
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
-    [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs]]
+    [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
@@ -32,9 +32,9 @@
    (let [cost (let [cost (run-cost state side card nil args)]
                 (when (and (pos? cost)
                            (not ignore-costs))
-                  [:credit cost]))
+                  (->c :credit cost)))
          additional-costs (run-additional-cost-bonus state side card args)
-         click-run-cost (when click-run [:click 1])]
+         click-run-cost (when click-run (->c :click 1))]
      (when-not ignore-costs
        (merge-costs
          [click-run-cost

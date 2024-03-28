@@ -60,7 +60,7 @@
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
   ([state side eid n] (gain-tags state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
-   (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
+   (swap! state update :tag dissoc :tag-bonus :tag-prevent)
    (wait-for (trigger-event-simult state side :pre-tag nil card)
              (let [n (number-of-tags-to-gain state side n args)
                    prevent (get-prevent-list state :runner :tag)]

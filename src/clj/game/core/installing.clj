@@ -15,7 +15,7 @@
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
     [game.core.memory :refer [sufficient-mu? update-mu]]
     [game.core.moving :refer [move trash trash-cards]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
@@ -24,7 +24,8 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [dissoc-in in-coll? to-keyword]]))
+    [game.utils :refer [dissoc-in in-coll? to-keyword]]
+    [medley.core :refer [find-first]]))
 
 (defn install-locked?
   "Checks if installing is locked"
@@ -223,7 +224,7 @@
                                {:server server
                                 :dest-zone dest-zone})]
         (when-not ignore-all-cost
-          (merge-costs [base-cost [:credit cost]])))))
+          (vec (flatten [base-cost (->c :credit cost)]))))))
 
 (defn corp-can-pay-and-install?
   [state side eid card server args]
@@ -239,13 +240,12 @@
   [state side eid card server {:keys [action] :as args}]
   (let [slot (get-slot state card server args)
         costs (corp-install-cost state side card server (dissoc args :cached-costs))
-        ;; note - all this filler is solely for tucana. Maybe NSG will re-use that combined discount again? idk
-        credcost (or (second (first (filter #(= (first %) :credit) costs))) 0)
+        credcost (or (value (find-first #(= :credit (:cost/type %)) costs)) 0)
         discount (or (:combined-credit-discount args) 0)
         appldisc (if (and (not (zero? credcost)) (not (zero? discount)))
                    (if (>= credcost discount) discount credcost) 0)
         args (if discount (assoc args :cost-bonus (- appldisc discount)) args)
-        costs (merge-costs (conj costs [:credit (- 0 appldisc)]))]
+        costs (conj costs (->c :credit (- 0 appldisc)))]
       ;; get a functional discount and apply it to
     (if (corp-can-pay-and-install? state side eid card server (assoc args :cached-costs costs))
       (wait-for (pay state side (make-eid state eid) card costs {:action action})
@@ -349,7 +349,8 @@
 (defn runner-install-continue
   [state side eid card
    {:keys [previous-zone host-card facedown no-mu no-msg payment-str] :as args}]
-  (let [c (if host-card
+  (let [
+        c (if host-card
             (host state side host-card card)
             (move state side card
                   [:rig (if facedown :facedown (to-keyword (:type card)))]))
@@ -387,7 +388,7 @@
    {:keys [base-cost ignore-install-cost ignore-all-cost facedown cost-bonus cached-costs]}]
   (cond+
     [cached-costs]
-    [(or ignore-all-cost facedown) [:credit 0]]
+    [(or ignore-all-cost facedown) [(->c :credit 0)]]
     [:else
      (let [cost (install-cost state side card {:cost-bonus cost-bonus} {:facedown facedown})
            additional-costs (install-additional-cost-bonus state side card)]
@@ -395,7 +396,7 @@
          [base-cost
           (when (and (not ignore-install-cost)
                      (not facedown))
-            [:credit cost])
+            (->c :credit cost))
           additional-costs]))]))
 
 (defn runner-can-pay-and-install?

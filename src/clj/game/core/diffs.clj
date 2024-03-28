@@ -8,7 +8,7 @@
    [game.core.engine :refer [can-trigger?]]
    [game.core.installing :refer [corp-can-pay-and-install?
                                  runner-can-pay-and-install?]]
-   [game.core.payment :refer [can-pay?]]
+   [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [can-play-instant?]]
    [game.utils :refer [dissoc-in]]
    [jinteki.utils :refer [select-non-nil-keys]]
@@ -26,7 +26,7 @@
                 (fn [server]
                   (corp-can-pay-and-install?
                     state :corp {:source server :source-type :corp-install}
-                    card server {:base-cost [:click 1]
+                    card server {:base-cost [(->c :click 1)]
                                  :action :corp-click-install
                                  :no-toast true}))
                 (installable-servers state card))]
@@ -35,13 +35,14 @@
                   (resource? card))
               (runner-can-pay-and-install?
                 state :runner {:source :action :source-type :runner-install}
-                card {:base-cost [:click 1]
+                card {:base-cost [(->c :click 1)]
                       :no-toast true})]
              [(or (event? card)
                   (operation? card))
               (can-play-instant?
                 state side {:source :action :source-type :play}
-                card {:base-cost [:click 1] :silent true})])
+                card {:base-cost [(->c :click 1)]
+                      :silent true})])
            true)
     (assoc card :playable true)
     card))

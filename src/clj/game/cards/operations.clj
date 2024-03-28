@@ -1,7 +1,6 @@
 (ns game.cards.operations
   (:require
    [clojure.set :as set]
-   [clojure.string :as str]
    [game.core.access :refer [access-card steal-cost-bonus]]
    [game.core.actions :refer [advance score]]
    [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
@@ -39,7 +38,7 @@
    [game.core.memory :refer [mu+ update-mu]]
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
-   [game.core.payment :refer [can-pay? cost-target]]
+   [game.core.payment :refer [can-pay? cost-target ->c]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
@@ -83,7 +82,7 @@
 (defcard "24/7 News Cycle"
   {:on-play
    {:req (req (pos? (count (:scored corp))))
-    :additional-cost [:forfeit]
+    :additional-cost [(->c :forfeit)]
     :async true
     :effect (effect
               (continue-ability
@@ -100,7 +99,7 @@
   (letfn [(ad [st si e c cards]
             (when-let [choices (filterv #(and (operation? %)
                                             (can-pay? st si (assoc e :source c :source-type :play)
-                                                      c nil [:credit (play-cost st si %)]))
+                                                      c nil [(->c :credit (play-cost st si %))]))
                                       cards)]
               {:async true
                :prompt "Choose an operation to play"
@@ -127,7 +126,7 @@
                           {:optional
                            {:prompt "Pay 2 [credits] to give the Runner -1 allotted [Click] for their next turn?"
                             :yes-ability
-                            {:cost [:credit 2]
+                            {:cost [(->c :credit 2)]
                              :msg "give the Runner -1 allotted [Click] for their next turn"
                              :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0)))}}})
                         card nil))}]
@@ -226,20 +225,20 @@
 
 
 (defcard "Armed Asset Protection"
-  (let [faceup-agendas (fn [corp] (some #(and (faceup? %) (agenda? %)) (:discard corp)))]
+  (let [faceup-agendas (fn [corp]
+                         (some #(and (faceup? %) (agenda? %)) (:discard corp)))]
     {:on-play
      {:msg (msg "gain 3 [Credits], then gain " (faceup-archives-types corp) " [Credits]")
       :async true
       :effect (req (wait-for (gain-credits state :corp 3)
                              (wait-for (gain-credits state :corp (faceup-archives-types corp))
-                                       (if (faceup-agendas corp)
-                                         (continue-ability
-                                           state side
+                                       (continue-ability
+                                         state side
+                                         (when (faceup-agendas corp)
                                            {:msg "gain 2 [Credits] for having faceup agendas in Archives"
                                             :effect (effect (gain-credits eid 2))
-                                            :async true}
-                                           card nil)
-                                         (effect-completed state side eid)))))}}))
+                                            :async true})
+                                         card nil))))}}))
 
 (defcard "Attitude Adjustment"
   {:on-play
@@ -315,7 +314,7 @@
 
 (defcard "Backroom Machinations"
   {:on-play
-   {:additional-cost [:tag 1]
+   {:additional-cost [(->c :tag 1)]
     :msg "add itself to the score area as an agenda worth 1 agenda point"
     :effect (req (as-agenda state :corp card 1))}})
 
@@ -468,7 +467,7 @@
                               :req (req (threat-level 3 state))
                               :waiting-prompt true
                               :yes-ability
-                              {:cost [:credit 2]
+                              {:cost [(->c :credit 2)]
                                :req (req (seq (:hand runner)))
                                 :effect(req (let [target-card (first (shuffle (:hand runner)))]
                                               (wait-for
@@ -803,7 +802,7 @@
                                             (corp? %)
                                             (not (rezzed? %))
                                             (not (agenda? %)))}
-                      :effect (effect (rez eid target {:cost-bonus discount}))}
+                      :effect (req (rez state side eid target {:cost-bonus discount}))}
                      card nil)))}})
 
 (defcard "Door to Door"
@@ -853,7 +852,7 @@
 
 (defcard "End of the Line"
   {:on-play
-   {:additional-cost [:tag 1]
+   {:additional-cost [(->c :tag 1)]
     :msg "do 4 meat damage"
     :async true
     :effect (effect (damage eid :meat 4 {:card card}))}})
@@ -879,10 +878,11 @@
 (defcard "Enhanced Login Protocol"
   {:on-play {:msg (str "add an additional cost of [Click]"
                        " to make the first run not through a card ability this turn")}
-   :static-abilities [{:type :run-additional-cost
-                       :req (req (and (no-event? state side :run #(:click-run (:cost-args (first %))))
-                                      (:click-run (second targets))))
-                       :value [:click 1]}]})
+   :static-abilities
+   [{:type :run-additional-cost
+     :req (req (and (no-event? state side :run #(:click-run (:cost-args (first %))))
+                    (:click-run (second targets))))
+     :value [(->c :click 1)]}]})
 
 (defcard "Exchange of Information"
   {:on-play
@@ -1018,9 +1018,9 @@
                           :prompt "How many credits do you want to pay?"
                           :choices {:number (req numtargets)}
                           :effect (req (let [c target]
-                                         (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
+                                         (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) (->c :credit c))
                                            (let [new-eid (make-eid state {:source card :source-type :ability})]
-                                             (wait-for (pay state :corp new-eid card :credit c)
+                                             (wait-for (pay state :corp new-eid card (->c :credit c))
                                                        (when-let [payment-str (:msg async-result)]
                                                          (system-msg state :corp payment-str))
                                                        (continue-ability
@@ -1127,7 +1127,7 @@
                                           :card #(and (installed? %)
                                                       (is-type? % card-type)
                                                       (not (has-subtype? % "Icebreaker")))}
-                                :effect (req (wait-for (pay state :runner (make-eid state eid) card :credit (* 3 (count targets)))
+                                :effect (req (wait-for (pay state :runner (make-eid state eid) card (->c :credit (* 3 (count targets))))
                                                        (system-msg
                                                          state :runner
                                                          (str (:msg async-result) " to prevent the trashing of "
@@ -1189,7 +1189,7 @@
                                                            {:optional {:prompt "Remove 1 tag to place 1 advancement counter on the installed card?"
                                                                        :waiting-prompt true
                                                                        :yes-ability {:msg (msg "removes 1 tag to place 1 advancement counter on " (card-str state installed-card))
-                                                                                     :cost [:tag 1]
+                                                                                     :cost [(->c :tag 1)]
                                                                                      :effect (req (add-prop state :corp installed-card :advance-counter 1 {:placed true}))}}}
                                                            card nil)
                                                          (effect-completed state side eid)))))}
@@ -1276,7 +1276,7 @@
                                                                       chosen n original) card nil)
                               (continue-ability state side (hr-final chosen original) card nil))))})]
     {:on-play
-     {:additional-cost [:trash-from-deck 1]
+     {:additional-cost [(->c :trash-from-deck 1)]
       :msg "trash the top card of R&D, draw 3 cards, and add 3 cards in HQ to the top of R&D"
       :waiting-prompt true
       :async true
@@ -1604,7 +1604,7 @@
                        :value 1}]
    :leave-play (req (system-msg state :corp "trashes MCA Informant"))
    :runner-abilities [{:label "Trash MCA Informant host"
-                       :cost [:click 1 :credit 2]
+                       :cost [(->c :click 1) (->c :credit 2)]
                        :async true
                        :effect (effect (system-msg :runner (str "spends [Click] and 2 [Credits] to trash "
                                                                 (card-str state (:host card))))
@@ -1795,8 +1795,7 @@
   (lockdown
     {:static-abilities
      [{:type :steal-additional-cost
-       :value (req [[:credit (+ 4 (* 2 (get-counters target :advancement)))]
-                    {:source card :source-type :ability}])}]}))
+       :value (req (->c :credit (+ 4 (* 2 (get-counters target :advancement)))))}]}))
 
 (defcard "Neural EMP"
   {:on-play
@@ -1857,7 +1856,7 @@
 
 (defcard "Observe and Destroy"
   {:on-play
-   {:additional-cost [:tag 1]
+   {:additional-cost [(->c :tag 1)]
     :req (req (and (pos? (count-real-tags state))
                    (< (:credit runner) 6)))
     :prompt "Choose an installed card to trash"
@@ -1881,7 +1880,7 @@
                                        :req (req (threat-level 3 state))
                                        :waiting-prompt true
                                        :yes-ability {:async true
-                                                     :cost [:credit 5]
+                                                     :cost [(->c :credit 5)]
                                                      :msg "give the Runner 2 tags"
                                                      :effect (req (gain-tags state :corp eid 2))}}}
                                      card nil)))}})
@@ -2027,7 +2026,7 @@
 
 (defcard "Predictive Algorithm"
   {:static-abilities [{:type :steal-additional-cost
-                       :value (req [[:credit 2] {:source card :source-type :ability}])}]})
+                       :value (req (->c :credit 2))}]})
 
 (defcard "Predictive Planogram"
   {:on-play
@@ -2090,9 +2089,9 @@
     :choices {:number (req (count-tags state))}
     :async true
     :effect (req (let [c target]
-                   (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) :credit c)
+                   (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) (->c :credit c))
                      (let [new-eid (make-eid state {:source card :source-type :ability})]
-                       (wait-for (pay state :corp new-eid card :credit c)
+                       (wait-for (pay state :corp new-eid card (->c :credit c))
                                  (when-let [payment-str (:msg async-result)]
                                    (system-msg state :corp payment-str))
                                  (continue-ability
@@ -2150,11 +2149,11 @@
     :waiting-prompt true
     :prompt "Choose one"
     :choices (req ["Take 1 tag"
-                   (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) :credit 8)
+                   (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) (->c :credit 8))
                      "Pay 8 [Credits]")])
     :async true
     :effect (req (if (= target "Pay 8 [Credits]")
-                   (wait-for (pay state :runner (make-eid state eid) card :credit 8)
+                   (wait-for (pay state :runner (make-eid state eid) card (->c :credit 8))
                              (system-msg state :runner (:msg async-result))
                              (effect-completed state side eid))
                    (gain-tags state :corp eid 1)))}})
@@ -2423,7 +2422,7 @@
     :msg (msg "force the Runner to " (decapitalize target))
     :choices ["Suffer 1 core damage" "Get 3 fewer [Click] on the next turn"]
     :effect (req (if (= target "Suffer 1 core damage")
-                   (pay state :runner eid card [:brain 1])
+                   (pay state :runner eid card [(->c :brain 1)])
                    (do (swap! state update-in [:runner :extra-click-temp] (fnil #(- % 3) 0))
                        (effect-completed state side eid))))}})
 
@@ -2456,7 +2455,7 @@
   {:on-play
    {:req (req (and (pos? (count-bad-pub state))
                    (some #(pos? (:agendapoints %)) (:scored corp))))
-    :additional-cost [:forfeit]
+    :additional-cost [(->c :forfeit)]
     :async true
     :effect (req (let [bp-lost (max 0 (min (:agendapoints (last (:rfg corp)))
                                            (count-bad-pub state)))]
@@ -2578,7 +2577,7 @@
   {:on-play {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"}
    :static-abilities [{:type :run-additional-cost
                        :req (req (no-event? state side :run))
-                       :value [:credit 1]}]})
+                       :value [(->c :credit 1)]}]})
 
 (defcard "Shipment from Kaguya"
   {:on-play
@@ -2770,14 +2769,14 @@
                              {:prompt (msg "Pay 3 [Credits] to gain [Click]?")
                               :waiting-prompt true
                               :req (req (threat-level 3 state))
-                              :yes-ability {:cost [:credit 3]
+                              :yes-ability {:cost [(->c :credit 3)]
                                             :msg (msg "gain [Click]")
                                             :effect (effect (gain-clicks 1))}}}
         play-instant-first {:prompt (msg "Choose a non-terminal operation")
                             :choices (req (conj (filter #(and (operation? %)
                                                               (not (has-subtype? % "Terminal"))
                                                               (should-trigger? state :corp (assoc eid :source % :source-type :play) % nil (or (:on-play (card-def %)) {}))
-                                                              (can-pay? state side (assoc eid :source % :source-type :play) % nil [:credit (play-cost state side % nil)]))
+                                                              (can-pay? state side (assoc eid :source % :source-type :play) % nil [(->c :credit (play-cost state side % nil))]))
                                                         (:hand corp))
                                                 "Done"))
                             :async true
@@ -2866,7 +2865,7 @@
                         (advance-n-times state side eid card target (dec n)))
               (effect-completed state side eid)))]
     {:on-play
-     {:additional-cost [:forfeit]
+     {:additional-cost [(->c :forfeit)]
       :choices {:card can-be-advanced?}
       :msg (msg "advance " (card-str state target)
              " " (quantify (get-advancement-requirement (cost-target eid :forfeit)) "time"))
@@ -2924,11 +2923,11 @@
               :msg (msg "force the Runner to " (decapitalize target))
               :player :runner
               :prompt "Choose one"
-              :choices (req [(when (can-pay? state :runner eid card nil [:credit 4])
+              :choices (req [(when (can-pay? state :runner eid card nil [(->c :credit 4)])
                                "Pay 4 [Credits]")
                              "Take 1 tag"])
               :effect (req (if (= target "Pay 4 [Credits]")
-                             (wait-for (pay state :runner (make-eid state eid) card :credit 4)
+                             (wait-for (pay state :runner (make-eid state eid) card (->c :credit 4))
                                        (system-msg state :runner (:msg async-result))
                                        (effect-completed state side eid))
                              (gain-tags state :corp eid 1 nil)))}]}))

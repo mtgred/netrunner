@@ -10,7 +10,7 @@
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
    [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
-   [game.core.payment :refer [cost-name handler label payable? value stealth-value]]
+   [game.core.payment :refer [handler label payable? value stealth-value]]
    [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez]]
@@ -23,8 +23,7 @@
    [game.utils :refer [enumerate-str quantify same-card?]]))
 
 ;; Click
-(defmethod cost-name :click [_] :click)
-(defmethod value :click [[_ cost-value]] cost-value)
+(defmethod value :click [cost] (:cost/amount cost))
 (defmethod label :click [cost]
   (->> (repeat "[Click]")
        (take (value cost))
@@ -57,8 +56,7 @@
   (->> (repeat "[Click]")
        (take (value cost))
        (apply str)))
-(defmethod cost-name :lose-click [_] :lose-click)
-(defmethod value :lose-click [[_ cost-value]] cost-value)
+(defmethod value :lose-click [cost] (:cost/amount cost))
 (defmethod label :lose-click [cost]
   (str "Lose " (lose-click-label cost)))
 (defmethod payable? :lose-click
@@ -119,11 +117,12 @@
        (reduce +)))
 
 ;; Credit
-(defmethod cost-name :credit [_] :credit)
-(defmethod value :credit [[_ cost-value]] cost-value)
-;; Zero stealth value for costs where it doesn't make sense
-(defmethod stealth-value :default [_] 0)
-(defmethod stealth-value :credit [[_ __ stealth-amount]] (or stealth-amount 0))
+(defmethod value :credit [cost] (:cost/amount cost))
+(defmethod stealth-value :credit [cost] (let [v (:cost/stealth cost)]
+                                          (cond
+                                            (= :all-stealth v) (value cost)
+                                            v v
+                                            :else 0)))
 (defmethod label :credit [cost] (str (value cost) " [Credits]"))
 (defmethod payable? :credit
   [cost state side eid card]
@@ -165,10 +164,9 @@
                                             :value 0}))))
 
 ;; X Credits
-(defmethod cost-name :x-credits [_] :x-credits)
 (defmethod value :x-credits [_] 0)
 ;We put stealth credits in the third slot rather than the empty second slot for consistency with credits
-(defmethod stealth-value :x-credits [[_ __ stealth-amount]] (or stealth-amount 0))
+(defmethod stealth-value :x-credits [cost] (or (:cost/stealth cost) 0))
 (defmethod label :x-credits [_] (str "X [Credits]"))
 (defmethod payable? :x-credits
   [cost state side eid card]
@@ -212,7 +210,6 @@
     card nil))
 
 ;; Expend Helper - this is a dummy cost just for cost strings
-(defmethod cost-name :expend [_] :expend)
 (defmethod value :expend [cost] 1)
 (defmethod label :expend [cost] "reveal from HQ and trash itself")
 (defmethod payable? :expend
@@ -230,7 +227,6 @@
                                              :targets [card]}))))
 
 ;; Trash
-(defmethod cost-name :trash-can [_] :trash-can)
 (defmethod value :trash-can [cost] 1)
 (defmethod label :trash-can [cost] "[trash]")
 (defmethod payable? :trash-can
@@ -246,8 +242,7 @@
                                                   :targets [card]})))
 
 ;; Forfeit
-(defmethod cost-name :forfeit [_] :forfeit)
-(defmethod value :forfeit [[_ cost-value]] cost-value)
+(defmethod value :forfeit [cost] (:cost/amount cost))
 (defmethod label :forfeit [cost] (str "forfeit " (quantify (value cost) "Agenda")))
 (defmethod payable? :forfeit
   [cost state side _eid _card]
@@ -279,7 +274,6 @@
     card nil))
 
 ;; ForfeitSelf
-(defmethod cost-name :forfeit-self [_] :forfeit-self)
 (defmethod value :forfeit-self [_cost] 1)
 (defmethod label :forfeit-self [_cost] "forfeit this Agenda")
 (defmethod payable? :forfeit-self
@@ -297,8 +291,7 @@
 
 
 ;; Gain tag
-(defmethod cost-name :gain-tag [_] :gain-tag)
-(defmethod value :gain-tag [[_ cost-value]] cost-value)
+(defmethod value :gain-tag [cost] (:cost/amount cost))
 (defmethod label :gain-tag [cost] (str "take " (quantify (value cost) "tag")))
 (defmethod payable? :gain-tag
   ;; TODO - shouldn't actually be true if we're forced to avoid tags
@@ -313,8 +306,7 @@
                                                   :value (value cost)})))
 
 ;; Tag
-(defmethod cost-name :tag [_] :tag)
-(defmethod value :tag [[_ cost-value]] cost-value)
+(defmethod value :tag [cost] (:cost/amount cost))
 (defmethod label :tag [cost] (str "remove " (quantify (value cost) "tag")))
 (defmethod payable? :tag
   [cost state side eid card]
@@ -327,8 +319,7 @@
                                                   :value (value cost)})))
 
 ;; Tag-or-bad-pub
-(defmethod cost-name :tag-or-bad-pub [_] :tag-or-bad-pub)
-(defmethod value :tag-or-bad-pub [[_ cost-value]] cost-value)
+(defmethod value :tag-or-bad-pub [cost] (:cost/amount cost))
 (defmethod label :tag-or-bad-pub [cost] (str "remove " (quantify (value cost) "tag") " or take " (value cost) " bad publicity"))
 (defmethod payable? :tag-or-bad-pub
   [cost state side eid card]
@@ -358,7 +349,6 @@
       card nil)))
 
 ;; ReturnToHand
-(defmethod cost-name :return-to-hand [_] :return-to-hand)
 (defmethod value :return-to-hand [cost] 1)
 (defmethod label :return-to-hand [cost] "return this card to your hand")
 (defmethod payable? :return-to-hand
@@ -376,7 +366,6 @@
      :targets [card]}))
 
 ;; RemoveFromGame
-(defmethod cost-name :remove-from-game [_] :remove-from-game)
 (defmethod value :remove-from-game [cost] 1)
 (defmethod label :remove-from-game [cost] "remove this card from the game")
 (defmethod payable? :remove-from-game
@@ -393,8 +382,7 @@
      :targets [card]}))
 
 ;; RfgProgram
-(defmethod cost-name :rfg-program [_] :rfg-program)
-(defmethod value :rfg-program [[_ cost-value]] cost-value)
+(defmethod value :rfg-program [cost] (:cost/amount cost))
 (defmethod label :rfg-program [cost]
   (str "remove " (quantify (value cost) "installed program")
        " from the game"))
@@ -424,8 +412,7 @@
     card nil))
 
 ;; TrashOtherInstalledCard - this may NOT target the source card (itself), use :trash-installed instead
-(defmethod cost-name :trash-other-installed [_] :trash-other-installed)
-(defmethod value :trash-other-installed [[_ cost-value]] cost-value)
+(defmethod value :trash-other-installed [cost] (:cost/amount cost))
 (defmethod label :trash-other-installed [cost]
   (str "trash " (quantify (value cost) "installed card")))
 (defmethod payable? :trash-other-installed
@@ -456,8 +443,7 @@
     card nil))
 
 ;; TrashInstalledCard - this may target the source card (itself)
-(defmethod cost-name :trash-installed [_] :trash-installed)
-(defmethod value :trash-installed [[_ cost-value]] cost-value)
+(defmethod value :trash-installed [cost] (:cost/amount cost))
 (defmethod label :trash-installed [cost]
   (str "trash " (quantify (value cost) "installed card")))
 (defmethod payable? :trash-installed
@@ -487,8 +473,7 @@
     card nil))
 
 ;; TrashInstalledHardware
-(defmethod cost-name :hardware [_] :hardware)
-(defmethod value :hardware [[_ cost-value]] cost-value)
+(defmethod value :hardware [cost] (:cost/amount cost))
 (defmethod label :hardware [cost]
   (str "trash " (quantify (value cost) "installed piece") " of hardware"))
 (defmethod payable? :hardware
@@ -516,8 +501,7 @@
     card nil))
 
 ;; DerezOtherHarmonic - this may NOT target the source card (itself)
-(defmethod cost-name :derez-other-harmonic [_] :derez-other-harmonic)
-(defmethod value :derez-other-harmonic [[_ cost-value]] cost-value)
+(defmethod value :derez-other-harmonic [cost] (:cost/amount cost))
 (defmethod label :derez-other-harmonic [cost]
   (str "derez " (value cost) " Harmonic ice"))
 (defmethod payable? :derez-other-harmonic
@@ -549,8 +533,7 @@
     card nil))
 
 ;; TrashInstalledProgram
-(defmethod cost-name :program [_] :program)
-(defmethod value :program [[_ cost-value]] cost-value)
+(defmethod value :program [cost] (:cost/amount cost))
 (defmethod label :program [cost]
   (str "trash " (quantify (value cost) "installed program")))
 (defmethod payable? :program
@@ -577,8 +560,7 @@
     card nil))
 
 ;; TrashInstalledResource
-(defmethod cost-name :resource [_] :resource)
-(defmethod value :resource [[_ cost-value]] cost-value)
+(defmethod value :resource [cost] (:cost/amount cost))
 (defmethod label :resource [cost]
   (str "trash " (quantify (value cost) "installed resource")))
 (defmethod payable? :resource
@@ -605,8 +587,7 @@
     card nil))
 
 ;; TrashInstalledConnection
-(defmethod cost-name :connection [_] :connection)
-(defmethod value :connection [[_ cost-value]] cost-value)
+(defmethod value :connection [cost] (:cost/amount cost))
 (defmethod label :connection [cost]
   (str "trash " (str "trash " (quantify (value cost) "installed connection resource"))))
 (defmethod payable? :connection
@@ -636,8 +617,7 @@
     card nil))
 
 ;; TrashRezzedIce
-(defmethod cost-name :ice [_] :ice)
-(defmethod value :ice [[_ cost-value]] cost-value)
+(defmethod value :ice [cost] (:cost/amount cost))
 (defmethod label :ice [cost]
   (str "trash " (str "trash " (quantify (value cost) "installed rezzed ice" ""))))
 (defmethod payable? :ice
@@ -664,8 +644,7 @@
     card nil))
 
 ;; TrashFromDeck
-(defmethod cost-name :trash-from-deck [_] :trash-from-deck)
-(defmethod value :trash-from-deck [[_ cost-value]] cost-value)
+(defmethod value :trash-from-deck [cost] (:cost/amount cost))
 (defmethod label :trash-from-deck [cost]
   (str "trash " (quantify (value cost) "card") " from the top of your deck"))
 (defmethod payable? :trash-from-deck
@@ -684,8 +663,7 @@
                :targets async-result})))
 
 ;; TrashFromHand
-(defmethod cost-name :trash-from-hand [_] :trash-from-hand)
-(defmethod value :trash-from-hand [[_ cost-value]] cost-value)
+(defmethod value :trash-from-hand [cost] (:cost/amount cost))
 (defmethod label :trash-from-hand [cost]
   (str "trash " (quantify (value cost) "card") " from your hand"))
 (defmethod payable? :trash-from-hand
@@ -718,8 +696,7 @@
       nil nil)))
 
 ;; RandomlyTrashFromHand
-(defmethod cost-name :randomly-trash-from-hand [_] :randomly-trash-from-hand)
-(defmethod value :randomly-trash-from-hand [[_ cost-value]] cost-value)
+(defmethod value :randomly-trash-from-hand [cost] (:cost/amount cost))
 (defmethod label :randomly-trash-from-hand [cost]
   (str "trash " (quantify (value cost) "card") " randomly from your hand"))
 (defmethod payable? :randomly-trash-from-hand
@@ -738,7 +715,6 @@
                :targets async-result})))
 
 ;; TrashEntireHand
-(defmethod cost-name :trash-entire-hand [_] :trash-entire-hand)
 (defmethod value :trash-entire-hand [cost] 1)
 (defmethod label :trash-entire-hand [cost] "trash all cards in your hand")
 (defmethod payable? :trash-entire-hand
@@ -759,8 +735,7 @@
                  :targets async-result}))))
 
 ;; TrashHardwareFromHand
-(defmethod cost-name :trash-hardware-from-hand [_] :trash-hardware-from-hand)
-(defmethod value :trash-hardware-from-hand [[_ cost-value]] cost-value)
+(defmethod value :trash-hardware-from-hand [cost] (:cost/amount cost))
 (defmethod label :trash-hardware-from-hand [cost]
   (str "trash " (quantify (value cost) "piece") " of hardware in the grip"))
 (defmethod payable? :trash-hardware-from-hand
@@ -788,8 +763,7 @@
     nil nil))
 
 ;; TrashProgramFromHand
-(defmethod cost-name :trash-program-from-hand [_] :trash-program-from-hand)
-(defmethod value :trash-program-from-hand [[_ cost-value]] cost-value)
+(defmethod value :trash-program-from-hand [cost] (:cost/amount cost))
 (defmethod label :trash-program-from-hand [cost]
   (str "trash " (quantify (value cost) "program") " in the grip"))
 (defmethod payable? :trash-program-from-hand
@@ -816,8 +790,7 @@
     nil nil))
 
 ;; TrashResourceFromHand
-(defmethod cost-name :trash-resource-from-hand [_] :trash-resource-from-hand)
-(defmethod value :trash-resource-from-hand [[_ cost-value]] cost-value)
+(defmethod value :trash-resource-from-hand [cost] (:cost/amount cost))
 (defmethod label :trash-resource-from-hand [cost]
   (str "trash " (quantify (value cost) "resource") " in the grip"))
 (defmethod payable? :trash-resource-from-hand
@@ -844,8 +817,7 @@
     nil nil))
 
 ;; NetDamage
-(defmethod cost-name :net [_] :net)
-(defmethod value :net [[_ cost-value]] cost-value)
+(defmethod value :net [cost] (:cost/amount cost))
 (defmethod label :net [cost] (str "suffer " (value cost) " net damage"))
 (defmethod payable? :net
   [cost state side eid card]
@@ -861,8 +833,7 @@
                :targets async-result})))
 
 ;; MeatDamage
-(defmethod cost-name :meat [_] :meat)
-(defmethod value :meat [[_ cost-value]] cost-value)
+(defmethod value :meat [cost] (:cost/amount cost))
 (defmethod label :meat [cost] (str "suffer " (value cost) " meat damage"))
 (defmethod payable? :meat
   [cost state side eid card]
@@ -878,8 +849,7 @@
                :targets async-result})))
 
 ;; BrainDamage
-(defmethod cost-name :brain [_] :brain)
-(defmethod value :brain [[_ cost-value]] cost-value)
+(defmethod value :brain [cost] (:cost/amount cost))
 (defmethod label :brain [cost] (str "suffer " (value cost) " core damage"))
 (defmethod payable? :brain
   [cost state side eid card]
@@ -895,8 +865,7 @@
                :targets async-result})))
 
 ;; ShuffleInstalledToDeck
-(defmethod cost-name :shuffle-installed-to-stack [_] :shuffle-installed-to-stack)
-(defmethod value :shuffle-installed-to-stack [[_ cost-value]] cost-value)
+(defmethod value :shuffle-installed-to-stack [cost] (:cost/amount cost))
 (defmethod label :shuffle-installed-to-stack [cost]
   (str "shuffle " (quantify (value cost) "installed card") " into your deck"))
 (defmethod payable? :shuffle-installed-to-stack
@@ -925,8 +894,7 @@
     nil nil))
 
 ;; AddInstalledToBottomOfDeck
-(defmethod cost-name :add-installed-to-bottom-of-deck [_] :add-installed-to-bottom-of-deck)
-(defmethod value :add-installed-to-bottom-of-deck [[_ cost-value]] cost-value)
+(defmethod value :add-installed-to-bottom-of-deck [cost] (:cost/amount cost))
 (defmethod label :add-installed-to-bottom-of-deck [cost]
   (str "add " (quantify (value cost) "installed card") " to the bottom of your deck"))
 (defmethod payable? :add-installed-to-bottom-of-deck
@@ -955,8 +923,7 @@
       nil nil)))
 
 ;; AddRandomToBottom
-(defmethod cost-name :add-random-from-hand-to-bottom-of-deck [_] :add-random-from-hand-to-bottom-of-deck)
-(defmethod value :add-random-from-hand-to-bottom-of-deck [[_ cost-value]] cost-value)
+(defmethod value :add-random-from-hand-to-bottom-of-deck [cost] (:cost/amount cost))
 (defmethod label :add-random-from-hand-to-bottom-of-deck [cost]
   (str "add " (quantify (value cost) "random card") " to the bottom of your deck"))
 (defmethod payable? :add-random-from-hand-to-bottom-of-deck
@@ -978,8 +945,7 @@
        :targets chosen})))
 
 ;; AnyAgendaCounter
-(defmethod cost-name :any-agenda-counter [_] :any-agenda-counter)
-(defmethod value :any-agenda-counter [[_ cost-value]] cost-value)
+(defmethod value :any-agenda-counter [cost] (:cost/amount cost))
 (defmethod label :any-agenda-counter [cost] "any agenda counter")
 (defmethod payable? :any-agenda-counter
   [cost state side eid card]
@@ -1006,8 +972,7 @@
     nil nil))
 
 ;; AnyVirusCounter
-(defmethod cost-name :any-virus-counter [_] :any-virus-counter)
-(defmethod value :any-virus-counter [[_ cost-value]] cost-value)
+(defmethod value :any-virus-counter [cost] (:cost/amount cost))
 (defmethod label :any-virus-counter [cost]
   (str "any " (quantify (value cost) "virus counter")))
 (defmethod payable? :any-virus-counter
@@ -1024,8 +989,7 @@
                :targets (:targets async-result)})))
 
 ;; AdvancementCounter
-(defmethod cost-name :advancement [_] :advancement)
-(defmethod value :advancement [[_ cost-value]] cost-value)
+(defmethod value :advancement [cost] (:cost/amount cost))
 (defmethod label :advancement [cost]
   (if (< 1 (value cost))
     (quantify (value cost) "hosted advancement counter")
@@ -1047,8 +1011,7 @@
                  :value (value cost)}))))
 
 ;; AgendaCounter
-(defmethod cost-name :agenda [_] :agenda)
-(defmethod value :agenda [[_ cost-value]] cost-value)
+(defmethod value :agenda [cost] (:cost/amount cost))
 (defmethod label :agenda [cost]
   (if (< 1 (value cost))
     (quantify (value cost) "hosted agenda counter")
@@ -1064,14 +1027,13 @@
               (complete-with-result
                 state side eid
                 {:msg (str "spends "
-                           (quantify (value cost) (str "hosted agenda counter"))
+                           (quantify (value cost) "hosted agenda counter")
                            " from on " title)
                  :type :agenda
                  :value (value cost)}))))
 
 ;; PowerCounter
-(defmethod cost-name :power [_] :power)
-(defmethod value :power [[_ cost-value]] cost-value)
+(defmethod value :power [cost] (:cost/amount cost))
 (defmethod label :power [cost]
   (if (< 1 (value cost))
     (quantify (value cost) "hosted power counter")
@@ -1087,13 +1049,12 @@
               (complete-with-result
                 state side eid
                 {:msg (str "spends "
-                           (quantify (value cost) (str "hosted power counter"))
+                           (quantify (value cost) "hosted power counter")
                            " from on " title)
                  :type :power
                  :value (value cost)}))))
 
 ;; XPowerCounter
-(defmethod cost-name :x-power [_] :x-power)
 (defmethod value :x-power [_] 0)
 (defmethod label :x-power [_] "X hosted power counters")
 (defmethod payable? :x-power
@@ -1121,8 +1082,7 @@
     card nil))
 
 ;; VirusCounter
-(defmethod cost-name :virus [_] :virus)
-(defmethod value :virus [[_ cost-value]] cost-value)
+(defmethod value :virus [cost] (:cost/amount cost))
 (defmethod label :virus [cost]
   (if (< 1 (value cost))
     (quantify (value cost) "hosted virus counter")

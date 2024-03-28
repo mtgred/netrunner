@@ -2,9 +2,9 @@
   (:require
     [game.core.card :refer [runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [any-effects get-effects sum-effects]]
+    [game.core.effects :refer [any-effects get-effects sum-effects get-effect-maps get-effect-value]]
     [game.core.eid :refer [make-eid]]
-    [game.core.payment :refer [merge-costs cost-name value]]))
+    [game.core.payment :refer [merge-costs]]))
 
 ;; State-aware cost-generating functions
 (defn play-cost
@@ -44,17 +44,17 @@
   ([state side card] (rez-additional-cost-bonus state side card nil))
   ([state side card pred]
    (let [costs (merge-costs
-                 (concat (:additional-cost card)
-                         (:additional-cost (card-def card))
-                         (get-effects state side :rez-additional-cost card)))]
-     (if pred (filterv pred costs) costs))))
+                 [(:additional-cost card)
+                  (:additional-cost (card-def card))
+                  (get-effects state side :rez-additional-cost card)])]
+     (filterv (or pred identity) costs))))
 
 (defn score-additional-cost-bonus
   [state side card]
   (merge-costs
-   (concat (:additional-cost card)
-           (:additional-cost (card-def card))
-           (get-effects state side :score-additional-cost card))))
+    [(:additional-cost card)
+     (:additional-cost (card-def card))
+     (get-effects state side :score-additional-cost card)]))
 
 (defn trash-cost
   "Returns the number of credits required to trash the given card."
@@ -86,9 +86,9 @@
 (defn install-additional-cost-bonus
   [state side card]
   (merge-costs
-    (concat (:additional-cost card)
-            (:additional-cost (card-def card))
-            (get-effects state side :install-additional-cost card))))
+    [(:additional-cost card)
+     (:additional-cost (card-def card))
+     (get-effects state side :install-additional-cost card)]))
 
 (defn ignore-install-cost?
   [state side card]
@@ -115,52 +115,61 @@
   (let [abilities (:abilities (card-def card))
         events (:events (card-def card))]
     (or (some :trash-icon (concat abilities events))
-        (some #(= :trash-can (first %))
+        (some #(= :trash-can (:cost/type %))
               (->> abilities
                    (map :cost)
-                   (map merge-costs)
-                   (apply concat))))))
+                   (vec)
+                   (merge-costs))))))
 
 (defn card-ability-cost
   "Returns a list of all costs (printed and additional) required to use a given ability"
   ([state side ability card] (card-ability-cost state side ability card nil))
   ([state side ability card targets]
    (merge-costs
-     (concat (:cost ability)
-             (:additional-cost ability)
-             (get-effects state side :card-ability-additional-cost card (cons ability targets))))))
+     [(:cost ability)
+      (:additional-cost ability)
+      (get-effects state side :card-ability-additional-cost {:card card
+                                                             :ability ability
+                                                             :targets targets})])))
 
 (defn break-sub-ability-cost
   ([state side ability card] (break-sub-ability-cost state side ability card nil))
   ([state side ability card targets]
    (merge-costs
-     (concat (:break-cost ability)
-             (:additional-cost ability)
-             (when-let [break-fn (:break-cost-bonus ability)]
-               (break-fn state side (make-eid state) card targets))
-             (get-effects state side :break-sub-additional-cost card (cons ability targets))))))
+     [(:break-cost ability)
+      (:additional-cost ability)
+      (when-let [break-fn (:break-cost-bonus ability)]
+        (break-fn state side (make-eid state) card targets))
+      (get-effects state side :break-sub-additional-cost {:card card
+                                                          :ability ability
+                                                          :targets targets})])))
 
 (defn jack-out-cost
   [state side]
   (get-effects state side :jack-out-additional-cost))
 
-(defn all-stealth
-  "To be used as the :cost-req of an ability. Requires all credits spent to be stealth credits."
-  [costs]
-  (mapv #(condp = (cost-name %) :x-credits [:x-credits nil -1] :credit [:credit (value %) (value %)] %) costs))
-
-(defn min-stealth
-  "Returns a function to be used as the :cost-req of an ability. Requires a minimum number of credits spent to be stealth"
-  [stealth-requirement]
-  (fn [costs]
-    (if (some #(= (cost-name %) :credit) costs)
-      (map #(if (= (cost-name %) :credit) [:credit (value %) stealth-requirement] %) costs)
-      (map #(if (= (cost-name %) :x-credits) [:x-credits nil stealth-requirement] %) costs))))
-
 (defn steal-cost
   "Gets a vector of costs and their sources for stealing the given agenda."
   [state side eid card]
-  (-> (when-let [costfun (:steal-cost-bonus (card-def card))]
-        [[(costfun state side eid card nil) {:source card :source-type :ability}]])
-      (concat (get-effects state side :steal-additional-cost card))
-      vec))
+  (let [steal-cost (when-let [costfun (:steal-cost-bonus (card-def card))]
+                     (costfun state side eid card nil))
+        steal-cost (when steal-cost
+                     (if (map? steal-cost)
+                       (assoc-in steal-cost [:cost/args :source] card)
+                       (mapv #(assoc-in % [:cost/args :source] card) steal-cost)))
+        ev (get-effect-value state side eid [card])]
+    (->> (get-effect-maps state side eid :steal-additional-cost [card])
+         (reduce
+           (fn [acc {ab-card :card :as ab}]
+             (let [cost (ev ab)
+                   cost (if (map? cost)
+                          (assoc-in cost [:cost/args :source] ab-card)
+                          (mapv #(assoc-in % [:cost/args :source] ab-card) cost))]
+               (conj acc cost)))
+           [])
+         (concat [steal-cost])
+         (flatten)
+         (filter some?)
+         (mapv #(-> %
+                    (assoc :cost/additional true)
+                    (assoc-in [:cost/args :source-type] :ability))))))

@@ -1743,7 +1743,8 @@
 (deftest gamenet-where-dreams-are-real-gain-credits-from-bellona-steal
     ;; Gain credits from Bellona steal
     (do-game
-      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Bellona"]}})
+      (new-game {:corp {:id "GameNET: Where Dreams are Real"
+                        :hand ["Bellona"]}})
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
@@ -1754,7 +1755,8 @@
 (deftest gamenet-where-dreams-are-real-gain-credits-from-napd-cordon-steal
     ;; Gain credits from NAPD cordon steal
     (do-game
-      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Send a Message" "NAPD Cordon"]}})
+      (new-game {:corp {:id "GameNET: Where Dreams are Real"
+                        :hand ["Send a Message" "NAPD Cordon"]}})
       (play-from-hand state :corp "NAPD Cordon")
       (take-credits state :corp)
       (run-on state "HQ")
@@ -1782,7 +1784,8 @@
 (deftest gamenet-where-dreams-are-real-gain-credits-from-psi-games
     ;; Gain credits from psi games
     (do-game
-      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Caprice Nisei"]}})
+      (new-game {:corp {:id "GameNET: Where Dreams are Real"
+                        :hand ["Caprice Nisei"]}})
       (play-from-hand state :corp "Caprice Nisei" "New remote")
       (let [caprice (get-content state :remote1 0)]
         (take-credits state :corp)
@@ -1820,7 +1823,8 @@
 (deftest gamenet-where-dreams-are-real-no-credits-from-the-source
     ;; No credits from the source
     (do-game
-      (new-game {:corp {:id "GameNET: Where Dreams are Real" :hand ["Send a Message"]}
+      (new-game {:corp {:id "GameNET: Where Dreams are Real"
+                        :hand ["Send a Message"]}
                  :runner {:hand ["The Source"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "The Source")
