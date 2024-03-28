@@ -1928,7 +1928,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner took 1 tag")
-      (is (nil? (get-in @state [:run])) "Run was ended"))))
+      (is (nil? (:run @state)) "Run was ended"))))
 
 (deftest drafter-subroutine-1-add-1-card-from-archives-to-hq
   ;; Subroutine 1: Add 1 card from Archives to HQ
@@ -3361,13 +3361,13 @@
       (take-credits state :corp)
       (run-on state "HQ")
       (run-continue state)
-      (= 4 (:credit (get-corp)))
+      (is (= 4 (:credit (get-corp))))
       (card-subroutine state :corp herald 0)
-      (= 6 (:credit (get-corp)))
+      (is (= 6 (:credit (get-corp))))
       (card-subroutine state :corp herald 1)
       (click-prompt state :corp "2")
       (click-card state :corp beale)
-      (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
+      (is (= 4 (:credit (get-corp))) "Paid 2 credits through Herald second sub")
       (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
 
 (deftest herald-access-test
@@ -3379,13 +3379,13 @@
     (let [beale (get-content state :remote1 0)]
       (take-credits state :corp)
       (run-empty-server state :hq)
-      (= 4 (:credit (get-corp)))
+      (is (= 7 (:credit (get-corp))))
       (is (= "Herald" (:title (core/get-current-ice state))) "Encountering Herald on access")
       (fire-subs state (core/get-current-ice state))
-      (= 6 (:credit (get-corp)))
+      (is (= 9 (:credit (get-corp))))
       (click-prompt state :corp "2")
       (click-card state :corp beale)
-      (= 4 (:credit (get-corp)) "Paid 2 credits through Herald second sub")
+      (is (= 7 (:credit (get-corp))) "Paid 2 credits through Herald second sub")
       (is (= 2 (get-counters (refresh beale) :advancement)) "Herald placed 2 advancement tokens"))))
 
 (deftest herald-partial-break
@@ -4405,7 +4405,7 @@
       (take-credits state :corp 2)
       (is (= 5 (get-strength (refresh lotus))) "Lotus Field strength increased"))))
 
-(deftest ^:kaocha/pending lycian-multi-munition
+(deftest lycian-multi-munition
   (do-game
     (new-game {:corp {:hand ["Lycian Multi-Munition"]}
                :runner {:hand ["Marjanah"]}})
@@ -4418,6 +4418,7 @@
       (click-prompt state :corp "Code Gate")
       (click-prompt state :corp "Sentry")
       (click-prompt state :corp "Barrier")
+      (click-prompt state :corp "Done")
       (run-continue state)
       (is (changed? [(:credit (get-runner)) -1
                      (:click (get-runner)) -1]

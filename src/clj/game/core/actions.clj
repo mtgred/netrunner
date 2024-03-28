@@ -15,14 +15,14 @@
     [game.core.ice :refer [break-subroutine! get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string ->c]]
     [game.core.expend :refer [expend]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
-    [game.core.runs :refer [can-run-server? continue get-runnable-zones total-run-cost]]
+    [game.core.runs :refer [continue get-runnable-zones]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
-    [game.core.servers :refer [name-zone unknown->kw zones->sorted-names]]
+    [game.core.servers :refer [name-zone zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
@@ -31,10 +31,15 @@
 
 ;;; Neutral actions
 (defn- do-play-ability [state side card ability ability-idx targets]
-  (let [cost (seq (card-ability-cost state side ability card targets))]
+  (let [cost (seq (card-ability-cost state side ability card targets))
+        source {:source card
+                :source-type :ability
+                :source-info {:ability-idx ability-idx
+                              :ability-targets targets}}]
     (when (or (nil? cost)
-              (can-pay? state side (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx :ability-targets targets}}) card (:title card) cost))
-      (let [eid (make-eid state {:source card :source-type :ability :source-info {:ability-idx ability-idx :ability-targets targets}})]
+              (can-pay? state side (make-eid state source)
+                        card (:title card) cost))
+      (let [eid (make-eid state source)]
         (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
 
 (defn play-ability
@@ -131,7 +136,7 @@
 (defn- maybe-pay
   [state side eid card choices choice]
   (if (= choices :credit)
-    (pay state side eid card :credit (min choice (get-in @state [side :credit])))
+    (pay state side eid card (->c :credit (min choice (get-in @state [side :credit]))))
     (effect-completed state side eid)))
 
 (defn resolve-prompt
@@ -238,7 +243,7 @@
                  (seq)
                  (sort-by #(-> % first :auto-pump-sort))
                  (apply min-key #(let [costs (second %)]
-                                   (reduce (fnil + 0 0) 0 (mapv second costs)))))
+                                   (reduce (fnil + 0 0) 0 (keep :cost/amount costs)))))
         cost-req (or (:cost-req pump-ability) identity)
         pump-strength (get-pump-strength state side pump-ability card)
         strength-diff (when (and current-ice
@@ -252,7 +257,7 @@
                      0)
         total-pump-cost (when (and pump-ability
                                    times-pump)
-                          (repeat times-pump (cost-req [pump-cost])))]
+                          (repeat times-pump (cost-req pump-cost)))]
     (when (can-pay? state side eid card (:title card) total-pump-cost)
       (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [_ times-pump]
@@ -321,7 +326,7 @@
         total-cost (when (and breaker-ability
                               ability-uses-needed)
                      (if x-breaker
-                       [:credit x-number]
+                       [(->c :credit x-number)]
                        (repeat ability-uses-needed (:cost breaker-ability))))]
     (when (and breaker-ability
                (can-pay? state side eid card (:title card) total-cost))
@@ -380,7 +385,7 @@
                    (seq)
                    (sort-by #(-> % first :auto-pump-sort))
                    (apply min-key #(let [costs (second %)]
-                                     (reduce (fnil + 0 0) 0 (mapv second costs)))))
+                                     (reduce (fnil + 0 0) 0 (mapv :cost/amount costs)))))
           pump-cost-req (or (:cost-req pump-ability) identity)
           pump-strength (get-pump-strength state side pump-ability card)
           strength-diff (when (and current-ice
@@ -407,7 +412,7 @@
                    (seq)
                    (sort-by #(-> % first :auto-break-sort))
                    (apply min-key #(let [costs (second %)]
-                                     (reduce (fnil + 0 0) 0 (mapv second costs)))))
+                                     (reduce (fnil + 0 0) 0 (mapv :cost/amount costs)))))
           break-cost-req (or (:cost-req break-ability) identity)
           subs-broken-at-once (when break-ability
                                 (:break break-ability 1))
@@ -559,7 +564,10 @@
    (let [card (get-card state card)
          eid (eid-set-defaults eid :source nil :source-type :advance)]
      (if (can-advance? state side card)
-       (wait-for (pay state side (make-eid state eid) card :click (if-not no-cost 1 0) :credit (if-not no-cost 1 0) {:action :corp-advance})
+       (wait-for (pay state side (make-eid state eid) card
+                      (->c :click (if-not no-cost 1 0))
+                      (->c :credit (if-not no-cost 1 0))
+                      {:action :corp-advance})
                  (if-let [payment-str (:msg async-result)]
                    (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
                        (update-advancement-requirement state card)
@@ -597,16 +605,15 @@
   ([state side eid card {:keys [no-req]}]
    (if-not (can-score? state side card {:no-req no-req})
      (effect-completed state side eid)
-     (let [additional-costs (score-additional-cost-bonus state side card)
-           cost (merge-costs (mapv first additional-costs))
+     (let [cost (score-additional-cost-bonus state side card)
            cost-strs (build-cost-string cost)
-           can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)]
+           can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs cost)) card (:title card) cost)]
        (cond
          (string/blank? cost-strs) (resolve-score state side eid card)
          (not can-pay) (effect-completed state side eid)
          :else (wait-for (pay state side (make-eid state
-                                                   (assoc eid :additional-costs additional-costs :source card :source-type :corp-score))
-                              nil cost 0)
+                                                   (assoc eid :additional-costs cost :source card :source-type :corp-score))
+                              nil cost)
                          (let [payment-result async-result]
                            (if (string/blank? (:msg payment-result))
                              (effect-completed state side eid)

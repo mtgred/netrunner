@@ -6,7 +6,6 @@
     [game.core.toasts :refer [toast]]
     [game.macros :refer [when-let*]]
     [game.utils :refer [pluralize side-str]]
-    [jinteki.utils :refer [other-side]]
     [medley.core :refer [find-first]]))
 
 (defn choice-parser

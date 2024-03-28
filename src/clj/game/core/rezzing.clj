@@ -10,7 +10,7 @@
     [game.core.ice :refer [update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.moving :refer [trash-cards]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
     [game.core.runs :refer [continue]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.toasts :refer [toast]]
@@ -23,13 +23,13 @@
   [state side card {:keys [ignore-cost alternative-cost cost-bonus]}]
   (merge-costs
     (cond
-      (= :all-costs ignore-cost) [:credit 0]
+      (= :all-costs ignore-cost) [(->c :credit 0)]
       alternative-cost alternative-cost
       :else (let [cost (rez-cost state side card {:cost-bonus cost-bonus})
-                  additional-costs (rez-additional-cost-bonus state side card (when ignore-cost #(not (= :credit (first %)))))]
+                  additional-costs (rez-additional-cost-bonus state side card (when ignore-cost #(not= :credit (:cost/type %))))]
               (concat
                 (when-not ignore-cost
-                  [:credit cost])
+                  [(->c :credit cost)])
                 (when (not (:disabled card))
                   additional-costs))))))
 

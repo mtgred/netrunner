@@ -52,7 +52,7 @@
 ; :req -- 5-fn
 ;   Must return true or false. If false, the ability will not be resolved.
 ; :cost -- vector
-;   A vector of cost pairs to charge, for example [:credit 1 :click 1].
+;   A vector of ->c costs to charge, for example [(->c :credit 1) (->c :click 1)].
 ;   If the costs cannot be paid, the ability will not be resolved.
 ; :msg -- string or 5-fn.
 ;   Must return a string. (`msg` is expressly built for this.)
@@ -327,17 +327,21 @@
   currently doesn't work properly with `pay-counters`"
   [card cost]
   ;; TODO: Remove me some day
-  (let [[counter-type counter-amount]
+  (let [counter-costs
         (->> cost
-             (remove map?)
-             merge-costs
-             (filter #(some #{:advancement :agenda :power :virus :bad-publicity} %))
-             first)]
-    (if counter-type
-      (let [counter (if (= :advancement counter-type)
-                      [:advance-counter]
-                      [:counter counter-type])]
-        (update-in card counter - counter-amount))
+             (merge-costs)
+             (filter #(#{:advancement :agenda :power :virus :bad-publicity} (:cost/type %)))
+             (seq))]
+    (if counter-costs
+      (reduce
+        (fn [card {counter-type :cost/type
+                   counter-amount :cost/amount}]
+          (let [counter (if (= :advancement counter-type)
+                          [:advance-counter]
+                          [:counter counter-type])]
+            (update-in card counter - counter-amount)))
+        card
+        counter-costs)
       card)))
 
 (defn merge-costs-paid
@@ -345,8 +349,8 @@
    (into {} (map (fn [[k {:keys [type value targets]}]]
                    [k {:type type
                        :value value
-                       :targets targets}])
-                 cost-paid)))
+                       :targets targets}]))
+         cost-paid))
   ([cost-paid1 cost-paid2]
    (let [costs-paid [cost-paid1 cost-paid2]
          cost-keys (mapcat keys costs-paid)]
@@ -1145,9 +1149,11 @@
   "Same as pay, but awaitable."
   [state side eid card & args]
   (let [args (flatten args)
-        raw-costs (remove map? args)
-        actions (filter map? args)
+        raw-costs (filter :cost/type args)
+        actions (remove :cost/type args)
         costs (can-pay? state side eid card (:title card) raw-costs)]
+    (when (some keyword? args)
+      (throw (ex-info "Please convert to wrapped cost" {:args args})))
     (if (nil? costs)
       (complete-with-result state side eid nil)
       (wait-for (pay-next state side (make-eid state eid) costs card actions [])
