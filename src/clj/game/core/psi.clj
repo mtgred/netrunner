@@ -9,7 +9,8 @@
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability effect wait-for]]
     [jinteki.utils :refer [str->int]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [game.core.payment :refer [->c]]))
 
 (defn- resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
@@ -19,10 +20,10 @@
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (wait-for
-        (pay state opponent (make-eid state eid) card [:credit opponent-bet])
+        (pay state opponent (make-eid state eid) card [(->c :credit opponent-bet)])
         (system-msg state opponent (:msg async-result))
         (wait-for
-          (pay state side (make-eid state eid) card [:credit bet])
+          (pay state side (make-eid state eid) card (->c :credit bet))
           (system-msg state side (:msg async-result))
           (clear-wait-prompt state opponent)
           (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))

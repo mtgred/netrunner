@@ -7,15 +7,15 @@
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects get-effects register-lingering-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
-    [game.core.flags :refer [card-flag?]]
-    [game.core.payment :refer [build-cost-label can-pay? merge-costs]]
+    [game.core.payment :refer [build-cost-label can-pay? merge-costs ->c stealth-value]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [req effect msg continue-ability wait-for]]
     [game.utils :refer [same-card? pluralize quantify remove-once]]
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]
-    [clojure.set :as set]))
+    [clojure.set :as set]
+    [medley.core :refer [find-first]]))
 
 ;; These should be in runs.clj, but `req` needs get-current-ice and
 ;; moving.clj needs set-current-ice
@@ -546,13 +546,17 @@
                                                                 card ice))
                            message (when (seq broken-subs)
                                      (break-subroutines-msg ice broken-subs breaker args))]
-                       (wait-for (pay state side (make-eid state {:source card :source-info {:ability-idx (:ability-idx args) }  :source-type :ability}) card total-cost)
+                       (wait-for (pay state side (make-eid state {:source card
+                                                                  :source-info {:ability-idx (:ability-idx args)}
+                                                                  :source-type :ability})
+                                      card total-cost)
                                  (if-let [payment-str (:msg async-result)]
                                    (do (when (not (string/blank? message))
                                          (system-msg state :runner (str payment-str " to " message)))
                                        (doseq [sub broken-subs]
                                          (break-subroutine! state (get-card state ice) sub breaker)
-                                         (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                                         (resolve-ability state side (make-eid state {:source card
+                                                                                      :source-type :ability})
                                                           (:additional-ability args)
                                                           card nil))
                                        (let [ice (get-card state ice)
@@ -573,6 +577,12 @@
                                                (effect-completed state side eid))))))
                                    (effect-completed state side eid))))))})))
 
+(defn add-stealth-to-label [cost]
+  (when-let [cost (find-first #(= :credit (:cost/type %)) (flatten [cost]))]
+    (let [stealth (stealth-value cost)]
+      (when (pos? stealth)
+        (str " (using at least " stealth " stealth [Credits])")))))
+
 (defn break-sub
   "Creates a break subroutine ability.
 
@@ -589,7 +599,7 @@
   ([cost n] (break-sub cost n nil nil))
   ([cost n subtypes] (break-sub cost n subtypes nil))
   ([cost n subtypes args]
-   (let [cost (if (number? cost) [:credit cost] cost)
+   (let [cost (if (number? cost) [(->c :credit cost)] cost)
          subtypes (cond (string? subtypes) #{subtypes}
                         (set? subtypes) subtypes
                         :else #{"All"})
@@ -607,7 +617,7 @@
                              (<= (get-strength current-ice) (get-strength card))
                              true))]
      (merge
-       (when (some #(= :trash-can (first %)) (merge-costs cost))
+       (when (some #(= :trash-can (:cost/type %)) (merge-costs cost))
          {:trash-icon true})
        {:async true
         :req (req (and (break-req state side eid card targets)
@@ -626,7 +636,8 @@
                              (if (pos? n) n "any number of")
                              (when-not (= #{"All"} subtypes)
                                (str " " (string/join " or " (sort subtypes))))
-                             (pluralize " subroutine" n))))
+                             (pluralize " subroutine" n)
+                             (add-stealth-to-label cost))))
         :effect (effect (continue-ability
                           (let [n (if (fn? n)
                                     (n state side (assoc eid :source-type :ability) card nil)
@@ -643,11 +654,11 @@
 
 (defn strength-pump
   "Creates a strength pump ability.
-  Cost can be a credit amount or a list of costs e.g. [:credit 2]."
+  Cost can be a credit amount or a list of costs e.g. [(->c :credit 2)]."
   ([cost strength] (strength-pump cost strength :end-of-encounter nil))
   ([cost strength duration] (strength-pump cost strength duration nil))
   ([cost strength duration args]
-   (let [cost (if (number? cost) [:credit cost] cost)
+   (let [cost (if (number? cost) (->c :credit cost) cost)
          duration-string (cond
                            (= duration :end-of-run)
                            " for the remainder of the run"
@@ -655,11 +666,12 @@
                            " for the remainder of the turn")]
      {:label (str (or (:label args)
                       (str "add " strength " strength"
-                           duration-string)))
+                           duration-string
+                           (add-stealth-to-label cost))))
       :req (req (if-let [str-req (:req args)]
                   (str-req state side eid card targets)
                   true))
-      :cost cost
+      :cost [cost]
       :cost-req (:cost-req args)
       :pump strength
       :pump-bonus (:pump-bonus args)

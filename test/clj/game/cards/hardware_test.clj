@@ -427,7 +427,7 @@
       (run-jack-out state)
       (is (= "Autoscripter" (:title (last (:discard (get-runner))))) "Autoscripter was trashed after successful run"))))
 
-(deftest basilar-synth
+[(deftest basilar-synth
   (do-game
     (new-game {:runner {:hand ["Basilar Synthgland 2KVJ" (qty "Sure Gamble" 4)]}})
     (take-credits state :corp)
@@ -437,7 +437,7 @@
     (is (= 3 (:click (get-runner))))
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (= 5 (:click (get-runner))) "4+1  base clicks")))
+    (is (= 5 (:click (get-runner))) "4+1  base clicks")))]
 
 (deftest blackguard
   ;; Blackguard - +2 MU, forced rez of exposed ice
@@ -1761,13 +1761,15 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Dorm Computer")
     (let [dorm (get-hardware state 0)]
-      (card-ability state :runner dorm 0)
-      (click-prompt state :runner "Server 1")
-      (run-continue state)
-      (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Snare!")
-      (click-prompt state :corp "Yes")
-      (is (zero? (count-tags state)) "Runner has 0 tags")
-      (is (= 3 (get-counters (refresh dorm) :power))))))
+      (is (changed? [(count-tags state) 0
+                     (get-counters (refresh dorm) :power) -1]
+            (card-ability state :runner dorm 0)
+            (click-prompt state :runner "Server 1")
+            (run-continue state)
+            (is (= "Snare!" (:title (:card (prompt-map :corp)))))
+            (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Snare!")
+            (click-prompt state :corp "Yes"))
+          "No tags, spent a power counter"))))
 
 (deftest dyson-fractal-generator-pay-credits-prompt
     ;; Pay-credits prompt

@@ -11,7 +11,7 @@
     [game.core.finding :refer [find-cid]]
     [game.core.flags :refer [can-access? can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs]]
+    [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs ->c]]
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [get-server-type name-zone zone->name]]
@@ -87,7 +87,7 @@
             ; Runner cannot trash (eg Trebuchet)
             can-trash (can-trash? state side c)
             can-pay (when trash-cost
-                      (can-pay? state :runner trash-eid card nil [:credit trash-cost]))
+                      (can-pay? state :runner trash-eid card nil [(->c :credit trash-cost)]))
             trash-cost-str (when can-pay
                              [(str "Pay " trash-cost " [Credits] to trash")])
             ; Is the runner is forced to trash this card with only credits? (NAT)
@@ -128,7 +128,7 @@
 
                           ; Pay credits (from pool or cards) to trash
                           (= target (first trash-cost-str))
-                          (wait-for (pay state side (make-eid state trash-eid) card [:credit trash-cost])
+                          (wait-for (pay state side (make-eid state trash-eid) card [(->c :credit trash-cost)])
                                     (when (:breach @state)
                                       (swap! state assoc-in [:breach :did-trash] true))
                                     (when (:run @state)
@@ -162,7 +162,7 @@
 ;;; Stealing agendas
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
-  for example [:credit 2 :click 1]."
+  for example [(->c :credit 2) (->c :click 1)]."
   ([state _ costs] (steal-cost-bonus state nil costs nil))
   ([state _ costs source]
     (swap! state update-in [:bonus :steal-cost] #(conj % [costs source]))))
@@ -205,10 +205,9 @@
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid card]
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
-  (let [additional-costs (steal-cost state side eid card)
-        cost (merge-costs (mapv first additional-costs))
+  (let [cost (merge-costs (steal-cost state side eid card))
         cost-strs (build-cost-string cost)
-        can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) card (:title card) cost)
+        can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs cost)) card (:title card) cost)
         can-steal (can-steal? state side card)
         ; Access abilities are useless in the discard
         access-ab-cards (when-not (in-discard? card)
@@ -248,7 +247,9 @@
                       ;; Pay additiional costs to steal
                       (= target "Pay to steal")
                       (wait-for (pay state side (make-eid state
-                                                  (assoc eid :additional-costs additional-costs :source card :source-type :runner-steal))
+                                                  (assoc eid :additional-costs cost
+                                                         :source card
+                                                         :source-type :runner-steal))
                                   nil cost {:action :steal-cost})
                                 (system-msg state side (str (:msg async-result) " to steal "
                                                             (:title card) " from "
@@ -324,13 +325,13 @@
   "Effect for triggering ambush on access.
   Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
   ([cost ability]
-   (let [ab (if (pos? cost) (assoc ability :cost [:credit cost]) ability)
+   (let [ab (if (pos? cost) (assoc ability :cost [(->c :credit cost)]) ability)
          prompt (if (pos? cost)
                   (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
                   (req (str "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
-   (let [cost (if (number? cost) [:credit cost] cost)]
+   (let [cost (if (number? cost) [(->c :credit cost)] cost)]
      {:on-access
       {:optional
        {:req (req (and installed (can-pay? state :corp eid card nil cost)))
@@ -369,7 +370,7 @@
 
 (defn access-cost-bonus
   "Applies a cost to the next access. costs can be a vector of [:key value] pairs,
-  for example [:credit 2 :click 1]."
+  for example [(->c :credit 2) (->c :click 1)]."
   [state _ costs]
   (swap! state update-in [:bonus :access-cost] #(merge-costs (concat % costs))))
 

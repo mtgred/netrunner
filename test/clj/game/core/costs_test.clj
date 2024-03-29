@@ -2,46 +2,48 @@
   (:require
    [clojure.test :refer :all]
    [game.core :as core]
-   [game.test-framework :refer :all]))
+   [game.test-framework :refer :all]
+   [game.core.payment :refer [->c]]
+   [clojure.string :as str]))
 
 (deftest merge-costs
   (testing "Non-damage costs"
     (testing "No defaults, already merged"
-      (is (= [[:credit 1]] (core/merge-costs [[:credit 1]]))))
+      (is (= [(->c :credit 1)] (core/merge-costs [[(->c :credit 1)]]))))
     (testing "Costs are already flattened"
-      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:credit 1 :click 1]]))))
+      (is (= [(->c :click 1) (->c :credit 1)] (core/merge-costs [[(->c :credit 1) (->c :click 1)]]))))
     (testing "Passed as a flattened vec"
-      (is (= [[:credit 1]] (core/merge-costs [:credit 1]))))
+      (is (= [(->c :credit 1)] (core/merge-costs [(->c :credit 1)]))))
     (testing "Default type is only element"
-      (is (= [[:credit 1]] (core/merge-costs [[:credit]]))))
+      (is (= [(->c :credit 1)] (core/merge-costs [[(->c :credit)]]))))
     (testing "Default plus explicit"
-      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:click :credit 1]]))))
+      (is (= [(->c :click 1) (->c :credit 1)] (core/merge-costs [(->c :click) (->c :credit 1)]))))
     (testing "Costs ending with defaults expand"
-      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:credit 1 :click]]))))
+      (is (= [(->c :click 1) (->c :credit 1)] (core/merge-costs [[(->c :credit 1) (->c :click)]]))))
     (testing "Non-damage costs aren't reordered"
-      (is (not= [[:credit 1] [:click 1]] (core/merge-costs [[:click 1 :credit 1]]))))
+      (is (not= [(->c :credit 1) (->c :click 1)] (core/merge-costs [[(->c :click 1) (->c :credit 1)]]))))
     (testing "Costs with all defaults are expanded"
-      (is (= [[:click 1] [:credit 1]] (core/merge-costs [[:click :credit]]))))
+      (is (= [(->c :click 1) (->c :credit 1)] (core/merge-costs [(->c :click) (->c :credit)]))))
     (testing "Non-damage costs are combined"
-      (is (= [[:click 4] [:credit 2]]
-             (core/merge-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))))
+      (is (= [(->c :click 4) (->c :credit 2)]
+             (core/merge-costs [(->c :click 1) [(->c :click 3)] (->c :credit 1) (->c :credit 1)]))))
     (testing "Deeply nested costs are flattened"
-      (is (= [[:click 3]] (core/merge-costs [[[[[:click 1]]] [[[[[:click 1]]]]]] :click 1]))))
+      (is (= [(->c :click 3)] (core/merge-costs [[[[[(->c :click 1)]]] [[[[[(->c :click 1)]]]]]] (->c :click 1)]))))
     (testing "Empty costs return an empty list"
       (is (= '() (core/merge-costs []))))
     (testing "nil costs return an empty list"
       (is (= '() (core/merge-costs nil))))
     (testing "Stealth credits are totaled correctly"
-      (is (= [[:credit 5 2]]
-             (core/merge-costs [[:credit 3 1] [:credit 2 1]])))))
+      (is (= [(->c :credit 5 {:stealth 2})]
+             (core/merge-costs [(->c :credit 3 {:stealth 1}) (->c :credit 2 {:stealth 1})])))))
   (testing "Damage costs"
     (testing "Damage costs are moved to the end"
-      (is (= [[:credit 1] [:net 1]] (core/merge-costs [[:net 1 :credit 1]]))))
+      (is (= [(->c :credit 1) (->c :net 1)] (core/merge-costs [(->c :net 1) (->c :credit 1)]))))
     (testing "Damage is combined"
-      (is (= [[:net 2]] (core/merge-costs [[:net 1 :net 1]]))))
+      (is (= [(->c :net 2)] (core/merge-costs [[(->c :net 1) (->c :net 1)]]))))
     (testing "Net, meat, and core damage are recognized"
-      (is (= [[:net 1] [:meat 1] [:brain 1]]
-             (core/merge-costs [[:net 1] [:meat 1] [:brain 1]]))))))
+      (is (= [(->c :net 1) (->c :meat 1) (->c :brain 1)]
+             (core/merge-costs [(->c :net 1) (->c :meat 1) (->c :brain 1)]))))))
 
 (deftest pay-credits
   (testing "Testing several cost messages"
@@ -94,8 +96,7 @@
       (run-on state :hq)
       (let [cre (:credit (get-runner))
             cor (get-program state 0)
-            clo (get-program state 1)
-            nm (get-resource state 0)]
+            clo (get-program state 1)]
         (is (= 2 (get-strength (refresh cor))) "Corroder starts at 2 strength")
         (auto-pump state (refresh cor))
         (click-card state :runner clo)
@@ -174,7 +175,7 @@
         (rez state :corp engine)
         (run-continue state)
         (auto-pump state (refresh hou))
-        (is (clojure.string/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
+        (is (str/includes? (:msg (prompt-map :runner)) "2 stealth") "The prompt tells us how many stealth credits we need")
         (click-card state :runner mantle1)
         (click-card state :runner mantle2)
         (is (= 10 (get-strength (refresh hou))) "Houdini is at 10 strength")

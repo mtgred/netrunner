@@ -4,28 +4,29 @@
    [game.core :as core]
    [game.core.card :refer :all]
    [game.core.rezzing :as rezzing]
-   [game.test-framework :refer :all]))
+   [game.test-framework :refer :all]
+   [game.core.payment :refer [->c]]))
 
 (deftest get-rez-cost-test
   (before-each [state (new-game)
                 card {:title "No match" :cost 5}]
     (testing "ignoring all costs"
-      (is (= [[:credit 0]] (rezzing/get-rez-cost state nil nil {:ignore-cost :all-costs}))))
+      (is (= [(->c :credit 0)] (rezzing/get-rez-cost state nil nil {:ignore-cost :all-costs}))))
     (testing "as an alternative cost"
-      (is (= [[:click 1]] (rezzing/get-rez-cost state nil nil {:alternative-cost [:click 1]}))))
+      (is (= [(->c :click 1)] (rezzing/get-rez-cost state nil nil {:alternative-cost [(->c :click 1)]}))))
     (testing "base cost"
-      (is (= [[:credit 5]] (rezzing/get-rez-cost state nil card nil))))
+      (is (= [(->c :credit 5)] (rezzing/get-rez-cost state nil card nil))))
     (testing "ignoring cost"
       (is (= () (rezzing/get-rez-cost state nil card {:ignore-cost true})))))
   (before-each [state (new-game)
-                card {:title "No match" :cost 5 :additional-cost [:trash-can]}]
+                card {:title "No match" :cost 5 :additional-cost [(->c :trash-can)]}]
     (testing "ignoring cost with additional costs"
-      (is (= [[:trash-can 1]] (rezzing/get-rez-cost state nil card {:ignore-cost true}))))
+      (is (= [(->c :trash-can 1)] (rezzing/get-rez-cost state nil card {:ignore-cost true}))))
     (testing "with additional costs"
-      (is (= [[:credit 5] [:trash-can 1]] (rezzing/get-rez-cost state nil card nil))))
+      (is (= [(->c :credit 5) (->c :trash-can 1)] (rezzing/get-rez-cost state nil card nil))))
     (testing "with additional costs and card disabled"
       (let [card (assoc card :disabled true)]
-        (is (= [[:credit 5]] (rezzing/get-rez-cost state nil card nil)))))))
+        (is (= [(->c :credit 5)] (rezzing/get-rez-cost state nil card nil)))))))
 
 (deftest simultaneous-rez-test
   (do-game
