@@ -615,3 +615,45 @@
               (assoc (bad-pub-changed) :event :corp-lose-bad-publicity)]
      :leave-play (req (when (pos? (count-bad-pub state))
                         (conceal-hand state :corp)))}))
+
+(defcard "Victory Missile"
+  ;; To play this card, you must discard three cards with the word tag in their text.
+  ;; Do 3 meat damage. If you flatline your opponent by doing meat damage with this card,
+  ;; you win the match.
+  (letfn [(valid-card-fn [c]
+            (let [s-card (server-card (:title c))]
+              (and (in-hand? c)
+                   (corp? c)
+                   (str/includes? (str/lower-case (:text s-card)) "tag"))))]
+    {:on-play {:req (req (<= 3 (count (filter #(and (not (same-card? % card))
+                                                    (valid-card-fn %))
+                                              (:hand corp)))))
+               :async true
+               :prompt "Choose three cards with the word 'tag' in their text"
+               :choices {:max 3
+                         :all true
+                         :req (req (and (not (same-card? target card))
+                                        (in-hand? target)
+                                        (corp? target)
+                                        (valid-card-fn target)))}
+               :msg (msg "discard " (str/join ", " (map :title targets)) " to deal 3 meat damage")
+               :effect (req (wait-for (trash-cards state :corp
+                                                   (map #(assoc % :seen true) targets)
+                                                   {:unpreventable true :cause-card card})
+                                      (damage state :corp eid :meat 3)))}}))
+
+(defcard "Intellectual Property"
+  ;; When scored, add an installed icebreaker to your score area as an agenda
+  ;; worth points equal to it's printed strength.
+  ;; This agenda is worth 1
+  ;; additional agenda point in the Runner's score area.
+  {:agendapoints-runner (req 1)
+   :on-score {:req (req (seq (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
+              :waiting-prompt true
+              :prompt "Choose an icebreaker to score"
+              :choices {:card #(and (installed? %)
+                                    (program? %)
+                                    (has-subtype? % "Icebreaker"))
+                        :all true}
+              :msg (msg "add " (:title target) " to their score area as an agenda worth " (:strength target))
+              :effect (req (as-agenda state :corp target (:strength target)))}})
