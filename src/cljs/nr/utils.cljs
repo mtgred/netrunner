@@ -121,6 +121,7 @@
 
 (def slug->format
   {"standard" "Standard"
+   "standard-plus" "Standard Plus"
    "system-gateway" "System Gateway"
    "startup" "Startup"
    "sunset" "Sunset"
@@ -132,6 +133,7 @@
 
 (def format->slug
   {"Standard" "standard"
+   "Standard Plus" "standard-plus"
    "System Gateway" "system-gateway"
    "Startup" "startup"
    "Sunset" "sunset"

@@ -12,6 +12,7 @@
   "Loading visible formats from localStorage. Accounting for the fact that js->clj doesn't handle sets"
   []
   (let [default-visible-formats #{"standard"
+                                  "standard-plus"
                                   "system-gateway"
                                   "startup"
                                   "sunset"

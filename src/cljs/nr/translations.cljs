@@ -31,6 +31,7 @@
     {:all "All"
      :any-format "Any Format"
      :standard "Standard"
+     :standard-plus "Standard+"
      :eternal "Eternal"
      :core-experience "Core Experience"
      :snapshot "Snapshot"
@@ -474,6 +475,7 @@
      :classic "Classico"
      :casual "Casual"
      :system-gateway "System Gateway"
+     :standard-plus "Standard+"
      :startup "Startup"}
     :card-type
     {:all "Todos"
@@ -1303,6 +1305,7 @@
      :classic "Assicclay"
      :casual "Asualcay"
      :system-gateway "Emsystay Atewaygay"
+     :standard-plus "Standard+"
      :startup "Artupstay"}
     :card-type
     {:all "Allyay"
@@ -1712,6 +1715,7 @@
      :classic "Classic"
      :casual "Casual"
      :system-gateway "System Gateway"
+     :standard-plus "Standard+"
      :startup "Startup"}
     :card-type
     {:all "Tous"
@@ -2548,6 +2552,7 @@
      :classic "Classic"
      :casual "Niekompetytywny"
      :system-gateway "Wejście do Systemu"
+     :standard-plus "Standard+"
      :startup "Startup"}
     :card-type
     {:all "Wszystkie"
@@ -2980,6 +2985,7 @@
      :classic "Classic"
      :casual "Casual"
      :system-gateway "システムゲートウェイ"
+     :standard-plus "Standard+"
      :startup "スタートアップ"}
     :card-type
     {:all "全部"

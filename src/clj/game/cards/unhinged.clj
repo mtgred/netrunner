@@ -175,7 +175,6 @@
                                           (effect-completed state side eid))))))})]
     {:on-play (reveal-fn)}))
 
-
 (defcard "You have three cards"
   ;;
   {:events [
@@ -379,7 +378,7 @@
                :msg (msg "lose all clicks, gain 1 credit, and take 10 actions at random")
                :async true
                :effect (req (lose-clicks state side 15)
-                            (wait-for (gain-credits state side card 1)
+                            (wait-for (gain-credits state side 1)
                                       (continue-ability state side (choose-an-action 10) (get-card state card) nil)))}]}))
 
 
@@ -472,6 +471,7 @@
   ;; When you rez this ice during a run, you may swap it with another rezzed ice. If
   ;; you do, derez this ice, and the runner is now encountering that ice.
   {:on-rez {:req (req run)
+            :async true
             :choices {:req (req (and (ice? target)
                                      (rezzed? target)
                                      (not (same-card? card target))))}
@@ -480,22 +480,16 @@
                       ", force the runner to encounter it, and derez Mirror Trap")
             :effect (req (let [this card
                                that (get-card state target)]
-                           ;;(when-not (= (second (get-zone this)) (second (get-zone that)))
-                           ;;  (redirect-run state side (second (get-zone state this)) :encounter-ice\
-))
                            (wait-for (encounter-ends state side)
                                      (swap! state update-in [:run]
-                                            #(assoc % :position (inc (:index this)) :server [(second \
-(get-zone this))]))
+                                            #(assoc % :position (inc (:index this)) :server [(second (get-zone this))]))
                                      (swap-ice state side this that)
                                      (set-next-phase state :encounter-ice)
                                      (update-all-ice state side)
                                      (update-all-icebreakers state side)
                                      (start-next-phase state side eid)
-                                     (effect-completed state side eid))))
-            :async true}
-   :subroutines [(assoc (end-the-run-unless-runner-pays [:credit 1]) :label " [credit] Ɩ ƨγɒq ɿɘnnυɿ \
-ɘʜɈ ƨƨɘlnυ nυɿ ɘʜɈ bnƎ")]})
+                                     (effect-completed state side eid))))}
+   :subroutines [(assoc (end-the-run-unless-runner-pays [:credit 1]) :label " [credit] Ɩ ƨγɒq ɿɘnnυɿ ɘʜɈ ƨƨɘlnυ nυɿ ɘʜɈ bnƎ")]})
 
 (defcard "Longsort"
   ;; Choose one:
@@ -594,3 +588,30 @@
     {:events [(assoc nasol :event :agenda-scored)
               (assoc nasol :event :agenda-stolen)
               (assoc nasol :event :run-ends :req (req (first-event? state side :run-ends)))]}))
+
+(defcard "Sandra Harish"
+  ;; If the Corp has 1 or more bad publicity, they play HQ revealed.
+  (letfn [(bad-pub-changed []
+            {:effect (req (if (pos? (count-bad-pub state))
+                            (when-not (get-in @state [:corp :openhand])
+                              (system-msg state :runner (str "uses " (get-title card) " make the Corporation play with their grip revealed"))
+                              (system-msg state :runner (str "uses " (get-title card) " to see that the Corporation currently has "
+                                                           (format-grip corp) " in HQ"))
+                              (reveal-hand state :corp))
+                            (when (get-in @state [:corp :openhand])
+                              (system-msg state :runner (str "uses " (get-title card) " stop making the Corporation play with their grip revealed"))
+                              (system-msg state :runner (str "uses " (get-title card) " to see that the Corporation had "
+                                                           (format-grip corp) " in HQ before it was concealed"))
+                              (conceal-hand state :corp))))})
+          (format-grip [corp]
+            (if (pos? (count (:hand corp)))
+              (enumerate-str (map :title (sort-by :title (:hand corp))))
+              "no cards"))]
+    {:events [{:event :post-corp-draw
+               :req (req (pos? (count-bad-pub state)))
+               :msg (msg "see that the Corp drew: "
+                         (enumerate-str (map :title corp-currently-drawing)))}
+              (assoc (bad-pub-changed) :event :corp-gain-bad-publicity)
+              (assoc (bad-pub-changed) :event :corp-lose-bad-publicity)]
+     :leave-play (req (when (pos? (count-bad-pub state))
+                        (conceal-hand state :corp)))}))
