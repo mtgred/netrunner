@@ -93,6 +93,7 @@
         amts (take-nth 2 (drop 1 bindings))
         init-binds (repeatedly gensym)
         end-binds (repeatedly gensym)
+        msg (if msg (str msg "\n") "")
         pairs (mapv vector
                     amts
                     (map #(list `quote %) exprs)
@@ -108,12 +109,11 @@
            {:type (if (= actual-change# amt#) :pass :changed-fail)
             :expected amt#
             :actual actual-change#
-            :message (format "%s\n%s => (%s to %s)" ~msg expr# init# end#)})))))
+            :message (format "%s%s => (%s to %s)" ~msg expr# init# end#)})))))
 
 (defn report-failed-change [m]
   (t/with-test-out
-    (println (str "\n" (k.output/colored :red "FAIL")
-                  " in " (t/testing-vars-str m)))
+    (println (str "\nFAIL in " (t/testing-vars-str m)))
     (when (seq t/*testing-contexts*)
       (println (t/testing-contexts-str)))
     (when-let [message (:message m)] 

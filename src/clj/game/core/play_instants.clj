@@ -10,7 +10,7 @@
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [wait-for]]
@@ -84,14 +84,14 @@
             additional-costs (play-additional-cost-bonus state side card)
             costs (merge-costs
                     [(when-not ignore-cost
-                       [base-cost [:credit cost]])
+                       [base-cost (->c :credit cost)])
                      (when (and (has-subtype? card "Triple")
                                 (not no-additional-cost))
-                       [:click 2])
+                       (->c :click 2))
                      (when (and (has-subtype? card "Double")
                                 (not no-additional-cost)
                                 (not (get-in @state [side :register :double-ignore-additional])))
-                       [:click 1])
+                       (->c :click 1))
                      (when-not (or no-additional-cost ignore-cost)
                        [additional-costs])])]
         costs)))

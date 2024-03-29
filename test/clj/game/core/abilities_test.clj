@@ -59,7 +59,7 @@
   (doseq [card (->> (vals @all-cards)
                     (filter #(re-find #"(?i)\[trash\].*:" (:text % ""))))
           :when (not-empty (card-def card))]
-    (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [:trash-can] or :trash-icon true"))))
+    (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [(->c :trash-can)] or :trash-icon true"))))
 
 (deftest label
   (doseq [[title abilities]

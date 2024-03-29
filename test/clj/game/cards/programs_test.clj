@@ -4,7 +4,8 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
-   [game.macros :refer [req]]
+   [game.core.cost-fns :refer [card-ability-cost]]
+   [game.core.payment :refer [->c]]
    [game.test-framework :refer :all]
    [game.utils :as utils]))
 
@@ -891,7 +892,26 @@
       (run-continue state)
       (is (no-prompt? state :runner) "Black Orchestra prompt did not come up")))
 
-(deftest ^:kaocha/pending boi-tata
+(deftest blackstone-pay-credits-prompt
+  ;; Pay-credits prompt
+  (do-game
+    (new-game {:runner {:deck ["Cloak" "Blackstone"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cloak")
+    (play-from-hand state :runner "Blackstone")
+    (let [cl (get-program state 0)
+          bs (get-program state 1)]
+      (is (= ["Break 1 Barrier subroutine"
+              "Add 4 strength for the remainder of the run (using at least 1 stealth [Credits])"]
+             (mapv :label (:abilities bs))))
+      (is (changed? [(:credit (get-runner)) -2
+                     (get-strength (refresh bs)) 4]
+                    (card-ability state :runner bs 1)
+                    (click-card state :runner cl))
+          "Used 1 credit from Cloak"))))
+
+(deftest boi-tata
   (do-game
     (new-game {:corp {:credits 6 :deck ["Ansel 1.0"] }
                :runner {:credits 15
@@ -904,11 +924,16 @@
     (run-on state "HQ")
     (run-continue state)
     (let [boi (get-program state 0)]
-      (is (= [[:credit 7]] (:cost (first (take-last 2 (:abilities (refresh boi))))))
-          "3 to boost 2 + 2 to fully break Ansel 1.0")
+      (is (= [(->c :credit 3)] (card-ability-cost
+                                 state :runner
+                                 (second (:abilities (refresh boi)))
+                                 (refresh boi))))
       (card-ability state :runner (get-resource state 0) 0)
-      (is (= [[:credit 4]] (:cost (first (take-last 2 (:abilities (refresh boi))))))
-          "2 to boost 1 + 1 to fully break Ansel 1.0"))))
+      (is (= [(->c :credit 2)] (card-ability-cost
+                                 state :runner
+                                 (second (:abilities (refresh boi)))
+                                 (refresh boi)))
+          "Cost reduction from trash"))))
 
 (deftest botulus
   ;; Botulus
@@ -3425,16 +3450,16 @@
         "Corp purges and trashes 2 random cards from HQ and Heliamphora")))
 
 (deftest houdini-must-use-a-single-stealth-credit-to-pump
-    ;; Must use a single stealth credit to pump
-    (do-game (new-game {:runner {:deck ["Houdini" "Cloak"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Houdini")
-      (play-from-hand state :runner "Cloak")
-      (let [houdini (get-program state 0) cloak (get-program state 1)]
-        (is (changed? [(get-strength (refresh houdini)) 4]
-              (card-ability state :runner houdini 1)
-              (click-card state :runner cloak))
-            "Houdini gains strength"))))
+  ;; Must use a single stealth credit to pump
+  (do-game (new-game {:runner {:deck ["Houdini" "Cloak"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Houdini")
+    (play-from-hand state :runner "Cloak")
+    (let [houdini (get-program state 0) cloak (get-program state 1)]
+      (is (changed? [(get-strength (refresh houdini)) 4]
+            (card-ability state :runner houdini 1)
+            (click-card state :runner cloak))
+          "Houdini gains strength"))))
 
 (deftest houdini-can-t-pump-without-a-stealth-credit
     ;; Can't pump without a stealth credit
@@ -3442,12 +3467,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Houdini")
       (let [houdini (get-program state 0)]
-        (is (changed? [(:credit (get-runner)) 0]
+        (is (changed? [(:credit (get-runner)) 0
+                       (get-strength houdini) 0]
               (card-ability state :runner houdini 1))
-            "Runner has not been charged")
-        (is (changed? [(get-strength houdini) 0]
-              (card-ability state :runner houdini 1))
-            "Strength has not been changed"))))
+            "Runner has not been charged, strength hasn't changed"))))
 
 (deftest hyperbaric
   ;; Hyperbaric - I can't believe it's not Study Guide
@@ -4672,19 +4695,18 @@
       (let [face-up (fn [card] (count (filter #(not (:facedown %)) (:hosted (refresh card)))))
             face-down (fn [card] (count (filter #(:facedown %) (:hosted (refresh card)))))
             do-mat-run (fn [card up total]
-                         (do
-                           (is (= up (face-up mat)) (str up " face-up copies of Matryoshka"))
-                           (run-on state :hq)
-                           (run-continue state)
-                           (card-ability state :runner (refresh mat) 1)
-                           (click-prompt state :runner "1")
-                           (click-prompt state :runner "End the run")
-                           (is (= (- up 1) (face-up mat))
-                               (str (- up 1) " face-up copies of Matryoshka left"))
-                           (is (= (+ 1 (- total up)) (face-down mat))
-                               (str (+ 1 (- total up)) "face-down copies of Matryoshka"))
-                           (run-continue state)
-                           (run-continue state)))]
+                         (is (= up (face-up card)) (str up " face-up copies of Matryoshka"))
+                         (run-on state :hq)
+                         (run-continue state)
+                         (card-ability state :runner (refresh card) 1)
+                         (click-prompt state :runner "1")
+                         (click-prompt state :runner "End the run")
+                         (is (= (- up 1) (face-up card))
+                             (str (- up 1) " face-up copies of Matryoshka left"))
+                         (is (= (+ 1 (- total up)) (face-down card))
+                             (str (+ 1 (- total up)) "face-down copies of Matryoshka"))
+                         (run-continue state)
+                         (run-continue state))]
         (do-mat-run mat 4 4)
         (do-mat-run mat 3 4)
         (do-mat-run mat 2 4)
@@ -6491,7 +6513,7 @@
         (take-credits state :runner)
         (play-from-hand state :corp "Divert Power")
         (is (changed? [(:credit (get-runner)) 3]
-              (click-card state :corp (refresh magnet)))
+              (click-card state :corp magnet))
             "Gained 3 credits on derez"))))
 
 (deftest sadyojata-swap-ability
@@ -7282,6 +7304,26 @@
         (is (= ["Vanilla" "Ice Wall"] (map :title (get-ice state :hq)))
             "Vanilla is innermost, Ice Wall is outermost again")
         (is (= [0 1] (map :index (get-ice state :hq)))))))
+
+(deftest switchblade
+  ;; Switchblade
+  (do-game
+    (new-game {:runner {:deck ["Cloak" "Switchblade"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cloak")
+    (play-from-hand state :runner "Switchblade")
+    (let [cl (get-program state 0)
+          sb (get-program state 1)]
+      (is (= ["Break any number of Sentry subroutines (using at least 1 stealth [Credits])"
+              "Add 7 strength (using at least 1 stealth [Credits])"]
+             (mapv :label (:abilities sb))))
+      (is (changed? [(:credit (get-runner)) 0
+                     (get-counters (refresh cl) :recurring) -1
+                     (get-strength (refresh sb)) 7]
+                    (card-ability state :runner sb 1)
+                    (click-card state :runner cl))
+          "Used 1 credit from Cloak"))))
 
 (deftest takobi-1-counter-when-breaking-all-subs
     ;; +1 counter when breaking all subs
