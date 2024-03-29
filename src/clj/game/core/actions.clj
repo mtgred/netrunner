@@ -244,7 +244,6 @@
                  (sort-by #(-> % first :auto-pump-sort))
                  (apply min-key #(let [costs (second %)]
                                    (reduce (fnil + 0 0) 0 (keep :cost/amount costs)))))
-        cost-req (or (:cost-req pump-ability) identity)
         pump-strength (get-pump-strength state side pump-ability card)
         strength-diff (when (and current-ice
                                  (get-strength current-ice)
@@ -257,7 +256,7 @@
                      0)
         total-pump-cost (when (and pump-ability
                                    times-pump)
-                          (repeat times-pump (cost-req pump-cost)))]
+                          (repeat times-pump pump-cost))]
     (when (can-pay? state side eid card (:title card) total-pump-cost)
       (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [_ times-pump]
@@ -386,7 +385,6 @@
                    (sort-by #(-> % first :auto-pump-sort))
                    (apply min-key #(let [costs (second %)]
                                      (reduce (fnil + 0 0) 0 (mapv :cost/amount costs)))))
-          pump-cost-req (or (:cost-req pump-ability) identity)
           pump-strength (get-pump-strength state side pump-ability card)
           strength-diff (when (and current-ice
                                    (get-strength current-ice)
@@ -399,7 +397,7 @@
                        0)
           total-pump-cost (when (and pump-ability
                                      times-pump)
-                            (repeat times-pump (pump-cost-req [pump-cost])))
+                            (repeat times-pump pump-cost))
           ;; break all subs
           can-break (fn [ability]
                       (when (and (:break-req ability)
@@ -413,7 +411,6 @@
                    (sort-by #(-> % first :auto-break-sort))
                    (apply min-key #(let [costs (second %)]
                                      (reduce (fnil + 0 0) 0 (mapv :cost/amount costs)))))
-          break-cost-req (or (:cost-req break-ability) identity)
           subs-broken-at-once (when break-ability
                                 (:break break-ability 1))
           unbroken-subs (when (:subroutines current-ice)
@@ -426,7 +423,7 @@
                           1))
           total-break-cost (when (and break-cost
                                       times-break)
-                             (repeat times-break (break-cost-req [break-cost])))
+                             (repeat times-break break-cost))
           total-cost (merge-costs (conj total-pump-cost total-break-cost))]
       (when (and break-ability
                  (can-pay? state side eid card (:title card) total-cost))
