@@ -177,9 +177,11 @@
 
 (defcard "You have three cards"
   ;;
-  {:events [
-            {:event :post-corp-draw
-             :req (req (> (count (:hand corp)) 3))
+  {:events [{:event :post-corp-draw
+             :req (req (and (> (count (:hand corp)) 3)
+                            (not (get-in card [:special :trying-to-mulligan]))
+                            (:turn @state)
+                            (pos? (:turn @state))))
              :async true
              :effect (req (let [to-destroy (- (count (:hand corp)) 3)]
                             (continue-ability
@@ -196,7 +198,9 @@
                               card nil)))}
             {:event :card-moved
              :req (req (and (< (count (:hand corp)) 3)
-                            (= :hand (first (:previous-zone (second targets))))))
+                            (= :hand (first (:previous-zone (second targets))))
+                            (:turn @state)
+                            (pos? (:turn @state))))
              :msg (msg "draw a card")
              :effect (req (let [to-draw (- 3 (count (:hand corp)))]
                             (draw state :corp eid to-draw)))}]})
@@ -260,7 +264,7 @@
    :on-access {:req (req (pos? (get-counters (get-card state card) :advancement)))
                :msg (msg "remove " (str/join ", " (map :title (:hand runner)))
                          " in the Grip from the game and add " (count (:hand runner))
-                         " copies of infiltration to the grip")
+                         " copies of Infiltration to the grip")
                :effect (req (let [to-destroy (:hand runner)
                                   qty (count to-destroy)]
                               (doseq [c to-destroy]
