@@ -79,7 +79,7 @@
   [:section
    [:h3 (tr [:lobby.format "Format"])]
    [:select.format
-    {:value (or @fmt-state "standard-plus")
+    {:value (or @fmt-state "standard")
      :on-change #(reset! fmt-state (.. % -target -value))}
     (doall
       (for [[k v] slug->format]
@@ -196,7 +196,7 @@
 
 (defn create-new-game [lobby-state user]
   (r/with-let [state (r/atom {:flash-message ""
-                              :format (or (get-in @app-state [:options :default-format]) "standard-plus")
+                              :format (or (get-in @app-state [:options :default-format]) "standard")
                               :room (:room @lobby-state)
                               :side "Any Side"
                               :title (str (:username @user) "'s game")})
