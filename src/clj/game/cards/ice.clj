@@ -2666,15 +2666,11 @@
 (defcard "Lycian Multi-Munition"
   (letfn [(ice-subtype-choice [choices]
             {:prompt "Choose an ice subtype"
-             :waiting-prompt true
              :choices choices
              :async true
              :effect (req (if (= target "Done")
                             (effect-completed state side eid)
-                            (let [new-choices (->> choices
-                                                   (remove #{target})
-                                                   (cons "Done")
-                                                   distinct)]
+                            (let [new-choices (remove #{target} choices)]
                               ;; note this is a lingering ability and persists so
                               ;; long as the card is rezzed
                               ;; if the card is hushed, it will not derez, so the subtypes will stay!
@@ -2691,7 +2687,8 @@
                                 (ice-subtype-choice new-choices)
                                 card nil))))})]
     {:on-rez {:async true
-              :effect (effect (continue-ability (ice-subtype-choice ["Barrier" "Code Gate" "Sentry"]) card nil))}
+              :waiting-prompt true
+              :effect (effect (continue-ability (ice-subtype-choice ["Barrier" "Code Gate" "Sentry" "Done"]) card nil))}
      :derez-effect {:effect (req (unregister-effects-for-card state side card #(= :gain-subtype (:type %))))}
      :static-abilities [{:type :gain-subtype
                          :req (req (and (same-card? card target) (:subtype-target card)))

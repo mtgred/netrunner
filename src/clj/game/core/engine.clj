@@ -2,7 +2,6 @@
   (:require
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
-    [clojure.string :as str]
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
@@ -322,28 +321,6 @@
     (ability-effect state side eid card targets)
     (effect-completed state side eid)))
 
-(defn- ugly-counter-hack
-  "This is brought over from the old do-ability because using `get-card` or `find-latest`
-  currently doesn't work properly with `pay-counters`"
-  [card cost]
-  ;; TODO: Remove me some day
-  (let [counter-costs
-        (->> cost
-             (merge-costs)
-             (filter #(#{:advancement :agenda :power :virus :bad-publicity} (:cost/type %)))
-             (seq))]
-    (if counter-costs
-      (reduce
-        (fn [card {counter-type :cost/type
-                   counter-amount :cost/amount}]
-          (let [counter (if (= :advancement counter-type)
-                          [:advance-counter]
-                          [:counter counter-type])]
-            (update-in card counter - counter-amount)))
-        card
-        counter-costs)
-      card)))
-
 (defn merge-costs-paid
   ([cost-paid]
    (into {} (map (fn [[k {:keys [type value targets]}]]
@@ -365,15 +342,19 @@
   ([cost-paid1 cost-paid2 & costs-paid]
    (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
 
-(defn- do-paid-ability [state side {:keys [eid cost] :as ability} card targets async-result]
+(defn- do-paid-ability [state side {:keys [eid] :as ability} card targets async-result]
   (let [payment-str (:msg async-result)
         cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
-        ability (assoc-in ability [:eid :cost-paid] cost-paid)]
+        ability (assoc-in ability [:eid :cost-paid] cost-paid)
+        ;; After paying costs, counters will be removed, so fetch the latest version.
+        ;; We still want the card if the card is trashed, so default to given
+        ;; when the latest is gone.
+        card (or (get-card state card) card)]
     ;; Print the message
     (print-msg state side ability card targets payment-str)
     ;; Trigger the effect
     (register-once state side ability card)
-    (do-effect state side ability (ugly-counter-hack card cost) targets)
+    (do-effect state side ability card targets)
     ;; If the ability isn't async, complete it
     (when-not (:async ability)
       (effect-completed state side eid))))
