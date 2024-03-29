@@ -115,7 +115,7 @@
 
 (defn cost-targets
   [eid cost-type]
-  (get-in eid [:cost-paid cost-type :targets]))
+  (get-in eid [:cost-paid cost-type :paid/targets]))
 
 (defn cost-target
   [eid cost-type]
@@ -123,7 +123,7 @@
 
 (defn cost-value
   [eid cost-type]
-  (get-in eid [:cost-paid cost-type :value]))
+  (get-in eid [:cost-paid cost-type :paid/value]))
 
 ;; the function `pay` is defined in resolve-ability because they're all intermingled
 ;; fuck the restriction against circular dependencies, for real

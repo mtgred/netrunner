@@ -322,23 +322,17 @@
     (effect-completed state side eid)))
 
 (defn merge-costs-paid
-  ([cost-paid]
-   (into {} (map (fn [[k {:keys [type value targets]}]]
-                   [k {:type type
-                       :value value
-                       :targets targets}]))
-         cost-paid))
+  ([cost-paid] cost-paid)
   ([cost-paid1 cost-paid2]
-   (let [costs-paid [cost-paid1 cost-paid2]
-         cost-keys (mapcat keys costs-paid)]
+   (let [costs-paid (concat (vals cost-paid1) (vals cost-paid2))]
      (reduce (fn [acc cur]
-               (let [costs (map cur costs-paid)
-                     cost-obj {:type cur
-                               :value (apply + (keep :value costs))
-                               :targets (seq (apply concat (keep :targets costs)))}]
-                 (assoc acc cur cost-obj)))
+               (let [existing (get acc (:paid/type cur))
+                     cost-obj {:paid/type (:paid/type cur)
+                               :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
+                               :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
+                 (assoc acc (:paid/type cur) cost-obj)))
              {}
-             cost-keys)))
+             costs-paid)))
   ([cost-paid1 cost-paid2 & costs-paid]
    (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
 
@@ -1143,11 +1137,11 @@
                             (complete-with-result
                               state side eid
                               {:msg (->> payment-result
-                                         (keep :msg)
-                                         enumerate-str)
+                                         (keep :paid/msg)
+                                         (enumerate-str))
                                :cost-paid (->> payment-result
-                                               (keep #(not-empty (select-keys % [:type :targets :value])))
+                                               (keep #(not-empty (select-keys % [:paid/type :paid/targets :paid/value])))
                                                (reduce
-                                                 (fn [acc cost]
-                                                   (assoc acc (:type cost) cost))
+                                                 (fn [acc paid]
+                                                   (assoc acc (:paid/type paid) paid))
                                                  {}))})))))))

@@ -63,50 +63,48 @@
                (:order @state)))))))
 
 (deftest merge-costs-paid
-  (let [eid1 {:cost-paid {:click {:type :click
-                                  :value 3}
-                          :credit {:type :credit
-                                   :value 1}
-                          :forfeit {:type :forfeit
-                                    :targets [{:title "NAPD Contract"}]
-                                    :value 1}}}
-        eid2 {:cost-paid {:click {:type :click
-                                  :value 1}}}
-        eid3 {:cost-paid {:trash {:type :trash
-                                  :value 1
-                                  :targets [{:title "C.I. Fund"}]}}}]
-    (is (= {:click {:type :click
-                    :targets nil
-                    :value 3}
-            :credit {:type :credit
-                     :targets nil
-                     :value 1}
-            :forfeit {:type :forfeit
-                      :targets [{:title "NAPD Contract"}]
-                      :value 1}}
+  (let [eid1 {:cost-paid {:click {:paid/type :click
+                                  :paid/value 3}
+                          :credit {:paid/type :credit
+                                   :paid/value 1}
+                          :forfeit {:paid/type :forfeit
+                                    :paid/targets [{:title "NAPD Contract"}]
+                                    :paid/value 1}}}
+        eid2 {:cost-paid {:click {:paid/type :click
+                                  :paid/value 1}}}
+        eid3 {:cost-paid {:trash {:paid/type :trash
+                                  :paid/value 1
+                                  :paid/targets [{:title "C.I. Fund"}]}}}]
+    (is (= {:click {:paid/type :click
+                    :paid/value 3}
+            :credit {:paid/type :credit
+                     :paid/value 1}
+            :forfeit {:paid/type :forfeit
+                      :paid/targets [{:title "NAPD Contract"}]
+                      :paid/value 1}}
            (e/merge-costs-paid (:cost-paid eid1))))
-    (is (= {:click {:type :click
-                    :targets nil
-                    :value 4}
-            :credit {:type :credit
-                     :targets nil
-                     :value 1}
-            :forfeit {:type :forfeit
-                      :targets [{:title "NAPD Contract"}]
-                      :value 1}}
+    (is (= {:click {:paid/type :click
+                    :paid/targets nil
+                    :paid/value 4}
+            :credit {:paid/type :credit
+                     :paid/targets nil
+                     :paid/value 1}
+            :forfeit {:paid/type :forfeit
+                      :paid/targets [{:title "NAPD Contract"}]
+                      :paid/value 1}}
            (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2))))
-    (is (= {:click {:type :click
-                    :targets nil
-                    :value 4}
-            :credit {:type :credit
-                     :targets nil
-                     :value 1}
-            :forfeit {:type :forfeit
-                      :targets [{:title "NAPD Contract"}]
-                      :value 1}
-            :trash {:type :trash
-                    :targets [{:title "C.I. Fund"}]
-                    :value 1}}
+    (is (= {:click {:paid/type :click
+                    :paid/targets nil
+                    :paid/value 4}
+            :credit {:paid/type :credit
+                     :paid/targets nil
+                     :paid/value 1}
+            :forfeit {:paid/type :forfeit
+                      :paid/targets [{:title "NAPD Contract"}]
+                      :paid/value 1}
+            :trash {:paid/type :trash
+                    :paid/targets [{:title "C.I. Fund"}]
+                    :paid/value 1}}
            (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2) (:cost-paid eid3))))))
 
 (deftest trash-currents-test
