@@ -320,6 +320,7 @@
 (defn get-strength
   [card]
   (when (or (ice? card)
+            (:strength card)
             (has-subtype? card "Icebreaker"))
     (or (:current-strength card)
         (:strength card)
