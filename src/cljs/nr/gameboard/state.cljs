@@ -33,3 +33,5 @@
     (when (not= (get-in @game-state aid)
                 (get-in @last-state aid))
       (reset! ws/lock false))))
+
+(defonce iconic-mode (r/atom true))

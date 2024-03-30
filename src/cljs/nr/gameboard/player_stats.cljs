@@ -4,7 +4,7 @@
    [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
    [nr.gameboard.actions :refer [send-command]]
-   [nr.gameboard.state :refer [game-state not-spectator?]]
+   [nr.gameboard.state :refer [game-state not-spectator? iconic-mode]]
    [nr.translations :refer [tr tr-pronouns]]))
 
 (defn stat-controls
@@ -115,6 +115,6 @@
 (defn stats-view
   [player]
   (fn [player]
-    [:div.panel.blue-shade.stats {:class (when (:active @player) "active-player")}
+    [:div.panel.blue-shade.stats {:class [(when (:active @player) "active-player") (when @iconic-mode "iconic-mode")]}
      (name-area (:user @player))
      [stats-area player]]))

@@ -23,7 +23,7 @@
    [nr.gameboard.player-stats :refer [stat-controls stats-view]]
    [nr.gameboard.replay :refer [replay-panel]]
    [nr.gameboard.right-pane :refer [content-pane]]
-   [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
+   [nr.gameboard.state :refer [game-state not-spectator? replay-side iconic-mode]]
    [nr.sounds :refer [update-audio]]
    [nr.translations :refer [tr tr-side]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
@@ -379,7 +379,7 @@
         active-menu? (= (:cid card) (:source @card-menu))]
     (when servers
       [:div.panel.blue-shade.servers-menu (when active-menu?
-                                            {:class "active-menu"
+                                            {:class ["active-menu" (when @iconic-mode "iconic-mode")]
                                              :style {:display "inline"}})
        [:ul (map-indexed
              (fn [_ label]
@@ -527,7 +527,7 @@
                              (:strength ice)
                              0)
         subroutines (:subroutines ice)]
-    [:div.panel.blue-shade.encounter-info {:style {:display "inline"}}
+    [:div.panel.blue-shade.encounter-info {:style {:display "inline"} :class (when @iconic-mode "iconic-mode")}
      [:span.active.float-center (get-title ice)]
      [:span.info {:style {:display "block"}} (join " - " subtypes)]
      [:span.float-center (tr [:card-browser.strength] "Strength") ": " current-strength]
@@ -536,7 +536,8 @@
        [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
      (map-indexed
        (fn [i sub]
-         [:div {:key i}
+         [:div {:key i
+                :class (when @iconic-mode "iconic-mode")}
           [:span (cond (:broken sub)
                        {:class :disabled
                         :style {:font-style :italic}}
@@ -1106,6 +1107,7 @@
         side-class (if (= player-side :runner) "opponent" "me")
         hand-count-number (if (nil? @hand-count) (count @hand) @hand-count)]
     [:div.outer-corp-board {:class [side-class
+                                    (when @iconic-mode "iconic-mode")
                                     (when (get-in @app-state [:options :sides-overlap]) "overlap")]}
      [:div.corp-board {:class side-class}
       (doall
@@ -1154,7 +1156,8 @@
                           (= "irl" (get-in @app-state [:options :runner-board-order])))
                    reverse
                    seq)]
-    [:div.runner-board {:class [(if is-me "me" "opponent")
+    [:div.runner-board {:class [(when @iconic-mode "iconic-mode")
+                                (if is-me "me" "opponent")
                                 (when (get-in @app-state [:options :sides-overlap]) "overlap")]}
      (when-not is-me centrals)
      (doall
@@ -2032,6 +2035,7 @@
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview
               [:div {:class [:gameboard
+                             (when @iconic-mode "iconic-mode")
                              (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
                              (when @labeled-cards :show-card-labels)]}
                (let [me-keep (r/cursor game-state [me-side :keep])

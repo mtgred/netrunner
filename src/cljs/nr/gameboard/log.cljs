@@ -7,7 +7,7 @@
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
-   [nr.gameboard.state :refer [game-state not-spectator?]]
+   [nr.gameboard.state :refer [game-state not-spectator? iconic-mode]]
    [nr.help :refer [command-info]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [influence-dot player-highlight-option-class
@@ -206,6 +206,7 @@
        (fn []
          (into [:div.messages {:class [(when (:replay @game-state)
                                          "panel-bottom")
+                                       (when @iconic-mode "iconic-mode")
                                        (player-highlight-option-class)]
                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)
                                :on-mouse-out #(card-preview-mouse-out % zoom-channel)
@@ -226,6 +227,12 @@
   (fn []
     [:div.log
      [angel-arena-log/inactivity-pane]
+     [:div
+      [:span.new-feature
+       "Try out the new feature: "]
+      [:button {:on-click #(swap! iconic-mode not)}
+       "Turn " (if @iconic-mode "off" "on") " iconic mode"]
+      [:hr {:style {:width "100%"}}]]
      [log-messages]
      [log-typing]
      [log-input]]))
