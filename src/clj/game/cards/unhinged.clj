@@ -51,7 +51,7 @@
    [game.core.moving :refer [as-agenda flip-faceup forfeit mill move swap-ice swap-installed
                              remove-from-currently-drawing trash trash-cards
                              trash-prevent]]
-   [game.core.payment :refer [can-pay?]]
+   [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [can-play-instant? play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt clear-run-prompts]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
@@ -153,7 +153,7 @@
                                           card nil)
                                         ;; installable
                                         (if (can-pay? state side (assoc eid :source card :source-type :runner-install) top-card nil
-                                                      [:credit (install-cost state side top-card)])
+                                                      (install-cost state side top-card))
                                           (continue-ability
                                             state side
                                             {:optional
@@ -216,14 +216,14 @@
                     :prompt "Choose one"
                     :choices (req [(when (can-pay? state :corp
                                                    (assoc eid :source card :source-type :ability)
-                                                   card nil [:credit 1])
+                                                   card nil (->c :credit 1))
                                      "Pay 1 [credit]")
                                    "Discard a card at random"])
                     :async true
                     :waiting-prompt true
                     :msg (msg "force the corp to " (str/lower-case target))
-                    :effect (req (if (= target "Pay 1")
-                                   (pay state :corp eid card :credit 1)
+                    :effect (req (if (= target "Pay 1 [credit]")
+                                   (pay state :corp eid card (->c :credit 1))
                                    (trash state :runner eid (first (shuffle (:hand corp)))
                                           {:cause-card card})))}]
     {:on-play {:choices {:card #(and (corp? %)
@@ -243,11 +243,11 @@
   ;; Whenever you make
   ;; a run using the basic action card, gain a credit.
   {:static-abilities [{:type :card-ability-additional-cost
-                       :req (req (let [targetcard (first targets)
-                                       target (second targets)]
-                                   (and (same-card? targetcard (:basic-action-card runner))
-                                        (= "Gain 1 [Credits]" (:label target)))))
-                       :value [:credit 1000]}]
+                       :req (req (and (same-card? (:card context) (:basic-action-card runner))
+                                      (= "Gain 1 [Credits]"
+                                         (:label (:ability context)))))
+                       ;;(= "Gain 1 [Credits]" (:label target)))))
+                       :value (->c :credit 1000)}]
    ;; ^^ above is an EVIL hack
    :events [{:event :run
              :req (req (:click-run target))
@@ -493,7 +493,7 @@
                                      (update-all-icebreakers state side)
                                      (start-next-phase state side eid)
                                      (effect-completed state side eid))))}
-   :subroutines [(assoc (end-the-run-unless-runner-pays [:credit 1]) :label " [credit] Ɩ ƨγɒq ɿɘnnυɿ ɘʜɈ ƨƨɘlnυ nυɿ ɘʜɈ bnƎ")]})
+   :subroutines [(assoc (end-the-run-unless-runner-pays (->c :credit 1)) :label " [credit] Ɩ ƨγɒq ɿɘnnυɿ ɘʜɈ ƨƨɘlnυ nυɿ ɘʜɈ bnƎ")]})
 
 (defcard "Longsort"
   ;; Choose one:

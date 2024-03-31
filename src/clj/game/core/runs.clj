@@ -162,6 +162,7 @@
                      (swap! state update-in [:runner :register :made-run] conj (first s))
                      (swap! state update-in [:stats side :runs :started] (fnil inc 0))
                      (queue-event state :run {:server s
+                                              :click-run click-run
                                               :position n
                                               :cost-args cost-args})
                      (wait-for
