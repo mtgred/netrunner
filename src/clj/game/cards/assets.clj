@@ -706,7 +706,7 @@
                                          (card-str state from-ice)
                                          " to "
                                          (card-str state target))
-                               :effect (effect (add-prop :corp target :advance-counter 1)
+                               :effect (effect (add-prop :corp target :advance-counter 1 {:placed true})
                                                (add-prop :corp from-ice :advance-counter -1))})
                             card nil))}]})
 
@@ -1265,7 +1265,7 @@
                                           " to "
                                           (card-str state target))
                                 :async true
-                                :effect (effect (add-prop :corp target :advance-counter 1)
+                                :effect (effect (add-prop :corp target :advance-counter 1 {:placed true})
                                                 (add-prop :corp from-ice :advance-counter -1)
                                                 (continue-ability political card nil))
                                 :cancel-effect (effect (continue-ability political card nil))})
