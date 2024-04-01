@@ -519,6 +519,7 @@
                         :req (req (some #{:rd} (:successful-run runner-reg)))
                         :label "Breach R&D"
                         :msg "breach R&D"
+                        :keep-menu-open :while-power-tokens-left
                         :async true
                         :effect (effect (breach-server eid [:rd] #_{:no-root true}))}]
     {:data {:counter {:power 2}}

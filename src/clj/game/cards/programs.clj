@@ -867,6 +867,7 @@
   {:abilities [{:cost [(->c :power 1)]
                 :req (req (= (:active-player @state) :runner))
                 :async true
+                :keep-menu-open :while-power-tokens-left
                 :effect (effect (gain-credits eid 2))
                 :msg "gain 2 [Credits]"}]
    :data {:counter {:power 2}}})
