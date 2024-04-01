@@ -1314,15 +1314,16 @@
                         (= :rd target)
                         (= :archives (first (:server run)))))
          :msg (msg "access 1 additional card")
-         :effect (effect (access-bonus :rd 1))}]
-    {:events [constant-ability
-              (successful-run-replace-breach
-              {:target-server :archives
-               :this-card-run true
-               :mandatory true
-               :ability {:msg "breach R&D"
-                         :async true
-                         :effect (req (breach-server state :runner eid [:rd] nil))}})]
+         :effect (effect (access-bonus :rd 1))}
+        ability
+        (successful-run-replace-breach
+          {:target-server :archives
+           :this-card-run true
+           :mandatory true
+           :ability {:msg "breach R&D"
+                     :async true
+                     :effect (req (breach-server state :runner eid [:rd] nil))}})]
+    {:events [constant-ability]
      :abilities [{:cost [(->c :click 1)]
                   :msg "make a run on Archives"
                   :label "Take 1 tag and run Archives"
@@ -1331,6 +1332,7 @@
                   :async true
                   :effect
                   (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
+                                 (register-events state side card [ability])
                                  (make-run state side eid :archives (get-card state card))))}]}))
 
 (defcard "Fall Guy"
