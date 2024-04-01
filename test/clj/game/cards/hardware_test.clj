@@ -2599,7 +2599,7 @@
       (take-credits state :runner)
       (is (= (+ 1 n) (count (:scored (get-runner)))) "Jeitinho moved to score area")
       (is (zero? (:agenda-point (get-runner))) "Jeitinho scored for 0 agenda point"))
-    (is (= "Jeitinho assassination event" (:reason @state)) "Win condition reports jeitinho")))
+    (is (= "assassination plot (Jeihtinho)" (:reason @state)) "Win condition reports jeitinho")))
 
 (deftest jeitinho-threat
   (do-game
