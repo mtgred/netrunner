@@ -1263,7 +1263,7 @@
                           (if (= 3 (count (filter #(= (:printed-title %) (:printed-title card))
                                                   (get-in @state [:runner :scored]))))
                             (do (system-msg state side "wins the game")
-                                (win state :runner "Jeitinho assassination event")
+                                (win state :runner "assassination plot (Jeihtinho)")
                                 (effect-completed state side eid))
                             (effect-completed state side eid)))}]})
 
