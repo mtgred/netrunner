@@ -3137,12 +3137,14 @@
    :abilities [{:cost [(->c :click 1) (->c :power 1)]
                 :label "Gain 3 [Credits]"
                 :msg "gain 3 [Credits]"
+                :keep-menu-open :while-power-tokens-left
                 :effect (req (gain-credits state side eid 3))}
                {:cost [(->c :click 1) (->c :power 5)]
                 :label "Gain 6 [Credits] and add a resource to the top of the stack"
                 :prompt "Choose a resource"
                 :choices {:card #(resource? %)}
                 :async true
+                :keep-menu-open :while-5-power-tokens-left
                 :msg (msg "gain 6 [Credits] and add " (:title target) " to the top of the stack")
                 :effect (req
                           (wait-for (gain-credits state side 6)
