@@ -1439,7 +1439,7 @@
                    :cost [(->c :trash-from-hand 1)]
                    :msg (msg "trash " (:title target) " from HQ")
                    :async true
-                   :effect (effect (trash eid (assoc target :seen true) {:cause-card card}))}}
+                   :effect (effect (trash eid (assoc target :seen true) {:accessed true :cause-card card}))}}
    :events [{:event :successful-run
              :silent (req true)
              :req (req (and (= :hq (target-server context))
