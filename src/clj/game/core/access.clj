@@ -20,6 +20,7 @@
     [game.macros :refer [continue-ability req wait-for]]
     [jinteki.utils :refer [add-cost-to-label]]
     [clojure.set :as clj-set]
+    [medley.core :refer [find-first]]
     [clojure.string :as string]))
 
 (defn no-trash-or-steal
@@ -99,7 +100,8 @@
                                                  (can-pay? state :runner eid % nil (card-ability-cost state side (access-ab %) % [card])))
                                            (all-active state :runner))))
             ; Remove any non-trash abilities, as they can't be used if we're forced to trash
-            trash-ab-cards (seq (filter #(:trash? (access-ab %) true) access-ab-cards))
+            {trash-ab-cards true
+             non-trash-ab-cards false} (group-by #(boolean (:trash? (access-ab %))) access-ab-cards)
             ; Is the runner is forced to trash this card by any means?
             ; Only relevant when not forced to trash with credits, as we want to include
             ; trash abilities here
@@ -107,15 +109,22 @@
                           (and (or can-pay trash-ab-cards)
                                (card-flag-fn? state side card :must-trash true)))
             ; If we must trash, make the label only from the trash abilities
+            ; If we're not allowed to trash, only use non-trash abilities
             ; Otherwise, make the label from all abilities
-            ability-strs (mapv #(access-ab-label state %)
-                               (if must-trash? trash-ab-cards access-ab-cards))
+            ability-strs (mapv (fn [card]
+                                 (let [label (access-ab-label state card)]
+                                   {:cid (:cid card)
+                                    :title label}))
+                               (cond
+                                 must-trash? trash-ab-cards
+                                 (not can-trash) non-trash-ab-cards
+                                 :else access-ab-cards))
             ; Only display "No action" when we're not forced to do anything, or
             ; if it is the only thing we can do
             forced-to-trash? (or must-trash? must-trash-with-credits?)
             no-action-str (when (or (not can-trash) (not forced-to-trash?))
                             ["No action"])
-            choices (vec (if can-trash (concat ability-strs trash-cost-str no-action-str) no-action-str))]
+            choices (vec (concat ability-strs (when can-trash trash-cost-str) no-action-str))]
         (continue-ability
           state :runner
           {:async true
@@ -143,9 +152,8 @@
                                               (access-end state side eid (first async-result) {:trashed true})))
 
                           ; Use access ability
-                          (some #(= % target) ability-strs)
-                          (let [idx (.indexOf ability-strs target)
-                                ability-card (nth access-ab-cards idx)
+                          (find-first #(same-card? % target) access-ab-cards)
+                          (let [ability-card (find-first #(same-card? % target) access-ab-cards)
                                 ability-eid (assoc eid :source ability-card :source-type :ability)
                                 ability (access-ab ability-card)]
                             (when (and (:breach @state)
@@ -214,7 +222,11 @@
                           (seq (filter #(and (can-trigger? state :runner eid (access-ab %) % [card])
                                              (can-pay? state :runner eid % nil (card-ability-cost state side (access-ab %) % [card])))
                                        (all-active state :runner))))
-        ability-strs (mapv #(access-ab-label state %) access-ab-cards)
+        ability-strs (mapv (fn [card]
+                             (let [label (access-ab-label state card)]
+                               {:cid (:cid card)
+                                :title label}))
+                           access-ab-cards)
         ;; strs
         steal-str (when (and can-steal can-pay)
                     (if (not (string/blank? cost-strs))
@@ -257,9 +269,8 @@
                                 (steal-agenda state side eid card))
 
                       ;; Use access ability
-                      (some #(= % target) ability-strs)
-                      (let [idx (.indexOf ability-strs target)
-                            ability-card (nth access-ab-cards idx)
+                      (find-first #(same-card? % target) access-ab-cards)
+                      (let [ability-card (find-first #(same-card? % target) access-ab-cards)
                             ability-eid (assoc eid :source ability-card :source-type :ability)
                             ability (access-ab ability-card)]
                         (when (and (:breach @state)

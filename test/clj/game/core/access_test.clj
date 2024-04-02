@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer :all]
    [game.core :as core]
+   [game.core.card :refer :all]
    [game.test-framework :refer :all]))
 
 (deftest rd-access
@@ -608,3 +609,51 @@
      (is (= {:total-mod 0 :chosen 0} (core/num-cards-to-access state :runner :archives nil)))
      (core/access-bonus state :runner :total -1)
      (is (= {:total-mod -1 :chosen 0} (core/num-cards-to-access state :runner :archives nil))))))
+
+(deftest multiple-trash-abilities
+  (testing "Mumbad Virtual Tour"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mumbad Virtual Tour"]
+                        :credit 100}
+                 :runner {:hand ["Imp" "Cupellation"]}})
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cupellation")
+      (play-from-hand state :runner "Imp")
+      (run-empty-server state :remote1)
+      (is (= ["[Imp] Hosted virus counter: Trash card"] (map :title (prompt-buttons :runner))))
+      (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
+      (is (last-log-contains? state "to use Imp to trash Mumbad Virtual Tour"))
+      (is (empty? (:hosted (get-program state 0))) "Nothing hosted on Cupellation")))
+  (testing "Multiple imps"
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Mumbad Virtual Tour" "Orbital Superiority"]
+                        :credit 100}
+                 :runner {:hand [(qty "Imp" 2)]
+                          :credit 100}})
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (play-from-hand state :corp "Orbital Superiority" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (play-from-hand state :runner "Imp")
+      (let [[imp1 imp2] (get-program state)]
+        (run-empty-server state :remote1)
+        (is (= ["[Imp] Hosted virus counter: Trash card"
+                "[Imp] Hosted virus counter: Trash card"] (map :title (prompt-buttons :runner))))
+        (is (changed? [(get-counters (refresh imp1) :virus) 0
+                       (get-counters (refresh imp2) :virus) -1]
+              (click-prompt state :runner (second (prompt-buttons :runner)))))
+        (is (last-log-contains? state "to use Imp to trash Mumbad Virtual Tour"))
+        (is (nil? (:run @state)) "Run has ended")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-empty-server state :remote2)
+        (is (= ["[Imp] Hosted virus counter: Trash card"
+                "[Imp] Hosted virus counter: Trash card"
+                "Steal"] (prompt-titles :runner)))
+        (is (changed? [(get-counters (refresh imp1) :virus) 0
+                       (get-counters (refresh imp2) :virus) -1]
+              (click-prompt state :runner (second (prompt-buttons :runner)))))
+        (is (last-log-contains? state "to use Imp to trash Orbital Superiority"))))))

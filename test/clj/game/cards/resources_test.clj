@@ -5327,7 +5327,7 @@
       (run-empty-server state :remote3)
       (is (not (no-prompt? state :runner)) "Prompting to trash")
       (is (= ["[Salsette Slums] Remove card from game" "Pay 1 [Credits] to trash" "No action"]
-             (prompt-buttons :runner))
+             (prompt-titles :runner))
           "Second Salsette Slums can be used")
       (click-prompt state :runner "[Salsette Slums] Remove card from game")
       (is (= 2 (count (:rfg (get-corp)))) "Two cards should be RFG now"))))
