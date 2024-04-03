@@ -4,6 +4,16 @@
     [nr.appstate :refer [app-state]]
     [taoensso.tempura :as tempura]))
 
+(defn ru-quant [group1 group2 group3]
+  (fn [[cnt]]
+    (let [group (if (contains? #{5 6 7 8 9 10 11 12 13 14} (rem cnt 100))
+                  group1
+                  (condp contains? (rem cnt 10)
+                    #{0 5 6 7 8 9} group1
+                    #{1} group2
+                    #{2 3 4} group3))]
+      (str cnt " " group))))
+
 (def translation-dictionary
   {
    :en
@@ -3381,15 +3391,6 @@
    }
 
    :ru
-   (defn ru-quant [group1 group2 group3]
-  (fn [[cnt]]
-    (let [group (if (contains? #{5 6 7 8 9 10 11 12 13 14} (rem cnt 100))
-                  group1
-                  (condp contains? (rem cnt 10)
-                    #{0 5 6 7 8 9} group1
-                    #{1} group2
-                    #{2 3 4} group3))]
-      (str cnt " " group))))
    {:missing ":ru missing text"
     :side
     {:corp "Корпорация"
@@ -3744,11 +3745,11 @@
    :archives "Архивы"
    :max-hand "Макс. размер руки"
    :brain-damage "Критический урон"
-   :tag-count (fn [[base additional total]]
+   :tag-count (fn [[base additional]]
                 (str base (when (pos? additional) (str " + " additional)) (ru-quant "меток" "метка" "метки")))
    :agenda-count (fn [[agenda-point]] (str agenda-point (ru-quant "победных очков" "победное очко" "победных очка")))
    :link-strength "Мощность канала"
-   :credit-count (fn [[credit run-credit]] (str credit (ru-quant "кредитов" "кредит" "кредита"))
+   :credit-count (fn [[credit run-credit]] (str credit (ru-quant "кредитов" "кредит" "кредита")
                                                 (when (pos? run-credit)
                                                   (str " (" run-credit " для забега)"))))
    :click-count (fn [[click]] (str click (ru-quant "кликов" "клик" "клика")))
