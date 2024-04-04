@@ -672,6 +672,7 @@
   {:interactions
    {:access-ability
     {:async true
+     :trash? true
      :once :per-turn
      :label "Trash card"
      :req (req (and (not (:disabled card))

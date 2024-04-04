@@ -1,5 +1,6 @@
 (ns user
   (:require
+   [clojure.pprint]
    [kaocha.repl]
    [potemkin :refer [import-vars]]
    [web.dev]))
@@ -22,7 +23,7 @@
 (defmacro spy [item]
   `(do (println "SPY:" '~item)
        (let [result# ~item]
-         (println "RESULT:" result#)
+         (println "RESULT:" (with-out-str (clojure.pprint/pprint result#)))
          result#)))
 
 (import-vars

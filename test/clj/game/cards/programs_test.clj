@@ -2082,6 +2082,34 @@
     (take-credits state :runner)
     (is (= 8 (get-counters (first (:hosted (get-program state 0))) :credit)))))
 
+(deftest cupellation-ansel-interaction-7363
+  ;; Interaction with Ansel 1.0, issue #7363
+  (do-game
+    (new-game {:corp {:hand ["Ansel 1.0" "PAD Campaign"]
+                      :deck [(qty "Hedge Fund" 10)]
+                      :credits 10}
+               :runner {:hand ["Rezeki" "Cupellation"]
+                        :credits 10}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Ansel 1.0" "Server 1")
+    (let [ansel (get-ice state :remote1 0)]
+      (rez state :corp ansel)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cupellation")
+      (play-from-hand state :runner "Rezeki")
+      (let [cup (get-program state 0)]
+        (run-on state "Server 1")
+        (run-continue-until state :encounter-ice)
+        (fire-subs state (refresh ansel))
+        (click-card state :corp "Rezeki")
+        (click-prompt state :corp "Done")
+        (run-continue-until state :success)
+        (is (changed? [(:credit (get-runner)) -1
+                       (count (get-content state :remote1)) -1
+                       (count (:hosted (refresh cup))) 1]
+              (click-prompt state :runner "[Cupellation] 1 [Credits]: Host a card"))
+            "Card is hosted on Cupellation")))))
+
 (deftest curupira
   (do-game
     (new-game {:runner {:hand ["Curupira"]

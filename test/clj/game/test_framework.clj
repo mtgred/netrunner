@@ -873,7 +873,7 @@
          ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
          ~'prompt-type (fn [side#] (:prompt-type (~'prompt-map side#)))
          ~'prompt-buttons (fn [side#] (->> (~'prompt-map side#) :choices (map :value)))
-         ~'prompt-titles (fn [side#] (map :title (~'prompt-buttons side#)))
+         ~'prompt-titles (fn [side#] (map #(or (:title %) %) (~'prompt-buttons side#)))
          ~'prompt-fmt (fn [side#]
                         (let [prompt# (~'prompt-map side#)
                               choices# (:choices prompt#)

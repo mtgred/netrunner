@@ -489,6 +489,7 @@
    :interactions
    {:access-ability
     {:label "Trash card"
+     :trash? true
      :req (req (and (can-trash? state :runner target)
                     (not (in-discard? target))
                     (not (get-in @state [:per-turn (:cid card)]))

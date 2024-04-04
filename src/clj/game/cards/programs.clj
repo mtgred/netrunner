@@ -1062,6 +1062,7 @@
                                       :cost [(->c :credit 1) (->c :trash-can)]
                                       :msg "access 2 additional cards from HQ"}}}]
    :interactions {:access-ability {:label "Host a card"
+                                   :trash? false
                                    :req (req (and (empty? (filter corp? (:hosted card)))
                                                   (not (agenda? target))))
                                    :cost [(->c :credit 1)]
@@ -1809,6 +1810,7 @@
 (defcard "Imp"
   {:data {:counter {:virus 2}}
    :interactions {:access-ability {:label "Trash card"
+                                   :trash? true
                                    :req (req (and (can-trash? state :runner target)
                                                   (not (in-discard? target))
                                                   (not (get-in @state [:per-turn (:cid card)]))))

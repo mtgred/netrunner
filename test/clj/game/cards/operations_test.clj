@@ -933,7 +933,7 @@
       (is (= 5 (:credit (get-corp))))
       (starting-hand state :corp ["Consulting Visit"])
       (play-from-hand state :corp "Consulting Visit")
-      (is (= ["Beanstalk Royalties" "Green Level Clearance" nil] (prompt-titles :corp)))
+      (is (= ["Beanstalk Royalties" "Green Level Clearance" "Cancel"] (prompt-titles :corp)))
       (click-prompt state :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
       (is (= 6 (:credit (get-corp))))))
 
@@ -953,10 +953,10 @@
       (let [hall (get-content state :remote1 0)]
         (rez state :corp hall)
         (card-ability state :corp (refresh hall) 0)
-        (is (= ["Consulting Visit" "Mumba Temple" nil] (prompt-titles :corp)))
+        (is (= ["Consulting Visit" "Mumba Temple" "Cancel"] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Consulting Visit" (:deck (get-corp))))
         (is (= 2 (:credit (get-corp))))
-        (is (= ["Beanstalk Royalties" "Green Level Clearance" nil] (prompt-titles :corp)))
+        (is (= ["Beanstalk Royalties" "Green Level Clearance" "Cancel"] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Green Level Clearance" (:deck (get-corp))))
         (is (= 4 (:credit (get-corp)))))))
 
@@ -2412,7 +2412,7 @@
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 5 (count (:hand (get-runner)))))
-    (is (= ["Fall Guy" "Sure Gamble" nil] (prompt-titles :corp)))
+    (is (= ["Fall Guy" "Sure Gamble" "Cancel"] (prompt-titles :corp)))
     (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
     (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
     (is (= 3 (count (:hand (get-runner)))))
@@ -2421,7 +2421,7 @@
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 3 (count (:hand (get-runner)))))
-    (is (= ["Fall Guy" nil] (prompt-titles :corp)))
+    (is (= ["Fall Guy" "Cancel"] (prompt-titles :corp)))
     (click-prompt state :corp (find-card "Fall Guy" (:hand (get-runner))))
     (is (no-prompt? state :corp) "No prompt for second card")
     (is (= 2 (count (:hand (get-runner)))))
