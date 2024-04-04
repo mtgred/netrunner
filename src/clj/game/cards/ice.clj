@@ -520,14 +520,12 @@
 (defn zero-to-hero
   "Salvage, Tyrant, Woodcutter"
   [sub]
-  (let [ability {:req (req (same-card? card target))
+  (let [ability {:req (req (same-card? card (:card context)))
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
     {:advanceable :while-rezzed
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
-              {:event :rez
-               :req (req (same-card? card (:card context)))
-               :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]}))
+              (assoc ability :event :rez)]}))
 
 ;; For 7 Wonders ice
 (defn wonder-sub
@@ -2851,16 +2849,13 @@
                  end-the-run]})
 
 (defcard "Masvingo"
-  (let [subs-effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))
-        ability {:req (req (same-card? card target))
-                 :effect subs-effect}]
+  (let [ability {:req (req (same-card? card (:card context)))
+                 :effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))}]
     {:advanceable :always
      :on-rez {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
-              {:event :rez
-               :req (req (same-card? card (:card context)))
-               :effect subs-effect}]}))
+              (assoc ability :event :rez)]}))
 
 (defcard "Matrix Analyzer"
   {:on-encounter {:cost [(->c :credit 1)]
@@ -3888,15 +3883,13 @@
                                       (system-msg state :runner (:msg async-result))
                                       (effect-completed state side eid))
                             (continue-ability state :corp trash-program-sub card nil)))}
-        ability {:req (req (same-card? card target))
+        ability {:req (req (same-card? card (:card context)))
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
     {:advanceable :always
      :on-rez take-bad-pub
      :events [(assoc ability :event :advance)
               (assoc ability :event :advancement-placed)
-              {:event :rez
-               :req (req (same-card? card (:card context)))
-               :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]}))
+              (assoc ability :event :rez)]}))
 
 (defcard "Swordsman"
   {:static-abilities [{:type :cannot-break-subs-on-ice

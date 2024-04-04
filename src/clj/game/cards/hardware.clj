@@ -1350,7 +1350,7 @@
              :prompt "Choose a card"
              :msg "add 1 card from the stack to the grip"
              :choices (req (cancellable (:deck runner)))
-             :effect (effect (trigger-event :searched-stack nil)
+             :effect (effect (trigger-event :searched-stack)
                              (shuffle! :deck)
                              (move target :hand))}]})
 
@@ -1889,7 +1889,7 @@
      :prompt (msg "Install another copy of " (:title card) "?")
      :yes-ability {:async true
                    :msg "install another copy of itself"
-                   :effect (req (trigger-event state side :searched-stack nil)
+                   :effect (req (trigger-event state side :searched-stack)
                                 (shuffle! state :runner :deck)
                                 (when-let [c (some #(when (= (:title %) (:title card)) %)
                                                    (:deck runner))]
@@ -1963,7 +1963,7 @@
                 :req (req (hardware-and-in-deck? (:card context) runner))
                 :yes-ability
                 {:msg (msg "add a copy of " (:title (:card context)) " from the stack to the grip")
-                 :effect (effect (trigger-event :searched-stack nil)
+                 :effect (effect (trigger-event :searched-stack)
                            (shuffle! :deck)
                            (move (some #(when (= (:title %) (:title (:card context))) %) (:deck runner)) :hand))}}}]}))
 

@@ -314,7 +314,7 @@
                 :req (req (not (install-locked? state side)))
                 :cost [(->c :forfeit)]
                 :choices (req (cancellable (filter #(not (event? %)) (:deck runner)) :sorted))
-                :effect (effect (trigger-event :searched-stack nil)
+                :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (runner-install eid target nil))}]})
 
@@ -361,7 +361,7 @@
                                                           (make-eid state eid) 
                                                           (search-and-host 2)
                                                           card nil)
-                                         (trigger-event state side :searched-stack nil)
+                                         (trigger-event state side :searched-stack)
                                          (shuffle! state side :deck)
                                          (effect-completed state side eid)))}
       :events [{:event :runner-turn-begins
@@ -787,9 +787,9 @@
 
 (defcard "Corporate Defector"
   {:events [{:event :corp-click-draw
-             :msg (msg "force the Corp to reveal that they drew " (:title target))
+             :msg (msg "force the Corp to reveal that they drew " (:title (:card context)))
              :async true
-             :effect (effect (reveal eid target))}]})
+             :effect (effect (reveal eid (:card context)))}]})
 
 (defcard "Councilman"
   {:events [{:event :rez
@@ -930,7 +930,7 @@
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
                 :cost [(->c :click 1) (->c :virus 3) (->c :trash-can)]
-                :effect (effect (trigger-event :searched-stack nil)
+                :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (runner-install (assoc eid :source card :source-type :runner-install) target nil))}
                (set-autoresolve :auto-place-counter "Crypt placing virus counters on itself")]})
@@ -2455,7 +2455,7 @@
                :msg "shuffle the stack"
                :async true
                :effect (req (let [target (str->int target)]
-                              (trigger-event state side :searched-stack nil)
+                              (trigger-event state side :searched-stack)
                               (shuffle! state :runner :deck)
                               (when (pos? target)
                                 (system-msg state side (str "adds "
@@ -2823,7 +2823,7 @@
                                    (str "install " (:title target)
                                         " from the stack, lowering its cost by "
                                         (:cost (find-rfg state card)))))
-                       :effect (req (trigger-event state side :searched-stack nil)
+                       :effect (req (trigger-event state side :searched-stack)
                                     (shuffle! state side :deck)
                                     (if (= target "Done")
                                       (effect-completed state side eid)
@@ -3643,7 +3643,7 @@
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [(->c :click 2)]
                 :keep-menu-open :while-2-clicks-left
-                :effect (effect (trigger-event :searched-stack nil)
+                :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (move target :hand))}]})
 

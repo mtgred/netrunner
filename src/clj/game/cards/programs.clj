@@ -1327,7 +1327,7 @@
                                                    (:deck runner)) :sorted))
                 :cost [(->c :click 1) (->c :credit 1)]
                 :keep-menu-open :while-clicks-left
-                :effect (effect (trigger-event :searched-stack nil)
+                :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (move target :hand))}
                {:label "Install and host a non-Icebreaker program"
@@ -2316,7 +2316,7 @@
                              ["Done"]))
              :async true
              :effect (req (when (= :deck where)
-                            (trigger-event state side :searched-stack nil)
+                            (trigger-event state side :searched-stack)
                             (shuffle! state side :deck))
                           (if (not= target "Done")
                             ;; does the card need to be installed on muse?
@@ -3017,7 +3017,7 @@
                                                         (seq))
                                                   ["Done"]))
                                    :async true
-                                   :effect (req (trigger-event state side :searched-stack nil)
+                                   :effect (req (trigger-event state side :searched-stack)
                                                 (shuffle! state side :deck)
                                                 (if (= target "Done")
                                                   (effect-completed state side eid)
@@ -3056,8 +3056,7 @@
                                     :interactive (req true)
                                     :msg "change the attacked server to HQ"
                                     :req (req (= :archives (-> run :server first)))
-                                    :effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                 (trigger-event state :corp :no-action))}])
+                                    :effect (req (swap! state assoc-in [:run :server] [:hq]))}])
                                 (make-run eid :archives (get-card state card)))}]})
 
 (defcard "Sneakdoor Prime A"
@@ -3206,7 +3205,7 @@
 (defcard "Surveillance Network Key"
   {:implementation "Only implemented for click to draw"
    :events [{:event :corp-click-draw
-             :msg (msg "reveal that they drew " (:title target))}]})
+             :msg (msg "reveal that they drew " (:title (:card context)))}]})
 
 (defcard "Switchblade"
   (auto-icebreaker {:abilities [(break-sub (->c :credit 1 {:stealth 1}) 0 "Sentry")
@@ -3498,7 +3497,7 @@
                                 (seq))
                            ["Done"]))
            :async true
-           :effect (req (trigger-event state side :searched-stack nil)
+           :effect (req (trigger-event state side :searched-stack)
                         (shuffle! state side :deck)
                         (if (= target "Done")
                           (effect-completed state side eid)

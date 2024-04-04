@@ -996,7 +996,7 @@
    :events [{:event :advance
              :condition :faceup
              :async true
-             :req (req (same-card? card target))
+             :req (req (same-card? card (:card context)))
              :effect (req (let [n (if (>= (get-counters (get-card state card) :advancement) 6) 2 1)]
                             (continue-ability
                               state side
@@ -1352,7 +1352,7 @@
    :events [{:event :advance
              :condition :faceup
              :optional
-             {:req (req (same-card? card target))
+             {:req (req (same-card? card (:card context)))
               :prompt "Install a card from HQ in a new remote?"
               :yes-ability {:prompt "Choose a card to install"
                             :choices {:card #(and (not (operation? %))
@@ -1398,7 +1398,7 @@
   {:install-state :face-up
    :events [{:event :advance
              :condition :faceup
-             :req (req (same-card? card target))
+             :req (req (same-card? card (:card context)))
              :msg (msg "gain " (if (>= (get-counters (get-card state card) :advancement) 5) "3" "2") " [Credits]")
              :async true
              :effect (effect (gain-credits eid (if (<= 5 (get-counters (get-card state card) :advancement)) 3 2)))}]})
@@ -2223,7 +2223,7 @@
      :events [{:event :advance
                :condition :faceup
                :async true
-               :req (req (same-card? card target))
+               :req (req (same-card? card (:card context)))
                :msg (msg (if (pos? (count (:deck runner)))
                            (str "trash "
                                 (enumerate-str (map :title (take (adv4? state card) (:deck runner))))

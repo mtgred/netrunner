@@ -662,7 +662,7 @@
                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                         [(->c :credit (install-cost state side % {:cost-bonus (rd-ice state)}))]))
                                         (:deck runner)))
-                  :effect (req (trigger-event state side :searched-stack nil)
+                  :effect (req (trigger-event state side :searched-stack)
                                (shuffle! state side :deck)
                                (wait-for (runner-install state side target {:cost-bonus (rd-ice state)})
                                          (gain-tags state side eid 1)))}})]}))
@@ -693,7 +693,7 @@
              :choices (req (cancellable (filter program? (get runner where))))
              :async true
              :effect (req (when (= :deck where)
-                            (trigger-event state side :searched-stack nil)
+                            (trigger-event state side :searched-stack)
                             (shuffle! state side :deck))
                           (runner-install state side (assoc eid :source card :source-type :runner-install)
                                           (assoc-in target [:special :compile-installed] true)
@@ -1261,7 +1261,7 @@
                                                       (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                                 [(->c :credit (install-cost state side % {:cost-bonus (- trash-cost)}))]))
                                                 (:deck runner)) :sorted))
-             :effect (req (trigger-event state side :searched-stack nil)
+             :effect (req (trigger-event state side :searched-stack)
                           (shuffle! state side :deck)
                           (runner-install state side (assoc eid :source card :source-type :runner-install)
                                           target {:cost-bonus (- trash-cost)}))})]
@@ -1765,7 +1765,7 @@
     :choices (req (cancellable (filter #(has-subtype? % "Connection") (:deck runner)) :sorted))
     :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
     :async true
-    :effect (effect (trigger-event :searched-stack nil)
+    :effect (effect (trigger-event :searched-stack)
                     (continue-ability
                       (let [connection target]
                         (if (can-pay? state side (assoc eid :source card :source-type :runner-install) connection nil
@@ -2051,7 +2051,7 @@
                                                       (seq))
                                                  ["Done"]))
                                  :async true
-                                 :effect (req (trigger-event state side :searched-stack nil)
+                                 :effect (req (trigger-event state side :searched-stack)
                                               (shuffle! state side :deck)
                                               (if (= target "Done")
                                                 (effect-completed state side eid)
@@ -2477,7 +2477,7 @@
                                                 (:deck runner)) :sorted))
              :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
              :async true
-             :effect (effect (trigger-event :searched-stack nil)
+             :effect (effect (trigger-event :searched-stack)
                              (move target :hand)
                              (shuffle! :deck)
                              (continue-ability (credit-gain-abi type) card nil))})]
@@ -2563,7 +2563,7 @@
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
     :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
     :async true
-    :effect (effect (trigger-event :searched-stack nil)
+    :effect (effect (trigger-event :searched-stack)
                     (continue-ability
                       (let [icebreaker target]
                         (if (and (:successful-run runner-reg)
@@ -2761,7 +2761,7 @@
                                    (:deck runner))))
     :msg (msg "play " (:title target))
     :async true
-    :effect (effect (trigger-event :searched-stack nil)
+    :effect (effect (trigger-event :searched-stack)
                     (shuffle! :deck)
                     (play-instant eid target {:no-additional-cost true}))}})
 
@@ -3597,7 +3597,7 @@
    {:prompt "Choose an Icebreaker"
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
     :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
-    :effect (effect (trigger-event :searched-stack nil)
+    :effect (effect (trigger-event :searched-stack)
                     (shuffle! :deck)
                     (move target :hand))}})
 
@@ -3786,7 +3786,7 @@
                                    (filter program? ((if (= where "Heap") :discard :deck) runner))))
                    :async true
                    :effect (req (when (= where "Stack")
-                                  (trigger-event state side :searched-stack nil)
+                                  (trigger-event state side :searched-stack)
                                   (shuffle! state side :deck))
                                 (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
                                                           target {:ignore-all-cost true})
@@ -3926,7 +3926,7 @@
                                   :choices (req (filter hardware?
                                                         (:deck runner)))
                                   :msg (msg "add " (:title target) " from the stack to the Grip and shuffle the stack")
-                                  :effect (effect (trigger-event :searched-stack nil)
+                                  :effect (effect (trigger-event :searched-stack)
                                                   (shuffle! :deck)
                                                   (move target :hand))}
                                  card nil))))}}))

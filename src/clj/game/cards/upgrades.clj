@@ -1321,7 +1321,7 @@
                        :value true}]})
 
 (defcard "NeoTokyo Grid"
-  (let [ng {:req (req (in-same-server? card target))
+  (let [ng {:req (req (in-same-server? card (:card context)))
             :once :per-turn
             :msg "gain 1 [Credits]"
             :async true
@@ -1367,11 +1367,11 @@
 (defcard "Oberth Protocol"
   {:additional-cost [(->c :forfeit)]
    :events [{:event :advance
-             :req (req (and (same-server? card target)
-                            (= 1 (count (filter #(= (second (get-zone %)) (second (get-zone card)))
+             :req (req (and (same-server? card (:card context))
+                            (= 1 (count (filter #(= (second (get-zone (:card %))) (second (get-zone card)))
                                                 (map first (turn-events state side :advance)))))))
-             :msg (msg "place 1 additional advancement token on " (card-str state target))
-             :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
+             :msg (msg "place 1 additional advancement token on " (card-str state (:card context)))
+             :effect (effect (add-prop :corp (:card context) :advance-counter 1 {:placed true}))}]})
 
 (defcard "Off the Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))

@@ -30,7 +30,9 @@
          changed? (not= old-tags new-tags)]
      (when changed?
        (swap! state update-in [:runner :tag] merge new-tags)
-       (trigger-event state :runner :tags-changed new-total old-total is-tagged?))
+       (trigger-event state :runner :tags-changed {:new-total new-total
+                                                   :old-total old-total
+                                                   :is-tagged is-tagged?}))
      changed?)))
 
 (defn tag-prevent

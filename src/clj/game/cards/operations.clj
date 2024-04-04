@@ -3037,7 +3037,7 @@
                                           state side card
                                           [{:event :advance
                                             :condition :hosted
-                                            :req (req (same-card? (:host card) target))
+                                            :req (req (same-card? (:host card) (:card context)))
                                             :async true
                                             :msg "gain 1 [Credit]"
                                             :effect (effect (gain-credits eid 1))}])))))}})
