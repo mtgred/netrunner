@@ -248,7 +248,7 @@
         costs (conj costs (->c :credit (- 0 appldisc)))]
       ;; get a functional discount and apply it to
     (if (corp-can-pay-and-install? state side eid card server (assoc args :cached-costs costs))
-      (wait-for (pay state side (make-eid state eid) card costs {:action action})
+      (wait-for (pay state side (make-eid state (assoc eid :action action)) card costs)
                 (if-let [payment-str (:msg async-result)]
                   (if (= server "New remote")
                     (wait-for (trigger-event-simult state side :server-created nil card)

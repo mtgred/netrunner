@@ -1434,19 +1434,20 @@
     {:abilities [ability]
      :leave-play cleanup
      :events [{:event :corp-spent-click
-               :effect (req (let [cid (first target)
-                                  ability-idx (:ability-idx (:source-info eid))
+               :effect (req (let [[cid value ability-idx] targets
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? (first target))
-                                          (case (first target)
+                                  cause (if (keyword? cid)
+                                          (case cid
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
-                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                            ; else
+                                            [cid ability-idx])
                                           [cid ability-idx])
-                                  clicks-spent (+ (get-in card [:seen-this-turn cause] 0) (second targets))]
-                              (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))
-                              (when (>= clicks-spent 3) ; can be >= 3 because :once :per-turn on ability
-                                (resolve-ability state side ability (get-card state card) nil))))}
+                                  clicks-spent (+ (get-in card [:seen-this-turn cause] 0) value)]
+                              (let [card (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))]
+                                ; can be >= 3 because :once :per-turn on ability
+                                (when (>= clicks-spent 3)
+                                  (resolve-ability state side ability card nil)))))}
               {:event :corp-turn-ends
                :effect cleanup}]}))
 
@@ -2989,13 +2990,12 @@
                                         card nil))})
         all-events (fn [state side] (turn-events state side :corp-spent-click))
         three-of (fn [cid idx state side]
-                   (= 3 (count (filter #(and (= (first (first %)) cid)
+                   (= 3 (count (filter #(and (= (first %) cid)
                                              (= (last %) idx))
                                        (all-events state side)))))]
     {:events [{:event :corp-spent-click
                :async true
-               :effect (req (let [cid (first target)
-                                  ability-idx (:ability-idx (:source-info eid))]
+               :effect (req (let [[cid _value ability-idx] targets]
                               (if (three-of cid ability-idx state side)
                                 (continue-ability state side payoff card nil)
                                 (effect-completed state side eid))))}]}))

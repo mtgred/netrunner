@@ -23,8 +23,10 @@
 (defmulti stealth-value :cost/type)
 (defmethod stealth-value :default [_] 0)
 (defmulti label :cost/type)
-(defmulti payable? (fn [cost _state _side _eid _card] (:cost/type cost)))
-(defmulti handler (fn [cost _state _side _eid _card _actions] (:cost/type cost)))
+(defn- payable-dispatch [cost _state _side _eid _card] (:cost/type cost))
+(defmulti payable? #'payable-dispatch)
+(defn- handler-dispatch [cost _state _side _eid _card] (:cost/type cost))
+(defmulti handler #'handler-dispatch)
 
 (defn group-costs
   [costs]

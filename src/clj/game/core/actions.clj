@@ -564,10 +564,11 @@
    (let [card (get-card state card)
          eid (eid-set-defaults eid :source nil :source-type :advance)]
      (if (can-advance? state side card)
-       (wait-for (pay state side (make-eid state eid) card
+       (wait-for (pay state side
+                      (make-eid state (assoc eid :action :corp-advance))
+                      card
                       (->c :click (if-not no-cost 1 0))
-                      (->c :credit (if-not no-cost 1 0))
-                      {:action :corp-advance})
+                      (->c :credit (if-not no-cost 1 0)))
                  (if-let [payment-str (:msg async-result)]
                    (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
                        (update-advancement-requirement state card)
@@ -612,7 +613,10 @@
          (string/blank? cost-strs) (resolve-score state side eid card)
          (not can-pay) (effect-completed state side eid)
          :else (wait-for (pay state side (make-eid state
-                                                   (assoc eid :additional-costs cost :source card :source-type :corp-score))
+                                                   (assoc eid
+                                                          :additional-costs cost
+                                                          :source card
+                                                          :source-type :corp-score))
                               nil cost)
                          (let [payment-result async-result]
                            (if (string/blank? (:msg payment-result))

@@ -1299,14 +1299,13 @@
      :abilities [mm-ability mm-clear]
      :events [{:event :corp-spent-click
                :async true
-               :effect (req (let [cid (first target)
-                                  ability-idx (:ability-idx (:source-info eid))
+               :effect (req (let [[cid _value ability-idx] targets
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? (first target))
-                                          (case (first target)
+                                  cause (if (keyword? cid)
+                                          (case cid
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
-                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                            [cid ability-idx])
                                           [cid ability-idx])
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]

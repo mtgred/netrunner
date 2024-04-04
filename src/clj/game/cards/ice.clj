@@ -1649,7 +1649,7 @@
                               "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 2 [Credits]")
-                            (wait-for (pay state side (make-eid state eid) card :credit 2)
+                            (wait-for (pay state side (make-eid state eid) card (->c :credit 2))
                                       (system-msg state side (:msg async-result))
                                       (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
@@ -1671,7 +1671,7 @@
                               "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 3 [Credits]")
-                            (wait-for (pay state side (make-eid state eid) card :credit 3)
+                            (wait-for (pay state side (make-eid state eid) card (->c :credit 3))
                                       (system-msg state side (:msg async-result))
                                       (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
