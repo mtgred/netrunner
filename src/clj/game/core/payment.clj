@@ -69,7 +69,7 @@
   "Combines disparate costs into a single cost per type."
   ([costs] (merge-costs costs false))
   ([costs remove-zero-credit-cost]
-   (let [costs (flatten [costs])
+   (let [costs (filterv some? (flatten [costs]))
          {real false additional true} (group-by :cost/additional costs)
          real (group-costs real)
          additional (group-costs additional)]

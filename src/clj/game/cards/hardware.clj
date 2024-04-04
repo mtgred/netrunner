@@ -1,12 +1,11 @@
 (ns game.cards.hardware
   (:require
    [clojure.set :as set]
-   [clojure.string :as str]
    [game.core.access :refer [access-bonus access-card breach-server
                              get-only-card-to-access]]
    [game.core.actions :refer [play-ability]]
    [game.core.board :refer [all-active all-active-installed all-installed]]
-   [game.core.card :refer [active? corp? event? facedown? get-card get-counters get-title
+   [game.core.card :refer [corp? event? facedown? get-card get-counters get-title
                            get-zone hardware? has-subtype? ice? in-deck? in-discard?
                            in-hand? in-scored? installed? is-type? program? resource? rezzed?
                            runner? virus-program? faceup?]]
@@ -20,7 +19,7 @@
    [game.core.effects :refer [register-lingering-effect
                               unregister-effects-for-card unregister-lingering-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
-   [game.core.engine :refer [can-trigger? not-used-once? register-events
+   [game.core.engine :refer [can-trigger? register-events
                              register-once register-suppress resolve-ability trigger-event
                              unregister-floating-events unregister-suppress-by-uuid]]
    [game.core.events :refer [event-count first-event? first-run-event? first-trash? no-event?
@@ -667,18 +666,9 @@
               :prompt "Trigger the [Click] ability of the just-installed Caïssa program?"
               :yes-ability
               {:async true
-               :effect (effect
-                         (continue-ability
-                           (let [cid (:cid (:card context))]
-                             {:async true
-                              :prompt "Choose the just-installed Caïssa program"
-                              :choices {:card #(= cid (:cid %))}
-                              :msg (msg "trigger the [Click] ability of " (:title target)
-                                        " without spending [Click]")
-                              :effect (req (gain-clicks state :runner 1)
-                                           (play-ability state side {:card target :ability 0})
-                                           (effect-completed state side eid))})
-                           card nil))}}}]})
+               :effect (effect (play-ability eid {:card (:card context)
+                                                  :ability 0
+                                                  :ignore-cost true}))}}}]})
 
 (defcard "Demolisher"
   {:static-abilities [(mu+ 1)

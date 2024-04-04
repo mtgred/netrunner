@@ -1045,7 +1045,7 @@
      :stolen he}))
 
 (defcard "Ikawah Project"
-  {:steal-cost-bonus (req [(->c :credit 2) (->c :click 1)])})
+  {:steal-cost-bonus (req [(->c :click 1) (->c :credit 2)])})
 
 (defcard "Illicit Sales"
   {:on-score

@@ -121,7 +121,6 @@
    generate-install-list
    generate-runnable-zones
    move-card
-   play
    play-ability
    play-auto-pump
    play-auto-pump-and-break

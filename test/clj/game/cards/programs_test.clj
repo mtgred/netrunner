@@ -1167,7 +1167,7 @@
           (click-prompt state :runner "Yes")
           (click-prompt state :runner "3"))
         "Runner uses Bug")
-    (is (last-log-contains? state "Runner pays 6 \\[Credits] to use Bug to force the Corp to reveal they drew Hedge Fund, Hedge Fund, and Hedge Fund."))))
+    (is (last-log-contains? state "Runner pays 6 [Credits] to use Bug to force the Corp to reveal they drew Hedge Fund, Hedge Fund, and Hedge Fund."))))
 
 (deftest buzzsaw
   ;; Buzzsaw
@@ -2882,7 +2882,7 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (auto-pump-and-break state (get-program state 0))
-      (is (second-last-log-contains? state "Runner pays 0 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct log with correct cost")
+      (is (second-last-log-contains? state "Runner pays 0 [Credits] to use Euler to break all 2 subroutines on Enigma.") "Correct log with correct cost")
       (core/continue state :corp nil)
       (run-jack-out state)
       (take-credits state :runner)
@@ -2890,7 +2890,7 @@
       (run-on state :hq)
       (run-continue state)
       (auto-pump-and-break state (get-program state 0))
-      (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Euler to break all 2 subroutines on Enigma.") "Correct second log with correct cost")
+      (is (second-last-log-contains? state "Runner pays 2 [Credits] to use Euler to break all 2 subroutines on Enigma.") "Correct second log with correct cost")
       (core/continue state :corp nil)))
 
 (deftest expert-schedule-analyzer
@@ -4760,14 +4760,14 @@
         (run-on state "HQ")
         (run-continue state)
         (auto-pump-and-break state (refresh maven))
-        (is (second-last-log-contains? state "Runner pays 4 \\[Credits\\] to use Maven to break all 2 subroutines on Border Control.") "Correct log with autopump ability")
+        (is (second-last-log-contains? state "Runner pays 4 [Credits] to use Maven to break all 2 subroutines on Border Control.") "Correct log with autopump ability")
         (core/continue state :corp nil)
         (run-jack-out state)
         (run-on state "HQ")
         (run-continue state)
         (card-ability state :runner (refresh maven) 0)
         (click-prompt state :runner "End the run")
-        (is (last-log-contains? state "Runner pays 2 \\[Credits\\] to use Maven to break 1 subroutine on Border Control.") "Correct log with single sub break"))))
+        (is (last-log-contains? state "Runner pays 2 [Credits] to use Maven to break 1 subroutine on Border Control.") "Correct log with single sub break"))))
 
 (deftest mayfly
   ;; Mayfly
@@ -4827,7 +4827,7 @@
         (run-on state "HQ")
         (run-continue state)
         (auto-pump-and-break state (refresh mimic))
-        (is (second-last-log-contains? state "Runner pays 2 \\[Credits\\] to use Mimic to break all 2 subroutines on Pup") "Correct log with autopump ability")
+        (is (second-last-log-contains? state "Runner pays 2 [Credits] to use Mimic to break all 2 subroutines on Pup") "Correct log with autopump ability")
         (core/continue state :corp nil)
         (run-jack-out state)
         (is (zero? (:credit (get-runner))) "Runner spent 2 credits to break Pup")
@@ -4869,7 +4869,7 @@
         (run-continue state)
         (is (= 2 (count (:abilities (refresh mimic)))) "Auto pump and break ability on Mimic is available")
         (auto-pump-and-break state (refresh mimic))
-        (is (second-last-log-contains? state "Runner pays 3 \\[Credits\\] to use Mimic to break all 3 subroutines on Zed 2.0") "Correct log with autopump ability")
+        (is (second-last-log-contains? state "Runner pays 3 [Credits] to use Mimic to break all 3 subroutines on Zed 2.0") "Correct log with autopump ability")
         (core/continue state :corp nil)
         (run-jack-out state)
         (is (= 1 (:credit (get-runner))) "Runner spent 3 credits to break Zed 2.0"))))

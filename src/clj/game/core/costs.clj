@@ -34,9 +34,6 @@
 (defmethod handler :click
   [cost state side eid _card]
   (let [a (:action eid)]
-    (when (not (#{:steal-cost} a))
-      (swap! state update :click-states (fn [click-states]
-                                          (vec (take-last 4 (conj click-states (dissoc @state :log :history)))))))
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
     (wait-for (trigger-event-sync state side (make-eid state eid)

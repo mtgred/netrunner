@@ -46,22 +46,29 @@
 
 (deftest undo-click-return-card-from-play-area
   (do-game
-   (new-game {:corp {:deck ["Predictive Planogram"]}
-              :runner {:deck ["Dirty Laundry"]}})
+   (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                     :hand ["Predictive Planogram"]}
+              :runner {:hand ["Sure Gamble" "Dirty Laundry" "Day Job"]}})
    (play-from-hand state :corp "Predictive Planogram")
    (core/command-undo-click state :corp)
    (is (= 0 (count (:play-area (get-corp)))) "Corp play area is empty")
    (is (= 1 (count (:hand (get-corp)))) "Corp has 1 card in HQ")
    (take-credits state :corp)
+   (is (= ["Sure Gamble" "Dirty Laundry" "Day Job"] (map :title (:hand (get-runner)))))
    (play-from-hand state :runner "Dirty Laundry")
    (core/command-undo-click state :runner)
    (is (= 0 (count (:play-area (get-runner)))) "Runner play area is empty")
-   (is (= 1 (count (:hand (get-runner)))) "Player has 1 card in grip")))
+   (is (= 3 (count (:hand (get-runner)))) "Player has 1 card in grip")
+   (is (= ["Sure Gamble" "Dirty Laundry" "Day Job"] (map :title (:hand (get-runner)))))))
 
 (deftest undo-click-does-not-return-lockdown-from-play-area
   (do-game
    (new-game {:corp {:deck ["NAPD Cordon" "Predictive Planogram"]}
               :runner {:deck ["Dirty Laundry"]}})
+   (play-from-hand state :corp "NAPD Cordon")
+   (core/command-undo-click state :corp)
+   (is (= 0 (count (:play-area (get-corp)))) "NAPD Cordon has returned to HQ")
+   (is (= 2 (count (:hand (get-corp)))))
    (play-from-hand state :corp "NAPD Cordon")
    (play-from-hand state :corp "Predictive Planogram")
    (core/command-undo-click state :corp)
@@ -80,9 +87,9 @@
       (run-continue state)
       (card-side-ability state :runner ice 0)
       (click-prompt state :runner "End the run")
-      (is (last-log-contains? state "Runner loses \\[Click\\] to use Eli 1.0 to break 1 subroutine on Eli 1.0"))
+      (is (last-log-contains? state "Runner loses [Click] to use Eli 1.0 to break 1 subroutine on Eli 1.0"))
       (click-prompt state :runner "End the run")
-      (is (last-log-contains? state "Runner loses \\[Click\\] to use Eli 1.0 to break 1 subroutine on Eli 1.0")))
+      (is (last-log-contains? state "Runner loses [Click] to use Eli 1.0 to break 1 subroutine on Eli 1.0")))
     (run-continue state)
     (run-continue state)
     (click-prompt state :runner "No action")

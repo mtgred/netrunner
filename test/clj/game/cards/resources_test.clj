@@ -1379,10 +1379,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Dadiana Chacon")
       (play-from-hand state :runner "Corroder")
-      (is (last-n-log-contains? state 3 "Runner spends \\[Click\\] and pays 0 \\[Credits\\] to install Dadiana Chacon."))
+      (is (last-n-log-contains? state 3 "Runner spends [Click] and pays 0 [Credits] to install Dadiana Chacon."))
       (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to suffer 3 meat damage."))
       (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, and Corroder due to meat damage."))
-      (is (last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to install Corroder."))))
+      (is (last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to install Corroder."))))
 
 (deftest daeg-first-net-cat
   ;; Daeg, First Net-Cat - charge on score/steal
@@ -3874,7 +3874,7 @@
       (is (zero? (:click (get-runner))) "Should now have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
       (is (last-log-contains? state "use Logic Bomb"))
-      (is (last-log-contains? state "\\[Click\\]\\[Click\\]") "Log should mention 2 clicks")))
+      (is (last-log-contains? state "[Click][Click]") "Log should mention 2 clicks")))
 
 (deftest logic-bomb-if-the-runner-has-no-clicks-left
     ;; if the runner has no clicks left
@@ -3894,7 +3894,7 @@
       (is (zero? (:click (get-runner))) "Should still have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
       (is (last-log-contains? state "use Logic Bomb"))
-      (is (not (last-log-contains? state "\\[Click\\]")) "Log shouldn't mention any clicks")))
+      (is (not (last-log-contains? state "[Click]")) "Log shouldn't mention any clicks")))
 
 (deftest london-library
   ;; Install non-virus programs on London library. Includes #325/409
@@ -4520,7 +4520,7 @@
       (is (changed? [(:credit (get-runner)) -1]
             (play-from-hand state :runner "Order of Sol"))
           "Only spends 1 credit total to install Order of Sol")
-      (is (last-log-contains? state "Runner uses Order of Sol to gain 1 \\[Credits]."))))
+      (is (last-log-contains? state "Runner uses Order of Sol to gain 1 [Credits]."))))
 
 (deftest order-of-sol-get-down-to-zero-credits-from-playing-an-event
     ;; Get down to zero credits from playing an event
@@ -4532,7 +4532,7 @@
       (is (changed? [(:credit (get-runner)) 5]
             (play-from-hand state :runner "Sure Gamble"))
           "Gain 5 total credits from playing Sure Gamble")
-      (is (last-n-log-contains? state 2 "Runner uses Order of Sol to gain 1 \\[Credits]."))))
+      (is (last-n-log-contains? state 2 "Runner uses Order of Sol to gain 1 [Credits]."))))
 
 (deftest order-of-sol-losing-credits
     ;; Losing credits
@@ -4548,7 +4548,7 @@
       (is (changed? [(:credit (get-runner)) 0]
             (rez state :corp (get-content state :remote1 0)))
           "Gain and lose 1 credit")
-      (is (last-log-contains? state "Runner uses Order of Sol to gain 1 \\[Credits]."))))
+      (is (last-log-contains? state "Runner uses Order of Sol to gain 1 [Credits]."))))
 
 (deftest pad-tap
   ;; PAD Tap
@@ -4822,21 +4822,21 @@
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner mo))
               "Pay 4 for MOpus install (1+5-2)")
-          (is (second-last-log-contains? state "Runner pays 1 \\[Credits\\] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 3 \\[Credits\\] to install Magnum Opus using Paule's Café\\.") "Correct message for MOpus install")
+          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
+          (is (last-log-contains? state "Runner pays 3 [Credits] to install Magnum Opus using Paule's Café\\.") "Correct message for MOpus install")
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner des))
               "Pay 4 for Desperado install (1+3)")
-          (is (second-last-log-contains? state "Runner pays 1 \\[Credits\\] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 3 \\[Credits\\] to install Desperado using Paule's Café\\.") "Correct message for Desperado install")
+          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
+          (is (last-log-contains? state "Runner pays 3 [Credits] to install Desperado using Paule's Café\\.") "Correct message for Desperado install")
           (take-credits state :runner)
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -3]
                 (click-card state :runner cor))
               "Pay 3 for Corroder install in Corp turn (1+2)")
-          (is (second-last-log-contains? state "Runner pays 1 \\[Credits\\] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 2 \\[Credits\\] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
+          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
+          (is (last-log-contains? state "Runner pays 2 [Credits] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
 
 (deftest paule-s-cafe-can-t-lower-cost-below-1-issue-4816
     ;; Can't lower cost below 1. Issue #4816
@@ -4858,8 +4858,8 @@
                 (card-ability state :runner pau 1)
                 (click-card state :runner cor))
               "Pay 1 credit for Corroder (2 - 4 + 1 base)")
-          (is (second-last-log-contains? state "Runner pays 1 \\[Credits\\] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 0 \\[Credits\\] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
+          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
+          (is (last-log-contains? state "Runner pays 0 [Credits] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
 
 (deftest penumbral-toolkit-install-cost-reduction-after-hq-run
     ;; install cost reduction after HQ run

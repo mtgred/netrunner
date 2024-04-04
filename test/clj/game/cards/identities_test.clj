@@ -1011,7 +1011,7 @@
         (is (changed? [(:credit (get-runner)) -1]
               (run-on state :hq))
             "Paid 1c to run on HQ")
-        (is (last-log-contains? state "spends \\[Click\\] and pays 1 \\[Credits\\] to make a run on HQ") "Should have correct log with credits price for the run")))
+        (is (last-log-contains? state "spends [Click] and pays 1 [Credits] to make a run on HQ") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-front-side-flipping-costs-1-click
       ;; Flipping costs 1 click
@@ -1021,7 +1021,7 @@
               (card-ability state :corp (get-in @state [:corp :identity]) 0))
             "Paid 1 click to flip Earth Station")
         (is (:flipped (get-in @state [:corp :identity])) "Earth Station is on flip side")
-        (is (last-log-contains? state "Corp spends \\[Click\\] to use Earth Station: SEA Headquarters to flip their identity to Earth Station: Ascending to Orbit.") "Should have correct log with click price")))
+        (is (last-log-contains? state "Corp spends [Click] to use Earth Station: SEA Headquarters to flip their identity to Earth Station: Ascending to Orbit.") "Should have correct log with click price")))
 
 (deftest earth-station-sea-headquarters-flip-side-no-additional-cost-to-run-hq
       ;; No additional cost to run HQ
@@ -1056,7 +1056,7 @@
         (is (changed? [(:credit (get-runner)) -6]
               (run-on state :remote1))
             "Paid 6c to run on remote server")
-        (is (last-log-contains? state "spends \\[Click\\] and pays 6 \\[Credits\\] to make a run on Server 1") "Should have correct log with credits price for the run")))
+        (is (last-log-contains? state "spends [Click] and pays 6 [Credits] to make a run on Server 1") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-flip-side-flip-back-on-successful-hq-run
       ;; Flip back on successful HQ run
