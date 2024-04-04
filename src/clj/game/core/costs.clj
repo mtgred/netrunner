@@ -32,9 +32,9 @@
   [cost state side _ _]
   (<= 0 (- (get-in @state [side :click]) (value cost))))
 (defmethod handler :click
-  [cost state side eid card actions]
-  (let [a (keep :action actions)]
-    (when (not (some #{:steal-cost} a))
+  [cost state side eid card action]
+  (let [a (:action action)]
+    (when (not (#{:steal-cost} a))
       (swap! state update :click-states (fn [click-states]
                                           (vec (take-last 4 (conj click-states (dissoc @state :log :history)))))))
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
@@ -63,7 +63,7 @@
   [cost state side _ _]
   (<= 0 (- (get-in @state [side :click]) (value cost))))
 (defmethod handler :lose-click
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
   (deduct state side [:click (value cost)])
   (wait-for (trigger-event-sync state side (make-eid state eid)
@@ -131,7 +131,7 @@
        (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
            (<= 0 (- (total-available-credits state side eid card) (value cost))))))
 (defmethod handler :credit
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [provider-func #(eligible-pay-credit-cards state side eid card)]
     (cond
       (and (pos? (value cost))
@@ -173,7 +173,7 @@
   (and (pos? (total-available-credits state side eid card))
        (<= (stealth-value cost) (total-available-stealth-credits state side eid card))))
 (defmethod handler :x-credits
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:async true
@@ -216,7 +216,7 @@
   [cost state side eid card]
   (in-hand? (get-card state card)))
 (defmethod handler :expend
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (reveal state :corp (make-eid state eid) [card])
             (wait-for (trash state :corp (make-eid state eid)
                              (assoc (get-card state card) :seen true))
@@ -233,7 +233,7 @@
   [cost state side eid card]
   (installed? (get-card state card)))
 (defmethod handler :trash-can
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (trash state side card {:cause :ability-cost
                                     :unpreventable true})
             (complete-with-result state side eid {:msg (str "trashes " (:title card))
@@ -299,7 +299,7 @@
   [_ _ _ _ _]
   true)
 (defmethod handler :gain-tag
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (gain-tags state side (value cost))
             (complete-with-result state side eid {:msg (str "takes " (quantify (value cost) "tag"))
                                                   :type :gain-tag
@@ -312,7 +312,7 @@
   [cost state side eid card]
   (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost))))
 (defmethod handler :tag
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (lose-tags state side (value cost))
             (complete-with-result state side eid {:msg (str "removes " (quantify (value cost) "tag"))
                                                   :type :tag
@@ -325,7 +325,7 @@
   [cost state side eid card]
   true)
 (defmethod handler :tag-or-bad-pub
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (if-not (<= 0 (- (get-in @state [:runner :tag :base] 0) (value cost)))
     (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) nil)
               (complete-with-result state side eid {:msg (str "gains " (value cost) " bad publicity")
@@ -355,7 +355,7 @@
   [cost state side eid card]
   (active? (get-card state card)))
 (defmethod handler :return-to-hand
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (move state side card :hand)
   (complete-with-result
     state side eid
@@ -372,7 +372,7 @@
   [cost state side eid card]
   (active? (get-card state card)))
 (defmethod handler :remove-from-game
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (move state side card :rfg)
   (complete-with-result
     state side eid
@@ -390,7 +390,7 @@
   [cost state side eid card]
   (<= 0 (- (count (all-installed-runner-type state :program)) (value cost))))
 (defmethod handler :rfg-program
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "program")
@@ -419,7 +419,7 @@
   [cost state side eid card]
   (<= 0 (- (count (filter #(not (same-card? card %)) (all-installed state side))) (value cost))))
 (defmethod handler :trash-other-installed
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
@@ -450,7 +450,7 @@
   [cost state side eid card]
   (<= 0 (- (count (all-installed state side)) (value cost))))
 (defmethod handler :trash-installed
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
@@ -480,7 +480,7 @@
   [cost state side eid card]
   (<= 0 (- (count (all-installed-runner-type state :hardware)) (value cost))))
 (defmethod handler :hardware
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed piece") " of hardware to trash")
@@ -511,7 +511,7 @@
                                 (not (same-card? card %)))
                           (all-active-installed state :corp))) (value cost))))
 (defmethod handler :derez-other-harmonic
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (value cost) " Harmonic ice to derez")
@@ -540,7 +540,7 @@
   [cost state side eid card]
   (<= 0 (- (count (all-installed-runner-type state :program)) (value cost))))
 (defmethod handler :program
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed program") " to trash")
@@ -567,7 +567,7 @@
   [cost state side eid card]
   (<= 0 (- (count (all-installed-runner-type state :resource)) (value cost))))
 (defmethod handler :resource
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed resource") " to trash")
@@ -594,7 +594,7 @@
   [cost state side eid card]
   (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) (value cost))))
 (defmethod handler :connection
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed connection resource") " to trash")
@@ -624,7 +624,7 @@
   [cost state side eid card]
   (<= 0 (- (count (filter (every-pred installed? rezzed? ice?) (all-installed state :corp))) (value cost))))
 (defmethod handler :ice
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "installed rezzed ice" "") " to trash")
@@ -651,7 +651,7 @@
   [cost state side eid card]
   (<= 0 (- (count (get-in @state [side :deck])) (value cost))))
 (defmethod handler :trash-from-deck
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (mill state side side (value cost))
             (complete-with-result
               state side eid
@@ -670,7 +670,7 @@
   [cost state side eid card]
   (<= 0 (- (count (get-in @state [side :hand])) (value cost))))
 (defmethod handler :trash-from-hand
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                         (in-hand? %))
         prompt-hand (if (= :corp side) "HQ" "the grip")
@@ -703,7 +703,7 @@
   [cost state side eid card]
   (<= 0 (- (count (get-in @state [side :hand])) (value cost))))
 (defmethod handler :randomly-trash-from-hand
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (discard-from-hand state side side (value cost))
             (complete-with-result
               state side eid
@@ -720,7 +720,7 @@
 (defmethod payable? :trash-entire-hand
   [cost state side eid card] true)
 (defmethod handler :trash-entire-hand
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [cards (get-in @state [side :hand])]
     (wait-for (trash-cards state side cards {:unpreventable true})
               (complete-with-result
@@ -742,7 +742,7 @@
   [cost state side eid card]
   (<= 0 (- (count (filter hardware? (get-in @state [:runner :hand]))) (value cost))))
 (defmethod handler :trash-hardware-from-hand
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "piece") " of hardware to trash")
@@ -770,7 +770,7 @@
   [cost state side eid card]
   (<= 0 (- (count (filter program? (get-in @state [:runner :hand]))) (value cost))))
 (defmethod handler :trash-program-from-hand
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "program") " to trash")
@@ -797,7 +797,7 @@
   [cost state side eid card]
   (<= 0 (- (count (filter resource? (get-in @state [:runner :hand]))) (value cost))))
 (defmethod handler :trash-resource-from-hand
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt (str "Choose " (quantify (value cost) "resource") " to trash")
@@ -823,7 +823,7 @@
   [cost state side eid card]
   (<= (value cost) (count (get-in @state [:runner :hand]))))
 (defmethod handler :net
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (damage state side :net (value cost) {:unpreventable true :card card})
             (complete-with-result
               state side eid
@@ -839,7 +839,7 @@
   [cost state side eid card]
   (<= (value cost) (count (get-in @state [:runner :hand]))))
 (defmethod handler :meat
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (damage state side :meat (value cost) {:unpreventable true :card card})
             (complete-with-result
               state side eid
@@ -855,7 +855,7 @@
   [cost state side eid card]
   (<= (value cost) (count (get-in @state [:runner :hand]))))
 (defmethod handler :brain
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (damage state side :brain (value cost) {:unpreventable true :card card})
             (complete-with-result
               state side eid
@@ -872,7 +872,7 @@
   [cost state side eid card]
   (<= 0 (- (count (all-installed state side)) (value cost))))
 (defmethod handler :shuffle-installed-to-stack
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state :runner
     {:prompt (str "Choose " (quantify (value cost) "installed card")
@@ -901,7 +901,7 @@
   [cost state side eid card]
   (<= 0 (- (count (all-installed state side)) (value cost))))
 (defmethod handler :add-installed-to-bottom-of-deck
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [deck (if (= :corp side) "R&D" "the stack")]
     (continue-ability
       state side
@@ -930,7 +930,7 @@
   [cost state side eid card]
   (<= (value cost) (count (get-in @state [side :hand]))))
 (defmethod handler :add-random-from-hand-to-bottom-of-deck
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [deck (if (= :corp side) "R&D" "the stack")
         hand (get-in @state [side :hand])
         chosen (take (value cost) (shuffle hand))]
@@ -951,7 +951,7 @@
   [cost state side eid card]
   (<= 0 (- (reduce + (map #(get-counters % :agenda) (get-in @state [:corp :scored]))) (value cost))))
 (defmethod handler :any-agenda-counter
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:prompt "Choose an agenda with a counter"
@@ -979,7 +979,7 @@
   [cost state side eid card]
   (<= 0 (- (number-of-virus-counters state) (value cost))))
 (defmethod handler :any-virus-counter
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (wait-for (resolve-ability state side (pick-virus-counters-to-spend (value cost)) card nil)
             (complete-with-result
               state side eid
@@ -998,7 +998,7 @@
   [cost state side eid card]
   (<= 0 (- (get-counters card :advancement) (value cost))))
 (defmethod handler :advancement
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [title (:title card)
         card (update! state side (update card :advance-counter - (value cost)))]
     (wait-for (trigger-event-sync state side :counter-added card)
@@ -1020,7 +1020,7 @@
   [cost state side eid card]
   (<= 0 (- (get-counters card :agenda) (value cost))))
 (defmethod handler :agenda
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [title (:title card)
         card (update! state side (update-in card [:counter :agenda] - (value cost)))]
     (wait-for (trigger-event-sync state side :agenda-counter-spent card)
@@ -1042,7 +1042,7 @@
   [cost state side eid card]
   (<= 0 (- (get-counters card :power) (value cost))))
 (defmethod handler :power
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (let [title (:title card)
         card (update! state side (update-in card [:counter :power] - (value cost)))]
     (wait-for (trigger-event-sync state side :counter-added card)
@@ -1061,7 +1061,7 @@
   [cost state side eid card]
   (pos? (get-counters card :power)))
 (defmethod handler :x-power
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (continue-ability
     state side
     {:async true
@@ -1096,7 +1096,7 @@
                    (reduce +)))
            (value cost))))
 (defmethod handler :virus
-  [cost state side eid card actions]
+  [cost state side eid card action]
   (if (pos? (->> (all-active-installed state :runner)
                  (filter #(= "Hivemind" (:title %)))
                  (keep #(get-counters % :virus))

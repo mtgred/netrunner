@@ -813,7 +813,7 @@
                                :effect
                                (req (if (= "Take 1 net damage" target)
                                       (damage state side eid :net 1 {:card card})
-                                      (pay state :runner eid card (->c :credit 2))))
+                                      (pay state :runner eid card [(->c :credit 2)])))
                                :msg (msg (if (= "Take 1 net damage" target)
                                            "do 1 net damage"
                                            (str "force the runner to " (decapitalize target))))}
@@ -1388,7 +1388,7 @@
                                  "Take 1 tag"])
                   :async true
                   :effect (req (if (= target "Pay 3 [Credits]")
-                                 (wait-for (pay state :runner (make-eid state eid) card (->c :credit 3))
+                                 (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 3)])
                                            (system-msg state :runner (:msg async-result))
                                            (effect-completed state side eid))
                                  (gain-tags state :runner eid 1)))}
@@ -1399,7 +1399,7 @@
 
 (defcard "Datapike"
   {:subroutines [{:async true
-                  :effect (req (wait-for (pay state :runner (make-eid state eid) card (->c :credit 2))
+                  :effect (req (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 2)])
                                          (if (:cost-paid async-result)
                                            (do (system-msg state :runner (:msg async-result))
                                                (effect-completed state side eid))
@@ -1628,7 +1628,7 @@
                               "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 1 [Credits]")
-                            (wait-for (pay state side (make-eid state eid) card (->c :credit 1))
+                            (wait-for (pay state side (make-eid state eid) card [(->c :credit 1)])
                                       (system-msg state side (:msg async-result))
                                       (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
@@ -1649,7 +1649,7 @@
                               "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 2 [Credits]")
-                            (wait-for (pay state side (make-eid state eid) card :credit 2)
+                            (wait-for (pay state side (make-eid state eid) card [(->c :credit 2)])
                                       (system-msg state side (:msg async-result))
                                       (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
@@ -1671,7 +1671,7 @@
                               "Trash an installed card")])
              :async true
              :effect (req (if (= target "Pay 3 [Credits]")
-                            (wait-for (pay state side (make-eid state eid) card :credit 3)
+                            (wait-for (pay state side (make-eid state eid) card [(->c :credit 3)])
                                       (system-msg state side (:msg async-result))
                                       (effect-completed state side eid))
                             (continue-ability state :runner runner-trash-installed-sub card nil)))}]
@@ -1792,7 +1792,7 @@
                               "give the runner 1 tag"))
                   :effect (req (if (= "Take 1 tag" target)
                                  (gain-tags state :corp eid 1)
-                                 (wait-for (pay state side (make-eid state eid) card (->c :credit 4))
+                                 (wait-for (pay state side (make-eid state eid) card [(->c :credit 4)])
                                            (system-msg state side (:msg async-result))
                                            (effect-completed state side eid))))}]})
 
@@ -2095,7 +2095,7 @@
                   :effect (req (let [c (str->int target)]
                                  (if (can-pay? state side (assoc eid :source card :source-type :subroutine) card (:title card) (->c :credit c))
                                    (let [new-eid (make-eid state {:source card :source-type :subroutine})]
-                                     (wait-for (pay state :corp new-eid card (->c :credit c))
+                                     (wait-for (pay state :corp new-eid card [(->c :credit c)])
                                                (system-msg state :corp (:msg async-result))
                                                (continue-ability
                                                  state side
@@ -2383,7 +2383,7 @@
                                            (str "force the runner to " (decapitalize target) " on encountering it")))
                                :effect (req (if (= target "Take 1 tag")
                                               (gain-tags state :runner eid 1)
-                                              (wait-for (pay state :runner (make-eid state eid) card (->c :click 1))
+                                              (wait-for (pay state :runner (make-eid state eid) card [(->c :click 1)])
                                                         (system-msg state side (:msg async-result))
                                                         (effect-completed state :runner eid))))}
                               card nil))}
@@ -3310,7 +3310,7 @@
                                                 "Pay 3 [Credits]")]
                                     :msg (msg "force the Runner to " (decapitalize target))
                                     :effect (req (if (= target "Pay 3 [Credits]")
-                                                   (wait-for (pay state :runner (make-eid state eid) card (->c :credit 3))
+                                                   (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 3)])
                                                              (system-msg state :runner (:msg async-result))
                                                              (effect-completed state side eid))
                                                    (access-card state :runner eid c)))}
@@ -4182,7 +4182,7 @@
                      :async true
                      :effect (req (if (and (= target "Spend [Click]")
                                            (can-pay? state :runner eid card nil [(->c :click 1)]))
-                                    (wait-for (pay state side (make-eid state eid) card (->c :click 1))
+                                    (wait-for (pay state side (make-eid state eid) card [(->c :click 1)])
                                               (system-msg state side (:msg async-result))
                                               (effect-completed state :runner eid))
                                     (end-run state :corp eid card)))})})

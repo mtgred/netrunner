@@ -1298,14 +1298,13 @@
      :abilities [mm-ability mm-clear]
      :events [{:event :corp-spent-click
                :async true
-               :effect (req (let [cid (first target)
-                                  ability-idx (:ability-idx (:source-info eid))
+               :effect (req (let [[cid _value ability-idx] targets
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? (first target))
-                                          (case (first target)
+                                  cause (if (keyword? cid)
+                                          (case cid
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
-                                            (first target)) ; in clojure there's: (= [1 2 3] '(1 2 3))
+                                            [cid ability-idx])
                                           [cid ability-idx])
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]
@@ -2162,7 +2161,7 @@
                      (str "force the runner to " (decapitalize target))))
          :effect (req (if (= "End the run" target)
                         (end-run state :corp eid card)
-                        (wait-for (pay state :runner (make-eid state eid) card (->c :trash-installed 1))
+                        (wait-for (pay state :runner (make-eid state eid) card [(->c :trash-installed 1)])
                                   (when-let [payment-str (:msg async-result)]
                                     (system-msg state :runner
                                                 (str payment-str

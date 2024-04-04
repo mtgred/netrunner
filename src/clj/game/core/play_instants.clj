@@ -134,7 +134,7 @@
          ;; Only mark the register once costs have been paid and card has been moved
          (when (has-subtype? card "Run")
            (swap! state assoc-in [:runner :register :click-type] :run))
-         (wait-for (pay state side (make-eid state eid) moved-card costs {:action :play-instant})
+         (wait-for (pay state side (make-eid state eid) moved-card {:action :play-instant} costs)
                    (let [payment-str (:msg async-result)
                          cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]
                      (if payment-str

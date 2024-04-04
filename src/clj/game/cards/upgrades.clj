@@ -437,7 +437,7 @@
                                   (str "force the Runner to " (decapitalize target))))
                       :effect (req (if (= target "End the run")
                                      (end-run state side eid card)
-                                     (wait-for (pay state :runner (make-eid state eid) card (->c :credit cost))
+                                     (wait-for (pay state :runner (make-eid state eid) card [(->c :credit cost)])
                                                (system-msg state :runner (:msg async-result))
                                                (effect-completed state side eid))))})
                    card nil))}]
@@ -779,7 +779,7 @@
                                          (str "force the runner to " (decapitalize target))))
                              :effect (req (if (= "End the run" target)
                                             (end-run state :corp eid card)
-                                            (wait-for (pay state :runner (make-eid state eid) card (->c :credit credit-cost))
+                                            (wait-for (pay state :runner (make-eid state eid) card [(->c :credit credit-cost)])
                                                       (system-msg state :runner (:msg async-result))
                                                       (effect-completed state side eid))))})
                          card nil))}]})
@@ -1077,12 +1077,12 @@
              :effect (req (cond+
                             [(and (= target "Spend [Click][Click]")
                                   (can-pay? state :runner eid card nil [(->c :click 2)]))
-                             (wait-for (pay state side (make-eid state eid) card (->c :click 2))
+                             (wait-for (pay state side (make-eid state eid) card [(->c :click 2)])
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [(and (= target "Pay 5 [Credits]")
                                   (can-pay? state :runner eid card nil [(->c :credit 5)]))
-                             (wait-for (pay state side (make-eid state eid) card (->c :credit 5))
+                             (wait-for (pay state side (make-eid state eid) card [(->c :credit 5)])
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [:else
@@ -1716,7 +1716,7 @@
               {:async true
                :msg "do 1 core damage instead of net damage"
                :effect (req (swap! state update :damage dissoc :damage-replace :defer-damage)
-                            (wait-for (pay state :corp (make-eid state eid) card (->c :credit 2))
+                            (wait-for (pay state :corp (make-eid state eid) card [(->c :credit 2)])
                                       (system-msg state side (:msg async-result))
                                       (wait-for (damage state side :brain 1 {:card card})
                                                 (swap! state assoc-in [:damage :damage-replace] true)

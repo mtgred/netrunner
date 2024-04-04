@@ -114,7 +114,7 @@
                                                can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)]
                                            (or (empty? additional-costs) can-pay))))}
                 :effect (req
-                          (let [additional-costs (merge-costs (into [] (get-effects state side :basic-ability-additional-trash-cost target)))
+                          (let [additional-costs (merge-costs (get-effects state side :basic-ability-additional-trash-cost target))
                                 cost-strs (build-cost-string additional-costs)
                                 can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)]
                             (if (empty? additional-costs)
@@ -129,8 +129,11 @@
                                                             (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target-card)))
                                                                 (effect-completed state side eid))
                                                             (wait-for (pay state side (make-eid state
-                                                                                                (assoc eid :additional-costs additional-costs :source card :source-type :trash-card))
-                                                                           nil additional-costs 0)
+                                                                                                (assoc eid
+                                                                                                       :additional-costs additional-costs
+                                                                                                       :source card
+                                                                                                       :source-type :trash-card))
+                                                                           nil additional-costs)
                                                                       (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target-card)))
                                                                       (complete-with-result state side eid target-card))))}
                                             card nil)

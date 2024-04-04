@@ -247,10 +247,10 @@
                       ;; Pay additiional costs to steal
                       (= target "Pay to steal")
                       (wait-for (pay state side (make-eid state
-                                                  (assoc eid :additional-costs cost
-                                                         :source card
-                                                         :source-type :runner-steal))
-                                  nil cost {:action :steal-cost})
+                                                          (assoc eid :additional-costs cost
+                                                                 :source card
+                                                                 :source-type :runner-steal))
+                                     nil {:action :steal-cost} cost)
                                 (system-msg state side (str (:msg async-result) " to steal "
                                                             (:title card) " from "
                                                             (name-zone :corp (get-zone card))))
