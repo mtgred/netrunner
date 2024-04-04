@@ -11,7 +11,7 @@
   "Shuffles the vector in @state [side kw]."
   [state side kw]
   (when (contains? #{:deck :hand :discard} kw)
-    (trigger-event state side (when (= :deck kw) (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck)) nil)
+    (trigger-event state side (when (= :deck kw) (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck)))
     (when (and (:access @state)
                (:run @state)
                (= :corp side)

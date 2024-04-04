@@ -170,7 +170,7 @@
                 :req (req (not-empty (:deck runner)))
                 :cost [(->c :click)]
                 :msg "draw 1 card"
-                :effect (req (trigger-event state side :runner-click-draw (-> @state side :deck (nth 0)))
+                :effect (req (trigger-event state side :runner-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                              (play-sfx state side "click-card")
                              (draw state side eid (+ 1 (use-bonus-click-draws! state))))}
