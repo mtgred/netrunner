@@ -232,9 +232,10 @@
 (deftest trash-seen-and-unseen
   ;; Trash installed assets that are both seen and unseen by runner
   (do-game
-    (new-game {:corp {:deck [(qty "PAD Campaign" 3)]}})
+    (new-game {:corp {:deck [(qty "Ice Wall" 7)]
+                      :hand ["PAD Campaign" "Sandburg" "NGO Front"]}})
     (play-from-hand state :corp "PAD Campaign" "New remote")
-    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Sandburg" "New remote")
     (take-credits state :corp 1)
     (run-empty-server state "Server 1")
     (click-prompt state :runner "No action")
@@ -242,11 +243,12 @@
     (run-empty-server state "Server 2")
     (click-prompt state :runner "Pay 4 [Credits] to trash")
     (take-credits state :runner 2)
-    (play-from-hand state :corp "PAD Campaign" "Server 1")
+    (play-from-hand state :corp "NGO Front" "Server 1")
+    (is (= "The PAD Campaign in Server 1 will now be trashed." (:msg (prompt-map :corp))))
     (click-prompt state :corp "OK")
     (is (= 2 (count (:discard (get-corp)))) "Trashed existing asset")
-    (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
-    (is (not (:seen (second (get-in @state [:corp :discard]))))
+    (is (:seen (find-card "Sandburg" (:discard (get-corp)))) "Asset trashed by runner is Seen")
+    (is (not (:seen (find-card "PAD Campaign" (:discard (get-corp)))))
         "Asset trashed by corp is Unseen")
     (is (not (:seen (get-content state :remote1 0))) "New asset is unseen")))
 

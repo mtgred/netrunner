@@ -2,14 +2,13 @@
   (:require
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
-    [clojure.string :as str]
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-lingering-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.payment :refer [build-spend-msg can-pay? handler merge-costs]]
+    [game.core.payment :refer [build-spend-msg can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
     [game.core.say :refer [system-msg system-say]]
@@ -74,8 +73,6 @@
 ;   Mark the ability as "async", meaning the :effect function must call effect-completed itself.
 ;   Without this being set to true, resolve-ability will call effect-completed once it's done.
 ;   This part of the engine is really dumb and complicated, so ask someone on slack about it.
-; :cost-req -- 1-fn
-;   A function which will be applied to the cost of an ability immediatly prior to being paid. See all-stealth or min-stealth for examples.
 
 ; PROMPT KEYS
 ; :prompt -- string or 5-fn
@@ -322,58 +319,34 @@
     (ability-effect state side eid card targets)
     (effect-completed state side eid)))
 
-(defn- ugly-counter-hack
-  "This is brought over from the old do-ability because using `get-card` or `find-latest`
-  currently doesn't work properly with `pay-counters`"
-  [card cost]
-  ;; TODO: Remove me some day
-  (let [counter-costs
-        (->> cost
-             (merge-costs)
-             (filter #(#{:advancement :agenda :power :virus :bad-publicity} (:cost/type %)))
-             (seq))]
-    (if counter-costs
-      (reduce
-        (fn [card {counter-type :cost/type
-                   counter-amount :cost/amount}]
-          (let [counter (if (= :advancement counter-type)
-                          [:advance-counter]
-                          [:counter counter-type])]
-            (update-in card counter - counter-amount)))
-        card
-        counter-costs)
-      card)))
-
 (defn merge-costs-paid
-  ([cost-paid]
-   (into {} (map (fn [[k {:keys [type value targets]}]]
-                   [k {:type type
-                       :value value
-                       :targets targets}]))
-         cost-paid))
+  ([cost-paid] cost-paid)
   ([cost-paid1 cost-paid2]
-   (let [costs-paid [cost-paid1 cost-paid2]
-         cost-keys (mapcat keys costs-paid)]
+   (let [costs-paid (concat (vals cost-paid1) (vals cost-paid2))]
      (reduce (fn [acc cur]
-               (let [costs (map cur costs-paid)
-                     cost-obj {:type cur
-                               :value (apply + (keep :value costs))
-                               :targets (seq (apply concat (keep :targets costs)))}]
-                 (assoc acc cur cost-obj)))
+               (let [existing (get acc (:paid/type cur))
+                     cost-obj {:paid/type (:paid/type cur)
+                               :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
+                               :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
+                 (assoc acc (:paid/type cur) cost-obj)))
              {}
-             cost-keys)))
+             costs-paid)))
   ([cost-paid1 cost-paid2 & costs-paid]
    (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
 
-(defn- do-paid-ability [state side {:keys [eid cost] :as ability} card targets async-result]
+(defn- do-paid-ability [state side {:keys [eid] :as ability} card targets async-result]
   (let [payment-str (:msg async-result)
         cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
-        ability (assoc-in ability [:eid :cost-paid] cost-paid)]
+        ability (assoc-in ability [:eid :cost-paid] cost-paid)
+        ;; After paying costs, counters will be removed, so fetch the latest version.
+        ;; We still want the card if the card is trashed, so default to given
+        ;; when the latest is gone.
+        card (or (get-card state card) card)]
     ;; Print the message
     (print-msg state side ability card targets payment-str)
     ;; Trigger the effect
     (register-once state side ability card)
-    (do-effect state side ability (ugly-counter-hack card cost) targets)
+    (do-effect state side ability card targets)
     ;; If the ability isn't async, complete it
     (when-not (:async ability)
       (effect-completed state side eid))))
@@ -1159,11 +1132,11 @@
                             (complete-with-result
                               state side eid
                               {:msg (->> payment-result
-                                         (keep :msg)
-                                         enumerate-str)
+                                         (keep :paid/msg)
+                                         (enumerate-str))
                                :cost-paid (->> payment-result
-                                               (keep #(not-empty (select-keys % [:type :targets :value])))
+                                               (keep #(not-empty (dissoc % :paid/msg)))
                                                (reduce
-                                                 (fn [acc cost]
-                                                   (assoc acc (:type cost) cost))
+                                                 (fn [acc paid]
+                                                   (assoc acc (:paid/type paid) paid))
                                                  {}))})))))))

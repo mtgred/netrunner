@@ -137,19 +137,20 @@
 
                           ; Pay credits (from pool or cards) to trash
                           (= target (first trash-cost-str))
-                          (wait-for (pay state side (make-eid state trash-eid) card [(->c :credit trash-cost)])
-                                    (when (:breach @state)
-                                      (swap! state assoc-in [:breach :did-trash] true))
-                                    (when (:run @state)
-                                      (swap! state assoc-in [:run :did-trash] true)
-                                      (when must-trash?
-                                        (swap! state assoc-in [:run :did-access] true)))
-                                    (swap! state assoc-in [:runner :register :trashed-card] true)
-                                    (system-msg state side (str (:msg async-result) " to trash "
-                                                                (:title card) " from "
-                                                                (name-zone :corp (get-zone card))))
-                                    (wait-for (trash state side card {:accessed true})
-                                              (access-end state side eid (first async-result) {:trashed true})))
+                          (let [card (update! state side (assoc c :seen true))]
+                            (wait-for (pay state side (make-eid state trash-eid) card [(->c :credit trash-cost)])
+                                      (when (:breach @state)
+                                        (swap! state assoc-in [:breach :did-trash] true))
+                                      (when (:run @state)
+                                        (swap! state assoc-in [:run :did-trash] true)
+                                        (when must-trash?
+                                          (swap! state assoc-in [:run :did-access] true)))
+                                      (swap! state assoc-in [:runner :register :trashed-card] true)
+                                      (system-msg state side (str (:msg async-result) " to trash "
+                                                                  (:title card) " from "
+                                                                  (name-zone :corp (get-zone card))))
+                                      (wait-for (trash state side card {:accessed true})
+                                                (access-end state side eid (first async-result) {:trashed true}))))
 
                           ; Use access ability
                           (find-first #(same-card? % target) access-ab-cards)

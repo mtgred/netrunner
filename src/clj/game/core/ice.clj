@@ -627,7 +627,6 @@
         :breaks subtypes
         :break-cost cost
         :auto-break-sort (:auto-break-sort args)
-        :cost-req (:cost-req args)
         :break-cost-bonus (:break-cost-bonus args)
         :additional-ability (:additional-ability args)
         :label (str (or (:label args)
@@ -672,7 +671,6 @@
                   (str-req state side eid card targets)
                   true))
       :cost [cost]
-      :cost-req (:cost-req args)
       :pump strength
       :pump-bonus (:pump-bonus args)
       :auto-pump-sort (:auto-break-sort args)

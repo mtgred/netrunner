@@ -100,14 +100,7 @@
   ([state side eid card title & args]
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
-         cost-req (when (and (:abilities (:source eid))
-                             (:ability-idx (:source-info eid)))
-                    (:cost-req (nth (:abilities (:source eid)) (:ability-idx (:source-info eid)) nil)))
-         cost-filter (if (fn? cost-req) cost-req identity)
-         costs (->> (merge-costs (filter some? args) remove-zero-credit-cost)
-                    (cost-filter)
-                    (flatten)
-                    (into []))]
+         costs (merge-costs (filter some? args) remove-zero-credit-cost)]
      (if (every? #(and (not (flag-stops-pay? state side %))
                        (payable? % state side eid card))
                  costs)
@@ -117,7 +110,7 @@
 
 (defn cost-targets
   [eid cost-type]
-  (get-in eid [:cost-paid cost-type :targets]))
+  (get-in eid [:cost-paid cost-type :paid/targets]))
 
 (defn cost-target
   [eid cost-type]
@@ -125,7 +118,7 @@
 
 (defn cost-value
   [eid cost-type]
-  (get-in eid [:cost-paid cost-type :value]))
+  (get-in eid [:cost-paid cost-type :paid/value]))
 
 ;; the function `pay` is defined in resolve-ability because they're all intermingled
 ;; fuck the restriction against circular dependencies, for real

@@ -114,7 +114,8 @@
   ([state side eid server card] (make-run state side eid server card nil))
   ([state side eid server card {:keys [click-run ignore-costs] :as args}]
    (let [cost-args (assoc args :server (unknown->kw server))
-         costs (total-run-cost state side card cost-args)]
+         costs (total-run-cost state side card cost-args)
+         card (or (get-card state card) card)]
      (if-not (and (can-run? state :runner)
                   (can-run-server? state server)
                   (can-pay? state :runner eid card "a run" costs))
