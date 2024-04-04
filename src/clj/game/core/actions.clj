@@ -564,8 +564,9 @@
    (let [card (get-card state card)
          eid (eid-set-defaults eid :source nil :source-type :advance)]
      (if (can-advance? state side card)
-       (wait-for (pay state side (make-eid state eid) card
-                      {:action :corp-advance}
+       (wait-for (pay state side
+                      (make-eid state (assoc eid :action :corp-advance))
+                      card
                       [(->c :click (if-not no-cost 1 0))
                        (->c :credit (if-not no-cost 1 0))])
                  (if-let [payment-str (:msg async-result)]

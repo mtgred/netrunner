@@ -396,7 +396,7 @@
                    waiting-prompt))}))
   (if (seq cost)
     ;; Ensure that any costs can be paid
-    (wait-for (pay state side (make-eid state eid) card {:action (:cid card)} cost)
+    (wait-for (pay state side (make-eid state (assoc eid :action (:cid card))) card cost)
               (if (:cost-paid async-result)
                 ;; If the cost can be and is paid, perform the ablity
                 (do-paid-ability state side ability card targets async-result)
@@ -1139,32 +1139,31 @@
 ;; PAYMENT
 
 (defn- pay-next
-  [state side eid costs card actions msgs]
+  [state side eid costs card msgs]
   (if (empty? costs)
     (complete-with-result state side eid msgs)
-    (wait-for (handler (first costs) state side (make-eid state eid) card actions)
-              (pay-next state side eid (rest costs) card actions (conj msgs async-result)))))
+    (wait-for (handler (first costs) state side (make-eid state eid) card)
+              (pay-next state side eid (rest costs) card (conj msgs async-result)))))
 
 (defn pay
-  ([state side eid card costs] (pay state side eid card nil costs))
-  ([state side eid card actions costs]
-   (let [costs (flatten [costs])
-         costs (can-pay? state side eid card (:title card) costs)]
-     (when (some keyword? costs)
-       (throw (ex-info "Please convert to wrapped cost" {:args costs})))
-     (if (nil? costs)
-       (complete-with-result state side eid nil)
-       (wait-for (pay-next state side (make-eid state eid) costs card actions [])
-                 (let [payment-result async-result]
-                   (wait-for (checkpoint state nil (make-eid state eid) nil)
-                             (complete-with-result
-                               state side eid
-                               {:msg (->> payment-result
-                                          (keep :msg)
-                                          enumerate-str)
-                                :cost-paid (->> payment-result
-                                                (keep #(not-empty (select-keys % [:type :targets :value])))
-                                                (reduce
-                                                  (fn [acc cost]
-                                                    (assoc acc (:type cost) cost))
-                                                  {}))}))))))))
+  [state side eid card costs]
+  (let [costs (flatten [costs])
+        costs (can-pay? state side eid card (:title card) costs)]
+    (when (some keyword? costs)
+      (throw (ex-info "Please convert to wrapped cost" {:args costs})))
+    (if (nil? costs)
+      (complete-with-result state side eid nil)
+      (wait-for (pay-next state side (make-eid state eid) costs card [])
+                (let [payment-result async-result]
+                  (wait-for (checkpoint state nil (make-eid state eid) nil)
+                            (complete-with-result
+                              state side eid
+                              {:msg (->> payment-result
+                                         (keep :msg)
+                                         enumerate-str)
+                               :cost-paid (->> payment-result
+                                               (keep #(not-empty (select-keys % [:type :targets :value])))
+                                               (reduce
+                                                 (fn [acc cost]
+                                                   (assoc acc (:type cost) cost))
+                                                 {}))})))))))
