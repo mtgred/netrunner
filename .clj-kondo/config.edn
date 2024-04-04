@@ -1,5 +1,7 @@
 {:linters
- {:unresolved-symbol
+ {:unused-binding {:exclude-defmulti-args true
+                   :exclude-destructured-as true}
+  :unresolved-symbol
   {:exclude [(game.macros/req [state side eid card targets target context
                                runner corp run run-server run-ices run-position
                                current-ice corp-reg corp-reg-last runner-reg
