@@ -1020,7 +1020,7 @@
                           :effect (req (let [c target]
                                          (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) (->c :credit c))
                                            (let [new-eid (make-eid state {:source card :source-type :ability})]
-                                             (wait-for (pay state :corp new-eid card [(->c :credit c)])
+                                             (wait-for (pay state :corp new-eid card (->c :credit c))
                                                        (when-let [payment-str (:msg async-result)]
                                                          (system-msg state :corp payment-str))
                                                        (continue-ability
@@ -1127,7 +1127,7 @@
                                           :card #(and (installed? %)
                                                       (is-type? % card-type)
                                                       (not (has-subtype? % "Icebreaker")))}
-                                :effect (req (wait-for (pay state :runner (make-eid state eid) card [(->c :credit (* 3 (count targets)))])
+                                :effect (req (wait-for (pay state :runner (make-eid state eid) card (->c :credit (* 3 (count targets))))
                                                        (system-msg
                                                          state :runner
                                                          (str (:msg async-result) " to prevent the trashing of "
@@ -2091,7 +2091,7 @@
     :effect (req (let [c target]
                    (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) (->c :credit c))
                      (let [new-eid (make-eid state {:source card :source-type :ability})]
-                       (wait-for (pay state :corp new-eid card [(->c :credit c)])
+                       (wait-for (pay state :corp new-eid card (->c :credit c))
                                  (when-let [payment-str (:msg async-result)]
                                    (system-msg state :corp payment-str))
                                  (continue-ability
@@ -2153,7 +2153,7 @@
                      "Pay 8 [Credits]")])
     :async true
     :effect (req (if (= target "Pay 8 [Credits]")
-                   (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 8)])
+                   (wait-for (pay state :runner (make-eid state eid) card (->c :credit 8))
                              (system-msg state :runner (:msg async-result))
                              (effect-completed state side eid))
                    (gain-tags state :corp eid 1)))}})
@@ -2927,7 +2927,7 @@
                                "Pay 4 [Credits]")
                              "Take 1 tag"])
               :effect (req (if (= target "Pay 4 [Credits]")
-                             (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 4)])
+                             (wait-for (pay state :runner (make-eid state eid) card (->c :credit 4))
                                        (system-msg state :runner (:msg async-result))
                                        (effect-completed state side eid))
                              (gain-tags state :corp eid 1 nil)))}]}))

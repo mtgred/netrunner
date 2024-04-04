@@ -414,7 +414,7 @@
       :async true
       :effect (req (if (pos? target)
                      (wait-for
-                       (pay state :corp (make-eid state eid) card [(->c :credit target)])
+                       (pay state :corp (make-eid state eid) card (->c :credit target))
                        (let [from (take target (shuffle (:hand runner)))]
                          (doseq [c from]
                            (move state :runner c :deck))

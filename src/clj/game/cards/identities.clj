@@ -2161,7 +2161,7 @@
                      (str "force the runner to " (decapitalize target))))
          :effect (req (if (= "End the run" target)
                         (end-run state :corp eid card)
-                        (wait-for (pay state :runner (make-eid state eid) card [(->c :trash-installed 1)])
+                        (wait-for (pay state :runner (make-eid state eid) card (->c :trash-installed 1))
                                   (when-let [payment-str (:msg async-result)]
                                     (system-msg state :runner
                                                 (str payment-str

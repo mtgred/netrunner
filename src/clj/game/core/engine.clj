@@ -1146,8 +1146,8 @@
               (pay-next state side eid (rest costs) card (conj msgs async-result)))))
 
 (defn pay
-  [state side eid card costs]
-  (let [costs (flatten [costs])
+  [state side eid card & costs]
+  (let [costs (flatten costs)
         costs (can-pay? state side eid card (:title card) costs)]
     (when (some keyword? costs)
       (throw (ex-info "Please convert to wrapped cost" {:args costs})))

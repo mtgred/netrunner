@@ -1370,7 +1370,7 @@
      :async true
      :effect (req (if (= target "Trash Fencer Fueno")
                     (trash state :runner eid card {:cause-card card})
-                    (pay state :runner eid card [(->c :credit 1)])))}
+                    (pay state :runner eid card (->c :credit 1))))}
     ;; companion-builder: ability
     {:req (req (and (pos? (get-counters (get-card state card) :credit))
                     (:successful run)))
@@ -1559,7 +1559,7 @@
                                              "Trash Guru Davinder"])
                               :effect (req (if (= target "Trash Guru Davinder")
                                               (trash state :runner eid card {:cause :runner-ability :cause-card card})
-                                              (pay state :runner eid card [(->c :credit 4)])))}]))}]})
+                                              (pay state :runner eid card (->c :credit 4))))}]))}]})
 
 
 (defcard "Hades Shard"
@@ -1957,7 +1957,7 @@
                              (decapitalize target)))
                  :effect (req (if (= target "Trash Lewi Guilherme")
                                 (trash state :runner eid card {:cause-card card})
-                                (pay state :runner eid card [(->c :credit 1)])))}]
+                                (pay state :runner eid card (->c :credit 1))))}]
     {:flags {:drip-economy true}
      :static-abilities [(corp-hand-size+ -1)]
      :events [(assoc ability :event :runner-turn-begins)]}))

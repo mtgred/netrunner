@@ -23,7 +23,7 @@
         (pay state opponent (make-eid state eid) card [(->c :credit opponent-bet)])
         (system-msg state opponent (:msg async-result))
         (wait-for
-          (pay state side (make-eid state eid) card [(->c :credit bet)])
+          (pay state side (make-eid state eid) card (->c :credit bet))
           (system-msg state side (:msg async-result))
           (clear-wait-prompt state opponent)
           (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
