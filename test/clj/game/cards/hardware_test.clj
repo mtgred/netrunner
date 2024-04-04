@@ -1537,6 +1537,25 @@
     (run-on state "Archives")
     (is (= 2 (count (:hand (get-runner)))) "No cards drawn")))
 
+(deftest deep-red
+  ;; Deep Red
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Ice Wall"]
+                      :credits 100}
+               :runner {:hand ["Deep Red" "Rook"]
+                        :credit 100}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (rez state :corp (get-ice state :rd 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Deep Red")
+    (is (changed? [(:click (get-runner)) -1]
+          (play-from-hand state :runner "Rook")
+          (click-prompt state :runner "Yes")
+          (click-card state :runner "Ice Wall"))
+        "Only spend 1 click")
+    (is (= ["Rook"] (map get-title (:hosted (get-ice state :rd 0)))))))
+
 (deftest demolisher
   ;; Demolisher
   (do-game
@@ -4542,7 +4561,7 @@
               (card-ability state :runner (get-hardware state 0) 0)
               ;; Issue #4889
               (is (= "Choose 1 installed program to trash" (:msg (prompt-map :runner)))
-              "Runner chooses program to trash as a cost")
+                  "Runner chooses program to trash as a cost")
               (click-card state :runner "Corroder"))
             "Corroder is installed for free")
         (is (= "Choose a target for Simulchip" (:msg (prompt-map :runner)))

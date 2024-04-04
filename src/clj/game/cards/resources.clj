@@ -2054,7 +2054,7 @@
                            :duration :end-of-run
                            :effect (effect (enable-server (first (:server target))))}]
       {:abilities [{:label "Run a remote server"
-                    :cost [(->c :trash-can) (->c :click 1) (->c :brain 1)]
+                    :cost [(->c :click 1) (->c :trash-can) (->c :brain 1)]
                     :prompt "Choose a remote server"
                     :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
                     :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")

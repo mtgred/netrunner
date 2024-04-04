@@ -28,7 +28,8 @@
 ;; Card definitions
 
 (defcard "Corp Basic Action Card"
-  {:abilities [{:label "Gain 1 [Credits]"
+  {:abilities [{:action true
+                :label "Gain 1 [Credits]"
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
@@ -37,7 +38,8 @@
                                        (trigger-event state side :corp-click-credit)
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
-               {:label "Draw 1 card"
+               {:action true
+                :label "Draw 1 card"
                 :req (req (not-empty (:deck corp)))
                 :cost [(->c :click)]
                 :msg "draw 1 card"
@@ -46,7 +48,8 @@
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                              (play-sfx state side "click-card")
                              (draw state side eid 1))}
-               {:label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
+               {:action true
+                :label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
                 :req (req (and (not-empty (:hand corp))
                                (in-hand? target)
@@ -73,7 +76,8 @@
                                  state side (assoc eid :source server :source-type :corp-install)
                                  target server {:base-cost [(->c :click 1)]
                                                 :action :corp-click-install})))}
-               {:label "Play 1 operation"
+               {:action true
+                :label "Play 1 operation"
                 :async true
                 :req (req (and (not-empty (:hand corp))
                                (in-hand? target)
@@ -82,7 +86,8 @@
                                                   target {:base-cost [(->c :click 1)]})))
                 :effect (req (play-instant state :corp (assoc eid :source :action :source-type :play)
                                            target {:base-cost [(->c :click 1)]}))}
-               {:label "Advance 1 installed card"
+               {:action true
+                :label "Advance 1 installed card"
                 :cost [(->c :click 1) (->c :credit 1)]
                 :async true
                 :msg (msg "advance " (card-str state target))
@@ -91,7 +96,8 @@
                                 (add-prop (get-card state target) :advance-counter 1)
                                 (play-sfx "click-advance")
                                 (effect-completed eid))}
-               {:label "Trash 1 resource if the Runner is tagged"
+               {:action true
+                :label "Trash 1 resource if the Runner is tagged"
                 :cost [(->c :click 1) (->c :credit 2)]
                 :async true
                 :req (req tagged)
@@ -140,7 +146,8 @@
                                           (if async-result
                                             (trash state side eid target nil)
                                             (effect-completed state side eid)))))))}
-               {:label "Purge virus counters"
+               {:action true
+                :label "Purge virus counters"
                 :cost [(->c :click 3)]
                 :msg "purge all virus counters"
                 :async true
@@ -148,7 +155,8 @@
                              (purge state side eid))}]})
 
 (defcard "Runner Basic Action Card"
-  {:abilities [{:label "Gain 1 [Credits]"
+  {:abilities [{:action true
+                :label "Gain 1 [Credits]"
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
@@ -157,7 +165,8 @@
                                        (trigger-event state side :runner-click-credit)
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
-               {:label "Draw 1 card"
+               {:action true
+                :label "Draw 1 card"
                 :req (req (not-empty (:deck runner)))
                 :cost [(->c :click)]
                 :msg "draw 1 card"
@@ -165,7 +174,8 @@
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                              (play-sfx state side "click-card")
                              (draw state side eid (+ 1 (use-bonus-click-draws! state))))}
-               {:label "Install 1 program, resource, or piece of hardware from the grip"
+               {:action true
+                :label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
                 :req (req (and (not-empty (:hand runner))
                                (in-hand? target)
@@ -179,7 +189,8 @@
                                state :runner (assoc eid :source :action :source-type :runner-install)
                                target {:base-cost [(->c :click 1)]
                                        :no-toast true}))}
-               {:label "Play 1 event"
+               {:action true
+                :label "Play 1 event"
                 :async true
                 :req (req (and (not-empty (:hand runner))
                                (in-hand? target)
@@ -188,10 +199,12 @@
                                                   target {:base-cost [(->c :click 1)]})))
                 :effect (req (play-instant state :runner (assoc eid :source :action :source-type :play)
                                            target {:base-cost [(->c :click 1)]}))}
-               {:label "Run any server"
+               {:action true
+                :label "Run any server"
                 :async true
                 :effect (effect (make-run eid target nil {:click-run true}))}
-               {:label "Remove 1 tag"
+               {:action true
+                :label "Remove 1 tag"
                 :cost [(->c :click 1) (->c :credit 2)]
                 :msg "remove 1 tag"
                 :req (req tagged)

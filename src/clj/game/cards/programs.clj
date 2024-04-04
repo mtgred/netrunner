@@ -685,7 +685,7 @@
   (letfn [(was-a-runner-card?
             [target]
             (runner? (:card (first target))))]
-    {:static-abilities [{:type :card-ability-additional-cost
+    {:static-abilities [{:type :card-ability-cost
                          :req (req (and (same-card? card (:card context))
                                         (not (no-event? state side :runner-trash was-a-runner-card?))))
                          :value (->c :credit -1)}]
@@ -1904,7 +1904,8 @@
   (let [knight-req (req (and (same-card? current-ice (get-nested-host card))
                              (<= (get-strength current-ice) (get-strength card))))]
     {:implementation "[Erratum] Program: Icebreaker - AI - Caïssa - Trojan"
-     :abilities [{:label "Host on a piece of ice"
+     :abilities [{:action true
+                  :label "Host on a piece of ice"
                   :async true
                   :effect (req (let [k (get-card state card)
                                      hosted (ice? (:host k))
@@ -3297,7 +3298,8 @@
 (defcard "Trope"
   {:events [{:event :runner-turn-begins
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:req (req (not (zone-locked? state :runner :discard)))
+   :abilities [{:action true
+                :req (req (not (zone-locked? state :runner :discard)))
                 :label "shuffle cards from heap into stack"
                 :async true
                 :effect

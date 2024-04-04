@@ -607,7 +607,7 @@
   {:events [(assoc ability :event :runner-trash :req (req (valid-trash target)))
             (assoc ability :event :agenda-stolen :req (req true))]
    :abilities [{:label "Look at the top 3 cards of R&D"
-                :cost [(->c :power 1) (->c :click 1)]
+                :cost [(->c :click 1) (->c :power 1)]
                 :msg "look at the top 3 cards of R&D"
                 :effect (req (let [top (take 3 (:deck corp))]
                                (wait-for (resolve-ability state side
@@ -2020,12 +2020,12 @@
   {})
 
 (defcard "SYNC: Everything, Everywhere"
-  {:static-abilities [{:type :card-ability-additional-cost
+  {:static-abilities [{:type :card-ability-cost
                        :req (req (and (not (:sync-flipped card))
                                       (same-card? (:card context) (:basic-action-card runner))
                                       (= "Remove 1 tag" (:label (:ability context)))))
                        :value (->c :credit 1)}
-                      {:type :card-ability-additional-cost
+                      {:type :card-ability-cost
                        :req (req (and (:sync-flipped card)
                                       (same-card? (:card context) (:basic-action-card corp))
                                       (= "Trash 1 resource if the Runner is tagged" (:label (:ability context)))))

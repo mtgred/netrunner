@@ -4,7 +4,7 @@
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement update-all-advancement-requirements update-all-agenda-points]]
-    [game.core.board :refer [get-zones installable-servers]]
+    [game.core.board :refer [installable-servers]]
     [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
@@ -29,29 +29,40 @@
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards]]))
 
+(defn- update-click-state
+  "Update :click-states to hold latest 4 moments before performing actions."
+  [state ability]
+  (when (or (:action ability)
+            (= :click (:cost/type (first (:cost ability)))))
+    (let [state' (dissoc @state :log :history)
+          click-states (vec (take-last 4 (conj (:click-states state') state')))]
+      (swap! state assoc :click-states click-states))))
+
 ;;; Neutral actions
-(defn- do-play-ability [state side card ability ability-idx targets]
-  (let [cost (seq (card-ability-cost state side ability card targets))
-        source {:source card
+(defn- do-play-ability [state side eid {:keys [card ability ability-idx targets ignore-cost]}]
+  (let [source {:source card
                 :source-type :ability
                 :source-info {:ability-idx ability-idx
-                              :ability-targets targets}}]
+                              :ability-targets targets}}
+        eid (or eid (make-eid state source))
+        cost (when-not ignore-cost
+               (seq (card-ability-cost state side ability card targets)))
+        ability (assoc ability :cost cost)]
     (when (or (nil? cost)
-              (can-pay? state side (make-eid state source)
-                        card (:title card) cost))
-      (let [eid (make-eid state source)]
-        (resolve-ability state side eid (assoc ability :cost cost) card targets)))))
+              (can-pay? state side eid card (:title card) cost))
+      (update-click-state state ability)
+      (resolve-ability state side eid ability card targets))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
-  [state side {:keys [card ability targets]}]
-  (let [card (get-card state card)
-        abilities (:abilities card)
-        ab (nth abilities ability)
-        cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
-    (when-not cannot-play
-      (do-play-ability state side card ab ability targets))))
+  ([state side args] (play-ability state side nil args))
+  ([state side eid {:keys [card] ability-idx :ability :as args}]
+   (let [card (get-card state card)
+         ability (nth (:abilities card) ability-idx)
+         cannot-play (or (:disabled card)
+                         (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
+     (when-not cannot-play
+       (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
 
 (defn expend-ability
   "Called when the player clicks a card from hand."
@@ -67,19 +78,25 @@
   (when-let [card (get-card state card)]
     (case (:type card)
       ("Event" "Operation")
-      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 3 :targets [card]})
+      (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                :ability 3
+                                :targets [card]})
       ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
-      (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 2 :targets [card server]}))))
+      (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                :ability 2
+                                :targets [card server]}))))
 
 (defn click-draw
   "Click to draw."
   [state side _]
-  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 1}))
+  (play-ability state side {:card (get-in @state [side :basic-action-card])
+                            :ability 1}))
 
 (defn click-credit
   "Click to gain 1 credit."
   [state side _]
-  (play-ability state side {:card (get-in @state [side :basic-action-card]) :ability 0}))
+  (play-ability state side {:card (get-in @state [side :basic-action-card])
+                            :ability 0}))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
@@ -464,25 +481,27 @@
 
 (defn play-corp-ability
   "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
-  [state side {:keys [card ability targets]}]
-  (let [card (get-card state card)
-        cdef (card-def card)
-        ab (get-in cdef [:corp-abilities ability])
-        cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
-    (when-not cannot-play
-      (do-play-ability state side card ab ability targets))))
+  ([state side args] (play-corp-ability state side nil args))
+  ([state side eid {:keys [card] ability-idx :ability :as args}]
+   (let [card (get-card state card)
+         cdef (card-def card)
+         ability (get-in cdef [:corp-abilities ability-idx])
+         cannot-play (or (:disabled card)
+                         (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
+     (when-not cannot-play
+       (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
-  [state side {:keys [card ability targets]}]
-  (let [card (get-card state card)
-        cdef (card-def card)
-        ab (get-in cdef [:runner-abilities ability])
-        cannot-play (or (:disabled card)
-                        (any-effects state side :prevent-paid-ability true? card [ab ability]))]
-    (when-not cannot-play
-      (do-play-ability state side card ab ability targets))))
+  ([state side args] (play-runner-ability state side nil args))
+  ([state side eid {:keys [card] ability-idx :ability :as args}]
+   (let [card (get-card state card)
+         cdef (card-def card)
+         ability (get-in cdef [:runner-abilities ability-idx])
+         cannot-play (or (:disabled card)
+                         (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
+     (when-not cannot-play
+       (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
