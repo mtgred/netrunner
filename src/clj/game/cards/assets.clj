@@ -743,8 +743,10 @@
                 :effect (effect (trash eid target {:unpreventable true :cause-card card}))}]})
 
 (defcard "CPC Generator"
-  {:events [{:event :runner-click-credit
-             :req (req (first-event? state side :runner-click-credit))
+  {:events [{:event :runner-credit-gain
+             :req (req (first-event? state side :runner-credit-gain
+                                     (fn [[context]]
+                                       (= :runner-click-credit (:action context)))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})

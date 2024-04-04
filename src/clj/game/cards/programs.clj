@@ -1587,15 +1587,16 @@
                                 (strength-pump 1 1 :end-of-run)]}))
 
 (defcard "Gorman Drip v1"
-  {:abilities [{:cost [(->c :click 1) (->c :trash-can)]
+  {:events [{:event :corp-credit-gain
+             :req (req (= :corp-click-credit (:action context)))
+             :effect (effect (add-counter :runner card :virus 1))}
+            {:event :corp-click-draw
+             :effect (effect (add-counter :runner card :virus 1))}]
+   :abilities [{:cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain credits"
                 :async true
                 :effect (effect (gain-credits eid (get-virus-counters state card)))
-                :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]
-   :events [{:event :corp-click-credit
-             :effect (effect (add-counter :runner card :virus 1))}
-            {:event :corp-click-draw
-             :effect (effect (add-counter :runner card :virus 1))}]})
+                :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]})
 
 (defcard "Grappling Hook"
   (let [break-subs (fn [state ice subroutines]

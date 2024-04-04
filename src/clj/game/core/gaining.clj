@@ -81,11 +81,11 @@
 (defn gain-credits
   "Utility function for triggering events"
   ([state side eid amount] (gain-credits state side eid amount nil))
-  ([state side eid amount args]
+  ([state side eid amount action]
    (if (and amount
             (pos? amount))
      (do (gain state side :credit amount)
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) amount args))
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) {:amount amount :action action}))
      (effect-completed state side eid))))
 
 (defn lose-credits

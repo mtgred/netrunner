@@ -2430,9 +2430,10 @@
 
 (defcard "PAD Tap"
   {:events [{:event :corp-credit-gain
-             :req (req (and (not= target :corp-click-credit)
+             :req (req (and (not= (:action context) :corp-click-credit)
                             (= 1 (->> (turn-events state :corp :corp-credit-gain)
-                                      (remove #(= (second %) :corp-click-credit))
+                                      (remove (fn [[context]]
+                                                (= (:action context) :corp-click-credit)))
                                       count))))
              :once :per-turn
              :msg "gain 1 [Credits]"

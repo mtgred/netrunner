@@ -3307,6 +3307,29 @@
       (is (= 1 (count-tags state)))
       (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
 
+(deftest gorman-drip-v1
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Hedge Fund" "Anonymous Tip"]}
+               :runner {:hand ["Gorman Drip v1"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gorman Drip v1")
+    (take-credits state :runner)
+    (let [gorman (get-program state 0)]
+      (is (changed? [(get-counters (refresh gorman) :virus) 2]
+            (click-credit state :corp)
+            (click-draw state :corp))
+          "Clicking gains a counter")
+      (is (changed? [(get-counters (refresh gorman) :virus) 0]
+            (play-from-hand state :corp "Hedge Fund")
+            (play-from-hand state :corp "Anonymous Tip"))
+          "Playing a card gains none")
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-runner)) 2]
+            (card-ability state :runner gorman 0))
+          "Ability gains credits")
+      (is (nil? (refresh gorman)) "Gorman is trashed"))))
+
 (deftest grappling-hook
   ;; Grappling Hook
   (do-game
