@@ -823,7 +823,7 @@
       (is (changed? [(:credit (get-corp)) +1]
             (card-ability state :runner cor 0)
             (click-prompt state :runner "End the run")
-            (is (last-log-contains? state "Corp uses Bailiff to gain 1 \\[Credits\\]")
+            (is (last-log-contains? state "Corp uses Bailiff to gain 1 [Credits]")
             "Correct message"))
           "Gained 1c from subroutines being broken"))))
 
@@ -902,8 +902,8 @@
         (is (changed? [(:credit (get-corp)) +2]
               (auto-pump-and-break state cor))
             "Gained 2c from the runner breaking")
-        (is (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 \\[Credits\\]"))
-        (is (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 \\[Credits\\]"))))))
+        (is (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 [Credits]"))
+        (is (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 [Credits]"))))))
 
 (deftest ballista
   ;; Ballista
@@ -2874,7 +2874,7 @@
             (card-ability state :runner cor 0)
             (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]")
             (click-prompt state :runner "Done")
-            (is (last-log-contains? state "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+            (is (last-log-contains? state "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")
             "Correct message"))
           "Paid 1c + 1c for breaking"))))
 
@@ -2894,9 +2894,9 @@
       (run-continue state)
       (is (changed? [(:credit (get-runner)) -4]
             (auto-pump-and-break state cor)
-            (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")
+            (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")
                 "Correct messages")
-            (is (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 \\[Credits\\] for breaking printed subs")))
+            (is (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")))
           "Paid 2c + 2c for breaking"))))
 
 (deftest gold-farmer-interaction-with-paperclip
@@ -6572,7 +6572,7 @@
         (card-subroutine state :corp shiro 1)
         (let [credits (:credit (get-corp))]
           (click-prompt state :corp "Yes")
-          (is (last-log-contains? state "pays 1 \\[Credits\\]") "Payment is logged")
+          (is (last-log-contains? state "pays 1 [Credits]") "Payment is logged")
           (is (last-log-contains? state "keep the Runner from breaching R&D") "Prevention is logged")
           (is (= (dec credits) (:credit (get-corp))) "Corp pays 1 to prevent access"))))))
 

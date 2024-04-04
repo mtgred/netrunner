@@ -1024,8 +1024,8 @@
      (take-credits state :corp)
      (play-from-hand state :runner "Dirty Laundry")
      (click-prompt state :runner "HQ")
-     (is (second-last-log-contains? state "Runner spends \\[Click\\] and pays 2 \\[Credits\\] to play Dirty Laundry."))
-     (is (last-log-contains? state "Runner spends \\[Click\\] and pays 1 \\[Credits\\] to make a run on HQ."))))
+     (is (second-last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
+     (is (last-log-contains? state "Runner spends [Click] and pays 1 [Credits] to make a run on HQ."))))
 
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ice

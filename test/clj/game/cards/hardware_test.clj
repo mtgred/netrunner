@@ -3973,7 +3973,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Prognostic Q-Loop")
       (card-ability state :runner (get-hardware state 0) 1)
-      (is (last-log-contains? state "Runner spends \\[Click] and pays 1 \\[Credits] to install Prognostic Q-Loop.")
+      (is (last-log-contains? state "Runner spends [Click] and pays 1 [Credits] to install Prognostic Q-Loop.")
           "Shouldn't print anything to log as the stack is empty")))
 
 (deftest prognostic-q-loop-orders-correctly-with-other-on-run-triggers-when-firing-first-issue-4973

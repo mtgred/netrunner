@@ -903,8 +903,7 @@
     `(do ~@bundles)))
 
 (defn escape-log-string [s]
-  ; (str/escape s {\[ "\\[" \] "\\]"})
-  s)
+  (str/escape s {\[ "\\[" \] "\\]"}))
 
 (defn last-log-contains?
   [state content]
