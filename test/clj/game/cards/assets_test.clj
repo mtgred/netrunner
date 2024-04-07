@@ -6575,7 +6575,13 @@
                     (click-card state :corp (get-resource state 0)))
           "5 power counters removed to gain 6 credits")
       (is (empty (get-resource state)))
-      (is (= "Smartware Distributor" (:title (first (:deck (get-runner)))))))))
+      (is (= "Smartware Distributor" (:title (first (:deck (get-runner))))))
+      (core/gain state :corp :click 1)
+      (core/add-counter state :corp wp :power 5)
+      (is (changed? [(:credit (get-corp)) 6]
+                    (card-ability state :corp (refresh wp) 1))
+          "5 power counters removed to gain 6 credits")
+      (is (no-prompt? state :corp)))))
 
 (deftest worlds-plaza
   ;; Worlds Plaza

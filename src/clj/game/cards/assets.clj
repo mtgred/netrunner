@@ -9,7 +9,7 @@
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [bad-publicity-prevent gain-bad-publicity
                                     lose-bad-publicity]]
-   [game.core.board :refer [all-active-installed all-installed get-remotes
+   [game.core.board :refer [all-active-installed all-installed all-installed-runner-type get-remotes
                             installable-servers]]
    [game.core.card :refer [agenda? asset? can-be-advanced? corp? event? corp-installable-type?
                            faceup? fake-identity? get-advancement-requirement
@@ -3140,16 +3140,21 @@
                 :keep-menu-open :while-power-tokens-left
                 :effect (req (gain-credits state side eid 3))}
                {:cost [(->c :click 1) (->c :power 5)]
-                :label "Gain 6 [Credits] and add a resource to the top of the stack"
-                :prompt "Choose a resource"
-                :choices {:card #(resource? %)}
-                :async true
+                :label "Gain 6 [Credits]. Add 1 resource to the top of the stack"
                 :keep-menu-open :while-5-power-tokens-left
-                :msg (msg "gain 6 [Credits] and add " (:title target) " to the top of the stack")
-                :effect (req
-                          (wait-for (gain-credits state side 6)
-                                    (move state :runner target :deck {:front true})
-                                    (effect-completed state side eid)))}]})
+                :msg "gain 6 [Credits]"
+                :async true
+                :effect
+                (req (wait-for (gain-credits state side 6)
+                               (continue-ability
+                                 state side
+                                 {:prompt "Choose a resource"
+                                  :req (req (seq (all-installed-runner-type state :resource)))
+                                  :choices {:card #(resource? %)}
+                                  :msg (msg (str "add " (:title target) " to the top of the stack"))
+                                  :effect (req (move state :runner target :deck {:front true}))}
+                                 card nil)
+                               (effect-completed state side eid)))}]})
 
 (defcard "Worlds Plaza"
   {:abilities [{:label "Install an asset on this asset"
