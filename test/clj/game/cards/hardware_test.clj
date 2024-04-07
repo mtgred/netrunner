@@ -5115,6 +5115,33 @@
                                                 " to reveal Legwork, Corroder, Ice Carver, Prepaid VoicePAD, Femme Fatale from the top of the stack"
                                                 " and install Femme Fatale, ignoring all costs."))))))
 
+(deftest the-wizards-chest-single-card-selection
+  (do-game
+    (new-game {:runner {:hand ["The Wizard's Chest"]
+                        :discard ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Wizard's Chest")
+    (let [chest (get-hardware state 0)]
+      ;; TODO: make this a helper or something for consistently ordered starting deck
+      (doseq [card-name ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]]
+        (core/move state :runner (find-card card-name (get-in @state [:runner :discard])) :deck))
+      (card-ability state :runner chest 0)
+      (is (no-prompt? state :runner) "Cannot trigger The Wizard's Chest until all centrals ran")
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (run-empty-server state "HQ")
+      (card-ability state :runner (refresh chest) 0)
+      (is (= ["Hardware" "Program" "Resource" "Cancel"] (prompt-buttons :runner)))
+      (click-prompt state :runner "Program")
+      (is (= ["Install Femme Fatale" "No install"] (prompt-buttons :runner)))
+      (is (changed? [(:credit (get-runner)) 0]
+                    (click-prompt state :runner "Install Femme Fatale"))
+          "Install at no cost")
+      (is (= "Femme Fatale" (:title (get-program state 0))) "Femme Fatale is installed")
+      (is (second-last-log-contains? state (str "Runner uses The Wizard's Chest"
+                                                " to reveal Legwork, Ice Carver, Prepaid VoicePAD, Femme Fatale, Earthrise Hotel from the top of the stack"
+                                                " and install Femme Fatale, ignoring all costs."))))))
+
 (deftest time-bomb
   (do-game
     (new-game {:runner {:hand ["Time Bomb"]}
