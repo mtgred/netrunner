@@ -3632,6 +3632,7 @@
                         (when-not (forced-to-avoid-tags? state side)
                           "Take 1 tag")])
          :msg (msg "force the Runner to " (decapitalize target) " on encountering it")
+         :async true
          :effect (req (cond
                         (= "Lose 3 [Credits]" target)
                           (lose-credits state :runner eid 3)
