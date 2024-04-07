@@ -2343,7 +2343,7 @@
               state side
               {:prompt "Choose one"
                :choices [(str "Install " (:title first-card))
-                         (str "Install " (:title second-card))
+                         (when second-card (str "Install " (:title second-card)))
                          "No install"]
                :msg (msg "reveal " rev-str " from the top of the stack"
                          (when-not (= target "No install")
@@ -2374,12 +2374,14 @@
                     (wiz-search-fn state side eid card rest-of-deck type rev-str revealed-card)
                     (install-choice state side eid card rev-str first-card revealed-card))
                   (wiz-search-fn state side eid card rest-of-deck type rev-str first-card)))
-              (continue-ability
-                state side
-                {:msg (msg "reveal " rev-str " from the top of the stack")
-                 :effect (effect (shuffle! :deck)
-                                 (system-msg "shuffles the Stack"))}
-                card nil)))]
+              (if-not first-card
+                (continue-ability
+                  state side
+                  {:msg (msg "reveal " rev-str " from the top of the stack")
+                  :effect (effect (shuffle! :deck)
+                                  (system-msg "shuffles the Stack"))}
+                  card nil)
+                (install-choice state side eid card rev-str first-card nil))))]
     {:abilities [{:cost [(->c :trash-can)]
                   :label "Set aside cards from the top of the stack"
                   :prompt "Choose a card type"
