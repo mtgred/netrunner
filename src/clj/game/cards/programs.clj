@@ -2703,10 +2703,11 @@
                                        (same-card? current-ice (:host card))
                                        (can-pay? state :runner eid (:ice context) nil [(->c :credit (count (:subroutines (get-card state current-ice))))])))
                         :yes-ability {:async true
-                                      :msg (msg "bypass " (card-str state current-ice))
                                       :effect (req (wait-for
                                                      (pay state side (make-eid state eid) card [(->c :credit (count (:subroutines (get-card state current-ice))))])
-                                                     (system-msg state :runner (:msg async-result))
+                                                     (let [payment-str (:msg async-result)
+                                                           msg-ab {:msg (str "bypass " (card-str state (:ice context)))}]
+                                                       (print-msg state side msg-ab card nil payment-str))
                                                      (bypass-ice state)
                                                      (effect-completed state side eid)))}}}]})
 
