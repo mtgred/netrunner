@@ -2158,6 +2158,7 @@
                                    valid (filter #(not (facedown? %)) hosted)
                                    same-title (filter #(= (:title card) (:title %)) valid)]
                                (and (active-encounter? state)
+                                    current-ice card
                                     (<= (get-strength current-ice) (get-strength card))
                                     (not-empty same-title))))
                                         ; no break-req to not enable auto-pumping
