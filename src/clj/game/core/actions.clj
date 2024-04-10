@@ -58,6 +58,7 @@
   ([state side args] (play-ability state side nil args))
   ([state side eid {:keys [card] ability-idx :ability :as args}]
    (let [card (get-card state card)
+         args (assoc args :card card)
          ability (nth (:abilities card) ability-idx)
          cannot-play (or (:disabled card)
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
