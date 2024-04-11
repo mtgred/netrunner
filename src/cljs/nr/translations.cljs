@@ -3745,19 +3745,22 @@
    :archives "Архивы"
    :max-hand "Макс. размер руки"
    :brain-damage "Критический урон"
-   :tag-count (fn [[base additional]]
-                (str base (when (pos? additional) (str " + " additional)) (ru-quant "меток" "метка" "метки")))
-   :agenda-count (fn [[agenda-point]] (str agenda-point (ru-quant "победных очков" "победное очко" "победных очка")))
+   :tag-count (let [tag-quant (ru-quant "меток" "метка" "метки")]
+                (fn [[base additional]]
+                  (str (tag-quant [base]) (when (pos? additional) (str " + " additional)))))
+   :agenda-count (ru-quant "победных очков" "победное очко" "победных очка")
    :link-strength "Мощность канала"
-   :credit-count (fn [[credit run-credit]] (str credit (ru-quant "кредитов" "кредит" "кредита")
-                                                (when (pos? run-credit)
-                                                  (str " (" run-credit " для забега)"))))
-   :click-count (fn [[click]] (str click (ru-quant "кликов" "клик" "клика")))
-   :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) (ru-quant "плохих репутаций" "плохая репутация" "плохих репутации")))
+   :credit-count (let [credit-quant (ru-quant "кредитов" "кредит" "кредита")]
+                   (fn [[credit run-credit]] (str (credit-quant [credit])
+                                                  (when (pos? run-credit)
+                                                    (str " (" run-credit " для забега)")))))
+   :click-count (ru-quant "кликов" "клик" "клика")
+   :bad-pub-count (let [bp-quant (ru-quant "плохих репутаций" "плохая репутация" "плохих репутации")]
+                    (fn [[base additional]] (str (bp-quant [base]) (when (pos? additional) (str " + " additional)))))
    :mu-count (fn [[unused available]] (str unused " из " available " свободных ЯП"))
    :special-mu-count (fn [[unused available mu-type]] (str unused " из " available " " mu-type " свободных ЯП"))
    :indicate-action "Обозначить действие"
-   :spec-count (fn [[c]] (str c (ru-quant "зрителей" "зритель" "зрителя")))
+   :spec-count (ru-quant "зрителей" "зритель" "зрителя")
    :spec-view "Перспектива зрителя"
    :runner-view "Перспектива Бегущего"
    :corp-view "Перспектива Корпорации"
@@ -3784,8 +3787,9 @@
    :show "Показать"
    :close-shuffle "Закрыть и перемешать"
    :heap "Куча"
-   :card-count (fn [[size]] (str size (ru-quant "карт" "карта" "карты") "."))
-   :face-down-count (fn [[total face-up]] (str total (ru-quant "карт" "карта" "карты") ", " (- total face-up) " лицом вниз."))
+   :card-count (ru-quant "карт" "карта" "карты")
+   :face-down-count (let [facedown-quant (ru-quant "карт" "карта" "карты")]
+                      (fn [[total face-up]] (str (facedown-quant [total])  ", " (- total face-up) " лицом вниз.")))
    :up-down-count (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
    :initiation "Инициация"
    :approach-ice "Приблизиться ко льду"
