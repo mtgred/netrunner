@@ -21,8 +21,6 @@
   []
   (vals @all-cards))
 
-(defn abs [n] (max n (- n)))
-
 (defn safe-zero?
   "`zero?` throws up on non numbers, so this is a safe version."
   [n]

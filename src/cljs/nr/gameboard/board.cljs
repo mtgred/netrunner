@@ -199,8 +199,6 @@
     (when (not= "Identity" (:type card))
       (send-command "move" {:card card :server server}))))
 
-(defn abs [n] (max n (- n)))
-
 ;; touch support
 (defonce touchmove (atom {}))
 
