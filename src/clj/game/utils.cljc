@@ -1,11 +1,10 @@
 (ns game.utils
   (:require
-    [jinteki.cards :refer [all-cards]]
     [clojure.string :as str]
-    [clj-uuid :as uuid]))
+    [jinteki.cards :refer [all-cards]]))
 
 (defn make-cid []
-  (uuid/to-string (uuid/v4)))
+  (str (random-uuid)))
 
 (defn server-card
   ([title] (server-card title true))
@@ -15,7 +14,8 @@
        (and title card) card
        (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
        :else (when strict?
-               (throw (Exception. (str "Tried to select server-card for " title))))))))
+               (throw #?(:clj (Exception. (str "Tried to select server-card for " title))
+                         :cljs (js/Error. (str "Tried to select server-card for " title)))))))))
 
 (defn server-cards
   []
@@ -46,10 +46,9 @@
     (step coll #{})))
 
 (defn string->num [s]
-  (try
-    (let [num (bigdec s)]
-      (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
-  (catch Exception _ nil)))
+  (cond
+    (number? s) s
+    (string? s) (parse-long s)))
 
 (def safe-split (fnil str/split ""))
 

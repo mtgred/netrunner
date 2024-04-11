@@ -13,14 +13,17 @@
   ([state side message msg-type] (toast state side message msg-type nil))
   ([state side message msg-type options]
    ;; Allows passing just the toast msg-type as the options parameter
-   (when message
-     ;; normal toast - add to list
-     (swap! state update-in [side :toast] #(conj % {:msg message :type msg-type :options options :id (random-uuid)})))))
+    (when message
+      (let [new-toast {:id (random-uuid)
+                       :msg message
+                       :type msg-type
+                       :options options}]
+        ;; normal toast - add to list
+        (swap! state update-in [side :toast] conj new-toast)))))
 
 (defn ack-toast
-  ([state side {:keys [id]}]
-   (when-let [id (when (string? id) (parse-uuid id))]
-     (swap! state update-in [side :toast] (fn [toasts] (remove #(= (:id %) id) toasts))))))
+  [state side {:keys [id]}]
+  (swap! state update-in [side :toast] (fn [toasts] (remove #(= (:id %) id) toasts))))
 
 (defn show-error-toast
   [state side]
