@@ -653,20 +653,20 @@
      (let [handlers (gather-events state side event [context])]
        (doseq [to-resolve handlers]
          (when-let [card (card-for-ability state to-resolve)]
-           (let [eid (make-eid state {:source card :source-type :ability})]
-             (resolve-ability state side eid (dissoc-req (:ability to-resolve)) card [context]))
            (when (:unregister-once-resolved to-resolve)
-             (unregister-event-by-uuid state side (:uuid to-resolve)))))))))
+             (unregister-event-by-uuid state side (:uuid to-resolve)))
+           (let [eid (make-eid state {:source card :source-type :ability})]
+             (resolve-ability state side eid (dissoc-req (:ability to-resolve)) card [context]))))))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event targets]
   (if-let [to-resolve (first handlers)]
     (if-let [card (card-for-ability state to-resolve)]
-      (let [new-eid (make-eid state (assoc eid :source card :source-type :ability))]
-        (wait-for (resolve-ability state side new-eid (dissoc-req (:ability to-resolve)) card targets)
-                  (when (:unregister-once-resolved to-resolve)
-                    (unregister-event-by-uuid state side (:uuid to-resolve)))
-                  (trigger-event-sync-next state side eid (rest handlers) event targets)))
+      (do (when (:unregister-once-resolved to-resolve)
+            (unregister-event-by-uuid state side (:uuid to-resolve)))
+          (let [new-eid (make-eid state (assoc eid :source card :source-type :ability))]
+            (wait-for (resolve-ability state side new-eid (dissoc-req (:ability to-resolve)) card targets)
+                      (trigger-event-sync-next state side eid (rest handlers) event targets))))
       (trigger-event-sync-next state side eid (rest handlers) event targets))
     (effect-completed state side eid)))
 
@@ -728,13 +728,13 @@
                     (if-let [the-card (card-for-ability state to-resolve)]
                       {:async true
                        :effect (req
+                                 (when (:unregister-once-resolved to-resolve)
+                                   (unregister-event-by-uuid state side (:uuid to-resolve)))
                                  (let [new-eid (make-eid state (assoc eid :source the-card :source-type :ability))]
                                    (wait-for (resolve-ability state (to-keyword (:side the-card))
                                                               new-eid
                                                               ability-to-resolve
                                                               the-card event-targets)
-                                             (when (:unregister-once-resolved to-resolve)
-                                               (unregister-event-by-uuid state side (:uuid to-resolve)))
                                              (if (should-continue state handlers)
                                                (continue-ability state side
                                                                  (choose-handler remaining-handlers) nil event-targets)
@@ -754,19 +754,18 @@
                                       ability-to-resolve (dissoc-req (:ability to-resolve))
                                       the-card (card-for-ability state to-resolve)
                                       new-eid (make-eid state (assoc eid :source the-card :source-type :ability))]
+                                  (when (:unregister-once-resolved to-resolve)
+                                    (unregister-event-by-uuid state side (:uuid to-resolve)))
                                   (wait-for
                                     (resolve-ability state (to-keyword (:side the-card))
                                                      new-eid
                                                      ability-to-resolve the-card event-targets)
-                                    (when (:unregister-once-resolved to-resolve)
-                                      (unregister-event-by-uuid state side (:uuid to-resolve)))
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
                                                           (remove-once #(same-card-ability? target %) handlers))
                                                         nil event-targets)
                                       (effect-completed state side eid)))))})))]
-
       (continue-ability state side (choose-handler handlers) nil event-targets))
     (effect-completed state side eid)))
 
@@ -916,14 +915,14 @@
                                    (rest handlers))
               new-eid (make-eid state (assoc eid :source ability-card :source-type :ability))]
           (if ability-card
-            (wait-for (resolve-ability state (to-keyword (:side ability-card))
-                                       new-eid
-                                       (dissoc-req ability)
-                                       ability-card
-                                       context)
-                      (when (:unregister-once-resolved to-resolve)
-                        (unregister-event-by-uuid state side (:uuid to-resolve)))
-                      (trigger-queued-event-player state side eid remaining-handlers args))
+            (do (when (:unregister-once-resolved to-resolve)
+                  (unregister-event-by-uuid state side (:uuid to-resolve)))
+                (wait-for (resolve-ability state (to-keyword (:side ability-card))
+                                           new-eid
+                                           (dissoc-req ability)
+                                           ability-card
+                                           context)
+                          (trigger-queued-event-player state side eid remaining-handlers args)))
             (trigger-queued-event-player state side eid remaining-handlers args)))
         (continue-ability
           state side
@@ -939,14 +938,14 @@
                                 context (:context handler)
                                 ability-card (card-for-ability state to-resolve)
                                 new-eid (make-eid state (assoc eid :source ability-card :source-type :ability))]
+                            (when (:unregister-once-resolved to-resolve)
+                              (unregister-event-by-uuid state side (:uuid to-resolve)))
                             (wait-for
                               (resolve-ability state (to-keyword (:side ability-card))
                                                new-eid
                                                (dissoc-req ability)
                                                ability-card
                                                context)
-                              (when (:unregister-once-resolved to-resolve)
-                                (unregister-event-by-uuid state side (:uuid to-resolve)))
                               (let [remaining-handlers (remove-once #(= handler %) handlers)]
                                 (trigger-queued-event-player state side eid remaining-handlers args)))))})
           nil nil)))))
