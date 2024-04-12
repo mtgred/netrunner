@@ -2832,6 +2832,7 @@
       (end-turn state :runner)
       (is (= "Draw 1 card?" (:msg (prompt-map :runner))))
       (is (= 5 (count (:hand (get-runner)))))
+      (is (not (no-prompt? state :corp)) "Corp should have a waiting prompt")
       (click-prompt state :runner "Yes")
       (is (= 6 (count (:hand (get-runner)))))))
 

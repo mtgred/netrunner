@@ -1195,10 +1195,12 @@
 (defcard "Lat: Ethical Freelancer"
   {:events [{:event :runner-turn-ends
              :interactive (req true)
+             :async true
              :effect
              (effect (continue-ability 
                        {:optional {:req (req (= (count (:hand runner)) (count (:hand corp))))
                         :autoresolve (get-autoresolve :auto-fire)
+                        :waiting-prompt true
                         :prompt "Draw 1 card?"
                         :yes-ability {:async true
                                       :msg "draw 1 card"
