@@ -255,6 +255,24 @@
       (is (nil? (refresh ws)) "Whitespace should be trashed")
       (is (nil? (refresh ac)) "Arruaceiras Crew should be trashed"))))
 
+(deftest artist-colony
+  ;; Artist Colony
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Vanity Project"]}
+               :runner {:deck ["Monolith" "Chatterjee University"]
+                        :hand ["Artist Colony"]}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (play-from-hand state :runner "Artist Colony")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-card state :runner "Vanity Project")
+    (is (last-log-contains? state "forfeits 1 agenda .* to use Artist Colony to search the Stack for a card"))
+    (click-prompt state :runner "Chatterjee University")
+    (is (= "Chatterjee University" (:title (get-resource state 1))))
+    (is (empty? (:scored (get-runner))))))
+
 (deftest asmund-pudlat
   ;; Asmund Pudlat
   (do-game

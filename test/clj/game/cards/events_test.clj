@@ -4630,9 +4630,9 @@
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Cookbook")
     (is (changed? [(:credit (get-runner)) 2]
-                  (click-card state :runner "Cookbook")
-                  (click-card state :runner "Always Be Running")
-                  (click-prompt state :runner "Done"))
+          (click-card state :runner "Cookbook")
+          (click-card state :runner "Always Be Running")
+          (click-prompt state :runner "Done"))
         "Runner gained 2 credits")
     (is (no-prompt? state :runner))
     ;; Choosing connection
@@ -4641,9 +4641,9 @@
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "The Class Act")
     (is (changed? [(:credit (get-runner)) 2]
-                  (click-card state :runner "The Class Act")
-                  (click-card state :runner "Kati Jones")
-                  (click-prompt state :runner "Done"))
+          (click-card state :runner "The Class Act")
+          (click-card state :runner "Kati Jones")
+          (click-prompt state :runner "Done"))
         "Runner gained 2 credits")))
 
 (deftest mining-accident

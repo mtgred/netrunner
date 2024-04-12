@@ -400,12 +400,14 @@
           additional-costs]))]))
 
 (defn runner-can-pay-and-install?
-  [state side eid card {:keys [facedown] :as args}]
-  (let [costs (runner-install-cost state side (assoc card :facedown facedown) args)]
-    (and (runner-can-install? state side card args)
-         (can-pay? state side eid card nil costs)
-         ;; explicitly return true
-         true)))
+  ([state side eid card] (runner-can-pay-and-install? state side eid card nil))
+  ([state side eid card {:keys [facedown] :as args}]
+   (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)
+         costs (runner-install-cost state side (assoc card :facedown facedown) args)]
+     (and (runner-can-install? state side card args)
+          (can-pay? state side eid card nil costs)
+          ;; explicitly return true
+          true))))
 
 (defn runner-install-pay
   [state side eid card {:keys [facedown] :as args}]

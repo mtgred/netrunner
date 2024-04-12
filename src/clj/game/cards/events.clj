@@ -2487,12 +2487,14 @@
                :effect (req (let [choice target]
                               (continue-ability
                                 state side
-                                {:optional 
+                                {:optional
                                  {:prompt (str "Search the stack for a " choice " resource?")
                                   :yes-ability
-                                  {:effect (effect (continue-ability (tutor-abi choice) card nil))}
+                                  {:async true
+                                   :effect (effect (continue-ability (tutor-abi choice) card nil))}
                                   :no-ability
-                                  {:effect (effect (continue-ability (credit-gain-abi choice) card nil))}}}
+                                  {:async true
+                                   :effect (effect (continue-ability (credit-gain-abi choice) card nil))}}}
                                 card nil)))}}))
 
 (defcard "Mining Accident"
