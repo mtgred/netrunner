@@ -267,9 +267,9 @@
     (click-prompt state :runner "Steal")
     (play-from-hand state :runner "Artist Colony")
     (card-ability state :runner (get-resource state 0) 0)
-    (click-card state :runner "Vanity Project")
-    (is (last-log-contains? state "forfeits 1 agenda .* to use Artist Colony to search the Stack for a card"))
     (click-prompt state :runner "Chatterjee University")
+    (click-card state :runner "Vanity Project")
+    (is (last-n-log-contains? state 1 "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
     (is (= "Chatterjee University" (:title (get-resource state 1))))
     (is (empty? (:scored (get-runner))))))
 

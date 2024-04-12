@@ -2758,10 +2758,18 @@
              :effect (effect (add-counter :runner card :virus 2))}]})
 
 (defcard "Pressure Spike"
-  {:implementation "Once per run restriction not enforced. Auto-breaking disabled for this card."
-   :abilities [(break-sub 1 1 "Barrier")
-               (strength-pump 2 3)
-               (strength-pump 2 9 :end-of-encounter {:req (req (threat-level 4 state))})]})
+  (letfn [(once [card]
+            {:once :per-run
+             :once-key (str (:cid card) "-thread-pump")})]
+    {:implementation "Auto-breaking disabled for this card."
+     :abilities [(break-sub 1 1 "Barrier")
+                 (strength-pump 2 3)
+                 (let [base (strength-pump
+                              2 9 :end-of-encounter
+                              {:req (req (threat-level 4 state)
+                                         (not-used-once? state (once card) card))})]
+                   (assoc base :effect (req (register-once state side (once card) card)
+                                            ((:effect base) state side eid card targets))))]}))
 
 (defcard "Progenitor"
   {:abilities [{:label "Install and host a virus program"

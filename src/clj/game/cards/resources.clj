@@ -314,6 +314,7 @@
                 :req (req (not (install-locked? state side)))
                 :cost [(->c :forfeit)]
                 :choices (req (cancellable (filter #(not (event? %)) (:deck runner)) :sorted))
+                :async true
                 :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (runner-install eid target nil))}]})

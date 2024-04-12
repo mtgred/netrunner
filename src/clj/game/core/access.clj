@@ -323,7 +323,7 @@
                          "accesses ")
                        title
                        (when card
-                         (str " from " (name-zone side zone)))))))
+                         (str " from " (name-zone :corp zone)))))))
   (if (reveal-access? state side card)
     (do (system-msg state side (str "must reveal they accessed " (:title card)))
         (reveal state :runner eid card))

@@ -6184,7 +6184,7 @@
       (click-prompt state :runner "End the run")
       (click-prompt state :runner "Done"))))
 
-(deftest ^:kaocha/pending pressure-spike-once-per-run-ability
+(deftest pressure-spike-once-per-run-ability
   (do-game
     (new-game {:corp {:hand ["Chiyashi" "Vanity Project"]
                       :credits 20}
@@ -6200,9 +6200,9 @@
       (run-continue state)
       (is (changed? [(:credit (get-runner)) -2
                      (get-strength (refresh ps)) 9]
-                    (card-ability state :runner (refresh ps) 2)
-                    ;; second pump shouldn't be allowed
-                    (card-ability state :runner (refresh ps) 2))
+            (card-ability state :runner (refresh ps) 2)
+            ;; second pump shouldn't be allowed
+            (card-ability state :runner (refresh ps) 2))
           "Runner spent 2 credits to match ice strength"))))
 
 (deftest progenitor-hosting-hivemind-using-virus-breeding-ground-issue-738
