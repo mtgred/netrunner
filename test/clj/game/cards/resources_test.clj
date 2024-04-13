@@ -3868,7 +3868,6 @@
    (play-from-hand state :corp "NGO Front" "New remote")
    (play-from-hand state :corp "Sand Storm" "Server 1")
    (play-from-hand state :corp "Hokusai Grid" "New remote")
-   ;(let [ht (get-content state :remote2 0)]
    (click-advance state :corp (refresh (get-content state :remote1 0)))
    (take-credits state :corp)
    (play-from-hand state :runner "Light the Fire!")
@@ -6186,7 +6185,7 @@
         (card-ability state :runner (refresh the-back) 1)
         (is (no-prompt? state :runner) "The Back prompt did not come up"))))
 
-(deftest ^:kaocha/pending the-back-automated
+#_(deftest ^:kaocha/pending the-back-automated
   ;; TODO: Enable this once card is fully implemented
   (testing "Basic test"
     (do-game

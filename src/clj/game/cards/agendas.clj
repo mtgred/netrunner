@@ -2031,19 +2031,18 @@
                                            (rezzed? %)
                                            (not= (first (:server target)) (second (get-zone %))))
                                      (all-installed-corp state)))]
-                    (if-not (empty? rezzed-targets)
-                              (continue-ability
-                                state side
-                                {:prompt "Choose a piece of ice protecting another server to derez"
-                                 :waiting-prompt true
-                                 :choices {:req (req (some #{target} rezzed-targets))}
-                                 :once :per-turn
-                                 :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
-                                 :async true
-                                 :effect (effect (derez target)
-                                                 (gain-credits eid 1))}
-                                card nil)
-                              (effect-completed state side eid))))}
+                    (continue-ability
+                      state side
+                      (when rezzed-targets
+                        {:prompt "Choose a piece of ice protecting another server to derez"
+                         :waiting-prompt true
+                         :choices {:req (req (some #{target} rezzed-targets))}
+                         :once :per-turn
+                         :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
+                         :async true
+                         :effect (effect (derez target)
+                                         (gain-credits eid 1))})
+                      card nil)))}
             {:event :derez
              :req (req (and run
                             (first-run-event?

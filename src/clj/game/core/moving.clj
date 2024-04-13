@@ -493,7 +493,9 @@
               (register-static-abilities state side newh)
               (when (program? newh)
                 (init-mu-cost state newh)))))
-        (trigger-event state side :swap a-new b-new)))))
+        (trigger-event state side :swap {:swap-type :installed
+                                         :card1 a-new
+                                         :card2 b-new})))))
 
 (defn swap-ice
   "Swaps 2 pieces of ice."
@@ -535,7 +537,9 @@
           ;; TODO - quote exactly where
           install-event (or (and (installed? a) (not (installed? b)))
                             (and (installed? b) (not (installed? a))))]
-      (trigger-event state side :swap moved-a moved-b)
+      (trigger-event state side :swap {:swap-type :not-installed
+                                       :card1 moved-a
+                                       :card2 moved-b})
       (doseq [moved [moved-a moved-b]]
         (when (installed? moved)
           (when-let [dre (:derezzed-events (card-def moved))]
@@ -581,7 +585,8 @@
     (register-static-abilities state side new-scored)
     (when-not (card-flag? scored :has-events-when-stolen true)
       (deactivate state :corp new-stolen))
-    (trigger-event state side :swap new-stolen new-scored)
+    (trigger-event state side :swap {:swap-type :agendas
+                                     :card1 new-stolen :card2 new-scored})
     (update-all-agenda-points state side)
     (check-win-by-agenda state side)
     [(get-card state new-stolen) (get-card state new-scored)]))

@@ -4430,8 +4430,9 @@
               (assoc ab :event :card-moved)
               (assoc ab :event :approach-ice)
               (assoc ab :event :swap
-                     :req (req (or (protecting-hq? target)
-                                   (protecting-hq? (second targets)))))]}))
+                     :req (req (and (= :installed (:swap-type context))
+                                    (or (protecting-hq? (:card1 context))
+                                        (protecting-hq? (:card2 context))))))]}))
 
 (defcard "Woodcutter"
   (zero-to-hero (do-net-damage 1)))

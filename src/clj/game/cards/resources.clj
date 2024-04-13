@@ -2019,20 +2019,15 @@
                                   :msg "trash all cards in the server for no cost"}
           pre-redirect-trigger {:event :pre-redirect-server
                                 :duration :end-of-run
-                                :effect (effect (enable-server (first target))
-                                                (disable-server (second (second targets))))}
-          ;post-redirect-trigger {:event :redirect-server
-          ;                       :duration :end-of-run
-          ;                       :async true
-          ;                       :effect (effect (disable-server (first (:server run)))
-          ;                                       (effect-completed eid))}
+                                :effect (effect (enable-server (:server context))
+                                                (disable-server (:new-server context)))}
           corp-install-trigger {:event :corp-install
                                 :duration :end-of-run
                                 :effect (req (disable-server state side (first (:server run))))}
           swap-trigger {:event :swap
                         :duration :end-of-run
-                        :effect (req (let [first-card (first targets)
-                                           second-card (second targets)
+                        :effect (req (let [first-card (:card1 context)
+                                           second-card (:card2 context)
                                            server (first (:server run))]
                                        ;; disable cards that have moved into the server
                                        (when (and (some #{:content} (:zone first-card))
