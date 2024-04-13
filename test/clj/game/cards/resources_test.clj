@@ -3598,6 +3598,40 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (get-counters (refresh kati) :credit)) "No counters left on Kati"))))
 
+(deftest keros-mcintyre
+  ;; Keros Mcintyre
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma" "Chimera"]
+                      :credits 100}
+               :runner {:hand ["Keros Mcintyre" (qty "Emergency Shutdown" 2)]
+                        :credits 100}})
+    (play-from-hand state :corp "Enigma" "New remote")
+    (play-from-hand state :corp "Chimera" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Keros Mcintyre")
+    (take-credits state :runner)
+    (let [enigma (get-ice state :remote1 0)
+          chimera (get-ice state :remote2 0)]
+      (rez state :corp chimera)
+      (click-prompt state :corp "Code Gate")
+      (is (changed? [(:credit (get-runner)) 0]
+            (take-credits state :corp))
+          "No credit gain from corp derezzing a card")
+      (rez state :corp chimera)
+      (click-prompt state :corp "Code Gate")
+      (rez state :corp enigma)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (changed? [(:credit (get-runner)) 2]
+            (play-from-hand state :runner "Emergency Shutdown")
+            (click-card state :runner "Enigma"))
+          "Credit gain from runner derezzing a card")
+      (is (changed? [(:credit (get-runner)) 0]
+            (play-from-hand state :runner "Emergency Shutdown")
+            (click-card state :runner "Chimera"))
+          "No credit gain a second time"))))
+
 (deftest kongamato
   ;; Kongamato
   (do-game

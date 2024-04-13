@@ -24,7 +24,7 @@
                              resolve-ability trigger-event trigger-event-simult
                              unregister-events unregister-floating-events]]
    [game.core.events :refer [first-event? first-run-event? run-events
-                             turn-events]]
+                             turn-events run-event-count]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [any-flag-fn? can-rez? can-trash?
@@ -2287,27 +2287,22 @@
                  (make-run state side eid target card))}})
 
 (defcard "Leave No Trace"
-  (letfn [(get-rezzed-cids [ice]
-            (map :cid (filter #(and (rezzed? %)
-                                    (ice? %))
-                              ice)))]
-    {:makes-run true
-     :on-play {:prompt "Choose a server"
-               :msg "make a run and derez all ice that is rezzed during this run"
-               :choices (req runnable-servers)
-               :async true
-               :effect (req (let [old-ice-cids (get-rezzed-cids (all-installed state :corp))]
-                              (update! state side (assoc-in card [:special :leave-no-trace] old-ice-cids))
-                              (make-run state side eid target (get-card state card))))}
-     :events [{:event :run-ends
-               :effect (req (let [new (set (get-rezzed-cids (all-installed state :corp)))
-                                  old (set (get-in (get-card state card) [:special :leave-no-trace]))
-                                  diff-cid (seq (set/difference new old))
-                                  diff (map #(find-cid % (all-installed state :corp)) diff-cid)]
-                              (doseq [ice diff]
-                                (derez state :runner ice))
-                              (when-not (empty? diff)
-                                (system-msg state :runner (str "uses " (:title card) " to derez " (enumerate-str (map :title diff)))))))}]}))
+  {:makes-run true
+   :on-play {:prompt "Choose a server"
+             :msg "make a run and derez all ice that is rezzed during this run"
+             :choices (req runnable-servers)
+             :async true
+             :effect (req (make-run state side eid target (get-card state card)))}
+   :events [{:event :run-ends
+             :effect (req (let [rezzed-ice (->> (run-events target :rez)
+                                                (keep (fn [[{:keys [card]}]]
+                                                        (when (ice? card)
+                                                          (get-card state card))))
+                                                (filter rezzed?))]
+                            (doseq [ice rezzed-ice]
+                              (derez state :runner ice))
+                            (when (seq rezzed-ice)
+                              (system-msg state :runner (str "uses " (:title card) " to derez " (enumerate-str (map :title rezzed-ice)))))))}]})
 
 (defcard "Legwork"
   {:makes-run true

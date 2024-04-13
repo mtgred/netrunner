@@ -2048,7 +2048,7 @@
              :req (req (and run
                             (first-run-event?
                               state side :derez
-                              (fn [targets] (ice? (first targets))))))
+                              (fn [[context]] (ice? (:card context))))))
              :msg "lower strength of each installed icebreaker by 2"}]
    :leave-play (effect (update-all-icebreakers))
    :static-abilities [{:type :breaker-strength
@@ -2057,8 +2057,7 @@
                                       (has-subtype? target "Icebreaker")
                                       (<= 1 (run-event-count
                                               state side :derez
-                                              (fn [targets]
-                                                (ice? (first targets)))))))}]})
+                                              (fn [[context]] (ice? (:card context)))))))}]})
 
 (defcard "Sting!"
   (letfn [(count-opp-stings [state side]

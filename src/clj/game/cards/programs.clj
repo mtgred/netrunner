@@ -2939,7 +2939,7 @@
              :async true
              :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:card context) (:host card)))
              :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 3))}]})
