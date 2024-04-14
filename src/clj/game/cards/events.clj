@@ -3963,6 +3963,7 @@
    :events [{:event :successful-run
              :silent (req true)
              :async true
+             :once :per-turn
              :req (req (and (#{:rd} (target-server context))
                             this-card-run))
              :msg "place 2 [Credits] on itself and access 1 additional card from R&D"

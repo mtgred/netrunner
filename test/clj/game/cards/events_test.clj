@@ -7171,6 +7171,26 @@
       (is (= :remote1 (first (get-in @state [:run :server]))))
       (is (= 6 (get-counters (refresh ts) :credit)) "Trick Shot still has 6 credits on it"))))
 
+(deftest trick-shot-aginfusion-interaction
+  (do-game
+    (new-game {:corp {:id "AgInfusion: New Miracles for a New World"
+                      :deck [(qty "Hedge Fund" 10)]
+                      :hand ["Vanilla"]}
+               :runner {:hand ["Trick Shot"]}})
+    (play-from-hand state :corp "Vanilla" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Trick Shot")
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Server 1")
+    (is (= :remote1 (first (get-in @state [:run :server]))))
+    (card-ability state :corp (:identity (get-corp)) 0)
+    (click-prompt state :corp "R&D")
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner))))
+
 (deftest uninstall
   ;; Uninstall
   (do-game
