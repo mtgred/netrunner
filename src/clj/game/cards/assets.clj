@@ -619,7 +619,7 @@
              :interactive (req true)
              :choices (req [(when (seq (:hand corp)) "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
                             (when (some #(not (:seen %)) (:discard corp))
-                              "Turn 1 facedown card in Archives faceup to place 1 advancement counter")
+                              "Turn 1 facedown card in Archives faceup to place 1 advancement counter on an installed card")
                             "Done"])
              :async true
              :effect (req (if (= target "Done")

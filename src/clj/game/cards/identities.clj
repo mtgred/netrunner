@@ -863,7 +863,7 @@
                               :msg (msg "install " (:title target))
                               :async true
                               :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}}}
-                           {:prompt (str "You have no " card-type " in hand")
+                           {:prompt (str "You have no " card-type " to install")
                             :choices ["Carry on!"]
                             :prompt-type :bogus}))
                        card nil))}]})
@@ -1368,7 +1368,7 @@
                             (continue-ability
                              state :corp
                              {:async true
-                              :prompt "No ice to install"
+                              :prompt "You have no piece of ice to install"
                               :choices ["Carry on!"]
                               :prompt-type :bogus
                               :effect (effect (effect-completed eid))}
@@ -2151,7 +2151,7 @@
   (let [thunderbolt-sub
         {:player :runner
          :async true
-         :label (str "End the run unless the Runner pays " (build-cost-label [(->c :trash-installed 1)]))
+         :label "End the run unless the Runner trashes 1 of their installed cards"
          :prompt "Choose one"
          :waiting-prompt true
          :choices (req ["End the run"

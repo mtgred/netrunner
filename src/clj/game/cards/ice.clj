@@ -1199,7 +1199,6 @@
    :events [{:event :end-of-encounter
              :req (req (and (= :this-turn (:rezzed card))
                             (same-card? (:ice context) card)))
-             :msg "force the Runner to choose an effect"
              :effect (effect (continue-ability
                                {:prompt "Choose one"
                                 :player :runner
@@ -1215,12 +1214,11 @@
                                               (= target "Corp trashes 1 Runner card")
                                               trash-installed-sub
                                               (= target "Take 2 tags")
-                                              {:effect (effect (gain-tags :runner eid 2 {:unpreventable true}))
-                                               :msg "give the Runner 2 tags"}
+                                              {:msg (msg "force the Runner to " (decapitalize target))
+                                               :effect (effect (gain-tags :runner eid 2 {:unpreventable true}))}
                                               (= target "Suffer 3 net damage")
-                                              {:effect (req (wait-for (pay state :runner (make-eid state eid) card [(->c :net 3)])
-                                                                      (system-msg state :runner (:msg async-result))
-                                                                      (effect-completed state side eid)))})
+                                              {:msg (msg "force the Runner to " (decapitalize target))
+                                               :effect (req (pay state :runner eid card [(->c :net 3)]))})
                                             card nil))}
                                card nil))}]})
 
@@ -2002,7 +2000,7 @@
 
 (defcard "Descent"
   (let [shuffle-ab
-        {:label "Draw 1 card and shuffle 2 agendas in HQ and/or Archives into R&D"
+        {:label "Draw 1 card and shuffle up to 2 agendas in HQ and/or Archives into R&D"
          :msg "draw 1 card"
          :async true
          :cost [:credit 1]
@@ -2579,10 +2577,7 @@
                                       :advance-counter
                                       (inc (faceup-archives-types corp))
                                       {:placed true}))}
-   :subroutines [{:msg "gain 2 [Credits] and end the run"
-                  :async true
-                  :effect (req (wait-for (gain-credits state :corp 2)
-                                         (end-run state side eid card)))}
+   :subroutines [(combine-abilities (gain-credits-sub 2) end-the-run)
                  end-the-run
                  end-the-run]})
 

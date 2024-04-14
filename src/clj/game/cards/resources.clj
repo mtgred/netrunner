@@ -271,7 +271,7 @@
              :effect (effect (add-counter (get-card state card) :power 1))}
             {:event :runner-turn-begins
              :optional
-             {:prompt (str "Trash this resource to force the Corp to lose 10 [Credits]?")
+             {:prompt "Trash this resource to force the Corp to lose 10 [Credits]?"
               :req (req (>= (get-counters (get-card state card) :power) 3))
               :yes-ability
               {:msg "trash itself and force the Corp to lose 10 [Credits]"
@@ -1313,7 +1313,7 @@
          :req (req (and (threat-level 3 state)
                         (= :rd target)
                         (= :archives (first (:server run)))))
-         :msg (msg "access 1 additional card")
+         :msg "access 1 additional card"
          :effect (effect (access-bonus :rd 1))}
         ability
         (successful-run-replace-breach
@@ -2113,7 +2113,7 @@
    :events [{:event :breach-server
              :req (req (and tagged run
                             (or (= target :rd) (= target :hq))))
-             :msg "access 1 additional card"
+             :msg (msg "access 1 additional card from " (zone->name target))
              :effect (effect (access-bonus target 1))}]})
 
 (defcard "\"Pretty\" Mary da Silva"
@@ -3517,11 +3517,11 @@
                          (continue-ability
                            state side
                            {:req (req (< 0 (get-counters card :power)))
-                            :prompt (msg (format "How many additional %s accesses do you want to make?" (if (= :rd target-server) "R&D" "HQ")))
+                            :prompt (msg "How many additional " (zone->name target-server) " accesses do you want to make?")
                             :choices {:number (req (min 2 (get-counters card :power)))
                                       :default (req (min 2 (get-counters card :power)))}
                             :msg (msg "access " (quantify target "additional card") " from "
-                                      (if (= :rd target-server) "R&D" "HQ"))
+                                      (zone->name target-server))
                             :async true
                             :effect (effect (access-bonus target-server (max 0 target))
                                             (add-counter :runner card :power (- target) {:placed true})

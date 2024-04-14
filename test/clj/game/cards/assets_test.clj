@@ -1054,7 +1054,7 @@
         (take-credits state :runner)
         (end-phase-12 state :corp)
         (is (changed? [(get-counters (refresh ngo) :advancement) 1]
-                      (click-prompt state :corp "Turn 1 facedown card in Archives faceup to place 1 advancement counter")
+                      (click-prompt state :corp "Turn 1 facedown card in Archives faceup to place 1 advancement counter on an installed card")
                       (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
                       (click-card state :corp ngo))
             "Corp turned 1 facedown card in Archived to advance 1 card")
