@@ -296,14 +296,15 @@
                             (wait-for (trash-cards state :corp to-trash {:unpreventable true :cause-card card})
                                       (doseq [h to-hq]
                                         (move state :corp h :hand))
-                                      (if (seq remaining)
-                                        (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
-                                        (do (system-msg state :corp
-                                                        (str "uses " (:title card)
-                                                             " to add " (quantify (count to-hq) "card")
-                                                             " to HQ, discard " (count to-trash)
-                                                             ", and arrange the top cards of R&D"))
-                                            (effect-completed state :corp eid))))
+                                      (do
+                                        (system-msg state :corp
+                                                    (str "uses " (:title card)
+                                                         " to trash " (quantify (count to-trash) "card")
+                                                         ", add " (quantify (count to-hq) "card")
+                                                         " to HQ, and arrange the top " (quantify (- 7 (count to-trash) (count to-hq)) "card") " of R&D"))
+                                        (if (seq remaining)
+                                          (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
+                                          (effect-completed state :corp eid))))
                             (continue-ability state :corp (hq-step
                                                             (set/difference (set remaining) (set [target]))
                                                             to-trash
