@@ -3500,6 +3500,32 @@
               (card-ability state :runner houdini 1))
             "Runner has not been charged, strength hasn't changed"))))
 
+(deftest hush
+  (do-game
+   (new-game {:corp {:deck [(qty "Hedge Fund" 2)]
+                     :hand ["Tollbooth"]
+                     :credits 10}
+              :runner {:deck [(qty "Sure Gamble" 2)]
+                       :hand ["Hush"]
+                       :credits 20}})
+   (play-from-hand state :corp "Tollbooth" "R&D")
+   (take-credits state :corp)
+   (take-credits state :corp)
+   (core/gain state :runner :click 1)
+   (let [toll (get-ice state :rd 0)
+         credits (:credit (get-runner))]
+     (run-on state "R&D")
+     (rez state :corp toll)
+     (run-continue state)
+     (is (= 3 (- credits (:credit (get-runner)))) "Runner paid 3 for Tollbooth")
+     (fire-subs state (refresh toll))
+     (play-from-hand state :runner "Hush")
+     (click-card state :runner (get-ice state :rd 0)) 
+     (run-on state "R&D")
+     (run-continue state) 
+     (is (= 4 (- credits (:credit (get-runner)))) "Runner pays for hush install but doesn't pay for Tollboth again")
+     (fire-subs state (refresh toll)))))
+
 (deftest hyperbaric
   ;; Hyperbaric - I can't believe it's not Study Guide
   ;; Starts with a counter, 2c to add a power counter; +1 strength per counter

@@ -1764,10 +1764,10 @@
       (strength-pump (->c :credit 2 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Hush"
-  ;; TODO - come back to this once disabling cards has been reworded. nbkelly, jan 2023
-  {:implementation "Unimplemented - corp must use /disable-card and /enable-card on ice to fix any issues (ie anansi, afshar, magnet)"
-   :hosting {:card #(and (ice? %)
+  {:hosting {:card #(and (ice? %)
                          (can-host? %))}
+   :on-trash {:effect (effect (enable-card :corp (get-card state (get-in target [:card :host]))))}
+   :on-install {:effect (effect (disable-card :corp (get-card state (:host card))))}
    :abilities [{:label "Host on a piece of ice"
                 :prompt "Choose a piece of ice"
                 :cost [(->c :click 1)]
@@ -1775,7 +1775,9 @@
                                       (installed? %)
                                       (can-host? %))}
                 :msg (msg "host itself on " (card-str state target))
-                :effect (effect (host target card))}]})
+                :effect (effect (enable-card :corp (get-card state (:host card)))
+                                (host target card)
+                                (disable-card :corp (get-card state target)))}]})
 
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}
