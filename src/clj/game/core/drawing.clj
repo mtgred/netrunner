@@ -1,5 +1,6 @@
 (ns game.core.drawing
   (:require
+    [game.core.card :refer [get-title]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
     [game.core.engine :refer [checkpoint queue-event resolve-ability trigger-event trigger-event-simult trigger-event-sync]]
     [game.core.events :refer [first-event?]]
@@ -112,11 +113,11 @@
      (draw state side eid n args)
      (continue-ability
        state side
-       {:optional {:prompt (str "draw " (quantify n "card") "?")
+       {:optional {:prompt (str "Draw " (quantify n "card") "?")
                    :yes-ability {:async true
                                  :msg (msg "draw " (quantify n " card"))
                                  :effect (req (draw state side eid n))}
-                   :no-ability {:effect (req (system-msg state side "declines to draw cards"))}}}
+                   :no-ability {:effect (req (system-msg state side (str "declines to use " (get-title card) " to draw cards")))}}}
        card nil))))
 
 (defn draw-up-to
