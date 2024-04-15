@@ -4148,9 +4148,9 @@
                      :choices (req (cancellable targets-in-the-grip))
                      :async true
                      :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target))
-                     :msg (msg "install " (:title target) " from the grip")}
+                     :msg (msg "install " (:title target))}
                     ;; else show a fake prompt so the corp can't infer that no legal targets exist
-                    {:prompt "You have no programs or pieces of hardware in the grip"
+                    {:prompt "You have no programs or pieces of hardware to install"
                      :choices ["OK"]
                      :prompt-type :bogus})
                 card nil)))}]

@@ -334,7 +334,7 @@
                          (continue-ability
                            state side
                            {:optional
-                            {:prompt (str "Derez another ice to give "
+                            {:prompt (str "Derez another piece of ice to give "
                                           (:title rezzed-card)
                                           " +3 strength for the remainder of the run?")
                              :waiting-prompt true
@@ -898,7 +898,7 @@
                                        (zero? (get-counters % :advancement))
                                        (same-server? card %))
                                  (all-installed-corp state)))
-                 :prompt "Choose a piece of ice protecting this server to place 1 advancement counter on"
+                 :prompt "Choose a piece of ice protecting this server"
                  :waiting-prompt true
                  :choices {:req (req (and (ice? target)
                                           (zero? (get-counters target :advancement))

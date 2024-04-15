@@ -1708,14 +1708,14 @@
                               (cond
                                 is-facedown?
                                 {:optional
-                                 {:prompt (msg "Host face-down card on this program instead of accessing it?")
-                                  :yes-ability {:msg (msg "host a facedown card on itself instead of accessing it")
+                                 {:prompt "Host face-down card on this program instead of accessing it?"
+                                  :yes-ability {:msg "host a facedown card on itself instead of accessing it"
                                                 :effect (effect (update! (assoc-in card [:special :host-available] false))
                                                                 (host card target-card))}}}
                                 (or is-agenda? is-trap?)
                                 {:optional
                                  {:prompt (msg "Host " (:title target-card) " on this program instead of accessing it?")
-                                  :yes-ability {:msg (msg "host a " (:title target-card) " on itself instead of accessing it")
+                                  :yes-ability {:msg (msg "host " (:title target-card) " on itself instead of accessing it")
                                                 :effect (effect (update! (assoc-in card [:special :host-available] false))
                                                                 (host card target-card))}}})
                               card nil)))}
@@ -2097,7 +2097,7 @@
             {:event :encounter-ice
              :interactive (req true)
              :ability-name "Malandragem (Power counter)"
-             :optional {:prompt "Spend 1 power counter to bypass encountered ice?"
+             :optional {:prompt "Remove 1 power counter to bypass encountered ice?"
                         :once :per-turn
                         :req (req (and (>= 3 (ice-strength state side current-ice))
                                        (<= 1 (get-counters (get-card state card) :power))))
@@ -2301,7 +2301,7 @@
           (muse-abi [where]
             {:prompt "Choose a non-daemon program"
              :msg (msg (if (= target "Done")
-                         (str "shuffle the stack")
+                         "shuffle the stack"
                          (str "install " (:title target))))
              :choices (req (concat
                              (->> (where runner)
@@ -2330,7 +2330,7 @@
                                 (let [target-card target]
                                   (continue-ability
                                     state side
-                                    {:prompt (msg "Choose an ice to host " (:title target-card))
+                                    {:prompt (msg "Choose a piece of ice to host " (:title target-card))
                                      :choices {:card #(and (installed? %)
                                                            (ice? %))}
                                      :async true

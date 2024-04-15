@@ -1236,7 +1236,7 @@
              :effect (req (continue-ability
                             state side
                             {:optional
-                             {:prompt "Install this card from the heap?"
+                             {:prompt "Install this hardware from the heap?"
                               :yes-ability {:cost [(->c :lose-click 1)]
                                             :msg (msg "install " (get-title card) " from the heap")
                                             :async true
@@ -1255,7 +1255,7 @@
                           (if (= 3 (count (filter #(= (:printed-title %) (:printed-title card))
                                                   (get-in @state [:runner :scored]))))
                             (do (system-msg state side "wins the game")
-                                (win state :runner "assassination plot (Jeihtinho)")
+                                (win state :runner "assassination plot (Jeitinho)")
                                 (effect-completed state side eid))
                             (effect-completed state side eid)))}]})
 

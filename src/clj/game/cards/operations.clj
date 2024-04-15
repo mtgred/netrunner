@@ -469,7 +469,7 @@
                               :yes-ability
                               {:cost [(->c :credit 2)]
                                :req (req (seq (:hand runner)))
-                                :effect(req (let [target-card (first (shuffle (:hand runner)))]
+                               :effect (req (let [target-card (first (shuffle (:hand runner)))]
                                               (wait-for
                                                 (reveal state side target-card)
                                                 (system-msg state side (str "shuffles " (:title target-card) " into the stack"))
@@ -511,9 +511,9 @@
                           :card #(and (corp? %)
                                       (installed? %)
                                       (can-be-advanced? %))}
-                      :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
-                      :effect (req (doseq [t targets]
-                                     (add-prop state :corp t :advance-counter 1 {:placed true})))}]
+                :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
+                :effect (req (doseq [t targets]
+                               (add-prop state :corp t :advance-counter 1 {:placed true})))}]
   {:on-play
    {:prompt "Choose one"
     :choices (req ["Place 1 advancement counter on each of up to 2 cards you can advance"
@@ -2766,13 +2766,13 @@
 
 (defcard "Sudden Commandment"
   (let [play-instant-second {:optional
-                             {:prompt (msg "Pay 3 [Credits] to gain [Click]?")
+                             {:prompt "Pay 3 [Credits] to gain [Click]?"
                               :waiting-prompt true
                               :req (req (threat-level 3 state))
                               :yes-ability {:cost [(->c :credit 3)]
-                                            :msg (msg "gain [Click]")
+                                            :msg "gain [Click]"
                                             :effect (effect (gain-clicks 1))}}}
-        play-instant-first {:prompt (msg "Choose a non-terminal operation")
+        play-instant-first {:prompt "Choose a non-terminal operation"
                             :choices (req (conj (filter #(and (operation? %)
                                                               (not (has-subtype? % "Terminal"))
                                                               (should-trigger? state :corp (assoc eid :source % :source-type :play) % nil (or (:on-play (card-def %)) {}))
@@ -2786,7 +2786,7 @@
                                           (continue-ability state side (when is-first-mandate? play-instant-second) card nil)
                                           (wait-for (play-instant state side (assoc (make-eid state eid) :source target :source-type :play) target nil)
                                                     (continue-ability state side (when is-first-mandate? play-instant-second) card nil)))))}]
-    {:on-play {:msg "Draw 2 cards"
+    {:on-play {:msg "draw 2 cards"
                :async true
                :effect (req (wait-for (draw state side (make-eid state eid) 2)
                                       (continue-ability

@@ -340,7 +340,7 @@
    :stolen {:async true
             :effect (effect (continue-ability (corp-recur) card nil))}
    :flags {:has-abilities-when-stolen true}
-   :abilities [{:label "Add 1 card from Archives to HQ"
+   :abilities [{:label "Choose a card to add to HQ"
                 :cost [(->c :trash-from-deck 1) (->c :agenda 1)]
                 :once :per-turn
                 :msg "add 1 card from Archives to HQ"
@@ -738,7 +738,7 @@
 (defcard "Eminent Domain"
   (let [expend-abi {:req (req (some corp-installable-type? (:hand corp)))
                     :cost [(->c :credit 1)]
-                    :prompt "Choose 1 card to install and rez"
+                    :prompt "Choose 1 card to install and rez, paying 5 [Credits] less"
                     :choices {:card #(and (in-hand? %)
                                           (corp-installable-type? %))}
                     :msg "install and rez 1 card from HQ, paying 5 [Credits] less"
@@ -1181,7 +1181,7 @@
                                                       (all-active-installed state :corp))))]
                             (continue-ability
                               state side
-                              {:prompt (msg "Choose " derez-count " pieces of ice protecting " (zone->name [zone]) " to derez")
+                              {:prompt (msg "Choose " (quantify derez-count "piece") " of ice protecting " (zone->name [zone]) " to derez")
                                :choices {:card #(and (ice? %)
                                                      (rezzed? %)
                                                      (= (second (get-zone %)) zone))
@@ -1204,14 +1204,14 @@
      :events [{:event :run
                :async true
                :optional
-               {:prompt (msg "Remove 1 hosted agenda counter to rez up to 2 ice protecting " (zone->name (:server context)) ", ignoring all costs?")
+               {:prompt (msg "Remove 1 hosted agenda counter to rez up to 2 pieces of ice protecting " (zone->name (:server context)) ", ignoring all costs?")
                 :req (req (pos? (get-counters card :agenda)))
                 :yes-ability
                 {:cost [(->c :agenda 1)]
                  :effect (req (let [current-server (first (:server (:run @state)))]
                                 (continue-ability
                                   state side
-                                  {:prompt (msg "Choose up to 2 ice protecting " (zone->name current-server))
+                                  {:prompt (msg "Choose up to 2 pieces of ice protecting " (zone->name current-server))
                                    :choices {:card #(and (ice? %)
                                                          (not (rezzed? %))
                                                          (= (second (get-zone %)) current-server))
@@ -1321,7 +1321,7 @@
 
 (defcard "Midnight-3 Arcology"
   {:on-score {:async true
-              :msg "Draw 3 cards and skip their discard step this turn"
+              :msg "draw 3 cards and skip their discard step this turn"
               :effect (effect
                         (register-lingering-effect
                           card
@@ -2073,7 +2073,7 @@
 (defcard "Stoke the Embers"
   (letfn [(score-abi
             [cred-gain]
-            {:msg (msg "gain " cred-gain" [Credits]")
+            {:msg (msg "gain " cred-gain " [Credits]")
              :interactive (req true)
              :async true
              :effect (req (wait-for
