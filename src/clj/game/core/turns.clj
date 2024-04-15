@@ -17,7 +17,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [abs dissoc-in enumerate-str quantify]]
+    [game.utils :refer [dissoc-in enumerate-str quantify]]
     [clojure.string :as string]))
 
 (defn- turn-message
