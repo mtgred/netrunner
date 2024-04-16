@@ -1895,7 +1895,7 @@
                   (assoc-in [:optional :req] (req (= side :runner))))
               (-> ability
                   (assoc :event :runner-prevent)
-                  (assoc-in [:optional :req] (req (seq (filter #(some #{:tag} %) targets)))))]
+                  (assoc-in [:optional :req] (req (= :tag (:type context)))))]
      :abilities [(set-autoresolve :auto-fire "Net Analytics")]}))
 
 (defcard "Net Police"

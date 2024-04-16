@@ -3535,7 +3535,7 @@
 (defcard "Thunder Art Gallery"
   (let [first-event-check (fn [state fn1 fn2]
                             (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
-                                 (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
+                                 (fn2 state :runner :runner-prevent (fn [[context]] (= :tag (:type context))))))
         ability {:async true
                  :prompt "Choose a card in the grip"
                  :waiting-prompt true
@@ -3558,7 +3558,7 @@
               (assoc ability
                      :event :runner-prevent
                      :req (req (and (first-event-check state no-event? first-event?)
-                                    (seq (filter #(some #{:tag} %) targets)))))]}))
+                                    (= :tag (:type context)))))]}))
 
 (defcard "Tri-maf Contact"
   {:abilities [{:cost [(->c :click 1)]

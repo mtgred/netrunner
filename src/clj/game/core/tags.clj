@@ -38,7 +38,8 @@
 (defn tag-prevent
   [state side eid n]
   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n)))
+  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type :tag
+                                                                                        :amount n}))
 
 (defn- number-of-tags-to-gain
   "Calculates the number of tags to give, taking into account prevention and boosting effects."

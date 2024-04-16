@@ -12,7 +12,8 @@
 (defn bad-publicity-prevent
   [state side n]
   (swap! state update-in [:bad-publicity :bad-publicity-prevent] (fnil #(+ % n) 0))
-  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:bad-publicity ~n)))
+  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) {:type :bad-publicity
+                                                                               :amount n}))
 
 (defn- resolve-bad-publicity
   [state side eid n]
