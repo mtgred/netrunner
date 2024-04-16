@@ -2429,10 +2429,10 @@
                        :req (req (<= 10 (:credit corp)))
                        :value (req (quot (:credit corp) 5))}]
    :events [{:event :corp-gain
-             :req (req (= :credit (first target)))
+             :req (req (= :credit (:type context)))
              :effect (effect (update-all-ice))}
             {:event :corp-lose
-             :req (req (= :credit (first target)))
+             :req (req (= :credit (:type context)))
              :effect (effect (update-all-ice))}]
    :leave-play (effect (update-all-ice))})
 

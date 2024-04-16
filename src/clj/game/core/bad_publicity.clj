@@ -20,7 +20,7 @@
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
         (toast state :corp (str "Took " n " bad publicity!") "info")
-        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity n))
+        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity {:amount n}))
     (effect-completed state side eid)))
 
 (defn- bad-publicity-count
@@ -67,4 +67,5 @@
    (if (= n :all)
      (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity :base]))
      (do (lose state :corp :bad-publicity n)
-         (trigger-event-sync state side eid :corp-lose-bad-publicity n side)))))
+         (trigger-event-sync state side eid :corp-lose-bad-publicity {:amount n
+                                                                      :side side})))))

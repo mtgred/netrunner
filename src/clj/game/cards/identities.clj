@@ -1854,7 +1854,7 @@
    :events [{:event :runner-gain-tag
              :async true
              :req (req (and (not (install-locked? state side))
-                            (= (second targets) (count-tags state)))) ;; every tag is one that was just gained
+                            (= (:amount context) (count-tags state)))) ;; every tag is one that was just gained
              :prompt "Choose a connection to install, paying 2 [Credits] less"
              :player :runner
              :choices

@@ -186,7 +186,10 @@
 
 (defcard "Adjusted Chronotype"
   {:events [{:event :runner-click-loss
-             :req (req (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-lose))))]
+             :req (req (let [click-losses (->> (turn-events state side :runner-lose)
+                                               (map (comp :type first))
+                                               (filter #(= :click %))
+                                               (count))]
                             (or (= 1 click-losses)
                                 (and (= 2 click-losses)
                                      (has-flag? state side :persistent :genetics-trigger-twice)))))
@@ -3534,7 +3537,7 @@
 
 (defcard "Thunder Art Gallery"
   (let [first-event-check (fn [state fn1 fn2]
-                            (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
+                            (and (fn1 state :runner :runner-lose-tag (fn [[context]] (= :runner (:side context))))
                                  (fn2 state :runner :runner-prevent (fn [[context]] (= :tag (:type context))))))
         ability {:async true
                  :prompt "Choose a card in the grip"
@@ -3703,7 +3706,7 @@
                                                                                                 " to " (decapitalize target))))
                                :else (effect-completed state side eid)))}
    :events [{:event :runner-lose-tag
-             :req (req (= :runner (second targets)))
+             :req (req (= :runner (:side context)))
              :player :runner
              :msg "gain 1 [Credits]"
              :async true

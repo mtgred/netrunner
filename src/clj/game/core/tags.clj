@@ -56,7 +56,7 @@
     (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
         (update-tag-status state)
-        (trigger-event-simult state side eid :runner-gain-tag nil nil n))
+        (trigger-event-simult state side eid :runner-gain-tag nil {:amount n}))
     (effect-completed state side eid)))
 
 (defn gain-tags
@@ -96,4 +96,5 @@
     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
         (deduct state :runner [:tag {:base n}])
         (update-tag-status state)
-        (trigger-event-sync state side eid :runner-lose-tag n side))))
+        (trigger-event-sync state side eid :runner-lose-tag {:amount n
+                                                             :side side}))))

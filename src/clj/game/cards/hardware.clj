@@ -179,7 +179,7 @@
   {:static-abilities [(mu+ 1)]
    :events [{:event :runner-lose-tag
              :optional {:prompt "Remove 1 power counter to draw 2 cards?"
-                        :req (req (= :runner (second targets)))
+                        :req (req (= :runner (:side context)))
                         :yes-ability {:cost [(->c :power 1)]
                                       :msg "draw 2 cards"
                                       :async true

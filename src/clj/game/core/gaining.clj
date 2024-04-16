@@ -66,7 +66,8 @@
       :else
       (do (swap! state update-in [side cost-type] (safe-inc-n amount))
           (swap! state update-in [:stats side :gain cost-type] (fnil + 0 0) amount)))
-    (trigger-event state side (if (= side :corp) :corp-gain :runner-gain) [cost-type amount])))
+    (trigger-event state side (if (= side :corp) :corp-gain :runner-gain) {:type cost-type
+                                                                           :amount amount})))
 
 (defn lose [state side & args]
   (doseq [[cost-type amount] (partition 2 args)]
@@ -76,7 +77,8 @@
       (do (when (number? amount)
             (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
           (deduct state side [cost-type amount])))
-    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) [cost-type amount])))
+    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) {:type cost-type
+                                                                           :amount amount})))
 
 (defn gain-credits
   "Utility function for triggering events"
