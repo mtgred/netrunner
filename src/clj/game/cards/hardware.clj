@@ -913,7 +913,7 @@
                                     (host state side card))
                                (update! state side (assoc-in (get-card state card) [:special :flame-out] (:cid target))))}]
      :events [{:event :card-moved
-               :req (req (= (:cid target) (get-in (get-card state card) [:special :flame-out])))
+               :req (req (= (:cid (:card context)) (get-in (get-card state card) [:special :flame-out])))
                :effect (effect (update! (dissoc-in card [:special :flame-out])))}
               (assoc maybe-turn-end :event :runner-turn-ends)
               (assoc maybe-turn-end :event :corp-turn-ends)]

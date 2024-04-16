@@ -348,11 +348,11 @@
               {:event :card-moved
                :silent (req true)
                :req (req (get (get-in card [:special :bravado-passed])
-                              (:cid (second targets))))
+                              (:cid (:moved-card context))))
                :effect (req (let [card (update! state side (update-in card [:special :bravado-moved] (fnil inc 0)))]
                               (update! state side
                                        (update-in card [:special :bravado-passed]
-                                                  disj (:cid (second targets))))))}]}))
+                                                  disj (:cid (:moved-card context))))))}]}))
 
 (defcard "Bribery"
   {:makes-run true

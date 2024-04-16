@@ -1754,8 +1754,8 @@
             {:event :card-moved
              :interactive (req true)
              :optional
-             {:req (req (and (in-scored? (second targets))
-                          (= :runner (:scored-side (second targets)))))
+             {:req (req (and (in-scored? (:moved-card context))
+                             (= :runner (:scored-side (:moved-card context)))))
               :waiting-prompt true
               :prompt (msg "Trash " (:title card) "?")
               :yes-ability

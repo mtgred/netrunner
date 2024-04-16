@@ -3399,13 +3399,13 @@
     (play-from-hand state :runner "Unity")
     (let [unity (get-program state 0)]
       (run-empty-server state :hq)
-      (= 4 (:credit (get-corp)))
+      (is (= 7 (:credit (get-corp))))
       (is (= "Herald" (:title (core/get-current-ice state))) "Encountering Herald on access")
       (is (= 3 (count (:abilities (refresh unity)))) "Has auto break abilities")
       (card-ability state :runner unity 0)
       (click-prompt state :runner "Pay up to 2 [Credits] to place up to 2 advancement tokens")
       (fire-subs state (core/get-current-ice state))
-      (= 6 (:credit (get-corp)))
+      (is (= 9 (:credit (get-corp))))
       (is (not= "How many advancement tokens?" (:msg (prompt-map :corp))) "Second subroutine did not fire"))))
 
 (deftest hive

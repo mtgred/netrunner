@@ -804,10 +804,9 @@
 (defcard "Ashigaru"
   {:on-rez {:effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}
    :events [{:event :card-moved
-             :req (req (let [target (nth targets 1)]
-                         (and (corp? target)
-                              (or (in-hand? target)
-                                  (= :hand (first (:previous-zone target)))))))
+             :req (req (and (corp? (:moved-card context))
+                            (or (in-hand? (:moved-card context))
+                                (= :hand (first (:previous-zone (:moved-card context)))))))
              :effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}]})
 
 (defcard "Assassin"
@@ -927,11 +926,10 @@
                                     (lose-credits state :runner eid 1)))}]
     {:on-rez {:effect (effect (reset-variable-subs card (sub-count corp) sub {:variable true :front true}))}
      :events [{:event :card-moved
-               :req (req (let [target (nth targets 1)]
-                           (and (operation? target)
-                                (has-subtype? target "Transaction")
-                                (or (in-discard? target)
-                                    (= :discard (first (:previous-zone target)))))))
+               :req (req (and (operation? (:moved-card context))
+                              (has-subtype? (:moved-card context) "Transaction")
+                              (or (in-discard? (:moved-card context))
+                                  (= :discard (first (:previous-zone (:moved-card context)))))))
                :effect (effect (reset-variable-subs card (sub-count corp) sub {:variable true :front true}))}]
      :subroutines [sub
                    end-the-run]}))
@@ -2150,7 +2148,7 @@
               (assoc ability :event :agenda-scored)
               (assoc ability
                      :event :card-moved
-                     :req (req (= :corp (:scored-side target))))]
+                     :req (req (= :corp (:scored-side (:card context)))))]
      :abilities [{:label "Lose subroutines"
                   :msg (msg "lose " (- 5 (corp-points corp)) " subroutines")
                   :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
@@ -3092,10 +3090,10 @@
                    (net-or-mill 3 4)]}))
 
 (defcard "Mother Goddess"
-  (let [mg {:req (req (ice? target))
-            :effect (effect (update-all-subtypes))}
-        rezzed-mg {:req (req (ice? (:card context)))
-                   :effect (effect (update-all-subtypes))}]
+  (let [context-mg {:req (req (ice? (:card context)))
+                   :effect (effect (update-all-subtypes))}
+        mg {:req (req (ice? target))
+            :effect (effect (update-all-subtypes))}]
     {:static-abilities [{:type :gain-subtype
                          :req (req (same-card? card target))
                          :value (req (->> (vals (:servers corp))
@@ -3104,10 +3102,9 @@
                                                         (not (same-card? card %))))
                                           (mapcat :subtypes)))}]
      :subroutines [end-the-run]
-     :events [(assoc rezzed-mg :event :rez)
-              (assoc rezzed-mg :event :derez)
-              (assoc mg :event :card-moved)
-              (assoc mg :event :derez)
+     :events [(assoc context-mg :event :rez)
+              (assoc context-mg :event :derez)
+              (assoc context-mg :event :card-moved)
               (assoc mg :event :ice-subtype-changed)]}))
 
 (defcard "Muckraker"

@@ -182,9 +182,7 @@
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
   ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event swap]}]
-   (let [zone (if host (map to-keyword (:zone host)) zone)
-         src-zone (first zone)
-         target-zone (if (vector? to) (first to) to)]
+   (let [zone (if host (map to-keyword (:zone host)) zone)]
      (if (fake-identity? card)
        ;; Make Fake-Identity cards "disappear"
        (do (deactivate state side card false)
@@ -195,8 +193,6 @@
                       (some #(same-card? card %) (get-in @state (cons :corp (vec zone)))))
                   (or force
                       (not (zone-locked? state (to-keyword (:side card)) (first (get-zone card))))))
-         (when-not suppress-event
-           (trigger-event state side :pre-card-moved card src-zone target-zone))
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]
            (update-effects state card moved-card)
@@ -219,7 +215,8 @@
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (when-not suppress-event
-             (trigger-event state side :card-moved card (assoc (get-card state moved-card) :move-to-side side)))
+             (trigger-event state side :card-moved {:card card
+                                                    :moved-card (get-card state moved-card)}))
            ;; move-zone-fn and the event can both modify the card, so re-bind here
            (let [moved-card (get-card state moved-card)]
              ; This is for removing `:location :X` events that are non-default locations,
