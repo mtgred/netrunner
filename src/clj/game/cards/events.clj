@@ -445,7 +445,7 @@
                               {:prompt (str "Choose where to put " (:title target-card))
                                :choices ["Top of R&D" "Bottom of R&D"]
                                :async true
-                               :msg (msg "add " (:title target-card) "to the "
+                               :msg (msg "add " (:title target-card) " to the "
                                          (decapitalize target))
                                :effect (req
                                          (if (= target "Top of R&D")
