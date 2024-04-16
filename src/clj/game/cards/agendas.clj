@@ -2137,7 +2137,7 @@
 
 (defcard "The Cleaners"
   {:events [{:event :pre-damage
-             :req (req (and (= target :meat)
+             :req (req (and (= (:type context) :meat)
                             (= side :corp)))
              :msg "do 1 additional meat damage"
              :effect (effect (damage-bonus :meat 1))}]})

@@ -550,8 +550,8 @@
   {:interactions {:prevent [{:type #{:net}
                              :req (req true)}]}
    :events [{:event :pre-damage
-             :req (req (= target :net))
-             :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}]
+             :req (req (= (:type context) :net))
+             :effect (effect (update! (assoc card :dmg-amount (:card context))))}]
    :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
                 :label "prevent net damage"
                 :cost [(->c :trash-can)]
@@ -694,8 +694,8 @@
 
 (defcard "Chrome Parlor"
   {:events [{:event :pre-damage
-             :req (req (has-subtype? (second targets) "Cybernetic"))
-             :effect (effect (damage-prevent target Integer/MAX_VALUE))}]})
+             :req (req (has-subtype? (:card context) "Cybernetic"))
+             :effect (effect (damage-prevent (:type context) Integer/MAX_VALUE))}]})
 
 (defcard "Citadel Sanctuary"
   {:interactions {:prevent [{:type #{:meat}
@@ -1540,9 +1540,9 @@
 (defcard "Guru Davinder"
   {:flags {:cannot-pay-net true}
    :events [{:event :pre-damage
-             :req (req (and (#{:meat :net} target)
-                            (pos? (last targets))))
-             :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
+             :req (req (and (#{:meat :net} (:type context))
+                            (pos? (:amount context))))
+             :msg (msg "prevent all " (name (:type context)) " damage")
              :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
                           (damage-prevent state side :net Integer/MAX_VALUE)
                           (register-events
@@ -2336,7 +2336,7 @@
 (defcard "No One Home"
   (letfn [(first-chance? [state side]
             (< (+ (event-count state side :pre-tag)
-                  (event-count state side :pre-damage #(= (first %) :net)))
+                  (event-count state side :pre-damage #(= :net (:type (first %)))))
                2))
           (start-trace [type]
             (let [message (str "avoid any " (if (= type :net)
@@ -2493,7 +2493,8 @@
   {:static-abilities [{:type :is-tagged
                        :val true}]
    :events [{:event :pre-damage
-             :req (req (= target :meat)) :msg "prevent all meat damage"
+             :req (req (= (:type context) :meat))
+             :msg "prevent all meat damage"
              :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}]})
 
 (defcard "Patron"

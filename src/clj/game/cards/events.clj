@@ -3834,7 +3834,7 @@
 
 (defcard "The Price"
   {:on-play {:async true
-             :req (req (not (empty? (:deck runner))))
+             :req (req (seq (:deck runner)))
              :effect
              (req
                (wait-for (mill state :runner (make-eid state eid) :runner 4)

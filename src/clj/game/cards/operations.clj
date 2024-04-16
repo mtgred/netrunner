@@ -686,7 +686,7 @@
 
 (defcard "Defective Brainchips"
   {:events [{:event :pre-damage
-             :req (req (= target :brain))
+             :req (req (= (:type context) :brain))
              :msg "do 1 additional core damage"
              :once :per-turn
              :effect (effect (damage-bonus :brain 1))}]})

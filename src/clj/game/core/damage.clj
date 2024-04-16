@@ -167,7 +167,6 @@
              ["Done"]
              (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
                            damage-prevented (if prevent (- prevent already-prevented) false)]
-                       (if damage-prevented (trigger-event state side :prevented-damage type prevent) nil)
                        (system-msg state player
                                    (if damage-prevented
                                      (str "prevents "
@@ -186,7 +185,7 @@
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
-   (trigger-event state side :pre-damage type card n)
+   (trigger-event state side :pre-damage {:type type :card card :amount n})
    (let [active-player (get-in @state [:active-player])]
      (if unpreventable
        (resolve-damage state side eid type (damage-count state side type n args) args)

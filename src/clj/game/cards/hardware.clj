@@ -1536,7 +1536,7 @@
   {:events [{:event :pre-damage
              :once :per-turn
              :once-key :muresh-bodysuit
-             :req (req (= target :meat))
+             :req (req (= (:type context) :meat))
              :msg "prevent the first meat damage this turn"
              :effect (effect (damage-prevent :meat 1))}]})
 
@@ -1922,15 +1922,16 @@
             (into {} (reverse (get s :turn-events))))]
     {:interactions {:prevent [{:type #{:net :brain :meat}
                                :req (req (and (:access @state)
-                                              (= (:cid (second (:pre-damage (eventmap @state))))
+                                              (= (:cid (:card (first (:pre-damage (eventmap @state)))))
                                                  (:cid (first (:pre-access-card (eventmap @state)))))))}]}
      :abilities [{:cost [(->c :x-credits) (->c :trash-can)]
                   :label "prevent damage"
                   :req (req (and (:access @state)
-                                 (= (:cid (second (:pre-damage (eventmap @state))))
+                                 (= (:cid (:card (first (:pre-damage (eventmap @state)))))
                                     (:cid (first (:pre-access-card (eventmap @state)))))))
                   :msg (msg "prevent " (cost-value eid :x-credits) " damage")
-                  :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) (cost-value eid :x-credits)))}]}))
+                  :effect (effect (damage-prevent (:type (first (:pre-damage (eventmap @state))))
+                                                  (cost-value eid :x-credits)))}]}))
 
 (defcard "Record Reconstructor"
   {:events [(successful-run-replace-breach
