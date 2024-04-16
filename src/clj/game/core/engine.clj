@@ -639,15 +639,17 @@
 (defn trigger-event
   "Resolves all abilities registered as handlers for the given event key, passing them
   the targets given."
-  [state side event & targets]
-  (when (some? event)
-    (log-event state event targets)
-    (let [handlers (gather-events state side event targets)]
-      (doseq [to-resolve handlers]
-        (when-let [card (card-for-ability state to-resolve)]
-          (resolve-ability state side (dissoc-req (:ability to-resolve)) card targets)
-          (when (:unregister-once-resolved to-resolve)
-            (unregister-event-by-uuid state side (:uuid to-resolve))))))))
+  ([state side event] (trigger-event state side event nil))
+  ([state side event context]
+   (assert (or (nil? context) (map? context)) "context must be a nilable map")
+   (when (some? event)
+     (log-event state event [context])
+     (let [handlers (gather-events state side event [context])]
+       (doseq [to-resolve handlers]
+         (when-let [card (card-for-ability state to-resolve)]
+           (resolve-ability state side (dissoc-req (:ability to-resolve)) card [context])
+           (when (:unregister-once-resolved to-resolve)
+             (unregister-event-by-uuid state side (:uuid to-resolve)))))))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event targets]

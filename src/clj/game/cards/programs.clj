@@ -157,11 +157,6 @@
                      (continue-ability (break-sub nil strength subtype {:repeatable false}) (get-card state card) nil))
      :pump strength}))
 
-(defn- cond-breaker
-  "The breakers which rely on an event having happened"
-  [keyword fn]
-  {:req (req (not (no-event? state side keyword fn)))})
-
 (def heap-breaker-auto-pump-and-break
   "Implements auto-pump-and-break for heap breakers. Updates an icebreaker's
   abilities with a pseudo-ability to trigger the auto-pump routine in core,
@@ -2562,16 +2557,16 @@
    :events [{:event :runner-turn-begins
              :effect (req (add-counter state side card :virus 1))}
             {:event :ice-strength-changed
-             :req (req (and (same-card? target (:host card))
+             :req (req (and (same-card? (:card context) (:host card))
                             (not (card-flag? (:host card) :untrashable-while-rezzed true))
-                            (<= (get-strength target) 0)))
+                            (<= (get-strength (:card context)) 0)))
              :async true
              :effect (req (unregister-events state side card)
                           (when (get-in card [:special :installing])
                             (update! state side (update-in card [:special] dissoc :installing))
                             (trigger-event state :runner :runner-install card))
-                          (trash state :runner eid target {:unpreventable true :cause-card card}))
-             :msg (msg "trash " (:title target))}]})
+                          (trash state :runner eid (:card context) {:unpreventable true :cause-card card}))
+             :msg (msg "trash " (:title (:card context)))}]})
 
 (defcard "Paricia"
   {:recurring 2

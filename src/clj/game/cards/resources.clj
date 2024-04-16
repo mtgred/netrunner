@@ -187,8 +187,7 @@
 (defcard "Adjusted Chronotype"
   {:events [{:event :runner-click-loss
              :req (req (let [click-losses (->> (turn-events state side :runner-lose)
-                                               (map (comp :type first))
-                                               (filter #(= :click %))
+                                               (filter #(= :click (:type (first %))))
                                                (count))]
                             (or (= 1 click-losses)
                                 (and (= 2 click-losses)

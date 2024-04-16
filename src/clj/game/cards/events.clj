@@ -3753,16 +3753,16 @@
                  :effect (effect (update! (dissoc-in card [:special :ss-target])))}]
     {:events [{:event :pump-breaker
                :req (req (or (not (get-in card [:special :ss-target]))
-                             (same-card? target (get-in card [:special :ss-target]))))
+                             (same-card? (:card context) (get-in card [:special :ss-target]))))
                :effect (req (when-not (get-in card [:special :ss-target])
-                              (update! state side (assoc-in card [:special :ss-target] target)))
-                            (let [new-pump (assoc (second targets) :duration :end-of-run)]
+                              (update! state side (assoc-in card [:special :ss-target] (:card context))))
+                            (let [new-pump (assoc (:effect context) :duration :end-of-run)]
                               (swap! state assoc :effects
                                      (->> (:effects @state)
                                           (remove #(= (:uuid %) (:uuid new-pump)))
                                           (#(conj % new-pump))
                                           (into []))))
-                            (update-breaker-strength state side target))}
+                            (update-breaker-strength state side (:card context)))}
               (assoc ability :event :corp-turn-ends)
               (assoc ability :event :runner-turn-ends)]}))
 

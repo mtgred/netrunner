@@ -1,8 +1,7 @@
 (ns game.core.gaining
   (:require
-    [game.core.eid :refer [make-eid effect-completed]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
-    [game.core.toasts :refer [toast]]))
+    [game.core.eid :refer [effect-completed]]
+    [game.core.engine :refer [trigger-event trigger-event-sync]]))
 
 (defn safe-inc-n
   "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"
@@ -110,8 +109,9 @@
   ([state side amount args]
     (when (and amount
                (pos? amount))
-      (do (gain state side :click amount)
-          (trigger-event state side (if (= :corp side) :corp-click-gain :runner-click-gain) amount args)))))
+      (gain state side :click amount)
+      (trigger-event state side (if (= :corp side) :corp-click-gain :runner-click-gain) {:amount amount
+                                                                                         :args args}))))
 
 (defn lose-clicks
   ([state side amount] (lose-clicks state side amount nil))
@@ -119,8 +119,9 @@
     (when (and amount
                (or (= :all amount)
                    (pos? amount)))
-      (do (lose state side :click amount)
-          (trigger-event state side (if (= :corp side) :corp-click-loss :runner-click-loss) amount args)))))
+      (lose state side :click amount)
+      (trigger-event state side (if (= :corp side) :corp-click-loss :runner-click-loss) {:amount amount
+                                                                                         :args args}))))
 
 ;;; Stuff for handling {:base x :mod y} data structures
 (defn base-mod-size

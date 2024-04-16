@@ -1103,8 +1103,8 @@
                                (update-breaker-strength state side host))
                              (host state side target card))}]
    :events [{:event :pump-breaker
-             :req (req (same-card? target (:host card)))
-             :effect (req (let [last-pump (assoc (second targets)
+             :req (req (same-card? (:card context) (:host card)))
+             :effect (req (let [last-pump (assoc (:effect context)
                                                  :duration :end-of-turn
                                                  :original-duration (:duration (last (:effects @state))))]
                             (swap! state assoc :effects
@@ -1112,7 +1112,7 @@
                                         (remove #(= (:uuid last-pump) (:uuid %)))
                                         (#(conj % last-pump))
                                         (into []))))
-                          (update-breaker-strength state side target))}]
+                          (update-breaker-strength state side (:card context)))}]
    :leave-play (req (when-let [host (get-card state (:host card))]
                       (swap! state assoc :effects
                              (reduce
