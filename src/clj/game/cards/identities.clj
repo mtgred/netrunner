@@ -1299,14 +1299,15 @@
      :abilities [mm-ability mm-clear]
      :events [{:event :corp-spent-click
                :async true
-               :effect (req (let [[cid _value ability-idx] targets
+               :effect (req (let [{:keys [action ability-idx]} context
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? cid)
-                                          (case cid
+                                  cause (if (keyword? action)
+                                          (case action
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
-                                            [cid ability-idx])
-                                          [cid ability-idx])
+                                            ; else
+                                            [action ability-idx])
+                                          [action ability-idx])
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]
                               (update! state side (assoc-in card [:special :mm-actions] actions))

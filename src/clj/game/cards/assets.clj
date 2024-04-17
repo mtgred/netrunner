@@ -25,7 +25,7 @@
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid]]
    [game.core.engine :refer [pay register-events resolve-ability]]
-   [game.core.events :refer [first-event? no-event? turn-events]]
+   [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
                             prevent-draw
@@ -1436,20 +1436,20 @@
     {:abilities [ability]
      :leave-play cleanup
      :events [{:event :corp-spent-click
-               :effect (req (let [[cid value ability-idx] targets
+               :effect (req (let [{:keys [action value ability-idx]} context
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? cid)
-                                          (case cid
+                                  cause (if (keyword? action)
+                                          (case action
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
                                             ; else
-                                            [cid ability-idx])
-                                          [cid ability-idx])
-                                  clicks-spent (+ (get-in card [:seen-this-turn cause] 0) value)]
-                              (let [card (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))]
-                                ; can be >= 3 because :once :per-turn on ability
-                                (when (>= clicks-spent 3)
-                                  (resolve-ability state side ability card nil)))))}
+                                            [action ability-idx])
+                                          [action ability-idx])
+                                  clicks-spent (+ (get-in card [:seen-this-turn cause] 0) value)
+                                  card (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))]
+                              ; can be >= 3 because :once :per-turn on ability
+                              (when (>= clicks-spent 3)
+                                (resolve-ability state side ability card nil))))}
               {:event :corp-turn-ends
                :effect cleanup}]}))
 
@@ -2029,7 +2029,7 @@
                                (register-turn-flag!
                                  state side
                                  target :can-score
-                                 (fn [state side card]
+                                 (fn [state _ card]
                                    (if (and (= tgtcid
                                                (:cid card))
                                             (<= (get-advancement-requirement card)
@@ -2977,28 +2977,17 @@
    :on-trash executive-trash-effect})
 
 (defcard "Wage Workers"
-  ;; note - for some reason, clicking for a credit and drawing a card register the same on
-  ;; the all-events (corp-spent-click)
-  ;; this means we need to do some of this the hard way
   (let [payoff {:msg "gain [Click]"
                 :effect (effect (gain-clicks 1))}
-        event-builder (fn [key]
-                        {:event key
-                         :async true
-                         :req (req (= 3 (count (turn-events state side key))))
-                         :effect (req (continue-ability
-                                        state side
-                                        payoff
-                                        card nil))})
-        all-events (fn [state side] (turn-events state side :corp-spent-click))
-        three-of (fn [cid idx state side]
-                   (= 3 (count (filter #(and (= (first %) cid)
-                                             (= (last %) idx))
-                                       (all-events state side)))))]
+        three-of (fn [state side cid idx]
+                   (= 3 (event-count state side :corp-spent-click
+                                     (fn [[context]]
+                                       (and (= cid (:action context))
+                                            (= idx (:ability-idx context)))))))]
     {:events [{:event :corp-spent-click
                :async true
-               :effect (req (let [[cid _value ability-idx] targets]
-                              (if (three-of cid ability-idx state side)
+               :effect (req (let [{:keys [action ability-idx]} context]
+                              (if (three-of state side action ability-idx)
                                 (continue-ability state side payoff card nil)
                                 (effect-completed state side eid))))}]}))
 

@@ -1845,10 +1845,10 @@
                          ;; and having it trashed (all-cards wont find it)
                          ;; also asset that the first-event? fn actually works right...
                          ;; -nbk, mar '24
-                         (and (resource? (find-cid target all-cards))
+                         (and (resource? (find-cid (:action target) all-cards))
                               (first-event? state side :runner-spent-click
                                             #(resource?
-                                               (find-cid (first %) all-cards))))))
+                                               (find-cid (:action (first %)) all-cards))))))
              :msg "gain [Click]"
              :effect (effect (add-counter card :power -1)
                              (gain-clicks 1))}]})
