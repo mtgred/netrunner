@@ -430,7 +430,7 @@
       (is (= 0 (count (:discard (get-corp)))) "Did not trashed PAD Campaign")
       (is (= 0 (count (:scored (get-corp)))) "Azef Protocol not scored"))))
 
-(deftest ^:kaocha/pending azef-protocol-cant-target-self
+(deftest azef-protocol-cant-target-self
   ;; Azef Protocol can't trash itself to pay its cost
   (do-game
    (new-game {:corp {:hand ["Azef Protocol", "PAD Campaign"]}

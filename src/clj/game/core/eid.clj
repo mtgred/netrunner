@@ -16,7 +16,7 @@
 
 (defn get-ability-targets
   [eid]
-  (get-in eid [:source-info :ability-targets]))
+  (get-in eid [:source-info :ability-targets 0]))
 
 (defn is-basic-advance-action?
   [eid]

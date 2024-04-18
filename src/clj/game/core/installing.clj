@@ -163,29 +163,35 @@
           moved-card (get-card state moved-card)]
       ;; Check to see if a second agenda/asset was installed.
       (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
-                (let [eid (assoc eid :source moved-card :source-type :rez)]
+                (let [eid (assoc eid :source moved-card)]
                   (queue-event state :corp-install {:card (get-card state moved-card)
                                                     :install-state install-state})
                   (case install-state
                     ;; Ignore all costs
                     :rezzed-no-cost
                     (if-not (agenda? moved-card)
-                      (rez state side eid moved-card {:ignore-cost :all-costs
-                                                      :no-msg no-msg})
+                      (rez state side (assoc eid :source-type :rez)
+                           moved-card {:ignore-cost :all-costs
+                                       :no-msg no-msg})
                       (checkpoint state nil eid))
                     ;; Ignore rez cost only
                     :rezzed-no-rez-cost
-                    (rez state side eid moved-card {:ignore-cost :rez-costs
-                                                    :no-msg no-msg})
+                    (rez state side (assoc eid :source-type :rez)
+                         moved-card {:ignore-cost :rez-costs
+                                     :no-msg no-msg})
                     ;; Pay costs
                     :rezzed
-                    (if-not (agenda? moved-card)
-                      (if-not (zero? cost-bonus)
-                        (rez state side eid moved-card {:no-msg no-msg :cost-bonus cost-bonus})
-                        (rez state side eid moved-card {:no-msg no-msg}))
-                      (do (when-let [dre (:derezzed-events cdef)]
-                            (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
-                          (checkpoint state nil eid)))
+                    (let [eid (assoc eid :source-type :rez)]
+                      (cond
+                        (agenda? moved-card)
+                        (do (when-let [dre (:derezzed-events cdef)]
+                              (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
+                            (checkpoint state nil eid))
+                        (zero? cost-bonus)
+                        (rez state side eid moved-card {:no-msg no-msg})
+                        :else
+                        (rez state side eid moved-card {:no-msg no-msg
+                                                        :cost-bonus cost-bonus})))
                     ;; "Face-up" cards
                     :face-up
                     (let [moved-card (-> (get-card state moved-card)
@@ -230,7 +236,8 @@
 
 (defn corp-can-pay-and-install?
   [state side eid card server args]
-  (let [slot (get-slot state card server (select-keys args [:host-card]))
+  (let [eid (eid-set-defaults eid :source nil :source-type :corp-install)
+        slot (get-slot state card server (select-keys args [:host-card]))
         costs (corp-install-cost state side card server args)]
     (and (corp-can-install? state side card slot (select-keys args [:no-toast]))
          (can-pay? state side eid card nil costs)
@@ -381,7 +388,7 @@
     (when-let [on-install (and (not facedown)
                                (:on-install (card-def installed-card)))]
       (register-pending-event state :runner-install installed-card on-install))
-    (wait-for (checkpoint state nil (make-eid state eid) nil)
+    (wait-for (checkpoint state nil (make-eid state) nil)
               (complete-with-result state side eid (get-card state installed-card)))))
 
 (defn- runner-install-cost

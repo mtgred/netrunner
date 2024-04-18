@@ -75,17 +75,18 @@
 
 (defn play
   "Called when the player clicks a card from hand."
-  [state side {:keys [card server]}]
+  [state side {:keys [card] :as context}]
   (when-let [card (get-card state card)]
-    (case (:type card)
-      ("Event" "Operation")
-      (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                :ability 3
-                                :targets [card]})
-      ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
-      (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                :ability 2
-                                :targets [card server]}))))
+    (let [context (assoc context :card card)]
+      (case (:type card)
+        ("Event" "Operation")
+        (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                  :ability 3
+                                  :targets [context]})
+        ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
+        (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                  :ability 2
+                                  :targets [context]})))))
 
 (defn click-draw
   "Click to draw."
@@ -523,29 +524,37 @@
 (defn trash-resource
   "Click to trash a resource."
   [state side _]
-  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 5}))
+  (play-ability state side {:card (get-in @state [:corp :basic-action-card])
+                            :ability 5}))
 
 (defn do-purge
   "Purge viruses."
   [state side _]
-  (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 6}))
+  (play-ability state side {:card (get-in @state [:corp :basic-action-card])
+                            :ability 6}))
 
 (defn click-advance
   "Click to advance installed card."
-  [state side {:keys [card]}]
+  [state side {:keys [card] :as context}]
   (when-let [card (get-card state card)]
-    (play-ability state side {:card (get-in @state [:corp :basic-action-card]) :ability 4 :targets [card]})))
+    (let [context (assoc context :card card)]
+      (play-ability state side {:card (get-in @state [:corp :basic-action-card])
+                                :ability 4
+                                :targets [context]}))))
 
 ;;; Runner actions
 (defn click-run
   "Click to start a run."
-  [state side {:keys [server]}]
-  (play-ability state side {:card (get-in @state [:runner :basic-action-card]) :ability 4 :targets [server]}))
+  [state side context]
+  (play-ability state side {:card (get-in @state [:runner :basic-action-card])
+                            :ability 4
+                            :targets [context]}))
 
 (defn remove-tag
   "Click to remove a tag."
   [state side _]
-  (play-ability state side {:card (get-in @state [:runner :basic-action-card]) :ability 5}))
+  (play-ability state side {:card (get-in @state [:runner :basic-action-card])
+                            :ability 5}))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."
@@ -634,7 +643,7 @@
                                                           :additional-costs cost
                                                           :source card
                                                           :source-type :corp-score))
-                              nil cost)
+                              card cost)
                          (let [payment-result async-result]
                            (if (string/blank? (:msg payment-result))
                              (effect-completed state side eid)

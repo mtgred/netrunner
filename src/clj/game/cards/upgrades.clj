@@ -593,7 +593,7 @@
   {:recurring 2
    :interactions {:pay-credits {:req (req (and (= :corp-install (:source-type eid))
                                                (= (second (get-zone card))
-                                                  (unknown->kw (:source eid)))))
+                                                  (unknown->kw (:server (get-ability-targets eid))))))
                                 :type :recurring}}})
 
 (defcard "Defense Construct"
@@ -1598,7 +1598,7 @@
 
 (defcard "Simone Diego"
   {:recurring 2
-   :interactions {:pay-credits {:req (req (let [ab-target (first (get-ability-targets eid))]
+   :interactions {:pay-credits {:req (req (let [ab-target (:card (get-ability-targets eid))]
                                             (and (same-server? card ab-target)
                                                  (or (= :advance (:source-type eid))
                                                      (is-basic-advance-action? eid)))))

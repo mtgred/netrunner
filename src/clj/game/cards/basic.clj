@@ -50,49 +50,51 @@
                {:action true
                 :label "Install 1 agenda, asset, upgrade, or piece of ice from HQ"
                 :async true
-                :req (req (and (not-empty (:hand corp))
-                               (in-hand? target)
-                               (or (agenda? target)
-                                   (asset? target)
-                                   (ice? target)
-                                   (upgrade? target))
-                               (if-let [server (second targets)]
-                                 (corp-can-pay-and-install?
-                                   state side (assoc eid :source server :source-type :corp-install)
-                                   target server {:base-cost [(->c :click 1)]
-                                                  :action :corp-click-install
-                                                  :no-toast true})
-                                 (some
-                                   (fn [server]
-                                     (corp-can-pay-and-install?
-                                       state side (assoc eid :source server :source-type :corp-install)
-                                       target server {:base-cost [(->c :click 1)]
-                                                      :action :corp-click-install
-                                                      :no-toast true}))
-                                   (installable-servers state card)))))
-                :effect (req (let [server (second targets)]
+                :req (req (let [{target-card :card server :server} context]
+                            (and (not-empty (:hand corp))
+                                 (in-hand? target-card)
+                                 (or (agenda? target-card)
+                                     (asset? target-card)
+                                     (ice? target-card)
+                                     (upgrade? target-card))
+                                 (if server
+                                   (corp-can-pay-and-install?
+                                     state side (assoc eid :source-type :corp-install)
+                                     target-card server {:base-cost [(->c :click 1)]
+                                                    :action :corp-click-install
+                                                    :no-toast true})
+                                   (some
+                                     (fn [server]
+                                       (corp-can-pay-and-install?
+                                         state side (assoc eid :source-type :corp-install)
+                                         target-card server {:base-cost [(->c :click 1)]
+                                                        :action :corp-click-install
+                                                        :no-toast true}))
+                                     (installable-servers state target-card))))))
+                :effect (req (let [{target-card :card server :server} context]
                                (corp-install
-                                 state side (assoc eid :source server :source-type :corp-install)
-                                 target server {:base-cost [(->c :click 1)]
-                                                :action :corp-click-install})))}
+                                 state side (assoc eid :source-type :corp-install)
+                                 target-card server {:base-cost [(->c :click 1)]
+                                                     :action :corp-click-install})))}
                {:action true
                 :label "Play 1 operation"
                 :async true
-                :req (req (and (not-empty (:hand corp))
-                               (in-hand? target)
-                               (operation? target)
-                               (can-play-instant? state :corp (assoc eid :source :action :source-type :play)
-                                                  target {:base-cost [(->c :click 1)]})))
-                :effect (req (play-instant state :corp (assoc eid :source :action :source-type :play)
-                                           target {:base-cost [(->c :click 1)]}))}
+                :req (req (let [target-card (:card context)]
+                            (and (not-empty (:hand corp))
+                                 (in-hand? target-card)
+                                 (operation? target-card)
+                                 (can-play-instant? state :corp (assoc eid :source-type :play)
+                                                    target-card {:base-cost [(->c :click 1)]}))))
+                :effect (req (play-instant state :corp (assoc eid :source-type :play)
+                                           (:card context) {:base-cost [(->c :click 1)]}))}
                {:action true
                 :label "Advance 1 installed card"
                 :cost [(->c :click 1) (->c :credit 1)]
                 :async true
-                :msg (msg "advance " (card-str state target))
-                :req (req (can-advance? state side target))
-                :effect (effect (update-advancement-requirement target)
-                                (add-prop (get-card state target) :advance-counter 1)
+                :msg (msg "advance " (card-str state (:card context)))
+                :req (req (can-advance? state side (:card context)))
+                :effect (effect (update-advancement-requirement (:card context))
+                                (add-prop (get-card state (:card context)) :advance-counter 1)
                                 (play-sfx "click-advance")
                                 (effect-completed eid))}
                {:action true
@@ -101,7 +103,7 @@
                 :async true
                 :req (req tagged)
                 :prompt "Choose a resource to trash"
-                :msg (msg "trash " (:title target))
+                :msg (msg "trash " (:title (:card context)))
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
                 :choices {:req (req (and (if (and (->> (all-active-installed state :runner)
                                                        (filter (fn [c] (untrashable-while-resources? c)))
@@ -124,27 +126,26 @@
                                 can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)]
                             (if (empty? additional-costs)
                               (trash state side eid target nil)
-                              (let [target-card target]
-                                (wait-for (resolve-ability
-                                            state side
-                                            {:prompt (str "Pay the additional cost to trash " (:title target-card) "?")
-                                             :choices [(when can-pay cost-strs) "No"]
-                                             :async true
-                                             :effect (req (if (= target "No")
-                                                            (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target-card)))
-                                                                (effect-completed state side eid))
-                                                            (wait-for (pay state side (make-eid state
-                                                                                                (assoc eid
-                                                                                                       :additional-costs additional-costs
-                                                                                                       :source card
-                                                                                                       :source-type :trash-card))
-                                                                           nil additional-costs)
-                                                                      (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target-card)))
-                                                                      (complete-with-result state side eid target-card))))}
-                                            card nil)
-                                          (if async-result
-                                            (trash state side eid target nil)
-                                            (effect-completed state side eid)))))))}
+                              (wait-for (resolve-ability
+                                          state side
+                                          (make-eid state eid)
+                                          {:prompt (str "Pay the additional cost to trash " (:title target) "?")
+                                           :choices [(when can-pay cost-strs) "No"]
+                                           :async true
+                                           :effect (req (if (= target "No")
+                                                          (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target)))
+                                                              (effect-completed state side eid))
+                                                          (wait-for (pay state side (make-eid state
+                                                                                              (assoc eid
+                                                                                                     :additional-costs additional-costs
+                                                                                                     :source-type :trash-card))
+                                                                         nil additional-costs)
+                                                                    (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target)))
+                                                                    (complete-with-result state side eid target))))}
+                                          card nil)
+                                        (if async-result
+                                          (trash state side eid target nil)
+                                          (effect-completed state side eid))))))}
                {:action true
                 :label "Purge virus counters"
                 :cost [(->c :click 3)]
@@ -175,32 +176,34 @@
                {:action true
                 :label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
-                :req (req (and (not-empty (:hand runner))
-                               (in-hand? target)
-                               (or (hardware? target)
-                                   (program? target)
-                                   (resource? target))
-                               (runner-can-pay-and-install?
-                                 state :runner (assoc eid :source :action :source-type :runner-install)
-                                 target {:base-cost [(->c :click 1)]})))
+                :req (req (let [target-card (:card context)]
+                            (and (not-empty (:hand runner))
+                                 (in-hand? target-card)
+                                 (or (hardware? target-card)
+                                     (program? target-card)
+                                     (resource? target-card))
+                                 (runner-can-pay-and-install?
+                                   state :runner (assoc eid :source-type :runner-install)
+                                   target-card {:base-cost [(->c :click 1)]}))))
                 :effect (req (runner-install
-                               state :runner (assoc eid :source :action :source-type :runner-install)
-                               target {:base-cost [(->c :click 1)]
-                                       :no-toast true}))}
+                               state :runner (dissoc eid :source-type)
+                               (:card context) {:base-cost [(->c :click 1)]
+                                                :no-toast true}))}
                {:action true
                 :label "Play 1 event"
                 :async true
-                :req (req (and (not-empty (:hand runner))
-                               (in-hand? target)
-                               (event? target)
-                               (can-play-instant? state :runner (assoc eid :source :action :source-type :play)
-                                                  target {:base-cost [(->c :click 1)]})))
-                :effect (req (play-instant state :runner (assoc eid :source :action :source-type :play)
-                                           target {:base-cost [(->c :click 1)]}))}
+                :req (req (let [target-card (:card context)]
+                            (and (not-empty (:hand runner))
+                                 (in-hand? target-card)
+                                 (event? target-card)
+                                 (can-play-instant? state :runner (assoc eid :source-type :play)
+                                                    target-card {:base-cost [(->c :click 1)]}))))
+                :effect (req (play-instant state :runner (assoc eid :source-type :play)
+                                           (:card context) {:base-cost [(->c :click 1)]}))}
                {:action true
                 :label "Run any server"
                 :async true
-                :effect (effect (make-run eid target nil {:click-run true}))}
+                :effect (effect (make-run eid (:server context) nil {:click-run true}))}
                {:action true
                 :label "Remove 1 tag"
                 :cost [(->c :click 1) (->c :credit 2)]

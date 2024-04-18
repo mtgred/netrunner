@@ -4,12 +4,13 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer :all]
-   [game.core :as core :refer [map->Card]]
+   [game.core :as core]
    [game.core.board :refer [server-list]]
    [game.core.card :refer [active? get-card get-counters get-title installed?
                            rezzed?]]
    [game.core.eid :as eid]
    [game.core.ice :refer [active-ice?]]
+   [game.core.initializing :refer [make-card]]
    [game.test-framework.asserts]
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
@@ -849,7 +850,7 @@
 (defn trace
   [state base]
   (core/init-trace state :corp
-                   (map->Card {:title "/trace command" :side :corp})
+                   (make-card {:title "/trace command" :side "Corp"})
                    {:base base}))
 
 (defn log-str [state]

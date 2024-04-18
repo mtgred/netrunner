@@ -5492,7 +5492,7 @@
      (is (changed? [(:credit (get-corp)) 3]
            (click-card state :corp (refresh pad)))
          "~ sells PAD Campaign before it triggers so only 3 credits gained")
-     (is (= (refresh pad) nil) "PAD Campaign should be in Heap"))))
+     (is (nil? (refresh pad)) "PAD Campaign should be in Heap"))))
 
 (deftest syvatogor-excavator-card-str-6471
   (do-game

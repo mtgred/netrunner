@@ -85,6 +85,8 @@
   (let [needed-locals (find-undefined-locals expr)
         nls (emit-only needed-locals)]
     `(fn ~['state 'side 'eid 'card 'targets]
+       (assert (or (nil? (:source ~'eid)) (:cid (:source ~'eid)))
+               (str ":source should be a card, received: " (:source ~'eid)))
        (let [~@nls]
          ~@expr))))
 
@@ -101,7 +103,7 @@
                          (first body)
                          [[{'async-result :result}] (first body)])
         expr (next body)
-        abnormal? (#{'apply 'handler 'payable?} (first action))
+        abnormal? (#{'handler 'payable?} (first action))
         to-take (if abnormal? 4 3)
         fn-name (gensym (name (first action)))
         [_ state _ eid?] (if abnormal? (next action) action)]

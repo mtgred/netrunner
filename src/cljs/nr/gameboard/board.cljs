@@ -1623,13 +1623,17 @@
      (when (and (not (or @runner-phase-12 @corp-phase-12))
                 (zero? (:click @me))
                 (not @end-turn))
-       [:button {:on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
+       [:button {:on-click #(send-command "end-turn")}
+        (tr [:game.end-turn "End Turn"])])
      (when @end-turn
-       [:button {:on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
+       [:button {:on-click #(send-command "start-turn")}
+        (tr [:game.start-turn "Start Turn"])]))
    (when (and (= (keyword @active-player) side)
               (or @runner-phase-12 @corp-phase-12))
      [:button {:on-click #(send-command "end-phase-12")}
-      (if (= side :corp) (tr [:game.mandatory-draw "Mandatory Draw"]) (tr [:game.take-clicks "Take Clicks"]))])
+      (if (= side :corp)
+        (tr [:game.mandatory-draw "Mandatory Draw"])
+        (tr [:game.take-clicks "Take Clicks"]))])
    (when (= side :runner)
      [:div
       [cond-button (tr [:game.remove-tag "Remove Tag"])

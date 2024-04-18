@@ -1368,7 +1368,7 @@
       (is (no-prompt? state :corp) "Corp should be waiting on Runner")
       (is (no-prompt? state :runner) "Runner should be able to take actions")))
 
-(deftest Djupstad-grid
+(deftest djupstad-grid
   (do-game
     (new-game {:corp {:hand ["Project Atlas" "Djupstad Grid"] :credits 10}
                :runner {:hand [(qty "Sure Gamble" 5)]}})

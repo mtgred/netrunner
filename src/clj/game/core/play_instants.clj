@@ -99,7 +99,8 @@
 (defn can-play-instant?
   ([state side eid card] (can-play-instant? state side eid card nil))
   ([state side eid card {:keys [targets silent] :as args}]
-   (let [on-play (or (:on-play (card-def card)) {})
+   (let [eid (eid-set-defaults eid :source card :source-type :play)
+         on-play (or (:on-play (card-def card)) {})
          costs (play-instant-costs state side card args)]
      (and ;; req is satisfied
           (should-trigger? state side eid card targets on-play)
@@ -124,16 +125,13 @@
   "Plays an Event or Operation."
   ([state side eid card] (play-instant state side eid card nil))
   ([state side eid card {:keys [ignore-cost] :as args}]
-   (let [eid (eid-set-defaults eid :source :action :source-type :play)
+   (let [eid (eid-set-defaults eid :source card :source-type :play)
          costs (play-instant-costs state side card (dissoc args :cached-costs))]
      ;; ensure the instant can be played
      (if (can-play-instant? state side eid card (assoc args :cached-costs costs))
        ;; Wait on pay to finish before triggering instant-effect
        (let [original-zone (:zone card)
              moved-card (move state side (assoc card :seen true) :play-area)]
-         ;; Only mark the register once costs have been paid and card has been moved
-         (when (has-subtype? card "Run")
-           (swap! state assoc-in [:runner :register :click-type] :run))
          (wait-for (pay state side (make-eid state (assoc eid :action :play-instant)) moved-card costs)
                    (let [payment-str (:msg async-result)
                          cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))]

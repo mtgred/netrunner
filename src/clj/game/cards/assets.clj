@@ -23,9 +23,9 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [is-disabled? register-lingering-effect]]
-   [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid]]
-   [game.core.engine :refer [pay register-events resolve-ability trigger-event]]
+   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
+   [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
@@ -37,7 +37,6 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice
                           update-ice-strength]]
-   [game.core.identities :refer [disable-card enable-card]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
@@ -2670,20 +2669,24 @@
   ; being run on in :runner-spent-click.
   {:events [{:event :runner-spent-click
              :req (req (first-event? state side :runner-spent-click))
-             :msg (req (when-not (= :run (get-in @state [:runner :register :click-type]))
+             :msg (req (when-not (= :make-run (:source-type eid))
                          "gain 2 [Credits]"))
              :async true
-             :effect (req (if (not= :run (get-in @state [:runner :register :click-type]))
-                            (gain-credits state :corp eid 2)
-                            (effect-completed state side eid)))}
+             :effect (req (if (or (= :make-run (:source-type eid))
+                                  (and (:source eid)
+                                       (:makes-run (card-def (:source eid))))
+                                  (and (get-ability-targets eid)
+                                       (:makes-run (card-def (:card (get-ability-targets eid))))))
+                            (effect-completed state side eid)
+                            (gain-credits state :corp eid 2)))}
             {:event :run
              :once :per-turn
              :req (req (first-event? state side :runner-spent-click))
-             :msg (req (when (and (= :run (get-in @state [:runner :register :click-type]))
+             :msg (req (when (and (= :make-run (:source-type eid))
                                   (not this-server))
                          "gain 2 [Credits]"))
              :async true
-             :effect (req (if (and (= :run (get-in @state [:runner :register :click-type]))
+             :effect (req (if (and (= :make-run (:source-type eid))
                                    (not this-server))
                             (gain-credits state :corp eid 2)
                             (effect-completed state side eid)))}]})
@@ -2699,7 +2702,8 @@
                  :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
                  :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                         (effect-completed eid))
-                 :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
+                 :effect (req (wait-for (trash state side target {:unpreventable true
+                                                                  :cause-card card})
                                         (gain-credits state side eid 3)))}]
     {:flags {:corp-phase-12 (req (>= (count (all-installed state :corp)) 2))}
      :events [(assoc ability
