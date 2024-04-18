@@ -1591,28 +1591,17 @@
              :effect (req (gain-tags state :runner eid 1))}]})
 
 (defcard "Malia Z0L0K4"
-  (let [re-enable-target
-        (req (if-let [malia-target (:malia-target card)]
-               (if (:disabled (get-card state malia-target))
-                 (do (system-msg state side (str "uses " (:title card) " to unblank "
-                                                 (card-str state malia-target)))
-                     (enable-card state :runner (get-card state malia-target))
-                     (remove-icon state :runner card (get-card state malia-target))
-                     (if-let [reactivate-effect (:reactivate (card-def malia-target))]
-                       (resolve-ability state :runner eid reactivate-effect (get-card state malia-target) nil)
-                       (effect-completed state nil eid)))
-                 (effect-completed state nil eid))
-               (effect-completed state nil eid)))]
-    {:on-rez {:msg (msg "blank the text box of " (card-str state target))
-              :choices {:card #(and (runner? %)
-                                    (installed? %)
-                                    (resource? %)
-                                    (not (has-subtype? % "Virtual")))}
-              :effect (effect (add-icon card target "MZ" (faction-label card))
-                              (update! (assoc (get-card state card) :malia-target target))
-                              (disable-card :runner (get-card state target)))}
-     :leave-play re-enable-target
-     :move-zone re-enable-target}))
+  {:on-rez {:msg (msg "blank the text box of " (card-str state target))
+            :choices {:card #(and (runner? %)
+                                  (installed? %)
+                                  (resource? %)
+                                  (not (has-subtype? % "Virtual")))}
+            :effect (effect (add-icon card target "MZ" (faction-label card))
+                            (update! (assoc (get-card state card) :malia-target target)))}
+   :static-abilities [{:type :disable-card
+                       :req (req (same-card? target (get-in card [:malia-target])))
+                       :value true}]})
+
 
 (defcard "Marilyn Campaign"
   (let [ability {:once :per-turn

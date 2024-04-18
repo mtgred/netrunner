@@ -12,6 +12,8 @@
           abilities (for [ability static-abilities]
                       (assoc
                         (select-keys ability [:type :req :value])
+                        ;; this is so I can select them later
+                        :static true
                         :duration :while-active
                         :card card
                         :uuid (uuid/v1)))]
@@ -124,3 +126,8 @@
   ([state side effect-type pred target] (any-effects state side effect-type pred target nil))
   ([state side effect-type pred target targets]
    (some pred (get-effects state side effect-type target targets))))
+
+(defn is-disabled?
+  "Check if a card is disabled"
+  ([state side target]
+   (any-effects state side :disable-card true? target)))

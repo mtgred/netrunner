@@ -1147,6 +1147,7 @@
                                       (effect-completed state side eid)))}]
     {:on-install {:async true
                   :effect (effect (continue-ability fenris-effect card nil))}
+     ;; TODO - make this work
      ;; Handle Dr. Lovegood / Malia
      :disable {:effect (req (doseq [hosted (:hosted card)]
                               (disable-card state side hosted)))}
@@ -1163,21 +1164,28 @@
              :prompt "Choose an installed card to make its text box blank for the remainder of the turn"
              :once :per-turn
              :interactive (req true)
-             :async true
+             ;;:async true
              :choices {:card installed?}
              :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
-             :effect (req (let [c target]
-                            (add-icon state side card target "DL" (faction-label card))
-                            (disable-card state side (get-card state target))
-                            (register-events
-                              state side card
-                              [{:event :post-runner-turn-ends
-                                :unregister-once-resolved true
-                                :effect (req (let [disabled-card (get-card state c)]
-                                                (enable-card state side disabled-card)
-                                                (remove-icon state side card (get-card state disabled-card))
-                                                (resolve-ability state :runner (:reactivate (card-def c)) disabled-card nil)))}])
-                            (effect-completed state side eid)))}]})
+             :effect (req
+                       (let [c target]
+                         (add-icon state side card target "DL" (faction-label card))
+                         (register-events
+                           state side card
+                           [{:event :post-runner-turn-ends
+                             :unregister-once-resolved true
+                             :effect (req (let [disabled-card (get-card state c)]
+                                            (remove-icon state side card (get-card state disabled-card))))}])
+                         (register-lingering-effect
+                           state side card
+                           {:type :disable-card
+                            :duration :runner-turn-ends
+                            :req (req (same-card? c target))
+                            :value (req true)})))}]})
+
+                            ;;
+                            ;; (disable-card state side (get-card state target))
+                            ;; (effect-completed state side eid)))}]})
 
 (defcard "Dr. Nuka Vrolyck"
   {:data {:counter {:power 2}}
@@ -2001,73 +2009,29 @@
                           card nil))}]})
 
 (defcard "Light the Fire!"
-  (letfn [(eligible? [_state card server]
-            (let [zone (:zone card)] (and (some #{:content} zone) (some #{server} zone))))
-          (select-targets [state server]
-            (filter #(eligible? state % server) (all-installed state :corp)))
-          (disable-server [state _side server]
-            (doseq [c (select-targets state server)]
-              (disable-card state :corp c)))
-          (enable-server [state _side server]
-            (doseq [c (select-targets state server)]
-              (enable-card state :corp c)))]
-    (let [successful-run-trigger {:event :successful-run
+  (let [successful-run-trigger {:event :successful-run
                                   :duration :end-of-run
                                   :async true
                                   :req (req (is-remote? (:server run)))
                                   :effect (effect (trash-cards eid (:content run-server)))
-                                  :msg "trash all cards in the server for no cost"}
-          pre-redirect-trigger {:event :pre-redirect-server
-                                :duration :end-of-run
-                                :effect (effect (enable-server (first target))
-                                                (disable-server (second (second targets))))}
-          ;post-redirect-trigger {:event :redirect-server
-          ;                       :duration :end-of-run
-          ;                       :async true
-          ;                       :effect (effect (disable-server (first (:server run)))
-          ;                                       (effect-completed eid))}
-          corp-install-trigger {:event :corp-install
-                                :duration :end-of-run
-                                :effect (req (disable-server state side (first (:server run))))}
-          swap-trigger {:event :swap
-                        :duration :end-of-run
-                        :effect (req (let [first-card (first targets)
-                                           second-card (second targets)
-                                           server (first (:server run))]
-                                       ;; disable cards that have moved into the server
-                                       (when (and (some #{:content} (:zone first-card))
-                                                  (some #{server} (:zone first-card)))
-                                         (disable-card state :corp first-card))
-                                       (when (and (some #{:content} (:zone second-card))
-                                                  (some #{server} (:zone second-card)))
-                                         (disable-card state :corp second-card))
-                                       ;; enable cards that have left the server
-                                       (when (and (some #{:content} (:zone first-card))
-                                                  (not (some #{server} (:zone first-card)))
-                                                  (some #{server} (:zone second-card)))
-                                         (enable-card state :corp first-card))
-                                       (when (and (some #{:content} (:zone second-card))
-                                                  (not (some #{server} (:zone second-card)))
-                                                  (some #{server} (:zone first-card)))
-                                         (enable-card state :corp second-card))))}
-          run-end-trigger {:event :run-ends
-                           :duration :end-of-run
-                           :effect (effect (enable-server (first (:server target))))}]
-      {:abilities [{:label "Run a remote server"
-                    :cost [(->c :click 1) (->c :trash-can) (->c :brain 1)]
-                    :prompt "Choose a remote server"
-                    :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
-                    :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
-                    :makes-run true
-                    :async true
-                    :effect (effect (register-events card [successful-run-trigger
-                                                           run-end-trigger
-                                                           pre-redirect-trigger
-                                                           ;post-redirect-trigger
-                                                           corp-install-trigger
-                                                           swap-trigger])
-                                    (make-run eid target card)
-                                    (disable-server (second (server->zone state target))))}]})))
+                                  :msg "trash all cards in the server for no cost"}]
+    {:abilities [{:label "Run a remote server"
+                  :cost [(->c :click 1) (->c :trash-can) (->c :brain 1)]
+                  :prompt "Choose a remote server"
+                  :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
+                  :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
+                  :makes-run true
+                  :async true
+                  :effect (effect
+                            (register-events card [successful-run-trigger])
+                            (make-run eid target card)
+                            (register-lingering-effect
+                              card
+                              {:type :disable-card
+                               :duration :end-of-run
+                               :req (req (and run
+                                              (some #{:content} (:zone target))
+                                              (some #{run-server} (:zone target))))}))}]}))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"

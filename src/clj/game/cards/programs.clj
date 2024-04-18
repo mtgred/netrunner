@@ -1765,9 +1765,28 @@
 
 (defcard "Hush"
   ;; TODO - come back to this once disabling cards has been reworded. nbkelly, jan 2023
-  {:implementation "Unimplemented - corp must use /disable-card and /enable-card on ice to fix any issues (ie anansi, afshar, magnet)"
+  (letfn [(reset-card-to-printed-subs [state side card]
+            (let [card (get-card state card)
+                  old-subs (remove #(or (:variable %)
+                                        (not (:printed %)))
+                                   (:subroutines card))
+                  new-card (assoc card :subroutines old-subs)]
+              (update! state :corp new-card)
+              (trigger-event state side :subroutines-changed (get-card state new-card))))]
+  {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
    :hosting {:card #(and (ice? %)
                          (can-host? %))}
+   :static-abilities [{:type :disable-card
+                       :req (req (same-card? target (:host card)))
+                       :value true}]
+   :on-install {:effect (req (reset-card-to-printed-subs state side (:host card)))}
+   ;; hoping and praying that it's impossible for this to cause a feedback loop
+   :events [{:event :subroutines-changed
+             :req (req (and
+                         (same-card? target (:host card))
+                         (or (some :variable (:subroutines target))
+                             (some #(not (:printed %)) (:subroutines target)))))
+             :effect (req (reset-card-to-printed-subs state side target))}]
    :abilities [{:label "Host on a piece of ice"
                 :prompt "Choose a piece of ice"
                 :cost [(->c :click 1)]
@@ -1775,7 +1794,8 @@
                                       (installed? %)
                                       (can-host? %))}
                 :msg (msg "host itself on " (card-str state target))
-                :effect (effect (host target card))}]})
+                :effect (req (host state side target card)
+                             (reset-card-to-printed-subs state side target))}]}))
 
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}

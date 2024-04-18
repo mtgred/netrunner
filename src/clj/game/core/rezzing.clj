@@ -3,7 +3,7 @@
     [game.core.card :refer [asset? condition-counter? get-card ice? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
-    [game.core.effects :refer [unregister-static-abilities]]
+    [game.core.effects :refer [unregister-static-abilities is-disabled?]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [register-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
@@ -24,7 +24,7 @@
   (merge-costs
     (cond
       (= :all-costs ignore-cost) [(->c :credit 0)]
-      alternative-cost alternative-cost
+      alternative-cost (when-not (is-disabled? state side card) alternative-cost)
       :else (let [cost (rez-cost state side card {:cost-bonus cost-bonus})
                   additional-costs (rez-additional-cost-bonus state side card (when ignore-cost #(not= :credit (:cost/type %))))]
               (concat

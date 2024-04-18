@@ -2486,6 +2486,7 @@
                                            (encounter-ends state side eid)))}}}]})
 
 (defcard "Klevetnik"
+  ;; TODO - make this use a floating effect to disable cards
   (let [re-enable-target
         (fn [t] {:event :corp-turn-ends
                  :unregister-once-resolved true
@@ -2778,39 +2779,21 @@
                  (trace-ability 1 end-the-run)]})
 
 (defcard "Magnet"
-  (letfn [(disable-hosted [state side c]
-            (doseq [hc (:hosted (get-card state c))]
-              ;; TODO - remove this boilerplate when disabling cards is reworked
-              (when (not= (:title hc) "Hush")
-                (unregister-events state side hc)
-                (unregister-static-abilities state side hc)
-                (init-mu-cost state hc)
-                (update! state side (dissoc hc :abilities)))))]
-    {:on-rez {:async true
-              :effect (req (let [magnet card]
-                             (wait-for (resolve-ability
-                                         state side
-                                         {:req (req (some #(some program? (:hosted %))
-                                                          (remove-once #(same-card? % magnet)
-                                                                       (filter ice? (all-installed state corp)))))
-                                          :prompt "Choose a Program to host"
-                                          :msg (msg "host " (card-str state target))
-                                          :choices {:card #(and (program? %)
-                                                                (ice? (:host %))
-                                                                (not (same-card? (:host %) magnet)))}
-                                          :effect (effect (host card target))}
-                                         card nil)
-                                       (disable-hosted state side card)
-                                       (effect-completed state side eid))))}
-     :derez-effect {:req (req (not-empty (:hosted card)))
-                    :effect (req (doseq [c (:hosted card)]
-                                   (unregister-static-abilities state side c)
-                                   (card-init state side c {:resolve-effect false})))}
-     :events [{:event :runner-install
-               :req (req (same-card? card (:host (:card context))))
-               :effect (req (disable-hosted state side card)
-                         (update-ice-strength state side card))}]
-     :subroutines [end-the-run]}))
+  {:on-rez {:req (req (some #(some program? (:hosted %))
+                            (remove-once #(same-card? % card)
+                                         (filter ice? (all-installed state corp)))))
+            :prompt "Choose a Program to host"
+            :msg (msg "host " (card-str state target))
+            :choices {:req (req (and (program? target)
+                                     (ice? (:host target))
+                                     (not (same-card? (:host target) card))))}
+            :effect (effect (host card target))}
+   :static-abilities [{:type :disable-card
+                       :req (req (and (same-card? (:host target) card)
+                                      (not= (:title target) "Hush")
+                                      (program? target)))
+                       :value true}]
+   :subroutines [end-the-run]})
 
 (defcard "Mamba"
   {:abilities [(power-counter-ability (do-net-damage 1))]

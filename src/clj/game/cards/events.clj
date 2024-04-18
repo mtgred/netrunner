@@ -1111,8 +1111,13 @@
 (defcard "Direct Access"
   {:makes-run true
    ;;this :effect is used in card-init as a temporary solution for blanking IDs like Azmari or Ken Tenma before they can trigger
-   :effect (req (doseq [s [:corp :runner]]
-                  (disable-identity state s)))
+   :effect (req (register-lingering-effect
+                  state side card
+                  {:type :disable-card
+                   :duration :end-of-run
+                   :req (req (or (same-card? target (:identity corp))
+                                 (same-card? target (:identity runner))))
+                   :value (req true)}))
    :on-play {:async true
              :prompt "Choose a server"
              :choices (req runnable-servers)
@@ -1120,9 +1125,7 @@
    :events [{:event :run-ends
              :unregister-once-resolved true
              :async true
-             :effect (req (doseq [s [:corp :runner]]
-                            (enable-identity state s))
-                          (continue-ability
+             :effect (req (continue-ability
                             state :runner
                             {:optional
                              {:prompt "Shuffle Direct Access into the Stack?"
@@ -3321,18 +3324,10 @@
   (letfn [(eligible? [card] (and (:uniqueness card)
                                  (or (asset? card)
                                      (upgrade? card))
-                                 (not (has-subtype? card "Region"))))
-          (rumor [state] (filter eligible? (concat (all-installed state :corp)
-                                                   (get-in @state [:corp :hand])
-                                                   (get-in @state [:corp :deck])
-                                                   (get-in @state [:corp :discard]))))]
-    {:leave-play (req (doseq [c (rumor state)]
-                        (enable-card state :corp c)))
-     :on-play {:effect (req (doseq [c (rumor state)]
-                              (disable-card state :corp c)))}
-     :events [{:event :corp-install
-               :req (req (eligible? (:card context)))
-               :effect (effect (disable-card :corp (:card context)))}]}))
+                                 (not (has-subtype? card "Region"))))]
+    {:static-abilities[{:type :disable-card
+                        :req (req (eligible? target))
+                        :value true}]}))
 
 (defcard "Run Amok"
   (letfn [(get-rezzed-cids [ice]

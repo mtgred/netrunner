@@ -135,7 +135,9 @@
   ([state side ice sub] (add-extra-sub! state side ice sub (:cid ice) {:back true}))
   ([state side ice sub cid] (add-extra-sub! state side ice sub cid {:back true}))
   ([state side ice sub cid args]
-   (add-sub! state side (assoc-in ice [:special :extra-subs] true) sub cid args)))
+   (add-sub! state side (assoc-in ice [:special :extra-subs] true) sub cid args)
+   (trigger-event state side :subroutines-changed (get-card state ice))
+   ))
 
 (defn remove-extra-subs!
   "Remove runtime subroutines assigned from the given cid from a piece of ice."

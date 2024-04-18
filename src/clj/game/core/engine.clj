@@ -6,7 +6,7 @@
     [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [get-effect-maps unregister-lingering-effects]]
+    [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled?]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
@@ -594,7 +594,9 @@
                            (and (contains? location :hand)
                                 (in-hand? card)))
           :test-condition true)
-    card))
+    (and
+      (not (is-disabled? state nil card))
+      card)))
 
 (defn- card-for-ability
   [state {:keys [card duration] :as ability}]
