@@ -3,6 +3,7 @@
             [game.core.card :refer [get-card]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.board :refer [get-all-cards]]
             [game.utils :refer [same-card? to-keyword]]))
 
 (defn register-static-abilities
@@ -57,9 +58,11 @@
 (defn gather-effects
   [state _ effect-type]
   (let [get-side #(-> % :card :side to-keyword)
-        is-active-player #(= (:active-player @state) (get-side %))]
+        is-active-player #(= (:active-player @state) (get-side %))
+        is-disabled-reg (fn [state c] (some #(same-card? % (:card c)) (:disabled-card-reg @state)))]
     (->> (:effects @state)
          (filter #(= effect-type (:type %)))
+         (filter #(not (and (:static %) (is-disabled-reg state %))))
          (sort-by (complement is-active-player))
          (into []))))
 
@@ -131,3 +134,14 @@
   "Check if a card is disabled"
   ([state side target]
    (any-effects state side :disable-card true? target)))
+
+(defn all-disabled-cards
+  "Gets all cards currently disabled"
+  [state]
+  (let [all-cards (get-all-cards state)
+        disabled-cards (filter #(is-disabled? state nil %) all-cards)]
+    (into [] disabled-cards)))
+
+(defn update-disabled-cards [state]
+  (swap! state assoc-in [:disabled-card-reg] (all-disabled-cards state))
+  (get-in @state [:disabled-card-reg]))
