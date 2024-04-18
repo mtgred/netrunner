@@ -542,7 +542,7 @@
                      args)]
      {:async true
       :effect (req (wait-for
-                     (resolve-ability state side (make-eid state eid) (break-subroutines-impl ice (if (zero? n) (count (:subroutines current-ice)) n) '() args) card nil)
+                     (resolve-ability state side (break-subroutines-impl ice (if (zero? n) (count (:subroutines current-ice)) n) '() args) card nil)
                      (let [broken-subs (:broken-subs async-result)
                            early-exit (:early-exit async-result)
                            total-cost (when (seq broken-subs)
@@ -553,10 +553,7 @@
                                                                 card ice))
                            message (when (seq broken-subs)
                                      (break-subroutines-msg ice broken-subs breaker args))]
-                       (wait-for (pay state side (make-eid state {:source card
-                                                                  :source-info {:ability-idx (:ability-idx args)}
-                                                                  :source-type :ability})
-                                      card total-cost)
+                       (wait-for (pay state side card total-cost)
                                  (if-let [payment-str (:msg async-result)]
                                    (do (when (not (string/blank? message))
                                          (system-msg state :runner (str payment-str " to " message)))
@@ -646,16 +643,15 @@
                              (add-stealth-to-label cost))))
         :effect (effect (continue-ability
                           (let [n (if (fn? n)
-                                    (n state side (assoc eid :source-type :ability) card nil)
+                                    (n state side eid card nil)
                                     n)]
-                            (when (can-pay? state side
-                                            (assoc eid :source-type :ability)
+                            (when (can-pay? state side eid
                                             card nil
                                             (break-sub-ability-cost
                                               state side
                                               (assoc args :break-cost cost :broken-subs (take n (:subroutines current-ice)))
                                               card current-ice))
-                              (break-subroutines current-ice card cost n (assoc args :ability-idx (:ability-idx (:source-info eid))))))
+                              (break-subroutines current-ice card cost n args)))
                           card nil))}))))
 
 (defn strength-pump

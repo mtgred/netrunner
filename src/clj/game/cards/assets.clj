@@ -2665,31 +2665,21 @@
              :effect (req (win state :corp (:title card)))}]})
 
 (defcard "Sundew"
-  ; If this a run event then handle in :begin-run as we do not know the server
-  ; being run on in :runner-spent-click.
   {:events [{:event :runner-spent-click
              :req (req (first-event? state side :runner-spent-click))
-             :msg (req (when-not (= :make-run (:source-type eid))
-                         "gain 2 [Credits]"))
+             :msg "gain 2 [Credits]"
              :async true
-             :effect (req (if (or (= :make-run (:source-type eid))
-                                  (and (:source eid)
-                                       (:makes-run (card-def (:source eid))))
-                                  (and (get-ability-targets eid)
-                                       (:makes-run (card-def (:card (get-ability-targets eid))))))
-                            (effect-completed state side eid)
-                            (gain-credits state :corp eid 2)))}
+             :effect (req (update! state side (assoc-in card [:special :spent-click] true))
+                          (gain-credits state :corp eid 2))}
             {:event :run
-             :once :per-turn
-             :req (req (first-event? state side :runner-spent-click))
-             :msg (req (when (and (= :make-run (:source-type eid))
-                                  (not this-server))
-                         "gain 2 [Credits]"))
+             :req (req (and (first-event? state side :runner-spent-click)
+                            run
+                            this-server
+                            (get-in card [:special :spent-click])))
+             :msg "lose 2 [Credits]"
              :async true
-             :effect (req (if (and (= :make-run (:source-type eid))
-                                   (not this-server))
-                            (gain-credits state :corp eid 2)
-                            (effect-completed state side eid)))}]})
+             :effect (req (update! state side (dissoc-in card [:special :spent-click]))
+                          (lose-credits state :corp eid 2))}]})
 
 (defcard "Svyatogor Excavator"
   (let [ability {:async true

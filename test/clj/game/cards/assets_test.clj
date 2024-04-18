@@ -5240,7 +5240,11 @@
         ;; spend a click running the sundew server
         (run-on state "Server 1")
         (is (= 15 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")
-        (is (= 3 (:click (get-runner))) "Runner spent 1 click to start run"))))
+        (is (= 3 (:click (get-runner))) "Runner spent 1 click to start run")
+        (run-jack-out state)
+        (run-on state "Server 1")
+        (is (= 15 (:credit (get-corp))) "Corp did not gain additional credits")
+        (is (= 2 (:click (get-runner)))))))
 
 (deftest sundew-multiple-sundews
     ;; Multiple Sundews
@@ -5301,7 +5305,7 @@
         (click-prompt state :runner "Expose 1 ice and make a run")
         (click-card state :runner (get-ice state :remote1 0))
         (click-prompt state :runner "Server 1")
-        (is (= 6 (:credit (get-corp))) "Corp gained 2cr from Sundew because DW is not a run event"))))
+        (is (= 4 (:credit (get-corp))) "Corp lost 2 because a run began on the server"))))
 
 (deftest sundew-sundew-out-of-the-ashes
     ;; Sundew - Out of the Ashes

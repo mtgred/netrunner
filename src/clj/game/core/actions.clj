@@ -9,7 +9,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
     [game.core.effects :refer [any-effects]]
-    [game.core.eid :refer [effect-completed eid-set-defaults make-eid]]
+    [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
     [game.core.ice :refer [break-subroutine! get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
@@ -588,7 +588,7 @@
   ([state side card no-cost] (advance state side (make-eid state) card no-cost))
   ([state side eid card no-cost]
    (let [card (get-card state card)
-         eid (eid-set-defaults eid :source nil :source-type :advance)]
+         eid (assoc eid :source-type :advance)]
      (if (can-advance? state side card)
        (wait-for (pay state side
                       (make-eid state (assoc eid :action :corp-advance))

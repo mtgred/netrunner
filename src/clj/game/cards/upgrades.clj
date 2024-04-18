@@ -1905,7 +1905,8 @@
                :once-per-instance false
                :req (req (let [cause (:cause context)
                                cause-card (:cause-card context)]
-                           (and (or (corp? (:source eid))
+                           (and (not= :corp-install (:source-type eid))
+                                (or (corp? (:source eid))
                                     (= :ability-cost cause)
                                     (= :subroutine cause)
                                     (and (corp? cause-card)

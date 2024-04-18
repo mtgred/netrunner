@@ -9,11 +9,6 @@
   ([state existing-eid]
    (assoc existing-eid :eid (:eid (swap! state update :eid inc)))))
 
-(defn eid-set-defaults
-  "Set default values for fields in the `eid` if they are not already set."
-  [eid & {:as args}]
-  (conj args eid))
-
 (defn get-ability-targets
   [eid]
   (get-in eid [:source-info :ability-targets 0]))

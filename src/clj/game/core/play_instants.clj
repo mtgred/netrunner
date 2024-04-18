@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-static-abilities]]
-    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint dissoc-req merge-costs-paid pay queue-event resolve-ability should-trigger? unregister-events]]
     [game.core.flags :refer [can-run? zone-locked?]]
     [game.core.gaining :refer [lose]]
@@ -99,7 +99,7 @@
 (defn can-play-instant?
   ([state side eid card] (can-play-instant? state side eid card nil))
   ([state side eid card {:keys [targets silent] :as args}]
-   (let [eid (eid-set-defaults eid :source card :source-type :play)
+   (let [eid (assoc eid :source card :source-type :play)
          on-play (or (:on-play (card-def card)) {})
          costs (play-instant-costs state side card args)]
      (and ;; req is satisfied
@@ -125,7 +125,7 @@
   "Plays an Event or Operation."
   ([state side eid card] (play-instant state side eid card nil))
   ([state side eid card {:keys [ignore-cost] :as args}]
-   (let [eid (eid-set-defaults eid :source card :source-type :play)
+   (let [eid (assoc eid :source card :source-type :play)
          costs (play-instant-costs state side card (dissoc args :cached-costs))]
      ;; ensure the instant can be played
      (if (can-play-instant? state side eid card (assoc args :cached-costs costs))
