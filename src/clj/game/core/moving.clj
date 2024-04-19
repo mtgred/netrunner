@@ -182,9 +182,7 @@
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
   ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event swap]}]
-   (let [zone (if host (map to-keyword (:zone host)) zone)
-         src-zone (first zone)
-         target-zone (if (vector? to) (first to) to)]
+   (let [zone (if host (map to-keyword (:zone host)) zone)]
      (if (fake-identity? card)
        ;; Make Fake-Identity cards "disappear"
        (do (deactivate state side card false)
@@ -195,8 +193,6 @@
                       (some #(same-card? card %) (get-in @state (cons :corp (vec zone)))))
                   (or force
                       (not (zone-locked? state (to-keyword (:side card)) (first (get-zone card))))))
-         (when-not suppress-event
-           (trigger-event state side :pre-card-moved card src-zone target-zone))
          (let [dest (if (sequential? to) (vec to) [to])
                moved-card (get-moved-card state side card to)]
            (update-effects state card moved-card)
@@ -219,7 +215,8 @@
            (when-let [move-zone-fn (:move-zone (card-def moved-card))]
              (move-zone-fn state side (make-eid state) moved-card card))
            (when-not suppress-event
-             (trigger-event state side :card-moved card (assoc (get-card state moved-card) :move-to-side side)))
+             (trigger-event state side :card-moved {:card card
+                                                    :moved-card (get-card state moved-card)}))
            ;; move-zone-fn and the event can both modify the card, so re-bind here
            (let [moved-card (get-card state moved-card)]
              ; This is for removing `:location :X` events that are non-default locations,
@@ -493,7 +490,9 @@
               (register-static-abilities state side newh)
               (when (program? newh)
                 (init-mu-cost state newh)))))
-        (trigger-event state side :swap a-new b-new)))))
+        (trigger-event state side :swap {:swap-type :installed
+                                         :card1 a-new
+                                         :card2 b-new})))))
 
 (defn swap-ice
   "Swaps 2 pieces of ice."
@@ -535,7 +534,9 @@
           ;; TODO - quote exactly where
           install-event (or (and (installed? a) (not (installed? b)))
                             (and (installed? b) (not (installed? a))))]
-      (trigger-event state side :swap moved-a moved-b)
+      (trigger-event state side :swap {:swap-type :not-installed
+                                       :card1 moved-a
+                                       :card2 moved-b})
       (doseq [moved [moved-a moved-b]]
         (when (installed? moved)
           (when-let [dre (:derezzed-events (card-def moved))]
@@ -581,7 +582,8 @@
     (register-static-abilities state side new-scored)
     (when-not (card-flag? scored :has-events-when-stolen true)
       (deactivate state :corp new-stolen))
-    (trigger-event state side :swap new-stolen new-scored)
+    (trigger-event state side :swap {:swap-type :agendas
+                                     :card1 new-stolen :card2 new-scored})
     (update-all-agenda-points state side)
     (check-win-by-agenda state side)
     [(get-card state new-stolen) (get-card state new-scored)]))

@@ -686,7 +686,7 @@
 
 (defcard "Defective Brainchips"
   {:events [{:event :pre-damage
-             :req (req (= target :brain))
+             :req (req (= (:type context) :brain))
              :msg "do 1 additional core damage"
              :once :per-turn
              :effect (effect (damage-bonus :brain 1))}]})
@@ -3037,7 +3037,7 @@
                                           state side card
                                           [{:event :advance
                                             :condition :hosted
-                                            :req (req (same-card? (:host card) target))
+                                            :req (req (same-card? (:host card) (:card context)))
                                             :async true
                                             :msg "gain 1 [Credit]"
                                             :effect (effect (gain-credits eid 1))}])))))}})

@@ -141,4 +141,4 @@
       (when-let [derezzed-events (:derezzed-events cdef)]
         (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events))))
     (unregister-static-abilities state side card)
-    (trigger-event state side :derez card side)))
+    (trigger-event state side :derez {:card card :side side})))

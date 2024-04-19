@@ -997,7 +997,7 @@
    :events [{:event :advance
              :condition :faceup
              :async true
-             :req (req (same-card? card target))
+             :req (req (same-card? card (:card context)))
              :effect (req (let [n (if (>= (get-counters (get-card state card) :advancement) 6) 2 1)]
                             (continue-ability
                               state side
@@ -1353,7 +1353,7 @@
    :events [{:event :advance
              :condition :faceup
              :optional
-             {:req (req (same-card? card target))
+             {:req (req (same-card? card (:card context)))
               :prompt "Install a card from HQ in a new remote?"
               :yes-ability {:prompt "Choose a card to install"
                             :choices {:card #(and (not (operation? %))
@@ -1399,7 +1399,7 @@
   {:install-state :face-up
    :events [{:event :advance
              :condition :faceup
-             :req (req (same-card? card target))
+             :req (req (same-card? card (:card context)))
              :msg (msg "gain " (if (>= (get-counters (get-card state card) :advancement) 5) "3" "2") " [Credits]")
              :async true
              :effect (effect (gain-credits eid (if (<= 5 (get-counters (get-card state card) :advancement)) 3 2)))}]})
@@ -1747,8 +1747,9 @@
 
 (defcard "Regenesis"
   {:on-score {:req (req (and (some #(not (faceup? %)) (:discard corp))
-                             (no-event? state side :card-moved #(and (in-discard? (second %))
-                                                                     (corp? (second %))))))
+                             (no-event? state side :card-moved (fn [[context]]
+                                                                 (and (in-discard? (:moved-card context))
+                                                                      (corp? (:moved-card context)))))))
               ;; we want a prompt even if there are no valid targets,
               ;; to make sure we don't give away hidden info
               :prompt "Choose a face-down agenda in Archives"
@@ -2032,24 +2033,23 @@
                                            (rezzed? %)
                                            (not= (first (:server target)) (second (get-zone %))))
                                      (all-installed-corp state)))]
-                    (if-not (empty? rezzed-targets)
-                              (continue-ability
-                                state side
-                                {:prompt "Choose a piece of ice protecting another server to derez"
-                                 :waiting-prompt true
-                                 :choices {:req (req (some #{target} rezzed-targets))}
-                                 :once :per-turn
-                                 :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
-                                 :async true
-                                 :effect (effect (derez target)
-                                                 (gain-credits eid 1))}
-                                card nil)
-                              (effect-completed state side eid))))}
+                    (continue-ability
+                      state side
+                      (when rezzed-targets
+                        {:prompt "Choose a piece of ice protecting another server to derez"
+                         :waiting-prompt true
+                         :choices {:req (req (some #{target} rezzed-targets))}
+                         :once :per-turn
+                         :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
+                         :async true
+                         :effect (effect (derez target)
+                                         (gain-credits eid 1))})
+                      card nil)))}
             {:event :derez
              :req (req (and run
                             (first-run-event?
                               state side :derez
-                              (fn [targets] (ice? (first targets))))))
+                              (fn [[context]] (ice? (:card context))))))
              :msg "lower strength of each installed icebreaker by 2"}]
    :leave-play (effect (update-all-icebreakers))
    :static-abilities [{:type :breaker-strength
@@ -2058,8 +2058,7 @@
                                       (has-subtype? target "Icebreaker")
                                       (<= 1 (run-event-count
                                               state side :derez
-                                              (fn [targets]
-                                                (ice? (first targets)))))))}]})
+                                              (fn [[context]] (ice? (:card context)))))))}]})
 
 (defcard "Sting!"
   (letfn [(count-opp-stings [state side]
@@ -2140,8 +2139,8 @@
 
 (defcard "The Cleaners"
   {:events [{:event :pre-damage
-             :req (req (and (= target :meat)
-                            (= side :corp)))
+             :req (req (and (= :meat (:type context))
+                            (= :corp side)))
              :msg "do 1 additional meat damage"
              :effect (effect (damage-bonus :meat 1))}]})
 
@@ -2224,7 +2223,7 @@
      :events [{:event :advance
                :condition :faceup
                :async true
-               :req (req (same-card? card target))
+               :req (req (same-card? card (:card context)))
                :msg (msg (if (pos? (count (:deck runner)))
                            (str "trash "
                                 (enumerate-str (map :title (take (adv4? state card) (:deck runner))))

@@ -374,7 +374,9 @@
         changed? (not= old-strength new-strength)]
     (when (active-ice? state ice)
       (update! state side (assoc ice :current-strength new-strength))
-      (trigger-event state side :ice-strength-changed (get-card state ice) old-strength)
+      (trigger-event state side :ice-strength-changed {:card (get-card state ice)
+                                                       :strength new-strength
+                                                       :old-strength old-strength})
       changed?)))
 
 (defn update-ice-in-server
@@ -444,7 +446,9 @@
         new-strength (breaker-strength state side breaker)
         changed? (not= old-strength new-strength)]
     (update! state side (assoc (get-card state breaker) :current-strength new-strength))
-    (trigger-event state side :breaker-strength-changed (get-card state breaker) old-strength)
+    (trigger-event state side :breaker-strength-changed {:card (get-card state breaker)
+                                                         :old-strength old-strength
+                                                         :strength new-strength})
     changed?))
 
 (defn update-all-icebreakers
@@ -467,7 +471,8 @@
                             :req (req (same-card? card target))
                             :value n})]
      (update-breaker-strength state side (get-card state card))
-     (trigger-event state side :pump-breaker (get-card state card) floating-effect))))
+     (trigger-event state side :pump-breaker {:card (get-card state card)
+                                              :effect floating-effect}))))
 
 (defn pump-all-icebreakers
   ([state side n] (pump-all-icebreakers state side n :end-of-encounter))

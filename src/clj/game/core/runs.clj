@@ -495,19 +495,20 @@
   ([state side server phase]
    (when (and (:run @state)
               (not= :success (:phase (:run @state))))
-     (let [dest (server->zone state server)
-           num-ice (count (get-in (:corp @state) (conj dest :ices)))
+     (let [[_ dest] (server->zone state server)
+           num-ice (count (get-in (:corp @state) [:servers dest :ices]))
            phase (if (= phase :approach-ice)
                    (if (pos? num-ice)
                      :approach-ice
                      :movement)
                    phase)]
-       (do (trigger-event state side :pre-redirect-server (:server (:run @state)) dest)
-           (swap! state update :run
-                  assoc
-                  :position num-ice
-                  :server [(second dest)])
-           (trigger-event state side :redirect-server dest))
+       (trigger-event state side :pre-redirect-server
+                      {:server (first (:server (:run @state)))
+                       :new-server dest})
+       (swap! state update :run
+              assoc
+              :position num-ice
+              :server [dest])
        (when phase
          (set-next-phase state phase)))
      (set-current-ice state))))

@@ -30,13 +30,16 @@
          changed? (not= old-tags new-tags)]
      (when changed?
        (swap! state update-in [:runner :tag] merge new-tags)
-       (trigger-event state :runner :tags-changed new-total old-total is-tagged?))
+       (trigger-event state :runner :tags-changed {:new-total new-total
+                                                   :old-total old-total
+                                                   :is-tagged is-tagged?}))
      changed?)))
 
 (defn tag-prevent
   [state side eid n]
   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n)))
+  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type :tag
+                                                                                        :amount n}))
 
 (defn- number-of-tags-to-gain
   "Calculates the number of tags to give, taking into account prevention and boosting effects."
@@ -53,7 +56,7 @@
     (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
         (update-tag-status state)
-        (trigger-event-simult state side eid :runner-gain-tag nil nil n))
+        (trigger-event-simult state side eid :runner-gain-tag nil {:amount n}))
     (effect-completed state side eid)))
 
 (defn gain-tags
@@ -93,4 +96,5 @@
     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
         (deduct state :runner [:tag {:base n}])
         (update-tag-status state)
-        (trigger-event-sync state side eid :runner-lose-tag n side))))
+        (trigger-event-sync state side eid :runner-lose-tag {:amount n
+                                                             :side side}))))
