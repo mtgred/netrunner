@@ -255,6 +255,24 @@
       (is (nil? (refresh ws)) "Whitespace should be trashed")
       (is (nil? (refresh ac)) "Arruaceiras Crew should be trashed"))))
 
+(deftest artist-colony
+  ;; Artist Colony
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Vanity Project"]}
+               :runner {:deck ["Monolith" "Chatterjee University"]
+                        :hand ["Artist Colony"]}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (play-from-hand state :runner "Artist Colony")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Chatterjee University")
+    (click-card state :runner "Vanity Project")
+    (is (last-n-log-contains? state 1 "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
+    (is (= "Chatterjee University" (:title (get-resource state 1))))
+    (is (empty? (:scored (get-runner))))))
+
 (deftest asmund-pudlat
   ;; Asmund Pudlat
   (do-game
@@ -3580,6 +3598,40 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (get-counters (refresh kati) :credit)) "No counters left on Kati"))))
 
+(deftest keros-mcintyre
+  ;; Keros Mcintyre
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma" "Chimera"]
+                      :credits 100}
+               :runner {:hand ["Keros Mcintyre" (qty "Emergency Shutdown" 2)]
+                        :credits 100}})
+    (play-from-hand state :corp "Enigma" "New remote")
+    (play-from-hand state :corp "Chimera" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Keros Mcintyre")
+    (take-credits state :runner)
+    (let [enigma (get-ice state :remote1 0)
+          chimera (get-ice state :remote2 0)]
+      (rez state :corp chimera)
+      (click-prompt state :corp "Code Gate")
+      (is (changed? [(:credit (get-runner)) 0]
+            (take-credits state :corp))
+          "No credit gain from corp derezzing a card")
+      (rez state :corp chimera)
+      (click-prompt state :corp "Code Gate")
+      (rez state :corp enigma)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (is (changed? [(:credit (get-runner)) 2]
+            (play-from-hand state :runner "Emergency Shutdown")
+            (click-card state :runner "Enigma"))
+          "Credit gain from runner derezzing a card")
+      (is (changed? [(:credit (get-runner)) 0]
+            (play-from-hand state :runner "Emergency Shutdown")
+            (click-card state :runner "Chimera"))
+          "No credit gain a second time"))))
+
 (deftest kongamato
   ;; Kongamato
   (do-game
@@ -3816,7 +3868,6 @@
    (play-from-hand state :corp "NGO Front" "New remote")
    (play-from-hand state :corp "Sand Storm" "Server 1")
    (play-from-hand state :corp "Hokusai Grid" "New remote")
-   ;(let [ht (get-content state :remote2 0)]
    (click-advance state :corp (refresh (get-content state :remote1 0)))
    (take-credits state :corp)
    (play-from-hand state :runner "Light the Fire!")
@@ -6134,7 +6185,7 @@
         (card-ability state :runner (refresh the-back) 1)
         (is (no-prompt? state :runner) "The Back prompt did not come up"))))
 
-(deftest ^:kaocha/pending the-back-automated
+#_(deftest ^:kaocha/pending the-back-automated
   ;; TODO: Enable this once card is fully implemented
   (testing "Basic test"
     (do-game

@@ -852,11 +852,13 @@
                    (map->Card {:title "/trace command" :side :corp})
                    {:base base}))
 
-(defn print-log [state]
+(defn log-str [state]
   (->> (:log @state)
        (map :text)
-       (str/join " ")
-       (prn)))
+       (str/join " ")))
+
+(defn print-log [state]
+  (prn (log-str state)))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s

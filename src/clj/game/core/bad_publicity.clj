@@ -12,14 +12,15 @@
 (defn bad-publicity-prevent
   [state side n]
   (swap! state update-in [:bad-publicity :bad-publicity-prevent] (fnil #(+ % n) 0))
-  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:bad-publicity ~n)))
+  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) {:type :bad-publicity
+                                                                               :amount n}))
 
 (defn- resolve-bad-publicity
   [state side eid n]
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
         (toast state :corp (str "Took " n " bad publicity!") "info")
-        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity n))
+        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity {:amount n}))
     (effect-completed state side eid)))
 
 (defn- bad-publicity-count
@@ -66,4 +67,5 @@
    (if (= n :all)
      (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity :base]))
      (do (lose state :corp :bad-publicity n)
-         (trigger-event-sync state side eid :corp-lose-bad-publicity n side)))))
+         (trigger-event-sync state side eid :corp-lose-bad-publicity {:amount n
+                                                                      :side side})))))

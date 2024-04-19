@@ -38,7 +38,9 @@
     (deduct state side [:click (value cost)])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
-                                  a (value cost) (:ability-idx (:source-info eid)))
+                                  {:action a
+                                   :value (value cost)
+                                   :ability-idx (:ability-idx (:source-info eid))})
               ;; sending the idx is mandatory to make wage workers functional
               ;; and so we can look through the events and figure out WHICH abilities were used
               ;; I don't think it will break anything
@@ -60,12 +62,12 @@
   [cost state side _ _]
   (<= 0 (- (get-in @state [side :click]) (value cost))))
 (defmethod handler :lose-click
-  [cost state side eid card]
+  [cost state side eid _card]
   (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
   (deduct state side [:click (value cost)])
   (wait-for (trigger-event-sync state side (make-eid state eid)
                                 (if (= side :corp) :corp-spent-click :runner-spent-click)
-                                nil (value cost))
+                                {:value (value cost)})
             (swap! state assoc-in [side :register :spent-click] true)
             (complete-with-result state side eid {:paid/msg (str "loses " (lose-click-label cost))
                                                   :paid/type :lose-click

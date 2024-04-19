@@ -2380,7 +2380,6 @@
       (is (= 6 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 1")
       (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter"))))
 
-
 (deftest issuaq-adaptics-multiple-score
   ;; Issuaq Adaptics - Adjusts point requirement after multiple agendas are scored
   (do-game

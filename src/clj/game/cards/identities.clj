@@ -979,7 +979,7 @@
                                  empty?)
                             (->> (turn-events state side :advance)
                                  (map #(first %))
-                                 (filter #(same-card? (:card context) %))
+                                 (filter #(same-card? (:card context) (:card %)))
                                  empty?)))
              :msg "put 1 charge counter on itself"
              :effect (req (add-counter state side card :power 1)
@@ -1113,7 +1113,7 @@
                                         (:deck runner))))
                 :msg (msg "install " (:title target) " from the stack, lowering the cost by 1 [Credit]")
                 :async true
-                :effect (effect (trigger-event :searched-stack nil)
+                :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (register-events
                                   card
@@ -1301,14 +1301,15 @@
      :abilities [mm-ability mm-clear]
      :events [{:event :corp-spent-click
                :async true
-               :effect (req (let [[cid _value ability-idx] targets
+               :effect (req (let [{:keys [action ability-idx]} context
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? cid)
-                                          (case cid
+                                  cause (if (keyword? action)
+                                          (case action
                                             :play-instant [bac-cid 3]
                                             :corp-click-install [bac-cid 2]
-                                            [cid ability-idx])
-                                          [cid ability-idx])
+                                            ; else
+                                            [action ability-idx])
+                                          [action ability-idx])
                                   prev-actions (get-in card [:special :mm-actions] [])
                                   actions (conj prev-actions cause)]
                               (update! state side (assoc-in card [:special :mm-actions] actions))
@@ -1738,8 +1739,7 @@
              :choices ["HQ" "R&D"]
              :msg (msg "change the attacked server to " target)
              :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
-                            (swap! state assoc-in [:run :server] [target-server])
-                            (trigger-event state :corp :no-action)))}
+                            (swap! state assoc-in [:run :server] [target-server])))}
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
 
@@ -1857,7 +1857,7 @@
    :events [{:event :runner-gain-tag
              :async true
              :req (req (and (not (install-locked? state side))
-                            (= (second targets) (count-tags state)))) ;; every tag is one that was just gained
+                            (= (:amount context) (count-tags state)))) ;; every tag is one that was just gained
              :prompt "Choose a connection to install, paying 2 [Credits] less"
              :player :runner
              :choices
@@ -2239,7 +2239,7 @@
   {:events [{:event :advance
              :async true
              :req (req ((complement pos?)
-                        (- (get-counters target :advancement) (:amount (second targets) 0))))
+                        (- (get-counters (:card context) :advancement) (:amount context 0))))
              :msg "gain 2 [Credits]"
              :effect (req (gain-credits state :corp eid 2))}]})
 
@@ -2261,7 +2261,7 @@
              :msg (msg "shuffle " (:title (last (:discard runner))) " into the stack")
              :effect (effect (move :runner (last (:discard runner)) :deck)
                              (shuffle! :runner :deck)
-                             (trigger-event :searched-stack nil))}]})
+                             (trigger-event :searched-stack))}]})
 
 (defcard "Zahya Sadeghi: Versatile Smuggler"
   {:events [{:event :run-ends

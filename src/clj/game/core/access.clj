@@ -37,15 +37,14 @@
   ([state side eid c {:keys [trashed stolen]}]
    ;; Do not trigger :no-trash if card has already been trashed
    (wait-for (trigger-event-sync state side (when-not trashed :no-trash) c)
-             (wait-for (trigger-event-sync state side (when-not stolen :no-steal) c)
-                       (when (and (not trashed)
-                                  (not stolen)
-                                  ;; Don't increment :no-trash-or-steal if accessing a card in Archives
-                                  (not (in-discard? c)))
-                         (no-trash-or-steal state))
-                       (let [accessed-card (:access @state)]
-                         (swap! state dissoc :access)
-                         (trigger-event-sync state side eid :post-access-card c accessed-card))))))
+             (when (and (not trashed)
+                        (not stolen)
+                        ;; Don't increment :no-trash-or-steal if accessing a card in Archives
+                        (not (in-discard? c)))
+               (no-trash-or-steal state))
+             (let [accessed-card (:access @state)]
+               (swap! state dissoc :access)
+               (trigger-event-sync state side eid :post-access-card c accessed-card)))))
 
 ;;; Accessing rules
 (defn interactions
@@ -284,7 +283,6 @@
                           (swap! state assoc-in [:run :did-trash] true))
                         (wait-for (resolve-ability state side (make-eid state ability-eid) ability ability-card [card])
                                   (let [card (first async-result)]
-                                    (trigger-event state side :no-steal card)
                                     (access-end state side eid card {:stolen (in-scored? card)}))))))}
       card nil)))
 
@@ -323,7 +321,7 @@
                          "accesses ")
                        title
                        (when card
-                         (str " from " (name-zone side zone)))))))
+                         (str " from " (name-zone :corp zone)))))))
   (if (reveal-access? state side card)
     (do (system-msg state side (str "must reveal they accessed " (:title card)))
         (reveal state :runner eid card))

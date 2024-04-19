@@ -47,7 +47,7 @@
   (set-prop state side target :advance-counter value)
   (system-msg state side (str "sets advancement counters to " value " on "
                               (card-str state target)))
-  (trigger-event state side :advancement-placed target))
+  (trigger-event state side :advancement-placed {:card target}))
 
 (defn command-adv-counter [state side value]
   (let [value (constrain-value value 0 1000)]
