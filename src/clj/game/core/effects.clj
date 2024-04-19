@@ -8,7 +8,7 @@
 
 (defn is-disabled-reg?
   [state card]
-  (some #(same-card? % card) (:disabled-card-reg @state)))
+  (get (:disabled-card-reg @state) (:cid card)))
 
 (defn register-static-abilities
   [state _ card]
@@ -144,8 +144,7 @@
   [state]
   (let [all-cards (get-all-cards state)
         disabled-cards (filter #(is-disabled? state nil %) all-cards)]
-    (into [] disabled-cards)))
-
+    (into {} (map (juxt :cid identity)) disabled-cards)))
 (defn update-disabled-cards [state]
   (swap! state assoc-in [:disabled-card-reg] (all-disabled-cards state))
   (get-in @state [:disabled-card-reg]))
