@@ -1593,16 +1593,25 @@
              :effect (req (gain-tags state :runner eid 1))}]})
 
 (defcard "Malia Z0L0K4"
-  {:on-rez {:msg (msg "blank the text box of " (card-str state target))
-            :choices {:card #(and (runner? %)
-                                  (installed? %)
-                                  (resource? %)
-                                  (not (has-subtype? % "Virtual")))}
-            :effect (effect (add-icon card target "MZ" (faction-label card))
-                            (update! (assoc (get-card state card) :malia-target target)))}
-   :static-abilities [{:type :disable-card
-                       :req (req (same-card? target (get-in card [:malia-target])))
-                       :value true}]})
+  (let [unmark
+        (req (when-let [malia-target (:malia-target card)]
+               (remove-icon state :runner card (get-card state malia-target)))
+             ;; I'm not sure why the side is nil here
+             ;; but the old impl had it, so 🤷
+             ;; --nbk, Apr '24
+             (effect-completed state nil eid))]
+    {:on-rez {:msg (msg "blank the text box of " (card-str state target))
+              :choices {:card #(and (runner? %)
+                                    (installed? %)
+                                    (resource? %)
+                                    (not (has-subtype? % "Virtual")))}
+              :effect (effect (add-icon card target "MZ" (faction-label card))
+                              (update! (assoc (get-card state card) :malia-target target)))}
+     :leave-play unmark
+     :move-zone unmark
+     :static-abilities [{:type :disable-card
+                         :req (req (same-card? target (get-in card [:malia-target])))
+                         :value true}]}))
 
 
 (defcard "Marilyn Campaign"
