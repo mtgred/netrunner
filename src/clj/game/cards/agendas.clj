@@ -1944,9 +1944,9 @@
                               (first-event? state side :pass-ice
                                             #(rezzed-gate-or-sentry (first %)))))
                :prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
-               :choices (req [(when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil (->c :credit 1))
+               :choices (req [(when (can-pay? state :corp eid card nil (->c :credit 1))
                                 "Pay 1 [Credit]")
-                              (when (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil (->c :trash-from-hand 1))
+                              (when (can-pay? state :corp eid card nil (->c :trash-from-hand 1))
                                 "Trash 1 card from HQ")
                               "Done"])
                :async true

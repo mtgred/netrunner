@@ -59,21 +59,21 @@
                                      (upgrade? target-card))
                                  (if server
                                    (corp-can-pay-and-install?
-                                     state side (assoc eid :source-type :corp-install)
+                                     state side eid
                                      target-card server {:base-cost [(->c :click 1)]
                                                     :action :corp-click-install
                                                     :no-toast true})
                                    (some
                                      (fn [server]
                                        (corp-can-pay-and-install?
-                                         state side (assoc eid :source-type :corp-install)
+                                         state side eid
                                          target-card server {:base-cost [(->c :click 1)]
                                                         :action :corp-click-install
                                                         :no-toast true}))
                                      (installable-servers state target-card))))))
                 :effect (req (let [{target-card :card server :server} context]
                                (corp-install
-                                 state side (assoc eid :source-type :corp-install)
+                                 state side eid
                                  target-card server {:base-cost [(->c :click 1)]
                                                      :action :corp-click-install})))}
                {:action true
@@ -83,9 +83,9 @@
                             (and (not-empty (:hand corp))
                                  (in-hand? target-card)
                                  (operation? target-card)
-                                 (can-play-instant? state :corp (assoc eid :source-type :play)
+                                 (can-play-instant? state :corp eid
                                                     target-card {:base-cost [(->c :click 1)]}))))
-                :effect (req (play-instant state :corp (assoc eid :source-type :play)
+                :effect (req (play-instant state :corp eid
                                            (:card context) {:base-cost [(->c :click 1)]}))}
                {:action true
                 :label "Advance 1 installed card"

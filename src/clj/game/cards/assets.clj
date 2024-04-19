@@ -615,7 +615,10 @@
      :abilities [ability]}))
 
 (defcard "Cohort Guidance Program"
-  (let [abi {:prompt "Choose one"
+  {:flags {:corp-phase-12 (req true)}
+   :derezzed-events [corp-rez-toast]
+   :events [{:event :corp-turn-begins
+             :prompt "Choose one"
              :interactive (req true)
              :choices (req [(when (seq (:hand corp)) "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
                             (when (some #(not (:seen %)) (:discard corp))
@@ -656,10 +659,7 @@
                                                                      :advance-counter 1
                                                                      {:placed true}))}
                                                 card nil))})
-                              card nil)))}]
-    {:flags {:corp-phase-12 (req true)}
-     :derezzed-events [corp-rez-toast]
-     :events [(assoc abi :event :corp-turn-begins)]}))
+                              card nil)))}]})
 
 (defcard "Commercial Bankers Group"
   (let [ability {:req (req unprotected)

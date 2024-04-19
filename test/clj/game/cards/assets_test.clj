@@ -1032,33 +1032,33 @@
         (is (no-prompt? state :corp)))))
 
 (deftest cohort-guidance-program
-    (do-game
-      (new-game {:corp {:hand ["Cohort Guidance Program" "NGO Front" "PAD Campaign"]
-                        :deck [(qty "Hedge Fund" 5)]}})
-      (play-from-hand state :corp "Cohort Guidance Program" "New remote")
-      (play-from-hand state :corp "NGO Front" "New remote")
-      (let [cgp (get-content state :remote1 0)
-            ngo (get-content state :remote2 0)]
-        (rez state :corp cgp)
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (:corp-phase-12 @state) "Corp has opportunity to use Cohort Guidance Program")
-        (end-phase-12 state :corp)
-        (is (changed? [(:credit (get-corp)) 2
-                       (count (:discard (get-corp))) 1
-                       (count (:hand (get-corp))) 1]
-                      (click-prompt state :corp "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
-                      (click-card state :corp "PAD Campaign"))
-            "Corp discarded 1 card, gained 2 credits, and drew 1 card")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (end-phase-12 state :corp)
-        (is (changed? [(get-counters (refresh ngo) :advancement) 1]
-                      (click-prompt state :corp "Turn 1 facedown card in Archives faceup to place 1 advancement counter on an installed card")
-                      (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
-                      (click-card state :corp ngo))
-            "Corp turned 1 facedown card in Archived to advance 1 card")
-        (is (empty? (remove #(:seen %) (:discard (get-corp)))) "PAD Campaign was turned faceup"))))
+  (do-game
+    (new-game {:corp {:hand ["Cohort Guidance Program" "NGO Front" "PAD Campaign"]
+                      :deck [(qty "Hedge Fund" 5)]}})
+    (play-from-hand state :corp "Cohort Guidance Program" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [cgp (get-content state :remote1 0)
+          ngo (get-content state :remote2 0)]
+      (rez state :corp cgp)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp has opportunity to use Cohort Guidance Program")
+      (end-phase-12 state :corp)
+      (is (changed? [(:credit (get-corp)) 2
+                     (count (:discard (get-corp))) 1
+                     (count (:hand (get-corp))) 1]
+            (click-prompt state :corp "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
+            (click-card state :corp "PAD Campaign"))
+          "Corp discarded 1 card, gained 2 credits, and drew 1 card")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (end-phase-12 state :corp)
+      (is (changed? [(get-counters (refresh ngo) :advancement) 1]
+            (click-prompt state :corp "Turn 1 facedown card in Archives faceup to place 1 advancement counter on an installed card")
+            (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
+            (click-card state :corp ngo))
+          "Corp turned 1 facedown card in Archived to advance 1 card")
+      (is (empty? (remove #(:seen %) (:discard (get-corp)))) "PAD Campaign was turned faceup"))))
 
 (deftest commercial-bankers-group
   ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice

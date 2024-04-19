@@ -252,8 +252,8 @@
 
 (defn is-ability?
   "Checks to see if a given map represents a card ability."
-  [{:keys [effect msg]}]
-  (or effect msg (seq (keys @ability-types))))
+  [{:keys [effect msg] :as ability}]
+  (or effect msg (seq (select-keys ability (keys @ability-types)))))
 
 (defn resolve-ability
   ([state side {:keys [eid] :as ability} card targets]

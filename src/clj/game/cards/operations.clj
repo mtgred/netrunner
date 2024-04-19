@@ -1019,18 +1019,17 @@
                           :prompt "How many credits do you want to pay?"
                           :choices {:number (req numtargets)}
                           :effect (req (let [c target]
-                                         (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) (->c :credit c))
-                                           (let [new-eid (make-eid state {:source card :source-type :ability})]
-                                             (wait-for (pay state :corp new-eid card (->c :credit c))
-                                                       (when-let [payment-str (:msg async-result)]
-                                                         (system-msg state :corp payment-str))
-                                                       (continue-ability
-                                                         state :corp
-                                                         {:msg (msg "place " (quantify c " advancement token") " on "
-                                                                    (card-str state target))
-                                                          :choices {:card installed?}
-                                                          :effect (effect (add-prop target :advance-counter c {:placed true}))}
-                                                         card nil)))
+                                         (if (can-pay? state side eid card (:title card) (->c :credit c))
+                                           (wait-for (pay state :corp card (->c :credit c))
+                                                     (when-let [payment-str (:msg async-result)]
+                                                       (system-msg state :corp payment-str))
+                                                     (continue-ability
+                                                       state :corp
+                                                       {:msg (msg "place " (quantify c " advancement token") " on "
+                                                                  (card-str state target))
+                                                        :choices {:card installed?}
+                                                        :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                                       card nil))
                                            (effect-completed state side eid))))})
                        card nil))))}})
 
@@ -2785,7 +2784,7 @@
                                       (let [is-first-mandate? (first-event? state side :play-operation #(has-subtype? (:card (first %)) "Mandate"))]
                                         (if (= target "Done")
                                           (continue-ability state side (when is-first-mandate? play-instant-second) card nil)
-                                          (wait-for (play-instant state side (assoc (make-eid state eid) :source target :source-type :play) target nil)
+                                          (wait-for (play-instant state side (make-eid state eid) target nil)
                                                     (continue-ability state side (when is-first-mandate? play-instant-second) card nil)))))}]
     {:on-play {:msg "draw 2 cards"
                :async true
