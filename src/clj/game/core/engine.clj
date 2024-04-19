@@ -859,7 +859,7 @@
                  (let [card (card-for-ability state handler)
                        ability (:ability handler)]
                    (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card context))
-                        card
+                        (or card (:while-disabled ability))
                         (can-trigger? state (to-keyword (:side card)) eid ability card context)))))
        (sort-by (complement #(is-active-player state (:handler %))))
        (seq)))
@@ -1063,7 +1063,7 @@
   [state _ eid]
   (let [trash-when-tagged (when (jinteki.utils/is-tagged? state)
                             (filter :trash-when-tagged (all-installed-runner state)))
-        trash-when-tagged (filter #(not (is-disabled? state %)) trash-when-tagged)]
+        trash-when-tagged (filter #(not (is-disabled? state nil %)) trash-when-tagged)]
     (if (seq trash-when-tagged)
       (wait-for (move* state nil (make-eid state eid)
                        :trash-cards trash-when-tagged

@@ -2948,13 +2948,14 @@
   {:hosting {:card #(and (ice? %)
                          (can-host? %))}
    :events [{:event :rez
-             :req (req (and (same-card? (:card context) (:host card))
-                            (not= (:title (:card context)) "Magnet")))
+             :req (req (same-card? (:card context) (:host card)))
+             ;;(not= (:title (:card context)) "Magnet")))
              :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
              :req (req (same-card? (:card context) (:host card)))
+             :while-disabled true
              :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 3))}]})

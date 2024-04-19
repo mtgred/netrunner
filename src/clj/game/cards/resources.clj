@@ -15,6 +15,7 @@
                            installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.cost-fns :refer [has-trash-ability? install-cost rez-cost
                                trash-cost]]
    [game.core.costs :refer [total-available-credits]]
@@ -1171,13 +1172,15 @@
                            [{:event :post-runner-turn-ends
                              :unregister-once-resolved true
                              :effect (req (let [disabled-card (get-card state c)]
-                                            (remove-icon state side card (get-card state disabled-card))))}])
+                                            (remove-icon state side card (get-card state disabled-card))
+                                            (fake-checkpoint state)))}])
                          (register-lingering-effect
                            state side card
                            {:type :disable-card
                             :duration :runner-turn-ends
                             :req (req (same-card? c target))
-                            :value (req true)})))}]})
+                            :value (req true)})
+                         (fake-checkpoint state)))}]})
 
                             ;;
                             ;; (disable-card state side (get-card state target))

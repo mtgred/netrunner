@@ -17,6 +17,7 @@
                            identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
                                   reorder-choice trash-on-empty get-x-fn]]
@@ -1594,8 +1595,8 @@
 
 (defcard "Malia Z0L0K4"
   (let [unmark
-        (req (when-let [malia-target (:malia-target card)]
-               (update! state side (assoc (get-card state card) :malia-target nil))
+        (req (when-let [malia-target (get-in card [:special :malia-target])]
+               (update! state side (assoc-in (get-card state card) [:special :malia-target] nil))
                (remove-icon state :runner card (get-card state malia-target)))
              ;; I'm not sure why the side is nil here
              ;; but the old impl had it, so 🤷
@@ -1606,15 +1607,18 @@
                                     (installed? %)
                                     (resource? %)
                                     (not (has-subtype? % "Virtual")))}
-              :effect (effect (add-icon card target "MZ" (faction-label card))
-                              (update! (assoc (get-card state card) :malia-target target)))}
+              :effect (req (add-icon state side card target "MZ" (faction-label card))
+                           (update! state side (assoc-in (get-card state card) [:special :malia-target] target))
+                           (fake-checkpoint state))}
      :leave-play unmark
      :move-zone unmark
      :static-abilities [{:type :disable-card
-                         :req (req (and
-                                     (get-card state card)
-                                     (rezzed? (get-card state card))
-                                     (same-card? target (get-in card [:malia-target]))))
+                         :req (req
+                                (let [malia-target (get-in (get-card state card) [:special :malia-target])]
+                                  (or (same-card? target malia-target)
+                                      (and (same-card? (:host target) malia-target)
+                                           (= (:title malia-target) "DJ Fenris")
+                                           (= (:type target) "Fake-Identity")))))
                          :value true}]}))
 
 
