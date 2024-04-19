@@ -6,7 +6,7 @@
     [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled?]]
+    [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled? is-disabled-reg? update-disabled-cards]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
@@ -596,6 +596,7 @@
           :test-condition true)
     (and
       (not (is-disabled? state nil card))
+      (not (is-disabled-reg? state card))
       card)))
 
 (defn- card-for-ability
@@ -855,6 +856,7 @@
                  (let [card (card-for-ability state handler)
                        ability (:ability handler)]
                    (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card context))
+                        card
                         (can-trigger? state (to-keyword (:side card)) eid ability card context)))))
        (sort-by (complement #(is-active-player state (:handler %))))
        (seq)))
@@ -1083,10 +1085,12 @@
   ([state _ eid] (checkpoint state nil eid nil))
   ([state _ eid {:keys [duration durations] :as args}]
    ;; a: Any ability that has met its condition creates the appropriate instances of itself and marks them as pending
-   (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid args)]
+   (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid nil)]
      ;; b: Any ability with a duration that has passed is removed from the game state
      (wait-for
        (unregister-expired-durations state nil (make-eid state eid) (conj durations duration) context-maps)
+       ;; update the disabled-card registry here
+        (update-disabled-cards state)
        ;; c: Check winning or tying by agenda points
        (check-win-by-agenda state)
        ;; d: uniqueness/console check

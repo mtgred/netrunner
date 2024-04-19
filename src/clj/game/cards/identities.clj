@@ -17,7 +17,7 @@
                              enable-corp-damage-choice]]
    [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed is-basic-advance-action? make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
    [game.core.events :refer [event-count first-event?
@@ -455,6 +455,7 @@
 
 (defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))
+                                    (not (is-disabled? state side card))
                                     (some rezzed? (all-installed state :corp))))}
    :abilities [{:choices {:card rezzed?}
                 :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
@@ -676,6 +677,7 @@
      :once :per-turn
      :label "Trash card"
      :req (req (and (not (:disabled card))
+                    (not (is-disabled? state side card))
                     (not (agenda? target))
                     (not (in-discard? target))
                     (<= (play-cost state side target)
@@ -707,6 +709,7 @@
             {:event :runner-turn-begins
              :player :corp
              :req (req (and (not (:disabled card))
+                            (not (is-disabled? state side card))
                             (has-most-faction? state :corp "Weyland Consortium")
                             (some ice? (all-installed state side))))
              :prompt "Choose a piece of ice to place 1 advancement token on"
@@ -959,6 +962,7 @@
 
 (defcard "Information Dynamics: All You Need To Know"
   {:events (let [inf {:req (req (and (not (:disabled card))
+                                     (not (is-disabled? state side card))
                                      (has-most-faction? state :corp "NBN")))
                       :msg "give the Runner 1 tag"
                       :async true
@@ -1081,9 +1085,9 @@
 (defcard "Jinteki: Potential Unleashed"
   {:events [{:async true
              :event :pre-resolve-damage
-             :req (req (and (-> @state :corp :disable-id not)
-                            (= target :net)
-                            (pos? (last targets))))
+             :req (req (and ;;(-> @state :corp :disable-id not)
+                         (= target :net)
+                         (pos? (last targets))))
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses " (:title card) " to trash " (:title c)
                                                          " from the top of the stack"))
@@ -1254,6 +1258,7 @@
                                         (draw state :runner eid 1)))}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (and (not (:disabled card))
+                                        (not (is-disabled? state side card))
                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
@@ -1406,6 +1411,7 @@
                                 (effect-completed state side eid)))}]
     {:flags {:drip-economy true
              :runner-phase-12 (req (and (not (:disabled card))
+                                        (not (is-disabled? state side card))
                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
      :abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)]}))
@@ -2005,6 +2011,7 @@
              :effect draft-points-target}
             {:event :runner-turn-ends
              :req (req (and (not (:disabled card))
+                            (not (is-disabled? state side card))
                             (has-most-faction? state :corp "Haas-Bioroid")
                             (pos? (count (:discard corp)))))
              :prompt "Choose a card in Archives to shuffle into R&D"
@@ -2043,6 +2050,7 @@
   {:events [{:event :pre-start-game
              :effect draft-points-target}]
    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
+                                    (not (is-disabled? state side card))
                                     (has-most-faction? state :corp "Jinteki")
                                     (<= 2 (count (filter ice? (all-installed state :corp))))))}
    :abilities [{:prompt "Choose 2 installed pieces of ice to swap"
@@ -2078,6 +2086,7 @@
 
 (defcard "Tennin Institute: The Secrets Within"
   {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
+                                    (not (is-disabled? state side card))
                                     (not-last-turn? state :runner :successful-run)))}
    :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
                 :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"

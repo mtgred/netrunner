@@ -39,6 +39,7 @@
   (let [ability (assoc
                   (select-keys ability [:type :duration :req :value])
                   :card card
+                  :lingering true
                   :uuid (uuid/v1))]
     (swap! state update :effects conj ability)
     ability))

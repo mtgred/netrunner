@@ -12,6 +12,7 @@
                            get-nested-host get-title get-zone hardware? has-subtype? ice? in-discard? in-hand?
                            installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [can-charge charge-ability charge-card]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
@@ -1110,18 +1111,23 @@
 
 (defcard "Direct Access"
   {:makes-run true
-   ;;this :effect is used in card-init as a temporary solution for blanking IDs like Azmari or Ken Tenma before they can trigger
-   :effect (req (register-lingering-effect
-                  state side card
-                  {:type :disable-card
-                   :duration :end-of-run
-                   :req (req (or (same-card? target (:identity corp))
-                                 (same-card? target (:identity runner))))
-                   :value (req true)}))
+   :static-abilities [{:type :disable-card
+                       :req (req (or (same-card? target (:identity corp))
+                                     (same-card? target (:identity runner))))
+
+                       :value true}]
+   :disable-id true
    :on-play {:async true
-             :prompt "Choose a server"
-             :choices (req runnable-servers)
-             :effect (effect (make-run eid target card))}
+             :effect (req
+                       ;; note - this fake checkpoint forces abilities like RP to be blank
+                       (fake-checkpoint state)
+                       (continue-ability
+                         state side
+                         {:async true
+                          :prompt "Choose a server"
+                          :choices (req runnable-servers)
+                          :effect (effect (make-run eid target card))}
+                         card nil))}
    :events [{:event :run-ends
              :unregister-once-resolved true
              :async true
@@ -1282,10 +1288,11 @@
                                (continue-ability state side (ec trash-cost to-trash) card nil))))}}))
 
 (defcard "Employee Strike"
-  {:on-play {:msg "disable the Corp's identity"
-             :effect (effect (disable-identity :corp))}
-   :disable-id true
-   :leave-play (effect (enable-identity :corp))})
+  {:on-play {:msg "disable the Corp's identity"}
+   :static-abilities [{:type :disable-card
+                       :req (req (same-card? target (:identity corp)))
+                       :value true}]
+   :disable-id true})
 
 (defcard "En Passant"
   {:on-play
