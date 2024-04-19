@@ -3,7 +3,8 @@
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
     [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
+    [game.core.board :refer [clear-empty-remotes all-installed-runner
+                             all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled? is-disabled-reg? update-disabled-cards]]
@@ -1043,6 +1044,7 @@
                       (filter console?))
         consoles (when (< 1 (count consoles))
                    (butlast consoles))
+
         cards-to-trash (-> (concat corp-uniques runner-uniques consoles)
                            distinct
                            seq)]
@@ -1054,6 +1056,21 @@
                 (doseq [card cards-to-trash]
                   (system-say state (to-keyword (:side card))
                               (str (card-str state card) " is trashed.")))
+                (effect-completed state nil eid))
+      (effect-completed state nil eid))))
+
+(defn trash-on-tag
+  [state _ eid]
+  (let [trash-when-tagged (when (jinteki.utils/is-tagged? state)
+                            (filter :trash-when-tagged (all-installed-runner state)))
+        trash-when-tagged (filter #(not (is-disabled? state %)) trash-when-tagged)]
+    (if (seq trash-when-tagged)
+      (wait-for (move* state nil (make-eid state eid)
+                       :trash-cards trash-when-tagged
+                       {:unpreventable true})
+                (doseq [card trash-when-tagged]
+                  (system-say state (to-keyword (:side card))
+                              (str "trashes " (card-str state card) " for being tagged")))
                 (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
@@ -1077,7 +1094,7 @@
                                   (update-mu state)
                                   (effect-completed state side eid)))})
         nil nil)
-      (effect-completed state nil eid))))
+      (trash-on-tag state nil eid))))
 
 (defn checkpoint
   "10.3. Checkpoints: A CHECKPOINT is a process wherein objects that have entered an

@@ -22,9 +22,9 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [is-disabled? register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid]]
-   [game.core.engine :refer [pay register-events resolve-ability]]
+   [game.core.engine :refer [pay register-events resolve-ability trigger-event]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
@@ -1595,6 +1595,7 @@
 (defcard "Malia Z0L0K4"
   (let [unmark
         (req (when-let [malia-target (:malia-target card)]
+               (update! state side (assoc (get-card state card) :malia-target nil))
                (remove-icon state :runner card (get-card state malia-target)))
              ;; I'm not sure why the side is nil here
              ;; but the old impl had it, so 🤷
@@ -1610,7 +1611,10 @@
      :leave-play unmark
      :move-zone unmark
      :static-abilities [{:type :disable-card
-                         :req (req (same-card? target (get-in card [:malia-target])))
+                         :req (req (and
+                                     (get-card state card)
+                                     (rezzed? (get-card state card))
+                                     (same-card? target (get-in card [:malia-target]))))
                          :value true}]}))
 
 

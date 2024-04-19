@@ -110,15 +110,8 @@
 
 (defn- trash-when-tagged-contructor
   "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
-  [card-name definition]
-  (let [trash-effect {:async true
-                      :effect (req (if tagged
-                                     (do (system-msg state :runner (str "trashes " card-name " for being tagged"))
-                                         (trash state :runner eid card {:unpreventable true :cause-card card}))
-                                     (effect-completed state side eid)))}]
-    (-> definition
-        (update :events conj (assoc trash-effect :event :tags-changed))
-        (assoc :reactivate trash-effect))))
+  [definition]
+  (assoc definition :trash-when-tagged true))
 
 (defn companion-builder
   "pay-credits-req says when it can be used. turn-ends-ability defines what happens,
@@ -2658,7 +2651,8 @@
   {:static-abilities [(runner-hand-size+ 2)]})
 
 (defcard "Rachel Beckman"
-  (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]}))
+  {:trash-when-tagged true
+   :in-play [:click-per-turn 1]})
 
 (defcard "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
@@ -3794,14 +3788,13 @@
                        :value 1}]})
 
 (defcard "Zona Sul Shipping"
-  (trash-when-tagged-contructor
-    "Zona Sul Shipping"
-    {:events [{:event :runner-turn-begins
-               :effect (effect (add-counter card :credit 1))}]
-     :abilities [{:cost [(->c :click 1)]
-                  :msg (msg "gain " (get-counters card :credit) " [Credits]")
-                  :label "Take all credits"
-                  :async true
-                  :effect (effect (add-counter card :credit
-                                               (- (get-counters card :credit)))
-                                  (gain-credits eid (get-counters card :credit)))}]}))
+  {:events [{:event :runner-turn-begins
+             :effect (effect (add-counter card :credit 1))}]
+   :trash-when-tagged true
+   :abilities [{:cost [(->c :click 1)]
+                :msg (msg "gain " (get-counters card :credit) " [Credits]")
+                :label "Take all credits"
+                :async true
+                :effect (effect (add-counter card :credit
+                                             (- (get-counters card :credit)))
+                                (gain-credits eid (get-counters card :credit)))}]})
