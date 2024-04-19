@@ -6,6 +6,10 @@
             [game.core.board :refer [get-all-cards]]
             [game.utils :refer [same-card? to-keyword]]))
 
+(defn is-disabled-reg?
+  [state card]
+  (some #(same-card? % card) (:disabled-card-reg @state)))
+
 (defn register-static-abilities
   [state _ card]
   (when (:static-abilities (card-def card))
@@ -58,11 +62,10 @@
 (defn gather-effects
   [state _ effect-type]
   (let [get-side #(-> % :card :side to-keyword)
-        is-active-player #(= (:active-player @state) (get-side %))
-        is-disabled-reg (fn [state c] (some #(same-card? % (:card c)) (:disabled-card-reg @state)))]
+        is-active-player #(= (:active-player @state) (get-side %))]
     (->> (:effects @state)
          (filter #(= effect-type (:type %)))
-         (filter #(not (and (:static %) (is-disabled-reg state %))))
+         (filter #(not (and (:static %) (is-disabled-reg? state (:card %)))))
          (sort-by (complement is-active-player))
          (into []))))
 
