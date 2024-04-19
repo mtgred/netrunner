@@ -269,10 +269,11 @@
     (effect-completed state side eid)
     ;; This was called directly without an eid present
     (and ability (not eid))
-    (resolve-ability-eid state side (assoc ability :eid (make-eid state eid)) card targets)
+    (resolve-ability state side ability card targets)
     ;; Both ability and eid are present, so we're good to go
     (and ability eid)
-    (let [ab (select-ability-kw ability)
+    (let [ability (assoc-in ability [:eid :source] card)
+          ab (select-ability-kw ability)
           ability-fn (get @ability-types ab)]
       (cond
         ab (ability-fn state side ability card targets)
