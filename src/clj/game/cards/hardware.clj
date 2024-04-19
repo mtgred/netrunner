@@ -179,7 +179,7 @@
   {:static-abilities [(mu+ 1)]
    :events [{:event :runner-lose-tag
              :optional {:prompt "Remove 1 power counter to draw 2 cards?"
-                        :req (req (= :runner (second targets)))
+                        :req (req (= :runner (:side context)))
                         :yes-ability {:cost [(->c :power 1)]
                                       :msg "draw 2 cards"
                                       :async true
@@ -913,7 +913,7 @@
                                     (host state side card))
                                (update! state side (assoc-in (get-card state card) [:special :flame-out] (:cid target))))}]
      :events [{:event :card-moved
-               :req (req (= (:cid target) (get-in (get-card state card) [:special :flame-out])))
+               :req (req (= (:cid (:card context)) (get-in (get-card state card) [:special :flame-out])))
                :effect (effect (update! (dissoc-in card [:special :flame-out])))}
               (assoc maybe-turn-end :event :runner-turn-ends)
               (assoc maybe-turn-end :event :corp-turn-ends)]
@@ -1103,8 +1103,8 @@
                                (update-breaker-strength state side host))
                              (host state side target card))}]
    :events [{:event :pump-breaker
-             :req (req (same-card? target (:host card)))
-             :effect (req (let [last-pump (assoc (second targets)
+             :req (req (same-card? (:card context) (:host card)))
+             :effect (req (let [last-pump (assoc (:effect context)
                                                  :duration :end-of-turn
                                                  :original-duration (:duration (last (:effects @state))))]
                             (swap! state assoc :effects
@@ -1112,7 +1112,7 @@
                                         (remove #(= (:uuid last-pump) (:uuid %)))
                                         (#(conj % last-pump))
                                         (into []))))
-                          (update-breaker-strength state side target))}]
+                          (update-breaker-strength state side (:card context)))}]
    :leave-play (req (when-let [host (get-card state (:host card))]
                       (swap! state assoc :effects
                              (reduce
@@ -1350,7 +1350,7 @@
              :prompt "Choose a card"
              :msg "add 1 card from the stack to the grip"
              :choices (req (cancellable (:deck runner)))
-             :effect (effect (trigger-event :searched-stack nil)
+             :effect (effect (trigger-event :searched-stack)
                              (shuffle! :deck)
                              (move target :hand))}]})
 
@@ -1536,7 +1536,7 @@
   {:events [{:event :pre-damage
              :once :per-turn
              :once-key :muresh-bodysuit
-             :req (req (= target :meat))
+             :req (req (= (:type context) :meat))
              :msg "prevent the first meat damage this turn"
              :effect (effect (damage-prevent :meat 1))}]})
 
@@ -1889,7 +1889,7 @@
      :prompt (msg "Install another copy of " (:title card) "?")
      :yes-ability {:async true
                    :msg "install another copy of itself"
-                   :effect (req (trigger-event state side :searched-stack nil)
+                   :effect (req (trigger-event state side :searched-stack)
                                 (shuffle! state :runner :deck)
                                 (when-let [c (some #(when (= (:title %) (:title card)) %)
                                                    (:deck runner))]
@@ -1922,15 +1922,16 @@
             (into {} (reverse (get s :turn-events))))]
     {:interactions {:prevent [{:type #{:net :brain :meat}
                                :req (req (and (:access @state)
-                                              (= (:cid (second (:pre-damage (eventmap @state))))
+                                              (= (:cid (:card (first (:pre-damage (eventmap @state)))))
                                                  (:cid (first (:pre-access-card (eventmap @state)))))))}]}
      :abilities [{:cost [(->c :x-credits) (->c :trash-can)]
                   :label "prevent damage"
                   :req (req (and (:access @state)
-                                 (= (:cid (second (:pre-damage (eventmap @state))))
+                                 (= (:cid (:card (first (:pre-damage (eventmap @state)))))
                                     (:cid (first (:pre-access-card (eventmap @state)))))))
                   :msg (msg "prevent " (cost-value eid :x-credits) " damage")
-                  :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) (cost-value eid :x-credits)))}]}))
+                  :effect (effect (damage-prevent (:type (first (:pre-damage (eventmap @state))))
+                                                  (cost-value eid :x-credits)))}]}))
 
 (defcard "Record Reconstructor"
   {:events [(successful-run-replace-breach
@@ -1963,7 +1964,7 @@
                 :req (req (hardware-and-in-deck? (:card context) runner))
                 :yes-ability
                 {:msg (msg "add a copy of " (:title (:card context)) " from the stack to the grip")
-                 :effect (effect (trigger-event :searched-stack nil)
+                 :effect (effect (trigger-event :searched-stack)
                            (shuffle! :deck)
                            (move (some #(when (= (:title %) (:title (:card context))) %) (:deck runner)) :hand))}}}]}))
 

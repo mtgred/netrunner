@@ -20,8 +20,8 @@
                       (rezzed? updated-card))
              (update-ice-strength state side updated-card))
            (if-not placed
-             (trigger-event-sync state side eid :advance (get-card state updated-card) args)
-             (trigger-event-sync state side eid :advancement-placed (get-card state updated-card) args)))
+             (trigger-event-sync state side eid :advance (assoc args :card (get-card state updated-card)))
+             (trigger-event-sync state side eid :advancement-placed (assoc args :card (get-card state updated-card)))))
        (trigger-event-sync state side eid :counter-added (get-card state updated-card) args)))))
 
 (defn add-counter

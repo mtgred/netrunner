@@ -157,11 +157,6 @@
                      (continue-ability (break-sub nil strength subtype {:repeatable false}) (get-card state card) nil))
      :pump strength}))
 
-(defn- cond-breaker
-  "The breakers which rely on an event having happened"
-  [keyword fn]
-  {:req (req (not (no-event? state side keyword fn)))})
-
 (def heap-breaker-auto-pump-and-break
   "Implements auto-pump-and-break for heap breakers. Updates an icebreaker's
   abilities with a pseudo-ability to trigger the auto-pump routine in core,
@@ -1327,7 +1322,7 @@
                                                    (:deck runner)) :sorted))
                 :cost [(->c :click 1) (->c :credit 1)]
                 :keep-menu-open :while-clicks-left
-                :effect (effect (trigger-event :searched-stack nil)
+                :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (move target :hand))}
                {:label "Install and host a non-Icebreaker program"
@@ -1587,15 +1582,16 @@
                                 (strength-pump 1 1 :end-of-run)]}))
 
 (defcard "Gorman Drip v1"
-  {:abilities [{:cost [(->c :click 1) (->c :trash-can)]
+  {:events [{:event :corp-credit-gain
+             :req (req (= :corp-click-credit (:action context)))
+             :effect (effect (add-counter :runner card :virus 1))}
+            {:event :corp-click-draw
+             :effect (effect (add-counter :runner card :virus 1))}]
+   :abilities [{:cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain credits"
                 :async true
                 :effect (effect (gain-credits eid (get-virus-counters state card)))
-                :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]
-   :events [{:event :corp-click-credit
-             :effect (effect (add-counter :runner card :virus 1))}
-            {:event :corp-click-draw
-             :effect (effect (add-counter :runner card :virus 1))}]})
+                :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]})
 
 (defcard "Grappling Hook"
   (let [break-subs (fn [state ice subroutines]
@@ -2316,7 +2312,7 @@
                              ["Done"]))
              :async true
              :effect (req (when (= :deck where)
-                            (trigger-event state side :searched-stack nil)
+                            (trigger-event state side :searched-stack)
                             (shuffle! state side :deck))
                           (if (not= target "Done")
                             ;; does the card need to be installed on muse?
@@ -2561,16 +2557,16 @@
    :events [{:event :runner-turn-begins
              :effect (req (add-counter state side card :virus 1))}
             {:event :ice-strength-changed
-             :req (req (and (same-card? target (:host card))
+             :req (req (and (same-card? (:card context) (:host card))
                             (not (card-flag? (:host card) :untrashable-while-rezzed true))
-                            (<= (get-strength target) 0)))
+                            (<= (get-strength (:card context)) 0)))
              :async true
              :effect (req (unregister-events state side card)
                           (when (get-in card [:special :installing])
                             (update! state side (update-in card [:special] dissoc :installing))
                             (trigger-event state :runner :runner-install card))
-                          (trash state :runner eid target {:unpreventable true :cause-card card}))
-             :msg (msg "trash " (:title target))}]})
+                          (trash state :runner eid (:card context) {:unpreventable true :cause-card card}))
+             :msg (msg "trash " (:title (:card context)))}]})
 
 (defcard "Paricia"
   {:recurring 2
@@ -2757,10 +2753,18 @@
              :effect (effect (add-counter :runner card :virus 2))}]})
 
 (defcard "Pressure Spike"
-  {:implementation "Once per run restriction not enforced. Auto-breaking disabled for this card."
-   :abilities [(break-sub 1 1 "Barrier")
-               (strength-pump 2 3)
-               (strength-pump 2 9 :end-of-encounter {:req (req (threat-level 4 state))})]})
+  (letfn [(once [card]
+            {:once :per-run
+             :once-key (str (:cid card) "-thread-pump")})]
+    {:implementation "Auto-breaking disabled for this card."
+     :abilities [(break-sub 1 1 "Barrier")
+                 (strength-pump 2 3)
+                 (let [base (strength-pump
+                              2 9 :end-of-encounter
+                              {:req (req (threat-level 4 state)
+                                         (not-used-once? state (once card) card))})]
+                   (assoc base :effect (req (register-once state side (once card) card)
+                                            ((:effect base) state side eid card targets))))]}))
 
 (defcard "Progenitor"
   {:abilities [{:label "Install and host a virus program"
@@ -2930,7 +2934,7 @@
              :async true
              :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:card context) (:host card)))
              :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 3))}]})
@@ -3017,7 +3021,7 @@
                                                         (seq))
                                                   ["Done"]))
                                    :async true
-                                   :effect (req (trigger-event state side :searched-stack nil)
+                                   :effect (req (trigger-event state side :searched-stack)
                                                 (shuffle! state side :deck)
                                                 (if (= target "Done")
                                                   (effect-completed state side eid)
@@ -3056,8 +3060,7 @@
                                     :interactive (req true)
                                     :msg "change the attacked server to HQ"
                                     :req (req (= :archives (-> run :server first)))
-                                    :effect (req (swap! state assoc-in [:run :server] [:hq])
-                                                 (trigger-event state :corp :no-action))}])
+                                    :effect (req (swap! state assoc-in [:run :server] [:hq]))}])
                                 (make-run eid :archives (get-card state card)))}]})
 
 (defcard "Sneakdoor Prime A"
@@ -3206,7 +3209,7 @@
 (defcard "Surveillance Network Key"
   {:implementation "Only implemented for click to draw"
    :events [{:event :corp-click-draw
-             :msg (msg "reveal that they drew " (:title target))}]})
+             :msg (msg "reveal that they drew " (:title (:card context)))}]})
 
 (defcard "Switchblade"
   (auto-icebreaker {:abilities [(break-sub (->c :credit 1 {:stealth 1}) 0 "Sentry")
@@ -3498,7 +3501,7 @@
                                 (seq))
                            ["Done"]))
            :async true
-           :effect (req (trigger-event state side :searched-stack nil)
+           :effect (req (trigger-event state side :searched-stack)
                         (shuffle! state side :deck)
                         (if (= target "Done")
                           (effect-completed state side eid)

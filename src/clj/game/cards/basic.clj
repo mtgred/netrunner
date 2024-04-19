@@ -35,7 +35,6 @@
                 :async true
                 :effect (req (wait-for (gain-credits state side 1 :corp-click-credit)
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
-                                       (trigger-event state side :corp-click-credit)
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
                {:action true
@@ -44,7 +43,7 @@
                 :cost [(->c :click)]
                 :msg "draw 1 card"
                 :async true
-                :effect (req (trigger-event state side :corp-click-draw (-> @state side :deck (nth 0)))
+                :effect (req (trigger-event state side :corp-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                              (play-sfx state side "click-card")
                              (draw state side eid 1))}
@@ -162,7 +161,6 @@
                 :async true
                 :effect (req (wait-for (gain-credits state side 1 :runner-click-credit)
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
-                                       (trigger-event state side :runner-click-credit)
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
                {:action true
@@ -170,7 +168,7 @@
                 :req (req (not-empty (:deck runner)))
                 :cost [(->c :click)]
                 :msg "draw 1 card"
-                :effect (req (trigger-event state side :runner-click-draw (-> @state side :deck (nth 0)))
+                :effect (req (trigger-event state side :runner-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                              (play-sfx state side "click-card")
                              (draw state side eid (+ 1 (use-bonus-click-draws! state))))}

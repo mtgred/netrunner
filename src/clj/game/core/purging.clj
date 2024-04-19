@@ -3,14 +3,13 @@
     [game.core.board :refer [get-all-installed]]
     [game.core.card :refer [get-counters]]
     [game.core.effects :refer [get-effects]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [trigger-event-sync]]
     [game.core.ice :refer [update-all-ice]]
     [game.core.props :refer [add-counter]]))
 
 (defn purge
   "Purges viruses."
   [state side eid]
-  (trigger-event state side :pre-purge)
   (let [purge-preventions
         (->> (get-effects state side :prevent-purge-virus-counters)
              (reduce
