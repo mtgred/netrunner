@@ -160,26 +160,23 @@
                                                 card nil)))}
                               card nil)))}]
    ;; This effect will be resolved when the ID is reenabled after Strike / Direct Access
-   :effect (effect
-             (continue-ability
-               {:req (req (< 2 (count (get-remotes state))))
-                :prompt "Choose 2 servers to be saved from the rules apocalypse"
-                :choices (req (get-remote-names state))
-                :async true
-                :effect (req (let [saved target]
-                               (continue-ability
-                                 state side
-                                 {:prompt "Choose another server to save"
-                                  :choices (req (filter #(not= saved %) (get-remote-names state)))
-                                  :async true
-                                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target saved] (zone->name (second (get-zone %))))
-                                                                           (all-installed state :corp))]
-                                                 (system-msg state side (str "chooses " target " and " saved " to be saved from the rules apocalypse and trashes "
-                                                                             (quantify (count to-be-trashed) "card")))
-                                                 ;; these cards get trashed by the game and not by players
-                                                 (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
-                                 card nil)))}
-               card nil))})
+   :enforce-conditions {:req (req (< 2 (count (get-remotes state))))
+                        :prompt "Choose 2 servers to be saved from the rules apocalypse"
+                        :choices (req (get-remote-names state))
+                        :async true
+                        :effect (req (let [saved target]
+                                       (continue-ability
+                                         state side
+                                         {:prompt "Choose another server to save"
+                                          :choices (req (filter #(not= saved %) (get-remote-names state)))
+                                          :async true
+                                          :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target saved] (zone->name (second (get-zone %))))
+                                                                                   (all-installed state :corp))]
+                                                         (system-msg state side (str "chooses " target " and " saved " to be saved from the rules apocalypse and trashes "
+                                                                                     (quantify (count to-be-trashed) "card")))
+                                                         ;; these cards get trashed by the game and not by players
+                                                         (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
+                                         card nil)))}})
 
 (defcard "Acme Consulting: The Truth You Need"
   (letfn [(outermost? [state ice]
@@ -553,21 +550,17 @@
                                           (in-coll? (keys (get-remotes state)) (:server (second targets))))))
                          :value (req [(->c :credit (if (:flipped card) 6 1))])}]
      :async true
-     ; This effect will be resolved when the ID is reenabled after Strike / Direct Access
-     :effect (effect
-               (continue-ability
-                 {:req (req (< 1 (count (get-remotes state))))
-                  :prompt "Choose a server to be saved from the rules apocalypse"
-                  :choices (req (get-remote-names state))
-                  :async true
-                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (get-zone %))))
-                                                           (all-installed state :corp))]
-                                 (system-msg state side (str "chooses " target
-                                                             " to be saved from the rules apocalypse and trashes "
-                                                             (quantify (count to-be-trashed) "card")))
-                                 ; these cards get trashed by the game and not by players
-                                 (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
-                 card nil))
+     :enforce-conditions {:req (req (< 1 (count (get-remotes state))))
+                          :prompt "Choose a server to be saved from the rules apocalypse"
+                          :choices (req (get-remote-names state))
+                          :async true
+                          :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (get-zone %))))
+                                                                   (all-installed state :corp))]
+                                         (system-msg state side (str "chooses " target
+                                                                     " to be saved from the rules apocalypse and trashes "
+                                                                     (quantify (count to-be-trashed) "card")))
+                                        ; these cards get trashed by the game and not by players
+                                         (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
      :abilities [{:label "Flip identity to Earth Station: Ascending to Orbit"
                   :req (req (not (:flipped card)))
                   :cost [(->c :click 1)]

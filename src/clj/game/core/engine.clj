@@ -3,7 +3,7 @@
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
     [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes all-installed-runner
+    [game.core.board :refer [clear-empty-remotes get-all-cards all-installed-runner
                              all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
@@ -1074,6 +1074,31 @@
                 (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
+(defn- enforce-conditions-impl
+  [state _ eid cards]
+  (if (seq cards)
+    (let [fc (first cards)
+          rest (rest cards)]
+      (wait-for
+        (resolve-ability
+          state (to-keyword (:side fc))
+          (when-not
+              (is-disabled-reg? state fc)
+            (:enforce-conditions fc))
+          fc nil)
+        (enforce-conditions-impl state nil eid rest)))
+    (effect-completed state nil eid)))
+
+(defn enforce-conditions
+  [state _ eid]
+  (wait-for
+    (trash-on-tag state nil (make-eid state eid))
+    (if-let [cards (filter
+                     :enforce-conditions
+                     [(get-in @state [:corp :identity])])]
+      (enforce-conditions-impl state nil eid cards)
+      (effect-completed state nil eid))))
+
 (defn check-restrictions
   [state _ eid]
   ;; memory limit check
@@ -1094,7 +1119,7 @@
                                   (update-mu state)
                                   (effect-completed state side eid)))})
         nil nil)
-      (trash-on-tag state nil eid))))
+      (enforce-conditions state nil eid))))
 
 (defn checkpoint
   "10.3. Checkpoints: A CHECKPOINT is a process wherein objects that have entered an
