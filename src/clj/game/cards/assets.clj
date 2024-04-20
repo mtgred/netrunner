@@ -11,7 +11,7 @@
                                     lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-runner-type get-remotes
                             installable-servers]]
-   [game.core.card :refer [agenda? asset? can-be-advanced? corp? event? corp-installable-type?
+   [game.core.card :refer [agenda? asset? corp? event? corp-installable-type?
                            faceup? fake-identity? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype? ice?
                            identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
@@ -28,7 +28,7 @@
    [game.core.engine :refer [pay register-events resolve-ability trigger-event]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
-   [game.core.flags :refer [lock-zone prevent-current
+   [game.core.flags :refer [can-really-be-advanced? lock-zone prevent-current
                             prevent-draw
                             register-turn-flag! release-zone]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -684,7 +684,7 @@
                                    :title)]
                   (as-> (all-installed state :corp) it
                     (filter ice? it)
-                    (filter can-be-advanced? it)
+                    (filter #(can-really-be-advanced? state %) it)
                     (remove empty? it)
                     (map :title it)
                     (split-with (partial not= a-token) it)
@@ -700,9 +700,9 @@
                           (continue-ability
                             (let [from-ice target]
                               {:prompt "Choose a piece of ice that can be advanced"
-                               :choices {:card #(and (ice? %)
-                                                     (not (same-card? from-ice %))
-                                                     (can-be-advanced? %))}
+                               :choices {:req (req (and (ice? target)
+                                                        (not (same-card? from-ice target))
+                                                        (can-really-be-advanced? state target)))}
                                :msg (msg "move an advancement token from "
                                          (card-str state from-ice)
                                          " to "
@@ -920,14 +920,14 @@
 
 (defcard "Early Premiere"
   {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (req (some #(and (can-be-advanced? %)
+   :flags {:corp-phase-12 (req (some #(and (can-really-be-advanced? state %)
                                            (in-server? %))
                                      (all-installed state :corp)))}
    :abilities [{:cost [(->c :credit 1)]
                 :label "Place 1 advancement token on a card that can be advanced in a server"
-                :choices {:card #(and (can-be-advanced? %)
-                                      (installed? %)
-                                      (in-server? %))} ; should be *in* a server
+                :choices {:req (req (and (can-really-be-advanced? state target)
+                                         (installed? target)
+                                         (in-server? target)))} ; should be *in* a server
                 :once :per-turn
                 :msg (msg "place 1 advancement token on " (card-str state target))
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
@@ -1244,8 +1244,8 @@
 (defcard "Hearts and Minds"
   (let [political {:req (req unprotected)
                    :prompt "Choose a card you can advance to place 1 advancement counter on"
-                   :choices {:card #(and (can-be-advanced? %)
-                                         (installed? %))}
+                   :choices {:req (req (and (can-really-be-advanced? state target)
+                                            (installed? target)))}
                    :msg (msg "place 1 advancement counter on " (card-str state target))
                    :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
         ability {:req (req (:corp-phase-12 @state))
@@ -1260,9 +1260,9 @@
                            (continue-ability
                              (let [from-ice target]
                                {:prompt "Choose an installed card you can advance"
-                                :choices {:card #(and (installed? %)
-                                                      (can-be-advanced? %)
-                                                      (not (same-card? from-ice %)))}
+                                :choices {:req (req (and (installed? target)
+                                                         (can-really-be-advanced? state target)
+                                                         (not (same-card? from-ice target))))}
                                 :msg (msg "move 1 hosted advancement counter from "
                                           (card-str state from-ice)
                                           " to "
@@ -2333,7 +2333,7 @@
                                  state side
                                  {:async true
                                   :prompt "Choose a card that can be advanced"
-                                  :choices {:card can-be-advanced?}
+                                  :choices {:req (req (can-really-be-advanced? state target))}
                                   :effect (effect (add-counter target :advancement num-counters {:placed true})
                                                   (system-msg (str "uses " (:title card) " to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
                                                   (effect-completed eid))}
@@ -2614,7 +2614,7 @@
                 :prompt "Place 1 advancement token on a card that can be advanced?"
                 :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
                               :prompt "Choose a card to place an advancement token on"
-                              :choices {:card can-be-advanced?}
+                              :choices {:req (req (can-really-be-advanced? state target))}
                               :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
 
 (defcard "Spin Doctor"

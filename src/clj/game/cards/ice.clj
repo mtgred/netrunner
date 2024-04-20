@@ -7,7 +7,7 @@
    [game.core.board :refer [all-active-installed all-installed all-installed-runner 
                             all-installed-runner-type card->server
                             get-all-cards get-all-installed server->zone]]
-   [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index
+   [game.core.card :refer [active? agenda? asset? card-index
                            corp? corp-installable-type? faceup?
                            get-card get-counters get-zone
                            hardware? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
@@ -20,14 +20,14 @@
                                   do-brain-damage do-net-damage offer-jack-out
                                   reorder-choice get-x-fn]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
-   [game.core.effects :refer [get-effects register-lingering-effect unregister-effects-for-card unregister-static-abilities]]
+   [game.core.effects :refer [get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-static-abilities update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [gather-events pay register-default-events register-events
                              resolve-ability trigger-event trigger-event-simult unregister-events
                              ]]
    [game.core.events :refer [first-event? run-events]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-rez? card-flag? prevent-draw prevent-jack-out
+   [game.core.flags :refer [can-really-be-advanced? can-rez? card-flag? prevent-draw prevent-jack-out
                             register-run-flag! register-turn-flag! run-flag? zone-locked?]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [hand-size]]
@@ -672,7 +672,9 @@
                   runner-trash-installed-sub]}))
 
 (defcard "Afshar"
-  (let [breakable-fn (req (if (= :hq (second (get-zone card)))
+  (let [breakable-fn (req (if (and (= :hq (second (get-zone card)))
+                                   (= (:title card) "Afshar") ;;loki protection
+                                   (not (is-disabled-reg? state card)))
                             (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
                             :unrestricted))]
     {:subroutines [{:msg "make the Runner lose 2 [Credits]"
@@ -703,7 +705,9 @@
                                            (encounter-ends state side eid))))}]})
 
 (defcard "Akhet"
-  (let [breakable-fn (req (if (<= 3 (get-counters card :advancement))
+  (let [breakable-fn (req (if (and (<= 3 (get-counters card :advancement))
+                                   (= (:title card) "Akhet") ;; loki protection
+                                   (not (is-disabled-reg? state card)))
                             (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
                             :unrestricted))]
     {:advanceable :always
@@ -822,7 +826,8 @@
   ;; we can figure out how to do that type of thing some time in the future
   (let [sub {:label "Do 1 net damage unless the Runner pays 2 [Credits]"
              :async true
-             :effect (req (if (threat-level 3 state)
+             :effect (req (if (and (threat-level 3 state)
+                                   (not (is-disabled? state side card)))
                             (damage state side eid :net 1 {:card card})
                             (continue-ability
                               state side
@@ -923,14 +928,21 @@
              :msg "gain 1 [Credits] and force the Runner to lose 1 [Credits]"
              :async true
              :effect (req (wait-for (gain-credits state :corp 1)
-                                    (lose-credits state :runner eid 1)))}]
-    {:on-rez {:effect (effect (reset-variable-subs card (sub-count corp) sub {:variable true :front true}))}
-     :events [{:event :card-moved
-               :req (req (and (operation? (:moved-card context))
-                              (has-subtype? (:moved-card context) "Transaction")
-                              (or (in-discard? (:moved-card context))
-                                  (= :discard (first (:previous-zone (:moved-card context)))))))
-               :effect (effect (reset-variable-subs card (sub-count corp) sub {:variable true :front true}))}]
+                                    (lose-credits state :runner eid 1)))}
+        reset-subs-abi {:effect (effect (reset-variable-subs card (sub-count corp)
+                                                             sub
+                                                             {:variable true :front true}))}]
+    {:on-rez reset-subs-abi
+     :events [(merge {:event :card-moved
+                      :req (req (and
+                                  (operation? (:moved-card context))
+                                  (has-subtype? (:moved-card context) "Transaction")
+                                  (or (in-discard? (:moved-card context))
+                                      (= :discard (first (:previous-zone (:moved-card context)))))))}
+                     reset-subs-abi)
+              (merge {:event :subroutines-should-update
+                      :silent (req true)}
+                     reset-subs-abi)]
      :subroutines [sub
                    end-the-run]}))
 
@@ -1022,8 +1034,8 @@
 (defcard "Builder"
   (let [sub {:label "Place 1 advancement token on a piece of ice that can be advanced protecting this server"
              :msg (msg "place 1 advancement token on " (card-str state target))
-             :choices {:card #(and (ice? %)
-                                   (can-be-advanced? %))}
+             :choices {:req (req (and (ice? target)
+                                      (can-really-be-advanced? state target)))}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
     {:abilities [{:label "Move this ice to the outermost position of any server"
                   :cost [(->c :click 1)]
@@ -1472,6 +1484,9 @@
              :req (req (and (has-subtype? (:card context) "Harmonic")
                             (ice? (:card context))))
              :effect (effect (add-counter card :power 1))}
+            {:event :subroutines-should-update
+             :silent (req true)
+             :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}
             {:event :counter-added
              :req (req (same-card? card target))
              :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}]})
@@ -1588,6 +1603,9 @@
      :events [{:event :corp-turn-begins
                :req (req (pos? (get-counters card :power)))
                :effect (effect (add-counter card :power -1))}
+              {:event :subroutines-should-update
+               :silent (req true)
+               :effect subs-effect}
               {:event :counter-added
                :req (req (same-card? card target))
                :effect subs-effect}]
@@ -2121,7 +2139,7 @@
                                                  state side
                                                  {:msg (msg "pay " c " [Credits] and place " (quantify c "advancement token")
                                                             " on " (card-str state target))
-                                                  :choices {:card can-be-advanced?}
+                                                  :choices {:req (req (can-really-be-advanced? state target))}
                                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                                  card nil)))
                                    (effect-completed state side eid))))}]
@@ -2144,6 +2162,7 @@
                      :event :rez
                      :req (req (same-card? card (:card context))))
               (assoc ability :event :agenda-scored)
+              (assoc ability :event :subroutines-should-update)
               (assoc ability
                      :event :card-moved
                      :req (req (= :corp (:scored-side (:card context)))))]
@@ -2809,7 +2828,11 @@
             :choices {:req (req (and (program? target)
                                      (ice? (:host target))
                                      (not (same-card? (:host target) card))))}
-            :effect (effect (host card target))}
+            :effect (req (host state side card target)
+                         (update-disabled-cards state)
+                         (trigger-event
+                           state :corp
+                           :subroutines-should-update))}
    :static-abilities [{:type :disable-card
                        :req (req (and (same-card? (:host target) card)
                                       (not= (:title target) "Hush")
@@ -2861,7 +2884,7 @@
 
 (defcard "Matrix Analyzer"
   {:on-encounter {:cost [(->c :credit 1)]
-                  :choices {:card can-be-advanced?}
+                  :choices {:req (req (can-really-be-advanced? state target))}
                   :msg (msg "place 1 advancement token on " (card-str state target))
                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
    :subroutines [(tag-trace 2)]})
@@ -4252,10 +4275,10 @@
                :waiting-prompt true
                :req (req (and (can-pay? state side eid card nil [(->c :credit 1)])
                               (some #(or (not (rezzed? %))
-                                         (can-be-advanced? %))
+                                         (can-really-be-advanced? state %))
                                     (all-installed state :corp))))
                :yes-ability {:cost [(->c :credit 1)]
-                             :choices {:card can-be-advanced?}
+                             :choices {:req (req (can-really-be-advanced? state target))}
                              :prompt "Choose a card that can be advanced"
                              :msg (msg "place 1 advancement counter on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))

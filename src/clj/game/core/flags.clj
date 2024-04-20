@@ -1,14 +1,21 @@
 (ns game.core.flags
   (:require
     [game.core.board :refer [all-active all-installed]]
-    [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed?]]
+    [game.core.card :refer [agenda? can-be-advanced? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed? ]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [any-effects]]
+    [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.eid :refer [make-eid]]
     [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.utils :refer [enumerate-str same-card? same-side?]]))
+
+(defn can-really-be-advanced?
+  "Like can be advanced, but takes into account that abilities allowing advancability may be disabled"
+  [state card]
+  (and (can-be-advanced? card)
+       (or (agenda? card)
+           (not (is-disabled-reg? state card)))))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -270,7 +277,8 @@
 (defn can-advance?
   "Checks if the corp can advance cards"
   [state side card]
-  (check-flag-types? state side card :can-advance [:current-turn :persistent]))
+  (and (check-flag-types? state side card :can-advance [:current-turn :persistent])
+       (can-really-be-advanced? state card)))
 
 (defn can-score?
   "Checks if the corp can score a given card"
