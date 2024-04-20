@@ -15,8 +15,7 @@
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [any-effects register-lingering-effect
-                              unregister-effects-for-card]]
+   [game.core.effects :refer [any-effects register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [ability-as-handler dissoc-req not-used-once? pay
                              print-msg register-events register-once
@@ -1760,15 +1759,48 @@
       (strength-pump (->c :credit 2 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Hush"
-  ;; TODO - come back to this once disabling cards has been reworded. nbkelly, jan 2023
-  (letfn [(reset-card-to-printed-subs [state side card]
-            (let [card (get-card state card)
-                  old-subs (remove #(or (:variable %)
-                                        (not (:printed %)))
-                                   (:subroutines card))
-                  new-card (assoc card :subroutines old-subs)]
-              (update! state :corp new-card)
-              (trigger-event state side :subroutines-changed (get-card state new-card))))]
+  ;; quick laundry list of ice with some variable subs that hush cares about, and other interactions:
+  ;;  ! Afshar (breaking restriction check) (done)
+  ;;  ! Akhet (advancable-while-hushed, +str, breaking restriction check) (done)
+  ;;  ! Anansi (done)
+  ;;  ! attini (the payment thing) (done)
+  ;;  ! blockchain * (done)
+  ;;  ! echo * (done)
+  ;;  ! envelopment * (done)
+  ;;  hive *
+  ;;  hortum
+  ;;  information overload
+  ;;  masvingo *
+  ;;  mausolus
+  ;;  anansi
+  ;;  cloud eater
+  ;;  NEXT Bronze, Gold, Opal, Silver *
+  ;; Orion (nebula, wormhole, asteroid belt)
+  ;;  saisentan
+  ;;  seraph
+  ;;  searchlight
+  ;;  surveyor
+  ;;  swarm *
+  ;;  thoth
+  ;;  tithonium
+  ;;  tour guide *
+  ;;  turing
+  ;;  tyr
+  ;;  tyrant *
+  ;;  wraparound
+  (let [reset-card-to-printed-subs
+        (fn [state side card]
+          (let [card (get-card state card)
+                old-subs (vec (remove #(or (:variable %)
+                                           (not (:printed %)))
+                                      (:subroutines card)))
+                new-card (assoc card :subroutines old-subs)]
+            (update! state :corp new-card)
+            (trigger-event state side :subroutines-changed (get-card state new-card))))
+        subroutines-should-update {:silent (req true)
+                                   :effect (req (trigger-event
+                                                  state :corp
+                                                  :subroutines-should-update))}]
   {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
    :hosting {:card #(and (ice? %)
                          (can-host? %))}
@@ -1783,6 +1815,9 @@
                          (or (some :variable (:subroutines target))
                              (some #(not (:printed %)) (:subroutines target)))))
              :effect (req (reset-card-to-printed-subs state side target))}]
+   :on-trash subroutines-should-update
+   :move-zone (req (continue-ability state side subroutines-should-update card nil))
+   ;;:uninstall subroutines-should-update
    :abilities [{:label "Host on a piece of ice"
                 :prompt "Choose a piece of ice"
                 :cost [(->c :click 1)]
@@ -1790,8 +1825,11 @@
                                       (installed? %)
                                       (can-host? %))}
                 :msg (msg "host itself on " (card-str state target))
+                :async true
                 :effect (req (host state side target card)
-                             (reset-card-to-printed-subs state side target))}]}))
+                             (update-disabled-cards state)
+                             (reset-card-to-printed-subs state side target)
+                             (continue-ability state side subroutines-should-update card nil))}]}))
 
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}
@@ -2955,6 +2993,7 @@
              :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
              :req (req (same-card? (:card context) (:host card)))
+             ;; special cheat for working with magnet
              :while-disabled true
              :msg "gain 3 [Credits]"
              :async true

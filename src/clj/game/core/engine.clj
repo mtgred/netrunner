@@ -505,6 +505,7 @@
    :unregister-once-resolved (or (:unregister-once-resolved ability) false)
    :once-per-instance (or (:once-per-instance ability) false)
    :ability (dissoc ability :event :duration :condition)
+   :while-disabled (:while-disabled ability)
    :card card
    :uuid (uuid/v1)})
 

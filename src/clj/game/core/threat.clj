@@ -14,6 +14,10 @@
   (or (<= threshold (get-in @state [:runner :agenda-point]))
       (<= threshold (get-in @state [:corp :agenda-point]))))
 
+(defn get-threat-level [state]
+  (max (get-in @state [:runner :agenda-point])
+       (get-in @state [:corp :agenda-point])))
+
 (defn threat
   ([threshold accept-ab]
    (threat threshold accept-ab nil))

@@ -2,10 +2,13 @@
   (:require
    [clojure.string :as str]
    [clojure.test :refer :all]
+   [game.core.flags :refer [can-really-be-advanced?]]
    [game.core :as core]
    [game.core.card :refer :all]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.payment :refer [->c]]
+   [game.core.props :refer [add-counter]]
+   [game.core.threat :refer [threat-level get-threat-level]]
    [game.test-framework :refer :all]
    [game.utils :as utils]))
 
@@ -3540,6 +3543,249 @@
       (is (= 2 (:credit (get-runner))) "Paid 2c")
       (is (= 3 (get-counters (refresh sg) :power)) "Has 3 power counters")
       (is (= 3 (get-strength (refresh sg))) "3 strength"))))
+
+(deftest hush-has-caused-me-to-suffer
+  (letfn
+      [(install-hush-and-run
+         [card {:keys [hushed counters server tags threat players rig unrezzed scored] :as args}]
+         (let [
+               ;; just incase I only care about the card counts
+               players (if (int? (get-in players [:corp :hand]))
+                         (assoc-in players [:corp :hand] (qty "IPO" (get-in players [:corp :hand])))
+                         players)
+               players (if (int? (get-in players [:corp :deck]))
+                         (assoc-in players [:corp :deck] (qty "IPO" (get-in players [:corp :deck])))
+                         players)
+               players (if (int? (get-in players [:runner :hand]))
+                         (assoc-in players [:runner :hand]
+                                   (qty "Inti" (get-in players [:runner :hand])))
+                         players)
+               players (if (int? (get-in players [:runner :deck]))
+                         (assoc-in players [:runner :deck]
+                                   (qty "Inti" (get-in players [:runner :deck])))
+                         players)
+               ;; add the ice to the corp hand
+               players (assoc-in players [:corp :hand]
+                                 (cons card (get-in players [:corp :hand])))
+
+               ;; add agendas to score to the corp hand
+               players (assoc-in players [:corp :hand]
+                                 (concat scored (get-in players [:corp :hand])))
+
+               ;; add the rig to the runner hand
+               players (assoc-in players [:runner :hand]
+                                 (concat rig (get-in players [:runner :hand])))
+               ;; add hush to the runner hand
+               players (if hushed
+                         (assoc-in players [:runner :hand]
+                                   (concat ["Hush"] (get-in players [:runner :hand])))
+                         players)
+               state (new-game players)
+               server (or server "HQ")
+               server-key (cond
+                            (= server "New remote") :remote1
+                            (= server "HQ") :hq
+                            (= server "R&D") :rd
+                            (= server "Archives") :archives)]
+           ;; adjust the threat level for threat: ... subs
+           (when threat
+             (do (game.core.change-vals/change
+                   ;; theoretically, either side is fine!
+                   state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
+                 (is (threat-level threat state) "Threat set")
+                 (is (not (threat-level (inc threat) state)) "Threat is accurate")))
+           (play-from-hand state :corp card server)
+           (let [ice (get-ice state server-key 0)]
+             ;; gain credits to rez the ice
+             (core/gain state :corp :credit (:cost ice))
+             ;; score agendas when needed
+             (doseq [s scored]
+               (play-and-score state :corp s))
+             ;;adjust counters when needed
+             (when counters
+               ;; counters of the form :counter {:power x :credit x}
+               (doseq [[c-type c-count] counters]
+                 (core/add-counter state :corp (get-ice state server-key 0) c-type c-count)))
+             (when-not unrezzed
+               (rez state :corp (get-ice state server-key 0)))
+             ;; gain tags when required
+             (when tags
+               (gain-tags state :runner tags)
+               (is (= tags (count-tags state)) (str "Have " tags " tags")))
+             ;; ensure we start with the specified credit count (default 5)
+             ;; by not actually clicking for creds
+             (core/lose state :corp :click 2)
+             (take-credits state :corp)
+             ;; install any cards from the runner rig (cheat click/cred costs)
+             (doseq [r rig]
+               (let [target-card (first (filter #(= (:title %) r) (:hand (:runner @state))))
+                     cost (:cost target-card)]
+                 (core/gain state :runner :credit cost)
+                 (core/gain state :runner :click 1)
+                 (play-from-hand state :runner r)))
+             ;; install hush if desired
+             (when hushed
+               (do (core/gain state :runner :credit 1)
+                   (core/gain state :runner :click 1)
+                   (play-from-hand state :runner "Hush")
+                   (click-card state :runner card)))
+             (run-on state server-key))
+           state))
+       (advancable-while-hushed-test?
+         [card rez-req]
+         (do-game
+           (new-game {:corp {:hand [card] :credits 15}
+                      :runner {:hand ["Hush"]}})
+           (play-from-hand state :corp card "HQ")
+           (let [ice (get-ice state :hq 0)]
+             (when rez-req
+               (is (can-really-be-advanced? state (refresh ice)) (str card " is advancable while unrezzed")))
+             (rez state :corp ice)
+             (is (can-really-be-advanced? state (refresh ice)) (str card " is advancable while rezzed"))
+             (take-credits state :corp)
+             (play-from-hand state :runner "Hush")
+             (click-card state :runner card)
+             (is (not (can-really-be-advanced? state (refresh ice)))
+                 (str card " is no longer advancable due to hush (rezzed)"))
+             (when rez-req
+               (derez state :corp (refresh ice))
+               (is (not (can-really-be-advanced? state (refresh ice)))
+                   (str card " is no longer advancable due to hush (derezzed)"))))))]
+
+    ;; Hush vs. Afshar
+    (do-game
+      (install-hush-and-run "Afshar" {:hushed true :rig ["Buzzsaw"]})
+      (let [buzz (get-program state 0)]
+        (run-continue-until state :encounter-ice)
+        (card-ability state :runner (refresh buzz) 0)
+        (click-prompt state :runner "Make the Runner lose 2 [Credits]")
+        (click-prompt state :runner "End the run")
+        (is (no-prompt? state :runner) "No break prompt as Afshar has no unbroken subroutines")))
+
+    ;; Hush vs. Akhet
+    (advancable-while-hushed-test? "Akhet" true)
+    (do-game
+      (install-hush-and-run "Akhet" {:hushed true :rig ["Cleaver"] :counters {:advancement 3}})
+      (let [akhet (get-ice state :hq 0)
+            cleaver (get-program state 0)]
+        (is (= 2 (get-strength (refresh akhet))) "No str gain while hushed")
+        (run-continue-until state :encounter-ice)
+        (card-ability state :runner cleaver 0)
+        (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement token")
+        (click-prompt state :runner "End the run")))
+
+    ;;Hush vs. Anansi
+    (do-game
+      (new-game {:corp {:hand ["Anansi"] :credits 15}
+                 :runner {:hand ["Hush" (qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Anansi" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hush")
+      (click-card state :runner "Anansi")
+      (run-on state :hq)
+      (run-continue-until state :encounter-ice)
+      (run-continue state :pass-ice)
+      (is (not (seq (:discard (get-runner)))) "No anansi damage"))
+
+    ;;hush interacts with attini
+    (do-game
+      (new-game {:corp {:hand ["Attini" "City Works Project"]
+                        :credits 50}
+                 :runner {:hand ["Hush"]}})
+      (play-and-score state "City Works Project")
+      (play-from-hand state :corp "Attini" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hush")
+      (click-card state :runner "Attini")
+      (run-on state :hq)
+      (run-continue-until state :encounter-ice)
+      (card-subroutine state :corp (get-ice state :hq 0) 0)
+      (is (not (no-prompt? state :runner)) "(hush)Can pay for attini despite threat")
+      (click-prompt state :runner "Pay 2 [Credits]"))
+
+    ;;hush interacts with blockchain
+    (do-game
+      (new-game {:corp {:hand ["Blockchain" (qty "Hedge Fund" 2)]}
+                 :runner {:hand ["Hush" "Spec Work"]}})
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Blockchain" "HQ")
+      (let [block (get-ice state :hq 0)]
+        (rez state :corp block)
+        (is (= 3 (count (:subroutines (refresh block)))) "3 subs to start")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Hush")
+        (click-card state :runner "Blockchain")
+        (is (= 2 (count (:subroutines (refresh block)))) "blockchain lost a sub to hush")
+        (play-from-hand state :runner "Spec Work")
+        (click-card state :runner "Hush")
+        (is (= 3 (count (:subroutines (refresh block)))) "blockchain is back to 3 subs")))
+
+    ;;  hush vs. echo
+    (do-game
+      (install-hush-and-run "Echo" {:rig ["Simulchip"]
+                                    :players {:runner {:discard ["Fermenter"]}}
+                                    :counters {:power 5}
+                                    :hushed true})
+      (let [echo (get-ice state :hq 0)
+            sim (get-hardware state 0)]
+        (is (= 0 (count (:subroutines echo))) "No subroutines because we're hushed")
+        (card-ability state :runner sim 0)
+        (click-card state :runner "Hush")
+        (click-card state :runner "Fermenter")
+        (is (= 6 (count (:subroutines (refresh echo)))) "5+1 subs now")))
+
+    ;; hush vs envelopment
+    (do-game
+      (install-hush-and-run "Envelopment" {:rig ["Simulchip"]
+                                           :players {:runner {:discard ["Fermenter"]}}
+                                           :hushed true})
+      (let [env (get-ice state :hq 0)
+            sim (get-hardware state 0)]
+        (is (= 1 (count (:subroutines env))) "1 subroutine because we're hushed")
+        (card-ability state :runner sim 0)
+        (click-card state :runner "Hush")
+        (click-card state :runner "Fermenter")
+        (is (= 5 (count (:subroutines (refresh env)))) "4+1 subs now")))
+
+    ;;  hive
+    (do-game
+      (install-hush-and-run "Hive" {:rig ["Simulchip"]
+                                    :scored ["City Works Project"]
+                                    :players {:runner {:discard ["Fermenter"]}}
+                                    :hushed true})
+      (let [ice (get-ice state :hq 0)
+            sim (get-hardware state 0)]
+        (is (= 5 (count (:subroutines ice))) "full subs on hive because hush")
+        (card-ability state :runner sim 0)
+        (click-card state :runner "Hush")
+        (click-card state :runner "Fermenter")
+        (is (= 2 (count (:subroutines ice))) "5-3 subs on hive now")))
+    ;;  hortum
+    ;;  information overload
+    ;;  masvingo *
+    ;;  mausolus
+    ;;  anansi
+    ;;  cloud eater
+    ;;  NEXT Bronze, Gold, Opal, Silver *
+    ;; Orion (nebula, wormhole, asteroid belt)
+    ;;  saisentan
+    ;;  seraph
+    ;;  searchlight
+    ;;  surveyor
+    ;;  swarm *
+    ;;  thoth
+    ;;  tithonium
+    ;;  tour guide *
+    ;;  turing
+    ;;  tyr
+    ;;  tyrant *
+    ;;  wraparound
+
+    ))
+
 
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks

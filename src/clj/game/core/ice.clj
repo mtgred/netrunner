@@ -155,15 +155,15 @@
   "Marks a given subroutine as broken"
   ([ice sub] (break-subroutine ice sub nil))
   ([ice sub breaker]
-   (assoc ice :subroutines (assoc (:subroutines ice) (:index sub) (if breaker
-                                                                    (assoc sub :broken true :breaker (:cid breaker))
-                                                                    (assoc sub :broken true))))))
+   (let [replacement-sub (assoc sub :broken true :breaker (when breaker (:cid breaker)))
+         replacement-subs (assoc (vec (:subroutines ice)) (:index sub) replacement-sub)]
+     (assoc ice :subroutines replacement-subs))))
 
 (defn break-subroutine!
   "Marks a given subroutine as broken, update!s state"
   ([state ice sub] (break-subroutine! state ice sub nil))
   ([state ice sub breaker]
-   (update! state :corp (break-subroutine ice sub breaker))))
+   (update! state :corp (break-subroutine (get-card state ice) sub breaker))))
 
 (defn break-all-subroutines
   ([ice]
