@@ -321,9 +321,10 @@
 
 (defn can-host?
   "Checks if the specified card is able to host other cards"
-  [card]
+  [state card]
   (or (not (rezzed? card))
-      (not (:cannot-host (card-def card)))))
+      (not (:cannot-host (card-def card)))
+      (is-disabled-reg? state card)))
 
 (defn when-scored?
   "Checks if the specified card is able to be used for a when-scored text ability"

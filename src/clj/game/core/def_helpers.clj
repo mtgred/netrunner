@@ -7,6 +7,7 @@
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
+    [game.core.effects :refer [is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [move trash]]
     [game.core.play-instants :refer [async-rfg]]
@@ -204,7 +205,7 @@
 (defn get-x-fn []
   (fn get-x-fn-inner
     [state side eid card targets]
-    (if-let [x-fn (and (not (:disabled card)) (:x-fn card))]
+    (if-let [x-fn (and (not (is-disabled-reg? state card)) (:x-fn card))]
       (x-fn state side eid card targets)
       0)))
 

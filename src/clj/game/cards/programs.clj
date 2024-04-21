@@ -703,8 +703,8 @@
 (defcard "Botulus"
   {:implementation "[Erratum] Program: Virus - Trojan"
    :data {:counter {:virus 1}}
-   :hosting {:card #(and (ice? %)
-                         (can-host? %))}
+   :hosting {:req (req (and (ice? target)
+                            (can-host? state target)))}
    :events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
    :abilities [(break-sub
@@ -821,8 +821,9 @@
 
 (defcard "Chisel"
   {:implementation "[Erratum] Program: Virus - Trojan"
-   :hosting {:card #(and (ice? %)
-                         (can-host? %))}
+   :hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (can-host? state target)))}
    :static-abilities [{:type :ice-strength
                        :req (req (same-card? target (:host card)))
                        :value (req (- (get-virus-counters state card)))}]
@@ -1373,9 +1374,9 @@
 
 (defcard "Egret"
   {:implementation "[Erratum] Program: Trojan"
-   :hosting {:card #(and (ice? %)
-                         (can-host? %)
-                         (rezzed? %))}
+   :hosting {:req (req (and (ice? target)
+                            (can-host? state target)
+                            (rezzed? target)))}
    :on-install {:msg (msg "make " (card-str state (:host card))
                           " gain Barrier, Code Gate and Sentry subtypes")}
    :static-abilities [{:type :gain-subtype
@@ -1547,8 +1548,8 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Flux Capacitor"
-  {:hosting {:card #(and (ice? %)
-                         (can-host? %))}
+  {:hosting {:req (req (and (ice? target)
+                            (can-host? state target)))}
     :events [{:event :subroutines-broken
               :once :per-encounter
               :async true
@@ -1816,8 +1817,8 @@
                                                   state :corp
                                                   :subroutines-should-update))}]
   {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
-   :hosting {:card #(and (ice? %)
-                         (can-host? %))}
+   :hosting {:req (req (and (ice? target)
+                            (can-host? state target)))}
    :static-abilities [{:type :disable-card
                        :req (req (same-card? target (:host card)))
                        :value true}]
@@ -1835,9 +1836,9 @@
    :abilities [{:label "Host on a piece of ice"
                 :prompt "Choose a piece of ice"
                 :cost [(->c :click 1)]
-                :choices {:card #(and (ice? %)
-                                      (installed? %)
-                                      (can-host? %))}
+                :choices {:req (req (and (ice? target)
+                                         (installed? target)
+                                         (can-host? state target)))}
                 :msg (msg "host itself on " (card-str state target))
                 :async true
                 :effect (req (host state side target card)
@@ -1867,9 +1868,9 @@
                     :abilities [{:label "Host on a piece of ice"
                                  :prompt "Choose a piece of ice"
                                  :cost [(->c :credit 2)]
-                                 :choices {:card #(and (ice? %)
-                                                       (installed? %)
-                                                       (can-host? %))}
+                                 :choices {:req (req (and (ice? target)
+                                                          (installed? target)
+                                                          (can-host? state target)))}
                                  :msg (msg "host itself on " (card-str state target))
                                  :effect (effect (host target card))}
                                 (break-sub 1 2 "Sentry")
@@ -1983,18 +1984,18 @@
                                    {:prompt (msg "Choose a piece of ice"
                                                  (when hosted " not before or after the current host ice"))
                                     :cost [(->c :click 1)]
-                                    :choices {:card #(if hosted
-                                                       (and (or (when (= (get-zone %) (get-zone (:host k)))
-                                                                  (not= 1 (abs (- (card-index state %) icepos))))
-                                                                (not= (get-zone %) (get-zone (:host k))))
-                                                            (ice? %)
-                                                            (can-host? %)
-                                                            (installed? %)
-                                                            (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
-                                                       (and (ice? %)
-                                                            (installed? %)
-                                                            (can-host? %)
-                                                            (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
+                                    :choices {:req (req (if hosted
+                                                          (and (or (when (= (get-zone target) (get-zone (:host k)))
+                                                                     (not= 1 (abs (- (card-index state target) icepos))))
+                                                                   (not= (get-zone target) (get-zone (:host k))))
+                                                               (ice? target)
+                                                            (can-host? state target)
+                                                            (installed? target)
+                                                            (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted target)))
+                                                          (and (ice? target)
+                                                            (installed? target)
+                                                            (can-host? state target)
+                                                            (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted target)))))}
                                     :msg (msg "host itself on " (card-str state target))
                                     :effect (effect (host target card))}
                                    card nil)))}
@@ -2002,8 +2003,9 @@
 
 (defcard "Kyuban"
   {:implementation "[Erratum] Program: Trojan"
-   :hosting {:card #(and (ice? %)
-                         (can-host? %))}
+   :hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (can-host? state target)))}
    :events [{:event :pass-ice
              :interactive (req true)
              :req (req (same-card? (:ice context) (:host card)))
@@ -2087,8 +2089,9 @@
   (auto-icebreaker {:on-install {:req (req (threat-level 4 state))
                                  :msg "gain 3 strength for the remainder of the turn"
                                  :effect (effect (pump card 3 :end-of-turn))}
-                    :hosting {:card #(and (ice? %)
-                                          (can-host? %))}
+                    :hosting {:req (req (and (ice? target)
+                                             (installed? target)
+                                             (can-host? state target)))}
                     :abilities [(break-sub 1 1 "Sentry" {:req (req (protecting-same-server? current-ice (:host card)))})
                                 (strength-pump 1 2)]}))
 
@@ -2341,8 +2344,9 @@
                                 (strength-pump 2 2)]}))
 
 (defcard "Monkeywrench"
-  {:hosting {:card #(and (ice? %)
-                         (can-host? %))}
+  {:hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (can-host? state target)))}
    :static-abilities [{:type :ice-strength
                        :req (req (and (ice? target)
                                       (= (get-zone (:host card)) (get-zone target))))
@@ -2615,9 +2619,10 @@
 
 (defcard "Parasite"
   {:implementation "[Erratum] Program: Virus - Trojan"
-   :hosting {:card #(and (ice? %)
-                         (can-host? %)
-                         (rezzed? %))}
+   :hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (rezzed? target)
+                            (can-host? state target)))}
    :on-install
    {:effect (req (when-let [h (:host card)]
                    (update! state side (assoc-in card [:special :installing] true))
@@ -2655,18 +2660,18 @@
    :abilities [{:label "Host on the outermost piece of ice of a central server"
                 :cost [(->c :click 1)]
                 :prompt "Choose the outermost piece of ice of a central server"
-                :choices {:card #(and (ice? %)
-                                      (can-host? %)
-                                      (= (last (get-zone %)) :ices)
-                                      (is-central? (second (get-zone %))))}
+                :choices {:req (req (and (ice? target)
+                                         (can-host? state target)
+                                         (= (last (get-zone target)) :ices)
+                                         (is-central? (second (get-zone target)))))}
                 :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:label "Host on the next innermost piece of ice"
                 :prompt "Choose the next innermost piece of ice"
-                :choices {:card #(and (ice? %)
-                                      (can-host? %)
-                                      (= (last (get-zone %)) :ices)
-                                      (is-central? (second (get-zone %))))}
+                :choices {:req (req (and (ice? target)
+                                         (can-host? state target)
+                                         (= (last (get-zone target)) :ices)
+                                         (is-central? (second (get-zone target)))))}
                 :msg (msg "host itself on " (card-str state target))
                 :effect (effect (host target card))}
                {:req (req (not (zone-locked? state :runner :discard)))
@@ -2758,8 +2763,9 @@
                                 :type :recurring}}})
 
 (defcard "Physarum Entangler"
-  {:hosting {:card #(and (ice? %)
-                         (can-host? %))}
+  {:hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (can-host? state target)))}
    :events [{:event :purge
              :async true
              :msg "trash itself"
@@ -2783,8 +2789,9 @@
 (defcard "Pichação"
   ;; TODO - there's not really a way to tell if an event happened during a run?
   ;; this can be cleaned up a little later
-  {:hosting {:card #(and (ice? %)
-                         (can-host? %))}
+  {:hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (can-host? state target)))}
    :events [{:event :pass-ice
              :optional {:interactive (req true)
                         :prompt "Gain [Click]?"
@@ -2977,17 +2984,17 @@
                                             (msg "Choose a piece of ice protecting this server or at position "
                                                  icepos " of a different server")
                                             (msg "Choose a piece of ice protecting any server"))
-                                  :choices {:card #(if hosted?
-                                                     (and (or (= (get-zone %) (get-zone (:host r)))
-                                                              (= (card-index state %) icepos))
-                                                          (= (last (get-zone %)) :ices)
-                                                          (ice? %)
-                                                          (can-host? %)
-                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %)))
-                                                     (and (ice? %)
-                                                          (can-host? %)
-                                                          (= (last (get-zone %)) :ices)
-                                                          (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted %))))}
+                                  :choices {:req (req (if hosted?
+                                                        (and (or (= (get-zone target) (get-zone (:host r)))
+                                                                 (= (card-index state target) icepos))
+                                                             (= (last (get-zone target)) :ices)
+                                                             (ice? target)
+                                                             (can-host? state target)
+                                                             (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted target)))
+                                                        (and (ice? target)
+                                                             (can-host? state target)
+                                                             (= (last (get-zone target)) :ices)
+                                                             (not-any? (fn [c] (has-subtype? c "Caïssa")) (:hosted target)))))}
                                   :msg (msg "host itself on " (card-str state target))
                                   :effect (effect (host target card))}
                                  card nil)))}]
@@ -2997,8 +3004,9 @@
                        :value 2}]})
 
 (defcard "Saci"
-  {:hosting {:card #(and (ice? %)
-                         (can-host? %))}
+  {:hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (can-host? state target)))}
    :events [{:event :rez
              :req (req (same-card? (:card context) (:host card)))
              ;;(not= (:title (:card context)) "Magnet")))
@@ -3116,8 +3124,9 @@
   (break-and-enter "Sentry"))
 
 (defcard "Slap Vandal"
-  {:hosting {:card #(and (ice? %)
-                         (can-host? %))}
+  {:hosting {:req (req (and (ice? target)
+                            (installed? target)
+                            (can-host? state target)))}
    :abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))
                                      :repeatable false})]})
 
@@ -3357,8 +3366,9 @@
                                (<= 3 (get-virus-counters state (get-card state card))))
                       (derez state side (get-card state (:host card)))))]
     {:implementation "[Erratum] Program: Virus - Trojan"
-     :hosting {:card #(and (ice? %)
-                           (can-host? %))}
+     :hosting {:req (req (and (ice? target)
+                              (installed? target)
+                              (can-host? state target)))}
      :on-install {:interactive (req true)
                   :effect action}
      :events [{:event :runner-turn-begins
@@ -3408,8 +3418,9 @@
                                 (trash state :runner eid h {:cause-card card}))
                             (effect-completed state side eid))))]
     {:implementation "[Erratum] Program: Virus - Trojan"
-     :hosting {:card #(and (ice? %)
-                           (can-host? %))}
+     :hosting {:req (req (and (ice? target)
+                              (installed? target)
+                              (can-host? state target)))}
      :on-install {:async true
                   :effect trash-if-5}
      :abilities [(set-autoresolve :auto-place-counter "Trypano placing virus counters on itself")]

@@ -489,6 +489,7 @@
     {:on-rez {:effect ef}
      :events [(assoc rez-ability :event :rez)
               (assoc rez-ability :event :derez)
+              (assoc trash-ability :event :subroutines-should-update :req nil)
               (assoc trash-ability :event :game-trash)
               (assoc trash-ability :event :corp-trash)
               (assoc trash-ability :event :runner-trash)]}))

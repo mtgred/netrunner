@@ -36,7 +36,7 @@
 (defn trash-hosted-cards
   [state side eid card]
   (let [hosted-cards (seq (remove condition-counter? (:hosted card)))]
-    (if (can-host? card)
+    (if (can-host? state card)
       (effect-completed state side eid)
       (wait-for (trash-cards state side hosted-cards {:unpreventable true :game-trash true})
                 (when (pos? (count hosted-cards))
@@ -102,6 +102,7 @@
          card (get-card state card)
          alternative-cost (when (and card
                                      (not alternative-cost)
+                                     (not (is-disabled? state side card))
                                      (not declined-alternative-cost))
                             (:alternative-cost (card-def card)))]
      (if (and card

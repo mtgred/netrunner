@@ -3804,6 +3804,8 @@
         (is (= 6 (count (:subroutines (refresh ice)))) "5+1 on masvingo subs now")))
 
     ;;  mausolus
+    (advancable-while-hushed-test? "Mausolus" true)
+
     ;;  cloud eater
     (do-game
       (install-hush-and-run "Cloud Eater" {:hushed true})
@@ -3811,7 +3813,51 @@
       (run-continue state)
       (is (no-prompt? state :runner) "No Cloud Eater prompt because of hush"))
 
-    ;;  NEXT Bronze, Gold, Opal, Silver *
+    ;; NEXT Bronze
+    (do-game
+      (install-hush-and-run "NEXT Bronze" {:hushed true})
+      (let [ice (get-ice state :hq 0)]
+        (is (= 0 (get-strength ice)) "NEXt Bronze: X is 0 while hushed")
+        (trash state :runner (first (:hosted (refresh ice))))
+        (is (= 1 (get-strength (refresh ice))) "NEXt Bronze: X is 1 post-hush")))
+
+    ;; NEXT Gold
+    (do-game
+      (install-hush-and-run "NEXT Gold" {:hushed true :runner {:hand 2}})
+      (let [ice (get-ice state :hq 0)]
+        (run-continue-until state :encounter-ice)
+        (fire-subs state ice)
+        (is (zero? (count (:discard (get-runner)))) "X is 0, so gold does 0 net")
+        (is (no-prompt? state :corp) "X is 0, so gold trashes 0 programs")))
+
+    ;; NEXT Silver
+    (do-game
+      (install-hush-and-run "NEXT Silver" {:hushed true})
+      (let [ice (get-ice state :hq 0)]
+        (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
+        (trash state :runner (first (:hosted (refresh ice))))
+        (is (= 1 (count (:subroutines (refresh ice)))) "1 on NEXT Silver subs now")))
+
+    ;; NEXT Opal
+    (do-game
+      (install-hush-and-run "NEXT Opal" {:hushed true})
+      (let [ice (get-ice state :hq 0)]
+        (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
+        (trash state :runner (first (:hosted (refresh ice))))
+        (is (= 1 (count (:subroutines (refresh ice)))) "1 on NEXT Opal subs now")))
+
+    ;; Orion, Nebula, Wormhole, Asteroid Belt
+    (doseq [const ["Orion" "Wormhole" "Nebula" "Asteroid Belt"]]
+      (advancable-while-hushed-test? const true)
+      (do-game
+        (install-hush-and-run const {:hushed true
+                                     :unrezzed true
+                                     :counters {:advancement 5}})
+        (let [ice (get-ice state :hq 0)
+              creds (:credit (get-corp))]
+          (rez state :corp ice)
+          (is (not= creds (:credit (get-corp))) (str "Paid full price for " const " (hushed)")))))
+
     ;; Orion (nebula, wormhole, asteroid belt)
     ;;  saisentan
     ;;  salbage
@@ -3857,6 +3903,11 @@
       (is (no-prompt? state :corp) "No Thoth prompt because of hush"))
 
     ;;  tithonium
+    (do-game
+      (install-hush-and-run "Tithonium" {:hushed true :unrezzed true :scored ["City Works Project"]})
+      (rez state :corp (get-ice state :hq 0))
+      (is (no-prompt? state :corp) "No alternate cost prompt")
+      (is (zero? (count (:discard (get-runner)))) "Hush not trashed"))
     ;;  tollbooth
     (do-game
       (install-hush-and-run "Tollbooth" {:hushed true})
