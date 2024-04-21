@@ -1060,7 +1060,7 @@
   [state _ eid]
   (let [corp-uniques (get-old-uniques state :corp)
         runner-uniques (get-old-uniques state :runner)
-	consoles (->> (get-in @state [:runner :rig :hardware])
+        consoles (->> (get-in @state [:runner :rig :hardware])
                       (filter console?))
         consoles (when (< 1 (count consoles))
                    (butlast consoles))
