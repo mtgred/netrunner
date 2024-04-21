@@ -86,7 +86,6 @@
   (-> card
       (assoc :influencelimit "∞")
       (assoc-in [:format :standard] {:banned true})
-      (assoc-in [:format :startup-plus] {:banned true})
       (assoc-in [:format :startup] {:banned true})
       (assoc-in [:format :sunset] {:banned true})
       (assoc-in [:format :eternal] {:banned true})
