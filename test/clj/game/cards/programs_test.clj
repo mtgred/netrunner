@@ -3600,7 +3600,7 @@
              (core/gain state :corp :credit (:cost ice))
              ;; score agendas when needed
              (doseq [s scored]
-               (play-and-score state :corp s))
+               (play-and-score state s))
              ;;adjust counters when needed
              (when counters
                ;; counters of the form :counter {:power x :credit x}
@@ -3750,7 +3750,13 @@
         (click-card state :runner "Fermenter")
         (is (= 5 (count (:subroutines (refresh env)))) "4+1 subs now")))
 
-    ;;  hive
+    ;; hush vs. funhouse
+    (do-game
+      (install-hush-and-run "Funhouse" {:hushed true})
+      (run-continue-until state :encounter-ice)
+      (is (no-prompt? state :runner) "No funhouse prompt because of hush"))
+
+    ;; hush vs. hive
     (do-game
       (install-hush-and-run "Hive" {:rig ["Simulchip"]
                                     :scored ["City Works Project"]
@@ -3763,25 +3769,135 @@
         (click-card state :runner "Hush")
         (click-card state :runner "Fermenter")
         (is (= 2 (count (:subroutines ice))) "5-3 subs on hive now")))
-    ;;  hortum
-    ;;  information overload
+
+    ;; hush vs. hortum
+    (advancable-while-hushed-test? "Hortum" true)
+    (do-game
+      (install-hush-and-run "Hortum" {:rig ["Alpha"] :counters {:advancement 3} :hushed true})
+      (run-continue-until state :encounter-ice)
+      (let [prog (get-program state 0)]
+        (card-ability state :runner prog 1)
+        (card-ability state :runner prog 1)
+        (card-ability state :runner prog 1)
+        (card-ability state :runner prog 0)
+        (click-prompt state :runner "Gain 1 [Credits] (Gain 4 [Credits])")
+        (click-prompt state :runner "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)")))
+
+    ;; hush vs. information overload
+    (do-game
+      (install-hush-and-run "Information Overload" {:hushed true :tags 5})
+      (run-continue-until state :encounter-ice)
+      (is (no-prompt? state :runner) "No Info Overload prompt because of hush")
+      (let [ice (get-ice state :hq 0)]
+        (is (= 0 (count (:subroutines (refresh ice)))) "No subs due to hush")
+        (trash state :runner (first (:hosted (refresh ice))))
+        (is (= 5 (count (:subroutines (refresh ice)))) "5 subs now")))
+
     ;;  masvingo *
+    (advancable-while-hushed-test? "Masvingo" true)
+    (do-game
+      (install-hush-and-run "Masvingo" {:counters {:advancement 5}
+                                        :hushed true})
+      (let [ice (get-ice state :hq 0)]
+        (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
+        (trash state :runner (first (:hosted (refresh ice))))
+        (is (= 6 (count (:subroutines (refresh ice)))) "5+1 on masvingo subs now")))
+
     ;;  mausolus
-    ;;  anansi
     ;;  cloud eater
+    (do-game
+      (install-hush-and-run "Cloud Eater" {:hushed true})
+      (run-continue-until state :encounter-ice)
+      (run-continue state)
+      (is (no-prompt? state :runner) "No Cloud Eater prompt because of hush"))
+
     ;;  NEXT Bronze, Gold, Opal, Silver *
     ;; Orion (nebula, wormhole, asteroid belt)
     ;;  saisentan
+    ;;  salbage
+    (advancable-while-hushed-test? "Salvage" false)
+    (do-game
+      (install-hush-and-run "Salvage" {:rig ["Simulchip"]
+                                       :counters {:advancement 5}
+                                       :players {:runner {:discard ["Fermenter"]}}
+                                       :hushed true})
+      (let [ice (get-ice state :hq 0)
+            sim (get-hardware state 0)]
+        (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
+        (card-ability state :runner sim 0)
+        (click-card state :runner "Hush")
+        (click-card state :runner "Fermenter")
+        (is (= 5 (count (:subroutines (refresh ice)))) "5 subs on salvage now")))
     ;;  seraph
+    (do-game
+      (install-hush-and-run "Seraph" {:hushed true})
+      (run-continue-until state :encounter-ice)
+      (is (no-prompt? state :runner) "No Seraph prompt because of hush"))
     ;;  searchlight
     ;;  surveyor
     ;;  swarm *
+    (advancable-while-hushed-test? "Swarm" true)
+    (do-game
+      (install-hush-and-run "Swarm" {:rig ["Simulchip"]
+                                        :counters {:advancement 5}
+                                        :players {:runner {:discard ["Fermenter"]}}
+                                        :hushed true})
+      (let [ice (get-ice state :hq 0)
+            sim (get-hardware state 0)]
+        (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
+        (card-ability state :runner sim 0)
+        (click-card state :runner "Hush")
+        (click-card state :runner "Fermenter")
+        (is (= 5 (count (:subroutines (refresh ice)))) "5 subs on swarm now")))
+
     ;;  thoth
+    (do-game
+      (install-hush-and-run "Thoth" {:hushed true})
+      (run-continue-until state :encounter-ice)
+      (is (no-prompt? state :corp) "No Thoth prompt because of hush"))
+
     ;;  tithonium
+    ;;  tollbooth
+    (do-game
+      (install-hush-and-run "Tollbooth" {:hushed true})
+      (is (= 5 (:credit (get-runner))))
+      (run-continue-until state :encounter-ice)
+      (is (= 5 (:credit (get-runner))) "No payment to tollbooth")
+      (is (no-prompt? state :runner) "No tollbooth prompt because of hush"))
     ;;  tour guide *
     ;;  turing
     ;;  tyr
+
     ;;  tyrant *
+    (advancable-while-hushed-test? "Tyrant" false)
+    (do-game
+      (install-hush-and-run "Tyrant" {:rig ["Simulchip"]
+                                        :counters {:advancement 5}
+                                        :players {:runner {:discard ["Fermenter"]}}
+                                        :hushed true})
+      (let [ice (get-ice state :hq 0)
+            sim (get-hardware state 0)]
+        (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
+        (card-ability state :runner sim 0)
+        (click-card state :runner "Hush")
+        (click-card state :runner "Fermenter")
+        (is (= 5 (count (:subroutines (refresh ice)))) "5 subs on tyrant now")))
+
+    ;; woodcutter
+    (advancable-while-hushed-test? "Woodcutter" false)
+    (do-game
+      (install-hush-and-run "Woodcutter" {:rig ["Simulchip"]
+                                          :counters {:advancement 5}
+                                          :players {:runner {:discard ["Fermenter"]}}
+                                          :hushed true})
+      (let [ice (get-ice state :hq 0)
+            sim (get-hardware state 0)]
+        (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
+        (card-ability state :runner sim 0)
+        (click-card state :runner "Hush")
+        (click-card state :runner "Fermenter")
+        (is (= 5 (count (:subroutines (refresh ice)))) "5 subs on woodcutter now")))
+
     ;;  wraparound
 
     ))

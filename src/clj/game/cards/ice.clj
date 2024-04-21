@@ -550,6 +550,7 @@
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
     {:advanceable :while-rezzed
      :events [(assoc ability :event :advance)
+              (assoc ability :event :subroutines-should-update :req nil)
               (assoc ability :event :advancement-placed)
               (assoc ability :event :rez)]}))
 
@@ -2155,9 +2156,12 @@
    :subroutines [end-the-run]})
 
 (defcard "Hive"
+  ;; TODO - make this work with hush
   (let [corp-points (fn [corp] (min 5 (max 0 (- 5 (:agenda-point corp 0)))))
         ability {:silent (req true)
-                 :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
+                 :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}
+        reset-to-5 {:silent (req true)
+                    :effect (effect (reset-printed-subs card 5 end-the-run))}]
     {:events [(assoc ability
                      :event :rez
                      :req (req (same-card? card (:card context))))
@@ -2203,7 +2207,9 @@
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid))))})]
     (let [breakable-fn (req (when (or (> 3 (get-counters card :advancement))
-                                      (not (has-subtype? target "AI")))
+                                      (not (has-subtype? target "AI"))
+                                      (not= (:title card) "Hortum") ;; loki protection
+                                      (is-disabled-reg? state card))
                               :unrestricted))]
       {:advanceable :always
        :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
@@ -2346,7 +2352,9 @@
 (defcard "Information Overload"
   {:on-encounter (tag-trace 1)
    :on-rez {:effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}
-   :events [{:event :tags-changed
+   :events [{:event :subroutines-should-update
+             :effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}
+            {:event :tags-changed
              :effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}]})
 
 (defcard "Interrupt 0"
@@ -2879,6 +2887,7 @@
     {:advanceable :always
      :on-rez {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}
      :events [(assoc ability :event :advance)
+              (assoc ability :event :subroutines-should-update :req nil)
               (assoc ability :event :advancement-placed)
               (assoc ability :event :rez)]}))
 
@@ -3896,6 +3905,7 @@
     {:advanceable :always
      :on-rez take-bad-pub
      :events [(assoc ability :event :advance)
+              (assoc ability :event :subroutines-should-update :req nil)
               (assoc ability :event :advancement-placed)
               (assoc ability :event :rez)]}))
 

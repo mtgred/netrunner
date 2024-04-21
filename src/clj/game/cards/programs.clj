@@ -28,7 +28,7 @@
    [game.core.gaining :refer [gain-clicks gain-credits lose-credits]]
    [game.core.hosting :refer [host]]
    [game.core.identities :refer [disable-card enable-card]]
-   [game.core.ice :refer [all-subs-broken-by-card? all-subs-broken?
+   [game.core.ice :refer [add-sub all-subs-broken-by-card? all-subs-broken?
                           any-subs-broken-by-card? auto-icebreaker break-sub
                           break-subroutine! break-subroutines-msg breaker-strength-bonus dont-resolve-subroutine!
                           get-strength ice-strength pump pump-ice set-current-ice strength-pump
@@ -47,7 +47,7 @@
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
-   [game.core.runs :refer [active-encounter? bypass-ice continue end-run-prevent
+   [game.core.runs :refer [active-encounter? bypass-ice continue end-run end-run-prevent
                            get-current-encounter make-run successful-run-replace-breach
                            update-current-encounter]]
    [game.core.sabotage :refer [sabotage-ability]]
@@ -72,6 +72,20 @@
   (auto-icebreaker {:data {:counter {:power 4}}
                     :abilities [(break-sub [(->c :power 1)] 2 ice-type)
                                 (strength-pump 1 1)]}))
+
+(defn- reset-printed-subs
+  ([state side card total sub] (reset-printed-subs state side card total sub {:printed true}))
+  ([state side card total sub args]
+   (let [old-subs (remove #(and (= (:cid card) (:from-cid %))
+                                (:printed %))
+                          (:subroutines card))
+         new-card (assoc card :subroutines old-subs)
+         new-subs (->> (range total)
+                       (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
+                       :subroutines)
+         new-card (assoc new-card :subroutines new-subs)]
+     (update! state :corp new-card)
+     (trigger-event state side :subroutines-changed (get-card state new-card)))))
 
 (defn- swap-with-in-hand
   "Swap with a deva program from the grip
