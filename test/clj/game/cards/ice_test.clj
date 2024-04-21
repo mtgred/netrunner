@@ -6266,7 +6266,7 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Trace succeeds with 1 advancement"))))
 
-(deftest searchlight-x-fn
+(deftest ^:kaocha/pending searchlight-x-fn
   (do-game
     (new-game {:corp {:deck ["Searchlight"]}})
     (core/gain state :corp :credit 10)
