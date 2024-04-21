@@ -153,7 +153,7 @@
                                           card nil)
                                         ;; installable
                                         (if (can-pay? state side (assoc eid :source card :source-type :runner-install) top-card nil
-                                                      (install-cost state side top-card))
+                                                      (->c :credit (install-cost state side top-card)))
                                           (continue-ability
                                             state side
                                             {:optional
