@@ -140,7 +140,8 @@
   ([cost qty] (bioroid-break cost qty nil))
   ([cost qty args]
    (break-sub [(->c :lose-click cost)] qty nil
-              (assoc args :req (req (currently-encountering-card card state))))))
+              (assoc args :req (req (and (not (is-disabled-reg? state card))
+                                         (currently-encountering-card card state)))))))
 
 ;;; General subroutines
 (def end-the-run
@@ -3549,7 +3550,7 @@
                                     (let [choice (:card-target card)
                                           cards async-result
                                           dmg (some #(when (= (:type %) choice) %) cards)]
-                                      (if dmg
+                                      (if (and dmg (not (is-disabled-reg? state card)))
                                         (do (system-msg state :corp (str "uses " (:title card) " to deal 1 additional net damage"))
                                             (damage state side eid :net 1 {:card card}))
                                         (effect-completed state side eid)))))}]

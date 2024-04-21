@@ -3547,7 +3547,8 @@
 (deftest hush-has-caused-me-to-suffer
   (letfn
       [(install-hush-and-run
-         [card {:keys [hushed counters server tags threat players rig unrezzed scored] :as args}]
+         [card {:keys [hushed counters server tags threat
+                       players rig unrezzed scored assets] :as args}]
          (let [
                ;; just incase I only care about the card counts
                players (if (int? (get-in players [:corp :hand]))
@@ -3571,6 +3572,10 @@
                ;; add agendas to score to the corp hand
                players (assoc-in players [:corp :hand]
                                  (concat scored (get-in players [:corp :hand])))
+
+               ;; add assets to the corp hand
+               players (assoc-in players [:corp :hand]
+                                 (concat assets (get-in players [:corp :hand])))
 
                ;; add the rig to the runner hand
                players (assoc-in players [:runner :hand]
@@ -3601,6 +3606,14 @@
              ;; score agendas when needed
              (doseq [s scored]
                (play-and-score state s))
+             (doseq [a assets]
+               (let [target-card (first (filter #(= (:title %) a) (:hand (:corp @state))))
+                     cost (:cost target-card)]
+                 (core/gain state :corp :credit cost)
+                 (core/gain state :corp :click 1)
+                 (play-from-hand state :corp a "New remote")
+                 (rez state :corp
+                      (get-content state (keyword (str "remote" (dec (:rid @state)))) 0))))
              ;;adjust counters when needed
              (when counters
                ;; counters of the form :counter {:power x :credit x}
@@ -3847,19 +3860,23 @@
         (is (= 1 (count (:subroutines (refresh ice)))) "1 on NEXT Opal subs now")))
 
     ;; Orion, Nebula, Wormhole, Asteroid Belt
-    (doseq [const ["Orion" "Wormhole" "Nebula" "Asteroid Belt"]]
-      (advancable-while-hushed-test? const true)
+    (doseq [space ["Orion" "Wormhole" "Nebula" "Asteroid Belt"]]
+      (advancable-while-hushed-test? space true)
       (do-game
-        (install-hush-and-run const {:hushed true
+        (install-hush-and-run space {:hushed true
                                      :unrezzed true
                                      :counters {:advancement 5}})
         (let [ice (get-ice state :hq 0)
               creds (:credit (get-corp))]
           (rez state :corp ice)
-          (is (not= creds (:credit (get-corp))) (str "Paid full price for " const " (hushed)")))))
+          (is (not= creds (:credit (get-corp))) (str "Paid full price for " space " (hushed)")))))
 
-    ;; Orion (nebula, wormhole, asteroid belt)
     ;;  saisentan
+    (do-game
+      (install-hush-and-run "Saisentan" {:hushed true})
+      (run-continue-until state :encounter-ice)
+      (is (no-prompt? state :corp) "No Saisentan prompt because of hush"))
+
     ;;  salbage
     (advancable-while-hushed-test? "Salvage" false)
     (do-game
@@ -3879,15 +3896,35 @@
       (install-hush-and-run "Seraph" {:hushed true})
       (run-continue-until state :encounter-ice)
       (is (no-prompt? state :runner) "No Seraph prompt because of hush"))
+
     ;;  searchlight
+    (advancable-while-hushed-test? "Searchlight" true)
+
+    ;; Stavka
+    (do-game
+      (install-hush-and-run "Stavka" {:hushed true :unrezzed true :assets ["PAD Campaign"]})
+      (rez state :corp (get-ice state :hq 0))
+      (is (no-prompt? state :corp) "No stavka prompt due to hush"))
+
     ;;  surveyor
-    ;;  swarm *
+    (do-game
+      (install-hush-and-run "Surveyor" {:hushed true})
+      (run-continue-until state :encounter-ice)
+      (fire-subs state (get-ice state :hq 0))
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (is (zero? (count-tags state)) "No tags from surveyor")
+      (is (:run @state) "run didn't end (X = 0, surveyor)"))
+    
+    ;;  swarm
     (advancable-while-hushed-test? "Swarm" true)
     (do-game
       (install-hush-and-run "Swarm" {:rig ["Simulchip"]
-                                        :counters {:advancement 5}
-                                        :players {:runner {:discard ["Fermenter"]}}
-                                        :hushed true})
+                                     :counters {:advancement 5}
+                                     :players {:runner {:discard ["Fermenter"]}}
+                                     :hushed true})
       (let [ice (get-ice state :hq 0)
             sim (get-hardware state 0)]
         (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
@@ -3908,6 +3945,7 @@
       (rez state :corp (get-ice state :hq 0))
       (is (no-prompt? state :corp) "No alternate cost prompt")
       (is (zero? (count (:discard (get-runner)))) "Hush not trashed"))
+
     ;;  tollbooth
     (do-game
       (install-hush-and-run "Tollbooth" {:hushed true})
@@ -3915,17 +3953,46 @@
       (run-continue-until state :encounter-ice)
       (is (= 5 (:credit (get-runner))) "No payment to tollbooth")
       (is (no-prompt? state :runner) "No tollbooth prompt because of hush"))
+
     ;;  tour guide *
+    (do-game
+      (install-hush-and-run "Tour Guide" {:hushed true
+                                          :assets ["PAD Campaign" "NGO Front"]})
+      (run-continue-until state :encounter-ice)
+      (let [ice (get-ice state :hq 0)]
+        (is (= 0 (count (:subroutines (refresh ice)))) "No subs on tour guide due to hush")
+        (trash state :runner (first (:hosted (refresh ice))))
+        (is (= 2 (count (:subroutines (refresh ice)))) "2 subs on tour guide now")))
+
     ;;  turing
+    (do-game
+      (install-hush-and-run "Turing" {:hushed true
+                                      :rig ["Alpha"]
+                                      :server "New remote"})
+      (run-continue-until state :encounter-ice)
+      (let [prog (get-program state 0)
+            tur (get-ice state :remote1 0)]
+        (is (= 2 (get-strength tur)) "Turing is 2 strength due to hush")
+        (card-ability state :runner prog 1)
+        (is (= 2 (get-strength (refresh prog))) "Alpha is 2 strength")
+        (card-ability state :runner prog 0)
+        (click-prompt state :runner "End the run unless the Runner pays [Click][Click][Click]")))
+
     ;;  tyr
+    (do-game
+      (install-hush-and-run "Týr" {:hushed true})
+      (run-continue state :encounter-ice)
+      (card-side-ability state :runner (get-ice state :hq 0) 0)
+      ;; NOTE - this isn't possible in game, but it is in the test....
+      (is (no-prompt? state :runner) "No prompt to break, the ability is not active"))
 
     ;;  tyrant *
     (advancable-while-hushed-test? "Tyrant" false)
     (do-game
       (install-hush-and-run "Tyrant" {:rig ["Simulchip"]
-                                        :counters {:advancement 5}
-                                        :players {:runner {:discard ["Fermenter"]}}
-                                        :hushed true})
+                                      :counters {:advancement 5}
+                                      :players {:runner {:discard ["Fermenter"]}}
+                                      :hushed true})
       (let [ice (get-ice state :hq 0)
             sim (get-hardware state 0)]
         (is (= 0 (count (:subroutines ice))) "0 subroutine because we're hushed")
@@ -3950,8 +4017,9 @@
         (is (= 5 (count (:subroutines (refresh ice)))) "5 subs on woodcutter now")))
 
     ;;  wraparound
-
-    ))
+    (do-game
+      (install-hush-and-run "Wraparound" {:hushed true})
+      (is (= 0 (get-strength (get-ice state :hq 0))) "Hushed wrap is 0 str"))))
 
 
 (deftest hyperdriver

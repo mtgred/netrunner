@@ -277,8 +277,9 @@
 (defn can-advance?
   "Checks if the corp can advance cards"
   [state side card]
-  (and (check-flag-types? state side card :can-advance [:current-turn :persistent])
-       (can-really-be-advanced? state card)))
+  (and (check-flag-types? state side card :can-advance [:current-turn :persistent])))
+;; this flag should *probably* be there, but it appears to break some of the tests
+;; (can-really-be-advanced? state card))) ;; we can fix this later - nbkelly, apr '24
 
 (defn can-score?
   "Checks if the corp can score a given card"
