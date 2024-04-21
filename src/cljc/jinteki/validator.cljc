@@ -325,7 +325,6 @@
     {:format (:format deck)
      :casual valid
      :standard (build-format-legality valid :standard deck)
-     :standard-plus (build-format-legality valid :standard-plus deck)
      :startup (build-format-legality valid :startup deck)
      :sunset (build-format-legality valid :sunset deck)
      :system-gateway (build-system-gateway-legality valid deck)
