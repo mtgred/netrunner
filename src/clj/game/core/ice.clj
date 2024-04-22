@@ -320,8 +320,10 @@
 (defn get-strength
   [card]
   (when (or (ice? card)
-            (:strength card)
-            (has-subtype? card "Icebreaker"))
+            (has-subtype? card "Icebreaker")
+            ;; special case for if a non-ice card is being used in a forced encounter
+            ;; at a bare minimum, it needs to have a :strength key to work -nbk, apr 2024
+            (:strength card))
     (or (:current-strength card)
         (:strength card)
         0)))
