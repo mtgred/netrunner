@@ -2158,7 +2158,6 @@
    :subroutines [end-the-run]})
 
 (defcard "Hive"
-  ;; TODO - make this work with hush
   (let [corp-points (fn [corp] (min 5 (max 0 (- 5 (:agenda-point corp 0)))))
         ability {:silent (req true)
                  :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}

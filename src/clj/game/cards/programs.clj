@@ -33,7 +33,7 @@
                           break-subroutine! break-subroutines-msg breaker-strength-bonus dont-resolve-subroutine!
                           get-strength ice-strength pump pump-ice set-current-ice strength-pump
                           unbroken-subroutines-choice update-all-icebreakers update-breaker-strength]]
-   [game.core.initializing :refer [ability-init card-init]]
+   [game.core.initializing :refer [ability-init card-init subroutines-init]]
    [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
                                  runner-install]]
    [game.core.link :refer [get-link]]
@@ -1774,42 +1774,17 @@
       (strength-pump (->c :credit 2 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Hush"
-  ;; quick laundry list of ice with some variable subs that hush cares about, and other interactions:
-  ;;  ! Afshar (breaking restriction check) (done)
-  ;;  ! Akhet (advancable-while-hushed, +str, breaking restriction check) (done)
-  ;;  ! Anansi (done)
-  ;;  ! attini (the payment thing) (done)
-  ;;  ! blockchain * (done)
-  ;;  ! echo * (done)
-  ;;  ! envelopment * (done)
-  ;;  hive *
-  ;;  hortum
-  ;;  information overload
-  ;;  masvingo *
-  ;;  mausolus
-  ;;  anansi
-  ;;  cloud eater
-  ;;  NEXT Bronze, Gold, Opal, Silver *
-  ;; Orion (nebula, wormhole, asteroid belt)
-  ;;  saisentan
-  ;;  seraph
-  ;;  searchlight
-  ;;  surveyor
-  ;;  swarm *
-  ;;  thoth
-  ;;  tithonium
-  ;;  tour guide *
-  ;;  turing
-  ;;  tyr
-  ;;  tyrant *
-  ;;  wraparound
   (let [reset-card-to-printed-subs
         (fn [state side card]
           (let [card (get-card state card)
-                old-subs (vec (remove #(or (:variable %)
-                                           (not (:printed %)))
-                                      (:subroutines card)))
-                new-card (assoc card :subroutines old-subs)]
+                subs (vec (remove #(or (:variable %)
+                                       (not (:printed %)))
+                                  (:subroutines card)))
+                ;; special case for hive, because it unprints subroutines...
+                subs (if (= "Hive" (:title card))
+                       (subroutines-init card (card-def card))
+                       subs)
+                new-card (assoc card :subroutines subs)]
             (update! state :corp new-card)
             (trigger-event state side :subroutines-changed (get-card state new-card))))
         subroutines-should-update {:silent (req true)

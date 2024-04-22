@@ -579,7 +579,7 @@
   (= (:active-player @state) (get-side ability)))
 
 (defn- valid-condition?
-  [state card {:keys [condition location]}]
+  [state card {:keys [condition location] :as ability}]
   (when (case condition
           :accessed (same-card? card (:access @state))
           :active (active? card)
@@ -596,9 +596,14 @@
                            (and (contains? location :hand)
                                 (in-hand? card)))
           :test-condition true)
-    (and
-      (not (is-disabled? state nil card))
-      (not (is-disabled-reg? state card))
+    (when
+        ;; special case for abilities which persist while disabled
+        ;; primarily, this is to cheat abilities based on rulings
+        ;; that aren't properly supported by the current design
+        ;; of our engine (eg Saci) - nbk, Apr 2024
+        (or (:while-disabled ability)
+            (and (not (is-disabled? state nil card))
+                 (not (is-disabled-reg? state card))))
       card)))
 
 (defn- card-for-ability

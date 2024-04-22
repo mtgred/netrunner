@@ -3771,17 +3771,12 @@
 
     ;; hush vs. hive
     (do-game
-      (install-hush-and-run "Hive" {:rig ["Simulchip"]
-                                    :scored ["City Works Project"]
-                                    :players {:runner {:discard ["Fermenter"]}}
+      (install-hush-and-run "Hive" {:scored ["City Works Project"]
                                     :hushed true})
-      (let [ice (get-ice state :hq 0)
-            sim (get-hardware state 0)]
+      (let [ice (get-ice state :hq 0)]
         (is (= 5 (count (:subroutines ice))) "full subs on hive because hush")
-        (card-ability state :runner sim 0)
-        (click-card state :runner "Hush")
-        (click-card state :runner "Fermenter")
-        (is (= 2 (count (:subroutines ice))) "5-3 subs on hive now")))
+        (trash state :runner (first (:hosted (refresh ice))))
+        (is (= 2 (count (:subroutines (refresh ice)))) "5-3 subs on hive now")))
 
     ;; hush vs. hortum
     (advancable-while-hushed-test? "Hortum" true)
