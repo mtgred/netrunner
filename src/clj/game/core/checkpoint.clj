@@ -32,5 +32,4 @@
                  (< i 10))
         (recur (inc i)))))
   (clear-empty-remotes state)
-  ;;(system-msg state nil (str "disabled: " (vec (map :title (:disabled-card-reg @state)))))
   (generate-runnable-zones state nil nil))

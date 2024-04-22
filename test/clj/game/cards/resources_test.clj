@@ -7453,7 +7453,7 @@
 (deftest zona-sul-shipping
   ;; Zona Sul Shipping - Gain 1c per turn, click to take all credits. Trash when tagged
   (do-game
-    (new-game {:runner {:deck ["Zona Sul Shipping"]}})
+    (new-game {:runner {:deck ["Zona Sul Shipping" "Rogue Trading"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Zona Sul Shipping")
     (let [zss (get-resource state 0)]
@@ -7466,5 +7466,7 @@
       (card-ability state :runner zss 0)
       (is (= 12 (:credit (get-runner))) "Took 2c off Zona Sul")
       (is (= 3 (:click (get-runner))) "Spent 1 click")
-      (gain-tags state :runner 1)
+      (play-from-hand state :runner "Rogue Trading")
+      (card-ability state :runner (get-resource state 1) 0)
+      ;;(gain-tags state :runner 1)
       (is (= 1 (count (:discard (get-runner)))) "Zona Sul trashed when tag taken"))))

@@ -2,7 +2,7 @@
   (:require
     [game.core.effects :refer [any-effects sum-effects]]
     [game.core.eid :refer [effect-completed]]
-    [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync]]
+    [game.core.engine :refer [trash-on-tag trigger-event trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
@@ -33,7 +33,11 @@
        (trigger-event state :runner :tags-changed {:new-total new-total
                                                    :old-total old-total
                                                    :is-tagged is-tagged?}))
-     changed?)))
+     (if is-tagged?
+       (wait-for
+         (trash-on-tag state nil)
+         changed?)
+       changed?))))
 
 (defn tag-prevent
   [state side eid n]
