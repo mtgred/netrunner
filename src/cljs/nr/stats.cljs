@@ -164,7 +164,7 @@
         shade (if (= (str winner) "corp") 
                 (if (= (:username user) (get-in corp [:player :username])) "#618b61" "#Ea7d7f")
                 (if (= (:username user) (get-in runner [:player :username])) "#618b61" "#Ea7d7f"))]
-    [:div.gameline {:style {:min-height "auto" :background-color shade}}
+    [:div.gameline {:style {:min-height "auto" :border-color shade}}
      [:button.float-right
       {:on-click #(do
                     (fetch-log state game)
