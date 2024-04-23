@@ -34,7 +34,7 @@
                                                    :old-total old-total
                                                    :is-tagged is-tagged?}))
      (when is-tagged?
-       (trash-on-tag state nil (make-eid state eid)))
+       (trash-on-tag state nil (make-eid state)))
      changed?)))
 
 (defn tag-prevent
