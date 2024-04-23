@@ -159,8 +159,12 @@
   [state {:keys [title corp runner turn winner replay-shared has-replay start-date] :as game} log-scroll-top]
   (let [corp-id (get @all-cards (:identity corp))
         runner-id (get @all-cards (:identity runner))
-        turn-count (if turn turn 0)]
-    [:div.gameline {:style {:min-height "auto"}}
+        turn-count (if turn turn 0)
+        user (:user @app-state)
+        shade (if (= (str winner) "corp") 
+                (if (= (:username user) (get-in corp [:player :username])) "#618b61" "#Ea7d7f")
+                (if (= (:username user) (get-in runner [:player :username])) "#618b61" "#Ea7d7f"))]
+    [:div.gameline {:style {:min-height "auto" :background-color shade}}
      [:button.float-right
       {:on-click #(do
                     (fetch-log state game)
