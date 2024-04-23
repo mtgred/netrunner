@@ -1,7 +1,7 @@
 (ns game.core.tags
   (:require
     [game.core.effects :refer [any-effects sum-effects]]
-    [game.core.eid :refer [effect-completed]]
+    [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [trash-on-tag trigger-event trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
