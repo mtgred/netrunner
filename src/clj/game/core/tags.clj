@@ -33,11 +33,9 @@
        (trigger-event state :runner :tags-changed {:new-total new-total
                                                    :old-total old-total
                                                    :is-tagged is-tagged?}))
-     (if is-tagged?
-       (wait-for
-         (trash-on-tag state nil)
-         changed?)
-       changed?))))
+     (when is-tagged?
+       (trash-on-tag state nil (make-eid state eid)))
+     changed?)))
 
 (defn tag-prevent
   [state side eid n]
