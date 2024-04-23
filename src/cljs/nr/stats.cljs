@@ -162,8 +162,8 @@
         turn-count (if turn turn 0)
         user (:user @app-state)
         shade (if (= (str winner) "corp") 
-                (if (= (:username user) (get-in corp [:player :username])) "#618b61" "#Ea7d7f")
-                (if (= (:username user) (get-in runner [:player :username])) "#618b61" "#Ea7d7f"))]
+                (if (= (:username user) (get-in corp [:player :username])) "#6AB56A" "#Ea7d7f")
+                (if (= (:username user) (get-in runner [:player :username])) "#6AB56A" "#Ea7d7f"))]
     [:div.gameline {:style {:min-height "auto" :border-color shade}}
      [:button.float-right
       {:on-click #(do
