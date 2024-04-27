@@ -148,7 +148,7 @@
     {:minutes minutes :seconds seconds}))
 
 (defn game-time [game]
-  [:span.game-time (str (time-since (:date game)))]
+  [:span.game-time (str (str (:minutes (time-since (:date game)))) "m")]
    )
 
 (defn players-row [{players :players :as game}]
