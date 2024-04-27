@@ -164,7 +164,8 @@
         user-win (if (= (str winner) "corp") 
                 (if (= (:username user) (get-in corp [:player :username])) " (You)" "")
                 (if (= (:username user) (get-in runner [:player :username])) " (You)" ""))]
-    [:div.gameline {:style {:min-height "auto" :border-color (if (= user-win " (You)") "#6AB56A" "#Ea7d7f")}}
+    [:div.gameline {:style {:min-height "auto"
+                            :border-color (when winner (if (= user-win " (You)") "#6AB56A" "#Ea7d7f"))}}
      [:button.float-right
       {:on-click #(do
                     (fetch-log state game)
