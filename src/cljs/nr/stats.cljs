@@ -161,10 +161,10 @@
         runner-id (get @all-cards (:identity runner))
         turn-count (if turn turn 0)
         user (:user @app-state)
-        shade (if (= (str winner) "corp") 
+        user-win (if (= (str winner) "corp") 
                 (if (= (:username user) (get-in corp [:player :username])) " (You)" "")
                 (if (= (:username user) (get-in runner [:player :username])) " (You)" ""))]
-    [:div.gameline {:style {:min-height "auto" :border-color (if (= shade " (You)") "#6AB56A" "#Ea7d7f")}}
+    [:div.gameline {:style {:min-height "auto" :border-color (if (= user-win " (You)") "#6AB56A" "#Ea7d7f")}}
      [:button.float-right
       {:on-click #(do
                     (fetch-log state game)
@@ -189,7 +189,7 @@
        (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
 
      (when winner
-       [:h4 (tr [:stats.winner "Winner"]) ": " (tr-side winner) (str shade)])]))
+       [:h4 (tr [:stats.winner "Winner"]) ": " (tr-side winner) (str user-win)])]))
 
 (defn history [_state list-scroll-top _log-scroll-top]
   (r/create-class
