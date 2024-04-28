@@ -138,18 +138,17 @@
    [:span.format-singleton (str (when singleton? " (singleton)"))]])
 
 (defn- time-since
-  "Helper method for match duration. Computes how much time since game start"
+  "Helper method for game-time. Computes how many minutes since game start"
   [start]
   (let [now (inst/now)
         diff (duration/between start now)
         total-seconds (duration/get diff chrono/seconds)
-        minutes (abs (quot total-seconds 60))
-        seconds (mod (abs total-seconds) 60)]
-    {:minutes minutes :seconds seconds}))
+        minutes (abs (quot total-seconds 60))]
+    minutes))
 
 (defn game-time [game]
-  [:span.game-time (str (str (:minutes (time-since (:date game)))) "m")]
-   )
+(when (:started game)
+  [:div.game-time (str (time-since (:date game)) "m")]))
 
 (defn players-row [{players :players :as game}]
   (into
