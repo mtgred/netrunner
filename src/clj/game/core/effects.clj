@@ -147,5 +147,5 @@
     (into {} (map (juxt :cid identity)) disabled-cards)))
 
 (defn update-disabled-cards [state]
-  (swap! state assoc-in [:disabled-card-reg] (all-disabled-cards state))
-  (get-in @state [:disabled-card-reg]))
+  (swap! state assoc :disabled-card-reg (all-disabled-cards state))
+  (:disabled-card-reg @state))
