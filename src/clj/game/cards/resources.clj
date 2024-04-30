@@ -109,11 +109,6 @@
                 :msg message
                 :effect (effect (effect-fn eid card targets))}]})
 
-(defn- trash-when-tagged-contructor
-  "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
-  [definition]
-  (assoc definition :trash-when-tagged true))
-
 (defn companion-builder
   "pay-credits-req says when it can be used. turn-ends-ability defines what happens,
   and requires `effect-completed`."
@@ -1161,7 +1156,6 @@
              :prompt "Choose an installed card to make its text box blank for the remainder of the turn"
              :once :per-turn
              :interactive (req true)
-             ;;:async true
              :choices {:card installed?}
              :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
              :effect (req
@@ -1181,10 +1175,6 @@
                             :req (req (same-card? c target))
                             :value (req true)})
                          (fake-checkpoint state)))}]})
-
-                            ;;
-                            ;; (disable-card state side (get-card state target))
-                            ;; (effect-completed state side eid)))}]})
 
 (defcard "Dr. Nuka Vrolyck"
   {:data {:counter {:power 2}}

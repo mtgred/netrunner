@@ -4094,9 +4094,8 @@
           (rez state :corp magnet)
           (click-card state :corp ika)
           (is (zero?(count (:hosted (refresh enigma)))) "Ika was removed from Enigma")
-          ;; note that when cards are disabled now, the abilities still exist
-          ;; we just don't allow them to be used
-          ;; since card-ability bypasses :playable, that wont work in the test
+          (is (not (:playable (first (:abilities (refresh ika))))) "Ika abilities are not playable")
+          (is (not (:playable (second (:abilities (refresh ika))))) "Ika abilities are not playable")
           (is (= 1 (count (:hosted (refresh magnet)))) "Ika was hosted onto Magnet")))))
 
 (deftest imp-full-test

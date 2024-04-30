@@ -3,7 +3,7 @@
     [game.core.card :refer [asset? condition-counter? get-card ice? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
-    [game.core.effects :refer [unregister-static-abilities is-disabled?]]
+    [game.core.effects :refer [is-disabled? unregister-static-abilities update-disabled-cards]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [register-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
@@ -142,4 +142,5 @@
       (when-let [derezzed-events (:derezzed-events cdef)]
         (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events))))
     (unregister-static-abilities state side card)
+    (update-disabled-cards state)
     (trigger-event state side :derez {:card card :side side})))

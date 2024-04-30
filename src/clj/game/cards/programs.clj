@@ -73,20 +73,6 @@
                     :abilities [(break-sub [(->c :power 1)] 2 ice-type)
                                 (strength-pump 1 1)]}))
 
-(defn- reset-printed-subs
-  ([state side card total sub] (reset-printed-subs state side card total sub {:printed true}))
-  ([state side card total sub args]
-   (let [old-subs (remove #(and (= (:cid card) (:from-cid %))
-                                (:printed %))
-                          (:subroutines card))
-         new-card (assoc card :subroutines old-subs)
-         new-subs (->> (range total)
-                       (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
-                       :subroutines)
-         new-card (assoc new-card :subroutines new-subs)]
-     (update! state :corp new-card)
-     (trigger-event state side :subroutines-changed (get-card state new-card)))))
-
 (defn- swap-with-in-hand
   "Swap with a deva program from the grip
   (Deva suite: Aghora, Sadyojata, Vamadeva)"
@@ -1777,13 +1763,7 @@
   (let [reset-card-to-printed-subs
         (fn [state side card]
           (let [card (get-card state card)
-                subs (vec (remove #(or (:variable %)
-                                       (not (:printed %)))
-                                  (:subroutines card)))
-                ;; special case for hive, because it unprints subroutines...
-                subs (if (= "Hive" (:title card))
-                       (subroutines-init card (card-def card))
-                       subs)
+                subs (subroutines-init card (card-def card))
                 new-card (assoc card :subroutines subs)]
             (update! state :corp new-card)
             (trigger-event state side :subroutines-changed (get-card state new-card))))
@@ -1807,7 +1787,6 @@
              :effect (req (reset-card-to-printed-subs state side target))}]
    :on-trash subroutines-should-update
    :move-zone (req (continue-ability state side subroutines-should-update card nil))
-   ;;:uninstall subroutines-should-update
    :abilities [{:label "Host on a piece of ice"
                 :prompt "Choose a piece of ice"
                 :cost [(->c :click 1)]
@@ -2989,12 +2968,11 @@
              :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
              :req (req (same-card? (:card context) (:host card)))
-             ;; special cheat for working with magnet
+             ;; NOTE
              ;;   current guidance from rules is that saci doesn't get
              ;;   a payout on magnet rez, but does get one when magnet is
-             ;;   derezzed. It is what it is.
+             ;;   derezzed.
              ;; - Apr 13 '24, nbkelly
-             :while-disabled true
              :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 3))}]})

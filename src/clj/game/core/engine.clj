@@ -505,7 +505,6 @@
    :unregister-once-resolved (or (:unregister-once-resolved ability) false)
    :once-per-instance (or (:once-per-instance ability) false)
    :ability (dissoc ability :event :duration :condition)
-   :while-disabled (:while-disabled ability)
    :card card
    :uuid (uuid/v1)})
 
@@ -597,13 +596,8 @@
                                 (in-hand? card)))
           :test-condition true)
     (when
-        ;; special case for abilities which persist while disabled
-        ;; primarily, this is to cheat abilities based on rulings
-        ;; that aren't properly supported by the current design
-        ;; of our engine (eg Saci) - nbk, Apr 2024
-        (or (:while-disabled ability)
-            (and (not (is-disabled? state nil card))
-                 (not (is-disabled-reg? state card))))
+        (and (not (is-disabled? state nil card))
+             (not (is-disabled-reg? state card)))
       card)))
 
 (defn- card-for-ability
@@ -865,7 +859,7 @@
                  (let [card (card-for-ability state handler)
                        ability (:ability handler)]
                    (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card context))
-                        (or card (:while-disabled ability))
+                        card
                         (can-trigger? state (to-keyword (:side card)) eid ability card context)))))
        (sort-by (complement #(is-active-player state (:handler %))))
        (seq)))
@@ -1082,8 +1076,7 @@
 (defn- enforce-conditions-impl
   [state _ eid cards]
   (if (seq cards)
-    (let [fc (first cards)
-          rest (rest cards)]
+    (let [fc (first cards)]
       (wait-for
         (resolve-ability
           state (to-keyword (:side fc))
@@ -1091,16 +1084,16 @@
               (is-disabled-reg? state fc)
             (:enforce-conditions fc))
           fc nil)
-        (enforce-conditions-impl state nil eid rest)))
+        (enforce-conditions-impl state nil eid (rest cards))))
     (effect-completed state nil eid)))
 
 (defn enforce-conditions
   [state _ eid]
   (wait-for
     (trash-on-tag state nil (make-eid state eid))
-    (if-let [cards (filter
-                     :enforce-conditions
-                     [(get-in @state [:corp :identity])])]
+    (if-let [cards (seq (filter
+                          :enforce-conditions
+                          [(get-in @state [:corp :identity])]))]
       (enforce-conditions-impl state nil eid cards)
       (effect-completed state nil eid))))
 
