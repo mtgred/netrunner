@@ -9,7 +9,6 @@
    [game.core.initializing :refer [update-all-card-labels]]
    [game.core.link :refer [update-link]]
    [game.core.memory :refer [update-mu]]
-   [game.core.say :refer [system-msg]]
    [game.core.subtypes :refer [update-all-subtypes]]
    [game.core.tags :refer [update-tag-status]]))
 

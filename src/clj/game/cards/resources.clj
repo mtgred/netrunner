@@ -2007,12 +2007,20 @@
                           card nil))}]})
 
 (defcard "Light the Fire!"
-  (let [successful-run-trigger {:event :successful-run
-                                  :duration :end-of-run
-                                  :async true
-                                  :req (req (is-remote? (:server run)))
-                                  :effect (effect (trash-cards eid (:content run-server)))
-                                  :msg "trash all cards in the server for no cost"}]
+  (let [successful-run-event
+        {:event :successful-run
+         :duration :end-of-run
+         :async true
+         :req (req (and run
+                        (is-remote? (:server run))))
+         :effect (effect (trash-cards eid (:content run-server)))
+         :msg "trash all cards in the server for no cost"}
+        disable-card-effect
+        {:type :disable-card
+         :duration :end-of-run
+         :req (req (and run
+                        (some #{:content} (:zone target))
+                        (some #{run-server} (:zone target))))}]
     {:abilities [{:label "Run a remote server"
                   :cost [(->c :click 1) (->c :trash-can) (->c :brain 1)]
                   :prompt "Choose a remote server"
@@ -2021,15 +2029,9 @@
                   :makes-run true
                   :async true
                   :effect (effect
-                            (register-events card [successful-run-trigger])
-                            (make-run eid target card)
-                            (register-lingering-effect
-                              card
-                              {:type :disable-card
-                               :duration :end-of-run
-                               :req (req (and run
-                                              (some #{:content} (:zone target))
-                                              (some #{run-server} (:zone target))))}))}]}))
+                            (register-events card [successful-run-event])
+                            (register-lingering-effect card [disable-card-effect])
+                            (make-run eid target card))}]}))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"

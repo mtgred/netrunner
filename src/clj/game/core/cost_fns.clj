@@ -49,7 +49,7 @@
                  ;; and the additional cost for the cdef, but we should probably actually
                  ;; have a note here explaining it (somewhere in this file)
                  [;(when-not (is-disabled? state side card)
-                    (:additional-cost card)
+                  (:additional-cost card)
                   ;  )
                   (when-not (is-disabled? state side card) (:additional-cost (card-def card)))
                   (get-effects state side :rez-additional-cost card)])]

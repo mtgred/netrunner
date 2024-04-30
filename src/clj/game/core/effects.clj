@@ -145,6 +145,7 @@
   (let [all-cards (get-all-cards state)
         disabled-cards (filter #(is-disabled? state nil %) all-cards)]
     (into {} (map (juxt :cid identity)) disabled-cards)))
+
 (defn update-disabled-cards [state]
   (swap! state assoc-in [:disabled-card-reg] (all-disabled-cards state))
   (get-in @state [:disabled-card-reg]))

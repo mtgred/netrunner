@@ -570,8 +570,7 @@
   {:on-play {:msg "disable the Runner's identity"}
    :static-abilities [{:type :disable-card
                        :req (req (same-card? target (:identity runner)))
-                       :value true}]
-   :disable-id true})
+                       :value true}]})
 
 (defcard "\"Clones are not People\""
   {:events [{:event :agenda-scored

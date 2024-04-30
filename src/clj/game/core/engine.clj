@@ -1050,7 +1050,6 @@
                       (filter console?))
         consoles (when (< 1 (count consoles))
                    (butlast consoles))
-
         cards-to-trash (-> (concat corp-uniques runner-uniques consoles)
                            distinct
                            seq)]
@@ -1135,7 +1134,7 @@
   ([state _ eid] (checkpoint state nil eid nil))
   ([state _ eid {:keys [duration durations] :as args}]
    ;; a: Any ability that has met its condition creates the appropriate instances of itself and marks them as pending
-   (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid nil)]
+   (let [{:keys [handlers context-maps]} (mark-pending-abilities state eid args)]
      ;; b: Any ability with a duration that has passed is removed from the game state
      (wait-for
        (unregister-expired-durations state nil (make-eid state eid) (conj durations duration) context-maps)

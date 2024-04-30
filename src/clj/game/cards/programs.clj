@@ -2984,13 +2984,16 @@
                             (can-host? state target)))}
    :events [{:event :rez
              :req (req (same-card? (:card context) (:host card)))
-             ;;(not= (:title (:card context)) "Magnet")))
              :msg "gain 3 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 3))}
             {:event :derez
              :req (req (same-card? (:card context) (:host card)))
              ;; special cheat for working with magnet
+             ;;   current guidance from rules is that saci doesn't get
+             ;;   a payout on magnet rez, but does get one when magnet is
+             ;;   derezzed. It is what it is.
+             ;; - Apr 13 '24, nbkelly
              :while-disabled true
              :msg "gain 3 [Credits]"
              :async true

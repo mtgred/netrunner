@@ -1078,7 +1078,7 @@
 (defcard "Jinteki: Potential Unleashed"
   {:events [{:async true
              :event :pre-resolve-damage
-             :req (req (and ;;(-> @state :corp :disable-id not)
+             :req (req (and
                          (= target :net)
                          (pos? (last targets))))
              :effect (req (let [c (first (get-in @state [:runner :deck]))]

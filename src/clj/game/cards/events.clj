@@ -1116,7 +1116,6 @@
                                      (same-card? target (:identity runner))))
 
                        :value true}]
-   :disable-id true
    :on-play {:async true
              :effect (req
                        ;; note - this fake checkpoint forces abilities like RP to be blank
@@ -1291,8 +1290,7 @@
   {:on-play {:msg "disable the Corp's identity"}
    :static-abilities [{:type :disable-card
                        :req (req (same-card? target (:identity corp)))
-                       :value true}]
-   :disable-id true})
+                       :value true}]})
 
 (defcard "En Passant"
   {:on-play
@@ -3329,9 +3327,9 @@
                                  (or (asset? card)
                                      (upgrade? card))
                                  (not (has-subtype? card "Region"))))]
-    {:static-abilities[{:type :disable-card
-                        :req (req (eligible? target))
-                        :value true}]}))
+    {:static-abilities [{:type :disable-card
+                         :req (req (eligible? target))
+                         :value true}]}))
 
 (defcard "Run Amok"
   (letfn [(get-rezzed-cids [ice]
