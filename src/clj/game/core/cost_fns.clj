@@ -23,8 +23,7 @@
 (defn play-additional-cost-bonus
   [state side card]
   (merge-costs
-    (concat (:additional-cost card)
-            (get-in (card-def card) [:on-play :additional-cost])
+    (concat (get-in (card-def card) [:on-play :additional-cost])
             (get-effects state side :play-additional-cost card))))
 
 (defn rez-cost
@@ -45,21 +44,14 @@
   ([state side card] (rez-additional-cost-bonus state side card nil))
   ([state side card pred]
    (let [costs (merge-costs
-                 ;; idk what the difference is between the additional cost for the card,
-                 ;; and the additional cost for the cdef, but we should probably actually
-                 ;; have a note here explaining it (somewhere in this file)
-                 [;(when-not (is-disabled? state side card)
-                  (:additional-cost card)
-                  ;  )
-                  (when-not (is-disabled? state side card) (:additional-cost (card-def card)))
+                 [(when-not (is-disabled? state side card) (:additional-cost (card-def card)))
                   (get-effects state side :rez-additional-cost card)])]
      (filterv (or pred identity) costs))))
 
 (defn score-additional-cost-bonus
   [state side card]
   (merge-costs
-    [(:additional-cost card)
-     (:additional-cost (card-def card))
+    [(:additional-cost (card-def card))
      (get-effects state side :score-additional-cost card)]))
 
 (defn trash-cost
@@ -92,8 +84,7 @@
 (defn install-additional-cost-bonus
   [state side card]
   (merge-costs
-    [(:additional-cost card)
-     (:additional-cost (card-def card))
+    [(:additional-cost (card-def card))
      (get-effects state side :install-additional-cost card)]))
 
 (defn ignore-install-cost?
