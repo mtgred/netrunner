@@ -270,6 +270,7 @@
    :events [{:event :run-ends
              :req (req (and (#{:hq :rd} (target-server context))
                             (>= (total-cards-accessed context) 3)))
+             :msg "add 1 power counter to itself"
              :effect (effect (add-counter (get-card state card) :power 1))}
             {:event :runner-turn-begins
              :optional
