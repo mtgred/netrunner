@@ -179,13 +179,16 @@
   {:static-abilities [(mu+ 1)]
    :events [{:event :runner-lose-tag
              :optional {:prompt "Remove 1 power counter to draw 2 cards?"
-                        :req (req (= :runner (:side context)))
+                        :waiting-prompt true
+                        :req (req (and (= :runner (:side context))
+                                       (pos? (get-counters card :power))))
                         :yes-ability {:cost [(->c :power 1)]
                                       :msg "draw 2 cards"
                                       :async true
                                       :effect (req (draw state :runner eid 2))}}}
             {:event :runner-turn-ends
              :req (req tagged)
+             :msg "place 1 power counter on itself"
              :effect (req (add-counter state side (get-card state card) :power 1))}]})
 
 
