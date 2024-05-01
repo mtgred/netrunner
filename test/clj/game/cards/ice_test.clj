@@ -4415,9 +4415,13 @@
       (play-from-hand state :runner "Marjanah")
       (run-on state "HQ")
       (rez state :corp lmm)
+      (is (= 3 (count (:choices (prompt-map :corp)))) "Corp cannot select Done right away")
       (click-prompt state :corp "Code Gate")
+      (is (= 3 (count (:choices (prompt-map :corp)))) "Done is added to the choices list")
       (click-prompt state :corp "Sentry")
+      (is (= 2 (count (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Barrier")
+      (is (= 1 (count (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Done")
       (run-continue state)
       (is (changed? [(:credit (get-runner)) -1
