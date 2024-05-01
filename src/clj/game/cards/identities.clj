@@ -5,7 +5,7 @@
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
                             get-remote-names get-remotes server->zone]]
-   [game.core.card :refer [agenda? asset?
+   [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
                            ice? in-discard? in-hand? in-play-area? installed? is-type? operation? program?
@@ -24,7 +24,7 @@
                              first-successful-run-on-server? no-event? not-last-turn? run-events turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-latest]]
-   [game.core.flags :refer [can-really-be-advanced? card-flag? clear-persistent-flag!
+   [game.core.flags :refer [card-flag? clear-persistent-flag!
                             register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
@@ -1060,7 +1060,7 @@
                                      (continue-ability
                                        state side
                                        {:prompt "Choose a card that can be advanced"
-                                        :choices {:req (req (can-really-be-advanced? state target))}
+                                        :choices {:req (req (can-be-advanced? state target))}
                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
                                        card nil))
                                  (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error"))))}]})
@@ -1765,7 +1765,7 @@
              :async true
              :waiting-prompt true
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
-             :choices {:req (req (and (installed? target) (can-really-be-advanced? state target)))}
+             :choices {:req (req (and (installed? target) (can-be-advanced? state target)))}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))
              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))

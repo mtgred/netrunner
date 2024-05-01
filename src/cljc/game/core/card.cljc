@@ -355,21 +355,31 @@
       (:agendapoints card)
       0))
 
+(defn- is-disabled-reg?
+  [state card]
+  (get (:disabled-card-reg @state) (:cid card)))
+
 (defn can-be-advanced?
   "Returns true if the card can be advanced"
-  [card]
-  (or (card-is? card :advanceable #?(:clj :always
-                                     :cljs "always"))
-      ;; e.g. Tyrant, Woodcutter
-      (and (card-is? card :advanceable #?(:clj :while-rezzed
-                                          :cljs "while-rezzed"))
-           (rezzed? card))
-      ;; e.g. Haas Arcology AI
-      (and (card-is? card :advanceable #?(:clj :while-unrezzed
-                                          :cljs "while-unrezzed"))
-           (not (rezzed? card)))
-      (and (is-type? card "Agenda")
-           (installed? card))))
+  ([card]
+   (or (card-is? card :advanceable #?(:clj :always
+                                      :cljs "always"))
+       ;; e.g. Tyrant, Woodcutter
+       (and (card-is? card :advanceable #?(:clj :while-rezzed
+                                           :cljs "while-rezzed"))
+            (rezzed? card))
+       ;; e.g. Haas Arcology AI
+       (and (card-is? card :advanceable #?(:clj :while-unrezzed
+                                           :cljs "while-unrezzed"))
+            (not (rezzed? card)))
+       (and (is-type? card "Agenda")
+            (installed? card))))
+  ([state card]
+   (and (can-be-advanced? card)
+        ;; note - the text allowing a card to be advanceable is an ability,
+        ;;    except for agendas, where it's implicit to the card type -nbk, apr '24
+        (or (agenda? card)
+            (not (is-disabled-reg? state card))))))
 
 (defn get-counters
   "Get number of counters of specified type."

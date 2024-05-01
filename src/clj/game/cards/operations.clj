@@ -7,7 +7,7 @@
    [game.core.board :refer [all-active-installed all-installed
                             get-all-installed get-remote-names get-remotes
                             installable-servers server->zone]]
-   [game.core.card :refer [active? agenda? asset? card-index corp? corp-installable-type?
+   [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
                            event? facedown? faceup? get-advancement-requirement
                            get-card get-counters get-title get-zone hardware? has-subtype? ice? identity?
                            in-discard? in-hand? installed? is-type? operation? program? resource?
@@ -24,7 +24,7 @@
    [game.core.engine :refer [pay register-events resolve-ability should-trigger?]]
    [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
                              turn-events]]
-   [game.core.flags :refer [can-really-be-advanced? can-score? clear-persistent-flag! in-corp-scored?
+   [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
                             in-runner-scored? is-scored? prevent-jack-out
                             register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
@@ -286,7 +286,7 @@
   (letfn [(audacity [x]
             {:prompt (msg "Choose a card that can be advanced to place advancement counters on (" x " remaining)")
              :async true
-             :choices {:req (req (can-really-be-advanced? state target))
+             :choices {:req (req (can-be-advanced? state target))
                        :all true}
              :msg (msg "place 1 advancement counter on " (card-str state target))
              :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
@@ -295,7 +295,7 @@
                                       (effect-completed state side eid))))})]
     {:on-play
      {:req (req (and (<= 3 (count (:hand corp)))
-                     (some #(can-really-be-advanced? state %) (all-installed state :corp))))
+                     (some #(can-be-advanced? state %) (all-installed state :corp))))
       :async true
       :msg "trash all cards in HQ"
       :effect (req (wait-for (trash-cards state side (:hand corp) {:unpreventable true :cause-card card})
@@ -510,7 +510,7 @@
         kaguya {:choices {:max 2
                           :req (req (and (corp? target)
                                          (installed? target)
-                                         (can-really-be-advanced? state target)))}
+                                         (can-be-advanced? state target)))}
                 :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
                 :effect (req (doseq [t targets]
                                (add-prop state :corp t :advance-counter 1 {:placed true})))}]
@@ -2098,7 +2098,7 @@
                                  (continue-ability
                                    state side
                                    {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
-                                    :choices {:req (req (can-really-be-advanced? state target))}
+                                    :choices {:req (req (can-be-advanced? state target))}
                                     :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                    card nil)))
                      (effect-completed state side eid))))}})
@@ -2268,9 +2268,9 @@
 
 (defcard "Red Planet Couriers"
   {:on-play
-   {:req (req (some #(can-really-be-advanced? state %) (all-installed state :corp)))
+   {:req (req (some #(can-be-advanced? state %) (all-installed state :corp)))
     :prompt "Choose an installed card that can be advanced"
-    :choices {:req (req (can-really-be-advanced? state target))}
+    :choices {:req (req (can-be-advanced? state target))}
     :async true
     :effect (req (let [installed (get-all-installed state)
                        total-adv (reduce + (map #(get-counters % :advancement) installed))]
@@ -2585,7 +2585,7 @@
    {:choices {:max 2
               :req (req (and (corp? target)
                              (installed? target)
-                             (can-really-be-advanced? state target)))}
+                             (can-be-advanced? state target)))}
     :msg (msg "place 1 advancement token on " (quantify (count targets) "card"))
     :effect (req (doseq [t targets]
                    (add-prop state :corp t :advance-counter 1 {:placed true})))}})
@@ -2612,7 +2612,7 @@
     :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
-                     {:choices {:req (req (can-really-be-advanced? state target))}
+                     {:choices {:req (req (can-be-advanced? state target))}
                       :msg (msg "place " (quantify c "advancement token") " on " (card-str state target))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))}
                      card nil)))}})
@@ -2867,7 +2867,7 @@
               (effect-completed state side eid)))]
     {:on-play
      {:additional-cost [(->c :forfeit)]
-      :choices {:req (req (can-really-be-advanced? state target))}
+      :choices {:req (req (can-be-advanced? state target))}
       :msg (msg "advance " (card-str state target)
              " " (quantify (get-advancement-requirement (cost-target eid :forfeit)) "time"))
       :async true
@@ -3046,11 +3046,11 @@
 (defcard "Trick of Light"
   {:on-play
    {:prompt "Choose an installed card you can advance"
-    :req (req (let [advanceable (some #(can-really-be-advanced? state %) (get-all-installed state))
+    :req (req (let [advanceable (some #(can-be-advanced? state %) (get-all-installed state))
                     num-installed (count (get-all-installed state))]
                  (and advanceable
                       (> num-installed 1))))
-    :choices {:req (req (and (can-really-be-advanced? state target)
+    :choices {:req (req (and (can-be-advanced? state target)
                              (installed? target)))}
     :async true
     :effect (effect

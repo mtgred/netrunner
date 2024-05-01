@@ -7,7 +7,7 @@
    [game.core.board :refer [all-active-installed all-installed all-installed-runner 
                             all-installed-runner-type card->server
                             get-all-cards get-all-installed server->zone]]
-   [game.core.card :refer [active? agenda? asset? card-index
+   [game.core.card :refer [active? agenda? asset? card-index can-be-advanced?
                            corp? corp-installable-type? faceup?
                            get-card get-counters get-zone
                            hardware? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
@@ -27,7 +27,7 @@
                              ]]
    [game.core.events :refer [first-event? run-events]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-really-be-advanced? can-rez? card-flag? prevent-draw prevent-jack-out
+   [game.core.flags :refer [can-rez? card-flag? prevent-draw prevent-jack-out
                             register-run-flag! register-turn-flag! run-flag? zone-locked?]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [hand-size]]
@@ -1038,7 +1038,7 @@
   (let [sub {:label "Place 1 advancement token on a piece of ice that can be advanced protecting this server"
              :msg (msg "place 1 advancement token on " (card-str state target))
              :choices {:req (req (and (ice? target)
-                                      (can-really-be-advanced? state target)))}
+                                      (can-be-advanced? state target)))}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
     {:abilities [{:label "Move this ice to the outermost position of any server"
                   :cost [(->c :click 1)]
@@ -2142,7 +2142,7 @@
                                                  state side
                                                  {:msg (msg "pay " c " [Credits] and place " (quantify c "advancement token")
                                                             " on " (card-str state target))
-                                                  :choices {:req (req (can-really-be-advanced? state target))}
+                                                  :choices {:req (req (can-be-advanced? state target))}
                                                   :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                                  card nil)))
                                    (effect-completed state side eid))))}]
@@ -2894,7 +2894,7 @@
 
 (defcard "Matrix Analyzer"
   {:on-encounter {:cost [(->c :credit 1)]
-                  :choices {:req (req (can-really-be-advanced? state target))}
+                  :choices {:req (req (can-be-advanced? state target))}
                   :msg (msg "place 1 advancement token on " (card-str state target))
                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
    :subroutines [(tag-trace 2)]})
@@ -4286,10 +4286,10 @@
                :waiting-prompt true
                :req (req (and (can-pay? state side eid card nil [(->c :credit 1)])
                               (some #(or (not (rezzed? %))
-                                         (can-really-be-advanced? state %))
+                                         (can-be-advanced? state %))
                                     (all-installed state :corp))))
                :yes-ability {:cost [(->c :credit 1)]
-                             :choices {:req (req (can-really-be-advanced? state target))}
+                             :choices {:req (req (can-be-advanced? state target))}
                              :prompt "Choose a card that can be advanced"
                              :msg (msg "place 1 advancement counter on " (card-str state target))
                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))

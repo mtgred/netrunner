@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as string]
    [game.core.board :refer [all-installed server->zone]]
-   [game.core.card :refer [agenda? corp? get-card
+   [game.core.card :refer [agenda? can-be-advanced? corp? get-card
                            has-subtype? ice? in-hand? installed? map->Card rezzed?
                            runner?]]
    [game.core.change-vals :refer [change]]
@@ -11,7 +11,7 @@
    [game.core.drawing :refer [draw]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [resolve-ability trigger-event]]
-   [game.core.flags :refer [can-really-be-advanced? is-scored?]]
+   [game.core.flags :refer [is-scored?]]
    [game.core.hosting :refer [host]]
    [game.core.identities :refer [disable-identity disable-card enable-card]]
    [game.core.initializing :refer [card-init deactivate make-card]]
@@ -84,7 +84,7 @@
      :effect (req (let [existing (:counter target)
                         value (constrain-value (if-let [n (string->num (first args))] n 0) 0 1000)
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
-                                     (can-really-be-advanced? state target) :advance-counter
+                                     (can-be-advanced? state target) :advance-counter
                                      (and (agenda? target) (is-scored? state side target)) :agenda
                                      (and (runner? target) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter counter-type)]

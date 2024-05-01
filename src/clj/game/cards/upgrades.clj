@@ -8,7 +8,7 @@
    [game.core.bad-publicity :refer [lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-corp card->server
                             get-remotes server->zone server-list]]
-   [game.core.card :refer [agenda? asset?
+   [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? get-card get-counters get-zone
                            has-subtype? ice? in-discard? in-hand? installed? operation? program? resource? rezzed?
                            runner? upgrade?]]
@@ -25,7 +25,7 @@
    [game.core.events :refer [first-event? first-run-event? no-event? turn-events]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.finding :refer [find-cid find-latest]]
-   [game.core.flags :refer [can-really-be-advanced? clear-persistent-flag! is-scored? register-persistent-flag!
+   [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
                             register-run-flag!]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+]]
@@ -1817,7 +1817,7 @@
                 :msg (msg "place 2 advancement counters on " (card-str state target))
                 :choices {:not-self true
                           :req (req (and (installed? target)
-                                         (can-really-be-advanced? state target)
+                                         (can-be-advanced? state target)
                                          (in-same-server? card target)))}
                 :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
 

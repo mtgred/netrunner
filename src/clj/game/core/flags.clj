@@ -10,13 +10,6 @@
     [game.core.toasts :refer [toast]]
     [game.utils :refer [enumerate-str same-card? same-side?]]))
 
-(defn can-really-be-advanced?
-  "Like can be advanced, but takes into account that abilities allowing advancability may be disabled"
-  [state card]
-  (and (can-be-advanced? card)
-       (or (agenda? card)
-           (not (is-disabled-reg? state card)))))
-
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
   ;; TODO: add a register for mutable state card flags, separate from this
@@ -278,8 +271,6 @@
   "Checks if the corp can advance cards"
   [state side card]
   (and (check-flag-types? state side card :can-advance [:current-turn :persistent])))
-;; this flag should *probably* be there, but it appears to break some of the tests
-;; (can-really-be-advanced? state card))) ;; we can fix this later - nbkelly, apr '24
 
 (defn can-score?
   "Checks if the corp can score a given card"
