@@ -50,14 +50,16 @@
            [(-> @routes/current-view :data :view)]]])})))
 
 (defn main-window []
-  [:<>
-   [:nav.topnav.blue-shade
-    [:div#left-menu [navbar]]
-    [:div#right-menu [auth-menu]]
-    [:div#status [status]]]
-   [:div#auth-forms [auth-forms]]
-   [reagent-modals/modal-window]
-   [pages]])
+  (let [new-theme (r/cursor app-state [:options :new-theme])
+        shrink-runner-cards (r/cursor app-state [:options :shrink-runner-cards])] 
+    [:div {:class [(when @new-theme :new-theme) (when @shrink-runner-cards :shrink-runner-cards)]} 
+     [:nav.topnav.blue-shade 
+      [:div#left-menu [navbar]] 
+      [:div#right-menu [auth-menu]] 
+      [:div#status [status]]] 
+     [:div#auth-forms [auth-forms]] 
+     [reagent-modals/modal-window] 
+     [pages]]))
 
 (defn mount []
   (rdom/render [main-window] (.getElementById js/document "main-content")))

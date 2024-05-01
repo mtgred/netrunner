@@ -7,7 +7,7 @@
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
-   [nr.gameboard.state :refer [game-state not-spectator?]]
+   [nr.gameboard.state :refer [game-state not-spectator? get-side]]
    [nr.help :refer [command-info]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [influence-dot player-highlight-option-class
@@ -176,6 +176,39 @@
          [indicate-action]
          [command-menu !input-ref state]]))))
 
+(defn log-input-alternate []
+  (let [current-game (r/cursor app-state [:current-game])
+        active-player (r/cursor game-state [:active-player])
+        !input-ref (r/atom nil)
+        state (r/atom {})]
+    (fn []
+      (when (or (not-spectator?)
+                (not (:mutespectators @current-game)))
+        [:div.log-input
+         [:div.form-container
+          [:form {:on-submit #(do (.preventDefault %)
+                                  (reset-command-menu state)
+                                  (send-msg state))}
+           [:input#log-input
+            {:placeholder (tr [:chat.placeholder "Say something"])
+             :type "text"
+             :autoComplete "off"
+             :ref #(reset! !input-ref %)
+             :value (:msg @state)
+             :on-blur #(send-typing (atom nil))
+             :on-key-down #(command-menu-key-down-handler state %)
+             :on-change #(log-input-change-handler state %)}]]]
+         [command-menu !input-ref state]
+         (when (not-spectator?) [:<> 
+                                 [:button {:class (when (not= (name (get-side @game-state)) @active-player) "disabled")} [:div.undo-icon {:title (tr [:game.undo-click "Undo Click"]) 
+                                                  :on-click #(do (.preventDefault %)
+                                                                 (send-command "undo-click" {:no-lock true})) 
+                                                  :key "Undo Click"}]]
+                                 [:button [:div.indicate-action-icon {:title (tr [:game.indicate-action "Indicate action"]) 
+                                                             :on-click #(do (.preventDefault %) 
+                                                                            (send-command "indicate-action"))
+                                                             :key "Indicate action"}]]])]))))
+
 (defn log-messages []
   (let [log (r/cursor game-state [:log])
         corp (r/cursor game-state [:corp :user :username])
@@ -229,3 +262,11 @@
      [log-messages]
      [log-typing]
      [log-input]]))
+
+(defn log-pane-alternate []
+  (fn []
+    [:div.log
+     [angel-arena-log/inactivity-pane]
+     [log-messages]
+     [log-typing]
+     [log-input-alternate]]))

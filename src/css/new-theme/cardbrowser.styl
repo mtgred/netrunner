@@ -1,0 +1,31 @@
+@require "opacity"
+@require "palette"
+// Card Browser
+.new-theme
+    .cardbrowser
+        .selected-alt
+            color: var(--theme-primary)
+
+    .search-box
+        .search-icon
+            color: var(--icon-highlight)
+
+        .search-clear
+            color: var(--nav-color)
+
+            &:hover
+                color: var(--icon-highlight)
+
+    .set-list > div
+        border: 1px solid transparent
+
+        &:hover
+            background-color: var(--theme-primary-40)
+            border: 1px solid var(--theme-primary)
+
+    .card-preview
+        &.selected
+            box-shadow(0 0 1px 2px var(--selected-highlight))
+
+        &.selected-alt
+            box-shadow(0 0 1px 2px var(--theme-primary))

@@ -328,6 +328,12 @@
   (if cond
     [:button {:on-click f :key text} text]
     [:button.disabled {:key text} text]))
+  
+(defn cond-button-element
+  [key element cond f]
+  (if cond
+    [:button {:on-click f :key key} element]
+    [:button.disabled {:key key} element]))
 
 (defn checkbox-button [on-text off-text on-cond f]
   (if on-cond

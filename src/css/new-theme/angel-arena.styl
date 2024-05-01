@@ -1,0 +1,36 @@
+// Note: Some of the definitions here overwrite styles set in lobby.styl for .lobby .gamepanel
+.new-theme .lobby .angel-arena.game-panel
+    .format-bar
+        .tab
+            color: white
+
+            &:hover
+                color: orange
+
+            &.current
+                color: orange
+
+    >.run .games
+        .match
+            &>img.identity
+                &.won
+                    box-shadow(0 0 4px 2px var(--success-highlight))
+
+                &.lost
+                    box-shadow(0 0 4px 2px var(--warning-red-shadow))
+
+    .latest-runs
+        .run
+            .match
+                &>img.identity
+
+                    &.won
+                        box-shadow(0 0 4px 2px var(--success-highlight))
+
+                    &.lost
+                        box-shadow(0 0 4px 2px var(--warning-red-shadow))
+
+            .unfold-button
+                border-top: .375rem solid transparent
+                border-bottom: .375rem solid transparent
+                border-left: .75rem solid white

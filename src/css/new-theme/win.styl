@@ -1,0 +1,28 @@
+@require "opacity"
+@require "palette"
+
+// Win Message Box
+.new-theme
+    .win.centered
+        border: 1px solid var(--theme-primary)
+        z-index: 1000
+        height: unset;
+        font-size: 1vw;
+        position: absolute;
+        width: unset;
+        min-width: 50vw;
+        top: 50%;
+        left: 50%;
+        margin: unset;
+        transform: translate(-50%, -50%);
+
+    .win-right
+        &:hover
+            background-color: var(--theme-primary-40)
+            border-color: var(--theme-primary)
+
+    .win.table
+        border: 1px solid var(--theme-primary)
+
+    .win.th
+        border-bottom: 1px solid var(--theme-primary)

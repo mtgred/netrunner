@@ -1,0 +1,83 @@
+@require "opacity"
+@require "palette"
+
+.new-theme
+    display: flex;
+    flex-direction: column;
+    height:100vh
+    
+    #right-menu .dropdown img
+        max-height: 1.2rem;
+
+    #main > .item
+        padding-top: 0 !important;
+        height: 100%;
+
+    .topnav
+        position: unset;
+        display: flex;
+        height: unset !important;
+        justify-content: left;
+        flex-wrap: wrap;
+
+    .topnav #left-menu, .topnav #right-menu, .topnav #status
+        line-height: unset;
+        height: unset;
+
+    .topnav #left-menu
+        order: 1;
+        flex-grow: 1;
+
+    .topnav li
+        height: 20px !important;
+        line-height: unset;
+
+    #left-menu ul, #status ul
+        display: flex;
+
+    #left-menu ul li, #status ul li
+        margin: 0 7px !important;
+
+    .topnav #right-menu
+        order: 3;
+        margin-left: auto;
+
+    .topnav #status
+        order: 2;
+
+    .topnav
+        color: nav-color
+        border-bottom: 1px solid var(--theme-bg-color-80)
+
+        li, #status
+            a
+                color: white-solid
+
+                &:hover
+                    color: var(--theme-primary)
+
+        li.active a
+            color: var(--theme-primary)
+
+        li.active#admin-nav a
+            color: var(--theme-primary)
+
+        li.active#features-nav a,
+        li.active#users-nav a
+            color: var(--theme-primary)
+
+        #admin-nav a,
+        #features-nav a,
+        #users-nav a
+            color: var(--dev-menu-color)
+
+            &:hover
+                color: var(--theme-primary)
+
+        .dropdown-menu a
+            &:hover
+                color: white-solid
+
+    #status
+        .float-right
+            border-right: 1px solid white-solid

@@ -9,6 +9,7 @@
    [nr.deckbuilder :refer [deck-builder]]
    [nr.features :refer [features]]
    [nr.gameboard.board :refer [gameboard]]
+   [nr.gameboard.board-alternate :refer [gameboard-alternate]]
    [nr.help :refer [help]]
    [nr.lobby :refer [game-lobby]]
    [nr.stats :refer [stats]]
@@ -24,10 +25,11 @@
   (reset! current-view match))
 
 (defn lobby-or-game []
-  (let [game-started? (r/cursor app-state [:current-game :started])]
+  (let [game-started? (r/cursor app-state [:current-game :started])
+        new-theme (r/cursor app-state [:options :new-theme])]
     (fn []
       (if @game-started?
-        [gameboard]
+        (if @new-theme [gameboard-alternate] [gameboard])
         [game-lobby]))))
 
 (def routes

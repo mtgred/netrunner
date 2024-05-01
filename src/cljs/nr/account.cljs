@@ -52,6 +52,9 @@
   (swap! app-state assoc-in [:options :log-top] (:log-top @s))
   (swap! app-state assoc-in [:options :log-player-highlight] (:log-player-highlight @s))
   (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
+  (swap! app-state assoc-in [:options :new-theme] (:new-theme @s))
+  (swap! app-state assoc-in [:options :shrink-runner-cards] (:shrink-runner-cards @s))
+  (swap! app-state assoc-in [:options :condensed-basic-actions] (:condensed-basic-actions @s))
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
   (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
@@ -69,6 +72,9 @@
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
   (.setItem js/localStorage "card-zoom" (:card-zoom @s))
+  (.setItem js/localStorage "new-theme" (:new-theme @s))
+  (.setItem js/localStorage "shrink-runner-cards" (:shrink-runner-cards @s))
+  (.setItem js/localStorage "condensed-basic-actions" (:condensed-basic-actions @s))
   (.setItem js/localStorage "pin-zoom" (:pin-zoom @s))
   (post-options url (partial post-response s)))
 
@@ -545,6 +551,28 @@
                     [:button.small.unblock-user {:type "button"
                                                  :on-click #(remove-user-from-block-list % s)} "X" ]
                     [:span.blocked-user-name (str "  " bu)]]))]
+         [:section {:id "new-theme"}
+          [:h3 (tr [:settings.theming "New Theme"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :name "use-new-theme"
+                            :checked (:new-theme @s)
+                            :on-change #(do
+                                          (swap! s assoc-in [:new-theme] (.. % -target -checked))
+                                          (swap! s assoc-in [:log-width] 360))}]
+            (tr [:settings.new-theme "Enable new theme (overrides log width to 360px)"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :name "use-shrink-runner-cards"
+                            :checked (:shrink-runner-cards @s)
+                            :on-change #(swap! s assoc-in [:shrink-runner-cards] (.. % -target -checked))}]
+            (tr [:settings.shrink-runner-cards "Shrink runner cards down to image"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :name "use-condensed-basic-actions"
+                            :checked (:condensed-basic-actions @s)
+                            :on-change #(swap! s assoc-in [:condensed-basic-actions] (.. % -target -checked))}]
+            (tr [:settings.condensed-basic-actions "Condense basic actions to icons"])]]]
 
      [api-keys s]
 
@@ -560,6 +588,9 @@
                        :custom-bg-url (get-in @app-state [:options :custom-bg-url])
                        :card-back (get-in @app-state [:options :card-back])
                        :card-zoom (get-in @app-state [:options :card-zoom])
+                       :new-theme (get-in @app-state [:options :new-theme])
+                       :shrink-runner-cards (get-in @app-state [:options :shrink-runner-cards])
+                       :condensed-basic-actions (get-in @app-state [:options :condensed-basic-actions])
                        :pin-zoom (get-in @app-state [:options :pin-zoom])
                        :pronouns (get-in @app-state [:options :pronouns])
                        :language (get-in @app-state [:options :language])

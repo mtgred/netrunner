@@ -1,10 +1,7 @@
-(ns nr.gameboard.right-pane
-  (:require [cljs.core.async :refer [put!]]
-            [nr.appstate :refer [app-state]]
-            [nr.gameboard.card-preview :refer [zoom-channel]]
-            [nr.gameboard.log :refer [log-pane]]
+(ns nr.gameboard.right-pane-alternate
+  (:require [nr.appstate :refer [app-state]]
+            [nr.gameboard.log :refer [log-pane-alternate]]
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
-            [nr.gameboard.state :refer [game-state]]
             [nr.gameboard.settings :refer [settings-pane]]
             [nr.translations :refer [tr]]
             [reagent.core :as r]))
@@ -12,7 +9,7 @@
 (defonce loaded-tabs (r/atom {}))
 (defonce available-tabs
   {:log
-   {:hiccup [log-pane]
+   {:hiccup [log-pane-alternate]
     :label (tr [:log.game-log "Game Log"])}
 
    :notes
@@ -25,7 +22,9 @@
 
    :settings
    {:hiccup [settings-pane]
-    :label (tr [:log.settings "Settings"])}})
+    :label (tr [:log.settings "Settings"])}
+
+   :none {:hiccup [:div] :label (tr [:settings.none "Minimize"])}})
 
 (defn- resize-card-zoom
   "Resizes the card zoom based on the values in the app-state"
@@ -41,38 +40,14 @@
           (.css "height" (int (* max-card-width card-ratio))))
       (-> ".card-zoom" js/$
           (.css "width" (int (/ max-card-height card-ratio)))
-          (.css "height" max-card-height)))
-    (-> ".right-pane" js/$ (.css "width" width))
-    (-> ".content-pane" js/$
-        (.css "left" 0)
-        (.css "top" top)
-        (.css "height" "auto")
-        (.css "width" width))))
-
-(defn- pane-resize [event ui]
-  "Resize the card zoom to fit the available space"
-  (let [width (.. ui -size -width)
-        top (.. ui -position -top)]
-    (swap! app-state assoc-in [:options :log-width] width) ;;XXX: rename
-    (swap! app-state assoc-in [:options :log-top] top)
-    (.setItem js/localStorage "log-width" width)
-    (.setItem js/localStorage "log-top" top)
-    (resize-card-zoom)))
-
-(defn- pane-start-resize [event ui]
-  "Display a zoomed card when resizing so the user can visualize how the
-  resulting zoom will look."
-  (when-let [card (get-in @game-state [:runner :identity])]
-    (put! zoom-channel [card event])))
-
-(defn- pane-stop-resize [event ui]
-  (put! zoom-channel [false false]))
+          (.css "height" max-card-height)))))
 
 (defn- tab-selector [selected-tab]
   (fn []
     [:div.panel.panel-top.blue-shade.selector
      (doall (for [[tab {:keys [label]}] (seq @loaded-tabs)]
               [:a {:key tab
+                   :class (when (= @selected-tab tab) "active")
                    :on-click #(reset! selected-tab tab)} label]))]))
 
 (defn load-tab [tab]
@@ -81,9 +56,6 @@
              {:hiccup [:div.error "This should not happen"]
               :label "???"})]
     (swap! loaded-tabs assoc tab {:hiccup hiccup :label label})))
-
-(defn unload-tab [tab]
-  (swap! loaded-tabs dissoc tab))
 
 (defn clear-tabs []
   (reset! loaded-tabs {}))
@@ -99,15 +71,11 @@
 
       :component-did-mount
       (fn [this]
-        (-> ".content-pane" js/$ (.resizable #js {:handles "w, n, nw"
-                                                  :resize pane-resize
-                                                  :start pane-start-resize
-                                                  :stop pane-stop-resize}))
         (resize-card-zoom))
 
       :reagent-render
       (fn []
-        [:div.content-pane
+        [:div.content-pane {:style {:width (get-in @app-state [:options :log-width])}}
          [tab-selector selected-tab]
-         [:div.panel.blue-shade.panel-bottom.content
+         [:div.panel {:class [:blue-shade :panel-bottom :content @selected-tab]}
           (get-in @loaded-tabs [@selected-tab :hiccup] "nothing here")]])})))

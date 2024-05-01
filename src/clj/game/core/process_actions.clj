@@ -10,7 +10,7 @@
    [game.core.card :refer [get-card]]
    [game.core.change-vals :refer [change]]
    [game.core.checkpoint :refer [fake-checkpoint]]
-   [game.core.commands :refer [parse-command]]
+   [game.core.commands :refer [parse-command command-undo-click]]
    [game.core.eid :refer [make-eid]]
    [game.core.moving :refer [trash]]
    [game.core.rezzing :refer [derez rez]]
@@ -83,6 +83,7 @@
    "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) (dissoc %3 :card))
    "trash-resource" #'trash-resource
    "unbroken-subroutines" #'play-unbroken-subroutines
+   "undo-click" (fn [state side & _] (command-undo-click state side))
    "view-deck" #'view-deck})
 
 (defn process-action
