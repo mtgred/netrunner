@@ -8,7 +8,7 @@
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
-    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities is-disabled-reg?]]
     [game.core.flags :refer [turn-flag? zone-locked?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
@@ -58,12 +58,14 @@
     ;; A Teia cannot have more than two servers
     (and (clojure.string/starts-with? (:title (get-in @state [:corp :identity])) "A Teia")
          (not (:disabled (get-in @state [:corp :identity])))
+         (not (is-disabled-reg? state (get-in @state [:corp :identity])))
          (<= 2 (count (get-remotes state)))
          (not (in-coll? (conj (keys (get-remotes state)) :archives :rd :hq) (second slot))))
     :a-teia
     ;; Earth station cannot have more than one server
     (and (= "Earth Station" (subs (:title (get-in @state [:corp :identity])) 0 (min 13 (count (:title (get-in @state [:corp :identity]))))))
          (not (:disabled (get-in @state [:corp :identity])))
+         (not (is-disabled-reg? state (get-in @state [:corp :identity])))
          (pos? (count (get-remotes state)))
          (not (in-coll? (conj (keys (get-remotes state)) :archives :rd :hq) (second slot))))
     :earth-station

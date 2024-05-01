@@ -17,14 +17,15 @@
                            identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [is-disabled? register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid]]
-   [game.core.engine :refer [pay register-events resolve-ability]]
+   [game.core.engine :refer [pay register-events resolve-ability trigger-event]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
@@ -683,7 +684,7 @@
                                    :title)]
                   (as-> (all-installed state :corp) it
                     (filter ice? it)
-                    (filter can-be-advanced? it)
+                    (filter #(can-be-advanced? state %) it)
                     (remove empty? it)
                     (map :title it)
                     (split-with (partial not= a-token) it)
@@ -699,9 +700,9 @@
                           (continue-ability
                             (let [from-ice target]
                               {:prompt "Choose a piece of ice that can be advanced"
-                               :choices {:card #(and (ice? %)
-                                                     (not (same-card? from-ice %))
-                                                     (can-be-advanced? %))}
+                               :choices {:req (req (and (ice? target)
+                                                        (not (same-card? from-ice target))
+                                                        (can-be-advanced? state target)))}
                                :msg (msg "move an advancement token from "
                                          (card-str state from-ice)
                                          " to "
@@ -919,14 +920,14 @@
 
 (defcard "Early Premiere"
   {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (req (some #(and (can-be-advanced? %)
+   :flags {:corp-phase-12 (req (some #(and (can-be-advanced? state %)
                                            (in-server? %))
                                      (all-installed state :corp)))}
    :abilities [{:cost [(->c :credit 1)]
                 :label "Place 1 advancement token on a card that can be advanced in a server"
-                :choices {:card #(and (can-be-advanced? %)
-                                      (installed? %)
-                                      (in-server? %))} ; should be *in* a server
+                :choices {:req (req (and (can-be-advanced? state target)
+                                         (installed? target)
+                                         (in-server? target)))} ; should be *in* a server
                 :once :per-turn
                 :msg (msg "place 1 advancement token on " (card-str state target))
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
@@ -1243,8 +1244,8 @@
 (defcard "Hearts and Minds"
   (let [political {:req (req unprotected)
                    :prompt "Choose a card you can advance to place 1 advancement counter on"
-                   :choices {:card #(and (can-be-advanced? %)
-                                         (installed? %))}
+                   :choices {:req (req (and (can-be-advanced? state target)
+                                            (installed? target)))}
                    :msg (msg "place 1 advancement counter on " (card-str state target))
                    :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
         ability {:req (req (:corp-phase-12 @state))
@@ -1259,9 +1260,9 @@
                            (continue-ability
                              (let [from-ice target]
                                {:prompt "Choose an installed card you can advance"
-                                :choices {:card #(and (installed? %)
-                                                      (can-be-advanced? %)
-                                                      (not (same-card? from-ice %)))}
+                                :choices {:req (req (and (installed? target)
+                                                         (can-be-advanced? state target)
+                                                         (not (same-card? from-ice target))))}
                                 :msg (msg "move 1 hosted advancement counter from "
                                           (card-str state from-ice)
                                           " to "
@@ -1593,28 +1594,33 @@
              :effect (req (gain-tags state :runner eid 1))}]})
 
 (defcard "Malia Z0L0K4"
-  (let [re-enable-target
-        (req (if-let [malia-target (:malia-target card)]
-               (if (:disabled (get-card state malia-target))
-                 (do (system-msg state side (str "uses " (:title card) " to unblank "
-                                                 (card-str state malia-target)))
-                     (enable-card state :runner (get-card state malia-target))
-                     (remove-icon state :runner card (get-card state malia-target))
-                     (if-let [reactivate-effect (:reactivate (card-def malia-target))]
-                       (resolve-ability state :runner eid reactivate-effect (get-card state malia-target) nil)
-                       (effect-completed state nil eid)))
-                 (effect-completed state nil eid))
-               (effect-completed state nil eid)))]
+  (let [unmark
+        (req (when-let [malia-target (get-in card [:special :malia-target])]
+               (update! state side (assoc-in (get-card state card) [:special :malia-target] nil))
+               (remove-icon state :runner card (get-card state malia-target)))
+             ;; I'm not sure why the side is nil here
+             ;; but the old impl had it, so 🤷
+             ;; --nbk, Apr '24
+             (effect-completed state nil eid))]
     {:on-rez {:msg (msg "blank the text box of " (card-str state target))
               :choices {:card #(and (runner? %)
                                     (installed? %)
                                     (resource? %)
                                     (not (has-subtype? % "Virtual")))}
-              :effect (effect (add-icon card target "MZ" (faction-label card))
-                              (update! (assoc (get-card state card) :malia-target target))
-                              (disable-card :runner (get-card state target)))}
-     :leave-play re-enable-target
-     :move-zone re-enable-target}))
+              :effect (req (add-icon state side card target "MZ" (faction-label card))
+                           (update! state side (assoc-in (get-card state card) [:special :malia-target] target))
+                           (fake-checkpoint state))}
+     :leave-play unmark
+     :move-zone unmark
+     :static-abilities [{:type :disable-card
+                         :req (req
+                                (let [malia-target (get-in (get-card state card) [:special :malia-target])]
+                                  (or (same-card? target malia-target)
+                                      (and (same-card? (:host target) malia-target)
+                                           (= (:title malia-target) "DJ Fenris")
+                                           (= (:type target) "Fake-Identity")))))
+                         :value true}]}))
+
 
 (defcard "Marilyn Campaign"
   (let [ability {:once :per-turn
@@ -2327,7 +2333,7 @@
                                  state side
                                  {:async true
                                   :prompt "Choose a card that can be advanced"
-                                  :choices {:card can-be-advanced?}
+                                  :choices {:req (req (can-be-advanced? state target))}
                                   :effect (effect (add-counter target :advancement num-counters {:placed true})
                                                   (system-msg (str "uses " (:title card) " to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
                                                   (effect-completed eid))}
@@ -2608,7 +2614,7 @@
                 :prompt "Place 1 advancement token on a card that can be advanced?"
                 :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
                               :prompt "Choose a card to place an advancement token on"
-                              :choices {:card can-be-advanced?}
+                              :choices {:req (req (can-be-advanced? state target))}
                               :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
 
 (defcard "Spin Doctor"

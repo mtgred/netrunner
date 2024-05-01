@@ -3,6 +3,7 @@
    [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
    [game.core.actions :refer [generate-runnable-zones]]
    [game.core.board :refer [get-remotes clear-empty-remotes]]
+   [game.core.effects :refer [update-disabled-cards]]
    [game.core.ice :refer [update-all-ice update-all-icebreakers]]
    [game.core.hand-size :refer [update-hand-size]]
    [game.core.initializing :refer [update-all-card-labels]]
@@ -24,7 +25,8 @@
                    (update-hand-size state :corp)
                    (update-hand-size state :runner)
                    (update-all-subtypes state)
-                   (update-tag-status state)]]
+                   (update-tag-status state)
+                   (update-disabled-cards state)]]
       (when (and (some true? changed)
                  (< i 10))
         (recur (inc i)))))

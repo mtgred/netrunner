@@ -15,6 +15,7 @@
                            installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.cost-fns :refer [has-trash-ability? install-cost rez-cost
                                trash-cost]]
    [game.core.costs :refer [total-available-credits]]
@@ -107,18 +108,6 @@
                 :cost [(->c :trash-can)]
                 :msg message
                 :effect (effect (effect-fn eid card targets))}]})
-
-(defn- trash-when-tagged-contructor
-  "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
-  [card-name definition]
-  (let [trash-effect {:async true
-                      :effect (req (if tagged
-                                     (do (system-msg state :runner (str "trashes " card-name " for being tagged"))
-                                         (trash state :runner eid card {:unpreventable true :cause-card card}))
-                                     (effect-completed state side eid)))}]
-    (-> definition
-        (update :events conj (assoc trash-effect :event :tags-changed))
-        (assoc :reactivate trash-effect))))
 
 (defn companion-builder
   "pay-credits-req says when it can be used. turn-ends-ability defines what happens,
@@ -1150,6 +1139,7 @@
                                       (effect-completed state side eid)))}]
     {:on-install {:async true
                   :effect (effect (continue-ability fenris-effect card nil))}
+     ;; TODO - make this work
      ;; Handle Dr. Lovegood / Malia
      :disable {:effect (req (doseq [hosted (:hosted card)]
                               (disable-card state side hosted)))}
@@ -1166,21 +1156,25 @@
              :prompt "Choose an installed card to make its text box blank for the remainder of the turn"
              :once :per-turn
              :interactive (req true)
-             :async true
              :choices {:card installed?}
              :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
-             :effect (req (let [c target]
-                            (add-icon state side card target "DL" (faction-label card))
-                            (disable-card state side (get-card state target))
-                            (register-events
-                              state side card
-                              [{:event :post-runner-turn-ends
-                                :unregister-once-resolved true
-                                :effect (req (let [disabled-card (get-card state c)]
-                                                (enable-card state side disabled-card)
-                                                (remove-icon state side card (get-card state disabled-card))
-                                                (resolve-ability state :runner (:reactivate (card-def c)) disabled-card nil)))}])
-                            (effect-completed state side eid)))}]})
+             :effect (req
+                       (let [c target]
+                         (add-icon state side card target "DL" (faction-label card))
+                         (register-events
+                           state side card
+                           [{:event :post-runner-turn-ends
+                             :unregister-once-resolved true
+                             :effect (req (let [disabled-card (get-card state c)]
+                                            (remove-icon state side card (get-card state disabled-card))
+                                            (fake-checkpoint state)))}])
+                         (register-lingering-effect
+                           state side card
+                           {:type :disable-card
+                            :duration :runner-turn-ends
+                            :req (req (same-card? c target))
+                            :value (req true)})
+                         (fake-checkpoint state)))}]})
 
 (defcard "Dr. Nuka Vrolyck"
   {:data {:counter {:power 2}}
@@ -2003,68 +1997,31 @@
                           card nil))}]})
 
 (defcard "Light the Fire!"
-  (letfn [(eligible? [_state card server]
-            (let [zone (:zone card)] (and (some #{:content} zone) (some #{server} zone))))
-          (select-targets [state server]
-            (filter #(eligible? state % server) (all-installed state :corp)))
-          (disable-server [state _side server]
-            (doseq [c (select-targets state server)]
-              (disable-card state :corp c)))
-          (enable-server [state _side server]
-            (doseq [c (select-targets state server)]
-              (enable-card state :corp c)))]
-    (let [successful-run-trigger {:event :successful-run
-                                  :duration :end-of-run
-                                  :async true
-                                  :req (req (is-remote? (:server run)))
-                                  :effect (effect (trash-cards eid (:content run-server)))
-                                  :msg "trash all cards in the server for no cost"}
-          pre-redirect-trigger {:event :pre-redirect-server
-                                :duration :end-of-run
-                                :effect (effect (enable-server (:server context))
-                                                (disable-server (:new-server context)))}
-          corp-install-trigger {:event :corp-install
-                                :duration :end-of-run
-                                :effect (req (disable-server state side (first (:server run))))}
-          swap-trigger {:event :swap
-                        :duration :end-of-run
-                        :effect (req (let [first-card (:card1 context)
-                                           second-card (:card2 context)
-                                           server (first (:server run))]
-                                       ;; disable cards that have moved into the server
-                                       (when (and (some #{:content} (:zone first-card))
-                                                  (some #{server} (:zone first-card)))
-                                         (disable-card state :corp first-card))
-                                       (when (and (some #{:content} (:zone second-card))
-                                                  (some #{server} (:zone second-card)))
-                                         (disable-card state :corp second-card))
-                                       ;; enable cards that have left the server
-                                       (when (and (some #{:content} (:zone first-card))
-                                                  (not (some #{server} (:zone first-card)))
-                                                  (some #{server} (:zone second-card)))
-                                         (enable-card state :corp first-card))
-                                       (when (and (some #{:content} (:zone second-card))
-                                                  (not (some #{server} (:zone second-card)))
-                                                  (some #{server} (:zone first-card)))
-                                         (enable-card state :corp second-card))))}
-          run-end-trigger {:event :run-ends
-                           :duration :end-of-run
-                           :effect (effect (enable-server (first (:server target))))}]
-      {:abilities [{:label "Run a remote server"
-                    :cost [(->c :click 1) (->c :trash-can) (->c :brain 1)]
-                    :prompt "Choose a remote server"
-                    :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
-                    :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
-                    :makes-run true
-                    :async true
-                    :effect (effect (register-events card [successful-run-trigger
-                                                           run-end-trigger
-                                                           pre-redirect-trigger
-                                                           ;post-redirect-trigger
-                                                           corp-install-trigger
-                                                           swap-trigger])
-                                    (make-run eid target card)
-                                    (disable-server (second (server->zone state target))))}]})))
+  (let [successful-run-event
+        {:event :successful-run
+         :duration :end-of-run
+         :async true
+         :req (req (and run
+                        (is-remote? (:server run))))
+         :effect (effect (trash-cards eid (:content run-server)))
+         :msg "trash all cards in the server for no cost"}
+        disable-card-effect
+        {:type :disable-card
+         :duration :end-of-run
+         :req (req (and run
+                        (some #{:content} (:zone target))
+                        (some #{run-server} (:zone target))))}]
+    {:abilities [{:label "Run a remote server"
+                  :cost [(->c :click 1) (->c :trash-can) (->c :brain 1)]
+                  :prompt "Choose a remote server"
+                  :choices (req (cancellable (filter #(can-run-server? state %) remotes)))
+                  :msg (msg "make a run on " target " during which cards in the root of the attacked server lose all abilities")
+                  :makes-run true
+                  :async true
+                  :effect (effect
+                            (register-events card [successful-run-event])
+                            (register-lingering-effect card [disable-card-effect])
+                            (make-run eid target card))}]}))
 
 (defcard "Logic Bomb"
   {:abilities [{:label "Bypass the encountered ice"
@@ -2689,7 +2646,8 @@
   {:static-abilities [(runner-hand-size+ 2)]})
 
 (defcard "Rachel Beckman"
-  (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click-per-turn 1]}))
+  {:trash-when-tagged true
+   :in-play [:click-per-turn 1]})
 
 (defcard "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
@@ -3825,14 +3783,13 @@
                        :value 1}]})
 
 (defcard "Zona Sul Shipping"
-  (trash-when-tagged-contructor
-    "Zona Sul Shipping"
-    {:events [{:event :runner-turn-begins
-               :effect (effect (add-counter card :credit 1))}]
-     :abilities [{:cost [(->c :click 1)]
-                  :msg (msg "gain " (get-counters card :credit) " [Credits]")
-                  :label "Take all credits"
-                  :async true
-                  :effect (effect (add-counter card :credit
-                                               (- (get-counters card :credit)))
-                                  (gain-credits eid (get-counters card :credit)))}]}))
+  {:events [{:event :runner-turn-begins
+             :effect (effect (add-counter card :credit 1))}]
+   :trash-when-tagged true
+   :abilities [{:cost [(->c :click 1)]
+                :msg (msg "gain " (get-counters card :credit) " [Credits]")
+                :label "Take all credits"
+                :async true
+                :effect (effect (add-counter card :credit
+                                             (- (get-counters card :credit)))
+                                (gain-credits eid (get-counters card :credit)))}]})

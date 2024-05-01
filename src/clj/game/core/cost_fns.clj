@@ -2,7 +2,7 @@
   (:require
     [game.core.card :refer [runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [any-effects get-effects sum-effects get-effect-maps get-effect-value]]
+    [game.core.effects :refer [any-effects get-effects sum-effects get-effect-maps get-effect-value is-disabled? is-disabled-reg?]]
     [game.core.eid :refer [make-eid]]
     [game.core.payment :refer [merge-costs]]))
 
@@ -23,8 +23,7 @@
 (defn play-additional-cost-bonus
   [state side card]
   (merge-costs
-    (concat (:additional-cost card)
-            (get-in (card-def card) [:on-play :additional-cost])
+    (concat (get-in (card-def card) [:on-play :additional-cost])
             (get-effects state side :play-additional-cost card))))
 
 (defn rez-cost
@@ -34,7 +33,8 @@
    (when-not (nil? cost)
      (->> [cost
            (or cost-bonus 0)
-           (when-let [rezfun (:rez-cost-bonus (card-def card))]
+           (when-let [rezfun (and (not (is-disabled-reg? state card))
+                                  (:rez-cost-bonus (card-def card)))]
              (rezfun state side (make-eid state) card nil))
            (sum-effects state side :rez-cost card)]
           (reduce (fnil + 0 0))
@@ -44,16 +44,14 @@
   ([state side card] (rez-additional-cost-bonus state side card nil))
   ([state side card pred]
    (let [costs (merge-costs
-                 [(:additional-cost card)
-                  (:additional-cost (card-def card))
+                 [(when-not (is-disabled? state side card) (:additional-cost (card-def card)))
                   (get-effects state side :rez-additional-cost card)])]
      (filterv (or pred identity) costs))))
 
 (defn score-additional-cost-bonus
   [state side card]
   (merge-costs
-    [(:additional-cost card)
-     (:additional-cost (card-def card))
+    [(:additional-cost (card-def card))
      (get-effects state side :score-additional-cost card)]))
 
 (defn trash-cost
@@ -86,8 +84,7 @@
 (defn install-additional-cost-bonus
   [state side card]
   (merge-costs
-    [(:additional-cost card)
-     (:additional-cost (card-def card))
+    [(:additional-cost (card-def card))
      (get-effects state side :install-additional-cost card)]))
 
 (defn ignore-install-cost?

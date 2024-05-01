@@ -1817,7 +1817,7 @@
                 :msg (msg "place 2 advancement counters on " (card-str state target))
                 :choices {:not-self true
                           :req (req (and (installed? target)
-                                         (can-be-advanced? target)
+                                         (can-be-advanced? state target)
                                          (in-same-server? card target)))}
                 :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
 

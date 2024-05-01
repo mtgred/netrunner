@@ -84,7 +84,7 @@
      :effect (req (let [existing (:counter target)
                         value (constrain-value (if-let [n (string->num (first args))] n 0) 0 1000)
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
-                                     (can-be-advanced? target) :advance-counter
+                                     (can-be-advanced? state target) :advance-counter
                                      (and (agenda? target) (is-scored? state side target)) :agenda
                                      (and (runner? target) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter counter-type)]

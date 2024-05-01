@@ -2617,6 +2617,27 @@
       (is (= 4 (count (:discard (get-runner))))
           "Discard is 4 cards - 2 from Philotic, 1 EStrike, 1 from PU mill")))
 
+(deftest employee-strike-vs-pe-philotic
+  ;; vs PU/Philotic
+  (do-game
+    (new-game {:corp {:id "Jinteki: Personal Evolution"
+                      :deck ["Sting!" (qty "Braintrust" 2)]}
+               :runner {:hand [(qty "Employee Strike" 5)]}})
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (run-empty-server state "Server 2")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (play-and-score state "Sting!")
+    (is (no-prompt? state :corp) "No prompt to interact because PE is dead")
+    (is (= 2 (count (:discard (get-runner))))
+        "Discard is 2 cards - 1 from String1, 1 EStrike")))
+
+
 (deftest en-passant
   ;; En Passant
   (do-game

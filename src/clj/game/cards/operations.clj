@@ -286,7 +286,7 @@
   (letfn [(audacity [x]
             {:prompt (msg "Choose a card that can be advanced to place advancement counters on (" x " remaining)")
              :async true
-             :choices {:card can-be-advanced?
+             :choices {:req (req (can-be-advanced? state target))
                        :all true}
              :msg (msg "place 1 advancement counter on " (card-str state target))
              :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
@@ -295,7 +295,7 @@
                                       (effect-completed state side eid))))})]
     {:on-play
      {:req (req (and (<= 3 (count (:hand corp)))
-                     (some can-be-advanced? (all-installed state :corp))))
+                     (some #(can-be-advanced? state %) (all-installed state :corp))))
       :async true
       :msg "trash all cards in HQ"
       :effect (req (wait-for (trash-cards state side (:hand corp) {:unpreventable true :cause-card card})
@@ -508,9 +508,9 @@
                     :effect (effect (add-counter target :virus (* -1 (get-counters target :virus))))
                     :msg (msg "remove all virus counters from " (card-str state target))}
         kaguya {:choices {:max 2
-                          :card #(and (corp? %)
-                                      (installed? %)
-                                      (can-be-advanced? %))}
+                          :req (req (and (corp? target)
+                                         (installed? target)
+                                         (can-be-advanced? state target)))}
                 :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
                 :effect (req (doseq [t targets]
                                (add-prop state :corp t :advance-counter 1 {:placed true})))}]
@@ -567,9 +567,10 @@
                                      (damage state side eid :brain 1 {:card card})))}}}})
 
 (defcard "Cerebral Static"
-  {:on-play {:msg "disable the Runner's identity"
-             :effect (effect (disable-identity :runner))}
-   :leave-play (effect (enable-identity :runner))})
+  {:on-play {:msg "disable the Runner's identity"}
+   :static-abilities [{:type :disable-card
+                       :req (req (same-card? target (:identity runner)))
+                       :value true}]})
 
 (defcard "\"Clones are not People\""
   {:events [{:event :agenda-scored
@@ -2097,7 +2098,7 @@
                                  (continue-ability
                                    state side
                                    {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
-                                    :choices {:card can-be-advanced?}
+                                    :choices {:req (req (can-be-advanced? state target))}
                                     :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                    card nil)))
                      (effect-completed state side eid))))}})
@@ -2267,9 +2268,9 @@
 
 (defcard "Red Planet Couriers"
   {:on-play
-   {:req (req (some #(can-be-advanced? %) (all-installed state :corp)))
+   {:req (req (some #(can-be-advanced? state %) (all-installed state :corp)))
     :prompt "Choose an installed card that can be advanced"
-    :choices {:card can-be-advanced?}
+    :choices {:req (req (can-be-advanced? state target))}
     :async true
     :effect (req (let [installed (get-all-installed state)
                        total-adv (reduce + (map #(get-counters % :advancement) installed))]
@@ -2582,9 +2583,9 @@
 (defcard "Shipment from Kaguya"
   {:on-play
    {:choices {:max 2
-              :card #(and (corp? %)
-                          (installed? %)
-                          (can-be-advanced? %))}
+              :req (req (and (corp? target)
+                             (installed? target)
+                             (can-be-advanced? state target)))}
     :msg (msg "place 1 advancement token on " (quantify (count targets) "card"))
     :effect (req (doseq [t targets]
                    (add-prop state :corp t :advance-counter 1 {:placed true})))}})
@@ -2611,7 +2612,7 @@
     :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
-                     {:choices {:card can-be-advanced?}
+                     {:choices {:req (req (can-be-advanced? state target))}
                       :msg (msg "place " (quantify c "advancement token") " on " (card-str state target))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))}
                      card nil)))}})
@@ -2866,7 +2867,7 @@
               (effect-completed state side eid)))]
     {:on-play
      {:additional-cost [(->c :forfeit)]
-      :choices {:card can-be-advanced?}
+      :choices {:req (req (can-be-advanced? state target))}
       :msg (msg "advance " (card-str state target)
              " " (quantify (get-advancement-requirement (cost-target eid :forfeit)) "time"))
       :async true
@@ -3045,12 +3046,12 @@
 (defcard "Trick of Light"
   {:on-play
    {:prompt "Choose an installed card you can advance"
-    :req (req (let [advanceable (some can-be-advanced? (get-all-installed state))
+    :req (req (let [advanceable (some #(can-be-advanced? state %) (get-all-installed state))
                     num-installed (count (get-all-installed state))]
                  (and advanceable
                       (> num-installed 1))))
-    :choices {:card #(and (can-be-advanced? %)
-                          (installed? %))}
+    :choices {:req (req (and (can-be-advanced? state target)
+                             (installed? target)))}
     :async true
     :effect (effect
               (continue-ability

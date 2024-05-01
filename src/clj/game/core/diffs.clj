@@ -6,6 +6,7 @@
    [game.core.card :refer :all]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.engine :refer [can-trigger?]]
+   [game.core.effects :refer [is-disabled-reg?]]
    [game.core.installing :refer [corp-can-pay-and-install?
                                  runner-can-pay-and-install?]]
    [game.core.payment :refer [can-pay? ->c]]
@@ -54,6 +55,13 @@
              :source-info {:ability-idx ability-idx}}]
     (if (and (or (active? card)
                  (:autoresolve ability))
+             ;; using the reg instead of any-effect here because this function gets called
+             ;; a LOT, and this is very close to linear time and should (I think)
+             ;; always be correct when this fn is called.
+             ;; If that's ever an issue, we can switch this to:
+             ;; (is-disabled? state side card)
+             ;; --n kelly, apr 2024
+             (not (is-disabled-reg? state card))
              (can-pay? state side eid card nil cost)
              (can-trigger? state side eid ability card nil))
       (assoc ability :playable true)

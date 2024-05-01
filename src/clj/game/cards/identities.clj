@@ -17,7 +17,7 @@
                              enable-corp-damage-choice]]
    [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed is-basic-advance-action? make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
    [game.core.events :refer [event-count first-event?
@@ -160,26 +160,23 @@
                                                 card nil)))}
                               card nil)))}]
    ;; This effect will be resolved when the ID is reenabled after Strike / Direct Access
-   :effect (effect
-             (continue-ability
-               {:req (req (< 2 (count (get-remotes state))))
-                :prompt "Choose 2 servers to be saved from the rules apocalypse"
-                :choices (req (get-remote-names state))
-                :async true
-                :effect (req (let [saved target]
-                               (continue-ability
-                                 state side
-                                 {:prompt "Choose another server to save"
-                                  :choices (req (filter #(not= saved %) (get-remote-names state)))
-                                  :async true
-                                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target saved] (zone->name (second (get-zone %))))
-                                                                           (all-installed state :corp))]
-                                                 (system-msg state side (str "chooses " target " and " saved " to be saved from the rules apocalypse and trashes "
-                                                                             (quantify (count to-be-trashed) "card")))
-                                                 ;; these cards get trashed by the game and not by players
-                                                 (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
-                                 card nil)))}
-               card nil))})
+   :enforce-conditions {:req (req (< 2 (count (get-remotes state))))
+                        :prompt "Choose 2 servers to be saved from the rules apocalypse"
+                        :choices (req (get-remote-names state))
+                        :async true
+                        :effect (req (let [saved target]
+                                       (continue-ability
+                                         state side
+                                         {:prompt "Choose another server to save"
+                                          :choices (req (filter #(not= saved %) (get-remote-names state)))
+                                          :async true
+                                          :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target saved] (zone->name (second (get-zone %))))
+                                                                                   (all-installed state :corp))]
+                                                         (system-msg state side (str "chooses " target " and " saved " to be saved from the rules apocalypse and trashes "
+                                                                                     (quantify (count to-be-trashed) "card")))
+                                                         ;; these cards get trashed by the game and not by players
+                                                         (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
+                                         card nil)))}})
 
 (defcard "Acme Consulting: The Truth You Need"
   (letfn [(outermost? [state ice]
@@ -455,6 +452,7 @@
 
 (defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))
+                                    (not (is-disabled? state side card))
                                     (some rezzed? (all-installed state :corp))))}
    :abilities [{:choices {:card rezzed?}
                 :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
@@ -552,21 +550,17 @@
                                           (in-coll? (keys (get-remotes state)) (:server (second targets))))))
                          :value (req [(->c :credit (if (:flipped card) 6 1))])}]
      :async true
-     ; This effect will be resolved when the ID is reenabled after Strike / Direct Access
-     :effect (effect
-               (continue-ability
-                 {:req (req (< 1 (count (get-remotes state))))
-                  :prompt "Choose a server to be saved from the rules apocalypse"
-                  :choices (req (get-remote-names state))
-                  :async true
-                  :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (get-zone %))))
-                                                           (all-installed state :corp))]
-                                 (system-msg state side (str "chooses " target
-                                                             " to be saved from the rules apocalypse and trashes "
-                                                             (quantify (count to-be-trashed) "card")))
-                                 ; these cards get trashed by the game and not by players
-                                 (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
-                 card nil))
+     :enforce-conditions {:req (req (< 1 (count (get-remotes state))))
+                          :prompt "Choose a server to be saved from the rules apocalypse"
+                          :choices (req (get-remote-names state))
+                          :async true
+                          :effect (req (let [to-be-trashed (remove #(in-coll? ["Archives" "R&D" "HQ" target] (zone->name (second (get-zone %))))
+                                                                   (all-installed state :corp))]
+                                         (system-msg state side (str "chooses " target
+                                                                     " to be saved from the rules apocalypse and trashes "
+                                                                     (quantify (count to-be-trashed) "card")))
+                                        ; these cards get trashed by the game and not by players
+                                         (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
      :abilities [{:label "Flip identity to Earth Station: Ascending to Orbit"
                   :req (req (not (:flipped card)))
                   :cost [(->c :click 1)]
@@ -676,6 +670,7 @@
      :once :per-turn
      :label "Trash card"
      :req (req (and (not (:disabled card))
+                    (not (is-disabled? state side card))
                     (not (agenda? target))
                     (not (in-discard? target))
                     (<= (play-cost state side target)
@@ -707,6 +702,7 @@
             {:event :runner-turn-begins
              :player :corp
              :req (req (and (not (:disabled card))
+                            (not (is-disabled? state side card))
                             (has-most-faction? state :corp "Weyland Consortium")
                             (some ice? (all-installed state side))))
              :prompt "Choose a piece of ice to place 1 advancement token on"
@@ -959,6 +955,7 @@
 
 (defcard "Information Dynamics: All You Need To Know"
   {:events (let [inf {:req (req (and (not (:disabled card))
+                                     (not (is-disabled? state side card))
                                      (has-most-faction? state :corp "NBN")))
                       :msg "give the Runner 1 tag"
                       :async true
@@ -1063,7 +1060,7 @@
                                      (continue-ability
                                        state side
                                        {:prompt "Choose a card that can be advanced"
-                                        :choices {:card can-be-advanced?}
+                                        :choices {:req (req (can-be-advanced? state target))}
                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
                                        card nil))
                                  (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error"))))}]})
@@ -1081,9 +1078,9 @@
 (defcard "Jinteki: Potential Unleashed"
   {:events [{:async true
              :event :pre-resolve-damage
-             :req (req (and (-> @state :corp :disable-id not)
-                            (= target :net)
-                            (pos? (last targets))))
+             :req (req (and
+                         (= target :net)
+                         (pos? (last targets))))
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses " (:title card) " to trash " (:title c)
                                                          " from the top of the stack"))
@@ -1254,6 +1251,7 @@
                                         (draw state :runner eid 1)))}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (and (not (:disabled card))
+                                        (not (is-disabled? state side card))
                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
@@ -1407,6 +1405,7 @@
                                 (effect-completed state side eid)))}]
     {:flags {:drip-economy true
              :runner-phase-12 (req (and (not (:disabled card))
+                                        (not (is-disabled? state side card))
                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
      :abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)]}))
@@ -1766,7 +1765,7 @@
              :async true
              :waiting-prompt true
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
-             :choices {:card #(and (installed? %) (can-be-advanced? %))}
+             :choices {:req (req (and (installed? target) (can-be-advanced? state target)))}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))
              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
@@ -2005,6 +2004,7 @@
              :effect draft-points-target}
             {:event :runner-turn-ends
              :req (req (and (not (:disabled card))
+                            (not (is-disabled? state side card))
                             (has-most-faction? state :corp "Haas-Bioroid")
                             (pos? (count (:discard corp)))))
              :prompt "Choose a card in Archives to shuffle into R&D"
@@ -2043,6 +2043,7 @@
   {:events [{:event :pre-start-game
              :effect draft-points-target}]
    :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
+                                    (not (is-disabled? state side card))
                                     (has-most-faction? state :corp "Jinteki")
                                     (<= 2 (count (filter ice? (all-installed state :corp))))))}
    :abilities [{:prompt "Choose 2 installed pieces of ice to swap"
@@ -2078,6 +2079,7 @@
 
 (defcard "Tennin Institute: The Secrets Within"
   {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
+                                    (not (is-disabled? state side card))
                                     (not-last-turn? state :runner :successful-run)))}
    :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
                 :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"

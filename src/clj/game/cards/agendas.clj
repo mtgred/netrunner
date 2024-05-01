@@ -263,19 +263,19 @@
    :abilities [{:cost [(->c :agenda 1)]
                 :label "place 1 advancement counter"
                 :msg (msg "place 1 advancement counter on " (card-str state target))
-                :choices {:card can-be-advanced?}
+                :choices {:req (req (can-be-advanced? state target))}
                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Award Bait"
   {:flags {:rd-reveal (req true)}
    :on-access {:async true
-               :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
+               :req (req (not-empty (filter #(can-be-advanced? state %) (all-installed state :corp))))
                :waiting-prompt true
                :prompt "How many advancement tokens do you want to place?"
                :choices ["0" "1" "2"]
                :effect (effect (continue-ability
                                  (let [c (str->int target)]
-                                   {:choices {:card can-be-advanced?}
+                                   {:choices {:req (req (can-be-advanced? state target))}
                                     :msg (msg "place " (quantify c "advancement token")
                                               " on " (card-str state target))
                                     :effect (effect (add-prop :corp target :advance-counter c {:placed true}))})
@@ -823,8 +823,8 @@
               :effect (effect (add-counter card :agenda 3))}
    :abilities [{:cost [(->c :agenda 1)]
                 :label "Place 1 advancement counter"
-                :choices {:card #(and (ice? %)
-                                      (can-be-advanced? %))}
+                :choices {:req (req (and (ice? target)
+                                         (can-be-advanced? state target)))}
                 :req (req (pos? (get-counters card :agenda)))
                 :msg (msg "place 1 advancement counter on " (card-str state target))
                 :once :per-turn
@@ -1002,7 +1002,7 @@
                             (continue-ability
                               state side
                               {:choices {:not-self true
-                                         :card #(can-be-advanced? %)}
+                                         :req (req (can-be-advanced? state target))}
                                :msg (msg "place " (quantify n "advancement token")
                                          " on " (card-str state target))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))}
@@ -1681,7 +1681,7 @@
              :interactive (req true)
              :waiting-prompt true
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
-             :choices {:card can-be-advanced?}
+             :choices {:req (req (can-be-advanced? state card))}
              :msg (msg "place 1 advancement token on " (card-str state target))
              :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
 
@@ -1965,9 +1965,9 @@
                                   card nil))))}]}))
 
 (defcard "Slash and Burn Agriculture"
-  {:expend {:req (req (some #(can-be-advanced? %) (all-installed state :corp)))
+  {:expend {:req (req (some #(can-be-advanced? state %) (all-installed state :corp)))
             :cost [(->c :credit 1)]
-            :choices {:card #(can-be-advanced? %)}
+            :choices {:req (req (can-be-advanced? state target))}
             :msg (msg "place 2 advancement counters on " (card-str state target))
             :async true
             :effect (req

@@ -7,6 +7,7 @@
    [game.core.damage :refer [damage]]
    [game.core.eid :refer [complete-with-result make-eid]]
    [game.core.engine :refer [checkpoint resolve-ability trigger-event-sync]]
+   [game.core.effects :refer [is-disabled-reg?]]
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
    [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
@@ -77,9 +78,14 @@
 (defn- all-active-pay-credit-cards
   [state side eid card]
   (filter #(when-let [pc (-> % card-def :interactions :pay-credits)]
-             (if (:req pc)
-               ((:req pc) state side eid % [card])
-               true))
+             ;; All payment should be "inbetween" checkpoints
+             ;; If there's ever some obscure issue with timing for this,
+             ;; then we can always manually update the reg here
+             ;; --nk, Apr 2024
+             (when-not (is-disabled-reg? state %)
+                 (if (:req pc)
+                   ((:req pc) state side eid % [card])
+                   true)))
           (all-active state side)))
 
 (defn- eligible-pay-credit-cards

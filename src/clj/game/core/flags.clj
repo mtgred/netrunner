@@ -1,9 +1,9 @@
 (ns game.core.flags
   (:require
     [game.core.board :refer [all-active all-installed]]
-    [game.core.card :refer [agenda? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed?]]
+    [game.core.card :refer [agenda? can-be-advanced? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed? ]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [any-effects]]
+    [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.eid :refer [make-eid]]
     [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
@@ -270,7 +270,7 @@
 (defn can-advance?
   "Checks if the corp can advance cards"
   [state side card]
-  (check-flag-types? state side card :can-advance [:current-turn :persistent]))
+  (and (check-flag-types? state side card :can-advance [:current-turn :persistent])))
 
 (defn can-score?
   "Checks if the corp can score a given card"
@@ -313,9 +313,10 @@
 
 (defn can-host?
   "Checks if the specified card is able to host other cards"
-  [card]
+  [state card]
   (or (not (rezzed? card))
-      (not (:cannot-host (card-def card)))))
+      (not (:cannot-host (card-def card)))
+      (is-disabled-reg? state card)))
 
 (defn when-scored?
   "Checks if the specified card is able to be used for a when-scored text ability"

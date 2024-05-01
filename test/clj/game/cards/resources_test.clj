@@ -1880,8 +1880,6 @@
               hosted-ct #(first (:hosted (refresh dj-fenris)))]
           (rez state :corp malia)
           (click-card state :corp dj-fenris)
-          (is (:disabled (refresh dj-fenris)) "DJ Fenris is disabled")
-          (is (:disabled (hosted-ct)) "CT is disabled")
           (is (= 4 (core/available-mu state)) "Disabling DJ Fenris also disabled CT, reducing MU back to 4")
           ;; Trash Malia to stop disable
           (trash state :corp (refresh malia))
@@ -3741,7 +3739,7 @@
    (take-credits state :corp)
    (click-prompt state :runner "Dr. Lovegood")
    (click-card state :runner "Lewi Guilherme")
-   (is (= 5 (hand-size :corp)) "-1 hand size from lewi")
+   (is (= 5 (hand-size :corp)) "regular hand size from lewi")
    (is (no-prompt? state :runner) "No more prompt to activate")))
 
 (deftest liberated-account
@@ -7442,6 +7440,15 @@
       (is (= 3 (:credit (get-corp))) "Paid 1 instead of 0 to rez Paper Wall")
       (rez state :corp lc)
       (is (= 2 (:credit (get-corp))) "Paid 1 to rez Launch Campaign; no effect on non-ice"))))
+
+(deftest zona-sul-shipping-trash-on-install
+  ;; Zona Sul Shipping - Gain 1c per turn, click to take all credits. Trash when tagged
+  (do-game
+    (new-game {:runner {:deck ["Zona Sul Shipping"]}})
+    (take-credits state :corp)
+    (gain-tags state :runner 1)
+    (play-from-hand state :runner "Zona Sul Shipping")
+    (is (= 1 (count (:discard (get-runner)))) "Zona Sul trashed when tag taken")))
 
 (deftest zona-sul-shipping
   ;; Zona Sul Shipping - Gain 1c per turn, click to take all credits. Trash when tagged

@@ -6272,15 +6272,16 @@
 
 (deftest searchlight-x-fn
   (do-game
-    (new-game {:corp {:deck ["Searchlight"]}})
+    (new-game {:corp {:deck ["Searchlight"]}
+               :runner {:hand ["Hush"]}})
     (core/gain state :corp :credit 10)
     (play-from-hand state :corp "Searchlight" "HQ")
     (let [searchlight (get-ice state :hq 0)]
       (rez state :corp searchlight)
       (advance state (refresh searchlight) 1)
       (take-credits state :corp)
-      (core/disable-card state :corp (refresh searchlight))
-      (core/fake-checkpoint state)
+      (play-from-hand state :runner "Hush")
+      (click-card state :runner "Searchlight")
       (run-on state "HQ")
       (run-continue state)
       (card-subroutine state :corp (refresh searchlight) 0)
@@ -6289,8 +6290,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (zero? (count-tags state)) "Trace failed with 0 advancements")
-      (core/enable-card state :corp (refresh searchlight))
-      (core/fake-checkpoint state)
+      (trash state :runner (first (:hosted (get-ice state :hq 0))))
       (card-subroutine state :corp (refresh searchlight) 0)
       (is (= :trace (prompt-type :corp)) "Trace is initiated")
       (is (= 1 (:base (prompt-map :corp))) "Trace is now base 1")

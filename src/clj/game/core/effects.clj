@@ -3,7 +3,12 @@
             [game.core.card :refer [get-card]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.board :refer [get-all-cards]]
             [game.utils :refer [same-card? to-keyword]]))
+
+(defn is-disabled-reg?
+  [state card]
+  (get (:disabled-card-reg @state) (:cid card)))
 
 (defn register-static-abilities
   [state _ card]
@@ -12,6 +17,8 @@
           abilities (for [ability static-abilities]
                       (assoc
                         (select-keys ability [:type :req :value])
+                        ;; this is so I can select them later
+                        :static true
                         :duration :while-active
                         :card card
                         :uuid (uuid/v1)))]
@@ -32,6 +39,7 @@
   (let [ability (assoc
                   (select-keys ability [:type :duration :req :value])
                   :card card
+                  :lingering true
                   :uuid (uuid/v1))]
     (swap! state update :effects conj ability)
     ability))
@@ -58,6 +66,7 @@
         is-active-player #(= (:active-player @state) (get-side %))]
     (->> (:effects @state)
          (filter #(= effect-type (:type %)))
+         (filter #(not (and (:static %) (is-disabled-reg? state (:card %)))))
          (sort-by (complement is-active-player))
          (into []))))
 
@@ -124,3 +133,19 @@
   ([state side effect-type pred target] (any-effects state side effect-type pred target nil))
   ([state side effect-type pred target targets]
    (some pred (get-effects state side effect-type target targets))))
+
+(defn is-disabled?
+  "Check if a card is disabled"
+  ([state side target]
+   (any-effects state side :disable-card true? target)))
+
+(defn all-disabled-cards
+  "Gets all cards currently disabled"
+  [state]
+  (let [all-cards (get-all-cards state)
+        disabled-cards (filter #(is-disabled? state nil %) all-cards)]
+    (into {} (map (juxt :cid identity)) disabled-cards)))
+
+(defn update-disabled-cards [state]
+  (swap! state assoc :disabled-card-reg (all-disabled-cards state))
+  (:disabled-card-reg @state))

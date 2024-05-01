@@ -12,6 +12,7 @@
                            get-nested-host get-title get-zone hardware? has-subtype? ice? in-discard? in-hand?
                            installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [can-charge charge-ability charge-card]]
+   [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
@@ -1110,19 +1111,26 @@
 
 (defcard "Direct Access"
   {:makes-run true
-   ;;this :effect is used in card-init as a temporary solution for blanking IDs like Azmari or Ken Tenma before they can trigger
-   :effect (req (doseq [s [:corp :runner]]
-                  (disable-identity state s)))
+   :static-abilities [{:type :disable-card
+                       :req (req (or (same-card? target (:identity corp))
+                                     (same-card? target (:identity runner))))
+
+                       :value true}]
    :on-play {:async true
-             :prompt "Choose a server"
-             :choices (req runnable-servers)
-             :effect (effect (make-run eid target card))}
+             :effect (req
+                       ;; note - this fake checkpoint forces abilities like RP to be blank
+                       (fake-checkpoint state)
+                       (continue-ability
+                         state side
+                         {:async true
+                          :prompt "Choose a server"
+                          :choices (req runnable-servers)
+                          :effect (effect (make-run eid target card))}
+                         card nil))}
    :events [{:event :run-ends
              :unregister-once-resolved true
              :async true
-             :effect (req (doseq [s [:corp :runner]]
-                            (enable-identity state s))
-                          (continue-ability
+             :effect (req (continue-ability
                             state :runner
                             {:optional
                              {:prompt "Shuffle Direct Access into the Stack?"
@@ -1279,10 +1287,10 @@
                                (continue-ability state side (ec trash-cost to-trash) card nil))))}}))
 
 (defcard "Employee Strike"
-  {:on-play {:msg "disable the Corp's identity"
-             :effect (effect (disable-identity :corp))}
-   :disable-id true
-   :leave-play (effect (enable-identity :corp))})
+  {:on-play {:msg "disable the Corp's identity"}
+   :static-abilities [{:type :disable-card
+                       :req (req (same-card? target (:identity corp)))
+                       :value true}]})
 
 (defcard "En Passant"
   {:on-play
@@ -3318,18 +3326,10 @@
   (letfn [(eligible? [card] (and (:uniqueness card)
                                  (or (asset? card)
                                      (upgrade? card))
-                                 (not (has-subtype? card "Region"))))
-          (rumor [state] (filter eligible? (concat (all-installed state :corp)
-                                                   (get-in @state [:corp :hand])
-                                                   (get-in @state [:corp :deck])
-                                                   (get-in @state [:corp :discard]))))]
-    {:leave-play (req (doseq [c (rumor state)]
-                        (enable-card state :corp c)))
-     :on-play {:effect (req (doseq [c (rumor state)]
-                              (disable-card state :corp c)))}
-     :events [{:event :corp-install
-               :req (req (eligible? (:card context)))
-               :effect (effect (disable-card :corp (:card context)))}]}))
+                                 (not (has-subtype? card "Region"))))]
+    {:static-abilities [{:type :disable-card
+                         :req (req (eligible? target))
+                         :value true}]}))
 
 (defcard "Run Amok"
   (letfn [(get-rezzed-cids [ice]

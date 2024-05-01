@@ -190,6 +190,8 @@
                 :subroutines (subroutines-init (assoc card :cid cid) cdef)
                 :abilities (ability-init cdef)
                 :expend (:expend cdef)
+                :enforce-conditions (:enforce-conditions cdef)
+                :trash-when-tagged (:trash-when-tagged cdef)
                 :x-fn (:x-fn cdef)
                 :printed-title (:title card))
          (dissoc :setname :text :_id :influence :number :influencelimit

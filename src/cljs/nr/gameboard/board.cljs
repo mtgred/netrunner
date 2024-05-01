@@ -97,6 +97,11 @@
     (if (:host card) (update card :host card-for-click) card)
     click-card-keys))
 
+(defn playable?
+  "Checks whether a card or ability is playable"
+  [action]
+  (:playable action))
+
 (defn handle-abilities
   [side {:keys [abilities corp-abilities runner-abilities subroutines facedown] :as card}]
   (let [actions (action-list card)
@@ -134,14 +139,10 @@
         ;; Trigger first (and only) ability / action
         (and (= c 1)
              (= side card-side))
-        (if (= (count abilities) 1)
+        (if (and (= (count abilities) 1)
+                 (playable? (first abilities)))
           (send-command "ability" {:card (card-for-click card) :ability 0})
           (send-command (first actions) {:card (card-for-click card)}))))))
-
-(defn playable?
-  "Checks whether a card or ability is playable"
-  [action]
-  (:playable action))
 
 (defn handle-card-click [{:keys [type zone] :as card}]
   (let [side (:side @game-state)]

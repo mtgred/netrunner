@@ -3,10 +3,11 @@
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
     [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes all-installed-runner-type all-active-installed]]
+    [game.core.board :refer [clear-empty-remotes get-all-cards all-installed-runner
+                             all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [get-effect-maps unregister-lingering-effects]]
+    [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled? is-disabled-reg? update-disabled-cards]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.payment :refer [build-spend-msg can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
@@ -577,7 +578,7 @@
   (= (:active-player @state) (get-side ability)))
 
 (defn- valid-condition?
-  [state card {:keys [condition location]}]
+  [state card {:keys [condition location] :as ability}]
   (when (case condition
           :accessed (same-card? card (:access @state))
           :active (active? card)
@@ -594,7 +595,10 @@
                            (and (contains? location :hand)
                                 (in-hand? card)))
           :test-condition true)
-    card))
+    (when
+        (and (not (is-disabled? state nil card))
+             (not (is-disabled-reg? state card)))
+      card)))
 
 (defn- card-for-ability
   [state {:keys [card duration] :as ability}]
@@ -855,6 +859,7 @@
                  (let [card (card-for-ability state handler)
                        ability (:ability handler)]
                    (and (not (apply trigger-suppress state (to-keyword (:side card)) (:event handler) card context))
+                        card
                         (can-trigger? state (to-keyword (:side card)) eid ability card context)))))
        (sort-by (complement #(is-active-player state (:handler %))))
        (seq)))
@@ -1053,6 +1058,45 @@
                 (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
+(defn trash-on-tag
+  [state _ eid]
+  (let [trash-when-tagged (when (jinteki.utils/is-tagged? state)
+                            (filter :trash-when-tagged (all-installed-runner state)))
+        trash-when-tagged (filter #(not (is-disabled? state nil %)) trash-when-tagged)]
+    (if (seq trash-when-tagged)
+      (wait-for (move* state nil (make-eid state eid)
+                       :trash-cards trash-when-tagged
+                       {:unpreventable true})
+                (doseq [card trash-when-tagged]
+                  (system-say state (to-keyword (:side card))
+                              (str "trashes " (card-str state card) " for being tagged")))
+                (effect-completed state nil eid))
+      (effect-completed state nil eid))))
+
+(defn- enforce-conditions-impl
+  [state _ eid cards]
+  (if (seq cards)
+    (let [fc (first cards)]
+      (wait-for
+        (resolve-ability
+          state (to-keyword (:side fc))
+          (when-not
+              (is-disabled-reg? state fc)
+            (:enforce-conditions fc))
+          fc nil)
+        (enforce-conditions-impl state nil eid (rest cards))))
+    (effect-completed state nil eid)))
+
+(defn enforce-conditions
+  [state _ eid]
+  (wait-for
+    (trash-on-tag state nil (make-eid state eid))
+    (if-let [cards (seq (filter
+                          :enforce-conditions
+                          [(get-in @state [:corp :identity])]))]
+      (enforce-conditions-impl state nil eid cards)
+      (effect-completed state nil eid))))
+
 (defn check-restrictions
   [state _ eid]
   ;; memory limit check
@@ -1073,7 +1117,7 @@
                                   (update-mu state)
                                   (effect-completed state side eid)))})
         nil nil)
-      (effect-completed state nil eid))))
+      (enforce-conditions state nil eid))))
 
 (defn checkpoint
   "10.3. Checkpoints: A CHECKPOINT is a process wherein objects that have entered an
@@ -1087,6 +1131,8 @@
      ;; b: Any ability with a duration that has passed is removed from the game state
      (wait-for
        (unregister-expired-durations state nil (make-eid state eid) (conj durations duration) context-maps)
+       ;; update the disabled-card registry here
+        (update-disabled-cards state)
        ;; c: Check winning or tying by agenda points
        (check-win-by-agenda state)
        ;; d: uniqueness/console check
