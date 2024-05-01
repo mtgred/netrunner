@@ -2687,7 +2687,8 @@
              :async true
              :effect (req (if (= target "Done")
                             (effect-completed state side eid)
-                            (let [new-choices (remove #{target} choices)]
+                            (let [remaining-choices (remove #{target} choices)
+                                  new-choices (dedupe (conj remaining-choices "Done"))]
                               ;; note this is a lingering ability and persists so
                               ;; long as the card is rezzed
                               ;; if the card is hushed, it will not derez, so the subtypes will stay!
@@ -2705,7 +2706,7 @@
                                 card nil))))})]
     {:on-rez {:async true
               :waiting-prompt true
-              :effect (effect (continue-ability (ice-subtype-choice ["Barrier" "Code Gate" "Sentry" "Done"]) card nil))}
+              :effect (effect (continue-ability (ice-subtype-choice ["Barrier" "Code Gate" "Sentry"]) card nil))}
      :derez-effect {:effect (req (unregister-effects-for-card state side card #(= :gain-subtype (:type %))))}
      :static-abilities [{:type :gain-subtype
                          :req (req (and (same-card? card target) (:subtype-target card)))
