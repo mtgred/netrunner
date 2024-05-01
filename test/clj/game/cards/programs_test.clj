@@ -2052,7 +2052,7 @@
       (is (changed? [(:credit (get-runner)) -1
                      (count (:hand (get-corp))) -1
                      (count (:hosted (refresh cup))) 1]
-                    (click-prompt state :runner "[Cupellation] 1 [Credits]: Host a card"))
+                    (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card"))
           "Card is hosted on Cupellation")
       (run-empty-server state "HQ")
       ;; Cupellation breach prompt
@@ -2078,7 +2078,7 @@
     (is (= 8 (get-counters (get-content state :remote1 0) :credit)) "Marilyn Campaign should start with 8 credits")
     (run-on state "Server 1")
     (run-continue state)
-    (click-prompt state :runner "[Cupellation] 1 [Credits]: Host a card")
+    (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card")
     (take-credits state :runner)
     (is (= 8 (get-counters (first (:hosted (get-program state 0))) :credit)))))
 
@@ -2107,7 +2107,7 @@
         (is (changed? [(:credit (get-runner)) -1
                        (count (get-content state :remote1)) -1
                        (count (:hosted (refresh cup))) 1]
-              (click-prompt state :runner "[Cupellation] 1 [Credits]: Host a card"))
+              (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card"))
             "Card is hosted on Cupellation")))))
 
 (deftest curupira
