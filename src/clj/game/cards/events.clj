@@ -2487,6 +2487,7 @@
                                  {:prompt (str "Search the stack for a " choice " resource?")
                                   :yes-ability
                                   {:async true
+                                   :msg (msg "search the stack for a " (decapitalize choice) " resource")
                                    :effect (effect (continue-ability (tutor-abi choice) card nil))}
                                   :no-ability
                                   {:async true
