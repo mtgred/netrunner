@@ -2460,7 +2460,7 @@
                        :card #(and (runner? %)
                                    (in-hand? %)
                                    (has-subtype? % type))}
-             :prompt (msg "Choose any number of " type " resources to reveal")
+             :prompt (msg "Choose any number of " (decapitalize type) " resources to reveal")
              :msg (msg "reveal " (enumerate-str (map :title (sort-by :title targets))) " from the Grip and gain " (count targets) " [Credits]")
              :async true
              :effect (req (wait-for
@@ -2484,7 +2484,7 @@
                               (continue-ability
                                 state side
                                 {:optional
-                                 {:prompt (str "Search the stack for a " choice " resource?")
+                                 {:prompt (str "Search the stack for a " (decapitalize choice) " resource?")
                                   :yes-ability
                                   {:async true
                                    :msg (msg "search the stack for a " (decapitalize choice) " resource")
