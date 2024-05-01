@@ -1843,9 +1843,9 @@
                               (first-event? state side :runner-spent-click
                                             #(resource?
                                                (find-cid (:action (first %)) all-cards))))))
+             :cost [(->c :power 1)]
              :msg "gain [Click]"
-             :effect (effect (add-counter card :power -1)
-                             (gain-clicks 1))}]})
+             :effect (effect (gain-clicks 1))}]})
 
 (defcard "Kasi String"
   {:events [{:event :run-ends
