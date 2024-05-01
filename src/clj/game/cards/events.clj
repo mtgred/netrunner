@@ -4176,13 +4176,15 @@
                                       :duration :end-of-run
                                       :optional
                                       {:player :corp
-                                        :waiting-prompt true
-                                        :req (req (and (installed? (get-card state chosen-ice))
-                                                       (not (rezzed? (get-card state chosen-ice)))))
-                                        :prompt (str "Rez " (card-str state chosen-ice) ", ignoring all costs?")
-                                        :yes-ability {:async true
-                                                      :msg (msg "rez " (card-str state chosen-ice) ", ignoring all costs")
-                                                      :effect (req (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
+                                       :waiting-prompt true
+                                       :req (req (and (installed? (get-card state chosen-ice))
+                                                      (not (rezzed? (get-card state chosen-ice)))))
+                                       :prompt (str "Rez " (card-str state chosen-ice) ", ignoring all costs?")
+                                       :yes-ability {:async true
+                                                     :effect
+                                                     (req 
+                                                       (system-msg state :corp (str "rezzes " (card-str state chosen-ice) ", ignoring all costs"))
+                                                       (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
                                   (derez state side target)
                                   (effect-completed state side eid)))}
                           card nil)
