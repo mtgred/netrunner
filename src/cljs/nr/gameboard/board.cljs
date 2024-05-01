@@ -1712,7 +1712,7 @@
                 @encounters)
             [run-div side run encounters]
             :else
-            (when false [basic-actions button-pane-args]))])})))
+            [basic-actions button-pane-args])])})))
 
 
 (defn- time-until
