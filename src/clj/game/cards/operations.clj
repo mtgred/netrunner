@@ -133,6 +133,7 @@
   {:on-play {:req (req (or (last-turn? state :runner :trashed-card)
                            (last-turn? state :runner :stole-agenda)))
              :prompt "Choose a card to install"
+             :waiting-prompt true
              :choices {:card #(and (corp-installable-type? %)
                                    (in-hand? %))}
              :async true

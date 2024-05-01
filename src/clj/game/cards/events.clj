@@ -2478,6 +2478,7 @@
                              (continue-ability (credit-gain-abi type) card nil))})]
     {:on-play {:prompt "Choose one"
                :async true
+               :waiting-prompt true
                :choices ["Connection" "Virtual"]
                :effect (req (let [choice target]
                               (continue-ability
@@ -3629,6 +3630,7 @@
    :abilities [{:cost [(->c :power 1)]
                 :label "Host an installed trojan on a piece of ice protecting this server"
                 :prompt "Choose an installed trojan"
+                :waiting-prompt true
                 :choices {:card #(and (has-subtype? % "Trojan")
                                       (program? %)
                                       (installed? %))}

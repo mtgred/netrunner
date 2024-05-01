@@ -1183,6 +1183,7 @@
                             (continue-ability
                               state side
                               {:prompt (msg "Choose " (quantify derez-count "piece") " of ice protecting " (zone->name [zone]) " to derez")
+                               :waiting-prompt true
                                :choices {:card #(and (ice? %)
                                                      (rezzed? %)
                                                      (= (second (get-zone %)) zone))
@@ -1213,6 +1214,7 @@
                                 (continue-ability
                                   state side
                                   {:prompt (msg "Choose up to 2 pieces of ice protecting " (zone->name current-server))
+                                   :waiting-prompt true
                                    :choices {:card #(and (ice? %)
                                                          (not (rezzed? %))
                                                          (= (second (get-zone %)) current-server))

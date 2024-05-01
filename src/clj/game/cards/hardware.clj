@@ -2386,6 +2386,7 @@
     {:abilities [{:cost [(->c :trash-can)]
                   :label "Set aside cards from the top of the stack"
                   :prompt "Choose a card type"
+                  :waiting-prompt true
                   :choices (req (cancellable ["Hardware" "Program" "Resource"]))
                   :req (req (and (some #{:hq} (:successful-run runner-reg))
                                  (some #{:rd} (:successful-run runner-reg))
