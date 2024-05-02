@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer :all]
    [game.core :as core]
+   [game.core.initializing :refer [make-card]]
    [game.macros :refer [req]]
    [game.test-framework :refer :all]))
 
@@ -14,5 +15,5 @@
                              {:req (req (swap! spy conj "inner") true)
                               :prompt "Yes or no"
                               :yes-ability {:effect (req true)}}}
-                            {} nil)
+                            (make-card {:title "test"}) nil)
       (is (= ["inner"] @spy) "Only the inner req of optional should be checked"))))

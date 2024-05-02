@@ -23,9 +23,9 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [is-disabled? register-lingering-effect]]
-   [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid]]
-   [game.core.engine :refer [pay register-events resolve-ability trigger-event]]
+   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
+   [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
@@ -37,7 +37,6 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice
                           update-ice-strength]]
-   [game.core.identities :refer [disable-card enable-card]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
@@ -616,7 +615,10 @@
      :abilities [ability]}))
 
 (defcard "Cohort Guidance Program"
-  (let [abi {:prompt "Choose one"
+  {:flags {:corp-phase-12 (req true)}
+   :derezzed-events [corp-rez-toast]
+   :events [{:event :corp-turn-begins
+             :prompt "Choose one"
              :interactive (req true)
              :choices (req [(when (seq (:hand corp)) "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
                             (when (some #(not (:seen %)) (:discard corp))
@@ -657,10 +659,7 @@
                                                                      :advance-counter 1
                                                                      {:placed true}))}
                                                 card nil))})
-                              card nil)))}]
-    {:flags {:corp-phase-12 (req true)}
-     :derezzed-events [corp-rez-toast]
-     :events [(assoc abi :event :corp-turn-begins)]}))
+                              card nil)))}]})
 
 (defcard "Commercial Bankers Group"
   (let [ability {:req (req unprotected)
@@ -2666,27 +2665,21 @@
              :effect (req (win state :corp (:title card)))}]})
 
 (defcard "Sundew"
-  ; If this a run event then handle in :begin-run as we do not know the server
-  ; being run on in :runner-spent-click.
   {:events [{:event :runner-spent-click
              :req (req (first-event? state side :runner-spent-click))
-             :msg (req (when-not (= :run (get-in @state [:runner :register :click-type]))
-                         "gain 2 [Credits]"))
+             :msg "gain 2 [Credits]"
              :async true
-             :effect (req (if (not= :run (get-in @state [:runner :register :click-type]))
-                            (gain-credits state :corp eid 2)
-                            (effect-completed state side eid)))}
+             :effect (req (update! state side (assoc-in card [:special :spent-click] true))
+                          (gain-credits state :corp eid 2))}
             {:event :run
-             :once :per-turn
-             :req (req (first-event? state side :runner-spent-click))
-             :msg (req (when (and (= :run (get-in @state [:runner :register :click-type]))
-                                  (not this-server))
-                         "gain 2 [Credits]"))
+             :req (req (and (first-event? state side :runner-spent-click)
+                            run
+                            this-server
+                            (get-in card [:special :spent-click])))
+             :msg "lose 2 [Credits]"
              :async true
-             :effect (req (if (and (= :run (get-in @state [:runner :register :click-type]))
-                                   (not this-server))
-                            (gain-credits state :corp eid 2)
-                            (effect-completed state side eid)))}]})
+             :effect (req (update! state side (dissoc-in card [:special :spent-click]))
+                          (lose-credits state :corp eid 2))}]})
 
 (defcard "Svyatogor Excavator"
   (let [ability {:async true
@@ -2699,7 +2692,8 @@
                  :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
                  :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                         (effect-completed eid))
-                 :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
+                 :effect (req (wait-for (trash state side target {:unpreventable true
+                                                                  :cause-card card})
                                         (gain-credits state side eid 3)))}]
     {:flags {:corp-phase-12 (req (>= (count (all-installed state :corp)) 2))}
      :events [(assoc ability

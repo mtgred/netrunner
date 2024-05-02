@@ -1032,33 +1032,33 @@
         (is (no-prompt? state :corp)))))
 
 (deftest cohort-guidance-program
-    (do-game
-      (new-game {:corp {:hand ["Cohort Guidance Program" "NGO Front" "PAD Campaign"]
-                        :deck [(qty "Hedge Fund" 5)]}})
-      (play-from-hand state :corp "Cohort Guidance Program" "New remote")
-      (play-from-hand state :corp "NGO Front" "New remote")
-      (let [cgp (get-content state :remote1 0)
-            ngo (get-content state :remote2 0)]
-        (rez state :corp cgp)
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (:corp-phase-12 @state) "Corp has opportunity to use Cohort Guidance Program")
-        (end-phase-12 state :corp)
-        (is (changed? [(:credit (get-corp)) 2
-                       (count (:discard (get-corp))) 1
-                       (count (:hand (get-corp))) 1]
-                      (click-prompt state :corp "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
-                      (click-card state :corp "PAD Campaign"))
-            "Corp discarded 1 card, gained 2 credits, and drew 1 card")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (end-phase-12 state :corp)
-        (is (changed? [(get-counters (refresh ngo) :advancement) 1]
-                      (click-prompt state :corp "Turn 1 facedown card in Archives faceup to place 1 advancement counter on an installed card")
-                      (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
-                      (click-card state :corp ngo))
-            "Corp turned 1 facedown card in Archived to advance 1 card")
-        (is (empty? (remove #(:seen %) (:discard (get-corp)))) "PAD Campaign was turned faceup"))))
+  (do-game
+    (new-game {:corp {:hand ["Cohort Guidance Program" "NGO Front" "PAD Campaign"]
+                      :deck [(qty "Hedge Fund" 5)]}})
+    (play-from-hand state :corp "Cohort Guidance Program" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [cgp (get-content state :remote1 0)
+          ngo (get-content state :remote2 0)]
+      (rez state :corp cgp)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp has opportunity to use Cohort Guidance Program")
+      (end-phase-12 state :corp)
+      (is (changed? [(:credit (get-corp)) 2
+                     (count (:discard (get-corp))) 1
+                     (count (:hand (get-corp))) 1]
+            (click-prompt state :corp "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
+            (click-card state :corp "PAD Campaign"))
+          "Corp discarded 1 card, gained 2 credits, and drew 1 card")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (end-phase-12 state :corp)
+      (is (changed? [(get-counters (refresh ngo) :advancement) 1]
+            (click-prompt state :corp "Turn 1 facedown card in Archives faceup to place 1 advancement counter on an installed card")
+            (click-card state :corp (find-card "PAD Campaign" (:discard (get-corp))))
+            (click-card state :corp ngo))
+          "Corp turned 1 facedown card in Archived to advance 1 card")
+      (is (empty? (remove #(:seen %) (:discard (get-corp)))) "PAD Campaign was turned faceup"))))
 
 (deftest commercial-bankers-group
   ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice
@@ -5240,7 +5240,11 @@
         ;; spend a click running the sundew server
         (run-on state "Server 1")
         (is (= 15 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")
-        (is (= 3 (:click (get-runner))) "Runner spent 1 click to start run"))))
+        (is (= 3 (:click (get-runner))) "Runner spent 1 click to start run")
+        (run-jack-out state)
+        (run-on state "Server 1")
+        (is (= 15 (:credit (get-corp))) "Corp did not gain additional credits")
+        (is (= 2 (:click (get-runner)))))))
 
 (deftest sundew-multiple-sundews
     ;; Multiple Sundews
@@ -5301,7 +5305,7 @@
         (click-prompt state :runner "Expose 1 ice and make a run")
         (click-card state :runner (get-ice state :remote1 0))
         (click-prompt state :runner "Server 1")
-        (is (= 6 (:credit (get-corp))) "Corp gained 2cr from Sundew because DW is not a run event"))))
+        (is (= 4 (:credit (get-corp))) "Corp lost 2 because a run began on the server"))))
 
 (deftest sundew-sundew-out-of-the-ashes
     ;; Sundew - Out of the Ashes
@@ -5492,7 +5496,7 @@
      (is (changed? [(:credit (get-corp)) 3]
            (click-card state :corp (refresh pad)))
          "~ sells PAD Campaign before it triggers so only 3 credits gained")
-     (is (= (refresh pad) nil) "PAD Campaign should be in Heap"))))
+     (is (nil? (refresh pad)) "PAD Campaign should be in Heap"))))
 
 (deftest syvatogor-excavator-card-str-6471
   (do-game

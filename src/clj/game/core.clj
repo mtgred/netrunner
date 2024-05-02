@@ -334,7 +334,6 @@
   [game.core.eid
    complete-with-result
    effect-completed
-   eid-set-defaults
    get-ability-targets
    is-basic-advance-action?
    make-eid

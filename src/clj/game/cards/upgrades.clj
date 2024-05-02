@@ -429,7 +429,7 @@
                       :player :runner
                       :waiting-prompt true
                       :prompt "Choose one"
-                      :choices [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [(->c :credit cost)])
+                      :choices [(when (can-pay? state :runner eid card nil [(->c :credit cost)])
                                   (str "Pay " cost " [Credits]"))
                                 "End the run"]
                       :msg (msg (if (= target "End the run")
@@ -531,11 +531,8 @@
                       card :can-trash
                       (fn [state _ card]
                         (or (not (same-card? target card))
-                            (can-pay?
-                              state :runner
-                              (assoc eid :source card :source-type :ability)
-                              card nil
-                              [(->c :add-random-from-hand-to-bottom-of-deck 2)])))))}
+                            (can-pay? state :runner eid
+                                      card nil [(->c :add-random-from-hand-to-bottom-of-deck 2)])))))}
               steal-cost]
      :on-trash {:async true
                 :interactive (req true)
@@ -593,7 +590,7 @@
   {:recurring 2
    :interactions {:pay-credits {:req (req (and (= :corp-install (:source-type eid))
                                                (= (second (get-zone card))
-                                                  (unknown->kw (:source eid)))))
+                                                  (unknown->kw (:server (get-ability-targets eid))))))
                                 :type :recurring}}})
 
 (defcard "Defense Construct"
@@ -1598,7 +1595,7 @@
 
 (defcard "Simone Diego"
   {:recurring 2
-   :interactions {:pay-credits {:req (req (let [ab-target (first (get-ability-targets eid))]
+   :interactions {:pay-credits {:req (req (let [ab-target (:card (get-ability-targets eid))]
                                             (and (same-server? card ab-target)
                                                  (or (= :advance (:source-type eid))
                                                      (is-basic-advance-action? eid)))))
@@ -1905,7 +1902,8 @@
                :once-per-instance false
                :req (req (let [cause (:cause context)
                                cause-card (:cause-card context)]
-                           (and (or (corp? (:source eid))
+                           (and (not= :corp-install (:source-type eid))
+                                (or (corp? (:source eid))
                                     (= :ability-cost cause)
                                     (= :subroutine cause)
                                     (and (corp? cause-card)

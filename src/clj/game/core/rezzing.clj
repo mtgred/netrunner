@@ -4,13 +4,13 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
     [game.core.effects :refer [is-disabled? unregister-static-abilities update-disabled-cards]]
-    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [register-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event unregister-events]]
     [game.core.flags :refer [can-host? can-rez?]]
     [game.core.ice :refer [update-ice-strength]]
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.moving :refer [trash-cards]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
+    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c]]
     [game.core.runs :refer [continue]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.toasts :refer [toast]]
@@ -98,7 +98,7 @@
   ([state side eid card] (rez state side eid card nil))
   ([state side eid card
     {:keys [ignore-cost force declined-alternative-cost alternative-cost] :as args}]
-   (let [eid (eid-set-defaults eid :source nil :source-type :rez)
+   (let [eid (assoc eid :source-type :rez)
          card (get-card state card)
          alternative-cost (when (and card
                                      (not alternative-cost)

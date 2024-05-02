@@ -76,7 +76,8 @@
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.16.8"]]
-                   :plugins [[lein-eftest "0.6.0"]]
+                   :plugins [[lein-eftest "0.6.0"]
+                             [cider/cider-nrepl "0.47.1"]]
                    :eftest {:report eftest.report.pretty/report
                             :fail-fast? false}
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "src/css"

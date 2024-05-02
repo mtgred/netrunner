@@ -26,7 +26,7 @@
               (some
                 (fn [server]
                   (corp-can-pay-and-install?
-                    state :corp {:source server :source-type :corp-install}
+                    state :corp {:source card :source-type :corp-install}
                     card server {:base-cost [(->c :click 1)]
                                  :action :corp-click-install
                                  :no-toast true}))
@@ -35,13 +35,13 @@
                   (program? card)
                   (resource? card))
               (runner-can-pay-and-install?
-                state :runner {:source :action :source-type :runner-install}
+                state :runner {:source card :source-type :runner-install}
                 card {:base-cost [(->c :click 1)]
                       :no-toast true})]
              [(or (event? card)
                   (operation? card))
               (can-play-instant?
-                state side {:source :action :source-type :play}
+                state side {:source card :source-type :play}
                 card {:base-cost [(->c :click 1)]
                       :silent true})])
            true)

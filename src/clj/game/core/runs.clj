@@ -115,18 +115,18 @@
   ([state side eid server card {:keys [click-run ignore-costs] :as args}]
    (let [cost-args (assoc args :server (unknown->kw server))
          costs (total-run-cost state side card cost-args)
-         card (or (get-card state card) card)]
+         card (or (get-card state card) card)
+         eid (assoc eid :source-type :make-run)]
      (if-not (and (can-run? state :runner)
                   (can-run-server? state server)
                   (can-pay? state :runner eid card "a run" costs))
        (effect-completed state side eid)
        (do (swap! state dissoc-in [:end-run :ended])
            (when click-run
-             (swap! state assoc-in [:runner :register :click-type] :run)
              (swap! state assoc-in [:runner :register :made-click-run] true)
              (play-sfx state side "click-run"))
            (wait-for
-             (pay state :runner (make-eid state {:source card :source-type :make-run}) nil costs)
+             (pay state :runner (make-eid state eid) nil costs)
              (let [payment-str (:msg async-result)]
                (if-not payment-str
                  (effect-completed state side eid)
@@ -333,7 +333,7 @@
       (register-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
     (wait-for (checkpoint state side
-                          (make-eid state eid)
+                          (make-eid state)
                           {:cancel-fn (fn [state]
                                         (should-end-encounter? state side ice))})
               (when (should-end-encounter? state side ice)
@@ -402,7 +402,7 @@
       (queue-event state :pass-all-ice {:ice (get-card state ice)}))
     (check-auto-no-action state)
     (wait-for (checkpoint state side
-                          (make-eid state eid)
+                          (make-eid state)
                           ;; Immediately end pass ice step if:
                           ;; * run ends
                           ;; * run is moved to another server
@@ -431,7 +431,7 @@
   (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
   (queue-event state :approach-server)
   (wait-for (checkpoint state side
-                        (make-eid state eid)
+                        (make-eid state)
                           ;; Immediately end approach if:
                           ;; * run ends
                           ;; * phase changes
@@ -563,7 +563,7 @@
       (handle-end-run state :runner eid)
       ;; Otherwise, if there's no handlers, access the cards
       (zero? (count titles))
-      (wait-for (breach-server state :runner (make-eid state eid) (get-in @state [:run :server]))
+      (wait-for (breach-server state :runner (make-eid state) (get-in @state [:run :server]))
                 (handle-end-run state :runner eid))
       ;; If there's only 1 handler and it's mandatory
       ;; just execute it

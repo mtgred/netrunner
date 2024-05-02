@@ -133,7 +133,7 @@
                 (not no-mu))
        (init-mu-cost state c))
      (if (and resolve-effect (is-ability? cdef))
-       (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
+       (resolve-ability state side (assoc eid :source-type :ability) (dissoc cdef :cost :additional-cost) c nil)
        (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))

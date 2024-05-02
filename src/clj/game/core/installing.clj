@@ -6,7 +6,7 @@
     [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? program? resource? rezzed? installed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
-    [game.core.eid :refer [complete-with-result effect-completed eid-set-defaults make-eid]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
     [game.core.effects :refer [register-static-abilities unregister-static-abilities is-disabled-reg?]]
     [game.core.flags :refer [turn-flag? zone-locked?]]
@@ -101,18 +101,19 @@
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
   [state side eid card dest-zone server]
   (let [prev-card (some #(when (or (asset? %) (agenda? %)) %) dest-zone)]
-    (if (and (or (asset? card) (agenda? card))
-             prev-card
-             (not (:host card)))
-      (continue-ability state side {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
-                                    :choices ["OK"]
-                                    :async true
-                                    :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
-                                                 (if (get-card state prev-card) ; make sure they didn't trash the card themselves
-                                                   (trash state :corp eid prev-card {:keep-server-alive true})
-                                                   (effect-completed state :corp eid)))}
-                       nil nil)
-      (effect-completed state side eid))))
+    (continue-ability
+      state side
+      (when (and (or (asset? card) (agenda? card))
+                 prev-card
+                 (not (:host card)))
+        {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
+         :choices ["OK"]
+         :async true
+         :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
+                      (if (get-card state prev-card) ; make sure they didn't trash the card themselves
+                        (trash state :corp eid prev-card {:keep-server-alive true})
+                        (effect-completed state :corp eid)))})
+      nil nil)))
 
 (defn- corp-install-message
   "Prints the correct install message."
@@ -163,29 +164,35 @@
           moved-card (get-card state moved-card)]
       ;; Check to see if a second agenda/asset was installed.
       (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
-                (let [eid (assoc eid :source moved-card :source-type :rez)]
+                (let [eid (assoc eid :source moved-card)]
                   (queue-event state :corp-install {:card (get-card state moved-card)
                                                     :install-state install-state})
                   (case install-state
                     ;; Ignore all costs
                     :rezzed-no-cost
                     (if-not (agenda? moved-card)
-                      (rez state side eid moved-card {:ignore-cost :all-costs
-                                                      :no-msg no-msg})
+                      (rez state side (assoc eid :source-type :rez)
+                           moved-card {:ignore-cost :all-costs
+                                       :no-msg no-msg})
                       (checkpoint state nil eid))
                     ;; Ignore rez cost only
                     :rezzed-no-rez-cost
-                    (rez state side eid moved-card {:ignore-cost :rez-costs
-                                                    :no-msg no-msg})
+                    (rez state side (assoc eid :source-type :rez)
+                         moved-card {:ignore-cost :rez-costs
+                                     :no-msg no-msg})
                     ;; Pay costs
                     :rezzed
-                    (if-not (agenda? moved-card)
-                      (if-not (zero? cost-bonus)
-                        (rez state side eid moved-card {:no-msg no-msg :cost-bonus cost-bonus})
-                        (rez state side eid moved-card {:no-msg no-msg}))
-                      (do (when-let [dre (:derezzed-events cdef)]
-                            (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
-                          (checkpoint state nil eid)))
+                    (let [eid (assoc eid :source-type :rez)]
+                      (cond
+                        (agenda? moved-card)
+                        (do (when-let [dre (:derezzed-events cdef)]
+                              (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
+                            (checkpoint state nil eid))
+                        (zero? cost-bonus)
+                        (rez state side eid moved-card {:no-msg no-msg})
+                        :else
+                        (rez state side eid moved-card {:no-msg no-msg
+                                                        :cost-bonus cost-bonus})))
                     ;; "Face-up" cards
                     :face-up
                     (let [moved-card (-> (get-card state moved-card)
@@ -230,7 +237,8 @@
 
 (defn corp-can-pay-and-install?
   [state side eid card server args]
-  (let [slot (get-slot state card server (select-keys args [:host-card]))
+  (let [eid (assoc eid :source-type :corp-install)
+        slot (get-slot state card server (select-keys args [:host-card]))
         costs (corp-install-cost state side card server args)]
     (and (corp-can-install? state side card slot (select-keys args [:no-toast]))
          (can-pay? state side eid card nil costs)
@@ -272,7 +280,7 @@
   :index - which position for an installed piece of ice"
   ([state side eid card server] (corp-install state side eid card server nil))
   ([state side eid card server {:keys [host-card] :as args}]
-   (let [eid (eid-set-defaults eid :source nil :source-type :corp-install)]
+   (let [eid (assoc eid :source-type :corp-install)]
      (cond
        ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
        (not server)
@@ -381,7 +389,7 @@
     (when-let [on-install (and (not facedown)
                                (:on-install (card-def installed-card)))]
       (register-pending-event state :runner-install installed-card on-install))
-    (wait-for (checkpoint state nil (make-eid state eid) nil)
+    (wait-for (checkpoint state nil (make-eid state) nil)
               (complete-with-result state side eid (get-card state installed-card)))))
 
 (defn- runner-install-cost
@@ -404,7 +412,7 @@
 (defn runner-can-pay-and-install?
   ([state side eid card] (runner-can-pay-and-install? state side eid card nil))
   ([state side eid card {:keys [facedown] :as args}]
-   (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)
+   (let [eid (assoc eid :source-type :runner-install)
          costs (runner-install-cost state side (assoc card :facedown facedown) args)]
      (and (runner-can-install? state side card args)
           (can-pay? state side eid card nil costs)
@@ -450,7 +458,7 @@
   "Installs specified runner card if able"
   ([state side eid card] (runner-install state side eid card nil))
   ([state side eid card {:keys [host-card facedown] :as args}]
-   (let [eid (eid-set-defaults eid :source nil :source-type :runner-install)
+   (let [eid (assoc eid :source-type :runner-install)
          hosting (and (not host-card)
                       (not facedown)
                       (:hosting (card-def card)))]

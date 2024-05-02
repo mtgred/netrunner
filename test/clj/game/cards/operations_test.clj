@@ -4686,7 +4686,7 @@
                   (click-prompt state :corp "Hedge Fund"))
         "Hedge Fund was played")))
 
-(deftest ^:kaocha/pending sudden-commandment-threat
+(deftest sudden-commandment-threat
   (do-game
     (new-game {:corp {:hand [(qty "Sudden Commandment" 2) "Bellona"]
                       :deck ["IPO" "Hedge Fund"]
