@@ -7171,24 +7171,40 @@
           "Paid 4 credits to rez Ice Wall"))))
 
 (deftest trick-shot
-  (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
-                      :hand ["Spin Doctor"]}
-               :runner {:hand ["Trick Shot"]}})
-    (play-from-hand state :corp "Spin Doctor" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Trick Shot")
-    (is (= :rd (first (get-in @state [:run :server]))))
-    (let [ts (-> (get-runner) :play-area first)]
-      (is (= 4 (get-counters (refresh ts) :credit)) "Trick Shot has 4 credits on it")
-      (is (changed? [(get-counters (refresh ts) :credit) 2]
-                    (run-continue state))
-          "Trick Shot gains 2 credits on successful run")
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Server 1")
-      (is (= :remote1 (first (get-in @state [:run :server]))))
-      (is (= 6 (get-counters (refresh ts) :credit)) "Trick Shot still has 6 credits on it"))))
+  (before-each [state (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                                        :hand ["Spin Doctor" "NGO Front"]}
+                                 :runner {:hand ["Trick Shot"]}})
+                _ (do (play-from-hand state :corp "Spin Doctor" "New remote")
+                      (play-from-hand state :corp "NGO Front" "New remote")
+                      (take-credits state :corp)
+                      (play-from-hand state :runner "Trick Shot"))
+                ts (-> (:runner @state) :play-area first)]
+    (testing "basic"
+      (do-game state
+        (is (= :rd (first (get-in @state [:run :server]))))
+        (is (= 4 (get-counters (refresh ts) :credit)) "Trick Shot has 4 credits on it")
+        (is (changed? [(get-counters (refresh ts) :credit) 2]
+              (run-continue state))
+            "Trick Shot gains 2 credits on successful run")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Server 1")
+        (is (= :remote1 (first (get-in @state [:run :server]))))
+        (is (= 6 (get-counters (refresh ts) :credit)) "Trick Shot still has 6 credits on it")))
+    (testing "only 2 runs please"
+      (do-game state
+        (run-continue state)
+        (is (= "You accessed Hedge Fund." (:msg (prompt-map :runner))))
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No action")
+        (is (= "Choose a remote server to run" (:msg (prompt-map :runner))))
+        (click-prompt state :runner "Server 1")
+        (is (some? (:phase (:run @state))))
+        (run-continue state)
+        (is (= "You accessed Spin Doctor." (:msg (prompt-map :runner))))
+        (click-prompt state :runner "No action")
+        (is (no-prompt? state :runner))
+        (is (nil? (:phase (:run @state))) "Run is finished")))))
 
 (deftest trick-shot-aginfusion-interaction
   (do-game

@@ -72,7 +72,7 @@
 (defn is-remote?
   "Returns true if the zone is for a remote server"
   [zone]
-  (not (nil? (remote->name zone))))
+  (some? (remote->name zone)))
 
 (defn is-central?
   "Returns true if the zone is for a central server"

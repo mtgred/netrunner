@@ -3961,20 +3961,18 @@
              :async true
              :effect (effect (make-run eid :rd card))}
    :events [{:event :successful-run
+             :unregister-once-resolved true
              :silent (req true)
-             :async true
-             :once :per-turn
-             :req (req (and (#{:rd} (target-server context))
+             :req (req (and (= :rd (target-server context))
                             this-card-run))
              :msg "place 2 [Credits] on itself and access 1 additional card from R&D"
              :effect (effect
                        (add-counter card :credit 2 {:placed true})
                        (register-events
-                         card [(breach-access-bonus (target-server context) 1 {:duration :end-of-run})])
-                       (effect-completed eid))}
+                         card [(breach-access-bonus :rd 1 {:duration :end-of-run})]))}
             {:event :run-ends
-             :req (req (and (not (get-in card [:special :run-again]))
-                            this-card-run))
+             :unregister-once-resolved true
+             :req (req this-card-run)
              :prompt "Choose a remote server to run"
              :choices (req (cancellable
                              (->> runnable-servers
@@ -3983,9 +3981,7 @@
                                   (map remote->name))))
              :msg (msg "make a run on " target)
              :async true
-             :effect (effect
-                       (update! (assoc-in card [:special :run-again] true))
-                       (make-run eid target card))}]})
+             :effect (effect (make-run eid target card))}]})
 
 (defcard "Uninstall"
   {:on-play
