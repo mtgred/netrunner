@@ -1717,11 +1717,15 @@
          (playable? (get-in @me [:basic-action-card :abilities 0])))
     #(send-command "credit")]])
 
-(defn button-pane [{:keys [side prompt-state]}]
+(defn button-pane [{:keys [side me-side op-side prompt-state]}]
   (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
         show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
         prompt-type (r/track (fn [] (get-in @prompt-state [:prompt-type])))
-        opened-by-system (r/atom false)]
+        opened-by-system (r/atom false)
+        me-user (r/cursor game-state [me-side :user])
+        op-user (r/cursor game-state [op-side :user])
+        op-play-area (r/cursor game-state [op-side :play-area])
+        me-play-area (r/cursor game-state [me-side :play-area])]
     (r/create-class
       {:display-name "button-pane"
 
@@ -1742,7 +1746,9 @@
        :reagent-render
        (fn [{:keys [side run encounters prompt-state me opponent] :as button-pane-args}]
          [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                            :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
+                            :on-mouse-out  #(card-preview-mouse-out % zoom-channel)} 
+          [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
+          [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
           (cond
             (and @prompt-state
                  (not= "run" @prompt-type))
@@ -2087,14 +2093,10 @@
                [:div.right-pane
                 (when-not (:replay @game-state)
                   [starting-timestamp @start-date @timer])
-                (let [op-current (r/cursor game-state [op-side :current])
-                      op-play-area (r/cursor game-state [op-side :play-area])
-                      me-current (r/cursor game-state [me-side :current])
-                      me-play-area (r/cursor game-state [me-side :play-area])]
+                (let [op-current (r/cursor game-state [op-side :current]) 
+                      me-current (r/cursor game-state [me-side :current])]
                   [:<>
                    [rfg-area me opponent]
-                   [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
-                   [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
                    [rfg-view op-current (tr [:game.current "Current"]) false]
                    [rfg-view me-current (tr [:game.current "Current"]) false]])]
                [:div.left-inner-leftpane
@@ -2107,7 +2109,7 @@
                [:div.right-inner-leftpane
                 [name-view op-side opponent]
                 (when-not (= @side :spectator)
-                  [button-pane {:side me-side :active-player active-player :run run :encounters encounters
+                  [button-pane {:side me-side :me-side me-side :op-side op-side :active-player active-player :run run :encounters encounters
                                 :end-turn end-turn :runner-phase-12 runner-phase-12
                                 :corp-phase-12 corp-phase-12 :corp corp :runner runner
                                 :me            me :opponent opponent :prompt-state prompt-state}])
