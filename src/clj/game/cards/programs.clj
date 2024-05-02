@@ -1056,7 +1056,7 @@
                                                       (effect-completed eid))
                                       :cost [(->c :credit 1) (->c :trash-can)]
                                       :msg "access 2 additional cards from HQ"}}}]
-   :interactions {:access-ability {:label "Host a card"
+   :interactions {:access-ability {:label "Host card"
                                    :trash? false
                                    :req (req (and (empty? (filter corp? (:hosted card)))
                                                   (not (agenda? target))))

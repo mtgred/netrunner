@@ -2468,7 +2468,7 @@
                        :card #(and (runner? %)
                                    (in-hand? %)
                                    (has-subtype? % type))}
-             :prompt (msg "Choose any number of " type " resources to reveal")
+             :prompt (msg "Choose any number of " (decapitalize type) " resources to reveal")
              :msg (msg "reveal " (enumerate-str (map :title (sort-by :title targets))) " from the Grip and gain " (count targets) " [Credits]")
              :async true
              :effect (req (wait-for
@@ -2486,14 +2486,16 @@
                              (continue-ability (credit-gain-abi type) card nil))})]
     {:on-play {:prompt "Choose one"
                :async true
+               :waiting-prompt true
                :choices ["Connection" "Virtual"]
                :effect (req (let [choice target]
                               (continue-ability
                                 state side
                                 {:optional
-                                 {:prompt (str "Search the stack for a " choice " resource?")
+                                 {:prompt (str "Search the stack for a " (decapitalize choice) " resource?")
                                   :yes-ability
                                   {:async true
+                                   :msg (msg "search the stack for a " (decapitalize choice) " resource")
                                    :effect (effect (continue-ability (tutor-abi choice) card nil))}
                                   :no-ability
                                   {:async true
@@ -3629,6 +3631,7 @@
    :abilities [{:cost [(->c :power 1)]
                 :label "Host an installed trojan on a piece of ice protecting this server"
                 :prompt "Choose an installed trojan"
+                :waiting-prompt true
                 :choices {:card #(and (has-subtype? % "Trojan")
                                       (program? %)
                                       (installed? %))}
