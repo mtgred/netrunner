@@ -1,4 +1,4 @@
-(ns nr.gameboard.player-stats-alternate
+(ns nr.gameboard.new-theme.player-stats
   (:require
    [clojure.string :as s :refer [capitalize lower-case]]
    [nr.appstate :refer [app-state]]

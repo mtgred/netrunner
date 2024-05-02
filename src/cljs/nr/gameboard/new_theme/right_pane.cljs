@@ -1,6 +1,6 @@
-(ns nr.gameboard.right-pane-alternate
+(ns nr.gameboard.new-theme.right-pane
   (:require [nr.appstate :refer [app-state]]
-            [nr.gameboard.log :refer [log-pane-alternate]]
+            [nr.gameboard.log :refer [log-pane-new-theme]]
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
             [nr.gameboard.settings :refer [settings-pane]]
             [nr.translations :refer [tr]]
@@ -9,7 +9,7 @@
 (defonce loaded-tabs (r/atom {}))
 (defonce available-tabs
   {:log
-   {:hiccup [log-pane-alternate]
+   {:hiccup [log-pane-new-theme]
     :label (tr [:log.game-log "Game Log"])}
 
    :notes

@@ -9,7 +9,7 @@
    [nr.deckbuilder :refer [deck-builder]]
    [nr.features :refer [features]]
    [nr.gameboard.board :refer [gameboard]]
-   [nr.gameboard.board-alternate :refer [gameboard-alternate]]
+   [nr.gameboard.new-theme.board :refer [gameboard-new-theme]]
    [nr.help :refer [help]]
    [nr.lobby :refer [game-lobby]]
    [nr.stats :refer [stats]]
@@ -29,7 +29,7 @@
         new-theme (r/cursor app-state [:options :new-theme])]
     (fn []
       (if @game-started?
-        (if @new-theme [gameboard-alternate] [gameboard])
+        (if @new-theme [gameboard-new-theme] [gameboard])
         [game-lobby]))))
 
 (def routes

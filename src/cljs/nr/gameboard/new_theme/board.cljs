@@ -1,4 +1,4 @@
-(ns nr.gameboard.board-alternate
+(ns nr.gameboard.new-theme.board
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
    [cljc.java-time.duration :as duration]
@@ -21,9 +21,9 @@
                                       card-highlight-mouse-over
                                       card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
-   [nr.gameboard.player-stats-alternate :refer [stat-controls name-area stats-area]]
+   [nr.gameboard.new-theme.player-stats :refer [stat-controls name-area stats-area]]
    [nr.gameboard.replay :refer [replay-panel]]
-   [nr.gameboard.right-pane-alternate :refer [content-pane]]
+   [nr.gameboard.new-theme.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
    [nr.translations :refer [tr tr-side]]
@@ -1972,7 +1972,7 @@
         ;; else
         nil))))
 
-(defn gameboard-alternate []
+(defn gameboard-new-theme []
   (let [active (r/cursor app-state [:active-page])
         start-date (r/cursor game-state [:start-date])
         timer (r/cursor game-state [:options :timer])

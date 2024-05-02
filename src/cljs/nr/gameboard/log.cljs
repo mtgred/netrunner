@@ -176,7 +176,7 @@
          [indicate-action]
          [command-menu !input-ref state]]))))
 
-(defn log-input-alternate []
+(defn log-input-new-theme []
   (let [current-game (r/cursor app-state [:current-game])
         active-player (r/cursor game-state [:active-player])
         !input-ref (r/atom nil)
@@ -263,10 +263,10 @@
      [log-typing]
      [log-input]]))
 
-(defn log-pane-alternate []
+(defn log-pane-new-theme []
   (fn []
     [:div.log
      [angel-arena-log/inactivity-pane]
      [log-messages]
      [log-typing]
-     [log-input-alternate]]))
+     [log-input-new-theme]]))

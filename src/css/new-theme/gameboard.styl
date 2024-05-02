@@ -81,16 +81,16 @@
     .run-icon
         -webkit-mask: url('/img/icons/run.svg')
         mask: url('/img/icons/run.svg')
-        height: 20px;
-        width: 20px;
-        mask-size: cover;
+        height: 20px
+        width: 20px
+        mask-size: cover
     .remove-tag-icon
         -webkit-mask: url('/img/icons/remove_tag.svg')
         mask: url('/img/icons/remove_tag.svg')
-        height: 20px;
-        width: 30px;
-        mask-size: contain;
-        mask-repeat: no-repeat;
+        height: 20px
+        width: 30px
+        mask-size: contain
+        mask-repeat: no-repeat
 
     .warning-text
         text-decoration: underline
@@ -104,29 +104,29 @@
         background-image: url('/img/icons/draw.png')
         width: 17px
         height: 20px
-        background-size: contain;
-        background-repeat: no-repeat;
+        background-size: contain
+        background-repeat: no-repeat
         filter: invert(1)
     .credit-plus-icon
         background-image: url('/img/icons/credit_plus.png')
         width: 13px
         height: 21px
-        background-size: contain;
-        background-repeat: no-repeat;
+        background-size: contain
+        background-repeat: no-repeat
         filter: invert(1)
     .purge-icon
         background-image: url('/img/icons/purge.png')
         width: 38px
         height: 20px
-        background-size: contain;
-        background-repeat: no-repeat;
+        background-size: contain
+        background-repeat: no-repeat
         filter: invert(1)
     .trash-resource-icon
         background-image: url('/img/icons/trash_resource.png')
         width: 14px
         height: 20px
-        background-size: contain;
-        background-repeat: no-repeat;
+        background-size: contain
+        background-repeat: no-repeat
         filter: invert(1)
     .fancy-agenda-point
         display: flex
@@ -140,7 +140,7 @@
         align-items: center
         padding-left: 0px
         cursor: pointer
-        flex-shrink: 0;
+        flex-shrink: 0
 
         .agenda-point-count
             text-shadow: 2px 2px 3px black
@@ -155,7 +155,7 @@
             margin-left: 8.5px
             margin-bottom: 3px
         .agenda-icon
-            filter: drop-shadow(0px 0px 5px #000);
+            filter: drop-shadow(0px 0px 5px #000)
             position: absolute
             left: 5px
             top: 0
@@ -163,8 +163,8 @@
             height: 2.5rem
     .gameview
         height: 100%
-        display-flex();
-        flex-direction(column);
+        display-flex()
+        flex-direction(column)
 
     #gameboard
         width: 100%
@@ -503,9 +503,9 @@
             >div
                 border: none
                 min-width:30px
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                display: flex
+                justify-content: center
+                align-items: center
 
             >span:before, >span:after
                 content: ''
@@ -559,7 +559,8 @@
         .hand-container
             z-index: 30
             flex: 1
-            flex-grow: 0;
+            flex-grow: 0
+            min-width: 350px
 
         .hand-wrapper
             display: flex
@@ -574,7 +575,6 @@
             height: 86px
             padding: 0
         .hand
-            min-width: 350px
             margin: 5px
             width: auto
 
@@ -602,11 +602,11 @@
             .rfg-wrapper
                 display: flex
                 width: 100%
-                flex: 1;
-                min-width: 0;
+                flex: 1
+                min-width: 0
         .scored
-            flex-direction: row;
-            align-items: flex-start;
+            flex-direction: row
+            align-items: flex-start
 
         .hand
             flex-grow: 1
@@ -647,7 +647,7 @@
             margin: 5px
             min-width: 0
             align-items: flex-start
-            flex-grow: 0;
+            flex-grow: 0
 
             .avatar
                 height: 36px
@@ -667,8 +667,8 @@
 
 
         .expander
-            display: flex;
-            justify-content: center;
+            display: flex
+            justify-content: center
             &:hover
                 background-color: var(--gray-20)
 
@@ -731,14 +731,14 @@
             display: flex
             align-self: flex-start
             padding: 0px
-            position: relative;
+            position: relative
 
         .stats-hover-details
             display: flex
             flex-direction: column
             position: absolute
             left: 5px
-            transform: translate(0%, -50px);
+            transform: translate(0%, -50px)
             width: calc(100% - 10px)
             margin: 0
             z-index: 0
@@ -758,8 +758,8 @@
                 padding-top: 3px
         
             &:hover
-                transform: translate(0%, calc(-100% - 5px));
-                z-index: 0;
+                transform: translate(0%, calc(-100% - 5px))
+                z-index: 0
 
         .start-game
             animation: fadein 1.2s
@@ -929,8 +929,8 @@
             display-flex()
             flex-direction(column)
             justify-content(space-between)
-            height: 100%;
-            min-height: 0;
+            height: 100%
+            min-height: 0
 
             > div
                 width: auto
@@ -956,13 +956,13 @@
 
             .panel
                 margin: 0
-                box-shadow: black 0px -1px 5px;
+                box-shadow: black 0px -1px 5px
             
 
             .button-pane
-                flex-shrink: 1;
-                min-height: 100px;
-                margin-top: auto;
+                flex-shrink: 1
+                min-height: 100px
+                margin-top: auto
 
         .timestamp
             padding-right: 20px
@@ -994,24 +994,24 @@
             
             > button
                 flex: 1
-                padding: 0 5px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+                padding: 0 5px
+                display: flex
+                justify-content: center
+                align-items: center
             :last-child
                 margin-right: 0
 
         .button-pane
             hr
-                width: 100%;
+                width: 100%
 
             .panel
                 padding: 8px
                 z-index: 20
-                display: flex;
-                flex-direction: column;
-                max-height: 100%;
-                overflow: auto;
+                display: flex
+                flex-direction: column
+                max-height: 100%
+                overflow: auto
 
                 .prompt-card-preview
                     text-align: center
@@ -1355,12 +1355,12 @@
             flex-direction(column)
             z-index:10
             align-items: flex-end
-            justify-content: center;
-            max-width: 150px;
-            position: absolute;
-            height: 100%;
-            right: 0;
-            top: 0;
+            justify-content: center
+            max-width: 150px
+            position: absolute
+            height: 100%
+            right: 0
+            top: 0
             > div
                 max-width: calc(100% - 10px)
 
