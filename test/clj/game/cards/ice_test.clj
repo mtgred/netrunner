@@ -408,7 +408,7 @@
     [state (new-game {:corp {:hand ["Ansel 1.0" "NGO Front" "Merger"]
                              :discard ["Adonis Campaign"]
                              :credits 100}
-                      :runner {:hand ["Corroder"]
+                      :runner {:hand ["Corroder" "Trick Shot"]
                                :credits 100}})
      _ (do (core/gain state :corp :click 100)
            (play-from-hand state :corp "Ansel 1.0" "New remote"))
@@ -491,7 +491,34 @@
         (run-continue state :movement)
         (run-continue state :success)
         (is (accessing state "NGO Front"))
-        (is (= ["No action"] (prompt-buttons :runner)))))))
+        (is (= ["No action"] (prompt-buttons :runner))))))
+  (testing "preventing trash with Ansel, issue #7343"
+    (do-game (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                               :hand ["Spin Doctor" "Ansel 1.0"]
+                               :credits 10}
+                        :runner {:hand ["Trick Shot"]
+                                 :credits 10}})
+      (play-from-hand state :corp "Ansel 1.0" "R&D")
+      (play-from-hand state :corp "Spin Doctor" "New remote")
+      (take-credits state :corp)
+      (let [ansel (get-ice state :rd 0)]
+        (play-from-hand state :runner "Trick Shot")
+        (rez state :corp ansel)
+        (run-continue state :encounter-ice)
+        (fire-subs state (refresh ansel))
+        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Done")
+        (is (last-log-contains? state "cannot steal or trash"))
+        (run-continue-until state :success)
+        (is (last-log-contains? state "accesses an unseen card"))
+        (is (= ["No action"] (prompt-buttons :runner))
+            "Ansel's third sub applies during the initial run")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "No action")
+        (click-prompt state :runner "Server 1")
+        (run-continue-until state :success)
+        (is (= ["Pay 2 [Credits] to trash" "No action"] (prompt-buttons :runner))
+            "Ansel's third sub doesn't last into 'end of run' runs")))))
 
 (deftest ansel-1-0-access-after-no-steal
   (do-game
@@ -4185,7 +4212,7 @@
       (is (= "Choose a piece of ice" (:msg (prompt-map :corp))) "Prompt to choose Ice")
       (click-card state :corp iw)
       (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
-      (run-continue state :rd)
+      (run-continue state :encounter-ice)
       (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be back to encountering Konjin"))))
 
 (deftest konjin-end-run-completely-if-forced-encounter-ends-the-run
@@ -5754,12 +5781,12 @@
     (rez state :corp (get-ice state :hq 0))
     (is (changed? [(count-tags state) 0]
           (run-continue state :encounter-ice)
-          (run-continue state :pass-ice)
+          (run-continue state :movement)
           (run-continue state :approach-ice))
         "gained no tag for passing vanilla")
     (run-continue state :encounter-ice)
     (is (changed? [(count-tags state) 1]
-          (run-continue state :pass-ice))
+          (run-continue state :movement))
         "gained 1 tag for phoneutria")))
 
 (deftest phonuetria-no-tag
@@ -5773,7 +5800,7 @@
     (rez state :corp (get-ice state :hq 0))
     (is (changed? [(count-tags state) 0]
           (run-continue state :encounter-ice)
-          (run-continue state :pass-ice))
+          (run-continue state :movement))
         "gained no tag for passing phoneutria")))
 
 (deftest ping
@@ -6973,7 +7000,7 @@
       (click-card state :corp susanoo)
       (fire-subs state susanoo)
       (is (= [:rd] (get-in @state [:run :server])) "Run still on R&D")
-      (run-continue state :movement)
+      (run-continue state :encounter-ice)
       (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
       (rez state :corp cl)
       (run-continue-until state :encounter-ice cl)

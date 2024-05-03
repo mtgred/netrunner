@@ -166,8 +166,7 @@
     (is (changed? [(:credit (get-corp)) 0]
           (click-card state :corp "Pharos")
           (click-prompt state :corp "Server 2"))
-        "Ignored install costs")
-    ))
+        "Ignored install costs")))
 
 (deftest a-teia-tatu-bola
   (do-game
@@ -178,8 +177,7 @@
     (take-credits state :corp)
     (run-on state :remote1)
     (rez state :corp (get-ice state :remote1 0))
-    (run-continue state :encounter-ice)
-    (run-continue state :pass-ice)
+    (run-continue-until state :movement)
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Vanilla")
     (click-card state :corp "Tatu-Bola")
