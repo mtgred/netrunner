@@ -144,6 +144,14 @@
           (send-command "ability" {:card (card-for-click card) :ability 0})
           (send-command (first actions) {:card (card-for-click card)}))))))
 
+(defn- graveyard-highlight-card?
+  [card]
+  (and
+    (= (first (:zone card)) "discard")
+    (or (= "Agenda" (:type card))
+        (:poison card)
+        (:highlight-in-discard card))))
+
 (defn handle-card-click [{:keys [type zone] :as card}]
   (let [side (:side @game-state)]
     (when (not-spectator?)
@@ -642,6 +650,7 @@
                                               (same-card? card (:button @app-state)) "hovered"
                                               (same-card? card (-> @game-state :encounters :ice)) "encountered"
                                               (playable? card) "playable"
+                                              (graveyard-highlight-card? card) "graveyard-highlight"
                                               new "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)
@@ -893,7 +902,10 @@
        [:div.blue-shade.discard {:on-click #(-> (:popup @s) js/$ .fadeToggle)}
         (when-not (empty? @discard)
           [card-view (last @discard) nil true])
-        [:div.header {:class "darkbg server-label"}
+        [:div.header {:class (str "server-label "
+                                  (if (some graveyard-highlight-card? @discard)
+                                    "graveyard-highlight-bg"
+                                    "darkbg"))}
          (str (tr [:game.heap "Heap"]) " (" (count @discard) ")")]]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
@@ -917,7 +929,13 @@
          [:div.blue-shade.discard {:on-click #(-> (:popup @s) js/$ .fadeToggle)}
           (when-not (empty? @discard)
             [:<> {:key "discard"} (draw-card (last @discard) true)])
-          [:div.header {:class "darkbg server-label"}
+          [:div.header {:class (str "server-label "
+                                    (if (some (if (or (= player-side :corp) (spectator-view-hidden?))
+                                                graveyard-highlight-card?
+                                                (every-pred graveyard-highlight-card? :seen))
+                                              @discard)
+                                      "graveyard-highlight-bg"
+                                      "darkbg"))}
            (let [total (count @discard)
                  face-up (count (filter faceup? @discard))]
              (str (tr [:game.archives "Archives"])

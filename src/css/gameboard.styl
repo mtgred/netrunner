@@ -38,6 +38,11 @@
         text-shadow 1px 1px 2px black-solid
         border-radius: 4px
 
+    .graveyard-highlight-bg
+        background: alpha(purple-core, o-60)
+        text-shadow 1px 1px 2px purple-core
+        border-radius: 4px
+
     .server-label
         color: white-solid
         text-align: center
@@ -73,6 +78,18 @@
             box-shadow: 0 0 1px 2px gold-base, 0px 0px 0px 0px lighten(alpha(gold-base, 30%), 80%), 0px 0px 0px 0px lighten(alpha(gold-base, 30%), 80%), 0 0 0px 0px spin(alpha(gold-base, 70%), -15deg)
         }
     }
+
+    @keyframes graveyard-card {
+        0% {
+            box-shadow: 0 0 1px 2px purple-core, 20px 20px 15px 10px lighten(alpha(purple-core, 30%), 80%), -20px -20px 15px 10px lighten(alpha(purple-core, 30%), 80%), 0 0 30px 15px spin(alpha(purple-core, 70%), -15deg)
+        }
+        100% {
+            box-shadow: 0 0 1px 2px purple-core, 0px 0px 0px 0px lighten(alpha(purple-core, 30%), 80%), 0px 0px 0px 0px lighten(alpha(purple-core, 30%), 80%), 0 0 0px 0px spin(alpha(purple-core, 70%), -15deg)
+        }
+    }
+
+    .card.graveyard-highlight
+        animation: graveyard-card 1s cubic-bezier(0.5,1,0.5,1) forwards
 
     .card.new
         animation: new-card 1s cubic-bezier(0.5,1,0.5,1) forwards
