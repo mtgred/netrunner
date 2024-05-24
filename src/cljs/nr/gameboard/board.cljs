@@ -139,9 +139,9 @@
         ;; Trigger first (and only) ability / action
         (and (= c 1)
              (= side card-side))
-        (if (and (= (count abilities) 1)
-                 (playable? (first abilities)))
-          (send-command "ability" {:card (card-for-click card) :ability 0})
+        (if (= (count abilities) 1)
+          (when (playable? (first abilities))
+            (send-command "ability" {:card (card-for-click card) :ability 0}))
           (send-command (first actions) {:card (card-for-click card)}))))))
 
 (defn handle-card-click [{:keys [type zone] :as card}]
