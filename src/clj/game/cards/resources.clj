@@ -1172,7 +1172,7 @@
                          (register-lingering-effect
                            state side card
                            {:type :disable-card
-                            :duration :runner-turn-ends
+                            :duration :end-of-turn
                             :req (req (same-card? c target))
                             :value (req true)})
                          (fake-checkpoint state)))}]})
