@@ -213,15 +213,21 @@
 
 (defcard "Ark Lockdown"
   {:on-play
-   {:req (req (and (not-empty (:discard runner))
-                   (not (zone-locked? state :runner :discard))))
-    :prompt "Name a card to remove all copies in the Heap from the game"
-    :choices (req (cancellable (:discard runner) :sorted))
-    :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
-    :async true
-    :effect (req (doseq [c (filter #(same-card? :title target %) (:discard runner))]
-                   (move state :runner c :rfg))
-                 (effect-completed state side eid))}})
+   {:async true
+    :effect (req (continue-ability
+                   state side
+                   (if (and (not-empty (:discard runner))
+                            (not (zone-locked? state :runner :discard)))
+                     {:prompt "Name a card to remove all copies in the Heap from the game"
+                      :choices (req (cancellable (:discard runner) :sorted))
+                      :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
+                      :async true
+                      :effect (req (doseq [c (filter #(same-card? :title target %)
+                                                     (:discard runner))]
+                                     (move state :runner c :rfg))
+                                   (effect-completed state side eid))}
+                     {:msg (msg "do nothing")})
+                   card nil))}})
 
 
 (defcard "Armed Asset Protection"
@@ -286,16 +292,14 @@
   (letfn [(audacity [x]
             {:prompt (msg "Choose a card that can be advanced to place advancement counters on (" x " remaining)")
              :async true
-             :choices {:req (req (can-be-advanced? state target))
-                       :all true}
+             :choices {:req (req (can-be-advanced? state target))}
              :msg (msg "place 1 advancement counter on " (card-str state target))
              :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
                                     (if (> x 1)
                                       (continue-ability state side (audacity (dec x)) card nil)
                                       (effect-completed state side eid))))})]
     {:on-play
-     {:req (req (and (<= 3 (count (:hand corp)))
-                     (some #(can-be-advanced? state %) (all-installed state :corp))))
+     {:req (req (<= 3 (count (:hand corp))))
       :async true
       :msg "trash all cards in HQ"
       :effect (req (wait-for (trash-cards state side (:hand corp) {:unpreventable true :cause-card card})
@@ -334,8 +338,7 @@
 
 (defcard "Best Defense"
   {:on-play
-   {:req (req (not-empty (all-installed state :runner)))
-    :prompt (msg "Choose a Runner card with an install cost of " (count-tags state) " or less to trash")
+   {:prompt (msg "Choose a Runner card with an install cost of " (count-tags state) " or less to trash")
     :choices {:req (req (and (runner? target)
                              (installed? target)
                              (not (facedown? target))
@@ -391,8 +394,7 @@
 
 (defcard "Big Deal"
   {:on-play
-   {:req (req (pos? (count (all-installed state :corp))))
-    :prompt "Choose a card on which to place 4 advancement counters"
+   {:prompt "Choose a card on which to place 4 advancement counters"
     :rfg-instead-of-trashing true
     :async true
     :choices {:card #(and (corp? %)
@@ -411,11 +413,7 @@
                                card nil))))}})
 
 (defcard "Bioroid Efficiency Research"
-  {:on-play {:req (req (some #(and (ice? %)
-                                   (has-subtype? % "Bioroid")
-                                   (not (rezzed? %)))
-                             (all-installed state :corp)))
-             :choices {:card #(and (ice? %)
+  {:on-play {:choices {:card #(and (ice? %)
                                    (has-subtype? % "Bioroid")
                                    (installed? %)
                                    (not (rezzed? %)))}

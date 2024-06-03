@@ -375,8 +375,6 @@
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Audacity" 3) "Ice Wall" "Hostile Takeover"]}})
-      (play-from-hand state :corp "Audacity")
-      (is (no-prompt? state :corp) "Can't play Audacity without an advanceable card")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Audacity")
       (click-card state :corp "Ice Wall")
@@ -460,8 +458,6 @@
                       :hand [(qty "Best Defense" 2)]}
                :runner {:hand ["Dorm Computer" "Mass-Driver"]
                         :credits 10}})
-    (play-from-hand state :corp "Best Defense")
-    (is (no-prompt? state :corp) "Corp can't play Best Defense without installed runner cards")
     (take-credits state :corp)
     (play-from-hand state :runner "Dorm Computer")
     (play-from-hand state :runner "Mass-Driver")
