@@ -83,18 +83,17 @@
   {:on-play
    {:additional-cost [(->c :forfeit)]
     :async true
-    :effect (req (if (pos? (count (:scored corp)))
-                   (continue-ability
-                     state side
-                     {:prompt "Choose an agenda in your score area"
-                      :choices {:card #(and (agenda? %)
-                                            (when-scored? %)
-                                            (is-scored? state :corp %))}
-                      :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                      :async true
-                      :effect (effect (continue-ability (:on-score (card-def target)) target nil))}
-                     card nil)
-                   (do-nothing state side eid card)))}})
+    :does-something (req (pos? (count (:scored corp))))
+    :effect (req (continue-ability
+                   state side
+                   {:prompt "Choose an agenda in your score area"
+                    :choices {:card #(and (agenda? %)
+                                          (when-scored? %)
+                                          (is-scored? state :corp %))}
+                    :msg (msg "trigger the \"when scored\" ability of " (:title target))
+                    :async true
+                    :effect (effect (continue-ability (:on-score (card-def target)) target nil))}
+                   card nil))}})
 
 (defcard "Accelerated Diagnostics"
   (letfn [(ad [st si e c cards]
@@ -112,6 +111,7 @@
                :cancel-effect (effect (trash-cards eid cards {:unpreventable true :cause-card card}))}))]
     {:on-play
      {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
+      :does-something (req (seq (:deck corp)))
       :choices ["OK"]
       :async true
       :effect (effect (continue-ability (ad state side eid card (take 3 (:deck corp))) card nil))}}))
@@ -166,6 +166,7 @@
 (defcard "Aggressive Negotiation"
   {:on-play
    {:req (req (:scored-agenda corp-reg))
+    :does-something (req (seq (:deck corp)))
     :prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))
     :msg "search R&D for a card and add it to HQ"
@@ -214,20 +215,16 @@
 (defcard "Ark Lockdown"
   {:on-play
    {:async true
-    :effect (req (if (and (not-empty (:discard runner))
-                          (not (zone-locked? state :runner :discard)))
-                   (continue-ability
-                     state side
-                     {:prompt "Name a card to remove all copies in the Heap from the game"
-                      :choices (req (cancellable (:discard runner) :sorted))
-                      :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
-                      :async true
-                      :effect (req (doseq [c (filter #(same-card? :title target %)
-                                                     (:discard runner))]
-                                     (move state :runner c :rfg))
-                                   (effect-completed state side eid))}
-                     card nil)
-                   (do-nothing state side eid card)))}})
+    :does-something (req (and (not-empty (:discard runner))
+                          (not (zone-locked? state :runner :discard))))
+    :prompt "Name a card to remove all copies in the Heap from the game"
+    :choices (req (cancellable (:discard runner) :sorted))
+    :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
+    :async true
+    :effect (req (doseq [c (filter #(same-card? :title target %)
+                                   (:discard runner))]
+                   (move state :runner c :rfg))
+                 (effect-completed state side eid))}})
 
 (defcard "Armed Asset Protection"
   (let [faceup-agendas (fn [corp]
