@@ -1595,9 +1595,7 @@
                                                           (get-all-installed state))))))}})
 
 (defcard "MCA Informant"
-  {:on-play {:req (req (not-empty (filter #(has-subtype? % "Connection")
-                                          (all-active-installed state :runner))))
-             :prompt "Choose a connection to host MCA Informant on"
+  {:on-play {:prompt "Choose a connection to host MCA Informant on"
              :choices {:card #(and (runner? %)
                                    (has-subtype? % "Connection")
                                    (installed? %))}
@@ -1616,7 +1614,6 @@
 (defcard "Media Blitz"
   {:on-play
    {:async true
-    :req (req (pos? (count (:scored runner))))
     :effect
     (effect
       (continue-ability
@@ -1746,10 +1743,7 @@
 
 (defcard "Mutate"
   {:on-play
-   {:req (req (some #(and (ice? %)
-                          (rezzed? %))
-                    (all-installed state :corp)))
-    :prompt "Choose a rezzed piece of ice to trash"
+   {:prompt "Choose a rezzed piece of ice to trash"
     :choices {:card #(and (ice? %)
                           (rezzed? %))}
     :async true
@@ -1780,10 +1774,7 @@
 
 (defcard "Mutually Assured Destruction"
   {:on-play
-   {:req (req (some #(and (rezzed? %)
-                          (not (agenda? %)))
-                    (all-installed state :corp)))
-    :prompt "Choose any number of rezzed cards to trash"
+   {:prompt "Choose any number of rezzed cards to trash"
     :interactive (req true)
     :choices {:max (req (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
               :card #(and (rezzed? %)
@@ -1993,10 +1984,7 @@
 
 (defcard "Power Shutdown"
   {:on-play
-   {:req (req (and (last-turn? state :runner :made-run)
-                   (not-empty (filter #(or (hardware? %)
-                                           (program? %))
-                                      (all-active-installed state :runner)))))
+   {:req (req (last-turn? state :runner :made-run))
     :prompt "How many cards do you want to trash from the top of R&D?"
     :waiting-prompt true
     :choices {:number (req (count (:deck corp)))}
@@ -2113,8 +2101,7 @@
              :async true
              :effect (effect (corp-install eid chosen target nil))})]
     {:on-play
-     {:req (req (seq (:deck corp)))
-      :async true
+     {:async true
       :msg "look at the top 5 cards of R&D"
       :effect
       (effect
@@ -2270,8 +2257,7 @@
 
 (defcard "Red Planet Couriers"
   {:on-play
-   {:req (req (some #(can-be-advanced? state %) (all-installed state :corp)))
-    :prompt "Choose an installed card that can be advanced"
+   {:prompt "Choose an installed card that can be advanced"
     :choices {:req (req (can-be-advanced? state target))}
     :async true
     :effect (req (let [installed (get-all-installed state)
@@ -2353,11 +2339,7 @@
 
 (defcard "Retribution"
   {:on-play
-   {:req (req (and tagged
-                   (->> (all-installed state :runner)
-                        (filter #(or (hardware? %)
-                                     (program? %)))
-                        not-empty)))
+   {:req (req tagged)
     :prompt "Choose a program or piece of hardware to trash"
     :choices {:req (req (and (installed? target)
                              (or (program? target)
@@ -2456,9 +2438,7 @@
 
 (defcard "Sacrifice"
   {:on-play
-   {:req (req (and (pos? (count-bad-pub state))
-                   (some #(pos? (:agendapoints %)) (:scored corp))))
-    :additional-cost [(->c :forfeit)]
+   {:additional-cost [(->c :forfeit)]
     :async true
     :effect (req (let [bp-lost (max 0 (min (:agendapoints (last (:rfg corp)))
                                            (count-bad-pub state)))]
@@ -3048,10 +3028,6 @@
 (defcard "Trick of Light"
   {:on-play
    {:prompt "Choose an installed card you can advance"
-    :req (req (let [advanceable (some #(can-be-advanced? state %) (get-all-installed state))
-                    num-installed (count (get-all-installed state))]
-                 (and advanceable
-                      (> num-installed 1))))
     :choices {:req (req (and (can-be-advanced? state target)
                              (installed? target)))}
     :async true
@@ -3221,6 +3197,5 @@
 
 (defcard "Your Digital Life"
   {:on-play {:msg (msg "gain " (count (:hand corp)) " [Credits]")
-             :req (req (<= 2 (count (:hand corp)))) ;; no change in gamestate rule
              :async true
              :effect (effect (gain-credits :corp eid (count (:hand corp))))}})

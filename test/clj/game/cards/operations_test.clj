@@ -3880,21 +3880,6 @@
         (is (zero? (count-bad-pub state)) "Sacrifice removes one bad publicity for forfeiting Hostile Takeover")
         (is (= (inc credits) (:credit (get-corp))) "Corp gained one credit from removing one bad pub with Sacrifice"))))
 
-(deftest sacrifice-play-restrictions
-    ;; Play restrictions
-    (do-game
-      (new-game {:corp {:deck ["Standoff" "Hostile Takeover" "Sacrifice"]}})
-      (play-and-score state "Standoff")
-      (click-prompt state :runner "Done")
-      (core/gain state :corp :bad-publicity 1)
-      (play-from-hand state :corp "Sacrifice")
-      (is (= 2 (count (:hand (get-corp)))) "Can not play Sacrifice with no 1+ agenda in score area")
-      (play-and-score state "Hostile Takeover")
-      ;; Remove BP
-      (core/gain state :corp :bad-publicity -2)
-      (play-from-hand state :corp "Sacrifice")
-      (is (= 1 (count (:hand (get-corp)))) "Can not play Sacrifice with no bad publicity in score area")))
-
 (deftest salem-s-hospitality
   ;; Salem's Hospitality - Full test
   (do-game
