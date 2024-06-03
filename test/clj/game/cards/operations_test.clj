@@ -628,26 +628,18 @@
     (is (= "Sure Gamble" (:title (nth (:deck (get-runner)) 2))) "Yet another Sure Gamble on top of the deck")))
 
 (deftest building-blocks-basic-behavior
-    ;; Basic behavior
-    (do-game
-      (new-game {:corp {:deck ["Building Blocks" "Ice Wall"]}})
-      (core/gain state :corp :credit 1)
-      (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
-      (play-from-hand state :corp "Building Blocks")
-      (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
-      (click-card state :corp "Ice Wall")
-      (click-prompt state :corp "New remote")
-      (let [iw (get-ice state :remote1 0)]
-        (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
-        (is (rezzed? (refresh iw)) "Ice Wall is installed and rezzed"))))
-
-(deftest building-blocks-choose-invalid-card
-    ;; Choose invalid card
-    (do-game
-      (new-game {:corp {:deck ["Building Blocks" "Hedge Fund" "Cortex Lock"]}})
-      (core/gain state :corp :credit 1)
-      (play-from-hand state :corp "Building Blocks")
-      (is (no-prompt? state :corp) "Can't play Building Blocks without a Barrier in hand")))
+  ;; Basic behavior
+  (do-game
+    (new-game {:corp {:deck ["Building Blocks" "Ice Wall"]}})
+    (core/gain state :corp :credit 1)
+    (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
+    (play-from-hand state :corp "Building Blocks")
+    (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :corp "New remote")
+    (let [iw (get-ice state :remote1 0)]
+      (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
+      (is (rezzed? (refresh iw)) "Ice Wall is installed and rezzed"))))
 
 (deftest business-as-usual
   (do-game

@@ -476,9 +476,8 @@
                             card nil))})]
     {:on-play
      {:async true
-      :req (req (and (pos? (count (:hand runner)))
-                     (or (last-turn? state :runner :trashed-card)
-                         (last-turn? state :runner :stole-agenda))))
+      :req (req (or (last-turn? state :runner :trashed-card)
+                    (last-turn? state :runner :stole-agenda)))
       :effect (req
                 (let [chosen-cards (take 2 (shuffle (:hand runner)))]
                   (continue-ability
@@ -488,8 +487,7 @@
 
 (defcard "Building Blocks"
   {:on-play
-   {:req (req (pos? (count (filter #(has-subtype? % "Barrier") (:hand corp)))))
-    :prompt "Choose a Barrier to install and rez"
+   {:prompt "Choose a Barrier to install and rez"
     :choices {:card #(and (corp? %)
                           (has-subtype? % "Barrier")
                           (in-hand? %))}
@@ -832,11 +830,16 @@
 
 (defcard "Economic Warfare"
   {:on-play
-   {:req (req (and (last-turn? state :runner :successful-run)
-                   (>= (:credit runner) 4)))
-    :msg "make the runner lose 4 [Credits]"
+   {:req (req (last-turn? state :runner :successful-run))
     :async true
-    :effect (effect (lose-credits :runner eid 4))}})
+    :effect (req (continue-ability
+                   state side
+                   (if (>= (:credit runner) 4)
+                     {:msg "make the runner lose 4 [Credits]"
+                      :async true
+                      :effect (effect (lose-credits :runner eid 4))}
+                     {:msg "do nothing"})
+                   card nil))}})
 
 (defcard "Election Day"
   {:on-play
