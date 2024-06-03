@@ -81,19 +81,20 @@
 ;; Card definitions
 (defcard "24/7 News Cycle"
   {:on-play
-   {:req (req (pos? (count (:scored corp))))
-    :additional-cost [(->c :forfeit)]
+   {:additional-cost [(->c :forfeit)]
     :async true
-    :effect (effect
-              (continue-ability
-                {:prompt "Choose an agenda in your score area"
-                 :choices {:card #(and (agenda? %)
-                                       (when-scored? %)
-                                       (is-scored? state :corp %))}
-                 :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                 :async true
-                 :effect (effect (continue-ability (:on-score (card-def target)) target nil))}
-                card nil))}})
+    :effect (req (if (pos? (count (:scored corp)))
+                   (continue-ability
+                     state side
+                     {:prompt "Choose an agenda in your score area"
+                      :choices {:card #(and (agenda? %)
+                                            (when-scored? %)
+                                            (is-scored? state :corp %))}
+                      :msg (msg "trigger the \"when scored\" ability of " (:title target))
+                      :async true
+                      :effect (effect (continue-ability (:on-score (card-def target)) target nil))}
+                     card nil)
+                   (effect-completed state side eid)))}})
 
 (defcard "Accelerated Diagnostics"
   (letfn [(ad [st si e c cards]
@@ -156,9 +157,7 @@
                :effect (req (wait-for (corp-install state side target nil {:install-state :rezzed})
                                       (continue-ability state side (ab (inc n) total) card nil)))}))]
     {:on-play
-     {:req (req (some #(has-subtype? % "Advertisement")
-                      (concat (:discard corp) (:hand corp))))
-      :prompt "How many Advertisements do you want to install and rez?"
+     {:prompt "How many Advertisements do you want to install and rez?"
       :choices :credit
       :msg (msg "install and rez " target " Advertisements")
       :async true
