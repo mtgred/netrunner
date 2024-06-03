@@ -888,21 +888,27 @@
 
 (defcard "Exchange of Information"
   {:on-play
-   {:req (req (and tagged
-                   (seq (:scored runner))
-                   (seq (:scored corp))))
-    :prompt "Choose an agenda in the Runner's score area to swap"
-    :choices {:req (req (in-runner-scored? state side target))}
+   {:req (req tagged)
     :async true
-    :effect (effect
-              (continue-ability
-                (let [stolen target]
-                  {:prompt (msg "Choose a scored agenda to swap for " (:title stolen))
-                   :choices {:req (req (in-corp-scored? state side target))}
-                   :msg (msg "swap " (:title target)
-                             " for " (:title stolen))
-                   :effect (effect (swap-agendas target stolen))})
-                card nil))}})
+    :effect (req (continue-ability
+                   state side
+                   (if (and
+                         (seq (:scored runner))
+                         (seq (:scored corp)))
+                     {:prompt "Choose an agenda in the Runner's score area to swap"
+                      :choices {:req (req (in-runner-scored? state side target))}
+                      :async true
+                      :effect (effect
+                                (continue-ability
+                                  (let [stolen target]
+                                    {:prompt (msg "Choose a scored agenda to swap for " (:title stolen))
+                                     :choices {:req (req (in-corp-scored? state side target))}
+                                     :msg (msg "swap " (:title target)
+                                               " for " (:title stolen))
+                                     :effect (effect (swap-agendas target stolen))})
+                                  card nil))}
+                     {:msg "do nothing"})
+                   card nil))}})
 
 (defcard "Extract"
   ;; doesn't check to see the card is actually trashed (it's not a cost, so may be prevented?)
@@ -928,8 +934,7 @@
 (defcard "Fast Break"
   {:x-fn (req (-> runner :scored count))
    :on-play
-   {:req (req (-> runner :scored count pos?))
-    :async true
+   {:async true
     :msg (msg "gain " ((get-x-fn) state side eid card targets) " [Credits]")
     :effect
     (req (let [draw {:async true
@@ -942,17 +947,18 @@
                      :effect (effect (draw eid target))}
                install-cards (fn install-cards
                                [server n]
-                               {:prompt "Choose a card to install"
-                                :choices {:card #(and (corp? %)
-                                                      (not (operation? %))
-                                                      (in-hand? %)
-                                                      (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
-                                :effect (req (wait-for
-                                               (corp-install state side target server nil)
-                                               (let [server (remote->name (second (:zone async-result)))]
-                                                 (if (< n ((get-x-fn) state side eid card targets))
-                                                   (continue-ability state side (install-cards server (inc n)) card nil)
-                                                   (effect-completed state side eid)))))})
+                               (when (pos? n)
+                                 {:prompt "Choose a card to install"
+                                  :choices {:card #(and (corp? %)
+                                                        (not (operation? %))
+                                                        (in-hand? %)
+                                                        (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
+                                  :effect (req (wait-for
+                                                 (corp-install state side target server nil)
+                                                 (let [server (remote->name (second (:zone async-result)))]
+                                                   (if (< n ((get-x-fn) state side eid card targets))
+                                                     (continue-ability state side (install-cards server (inc n)) card nil)
+                                                     (effect-completed state side eid)))))}))
                select-server {:async true
                               :prompt "Choose a server"
                               :choices (req (conj (vec (get-remote-names state)) "New remote"))
@@ -977,8 +983,7 @@
             (* 2 (count (filter resource? (all-active-installed state :runner)))))]
     {:on-play
      {:optional
-      {:req (req (and (<= 6 (:credit runner))
-                      (pos? (count-resources state))))
+      {:req (req (<= 6 (:credit runner)))
        :player :runner
        :waiting-prompt true
        :prompt "Trash a resource?"
@@ -1525,10 +1530,7 @@
 
 (defcard "Liquidation"
   {:on-play
-   {:req (req (some #(and (rezzed? %)
-                          (not (agenda? %)))
-                    (all-installed state :corp)))
-    :prompt "Choose any number of rezzed cards to trash"
+   {:prompt "Choose any number of rezzed cards to trash"
     :choices {:max (req (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
               :card #(and (rezzed? %)
                           (not (agenda? %)))}
