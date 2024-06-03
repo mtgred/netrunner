@@ -3974,10 +3974,11 @@
 (deftest seamless-launch
   ;; Seamless Launch
   (do-game
-     (new-game {:corp {:hand ["Seamless Launch" "Project Atlas"]}})
+     (new-game {:corp {:hand [(qty "Seamless Launch" 2) "Project Atlas"]}})
      (play-from-hand state :corp "Project Atlas" "New remote")
      (play-from-hand state :corp "Seamless Launch")
-     (is (no-prompt? state :corp) "No valid target for Seamless Launch")
+     (is (no-prompt? state :corp) "No prompt")
+     (is (last-log-contains? state "to do nothing") "did nothing")
      (take-credits state :corp)
      (take-credits state :runner)
      (play-from-hand state :corp "Seamless Launch")
@@ -5336,9 +5337,10 @@
     (let [eli (get-ice state :rd 0)
           vanilla (get-ice state :hq 0)]
       (play-from-hand state :corp "Wetwork Refit")
+      (is (no-prompt? state :corp) "No prompt")
+      (is (last-log-contains? state "to do nothing") "did nothing")
       (is (not-any? #{"Eli 1.0"} (prompt-buttons :corp))
           "Unrezzed Eli 1.0 is not a choice to host Wetwork Refit")
-      (click-prompt state :corp "Done")
       (take-credits state :corp)
       (take-credits state :runner)
       (rez state :corp (refresh eli))
