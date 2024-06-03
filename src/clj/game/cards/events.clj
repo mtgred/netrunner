@@ -4027,7 +4027,7 @@
 (defcard "Uninstall"
   {:on-play
    {:async true
-    :effect (req (if-not (some? #(and (installed? %) (not (facedown? %))
+    :effect (req (if-not (some #(and (installed? %) (not (facedown? %))
                                       (or (hardware? %) (program? %)))
                                 (all-installed state :runner))
                    (do-nothing state side eid card)
