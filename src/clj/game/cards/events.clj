@@ -956,8 +956,7 @@
     {:on-play
      {:req (req (and (some #{:hq} (:successful-run runner-reg))
                      (some #{:rd} (:successful-run runner-reg))
-                     (some #{:archives} (:successful-run runner-reg))
-                     (seq (:deck corp))))
+                     (some #{:archives} (:successful-run runner-reg))))
       :async true
       :effect (req (set-aside state :corp eid (take 8 (:deck corp)))
                    (let [top-8 (sort-by :title (get-set-aside state :corp eid))]
