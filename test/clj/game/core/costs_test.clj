@@ -48,7 +48,7 @@
 (deftest pay-credits
   (testing "Testing several cost messages"
     (do-game
-      (new-game {:runner {:hand ["Diesel" "Daily Casts" "Clot" "Career Fair" "Daily Casts" "Sure Gamble" "Misdirection"]}
+      (new-game {:runner {:hand ["Diesel" "Daily Casts" "Clot" "Career Fair" "Daily Casts" "Sure Gamble" "Misdirection"] :deck [(qty "Ika" 15)]}
                  :corp {:hand [(qty "Ice Wall" 2) "Turtlebacks" "Beanstalk Royalties" "Hedge Fund" "Project Beale" "Ben Musashi"]}})
       (core/gain state :corp :click 10)
       (play-from-hand state :corp "Ice Wall" "HQ")
