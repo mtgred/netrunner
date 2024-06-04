@@ -315,7 +315,7 @@
   (when once
     (swap! state assoc-in [once (or once-key cid)] true)))
 
-(defn- do-nothing
+(defn do-nothing
   "Does nothing (loudly)"
   [state side eid card]
   (system-msg state side (str "uses " (:title card) " to do nothing"))

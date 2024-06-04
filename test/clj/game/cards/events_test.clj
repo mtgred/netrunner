@@ -1500,8 +1500,7 @@
         (click-card state :runner (refresh cp))
         (is (= 3 (get-counters (refresh cp) :virus)) "Chrome Parlor has 3 counters after Contaminate")
         (play-from-hand state :runner "Contaminate")
-        (click-card state :runner (refresh yus))
-        (click-prompt state :runner "Done")
+        (is (last-log-contains? state "do nothing") "no valid targets")
         (is (= 3 (get-counters (refresh cp) :virus)) "Yusuf isn't selectable by Contaminate"))))
 
 (deftest contaminate-hivemind-makes-virus-programs-act-like-they-have-a-virus-counter
