@@ -324,9 +324,9 @@
 (defn- does-something?
   "Concession for NCIGS going - uses a 'does-something' key to assertain when a card does nothing
   By default the card is considered to do something if there is no key"
-  [state side {:keys [does-something eid] :as ability} card targets]
-  (or (not (contains? ability :does-something))
-      (does-something state side eid card targets)))
+  [state side {:keys [change-in-game-state eid] :as ability} card targets]
+  (or (not (contains? ability :change-in-game-state))
+      (change-in-game-state state side eid card targets)))
 
 (defn- do-effect
   "Trigger the effect"
