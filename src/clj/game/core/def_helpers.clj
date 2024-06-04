@@ -119,13 +119,6 @@
     :msg msg
     :effect (effect (access-bonus :runner server bonus))}))
 
-(defn do-nothing
-  "Does nothing"
-  ([state side card] (do-nothing state side nil card))
-  ([state side eid card]
-   (system-msg state side (str "uses " (:title card) " to do nothing"))
-   (when eid (effect-completed state side eid))))
-
 (defn do-net-damage
   "Do specified amount of net-damage."
   [dmg]

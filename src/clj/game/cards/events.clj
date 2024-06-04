@@ -520,7 +520,6 @@
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                        [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
     :async true
-    :cancel-effect (req (do-nothing state side eid card))
     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3}))}})
 
 (defcard "Careful Planning"
@@ -2493,7 +2492,6 @@
                                         (in-hand? target)
                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                   [(->c :credit (install-cost state side target))])))}
-               :cancel-effect (req (do-nothing state side eid card))
                :effect (req (wait-for (runner-install state side target nil)
                                       (continue-ability state side (mhelper (inc n)) card nil)))}))]
     {:on-play
