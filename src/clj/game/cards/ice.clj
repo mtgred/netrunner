@@ -830,7 +830,7 @@
   (let [sub {:label "Do 1 net damage unless the Runner pays 2 [Credits]"
              :async true
              :effect (req (if (and (threat-level 3 state)
-                                   (not (is-disabled? state side card)))
+                                   (not (is-disabled-reg? state card)))
                             (damage state side eid :net 1 {:card card})
                             (continue-ability
                               state side
