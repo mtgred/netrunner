@@ -1253,7 +1253,7 @@
                  :waiting-prompt true
                  :prompt "Choose an installed card to move 1 hosted advancement counter from"
                  :choices {:card #(and (installed? %)
-                                       (get-counters % :advancement))}
+                                       (pos? (get-counters % :advancement)))}
                  :async true
                  :effect (effect
                            (continue-ability
