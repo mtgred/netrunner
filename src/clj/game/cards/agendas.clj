@@ -2100,6 +2100,7 @@
                          :waiting-prompt true
                          :yes-ability
                          {:msg (msg "reveal itself from " (zone->name (:previous-zone card)))
+                          :async true
                           :effect (req (wait-for
                                          (reveal state side target)
                                          (continue-ability state side (score-abi 2) card nil)))}}}]}))
