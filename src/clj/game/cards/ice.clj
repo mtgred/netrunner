@@ -2046,7 +2046,7 @@
         {:label "Draw 1 card and shuffle up to 2 agendas in HQ and/or Archives into R&D"
          :msg "draw 1 card"
          :async true
-         :cost [:credit 1]
+         :cost [(->c :credit 1)]
          :effect
          (req (wait-for
                 (draw state side 1)
