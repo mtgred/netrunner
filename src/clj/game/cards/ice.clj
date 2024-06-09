@@ -4130,6 +4130,7 @@
                                    {:choices {:card #(and (ice? %)
                                                           (in-hand? %))}
                                     :prompt "Choose a piece of ice to install"
+                                    :async true
                                     :effect (req (let [this (zone->name (second (get-zone card)))
                                                        nice target]
                                                    (continue-ability state side
