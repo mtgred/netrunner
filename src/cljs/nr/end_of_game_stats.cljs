@@ -2,9 +2,15 @@
   (:require [nr.translations :refer [tr]]
             [nr.utils :refer [map-longest]]))
 
+(defn computed-stat
+  [s stat-tr key transform]
+  (let [val (get-in s key)
+        val (when val (transform val))]
+    (when (and val (pos? val))
+      [stat-tr val])))
+
 (defn optional-stat
   [s stat-tr key]
-  "Only show this stat if it's a positive value"
   (let [val (get-in s key)]
     (when (and val (pos? val))
       [stat-tr (get-in s key)])))
@@ -19,6 +25,7 @@
    [(tr [:stats.damage-done "Damage Done"]) (get-in s [:damage :all])]
    [(tr [:stats.cards-rezzed "Cards Rezzed"]) (get-in s [:cards :rezzed])]
    (optional-stat s (tr [:stats.shuffle-count "Shuffle Count"]) [:shuffle-count])
+   (optional-stat s (tr [:stats.operations-played "Operations Played"]) [:cards-played :play-instant])
    (optional-stat s (tr [:stats.rashida-count "Rashida Count"]) [:rashida-count])])
 
 (defn runner-stats [s]
@@ -33,6 +40,8 @@
    [(tr [:stats.cards-accessed "Cards Accessed"]) (get-in s [:access :cards])]
    (optional-stat s (tr [:stats.shuffle-count "Shuffle Count"]) [:shuffle-count])
    (optional-stat s (tr [:stats.cards-sabotaged "Sabotage Count"]) [:cards-sabotaged])
+   (optional-stat s (tr [:stats.events-played "Events Played"]) [:cards-played :play-instant])
+   (computed-stat s (tr [:stats.unique-accesses "Unique Cards Accessed"]) [:access :unique-cards] count)
    ])
 
 (defn show-stat
