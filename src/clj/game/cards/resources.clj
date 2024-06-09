@@ -1883,7 +1883,7 @@
 
 (defcard "Keros Mcintyre"
   {:events [{:event :derez
-             :req (req (and (first-event? state side :derez)
+             :req (req (and (first-event? state side :derez #(= :runner (:side (first %))))
                             (= (:side context) :runner)))
              :msg "gain 2 [Credits]"
              :async true
