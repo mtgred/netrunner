@@ -4156,7 +4156,9 @@
                                {:prompt (msg "Move " (:title card) " to the outermost position of " (zone->name target-server) "?")
                                 :yes-ability {:once :per-turn
                                               :msg (msg "move itself to the outermost position of " (zone->name target-server))
-                                              :effect (req (let [moved (move state side card (conj [:servers (first target-server)] :ices))]
+                                              :effect (req (let [moved (move state side
+                                                                             (get-card state card)
+                                                                             (conj [:servers (first target-server)] :ices))]
                                                                  (redirect-run state side target-server)
                                                                  ;;ugly hack - TODO: figure out why the event gets disabled after the card moves!
                                                                  ;;- maybe this should be inserted into move? -nbkelly, Jan '24
