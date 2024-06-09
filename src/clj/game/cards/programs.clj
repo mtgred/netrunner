@@ -2357,6 +2357,7 @@
                             ;; declined to install
                             (effect-completed state side eid)))})]
     {:on-install {:async true
+                  :interactive (req true)
                   :prompt "Choose where to install from"
                   :choices (req ["Grip" "Stack"
                                  (when-not (zone-locked? state :runner :discard) "Heap")])
