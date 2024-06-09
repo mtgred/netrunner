@@ -2,6 +2,13 @@
   (:require [nr.translations :refer [tr]]
             [nr.utils :refer [map-longest]]))
 
+(defn optional-stat
+  [s stat-tr key]
+  "Only show this stat if it's a positive value"
+  (let [val (get-in s key)]
+    (when (and val (pos? val))
+      [stat-tr (get-in s key)])))
+
 (defn corp-stats [s]
   [[(tr [:stats.clicks-gained "Clicks Gained"]) (get-in s [:gain :click])]
    [(tr [:stats.credits-gained "Credits Gained"]) (get-in s [:gain :credit])]
@@ -10,7 +17,9 @@
    [(tr [:stats.cards-drawn "Cards Drawn"]) (get-in s [:gain :card])]
    [(tr [:stats.cards-click "Cards Drawn by Click"]) (get-in s [:click :draw])]
    [(tr [:stats.damage-done "Damage Done"]) (get-in s [:damage :all])]
-   [(tr [:stats.cards-rezzed "Cards Rezzed"]) (get-in s [:cards :rezzed])]])
+   [(tr [:stats.cards-rezzed "Cards Rezzed"]) (get-in s [:cards :rezzed])]
+   (optional-stat s (tr [:stats.shuffle-count "Shuffle Count"]) [:shuffle-count])
+   (optional-stat s (tr [:stats.rashida-count "Rashida Count"]) [:rashida-count])])
 
 (defn runner-stats [s]
   [[(tr [:stats.clicks-gained "Clicks Gained"]) (get-in s [:gain :click])]
@@ -21,7 +30,10 @@
    [(tr [:stats.cards-click "Cards Drawn by Click"]) (get-in s [:click :draw])]
    [(tr [:stats.tags-gained "Tags Gained"]) (get-in s [:gain :tag :base])]
    [(tr [:stats.runs-made "Runs Made"]) (get-in s [:runs :started])]
-   [(tr [:stats.cards-accessed "Cards Accessed"]) (get-in s [:access :cards])]])
+   [(tr [:stats.cards-accessed "Cards Accessed"]) (get-in s [:access :cards])]
+   (optional-stat s (tr [:stats.shuffle-count "Shuffle Count"]) [:shuffle-count])
+   (optional-stat s (tr [:stats.cards-sabotaged "Sabotage Count"]) [:cards-sabotaged])
+   ])
 
 (defn show-stat
   "Determines statistic counter and if it should be shown"

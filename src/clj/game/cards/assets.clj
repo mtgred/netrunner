@@ -2271,6 +2271,7 @@
                         :msg "gain 3 [Credits] and draw 3 cards"
                         :effect (req (wait-for
                                        (trash state side card {:cause-card card})
+                                       (swap! state update-in [:stats side :rashida-count] (fnil + 0) 1)
                                        (wait-for
                                          (gain-credits state side 3)
                                          (draw state side eid 3))))}}}
