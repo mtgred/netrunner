@@ -636,6 +636,7 @@
                                            :all true
                                            :card #(and (corp? %)
                                                        (in-hand? %))}
+                                 :async true
                                  :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                                                         (wait-for (gain-credits state side 2)
                                                                   (draw state side eid 1))))}
