@@ -23,7 +23,7 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
@@ -1608,7 +1608,7 @@
                                     (not (has-subtype? % "Virtual")))}
               :effect (req (add-icon state side card target "MZ" (faction-label card))
                            (update! state side (assoc-in (get-card state card) [:special :malia-target] target))
-                           (fake-checkpoint state))}
+                           (update-disabled-cards state))}
      :leave-play unmark
      :move-zone unmark
      :static-abilities [{:type :disable-card
