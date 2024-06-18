@@ -1627,53 +1627,33 @@
              :effect (effect (gain-credits :runner eid (get-agenda-points (:card context))))}]})
 
 (defcard "Hunting Grounds"
-  (let [ability
-        {:label "Prevent a \"When encountered\" ability"
-         :once :per-turn
-         :msg (msg "prevent the encounter effect on " (card-str state current-ice))
-         :effect (req (let [[suppress]
-                            (register-suppress
-                              state side card
-                              (let [ice current-ice]
-                                [{:event :encounter-ice
-                                  ;; TODO: when suppression is fixed, this should be (:ice context)
-                                  :req (req (same-card? ice target))}]))]
-                        (register-once state side {:once :per-turn} card) ;; needed for firing in the event handler
-                        (register-events
-                          state side card
-                          [{:event :end-of-encounter
-                            :duration :end-of-encounter
-                            :unregister-once-resolved true
-                            :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}]
-    {:events [{:event :encounter-ice
-               :req (req (and (not-used-once? state {:once :per-turn} card)
-                              (contains? (card-def current-ice) :on-encounter)))
-               :async true
-               :effect
-               (effect (continue-ability
-                         {:eid (assoc eid :source-type :ability)
-                          :optional
-                          {:prompt (str "Prevent \"when encountered\" effect of " (:title (:ice context)) "?")
-                           :yes-ability ability}}
-                         card nil))}]
-     :abilities [(assoc ability
-                        :req (req (and (= :approach-ice (:phase run))
-                                       (rezzed? current-ice)
-                                       (or (->> (:events @state)
-                                                (filter #(and (= :encounter-ice (:event %))
-                                                              (same-card? current-ice (:card %))))
-                                                seq)
-                                           (contains? (card-def current-ice) :on-encounter)))))
-                 (letfn [(ri [cards]
-                           (when (seq cards)
-                             {:async true
-                              :effect (req (wait-for (runner-install state side (first cards) {:facedown true})
-                                                     (continue-ability state side (ri (rest cards)) card nil)))}))]
-                   {:async true
-                    :label "Install the top 3 cards of the stack facedown"
-                    :msg "install the top 3 cards of the stack facedown"
-                    :cost [(->c :trash-can)]
-                    :effect (effect (continue-ability (ri (take 3 (:deck runner))) card nil))})]}))
+  {:events [{:event :prevent-encounter-ability
+             :interactive (req true)
+             :async true
+             :req (req (and (not (get-in @state [:run :prevent-encounter-ability]))
+                            (not-used-once? state {:once :per-turn} card)))
+             :effect (req
+                       (if (get-in @state [:run :prevent-encounter-ability])
+                         (effect-completed state side eid)
+                         (continue-ability
+                           state side
+                           {:optional {:prompt (msg "Prevent a \"when encountered\" ability on " (:title current-ice) (when (:ability-name target)
+                                                                                                                        (str " (" (:ability-name target) ")")))
+                                       :once :per-turn
+                                       :yes-ability {:msg (msg "prevent the encounter ability on " (:title current-ice) (when (:ability-name target)
+                                                                                                                          (str " (" (:ability-name target) ")")))
+                                                     :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] true))}}}
+                           card targets)))}]
+   :abilities [(letfn [(ri [cards]
+                         (when (seq cards)
+                           {:async true
+                            :effect (req (wait-for (runner-install state side (first cards) {:facedown true})
+                                                   (continue-ability state side (ri (rest cards)) card nil)))}))]
+                 {:async true
+                  :label "Install the top 3 cards of the stack facedown"
+                  :msg "install the top 3 cards of the stack facedown"
+                  :cost [(->c :trash-can)]
+                  :effect (effect (continue-ability (ri (take 3 (:deck runner))) card nil))})]})
 
 (defcard "Ice Analyzer"
   {:implementation "Credit use restriction is not enforced"
