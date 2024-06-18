@@ -2052,7 +2052,7 @@
       (click-prompt state :runner "Carry on!")
       (take-credits state :runner)
       (take-credits state :corp)
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (no-prompt? state :corp) "No Hayley wait prompt for facedown installs.")))
 
 (deftest hoshiko-shiro-untold-protagonist-id-ability
