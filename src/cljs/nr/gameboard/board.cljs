@@ -8,7 +8,7 @@
    [clojure.string :as s :refer [capitalize ends-with? join lower-case split
                            starts-with?]]
    [game.core.card :refer [active? asset? corp? facedown? faceup?
-                           get-counters get-title has-subtype? ice? rezzed?
+                           get-counters get-title has-subtype? ice? program? rezzed?
                            same-card? operation? condition-counter?]]
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [add-cost-to-label is-tagged? select-non-nil-keys
@@ -633,7 +633,7 @@
 (defn card-view
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
-           side facedown card-target icon new runner-abilities subroutines
+           side facedown card-target icon new ghost runner-abilities subroutines
            subtype-target corp-abilities]
     :as card} flipped disable-click]
   (let [title (get-title card)]
@@ -642,6 +642,7 @@
                                               (same-card? card (:button @app-state)) "hovered"
                                               (same-card? card (-> @game-state :encounters :ice)) "encountered"
                                               (playable? card) "playable"
+                                              ghost "ghost"
                                               new "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)
@@ -1142,7 +1143,22 @@
                     :central-view [discard-view-corp player-side discard]
                     :run (when (= server-type "archives") @run)}]]]))
 
-(defn board-view-runner [player-side identity deck deck-count hand hand-count discard rig run]
+(defn- ghost-card
+  "recursively ghosts a card and all hosted cards"
+  [card]
+  (let [hosted (map ghost-card (:hosted card))]
+    (assoc card :ghost true :hosted hosted)))
+
+(defn- find-hosted-programs
+  "finds all programs hosted on ice, and makes them have the 'ghost' key"
+  [servers]
+  (let [servers (concat [(:archives @servers) (:rd @servers) (:hq @servers)] (get-remotes @servers))
+        ices (mapcat :ices servers)
+        hosted (mapcat :hosted ices)
+        hosted-programs (filter program? hosted)]
+    (map ghost-card hosted-programs)))
+
+(defn board-view-runner [player-side identity deck deck-count hand hand-count discard rig run servers]
   (let [is-me (= player-side :runner)
         hand-count-number (if (nil? @hand-count) (count @hand) @hand-count)
         centrals [:div.runner-centrals
@@ -1156,21 +1172,28 @@
     [:div.runner-board {:class [(if is-me "me" "opponent")
                                 (when (get-in @app-state [:options :sides-overlap]) "overlap")]}
      (when-not is-me centrals)
-     (doall
-       (for [zone (runner-f [:program :hardware :resource :facedown])]
-         ^{:key zone}
-         [:div
-          (if (get-in @app-state [:options :stacked-cards] false)
-            ; stacked mode
-            (let [cards (get @rig zone)
-                  distinct-cards (vals (group-by get-title cards))]
-              (show-distinct-cards distinct-cards))
-            ; not in stacked mode
-            (doall (for [c (get @rig zone)]
-                     ^{:key (:cid c)}
-                     [:div.card-wrapper {:class (when (playable? c) "playable")}
-                      [card-view c]])))]))
-     (when is-me centrals)]))
+     (let [hosted-programs (when (get-in @app-state [:options :ghost-trojans])
+                             (find-hosted-programs servers))]
+       (doall
+         (for [zone (runner-f [:program :hardware :resource :facedown])]
+           ^{:key zone}
+           [:div
+            (if (get-in @app-state [:options :stacked-cards] false)
+                                        ; stacked mode
+              (let [cards (get @rig zone)
+                    cards (if (= zone :program)
+                            (concat cards hosted-programs)
+                            cards)
+                    distinct-cards (vals (group-by get-title cards))]
+                (show-distinct-cards distinct-cards))
+                                        ; not in stacked mode
+              (doall (for [c (if (= zone :program)
+                               (concat (get @rig zone) hosted-programs)
+                               (get @rig zone))]
+                       ^{:key (:cid c)}
+                       [:div.card-wrapper {:class (when (playable? c) "playable")}
+                        [card-view c]])))])))
+       (when is-me centrals)]))
 
 (defn build-win-box
   "Builds the end of game pop up game end"
@@ -2066,10 +2089,10 @@
                [:div.centralpane
                 (if (= op-side :corp)
                   [board-view-corp me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard corp-servers run]
-                  [board-view-runner me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard runner-rig run])
+                  [board-view-runner me-side op-ident op-deck op-deck-count op-hand op-hand-count op-discard runner-rig run corp-servers])
                 (if (= me-side :corp)
                   [board-view-corp me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard corp-servers run]
-                  [board-view-runner me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard runner-rig run])]
+                  [board-view-runner me-side me-ident me-deck me-deck-count me-hand me-hand-count me-discard runner-rig run corp-servers])]
 
                [:div.leftpane
                 [:div.opponent
