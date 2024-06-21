@@ -454,13 +454,20 @@
    (wait-for (trigger-event-sync state side :pre-access-card card)
              (access-pay state side eid card title args))))
 
-(defn set-only-card-to-access
-  [state _ card]
-  (swap! state assoc-in [:run :only-card-to-access] card))
-
 (defn get-only-card-to-access
   [state]
   (get-card state (get-in @state [:run :only-card-to-access])))
+
+(defn set-only-card-to-access
+  "Note that multiple cards can be 'the only card we're allowed to access'
+  If that's the case, then we're not allowed to access any of them..."
+  [state _ card]
+  ;; because there are two cards that are both "the only cards we are allowed to access",
+  ;; we are not allowed to access any cards this run!
+  (when (and card (get-only-card-to-access state)
+             (not (same-card? card (get-only-card-to-access state))))
+    (swap! state assoc-in [:run :max-access] 0))
+  (swap! state assoc-in [:run :only-card-to-access] card))
 
 (defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]

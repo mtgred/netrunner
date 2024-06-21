@@ -2,7 +2,7 @@
   (:require
    [clojure.pprint :as pprint]
    [clojure.string :as str]
-   [game.core.access :refer [access-bonus access-n-cards breach-server steal
+   [game.core.access :refer [access-bonus access-n-cards breach-server get-only-card-to-access steal
                              num-cards-to-access steal-cost-bonus]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
@@ -2076,12 +2076,13 @@
    :events [{:event :breach-server
              :async true
              :interactive (req true)
-             :req (req (= :rd target))
+             :req (req (and (= :rd target)
+                            (not (get-only-card-to-access state))))
              :effect (req
                        (let [num-access (:random-access-limit (num-cards-to-access state side :rd nil))]
                          (continue-ability
                            state side
-                           (when (>= num-access 2)
+                           (when (and num-access (>= num-access 2))
                              {:optional
                               {:prompt "Access 1 additional card?"
                                :yes-ability
