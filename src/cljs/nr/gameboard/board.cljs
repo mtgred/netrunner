@@ -52,8 +52,10 @@
 
 (defonce button-channel (chan))
 
-(defn open-card-menu [source]
-  (swap! card-menu assoc :source source))
+(defn open-card-menu
+  ([source] (open-card-menu source nil))
+  ([source ghost]
+   (swap! card-menu assoc :source source :ghost ghost)))
 
 (defn close-card-menu []
   (swap! card-menu dissoc :source :keep-menu-open))
@@ -90,7 +92,7 @@
     (cons "derez")))
 
 (def click-card-keys
-  [:cid :side :host :type :zone])
+  [:cid :side :host :type :zone :ghost])
 
 (defn card-for-click [card]
   (select-non-nil-keys
@@ -120,21 +122,22 @@
             (and (corp? card)
                  (not (faceup? card))))
         (do (when (= side card-side)
-              (if (= (:cid card) (:source @card-menu))
+              (if (and (= (:cid card) (:source @card-menu))
+                       (= (:ghost card) (:ghost @card-menu)))
                 (close-card-menu)
-                (open-card-menu (:cid card))))
+                (open-card-menu (:cid card) (:ghost card))))
             (when (and (= :runner card-side)
                        (= :corp side)
                        corp-abilities)
               (if (= (:cid card) (:source @card-menu))
                 (close-card-menu)
-                (open-card-menu (:cid card))))
+                (open-card-menu (:cid card) (:ghost card))))
             (when (and (= :corp card-side)
                        (= :runner side)
                        (or subroutines runner-abilities))
               (if (= (:cid card) (:source @card-menu))
                 (close-card-menu)
-                (open-card-menu (:cid card)))))
+                (open-card-menu (:cid card) (:ghost card)))))
 
         ;; Trigger first (and only) ability / action
         (and (= c 1)
@@ -551,6 +554,7 @@
 (defn card-abilities [card abilities subroutines]
   (let [actions (action-list card)]
     (when (and (= (:cid card) (:source @card-menu))
+               (= (:ghost card) (:ghost @card-menu))
                (or (nil? (:keep-menu-open @card-menu))
                    (check-keep-menu-open card))
                (or (pos? (+ (count actions)
