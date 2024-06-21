@@ -44,7 +44,6 @@
     (run-continue state :success)
     (click-prompt state :corp "1 [Credits]")
     (click-prompt state :runner "0 [Credits]")
-    (click-prompt state :runner "Trick Shot")
     (click-prompt state :runner "Pay 2 [Credits] to trash")
     (click-card state :runner "Trick Shot")
     (click-card state :runner "Trick Shot")
