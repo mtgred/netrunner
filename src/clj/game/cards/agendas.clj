@@ -206,10 +206,19 @@
                                        :choices (cancellable (filter corp-installable-type?
                                                                      (take 5 (:deck corp))))
                                        :async true
-                                       :effect (effect (corp-install
-                                                         eid target nil
-                                                         {:ignore-all-cost true
-                                                          :install-state :rezzed-no-cost}))
+                                       :effect (req (let [target-position (first (positions #{target} (take 3 (:deck corp))))
+                                                          position (case target-position
+                                                                     0 "first "
+                                                                     1 "second "
+                                                                     2 "third "
+                                                                     3 "fourth "
+                                                                     4 "fifth "
+                                                                     "this-should-not-happen ")]
+                                                      (system-msg state side (str "uses " (:title card) " to install the " position "card from R&D"))
+                                                      (corp-install state side
+                                                        eid target nil
+                                                        {:ignore-all-cost true
+                                                         :install-state :rezzed-no-cost})))
                                        :cancel-effect
                                        (effect (system-msg
                                                  (str "declines to use "

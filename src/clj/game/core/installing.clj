@@ -16,6 +16,7 @@
     [game.core.memory :refer [sufficient-mu? update-mu]]
     [game.core.moving :refer [move trash trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
+    [game.core.revealing :refer [reveal]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
@@ -141,6 +142,19 @@
                       (all-installed state :corp))]
     (concat hosts (installable-servers state card))))
 
+(defn reveal-if-unrezzed
+  "Used to reveal a card if it cannot be rezzed when an instruction says to rez it
+  This is currently required under CR, and is treated as an actual functional reveal
+  for the purposes of card effects (ie Hyobou). It does not matter if that would then
+  make you able to rez the chosen card."
+  [state side eid moved-card]
+  (let [rezzed-card (get-card state moved-card)]
+    (if (rezzed? rezzed-card)
+      (checkpoint state nil eid)
+      (wait-for (reveal state :corp rezzed-card)
+                (system-msg state :corp (str "reveals " (card-str state rezzed-card {:visible true})))
+                (checkpoint state nil eid)))))
+
 (defn- corp-install-continue
   "Used by corp-install to actually install the card, rez it if it's supposed to be installed
   rezzed, and calls :corp-install in an awaitable fashion."
@@ -174,12 +188,13 @@
                       (rez state side (assoc eid :source-type :rez)
                            moved-card {:ignore-cost :all-costs
                                        :no-msg no-msg})
-                      (checkpoint state nil eid))
+                      (reveal-if-unrezzed state side eid moved-card))
                     ;; Ignore rez cost only
                     :rezzed-no-rez-cost
-                    (rez state side (assoc eid :source-type :rez)
-                         moved-card {:ignore-cost :rez-costs
-                                     :no-msg no-msg})
+                    (wait-for (rez state side (make-eid state (assoc eid :source-type :rez))
+                                   moved-card {:ignore-cost :rez-costs
+                                               :no-msg no-msg})
+                              (reveal-if-unrezzed state side eid moved-card))
                     ;; Pay costs
                     :rezzed
                     (let [eid (assoc eid :source-type :rez)]
@@ -187,12 +202,14 @@
                         (agenda? moved-card)
                         (do (when-let [dre (:derezzed-events cdef)]
                               (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
-                            (checkpoint state nil eid))
+                            (reveal-if-unrezzed state side eid moved-card))
                         (zero? cost-bonus)
-                        (rez state side eid moved-card {:no-msg no-msg})
+                        (wait-for (rez state side moved-card {:no-msg no-msg})
+                                  (reveal-if-unrezzed state side eid moved-card))
                         :else
-                        (rez state side eid moved-card {:no-msg no-msg
-                                                        :cost-bonus cost-bonus})))
+                        (wait-for (rez state side moved-card {:no-msg no-msg
+                                                              :cost-bonus cost-bonus})
+                                  (reveal-if-unrezzed state side eid moved-card))))
                     ;; "Face-up" cards
                     :face-up
                     (let [moved-card (-> (get-card state moved-card)
