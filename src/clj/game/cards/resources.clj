@@ -1896,6 +1896,7 @@
   {:events [{:event :corp-install
              :optional {:prompt "Trash the top card of the stack?"
                         :waiting-prompt true
+                        :autoresolve (get-autoresolve :auto-fire)
                         :req (req (and (not (ice? (:card target)))
                                        (not (condition-counter? (:card target)))
                                        (first-event? state side :corp-install #(and (not (ice? (:card (first %))))
@@ -1908,7 +1909,8 @@
                                       :async true
                                       :effect (req (wait-for (mill state :runner :runner 1)
                                                              (draw state :runner eid 1)))}
-                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
+                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
+   :abilities [(set-autoresolve :auto-fire "Lago Paranoá Shelter")]})
 
 (defcard "Laguna Velasco District"
   {:events [{:event :runner-click-draw
