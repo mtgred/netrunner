@@ -103,7 +103,7 @@
 (defn- resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."
-  [state side eid dmg-type n {:keys [card]}]
+  [state side eid dmg-type n {:keys [card cause]}]
   (swap! state update-in [:damage :defer-damage] dissoc dmg-type)
   (swap! state dissoc-in [:damage :chosen-damage])
   (damage-choice-priority state)
@@ -134,6 +134,7 @@
                               (queue-event state :damage {:amount n
                                                           :card card
                                                           :damage-type dmg-type
+                                                          :cause cause
                                                           :cards-trashed cards-trashed})
                               (let [trash-event (get-trash-event side false)
                                     args {:durations [:damage trash-event]}]

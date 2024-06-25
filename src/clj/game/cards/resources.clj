@@ -3560,8 +3560,11 @@
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
 
 (defcard "Tsakhia \"Bankhar\" Gantulga"
-  (let [subroutine {:variable true
-                    :sub-effect (do-net-damage 1)}
+  (let [sub {:variable true
+             :sub-effect {:effect (req (damage state :corp eid :net 1 {:card card :cause :subroutine}))
+                          :label "Do 1 net damage"
+                          :async true
+                          :msg "do 1 net damage"}}
         matches-server (fn [target card state side]
                          (= (:card-target card)
                             (zone->name (second (get-zone target)))))
@@ -3587,7 +3590,7 @@
                              :duration :end-of-encounter
                              :async true
                              :msg "force the Corp to resolve \"[Subroutine] Do 1 net damage\""
-                             :effect (req (update-current-encounter state :replace-subroutine subroutine)
+                             :effect (req (update-current-encounter state :replace-subroutine sub)
                                           (effect-completed state side eid))}]))}
               {:event :runner-turn-ends
                :silent (req true)
