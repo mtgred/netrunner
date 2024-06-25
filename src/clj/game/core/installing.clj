@@ -434,7 +434,7 @@
                      :card #(and (installed? %)
                                  (program? %))}
            :async true
-           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:game-trash true})
+           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
                                   (update-mu state)
                                   (runner-install-pay state side eid card args)))
            :cancel-effect (effect (effect-completed eid))}
