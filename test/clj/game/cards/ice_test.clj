@@ -7175,6 +7175,50 @@
       (is (= "Vanilla" (:title (get-ice state :hq 0))) "Vanilla outermost ice on HQ after swap during run")
       (is (= "Thimblerig" (:title (get-ice state :remote1 0))) "Thimblerig ice on remote after swap during run"))))
 
+(deftest thimblerig-swap-doesnt-mash-events
+  ;; Swap ability on runner pass
+  (do-game
+    (new-game {:corp {:deck ["Vanilla" "Thimblerig"]}
+               :runner {:hand ["Sure Gamble" "Inversificator"]}})
+    (play-from-hand state :corp "Thimblerig" "HQ")
+    (play-from-hand state :corp "Vanilla" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Inversificator")
+    (let [thimble (get-ice state :hq 0)
+          vanilla (get-ice state :remote1 0)
+          inv (get-program state 0)]
+      (run-on state "HQ")
+      (rez state :corp thimble)
+      (run-continue state)
+      (card-ability state :runner (refresh inv) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-card state :runner (get-ice state :remote1 0))
+      (click-prompt state :corp "Yes")
+      (is (= "Thimblerig" (:title (get-ice state :remote1 0))) "Thimblerig outermost ice on HQ")
+      (is (= "Vanilla" (:title (get-ice state :hq 0))) "Vanilla ice on remote")
+      (click-card state :corp (get-ice state :hq 0))
+      (is (= "Vanilla" (:title (get-ice state :remote1 0))) "Vanilla outermost ice on HQ after swap during run")
+      (is (= "Thimblerig" (:title (get-ice state :hq 0))) "Thimblerig ice on remote after swap during run"))))
+
+(deftest thimblerig-swapping-doesnt-lose-prompts
+  ;; Swap ability on runner pass
+  (do-game
+    (new-game {:corp {:deck [(qty "Thimblerig" 2)]}})
+    (play-from-hand state :corp "Thimblerig" "HQ")
+    (play-from-hand state :corp "Thimblerig" "R&D")
+    (take-credits state :corp)
+    (let [thimble1 (get-ice state :hq 0)
+          thimble2 (get-ice state :rd 0)]
+      (rez state :corp thimble1)
+      (rez state :corp thimble2)
+      (take-credits state :runner)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp thimble2)
+      (click-prompt state :corp "Yes"))))
+
 (deftest thimblerig-swapping-issues-related-to-trashing-5197
   ;; Swapping issues related to trashing #5197
   (do-game

@@ -4454,6 +4454,7 @@
       (click-card state :runner "Drafter")
       (is (= ["Border Control" "Thimblerig"] (map :title (get-ice state :rd))))
       (is (= ["Vanilla" "Drafter"] (map :title (get-ice state :hq))))
+      (click-prompt state :corp "No")
       (is (no-prompt? state :corp) "Corp gets no Thimblerig prompt")
       (is (no-prompt? state :runner) "No more prompts open")))
 

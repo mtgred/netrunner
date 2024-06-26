@@ -2086,6 +2086,7 @@
                :effect (effect (register-events
                                  card
                                  [{:event :pass-ice
+                                   :silent (req true)
                                    :duration :end-of-run
                                    :effect (effect (update! (update-in (get-card state card) [:special :how-deep-are-we] (fnil inc 0))))}])
                                (make-run eid target card))}
