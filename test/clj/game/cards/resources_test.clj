@@ -7193,7 +7193,7 @@
     (play-from-hand state :runner "Privileged Access")
     (run-continue state :success)
     (click-prompt state :runner "Privileged Access (resource)")
-    (click-card state :runner "Thunder Art Gallery")
+    (click-prompt state :runner "Thunder Art Gallery")
     (click-prompt state :runner "Sebastião Souza Pessoa: Activist Organizer")
     (click-card state :runner "Valentina Ferreira Carvalho")
     (click-prompt state :runner "Remove 1 tag")
