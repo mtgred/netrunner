@@ -1177,6 +1177,7 @@
              :req (req (seq (filter #(= (:zone %) [:servers zone :ices])
                                     (all-active-installed state :corp))))
              :duration :end-of-turn
+             :async true
              :effect (req (let [derez-count
                                 (min 2 (count (filter #(= (:zone %) [:servers zone :ices])
                                                       (all-active-installed state :corp))))]
@@ -1210,6 +1211,7 @@
                 :req (req (pos? (get-counters card :agenda)))
                 :yes-ability
                 {:cost [(->c :agenda 1)]
+                 :async true
                  :effect (req (let [current-server (first (:server (:run @state)))]
                                 (continue-ability
                                   state side
