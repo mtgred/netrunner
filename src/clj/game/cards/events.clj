@@ -496,7 +496,8 @@
           :interactive (req true)
           :async true
           :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
-          :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card})
+          :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card
+                                                                              :accessed true})
                                  (swap! state assoc-in [:runner :register :trashed-card] true)
                                  (damage state :runner eid :meat 1 {:unboostable true})))}]))}})
 
