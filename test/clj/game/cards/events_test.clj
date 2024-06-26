@@ -921,7 +921,6 @@
     (is (= 2 (count (:discard (get-runner)))) "two cards trashed")
     (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
 
-
 (deftest by-any-means-alongside-film-critic-should-get-the-option-to-trigger-either
     ;; alongside Film Critic: should get the option to trigger either
     (do-game
