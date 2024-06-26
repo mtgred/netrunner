@@ -2840,6 +2840,25 @@
       (is (:run @state) "Run not ended yet")
       (is (not (no-prompt? state :runner)) "Runner prompted to ETR"))))
 
+(deftest lucky-charm-vs-anoetic
+  (do-game
+    (new-game {:runner {:hand ["Lucky Charm"]}
+               :corp {:hand ["IPO" "Extract" "Anoetic Void"]}})
+    (play-from-hand state :corp "Anoetic Void" "Archives")
+    (rez state :corp (get-content state :archives 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lucky Charm")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (run-empty-server state :archives)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "IPO")
+    (click-card state :corp "Extract")
+    (is (:run @state) "Run not ended yet")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "Done")
+    (is (:run @state) "Run prevented from ending")))
+
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
     ;; No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction
     (do-game
