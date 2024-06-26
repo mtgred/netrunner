@@ -26,7 +26,7 @@
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [pay register-events resolve-ability]]
-   [game.core.events :refer [first-event? no-event? turn-events event-count]]
+   [game.core.events :refer [first-event? no-event? truncate-turn-event turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
                             prevent-draw
@@ -1645,8 +1645,20 @@
                  :autoresolve (get-autoresolve :auto-reshuffle)
                  :player :corp
                  :yes-ability {:msg "shuffle itself back into R&D"
-                               :effect (effect (move :corp card :deck)
-                                               (shuffle! :corp :deck))}}}}))
+                               :effect (req
+                                         ;; we're replacing actually moving into the discard
+                                         ;; but we have no way to do that in engine, so we can just truncate away the event
+                                         ;; if we ever do another major rework of how trashing works, we can add some sort
+                                         ;; of interrupt: location replacement event. That's just as much of a hack as this
+                                         ;; happens to be though.
+                                         (truncate-turn-event
+                                           state :corp
+                                           :card-moved (fn [[context]]
+                                                         (and (in-discard? (:moved-card context))
+                                                              (= (:title card) (:title (:moved-card context)))
+                                                              (corp? (:moved-card context)))))
+                                         (move state :corp card :deck)
+                                         (shuffle! state :corp :deck))}}}}))
 
 (defcard "Mark Yale"
   {:events [{:event :agenda-counter-spent

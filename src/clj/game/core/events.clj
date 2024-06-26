@@ -9,6 +9,16 @@
   [state _ ev]
   (mapcat rest (filter #(= ev (first %)) (:turn-events @state))))
 
+(defn truncate-turn-event
+  "Truncates the last occurance of an event, if possible."
+  ([state _ ev] truncate-turn-event state nil ev (constantly true))
+  ([state _ ev pred]
+   (when-let [matching (first (filter pred (turn-events state nil ev)))]
+     (let [converted-ev [ev matching]
+           [pre post] (split-with #(not= converted-ev %) (reverse (:turn-events @state)))
+           updated-turn-events (reverse (concat pre (rest post)))]
+       (swap! state assoc :turn-events updated-turn-events)))))
+
 (defn last-turn?
   [state side event]
   (get-in @state [side :register-last-turn event]))

@@ -3533,6 +3533,23 @@
     (click-card state :corp "Obokata Protocol")
     (is (= 5 (:agenda-point (get-corp))) "3+1+1 agenda points from obo + regen + regen")))
 
+(deftest regenesis-vs-marilyn-campaign-trash-replacement
+  ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
+  ;; and add it to score area
+  (do-game
+    (new-game {:corp {:deck ["Regenesis" "Marilyn Campaign"]
+                      :discard ["Obokata Protocol"]}})
+    (play-from-hand state :corp "Marilyn Campaign" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (dotimes [_ 4]
+      (take-credits state :corp)
+      (take-credits state :runner))
+    ;; marilyn should pop now
+    (click-prompt state :corp "Yes")
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Obokata Protocol")
+    (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
+
 (deftest regenesis-not-affected-by-subliminal-messaging
   ;; Regenesis - Leaving Subliminal Messaging in Archives doesn't interfere
   (do-game
