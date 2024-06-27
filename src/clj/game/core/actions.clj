@@ -27,7 +27,8 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards]]))
+    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards]]
+    [jinteki.utils :refer [pronoun]]))
 
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
@@ -559,13 +560,13 @@
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."
   [state side _]
-  (system-msg state side "looks at their deck")
+  (system-msg state side "looks at " (pronoun state side) " deck")
   (swap! state assoc-in [side :view-deck] true))
 
 (defn close-deck
   "Closes the deck view and makes cards in deck private again."
   [state side _]
-  (system-msg state side "stops looking at their deck")
+  (system-msg state side "stops looking at " (pronoun state side) " deck")
   (swap! state update-in [side] dissoc :view-deck))
 
 (defn generate-install-list

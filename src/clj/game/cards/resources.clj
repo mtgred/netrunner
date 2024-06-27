@@ -1028,7 +1028,7 @@
 (defcard "Dean Lister"
   {:abilities [{:req (req run)
                 :label "pump icebreaker"
-                :msg (msg "give +1 strength for each card in their Grip to " (:title target) " until the end of the run")
+                :msg (msg "give +1 strength for each card in " (pronoun state side) " Grip to " (:title target) " until the end of the run")
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
                 :cost [(->c :trash-can)]
@@ -1347,7 +1347,7 @@
 
 (defcard "Fan Site"
   {:events [{:event :agenda-scored
-             :msg "add itself to their score area as an agenda worth 0 agenda points"
+             :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 0 agenda points")
              :req (req (installed? card))
              :effect (req (as-agenda state :runner card 0))}]})
 
@@ -1403,7 +1403,7 @@
                   :req (req (get-agenda card))
                   :async true
                   :msg (msg (let [c (get-agenda card)]
-                              (str "add " (:title c) " to their score area and gain "
+                              (str "add " (:title c) " to " (pronoun state side) " score area and gain "
                                    (quantify (get-agenda-points c) "agenda point"))))
                   :effect (req (let [c (move state :runner (get-agenda card) :scored)]
                                  (when (card-flag? c :has-events-when-stolen true)
@@ -1722,7 +1722,7 @@
                 :effect (effect (gain-bad-publicity :corp 1))}]})
 
 (defcard "Investigator Inez Delgado"
-  {:abilities [{:msg "add itself to their score area as an agenda worth 0 agenda points"
+  {:abilities [{:msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 0 agenda points")
                 :label "Add to score area and reveal cards in server"
                 :async true
                 :prompt "Choose a server"
@@ -1864,7 +1864,7 @@
               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
             {:event :counter-added
              :req (req (<= 4 (get-counters (get-card state card) :power)))
-             :msg "add itself to their score area as an agenda worth 1 agenda point"
+             :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
              :effect (req (as-agenda state :runner card 1))}]
    :abilities [(set-autoresolve :auto-place-counter "Kasi String placing power counters on itself")]})
 
@@ -1972,7 +1972,8 @@
 
 (defcard "Liberated Chela"
   {:abilities [{:cost [(->c :click 5) (->c :forfeit)]
-                :msg "add itself to their score area"
+                :msg (msg "add itself to " (pronoun state side) " score area")
+                :label "Add liberated Chela to your score area"
                 :async true
                 :effect
                 (effect (continue-ability
@@ -1991,9 +1992,9 @@
                                                       (move state :runner card :rfg)
                                                       (effect-completed state side eid)))}
                               :no-ability
-                              {:msg "add itself to their score area as an agenda worth 2 points"
+                              {:msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 2 points")
                                :effect (effect (as-agenda :runner card 2))}}}
-                            {:msg "add itself to their score area as an agenda worth 2 points"
+                            {:msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 2 points")
                              :effect (effect (as-agenda :runner card 2))})
                           card nil))}]})
 
@@ -2052,7 +2053,7 @@
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :choices {:req (req (same-card? card (:host target)))}
-                :msg (msg "add " (:title target) " to their Grip")
+                :msg (msg "add " (:title target) " to " (pronoun state side) " Grip")
                 :effect (effect (move target :hand))}]
    :events [{:event :runner-turn-ends
              :interactive (req true)
@@ -3596,7 +3597,7 @@
 
 (defcard "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware"
-                :msg (msg "add " (:title target) " to their Grip")
+                :msg (msg "add " (:title target) " to " (pronoun state side) " Grip")
                 :label "Search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [(->c :click 2)]

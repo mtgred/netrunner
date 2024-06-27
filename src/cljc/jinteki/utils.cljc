@@ -65,6 +65,17 @@
        (filter seq $)
        (str/join sep $)))))
 
+(defn pronoun
+  "Selects an appropriate plurular pronoun
+  'their' is neuter, so it's appropriate to everyone as a fallback"
+  [state side]
+  (let [key (get-in @state [side :user :options :pronouns])]
+    (case key
+      "she" "her"
+      "he" "his"
+      "it" "its"
+      "their")))
+
 (defn superuser?
   [user]
   (or (:isadmin user)

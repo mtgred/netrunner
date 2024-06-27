@@ -934,7 +934,7 @@
 (defcard "Echo Chamber"
   {:abilities [{:label "Add this asset to your score area as an agenda worth 1 agenda point"
                 :cost [(->c :click 3)]
-                :msg "add itself to their score area as an agenda worth 1 agenda point"
+                :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
                 :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Edge of World"
@@ -1065,7 +1065,7 @@
                  :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
      :abilities [{:cost [(->c :click 1) (->c :advancement 7)]
                   :label "Add this asset to your score area as an agenda worth 3 agenda points"
-                  :msg "add itself to their score area as an agenda worth 3 agenda points"
+                  :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 3 agenda points")
                   :effect (req (as-agenda state :corp card 3))}]}))
 
 (defcard "Federal Fundraising"
@@ -1111,7 +1111,7 @@
 (defcard "Franchise City"
   {:events [{:event :access
              :req (req (agenda? target))
-             :msg "add itself to their score area as an agenda worth 1 agenda point"
+             :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
              :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Front Company"
@@ -1205,11 +1205,11 @@
                                        {:card card}))}
    :abilities [{:cost [(->c :click 1) (->c :advancement 3)]
                 :label "Add this asset to your score area as an agenda worth 1 agenda point"
-                :msg "add itself to their score area as an agenda worth 1 agenda point"
+                :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
                 :effect (req (as-agenda state :corp card 1))}]})
 
 (defcard "Genetics Pavilion"
-  {:on-rez {:msg "prevent the Runner from drawing more than 2 cards during their turn"
+  {:on-rez {:msg (msg "prevent the Runner from drawing more than 2 cards during " (pronoun state :runner) " turn")
             :effect (req (max-draw state :runner 2)
                          (when (zero? (remaining-draws state :runner))
                            (prevent-draw state :runner)))}
@@ -2195,7 +2195,7 @@
             {:event :counter-added
              :req (req (same-card? card target)
                        (not (pos? (get-counters card :power))))
-             :msg "add itself to their score area as an agenda worth 1 agenda point"
+             :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
              :effect (effect (as-agenda card 1))}]})
 
 (defcard "Quarantine System"
@@ -2564,7 +2564,7 @@
                      :async true
                      :effect (req (if (str/starts-with? target "Add")
                                     (do (system-msg state :runner (str "adds " (:title card)
-                                                                       " to their score area as an agenda worth "
+                                                                       " to " (pronoun state side) " score area as an agenda worth "
                                                                        (quantify -1 "agenda point")))
                                         (as-agenda state :runner card -1)
                                         (effect-completed state side eid))

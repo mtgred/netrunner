@@ -16,7 +16,8 @@
    [game.core.state :refer [new-state]]
    [game.macros :refer [wait-for]]
    [game.quotes :as quotes]
-   [game.utils :refer [server-card]]))
+   [game.utils :refer [server-card]]
+   [jinteki.utils :refer [pronoun]]))
 
 (defn build-card
   [card]
@@ -53,7 +54,7 @@
   "Choose not to mulligan."
   [state side _]
   (swap! state assoc-in [side :keep] :keep)
-  (system-msg state side "keeps their hand")
+  (system-msg state side (str "keeps " (pronoun state side) " hand"))
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
     (clear-wait-prompt state :runner)

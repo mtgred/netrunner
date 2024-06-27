@@ -18,16 +18,17 @@
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in enumerate-str quantify]]
+    [jinteki.utils :refer [pronoun]]
     [clojure.string :as string]))
 
 (defn- turn-message
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
   [state side start-of-turn]
   (let [pre (if start-of-turn "started" "is ending")
-        hand (if (= side :runner) "their Grip" "HQ")
+        hand (if (= side :runner) (str (pronoun state side) " Grip") "HQ")
         cards (count (get-in @state [side :hand]))
         credits (get-in @state [side :credit])
-        text (str pre " their turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
+        text (str pre " " (pronoun state side) " turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn end-phase-12
@@ -101,7 +102,7 @@
               (effect-completed state side eid))
           (any-effects state side :skip-discard)
           (do
-            (system-msg state side "skips their discard step this turn")
+            (system-msg state side (str "skips " (pronoun state side) " discard step this turn"))
             (effect-completed state side eid))
           (> cur-hand-size max-hand-size)
           (continue-ability
@@ -115,7 +116,7 @@
                                            (if (= :runner side)
                                              (enumerate-str (map :title targets))
                                              (quantify (count targets) "card"))
-                                           " from " (if (= :runner side) "their Grip" "HQ")
+                                           " from " (if (= :runner side) (str (pronoun state side) " Grip") "HQ")
                                            " at end of turn"))
                           (doseq [t targets]
                             (move state side t :discard))

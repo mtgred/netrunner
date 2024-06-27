@@ -21,7 +21,8 @@
    [game.core.update :refer [update!]]
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability req wait-for]]
-   [game.utils :refer [enumerate-str quantify same-card?]]))
+   [game.utils :refer [enumerate-str quantify same-card?]]
+   [jinteki.utils :refer [pronoun]]))
 
 ;; Click
 (defmethod value :click [cost] (:cost/amount cost))
@@ -365,7 +366,7 @@
   (complete-with-result
     state side eid
     {:paid/msg (str "returns " (:title card)
-                   " to " (if (= :corp side) "HQ" "their grip"))
+                   " to " (if (= :corp side) "HQ" (str (pronoun state side) " grip")))
      :paid/type :return-to-hand
      :paid/value 1
      :paid/targets [card]}))
@@ -730,7 +731,7 @@
               (complete-with-result
                 state side eid
                 {:paid/msg (str "trashes all (" (count async-result) ") cards in "
-                               (if (= :runner side) "their grip" "HQ")
+                               (if (= :runner side) (str (pronoun state side) " grip") "HQ")
                                (when (and (= :runner side)
                                           (pos? (count async-result)))
                                  (str " (" (enumerate-str (map :title async-result)) ")")))
@@ -760,7 +761,7 @@
                               {:paid/msg (str "trashes " (quantify (count async-result) "piece")
                                              " of hardware"
                                              " (" (enumerate-str (map :title targets)) ")"
-                                             " from their grip")
+                                             " from " (pronoun state side) " grip")
                                :paid/type :trash-hardware-from-hand
                                :paid/value (count async-result)
                                :paid/targets async-result})))}
