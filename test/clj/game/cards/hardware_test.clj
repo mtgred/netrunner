@@ -5202,6 +5202,29 @@
         (click-prompt state :corp kati) ; Chronos Protocol takes precedence over Ribs on Corp turn
         (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
 
+(deftest titanium-ribs-vs-damage-stat
+  (do-game
+    (new-game {:corp {:hand [(qty "Neural EMP" 2)]}
+               :runner {:hand [(qty "I've Had Worse" 2)]
+                        :deck [(qty "Titanium Ribs" 2) "Easy Mark" "Sure Gamble" "Dirty Laundry"]}})
+    (letfn [(is-damage-stat= [x]
+              (is (= (get-in @state [:stats :corp :damage :all]) x)
+                  (str "Corp has dealt " x " damage")))]
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Neural EMP")
+      (is (= 4 (count (:hand (get-runner)))))
+      (is-damage-stat= 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "I've Had Worse")
+      (is (= 5 (count (:hand (get-runner)))))
+      (play-from-hand state :runner "Titanium Ribs")
+      (click-card state :runner (find-card "Titanium Ribs" (:hand (get-runner))))
+      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+      (is-damage-stat= 3))))
+
 (deftest top-hat
   ;; Top Hat
   (do-game
