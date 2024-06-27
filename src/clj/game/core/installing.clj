@@ -3,7 +3,7 @@
     [cond-plus.core :refer [cond+]]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-installed get-remotes installable-servers server->zone all-installed-runner-type]]
-    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? operation? program? resource? rezzed? installed?]]
+    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -39,15 +39,10 @@
 (defn- corp-can-install-reason
   "Checks if the specified card can be installed.
    Returns true if there are no problems
-   Returns :region if Region check fails
    Returns :ice if ice check fails
    !! NB: This should only be used in a check with `true?` as all return values are truthy"
   [state side card slot]
   (cond
-    ;; Region check
-    (and (has-subtype? card "Region")
-         (some #(has-subtype? % "Region") (get-in @state (cons :corp slot))))
-    :region
     ;; ice install prevented by Unscheduled Maintenance
     (and (ice? card)
          (not (turn-flag? state side card :can-install-ice)))
@@ -79,9 +74,6 @@
         reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
         title (:title card)]
     (case reason
-      ;; failed region check
-      :region
-      (reason-toast (str "Cannot install " (:title card) ", limit of one Region per server"))
       ;; failed install lock check
       :lock-install
       (reason-toast (str "Unable to install " title ", installing is currently locked"))
@@ -97,23 +89,38 @@
       ;; else
       true)))
 
+(defn- corp-install-trash-old-card
+  "Trashes the previous card when installing a new one demands it"
+  [state side eid prev-card server]
+  (continue-ability
+    state side
+    {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
+     :choices ["OK"]
+     :async true
+     :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
+                  (if (get-card state prev-card) ; make sure they didn't trash the card themselves
+                    (trash state :corp eid prev-card {:keep-server-alive true})
+                    (effect-completed state :corp eid)))}
+    nil nil))
+
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
   [state side eid card dest-zone server]
-  (let [prev-card (some #(when (or (asset? %) (agenda? %)) %) dest-zone)]
-    (continue-ability
-      state side
-      (when (and (or (asset? card) (agenda? card))
+  (let [prev-card (some #(when (or (asset? %) (agenda? %)) %) dest-zone)
+        prev-region (first (filter #(has-subtype? % "Region") dest-zone))]
+    (cond
+      ;; overinstall an old asset or agenda
+      (and (or (asset? card) (agenda? card))
                  prev-card
                  (not (:host card)))
-        {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
-         :choices ["OK"]
-         :async true
-         :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
-                      (if (get-card state prev-card) ; make sure they didn't trash the card themselves
-                        (trash state :corp eid prev-card {:keep-server-alive true})
-                        (effect-completed state :corp eid)))})
-      nil nil)))
+      (corp-install-trash-old-card state side eid prev-card server)
+      ;; overinstall a region
+      (and (upgrade? card)
+           (has-subtype? card "Region")
+           prev-region)
+      (corp-install-trash-old-card state side eid prev-region server)
+      ;; do nothing
+      :else (effect-completed state side eid))))
 
 (defn- corp-install-message
   "Prints the correct install message."
