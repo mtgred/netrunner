@@ -1127,7 +1127,8 @@
                      :card #(and (installed? %)
                                  (program? %))}
            :async true
-           :effect (req (wait-for (move* state side (make-eid state eid) :trash-cards targets {:game-trash true})
+           :effect (req (wait-for (move* state side (make-eid state eid) :trash-cards targets {:game-trash true
+                                                                                               :unpreventable true})
                                   (update-mu state)
                                   (effect-completed state side eid)))})
         nil nil)
