@@ -7179,6 +7179,30 @@
                   (play-from-hand state :corp "End of the Line"))
         "Runner does NOT gain a credit from EOTL")))
 
+(deftest valentina-remove-tag-async-issue-#7390
+  (do-game
+    (new-game {:corp {:hand []}
+               :runner {:hand ["Valentina Ferreira Carvalho" "Privileged Access" "Fermenter"]
+                        :id "Sebastião Souza Pessoa: Activist Organizer"
+                        :discard ["Thunder Art Gallery" "Cleaver"]
+                        :credits 10}})
+    (game.core.change-vals/change
+      ;; theoretically, either side is fine!
+      state (first (shuffle [:corp :runner])) {:key :agenda-point :delta 3})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Privileged Access")
+    (run-continue state :success)
+    (click-prompt state :runner "Privileged Access (resource)")
+    (click-prompt state :runner "Thunder Art Gallery")
+    (click-prompt state :runner "Sebastião Souza Pessoa: Activist Organizer")
+    (click-card state :runner "Valentina Ferreira Carvalho")
+    (click-prompt state :runner "Remove 1 tag")
+    (click-card state :runner "Fermenter")
+    (click-prompt state :runner "Cleaver")
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= 0 (count (:hand (get-runner)))))
+    (is (no-prompt? state :runner))))
+
 (deftest verbal-plasticity
   ;; Verbal Plasticity
   (do-game

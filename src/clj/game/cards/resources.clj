@@ -3655,6 +3655,7 @@
                                "Done"])
                 :req (req (and (threat-level 3 state)
                                (= (:active-player @state) :runner)))
+                :async true
                 :effect (req (cond
                                (= "Remove 1 tag" target) (do (lose-tags state :runner eid 1)
                                                              (system-msg state :runner (str "uses " (:title card)
