@@ -130,79 +130,136 @@
             (str card " is no longer advancable due to hush (derezzed)"))))))
 
 ;; rest of tests
->>>>>>> c4fdb634459fd1c9e2caed2114ca60d689fb0581
 
 (defn- basic-program-test
   "tests a program which has simple boost and break functionality"
-  [card boost break]
+  [{:keys [name boost break threat counters-modify-strength run-event-bonus subtypes tags]}]
+  ;; set threat level like {:threat 3}
+  ;; set str modify counters like {:counters-modify-strength {:type :power
+  ;;                                                          :granularity x (default 1)
+  ;;                                                          :magnitude y (default 1)}}
   (let [type (condp = (:type break)
                "Sentry"    "Rototurret"
                "All"       "Rime"
                "Barrier"   "Vanilla"
                "Code Gate" "Enigma"
-	       ;; todo - whatever other types need to be tested
+               ;; todo - whatever other types need to be tested
                type)]
-    (do-game
-      (new-game {:corp {:credits 100
-                        :hand ["Mother Goddess" type]}
-                 :runner {:credits 100
-                          :hand [card]}})
-      (play-from-hand state :corp type "Archives")
-      (play-from-hand state :corp "Mother Goddess" "HQ")
-      (rez state :corp (get-ice state :archives 0))
-      (rez state :corp (get-ice state :hq 0))
-      (take-credits state :corp)
-      (play-from-hand state :runner card)
-      (let [card (get-program state 0)
-            ice (get-ice state :hq 0)
-            base-breaker-str (get-strength (refresh card))]
-        (run-on state :hq)
-        (run-continue state :encounter-ice)
-        ;; for fixed strength breakers/cards with no boost fn, we set ice str = breaker str
-        (if-not boost
-          (pump-ice state :corp (refresh ice) (- (get-strength (refresh card)) (get-strength (refresh ice))))
-          (pump-ice state :corp (refresh ice) (+ 7 (rand-int 7))))
-        ;; how many times should we need to boost?
-        (let [base-str (get-strength (refresh card))
-              need-to-boost (- (get-strength (refresh ice)) base-str)
-              boost-strength (:amount boost)
-              times-to-boost (if-not (pos? need-to-boost)
-                               0 (int (Math/ceil(/ need-to-boost boost-strength))))]
-          (dotimes [_ times-to-boost]
-            (changes-val-macro
-              boost-strength (get-strength (refresh card))
-              (str (:title card) " was boosted by " boost-strength)
-              (changes-val-macro
-                (- (:cost boost)) (:credit (get-runner))
-                (str (:title card) " spends " (:cost boost) " to boost strength")
-                (card-ability state :runner (refresh card) (:ab boost)))))
-          (is (>= (get-strength (refresh card))
-                  (get-strength (refresh ice))) "At strength to break MOGO")
-          (let [addl-subs (+ 3 (rand-int 10))
-                total-subs (inc addl-subs)
-                ;; we're going to insert a random number of ETR subs
-                etr-sub {:label "End the run"
-                         :msg "end the run"
-                         ;; don't need to actually do anything!
-                         :async true}]
-            (dotimes [_ addl-subs]
-              (add-sub! state :corp (refresh ice) etr-sub))
-            (is (= total-subs (count (:subroutines (refresh ice))))
-                (str "gained " addl-subs " ice subroutines"))
-            (let [subs-per-break (:amount break)
-                  num-breaks (int (Math/ceil (/ total-subs subs-per-break)))
-                  last-break (mod total-subs subs-per-break)
-                  last-break (if (zero? last-break) subs-per-break last-break)]
-              (card-ability state :runner (refresh card) (:ab break))
-              (dotimes [n num-breaks]
-                (let [breaks-this-time (if (= num-breaks (inc n)) last-break subs-per-break)]
-                  (changes-val-macro
-                    (- (:cost break)) (:credit (get-runner))
-                    (str "Spent " (:cost break) " credits to break subroutines with " (:title card))
-                    (dotimes [z breaks-this-time]
-                      (click-prompt state :runner "End the run")))))
-              (is (zero? (count (remove :broken (:subroutines (refresh ice))))) "All subroutines have been broken"))))))))
+    (if-not name
+      (is name "No name was supplied to test the card with")
+      (do-game
+        (new-game {:corp {:credits 100
+                          :hand ["Mother Goddess" type]}
+                   :runner {:credits 100
+                            :hand [name "Dirty Laundry"]}})
+        ;;set the threat level when appropriate
+        (when threat
+          (do (game.core.change-vals/change
+                ;; theoretically, either side is fine!
+                state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
+              (is (threat-level threat state) "Threat set")
+              (is (not (threat-level (inc threat) state)) "Threat is accurate")))
 
+        ;;gain tags when required
+        (when tags
+          (gain-tags state :runner tags)
+          (is (= tags (count-tags state)) (str "Have " tags " tags")))
+
+        (play-from-hand state :corp type "Archives")
+        (play-from-hand state :corp "Mother Goddess" "HQ")
+        (rez state :corp (get-ice state :archives 0))
+        (rez state :corp (get-ice state :hq 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner name)
+        (let [card (get-program state 0)
+              ice (get-ice state :hq 0)
+              base-breaker-str (get-strength (refresh card))]
+          ;; Does the card have the subtypes it should? Use this for special subtypes, or for playtest
+          (for [subtype subtypes]
+            (is (has-subtype? card subtype)
+                (str "Card " name " should have subtype " subtype)))
+          ;; Is the card actually labelled as an icebreaker?
+          (is (has-subtype? card "Icebreaker") (str "Card " name " is not an Icebreaker"))
+          ;;   If it's a decoder, is it marked as such?
+          (when (= (:type break) "Code Gate")
+            (is (has-subtype? card "Decoder") (str "Card " name " is not a Decoder")))
+          ;;   If it's a fracter, is it marked as such?
+          (when (= (:type break) "Barrier")
+            (is (has-subtype? card "Fracter") (str "Card " name " is not a Fracter")))
+          ;;   If it's a killer, is it marked as such?
+          (when (= (:type break) "Sentry")
+            (is (has-subtype? card "Killer") (str "Card " name " is not a Killer")))
+
+          ;; If counters modify the card strength, then test this
+          (when (:type counters-modify-strength)
+            (let [ctype (:type counters-modify-strength)
+                  gran (or (:granularity counters-modify-strength) 1)
+                  mag (or (:magnitude counters-modify-strength) 1)
+                  reps (+ 3 (rand-int 7))
+                  range 11]
+              (dotimes [_ reps]
+                (let [counters (rand-int range)
+                      steps (quot counters gran)
+                      expected-change (* steps mag)]
+                  (is (changed? [(get-strength (refresh card)) expected-change]
+                                (add-counter state :runner (refresh card) ctype counters)
+                                (update-all-icebreakers state :runner))
+                      (str (:title card) " gained " expected-change
+                           " strength from " counters " counters"))
+                  (add-counter state :runner (refresh card) ctype (- counters))
+                  (update-all-icebreakers state :runner)))))
+
+          (if-not run-event-bonus
+            (run-on state :hq)
+            (is (changed? [(get-strength (refresh card)) run-event-bonus]
+                          (play-from-hand state :runner "Dirty Laundry")
+                          (click-prompt state :runner "HQ"))
+                (str (:title card) "should have run-event bonus of " run-event-bonus)))
+
+          (run-continue state :encounter-ice)
+          ;; for fixed strength breakers/cards with no boost fn, we set ice str = breaker str
+          (if-not boost
+            (pump-ice state :corp (refresh ice) (- (get-strength (refresh card)) (get-strength (refresh ice))))
+            (pump-ice state :corp (refresh ice) (+ 7 (rand-int 7))))
+          ;; how many times should we need to boost?
+          (let [base-str (get-strength (refresh card))
+                need-to-boost (- (get-strength (refresh ice)) base-str)
+                boost-strength (:amount boost)
+                times-to-boost (if-not (pos? need-to-boost)
+                                 0 (int (Math/ceil(/ need-to-boost boost-strength))))]
+            (dotimes [_ times-to-boost]
+              (is (changed? [(get-strength (refresh card)) boost-strength
+                             (:credit (get-runner)) (- (:cost boost))]
+                            (card-ability state :runner (refresh card) (:ab boost)))
+                  (str (:title card) " spends " (:cost boost)
+                       " to boost strength by " boost-strength)))
+
+            (is (>= (get-strength (refresh card))
+                    (get-strength (refresh ice))) "At strength to break MOGO")
+            (let [addl-subs (+ 3 (rand-int 10))
+                  total-subs (inc addl-subs)
+                  ;; we're going to insert a random number of ETR subs
+                  etr-sub {:label "End the run"
+                           :msg "end the run"
+                           ;; don't need to actually do anything!
+                           :async true}]
+              (dotimes [_ addl-subs]
+                (add-sub! state :corp (refresh ice) etr-sub))
+              (is (= total-subs (count (:subroutines (refresh ice))))
+                  (str "gained " addl-subs " ice subroutines"))
+              (let [subs-per-break (:amount break)
+                    num-breaks (int (Math/ceil (/ total-subs subs-per-break)))
+                    last-break (mod total-subs subs-per-break)
+                    last-break (if (zero? last-break) subs-per-break last-break)]
+                (card-ability state :runner (refresh card) (:ab break))
+                (dotimes [n num-breaks]
+                  (let [breaks-this-time (if (= num-breaks (inc n)) last-break subs-per-break)]
+                    (is (changed? [(:credit (get-runner))
+                                   (- (:cost break))]
+                                  (dotimes [z breaks-this-time]
+                                    (click-prompt state :runner "End the run")))
+                        (str "Spent " (:cost break) " credits to break subroutines with " (:title card)))))
+                (is (zero? (count (remove :broken (:subroutines (refresh ice))))) "All subroutines have been broken")))))))))
 
 ;; test implementations
 
