@@ -5,6 +5,7 @@
    [game.core :as core]
    [game.core.card :refer :all]
    [game.core.cost-fns :refer [card-ability-cost]]
+   [game.core.ice :refer [pump-ice add-sub! update-all-icebreakers]]
    [game.core.payment :refer [->c]]
    [game.core.props :refer [add-counter]]
    [game.core.threat :refer [threat-level get-threat-level]]
@@ -128,8 +129,6 @@
         (derez state :corp (refresh ice))
         (is (not (can-be-advanced? state (refresh ice)))
             (str card " is no longer advancable due to hush (derezzed)"))))))
-
-;; rest of tests
 
 (defn- basic-program-test
   "tests a program which has simple boost and break functionality"
@@ -1424,7 +1423,9 @@
     (is (last-log-contains? state "Runner pays 6 [Credits] to use Bug to force the Corp to reveal they drew Hedge Fund, Hedge Fund, and Hedge Fund."))))
 
 (deftest buzzsaw-automated-test
-  (basic-program-test "Buzzsaw" {:ab 1 :amount 1 :cost 3} {:ab 0 :amount 2 :cost 1 :type "Code Gate"}))
+  (basic-program-test {:name "Buzzsaw"
+                       :boost {:ab 1 :amount 1 :cost 3}
+                       :break {:ab 0 :amount 2 :cost 1 :type "Code Gate"}}))
 
 (deftest buzzsaw
   ;; Buzzsaw
@@ -5482,7 +5483,8 @@
         (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash"))))
 
 (deftest mimic-automated-test
-  (basic-program-test "Mimic" nil {:ab 0 :amount 1 :cost 1 :type "Sentry"}))
+  (basic-program-test {:name "Mimic"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Sentry"}}))
 
 (deftest mimic
   ;; Mimic
@@ -5882,7 +5884,8 @@
       (is (= 2 (get-counters (refresh nga) :power))))))
 
 (deftest num-automated-test
-  (basic-program-test "Num" nil {:ab 0 :amount 1 :cost 2 :type "Sentry"}))
+  (basic-program-test {:name "Num"
+                       :break {:ab 0 :amount 1 :cost 2 :type "Sentry"}}))
 
 (deftest nyashia
   ;; Nyashia
