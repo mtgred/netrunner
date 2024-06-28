@@ -4036,6 +4036,34 @@
       (is (= "Choose a credit providing card (0 of 1 [Credits])" (:msg (prompt-map :runner)))
           "Credit selection prompt is opened")))
 
+(deftest polyhistor-test-no-ice
+  (do-game
+    (new-game {:corp {:hand [] :deck ["IPO"]}
+               :runner {:hand ["Polyhistor"] :deck ["Easy Mark"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Polyhistor")
+    (run-on state :hq)
+    (click-prompt state :runner "Yes")
+    (is (= 1 (count (:hand (get-runner))) (count (:hand (get-corp)))) "Each draw 1")))
+
+(deftest polyhistor-test-ice
+  (doseq [n [1 2 3]]
+    (do-game
+      (new-game {:corp {:hand [(qty "Vanilla" n)] :deck ["IPO"] :credits 30}
+                 :runner {:hand ["Polyhistor"] :deck ["Easy Mark"]}})
+      (dotimes [position n]
+        (play-from-hand state :corp "Vanilla" "HQ")
+        (rez state :corp (get-ice state :hq position)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Polyhistor")
+      (run-on state :hq)
+      (dotimes [_ n]
+        (run-continue-until state :encounter-ice)
+        (run-continue state :pass-ice))
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count (:hand (get-runner))) (count (:hand (get-corp)))) "Each draw 1"))))
+
+
 (deftest public-terminal-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game

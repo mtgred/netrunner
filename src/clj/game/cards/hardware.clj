@@ -1775,17 +1775,17 @@
 (defcard "Polyhistor"
   (let [abi {:optional
              {:prompt "Draw 1 card to force the Corp to draw 1 card?"
+              :waiting-prompt true
               :yes-ability {:msg "draw 1 card and force the Corp to draw 1 card"
                             :async true
                             :effect (req (wait-for (draw state :runner 1)
                                                    (draw state :corp eid 1)))}
-              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card)))
-                                           (effect-completed eid))}}}]
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
     {:static-abilities [(mu+ 1)
                         (link+ 1)]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
-                              (= (:position run) 1) ; trigger when last piece of ice is passed
+                              (= (:position run) 0) ; trigger when last piece of ice is passed
                               (pos? (count (:deck runner)))))
                :async true
                :once :per-turn
