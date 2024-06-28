@@ -218,7 +218,7 @@
     (play-from-hand state :runner "Mirror")
     (play-from-hand state :runner "Assimilator")
     (play-from-hand state :runner "Hunting Grounds")
-    (card-ability state :runner (get-resource state 1) 1)
+    (card-ability state :runner (get-resource state 1) 0)
     (is (= 3 (count (get-runner-facedown state))))
     (card-ability state :runner (get-resource state 0) 0)
     (is (= "Choose a facedown installed card" (:msg (prompt-map :runner))))

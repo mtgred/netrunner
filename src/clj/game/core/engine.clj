@@ -3,12 +3,13 @@
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
     [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes get-all-cards all-installed-runner
+    [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
-    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
+    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title ice? in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled? is-disabled-reg? update-disabled-cards]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+    [game.core.finding :refer [find-cid]]
     [game.core.payment :refer [build-spend-msg can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
@@ -605,8 +606,14 @@
 (defn- card-for-ability
   [state {:keys [card duration] :as ability}]
   (if (#{:default-duration :pending} duration)
-    (when-let [card (get-card state card)]
-      (valid-condition? state card ability))
+    (if-let [card (get-card state card)]
+      (valid-condition? state card ability)
+      (when-let [card (and (installed? card) (find-cid (:cid card) (all-installed state (:side card))))]
+        ;; ice that's swapped still triggers events when passed
+        ;; get-card wont find it because the zone is different
+        ;; any other card that gets swapped while pending should also maintain triggers,
+        ;; so long as it remains on the field/doesn't become inactive
+        (valid-condition? state card ability)))
     card))
 
 (defn trigger-suppress
@@ -1120,7 +1127,8 @@
                      :card #(and (installed? %)
                                  (program? %))}
            :async true
-           :effect (req (wait-for (move* state side (make-eid state eid) :trash-cards targets {:game-trash true})
+           :effect (req (wait-for (move* state side (make-eid state eid) :trash-cards targets {:game-trash true
+                                                                                               :unpreventable true})
                                   (update-mu state)
                                   (effect-completed state side eid)))})
         nil nil)

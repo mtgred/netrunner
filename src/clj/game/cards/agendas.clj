@@ -206,10 +206,19 @@
                                        :choices (cancellable (filter corp-installable-type?
                                                                      (take 5 (:deck corp))))
                                        :async true
-                                       :effect (effect (corp-install
-                                                         eid target nil
-                                                         {:ignore-all-cost true
-                                                          :install-state :rezzed-no-cost}))
+                                       :effect (req (let [target-position (first (positions #{target} (take 3 (:deck corp))))
+                                                          position (case target-position
+                                                                     0 "first "
+                                                                     1 "second "
+                                                                     2 "third "
+                                                                     3 "fourth "
+                                                                     4 "fifth "
+                                                                     "this-should-not-happen ")]
+                                                      (system-msg state side (str "uses " (:title card) " to install the " position "card from R&D"))
+                                                      (corp-install state side
+                                                        eid target nil
+                                                        {:ignore-all-cost true
+                                                         :install-state :rezzed-no-cost})))
                                        :cancel-effect
                                        (effect (system-msg
                                                  (str "declines to use "
@@ -762,6 +771,9 @@
                                                        (sort-by :title)
                                                        (seq))
                                                   ["Done"]))
+                                  :msg (msg (if (= target "Done")
+                                              "shuffle R&D"
+                                              (str "install and rez " (:title target) " from R&D, ignoring all costs")))
                                   :effect (req (shuffle! state side :deck)
                                                (if (= "Done" target)
                                                  (effect-completed state side eid)
@@ -1177,6 +1189,7 @@
              :req (req (seq (filter #(= (:zone %) [:servers zone :ices])
                                     (all-active-installed state :corp))))
              :duration :end-of-turn
+             :async true
              :effect (req (let [derez-count
                                 (min 2 (count (filter #(= (:zone %) [:servers zone :ices])
                                                       (all-active-installed state :corp))))]
@@ -1210,6 +1223,7 @@
                 :req (req (pos? (get-counters card :agenda)))
                 :yes-ability
                 {:cost [(->c :agenda 1)]
+                 :async true
                  :effect (req (let [current-server (first (:server (:run @state)))]
                                 (continue-ability
                                   state side

@@ -513,7 +513,7 @@
        (when-not (:no-action encounter)
          (core/process-action "continue" state :runner nil))
        (when-not (= :any phase)
-         (is (= phase (:phase (:run @state))) "Run is in the correct phase"))))))
+         (is' (= phase (:phase (:run @state))) "Run is in the correct phase"))))))
 
 (defmacro encounter-continue
   "No action from corp and continue for runner to proceed in current encounter."
@@ -524,7 +524,7 @@
   ([state] (run-continue-impl state :any))
   ([state phase]
    (if (core/get-current-encounter state)
-     (encounter-continue-impl state)
+     (encounter-continue-impl state phase)
      (let [run (:run @state)]
        (is' (some? run) "There is a run happening")
        (ensure-no-prompts state)

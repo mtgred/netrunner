@@ -143,6 +143,8 @@
    :strength
    :subroutines
    :subtype-target
+   :poison
+   :highlight-in-discard
    :subtypes
    :title
    :type

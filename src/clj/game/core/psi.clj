@@ -12,10 +12,16 @@
     [clojure.string :as string]
     [game.core.payment :refer [->c]]))
 
+(defn- bet-to-keyword
+  [bet]
+  (keyword (str "bet-" bet)))
+
 (defn- resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
   resolution ability."
   [state side eid card psi bet targets]
+  (swap! state update-in [:stats side :psi-game (bet-to-keyword bet)] (fnil + 0) 1)
+  (swap! state update-in [:stats side :psi-game :games-played] (fnil + 0) 1)
   (swap! state assoc-in [:psi side] bet)
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
@@ -27,10 +33,13 @@
           (system-msg state side (:msg async-result))
           (clear-wait-prompt state opponent)
           (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
-                    (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                      (let [card-side (if (corp? card) :corp :runner)]
-                        (continue-ability state card-side (assoc ability :async true) card targets))
-                      (effect-completed state side eid)))))
+                    (let [card-side (if (corp? card) :corp :runner)]
+                      (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+                        (do (swap! state update-in [:stats card-side :psi-game :wins] (fnil + 0) 1)
+                            (continue-ability state card-side (assoc ability :async true) card targets))
+                        (do
+                          (swap! state update-in [:stats (if (= card-side :corp) :runner :corp) :psi-game :wins] (fnil + 0) 1)
+                          (effect-completed state side eid)))))))
       (show-wait-prompt
         state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))
 

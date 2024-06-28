@@ -2845,6 +2845,7 @@
                                        :msg "gain [Click]"
                                        :effect (effect (gain-clicks :corp 1))}
                                       card nil)))}
+   :highlight-in-discard true
    :events [{:event :corp-phase-12
              :location :discard
              :optional
