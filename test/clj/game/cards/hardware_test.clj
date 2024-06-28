@@ -3521,18 +3521,30 @@
       (is (zero? (count-tags state)) "Runner loses all tags")))
 
 (deftest omni-drive-pay-credits-prompt
-    ;; Pay-credits prompt
-    (do-game
-      (new-game {:runner {:hand ["Omni-drive" "Inti"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Omni-drive")
-      (play-from-hand state :runner "Inti")
-      (click-prompt state :runner "Omni-drive")
-      (let [inti (first (:hosted (get-hardware state 0)))]
-        (is (changed? [(:credit (get-runner)) -1]
-                      (card-ability state :runner inti 1)
-                      (click-card state :runner "Omni-drive"))
-            "Used 1 credit from Omni-drive"))))
+  ;; Pay-credits prompt
+  (do-game
+    (new-game {:runner {:hand ["Omni-drive" "Inti"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Omni-drive")
+    (play-from-hand state :runner "Inti")
+    (click-prompt state :runner "Omni-drive")
+    (let [inti (first (:hosted (get-hardware state 0)))]
+      (is (changed? [(:credit (get-runner)) -1]
+                    (card-ability state :runner inti 1)
+                    (click-card state :runner "Omni-drive"))
+          "Used 1 credit from Omni-drive"))))
+
+(deftest omni-drive-vs-puffer
+  (do-game
+    (new-game {:runner {:hand ["Omni-drive" "Puffer"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Omni-drive")
+    (play-from-hand state :runner "Puffer")
+    (click-prompt state :runner "Omni-drive")
+    (let [puf (first (:hosted (get-hardware state 0)))]
+      (card-ability state :runner puf 2))
+    (is (= "Puffer" (:title (first (:discard (get-runner))))) "Trashed due to MU restriction on omni-drive")))
 
 (deftest pan-weave-happy
   ;; PAN-Weave - 1 meat on install, once/turn siphon 1 credit on hq run

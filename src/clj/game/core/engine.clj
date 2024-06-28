@@ -3,7 +3,7 @@
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
     [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes get-all-cards all-installed-runner
+    [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title in-discard? in-hand? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
@@ -1100,7 +1100,9 @@
     (trash-on-tag state nil (make-eid state eid))
     (if-let [cards (seq (filter
                           :enforce-conditions
-                          [(get-in @state [:corp :identity])]))]
+                          (concat (all-installed state :corp)
+                                  [(get-in @state [:corp :identity])]
+                                  (all-active-installed state :runner))))]
       (enforce-conditions-impl state nil eid cards)
       (effect-completed state nil eid))))
 

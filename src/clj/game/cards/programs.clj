@@ -17,7 +17,7 @@
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
-   [game.core.engine :refer [ability-as-handler dissoc-req not-used-once? pay
+   [game.core.engine :refer [ability-as-handler checkpoint dissoc-req not-used-once? pay
                              print-msg register-events register-once
                              trigger-event trigger-event-simult unregister-events]]
    [game.core.events :refer [run-events first-event? first-installed-trash? run-events
@@ -1222,7 +1222,8 @@
                 :effect (effect (damage-prevent :net Integer/MAX_VALUE))}]})
 
 (defcard "Dhegdheer"
-  {:can-host {:req (req (program? target))
+  {:implementation "Discount not considered by any engine functions when checking if a program is playable"
+   :can-host {:req (req (program? target))
               :no-mu true
               :cost-bonus -1
               :max-cards 1}})
@@ -2731,11 +2732,15 @@
                                 {:cost [(->c :click 1)]
                                  :msg "place 1 power counter"
                                  :label "Place 1 power counter"
-                                 :effect (effect (add-counter card :power 1))}
+                                 :async true
+                                 :effect (req (add-counter state side card :power 1)
+                                              (checkpoint state side eid))}
                                 {:cost [(->c :click 1)]
                                  :msg "remove 1 power counter"
                                  :label "Remove 1 power counter"
-                                 :effect (effect (add-counter card :power -1))}]
+                                 :async true
+                                 :effect (req (add-counter state side card :power -1)
+                                              (checkpoint state side eid))}]
                     :static-abilities [(breaker-strength-bonus (req (get-counters card :power)))
                                        {:type :used-mu
                                         :duration :while-active

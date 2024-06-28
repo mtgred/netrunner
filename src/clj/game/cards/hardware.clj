@@ -1526,7 +1526,15 @@
   (letfn [(netchip-count
             [state]
             (count (filter #(= (:title %) "NetChip") (all-active-installed state :runner))))]
-    {:can-host {:req (req (and (program? target)
+    {:enforce-conditions {:req (req (let [first-program (first (filter program? (:hosted card)))]
+                                    (and first-program (> (expected-mu state first-program) (netchip-count state)))))
+                          :silent (req true)
+                          :msg (msg "trash " (card-str state (first (filter program? (:hosted card)))) " for violating hosting restrictions")
+                          :async true
+                          :effect (req (let [first-program (first (filter program? (:hosted card)))]
+                                         (system-msg state nil (card-str state (first (filter program? (:hosted card)))) " is trashed for violating hosting restrictions")
+                                         (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
+     :can-host {:req (req (and (program? target)
                                (<= (expected-mu state target) (netchip-count state))))
                 :max-mu (req (netchip-count state))
                 :max-cards 1
@@ -1549,6 +1557,14 @@
 
 (defcard "Omni-drive"
   {:recurring 1
+   :enforce-conditions {:req (req (let [first-program (first (filter program? (:hosted card)))]
+                                    (and first-program (> (expected-mu state first-program) 1))))
+                        :silent (req true)
+                        :msg (msg "trash " (card-str state (first (filter program? (:hosted card)))) " for violating hosting restrictions")
+                        :async true
+                        :effect (req (let [first-program (first (filter program? (:hosted card)))]
+                                       (system-msg state nil (card-str state (first (filter program? (:hosted card)))) " is trashed for violating hosting restrictions")
+                                       (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
    :can-host {:req (req (and (program? target)
                              (<= (expected-mu state target) 1)))
               :max-mu 1

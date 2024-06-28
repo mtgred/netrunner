@@ -144,7 +144,7 @@
   (let [ab (first (filter #(= (:type %) :used-mu) (:static-abilities (card-def card))))
         abreq (:req ab)
         abval (:value ab)]
-    (if (and ab (abreq state :runner nil card nil))
+    (if (and ab (or (nil? abreq) (abreq state :runner nil card nil)))
       (abval state :runner nil card nil)
       0)))
 
