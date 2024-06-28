@@ -1,0 +1,150 @@
+@require "opacity"
+@require "palette"
+.new-theme
+    .bottompane
+        .replay
+
+            #timeline
+
+                .step
+
+                    .step-label
+                        background-color: var(--theme-bg-color)
+                        border: 1px solid white
+
+                        &:hover
+                            border-color: var(--theme-primary)
+                            box-shadow(0 0 6px var(--theme-shadow-color))
+
+                    .annotated-before:before, .annotated-after:after
+                        border: 1px solid white
+                        box-shadow(0 0 3px white)
+
+                    .start-of-turn-corp:before
+                        color: white
+                        background-color: var(--theme-bg-color-80)
+
+                    .active-step-label
+                        border-color: var(--theme-primary)
+                        color: var(--theme-primary)
+                        box-shadow(0 0 6px var(--theme-primary))
+
+                    .draw .symbol, .draw .symbol:after
+                        border: 1px solid white
+                        background: var(--theme-bg-color-80)
+                        color: transparent
+
+
+                    .active-step-label.draw .symbol, .active-step-label.draw .symbol:after
+                        border-color: var(--theme-primary)
+
+                .step.corp:after
+                    background-color: var(--replay-blue)
+
+                .step.runner:after
+                    background-color: var(--warning-red)
+
+            .controls
+                button.small
+                background-color: transparent
+                border-color: white
+
+                &:hover
+                    background-color: var(--theme-primary-40)
+                    border-color: gold-core
+
+                button.on
+                    background-color: var(--selected-button-background)
+                    border: 1px solid var(--highlight-yellow)
+
+                button.off
+                    background-color: var(--theme-primary-40)
+
+    .right-pane
+        .notes, .notes-shared
+            textarea
+                background: transparent
+                color: white
+                box-shadow: 0 0 12px var(--gray-60), inset 0 0 0 1px var(--gray-20)
+
+            .click:after
+                color: alpha(white, o-10)
+
+            .notes-icons
+                .notes-icon:hover:after
+                    border-color: var(--theme-primary)!important
+
+                .notes-icon.selected:after
+                    border-color: var(--theme-primary)!important
+                    box-shadow(0 0 6px var(--theme-primary))
+
+    .notes-icon:after
+        border: 1px solid white
+        color: white
+        box-shadow(0 0 3px white)
+
+    .notes-icon.none:after
+        content: ''
+        color: black
+        background-color: var(--theme-bg-color-80)
+        box-shadow(0 0 6px var(--theme-bg-color-80))
+
+    .notes-icon.blunder:after
+        content: '??'
+        color: black
+        background-color: var(--warning-red)
+        box-shadow(0 0 6px var(--warning-red))
+
+    .notes-icon.mistake:after
+        content: '?'
+        color: black
+        background-color: var(--replay-mistake)
+        box-shadow(0 0 6px var(--replay-mistake))
+
+    .notes-icon.inaccuracy:after
+        content: '?!'
+        color: black
+        background-color: --replay-inaccuracy
+        box-shadow(0 0 6px --replay-inaccuracy)
+
+    .notes-icon.good:after
+        content: '!'
+        color: black
+        background-color: olive-green
+        box-shadow(0 0 6px olive-green)
+
+    .notes-icon.brilliant:after
+        content: '!!'
+        color: black
+        background-color: var(--replay-blue)
+        box-shadow(0 0 6px var(--replay-blue))
+
+    .notes-icon.a:after
+        content: '⯀'
+        color: white
+        border-radius: 25%!important
+        line-height: .75rem!important
+        background-color: var(--warning-red-shadow)
+        box-shadow(0 0 6px var(--warning-red-shadow))
+
+    .notes-icon.b:after
+        content: '⬥'
+        color: white
+        border-radius: 25%!important
+        line-height: .75rem!important
+        background-color: var(--theme-shadow-color)
+        box-shadow(0 0 6px var(--theme-shadow-color))
+
+    .notes-icon.c:after
+        content: '☀'
+        color: black
+        border-radius: 25%!important
+        background-color: var(--success-highlight)
+        box-shadow(0 0 6px var(--success-highlight))
+
+    .notes-icon.d:after
+        content: '★'
+        color: white
+        border-radius: 25%!important
+        background-color: var(--power-counter-purple)
+        box-shadow(0 0 6px var(--power-counter-purple))

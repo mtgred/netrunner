@@ -14,13 +14,13 @@
   (.preventDefault e)
   (when-let [title (get-card-data-title e)]
     (when-let [card (get-in @app-state [:all-cards-and-flips title])]
-      (put! channel card)))
+      (put! channel [card e])))
   nil)
 
 (defn card-preview-mouse-out [e channel]
   (.preventDefault e)
   (when (get-card-data-title e)
-    (put! channel false))
+    (put! channel [false false]))
   nil)
 
 (defn card-highlight-mouse-over [e value channel]
@@ -34,4 +34,3 @@
   (when (:cid value)
     (put! channel false))
   nil)
-

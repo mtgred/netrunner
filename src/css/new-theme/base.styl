@@ -1,0 +1,159 @@
+@require "opacity"
+@require "palette"
+
+.new-theme 
+    color: var(--text-color)
+
+    a
+        color: var(--theme-primary)
+
+        &:hover
+            color: var(--link-hover)
+
+    input, select, textarea
+        background-color: alpha(white-solid, o-90)
+        border: 2px solid var(--tinted-text-shade)
+        color: black
+
+        &:focus
+            box-shadow(0 0 6px var(--theme-shadow-color))
+            border-color: var(--theme-shadow-color) !important
+
+    button, a.button
+        background-color: var(--theme-primary-40)
+        border: 1px solid var(--theme-primary)
+        color: white-solid
+        text-shadow: 0 1px 2px var(--gray-60)
+
+        &:focus, &:hover
+            box-shadow(0 0 6px var(--theme-shadow-color))
+            border-color: var(--theme-shadow-color)
+
+    button.small
+        background-color: transparent
+        border-color: white-solid
+
+        &:hover
+            background-color: var(--theme-primary-40)
+            border-color: var(--theme-primary)
+
+    button.on
+        background-color: var(--selected-button-background)
+        border: 1px solid var(--highlight-yellow)
+
+    button.off
+        background-color: var(--theme-primary-40)
+
+    .block-link
+        border: 1px solid transparent
+
+        &:hover:not([disabled])
+            background-color: var(--theme-primary-40)
+            border: 1px solid var(--theme-primary)
+
+    .infobox
+        border: 1px solid var(--theme-primary)
+        background-color: var(--theme-primary-40) !important
+
+        &::before
+            border: 1px solid var(--info-box-color);
+            color: var(--info-box-color);
+
+    .card.dragged
+        opacity: 1
+        box-shadow(0 0 1px 2px var(--theme-shadow-color))
+
+    .dragover
+        border-color: var(--theme-primary) !important
+
+    // Scrollbars
+
+    ::-webkit-scrollbar-thumb
+        background-color: var(--theme-bg-color-80)
+        box-shadow: 0 0 3px 0 var(--gray-60), inset 0 0 0 1px white-solid
+
+    ::-webkit-scrollbar-thumb:hover
+        box-shadow: 0 0 3px 0 var(--gray-60), inset 0 0 0 1px var(--theme-primary)
+        background: var(--theme-primary-40)
+
+    .active
+        color: var(--theme-primary)
+
+    .smallwarning
+        background: var(--theme-primary-40)
+        border: 1px solid var(--theme-primary)
+        color: white-solid
+
+    .fake-link
+        color: var(--theme-primary)
+
+    button .fake-link
+        color: white-solid
+
+    .standard, .eternal, .system-gateway, .startup, .snapshot, .snapshot-plus, .sunset, .neo, .legal
+        color: var(--success-highlight)
+        border-color: var(--success-highlight)
+
+    .casual
+        color: var(--highlight-yellow)
+        border-color: var(--highlight-yellow)
+
+    .invalid
+        color: var(--warning-orange-dark)
+        border-color: var(--warning-orange-dark)
+
+    .darken
+        background-color: black
+
+    .disabled
+        &:hover, &:focus
+            border-color: var(--theme-primary)
+
+    .rotated
+        color: white-solid
+        background-color: gray
+        border-color: var(--warning-orange-dark)
+
+        &:hover, &:focus
+            border-color: var(--theme-primary)
+
+    .label
+        border: 1px solid white-solid
+
+    .caret
+        border-right: 4px solid transparent
+        border-left: 4px solid transparent
+
+    .panel
+        border: 1px solid var(--theme-bg-color)
+
+    .blue-shade
+        background-color: var(--theme-bg-color)
+        box-shadow: 0 0 12px var(--gray-60), inset 0 0 0 1px most-var(--gray-60)
+
+    .green-shade
+        background-color: var(--tinted-text-shade)
+        box-shadow: 0 0 12px var(--gray-60), inset 0 0 0 1px most-var(--gray-60)
+
+    .active-player
+        border: 1px solid var(--theme-primary)
+
+    // Layout
+
+    #main
+        flex-grow: 1
+        height: auto;
+        .item
+            color: white-solid
+
+    // Version string on main page
+    #version
+        span
+            color: var(--version-color)
+
+
+@keyframes highlight-new-theme
+    from
+        background: var(--highlight-help)
+    to
+        background: none

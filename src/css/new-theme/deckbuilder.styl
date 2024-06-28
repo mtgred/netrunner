@@ -1,0 +1,41 @@
+@require "opacity"
+@require "palette"
+// Deckbuilder
+.new-theme
+    .deck-collection
+        .deckline
+            border: 1px solid white-solid
+
+            &:hover
+                border-color: var(--theme-primary)
+
+    .deckbuilder
+        .viewport
+            .decks, .decklist, .deckedit
+                border-right: 1px solid white-solid
+
+            .deckedit
+                .card-search
+                    .typeahead
+                        background-color: white-solid
+                        color: black
+                        border: 1px solid var(--theme-bg-color-80)
+
+                        > div
+                            border: 1px solid transparent
+
+                            &:hover
+                                background-color: var(--theme-primary-40)
+                                border-color: var(--theme-primary)
+
+                        .selected
+                            background-color: var(--theme-primary-40)
+                            border-color: var(--theme-primary)
+
+    .deck-status, .user-status
+        position: relative
+
+        .status-tooltip
+            border: 1px solid white-solid
+            color: white-solid
+            box-shadow(0 6px 12px var(--gray-20))

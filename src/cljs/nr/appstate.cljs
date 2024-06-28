@@ -32,6 +32,9 @@
                             :card-back (get-local-value "card-back" "nsg")
                             :card-zoom (get-local-value "card-zoom" "image")
                             :pin-zoom (get-local-value "pin-zoom" false)
+                            :new-theme (get-local-value "new-theme" false)
+                            :shrink-runner-cards (get-local-value "shrink-runner-cards" false)
+                            :condensed-basic-actions (get-local-value "condensed-basic-actions" false)
                             :pronouns "none"
                             :language "en"
                             :default-format (get-local-value "default-format" "standard")
