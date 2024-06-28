@@ -3924,7 +3924,7 @@
     (run-continue state :encounter-ice)
     (card-ability state :runner (get-program state 0) 0)
     (click-prompt state :runner "End the run")
-    (run-continue state :pass-ice)
+    (run-continue state :movement)
     (click-prompt state :runner "Yes")
     (click-card state :runner (get-ice state :rd 0))
     (run-continue-until state :success)
