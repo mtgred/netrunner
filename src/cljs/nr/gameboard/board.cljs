@@ -2061,7 +2061,7 @@
 
                 (if (:replay @game-state)
                   [content-pane :log :settings :notes :notes-shared]
-                  [content-pane :log :settings])]
+                  [content-pane :log :settings :run-timing :turn-timing])]
 
                [:div.centralpane
                 (if (= op-side :corp)
