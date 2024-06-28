@@ -3003,6 +3003,38 @@
       (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
       (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
 
+(deftest liza-vs-lockdown
+  (letfn [(rest-of-game
+            [state]
+            (play-from-hand state :corp "Lockdown" "HQ")
+            (take-credits state :corp)
+            (run-on state :hq)
+            (rez state :corp (get-ice state :hq 0))
+            (run-continue state :encounter-ice)
+            (card-subroutine state :corp (get-ice state :hq 0) 0)
+            (run-continue-until state :success)
+            (is (nil? (:run @state)) "No more run")
+            (is (= 1 (count-tags state)) "Took a tag")
+            (is (not (seq (get-in @state [:runner :hand]))) "Did not draw"))]
+  (do-game
+    (new-game {:corp {:hand ["Lockdown"]}
+               :runner {:id "Liza Talking Thunder: Prominent Legislator"
+                        :hand []
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (rest-of-game state))
+  (do-game
+    (new-game {:corp {:hand ["Lockdown"]}
+               :runner {:id "Reina Roja: Freedom Fighter"
+                        :hand ["DJ Fenris"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "DJ Fenris")
+    (click-prompt state :runner "Liza Talking Thunder: Prominent Legislator")
+    (take-credits state :runner)
+    (rest-of-game state))))
+
+
+
 (deftest liza-talking-thunder-prominent-legislator-works-with-crisium-grid
     ;; Works with Crisium Grid
     (do-game
