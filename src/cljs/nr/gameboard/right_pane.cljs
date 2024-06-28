@@ -30,7 +30,7 @@
 
    :turn-timing
    {:hiccup [turn-timing-pane]
-    :label (tr [:log.run-timing "Turn Timing"])}
+    :label (tr [:log.turn-timing "Turn Timing"])}
 
    :settings
    {:hiccup [settings-pane]

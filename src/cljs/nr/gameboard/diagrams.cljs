@@ -17,7 +17,7 @@
      [:section [:h3 (tr [:diagrams.turn.corp-turn "Corporation Turn"])]]
      [:section
       [:h4 (tr [:diagrams.turn.corp-draw-phase "5.6.1: Draw Phase"])]
-      (bullet 0 (render-icons (tr [:diagrams.corp-draw-phase-a "Corporation gains allotted clicks (default: [click][click][click])"])))
+      (bullet 0 (render-icons (tr [:diagrams.turn.corp-draw-phase-a "Corporation gains allotted clicks (default: [click][click][click])"])))
       (bullet 1 (tr [:diagrams.turn.corp-draw-phase-b "Paid ability window. Corp may rez non-ice cards or score agendas during this window"]))
       (bullet 2 (tr [:diagrams.turn.corp-draw-phase-c "Corporation recurring credits refill"]))
       (bullet 3 (tr [:diagrams.turn.corp-draw-phase-d "The turn formally begins. Turn begins events resolve"]))
