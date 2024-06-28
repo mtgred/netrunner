@@ -4078,7 +4078,7 @@
       (run-on state :hq)
       (dotimes [_ n]
         (run-continue-until state :encounter-ice)
-        (run-continue state :pass-ice))
+        (run-continue state :movement))
       (click-prompt state :runner "Yes")
       (is (= 1 (count (:hand (get-runner))) (count (:hand (get-corp)))) "Each draw 1"))))
 
