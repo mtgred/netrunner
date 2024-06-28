@@ -3961,12 +3961,14 @@
    :on-play {:req (req rd-runnable)
              :msg "make a run on R&D"
              :async true
-             :effect (effect (make-run eid :rd card))}
+             :effect (req (update! state side (assoc-in card [:special :run-eid] eid))
+                          (make-run state side eid :rd card))}
    :events [{:event :successful-run
              :unregister-once-resolved true
              :silent (req true)
              :req (req (and (= :rd (target-server context))
-                            this-card-run))
+                            this-card-run
+                            (= (get-in card [:special :run-eid :eid]) (get-in @state [:run :eid :eid]))))
              :msg "place 2 [Credits] on itself and access 1 additional card from R&D"
              :effect (effect
                        (add-counter card :credit 2 {:placed true})
