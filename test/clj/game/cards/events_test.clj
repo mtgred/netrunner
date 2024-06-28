@@ -256,11 +256,10 @@
       (core/gain state :runner :click 3)
       (core/gain state :runner :credit 2)
       (play-from-hand state :runner "Scheherazade")
-      (let [scheherazade (get-program state 0)]
-        (card-ability state :runner scheherazade 0)
-        (click-card state :runner (find-card "Corroder" (:hand (get-runner))))
-        (is (= 3 (core/available-mu state)) "Memory at 3 (-1 from Corroder)"))
+      (play-from-hand state :runner "Corroder")
+      (click-prompt state :runner "Scheherazade")
       (play-from-hand state :runner "Hivemind")
+      (click-prompt state :runner "The Rig")
       (is (= 1 (core/available-mu state)) "Memory at 1 (-1 from Corroder, -2 from Hivemind)")
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
@@ -6889,11 +6888,9 @@
         (play-from-hand state :runner "Leprechaun")
         (play-from-hand state :runner "Test Run")
         (click-prompt state :runner "Heap")
-        (click-prompt state :runner ms))
-      (let [lep (get-program state 0)
-            ms (get-program state 1)]
-        (card-ability state :runner lep 1)
-        (click-card state :runner ms)
+        (click-prompt state :runner ms)
+        (click-prompt state :runner "Leprechaun"))
+      (let [lep (get-program state 0)]
         (is (= "Morning Star" (:title (first (:hosted (refresh lep))))) "Morning Star hosted on Lep"))
       (take-credits state :runner)
       (is (= "Morning Star" (:title (first (:deck (get-runner))))) "Morning Star returned to Stack from host")
@@ -6901,7 +6898,8 @@
       (let [kn (find-card "Knight" (:discard (get-runner)))]
         (play-from-hand state :runner "Test Run")
         (click-prompt state :runner "Heap")
-        (click-prompt state :runner kn))
+        (click-prompt state :runner kn)
+        (click-prompt state :runner "The Rig"))
       (let [wrap (get-ice state :hq 0)
             kn (get-program state 1)]
         (card-ability state :runner kn 0)

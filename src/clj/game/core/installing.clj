@@ -528,6 +528,7 @@
 
 (defn runner-host-choice
   [state side eid card potential-hosts args]
+  "Have the runner choose where they are hosting the given card"
   (continue-ability
     state side
     {:choices (conj potential-hosts "The Rig")
@@ -543,6 +544,7 @@
                       (runner-host-enforce-card-limits
                         state side eid card (get-card state target)
                         (assoc args
+                               :cost-bonus cost-bonus
                                :no-mu (get-in target [:can-host :no-mu])
                                :cost-bonus cost-bonus)))))}
     card nil))

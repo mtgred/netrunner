@@ -4474,17 +4474,16 @@
 (deftest off-campus-apartment-ability-shows-a-simultaneous-resolution-prompt-when-appropriate
     ;; ability shows a simultaneous resolution prompt when appropriate
     (do-game
-      (new-game {:runner {:deck ["Street Peddler" "Off-Campus Apartment"
-                                 "Underworld Contact" (qty "Spy Camera" 6)]}})
+      (new-game {:runner {:hand ["Street Peddler" "Off-Campus Apartment" "Underworld Contact"]
+                          :deck [(qty "Spy Camera" 6)]}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Street Peddler" "Off-Campus Apartment" "Underworld Contact"])
       (play-from-hand state :runner "Off-Campus Apartment")
       (let [oca (get-resource state 0)]
-        (card-ability state :runner oca 0)
-        (click-card state :runner (find-card "Underworld Contact" (:hand (get-runner))))
+        (play-from-hand state :runner "Underworld Contact")
+        (click-prompt state :runner (:title oca))
         (is (= 2 (count (:hand (get-runner)))) "Drew a card from OCA")
-        (card-ability state :runner oca 0)
-        (click-card state :runner (find-card "Street Peddler" (:hand (get-runner))))
+        (play-from-hand state :runner "Street Peddler")
+        (click-prompt state :runner (:title oca))
         ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
         (is (= 2 (count (prompt-buttons :runner))) "Simultaneous-resolution prompt is showing")
         (click-prompt state :runner "Off-Campus Apartment")
@@ -4493,20 +4492,20 @@
 (deftest off-campus-apartment-second-ability-does-not-break-cards-that-are-hosting-others-e-g-street-peddler
     ;; second ability does not break cards that are hosting others, e.g., Street Peddler
     (do-game
-      (new-game {:runner {:deck [(qty "Street Peddler" 2) "Off-Campus Apartment" (qty "Spy Camera" 6)]}})
+      (new-game {:runner {:hand ["Street Peddler" "Street Peddler" "Off-Campus Apartment"]
+                          :deck [(qty "Spy Camera" 6)]}})
       (take-credits state :corp)
-      (starting-hand state :runner ["Street Peddler" "Street Peddler" "Off-Campus Apartment"])
       (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
       (play-from-hand state :runner "Off-Campus Apartment")
       (let [oca (get-resource state 0)]
-        (card-ability state :runner oca 0)
-        (click-card state :runner (find-card "Street Peddler" (:hand (get-runner))))
+        (play-from-hand state :runner "Street Peddler")
+        (click-prompt state :runner (:title oca))
         (click-prompt state :runner "Street Peddler")
         (let [ped1 (first (:hosted (refresh oca)))]
           (card-ability state :runner ped1 0)
           (click-prompt state :runner (last (prompt-buttons :runner))) ; choose Street Peddler
-          (card-ability state :runner (refresh oca) 1)
-          (click-card state :runner (get-resource state 1))
+          (click-prompt state :runner (:title oca))
+          (click-prompt state :runner (:title oca))
           (let [ped2 (first (:hosted (refresh oca)))]
             (card-ability state :runner ped2 0)
             (click-prompt state :runner (first (prompt-buttons :runner))) ; choose Spy Camera
@@ -4521,8 +4520,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Off-Campus Apartment")
       (let [oca (get-resource state 0)]
-        (card-ability state :runner oca 0)
-        (click-card state :runner "The Class Act")
+        (play-from-hand state :runner "The Class Act")
+        (click-prompt state :runner (:title oca))
         (click-card state :runner (last (:set-aside (get-runner))))
         (is (= 1 (count (:hand (get-runner)))))
         (take-credits state :runner)
