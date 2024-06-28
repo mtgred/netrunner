@@ -3909,6 +3909,27 @@
     (click-prompt state :runner "No action")
     (is (= 4 (get-counters (get-program state 0) :power)) "4 counters on david")))
 
+(deftest into-the-depths-inversificator-still-counts-the-ice
+  (do-game
+    (new-game {:runner {:hand ["Into the Depths" "Inversificator"]
+                        :credits 20}
+               :corp {:hand [(qty "Quandary" 2)]}})
+    (play-from-hand state :corp "Quandary" "HQ")
+    (play-from-hand state :corp "Quandary" "R&D")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :runner "Inversificator")
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (run-continue state :pass-ice)
+    (click-prompt state :runner "Yes")
+    (click-card state :runner (get-ice state :rd 0))
+    (run-continue-until state :success)
+    (click-prompt state :runner "Gain 4 [Credits]")))
+
 (deftest isolation
   ;; Isolation - A resource must be trashed, gain 7c
   (do-game
