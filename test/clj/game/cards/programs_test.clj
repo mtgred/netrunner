@@ -3699,7 +3699,7 @@
     (click-card state :runner "Anansi")
     (run-on state :hq)
     (run-continue-until state :encounter-ice)
-    (run-continue state :pass-ice)
+    (run-continue state :movement)
     (is (not (seq (:discard (get-runner)))) "No anansi damage")))
 
 (deftest hush-vs-attini
