@@ -307,11 +307,12 @@
   (render-specials (render-icons (render-cards input))))
 
 (defn- player-highlight-patterns-impl [corp runner]
-  (letfn [(regex-of [player-name] (re-pattern (str "(?i)" (regex-escape player-name))))]
+  (letfn [(regex-of [player-name] (re-pattern (str "^" (regex-escape player-name))))]
     (->> {corp [:span.corp-username corp]
           runner [:span.runner-username runner]}
          (filter (fn [[k _]] (not-empty k)))
-         (map (fn [[k v]] [(regex-of k) v]))
+         (mapcat (fn [[k v]] [[(regex-of k) v]
+                              [(regex-of (str "[!]" k)) [:<> [:div.smallwarning "!"] v]]]))
          (sort-by (comp count str first) >))))
 (def player-highlight-patterns (memoize player-highlight-patterns-impl))
 

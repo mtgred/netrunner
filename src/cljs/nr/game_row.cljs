@@ -1,6 +1,9 @@
 (ns nr.game-row
   (:require
    [jinteki.utils :refer [superuser?]]
+   [cljc.java-time.instant :as inst]
+   [cljc.java-time.duration :as duration]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.player-view :refer [player-view]]
@@ -134,6 +137,19 @@
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [:span.format-singleton (str (when singleton? " (singleton)"))]])
 
+(defn- time-since
+  "Helper method for game-time. Computes how many minutes since game start"
+  [start]
+  (let [now (inst/now)
+        diff (duration/between start now)
+        total-seconds (duration/get diff chrono/seconds)
+        minutes (abs (quot total-seconds 60))]
+    minutes))
+
+(defn game-time [game]
+(when (:started game)
+  [:div.game-time (str (time-since (:date game)) "m")]))
+
 (defn players-row [{players :players :as game}]
   (into
     [:div]
@@ -153,4 +169,5 @@
      [game-title state user game]
      [mod-menu-popup state user game]
      [game-format game]
+     [game-time game]
      [players-row game]]))

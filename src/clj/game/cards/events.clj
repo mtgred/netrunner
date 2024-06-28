@@ -496,7 +496,8 @@
           :interactive (req true)
           :async true
           :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
-          :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card})
+          :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card
+                                                                              :accessed true})
                                  (swap! state assoc-in [:runner :register :trashed-card] true)
                                  (damage state :runner eid :meat 1 {:unboostable true})))}]))}})
 
@@ -2116,6 +2117,7 @@
                :effect (effect (register-events
                                  card
                                  [{:event :pass-ice
+                                   :silent (req true)
                                    :duration :end-of-run
                                    :effect (effect (update! (update-in (get-card state card) [:special :how-deep-are-we] (fnil inc 0))))}])
                                (make-run eid target card))}
@@ -4025,12 +4027,15 @@
                                 :type :credit}}
    :on-play {:async true
              :change-in-game-state (req rd-runnable)
-             :effect (req (make-run state side eid :rd card))}
+             :effect (req 
+                      (update! state side (assoc-in card [:special :run-eid] eid))
+                      (make-run state side eid :rd card))}
    :events [{:event :successful-run
              :unregister-once-resolved true
              :silent (req true)
              :req (req (and (= :rd (target-server context))
-                            this-card-run))
+                            this-card-run
+                            (= (get-in card [:special :run-eid :eid]) (get-in @state [:run :eid :eid]))))
              :msg "place 2 [Credits] on itself and access 1 additional card from R&D"
              :effect (effect
                        (add-counter card :credit 2 {:placed true})

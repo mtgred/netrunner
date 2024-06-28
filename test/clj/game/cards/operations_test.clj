@@ -3930,6 +3930,28 @@
       (play-from-hand state :runner "Kati Jones")
       (is (= (- credits (+ cost 2)) (:credit (get-runner))) "Runner should pay 2 extra for Kati Jones"))))
 
+(deftest scarcity-of-resources-vs-undo-click
+  ;; Scarcity of Resources
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Scarcity of Resources"]}
+               :runner {:hand ["Kati Jones" "Spy Camera"]}})
+    (play-from-hand state :corp "Scarcity of Resources")
+    (take-credits state :corp)
+    (let [cost (+ 2 (:cost (find-card "Kati Jones" (:hand (get-runner)))))]
+      (is (changed? [(:credit (get-runner)) (- cost)]
+                    (play-from-hand state :runner "Kati Jones"))
+           "Runner should pay 2 extra for Kati Jones")
+      (is (changed? [(:credit (get-runner)) cost]
+                    (core/command-undo-click state :runner))
+          "refunded full cost")
+      (is (changed? [(:credit (get-runner)) 0]
+                    (play-from-hand state :runner "Spy Camera"))
+           "No charge for spy camera")
+      (is (changed? [(:credit (get-runner)) (- cost)]
+                    (play-from-hand state :runner "Kati Jones"))
+           "Scarcity still works after the undo"))))
+
 (deftest scorched-earth
   ;; Scorched Earth
   (do-game

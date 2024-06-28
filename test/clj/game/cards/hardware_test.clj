@@ -2840,6 +2840,25 @@
       (is (:run @state) "Run not ended yet")
       (is (not (no-prompt? state :runner)) "Runner prompted to ETR"))))
 
+(deftest lucky-charm-vs-anoetic
+  (do-game
+    (new-game {:runner {:hand ["Lucky Charm"]}
+               :corp {:hand ["IPO" "Extract" "Anoetic Void"]}})
+    (play-from-hand state :corp "Anoetic Void" "Archives")
+    (rez state :corp (get-content state :archives 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lucky Charm")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (run-empty-server state :archives)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "IPO")
+    (click-card state :corp "Extract")
+    (is (:run @state) "Run not ended yet")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "Done")
+    (is (:run @state) "Run prevented from ending")))
+
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
     ;; No interference with runs ending successfully or by jacking out, and Batty/normal ETR/Border Control interaction
     (do-game
@@ -4036,6 +4055,34 @@
       (is (= "Choose a credit providing card (0 of 1 [Credits])" (:msg (prompt-map :runner)))
           "Credit selection prompt is opened")))
 
+(deftest polyhistor-test-no-ice
+  (do-game
+    (new-game {:corp {:hand [] :deck ["IPO"]}
+               :runner {:hand ["Polyhistor"] :deck ["Easy Mark"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Polyhistor")
+    (run-on state :hq)
+    (click-prompt state :runner "Yes")
+    (is (= 1 (count (:hand (get-runner))) (count (:hand (get-corp)))) "Each draw 1")))
+
+(deftest polyhistor-test-ice
+  (doseq [n [1 2 3]]
+    (do-game
+      (new-game {:corp {:hand [(qty "Vanilla" n)] :deck ["IPO"] :credits 30}
+                 :runner {:hand ["Polyhistor"] :deck ["Easy Mark"]}})
+      (dotimes [position n]
+        (play-from-hand state :corp "Vanilla" "HQ")
+        (rez state :corp (get-ice state :hq position)))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Polyhistor")
+      (run-on state :hq)
+      (dotimes [_ n]
+        (run-continue-until state :encounter-ice)
+        (run-continue state :pass-ice))
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count (:hand (get-runner))) (count (:hand (get-corp)))) "Each draw 1"))))
+
+
 (deftest public-terminal-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -5201,6 +5248,29 @@
       (let [kati (find-card "Kati Jones" (:hand (get-runner)))]
         (click-prompt state :corp kati) ; Chronos Protocol takes precedence over Ribs on Corp turn
         (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
+
+(deftest titanium-ribs-vs-damage-stat
+  (do-game
+    (new-game {:corp {:hand [(qty "Neural EMP" 2)]}
+               :runner {:hand [(qty "I've Had Worse" 2)]
+                        :deck [(qty "Titanium Ribs" 2) "Easy Mark" "Sure Gamble" "Dirty Laundry"]}})
+    (letfn [(is-damage-stat= [x]
+              (is (= (get-in @state [:stats :corp :damage :all]) x)
+                  (str "Corp has dealt " x " damage")))]
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Neural EMP")
+      (is (= 4 (count (:hand (get-runner)))))
+      (is-damage-stat= 1)
+      (take-credits state :corp)
+      (play-from-hand state :runner "I've Had Worse")
+      (is (= 5 (count (:hand (get-runner)))))
+      (play-from-hand state :runner "Titanium Ribs")
+      (click-card state :runner (find-card "Titanium Ribs" (:hand (get-runner))))
+      (click-card state :runner (find-card "Easy Mark" (:hand (get-runner))))
+      (is-damage-stat= 3))))
 
 (deftest top-hat
   ;; Top Hat

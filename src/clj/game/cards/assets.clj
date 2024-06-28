@@ -23,7 +23,7 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
@@ -422,6 +422,7 @@
 
 (defcard "Breached Dome"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:async true
                :effect (req (let [c (first (get-in @state [:runner :deck]))]
                               (system-msg state :corp (str "uses " (:title card) " to do 1 meat damage"
@@ -1280,6 +1281,7 @@
 
 (defcard "Honeyfarm"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:msg "force the Runner to lose 1 [Credits]"
                :async true
                :effect (effect (lose-credits :runner eid 1))}})
@@ -1608,7 +1610,7 @@
                                     (not (has-subtype? % "Virtual")))}
               :effect (req (add-icon state side card target "MZ" (faction-label card))
                            (update! state side (assoc-in (get-card state card) [:special :malia-target] target))
-                           (fake-checkpoint state))}
+                           (update-disabled-cards state))}
      :leave-play unmark
      :move-zone unmark
      :static-abilities [{:type :disable-card
@@ -1927,6 +1929,7 @@
 
 (defcard "News Team"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:async true
                :msg (msg "force the Runner to " (decapitalize target))
                :player :runner
@@ -1976,6 +1979,7 @@
 
 (defcard "Nightmare Archive"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:async true
                :msg (msg (if (= target "Suffer 1 core damage")
                            "do 1 core damage"
@@ -2271,6 +2275,7 @@
                         :msg "gain 3 [Credits] and draw 3 cards"
                         :effect (req (wait-for
                                        (trash state side card {:cause-card card})
+                                       (swap! state update-in [:stats side :rashida-count] (fnil + 0) 1)
                                        (wait-for
                                          (gain-credits state side 3)
                                          (draw state side eid 3))))}}}
@@ -2544,7 +2549,8 @@
                      :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
 (defcard "Shi.Kyū"
-  {:on-access
+  {:poison true
+   :on-access
    {:optional
     {:req (req (not (in-deck? card)))
      :waiting-prompt true
@@ -2574,6 +2580,7 @@
 
 (defcard "Shock!"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:msg "do 1 net damage"
                :async true
                :effect (effect (damage eid :net 1 {:card card}))}})
@@ -2608,6 +2615,7 @@
 
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:optional
                {:waiting-prompt true
                 :prompt "Place 1 advancement token on a card that can be advanced?"
