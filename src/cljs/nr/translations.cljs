@@ -328,6 +328,9 @@
    :cards-rezzed "Cards Rezzed"
    :tags-gained "Tags Gained"
    :runs-made "Runs Made"
+   :shuffle-count "Shuffle Count"
+   :rashida-count "Rashida Count"
+   :sabotage-count "Sabotage Count"
    :cards-accessed "Cards Accessed"}
   :log
   {:game-log "Game Log"
