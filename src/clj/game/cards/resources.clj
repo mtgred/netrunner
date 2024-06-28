@@ -23,7 +23,7 @@
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty do-net-damage]]
    [game.core.drawing :refer [draw click-draw-bonus]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events
                              register-once register-suppress resolve-ability
@@ -1175,7 +1175,7 @@
                             :duration :end-of-turn
                             :req (req (same-card? c target))
                             :value (req true)})
-                         (fake-checkpoint state)))}]})
+                         (update-disabled-cards state)))}]})
 
 (defcard "Dr. Nuka Vrolyck"
   {:data {:counter {:power 2}}

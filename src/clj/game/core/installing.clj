@@ -8,7 +8,7 @@
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
-    [game.core.effects :refer [register-static-abilities unregister-static-abilities is-disabled-reg?]]
+    [game.core.effects :refer [is-disabled-reg? register-static-abilities unregister-static-abilities update-disabled-cards]]
     [game.core.flags :refer [turn-flag? zone-locked?]]
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
@@ -188,6 +188,7 @@
                 (let [eid (assoc eid :source moved-card)]
                   (queue-event state :corp-install {:card (get-card state moved-card)
                                                     :install-state install-state})
+                  (update-disabled-cards state)
                   (case install-state
                     ;; Ignore all costs
                     :rezzed-no-cost
@@ -402,6 +403,7 @@
     (when-not facedown
       (implementation-msg state card))
     (play-sfx state side "install-runner")
+    (update-disabled-cards state)
     (when (and (not facedown)
                (resource? card))
       (swap! state assoc-in [:runner :register :installed-resource] true))
