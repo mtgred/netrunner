@@ -1025,7 +1025,7 @@
         (run-empty-server state "Server 2")
         (click-prompt state :runner "No action")
         (is (= 3 (:agenda-point (get-runner))) "Runner stole Degree Mill with single card")
-        (card-ability state :runner hg 1)
+        (card-ability state :runner hg 0)
         (is (= 2 (count (get-in (get-runner) [:rig :facedown]))) "Hunting Ground did not install cards facedown")
         (is (empty? (:deck (get-runner))) "Hunting Grounds did not remove cards from deck")
         (let [fd1 (get-runner-facedown state 0)
