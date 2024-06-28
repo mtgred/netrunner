@@ -762,6 +762,9 @@
                                                        (sort-by :title)
                                                        (seq))
                                                   ["Done"]))
+                                  :msg (msg (if (= target "Done")
+                                              "shuffle R&D"
+                                              (str "install and rez " (:title target) " from R&D, ignoring all costs")))
                                   :effect (req (shuffle! state side :deck)
                                                (if (= "Done" target)
                                                  (effect-completed state side eid)
