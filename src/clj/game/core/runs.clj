@@ -7,7 +7,7 @@
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
     [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event]]
+    [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
     [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
@@ -18,7 +18,7 @@
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [effect req wait-for]]
+    [game.macros :refer [continue-ability effect req wait-for]]
     [game.utils :refer [dissoc-in same-card?]]
     [jinteki.utils :refer [count-bad-pub other-side]]
     [clojure.stacktrace :refer [print-stack-trace]]
@@ -320,6 +320,19 @@
       (:next-phase (:run @state))
       (check-for-empty-server state)))
 
+(defn- preventable-encounter-abi
+  [abi ice]
+  {:async true
+   :interactive (req true)
+   :ability-name (or (:ability-name abi) (str (:title ice) " Ability"))
+   :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] nil)
+                (wait-for (trigger-event-simult state :runner :prevent-encounter-ability nil {:ability-name (:ability-name abi)})
+                          (if (get-in @state [:run :prevent-encounter-ability])
+                            (effect-completed state side eid)
+                            (do (register-pending-event state :resolve-ice-encounter-abi ice abi)
+                                (queue-event state :resolve-ice-encounter-abi {:ice ice})
+                                (checkpoint state side eid)))))})
+
 (defn encounter-ice
   [state side eid ice]
   (swap! state update :encounters conj {:eid eid
@@ -327,7 +340,7 @@
   (check-auto-no-action state)
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil :gain-encounter-ability ice)
-        all-encounters (remove nil? (conj applied-encounters on-encounter))]
+        all-encounters (map #(preventable-encounter-abi % ice) (remove nil? (conj applied-encounters on-encounter)))]
     (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (doseq [on-encounter all-encounters]
       (register-pending-event state :encounter-ice ice on-encounter))
@@ -777,11 +790,11 @@
     (swap! state assoc :run nil)
     (swap! state dissoc-in [:end-run :ended])
     (queue-event state :run-ends run)
+    (clear-encounter state)
+    (clear-run-prompts state)
+    (reset-all-ice state side)
+    (clear-run-register! state)
     (wait-for (checkpoint state nil (make-eid state eid) {:durations [:end-of-encounter :end-of-run :end-of-next-run]})
-              (clear-encounter state)
-              (clear-run-prompts state)
-              (reset-all-ice state side)
-              (clear-run-register! state)
               (run-end-fx state side run)
               (effect-completed state side eid)
               (effect-completed state side run-eid))))
