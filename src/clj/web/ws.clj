@@ -4,7 +4,17 @@
    [web.app-state :refer [register-user! deregister-user!]]
    [web.user :refer [active-user?]]
    [taoensso.sente :as sente]
-   [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
+   [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
+   [taoensso.timbre :as timbre]))
+
+(defn redact-uid-middleware
+  "Timbre middelware to remove UIDs from Sente log lines"
+  [data]
+  (letfn [(filter-uid-from-log-arg [arg] (if (string? arg)
+                                          (clojure.string/replace arg #"u_.*/c_" "u_[REDACTED]/c_")
+                                          arg))]
+    (assoc data :vargs (map filter-uid-from-log-arg (:vargs data )))))
+(timbre/merge-config! {:middleware [redact-uid-middleware]})
 
 (let [chsk-server (sente/make-channel-socket-server!
                     (get-sch-adapter)
@@ -12,11 +22,14 @@
                                    (or (-> ring-req :session :uid)
                                        (:client-id ring-req)))})
       {:keys [ch-recv send-fn connected-uids
-              ajax-post-fn ajax-get-or-ws-handshake-fn]} chsk-server]
-  (defonce handshake-handler ajax-get-or-ws-handshake-fn)
+              ajax-post-fn ajax-get-or-ws-handshake-fn private]} chsk-server
+      conns_ (:conns_ private)]
+  (defonce handshake-handler (fn [& args] (try (apply ajax-get-or-ws-handshake-fn args)
+                                               (catch Exception _ (println "Caught an error in the handshake handler")))))
   (defonce post-handler ajax-post-fn)
   (defonce connected-sockets connected-uids)
   (defonce ch-chsk ch-recv)
+  (defonce connections_ conns_) ; internal sente info, ideally don't use this outside of debugging
   (defn chsk-send! [uid ev] (send-fn uid ev)))
 
 ;; Maximum throughput is 25,000 client updates a second
@@ -64,6 +77,7 @@
     (?reply-fn {:msg "Unhandled event"})))
 
 (defmethod -msg-handler :chsk/ws-ping [_])
+(defmethod -msg-handler :chsk/ws-pong [_])
 ;; NOTE - :chsk/uidport-close is handled in game.clj
 (defmethod -msg-handler :chsk/uidport-open
   [{uid :uid

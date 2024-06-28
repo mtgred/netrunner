@@ -91,21 +91,18 @@
   "Returns a list of all installed cards"
   [state]
   (let [installed-runner-cards (runner-rig-cards state)
-        installed-corp-cards (corp-servers-cards state)
-        hosted-cards (into (mapcat :hosted installed-runner-cards)
-                           (mapcat :hosted installed-corp-cards))]
+        installed-corp-cards (corp-servers-cards state)]
     (loop [installed (transient [])
            unchecked (concat installed-runner-cards
-                             installed-corp-cards
-                             hosted-cards)]
+                             installed-corp-cards)]
       (if (empty? unchecked)
-        (reverse (persistent! installed))
+        (persistent! installed)
         (let [[card & remaining] unchecked]
           (recur
             (if (installed? card)
               (conj! installed card)
               installed)
-            (into remaining (:hosted card))))))))
+            (into (vec remaining) (:hosted card))))))))
 
 (defn all-installed-runner-type
   "Returns a list of all installed, non-facedown runner cards of the requested type."

@@ -4,13 +4,13 @@
     [game.core.card :refer [get-card map->Card program? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
-    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-default-events register-events resolve-ability unregister-events]]
     [game.core.finding :refer [find-cid]]
     [game.core.gaining :refer [gain lose]]
     [game.core.ice :refer [add-sub]]
-    [game.core.memory :refer [update-mu]]
+    [game.core.memory :refer [init-mu-cost]]
     [game.core.payment :refer [add-cost-label-to-ability]]
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
@@ -65,7 +65,7 @@
   ([state side card] (deactivate state side card nil))
   ([state side {:keys [cid disabled installed rezzed] :as card} keep-counter]
    (unregister-events state side card)
-   (unregister-constant-effects state side card)
+   (unregister-static-abilities state side card)
    (trigger-leave-effect state side card)
    (when (and (find-cid cid (all-active-installed state side))
               (not disabled)
@@ -127,18 +127,13 @@
              :req (req (not (:disabled card)))
              :effect r}])))
      (register-default-events state side c)
-     (register-constant-effects state side c)
+     (register-static-abilities state side c)
      ;; Facedown cards can't be initialized
      (when (and (program? card)
                 (not no-mu))
-       (register-floating-effect
-         state side c
-         {:type :used-mu
-          :duration :constant
-          :value (:memoryunits c)})
-       (update-mu state))
+       (init-mu-cost state c))
      (if (and resolve-effect (is-ability? cdef))
-       (resolve-ability state side eid (dissoc cdef :cost :additional-cost) c nil)
+       (resolve-ability state side (assoc eid :source-type :ability) (dissoc cdef :cost :additional-cost) c nil)
        (effect-completed state side eid))
      (when-let [in-play (:in-play cdef)]
        (apply gain state side in-play))
@@ -194,7 +189,12 @@
                 :implementation (card-implemented card)
                 :subroutines (subroutines-init (assoc card :cid cid) cdef)
                 :abilities (ability-init cdef)
+                :expend (:expend cdef)
+                :enforce-conditions (:enforce-conditions cdef)
+                :trash-when-tagged (:trash-when-tagged cdef)
                 :x-fn (:x-fn cdef)
+                :poison (:poison cdef)
+                :highlight-in-discard (:highlight-in-discard cdef)
                 :printed-title (:title card))
          (dissoc :setname :text :_id :influence :number :influencelimit
                  :image_url :factioncost :format :quantity)

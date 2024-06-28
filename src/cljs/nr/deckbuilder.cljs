@@ -11,7 +11,7 @@
     [nr.auth :refer [authenticated] :as auth]
     [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
     [nr.deck-status :refer [deck-status-span]]
-    [nr.translations :refer [tr tr-faction tr-format tr-side tr-type]]
+    [nr.translations :refer [tr tr-faction tr-format tr-side tr-type tr-data]]
     [nr.utils :refer [alliance-dots banned-span cond-button
                       deck-points-card-span dots-html format->slug format-date-time
                       influence-dot influence-dots mdy-formatter non-game-toast num->percent
@@ -96,7 +96,7 @@
   (if (empty? title)
     {:display-name "Missing Identity"}
     (let [card (lookup side {:title title})]
-      (assoc card :display-name (build-identity-name title setname)))))
+      (assoc card :display-name (build-identity-name (tr-data :title card) setname)))))
 
 (defn add-params-to-card
   "Add art and id parameters to a card hash"
@@ -137,7 +137,7 @@
   "Parse a single line of a deck string"
   [line]
   (let [clean (s/trim line)
-        [_ qty-str card-name _ card-params] (re-matches #"(\d+)[^\s]*\s+([^\[]+)(\[(.*)\])?" clean)]
+        [_ qty-str card-name card-params] (re-matches #"(\d+)[^\s]*\s+(([^\[]+)|(\[(.*)\]))" clean)]
     (if (and qty-str
              (not (js/isNaN (str->int qty-str)))
              card-name)
@@ -192,10 +192,12 @@
   [all-titles card]
   (let [card-title (:title card)
         indexes (keep-indexed #(if (= %2 card-title) %1 nil) all-titles)
-        dups (> (count indexes) 1)]
+        dups (> (count indexes) 1)
+        display-title (tr-data :title card)
+        setname (:setname card)]
     (if dups
-      (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
-      (assoc card :display-name (:title card)))))
+      (assoc card :display-name (str display-title " (" setname ")"))
+      (assoc card :display-name display-title))))
 
 (defn- insert-params
   "Add card parameters into the string representation"
@@ -532,8 +534,8 @@
                                            (swap! card-state assoc :query (.. e -target -textContent))
                                            (swap! card-state assoc :selected i)
                                            nil)
-                               :key (:title (nth matches i))}
-                         (:title (nth matches i))]))])))]])))
+                               :key (tr-data :title (nth matches i))}
+                         (tr-data :title (nth matches i))]))])))]])))
 
 (defn deck-name
   ([deck] (deck-name deck 40))
@@ -572,7 +574,7 @@
       [deck-status-span deck]
       [:p (deck-date deck)]]
      [:h4 (deck-name deck)]
-     [:span (get-in deck [:identity :title])]
+     [:span (tr-data :title (:identity deck))]
      [deck-stats-line deck]]))
 
 (def all-sides-filter "Any Side")
@@ -642,7 +644,7 @@
   "Make the view of a single line in the deck - returns a span"
   [{:keys [identity cards format] :as deck} {:keys [qty card] :as line}]
   [:span qty "  "
-   (if-let [title (:title card)]
+   (if-let [title (tr-data :title card)]
      (let [infaction (no-inf-cost? identity card)
            card-status (format-status format card)
            banned (:banned card-status)
@@ -670,7 +672,7 @@
 (defn line-name-span
   "Make the view of a single line in the deck - returns a span"
   [{:keys [identity cards format] :as deck} {:keys [qty card] :as line}]
-  [:span (if-let [name (:title card)]
+  [:span (if-let [name (tr-data :title card)]
            (let [infaction (no-inf-cost? identity card)
                  card-status (format-status format card)
                  banned (:banned card-status)
@@ -721,7 +723,7 @@
   (let [id (:identity deck)]
     [:div.header
      [:img {:src (image-url id)
-            :alt (:title id)}]
+            :alt (tr-data :title id)}]
      [:div.header-text
       [:h4 {:class (str "fake-link"
                         (let [status (format-status (:format deck) id)]
@@ -731,7 +733,7 @@
                                                  :art (:art id)
                                                  :id (:id id)})
             :on-mouse-leave #(put! zoom-channel false) }
-       (:title id)
+       (tr-data :title id)
        (let [status (format-status (:format deck) id)]
          (cond (:banned status) banned-span
                (:restricted status) restricted-span
@@ -884,7 +886,7 @@
 
 (defn- identity-option-string
   [card]
-  (.stringify js/JSON (clj->js {:title (:title card)
+  (.stringify js/JSON (clj->js {:title (tr-data :title card)
                                 :id (:code card)})))
 
 (defn- create-identity
@@ -1002,7 +1004,7 @@
   (when-let [url (image-url card)]
     [:div.card-preview.blue-shade
      [:img {:src url
-            :alt (:title card)}]]))
+            :alt (tr-data :title card)}]]))
 
 (defn list-panel
   [s user decks decks-loaded scroll-top]

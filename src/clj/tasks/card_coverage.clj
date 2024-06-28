@@ -4,7 +4,7 @@
             [clojure.string :as s]
             [jinteki.cards :refer [all-cards]]
             [jinteki.utils :refer [slugify]]
-            [game.core-test :refer [load-all-cards]]))
+            [game.test-framework :refer [load-all-cards]]))
 
 (defn- get-cards []
   (map (comp symbol slugify :normalizedtitle) (vals @all-cards)))

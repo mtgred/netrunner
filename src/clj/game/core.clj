@@ -38,6 +38,7 @@
     [game.core.optional]
     [game.core.payment]
     [game.core.pick-counters]
+    [game.core.expend]
     [game.core.play-instants]
     [game.core.player]
     [game.core.process-actions]
@@ -58,6 +59,7 @@
     [game.core.state]
     [game.core.subtypes]
     [game.core.tags]
+    [game.core.threat]
     [game.core.to-string]
     [game.core.toasts]
     [game.core.trace]
@@ -104,7 +106,6 @@
    num-cards-to-access
    set-only-card-to-access
    steal
-   steal-cost
    steal-cost-bonus
    turn-archives-faceup])
 
@@ -119,9 +120,7 @@
    do-purge
    generate-install-list
    generate-runnable-zones
-   get-runnable-zones
    move-card
-   play
    play-ability
    play-auto-pump
    play-auto-pump-and-break
@@ -270,6 +269,7 @@
    run-additional-cost-bonus
    run-cost
    score-additional-cost-bonus
+   steal-cost
    trash-cost])
 
 (expose-vars
@@ -323,21 +323,21 @@
    get-effects
    get-effect-maps
    get-effect-value
-   register-constant-effects
-   register-floating-effect
+   register-static-abilities
+   register-lingering-effect
    sum-effects
-   unregister-constant-effects
+   unregister-static-abilities
    unregister-effects-for-card
-   unregister-floating-effects])
+   unregister-lingering-effects])
 
 (expose-vars
   [game.core.eid
    complete-with-result
    effect-completed
-   eid-set-defaults
+   get-ability-targets
+   is-basic-advance-action?
    make-eid
-   make-result
-   register-effect-completed])
+   make-result])
 
 (expose-vars
   [game.core.engine
@@ -412,7 +412,6 @@
    can-advance?
    can-host?
    can-rez?
-   can-run-server?
    can-run?
    can-score?
    can-steal?
@@ -428,7 +427,6 @@
    clear-run-register!
    clear-turn-flag!
    clear-turn-register!
-   enable-run-on-server
    get-card-prevention
    get-prevent-list
    get-preventing-cards
@@ -441,7 +439,6 @@
    prevent-current
    prevent-draw
    prevent-jack-out
-   prevent-run-on-server
    register-persistent-flag!
    register-run-flag!
    register-turn-flag!
@@ -519,8 +516,6 @@
    reset-all-ice
    reset-all-subs
    reset-all-subs!
-   reset-sub
-   reset-sub!
    resolve-subroutine
    resolve-subroutine!
    resolve-unbroken-subs!
@@ -600,6 +595,7 @@
    remove-from-currently-drawing
    swap-agendas
    swap-cards
+   swap-cards-async
    swap-ice
    swap-installed
    trash
@@ -622,7 +618,6 @@
    build-spend-msg
    can-pay?
    cost->string
-   cost-name
    cost-target
    cost-targets
    cost-value
@@ -642,6 +637,10 @@
   [game.core.pick-counters
    pick-credit-providing-cards
    pick-virus-counters-to-spend])
+
+(expose-vars
+  [game.core.expend
+   expend])
 
 (expose-vars
   [game.core.process-actions
@@ -707,6 +706,7 @@
    add-run-effect
    bypass-ice
    can-bypass-ice
+   can-run-server?
    check-auto-no-action
    check-for-empty-server
    complete-run
@@ -718,6 +718,7 @@
    gain-next-run-credits
    gain-run-credits
    get-current-encounter
+   get-runnable-zones
    handle-end-run
    jack-out
    jack-out-prevent
@@ -731,8 +732,7 @@
    successful-run
    successful-run-replace-breach
    toggle-auto-no-action
-   total-cards-accessed
-   total-run-cost])
+   total-cards-accessed])
 
 
 (expose-vars
@@ -813,6 +813,11 @@
    tag-prevent])
 
 (expose-vars
+  [game.core.threat
+   threat
+   threat-level])
+
+(expose-vars
   [game.core.to-string
    card-str])
 
@@ -823,8 +828,8 @@
 
 (expose-vars
   [game.core.trace
-   init-trace
-   init-trace-bonus])
+   force-base
+   init-trace])
 
 (expose-vars
   [game.core.turns

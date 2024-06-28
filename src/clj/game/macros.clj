@@ -34,10 +34,10 @@
       unprotected (let [server (second (game.core.card/get-zone card))]
                     (empty? (get-in @state [:corp :servers server :ices])))
       runnable-servers (game.core.servers/zones->sorted-names
-                         (game.core.actions/get-runnable-zones state side eid card nil))
-      hq-runnable (not (:hq (get-in (:runner @state) [:register :cannot-run-on-server])))
-      rd-runnable (not (:rd (get-in (:runner @state) [:register :cannot-run-on-server])))
-      archives-runnable (not (:archives (get-in (:runner @state) [:register :cannot-run-on-server])))
+                         (game.core.runs/get-runnable-zones state side eid card nil))
+      hq-runnable (some #{:hq} (game.core.runs/get-runnable-zones state))
+      rd-runnable (some #{:rd} (game.core.runs/get-runnable-zones state))
+      archives-runnable (some #{:archives} (game.core.runs/get-runnable-zones state))
       tagged (jinteki.utils/is-tagged? state)
       ;; only intended for use in event listeners on (pre-/post-, un-)successful-run or run-ends
       ;; true if the run was initiated by this card
@@ -85,6 +85,8 @@
   (let [needed-locals (find-undefined-locals expr)
         nls (emit-only needed-locals)]
     `(fn ~['state 'side 'eid 'card 'targets]
+       (assert (or (nil? (:source ~'eid)) (:cid (:source ~'eid)))
+               (str ":source should be a card, received: " (:source ~'eid)))
        (let [~@nls]
          ~@expr))))
 
@@ -94,22 +96,23 @@
 (defmacro msg [& expr]
   `(req (str ~@expr)))
 
-
 (defmacro wait-for
   [& body]
   (let [[binds action] (if (vector? (first body))
-                       (first body)
-                       [[{'async-result :result}] (first body)])
+                         (first body)
+                         [[{'async-result :result}] (first body)])
         expr (next body)
-        abnormal? (#{'apply 'handler 'payable?} (first action))
+        abnormal? (#{'handler 'payable?} (first action))
         to-take (if abnormal? 4 3)
+        fn-name (gensym (name (first action)))
         [_ state _ eid?] (if abnormal? (next action) action)]
     `(let [eid?# ~eid?
            use-eid# (and (map? eid?#) (:eid eid?#))
-           new-eid# (if use-eid# eid?# (game.core.eid/make-eid ~state))]
+           existing-eid# ~(when (contains? &env 'eid) 'eid)
+           new-eid# (if use-eid# eid?# (game.core.eid/make-eid ~state existing-eid#))]
        (game.core.eid/register-effect-completed
          ~state new-eid#
-         (fn ~(if (vector? binds) binds [binds])
+         (fn ~fn-name ~(if (vector? binds) binds [binds])
            ~@expr))
        (if use-eid#
          (~@(take to-take action) new-eid# ~@(drop (inc to-take) action))
@@ -128,7 +131,9 @@
 
 (defmacro continue-ability
   [state side ability card targets]
-  `(game.core.engine/resolve-ability ~state ~side (if (:eid ~ability) ~ability (assoc ~ability :eid ~'eid)) ~card ~targets))
+  `(let [ability# ~ability
+         ability# (if (:eid ability#) ability# (assoc ability# :eid ~'eid))]
+     (game.core.engine/resolve-ability ~state ~side ability#  ~card ~targets)))
 
 (defmacro when-let*
   ([bindings & body]

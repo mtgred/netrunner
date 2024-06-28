@@ -13,7 +13,7 @@
    [web.app-state :as app-state]
    [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
    [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
-   [web.utils :refer [response]]
+   [web.utils :refer [response md5]]
    [web.versions :refer [banned-msg]])
   (:import
    java.security.SecureRandom))
@@ -93,7 +93,7 @@
 
 (defn find-non-banned-user
   [db query]
-  (active-user? (mc/find-one-as-map db "users" query)))
+  (active-user? (find-one-as-map-case-insensitive db "users" query)))
 
 (defn login-handler
   [{db :system/db
@@ -105,7 +105,7 @@
       (and user (password/check password (:password user)))
       (do (mc/update db "users"
                      {:username username}
-                     {"$set" {:last-connection (inst/now)}})
+                     {"$set" {:lastConnection (inst/now)}})
           (assoc (response 200 {:message "ok"})
                  :cookies {"session" (merge {:value (create-token auth user)}
                                             (:cookie auth))}))
@@ -152,7 +152,8 @@
     (acknowledged?
       (mc/update db "users"
                  {:username username}
-                 {"$set" {:email email}}))
+                 {"$set" {:email email
+                          :emailhash (md5 email)}}))
     (response 200 {:message "Refresh your browser"})
 
     :else
@@ -160,8 +161,9 @@
 
 (defn profile-keys []
   [:background :pronouns :language :default-format :show-alt-art :blocked-users
-   :alt-arts :card-resolution :deckstats :gamestats :card-zoom
-   :pin-zoom :card-back :stacked-cards :sides-overlap])
+   :alt-arts :card-resolution :deckstats :gamestats :card-zoom :pin-zoom
+   :card-back :stacked-cards :sides-overlap :archives-sorted :heap-sorted
+   :labeled-cards :labeled-unrezzed-cards])
 
 (defn update-profile-handler
   [{db :system/db

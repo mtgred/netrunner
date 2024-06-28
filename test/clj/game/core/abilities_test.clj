@@ -1,15 +1,14 @@
 (ns game.core.abilities-test
-  (:require [game.core :as core]
-            [game.core.eid :as eid]
-            [game.core.card :refer :all]
-            [game.cards.ice :as ice]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [game.core.card-defs :refer :all]
-            [jinteki.cards :refer [all-cards]]
-            [jinteki.utils :refer [add-cost-to-label]]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.cards.ice :as ice]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.card-defs :refer :all]
+   [game.core.eid :as eid]
+   [game.test-framework :refer :all]
+   [jinteki.cards :refer [all-cards]]
+   [jinteki.utils :refer [add-cost-to-label]]))
 
 (deftest combine-abilities
   (testing "Combining 2 abilities"
@@ -60,7 +59,7 @@
   (doseq [card (->> (vals @all-cards)
                     (filter #(re-find #"(?i)\[trash\].*:" (:text % ""))))
           :when (not-empty (card-def card))]
-    (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [:trash-can] or :trash-icon true"))))
+    (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [(->c :trash-can)] or :trash-icon true"))))
 
 (deftest label
   (doseq [[title abilities]

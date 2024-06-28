@@ -6,7 +6,7 @@
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.diffs :refer [public-states]]
    [game.core.drawing :refer [draw]]
-   [game.core.eid :refer [make-eid]]
+   [game.core.eid :refer [make-eid effect-completed]]
    [game.core.engine :refer [trigger-event trigger-event-sync]]
    [game.core.initializing :refer [card-init make-card]]
    [game.core.player :refer [new-corp new-runner]]
@@ -139,9 +139,11 @@
     (implementation-msg state runner-identity)
     (create-basic-action-cards state)
     (fake-checkpoint state)
-    (wait-for (trigger-event-sync state :corp :pre-start-game nil)
-              (wait-for (trigger-event-sync state :runner :pre-start-game nil)
-                        (init-hands state)
-                        (fake-checkpoint state)))
+    (let [eid (make-eid state)]
+      (wait-for (trigger-event-sync state :corp :pre-start-game nil)
+                (wait-for (trigger-event-sync state :runner :pre-start-game nil)
+                          (init-hands state)
+                          (fake-checkpoint state)
+                          (effect-completed state nil eid))))
     (swap! state assoc :history [(:hist-state (public-states state))])
     state))

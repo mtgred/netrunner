@@ -6,7 +6,6 @@
     [game.core.toasts :refer [toast]]
     [game.macros :refer [when-let*]]
     [game.utils :refer [pluralize side-str]]
-    [jinteki.utils :refer [other-side]]
     [medley.core :refer [find-first]]))
 
 (defn choice-parser
@@ -38,8 +37,7 @@
                   :show-discard show-discard
                   :cancel-effect cancel-effect
                   :end-effect end-effect}]
-     (when (or (= prompt-type :waiting)
-               (= prompt-type :run)
+     (when (or (#{:waiting :run} prompt-type)
                (:number choices)
                (:card-title choices)
                (#{:credit :counter} choices)

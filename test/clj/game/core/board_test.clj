@@ -1,9 +1,8 @@
 (ns game.core.board-test
-  (:require [game.core :as core]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.test-framework :refer :all]))
 
 (deftest all-installed
   (testing "corp cards"
@@ -49,14 +48,14 @@
       ;; Ice
       (play-from-hand state :corp "Ice Wall" "HQ")
       (is (find-card "Ice Wall" (core/all-installed state :corp)))
-      (play-from-hand state :corp "Vanilla" "Server 1")
+      (play-from-hand state :corp "Vanilla" "New remote")
       (is (find-card "Vanilla" (core/all-installed state :corp)))
       ;; Upgrades
       ;; Root
       (play-from-hand state :corp "Research Station" "HQ")
       (is (find-card "Research Station" (core/all-installed state :corp)))
       ;; Remotes
-      (play-from-hand state :corp "Embolus" "Server 1")
+      (play-from-hand state :corp "Embolus" "New remote")
       (is (find-card "Embolus" (core/all-installed state :corp)))
       ;; Hosted Operations
       (rez state :corp (get-ice state :hq 0))

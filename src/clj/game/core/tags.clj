@@ -1,21 +1,21 @@
 (ns game.core.tags
   (:require
     [game.core.effects :refer [any-effects sum-effects]]
-    [game.core.eid :refer [effect-completed]]
-    [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync]]
+    [game.core.eid :refer [effect-completed make-eid]]
+    [game.core.engine :refer [trash-on-tag trigger-event trigger-event-simult trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [quantify]]))
+    [game.utils :refer [pluralize quantify]]))
 
 (defn sum-tag-effects
   [state]
   (+ (or (get-in @state [:runner :tag :base]) 0)
-     (sum-effects state :runner nil :user-tags nil)
-     (sum-effects state :runner nil :tags nil)))
+     (sum-effects state :runner :user-tags)
+     (sum-effects state :runner :tags)))
 
 (defn update-tag-status
   ([state] (update-tag-status state nil))
@@ -30,13 +30,18 @@
          changed? (not= old-tags new-tags)]
      (when changed?
        (swap! state update-in [:runner :tag] merge new-tags)
-       (trigger-event state :runner :tags-changed new-total old-total is-tagged?))
+       (trigger-event state :runner :tags-changed {:new-total new-total
+                                                   :old-total old-total
+                                                   :is-tagged is-tagged?}))
+     (when is-tagged?
+       (trash-on-tag state nil (make-eid state)))
      changed?)))
 
 (defn tag-prevent
   [state side eid n]
   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) (list :tag n)))
+  (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type :tag
+                                                                                        :amount n}))
 
 (defn- number-of-tags-to-gain
   "Calculates the number of tags to give, taking into account prevention and boosting effects."
@@ -53,14 +58,14 @@
     (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
         (update-tag-status state)
-        (trigger-event-sync state side eid :runner-gain-tag n))
+        (trigger-event-simult state side eid :runner-gain-tag nil {:amount n}))
     (effect-completed state side eid)))
 
 (defn gain-tags
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
   ([state side eid n] (gain-tags state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
-   (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
+   (swap! state update :tag dissoc :tag-bonus :tag-prevent)
    (wait-for (trigger-event-simult state side :pre-tag nil card)
              (let [n (number-of-tags-to-gain state side n args)
                    prevent (get-prevent-list state :runner :tag)]
@@ -78,7 +83,7 @@
                                prevent-msg (if prevent
                                              (str "avoids "
                                                   (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                                  (quantify prevent "tag"))
+                                                  (pluralize prevent "tag"))
                                              "will not avoid tags")]
                            (system-msg state :runner prevent-msg)
                            (clear-wait-prompt state :corp)
@@ -93,4 +98,5 @@
     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
         (deduct state :runner [:tag {:base n}])
         (update-tag-status state)
-        (trigger-event-sync state side eid :runner-lose-tag n side))))
+        (trigger-event-sync state side eid :runner-lose-tag {:amount n
+                                                             :side side}))))

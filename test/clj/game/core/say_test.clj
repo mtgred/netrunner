@@ -1,11 +1,10 @@
 (ns game.core.say-test
-  (:require [game.core :as core]
-            [game.core.card :refer :all]
-            [game.core.mark :refer :all]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.card :refer :all]
+   [game.core.mark :refer :all]
+   [game.test-framework :refer :all]))
 
 (deftest chat-commands
 
@@ -160,10 +159,9 @@
       (testing "Can increase link"
         (do-game
           (new-game)
-          (changes-val-macro
-            1 (get-link state)
-            "Link increases by 1"
-            (core/command-parser state :runner {:user user :text "/link 1"}))))
+          (is (changed? [(get-link state) 1]
+                (core/command-parser state :runner {:user user :text "/link 1"}))
+              "Link increases by 1")))
 
       (testing "/link sizes"
         (do-game
@@ -300,7 +298,7 @@
         (play-from-hand state :runner "Wireless Net Pavilion")
         (let [wnp1 (get-resource state 0)]
           (core/command-parser state :runner {:user user :text "/unique"})
-          (is (last-log-contains? state "\\[!\\]Runner uses a command: /unique") "Correct message")
+          (is (last-log-contains? state "[!]Runner uses a command: /unique") "Correct message")
           (click-card state :runner wnp1)
           (is (not (unique? (refresh wnp1))) "WNP is not unique anymore")
           (is (last-log-contains? state "Runner uses /unique command to make Wireless Net Pavilion not unique\\.") "Correct message")

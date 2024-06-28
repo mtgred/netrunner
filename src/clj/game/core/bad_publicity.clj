@@ -12,15 +12,15 @@
 (defn bad-publicity-prevent
   [state side n]
   (swap! state update-in [:bad-publicity :bad-publicity-prevent] (fnil #(+ % n) 0))
-  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:bad-publicity ~n)))
+  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) {:type :bad-publicity
+                                                                               :amount n}))
 
 (defn- resolve-bad-publicity
   [state side eid n]
-  (trigger-event state side :pre-resolve-bad-publicity n)
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
         (toast state :corp (str "Took " n " bad publicity!") "info")
-        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity n))
+        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity {:amount n}))
     (effect-completed state side eid)))
 
 (defn- bad-publicity-count
@@ -44,7 +44,7 @@
                         (not unpreventable)
                         (cards-can-prevent? state :corp prevent :bad-publicity))
                  (do (system-msg state :corp "has the option to avoid bad publicity")
-                     (show-wait-prompt state :runner "Corp to prevent bad publicity" {:priority 10})
+                     (show-wait-prompt state :runner "Corp to prevent bad publicity")
                      (swap! state assoc-in [:prevent :current] :bad-publicity)
                      (show-prompt
                        state :corp nil
@@ -58,8 +58,7 @@
                                               " bad publicity")
                                          "will not avoid bad publicity"))
                            (clear-wait-prompt state :runner)
-                           (resolve-bad-publicity state side eid (max 0 (- n (or prevent 0))))))
-                       {:priority 10}))
+                           (resolve-bad-publicity state side eid (max 0 (- n (or prevent 0))))))))
                  (resolve-bad-publicity state side eid n))))))
 
 (defn lose-bad-publicity
@@ -68,4 +67,5 @@
    (if (= n :all)
      (lose-bad-publicity state side eid (get-in @state [:corp :bad-publicity :base]))
      (do (lose state :corp :bad-publicity n)
-         (trigger-event-sync state side eid :corp-lose-bad-publicity n side)))))
+         (trigger-event-sync state side eid :corp-lose-bad-publicity {:amount n
+                                                                      :side side})))))

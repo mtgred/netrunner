@@ -8,8 +8,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [in-coll? quantify same-card?]]
-    [clojure.string :as string]))
+    [game.utils :refer [enumerate-str in-coll? quantify same-card?]]))
 
 (defn- pick-counter-triggers
   [state side eid current-cards selected-cards counter-count message]
@@ -53,7 +52,7 @@
                      (continue-ability state side
                                        (pick-virus-counters-to-spend specific-card target-count selected-cards counter-count)
                                        card nil)
-                     (let [message (string/join ", " (map #(let [{:keys [card number]} %
+                     (let [message (enumerate-str (map #(let [{:keys [card number]} %
                                                           title (:title card)]
                                                       (str (quantify number "virus counter") " from " title))
                                                    (vals selected-cards)))]
@@ -62,7 +61,7 @@
                      (req (doseq [{:keys [card number]} (vals selected-cards)]
                             (update! state :runner (update-in (get-card state card) [:counter :virus] + number)))
                           (complete-with-result state side eid :cancel))
-                     (req (let [message (string/join ", " (map #(let [{:keys [card number]} %
+                     (req (let [message (enumerate-str (map #(let [{:keys [card number]} %
                                                                title (:title card)]
                                                            (str (quantify number "virus counter") " from " title))
                                                         (vals selected-cards)))]
@@ -100,7 +99,7 @@
                               remainder-str (when (pos? remainder)
                                               (str remainder " [Credits]"))
                               card-strs (when (pos? (count selected-cards))
-                                          (str (string/join ", " (map #(let [{:keys [card number]} %
+                                          (str (enumerate-str (map #(let [{:keys [card number]} %
                                                                       title (:title card)]
                                                                   (str number " [Credits] from " title))
                                                                (vals selected-cards)))))

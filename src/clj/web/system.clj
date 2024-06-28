@@ -29,6 +29,7 @@
    [web.app-state :as app-state]
    [web.game]
    [web.lobby :as lobby]
+   [web.telemetry]
    [web.utils :refer [tick]]
    [web.versions :refer [banned-msg frontend-version]]
    [web.ws :refer [ch-chsk event-msg-handler]]))
@@ -65,6 +66,7 @@
 (defmethod ig/init-key :web/app-state [_ _]
   (reset! app-state/app-state
           {:lobbies {}
+           :lobby-updates {}
            :users {}})
   (reset! angel-arena/arena-queue []))
 
@@ -136,8 +138,8 @@
 
 (defmethod ig/init-key :jinteki/cards [_ {{:keys [db]} :mongo}]
   (let [cards (mc/find-maps db "cards" nil)
-        stripped-cards (map #(update % :_id str) cards)
-        all-cards (into {} (map (juxt :title identity) stripped-cards))
+        stripped-cards (mapv #(update % :_id str) cards)
+        all-cards (into {} (map (juxt :title identity)) stripped-cards)
         sets (mc/find-maps db "sets" nil)
         cycles (mc/find-maps db "cycles" nil)
         mwl (mc/find-maps db "mwls" nil)

@@ -8,79 +8,88 @@
     [game.core.toasts :refer [toast]]
     [jinteki.utils :refer [capitalize]]))
 
-(defmulti cost-name (fn [[cost-type _]] cost-type))
-(defmulti value (fn [[cost-type _]] cost-type))
-(defmulti stealth-value (fn [[cost-type]] cost-type))
-(defmulti label (fn [[cost-type _]] cost-type))
-(defmulti payable? (fn [[cost-type] & _] cost-type))
-(defmulti handler (fn [[cost-type] & _] cost-type))
+(defn ->c
+  ([type] (->c type 1))
+  ([type n] (->c type n nil))
+  ([type n {:keys [additional stealth] :as args}]
+   {:cost/type type
+    :cost/amount n
+    :cost/additional (boolean additional)
+    :cost/stealth stealth
+    :cost/args (not-empty (dissoc args :stealth :additional))}))
 
-(defn- add-default-to-costs
-  "Transform a sequence of cost vectors (with any amount of nesting) into a
-  sequence of conforming cost vectors: keyword and 1 or more numbers"
-  [costs]
-  (loop [[cost-type & rest-costs] (filter #(or (keyword? %) (number? %)) (flatten costs))
-         result []]
-    (if-not cost-type
-      result
-      (let [[quantities remainder] (split-with number? rest-costs)
-            quantities (or (not-empty quantities) [1])
-            new-cost (into [] (cons cost-type quantities))]
-        (recur remainder (conj result new-cost))))))
-
-(defn- cost-ranks
-  [[cost-type _]]
-  (case cost-type
-    :click 1
-    :lose-click 2
-    :credit 3
-    (:trash-can :remove-from-game) 4
-    5))
-
-(defn merge-cost-impl
-  "Reducing function for merging costs of the same type, respecting stealth requirements."
-  [[_ value-acc stealth-acc] [cost-type cost-value stealth-value]]
-  (->> [cost-type
-        ;; Using the multi-method value here in case a cost-type
-        ;; shouldn't have more than 1 (e.g. :trash-can)
-        (value [cost-type ((fnil + 0 0) value-acc cost-value)])
-        (when (or stealth-acc stealth-value)
-          ((fnil + 0 0) stealth-acc stealth-value))]
-       ;; Remove nil stealth costs
-       (filterv some?)))
+(defmulti value :cost/type)
+(defmethod value :default [_] 0)
+(defmulti stealth-value :cost/type)
+(defmethod stealth-value :default [_] 0)
+(defmulti label :cost/type)
+(defn- payable-dispatch [cost _state _side _eid _card] (:cost/type cost))
+(defmulti payable? #'payable-dispatch)
+(defn- handler-dispatch [cost _state _side _eid _card] (:cost/type cost))
+(defmulti handler #'handler-dispatch)
 
 (defn group-costs
   [costs]
   (->> costs
-       (group-by #(let [cost-name (cost-name %)]
+       (group-by #(let [cost-name (:cost/type %)]
                     ;; Don't group :x-credits
                     (if (= :x-credits cost-name)
                       (gensym)
                       cost-name)))
        (vals)))
 
+(defn merge-cost-impl
+  "Reducing function for merging costs of the same type, respecting stealth requirements."
+  [acc cur]
+  (let [acc-stealth (:cost/stealth acc)
+        cur-stealth (:cost/stealth cur)]
+    (->c (:cost/type cur)
+         (+ (:cost/amount acc 0) (:cost/amount cur 0))
+         (conj {:additional (:cost/additional cur)
+                :stealth (cond
+                           (or (= :all-stealth acc-stealth)
+                               (= :all-stealth cur-stealth))
+                           :all-stealth
+                           (or acc-stealth cur-stealth)
+                           (+ (or acc-stealth 0) (or cur-stealth 0)))}
+               (:cost/args acc)
+               (:cost/args cur)))))
+
+(defn- cost-ranks
+  [cost]
+  (case (:cost/type cost)
+    :click 1
+    :lose-click 2
+    :credit 3
+    (:trash-can :remove-from-game) 4
+    ; :else
+    5))
+
 (defn merge-costs
   "Combines disparate costs into a single cost per type."
   ([costs] (merge-costs costs false))
   ([costs remove-zero-credit-cost]
-   (->> (add-default-to-costs costs)
-        (group-costs)
-        (map #(reduce merge-cost-impl [] %))
-        (remove #(if remove-zero-credit-cost
-                   (and (= :credit (cost-name %))
-                        (zero? (value %)))
-                   false))
-        (sort-by cost-ranks)
-        (into []))))
+   (let [costs (filterv some? (flatten [costs]))
+         {real false additional true} (group-by :cost/additional costs)
+         real (group-costs real)
+         additional (group-costs additional)]
+     (->> (concat real additional)
+          (keep #(reduce merge-cost-impl nil %))
+          (remove #(if remove-zero-credit-cost
+                     (and (= :credit (:cost/type %))
+                          (zero? (:cost/amount %)))
+                     false))
+          (sort-by cost-ranks)
+          (into [])))))
 
 (comment
-  (= [[:click 4] [:credit 2]] (merge-costs [[:click 1] [:click 3] [:credit 1] [:credit 1]]))
-  (= [[:click 4] [:credit 2]] (merge-costs [[:credit 1] [:credit 1] [:click 1] [:click 3]])))
+  (= [(->c :click 4) (->c :credit 2)] (merge-costs [[(->c :click 1)] [(->c :click 3)] [(->c :credit 1)] [(->c :credit 1)]]))
+  (= [(->c :click 4) (->c :credit 2)] (merge-costs [[(->c :credit 1)] [(->c :credit 1)] [(->c :click 1)] [(->c :click 3)]])))
 
 (defn- flag-stops-pay?
   "Checks installed cards to see if payment type is prevented by a flag"
   [state side cost]
-  (let [flag (keyword (str "cannot-pay-" (name (cost-name cost))))]
+  (let [flag (keyword (str "cannot-pay-" (name (:cost/type cost))))]
     (some #(card-flag? % flag true) (all-active-installed state side))))
 
 (defn can-pay?
@@ -91,11 +100,7 @@
   ([state side eid card title & args]
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
-         cost-req (when (and (:abilities (:source eid))
-                             (:ability-idx (:source-info eid)))
-                    (:cost-req (nth (:abilities (:source eid)) (:ability-idx (:source-info eid)) nil)))
-         cost-filter (if (fn? cost-req) cost-req identity)
-         costs (cost-filter (merge-costs (remove #(or (nil? %) (map? %)) args) remove-zero-credit-cost))]
+         costs (merge-costs (filter some? args) remove-zero-credit-cost)]
      (if (every? #(and (not (flag-stops-pay? state side %))
                        (payable? % state side eid card))
                  costs)
@@ -105,7 +110,7 @@
 
 (defn cost-targets
   [eid cost-type]
-  (get-in eid [:cost-paid cost-type :targets]))
+  (get-in eid [:cost-paid cost-type :paid/targets]))
 
 (defn cost-target
   [eid cost-type]
@@ -113,7 +118,7 @@
 
 (defn cost-value
   [eid cost-type]
-  (get-in eid [:cost-paid cost-type :value]))
+  (get-in eid [:cost-paid cost-type :paid/value]))
 
 ;; the function `pay` is defined in resolve-ability because they're all intermingled
 ;; fuck the restriction against circular dependencies, for real
@@ -135,23 +140,28 @@
   ([ability cost]
    (assoc ability :cost-label
           (build-cost-label (if (:trash-icon ability)
-                              (conj cost [:trash-can])
+                              (conj cost [(->c :trash-can)])
                               cost)))))
 
 (comment
   (= "[Click][Click][Click][Click], 1 [Credits], suffer 1 net damage"
-     (build-cost-label [[:click 1] [:click 3] [:net 1] [:credit 1]])))
+     (build-cost-label [(->c :click 1) (->c :click 3) (->c :net 1) (->c :credit 1)])))
 
 (defn cost->string
   "Converts a cost to a string for printing"
   [cost]
-  (when (not (neg? (value cost)))
-    (let [cost-type (cost-name cost)
-          cost-string (label cost)]
-      (cond
-        (or (= :click cost-type) (= :lose-click cost-type)) (str "spend " cost-string)
-        (= :credit cost-type) (str "pay " cost-string)
-        :else cost-string))))
+  (if (:cost/type cost)
+    (when (not (neg? (value cost)))
+      (let [cost-type (:cost/type cost)
+            cost-string (label cost)]
+        (cond
+          (#{:click :lose-click} cost-type) (str "spend " cost-string)
+          (= :credit cost-type) (str "pay " cost-string)
+          :else cost-string)))
+    (try (cost->string (first cost))
+         (catch Throwable t
+           (prn cost)
+           (throw t)))))
 
 (defn build-cost-string
   "Gets the complete cost-str for specified costs"

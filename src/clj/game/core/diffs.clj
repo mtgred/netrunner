@@ -6,9 +6,10 @@
    [game.core.card :refer :all]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.engine :refer [can-trigger?]]
+   [game.core.effects :refer [is-disabled-reg?]]
    [game.core.installing :refer [corp-can-pay-and-install?
                                  runner-can-pay-and-install?]]
-   [game.core.payment :refer [can-pay?]]
+   [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [can-play-instant?]]
    [game.utils :refer [dissoc-in]]
    [jinteki.utils :refer [select-non-nil-keys]]
@@ -25,8 +26,8 @@
               (some
                 (fn [server]
                   (corp-can-pay-and-install?
-                    state :corp {:source server :source-type :corp-install}
-                    card server {:base-cost [:click 1]
+                    state :corp {:source card :source-type :corp-install}
+                    card server {:base-cost [(->c :click 1)]
                                  :action :corp-click-install
                                  :no-toast true}))
                 (installable-servers state card))]
@@ -34,14 +35,15 @@
                   (program? card)
                   (resource? card))
               (runner-can-pay-and-install?
-                state :runner {:source :action :source-type :runner-install}
-                card {:base-cost [:click 1]
+                state :runner {:source card :source-type :runner-install}
+                card {:base-cost [(->c :click 1)]
                       :no-toast true})]
              [(or (event? card)
                   (operation? card))
               (can-play-instant?
-                state side {:source :action :source-type :play}
-                card {:base-cost [:click 1] :silent true})])
+                state side {:source card :source-type :play}
+                card {:base-cost [(->c :click 1)]
+                      :silent true})])
            true)
     (assoc card :playable true)
     card))
@@ -53,6 +55,13 @@
              :source-info {:ability-idx ability-idx}}]
     (if (and (or (active? card)
                  (:autoresolve ability))
+             ;; using the reg instead of any-effect here because this function gets called
+             ;; a LOT, and this is very close to linear time and should (I think)
+             ;; always be correct when this fn is called.
+             ;; If that's ever an issue, we can switch this to:
+             ;; (is-disabled? state side card)
+             ;; --n kelly, apr 2024
+             (not (is-disabled-reg? state card))
              (can-pay? state side eid card nil cost)
              (can-trigger? state side eid ability card nil))
       (assoc ability :playable true)
@@ -134,6 +143,8 @@
    :strength
    :subroutines
    :subtype-target
+   :poison
+   :highlight-in-discard
    :subtypes
    :title
    :type
@@ -199,6 +210,10 @@
     (not-empty (select-non-nil-keys prompt prompt-keys))
     nil))
 
+(defn toast-summary
+  [toast same-side?]
+  (if same-side? toast nil))
+
 (def player-keys
   [:aid
    :user
@@ -234,6 +249,7 @@
       (update :scored cards-summary state side)
       (update :set-aside cards-summary state side)
       (update :prompt-state prompt-summary same-side?)
+      (update :toast toast-summary same-side?)
       (select-non-nil-keys (into player-keys additional-keys))))
 
 (def corp-keys

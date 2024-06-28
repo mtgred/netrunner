@@ -8,13 +8,40 @@
   (fn []
     [:div.settings
      [:section
-      [:h4 (tr [:ingame-settings.card-stacking "Card stacking"])]
+      [:h4 (tr [:ingame-settings.card-stacking "Card settings"])]
       [:div
        [:label [:input {:type "checkbox"
                         :value true
                         :checked (get-in @app-state [:options :stacked-cards])
                         :on-change #(swap! app-state assoc-in [:options :stacked-cards] (.. % -target -checked))}]
-        (tr [:ingame-settings.stack-cards "Stack cards"])]]]
+        (tr [:ingame-settings.stack-cards "Stack cards"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :labeled-unrezzed-cards])
+                        :on-change #(swap! app-state assoc-in [:options :labeled-unrezzed-cards] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Label unrezzed cards"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :labeled-cards])
+                        :on-change #(swap! app-state assoc-in [:options :labeled-cards] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Label face up cards"])]]]
+
+     [:section
+      [:h4 (tr [:ingame-settings.card-stacking "Sorting"])]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :archives-sorted])
+                        :on-change #(swap! app-state assoc-in [:options :archives-sorted] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Sort Archives"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :heap-sorted])
+                        :on-change #(swap! app-state assoc-in [:options :heap-sorted] (.. % -target -checked))}]
+        (tr [:ingame-settings.stack-cards "Sort Heap"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.runner-board-order "Runner board order"])]
@@ -39,7 +66,7 @@
 
      [:section
       [:h4 (tr [:ingame-settings.card-backs "Card backs"])]
-      (doall (for [option [{:name (tr [:settings.nisei "NISEI"]) :ref "nisei"}
+      (doall (for [option [{:name (tr [:settings.nsg "NSG"]) :ref "nsg"}
                            {:name (tr [:settings.ffg "FFG"]) :ref "ffg"}]]
                [:div.radio {:key (:name option)}
                 [:label [:input {:type "radio"

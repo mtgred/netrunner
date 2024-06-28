@@ -1,6 +1,9 @@
 (ns nr.game-row
   (:require
    [jinteki.utils :refer [superuser?]]
+   [cljc.java-time.instant :as inst]
+   [cljc.java-time.duration :as duration]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.player-view :refer [player-view]]
@@ -97,8 +100,12 @@
 
 (defn rejoin-button [lobby-state user game current-game editing]
   (when (can-rejoin? user game current-game editing)
-    [:button {:on-click #(do (join-game lobby-state game "rejoin")
-                             (resume-sound))}
+    [:button {:on-click #(if (:password game)
+                           (authenticated
+                             (fn [_]
+                               (swap! lobby-state assoc :password-game {:game game :action "rejoin"})))
+                           (do (join-game lobby-state game "rejoin")
+                               (resume-sound)))}
      (tr [:lobby.rejoin "Rejoin"])]))
 
 (defn mod-menu-popup [s user {gameid :gameid}]
@@ -130,6 +137,19 @@
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [:span.format-singleton (str (when singleton? " (singleton)"))]])
 
+(defn- time-since
+  "Helper method for game-time. Computes how many minutes since game start"
+  [start]
+  (let [now (inst/now)
+        diff (duration/between start now)
+        total-seconds (duration/get diff chrono/seconds)
+        minutes (abs (quot total-seconds 60))]
+    minutes))
+
+(defn game-time [game]
+(when (:started game)
+  [:div.game-time (str (time-since (:date game)) "m")]))
+
 (defn players-row [{players :players :as game}]
   (into
     [:div]
@@ -149,4 +169,5 @@
      [game-title state user game]
      [mod-menu-popup state user game]
      [game-format game]
+     [game-time game]
      [players-row game]]))

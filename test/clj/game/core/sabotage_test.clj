@@ -1,12 +1,11 @@
 (ns game.core.sabotage-test
-  (:require [game.core :as core]
-            [game.core.eid :as eid]
-            [game.core.sabotage :as s]
-            [game.core.mark :as m]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.eid :as eid]
+   [game.core.mark :as m]
+   [game.core.sabotage :as s]
+   [game.test-framework :refer :all]))
 
 (deftest sabotage-test
   (testing "Choosing only from HQ"
@@ -101,7 +100,7 @@
       (is (no-prompt? state :runner))
       (is (empty? (:hand (get-corp))) "HQ is empty")
       (is (empty? (:deck (get-corp))) "R&D is empty")
-      (is (= 7 (count (:discard (get-corp)))) "Archives has 7 cards"))))
+      (is (= 7 (count (:discard (get-corp)))) "Archives has 7 cards")))
   (testing "Forced to trash more cards than there are in HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 7)]}})
@@ -111,4 +110,4 @@
       (is (no-prompt? state :runner))
       (is (empty? (:hand (get-corp))))
       (is (empty? (:deck (get-corp))))
-      (is (= 7 (count (:discard (get-corp)))))))
+      (is (= 7 (count (:discard (get-corp))))))))

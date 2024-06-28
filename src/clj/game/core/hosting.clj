@@ -2,11 +2,11 @@
   (:require
     [game.core.card :refer [assoc-host-zones corp? get-card program? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-constant-effects register-floating-effect unregister-constant-effects]]
+    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [make-eid]]
     [game.core.engine :refer [register-default-events unregister-events]]
     [game.core.initializing :refer [card-init]]
-    [game.core.memory :refer [update-mu]]
+    [game.core.memory :refer [init-mu-cost]]
     [game.core.update :refer [update! update-hosted!]]
     [game.utils :refer [remove-once]]))
 
@@ -24,7 +24,7 @@
   ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown no-mu]}]
    (when (not= cid (:cid card))
      (unregister-events state side target)
-     (unregister-constant-effects state side target)
+     (unregister-static-abilities state side target)
      (doseq [s [:runner :corp]]
        (if host
          (when-let [host-card (get-card state host)]
@@ -57,20 +57,15 @@
            (card-init state side target {:resolve-effect false
                                          :init-data true
                                          :no-mu no-mu})
-           ;; Otherwise just register events and constant effects
+           ;; Otherwise just register events and static abilities
            (do (register-default-events state side target)
-               (register-constant-effects state side target)
+               (register-static-abilities state side target)
                (when (and (program? target)
                           (not no-mu))
-                 (register-floating-effect
-                   state side target
-                   {:type :used-mu
-                    :duration :constant
-                    :value (:memoryunits target)})
-                 (update-mu state)))))
+                 (init-mu-cost state target)))))
        (when-let [hosted-gained (:hosted-gained cdef)]
          (hosted-gained state side (make-eid state) (get-card state card) [target]))
-       ;; Update all constant and floating effects
+       ;; Update all static abilities and floating effects
        (let [new-effects (reduce
                            (fn [all-effects current-effect]
                              (if (= cid (:cid (:card current-effect)))

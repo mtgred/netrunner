@@ -26,7 +26,7 @@ pom.xml
 /resources/public/img/cards/
 /resources/public/sound/
 /data/andb-*.json
-/data/cards.edn
+/data/cards*.edn
 /data/cycles.edn
 /data/formats.edn
 /data/mwls.edn
@@ -56,3 +56,15 @@ tags.temp.tmp
 .lsp/
 .shadow-cljs/
 tests-user.edn
+data/cards-ca.edn
+data/cards-de.edn
+data/cards-es.edn
+data/cards-fr.edn
+data/cards-it.edn
+data/cards-ja.edn
+data/cards-ko.edn
+data/cards-pl.edn
+data/cards-pt.edn
+data/cards-ru.edn
+data/cards-zh-hans.edn
+data/cards-zh-hant.edn

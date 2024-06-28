@@ -3,54 +3,12 @@
             [game.core.card :refer [get-card]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
+            [game.core.board :refer [get-all-cards]]
             [game.utils :refer [same-card? to-keyword]]))
 
-(defn register-constant-effects
-  [state _ card]
-  (when (:constant-effects (card-def card))
-    (let [constant-effects (:constant-effects (card-def card))
-          abilities (for [ability constant-effects]
-                      (assoc
-                        (select-keys ability [:type :req :value])
-                        :duration :constant
-                        :card card
-                        :uuid (uuid/v1)))]
-      (swap! state update :effects
-             #(apply conj (into [] %) abilities))
-      abilities)))
-
-(defn unregister-constant-effects
-  [state _ card]
-  (swap! state assoc :effects
-         (->> (:effects @state)
-              (remove #(and (same-card? card (:card %))
-                            (= :constant (:duration %))))
-              (into []))))
-
-(defn register-floating-effect
-  [state _ card ability]
-  (let [ability (assoc
-                  (select-keys ability [:type :duration :req :value])
-                  :card card
-                  :uuid (uuid/v1))]
-    (swap! state update :effects conj ability)
-    ability))
-
-(defn unregister-floating-effects
-  [state _ duration]
-  (swap! state assoc :effects
-         (->> (:effects @state)
-              (remove #(= duration (:duration %)))
-              (into []))))
-
-(defn unregister-effects-for-card
-  ([state _ card] (unregister-effects-for-card state nil card identity))
-  ([state _ card pred]
-   (swap! state assoc :effects
-          (->> (:effects @state)
-               (remove #(and (same-card? card (:card %))
-                             (pred %)))
-               (into [])))))
+(defn is-disabled-reg?
+  [state card]
+  (get (:disabled-card-reg @state) (:cid card)))
 
 (defn gather-effects
   [state _ effect-type]
@@ -58,6 +16,7 @@
         is-active-player #(= (:active-player @state) (get-side %))]
     (->> (:effects @state)
          (filter #(= effect-type (:type %)))
+         (filter #(not (and (:static %) (is-disabled-reg? state (:card %)))))
          (sort-by (complement is-active-player))
          (into []))))
 
@@ -100,25 +59,98 @@
 
 (defn get-effects
   "Filters and then 'executes' the effects of a given type."
-  ([state side card effect-type] (get-effects state side card effect-type nil))
-  ([state side card effect-type targets]
+  ([state side effect-type] (get-effects state side effect-type nil nil))
+  ([state side effect-type target] (get-effects state side effect-type target nil))
+  ([state side effect-type target targets]
    (let [eid (make-eid state)
-         targets (cons card targets)]
+         targets (cons target targets)]
      (->> (get-effect-maps state side eid effect-type targets)
           (mapv (get-effect-value state side eid targets))))))
 
 (defn sum-effects
   "Sums the results from get-effects."
-  ([state side card effect-type] (sum-effects state side card effect-type nil))
-  ([state side card effect-type targets]
-   (->> (get-effects state side card effect-type targets)
+  ([state side effect-type] (sum-effects state side effect-type nil nil))
+  ([state side effect-type target] (sum-effects state side effect-type target nil))
+  ([state side effect-type target targets]
+   (->> (get-effects state side effect-type target targets)
         (filter number?)
-        (reduce +))))
+        (reduce + 0))))
 
 (defn any-effects
   "Check if any effects return true for pred"
   ([state side effect-type] (any-effects state side effect-type true? nil nil))
   ([state side effect-type pred] (any-effects state side effect-type pred nil nil))
-  ([state side effect-type pred card] (any-effects state side effect-type pred card nil))
-  ([state side effect-type pred card targets]
-   (some pred (get-effects state side card effect-type targets))))
+  ([state side effect-type pred target] (any-effects state side effect-type pred target nil))
+  ([state side effect-type pred target targets]
+   (some pred (get-effects state side effect-type target targets))))
+
+(defn is-disabled?
+  "Check if a card is disabled"
+  ([state side target]
+   (any-effects state side :disable-card true? target)))
+
+(defn all-disabled-cards
+  "Gets all cards currently disabled"
+  [state]
+  (let [all-cards (get-all-cards state)
+        disabled-cards (filter #(is-disabled? state nil %) all-cards)]
+    (into {} (map (juxt :cid identity)) disabled-cards)))
+
+(defn update-disabled-cards [state]
+  (swap! state assoc :disabled-card-reg (all-disabled-cards state))
+  (:disabled-card-reg @state))
+
+(defn register-static-abilities
+  [state _ card]
+  (when (:static-abilities (card-def card))
+    (let [static-abilities (:static-abilities (card-def card))
+          abilities (for [ability static-abilities]
+                      (assoc
+                        (select-keys ability [:type :req :value])
+                        ;; this is so I can select them later
+                        :static true
+                        :duration :while-active
+                        :card card
+                        :uuid (uuid/v1)))]
+      (swap! state update :effects
+             #(apply conj (into [] %) abilities))
+      (update-disabled-cards state)
+      abilities)))
+
+(defn unregister-static-abilities
+  [state _ card]
+  (swap! state assoc :effects
+         (->> (:effects @state)
+              (remove #(and (same-card? card (:card %))
+                            (= :while-active (:duration %))))
+              (into [])))
+  (update-disabled-cards state))
+
+(defn register-lingering-effect
+  [state _ card ability]
+  (let [ability (assoc
+                  (select-keys ability [:type :duration :req :value])
+                  :card card
+                  :lingering true
+                  :uuid (uuid/v1))]
+    (swap! state update :effects conj ability)
+    (update-disabled-cards state)
+    ability))
+
+(defn unregister-lingering-effects
+  [state _ duration]
+  (swap! state assoc :effects
+         (->> (:effects @state)
+              (remove #(= duration (:duration %)))
+              (into [])))
+  (update-disabled-cards state))
+
+(defn unregister-effects-for-card
+  ([state _ card] (unregister-effects-for-card state nil card identity))
+  ([state _ card pred]
+   (swap! state assoc :effects
+          (->> (:effects @state)
+               (remove #(and (same-card? card (:card %))
+                             (pred %)))
+               (into [])))
+   (update-disabled-cards state)))

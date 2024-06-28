@@ -4,7 +4,7 @@
     [game.core.board :refer [all-active all-active-installed all-installed all-installed-and-scored]]
     [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
     [game.core.drawing :refer [draw]]
-    [game.core.effects :refer [unregister-floating-effects any-effects]]
+    [game.core.effects :refer [unregister-lingering-effects any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
@@ -17,7 +17,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [abs dissoc-in quantify]]
+    [game.utils :refer [dissoc-in enumerate-str quantify]]
     [clojure.string :as string]))
 
 (defn- turn-message
@@ -36,14 +36,15 @@
   ([state side eid _]
    (turn-message state side true)
    (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
-             (unregister-floating-effects state side :start-of-turn)
+             (unregister-lingering-effects state side :start-of-turn)
              (unregister-floating-events state side :start-of-turn)
-             (unregister-floating-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
+             (unregister-lingering-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
-             (when (= side :corp)
-               (system-msg state side "makes mandatory start of turn draw")
-               (wait-for (draw state side 1 nil)
-                         (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
+             (if (= side :corp)
+               (do (system-msg state side "makes mandatory start of turn draw")
+                   (wait-for (draw state side 1 nil)
+                             (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
+               (effect-completed state nil eid))
              (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
              (when (= side :corp)
                (update-all-advancement-requirements state)))))
@@ -57,6 +58,7 @@
 
   ; Functions to set up state for undo-turn functionality
   (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
+  (swap! state assoc :click-states [])
   (swap! state assoc :turn-state (dissoc @state :log :turn-state))
 
   (when (= side :corp)
@@ -83,7 +85,7 @@
     (trigger-event state side phase nil)
     (if (not-empty start-cards)
       (toast state side
-             (str "You may use " (string/join ", " (map :title start-cards))
+             (str "You may use " (enumerate-str (map :title start-cards))
                   (if (= side :corp)
                     " between the start of your turn and your mandatory draw."
                     " before taking your first click."))
@@ -111,7 +113,7 @@
              :effect (req (system-msg state side
                                       (str "discards "
                                            (if (= :runner side)
-                                             (string/join ", " (map :title targets))
+                                             (enumerate-str (map :title targets))
                                              (quantify (count targets) "card"))
                                            " from " (if (= :runner side) "their Grip" "HQ")
                                            " at end of turn"))
@@ -131,11 +133,11 @@
      (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
                (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
                (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
-               (unregister-floating-effects state side :end-of-turn)
+               (unregister-lingering-effects state side :end-of-turn)
                (unregister-floating-events state side :end-of-turn)
-               (unregister-floating-effects state side :end-of-next-run)
+               (unregister-lingering-effects state side :end-of-next-run)
                (unregister-floating-events state side :end-of-next-run)
-               (unregister-floating-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (unregister-lingering-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended

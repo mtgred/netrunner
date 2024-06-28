@@ -46,6 +46,8 @@
            [:li "bbbbbbbbba: Language translations."]
            [:li "Seojun Park: Language translations."]
            [:li "PopTartNZ: High-resolution card images."]
+           [:li "Rhahi: Labelling and other QoL functionality ported with permission from "
+            [:a {:href "https://addons.mozilla.org/en-US/firefox/addon/cyberfeeder/" :target "_blank"} "Cyberfeeder"] " Firefox plugin"]
            (make-artists)
            ]
 
@@ -77,7 +79,7 @@
              ^{:key d}
              [:li d])]
           [:h3 "Disclaimer"]
-          [:p "Netrunner and Android are trademarks of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC."]
+          [:p "Netrunner is a trademark of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC."]
           [:p "This is website is not affiliated with Fantasy Flight Games or Wizards of the Coast."]
           [:p "Targeting icon made by "
            [:a {:href "http://www.freepik.com" :title "Freepik" :target "_blank"} "Freepik"]

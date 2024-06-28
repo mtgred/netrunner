@@ -1,10 +1,10 @@
 (ns game.core.optional-test
-  (:require [game.core :as core]
-            [game.core-test :refer :all]
-            [game.utils-test :refer :all]
-            [game.macros-test :refer :all]
-            [game.macros :refer [req]]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.initializing :refer [make-card]]
+   [game.macros :refer [req]]
+   [game.test-framework :refer :all]))
 
 (deftest optional-req
   (let [spy (atom [])]
@@ -15,5 +15,5 @@
                              {:req (req (swap! spy conj "inner") true)
                               :prompt "Yes or no"
                               :yes-ability {:effect (req true)}}}
-                            {} nil)
+                            (make-card {:title "test"}) nil)
       (is (= ["inner"] @spy) "Only the inner req of optional should be checked"))))

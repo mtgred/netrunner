@@ -4,6 +4,6 @@
         :output-dir "resources/public/js"
         :devtools {:watch-dir "resources/public/css"
                    :watch-path "/css"
-                   :repl-init-ns nr.dev}
-        :dev {:modules {:main {:entries [nr.dev]}}}
+                   :repl-init-ns dev.nr}
+        :dev {:modules {:main {:entries [dev.nr]}}}
         :release {:modules {:main {:entries [prod.nr]}}}}}}

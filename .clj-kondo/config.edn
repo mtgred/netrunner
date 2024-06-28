@@ -1,5 +1,7 @@
 {:linters
- {:unresolved-symbol
+ {:unused-binding {:exclude-defmulti-args true
+                   :exclude-destructured-as true}
+  :unresolved-symbol
   {:exclude [(game.macros/req [state side eid card targets target context
                                runner corp run run-server run-ices run-position
                                current-ice corp-reg corp-reg-last runner-reg
@@ -22,9 +24,10 @@
                                archives-runnable tagged this-card-run this-server
                                corp-currently-drawing runner-currently-drawing])
              (game.macros/wait-for [async-result])
-             (game.macros-test/do-game [state get-corp get-runner get-run refresh hand-size
-                                        prompt-map prompt-button prompt-type prompt-buttons
-                                        prompt-titles prompt-fmt])
+             (game.test-framework/do-game [state get-corp get-runner get-run refresh
+                                           hand-size prompt-map prompt-button
+                                           prompt-type prompt-buttons prompt-titles
+                                           prompt-fmt])
              (game.core/req [state side eid card targets target context
                              runner corp run run-server run-ices run-position
                              current-ice corp-reg corp-reg-last runner-reg
@@ -51,67 +54,16 @@
                               game.core/effect game.core/wait-for]}
   :unused-namespace {:exclude ["game.core.*"]}
   :refer-all {:level :off}
-  :type-mismatch
-  {:namespaces
-   {monger.collection
-    {insert {:arities {3 {:args [:any :any :map]}
-                       4 {:args [:any :any :map :any]}}}
-     insert-and-return {:arities {3 {:args [:any :any :map]}
-                                  4 {:args [:any :any :map :any]}}}
-     insert-batch {:arities {3 {:args [:any :any :seq]}
-                             4 {:args [:any :any :seq :any]}}}
-     find {:arities {2 {:args [:any :any]}
-                     3 {:args [:any :any :any]}
-                     4 {:args [:any :any :any :any]}}}
-     find-maps {:arities {2 {:args [:any :any]}
-                          3 {:args [:any :any :any]}
-                          4 {:args [:any :any :any :any]}}}
-     find-seq {:arities {2 {:args [:any :any]}
-                         3 {:args [:any :any :any]}
-                         4 {:args [:any :any :any :any]}}}
-     find-one {:arities {3 {:args [:any :any :any]}
-                         4 {:args [:any :any :any :any]}}}
-     find-one-as-map {:arities {3 {:args [:any :any :any]}
-                                4 {:args [:any :any :any :any]}
-                                5 {:args [:any :any :any :any :any]}}}
-     find-and-modify {:arities {5 {:args [:any :any :any :any :any]}}}
-     find-by-id {:arities {3 {:args [:any :any :any]}
-                           4 {:args [:any :any :any :any]}}}
-     find-map-by-id {:arities {3 {:args [:any :any :any]}
-                               4 {:args [:any :any :any :any]}
-                               5 {:args [:any :any :any :any :any]}}}
-     count {:arities {2 {:args [:any :any]}
-                      3 {:args [:any :any :any]}}}
-     any?  {:arities {2 {:args [:any :any]}
-                      3 {:args [:any :any :any]}}}
-     empty?  {:arities {2 {:args [:any :any]}}}
-     update {:arities {4 {:args [:any :any :any :any]}
-                       5 {:args [:any :any :any :any :any]}}}
-     upsert {:arities {4 {:args [:any :any :any :any]}
-                       5 {:args [:any :any :any :any :any]}}}
-     update-by-id {:arities {4 {:args [:any :any :any :any]}
-                             5 {:args [:any :any :any :any :any]}}}
-     update-by-ids {:arities {4 {:args [:any :any :any :any]}
-                              5 {:args [:any :any :any :any :any]}}}
-     save {:arities {3 {:args [:any :any :any]}
-                     4 {:args [:any :any :any :any]}}}
-     save-and-return {:arities {3 {:args [:any :any :any]}
-                                4 {:args [:any :any :any :any]}}}
-     remove {:arities {2 {:args [:any :any]}
-                       3 {:args [:any :any :any]}}}
-     remove-by-id {:arities {3 {:args [:any :any :any]}}}
-     purge-many {:arities {2 {:args [:any :any]}}}
-     create-index {:arities {3 {:args [:any :any :any]}
-                             4 {:args [:any :any :any :any]}}}}}}
   }
- :lint-as {game.macros-test/before-each clojure.core/let
+ :lint-as {game.test-framework/before-each clojure.core/let
            reagent.core/with-let clojure.core/let
            game.macros/when-let* clojure.core/let
            game.core/req game.macros/req
            game.core/effect game.macros/effect
            game.core/msg game.macros/msg
            game.core/wait-for game.macros/wait-for
-           game.macros-test/deftest-pending clojure.test/deftest
+           game.test-framework/deftest-pending clojure.test/deftest
+           game.test-framework/dont-use-me clj-kondo.lint-as/def-catch-all
            game.core/expose-vars potemkin/import-vars
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->

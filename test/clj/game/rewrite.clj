@@ -1,10 +1,10 @@
 (ns game.rewrite
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [jinteki.utils :refer [slugify]]
    [rewrite-clj.node :as n]
-   [rewrite-clj.zip :as z]
-   [clojure.string :as str]))
+   [rewrite-clj.zip :as z]))
 
 (defn deftest? [zloc]
   (= "deftest" (z/string zloc)))

@@ -8,7 +8,9 @@
                                parse-state]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [toastr-options]]
-   [nr.ws :as ws]))
+   [nr.ws :as ws]
+   [reagent.core :as r]
+   [reagent.ratom :as ratom]))
 
 (defn reset-game! [state]
   (reset! game-state (assoc state :side (get-side state)))
@@ -106,12 +108,19 @@
       (build-report-url error)
       "');\">Report on GitHub</button></div>")))
 
+(defn ack-toast ([id] (send-command "toast" {:id id})))
+
 (defn toast
   "Display a toast warning with the specified message.
   Sends a command to clear any server side toasts."
   [msg toast-type options]
   (set! (.-options js/toastr) (toastr-options options))
   (let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
-    (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state)) msg))
-    (when-not (or (= "error" toast-type) (= "exception" toast-type))
-      (send-command "toast"))))
+    (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state)) msg))))
+
+(defonce side (r/cursor game-state [:side]))
+(defonce me-toasts (ratom/reaction (get-in @game-state [@side :toast])))
+(defn handle-toasts-changed [] (doseq [{:keys [id msg type options]} @me-toasts]
+                                 (toast msg type options)
+                                 (ack-toast id)))
+(defonce watch-toasts (r/track! handle-toasts-changed))

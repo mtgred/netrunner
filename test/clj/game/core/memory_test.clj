@@ -1,9 +1,9 @@
 (ns game.core.memory-test
-  (:require [game.core :as core]
-            [game.core.memory :as memory]
-            [game.core-test :refer :all]
-            [game.macros-test :refer :all]
-            [clojure.test :refer :all]))
+  (:require
+   [clojure.test :refer :all]
+   [game.core :as core]
+   [game.core.memory :as memory]
+   [game.test-framework :refer :all]))
 
 (deftest mu+
   (testing "1 arity"
@@ -88,7 +88,7 @@
 (deftest build-new-mu-using-mu-test
   (do-game
     (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Corroder" (:hand (get-runner)))
       {:type :used-mu
        :value 1})
@@ -104,7 +104,7 @@
 (deftest build-new-mu-greater-than-available-test
   (do-game
     (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Corroder" (:hand (get-runner)))
       {:type :used-mu
        :value 5})
@@ -120,7 +120,7 @@
 (deftest build-new-mu-increasing-available-mu-test
   (do-game
     (new-game {:runner {:hand ["Corroder" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Sure Gamble" (:hand (get-runner)))
       (memory/mu+ 2))
     (is (= {:only-for {:caissa {:available 0
@@ -135,7 +135,7 @@
 (deftest build-new-mu-virus-increasing-available-virus-mu-test
   (do-game
     (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Sure Gamble" (:hand (get-runner)))
       (memory/virus-mu+ 2))
     (is (= {:only-for {:caissa {:available 0
@@ -150,10 +150,10 @@
 (deftest build-new-mu-virus-increasing-available-non-virus-mu-test
   (do-game
     (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Sure Gamble" (:hand (get-runner)))
       (memory/mu+ 2))
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Sure Gamble" (:hand (get-runner)))
       (memory/virus-mu+ 2))
     (is (= {:only-for {:caissa {:available 0
@@ -168,7 +168,7 @@
 (deftest build-new-mu-virus-no-available-virus-mu-test
   (do-game
     (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Cache" (:hand (get-runner)))
       {:type :used-mu
        :value 2})
@@ -184,10 +184,10 @@
 (deftest build-new-mu-virus-using-virus-mu-test
   (do-game
     (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Sure Gamble" (:hand (get-runner)))
       (memory/virus-mu+ 2))
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Cache" (:hand (get-runner)))
       {:type :used-mu
        :value 2})
@@ -203,10 +203,10 @@
 (deftest build-new-mu-virus-using-more-than-available-test
   (do-game
     (new-game {:runner {:hand ["Cache" "Sure Gamble"]}})
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Sure Gamble" (:hand (get-runner)))
       (memory/virus-mu+ 2))
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Cache" (:hand (get-runner)))
       {:type :used-mu
        :value 3})
@@ -223,14 +223,14 @@
   (do-game
     (new-game)
     (is (false? (memory/update-mu state)) "Returns false when no change occurs")
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner nil
       {:type :used-mu
        :value 1})
     (is (true? (memory/update-mu state)) "Returns true when a change has occured"))
   (do-game
     (new-game)
-    (core/register-floating-effect
+    (core/register-lingering-effect
       state :runner (find-card "Sure Gamble" (:hand (get-runner)))
       (memory/virus-mu+ 2))
     (is (true? (memory/update-mu state)) "Returns true when a change has occured")))

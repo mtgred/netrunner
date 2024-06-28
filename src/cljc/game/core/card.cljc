@@ -355,21 +355,31 @@
       (:agendapoints card)
       0))
 
+(defn- is-disabled-reg?
+  [state card]
+  (get (:disabled-card-reg @state) (:cid card)))
+
 (defn can-be-advanced?
   "Returns true if the card can be advanced"
-  [card]
-  (or (card-is? card :advanceable #?(:clj :always
-                                     :cljs "always"))
-      ;; e.g. Tyrant, Woodcutter
-      (and (card-is? card :advanceable #?(:clj :while-rezzed
-                                          :cljs "while-rezzed"))
-           (rezzed? card))
-      ;; e.g. Haas Arcology AI
-      (and (card-is? card :advanceable #?(:clj :while-unrezzed
-                                          :cljs "while-unrezzed"))
-           (not (rezzed? card)))
-      (and (is-type? card "Agenda")
-           (installed? card))))
+  ([card]
+   (or (card-is? card :advanceable #?(:clj :always
+                                      :cljs "always"))
+       ;; e.g. Tyrant, Woodcutter
+       (and (card-is? card :advanceable #?(:clj :while-rezzed
+                                           :cljs "while-rezzed"))
+            (rezzed? card))
+       ;; e.g. Haas Arcology AI
+       (and (card-is? card :advanceable #?(:clj :while-unrezzed
+                                           :cljs "while-unrezzed"))
+            (not (rezzed? card)))
+       (and (is-type? card "Agenda")
+            (installed? card))))
+  ([state card]
+   (and (can-be-advanced? card)
+        ;; note - the text allowing a card to be advanceable is an ability,
+        ;;    except for agendas, where it's implicit to the card type -nbk, apr '24
+        (or (agenda? card)
+            (not (is-disabled-reg? state card))))))
 
 (defn get-counters
   "Get number of counters of specified type."
@@ -477,13 +487,13 @@
              (and (in-discard? card)
                   (faceup? card)))))))
 
-;; CR 1.5
+;; CR 1.8
 ;; 10.1.3. Some abilities add a card to a player’s score area “as an agenda”. When this
 ;;    happens, the card loses all its previous properties and gains only those
 ;;    properties specified in the effect converting it. This conversion lasts until the
 ;;    card moves to a zone that is not a score area, at which point it returns to being
 ;;    its original printed card. If this happens in any way other than by agenda
-;;    forfeit, the card is immediately trashed. See rule 8.2.5.
+;;    forfeit, the card is immediately trashed.
 
 (defn convert-to-agenda
   [{:keys [cid code host hosted side title zone implementation]} n]
@@ -499,7 +509,7 @@
      :type "Agenda"
      :zone zone}))
 
-;; CR 1.5
+;; CR 1.8
 ;; 10.1.4. Some abilities can convert a card into a counter. When this happens, the card
 ;;    loses all its previous properties and gains only those properties specified in the
 ;;    effect converting it. This conversion lasts until the counter moves to another

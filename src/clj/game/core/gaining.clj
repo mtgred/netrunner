@@ -1,8 +1,7 @@
 (ns game.core.gaining
   (:require
-    [game.core.eid :refer [make-eid effect-completed]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
-    [game.core.toasts :refer [toast]]))
+    [game.core.eid :refer [effect-completed]]
+    [game.core.engine :refer [trigger-event trigger-event-sync]]))
 
 (defn safe-inc-n
   "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"
@@ -66,7 +65,8 @@
       :else
       (do (swap! state update-in [side cost-type] (safe-inc-n amount))
           (swap! state update-in [:stats side :gain cost-type] (fnil + 0 0) amount)))
-    (trigger-event state side (if (= side :corp) :corp-gain :runner-gain) [cost-type amount])))
+    (trigger-event state side (if (= side :corp) :corp-gain :runner-gain) {:type cost-type
+                                                                           :amount amount})))
 
 (defn lose [state side & args]
   (doseq [[cost-type amount] (partition 2 args)]
@@ -76,16 +76,17 @@
       (do (when (number? amount)
             (swap! state update-in [:stats side :lose cost-type] (fnil + 0) amount))
           (deduct state side [cost-type amount])))
-    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) [cost-type amount])))
+    (trigger-event state side (if (= side :corp) :corp-lose :runner-lose) {:type cost-type
+                                                                           :amount amount})))
 
 (defn gain-credits
   "Utility function for triggering events"
   ([state side eid amount] (gain-credits state side eid amount nil))
-  ([state side eid amount args]
+  ([state side eid amount action]
    (if (and amount
             (pos? amount))
      (do (gain state side :credit amount)
-         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) amount args))
+         (trigger-event-sync state side eid (if (= :corp side) :corp-credit-gain :runner-credit-gain) {:amount amount :action action}))
      (effect-completed state side eid))))
 
 (defn lose-credits
@@ -108,8 +109,9 @@
   ([state side amount args]
     (when (and amount
                (pos? amount))
-      (do (gain state side :click amount)
-          (trigger-event state side (if (= :corp side) :corp-click-gain :runner-click-gain) amount args)))))
+      (gain state side :click amount)
+      (trigger-event state side (if (= :corp side) :corp-click-gain :runner-click-gain) {:amount amount
+                                                                                         :args args}))))
 
 (defn lose-clicks
   ([state side amount] (lose-clicks state side amount nil))
@@ -117,8 +119,9 @@
     (when (and amount
                (or (= :all amount)
                    (pos? amount)))
-      (do (lose state side :click amount)
-          (trigger-event state side (if (= :corp side) :corp-click-loss :runner-click-loss) amount args)))))
+      (lose state side :click amount)
+      (trigger-event state side (if (= :corp side) :corp-click-loss :runner-click-loss) {:amount amount
+                                                                                         :args args}))))
 
 ;;; Stuff for handling {:base x :mod y} data structures
 (defn base-mod-size

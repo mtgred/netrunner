@@ -14,10 +14,11 @@
   (let [default-visible-formats #{"standard"
                                   "system-gateway"
                                   "startup"
+                                  "sunset"
                                   "eternal"
                                   "snapshot"
                                   "snapshot-plus"
-                                  "classic"
+                                  "neo"
                                   "casual"}
         serialized (get-local-value "visible-formats" "")]
     (if (empty? serialized) default-visible-formats (set (.parse js/JSON serialized)))))
@@ -27,8 +28,8 @@
   (r/atom {:active-page "/"
            :user (js->clj js/user :keywordize-keys true)
            :options (merge {:background "lobby-bg"
-                            :custom-bg-url (get-local-value "custom_bg_url" "https://nisei.net/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
-                            :card-back (get-local-value "card-back" "nisei")
+                            :custom-bg-url (get-local-value "custom_bg_url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
+                            :card-back (get-local-value "card-back" "nsg")
                             :card-zoom (get-local-value "card-zoom" "image")
                             :pin-zoom (get-local-value "pin-zoom" false)
                             :pronouns "none"
@@ -48,12 +49,14 @@
                             :gamestats "always"
                             :log-width (str->int (get-local-value "log-width" "300"))
                             :log-top (str->int (get-local-value "log-top" "419"))
+                            :log-player-highlight (get-local-value "log-player-highlight" "blue-red")
                             :sounds (= (get-local-value "sounds" "true") "true")
                             :lobby-sounds (= (get-local-value "lobby_sounds" "true") "true")
                             :sounds-volume (str->int (get-local-value "sounds_volume" "100"))}
                            (:options (js->clj js/user :keywordize-keys true)))
 
            :cards-loaded false
+           :connected false
            :previous-cards {}
            :sets [] :mwl [] :cycles []
            :decks [] :decks-loaded false

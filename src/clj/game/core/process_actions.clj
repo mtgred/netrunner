@@ -3,7 +3,8 @@
    [clojure.string :as str]
    [game.core.actions :refer [click-advance click-credit click-draw click-run
                               close-deck do-purge generate-install-list
-                              generate-runnable-zones move-card play play-ability play-corp-ability
+                              generate-runnable-zones move-card expend-ability
+                              play play-ability play-corp-ability
                               play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag
                               resolve-prompt score select trash-resource view-deck]]
    [game.core.card :refer [get-card]]
@@ -18,7 +19,7 @@
    [game.core.say :refer [indicate-action say system-msg system-say]]
    [game.core.set-up :refer [keep-hand mulligan]]
    [game.core.shuffling :refer [shuffle-deck]]
-   [game.core.toasts :refer [toast]]
+   [game.core.toasts :refer [ack-toast]]
    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
    [game.core.winning :refer [concede]]))
 
@@ -65,6 +66,7 @@
    "move" #'move-card
    "mulligan" #'mulligan
    "play" #'play
+   "expend" #'expend-ability
    "purge" #'do-purge
    "remove-tag" #'remove-tag
    "rez" #(rez %1 %2 (make-eid %1) (:card %3) (dissoc %3 :card))
@@ -76,7 +78,7 @@
    "start-turn" #'start-turn
    "subroutine" #'play-subroutine
    "system-msg" #(system-msg %1 %2 (:msg %3))
-   "toast" #'toast
+   "toast" #'ack-toast
    "toggle-auto-no-action" #'toggle-auto-no-action
    "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) (dissoc %3 :card))
    "trash-resource" #'trash-resource

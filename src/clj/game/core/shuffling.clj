@@ -1,23 +1,23 @@
 (ns game.core.shuffling
   (:require
-    [clojure.string :as string]
     [game.core.card :refer [corp? in-discard?]]
     [game.core.engine :refer [trigger-event]]
     [game.core.moving :refer [move move-zone]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability msg req]]
-    [game.utils :refer [quantify]]))
+    [game.utils :refer [enumerate-str quantify]]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
   (when (contains? #{:deck :hand :discard} kw)
-    (trigger-event state side (when (= :deck kw) (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck)) nil)
+    (trigger-event state side (when (= :deck kw) (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck)))
     (when (and (:access @state)
                (:run @state)
                (= :corp side)
                (= :deck kw))
       (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+    (swap! state update-in [:stats side :shuffle-count] (fnil + 0) 1)
     (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck
@@ -39,7 +39,7 @@
       :msg (msg "shuffle "
                 (let [seen (filter :seen targets)
                       m (count (filter #(not (:seen %)) targets))]
-                  (str (string/join ", " (map :title seen))
+                  (str (enumerate-str (map :title seen))
                        (when (pos? m)
                          (str (when-not (empty? seen) " and ")
                               (quantify m "unseen card")))))
@@ -47,7 +47,9 @@
       :effect (req (doseq [c targets]
                      (move state side c :deck))
                    (shuffle! state side :deck))
-      :cancel-effect (req (shuffle! state side :deck))}
+      :cancel-effect (req 
+                      (system-msg state side (str " uses " (:title card) " to shuffle their deck")) 
+                      (shuffle! state side :deck))}
      card nil)))
 
 (defn shuffle-deck

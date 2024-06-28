@@ -3,7 +3,6 @@
             [monger.collection :as mc]
             [monger.operators :refer :all]
             [org.httpkit.client :as http]
-            [clj-uuid :as uuid]
             [clojure.string :as str]))
 
 (def nrdb-decklist-url "https://netrunnerdb.com/api/2.0/public/decklist/")
@@ -12,7 +11,8 @@
 (defn- parse-input
   "Want to handle an NRDB URL or just a deck id number"
   [input]
-  (let [input (if (str/starts-with? input nrdb-readable-url)
+  (let [input (str/replace input "www.netrunnerdb.com" "netrunnerdb.com")
+        input (if (str/starts-with? input nrdb-readable-url)
                 (subs input (count nrdb-readable-url))
                 input)
         [id] (str/split input #"/")]

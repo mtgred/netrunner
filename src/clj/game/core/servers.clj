@@ -41,7 +41,10 @@
 (defn name-zone
   "Gets a string representation for the given zone."
   [side zone]
-  (let [zone (vec zone)]
+  (let [side (cond (= :corp side) "Corp"
+                   (= :runner side) "Runner"
+                   :else side)
+        zone (if (keyword? zone) [zone] (vec zone))]
   (cond
     (= zone [:hand]) (if (= side "Runner") "Grip" "HQ")
     (= zone [:discard]) (if (= side "Runner") "Heap" "Archives")
@@ -69,7 +72,7 @@
 (defn is-remote?
   "Returns true if the zone is for a remote server"
   [zone]
-  (not (nil? (remote->name zone))))
+  (some? (remote->name zone)))
 
 (defn is-central?
   "Returns true if the zone is for a central server"

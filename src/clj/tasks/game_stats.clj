@@ -41,7 +41,7 @@
    (let [{{:keys [db]} :mongodb/connection :as system} (connect)]
      (try
        (let [start-date (ld/parse start-date-str ymd-formatter)
-             games (mq/with-collection db coll
+             games (mq/with-collection db (str coll)
                      (mq/find {:start-date {$gte start-date}})
                      (mq/fields {:_id 0 :start-date 1 :end-date 1 :room 1 :format 1 :winner 1
                                  :reason 1 :turn 1 :corp.identity 1 :runner.identity 1})

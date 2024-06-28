@@ -16,7 +16,7 @@
    [nr.appstate :refer [app-state]]
    [nr.cardbrowser :refer [card-as-text]]
    [nr.end-of-game-stats :refer [build-game-stats]]
-   [nr.gameboard.actions :refer [send-command toast]]
+   [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
@@ -97,6 +97,11 @@
     (if (:host card) (update card :host card-for-click) card)
     click-card-keys))
 
+(defn playable?
+  "Checks whether a card or ability is playable"
+  [action]
+  (:playable action))
+
 (defn handle-abilities
   [side {:keys [abilities corp-abilities runner-abilities subroutines facedown] :as card}]
   (let [actions (action-list card)
@@ -135,13 +140,17 @@
         (and (= c 1)
              (= side card-side))
         (if (= (count abilities) 1)
-          (send-command "ability" {:card (card-for-click card) :ability 0})
+          (when (playable? (first abilities))
+            (send-command "ability" {:card (card-for-click card) :ability 0}))
           (send-command (first actions) {:card (card-for-click card)}))))))
 
-(defn playable?
-  "Checks whether a card or ability is playable"
-  [action]
-  (:playable action))
+(defn- graveyard-highlight-card?
+  [card]
+  (and
+    (= (first (:zone card)) "discard")
+    (or (= "Agenda" (:type card))
+        (:poison card)
+        (:highlight-in-discard card))))
 
 (defn handle-card-click [{:keys [type zone] :as card}]
   (let [side (:side @game-state)]
@@ -198,8 +207,6 @@
   (let [card (-> e .-dataTransfer (.getData "card") ((.-parse js/JSON)) (js->clj :keywordize-keys true))]
     (when (not= "Identity" (:type card))
       (send-command "move" {:card card :server server}))))
-
-(defn abs [n] (max n (- n)))
 
 ;; touch support
 (defonce touchmove (atom {}))
@@ -289,6 +296,18 @@
      [tag {:src (str "/img/" card-back "-" s ".png")
            :alt alt}])))
 
+(defn sort-archives
+  [cards] (->> cards (sort-by get-title) (sort-by #(not (faceup? %)))))
+
+(defn sort-heap
+  [cards] (sort-by get-title cards))
+
+(defn sort-archives?
+  [] (get-in @app-state [:options :archives-sorted] false))
+
+(defn sort-heap?
+  [] (get-in @app-state [:options :heap-sorted] false))
+
 (defn card-img
   "Build an image of the card (is always face-up). Only shows the zoomed card image, does not do any interaction."
   [{:keys [code] :as card}]
@@ -374,7 +393,9 @@
                ^{:key label}
                [card-menu-item label
                 #(do (close-card-menu)
-                     (send-command "play" {:card card :server label}))])
+                     (if (= "Expend" label)
+                       (send-command "expend" {:card card :server label})
+                       (send-command "play" {:card card :server label})))])
              servers)]])))
 
 (defn list-abilities
@@ -629,6 +650,7 @@
                                               (same-card? card (:button @app-state)) "hovered"
                                               (same-card? card (-> @game-state :encounters :ice)) "encountered"
                                               (playable? card) "playable"
+                                              (graveyard-highlight-card? card) "graveyard-highlight"
                                               new "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)
@@ -880,14 +902,17 @@
        [:div.blue-shade.discard {:on-click #(-> (:popup @s) js/$ .fadeToggle)}
         (when-not (empty? @discard)
           [card-view (last @discard) nil true])
-        [:div.header {:class "darkbg server-label"}
+        [:div.header {:class (str "server-label "
+                                  (if (some graveyard-highlight-card? @discard)
+                                    "graveyard-highlight-bg"
+                                    "darkbg"))}
          (str (tr [:game.heap "Heap"]) " (" (count @discard) ")")]]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
          [:a {:on-click #(close-popup % (:popup @s) nil false false)} (tr [:game.close "Close"])]]
         (doall
-          (for [card @discard]
+          (for [card (if (sort-heap?) (sort-heap @discard) @discard)]
             ^{:key (:cid card)}
             [card-view card]))]])))
 
@@ -904,7 +929,13 @@
          [:div.blue-shade.discard {:on-click #(-> (:popup @s) js/$ .fadeToggle)}
           (when-not (empty? @discard)
             [:<> {:key "discard"} (draw-card (last @discard) true)])
-          [:div.header {:class "darkbg server-label"}
+          [:div.header {:class (str "server-label "
+                                    (if (some (if (or (= player-side :corp) (spectator-view-hidden?))
+                                                graveyard-highlight-card?
+                                                (every-pred graveyard-highlight-card? :seen))
+                                              @discard)
+                                      "graveyard-highlight-bg"
+                                      "darkbg"))}
            (let [total (count @discard)
                  face-up (count (filter faceup? @discard))]
              (str (tr [:game.archives "Archives"])
@@ -918,7 +949,7 @@
                          face-up (count (filter faceup? @discard))]
                      (tr [:game.face-down-count] total face-up))]]
           (doall
-            (for [[idx c] (map-indexed vector @discard)]
+            (for [[idx c] (map-indexed vector (if (sort-archives?) (sort-archives @discard) @discard))]
               ^{:key idx}
               [:div (draw-card c false)]))]]))))
 
@@ -1188,8 +1219,11 @@
               (= "Claim" (capitalize reason))
               (tr [:game.win-claimed] turn)
 
+              (= "Agenda" (capitalize reason))
+              (tr [:game.win-points] turn)
+
               :else
-              (tr [:game.win-points] turn))]
+              (tr [:game.win-other] turn reason))]
            [:div (tr [:game.time-taken] time)]
            [:br]
            [build-game-stats (get-in @game-state [:stats :corp]) (get-in @game-state [:stats :runner])]
@@ -1275,14 +1309,6 @@
                                               (reset! mulliganed true))]))]]]
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
-
-(defn audio-component [_input]
-  (r/with-let [sfx-state (r/track #(select-keys @game-state [:sfx :sfx-current-id]))]
-    (r/create-class
-      {:display-name "audio-component"
-       :component-did-update (fn [] (update-audio @sfx-state))
-       ;; make this component rebuild when sfx changes.
-       :reagent-render (fn [sfx] @sfx nil)})))
 
 (defn get-run-ices []
   (let [server (-> (:run @game-state)
@@ -1615,13 +1641,17 @@
      (when (and (not (or @runner-phase-12 @corp-phase-12))
                 (zero? (:click @me))
                 (not @end-turn))
-       [:button {:on-click #(send-command "end-turn")} (tr [:game.end-turn "End Turn"])])
+       [:button {:on-click #(send-command "end-turn")}
+        (tr [:game.end-turn "End Turn"])])
      (when @end-turn
-       [:button {:on-click #(send-command "start-turn")} (tr [:game.start-turn "Start Turn"])]))
+       [:button {:on-click #(send-command "start-turn")}
+        (tr [:game.start-turn "Start Turn"])]))
    (when (and (= (keyword @active-player) side)
               (or @runner-phase-12 @corp-phase-12))
      [:button {:on-click #(send-command "end-phase-12")}
-      (if (= side :corp) (tr [:game.mandatory-draw "Mandatory Draw"]) (tr [:game.take-clicks "Take Clicks"]))])
+      (if (= side :corp)
+        (tr [:game.mandatory-draw "Mandatory Draw"])
+        (tr [:game.take-clicks "Take Clicks"]))])
    (when (= side :runner)
      [:div
       [cond-button (tr [:game.remove-tag "Remove Tag"])
@@ -1689,9 +1719,7 @@
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
            (set! (.-cursor (.-style (.-body js/document))) "default"))
          (when (= "card-title" @prompt-type)
-           (-> "#card-title" js/$ .focus))
-         (doseq [{:keys [msg type options]} (get-in @game-state [side :toast])]
-           (toast msg type options)))
+           (-> "#card-title" js/$ .focus)))
 
        :reagent-render
        (fn [{:keys [side run encounters prompt-state me] :as button-pane-args}]
@@ -1757,21 +1785,59 @@
               (:minutes @remaining) "m:"
               (:seconds @remaining) "s remaining")]))})))
 
+(defn- time-since
+  "Helper method for match duration. Computes how much time since game start"
+  [start]
+  (let [start-time (-> start
+                       (inst/parse))
+        now (inst/now)
+        diff (duration/between start-time now)
+        total-seconds (duration/get diff chrono/seconds)
+        minutes (abs (quot total-seconds 60))
+        seconds (mod (abs total-seconds) 60)]
+    {:minutes minutes :seconds seconds}))
+
+(defn match-duration
+  "Component which displays a readout of the time since the start of the match."
+  [start-date hidden]
+  (let [duration (r/atom nil)
+        interval (r/atom nil)]
+    (r/create-class
+      {:component-did-mount
+       (fn []
+         (reset! interval
+                 ;; Update timer at most every 1 sec
+                 (js/setInterval #(reset! duration (time-since start-date)) 1000)))
+       :component-will-unmount
+       (fn []
+         (js/clearInterval @interval)
+         (reset! interval nil))
+       :reagent-render
+       (fn []
+         (when (not @hidden)
+           [:span.float-center.timer
+            (str
+              (:minutes @duration) "m:"
+              (:seconds @duration) "s")])
+         )})))
+
 (defn starting-timestamp [start-date timer]
   ;; I don't like using js/Date, but `toLocalTimeString`
   ;; is just too convenient
   (let [start-time-string (str (tr [:game.game-start "Game start"])
                                ": " (.toLocaleTimeString (js/Date. start-date)))
-        hide-remaining (r/atom false)]
+        hide-timer (r/atom false)]
     (fn []
       [:div.panel.blue-shade.timestamp
        [:span.float-center start-time-string]
-       (when timer
-         [:<>
-          [:span.pm {:on-click #(swap! hide-remaining not)}
-           (if @hide-remaining "+" "-")]
-          [:span {:on-click #(swap! hide-remaining not)}
-           [time-remaining start-date timer hide-remaining]]])])))
+       [:<>
+        [:span.pm {:on-click #(swap! hide-timer not)}
+         (if @hide-timer "+" "-")]
+        (if timer [:span {:on-click #(swap! hide-timer not)}
+                        [time-remaining start-date timer hide-timer]]
+                  [:span {:on-click #(swap! hide-timer not)}
+                        [match-duration start-date hide-timer]])]])))
+
 
 (defn- handle-click [{:keys [render-board?]} e]
   (when render-board?
@@ -1900,7 +1966,9 @@
         active-player (r/cursor game-state [:active-player])
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])
-        custom-bg-url (r/cursor app-state [:options :custom-bg-url])]
+        custom-bg-url (r/cursor app-state [:options :custom-bg-url])
+        labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
+        labeled-cards (r/cursor app-state [:options :labeled-cards])]
 
     (go (while true
           (let [zoom (<! zoom-channel)]
@@ -1984,7 +2052,9 @@
                  runner-rig (r/cursor game-state [:runner :rig])
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview
-              [:div.gameboard
+              [:div {:class [:gameboard
+                             (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
+                             (when @labeled-cards :show-card-labels)]}
                (let [me-keep (r/cursor game-state [me-side :keep])
                      op-keep (r/cursor game-state [op-side :keep])
                      me-quote (r/cursor game-state [me-side :quote])
@@ -2024,8 +2094,6 @@
                  [hand-view op-side op-hand op-hand-size op-hand-count (atom nil) (= @side :spectator)]]
 
                 [:div.inner-leftpane
-                 [audio-component sfx]
-
                  [:div.left-inner-leftpane
                   [:div
                    [stats-view opponent]
@@ -2058,10 +2126,13 @@
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
-                                  :me me :opponent opponent :prompt-state prompt-state}])]]
+                                  :me            me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
                  [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
               (when (:replay @game-state)
                 [:div.bottompane
                  [replay-panel]])])))})))
+
+(defonce sfx (r/track #(select-keys @game-state [:sfx :sfx-current-id])))
+(defonce trigger-sfx (r/track! #(update-audio @sfx)))

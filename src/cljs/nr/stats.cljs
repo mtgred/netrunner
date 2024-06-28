@@ -10,9 +10,9 @@
    [nr.avatar :refer [avatar]]
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.translations :refer [tr tr-format tr-lobby tr-side]]
-   [nr.utils :refer [day-word-with-time-formatter faction-icon
-                     format-date-time notnum->zero num->percent render-message
-                     set-scroll-top store-scroll-top]]
+   [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
+                     notnum->zero num->percent player-highlight-option-class
+                     render-message render-player-highlight set-scroll-top store-scroll-top]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -129,15 +129,17 @@
      :component-will-unmount #(store-scroll-top % log-scroll-top)
      :reagent-render
      (fn [state _log-scroll-top]
-       (let [game (:view-game @state)]
+       (let [game (:view-game @state)
+             corp (get-in game [:corp :player :username])
+             runner (get-in game [:runner :player :username])]
          [:div {:style {:overflow "auto"}}
-          [:div.panel.messages
+          [:div.panel.messages {:class (player-highlight-option-class)}
            (if (seq (:log game))
              (doall (map-indexed
                       (fn [i msg]
                         (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
                           (if (= (:user msg) "__system__")
-                            [:div.system {:key i} (render-message (:text msg))]
+                            [:div.system {:key i} (render-message (render-player-highlight (:text msg) corp runner))]
                             [:div.message {:key i}
                              [avatar (:user msg) {:opts {:size 38}}]
                              [:div.content
@@ -157,8 +159,13 @@
   [state {:keys [title corp runner turn winner replay-shared has-replay start-date] :as game} log-scroll-top]
   (let [corp-id (get @all-cards (:identity corp))
         runner-id (get @all-cards (:identity runner))
-        turn-count (if turn turn 0)]
-    [:div.gameline {:style {:min-height "auto"}}
+        turn-count (if turn turn 0)
+        user (:user @app-state)
+        user-win (if (= (str winner) "corp") 
+                (if (= (:username user) (get-in corp [:player :username])) " (You)" "")
+                (if (= (:username user) (get-in runner [:player :username])) " (You)" ""))]
+    [:div.gameline {:style {:min-height "auto"
+                            :border-color (when winner (if (= user-win " (You)") "#6AB56A" "#Ea7d7f"))}}
      [:button.float-right
       {:on-click #(do
                     (fetch-log state game)
@@ -183,7 +190,7 @@
        (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
 
      (when winner
-       [:h4 (tr [:stats.winner "Winner"]) ": " (tr-side winner)])]))
+       [:h4 (tr [:stats.winner "Winner"]) ": " (tr-side winner) (str user-win)])]))
 
 (defn history [_state list-scroll-top _log-scroll-top]
   (r/create-class
