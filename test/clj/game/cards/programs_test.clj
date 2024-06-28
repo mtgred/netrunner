@@ -768,9 +768,14 @@
       (is (= (inc base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga lost 2 subroutines from trashed Faerie")
       (play-from-hand state :runner "Sharpshooter")
       (click-prompt state :runner "Baba Yaga")
-      (is (= 2 (count (:hosted (refresh baba)))) "Faerie and Sharpshooter hosted on Baba Yaga")
+      (is (= 2 (count (:hosted (refresh baba)))) "Yog0 and Sharpshooter hosted on Baba Yaga")
       (is (= 1 (core/available-mu state)) "1 MU left with 2 breakers on Baba Yaga")
-      (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
+      (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog")
+      (is (= (:label (last (:abilities (refresh baba)))) "Add 2 strength"))
+      (is (changed? [(:credit (get-runner)) -1]
+                    ;; fairie strength boost
+                    (card-ability state :runner (refresh baba) 2))
+          "Spent 1c to boost baba yaga"))))
 
 (deftest bankroll
   ;; Bankroll - Includes check for Issue #4334
