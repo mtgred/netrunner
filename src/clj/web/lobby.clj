@@ -183,12 +183,16 @@
            lobby-summaries (summaries-for-lobbies filtered-lobbies)]
        [uid [:lobby/list lobby-summaries]])))
 
+(defn lobby-update-uids
+  []
+  (filter #(app-state/receive-lobby-updates? %) (ws/connected-uids)))
+
 (defn broadcast-lobby-list
   "Sends the lobby list to all users or a given list of users.
   Filters the list per each users block list."
   ([]
    (let [user-cache (:users @app-state/app-state)
-         uids (filter #(app-state/receive-lobby-updates? %) (ws/connected-uids))
+         uids (lobby-update-uids)
          users (map #(get user-cache %) uids)]
      (broadcast-lobby-list users)))
   ([users]

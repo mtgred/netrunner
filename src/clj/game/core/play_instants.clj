@@ -52,6 +52,7 @@
           play-event (if (= side :corp) :play-operation :play-event)
           resolved-event (if (= side :corp) :play-operation-resolved :play-event-resolved)]
       (queue-event state play-event {:card card :event play-event})
+      (swap! state update-in [:stats side :cards-played :play-instant] (fnil inc 0))
       (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
                 (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
                           (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))

@@ -17,6 +17,7 @@
                (= :corp side)
                (= :deck kw))
       (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+    (swap! state update-in [:stats side :shuffle-count] (fnil + 0) 1)
     (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck

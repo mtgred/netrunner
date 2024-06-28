@@ -193,6 +193,8 @@
                 :enforce-conditions (:enforce-conditions cdef)
                 :trash-when-tagged (:trash-when-tagged cdef)
                 :x-fn (:x-fn cdef)
+                :poison (:poison cdef)
+                :highlight-in-discard (:highlight-in-discard cdef)
                 :printed-title (:title card))
          (dissoc :setname :text :_id :influence :number :influencelimit
                  :image_url :factioncost :format :quantity)

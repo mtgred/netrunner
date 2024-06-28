@@ -898,6 +898,24 @@
       (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
       (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
 
+(deftest by-any-means-vs-loup
+  ;; vs Loup
+  (do-game
+    (new-game {:corp {:deck ["Paper Trail"]}
+               :runner {:id "René \"Loup\" Arcemont: Party Animal"
+                        :hand ["By Any Means"]
+                        :deck ["Strike Fund"]}})
+    (play-from-hand state :corp "Paper Trail" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "By Any Means")
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Yes")
+    (is (= 6 (:credit (get-runner))) "gained 2c from strike + 1c from loup")
+    (is (no-prompt? state :runner) "No prompt to steal since agenda was trashed")
+    (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
+    (is (= 2 (count (:discard (get-runner)))) "two cards trashed")
+    (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")))
+
 (deftest by-any-means-alongside-film-critic-should-get-the-option-to-trigger-either
     ;; alongside Film Critic: should get the option to trigger either
     (do-game
@@ -3882,6 +3900,27 @@
     (click-card state :runner "D4v1d")
     (click-prompt state :runner "No action")
     (is (= 4 (get-counters (get-program state 0) :power)) "4 counters on david")))
+
+(deftest into-the-depths-inversificator-still-counts-the-ice
+  (do-game
+    (new-game {:runner {:hand ["Into the Depths" "Inversificator"]
+                        :credits 20}
+               :corp {:hand [(qty "Quandary" 2)]}})
+    (play-from-hand state :corp "Quandary" "HQ")
+    (play-from-hand state :corp "Quandary" "R&D")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :runner "Inversificator")
+    (play-from-hand state :runner "Into the Depths")
+    (click-prompt state :runner "HQ")
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (run-continue state :pass-ice)
+    (click-prompt state :runner "Yes")
+    (click-card state :runner (get-ice state :rd 0))
+    (run-continue-until state :success)
+    (click-prompt state :runner "Gain 4 [Credits]")))
 
 (deftest isolation
   ;; Isolation - A resource must be trashed, gain 7c
