@@ -2,7 +2,7 @@
   (:require
     [game.core.card :refer [runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [any-effects get-effects sum-effects get-effect-maps get-effect-value is-disabled? is-disabled-reg?]]
+    [game.core.effects :refer [any-effects get-effects sum-effects get-effect-maps get-effect-value is-disabled-reg?]]
     [game.core.eid :refer [make-eid]]
     [game.core.payment :refer [merge-costs]]))
 
@@ -44,7 +44,7 @@
   ([state side card] (rez-additional-cost-bonus state side card nil))
   ([state side card pred]
    (let [costs (merge-costs
-                 [(when-not (is-disabled? state side card) (:additional-cost (card-def card)))
+                 [(when-not (is-disabled-reg? state card) (:additional-cost (card-def card)))
                   (get-effects state side :rez-additional-cost card)])]
      (filterv (or pred identity) costs))))
 

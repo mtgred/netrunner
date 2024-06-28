@@ -841,10 +841,10 @@
 
 (defcard "Hayley Kaplan: Universal Scholar"
   {:events [{:event :runner-install
-             :silent (req (not (and (first-event? state side :runner-install)
-                                    (some #(is-type? % (:type (:card context))) (:hand runner)))))
              :req (req (and (first-event? state side :runner-install)
                             (not (:facedown context))))
+             :interactive (req (some #(card-flag? % :runner-install-draw)
+                                     (all-installed state :runner)))
              :once :per-turn
              :async true
              :waiting-prompt true

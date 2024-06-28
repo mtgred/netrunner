@@ -4608,7 +4608,7 @@
     (is (not (:run @state)) "Run ended")
     (run-on state :remote1)
     (run-continue state :encounter-ice)
-    (click-prompt state :corp "Funhouse")
+    (click-prompt state :corp "Funhouse Ability")
     (click-prompt state :runner "End the run")
     (is (not (:run @state)) "Run ended")
     (is (no-prompt? state :corp))))

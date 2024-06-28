@@ -166,8 +166,7 @@
     (is (changed? [(:credit (get-corp)) 0]
           (click-card state :corp "Pharos")
           (click-prompt state :corp "Server 2"))
-        "Ignored install costs")
-    ))
+        "Ignored install costs")))
 
 (deftest a-teia-tatu-bola
   (do-game
@@ -178,8 +177,7 @@
     (take-credits state :corp)
     (run-on state :remote1)
     (rez state :corp (get-ice state :remote1 0))
-    (run-continue state :encounter-ice)
-    (run-continue state :pass-ice)
+    (run-continue-until state :movement)
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Vanilla")
     (click-card state :corp "Tatu-Bola")
@@ -2026,6 +2024,23 @@
       (play-from-hand state :runner "Fan Site")
       (is (no-prompt? state :runner) "No Hayley prompt if not first install this turn.")))
 
+(deftest hayley-vs-off-campus-apartment
+  (do-game
+    (new-game {:runner {:id "Hayley Kaplan: Universal Scholar"
+                        :hand ["Off-Campus Apartment" "Data Dealer"]
+                        :deck ["Fan Site"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Off-Campus Apartment")
+    (click-prompt state :runner "No")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [oca (get-resource state 0)]
+      (card-ability state :runner oca 0)
+      (click-card state :runner "Data Dealer")
+      (click-prompt state :runner "Off-Campus Apartment")
+      (click-prompt state :runner "Yes")
+      (click-card state :runner "Fan Site"))))
+
 (deftest hayley-kaplan-universal-scholar-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -2068,7 +2083,7 @@
       (click-prompt state :runner "Carry on!")
       (take-credits state :runner)
       (take-credits state :corp)
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (no-prompt? state :corp) "No Hayley wait prompt for facedown installs.")))
 
 (deftest hoshiko-shiro-untold-protagonist-id-ability
@@ -3018,6 +3033,38 @@
       (run-empty-server state "R&D")
       (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
       (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
+
+(deftest liza-vs-lockdown
+  (letfn [(rest-of-game
+            [state]
+            (play-from-hand state :corp "Lockdown" "HQ")
+            (take-credits state :corp)
+            (run-on state :hq)
+            (rez state :corp (get-ice state :hq 0))
+            (run-continue state :encounter-ice)
+            (card-subroutine state :corp (get-ice state :hq 0) 0)
+            (run-continue-until state :success)
+            (is (nil? (:run @state)) "No more run")
+            (is (= 1 (count-tags state)) "Took a tag")
+            (is (not (seq (get-in @state [:runner :hand]))) "Did not draw"))]
+  (do-game
+    (new-game {:corp {:hand ["Lockdown"]}
+               :runner {:id "Liza Talking Thunder: Prominent Legislator"
+                        :hand []
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (rest-of-game state))
+  (do-game
+    (new-game {:corp {:hand ["Lockdown"]}
+               :runner {:id "Reina Roja: Freedom Fighter"
+                        :hand ["DJ Fenris"]
+                        :deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "DJ Fenris")
+    (click-prompt state :runner "Liza Talking Thunder: Prominent Legislator")
+    (take-credits state :runner)
+    (rest-of-game state))))
+
+
 
 (deftest liza-talking-thunder-prominent-legislator-works-with-crisium-grid
     ;; Works with Crisium Grid

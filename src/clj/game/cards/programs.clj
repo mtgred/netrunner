@@ -101,6 +101,7 @@
   (Conspiracy suite: Black Orchestra, MKUltra, Paperclip)"
   [title ice-type abilities]
   {:abilities abilities
+   :highlight-in-discard true
    :events [{:event :encounter-ice
              :async true
              :location :discard
@@ -1651,12 +1652,6 @@
                    (flip-facedown state side card)))}})
 
 (defcard "Heliamphora"
-  (let [traps-we-care-about #{"Mavirus" "Cyberdeck Virus Suite" "Breached Dome"
-                              "Honeyfarm" "Increased Drop Rates" "News Team"
-                              "Nightmare Archive" "Shi.Kyū" "Shock!"
-                              "Space Camp"}]
-    ;; TODO - we should probably just add a flag to the cdef of all archives activated ambushes
-    ;; instead of manually listing them. It might come in handy later, too -nbkelly
   {:events [{:event :breach-server
              :async true
              :interactive (req true)
@@ -1681,7 +1676,7 @@
                          (in-discard? target)
                          (or (agenda? target)
                              (not (:seen target))
-                             (contains? traps-we-care-about (:title target)))))
+                             (:poison target))))
              :async true
              ;; note that it's possible for cards to get added to archives mid-access (even by this card)
              ;; because of this, we can't just treat this like archives interface
@@ -1690,7 +1685,7 @@
              :effect (req (let [target-card target
                                 is-facedown? (not (:seen target))
                                 is-agenda? (agenda? target)
-                                is-trap? (contains? traps-we-care-about (:title target))]
+                                is-poison? (:poison target)]
                             (continue-ability
                               state side
                               (cond
@@ -1700,7 +1695,7 @@
                                   :yes-ability {:msg "host a facedown card on itself instead of accessing it"
                                                 :effect (effect (update! (assoc-in card [:special :host-available] false))
                                                                 (host card target-card))}}}
-                                (or is-agenda? is-trap?)
+                                (or is-agenda? is-poison?)
                                 {:optional
                                  {:prompt (msg "Host " (:title target-card) " on this program instead of accessing it?")
                                   :yes-ability {:msg (msg "host " (:title target-card) " on itself instead of accessing it")
@@ -1713,7 +1708,7 @@
              :effect (req (wait-for
                             (trash-cards state :corp (make-eid state eid)
                                          (take 2 (shuffle (:hand corp))) {:cause-card card})
-                            (trash state :runner eid card {:cause :purge :cause-card card})))}]}))
+                            (trash state :runner eid card {:cause :purge :cause-card card})))}]})
 
 (defcard "Hemorrhage"
   {:events [{:event :successful-run
