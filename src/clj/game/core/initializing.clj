@@ -190,6 +190,7 @@
                 :subroutines (subroutines-init (assoc card :cid cid) cdef)
                 :abilities (ability-init cdef)
                 :expend (:expend cdef)
+                :can-host (:can-host cdef)
                 :enforce-conditions (:enforce-conditions cdef)
                 :trash-when-tagged (:trash-when-tagged cdef)
                 :x-fn (:x-fn cdef)

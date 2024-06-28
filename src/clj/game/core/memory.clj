@@ -148,11 +148,16 @@
       (abval state :runner nil card nil)
       0)))
 
+(defn expected-mu
+  [state card]
+  (when (program? card)
+    (+ (:memoryunits card) (some-mu-effect? state card))))
+
 (defn sufficient-mu?
   "Will installing this card put the runner over their memory limit?"
   [state card]
   (when (program? card)
-    (let [mu-cost (+ (:memoryunits card) (some-mu-effect? state card))
+    (let [mu-cost (expected-mu state card)
           mu-list (get-available-mu state)
           available-mu (merge-available-memory mu-list)
           used-mu-effects (conj (get-effect-maps state :runner :used-mu)

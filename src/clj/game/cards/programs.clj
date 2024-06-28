@@ -38,7 +38,7 @@
                                  runner-install]]
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
-   [game.core.memory :refer [available-mu update-mu]]
+   [game.core.memory :refer [available-mu expected-mu update-mu]]
    [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards
                              trash-prevent]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
@@ -535,23 +535,11 @@
                                 (strength-pump 2 3)]}))
 
 (defcard "Baba Yaga"
-  (let [host-click {:cost [(->c :click 1)]
-                    :label "Install and host a non-AI icebreaker on Baba Yaga"
-                    :prompt "Choose a non-AI icebreaker in the grip"
-                    :choices {:card #(and (has-subtype? % "Icebreaker")
-                                          (not (has-subtype? % "AI"))
-                                          (in-hand? %))}
-                    :async true
-                    :effect (effect (runner-install eid target {:host-card card}))}
-        host-free {:label "Host an installed non-AI icebreaker (manual)"
-                   :prompt "Choose an installed non-AI icebreaker"
-                   :choices {:card #(and (has-subtype? % "Icebreaker")
-                                         (not (has-subtype? % "AI"))
-                                         (installed? %))}
-                   :effect (effect (host card target))}
-        gain-abis (req (let [new-abis (mapcat (comp ability-init card-def) (:hosted card))]
-                         (update! state :runner (assoc card :abilities (concat [host-click host-free] new-abis)))))]
-    {:abilities [host-click host-free]
+  (let [gain-abis (req (let [new-abis (mapcat (comp ability-init card-def) (:hosted card))]
+                         (update! state :runner (assoc card :abilities new-abis))))]
+    {:can-host {:req (req (and (program? target)
+                               (has-subtype? target "Icebreaker")
+                               (not (has-subtype? target "AI"))))}
      :hosted-gained gain-abis
      :hosted-lost gain-abis}))
 
@@ -1234,58 +1222,10 @@
                 :effect (effect (damage-prevent :net Integer/MAX_VALUE))}]})
 
 (defcard "Dhegdheer"
-  {:abilities [{:req (req (and (not (get-in card [:special :dheg-prog]))
-                               (some #(and (program? %)
-                                           (runner-can-install? state side % false)
-                                           (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                     [(->c :credit (install-cost state side % {:cost-bonus -1}))]))
-                                     (:hand runner))))
-                :cost [(->c :click 1)]
-                :label "Install and host a program"
-                :prompt "Choose a program in the grip"
-                :choices
-                {:req (req (and (program? target)
-                                (runner-can-install? state side target false)
-                                (in-hand? target)
-                                (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                          [(->c :credit (install-cost state side target {:cost-bonus -1}))])))}
-                :msg (msg (str "install and host " (:title target)
-                               (when (-> target :cost pos?)
-                                 ", lowering its cost by 1 [Credit]")))
-                :async true
-                :effect (effect (update! (assoc-in card [:special :dheg-prog] (:cid target)))
-                                (runner-install (assoc eid :source (get-card state card) :source-type :runner-install)
-                                                target {:host-card (get-card state card)
-                                                        :no-mu true
-                                                        :cost-bonus -1}))}
-               {:label "Host an installed program with [Credit] discount (manual)"
-                :req (req (nil? (get-in card [:special :dheg-prog])))
-                :prompt "Choose an installed program"
-                :choices {:card #(and (program? %)
-                                      (installed? %))}
-                :msg (msg (str "host " (:title target)
-                               (when (-> target :cost pos?)
-                                 ", lowering its cost by 1 [Credit]")))
-                :async true
-                :effect (req (let [c (if (-> target :cost pos?) 1 0)]
-                               (wait-for (gain-credits state side c)
-                                         (host state side card (get-card state target))
-                                         (unregister-effects-for-card state side target #(= :used-mu (:type %)))
-                                         (update-mu state)
-                                         (update! state side (assoc-in (get-card state card) [:special :dheg-prog] (:cid target)))
-                                         (update-breaker-strength state side target)
-                                         (effect-completed state side eid))))}
-               {:label "Host an installed program (manual)"
-                :req (req (nil? (get-in card [:special :dheg-prog])))
-                :prompt "Choose an installed program"
-                :choices {:card #(and (program? %)
-                                      (installed? %))}
-                :msg (msg (str "host " (:title target)))
-                :effect (effect (host card (get-card state target))
-                                (unregister-effects-for-card target #(= :used-mu (:type %)))
-                                (update-mu)
-                                (update-breaker-strength target)
-                                (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]})
+  {:can-host {:req (req (program? target))
+              :no-mu true
+              :cost-bonus -1
+              :max-cards 1}})
 
 (defcard "Disrupter"
   {:events
@@ -1314,7 +1254,12 @@
                                                          :cause-card card}))}]})
 
 (defcard "Djinn"
-  {:abilities [{:label "Search the stack for a virus program and add it to the grip"
+  {:can-host {:req (req (and (<= (expected-mu state target) 3)
+                             (not (has-subtype? target "Icebreaker"))
+                             (program? target)))
+              :no-mu true
+              :max-mu 3}
+   :abilities [{:label "Search the stack for a virus program and add it to the grip"
                 :prompt "Choose a Virus"
                 :msg (msg "add " (:title target) " from the stack to the grip")
                 :choices (req (cancellable (filter #(and (program? %)
@@ -1324,26 +1269,7 @@
                 :keep-menu-open :while-clicks-left
                 :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
-                                (move target :hand))}
-               {:label "Install and host a non-Icebreaker program"
-                :cost [(->c :click 1)]
-                :prompt "Choose a non-Icebreaker program"
-                :choices {:req (req (and (program? target)
-                                         (runner-can-install? state side target false)
-                                         (not (has-subtype? target "Icebreaker"))
-                                         (in-hand? target)))}
-                :msg (msg "install from the grip and host " (:title target))
-                :async true
-                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed non-Icebreaker program (manual)"
-                :prompt "Choose an installed non-Icebreaker program"
-                :choices {:card #(and (program? %)
-                                      (not (has-subtype? % "Icebreaker"))
-                                      (installed? %))}
-                :msg (msg "host " (:title target))
-                :effect (effect (host card target)
-                                (unregister-effects-for-card target #(= :used-mu (:type %)))
-                                (update-mu))}]})
+                                (move target :hand))}]})
 
 (defcard "Eater"
   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg "access not more than 0 cards for the remainder of this run"
@@ -2017,23 +1943,9 @@
                 :effect (effect (pump-ice current-ice -1))}]})
 
 (defcard "Leprechaun"
-  {:abilities [{:label "Install and host a program"
-                :cost [(->c :click 1)]
-                :prompt "Choose a program in the grip"
-                :choices {:req (req (and (program? target)
-                                         (runner-can-install? state side target false)
-                                         (in-hand? target)))}
-                :msg (msg "install and host " (:title target))
-                :async true
-                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed program (manual)"
-                :prompt "Choose an installed program"
-                :choices {:card #(and (program? %)
-                                      (installed? %))}
-                :msg (msg "host " (:title target))
-                :effect (effect (host card target)
-                                (unregister-effects-for-card target #(= :used-mu (:type %)))
-                                (update-mu))}]})
+  {:can-host {:req (req (program? target))
+              :no-mu true
+              :max-cards 2}})
 
 (defcard "Leviathan"
   (auto-icebreaker {:abilities [(break-sub 3 3 "Code Gate")
@@ -2800,31 +2712,13 @@
                                             ((:effect base) state side eid card targets))))]}))
 
 (defcard "Progenitor"
-  {:abilities [{:label "Install and host a virus program"
-                :req (req (empty? (:hosted card)))
-                :cost [(->c :click 1)]
-                :prompt "Choose a virus program"
-                :choices {:card #(and (program? %)
-                                      (has-subtype? % "Virus")
-                                      (in-hand? %))}
-                :msg (msg "install and host " (:title target))
-                :async true
-                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed virus (manual)"
-                :req (req (empty? (:hosted card)))
-                :prompt "Choose an installed virus program"
-                :choices {:card #(and (program? %)
-                                      (has-subtype? % "Virus")
-                                      (installed? %))}
-                :msg (msg "host " (:title target))
-                :effect (effect (host card target)
-                                (unregister-effects-for-card target #(= :used-mu (:type %)))
-                                (update-mu))}]
-   :static-abilities
-   [{:type :prevent-purge-virus-counters
-     :req (req (pos? (get-counters (first (:hosted card)) :virus)))
-     :value (req {:card (first (:hosted card))
-                  :quantity 1})}]})
+  {:can-host {:req (req (and (program? target) (has-subtype? target "Virus")))
+              :no-mu true
+              :max-cards 1}
+   :static-abilities [{:type :prevent-purge-virus-counters
+                       :req (req (pos? (get-counters (first (:hosted card)) :virus)))
+                       :value (req {:card (first (:hosted card))
+                                    :quantity 1})}]})
 
 (defcard "Propeller"
   (auto-icebreaker {:data {:counter {:power 4}}
@@ -3015,28 +2909,12 @@
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]})
 
 (defcard "Scheherazade"
-  {:abilities [{:label "Install and host a program from the grip"
-                :async true
-                :cost [(->c :click 1)]
-                :keep-menu-open :while-clicks-left
-                :prompt "Choose a program in the grip"
-                :choices {:req (req (and (program? target)
-                                      (runner-can-install? state side target false)
-                                      (in-hand? target)))}
-                :msg (msg "install and host " (:title target) " and gain 1 [Credits]")
-                :effect (req (wait-for (gain-credits state side 1)
-                                       (runner-install state side
-                                                       (assoc eid :source card :source-type :runner-install)
-                                                       target {:host-card card})))}
-               {:label "Host an installed program (manual)"
-                :prompt "Choose an installed program"
-                :choices {:card #(and (program? %)
-                                      (installed? %))}
-                :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                :async true
-                :effect (req (if (host state side card target)
-                               (gain-credits state side eid 1)
-                               (effect-completed state side eid)))}]})
+  {:can-host {:req (req (program? target))}
+   :events [{:event :runner-install
+             :req (req (same-card? card (:host (:card context))))
+             :msg (msg "gain 1 [Credits]")
+             :async true
+             :effect (req (gain-credits state side eid 1))}]})
 
 (defcard "Self-modifying Code"
   {:abilities [{:req (req (not (install-locked? state side)))
