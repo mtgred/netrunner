@@ -422,6 +422,7 @@
 
 (defcard "Breached Dome"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:async true
                :effect (req (let [c (first (get-in @state [:runner :deck]))]
                               (system-msg state :corp (str "uses " (:title card) " to do 1 meat damage"
@@ -1280,6 +1281,7 @@
 
 (defcard "Honeyfarm"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:msg "force the Runner to lose 1 [Credits]"
                :async true
                :effect (effect (lose-credits :runner eid 1))}})
@@ -1927,6 +1929,7 @@
 
 (defcard "News Team"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:async true
                :msg (msg "force the Runner to " (decapitalize target))
                :player :runner
@@ -1976,6 +1979,7 @@
 
 (defcard "Nightmare Archive"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:async true
                :msg (msg (if (= target "Suffer 1 core damage")
                            "do 1 core damage"
@@ -2545,7 +2549,8 @@
                      :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
 (defcard "Shi.Kyū"
-  {:on-access
+  {:poison true
+   :on-access
    {:optional
     {:req (req (not (in-deck? card)))
      :waiting-prompt true
@@ -2575,6 +2580,7 @@
 
 (defcard "Shock!"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:msg "do 1 net damage"
                :async true
                :effect (effect (damage eid :net 1 {:card card}))}})
@@ -2609,6 +2615,7 @@
 
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:optional
                {:waiting-prompt true
                 :prompt "Place 1 advancement token on a card that can be advanced?"

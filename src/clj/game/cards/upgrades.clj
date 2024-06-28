@@ -502,6 +502,7 @@
 
 (defcard "Cyberdex Virus Suite"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:optional
                {:waiting-prompt true
                 :prompt "Purge virus counters?"
@@ -856,6 +857,7 @@
 
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:interactive (req true)
                :player :runner
                :async true
@@ -1125,6 +1127,7 @@
 
 (defcard "Mavirus"
   {:flags {:rd-reveal (req true)}
+   :poison true
    :on-access {:optional
                {:waiting-prompt true
                 :prompt "Purge virus counters?"

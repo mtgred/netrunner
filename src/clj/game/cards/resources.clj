@@ -884,6 +884,7 @@
                                                     (draw state :runner eid 1))
                                           (effect-completed state side eid))))}]
     {:data {:counter {:credit 3}}
+     :highlight-in-discard true
      :flags {:drip-economy true
              :runner-turn-draw (req (= 1 (get-counters (get-card state card) :credit)))
              :runner-phase-12 (req (= 1 (get-counters (get-card state card) :credit)))}
