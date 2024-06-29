@@ -26,7 +26,13 @@
                         :value true
                         :checked (get-in @app-state [:options :labeled-cards])
                         :on-change #(swap! app-state assoc-in [:options :labeled-cards] (.. % -target -checked))}]
-        (tr [:ingame-settings.stack-cards "Label face up cards"])]]]
+        (tr [:ingame-settings.stack-cards "Label face up cards"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :ghost-trojans])
+                        :on-change #(swap! app-state assoc-in [:options :ghost-trojans] (.. % -target -checked))}]
+        (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.card-stacking "Sorting"])]

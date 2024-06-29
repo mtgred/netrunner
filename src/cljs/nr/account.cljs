@@ -46,6 +46,7 @@
   (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
   (swap! app-state assoc-in [:options :player-stats-icons] (:player-stats-icons @s))
   (swap! app-state assoc-in [:options :stacked-cards] (:stacked-cards @s))
+  (swap! app-state assoc-in [:options :ghost-trojans] (:ghost-trojans @s))
   (swap! app-state assoc-in [:options :sides-overlap] (:sides-overlap @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
@@ -65,6 +66,7 @@
   (.setItem js/localStorage "log-player-highlight" (:log-player-highlight @s))
   (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
   (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
+  (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
   (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
@@ -349,6 +351,12 @@
            [:div
             [:label [:input {:type "checkbox"
                              :value true
+                             :checked (:ghost-trojans @s)
+                             :on-change #(swap! s assoc-in [:ghost-trojans] (.. % -target -checked))}]
+             (tr [:settings.ghost-trojans "Display ghosts for hosted programs"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
                              :checked (:sides-overlap @s)
                              :on-change #(swap! s assoc-in [:sides-overlap] (.. % -target -checked))}]
              (tr [:settings.sides-overlap "Runner and Corp board may overlap"])]]
@@ -572,6 +580,7 @@
                        :all-art-select "wc2015"
                        :card-resolution (get-in @app-state [:options :card-resolution])
                        :stacked-cards (get-in @app-state [:options :stacked-cards])
+                       :ghost-trojans (get-in @app-state [:options :ghost-trojans])
                        :sides-overlap (get-in @app-state [:options :sides-overlap])
                        :player-stats-icons (get-in @app-state [:options :player-stats-icons])
                        :runner-board-order (get-in @app-state [:options :runner-board-order])
