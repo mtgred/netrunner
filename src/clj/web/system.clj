@@ -29,6 +29,7 @@
    [web.app-state :as app-state]
    [web.game]
    [web.lobby :as lobby]
+   [web.telemetry]
    [web.utils :refer [tick]]
    [web.versions :refer [banned-msg frontend-version]]
    [web.ws :refer [ch-chsk event-msg-handler]]))

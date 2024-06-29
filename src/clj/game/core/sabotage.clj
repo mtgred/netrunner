@@ -65,4 +65,6 @@
     {:req (req (pos? n))
      :msg (msg "sabotage " n)
      :async true
-     :effect (req (continue-ability state side check-forcing-ab card targets))}))
+     :effect (req
+               (swap! state update-in [:stats :runner :cards-sabotaged] (fnil + 0) n)
+               (continue-ability state side check-forcing-ab card targets))}))

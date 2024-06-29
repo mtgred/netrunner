@@ -25,8 +25,7 @@
                    (update-hand-size state :corp)
                    (update-hand-size state :runner)
                    (update-all-subtypes state)
-                   (update-tag-status state)
-                   (update-disabled-cards state)]]
+                   (update-tag-status state)]]
       (when (and (some true? changed)
                  (< i 10))
         (recur (inc i)))))

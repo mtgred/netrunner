@@ -96,50 +96,30 @@
    :abilities [(break-sub [(->c :lose-click 1)] 1 "All" {:req (req true)})]})
 
 (defcard "AirbladeX (JSRF Ed.)"
-  (let [ability {:label "Prevent a \"when encountered\" ability on a piece of ice"
-                 :cost [(->c :power 1)]
-                 :msg (msg "prevent the encounter ability on " (card-str state current-ice))
-                 :effect (req (let [[suppress]
-                                    (register-suppress
-                                      state side card
-                                      (let [ice current-ice]
-                                        [{:event :encounter-ice
-                                          ;; TODO: when suppression is fixed, this should be (:ice context)
-                                          :req (req (same-card? ice target))}]))]
-                                (register-once state side {:once :per-turn} card) ;; needed for firing in the event handler
-                                (register-events
-                                  state side card
-                                  [{:event :end-of-encounter
-                                    :duration :end-of-encounter
-                                    :unregister-once-resolved true
-                                    :effect (effect (unregister-suppress-by-uuid (:uuid suppress)))}])))}]
-    {:data {:counter {:power 3}}
-     :interactions {:prevent [{:type #{:net}
-                               :req (req run)}]}
-     :events [(trash-on-empty :power)
-              {:event :encounter-ice
-               :req (req (contains? (card-def current-ice) :on-encounter))
-               :async true
-               :effect
-               (effect (continue-ability
-                         {:eid (assoc eid :source-type :ability)
-                          :optional
-                          {:prompt (str "Prevent \"when encountered\" ability of " (card-str state current-ice) "?")
-                           :waiting-prompt true
-                           :yes-ability ability}}
-                         card nil))}]
+  {:data {:counter {:power 3}}
+   :interactions {:prevent [{:type #{:net}
+                             :req (req run)}]}
+   :events [(trash-on-empty :power)
+            {:event :prevent-encounter-ability
+             :interactive (req true)
+             :req (req (not (get-in @state [:run :prevent-encounter-ability])))
+             :async true
+             :effect (req
+                       (if (get-in @state [:run :prevent-encounter-ability])
+                         (effect-completed state side eid)
+                         (continue-ability
+                           state side
+                           {:optional {:prompt (msg "Prevent a \"when encountered\" ability on " (:title current-ice) (when (:ability-name target)
+                                                                                                                        (str " (" (:ability-name target) ")")))
+                                       :yes-ability {:cost [(->c :power 1)]
+                                                     :msg (msg "prevent the encounter ability on " (:title current-ice) (when (:ability-name target)
+                                                                                                                          (str " (" (:ability-name target) ")")))
+                                                     :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] true))}}}
+                           card targets)))}]
      :abilities [{:cost [(->c :power 1)]
                   :req (req run)
                   :msg "prevent 1 net damage"
-                  :effect (effect (damage-prevent :net 1))}
-                 (assoc ability
-                        :req (req (and (= :approach-ice (:phase run))
-                                       (rezzed? current-ice)
-                                       (or (->> (:events @state)
-                                                (filter #(and (= :encounter-ice (:event %))
-                                                              (same-card? current-ice (:card %))))
-                                                seq)
-                                           (contains? (card-def current-ice) :on-encounter)))))]}))
+                  :effect (effect (damage-prevent :net 1))}]})
 
 (defcard "Akamatsu Mem Chip"
   {:static-abilities [(mu+ 1)]})
@@ -1720,17 +1700,17 @@
 (defcard "Polyhistor"
   (let [abi {:optional
              {:prompt "Draw 1 card to force the Corp to draw 1 card?"
+              :waiting-prompt true
               :yes-ability {:msg "draw 1 card and force the Corp to draw 1 card"
                             :async true
                             :effect (req (wait-for (draw state :runner 1)
                                                    (draw state :corp eid 1)))}
-              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card)))
-                                           (effect-completed eid))}}}]
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
     {:static-abilities [(mu+ 1)
                         (link+ 1)]
      :events [{:event :pass-ice
                :req (req (and (= (:server run) [:hq])
-                              (= (:position run) 1) ; trigger when last piece of ice is passed
+                              (= (:position run) 0) ; trigger when last piece of ice is passed
                               (pos? (count (:deck runner)))))
                :async true
                :once :per-turn

@@ -3,7 +3,6 @@
    [clojure.core.async :refer [<! >! chan go timeout]]
    [web.app-state :refer [register-user! deregister-user!]]
    [web.user :refer [active-user?]]
-   [taoensso.encore :as enc]
    [taoensso.sente :as sente]
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
    [taoensso.timbre :as timbre]))
@@ -45,29 +44,6 @@
 (def websocket-buffer (chan buffer-size))
 
 (defn connected-uids [] (seq (:any @connected-sockets)))
-
-(defonce log-connected-uid-counts
-  (go (while true
-    (<! (timeout (enc/ms :mins 5)))
-    (let [ajax-uid-count (count (:ajax @connected-sockets))
-          ajax-conn-counts (seq (map count (:ajax @connections_)))
-          ajax-conn-total (reduce + ajax-conn-counts)
-          ajax-conn-max (apply max (conj ajax-conn-counts 0))
-          ws-uid-count (count (:ws @connected-sockets))
-          ws-conn-counts (seq (map count (:ws @connections_)))
-          ws-conn-total (reduce + ws-conn-counts)
-          ws-conn-max (apply max (conj ws-conn-counts 0))
-          ]
-      (timbre/info (str "connected -"
-                        " :ajax { "
-                        " uid: " ajax-uid-count
-                        " conn: " ajax-conn-total
-                        " conn-max: " ajax-conn-max
-                        " } :ws { "
-                        " uid: " ws-uid-count
-                        " conn: " ws-conn-total
-                        " conn-max: " ws-conn-max
-                        " }"))))))
 
 (defonce ratelimiter
   (go (while true

@@ -26,6 +26,24 @@
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
       (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
+(deftest installing-second-region-test
+  (do-game
+    (new-game {:corp {:hand ["Lateral Growth" "Crisium Grid"
+                             "Tranquility Home Grid" "Jinja City Grid"]}})
+    (play-from-hand state :corp "Jinja City Grid" "New remote")
+    (is (no-prompt? state :corp))
+    (play-from-hand state :corp "Crisium Grid" "Server 1")
+    (is (= "The Jinja City Grid in Server 1 will now be trashed." (:msg (prompt-map :corp)))
+        "Prompt to trash region")
+    (click-prompt state :corp "OK")
+    (play-from-hand state :corp "Lateral Growth")
+    (click-card state :corp "Tranquility Home Grid")
+    (click-prompt state :corp "Server 1")
+    (is (= "The Crisium Grid in Server 1 will now be trashed." (:msg (prompt-map :corp)))
+        "Prompt to trash region")
+    (click-prompt state :corp "OK")
+    (is (= 3 (count (:discard (get-corp)))))))
+
 (deftest installing-second-unique-trashes-first-unique-test
   (do-game
     (new-game {:runner {:hand [(qty "Kati Jones" 2)]

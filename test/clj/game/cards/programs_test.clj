@@ -3665,7 +3665,7 @@
     (click-card state :runner "Anansi")
     (run-on state :hq)
     (run-continue-until state :encounter-ice)
-    (run-continue state :pass-ice)
+    (run-continue state :movement)
     (is (not (seq (:discard (get-runner)))) "No anansi damage")))
 
 (deftest hush-vs-attini
@@ -4420,6 +4420,7 @@
       (click-card state :runner "Drafter")
       (is (= ["Border Control" "Thimblerig"] (map :title (get-ice state :rd))))
       (is (= ["Vanilla" "Drafter"] (map :title (get-ice state :hq))))
+      (click-prompt state :corp "No")
       (is (no-prompt? state :corp) "Corp gets no Thimblerig prompt")
       (is (no-prompt? state :runner) "No more prompts open")))
 
@@ -4445,8 +4446,8 @@
         (card-ability state :runner sg 0)
         (run-continue-until state :approach-ice)
         (rez state :corp (get-ice state :rd 0))
-        (card-ability state :runner hg 0)
         (run-continue state)
+        (click-prompt state :runner "Yes")
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 0)
