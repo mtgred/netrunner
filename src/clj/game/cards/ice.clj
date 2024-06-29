@@ -2092,7 +2092,7 @@
 
 (defcard "Harvester"
   (let [sub {:label "Runner draws 3 cards and discards down to maximum hand size"
-             :msg (msg "make the Runner draw 3 cards and discard down to " (pronoun state :runner) " maximum hand size")
+             :msg "make the Runner draw 3 cards and discard down to [runner-pronoun] maximum hand size"
              :async true
              :effect (req (wait-for (draw state :runner 3)
                                     (continue-ability
@@ -3266,8 +3266,8 @@
 (defcard "Nightdancer"
   (let [sub {:label (str "The Runner loses [Click], if able. "
                          "You have an additional [Click] to spend during your next turn")
-             :msg (msg "force the runner to lose a [Click], if able. "
-                       "Corp gains an additional [Click] to spend during " (pronoun state side) " next turn")
+             :msg (str "force the runner to lose a [Click], if able. "
+                       "Corp gains an additional [Click] to spend during [their] next turn")
              :effect (req (lose-clicks state :runner 1)
                           (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
     {:subroutines [sub

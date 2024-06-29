@@ -4,8 +4,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name]]
    [game.core.update :refer [update!]]
-   [game.macros :refer [req]]
-   [jinteki.utils :refer [pronoun]]))
+   [game.macros :refer [req]]))
 
 (defn set-mark
   [state new-mark]
@@ -20,7 +19,7 @@
   [state]
   (let [new-mark (rand-nth [:hq :rd :archives])]
     (set-mark state new-mark)
-    (system-msg state :runner (str "identifies " (pronoun state :runner) " mark to be " (central->name new-mark)))))
+    (system-msg state :runner (str "identifies [their] mark to be " (central->name new-mark)))))
 
 (def identify-mark-ability
   {:effect (req (when (nil? (:mark @state)) (identify-mark state)))})

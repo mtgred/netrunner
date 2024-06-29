@@ -5,8 +5,7 @@
     [game.core.moving :refer [move move-zone]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability msg req]]
-    [game.utils :refer [enumerate-str quantify]]
-    [jinteki.utils :refer [pronoun]]))
+    [game.utils :refer [enumerate-str quantify]]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
@@ -48,7 +47,7 @@
                      (move state side c :deck))
                    (shuffle! state side :deck))
       :cancel-effect (req
-                      (system-msg state side (str " uses " (:title card) " to shuffle " (pronoun state side) " deck"))
+                      (system-msg state side (str " uses " (:title card) " to shuffle R&D"))
                       (shuffle! state side :deck))}
      card nil)))
 
@@ -59,5 +58,5 @@
   (if close
     (do
       (swap! state update-in [side] dissoc :view-deck)
-      (system-msg state side "stops looking at " (pronoun state side) " deck and shuffles it"))
-    (system-msg state side "shuffles " (pronoun state side) " deck")))
+      (system-msg state side "stops looking at [pronoun] deck and shuffles it"))
+    (system-msg state side "shuffles [pronoun] deck")))

@@ -1868,7 +1868,7 @@
                 :once :per-turn
                 :req (req (:runner-phase-12 @state))
                 :effect (effect (update! (assoc card :qianju-active true)))
-                :msg (msg "lose [Click] and avoid the first tag received until " (pronoun state side) " next turn")}]
+                :msg (msg "lose [Click] and avoid the first tag received until [their] next turn")}]
    :events [{:event :corp-turn-ends
              :effect (effect (update! (dissoc card :qianju-active)))}
             {:event :runner-turn-begins
@@ -2136,7 +2136,7 @@
                {:prompt "Lower your maximum hand size by 1 to reduce the strength of encountered ice to 0?"
                 :once :per-turn
                 :yes-ability
-                {:msg (msg "lower " (pronoun state side) " maximum hand size by 1 and reduce the strength of " (:title current-ice) " to 0")
+                {:msg (msg "lower [their] maximum hand size by 1 and reduce the strength of " (:title current-ice) " to 0")
                  :effect (effect
                            (register-lingering-effect
                              card

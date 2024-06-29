@@ -713,7 +713,7 @@
                 {:async true
                  :prompt "Choose where to install the program from"
                  :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"]))
-                 :msg (msg "install a program from " (pronoun state side) " " target)
+                 :msg (msg "install a program from [their] " target)
                  :effect (effect (continue-ability
                                    (compile-fn (if (= "Stack" target) :deck :discard))
                                    card nil))}}}
@@ -1003,13 +1003,13 @@
    {:req (req (not (zone-locked? state :runner :discard)))
     :prompt "Choose a card to add to Grip"
     :choices (req (cancellable (:discard runner) :sorted))
-    :msg (msg "add " (:title target) " to " (pronoun state side) " Grip")
+    :msg (msg "add " (:title target) " to [their] Grip")
     :async true
     :effect (effect (move target :hand)
                     (continue-ability
                       (when (has-subtype? target "Virus")
                         {:prompt "Choose a virus to add to Grip"
-                         :msg (msg "add " (:title target) " to " (pronoun state side) " Grip")
+                         :msg (msg "add " (:title target) " to [their] Grip")
                          :choices (req (cancellable (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                          :effect (effect (move target :hand))})
                       card nil))}})
@@ -1635,7 +1635,7 @@
 
 (defcard "\"Freedom Through Equality\""
   {:events [{:event :agenda-stolen
-             :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
+             :msg (msg "add itself to [their] score area as an agenda worth 1 agenda point")
              :effect (req (as-agenda state :runner card 1))}]})
 
 (defcard "Freelance Coding Contract"
@@ -2374,7 +2374,7 @@
              :req (req this-card-run)
              :effect (req (if (:did-steal target)
                             (do (system-msg state :runner
-                                            (str "adds Mad Dash to " (pronoun state side) " score area as an agenda worth 1 agenda point"))
+                                            (str "adds Mad Dash to [their] score area as an agenda worth 1 agenda point"))
                                 (as-agenda state :runner (get-card state card) 1)
                                 (effect-completed state side eid))
                             (do (system-msg state :runner
@@ -2425,7 +2425,7 @@
                             :value [blocked-server]
                             :duration :end-of-turn}))
                        (when (:successful target)
-                         (system-msg state :runner (str "gains [Click] and adds Marathon to " (pronoun state side) " grip"))
+                         (system-msg state :runner (str "gains [Click] and adds Marathon to [their] grip"))
                          (gain-clicks state :runner 1)
                          (move state :runner card :hand)
                          (unregister-events state side card)))}]})
@@ -2616,7 +2616,7 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
+    :msg (msg "add itself to [their] score area as an agenda worth 1 agenda point")
     :effect (req (as-agenda state :runner card 1))}})
 
 (defcard "Office Supplies"
@@ -2803,7 +2803,7 @@
 
 (defcard "Populist Rally"
   {:on-play {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
-             :msg (msg "give the Corp 1 fewer [Click] to spend on " (pronoun state :corp) " next turn")
+             :msg (msg "give the Corp 1 fewer [Click] to spend on [corp-pronoun] next turn")
              :effect (effect (lose :corp :click-per-turn 1))}
    :events [{:event :corp-turn-ends
              :duration :until-corp-turn-ends
@@ -3825,7 +3825,7 @@
                               {:async true
                                :prompt "Choose a server"
                                :choices (req runnable-servers)
-                               :msg (msg "trash " (pronoun state side) " grip and make a run on " target
+                               :msg (msg "trash [their] grip and make a run on " target
                                          ", preventing all damage")
                                :effect (effect (make-run eid target card))}
                               card nil)))}
@@ -3867,7 +3867,7 @@
 (defcard "The Price of Freedom"
   {:on-play {:additional-cost [(->c :connection 1)]
              :rfg-instead-of-trashing true
-             :msg (msg "prevent the Corp from advancing cards during " (pronoun state :corp) " next turn")}
+             :msg (msg "prevent the Corp from advancing cards during [their] next turn")}
    :events [{:event :corp-turn-begins
              :duration :until-runner-turn-begins
              :effect (effect (register-turn-flag!
@@ -3992,7 +3992,7 @@
                           (not (facedown? %))
                           (or (hardware? %)
                               (program? %)))}
-    :msg (msg "move " (:title target) " to " (pronoun state side) " Grip")
+    :msg (msg "move " (:title target) " to [their] Grip")
     :effect (effect (move target :hand))}})
 
 (defcard "Unscheduled Maintenance"

@@ -116,17 +116,17 @@
 
 (defcard "Active Policing"
   (let [lose-click-abi
-        {:msg (msg "give the Runner -1 allotted [Click] for " (pronoun state :runner) " next turn")
+        {:msg "give the Runner -1 allotted [Click] for [runner-pronoun] next turn"
          :async true
          :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
                       (continue-ability
                         state side
                         (when (threat-level 3 state)
                           {:optional
-                           {:prompt (msg "Pay 2 [credits] to give the Runner -1 allotted [Click] for " (pronoun state side) " next turn?")
+                           {:prompt "Pay 2 [credits] to give the Runner -1 allotted [Click] for [runner-pronoun] next turn?"
                             :yes-ability
                             {:cost [(->c :credit 2)]
-                             :msg (msg "give the Runner -1 allotted [Click] for " (pronoun state :runner) " next turn")
+                             :msg "give the Runner -1 allotted [Click] for [runner-pronoun] next turn"
                              :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0)))}}})
                         card nil))}]
   {:on-play {:req (req (or (last-turn? state :runner :trashed-card)
@@ -189,7 +189,7 @@
                                 :effect (effect (clear-wait-prompt :corp)
                                                 (make-run eid serv card)
                                                 (prevent-jack-out))}
-                  :no-ability {:msg (msg "add itself to " (pronoun state side) " score area as an agenda worth 1 agenda point")
+                  :no-ability {:msg "add itself to [their] score area as an agenda worth 1 agenda point"
                                :effect (effect (clear-wait-prompt :corp)
                                                (as-agenda :corp card 1))}}})
               card nil))}})
@@ -628,7 +628,7 @@
     :msg (msg "search R&D for " (:title target) " and play it")
     :async true
     :effect (effect (shuffle! :deck)
-                    (system-msg (str "shuffles " (pronoun state side) " deck"))
+                    (system-msg "shuffles [their] deck")
                     (play-instant eid target nil))}})
 
 (defcard "Corporate Hospitality"
@@ -1390,7 +1390,7 @@
 
 (defcard "Hypoxia"
   {:on-play {:req (req tagged)
-             :msg (msg "do 1 core damage and give the Runner -1 allotted [Click] for " (pronoun state :runner) " next turn")
+             :msg "do 1 core damage and give the Runner -1 allotted [Click] for [runner-pronoun] next turn"
              :rfg-instead-of-trashing true
              :async true
              :effect (req (wait-for (damage state :runner :brain 1 {:card card})
@@ -1538,7 +1538,7 @@
                            (gain-credits state side eid (* (count targets) 3))))}})
 
 (defcard "Load Testing"
-  {:on-play {:msg (msg "make the Runner lose [Click] when " (pronoun state :runner) " next turn begins")}
+  {:on-play {:msg (msg "make the Runner lose [Click] when [runner-pronoun] next turn begins")}
    :events [{:event :runner-turn-begins
              :duration :until-runner-turn-begins
              :msg "make the Runner lose [Click]"

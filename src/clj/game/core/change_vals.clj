@@ -9,8 +9,7 @@
     [game.core.memory :refer [available-mu update-mu]]
     [game.core.say :refer [system-msg]]
     [game.core.tags :refer [update-tag-status]]
-    [game.macros :refer [req]]
-    [jinteki.utils :refer [pronoun]]))
+    [game.macros :refer [req]]))
 
 (defn- change-msg
   "Send a system message indicating the property change"
@@ -70,7 +69,7 @@
        :value delta}))
   (update-all-agenda-points state side)
   (system-msg state side
-              (str "sets " (pronoun state side) " agenda points to " (get-in @state [side :agenda-point])
+              (str "sets [their] agenda points to " (get-in @state [side :agenda-point])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-link
@@ -82,7 +81,7 @@
      :value delta})
   (update-link state)
   (system-msg state side
-              (str "sets " (pronoun state side) " [link] to " (get-link state)
+              (str "sets [their] [link] to " (get-link state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-hand-size
@@ -96,7 +95,7 @@
        :value delta}))
   (update-hand-size state side)
   (system-msg state side
-              (str "sets " (pronoun state side) " hand size to " (hand-size state side)
+              (str "sets [their] hand size to " (hand-size state side)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-generic

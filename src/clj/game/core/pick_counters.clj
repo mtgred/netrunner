@@ -8,8 +8,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [enumerate-str in-coll? quantify same-card?]]
-    [jinteki.utils :refer [pronoun]]))
+    [game.utils :refer [enumerate-str in-coll? quantify same-card?]]))
 
 (defn- pick-counter-triggers
   [state side eid current-cards selected-cards counter-count message]
@@ -109,7 +108,7 @@
                                              " and ")
                                            remainder-str
                                            (when (and card-strs remainder-str)
-                                             " from " (pronoun state side) " credit pool"))]
+                                             " from [their] credit pool"))]
                           (lose state side :credit remainder)
                           (let [cards (->> (vals selected-cards)
                                           (map :card)
