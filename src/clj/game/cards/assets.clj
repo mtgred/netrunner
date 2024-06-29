@@ -637,6 +637,7 @@
                                            :all true
                                            :card #(and (corp? %)
                                                        (in-hand? %))}
+                                 :async true
                                  :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                                                         (wait-for (gain-credits state side 2)
                                                                   (draw state side eid 1))))}
@@ -728,20 +729,24 @@
                 :effect (effect (damage eid :meat 2 {:card card}))}]})
 
 (defcard "Corporate Town"
-  {:derezzed-events [corp-rez-toast]
-   :additional-cost [(->c :forfeit)]
-   :flags {:corp-phase-12 (req (and (rezzed? card)
-                                    (->> (all-active-installed state :runner)
-                                         (filter resource?)
-                                         count
-                                         pos?)))}
-   :abilities [{:label "Trash a resource"
-                :once :per-turn
-                :async true
-                :prompt "Choose a resource to trash"
-                :choices {:card resource?}
-                :msg (msg "trash " (:title target))
-                :effect (effect (trash eid target {:unpreventable true :cause-card card}))}]})
+  (let [ability {:label "Trash a resource"
+                 :once :per-turn
+                 :async true
+                 :prompt "Choose a resource to trash"
+                 :choices {:card resource?}
+                 :msg (msg "trash " (:title target))
+                 :interactive (req true)
+                 :req (req (some resource? (all-installed state :runner)))
+                 :effect (effect (trash eid target {:unpreventable true :cause-card card}))}]
+    {:derezzed-events [corp-rez-toast]
+     :additional-cost [(->c :forfeit)]
+     :flags {:corp-phase-12 (req (and (rezzed? card)
+                                      (->> (all-active-installed state :runner)
+                                           (filter resource?)
+                                           count
+                                           pos?)))}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "CPC Generator"
   {:events [{:event :runner-credit-gain
@@ -1254,7 +1259,7 @@
                  :waiting-prompt true
                  :prompt "Choose an installed card to move 1 hosted advancement counter from"
                  :choices {:card #(and (installed? %)
-                                       (get-counters % :advancement))}
+                                       (pos? (get-counters % :advancement)))}
                  :async true
                  :effect (effect
                            (continue-ability

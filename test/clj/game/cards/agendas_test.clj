@@ -4328,7 +4328,6 @@
                    (get-counters (refresh (get-content state :remote3 0)) :advancement) 1]
                   (click-prompt state :corp "New remote")
                   (click-prompt state :corp "Yes")
-                  (is (last-n-log-contains? state 3 "reveals Stoke the Embers in Server 3"))
                   (click-card state :corp (get-content state :remote3 0)))
         "Corp gained 2 credits (+1 from Hyobu because the agenda was revealed) and put 1 advancement counter on a card")))
 

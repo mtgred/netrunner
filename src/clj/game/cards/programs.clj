@@ -1021,10 +1021,8 @@
   {:events [;; Note - we don't actually have access events for inactive cards in archives
             ;; because of this, we need to perform this evil hack - nbkelly, jan '24
             {:event :end-breach-server
-             :async true
              :interactive (req true)
              :req (req (and (= (:from-server target) :archives)
-                            ;; can-pay-credit           ;;todo - assert that we can pay the credit
                             (seq (filter #(and (:seen %) (not (agenda? %))) (:discard corp)))
                             (empty? (filter corp? (:hosted card)))))
              :prompt "1 [Credits]: Host a card from archives?"
@@ -1033,9 +1031,7 @@
                                         :sorted))
              :cost [(->c :credit 1)]
              :msg (msg "host " (:title target) " on itself")
-             :effect (req (disable-card state side (get-card state target))
-                          (host state side (assoc card :seen true) target)
-                          (effect-completed state side eid))}
+             :effect (req (host state side card (assoc target :seen true :installed false)))}
             {:event :breach-server
              :async true
              :optional {:req (req (and (= :hq target)
@@ -1052,13 +1048,9 @@
                                                   (not (agenda? target))))
                                    :cost [(->c :credit 1)]
                                    :msg (msg "host " (:title target) " on itself")
-                                   :async true
                                    :effect (req
-                                             (disable-card state side (get-card state target))
-                                             (host state side (assoc card :seen true)
-                                                   (get-card state target))
-                                             (swap! state dissoc :access)
-                                             (effect-completed state side eid))}}})
+                                             (host state side card (assoc target :seen true :installed false))
+                                             (swap! state dissoc :access))}}})
 
 (defcard "Curupira"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
@@ -2277,6 +2269,7 @@
                             ;; declined to install
                             (effect-completed state side eid)))})]
     {:on-install {:async true
+                  :interactive (req true)
                   :prompt "Choose where to install from"
                   :choices (req ["Grip" "Stack"
                                  (when-not (zone-locked? state :runner :discard) "Heap")])

@@ -437,6 +437,8 @@
             {:event :runner-install
              :req (req (and (:card-target card)
                             (is-type? (:card context) (:card-target card))
+                            (first-event? state :runner :runner-install
+                                         #(is-type? (:card (first %)) (:card-target card)))
                             (not (:facedown context))))
              :async true
              :effect (effect (gain-credits :corp eid 2))
@@ -444,6 +446,7 @@
              :msg (msg "gain 2 [Credits] from " (:card-target card))}
             {:event :play-event
              :req (req (and (:card-target card)
+                            (first-event? state :runner :play-event)
                             (is-type? (:card context) (:card-target card))))
              :async true
              :effect (effect (gain-credits :corp eid 2))
