@@ -53,8 +53,8 @@
       (play-from-hand state :runner "Wireless Net Pavilion")
       (play-from-hand state :runner "Net Shield")
       (let [apt (get-resource state 0)]
-        (card-ability state :runner apt 0)
-        (click-card state :runner (find-card "Fall Guy" (:hand (get-runner))))
+        (play-from-hand state :runner "Fall Guy")
+        (click-prompt state :runner (:title apt))
         (take-credits state :runner)
         (is (= 6 (:credit (get-runner))))
         (play-from-hand state :corp "Neural EMP")

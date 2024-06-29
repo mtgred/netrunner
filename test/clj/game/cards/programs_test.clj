@@ -752,26 +752,30 @@
 (deftest baba-yaga
   ;; Baba Yaga
   (do-game
-    (new-game {:runner {:deck ["Baba Yaga" "Faerie" "Yog.0" "Sharpshooter"]}})
+    (new-game {:runner {:hand ["Baba Yaga" "Faerie" "Yog.0" "Sharpshooter"]}})
     (take-credits state :corp)
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Baba Yaga")
-    (play-from-hand state :runner "Sharpshooter")
     (let [baba (get-program state 0)
           base-abicount (count (:abilities baba))]
-      (card-ability state :runner baba 0)
-      (click-card state :runner "Faerie")
+      (play-from-hand state :runner "Faerie")
+      (click-prompt state :runner "Baba Yaga")
       (is (= (+ 2 base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga gained 2 subroutines from Faerie")
-      (card-ability state :runner (refresh baba) 0)
-      (click-card state :runner (find-card "Yog.0" (:hand (get-runner))))
+      (play-from-hand state :runner "Yog.0")
+      (click-prompt state :runner "Baba Yaga")
       (is (= (+ 3 base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga gained 1 subroutine from Yog.0")
       (trash state :runner (first (:hosted (refresh baba))))
       (is (= (inc base-abicount) (count (:abilities (refresh baba)))) "Baba Yaga lost 2 subroutines from trashed Faerie")
-      (card-ability state :runner baba 1)
-      (click-card state :runner (find-card "Sharpshooter" (:program (:rig (get-runner)))))
-      (is (= 2 (count (:hosted (refresh baba)))) "Faerie and Sharpshooter hosted on Baba Yaga")
+      (play-from-hand state :runner "Sharpshooter")
+      (click-prompt state :runner "Baba Yaga")
+      (is (= 2 (count (:hosted (refresh baba)))) "Yog0 and Sharpshooter hosted on Baba Yaga")
       (is (= 1 (core/available-mu state)) "1 MU left with 2 breakers on Baba Yaga")
-      (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
+      (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog")
+      (is (= (:label (last (:abilities (refresh baba)))) "Add 2 strength"))
+      (is (changed? [(:credit (get-runner)) -1]
+                    ;; fairie strength boost
+                    (card-ability state :runner (refresh baba) 2))
+          "Spent 1c to boost baba yaga"))))
 
 (deftest bankroll
   ;; Bankroll - Includes check for Issue #4334
@@ -1457,49 +1461,39 @@
             "Hostile Takeover is affected by Chakana"))))
 
 (deftest chameleon-with-clone-chip
-    ;; with Clone Chip
-    (do-game
-      (new-game {:runner {:deck ["Chameleon" "Clone Chip"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Clone Chip")
-      (core/move state :runner (find-card "Chameleon" (:hand (get-runner))) :discard)
-      (take-credits state :runner)
-      (is (zero? (count (:hand (get-runner)))))
-      ;; Install Chameleon on corp turn
-      (take-credits state :corp 1)
-      (let [chip (get-hardware state 0)]
-        (card-ability state :runner chip 0)
-        (click-card state :runner (find-card "Chameleon" (:discard (get-runner))))
-        (click-prompt state :runner "Sentry"))
-      (take-credits state :corp)
-      (is (zero? (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
-      (take-credits state :runner)
-      (is (= 1 (count (:hand (get-runner)))) "Chameleon returned to hand at end of runner's turn")))
+  ;; with Clone Chip
+  (do-game
+    (new-game {:runner {:deck ["Chameleon" "Clone Chip"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clone Chip")
+    (core/move state :runner (find-card "Chameleon" (:hand (get-runner))) :discard)
+    (take-credits state :runner)
+    (is (zero? (count (:hand (get-runner)))))
+    ;; Install Chameleon on corp turn
+    (take-credits state :corp 1)
+    (let [chip (get-hardware state 0)]
+      (card-ability state :runner chip 0)
+      (click-card state :runner (find-card "Chameleon" (:discard (get-runner))))
+      (click-prompt state :runner "Sentry"))
+    (take-credits state :corp)
+    (is (zero? (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
+    (take-credits state :runner)
+    (is (= 1 (count (:hand (get-runner)))) "Chameleon returned to hand at end of runner's turn")))
 
 (deftest chameleon-returns-to-hand-after-hosting-977
-    ;; Returns to hand after hosting. #977
-    (do-game
-      (new-game {:runner {:deck [(qty "Chameleon" 2) "Scheherazade"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Chameleon")
-      (click-prompt state :runner "Barrier")
-      (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon")
-      ;; Host the Chameleon on Scheherazade that was just played (as in Personal Workshop/Hayley ability scenarios)
-      (play-from-hand state :runner "Scheherazade")
-      (let [scheherazade (get-program state 1)]
-        (card-ability state :runner scheherazade 1) ; Host an installed program
-        (click-card state :runner (find-card "Chameleon" (:program (:rig (get-runner)))))
-        (is (= 4 (:credit (get-runner))) "+1 from hosting onto Scheherazade")
-        ;; Install another Chameleon directly onto Scheherazade
-        (card-ability state :runner scheherazade 0) ; Install and host a program from Grip
-        (click-card state :runner (find-card "Chameleon" (:hand (get-runner))))
-        (click-prompt state :runner "Code Gate")
-        (is (= 2 (count (:hosted (refresh scheherazade)))) "2 Chameleons hosted on Scheherazade")
-        (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon, +1 from installing onto Scheherazade"))
-      (is (zero? (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
-      (take-credits state :runner)
-      (click-prompt state :runner "Chameleon")
-      (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2")))
+  ;; Returns to hand after hosting. #977
+  (do-game
+    (new-game {:runner {:hand ["Chameleon" "Scheherazade"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Scheherazade")
+    (play-from-hand state :runner "Chameleon")
+    (click-prompt state :runner "Scheherazade")
+    (click-prompt state :runner "Barrier")
+    (is (= 4 (:credit (get-runner))) "-2 from playing Chameleon, +1 from scheherazade")
+    (is (= 4 (:credit (get-runner))) "+1 from hosting onto Scheherazade")
+    (is (zero? (count (:hand (get-runner)))) "Chameleon in play - hand size 0")
+    (take-credits state :runner)
+    (is (= 1 (count (:hand (get-runner)))) "Chameleons returned to hand - hand size 1")))
 
 (deftest chameleon-can-break-subroutines-only-on-chosen-subtype
     ;; Can break subroutines only on chosen subtype
@@ -2643,44 +2637,18 @@
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
 
 (deftest dhegdheer-with-credit-savings
-    ;; with credit savings
-    (do-game
-      (new-game {:runner {:deck ["Adept" "Dhegdheer"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 5)
-      (play-from-hand state :runner "Dhegdheer")
-      (play-from-hand state :runner "Adept")
-      (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
-      (is (= 2 (core/available-mu state)) "2 MU used")
-      (let [dheg (get-program state 0)
-            adpt (get-program state 1)]
-        (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
-        (card-ability state :runner dheg 1)
-        (click-card state :runner (refresh adpt))
-        (let [hosted-adpt (first (:hosted (refresh dheg)))]
-          (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
-          (is (= 4 (core/available-mu state)) "0 MU used")
-          (is (= 6 (get-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
-
-(deftest dhegdheer-without-credit-savings
-    ;; without credit savings
-    (do-game
-      (new-game {:runner {:deck ["Adept" "Dhegdheer"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 5)
-      (play-from-hand state :runner "Dhegdheer")
-      (play-from-hand state :runner "Adept")
-      (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
-      (is (= 2 (core/available-mu state)) "2 MU used")
-      (let [dheg (get-program state 0)
-            adpt (get-program state 1)]
-        (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
-        (card-ability state :runner dheg 2)
-        (click-card state :runner (refresh adpt))
-        (let [hosted-adpt (first (:hosted (refresh dheg)))]
-          (is (= 3 (:credit (get-runner))) "4 credits left after hosting")
-          (is (= 4 (core/available-mu state)) "0 MU used")
-          (is (= 6 (get-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
+  ;; with credit savings
+  (do-game
+    (new-game {:runner {:deck ["Adept" "Dhegdheer"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Dhegdheer")
+    (play-from-hand state :runner "Adept")
+    (click-prompt state :runner "Dhegdheer")
+    (let [adpt (first (:hosted (get-program state 0)))]
+      (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
+      (is (= 4 (core/available-mu state)) "0 MU used")
+      (is (= 6 (get-strength adpt)) "Adept at 6 strength hosted"))))
 
 (deftest disrupter
   ;; Disrupter
@@ -2734,54 +2702,52 @@
     (is (= 2 (:credit (get-corp))) "No charge for installs after Diwan purged")))
 
 (deftest djinn-hosted-chakana-does-not-disable-advancing-agendas-issue-750
-    ;; Hosted Chakana does not disable advancing agendas. Issue #750
-    (do-game
-      (new-game {:corp {:deck ["Priority Requisition"]}
-                 :runner {:deck ["Djinn" "Chakana"]}})
-      (play-from-hand state :corp "Priority Requisition" "New remote")
-      (take-credits state :corp 2)
-      (play-from-hand state :runner "Djinn")
-      (let [djinn (get-program state 0)
-            agenda (get-content state :remote1 0)]
-        (is agenda "Agenda was installed")
-        (card-ability state :runner djinn 1)
-        (click-card state :runner (find-card "Chakana" (:hand (get-runner))))
-        (let [chak (first (:hosted (refresh djinn)))]
-          (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
-          ;; manually add 3 counters
-          (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
-          (take-credits state :runner 2)
-          (click-advance state :corp agenda)
-          (is (= 1 (get-counters (refresh agenda) :advancement)) "Agenda was advanced")))))
+  ;; Hosted Chakana does not disable advancing agendas. Issue #750
+  (do-game
+    (new-game {:corp {:deck ["Priority Requisition"]}
+               :runner {:deck ["Djinn" "Chakana"]}})
+    (play-from-hand state :corp "Priority Requisition" "New remote")
+    (take-credits state :corp 2)
+    (play-from-hand state :runner "Djinn")
+    (play-from-hand state :runner "Chakana")
+    (click-prompt state :runner "Djinn")
+    (let [djinn (get-program state 0)
+          agenda (get-content state :remote1 0)
+          chak (first (:hosted djinn))]
+      (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
+      ;; manually add 3 counters
+      (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
+      (take-credits state :runner 2)
+      (click-advance state :corp agenda)
+      (is (= 1 (get-counters (refresh agenda) :advancement)) "Agenda was advanced"))))
 
 (deftest djinn-host-a-non-icebreaker-program
-    ;; Host a non-icebreaker program
-    (do-game
-      (new-game {:runner {:deck ["Djinn" "Chakana"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Djinn")
-      (is (= 3 (core/available-mu state)))
-      (let [djinn (get-program state 0)]
-        (card-ability state :runner djinn 1)
-        (click-card state :runner (find-card "Chakana" (:hand (get-runner))))
-        (is (= 3 (core/available-mu state)) "No memory used to host on Djinn")
-        (is (= "Chakana" (:title (first (:hosted (refresh djinn))))) "Djinn has a hosted Chakana")
-        (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
+  ;; Host a non-icebreaker program
+  (do-game
+    (new-game {:runner {:deck ["Djinn" "Chakana"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Djinn")
+    (is (= 3 (core/available-mu state)))
+    (play-from-hand state :runner "Chakana")
+    (click-prompt state :runner "Djinn")
+    (let [djinn (get-program state 0)]
+      (is (= 3 (core/available-mu state)) "No memory used to host on Djinn")
+      (is (= "Chakana" (:title (first (:hosted (refresh djinn))))) "Djinn has a hosted Chakana")
+      (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
 
 (deftest djinn-tutor-a-virus-program
-    ;; Tutor a virus program
-    (do-game
-      (new-game {:runner {:deck ["Djinn" "Parasite"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Djinn")
-      (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
-      (is (zero? (count (:hand (get-runner)))) "No cards in hand after moving Parasite to deck")
-      (let [djinn (get-program state 0)]
-        (card-ability state :runner djinn 0)
-        (click-prompt state :runner (find-card "Parasite" (:deck (get-runner))))
-        (is (= "Parasite" (:title (first (:hand (get-runner))))) "Djinn moved Parasite to hand")
-        (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
-        (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
+  ;; Tutor a virus program
+  (do-game
+    (new-game {:runner {:hand ["Djinn"]
+                        :deck ["Parasite"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Djinn")
+    (let [djinn (get-program state 0)]
+      (card-ability state :runner djinn 0)
+      (click-prompt state :runner (find-card "Parasite" (:deck (get-runner))))
+      (is (= "Parasite" (:title (first (:hand (get-runner))))) "Djinn moved Parasite to hand")
+      (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
+      (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
 
 (deftest eater
   (do-game
@@ -4054,39 +4020,39 @@
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks
   (do-game
-      (new-game {:runner {:deck ["Hyperdriver"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Hyperdriver")
-      (is (= 1 (core/available-mu state)) "3 MU used")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (is (:runner-phase-12 @state) "Runner in Step 1.2")
-      (let [hyp (get-program state 0)]
-        (card-ability state :runner hyp 0)
-        (end-phase-12 state :runner)
-        (is (= 7 (:click (get-runner))) "Gained 3 clicks")
-        (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
+    (new-game {:runner {:deck ["Hyperdriver"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hyperdriver")
+    (is (= 1 (core/available-mu state)) "3 MU used")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [hyp (get-program state 0)]
+      (card-ability state :runner hyp 0)
+      (end-phase-12 state :runner)
+      (is (= 7 (:click (get-runner))) "Gained 3 clicks")
+      (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
 
 (deftest hyperdriver-triggering-a-dhegdeered-hyperdriver-should-not-grant-3-mu
-    ;; triggering a Dhegdeered Hyperdriver should not grant +3 MU
-    (do-game
-      (new-game {:runner {:deck ["Hyperdriver" "Dhegdheer"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Dhegdheer")
-      (let [dheg (get-program state 0)]
-        (card-ability state :runner dheg 0)
-        (click-card state :runner (find-card "Hyperdriver" (:hand (get-runner))))
-        (is (= 4 (core/available-mu state)) "0 MU used by Hyperdriver hosted on Dhegdheer")
-        (is (= 2 (:click (get-runner))) "2 clicks used")
-        (is (= 3 (:credit (get-runner))) "2 credits used")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (:runner-phase-12 @state) "Runner in Step 1.2")
-        (let [hyp (first (:hosted (refresh dheg)))]
-          (card-ability state :runner hyp 0)
-          (end-phase-12 state :runner)
-          (is (= 7 (:click (get-runner))) "Used Hyperdriver")
-          (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game")))))
+  ;; triggering a Dhegdeered Hyperdriver should not grant +3 MU
+  (do-game
+    (new-game {:runner {:hand ["Hyperdriver" "Dhegdheer"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dhegdheer")
+    (play-from-hand state :runner "Hyperdriver")
+    (click-prompt state :runner "Dhegdheer")
+    (is (= 4 (core/available-mu state)) "0 MU used by Hyperdriver hosted on Dhegdheer")
+    (is (= 2 (:click (get-runner))) "2 clicks used")
+    (is (= 3 (:credit (get-runner))) "2 credits used")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (let [dheg (get-program state 0)
+          hyp (first (:hosted (refresh dheg)))]
+      (card-ability state :runner hyp 0)
+      (end-phase-12 state :runner)
+      (is (= 7 (:click (get-runner))) "Used Hyperdriver")
+      (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game"))))
 
 (deftest ika-can-be-hosted-on-both-rezzed-unrezzed-ice-respects-no-host-is-blanked-by-magnet
     ;; Can be hosted on both rezzed/unrezzed ice, respects no-host, is blanked by Magnet
@@ -4819,43 +4785,42 @@
 (deftest leprechaun
   ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
   (do-game
-      (new-game {:runner {:deck ["Adept" "Leprechaun"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 5)
-      (play-from-hand state :runner "Leprechaun")
-      (play-from-hand state :runner "Adept")
-      (is (= 1 (core/available-mu state)) "3 MU used")
-      (let [lep (get-program state 0)
-            adpt (get-program state 1)]
-        (is (= 3 (get-strength (refresh adpt))) "Adept at 3 strength individually")
-        (card-ability state :runner lep 1)
-        (click-card state :runner (refresh adpt))
-        (let [hosted-adpt (first (:hosted (refresh lep)))]
-          (is (= 3 (core/available-mu state)) "1 MU used")
-          (is (= 5 (get-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
+    (new-game {:runner {:hand ["Adept" "Leprechaun"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Leprechaun")
+    (play-from-hand state :runner "Adept")
+    (click-prompt state :runner "Leprechaun")
+    (let [adpt (first (:hosted (get-program state 0)))]
+      (is (= 3 (core/available-mu state)) "1 MU used")
+      (is (= 5 (get-strength adpt)) "Adept at 5 strength hosted"))))
 
 (deftest leprechaun-keep-mu-the-same-when-hosting-or-trashing-hosted-programs
-    ;; Keep MU the same when hosting or trashing hosted programs
-    (do-game
-      (new-game {:runner {:deck ["Leprechaun" "Hyperdriver" "Imp"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Leprechaun")
-      (let [lep (get-program state 0)]
-        (card-ability state :runner lep 0)
-        (click-card state :runner (find-card "Hyperdriver" (:hand (get-runner))))
-        (is (= 2 (:click (get-runner))))
-        (is (= 2 (:credit (get-runner))))
-        (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not deducted from available MU")
-        (card-ability state :runner lep 0)
-        (click-card state :runner (find-card "Imp" (:hand (get-runner))))
-        (is (= 1 (:click (get-runner))))
-        (is (zero? (:credit (get-runner))))
-        (is (= 3 (core/available-mu state)) "Imp 1 MU not deducted from available MU")
-        ;; Trash Hyperdriver
-        (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard)
-        (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not added to available MU")
-        (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
-        (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU"))))
+  ;; Keep MU the same when hosting or trashing hosted programs
+  (do-game
+    (new-game {:runner {:hand ["Leprechaun" "Hyperdriver" "Imp" "Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Leprechaun")
+    (let [lep (get-program state 0)]
+      (play-from-hand state :runner "Hyperdriver")
+      (click-prompt state :runner "Leprechaun")
+      (is (= 2 (:click (get-runner))))
+      (is (= 2 (:credit (get-runner))))
+      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not deducted from available MU")
+      (play-from-hand state :runner "Imp")
+      (click-prompt state :runner "Leprechaun")
+      (is (= 1 (:click (get-runner))))
+      (is (zero? (:credit (get-runner))))
+      (is (= 3 (core/available-mu state)) "Imp 1 MU not deducted from available MU")
+      ;; Trash Hyperdriver
+      (play-from-hand state :runner "Ika")
+      (click-prompt state :runner "Leprechaun")
+      (click-card state :runner "Hyperdriver")
+      (click-prompt state :runner "Done")
+      (is (= "Hyperdriver" (:title (first (:discard (get-runner))))) "Hyperdriver trashed")
+      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not added to available MU")
+      (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
+      (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU"))))
 
 (deftest living-mural
   (do-game
@@ -6315,30 +6280,29 @@
           (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
 (deftest parasite-interaction-with-customized-secretary-2672
-    ;; Interaction with Customized Secretary #2672
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Enigma"]}
-                 :runner {:deck ["Parasite"]
-                          :hand ["Djinn" "Customized Secretary"]
-                          :credits 10}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (rez state :corp (get-ice state :hq 0))
-      (take-credits state :corp)
-      (play-from-hand state :runner "Djinn")
-      (card-ability state :runner (get-program state 0) 1)
-      (is (= "Choose a non-Icebreaker program" (:msg (prompt-map :runner))))
-      (click-card state :runner "Customized Secretary")
-      (is (= "Choose a program to host" (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Parasite")
-      (card-ability state :runner (first (:hosted (get-program state 0))) 0)
-      (is (= "Parasite" (:title (first (:hosted (first (:hosted (get-program state 0))))))))
-      (is (= "Choose a program to install" (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Parasite")
-      (is (= "Choose a card to host Parasite on" (:msg (prompt-map :runner))))
-      (click-card state :runner "Enigma")
-      (is (= "Customized Secretary" (:title (first (:hosted (get-program state 0))))))
-      (is (empty? (:hosted (first (:hosted (get-program state 0))))))))
+  ;; Interaction with Customized Secretary #2672
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:deck ["Parasite"]
+                        :hand ["Djinn" "Customized Secretary"]
+                        :credits 10}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Djinn")
+    (play-from-hand state :runner "Customized Secretary")
+    (click-prompt state :runner "Djinn")
+    (is (= "Choose a program to host" (:msg (prompt-map :runner))))
+    (click-prompt state :runner "Parasite")
+    (card-ability state :runner (first (:hosted (get-program state 0))) 0)
+    (is (= "Parasite" (:title (first (:hosted (first (:hosted (get-program state 0))))))))
+    (is (= "Choose a program to install" (:msg (prompt-map :runner))))
+    (click-prompt state :runner "Parasite")
+    (is (= "Choose a card to host Parasite on" (:msg (prompt-map :runner))))
+    (click-card state :runner "Enigma")
+    (is (= "Customized Secretary" (:title (first (:hosted (get-program state 0))))))
+    (is (empty? (:hosted (first (:hosted (get-program state 0))))))))
 
 (deftest parasite-triggers-hostile-infrastructure
     ;; Triggers Hostile Infrastructure
@@ -6717,44 +6681,43 @@
           "Runner spent 2 credits to match ice strength"))))
 
 (deftest progenitor-hosting-hivemind-using-virus-breeding-ground-issue-738
-    ;; Hosting Hivemind, using Virus Breeding Ground. Issue #738
-    (do-game
-      (new-game {:runner {:deck ["Progenitor" "Virus Breeding Ground" "Hivemind"]}})
+  ;; Hosting Hivemind, using Virus Breeding Ground. Issue #738
+  (do-game
+    (new-game {:runner {:hand ["Progenitor" "Virus Breeding Ground" "Hivemind"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Progenitor")
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (is (= 4 (core/available-mu state)))
+    (play-from-hand state :runner "Hivemind")
+    (click-prompt state :runner "Progenitor")
+    (is (= 4 (core/available-mu state)) "No memory used to host on Progenitor")
+    (let [vbg (get-resource state 0)
+          hive (first (:hosted (get-program state 0)))]
+      (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
+      (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
+      (is (zero? (:credit (get-runner))) "Full cost to host on Progenitor")
+      (take-credits state :runner 1)
       (take-credits state :corp)
-      (play-from-hand state :runner "Progenitor")
-      (play-from-hand state :runner "Virus Breeding Ground")
-      (is (= 4 (core/available-mu state)))
-      (let [prog (get-program state 0)
-            vbg (get-resource state 0)]
-        (card-ability state :runner prog 0)
-        (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
-        (is (= 4 (core/available-mu state)) "No memory used to host on Progenitor")
-        (let [hive (first (:hosted (refresh prog)))]
-          (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
-          (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
-          (is (zero? (:credit (get-runner))) "Full cost to host on Progenitor")
-          (take-credits state :runner 1)
-          (take-credits state :corp)
-          (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
-          (click-card state :runner hive)
-          (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
-          (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter")))))
+      (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
+      (click-card state :runner hive)
+      (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
+      (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
 
 (deftest progenitor-keep-mu-the-same-when-hosting-or-trashing-hosted-programs
-    ;; Keep MU the same when hosting or trashing hosted programs
-    (do-game
-      (new-game {:runner {:deck ["Progenitor" "Hivemind"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Progenitor")
-      (let [pro (get-program state 0)]
-        (card-ability state :runner pro 0)
-        (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
-        (is (= 2 (:click (get-runner))))
-        (is (= 2 (:credit (get-runner))))
-        (is (= 4 (core/available-mu state)) "Hivemind 2 MU not deducted from available MU")
-        ;; Trash Hivemind
-        (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
-        (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
+  ;; Keep MU the same when hosting or trashing hosted programs
+  (do-game
+    (new-game {:runner {:hand ["Progenitor" "Hivemind"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Progenitor")
+    (play-from-hand state :runner "Hivemind")
+    (click-prompt state :runner "Progenitor")
+    (let [pro (get-program state 0)]
+      (is (= 2 (:click (get-runner))))
+      (is (= 2 (:credit (get-runner))))
+      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not deducted from available MU")
+      ;; Trash Hivemind
+      (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
+      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
 
 (deftest propeller
   ;; counter: +2 str, 0 str start, 1c: break barrier
@@ -7229,25 +7192,23 @@
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
   (do-game
-    (new-game {:runner {:deck ["Scheherazade" "Cache"
+    (new-game {:runner {:hand ["Scheherazade" "Cache"
                                "Inti" "Fall Guy"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Scheherazade")
     (let [sch (get-program state 0)]
-      (card-ability state :runner sch 0)
-      (click-card state :runner (find-card "Inti" (:hand (get-runner))))
+      (play-from-hand state :runner "Inti")
+      (click-prompt state :runner "Scheherazade")
       (is (= 1 (count (:hosted (refresh sch)))))
       (is (= 2 (:click (get-runner))) "Spent 1 click to install and host")
       (is (= 6 (:credit (get-runner))) "Gained 1 credit")
       (is (= 3 (core/available-mu state)) "Programs hosted on Scheh consume MU")
-      (card-ability state :runner sch 0)
-      (click-card state :runner (find-card "Cache" (:hand (get-runner))))
+      (play-from-hand state :runner "Cache")
+      (click-prompt state :runner "Scheherazade")
       (is (= 2 (count (:hosted (refresh sch)))))
       (is (= 6 (:credit (get-runner))) "Gained 1 credit")
-      (card-ability state :runner sch 0)
-      (click-card state :runner (find-card "Fall Guy" (:hand (get-runner))))
-      (is (= 2 (count (:hosted (refresh sch)))) "Can't host non-program")
-      (is (= 1 (count (:hand (get-runner))))))))
+      (play-from-hand state :runner "Fall Guy")
+      (is (no-prompt? state :runner) "Can't host non-program"))))
 
 (deftest self-modifying-code-trash-pay-2-to-search-deck-for-a-program-and-install-it-shuffle
     ;; Trash & pay 2 to search deck for a program and install it. Shuffle

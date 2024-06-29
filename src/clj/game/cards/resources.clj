@@ -2305,24 +2305,8 @@
 
 (defcard "Off-Campus Apartment"
   {:flags {:runner-install-draw true}
-   :abilities [{:async true
-                :label "Install and host a connection"
-                :cost [(->c :click 1)]
-                :prompt "Choose a connection in the grip"
-                :choices {:req (req (and (has-subtype? target "Connection")
-                                         (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                                   target nil [(->c :credit (install-cost state side target))])
-                                         (in-hand? target)))}
-                :msg (msg "install and host " (:title target) " and draw 1 card")
-                :effect (effect (runner-install eid target {:host-card card}))}
-               {:label "Host an installed connection (manual)"
-                :prompt "Choose an installed connection"
-                :choices {:card #(and (has-subtype? % "Connection")
-                                      (installed? %))}
-                :msg (msg "host " (:title target) " and draw 1 card")
-                :async true
-                :effect (effect (host card target)
-                                (draw eid 1))}]
+   :static-abilities [{:type :can-host
+                      :req (req (and (resource? target) (has-subtype? target "Connection")))}]
    :events [{:event :runner-install
              :req (req (same-card? card (:host (:card context))))
              :async true

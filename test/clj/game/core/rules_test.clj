@@ -62,8 +62,8 @@
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
     (let [oca (get-resource state 1)]
-      (card-ability state :runner oca 0)
-      (click-card state :runner (find-card "Kati Jones" (:hand (get-runner))))
+      (play-from-hand state :runner "Kati Jones")
+      (click-prompt state :runner "Off-Campus Apartment")
       (is (find-card "Kati Jones" (:hosted (refresh oca))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
       (is (last-log-contains? state "Kati Jones is trashed.")))))
@@ -75,10 +75,11 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Scheherazade")
     (let [scheh (get-program state 0)]
-      (card-ability state :runner scheh 0)
-      (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
+      (play-from-hand state :runner "Hivemind")
+      (click-prompt state :runner "Scheherazade")
       (is (find-card "Hivemind" (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade")
       (play-from-hand state :runner "Hivemind")
+      (click-prompt state :runner "The Rig")
       (is (= "Hivemind" (:title (get-discarded state :runner))))
       (is (last-log-contains? state "Hivemind hosted on Scheherazade is trashed."))
       (is (empty? (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade"))))
@@ -124,15 +125,15 @@
 (deftest refresh-recurring-credits-hosted
   ;; host - Recurring credits on cards hosted after install refresh properly
   (do-game
-    (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Hedge Fund" 3)]}
-               :runner {:deck ["Compromised Employee" "Off-Campus Apartment"]}})
+    (new-game {:corp {:hand [(qty "Ice Wall" 3) (qty "Hedge Fund" 3)]}
+               :runner {:hand ["Compromised Employee" "Off-Campus Apartment"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Off-Campus Apartment")
     (let [iwall (get-ice state :hq 0)
           apt (get-resource state 0)]
-      (card-ability state :runner apt 0) ; use Off-Campus option to host a card
-      (click-card state :runner "Compromised Employee")
+      (play-from-hand state :runner "Compromised Employee")
+      (click-prompt state :runner (:title apt))
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
@@ -290,33 +291,30 @@
   ;; Tests all-installed for programs hosted on ice, nested hosted programs, and non-installed hosted programs
   (do-game
     (new-game {:corp {:deck ["Wraparound"]}
-               :runner {:deck ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]}})
+               :runner {:hand ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]}})
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (rez state :corp wrap)
       (take-credits state :corp)
-      (draw state :runner)
       (core/gain state :runner :credit 7)
       (play-from-hand state :runner "Knight")
       (play-from-hand state :runner "Personal Workshop")
       (play-from-hand state :runner "Omni-drive")
+      (take-credits state :runner)
       (take-credits state :corp)
       (let [kn (get-program state 0)
             pw (get-resource state 0)
-            od (get-hardware state 0)
-            co (find-card "Corroder" (:hand (get-runner)))
-            le (find-card "Leprechaun" (:hand (get-runner)))]
+            od (get-hardware state 0)]
         (card-ability state :runner kn 0)
         (click-card state :runner wrap)
         (card-ability state :runner pw 0)
-        (click-card state :runner co)
-        (card-ability state :runner od 0)
-        (click-card state :runner le)
+        (click-card state :runner "Corroder")
+        (play-from-hand state :runner "Leprechaun")
+        (click-prompt state :runner (:title od))
         (let [od (refresh od)
-              le (first (:hosted od))
-              mi (find-card "Mimic" (:hand (get-runner)))]
-          (card-ability state :runner le 0)
-          (click-card state :runner mi)
+              le (first (:hosted od))]
+          (play-from-hand state :runner "Mimic")
+          (click-prompt state :runner "Leprechaun")
           (let [all-installed (core/all-installed state :runner)]
             (is (= 5 (count all-installed)) "Number of installed runner cards is correct")
             (is (not-empty (filter #(= (:title %) "Leprechaun") all-installed)) "Leprechaun is in all-installed")
@@ -394,17 +392,17 @@
     (take-credits state :corp)
     (core/gain state :runner :credit 100)
     (play-from-hand state :runner "Leprechaun")
-    (let [lep (get-program state 0)]
-      (card-ability state :runner lep 0)
-      (click-card state :runner (find-card "Djinn" (:hand (get-runner))))
-      (let [djinn (first (:hosted (refresh lep)))]
-        (card-ability state :runner djinn 1)
-        (click-card state :runner (find-card "Imp" (:hand (get-runner))))
-        (let [imp (first (:hosted (refresh djinn)))]
-          (is (= 2 (get-counters imp :virus)) "Imp has 2 virus counters")
-          (take-credits state :runner)
-          (play-from-hand state :corp "Cyberdex Trial")
-          (is (zero? (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
+    (play-from-hand state :runner "Djinn")
+    (click-prompt state :runner "Leprechaun")
+    (play-from-hand state :runner "Imp")
+    (click-prompt state :runner "Djinn")
+    (let [lep (get-program state 0)
+          djinn (first (:hosted (refresh lep)))
+          imp (first (:hosted (refresh djinn)))]
+      (is (= 2 (get-counters imp :virus)) "Imp has 2 virus counters")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Cyberdex Trial")
+      (is (zero? (get-counters (refresh imp) :virus)) "Imp counters purged"))))
 
 (deftest purge-corp
   ;; Purge virus counters on Corp cards
