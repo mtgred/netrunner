@@ -3546,20 +3546,33 @@
   (let [sub {:label "Do 1 net damage"
              :async true
              :msg "do 1 net damage"
-             :effect (req (wait-for (damage state side :net 1 {:card card})
-                                    (let [choice (:card-target card)
-                                          cards async-result
-                                          dmg (some #(when (= (:type %) choice) %) cards)]
-                                      (if (and dmg (not (is-disabled-reg? state card)))
-                                        (do (system-msg state :corp (str "uses " (:title card) " to deal 1 additional net damage"))
-                                            (damage state side eid :net 1 {:card card}))
-                                        (effect-completed state side eid)))))}]
+             :effect (req (damage state side eid :net 1 {:card card :cause :subroutine}))}]
     {:on-encounter {:waiting-prompt true
                     :prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :msg (msg "choose the card type " target)
                     :effect (effect (update! (assoc card :card-target target)))}
-     :events [{:event :end-of-encounter
+     :events [{:event :damage
+               :req (req (and (= (:damage-type context) :net)
+                              (= (:cause context) :subroutine)
+                              (same-card? (:card context) card)))
+               :async true
+               :effect (req (let [trashed-cards (:cards-trashed context)
+                                  chosen-type (:card-target card)
+                                  matching-type (filter #(= (:type %) chosen-type) trashed-cards)]
+                              ;; theoretically, if this ice is made to deal 2 or more net damage from
+                              ;; a sub (who knows what the future holds), we can be dealing out more
+                              ;; than one additional damage...
+                              (if-not (seq matching-type)
+                                (effect-completed state side eid)
+                                (letfn [(resolve-extra-damage [x]
+                                          (system-msg state :corp (str "uses " (:title card) " to deal 1 additional net damage" (when (> x 1) (str " (" (dec x) " remaining)"))))
+                                          (if-not (> x 1)
+                                            (damage state side eid :net 1 {:card card})
+                                            (wait-for (damage side :net 1 {:card card})
+                                                      (resolve-extra-damage (dec x)))))]
+                                  (resolve-extra-damage (count matching-type))))))}
+              {:event :end-of-encounter
                :req (req (:card-target card))
                :effect (effect (update! (dissoc card :card-target)))}]
      :subroutines [sub

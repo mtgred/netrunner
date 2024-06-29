@@ -6077,6 +6077,26 @@
       (card-subroutine state :corp sai 0)
       (is (= 2 (-> (get-runner) :discard count)) "Two cards should be trashed due to correctly guessing"))))
 
+(deftest saisentan-bankhar-interaction
+  ;; Corp chooses correctly
+  (do-game
+    (new-game {:corp {:hand ["Saisentan"]}
+               :runner {:hand ["Tsakhia \"Bankhar\" Gantulga" (qty "Sure Gamble" 4)]}})
+    (play-from-hand state :corp "Saisentan" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tsakhia \"Bankhar\" Gantulga")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-prompt state :runner "HQ")
+    (run-on state "HQ")
+    (let [sai (get-ice state :hq 0)]
+      (rez state :corp sai)
+      (run-continue state)
+      (click-prompt state :corp "Event")
+      (is (zero? (-> (get-runner) :discard count)) "Heap should be empty")
+      (card-subroutine state :corp sai 0)
+      (is (= 2 (-> (get-runner) :discard count)) "Two cards should be trashed due to correctly guessing"))))
+
 (deftest saisentan-corp-chooses-incorrectly
   ;; Corp chooses incorrectly
   (do-game
