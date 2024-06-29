@@ -1988,9 +1988,8 @@
                :prompt "Choose one"
                :choices ["Suffer 1 core damage" "Add Nightmare Archive to score area"]
                :effect (req (if (= target "Suffer 1 core damage")
-                              (wait-for (damage state :corp :brain 1 {:card card})
-                                        (move state :corp card :rfg)
-                                        (effect-completed state side eid))
+                              (do (move state :corp card :rfg)
+                                  (damage state :corp eid :brain 1 {:card card}))
                               (do (as-agenda state :runner card -1)
                                   (effect-completed state side eid))))}})
 
