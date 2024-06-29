@@ -5048,6 +5048,11 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
       (play-from-hand state :runner "Apocalypse")
+      (let [facedowns (filter :facedown (core/all-installed state :runner))
+            casts (find-card "Daily Casts" facedowns)
+            otl (find-card "On the Lam" facedowns)]
+        (is casts "Casts facedown")
+        (is (not otl) "OTL not facedown"))
       (take-credits state :runner)
       (play-from-hand state :corp "SEA Source")
       (click-prompt state :corp "0")
