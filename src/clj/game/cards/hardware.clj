@@ -693,12 +693,13 @@
                                (update-all-ice))}}}]})
 
 (defcard "Dinosaurus"
-  {:can-host {:req (req (and (program? target)
-                             (has-subtype? target "Icebreaker")
-                             (not (has-subtype? target "AI"))))
-              :max-cards 1
-              :no-mu true}
-   :static-abilities [{:type :breaker-strength
+  {:static-abilities [{:type :can-host
+                       :req (req (and (program? target)
+                                      (has-subtype? target "Icebreaker")
+                                      (not (has-subtype? target "AI"))))
+                       :max-cards 1
+                       :no-mu true}
+                      {:type :breaker-strength
                        :req (req (same-card? target (first (:hosted card))))
                        :value 2}]})
 
@@ -844,8 +845,9 @@
                                            (trash state side eid hosted {:cause-card card}))
                                        (effect-completed state side eid)))}]
     {:implementation "Credit usage restriction not enforced"
-     :can-host {:req (req (program? target))
-                :max-cards 1}
+     :static-abilities [{:type :can-host
+                         :req (req (program? target))
+                         :max-cards 1}]
      :data {:counter {:credit 9}}
      :abilities [{:label "Take 1 hosted [Credits]"
                   :req (req (and (not-empty (:hosted card))
@@ -1514,11 +1516,12 @@
                           :effect (req (let [first-program (first (filter program? (:hosted card)))]
                                          (system-msg state nil (card-str state (first (filter program? (:hosted card)))) " is trashed for violating hosting restrictions")
                                          (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
-     :can-host {:req (req (and (program? target)
-                               (<= (expected-mu state target) (netchip-count state))))
-                :max-mu (req (netchip-count state))
-                :max-cards 1
-                :no-mu true}}))
+     :static-abilities [{:type :can-host
+                        :req (req (and (program? target)
+                                       (<= (expected-mu state target) (netchip-count state))))
+                         :max-mu (req (netchip-count state))
+                         :max-cards 1
+                         :no-mu true}]}))
 
 (defcard "Obelus"
   {:static-abilities [(mu+ 1)
@@ -1545,11 +1548,12 @@
                         :effect (req (let [first-program (first (filter program? (:hosted card)))]
                                        (system-msg state nil (card-str state (first (filter program? (:hosted card)))) " is trashed for violating hosting restrictions")
                                        (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
-   :can-host {:req (req (and (program? target)
-                             (<= (expected-mu state target) 1)))
-              :max-mu 1
-              :max-cards 1
-              :no-mu true}
+   :static-abilities [{:type :can-host
+                       :req (req (and (program? target)
+                                      (<= (expected-mu state target) 1)))
+                       :max-mu 1
+                       :max-cards 1
+                       :no-mu true}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (program? target)
                                                (same-card? card (:host target))))

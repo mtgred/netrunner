@@ -2018,12 +2018,12 @@
     (click-prompt state :runner "No")
     (take-credits state :runner)
     (take-credits state :corp)
-    (let [oca (get-resource state 0)]
-      (card-ability state :runner oca 0)
-      (click-card state :runner "Data Dealer")
-      (click-prompt state :runner "Off-Campus Apartment")
-      (click-prompt state :runner "Yes")
-      (click-card state :runner "Fan Site"))))
+    (play-from-hand state :runner "Data Dealer")
+    (click-prompt state :runner "Off-Campus Apartment") ;;location
+    (click-prompt state :runner "Off-Campus Apartment") ;;trigger the draw
+    (click-card state :runner "Data Dealer")
+    (click-prompt state :runner "Yes")
+    (click-card state :runner "Fan Site")))
 
 (deftest hayley-kaplan-universal-scholar-pay-credits-prompt
     ;; Pay-credits prompt

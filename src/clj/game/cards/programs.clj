@@ -538,9 +538,10 @@
 (defcard "Baba Yaga"
   (let [gain-abis (req (let [new-abis (mapcat (comp ability-init card-def) (:hosted card))]
                          (update! state :runner (assoc card :abilities new-abis))))]
-    {:can-host {:req (req (and (program? target)
-                               (has-subtype? target "Icebreaker")
-                               (not (has-subtype? target "AI"))))}
+    {:static-abilities [{:type :can-host
+                         :req (req (and (program? target)
+                                        (has-subtype? target "Icebreaker")
+                                        (not (has-subtype? target "AI"))))}]
      :hosted-gained gain-abis
      :hosted-lost gain-abis}))
 
@@ -1224,10 +1225,11 @@
 
 (defcard "Dhegdheer"
   {:implementation "Discount not considered by any engine functions when checking if a program is playable"
-   :can-host {:req (req (program? target))
-              :no-mu true
-              :cost-bonus -1
-              :max-cards 1}})
+   :static-abilities [{:type :can-host
+                       :req (req (program? target))
+                       :no-mu true
+                       :cost-bonus -1
+                       :max-cards 1}]})
 
 (defcard "Disrupter"
   {:events
@@ -1256,11 +1258,12 @@
                                                          :cause-card card}))}]})
 
 (defcard "Djinn"
-  {:can-host {:req (req (and (<= (expected-mu state target) 3)
-                             (not (has-subtype? target "Icebreaker"))
-                             (program? target)))
-              :no-mu true
-              :max-mu 3}
+  {:static-abilities [{:type :can-host
+                       :req (req (and (<= (expected-mu state target) 3)
+                                      (not (has-subtype? target "Icebreaker"))
+                                      (program? target)))
+                       :no-mu true
+                       :max-mu 3}]
    :abilities [{:label "Search the stack for a virus program and add it to the grip"
                 :prompt "Choose a Virus"
                 :msg (msg "add " (:title target) " from the stack to the grip")
@@ -1939,9 +1942,10 @@
                 :effect (effect (pump-ice current-ice -1))}]})
 
 (defcard "Leprechaun"
-  {:can-host {:req (req (program? target))
-              :no-mu true
-              :max-cards 2}})
+  {:static-abilities [{:type :can-host
+                       :req (req (program? target))
+                       :no-mu true
+                       :max-cards 2}]})
 
 (defcard "Leviathan"
   (auto-icebreaker {:abilities [(break-sub 3 3 "Code Gate")
@@ -2708,10 +2712,11 @@
                                             ((:effect base) state side eid card targets))))]}))
 
 (defcard "Progenitor"
-  {:can-host {:req (req (and (program? target) (has-subtype? target "Virus")))
-              :no-mu true
-              :max-cards 1}
-   :static-abilities [{:type :prevent-purge-virus-counters
+  {:static-abilities [{:type :can-host
+                       :req (req (and (program? target) (has-subtype? target "Virus")))
+                       :no-mu true
+                       :max-cards 1}
+                      {:type :prevent-purge-virus-counters
                        :req (req (pos? (get-counters (first (:hosted card)) :virus)))
                        :value (req {:card (first (:hosted card))
                                     :quantity 1})}]})
@@ -2909,7 +2914,8 @@
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]})
 
 (defcard "Scheherazade"
-  {:can-host {:req (req (program? target))}
+  {:static-abilities [{:type :can-host
+                       :req (req (program? target))}]
    :events [{:event :runner-install
              :req (req (same-card? card (:host (:card context))))
              :msg (msg "gain 1 [Credits]")

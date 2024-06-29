@@ -452,8 +452,7 @@
       (effect-completed state side eid)
       (if (and (program? card)
                (not facedown)
-               (not (sufficient-mu? state card))
-               (not no-mu))
+               (not (or no-mu (sufficient-mu? state card))))
         (continue-ability
           state side
           {:prompt (format "Insufficient MU to install %s. Trash installed programs?" (:title card))
@@ -481,22 +480,27 @@
                                         :previous-zone (:previous-zone card)))
                         (effect-completed state side eid)))))))))
 
+(defn- some-hosting-effect
+  [state card]
+  "Gets the first (only) host effect of a card, if it exists and is not disabled"
+  (when-not (is-disabled-reg? state card)
+    (first (filter #(= (:type %) :can-host) (:static-abilities (card-def card))))))
+
 (defn runner-can-host
   [state side eid card {:keys [host-card facedown] :as args}]
-  ;; if it's already being hosted, then ignore it
+  "Gets a list of all cards that the runner can host the install target on"
   (when-not (or host-card facedown)
-    (let [all-hosts (filter :can-host (all-installed state :runner))
-          relevant (filter #(and
-                              (not (is-disabled-reg? state %))
-
-                              (or (nil? (get-in % [:can-host :req]))
-                                  ((get-in % [:can-host :req]) state side eid % [card])))
+    (let [all-hosts (filter #(some-hosting-effect state %) (all-installed state :runner))
+          relevant (filter #(let [ab (some-hosting-effect state %)]
+                              (or (nil? (:req ab))
+                                  ((:req ab) state side eid % [card])))
                            all-hosts)]
       (seq relevant))))
 
 (defn runner-host-enforce-specific-memory
   [state side eid card potential-host args]
-  (if-let [max-mu (when (program? card) (get-in potential-host [:can-host :max-mu]))]
+  "enforces limits on the total MU a host can support during install"
+  (if-let [max-mu (when (program? card) (:max-mu (some-hosting-effect state potential-host)))]
     (let [max-mu (if (fn? max-mu)
                    (max-mu state side eid potential-host nil)
                    max-mu)
@@ -529,7 +533,8 @@
 
 (defn runner-host-enforce-card-limits
   [state side eid card potential-host args]
-  (if-let [max-cards (get-in potential-host [:can-host :max-cards])]
+  "Enforces limits on the number of hosted cards a host can have during install"
+  (if-let [max-cards (:max-cards (some-hosting-effect state potential-host))]
     (let [max-cards (if (int? max-cards)
                       max-cards
                       (max-cards state side eid potential-host nil))
@@ -563,15 +568,15 @@
      :effect (req (if (= target "The Rig")
                     (runner-install-pay state side eid card args)
                     ;; todo - apply all the modifiers from the host map
-                    (let [old-cost-bonus (or (:cost-bonus args) 0)
-                          new-cost-bonus (or (get-in target [:can-host :cost-bonus]) 0)
+                    (let [host-abi (some-hosting-effect state target)
+                          old-cost-bonus (or (:cost-bonus args) 0)
+                          new-cost-bonus (or (:cost-bonus host-abi) 0)
                           combined-cost-bonus (+ old-cost-bonus new-cost-bonus)
                           cost-bonus (if (zero? combined-cost-bonus) nil combined-cost-bonus)]
                       (runner-host-enforce-card-limits
                         state side eid card (get-card state target)
                         (assoc args
-                               :cost-bonus cost-bonus
-                               :no-mu (get-in target [:can-host :no-mu])
+                               :no-mu (:no-mu host-abi)
                                :cost-bonus cost-bonus)))))}
     card nil))
 

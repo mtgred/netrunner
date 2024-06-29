@@ -2305,7 +2305,8 @@
 
 (defcard "Off-Campus Apartment"
   {:flags {:runner-install-draw true}
-   :can-host {:req (req (and (resource? target) (has-subtype? target "Connection")))}
+   :static-abilities [{:type :can-host
+                      :req (req (and (resource? target) (has-subtype? target "Connection")))}]
    :events [{:event :runner-install
              :req (req (same-card? card (:host (:card context))))
              :async true

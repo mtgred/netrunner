@@ -150,8 +150,9 @@
 
 (defn expected-mu
   [state card]
-  (when (program? card)
-    (+ (:memoryunits card) (some-mu-effect? state card))))
+  (if (program? card)
+    (+ (:memoryunits card) (some-mu-effect? state card))
+    0))
 
 (defn sufficient-mu?
   "Will installing this card put the runner over their memory limit?"
@@ -161,7 +162,6 @@
           mu-list (get-available-mu state)
           available-mu (merge-available-memory mu-list)
           used-mu-effects (conj (get-effect-maps state :runner :used-mu)
-
                                 {:type :used-mu
                                  :duration :while-active
                                  :card card
