@@ -2021,7 +2021,6 @@
     (play-from-hand state :runner "Data Dealer")
     (click-prompt state :runner "Off-Campus Apartment") ;;location
     (click-prompt state :runner "Off-Campus Apartment") ;;trigger the draw
-    (click-card state :runner "Data Dealer")
     (click-prompt state :runner "Yes")
     (click-card state :runner "Fan Site")))
 
