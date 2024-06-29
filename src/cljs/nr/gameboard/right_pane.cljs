@@ -2,6 +2,7 @@
   (:require [cljs.core.async :refer [put!]]
             [nr.appstate :refer [app-state]]
             [nr.gameboard.card-preview :refer [zoom-channel]]
+            [nr.gameboard.diagrams :refer [run-timing-pane turn-timing-pane]]
             [nr.gameboard.log :refer [log-pane]]
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
             [nr.gameboard.state :refer [game-state]]
@@ -22,6 +23,14 @@
    :notes-shared
    {:hiccup [notes-shared-pane]
     :label (tr [:log.shared "Shared Annotations"])}
+
+   :run-timing
+   {:hiccup [run-timing-pane]
+    :label (tr [:log.run-timing "Run Timing"])}
+
+   :turn-timing
+   {:hiccup [turn-timing-pane]
+    :label (tr [:log.turn-timing "Turn Timing"])}
 
    :settings
    {:hiccup [settings-pane]
