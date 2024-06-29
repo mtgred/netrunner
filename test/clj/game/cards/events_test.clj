@@ -815,12 +815,7 @@
       (click-card state :runner "Tollbooth")
       (is (rezzed? (refresh tb)) "Runner doesn't have enough money to derez Tollbooth")
       (click-card state :runner iw)
-      (is (not (rezzed? (refresh iw))) "Runner can derez Ice Wall")
-      (play-from-hand state :runner "Xanadu")
-      (core/gain state :runner :credit 7)
-      (is (= (:cost tb) (:credit (get-runner))) "Gain enough credits to derez Tollbooth normally")
-      (play-from-hand state :runner "Brute-Force-Hack")
-      (is (no-prompt? state :runner) "Runner can't play Brute-Force-Hack when only available ice is too expensive"))))
+      (is (not (rezzed? (refresh iw))) "Runner can derez Ice Wall"))))
 
 (deftest build-script
   ;; Build Script
@@ -1522,8 +1517,7 @@
         (click-card state :runner (refresh cp))
         (is (= 3 (get-counters (refresh cp) :virus)) "Chrome Parlor has 3 counters after Contaminate")
         (play-from-hand state :runner "Contaminate")
-        (click-card state :runner (refresh yus))
-        (click-prompt state :runner "Done")
+        (is (last-log-contains? state "do nothing") "no valid targets")
         (is (= 3 (get-counters (refresh cp) :virus)) "Yusuf isn't selectable by Contaminate"))))
 
 (deftest contaminate-hivemind-makes-virus-programs-act-like-they-have-a-virus-counter
@@ -2676,9 +2670,7 @@
       (is (refresh iw) "Ice Wall on HQ hasn't been trashed as it's rezzed")
       (derez state :corp iw)
       (click-card state :runner (refresh iw))
-      (is (not (refresh iw)) "Ice Wall on HQ has been trashed")
-      (play-from-hand state :runner "En Passant")
-      (is (no-prompt? state :runner) "Runner has no prompt as En Passant can't be played"))))
+      (is (not (refresh iw)) "Ice Wall on HQ has been trashed"))))
 
 (deftest encore
   ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
@@ -4939,8 +4931,6 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
                :runner {:hand ["Networking"]}})
     (take-credits state :corp)
-    (play-from-hand state :runner "Networking")
-    (is (= "Networking" (-> (get-runner) :hand first :title)) "Networking shouldn't be played")
     (gain-tags state :runner 4)
     (let [credits (:credit (get-runner))]
       (play-from-hand state :runner "Networking")
@@ -5181,8 +5171,6 @@
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]}
                :runner {:hand ["Paper Tripping"]}})
     (take-credits state :corp)
-    (play-from-hand state :runner "Paper Tripping")
-    (is (= "Paper Tripping" (-> (get-runner) :hand first :title)) "Paper Tripping shouldn't be played")
     (gain-tags state :runner 100)
     (play-from-hand state :runner "Paper Tripping")
     (is (zero? (count-tags state)) "Runner should lose all tags")))
