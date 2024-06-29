@@ -520,6 +520,40 @@
         (is (= ["Pay 2 [Credits] to trash" "No action"] (prompt-buttons :runner))
             "Ansel's third sub doesn't last into 'end of run' runs")))))
 
+(deftest ansel-1-0-vs-run-amok
+  (do-game
+    (new-game {:corp {:hand ["Ansel 1.0"]}
+               :runner {:hand ["Run Amok"]}})
+    (play-from-hand state :corp "Ansel 1.0" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Run Amok")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (card-subroutine state :corp (get-ice state :hq 0) 2)
+    (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
+    (run-continue state :movement)
+    (run-jack-out state)
+    (click-card state :runner "Ansel 1.0")
+    (is (= 1 (count (:discard (get-corp)))) "Trashed ansel")))
+
+(deftest ansel-1-0-vs-virtuoso
+  (do-game
+    (new-game {:corp {:hand ["Ansel 1.0" "Hostile Takeover"]}
+               :runner {:hand ["Virtuoso"]}})
+    (play-from-hand state :corp "Ansel 1.0" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (run-on state :archives)
+    (rez state :corp (get-ice state :archives 0))
+    (run-continue state :encounter-ice)
+    (card-subroutine state :corp (get-ice state :archives 0) 2)
+    (is (last-log-contains? state "prevent the Runner from stealing or trashing"))
+    (core/set-mark state :archives)
+    (run-continue-until state :success)
+    (click-prompt state :runner "Steal")
+    (is (= 1 (count (:scored (get-runner)))) "Stole agenda")))
+
 (deftest ansel-1-0-access-after-no-steal
   (do-game
     (new-game {:corp {:hand ["Ansel 1.0" "Ganked!" "Merger"]
