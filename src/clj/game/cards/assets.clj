@@ -2630,6 +2630,7 @@
             :effect (effect (draw eid 2))}
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [(->c :remove-from-game)]
+                :waiting-prompt true
                 :async true
                 :effect (effect (shuffle-into-rd-effect eid card 2))}]})
 
