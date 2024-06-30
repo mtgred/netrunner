@@ -169,6 +169,7 @@
         (and (= side :runner)
              (= "Runner" (:side card))
              (= "hand" (first zone))
+             (nil? (get-in @game-state [side :prompt-state]))
              (playable? card))
         (send-command "play" {:card (card-for-click card)})
 
@@ -176,6 +177,7 @@
         (and (= side :corp)
              (= "Corp" (:side card))
              (= "hand" (first zone))
+             (nil? (get-in @game-state [side :prompt-state]))
              (playable? card))
         (if (= "Operation" type)
           (send-command "play" {:card (card-for-click card)})
