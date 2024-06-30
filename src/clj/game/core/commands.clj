@@ -209,6 +209,28 @@
     (swap! state dissoc-in [side :selected])
     (effect-completed state side (:eid prompt))))
 
+(defn command-install
+  ([state side] (command-install state side nil))
+  ([state side {:keys [ignore-all-cost] :as args}]
+   (resolve-ability
+     state side
+     (if (= side :corp)
+       {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+        :choices {:card #(and (corp? %)
+                              (not (installed? %)))}
+        :async true
+        :effect (req (corp-install state side eid target nil {:ignore-all-cost ignore-all-cost}))}
+       {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+        :choices {:card #(and (runner? %)
+                              (not (installed? %)))}
+        :async true
+        :effect (req (runner-install state side eid target {:ignore-all-cost ignore-all-cost}))})
+     nil nil)))
+
+(defn command-install-free
+  [state side]
+  (command-install state side {:ignore-all-cost true}))
+
 (defn command-install-ice
   [state side]
   (when (= side :corp)
@@ -395,7 +417,9 @@
                                       :delta (- (constrain-value value -1000 1000)
                                                 (get-in @%1 [%2 :hand-size :total]))})
         "/host"       command-host
+        "/install-free" command-install-free
         "/install-ice" command-install-ice
+        "/install" command-install
         "/jack-out"   (fn [state side]
                         (when (and (= side :runner)
                                    (or (:run @state)
