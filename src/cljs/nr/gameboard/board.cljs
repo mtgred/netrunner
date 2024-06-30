@@ -110,7 +110,6 @@
     (swap! card-menu dissoc :keep-menu-open)
     (when-not (and (= card-side :runner) facedown)
       (cond
-
         ;; Toggle abilities panel
         (or (< 1 c)
             (pos? (+ (count corp-abilities)
@@ -640,6 +639,11 @@
                     (faceup? card)
                     (= (:side host) "Runner"))))))
 
+(defn- should-highlight-playable
+  [side card zone]
+  (let [side (if-not (keyword? side) (keyword (lower-case side)) side)]
+    (and (playable? card) (nil? (get-in @game-state [side :prompt-state :prompt-type])))))
+
 (defn card-view
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
@@ -651,7 +655,7 @@
      [:div.blue-shade.card {:class (str (cond selected "selected"
                                               (same-card? card (:button @app-state)) "hovered"
                                               (same-card? card (-> @game-state :encounters :ice)) "encountered"
-                                              (playable? card) "playable"
+                                              (should-highlight-playable side card zone) "playable"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
                                               new "new"))
                             :tab-index (when (and (not disable-click)
