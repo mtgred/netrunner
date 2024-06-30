@@ -18,6 +18,7 @@
 (defn playable? [card state side]
   (if (and ((if (= :corp side) corp? runner?) card)
            (in-hand? card)
+           (not= (get-in @state [side :prompt-state :promp-type]) :waiting)
            (cond+
              [(or (agenda? card)
                   (asset? card)
