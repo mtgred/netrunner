@@ -97,6 +97,16 @@
     (if (:host card) (update card :host card-for-click) card)
     click-card-keys))
 
+(defn- any-prompt?
+  [side]
+  (let [side (if-not (keyword? side) (keyword (lower-case side)) side)]
+    (get-in @game-state [:side :prompt-state :prompt-type])))
+
+(defn- waiting-prompt?
+  [side]
+  (let [side (if-not (keyword? side) (keyword (lower-case side)) side)]
+    (= (get-in @game-state [:side :prompt-state :prompt-type]) :waiting)))
+
 (defn playable?
   "Checks whether a card or ability is playable"
   [action]
@@ -137,7 +147,8 @@
 
         ;; Trigger first (and only) ability / action
         (and (= c 1)
-             (= side card-side))
+             (= side card-side)
+             (not (waiting-prompt? side)))
         (if (= (count abilities) 1)
           (when (playable? (first abilities))
             (send-command "ability" {:card (card-for-click card) :ability 0}))
@@ -1646,6 +1657,7 @@
    (if (= (keyword @active-player) side)
      (when (and (not (or @runner-phase-12 @corp-phase-12))
                 (zero? (:click @me))
+                (not (any-prompt? side))
                 (not @end-turn))
        [:button {:on-click #(send-command "end-turn")}
         (tr [:game.end-turn "End Turn"])])
@@ -1653,6 +1665,7 @@
        [:button {:on-click #(send-command "start-turn")}
         (tr [:game.start-turn "Start Turn"])]))
    (when (and (= (keyword @active-player) side)
+              (not (any-prompt? side))
               (or @runner-phase-12 @corp-phase-12))
      [:button {:on-click #(send-command "end-phase-12")}
       (if (= side :corp)
@@ -1662,12 +1675,14 @@
      [:div
       [cond-button (tr [:game.remove-tag "Remove Tag"])
        (and (not (or @runner-phase-12 @corp-phase-12))
+            (not (any-prompt? :runner))
             (playable? (get-in @me [:basic-action-card :abilities 5]))
             (pos? (get-in @me [:tag :base])))
        #(send-command "remove-tag")]
       [:div.run-button.menu-container
        [cond-button (tr [:game.run "Run"])
         (and (not (or @runner-phase-12 @corp-phase-12))
+             (not (any-prompt? :runner))
              (pos? (:click @me)))
         #(do (send-command "generate-runnable-zones")
              (if (= :run-button (:source @card-menu))
@@ -1687,21 +1702,25 @@
    (when (= side :corp)
      [cond-button (tr [:game.purge "Purge"])
       (and (not (or @runner-phase-12 @corp-phase-12))
+           (not (any-prompt? :corp))
            (playable? (get-in @me [:basic-action-card :abilities 6])))
       #(send-command "purge")])
    (when (= side :corp)
      [cond-button (tr [:game.trash-resource "Trash Resource"])
       (and (not (or @runner-phase-12 @corp-phase-12))
+           (not (any-prompt? :corp))
            (playable? (get-in @me [:basic-action-card :abilities 5]))
            (is-tagged? game-state))
       #(send-command "trash-resource")])
    [cond-button (tr [:game.draw "Draw"])
     (and (not (or @runner-phase-12 @corp-phase-12))
+         (not (any-prompt? side))
          (playable? (get-in @me [:basic-action-card :abilities 1]))
          (pos? (:deck-count @me)))
     #(send-command "draw")]
    [cond-button (tr [:game.gain-credit "Gain Credit"])
     (and (not (or @runner-phase-12 @corp-phase-12))
+         (not (any-prompt? side))
          (playable? (get-in @me [:basic-action-card :abilities 0])))
     #(send-command "credit")]])
 
