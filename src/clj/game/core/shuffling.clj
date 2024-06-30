@@ -2,6 +2,7 @@
   (:require
     [game.core.card :refer [corp? in-discard?]]
     [game.core.engine :refer [trigger-event]]
+    [game.core.eid :refer [effect-completed]]
     [game.core.moving :refer [move move-zone]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [continue-ability msg req]]
@@ -36,6 +37,7 @@
                 :card #(and (corp? %)
                             (in-discard? %))
                 :all all?}
+      :waiting-prompt true
       :msg (msg "shuffle "
                 (let [seen (filter :seen targets)
                       m (count (filter #(not (:seen %)) targets))]
@@ -44,12 +46,15 @@
                          (str (when-not (empty? seen) " and ")
                               (quantify m "unseen card")))))
                 " into R&D")
+      :async true
       :effect (req (doseq [c targets]
                      (move state side c :deck))
-                   (shuffle! state side :deck))
+                   (shuffle! state side :deck)
+                   (effect-completed state side eid))
       :cancel-effect (req 
                       (system-msg state side (str " uses " (:title card) " to shuffle their deck")) 
-                      (shuffle! state side :deck))}
+                      (shuffle! state side :deck)
+                      (effect-completed state side eid))}
      card nil)))
 
 (defn shuffle-deck
