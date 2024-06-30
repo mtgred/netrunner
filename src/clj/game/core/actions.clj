@@ -559,13 +559,13 @@
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."
   [state side _]
-  (system-msg state side "looks at their deck")
+  (system-msg state side "looks at [their] deck")
   (swap! state assoc-in [side :view-deck] true))
 
 (defn close-deck
   "Closes the deck view and makes cards in deck private again."
   [state side _]
-  (system-msg state side "stops looking at their deck")
+  (system-msg state side "stops looking at [their] deck")
   (swap! state update-in [side] dissoc :view-deck))
 
 (defn generate-install-list

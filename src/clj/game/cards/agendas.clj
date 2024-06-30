@@ -1144,7 +1144,7 @@
                                (in-hand? %)
                                (>= 1 (:agendapoints %)))}
          :waiting-prompt true
-         :msg (msg "add " (:title target) " from HQ to their score area")
+         :msg (msg "add " (:title target) " from HQ to [their] score area")
          :effect (req
                    (let [c (move state :corp target :scored)]
                         (card-init state :corp c {:resolve-effect false
@@ -1338,7 +1338,7 @@
 
 (defcard "Midnight-3 Arcology"
   {:on-score {:async true
-              :msg "draw 3 cards and skip their discard step this turn"
+              :msg (msg "draw 3 cards and skip [their] discard step this turn")
               :effect (effect
                         (register-lingering-effect
                           card
@@ -1708,7 +1708,7 @@
                :interactive (req true)
                :prompt "Quantum Predictive Model will be added to the Corp's score area"
                :choices ["OK"]
-               :msg "add itself to their score area and gain 1 agenda point"
+               :msg (msg "add itself to [their] score area and gain 1 agenda point")
                :effect (effect (move :corp card :scored {:force true})
                                (update-all-agenda-points)
                                (check-win-by-agenda))}})
@@ -1729,7 +1729,7 @@
              :msg (req (let [n (count chosen)]
                          (str "add " (quantify n "card") " from HQ to the bottom of R&D and draw " (quantify n "card")
                               ". The Runner randomly adds " (quantify (min n (count (:hand runner))) "card")
-                              " from their Grip to the bottom of the Stack")))
+                              " from [runner-pronoun] Grip to the bottom of the Stack")))
              :effect (req (let [n (count chosen)]
                             (if (= target "Done")
                               (do (doseq [c (reverse chosen)] (move state :corp c :deck))
@@ -1774,7 +1774,7 @@
                                     (not (faceup? %)))}
               :show-discard true
               :async true
-              :msg (msg "reveal " (:title (first targets)) " and add it to their score area")
+              :msg (msg "reveal " (:title (first targets)) " and add it to [their] score area")
               :effect (req (wait-for (reveal state side target)
                                      (let [c (move state :corp target :scored)]
                                        (card-init state :corp c {:resolve-effect false
@@ -1801,7 +1801,7 @@
 (defcard "Remote Data Farm"
   {:move-zone (req (when (and (in-scored? card)
                               (= :corp (:scored-side card)))
-                     (system-msg state side (str "uses " (:title card) " to increase their maximum hand size by 2"))))
+                     (system-msg state side (str "uses " (:title card) " to increase [their] maximum hand size by 2"))))
    :static-abilities [(corp-hand-size+ 2)]})
 
 (defcard "Remote Enforcement"

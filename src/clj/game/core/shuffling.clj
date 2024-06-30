@@ -47,8 +47,8 @@
       :effect (req (doseq [c targets]
                      (move state side c :deck))
                    (shuffle! state side :deck))
-      :cancel-effect (req 
-                      (system-msg state side (str " uses " (:title card) " to shuffle their deck")) 
+      :cancel-effect (req
+                      (system-msg state side (str " uses " (:title card) " to shuffle R&D"))
                       (shuffle! state side :deck))}
      card nil)))
 
@@ -59,5 +59,5 @@
   (if close
     (do
       (swap! state update-in [side] dissoc :view-deck)
-      (system-msg state side "stops looking at their deck and shuffles it"))
-    (system-msg state side "shuffles their deck")))
+      (system-msg state side "stops looking at [pronoun] deck and shuffles it"))
+    (system-msg state side "shuffles [pronoun] deck")))

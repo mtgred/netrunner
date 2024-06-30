@@ -529,7 +529,7 @@
 
 (defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
-                                       (do (system-msg state :corp "flipped their identity to Earth Station: SEA Headquarters")
+                                       (do (system-msg state :corp "flipped [pronoun] identity to Earth Station: SEA Headquarters")
                                            (assoc card
                                                   :flipped false
                                                   :face :front
@@ -567,7 +567,7 @@
      :abilities [{:label "Flip identity to Earth Station: Ascending to Orbit"
                   :req (req (not (:flipped card)))
                   :cost [(->c :click 1)]
-                  :msg "flip their identity to Earth Station: Ascending to Orbit"
+                  :msg "flip [their] identity to Earth Station: Ascending to Orbit"
                   :effect flip-effect}
                  {:label "Manually flip identity to Earth Station: SEA Headquarters"
                   :req (req (:flipped card))
@@ -819,14 +819,14 @@
               {:event :tags-changed
                :effect (req (if (is-tagged? state)
                               (when-not (get-in @state [:runner :openhand])
-                                (system-msg state :corp (str "uses " (get-title card) " make the Runner play with their grip revealed"))
+                                (system-msg state :corp (str "uses " (get-title card) " make the Runner play with [runner-pronoun] grip revealed"))
                                 (system-msg state :corp (str "uses " (get-title card) " to see that the Runner currently has "
-                                                             (format-grip runner) " in their grip"))
+                                                             (format-grip runner) " in [runner-pronoun] grip"))
                               (reveal-hand state :runner))
                             (when (get-in @state [:runner :openhand])
-                              (system-msg state :corp (str "uses " (get-title card) " stop making the Runner play with their grip revealed"))
-                              (system-msg state :corp (str "uses " (get-title card) " to see that the Runner had "
-                                                           (format-grip runner) " in their grip before it was concealed"))
+                              (system-msg state :corp (str "uses " (get-title card) " stop making the Runner play with [runner-pronoun] grip revealed"))
+                              (system-msg state :corp (str "uses " (get-title card) " to note that the Runner had "
+                                                           (format-grip runner) " in [runner-pronoun] grip before it was concealed"))
                               (conceal-hand state :runner))))}]
    :effect (req (when (is-tagged? state)
                   (reveal-hand state :runner)))
@@ -896,13 +896,13 @@
                :effect (req (cond
                               (and (:flipped card)
                                    (not (:accessed-cards runner-reg)))
-                              (do (system-msg state :runner "flips their identity to Hoshiko Shiro: Untold Protagonist")
+                              (do (system-msg state :runner "flips [their] identity to Hoshiko Shiro: Untold Protagonist")
                                   (continue-ability state :runner {:effect flip-effect} card nil))
 
                               (and (not (:flipped card))
                                    (:accessed-cards runner-reg))
                               (wait-for (gain-credits state :runner 2)
-                                        (system-msg state :runner "gains 2 [Credits] and flips their identity to Hoshiko Shiro: Mahou Shoujo")
+                                        (system-msg state :runner "gains 2 [Credits] and flips [their] identity to Hoshiko Shiro: Mahou Shoujo")
                                         (continue-ability state :runner {:effect flip-effect} card nil))
 
                               :else
@@ -915,7 +915,7 @@
                                                 (system-msg state :runner (str "uses " (:title card) " to draw 1 card and lose 1 [Credits]"))
                                                 (effect-completed state side eid))))}]
      :abilities [{:label "flip identity"
-                  :msg "flip their identity manually"
+                  :msg "flip [their] identity manually"
                   :effect flip-effect}]}))
 
 (defcard "Hyoubu Institute: Absolute Clarity"
@@ -2040,7 +2040,7 @@
                                (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
                                (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
-                :msg "flip their identity"}]})
+                :msg (msg "flip [their] identity")}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
   {:events [{:event :pre-start-game

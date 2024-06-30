@@ -108,7 +108,7 @@
                                              " and ")
                                            remainder-str
                                            (when (and card-strs remainder-str)
-                                             " from their credit pool"))]
+                                             " from [their] credit pool"))]
                           (lose state side :credit remainder)
                           (let [cards (->> (vals selected-cards)
                                           (map :card)

@@ -17,11 +17,36 @@
   [text]
   (make-message {:user "__system__" :text text}))
 
+(defn- select-pronoun
+  "Selects an appropriate plurular pronoun
+  'their' is neuter, so it's appropriate to everyone as a fallback"
+  [user]
+  (let [key (get-in user [:options :pronouns])]
+    (case key
+      "she" "her"
+      "he" "his"
+      "it" "its"
+      "their")))
+
+(defn- insert-pronouns
+  "inserts pronouns into text based on the side speaking"
+  [state side text]
+  (let [corp-pronoun (select-pronoun (get-in @state [:corp :user]))
+        runner-pronoun (select-pronoun (get-in @state [:runner :user]))
+        user-pronoun (cond
+                       (= side :corp) corp-pronoun
+                       (= side :runner) runner-pronoun
+                       :else "their")]
+    (-> text
+        (str/replace #"(\[pronoun\])|(\[their\])" user-pronoun)
+        (str/replace #"\[corp-pronoun\]" corp-pronoun)
+        (str/replace #"\[runner-pronoun\]" runner-pronoun))))
+
 (defn say
   "Prints a message to the log as coming from the given user."
   [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))
-        message (make-message {:user author :text text})]
+        message (make-message {:user author :text (insert-pronouns state side text)})]
     (swap! state update :log conj message)
     (swap! state assoc :typing false)))
 

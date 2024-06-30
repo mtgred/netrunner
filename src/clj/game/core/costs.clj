@@ -365,7 +365,7 @@
   (complete-with-result
     state side eid
     {:paid/msg (str "returns " (:title card)
-                   " to " (if (= :corp side) "HQ" "their grip"))
+                   " to " (if (= :corp side) "HQ" "[their] grip"))
      :paid/type :return-to-hand
      :paid/value 1
      :paid/targets [card]}))
@@ -730,7 +730,7 @@
               (complete-with-result
                 state side eid
                 {:paid/msg (str "trashes all (" (count async-result) ") cards in "
-                               (if (= :runner side) "their grip" "HQ")
+                               (if (= :runner side) "[their] grip" "HQ")
                                (when (and (= :runner side)
                                           (pos? (count async-result)))
                                  (str " (" (enumerate-str (map :title async-result)) ")")))
@@ -760,7 +760,7 @@
                               {:paid/msg (str "trashes " (quantify (count async-result) "piece")
                                              " of hardware"
                                              " (" (enumerate-str (map :title targets)) ")"
-                                             " from their grip")
+                                             " from [their] grip")
                                :paid/type :trash-hardware-from-hand
                                :paid/value (count async-result)
                                :paid/targets async-result})))}
