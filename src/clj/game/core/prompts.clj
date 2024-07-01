@@ -33,7 +33,7 @@
                   :choices choices
                   :effect f
                   :card card
-                  :prompt-type prompt-type
+                  :prompt-type (or prompt-type :other)
                   :show-discard show-discard
                   :cancel-effect cancel-effect
                   :end-effect end-effect}]

@@ -1,11 +1,12 @@
 (ns game.core.shuffling
   (:require
-    [game.core.card :refer [corp? in-discard?]]
-    [game.core.engine :refer [trigger-event]]
-    [game.core.moving :refer [move move-zone]]
-    [game.core.say :refer [system-msg]]
-    [game.macros :refer [continue-ability msg req]]
-    [game.utils :refer [enumerate-str quantify]]))
+   [game.core.card :refer [corp? in-discard?]]
+   [game.core.eid :refer [effect-completed]]
+   [game.core.engine :refer [trigger-event]]
+   [game.core.moving :refer [move move-zone]]
+   [game.core.say :refer [system-msg]]
+   [game.macros :refer [continue-ability msg req]]
+   [game.utils :refer [enumerate-str quantify]]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
@@ -44,12 +45,14 @@
                          (str (when-not (empty? seen) " and ")
                               (quantify m "unseen card")))))
                 " into R&D")
+      :waiting-prompt true
       :effect (req (doseq [c targets]
                      (move state side c :deck))
                    (shuffle! state side :deck))
-      :cancel-effect (req
-                      (system-msg state side (str " uses " (:title card) " to shuffle R&D"))
-                      (shuffle! state side :deck))}
+      :cancel-effect (req 
+                      (system-msg state side (str " uses " (:title card) " to shuffle R&D")) 
+                      (shuffle! state side :deck)
+                      (effect-completed state side eid))}
      card nil)))
 
 (defn shuffle-deck

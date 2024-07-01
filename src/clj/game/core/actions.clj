@@ -76,7 +76,7 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card] :as context}]
-  (when-let [card (get-card state card)]
+  (when-let [card (and (nil? (get-in @state [side :prompt-state :prompt-type])) (get-card state card))]
     (let [context (assoc context :card card)]
       (case (:type card)
         ("Event" "Operation")

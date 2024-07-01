@@ -11,10 +11,11 @@
 (defn ->c
   ([type] (->c type 1))
   ([type n] (->c type n nil))
-  ([type n {:keys [additional stealth] :as args}]
+  ([type n {:keys [additional stealth allowed-during-run] :as args}]
    {:cost/type type
     :cost/amount n
     :cost/additional (boolean additional)
+    :cost/allowed-during-run (boolean allowed-during-run)
     :cost/stealth stealth
     :cost/args (not-empty (dissoc args :stealth :additional))}))
 
@@ -22,6 +23,8 @@
 (defmethod value :default [_] 0)
 (defmulti stealth-value :cost/type)
 (defmethod stealth-value :default [_] 0)
+(defmulti allowed-during-run :cost/type)
+(defmethod allowed-during-run :default [_] false)
 (defmulti label :cost/type)
 (defn- payable-dispatch [cost _state _side _eid _card] (:cost/type cost))
 (defmulti payable? #'payable-dispatch)
