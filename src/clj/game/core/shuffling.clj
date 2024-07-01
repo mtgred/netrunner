@@ -1,11 +1,12 @@
 (ns game.core.shuffling
   (:require
-    [game.core.card :refer [corp? in-discard?]]
-    [game.core.engine :refer [trigger-event]]
-    [game.core.moving :refer [move move-zone]]
-    [game.core.say :refer [system-msg]]
-    [game.macros :refer [continue-ability msg req]]
-    [game.utils :refer [enumerate-str quantify]]))
+   [game.core.card :refer [corp? in-discard?]]
+   [game.core.eid :refer [effect-completed]]
+   [game.core.engine :refer [trigger-event]]
+   [game.core.moving :refer [move move-zone]]
+   [game.core.say :refer [system-msg]]
+   [game.macros :refer [continue-ability msg req]]
+   [game.utils :refer [enumerate-str quantify]]))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
