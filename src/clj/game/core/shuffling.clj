@@ -44,12 +44,14 @@
                          (str (when-not (empty? seen) " and ")
                               (quantify m "unseen card")))))
                 " into R&D")
+      :waiting-prompt true
       :effect (req (doseq [c targets]
                      (move state side c :deck))
                    (shuffle! state side :deck))
       :cancel-effect (req 
                       (system-msg state side (str " uses " (:title card) " to shuffle their deck")) 
-                      (shuffle! state side :deck))}
+                      (shuffle! state side :deck)
+                      (effect-completed state side eid))}
      card nil)))
 
 (defn shuffle-deck
