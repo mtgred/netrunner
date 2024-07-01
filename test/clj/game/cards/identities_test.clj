@@ -871,6 +871,22 @@
         (click-card state :runner "Sure Gamble")
         (is (= credits (:credit (get-corp))) "Corp gains no credits from facedown install"))) )
 
+(deftest azmari-direct-access
+  (do-game
+    (new-game {:corp {:id "Azmari EdTech: Shaping the Future"
+                      :hand []
+                      :deck []}
+               :runner {:hand ["Direct Access" "Easy Mark"]}})
+    (take-credits state :corp)
+    (click-prompt state :corp "Event")
+    (is (changed? [(:credit (get-corp)) 0]
+                  (play-from-hand state :runner "Direct Access")
+                  (click-prompt state :runner "Archives")
+                  (run-continue-until state :success)
+                  (click-prompt state :runner "No")
+                  (play-from-hand state :runner "Easy Mark"))
+        "Didn't gain any credits from azmari")))
+
 (deftest blue-sun-powering-the-future
   ;; Blue Sun - Pick up cards at start of turn
   (do-game
@@ -2018,12 +2034,11 @@
     (click-prompt state :runner "No")
     (take-credits state :runner)
     (take-credits state :corp)
-    (let [oca (get-resource state 0)]
-      (card-ability state :runner oca 0)
-      (click-card state :runner "Data Dealer")
-      (click-prompt state :runner "Off-Campus Apartment")
-      (click-prompt state :runner "Yes")
-      (click-card state :runner "Fan Site"))))
+    (play-from-hand state :runner "Data Dealer")
+    (click-prompt state :runner "Off-Campus Apartment") ;;location
+    (click-prompt state :runner "Off-Campus Apartment") ;;trigger the draw
+    (click-prompt state :runner "Yes")
+    (click-card state :runner "Fan Site")))
 
 (deftest hayley-kaplan-universal-scholar-pay-credits-prompt
     ;; Pay-credits prompt

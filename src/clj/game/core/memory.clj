@@ -2,7 +2,9 @@
   (:require
    [cond-plus.core :refer [cond+]]
    [game.core.card :refer [has-subtype? virus-program? program?]]
-   [game.core.effects :refer [get-effect-maps get-effect-value get-effects register-lingering-effect]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.eid :refer [make-eid]]
+   [game.core.effects :refer [get-effect-maps get-effect-value get-effects is-disabled-reg? register-lingering-effect]]
    [game.core.toasts :refer [toast]]))
 
 (defn mu+
@@ -137,11 +139,26 @@
        (swap! state update-in [:runner :memory] merge new-mu))
      changed?)))
 
+(defn some-mu-effect?
+  [state card]
+  (let [ab (first (filter #(= (:type %) :used-mu) (:static-abilities (card-def card))))
+        abreq (:req ab)
+        abval (:value ab)]
+    (if (and ab (or (nil? abreq) (abreq state :runner nil card nil)))
+      (abval state :runner nil card nil)
+      0)))
+
+(defn expected-mu
+  [state card]
+  (if (program? card)
+    (+ (:memoryunits card) (some-mu-effect? state card))
+    0))
+
 (defn sufficient-mu?
   "Will installing this card put the runner over their memory limit?"
   [state card]
   (when (program? card)
-    (let [mu-cost (:memoryunits card)
+    (let [mu-cost (expected-mu state card)
           mu-list (get-available-mu state)
           available-mu (merge-available-memory mu-list)
           used-mu-effects (conj (get-effect-maps state :runner :used-mu)

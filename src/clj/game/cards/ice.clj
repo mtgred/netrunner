@@ -2046,7 +2046,7 @@
         {:label "Draw 1 card and shuffle up to 2 agendas in HQ and/or Archives into R&D"
          :msg "draw 1 card"
          :async true
-         :cost [:credit 1]
+         :cost [(->c :credit 1)]
          :effect
          (req (wait-for
                 (draw state side 1)
@@ -2092,7 +2092,7 @@
 
 (defcard "Harvester"
   (let [sub {:label "Runner draws 3 cards and discards down to maximum hand size"
-             :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
+             :msg "make the Runner draw 3 cards and discard down to [runner-pronoun] maximum hand size"
              :async true
              :effect (req (wait-for (draw state :runner 3)
                                     (continue-ability
@@ -3267,7 +3267,7 @@
   (let [sub {:label (str "The Runner loses [Click], if able. "
                          "You have an additional [Click] to spend during your next turn")
              :msg (str "force the runner to lose a [Click], if able. "
-                       "Corp gains an additional [Click] to spend during their next turn")
+                       "Corp gains an additional [Click] to spend during [their] next turn")
              :effect (req (lose-clicks state :runner 1)
                           (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]
     {:subroutines [sub
@@ -3546,20 +3546,33 @@
   (let [sub {:label "Do 1 net damage"
              :async true
              :msg "do 1 net damage"
-             :effect (req (wait-for (damage state side :net 1 {:card card})
-                                    (let [choice (:card-target card)
-                                          cards async-result
-                                          dmg (some #(when (= (:type %) choice) %) cards)]
-                                      (if (and dmg (not (is-disabled-reg? state card)))
-                                        (do (system-msg state :corp (str "uses " (:title card) " to deal 1 additional net damage"))
-                                            (damage state side eid :net 1 {:card card}))
-                                        (effect-completed state side eid)))))}]
+             :effect (req (damage state side eid :net 1 {:card card :cause :subroutine}))}]
     {:on-encounter {:waiting-prompt true
                     :prompt "Choose a card type"
                     :choices ["Event" "Hardware" "Program" "Resource"]
                     :msg (msg "choose the card type " target)
                     :effect (effect (update! (assoc card :card-target target)))}
-     :events [{:event :end-of-encounter
+     :events [{:event :damage
+               :req (req (and (= (:damage-type context) :net)
+                              (= (:cause context) :subroutine)
+                              (same-card? (:card context) card)))
+               :async true
+               :effect (req (let [trashed-cards (:cards-trashed context)
+                                  chosen-type (:card-target card)
+                                  matching-type (filter #(= (:type %) chosen-type) trashed-cards)]
+                              ;; theoretically, if this ice is made to deal 2 or more net damage from
+                              ;; a sub (who knows what the future holds), we can be dealing out more
+                              ;; than one additional damage...
+                              (if-not (seq matching-type)
+                                (effect-completed state side eid)
+                                (letfn [(resolve-extra-damage [x]
+                                          (system-msg state :corp (str "uses " (:title card) " to deal 1 additional net damage" (when (> x 1) (str " (" (dec x) " remaining)"))))
+                                          (if-not (> x 1)
+                                            (damage state side eid :net 1 {:card card})
+                                            (wait-for (damage side :net 1 {:card card})
+                                                      (resolve-extra-damage (dec x)))))]
+                                  (resolve-extra-damage (count matching-type))))))}
+              {:event :end-of-encounter
                :req (req (:card-target card))
                :effect (effect (update! (dissoc card :card-target)))}]
      :subroutines [sub
@@ -4130,6 +4143,7 @@
                                    {:choices {:card #(and (ice? %)
                                                           (in-hand? %))}
                                     :prompt "Choose a piece of ice to install"
+                                    :async true
                                     :effect (req (let [this (zone->name (second (get-zone card)))
                                                        nice target]
                                                    (continue-ability state side
@@ -4156,7 +4170,9 @@
                                {:prompt (msg "Move " (:title card) " to the outermost position of " (zone->name target-server) "?")
                                 :yes-ability {:once :per-turn
                                               :msg (msg "move itself to the outermost position of " (zone->name target-server))
-                                              :effect (req (let [moved (move state side card (conj [:servers (first target-server)] :ices))]
+                                              :effect (req (let [moved (move state side
+                                                                             (get-card state card)
+                                                                             (conj [:servers (first target-server)] :ices))]
                                                                  (redirect-run state side target-server)
                                                                  ;;ugly hack - TODO: figure out why the event gets disabled after the card moves!
                                                                  ;;- maybe this should be inserted into move? -nbkelly, Jan '24

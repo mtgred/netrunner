@@ -316,11 +316,26 @@
   (when once
     (swap! state assoc-in [once (or once-key cid)] true)))
 
+(defn do-nothing
+  "Does nothing (loudly)"
+  [state side eid card]
+  (system-msg state side (str "uses " (:title card) " to do nothing"))
+  (effect-completed state side eid))
+
+(defn- change-in-game-state?
+  "Concession for NCIGS going - uses a 'change-in-game-state' key to check when a card
+  has no potential to do anything through resolving (different to req)"
+  [state side {:keys [change-in-game-state eid] :as ability} card targets]
+  (or (not (contains? ability :change-in-game-state))
+      (change-in-game-state state side eid card targets)))
+
 (defn- do-effect
   "Trigger the effect"
   [state side {:keys [eid] :as ability} card targets]
   (if-let [ability-effect (:effect ability)]
-    (ability-effect state side eid card targets)
+    (if (change-in-game-state? state side ability card targets)
+      (ability-effect state side eid card targets)
+      (do-nothing state side eid card))
     (effect-completed state side eid)))
 
 (defn merge-costs-paid
@@ -388,37 +403,39 @@
         args (-> ability
                  (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
-   (if (map? choices)
-     ;; Two types of choices use maps: select prompts, and :number prompts.
-     (cond
-       ;; a counter prompt
-       (:counter choices)
-       (prompt! state s card prompt choices ab args)
-       ;; a select prompt
-       (or (:req choices)
-           (:card choices))
-       (show-select state s card ability update! resolve-ability args)
-       ;; a :number prompt
-       (:number choices)
-       (let [n ((:number choices) state side eid card targets)
-             d (if-let [dfunc (:default choices)]
-                 (dfunc state side (make-eid state eid) card targets)
-                 0)]
-         (prompt! state s card prompt {:number n :default d} ab args))
-       (:card-title choices)
-       (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state eid) nil [%])
-                                                   (server-cards))))
-             choices (assoc choices :autocomplete card-titles)
-             args (assoc args :prompt-type :card-title)]
-         (prompt! state s card prompt choices ab args))
-       ;; unknown choice
-       :else nil)
-     ;; Not a map; either :credit, :counter, or a vector of cards or strings.
-     (let [cs (if-not (fn? choices)
-                choices ; :credit or :counter
-                (let [cards (choices state side eid card targets)] ; a vector of cards or strings
-                  (if not-distinct cards (distinct-by :title cards))))]
-       (prompt! state s card prompt cs ab args)))))
+    (if-not (change-in-game-state? state side ability card targets)
+      (do-nothing state side eid card)
+      (if (map? choices)
+        ;; Two types of choices use maps: select prompts, and :number prompts.
+        (cond
+          ;; a counter prompt
+          (:counter choices)
+          (prompt! state s card prompt choices ab args)
+          ;; a select prompt
+          (or (:req choices)
+              (:card choices))
+          (show-select state s card ability update! resolve-ability args)
+          ;; a :number prompt
+          (:number choices)
+          (let [n ((:number choices) state side eid card targets)
+                d (if-let [dfunc (:default choices)]
+                    (dfunc state side (make-eid state eid) card targets)
+                    0)]
+            (prompt! state s card prompt {:number n :default d} ab args))
+          (:card-title choices)
+          (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state eid) nil [%])
+                                                      (server-cards))))
+                choices (assoc choices :autocomplete card-titles)
+                args (assoc args :prompt-type :card-title)]
+            (prompt! state s card prompt choices ab args))
+          ;; unknown choice
+          :else nil)
+        ;; Not a map; either :credit, :counter, or a vector of cards or strings.
+        (let [cs (if-not (fn? choices)
+                   choices ; :credit or :counter
+                   (let [cards (choices state side eid card targets)] ; a vector of cards or strings
+                     (if not-distinct cards (distinct-by :title cards))))]
+          (prompt! state s card prompt cs ab args))))))
 
 ;;; Prompts
 (defn- prompt!
@@ -1107,7 +1124,9 @@
     (trash-on-tag state nil (make-eid state eid))
     (if-let [cards (seq (filter
                           :enforce-conditions
-                          [(get-in @state [:corp :identity])]))]
+                          (concat (all-installed state :corp)
+                                  [(get-in @state [:corp :identity])]
+                                  (all-active-installed state :runner))))]
       (enforce-conditions-impl state nil eid cards)
       (effect-completed state nil eid))))
 

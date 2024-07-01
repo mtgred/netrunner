@@ -2,7 +2,8 @@
   (:require
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
-    [game.core.card :refer [active? corp? faceup? get-card get-counters has-subtype? in-discard?]]
+    [game.core.board :refer [all-installed]]
+    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard?]]
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed]]
@@ -233,11 +234,17 @@
        (make-current-event-handler title)
        (make-recurring-ability)))
 
+(defn something-can-be-advanced?
+  "There's either a card on the field that can be advanced, or a card that has the potential to be an advancable card (hidden info)"
+  [state]
+  (some #(or (not (faceup? %)) (can-be-advanced? state %)) (all-installed state :corp)))
+
 (defn corp-recur
   ([] (corp-recur (constantly true)))
   ([pred]
    {:label "add card from Archives to HQ"
     :prompt "Choose a card to add to HQ"
+    :does-something (req (seq (:discard corp)))
     :waiting-prompt true
     :show-discard true
     :choices {:card #(and (corp? %)

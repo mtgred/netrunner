@@ -1665,14 +1665,18 @@
                                        (damage state side eid :brain 1 {:card card})))}}}})
 
 (defcard "The Holo Man"
-  (let [abi
+  (let [is-boosted-fn?
+        (fn [state side]
+          (no-event? state side :corp-install #(= [:hand] (:previous-zone (:card (first %))))))
+        abi
         {:cost [(->c :click) (->c :credit 4)]
          :label "Place advancement counters on a card in or protecting this server"
          :once :per-turn
          :choices {:req (req (same-server? card target))}
+         :msg (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
+                   (card-str state target))
          :effect
-         (req (let [n (if (no-event? state side :corp-install #(= [:hand] (:previous-zone (:card (first %))))) 3 2)]
-                (system-msg state side (str "uses " (card-str state card) " to place " (quantify n "advancement counter") " on " (card-str state target)))
+         (req (let [n (if (is-boosted-fn? state side) 3 2)]
                 (add-prop state side eid target :advance-counter n {:placed true})))}]
     {:abilities [abi]
      :events [(mobile-sysop-event :corp-turn-begins)]}))

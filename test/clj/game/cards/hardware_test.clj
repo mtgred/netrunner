@@ -1636,43 +1636,17 @@
         (is (= 2 (get-strength (refresh enig))) "Enigma is back at 2 strength"))))
 
 (deftest dinosaurus-hosting-a-breaker-with-strength-based-on-unused-mu-should-calculate-correctly
-    ;; Hosting a breaker with strength based on unused MU should calculate correctly
-    (do-game
-      (new-game {:runner {:deck ["Adept" "Dinosaurus"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 5)
-      (play-from-hand state :runner "Dinosaurus")
-      (play-from-hand state :runner "Adept")
-      (is (= 2 (core/available-mu state)) "2 MU used")
-      (let [dino (get-hardware state 0)
-            adpt (get-program state 0)]
-        (is (= 4 (get-strength (refresh adpt))) "Adept at 4 strength individually")
-        (card-ability state :runner dino 1)
-        (click-card state :runner (refresh adpt))
-        (let [hosted-adpt (first (:hosted (refresh dino)))]
-          (is (= 4 (core/available-mu state)) "0 MU used")
-          (is (= 8 (get-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
-
-(deftest dinosaurus-boost-strength-of-hosted-icebreaker-keep-mu-the-same-when-hosting-or-trashing-hosted-breaker
-    ;; Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker
-    (do-game
-      (new-game {:runner {:deck ["Dinosaurus" "Battering Ram"]}})
-      (take-credits state :corp)
-      (core/gain state :runner :credit 5)
-      (play-from-hand state :runner "Dinosaurus")
-      (let [dino (get-hardware state 0)]
-        (card-ability state :runner dino 0)
-        (click-card state :runner (find-card "Battering Ram" (:hand (get-runner))))
-        (is (= 2 (:click (get-runner))))
-        (is (zero? (:credit (get-runner))))
-        (is (= 4 (core/available-mu state)) "Battering Ram 2 MU not deducted from available MU")
-        (let [ram (first (:hosted (refresh dino)))]
-          (is (= 5 (get-strength (refresh ram)))
-              "Dinosaurus giving +2 strength to Battering Ram")
-          ;; Trash Battering Ram
-          (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
-          (is (= 4 (core/available-mu state))
-              "Battering Ram 2 MU not added to available MU when Battering Ram was trashed")))))
+  ;; Hosting a breaker with strength based on unused MU should calculate correctly
+  (do-game
+    (new-game {:runner {:deck ["Adept" "Dinosaurus"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Dinosaurus")
+    (play-from-hand state :runner "Adept")
+    (click-prompt state :runner "Dinosaurus")
+    (is (= 4 (core/available-mu state)) "0 MU used")
+    (let [adpt (first (:hosted (get-hardware state 0)))]
+      (is (= 8 (get-strength adpt)) "Adept at 8 strength hosted"))))
 
 (deftest docklands-pass-corp-access-extra-card-on-hq-run
     ;; Corp access extra card on HQ run
@@ -1876,88 +1850,86 @@
         (is (empty? (get-hardware state)) "Feedback Filter trashed")))))
 
 (deftest flame-out-basic-behavior
-    ;; Basic behavior
-    (do-game
-      (new-game {:runner {:deck ["Flame-out" "Mimic"]}})
+  ;; Basic behavior
+  (do-game
+    (new-game {:runner {:deck ["Flame-out" "Mimic"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Flame-out")
+    (play-from-hand state :runner "Mimic")
+    (click-prompt state :runner "Flame-out")
+    (let [fo (get-hardware state 0)]
+      (take-credits state :runner)
       (take-credits state :corp)
-      (play-from-hand state :runner "Flame-out")
-      (let [fo (get-hardware state 0)]
-        (card-ability state :runner fo 2)
-        (click-card state :runner (find-card "Mimic" (:hand (get-runner))))
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
-        (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
-        (card-ability state :runner fo 0)
-        (is (= 3 (:credit (get-runner))) "Runner gains 1 credit")
-        (is (= 8 (get-counters (refresh fo) :credit)) "Took 1 credit from Flame-out")
-        (take-credits state :runner)
-        (is (empty? (:hosted (refresh fo))) "Mimic trashed")
-        (is (= 1 (count (:discard (get-runner)))) "Mimic in trash"))))
+      (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
+      (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
+      (card-ability state :runner fo 0)
+      (is (= 3 (:credit (get-runner))) "Runner gains 1 credit")
+      (is (= 8 (get-counters (refresh fo) :credit)) "Took 1 credit from Flame-out")
+      (take-credits state :runner)
+      (is (empty? (:hosted (refresh fo))) "Mimic trashed")
+      (is (= 1 (count (:discard (get-runner)))) "Mimic in trash"))))
 
 (deftest flame-out-corp-turn-usage
-    ;; Corp turn usage
-    (do-game
-      (new-game {:runner {:deck ["Flame-out" "Mimic"]}})
+  ;; Corp turn usage
+  (do-game
+    (new-game {:runner {:deck ["Flame-out" "Mimic"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Flame-out")
+    (play-from-hand state :runner "Mimic")
+    (click-prompt state :runner "Flame-out")
+    (let [fo (get-hardware state 0)]
+      (take-credits state :runner)
+      (is (= 1 (count (:hosted (refresh fo)))) "Mimic hosted")
+      (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
+      (card-ability state :runner fo 1)
+      (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
+      (is (= 11 (:credit (get-runner))) "Runner gains 9 credit")
+      (is (zero? (get-counters (refresh fo) :credit)) "Took all credits from Flame-out")
       (take-credits state :corp)
-      (play-from-hand state :runner "Flame-out")
-      (let [fo (get-hardware state 0)]
-        (card-ability state :runner fo 2)
-        (click-card state :runner (find-card "Mimic" (:hand (get-runner))))
-        (take-credits state :runner)
-        (is (= 1 (count (:hosted (refresh fo)))) "Mimic hosted")
-        (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
-        (card-ability state :runner fo 1)
-        (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
-        (is (= 11 (:credit (get-runner))) "Runner gains 9 credit")
-        (is (zero? (get-counters (refresh fo) :credit)) "Took all credits from Flame-out")
-        (take-credits state :corp)
-        (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
+      (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
 
 (deftest flame-out-pay-credits-prompt
-    ;; Pay-credits prompt
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Owl"]}
-                 :runner {:deck ["Flame-out" "Mimic"]}})
-      (play-from-hand state :corp "Owl" "HQ")
+  ;; Pay-credits prompt
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Owl"]}
+               :runner {:deck ["Flame-out" "Mimic"]}})
+    (play-from-hand state :corp "Owl" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Flame-out")
+    (play-from-hand state :runner "Mimic")
+    (click-prompt state :runner "Flame-out")
+    (let [fo (get-hardware state 0)]
+      (take-credits state :runner)
       (take-credits state :corp)
-      (play-from-hand state :runner "Flame-out")
-      (let [fo (get-hardware state 0)]
-        (card-ability state :runner fo 2)
-        (click-card state :runner "Mimic")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
-        (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
-        (run-on state "HQ")
-        (rez state :corp (get-ice state :hq 0))
-        (run-continue state)
-        (card-ability state :runner (first (:hosted (refresh fo))) 0)
-        (click-prompt state :runner "Add installed program to the top of the stack")
-        (click-card state :runner fo)
-        (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
-        (take-credits state :runner)
-        (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
+      (is (= 1 (count (:hosted (refresh fo)))) "Mimic still hosted")
+      (is (= 2 (:credit (get-runner))) "Runner starts with 2 credits")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (card-ability state :runner (first (:hosted (refresh fo))) 0)
+      (click-prompt state :runner "Add installed program to the top of the stack")
+      (click-card state :runner fo)
+      (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
+      (take-credits state :runner)
+      (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
 
 (deftest flame-out-pump-abilities-don-t-disappear-when-card-is-hosted-4770
-    ;; Pump abilities don't disappear when card is hosted #4770
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Owl"]}
-                 :runner {:hand ["Flame-out" "Cybertrooper Talut" "Mimic"]
-                          :credits 20}})
-      (play-from-hand state :corp "Owl" "HQ")
-      (take-credits state :corp)
-      (core/gain state :runner :click 10)
-      (play-from-hand state :runner "Cybertrooper Talut")
-      (play-from-hand state :runner "Flame-out")
-      (play-from-hand state :runner "Mimic")
-      (let [mimic-strength (get-strength (get-program state 0))
-            fo (get-hardware state 0)]
-        (card-ability state :runner fo 3)
-        (click-card state :runner "Mimic")
-        (is (= mimic-strength (get-strength (first (:hosted (get-hardware state 0)))))))))
+  ;; Pump abilities don't disappear when card is hosted #4770
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Owl"]}
+               :runner {:hand ["Flame-out" "Cybertrooper Talut" "Mimic"]
+                        :credits 20}})
+    (play-from-hand state :corp "Owl" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Cybertrooper Talut")
+    (play-from-hand state :runner "Flame-out")
+    (play-from-hand state :runner "Mimic")
+    (click-prompt state :runner "Flame-out")
+    (let [fo (get-hardware state 0)]
+      (is (= 5 (get-strength (first (:hosted (get-hardware state 0)))))))))
 
 (deftest flip-switch-trace-reaction-ability
     ;; Trace reaction ability
@@ -3576,19 +3548,30 @@
       (is (zero? (count-tags state)) "Runner loses all tags")))
 
 (deftest omni-drive-pay-credits-prompt
-    ;; Pay-credits prompt
-    (do-game
-      (new-game {:runner {:hand ["Omni-drive" "Inti"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Omni-drive")
-      (let [omni (get-hardware state 0)]
-          (card-ability state :runner omni 0)
-          (click-card state :runner (find-card "Inti" (:hand (get-runner))))
-          (let [inti (first (:hosted (refresh omni)))]
-            (is (changed? [(:credit (get-runner)) -1]
-                  (card-ability state :runner inti 1)
-                  (click-card state :runner omni))
-                "Used 1 credit from Omni-drive")))))
+  ;; Pay-credits prompt
+  (do-game
+    (new-game {:runner {:hand ["Omni-drive" "Inti"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Omni-drive")
+    (play-from-hand state :runner "Inti")
+    (click-prompt state :runner "Omni-drive")
+    (let [inti (first (:hosted (get-hardware state 0)))]
+      (is (changed? [(:credit (get-runner)) -1]
+                    (card-ability state :runner inti 1)
+                    (click-card state :runner "Omni-drive"))
+          "Used 1 credit from Omni-drive"))))
+
+(deftest omni-drive-vs-puffer
+  (do-game
+    (new-game {:runner {:hand ["Omni-drive" "Puffer"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Omni-drive")
+    (play-from-hand state :runner "Puffer")
+    (click-prompt state :runner "Omni-drive")
+    (let [puf (first (:hosted (get-hardware state 0)))]
+      (card-ability state :runner puf 2))
+    (is (= "Puffer" (:title (first (:discard (get-runner))))) "Trashed due to MU restriction on omni-drive")))
 
 (deftest pan-weave-happy
   ;; PAN-Weave - 1 meat on install, once/turn siphon 1 credit on hq run

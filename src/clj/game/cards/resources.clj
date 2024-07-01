@@ -1029,7 +1029,7 @@
 (defcard "Dean Lister"
   {:abilities [{:req (req run)
                 :label "pump icebreaker"
-                :msg (msg "give +1 strength for each card in their Grip to " (:title target) " until the end of the run")
+                :msg (msg "give +1 strength for each card in [their] Grip to " (:title target) " until the end of the run")
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
                 :cost [(->c :trash-can)]
@@ -1348,7 +1348,7 @@
 
 (defcard "Fan Site"
   {:events [{:event :agenda-scored
-             :msg "add itself to their score area as an agenda worth 0 agenda points"
+             :msg (msg "add itself to [their] score area as an agenda worth 0 agenda points")
              :req (req (installed? card))
              :effect (req (as-agenda state :runner card 0))}]})
 
@@ -1404,7 +1404,7 @@
                   :req (req (get-agenda card))
                   :async true
                   :msg (msg (let [c (get-agenda card)]
-                              (str "add " (:title c) " to their score area and gain "
+                              (str "add " (:title c) " to [their] score area and gain "
                                    (quantify (get-agenda-points c) "agenda point"))))
                   :effect (req (let [c (move state :runner (get-agenda card) :scored)]
                                  (when (card-flag? c :has-events-when-stolen true)
@@ -1703,7 +1703,7 @@
                 :effect (effect (gain-bad-publicity :corp 1))}]})
 
 (defcard "Investigator Inez Delgado"
-  {:abilities [{:msg "add itself to their score area as an agenda worth 0 agenda points"
+  {:abilities [{:msg (msg "add itself to [their] score area as an agenda worth 0 agenda points")
                 :label "Add to score area and reveal cards in server"
                 :async true
                 :prompt "Choose a server"
@@ -1845,7 +1845,7 @@
               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}
             {:event :counter-added
              :req (req (<= 4 (get-counters (get-card state card) :power)))
-             :msg "add itself to their score area as an agenda worth 1 agenda point"
+             :msg "add itself to [their] score area as an agenda worth 1 agenda point"
              :effect (req (as-agenda state :runner card 1))}]
    :abilities [(set-autoresolve :auto-place-counter "Kasi String placing power counters on itself")]})
 
@@ -1864,7 +1864,7 @@
 
 (defcard "Keros Mcintyre"
   {:events [{:event :derez
-             :req (req (and (first-event? state side :derez)
+             :req (req (and (first-event? state side :derez #(= :runner (:side (first %))))
                             (= (:side context) :runner)))
              :msg "gain 2 [Credits]"
              :async true
@@ -1955,7 +1955,8 @@
 
 (defcard "Liberated Chela"
   {:abilities [{:cost [(->c :click 5) (->c :forfeit)]
-                :msg "add itself to their score area"
+                :msg "add itself to [their] score area"
+                :label "Add liberated Chela to your score area"
                 :async true
                 :effect
                 (effect (continue-ability
@@ -1974,9 +1975,9 @@
                                                       (move state :runner card :rfg)
                                                       (effect-completed state side eid)))}
                               :no-ability
-                              {:msg "add itself to their score area as an agenda worth 2 points"
+                              {:msg "add itself to [their] score area as an agenda worth 2 points"
                                :effect (effect (as-agenda :runner card 2))}}}
-                            {:msg "add itself to their score area as an agenda worth 2 points"
+                            {:msg "add itself to [their] score area as an agenda worth 2 points"
                              :effect (effect (as-agenda :runner card 2))})
                           card nil))}]})
 
@@ -2035,7 +2036,7 @@
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :choices {:req (req (same-card? card (:host target)))}
-                :msg (msg "add " (:title target) " to their Grip")
+                :msg (msg "add " (:title target) " to [their] Grip")
                 :effect (effect (move target :hand))}]
    :events [{:event :runner-turn-ends
              :interactive (req true)
@@ -2305,24 +2306,8 @@
 
 (defcard "Off-Campus Apartment"
   {:flags {:runner-install-draw true}
-   :abilities [{:async true
-                :label "Install and host a connection"
-                :cost [(->c :click 1)]
-                :prompt "Choose a connection in the grip"
-                :choices {:req (req (and (has-subtype? target "Connection")
-                                         (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                                   target nil [(->c :credit (install-cost state side target))])
-                                         (in-hand? target)))}
-                :msg (msg "install and host " (:title target) " and draw 1 card")
-                :effect (effect (runner-install eid target {:host-card card}))}
-               {:label "Host an installed connection (manual)"
-                :prompt "Choose an installed connection"
-                :choices {:card #(and (has-subtype? % "Connection")
-                                      (installed? %))}
-                :msg (msg "host " (:title target) " and draw 1 card")
-                :async true
-                :effect (effect (host card target)
-                                (draw eid 1))}]
+   :static-abilities [{:type :can-host
+                      :req (req (and (resource? target) (has-subtype? target "Connection")))}]
    :events [{:event :runner-install
              :req (req (same-card? card (:host (:card context))))
              :async true
@@ -3543,8 +3528,11 @@
                             (trigger-event-sync state side eid :spent-credits-from-card card)))}))
 
 (defcard "Tsakhia \"Bankhar\" Gantulga"
-  (let [subroutine {:variable true
-                    :sub-effect (do-net-damage 1)}
+  (let [sub {:variable true
+             :sub-effect {:effect (req (damage state :corp eid :net 1 {:card card :cause :subroutine}))
+                          :label "Do 1 net damage"
+                          :async true
+                          :msg "do 1 net damage"}}
         matches-server (fn [target card state side]
                          (= (:card-target card)
                             (zone->name (second (get-zone target)))))
@@ -3570,7 +3558,7 @@
                              :duration :end-of-encounter
                              :async true
                              :msg "force the Corp to resolve \"[Subroutine] Do 1 net damage\""
-                             :effect (req (update-current-encounter state :replace-subroutine subroutine)
+                             :effect (req (update-current-encounter state :replace-subroutine sub)
                                           (effect-completed state side eid))}]))}
               {:event :runner-turn-ends
                :silent (req true)
@@ -3579,7 +3567,7 @@
 
 (defcard "Tyson Observatory"
   {:abilities [{:prompt "Choose a piece of Hardware"
-                :msg (msg "add " (:title target) " to their Grip")
+                :msg (msg "add " (:title target) " to [their] Grip")
                 :label "Search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [(->c :click 2)]

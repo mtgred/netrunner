@@ -111,8 +111,9 @@
                                                   (< 1 (->> (all-active-installed state :runner)
                                                             (filter resource?)
                                                             count)))
-                                           (resource? target)
+                                           true
                                            (not (untrashable-while-resources? target)))
+                                         (resource? target)
                                          (let [additional-costs
                                                (->> (get-effects state side :basic-ability-additional-trash-cost target)
                                                     (concat (get-effects state side :additional-trash-cost target))

@@ -53,7 +53,7 @@
   "Choose not to mulligan."
   [state side _]
   (swap! state assoc-in [side :keep] :keep)
-  (system-msg state side "keeps their hand")
+  (system-msg state side "keeps [their] hand")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
     (clear-wait-prompt state :runner)

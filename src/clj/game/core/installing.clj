@@ -3,7 +3,7 @@
     [cond-plus.core :refer [cond+]]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-installed get-remotes installable-servers server->zone all-installed-runner-type]]
-    [game.core.card :refer [agenda? asset? convert-to-condition-counter corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
+    [game.core.card :refer [agenda? asset? condition-counter? convert-to-condition-counter  corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -13,7 +13,7 @@
     [game.core.hosting :refer [host]]
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
-    [game.core.memory :refer [sufficient-mu? update-mu]]
+    [game.core.memory :refer [expected-mu sufficient-mu? update-mu]]
     [game.core.moving :refer [move trash trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
     [game.core.revealing :refer [reveal]]
@@ -25,7 +25,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [dissoc-in in-coll? to-keyword]]
+    [game.utils :refer [dissoc-in in-coll? same-card? to-keyword quantify]]
     [medley.core :refer [find-first]]))
 
 (defn install-locked?
@@ -446,13 +446,13 @@
           true))))
 
 (defn runner-install-pay
-  [state side eid card {:keys [facedown] :as args}]
+  [state side eid card {:keys [no-mu facedown] :as args}]
   (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))]
     (if-not (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
       (effect-completed state side eid)
       (if (and (program? card)
                (not facedown)
-               (not (sufficient-mu? state card)))
+               (not (or no-mu (sufficient-mu? state card))))
         (continue-ability
           state side
           {:prompt (format "Insufficient MU to install %s. Trash installed programs?" (:title card))
@@ -480,6 +480,106 @@
                                         :previous-zone (:previous-zone card)))
                         (effect-completed state side eid)))))))))
 
+(defn- some-hosting-effect
+  [state card]
+  "Gets the first (only) host effect of a card, if it exists and is not disabled"
+  (when-not (is-disabled-reg? state card)
+    (first (filter #(= (:type %) :can-host) (:static-abilities (card-def card))))))
+
+(defn runner-can-host
+  [state side eid card {:keys [host-card facedown] :as args}]
+  "Gets a list of all cards that the runner can host the install target on"
+  (when-not (or host-card facedown)
+    (let [all-hosts (filter #(some-hosting-effect state %) (all-installed state :runner))
+          relevant (filter #(let [ab (some-hosting-effect state %)]
+                              (or (nil? (:req ab))
+                                  ((:req ab) state side eid % [card])))
+                           all-hosts)]
+      (seq relevant))))
+
+(defn runner-host-enforce-specific-memory
+  [state side eid card potential-host args]
+  "enforces limits on the total MU a host can support during install"
+  (if-let [max-mu (when (program? card) (:max-mu (some-hosting-effect state potential-host)))]
+    (let [max-mu (if (fn? max-mu)
+                   (max-mu state side eid potential-host nil)
+                   max-mu)
+          relevant-cards (filter program? (:hosted potential-host))
+          current-mu-host (reduce + 0 (map #(expected-mu state %) relevant-cards))
+          card-mu (expected-mu state card)
+          new-mu (+ card-mu current-mu-host)
+          to-eliminate (- new-mu max-mu)]
+      (if (pos? to-eliminate)
+        (continue-ability
+          state side
+          {:prompt (str (:title potential-host) " can only handle " max-mu " MU of programs - trash programs on " (:title card) " worth at least " to-eliminate " MU")
+           :choices {:req (req (and (program? target)
+                                    (some #(same-card? % target) relevant-cards)))
+                     :max (count relevant-cards)
+                     :min 1}
+           :async true
+           ;; note - this is recursive because there's no good way to specify in the prompt that
+           ;; the total selection is worth X memory, since the req function must be satisfied at
+           ;; every point of the selection --nbkelly, jun 2024
+           :effect (req (wait-for
+                          (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+                          (update-mu state)
+                          (runner-host-enforce-specific-memory state side eid card
+                                                               (get-card state potential-host)
+                                                               args)))}
+          card nil)
+        (runner-install-pay state side eid card (assoc args :host-card potential-host))))
+    (runner-install-pay state side eid card (assoc args :host-card potential-host))))
+
+(defn runner-host-enforce-card-limits
+  [state side eid card potential-host args]
+  "Enforces limits on the number of hosted cards a host can have during install"
+  (if-let [max-cards (:max-cards (some-hosting-effect state potential-host))]
+    (let [max-cards (if (int? max-cards)
+                      max-cards
+                      (max-cards state side eid potential-host nil))
+          relevant-cards (filter (complement condition-counter?) (:hosted potential-host))
+          new-total (+ 1 (count relevant-cards))
+          to-destroy (- new-total max-cards)]
+      (if (pos? to-destroy)
+        (continue-ability
+          state side
+          {:prompt (str "Insufficient Space - Choose at least " (quantify to-destroy "card") " on " (:title potential-host) " to trash")
+           :choices {:req (req (some #(same-card? % target) relevant-cards))
+                     :min to-destroy
+                     :max (count relevant-cards)}
+           :async true
+           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+                                  (update-mu state)
+                                  (runner-host-enforce-specific-memory state side eid card
+                                                                       (get-card state potential-host) args)))}
+          card nil)
+        (runner-host-enforce-specific-memory state side eid card potential-host args)))
+    (runner-host-enforce-specific-memory state side eid card potential-host args)))
+
+(defn runner-host-choice
+  [state side eid card potential-hosts args]
+  "Have the runner choose where they are hosting the given card"
+  (continue-ability
+    state side
+    {:choices (conj potential-hosts "The Rig")
+     :prompt (str "Choose a destination for " (:title card))
+     :async true
+     :effect (req (if (= target "The Rig")
+                    (runner-install-pay state side eid card args)
+                    ;; todo - apply all the modifiers from the host map
+                    (let [host-abi (some-hosting-effect state target)
+                          old-cost-bonus (or (:cost-bonus args) 0)
+                          new-cost-bonus (or (:cost-bonus host-abi) 0)
+                          combined-cost-bonus (+ old-cost-bonus new-cost-bonus)
+                          cost-bonus (if (zero? combined-cost-bonus) nil combined-cost-bonus)]
+                      (runner-host-enforce-card-limits
+                        state side eid card (get-card state target)
+                        (assoc args
+                               :no-mu (:no-mu host-abi)
+                               :cost-bonus cost-bonus)))))}
+    card nil))
+
 (defn runner-install
   "Installs specified runner card if able"
   ([state side eid card] (runner-install state side eid card nil))
@@ -496,7 +596,9 @@
           :async true
           :effect (effect (runner-install-pay eid card (assoc args :host-card target)))}
          card nil)
-       (runner-install-pay state side eid card args)))))
+       (if-let [potential-hosts (runner-can-host state side eid card args)]
+         (runner-host-choice state side eid card potential-hosts args)
+         (runner-install-pay state side eid card args))))))
 
 (defn install-as-condition-counter
   "Install the event or operation onto the target as a condition counter."

@@ -19,7 +19,7 @@
   [state]
   (let [new-mark (rand-nth [:hq :rd :archives])]
     (set-mark state new-mark)
-    (system-msg state :runner (str "identifies their mark to be " (central->name new-mark)))))
+    (system-msg state :runner (str "identifies [their] mark to be " (central->name new-mark)))))
 
 (def identify-mark-ability
   {:effect (req (when (nil? (:mark @state)) (identify-mark state)))})

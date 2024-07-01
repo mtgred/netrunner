@@ -375,8 +375,6 @@
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand [(qty "Audacity" 3) "Ice Wall" "Hostile Takeover"]}})
-      (play-from-hand state :corp "Audacity")
-      (is (no-prompt? state :corp) "Can't play Audacity without an advanceable card")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Audacity")
       (click-card state :corp "Ice Wall")
@@ -460,8 +458,6 @@
                       :hand [(qty "Best Defense" 2)]}
                :runner {:hand ["Dorm Computer" "Mass-Driver"]
                         :credits 10}})
-    (play-from-hand state :corp "Best Defense")
-    (is (no-prompt? state :corp) "Corp can't play Best Defense without installed runner cards")
     (take-credits state :corp)
     (play-from-hand state :runner "Dorm Computer")
     (play-from-hand state :runner "Mass-Driver")
@@ -632,26 +628,18 @@
     (is (= "Sure Gamble" (:title (nth (:deck (get-runner)) 2))) "Yet another Sure Gamble on top of the deck")))
 
 (deftest building-blocks-basic-behavior
-    ;; Basic behavior
-    (do-game
-      (new-game {:corp {:deck ["Building Blocks" "Ice Wall"]}})
-      (core/gain state :corp :credit 1)
-      (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
-      (play-from-hand state :corp "Building Blocks")
-      (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
-      (click-card state :corp "Ice Wall")
-      (click-prompt state :corp "New remote")
-      (let [iw (get-ice state :remote1 0)]
-        (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
-        (is (rezzed? (refresh iw)) "Ice Wall is installed and rezzed"))))
-
-(deftest building-blocks-choose-invalid-card
-    ;; Choose invalid card
-    (do-game
-      (new-game {:corp {:deck ["Building Blocks" "Hedge Fund" "Cortex Lock"]}})
-      (core/gain state :corp :credit 1)
-      (play-from-hand state :corp "Building Blocks")
-      (is (no-prompt? state :corp) "Can't play Building Blocks without a Barrier in hand")))
+  ;; Basic behavior
+  (do-game
+    (new-game {:corp {:deck ["Building Blocks" "Ice Wall"]}})
+    (core/gain state :corp :credit 1)
+    (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
+    (play-from-hand state :corp "Building Blocks")
+    (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :corp "New remote")
+    (let [iw (get-ice state :remote1 0)]
+      (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
+      (is (rezzed? (refresh iw)) "Ice Wall is installed and rezzed"))))
 
 (deftest business-as-usual
   (do-game
@@ -3892,21 +3880,6 @@
         (is (zero? (count-bad-pub state)) "Sacrifice removes one bad publicity for forfeiting Hostile Takeover")
         (is (= (inc credits) (:credit (get-corp))) "Corp gained one credit from removing one bad pub with Sacrifice"))))
 
-(deftest sacrifice-play-restrictions
-    ;; Play restrictions
-    (do-game
-      (new-game {:corp {:deck ["Standoff" "Hostile Takeover" "Sacrifice"]}})
-      (play-and-score state "Standoff")
-      (click-prompt state :runner "Done")
-      (core/gain state :corp :bad-publicity 1)
-      (play-from-hand state :corp "Sacrifice")
-      (is (= 2 (count (:hand (get-corp)))) "Can not play Sacrifice with no 1+ agenda in score area")
-      (play-and-score state "Hostile Takeover")
-      ;; Remove BP
-      (core/gain state :corp :bad-publicity -2)
-      (play-from-hand state :corp "Sacrifice")
-      (is (= 1 (count (:hand (get-corp)))) "Can not play Sacrifice with no bad publicity in score area")))
-
 (deftest salem-s-hospitality
   ;; Salem's Hospitality - Full test
   (do-game
@@ -4023,10 +3996,11 @@
 (deftest seamless-launch
   ;; Seamless Launch
   (do-game
-     (new-game {:corp {:hand ["Seamless Launch" "Project Atlas"]}})
+     (new-game {:corp {:hand [(qty "Seamless Launch" 2) "Project Atlas"]}})
      (play-from-hand state :corp "Project Atlas" "New remote")
      (play-from-hand state :corp "Seamless Launch")
-     (is (no-prompt? state :corp) "No valid target for Seamless Launch")
+     (is (no-prompt? state :corp) "No prompt")
+     (is (last-log-contains? state "to do nothing") "did nothing")
      (take-credits state :corp)
      (take-credits state :runner)
      (play-from-hand state :corp "Seamless Launch")
@@ -4907,32 +4881,30 @@
         (is (= 2 (count (:discard (get-runner)))) "Two cards in heap"))))
 
 (deftest the-all-seeing-i-checks-that-all-seeing-i-does-not-double-trash-hosted-cards-trashes-hosted-cards
-    ;; Checks that All-seeing I does not double-trash hosted cards, trashes hosted cards
-    (do-game
-      (new-game {:corp {:deck ["The All-Seeing I"]}
-                 :runner {:deck [(qty "Fall Guy" 2) "Off-Campus Apartment"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Off-Campus Apartment")
-      (let [oca (get-resource state 0)
-            fg1 (get-in (get-runner) [:hand 0])
-            fg2 (get-in (get-runner) [:hand 1])]
-        (card-ability state :runner oca 0)
-        (click-card state :runner fg1)
-        (card-ability state :runner oca 0)
-        (click-card state :runner fg2))
-      (gain-tags state :runner 1)
-      (take-credits state :runner)
-      (play-from-hand state :corp "The All-Seeing I")
-      (is (= "Prevent the trashing of Off-Campus Apartment?"
-             (:msg (prompt-map :runner))))
-      (let [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
-        (card-ability state :runner fall-guy 0))
-      (click-prompt state :runner "Done")
-      (is (= "Prevent the trashing of Fall Guy?"
-             (:msg (prompt-map :runner))))
-      (click-prompt state :runner "Done")
-      (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
-      (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
+  ;; Checks that All-seeing I does not double-trash hosted cards, trashes hosted cards
+  (do-game
+    (new-game {:corp {:deck ["The All-Seeing I"]}
+               :runner {:deck ["Fall Guy"]
+                        :hand ["Fall Guy" "Off-Campus Apartment"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Off-Campus Apartment")
+    (play-from-hand state :runner "Fall Guy")
+    (click-prompt state :runner "Off-Campus Apartment")
+    (play-from-hand state :runner "Fall Guy")
+    (click-prompt state :runner "Off-Campus Apartment")
+    (gain-tags state :runner 1)
+    (take-credits state :runner)
+    (play-from-hand state :corp "The All-Seeing I")
+    (is (= "Prevent the trashing of Off-Campus Apartment?"
+           (:msg (prompt-map :runner))))
+    (let [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
+      (card-ability state :runner fall-guy 0))
+    (click-prompt state :runner "Done")
+    (is (= "Prevent the trashing of Fall Guy?"
+           (:msg (prompt-map :runner))))
+    (click-prompt state :runner "Done")
+    (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
+    (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
 
 (deftest the-all-seeing-i-should-not-trash-jarogniew-mercs-if-there-are-other-installed-resources
     ;; should not trash Jarogniew Mercs if there are other installed resources
@@ -5385,9 +5357,10 @@
     (let [eli (get-ice state :rd 0)
           vanilla (get-ice state :hq 0)]
       (play-from-hand state :corp "Wetwork Refit")
+      (is (no-prompt? state :corp) "No prompt")
+      (is (last-log-contains? state "to do nothing") "did nothing")
       (is (not-any? #{"Eli 1.0"} (prompt-buttons :corp))
           "Unrezzed Eli 1.0 is not a choice to host Wetwork Refit")
-      (click-prompt state :corp "Done")
       (take-credits state :corp)
       (take-credits state :runner)
       (rez state :corp (refresh eli))

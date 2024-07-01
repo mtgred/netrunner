@@ -69,7 +69,7 @@
        :value delta}))
   (update-all-agenda-points state side)
   (system-msg state side
-              (str "sets their agenda points to " (get-in @state [side :agenda-point])
+              (str "sets [their] agenda points to " (get-in @state [side :agenda-point])
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-link
@@ -81,7 +81,7 @@
      :value delta})
   (update-link state)
   (system-msg state side
-              (str "sets their [link] to " (get-link state)
+              (str "sets [their] [link] to " (get-link state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-hand-size
@@ -95,7 +95,7 @@
        :value delta}))
   (update-hand-size state side)
   (system-msg state side
-              (str "sets their hand size to " (hand-size state side)
+              (str "sets [their] hand size to " (hand-size state side)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn- change-generic

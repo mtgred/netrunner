@@ -37,7 +37,7 @@
                           update-breaker-strength]]
    [game.core.installing :refer [runner-can-install? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [get-link link+]]
-   [game.core.memory :refer [caissa-mu+ mu+ update-mu virus-mu+]]
+   [game.core.memory :refer [caissa-mu+ expected-mu mu+ update-mu virus-mu+]]
    [game.core.moving :refer [as-agenda mill move swap-agendas trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-string can-pay? cost-value ->c]]
@@ -693,26 +693,13 @@
                                (update-all-ice))}}}]})
 
 (defcard "Dinosaurus"
-  {:abilities [{:label "Install and host a non-AI icebreaker"
-                :req (req (empty? (:hosted card)))
-                :cost [(->c :click 1)]
-                :prompt "Choose a non-AI icebreaker in the grip"
-                :choices {:card #(and (has-subtype? % "Icebreaker")
-                                      (not (has-subtype? % "AI"))
-                                      (in-hand? %))}
-                :async true
-                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed non-AI icebreaker (manual)"
-                :req (req (empty? (:hosted card)))
-                :prompt "Choose an installed non-AI icebreaker"
-                :choices {:card #(and (has-subtype? % "Icebreaker")
-                                      (not (has-subtype? % "AI"))
-                                      (installed? %))}
-                :msg (msg "host " (:title target))
-                :effect (effect (host card target)
-                                (unregister-effects-for-card target #(= :used-mu (:type %)))
-                                (update-mu))}]
-   :static-abilities [{:type :breaker-strength
+  {:static-abilities [{:type :can-host
+                       :req (req (and (program? target)
+                                      (has-subtype? target "Icebreaker")
+                                      (not (has-subtype? target "AI"))))
+                       :max-cards 1
+                       :no-mu true}
+                      {:type :breaker-strength
                        :req (req (same-card? target (first (:hosted card))))
                        :value 2}]})
 
@@ -858,6 +845,9 @@
                                            (trash state side eid hosted {:cause-card card}))
                                        (effect-completed state side eid)))}]
     {:implementation "Credit usage restriction not enforced"
+     :static-abilities [{:type :can-host
+                         :req (req (program? target))
+                         :max-cards 1}]
      :data {:counter {:credit 9}}
      :abilities [{:label "Take 1 hosted [Credits]"
                   :req (req (and (not-empty (:hosted card))
@@ -875,30 +865,8 @@
                                  (update! state :runner (dissoc-in card [:counter :credit]))
                                  (system-msg state :runner (str "takes " credits " hosted [Credits] from Flame-out"))
                                  (register-flame-effect state card)
-                                 (gain-credits state :runner eid credits)))}
-                 {:label "Install and host a program"
-                  :req (req (empty? (:hosted card)))
-                  :cost [(->c :click 1)]
-                  :prompt "Choose a program in the grip"
-                  :choices {:card #(and (program? %)
-                                        (in-hand? %))}
-                  :async true
-                  :effect (effect (update! (assoc-in (get-card state card) [:special :flame-out] (:cid target)))
-                                  (runner-install eid target {:host-card card}))}
-                 {:label "Host an installed program (manual)"
-                  :req (req (empty? (:hosted card)))
-                  :prompt "Choose an installed program"
-                  :choices {:card #(and (program? %)
-                                        (installed? %))}
-                  :msg (msg "host " (:title target))
-                  :effect (req (->> target
-                                    (get-card state)
-                                    (host state side card))
-                               (update! state side (assoc-in (get-card state card) [:special :flame-out] (:cid target))))}]
-     :events [{:event :card-moved
-               :req (req (= (:cid (:card context)) (get-in (get-card state card) [:special :flame-out])))
-               :effect (effect (update! (dissoc-in card [:special :flame-out])))}
-              (assoc maybe-turn-end :event :runner-turn-ends)
+                                 (gain-credits state :runner eid credits)))}]
+     :events [(assoc maybe-turn-end :event :runner-turn-ends)
               (assoc maybe-turn-end :event :corp-turn-ends)]
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (same-card? card (:host target))
@@ -1537,37 +1505,23 @@
              :effect (effect (pump target 1 :end-of-run))}]})
 
 (defcard "NetChip"
-  {:abilities [{:async true
-                :label "Install and host a program"
-                :req (req (empty? (:hosted card)))
-                :effect (effect
-                          (continue-ability
-                            (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                              {:async true
-                               :cost [(->c :click 1)]
-                               :prompt "Choose a program in the grip"
-                               :choices {:card #(and (program? %)
-                                                     (runner-can-install? state side % false)
-                                                     (<= (:memoryunits %) n)
-                                                     (in-hand? %))}
-                               :msg (msg "install and host " (:title target))
-                               :effect (effect (runner-install eid target {:host-card card :no-mu true}))})
-                            card nil))}
-               {:async true
-                :label "Host an installed program (manual)"
-                :req (req (empty? (:hosted card)))
-                :effect (effect
-                          (continue-ability
-                            (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
-                              {:prompt "Choose an installed program"
-                               :choices {:card #(and (program? %)
-                                                     (<= (:memoryunits %) n)
-                                                     (installed? %))}
-                               :msg (msg "host " (:title target))
-                               :effect (effect (host card target)
-                                               (unregister-effects-for-card target #(= :used-mu (:type %)))
-                                               (update-mu))})
-                            card nil))}]})
+  (letfn [(netchip-count
+            [state]
+            (count (filter #(= (:title %) "NetChip") (all-active-installed state :runner))))]
+    {:enforce-conditions {:req (req (let [first-program (first (filter program? (:hosted card)))]
+                                    (and first-program (> (expected-mu state first-program) (netchip-count state)))))
+                          :silent (req true)
+                          :msg (msg "trash " (card-str state (first (filter program? (:hosted card)))) " for violating hosting restrictions")
+                          :async true
+                          :effect (req (let [first-program (first (filter program? (:hosted card)))]
+                                         (system-msg state nil (card-str state (first (filter program? (:hosted card)))) " is trashed for violating hosting restrictions")
+                                         (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
+     :static-abilities [{:type :can-host
+                        :req (req (and (program? target)
+                                       (<= (expected-mu state target) (netchip-count state))))
+                         :max-mu (req (netchip-count state))
+                         :max-cards 1
+                         :no-mu true}]}))
 
 (defcard "Obelus"
   {:static-abilities [(mu+ 1)
@@ -1586,25 +1540,20 @@
 
 (defcard "Omni-drive"
   {:recurring 1
-   :abilities [{:async true
-                :label "Install and host a program of 1[mu] or less"
-                :req (req (empty? (:hosted card)))
-                :cost [(->c :click 1)]
-                :prompt "Choose a program of 1[mu] or less in the grip"
-                :choices {:card #(and (program? %)
-                                      (<= (:memoryunits %) 1)
-                                      (in-hand? %))}
-                :msg (msg "install and host " (:title target))
-                :effect (effect (runner-install eid target {:host-card card :no-mu true}))}
-               {:label "Host an installed program of 1[mu] or less (manual)"
-                :prompt "Choose an installed program of 1[mu] or less"
-                :choices {:card #(and (program? %)
-                                      (<= (:memoryunits %) 1)
-                                      (installed? %))}
-                :msg (msg "host " (:title target))
-                :effect (effect (host card target)
-                                (unregister-effects-for-card target #(= :used-mu (:type %)))
-                                (update-mu))}]
+   :enforce-conditions {:req (req (let [first-program (first (filter program? (:hosted card)))]
+                                    (and first-program (> (expected-mu state first-program) 1))))
+                        :silent (req true)
+                        :msg (msg "trash " (card-str state (first (filter program? (:hosted card)))) " for violating hosting restrictions")
+                        :async true
+                        :effect (req (let [first-program (first (filter program? (:hosted card)))]
+                                       (system-msg state nil (card-str state (first (filter program? (:hosted card)))) " is trashed for violating hosting restrictions")
+                                       (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
+   :static-abilities [{:type :can-host
+                       :req (req (and (program? target)
+                                      (<= (expected-mu state target) 1)))
+                       :max-mu 1
+                       :max-cards 1
+                       :no-mu true}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (program? target)
                                                (same-card? card (:host target))))
@@ -1848,7 +1797,7 @@
                 :once :per-turn
                 :req (req (:runner-phase-12 @state))
                 :effect (effect (update! (assoc card :qianju-active true)))
-                :msg "lose [Click] and avoid the first tag received until their next turn"}]
+                :msg (msg "lose [Click] and avoid the first tag received until [their] next turn")}]
    :events [{:event :corp-turn-ends
              :effect (effect (update! (dissoc card :qianju-active)))}
             {:event :runner-turn-begins
@@ -2116,7 +2065,7 @@
                {:prompt "Lower your maximum hand size by 1 to reduce the strength of encountered ice to 0?"
                 :once :per-turn
                 :yes-ability
-                {:msg (msg "lower their maximum hand size by 1 and reduce the strength of " (:title current-ice) " to 0")
+                {:msg (msg "lower [their] maximum hand size by 1 and reduce the strength of " (:title current-ice) " to 0")
                  :effect (effect
                            (register-lingering-effect
                              card
