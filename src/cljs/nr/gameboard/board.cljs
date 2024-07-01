@@ -52,6 +52,10 @@
 
 (defonce button-channel (chan))
 
+(def any-prompt-open?
+  (let [side (:side @game-state)]
+    (get-in @game-state [side :prompt :prompt-state])))
+
 (defn open-card-menu [source]
   (swap! card-menu assoc :source source))
 
@@ -168,6 +172,7 @@
         ;; Runner clicking on a runner card
         (and (= side :runner)
              (= "Runner" (:side card))
+             (not any-prompt-open?)
              (= "hand" (first zone))
              (playable? card))
         (send-command "play" {:card (card-for-click card)})
@@ -175,6 +180,7 @@
         ;; Corp clicking on a corp card
         (and (= side :corp)
              (= "Corp" (:side card))
+             (not any-prompt-open?)
              (= "hand" (first zone))
              (playable? card))
         (if (= "Operation" type)
@@ -649,7 +655,7 @@
      [:div.blue-shade.card {:class (str (cond selected "selected"
                                               (same-card? card (:button @app-state)) "hovered"
                                               (same-card? card (-> @game-state :encounters :ice)) "encountered"
-                                              (playable? card) "playable"
+                                              (and (not any-prompt-open?) (playable? card)) "playable"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
                                               new "new"))
                             :tab-index (when (and (not disable-click)
