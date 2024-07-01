@@ -139,7 +139,7 @@
                                     :duration :end-of-run
                                     :optional
                                     {:prompt "Spend [Click][Click] to bypass encountered ice?"
-                                     :yes-ability {:cost [(->c :click 2)]
+                                     :yes-ability {:cost [(->c :click 2 {:allowed-during-run true})]
                                                    :req (req (>= (:click runner) 2))
                                                    :msg (msg "bypass " (card-str state (:ice context)))
                                                    :effect (req (bypass-ice state))}}}])

@@ -2422,7 +2422,7 @@
                               {:player :runner
                                :prompt "Choose one"
                                :choices (req ["Take 1 tag"
-                                              (when (can-pay? state :runner nil card nil [(->c :click 1)])
+                                              (when (can-pay? state :runner nil card nil [(->c :click 1 {:allowed-during-run true})])
                                                 "Spend [Click]")])
                                :waiting-prompt true
                                :async true
@@ -2431,7 +2431,7 @@
                                            (str "force the runner to " (decapitalize target) " on encountering it")))
                                :effect (req (if (= target "Take 1 tag")
                                               (gain-tags state :runner eid 1)
-                                              (wait-for (pay state :runner (make-eid state eid) card (->c :click 1))
+                                              (wait-for (pay state :runner (make-eid state eid) card (->c :click 1 {:allowed-during-run true}))
                                                         (system-msg state side (:msg async-result))
                                                         (effect-completed state :runner eid))))}
                               card nil))}
@@ -2778,7 +2778,7 @@
                 :cost [(->c :trash-can)]
                 :effect (req (wait-for (resolve-ability
                                          state side
-                                         (end-the-run-unless-runner-pays (->c :click 1) "ability")
+                                         (end-the-run-unless-runner-pays (->c :click 1 {:allowed-during-run true}) "ability")
                                          card nil)
                                        (when (and run (= (get-current-ice state) card))
                                          (encounter-ends state side eid))))}]
@@ -3415,7 +3415,7 @@
                   :msg (msg "make the runner lose " (harmonic-ice-count corp) " [Credits]")
                   :async true
                   :effect (req (lose-credits state :runner eid (harmonic-ice-count corp)))}
-                 (end-the-run-unless-runner-pays (->c :click 1))]})
+                 (end-the-run-unless-runner-pays (->c :click 1 {:allowed-during-run true}))]})
 
 (defcard "Pup"
   (let [sub {:player :runner
@@ -4189,13 +4189,13 @@
                      :player :runner
                      :prompt "Choose one"
                      :waiting-prompt true
-                     :choices (req [(when (can-pay? state :runner eid card nil [(->c :click 1)])
+                     :choices (req [(when (can-pay? state :runner eid card nil [(->c :click 1 {:allowed-during-run true})])
                                       "Spend [Click]")
                                     "End the run"])
                      :async true
                      :effect (req (if (and (= target "Spend [Click]")
-                                           (can-pay? state :runner eid card nil [(->c :click 1)]))
-                                    (wait-for (pay state side (make-eid state eid) card (->c :click 1))
+                                           (can-pay? state :runner eid card nil [(->c :click 1 {:allowed-during-run true})]))
+                                    (wait-for (pay state side (make-eid state eid) card (->c :click 1 {:allowed-during-run true}))
                                               (system-msg state side (:msg async-result))
                                               (effect-completed state :runner eid))
                                     (end-run state :corp eid card)))})})
@@ -4212,7 +4212,7 @@
                                       (has-subtype? (:icebreaker context) "AI")))
                        :value true}
                       (ice-strength-bonus (req (not (protecting-a-central? card))) 3)]
-   :subroutines [(end-the-run-unless-runner-pays (->c :click 3))]})
+   :subroutines [(end-the-run-unless-runner-pays (->c :click 3 {:allowed-during-run true}))]})
 
 (defcard "Turnpike"
   {:on-encounter {:msg "force the Runner to lose 1 [Credits]"
@@ -4467,7 +4467,7 @@
   (space-ice (resolve-another-subroutine)))
 
 (defcard "Wotan"
-  {:subroutines [(end-the-run-unless-runner-pays (->c :click 2))
+  {:subroutines [(end-the-run-unless-runner-pays (->c :click 2 {:allowed-during-run true}))
                  (end-the-run-unless-runner-pays (->c :credit 3))
                  (end-the-run-unless-runner-pays (->c :program 1))
                  (end-the-run-unless-runner-pays (->c :brain 1))]})

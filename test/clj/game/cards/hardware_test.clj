@@ -1911,6 +1911,8 @@
       (click-prompt state :runner "Add installed program to the top of the stack")
       (click-card state :runner fo)
       (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
+      (run-continue state :movement)
+      (run-jack-out state)
       (take-credits state :runner)
       (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
 

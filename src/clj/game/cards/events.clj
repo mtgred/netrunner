@@ -3466,7 +3466,7 @@
                                                         "?")
                                            :waiting-prompt true
                                            :yes-ability {:msg (msg "bypass " (card-str state current-ice))
-                                                         :cost [(->c :click 1)]
+                                                         :cost [(->c :click 1 {:allowed-during-run true})]
                                                          :effect (req (bypass-ice state))}}}
                                card nil))}]})
 
@@ -4121,7 +4121,7 @@
                 :choices (req (map str (range 0 (inc (:click runner)))))
                 :async true
                 :effect (req (let [n (str->int target)]
-                               (wait-for (pay state :runner (make-eid state eid) card (->c :click n))
+                               (wait-for (pay state :runner (make-eid state eid) card (->c :click n {:allowed-during-run true}))
                                          (system-msg state :runner (:msg async-result))
                                          (trash-cards state :corp eid (take n (shuffle (:hand corp))) {:cause-card card}))))}})]})
 
