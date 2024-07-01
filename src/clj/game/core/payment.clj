@@ -49,9 +49,6 @@
     (->c (:cost/type cur)
          (+ (:cost/amount acc 0) (:cost/amount cur 0))
          (conj {:additional (:cost/additional cur)
-                ;; :allowed-during-run (or (:cost/allowed-during-run acc)
-                ;;                         (:cost/allowed-during-run cur))
-
                 :stealth (cond
                            (or (= :all-stealth acc-stealth)
                                (= :all-stealth cur-stealth))
