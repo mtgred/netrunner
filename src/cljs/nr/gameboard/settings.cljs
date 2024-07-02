@@ -20,13 +20,13 @@
                         :value true
                         :checked (get-in @app-state [:options :labeled-unrezzed-cards])
                         :on-change #(swap! app-state assoc-in [:options :labeled-unrezzed-cards] (.. % -target -checked))}]
-        (tr [:ingame-settings.stack-cards "Label unrezzed cards"])]]
+        (tr [:ingame-settings.label-unrezzed-cards "Label unrezzed cards"])]]
       [:div
        [:label [:input {:type "checkbox"
                         :value true
                         :checked (get-in @app-state [:options :labeled-cards])
                         :on-change #(swap! app-state assoc-in [:options :labeled-cards] (.. % -target -checked))}]
-        (tr [:ingame-settings.stack-cards "Label face up cards"])]]
+        (tr [:ingame-settings.label-faceup-cards "Label face up cards"])]]
       [:div
        [:label [:input {:type "checkbox"
                         :value true
@@ -35,19 +35,19 @@
         (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]]
 
      [:section
-      [:h4 (tr [:ingame-settings.card-stacking "Sorting"])]
+      [:h4 (tr [:ingame-settings.card-sorting "Sorting"])]
       [:div
        [:label [:input {:type "checkbox"
                         :value true
                         :checked (get-in @app-state [:options :archives-sorted])
                         :on-change #(swap! app-state assoc-in [:options :archives-sorted] (.. % -target -checked))}]
-        (tr [:ingame-settings.stack-cards "Sort Archives"])]]
+        (tr [:ingame-settings.sort-archives "Sort Archives"])]]
       [:div
        [:label [:input {:type "checkbox"
                         :value true
                         :checked (get-in @app-state [:options :heap-sorted])
                         :on-change #(swap! app-state assoc-in [:options :heap-sorted] (.. % -target -checked))}]
-        (tr [:ingame-settings.stack-cards "Sort Heap"])]]]
+        (tr [:ingame-settings.sort-heap "Sort Heap"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.runner-board-order "Runner board order"])]
