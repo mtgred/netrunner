@@ -131,11 +131,12 @@
         (let [c (count (:spectators game))]
           (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")"))))])
 
-(defn game-format [{fmt :format singleton? :singleton}]
+(defn game-format [{fmt :format singleton? :singleton first-five? :first-five}]
   [:div {:class "game-format"}
    [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
-   [:span.format-singleton (str (when singleton? " (singleton)"))]])
+   [:span.format-singleton (str (when singleton? " (singleton)"))]
+   [:span.format-first-five (str (when first-five? " (first-five mode)"))]])
 
 (defn- time-since
   "Helper method for game-time. Computes how many minutes since game start"
