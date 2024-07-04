@@ -20,7 +20,7 @@
                              :deck-id (:_id deck)}]
                1500
                #(when (sente/cb-error? %)
-                  (non-game-toast "Cannot select that deck" "error")))
+                  (non-game-toast (tr [:lobby.select-error "Cannot select that deck"]) "error")))
   (reagent-modals/close-modal!))
 
 (defn select-deck-modal [user current-game]
@@ -82,7 +82,7 @@
 (defn singleton-info-box [current-game]
   (when (:singleton @current-game)
     [:div.infobox.blue-shade
-     [:p "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."]]))
+     [:p (tr [:lobby.singleton-restriction "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."])]]))
 
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
