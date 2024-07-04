@@ -149,7 +149,7 @@
                           :placeholder (tr [:lobby.timer-length "Timer length (minutes)"])}]])
    [:div.infobox.blue-shade
     {:style {:display (if (:timed @options) "block" "none")}}
-    [:p "Timer is only for convenience: the game will not stop when timer runs out."]]])
+    [:p (tr [:lobby.timed-game-details "Timer is only for convenience: the game will not stop when timer runs out."])]]])
 
 (defn save-replay [options]
   [:<>
