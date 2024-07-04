@@ -88,8 +88,8 @@
    [singleton-only options fmt-state]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
-    [:p "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]
-    [:p "1) Nova Initiumia: Catalyst & Impetus" " 2) Ampere: Cybernetics For Anyone"]]])
+    [:p (tr [:lobby.singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."])]
+    [:p (tr [:lobby.singleton-example "1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone"])]]])
 
 (defn allow-spectators [options]
   [:p
