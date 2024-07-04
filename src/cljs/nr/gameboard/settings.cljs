@@ -84,8 +84,8 @@
 
      [:section
       [:h4 (tr [:ingame-settings.preview-zoom "Card preview zoom"])]
-      (doall (for [option [{:name "Card Image" :ref "image"}
-                           {:name "Card Text" :ref "text"}]]
+      (doall (for [option [{:name (tr [:ingame-settings.card-image "Card Image"]) :ref "image"}
+                          {:name (tr [:ingame-settings.card-text "Card Text"]) :ref "text"}]]
                [:div.radio {:key (:name option)}
                 [:label [:input {:type "radio"
                                  :name "card-zoom"
