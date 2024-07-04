@@ -181,7 +181,7 @@
          (str " " (tr [:lobby.api-requires-key "(Requires an API Key in Settings)"])))]])
    [:div.infobox.blue-shade
     {:style {:display (if (:api-access @options) "block" "none")}}
-    [:p "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"]]])
+    [:p (tr [:lobby.api-access-details "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"])]]])
 
 (defn options-section [options user]
   [:section
