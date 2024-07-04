@@ -161,11 +161,9 @@
      (str "🟢 " (tr [:lobby.save-replay "Save replay"]))]]
    [:div.infobox.blue-shade
     {:style {:display (if (:save-replay @options) "block" "none")}}
-    [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
-     " The file is available only after the game is finished."]
-    [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
-    [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
-     " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]])
+    [:p (tr [:lobby.save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."])]
+    [:p (tr [:lobby.save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."])]
+    [:p (tr [:lobby.save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."])]]])
 
 (defn api-access [options user]
   [:<>
