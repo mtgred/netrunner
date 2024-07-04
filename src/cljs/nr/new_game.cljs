@@ -108,9 +108,8 @@
      (tr [:lobby.hidden "Make players' hidden information visible to spectators"])]]
    [:div.infobox.blue-shade
     {:style {:display (if (:spectatorhands @options) "block" "none")}}
-    [:p "This will reveal both players' hidden information to ALL spectators of your game, "
-     "including hand and face-down cards."]
-    [:p "We recommend using a password to prevent strangers from spoiling the game."]]])
+    [:p (tr [:lobby.hidden-details "This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards."])]
+    [:p (tr [:lobby.hidden-password "We recommend using a password to prevent strangers from spoiling the game."])]]])
 
 (defn password-input [options]
   [:<>
