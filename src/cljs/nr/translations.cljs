@@ -89,7 +89,8 @@
      :delete "Delete Message"
      :delete-all "Delete All Messages From User"
      :block "Block User"
-     :cancel "Cancel"}
+     :cancel "Cancel"
+     :message-blocked (fn [[reason-str]] (str "Message Blocked" (when reason-str (str ": " reason-str))))}
     :nav
     {:chat "Chat"
      :cards "Cards"
