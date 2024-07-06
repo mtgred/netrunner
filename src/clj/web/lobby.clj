@@ -21,13 +21,14 @@
 (defn create-new-lobby
   [{uid :uid
     user :user
-    {:keys [gameid allow-spectator api-access format mute-spectators password room save-replay
+    {:keys [gameid now
+            allow-spectator api-access format mute-spectators password room save-replay
             side singleton spectatorhands timer title]
-     :or {gameid (random-uuid)}} :options}]
+     :or {gameid (random-uuid)
+          now (inst/now)}} :options}]
   (let [player {:user user
                 :uid uid
-                :side side}
-        now (inst/now)]
+                :side side}]
     {:gameid gameid
      :date now
      :last-update now
