@@ -22,7 +22,7 @@ RUN npm run release
 
 RUN lein uberjar
 
-FROM openjdk:11
+FROM openjdk:11-slim
 
 WORKDIR /opt/netrunner
 RUN apt update && apt install -y zip && rm -rf /var/lib/apt/lists/*
