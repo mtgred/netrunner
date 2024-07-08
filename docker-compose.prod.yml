@@ -13,12 +13,9 @@ services:
       - server
 
   server:
-    image: openjdk:11
-    command: java -jar /netrunner-standalone.jar
-    ports:
-      - 2042:1042
+    image: acollign/netrunner
     volumes:
-      - "./target/netrunner-standalone.jar:/netrunner-standalone.jar"
+      - "./docker/prod/prod.edn:/opt/netrunner/prod.edn"
     depends_on:
       - database
     links:
