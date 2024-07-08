@@ -18,8 +18,7 @@ ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 COPY . /usr/src/app
 
 RUN npm ci
-RUN npm run cljs:build
-RUN npm run css:build
+RUN npm run release
 
 RUN lein uberjar
 
