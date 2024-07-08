@@ -6,7 +6,7 @@ figwheel_server.log
 andb-*.json
 
 node_modules/
-
+data/
 resources/public/css/
 !resources/public/css/carousel.css
 
