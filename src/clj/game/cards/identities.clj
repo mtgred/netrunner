@@ -18,7 +18,7 @@
    [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
-   [game.core.eid :refer [effect-completed is-basic-advance-action? make-eid]]
+   [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
    [game.core.events :refer [event-count first-event?
                              first-successful-run-on-server? no-event? not-last-turn? run-events turn-events]]
@@ -2215,8 +2215,10 @@
 
 (defcard "Weyland Consortium: Because We Built It"
   {:recurring 1
-   :interactions {:pay-credits {:req (req (or (= :advance (:source-type eid))
-                                              (is-basic-advance-action? eid)))
+   :interactions {:pay-credits {:req (req (let [ab-target (:card (get-ability-targets eid))]
+                                            (and (ice? ab-target)
+                                                 (or (= :advance (:source-type eid))
+                                                     (is-basic-advance-action? eid)))))
                                 :type :recurring}}})
 
 (defcard "Weyland Consortium: Builder of Nations"
