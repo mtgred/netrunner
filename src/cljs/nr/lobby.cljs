@@ -20,6 +20,10 @@
    [reagent.core :as r]
    [taoensso.sente :as sente]))
 
+(defn notify-presence []
+  (.requestPermission js/Notification)
+  (js/Notification. "Someone has entered the lobby" #js {:body "Good luck and have fun!" :icon "/img/icons/jinteki_167.png"}))
+
 (defmethod ws/event-msg-handler :lobby/list [{data :?data}]
   (swap! app-state assoc :games data))
 
@@ -30,6 +34,7 @@
       (ws/ws-send! [:game/resync {:gameid (:gameid data)}]))))
 
 (defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
+  (notify-presence)
   (play-sound data))
 
 (defmethod ws/event-msg-handler :lobby/toast [{{:keys [message type]} :?data}]
