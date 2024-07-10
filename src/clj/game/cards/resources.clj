@@ -2686,7 +2686,8 @@
                                      (filter is-central?)
                                      (remove (into #{} (:made-run runner-reg)))
                                      (map central->name))))
-                :msg "make a run on central server"
+                :label "make a run on a central server"
+                :msg (msg "make a run on " target)
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid target card))}]})
