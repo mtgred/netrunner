@@ -5115,6 +5115,7 @@
       (is (= 3 (:click (get-runner))) "Runner still has 3 clicks left")
       (card-ability state :runner (get-resource state 0) 0)
       (click-prompt state :runner "HQ")
+      (is (last-log-contains? state "make a run on HQ"))
       (run-continue state)
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
       (is (= 9 (get-counters (get-resource state 0) :credit)) "Red team has 9 credits remaining")
