@@ -22,7 +22,7 @@
 
 (defn notify-presence []
   (.requestPermission js/Notification)
-  (js/Notification. "Someone has entered the lobby" #js {:body "Good luck and have fun!" :icon "/img/icons/jinteki_167.png"}))
+  (js/Notification. (tr [:lobby.notification-title "Someone has entered the lobby"]) #js {:body (tr [:lobby.notification-body "Good luck and have fun!"]) :icon "/img/icons/jinteki_167.png"}))
 
 (defmethod ws/event-msg-handler :lobby/list [{data :?data}]
   (swap! app-state assoc :games data))
