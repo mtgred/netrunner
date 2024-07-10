@@ -25,7 +25,6 @@
 
 (defn- auto-confirm-cost?
   [state side]
-  (println (get-in @state [side :options]))
   (get-in @state [side :user :options :auto-confirm-costs]))
 
 ;; Click
@@ -480,26 +479,31 @@
   (<= 0 (- (count (all-installed state side)) (value cost))))
 (defmethod handler :trash-installed
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
-     :choices {:all true
-               :max (value cost)
-               :card #(and (installed? %)
-                           (if (= side :runner)
-                             (runner? %)
-                             (corp? %)))}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
-                                                             :unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "trashes " (quantify (count async-result) "installed card")
-                                             " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :trash-installed
-                               :paid/value (count async-result)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(resolve-trashes [state side eid cost targets]
+            (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                       :unpreventable true})
+                      (complete-with-result
+                        state side eid
+                        {:paid/msg (str "trashes " (quantify (count async-result) "installed card")
+                                        " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                         :paid/type :trash-other-installed
+                         :paid/value (count async-result)
+                         :paid/targets targets})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (all-installed state side))))
+      (resolve-trashes state side eid cost (all-installed state side))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card #(and (installed? %)
+                               (if (= side :runner)
+                                 (runner? %)
+                                 (corp? %)))}
+         :async true
+         :effect (req (resolve-trashes state side eid cost targets))}
+        card nil))))
 
 ;; TrashInstalledHardware
 (defmethod value :hardware [cost] (:cost/amount cost))
@@ -510,24 +514,29 @@
   (<= 0 (- (count (all-installed-runner-type state :hardware)) (value cost))))
 (defmethod handler :hardware
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed piece") " of hardware to trash")
-     :choices {:all true
-               :max (value cost)
-               :card (every-pred installed? hardware? (complement facedown?))}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
-                                                             :unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "trashes " (quantify (count async-result) "installed piece")
-                                             " of hardware"
-                                             " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :hardware
-                               :paid/value (count async-result)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(resolve-trashes [state side eid cost targets]
+            (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                       :unpreventable true})
+                      (complete-with-result
+                        state side eid
+                        {:paid/msg (str "trashes " (quantify (count async-result) "installed piece")
+                                        " of hardware"
+                                        " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                         :paid/type :hardware
+                         :paid/value (count async-result)
+                         :paid/targets targets})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (filter hardware? (all-installed state side)))))
+      (resolve-trashes state side eid cost (filter hardware? (all-installed state side)))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "installed piece") " of hardware to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card (every-pred installed? hardware? (complement facedown?))}
+         :async true
+         :effect (req (resolve-trashes state side eid cost targets))}
+        card nil))))
 
 ;; DerezOtherHarmonic - this may NOT target the source card (itself)
 (defmethod value :derez-other-harmonic [cost] (:cost/amount cost))
@@ -541,16 +550,13 @@
                           (all-active-installed state :corp))) (value cost))))
 (defmethod handler :derez-other-harmonic
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (value cost) " Harmonic ice to derez")
-     :choices {:all true
-               :max (value cost)
-               :card #(and (rezzed? %)
-                           (not (same-card? % card))
-                           (has-subtype? % "Harmonic"))}
-     :async true
-     :effect (req (doseq [harmonic targets]
+  (letfn [(other-harmonics [state side card]
+            (filter #(and (rezzed? %)
+                          (has-subtype? % "Harmonic")
+                          (not (same-card? card %)))
+                    (all-installed state :corp)))
+          (resolve-derez [state side eid cost targets]
+            (doseq [harmonic targets]
                     (derez state side harmonic))
                   (complete-with-result
                     state side eid
@@ -558,8 +564,21 @@
                                    " Harmonic ice (" (enumerate-str (map #(card-str state %) targets)) ")")
                      :paid/type :derez
                      :paid/value (count targets)
-                     :paid/targets targets}))}
-    card nil))
+                     :paid/targets targets}))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (other-harmonics state side card))))
+      (resolve-derez state side eid cost (other-harmonics state side card))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (value cost) " Harmonic ice to derez")
+         :choices {:all true
+                   :max (value cost)
+                   :card #(and (rezzed? %)
+                               (not (same-card? % card))
+                               (has-subtype? % "Harmonic"))}
+         :async true
+         :effect (req (resolve-derez state side eid cost targets))}
+        card nil))))
 
 ;; TrashInstalledProgram
 (defmethod value :program [cost] (:cost/amount cost))
@@ -702,26 +721,32 @@
   [cost state side eid card]
   (let [select-fn #(and ((if (= :corp side) corp? runner?) %)
                         (in-hand? %))
-        hand (if (= :corp side) "HQ" "the grip")]
-    (continue-ability
-      state side
-      {:prompt (str "Choose " (quantify (value cost) "card") " to trash")
-       :choices {:all true
-                 :max (value cost)
-                 :card select-fn}
-       :async true
-       :effect (req (wait-for (trash-cards state side targets {:unpreventable true :seen false})
-                              (complete-with-result
-                                state side eid
-                                {:paid/msg (str "trashes " (quantify (count async-result) "card")
-                                               (when (and (= :runner side)
-                                                          (pos? (count async-result)))
-                                                 (str " (" (enumerate-str (map #(card-str state %) targets)) ")"))
-                                               " from " hand)
-                                 :paid/type :trash-from-hand
-                                 :paid/value (count async-result)
-                                 :paid/targets async-result})))}
-      nil nil)))
+        hand (if (= :corp side) "HQ" "the grip")
+        resolve-trash-from-hand
+        (fn [state side eid cost targets]
+          (wait-for (trash-cards state side targets {:unpreventable true :seen false})
+                    (complete-with-result
+                      state side eid
+                      {:paid/msg (str "trashes " (quantify (count async-result) "card")
+                                      (when (and (= :runner side)
+                                                 (pos? (count async-result)))
+                                        (str " (" (enumerate-str (map #(card-str state %) targets)) ")"))
+                                      " from " hand)
+                       :paid/type :trash-from-hand
+                       :paid/value (count async-result)
+                       :paid/targets async-result})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (get-in @state [side :hand]))))
+      (resolve-trash-from-hand state side eid cost (get-in @state [side :hand]))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "card") " to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card select-fn}
+         :async true
+         :effect (req (resolve-trash-from-hand state side eid cost targets))}
+        nil nil))))
 
 ;; RandomlyTrashFromHand
 (defmethod value :randomly-trash-from-hand [cost] (:cost/amount cost))
