@@ -23,6 +23,10 @@
    [game.macros :refer [continue-ability req wait-for]]
    [game.utils :refer [enumerate-str quantify same-card?]]))
 
+(defn- auto-confirm-cost?
+  [state side]
+  (get-in @state [side :options :auto-confirm-costs]))
+
 ;; Click
 (defmethod value :click [cost] (:cost/amount cost))
 (defmethod label :click [cost]
@@ -271,7 +275,8 @@
                  :paid/type :forfeit
                  :paid/value (value cost)
                  :paid/targets targets})))]
-    (if (= (value cost) (count (get-in @state [side :scored])))
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (get-in @state [side :scored]))))
         ;; if we need to forfiet agendas exactly equal to what we have, it can be automated
       (resolve-forfiets state side eid cost (get-in @state [side :scored]))
       (continue-ability
