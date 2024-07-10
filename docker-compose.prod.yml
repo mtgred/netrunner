@@ -5,8 +5,8 @@ services:
     ports:
       - 8042:8000
     volumes:
-      - ./local/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./resources/public/:/usr/share/netrunner
+      - ./docker/prod/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./resources/prod/:/usr/share/netrunner
     depends_on:
       - server
     links:
@@ -28,4 +28,4 @@ services:
     ports:
       - 27017-27019:27017-27019
     volumes:
-      - ./data/db:/data/db
+      - ./data/db-prod:/data/db
