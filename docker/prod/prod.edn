@@ -1,0 +1,40 @@
+{:server/mode "prod"
+ :mongodb/connection {:address "mongo"
+                      :port 27017
+                      :name "netrunner"
+                      ; Monger requires a db name in the URI string, be sure to specify
+                      :connection-string #or [#env MONGO_CONNECTION_URI nil]}
+ :web/app-state nil
+ :web/server {:port 1042
+              :app #ig/ref :web/app}
+ :web/auth {:expiration 60
+            :secret "HBPOSDc8ugXl5ikqzgJqYFjmp4MBQHrqQaiYLEhJYLqLV4leirkV1G0AiQTwmOmz"
+            :cookie {:http-only true
+                     :same-site :lax
+                     :secure true
+                     ; 60 days
+                     :max-age 5184000}}
+ :web/lobby {:interval 1000
+             :mongo #ig/ref :mongodb/connection
+             :time-inactive 600}
+ :web/chat {:max-length 144
+            ;; sliding window size in seconds
+            :rate-window 60
+            ;; number of messages allowed in the sliding window
+            :rate-cnt 10}
+ :web/email {:host nil
+             :user nil
+             :pass nil
+             :ssl  nil}
+ :web/app {:server-mode #ig/ref :server/mode
+           :mongodb/connection #ig/ref :mongodb/connection
+           :web/auth #ig/ref :web/auth
+           :web/chat #ig/ref :web/chat
+           :web/email #ig/ref :web/email}
+ :web/banned-msg {:initial "Account Banned"
+                  :mongo #ig/ref :mongodb/connection}
+ :frontend/version {:initial "1"
+                    :mongo #ig/ref :mongodb/connection}
+ :sente/router nil
+ :game/quotes nil
+ :jinteki/cards {:mongo #ig/ref :mongodb/connection}}
