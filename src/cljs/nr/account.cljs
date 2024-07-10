@@ -46,6 +46,7 @@
   (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
   (swap! app-state assoc-in [:options :player-stats-icons] (:player-stats-icons @s))
   (swap! app-state assoc-in [:options :stacked-cards] (:stacked-cards @s))
+  (swap! app-state assoc-in [:options :auto-confirm-costs] (:auto-confirm-costs @s))
   (swap! app-state assoc-in [:options :ghost-trojans] (:ghost-trojans @s))
   (swap! app-state assoc-in [:options :sides-overlap] (:sides-overlap @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
@@ -66,6 +67,7 @@
   (.setItem js/localStorage "log-player-highlight" (:log-player-highlight @s))
   (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
   (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
+  (.setItem js/localStore "auto-confirm-costs" (:auto-confirm-costs @s))
   (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
   (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
@@ -335,6 +337,13 @@
              [:option {:value k} (tr-format v)]))]]
 
           [:section
+           [:h3 (tr [:settings.gameplay-options "Gameplay options"])]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:auto-confirm-costs @s)
+                             :on-change #(swap! s assoc-in [:auto-confirm-costs] (.. % -target -checked))}]
+             (tr [:settings.auto-confirm-costs "Automatically confirm trivial costs (costs where there is only one valid selection)"])]]
            [:h3 (tr [:settings.layout-options "Layout options"])]
            [:div
             [:label [:input {:type "checkbox"
@@ -579,6 +588,7 @@
                        :alt-arts (get-in @app-state [:options :alt-arts])
                        :all-art-select "wc2015"
                        :card-resolution (get-in @app-state [:options :card-resolution])
+                       :auto-confirm-costs (get-in @app-state [:options :auto-confirm-costs])
                        :stacked-cards (get-in @app-state [:options :stacked-cards])
                        :ghost-trojans (get-in @app-state [:options :ghost-trojans])
                        :sides-overlap (get-in @app-state [:options :sides-overlap])

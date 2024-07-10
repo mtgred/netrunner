@@ -254,29 +254,35 @@
   (<= 0 (- (count (get-in @state [side :scored])) (value cost))))
 (defmethod handler :forfeit
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "Agenda") " to forfeit")
-     :async true
-     :choices {:max (value cost)
-               :all true
-               :card #(is-scored? state side %)}
-     :effect (req (doseq [agenda targets]
-                    ;; We don't have to await this because we're suppressing the
-                    ;; checkpoint and forfeit makes all of the trashing unpreventable,
-                    ;; meaning that there will be no potential for input. Once
-                    ;; everything is queued, then we perform the actual checkpoint.
-                    (forfeit state side (make-eid state eid) agenda {:msg false
-                                                                     :suppress-checkpoint true}))
-                  (wait-for (checkpoint state nil (make-eid state eid) {:durations [:game-trash]})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "forfeits " (quantify (value cost) "agenda")
-                                             " (" (enumerate-str (map :title targets)) ")")
-                               :paid/type :forfeit
-                               :paid/value (value cost)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(resolve-forfiets [state side eid cost targets]
+            (doseq [agenda targets]
+              ;; We don't have to await this because we're suppressing the
+              ;; checkpoint and forfeit makes all of the trashing unpreventable,
+              ;; meaning that there will be no potential for input. Once
+              ;; everything is queued, then we perform the actual checkpoint.
+              (forfeit state side (make-eid state eid) agenda {:msg false
+                                                               :suppress-checkpoint true}))
+            (wait-for
+              (checkpoint state nil (make-eid state eid) {:durations [:game-trash]})
+              (complete-with-result
+                state side eid
+                {:paid/msg (str "forfeits " (quantify (value cost) "agenda")
+                                " (" (enumerate-str (map :title targets)) ")")
+                 :paid/type :forfeit
+                 :paid/value (value cost)
+                 :paid/targets targets})))]
+    (if (= (value cost) (count (get-in @state [side :scored])))
+        ;; if we need to forfiet agendas exactly equal to what we have, it can be automated
+      (resolve-forfiets state side eid cost (get-in @state [side :scored]))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "Agenda") " to forfeit")
+         :async true
+         :choices {:max (value cost)
+                   :all true
+                   :card #(is-scored? state side %)}
+         :effect (req (resolve-forfiets state side eid cost targets))}
+        card nil))))
 
 ;; ForfeitSelf
 (defmethod value :forfeit-self [_cost] 1)

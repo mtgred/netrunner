@@ -87,6 +87,13 @@
 (defn stack-cards []
   (swap! app-state update-in [:options :stacked-cards] not))
 
+(defn automatically-confirm-trivial-costs []
+  (when (not (:replay @game-state))
+    (let [value (get-in @app-state [:options :auto-confirm-costs])]
+      (send-command "update-player-setting" {:setting :auto-confirm-costs
+                                             :value value}))))
+
+
 ; (defn flip-runner-board []
 ;   (let [layout (if (= "irl" (get-in @app-state [:options :runner-board-order])) "jnet" "irl")]
 ;     (swap! app-state assoc-in [:options :runner-board-order] layout)))

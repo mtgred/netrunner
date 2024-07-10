@@ -2,7 +2,9 @@
   (:require
    [nr.account :refer [post-options]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr]]))
+   [nr.translations :refer [tr]]
+   [nr.gameboard.actions :refer [automatically-confirm-trivial-costs]]
+   [nr.gameboard.state :refer [not-spectator?]]))
 
 (defn settings-pane []
   (fn []
@@ -33,6 +35,18 @@
                         :checked (get-in @app-state [:options :ghost-trojans])
                         :on-change #(swap! app-state assoc-in [:options :ghost-trojans] (.. % -target -checked))}]
         (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]]
+
+     ;; todo - make this visible only for active players in a game!
+     (when (not-spectator?)
+       [:section
+        [:h4 (tr [:ingame-settings.gameplay-settings "Gameplay settings"])]
+        [:div
+         [:label [:input {:type "checkbox"
+                          :value true
+                          :checked (get-in @app-state [:options :auto-confirm-costs])
+                          :on-change #(do (swap! app-state assoc-in [:options :auto-confirm-costs] (.. % -target -checked))
+                                          (automatically-confirm-trivial-costs))}]
+          (tr [:ingame-settings.auto-confirm-costs "Automatically confirm trivial costs"])]]])
 
      [:section
       [:h4 (tr [:ingame-settings.card-sorting "Sorting"])]
