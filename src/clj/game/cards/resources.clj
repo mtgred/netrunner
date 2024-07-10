@@ -2452,6 +2452,7 @@
                                                    (= (zone->name (:server context))
                                                       (:card-target card)))))))))
               {:event :runner-turn-ends
+               :silent (req true)
                :effect (effect (update! (dissoc (get-card state card) :card-target)))}]}))
 
 (defcard "Paule's Café"
