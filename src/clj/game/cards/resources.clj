@@ -2892,7 +2892,7 @@
                                :label "Take 1 [Credits] (start of turn)"
                                :req (req (and (:runner-phase-12 @state)
                                               (pos? (get-counters card :credit))))
-                               :msg "take 1 [Credits]"
+                               :msg "gain 1 [Credits]"
                                :async true
                                :effect (req (add-counter state side card :credit -1)
                                          (gain-credits state side eid 1))}]

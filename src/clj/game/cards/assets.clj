@@ -1420,7 +1420,7 @@
                  {:cost [(->c :click 1)]
                   :label "Take all hosted credits and add this asset to HQ. Install 1 card from HQ"
                   :async true
-                  :msg (msg "take " (get-counters (get-card state card) :credit) " [Credits] and add itself to HQ")
+                  :msg (msg "gain " (get-counters (get-card state card) :credit) " [Credits] and add itself to HQ")
                   :effect (req (wait-for (gain-credits state side (make-eid state eid)
                                                        (get-counters (get-card state card) :credit))
                                          (move state :corp card :hand)
@@ -1672,7 +1672,7 @@
                 :effect (effect (gain-credits eid 2))}]})
 
 (defcard "Marked Accounts"
-  (let [ability {:msg "take 1 [Credits]"
+  (let [ability {:msg "gain 1 [Credits]"
                  :label "Take 1 [Credits] (start of turn)"
                  :once :per-turn
                  :req (req (pos? (get-counters card :credit)))
