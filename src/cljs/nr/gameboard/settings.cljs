@@ -42,7 +42,7 @@
         [:h4 (tr [:ingame-settings.gameplay-settings "Gameplay settings"])]
         [:div
          [:label [:input {:type "checkbox"
-                          :value true
+                          :value false
                           :checked (get-in @app-state [:options :auto-confirm-costs])
                           :on-change #(do (swap! app-state assoc-in [:options :auto-confirm-costs] (.. % -target -checked))
                                           (automatically-confirm-trivial-costs))}]

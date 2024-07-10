@@ -340,7 +340,7 @@
            [:h3 (tr [:settings.gameplay-options "Gameplay options"])]
            [:div
             [:label [:input {:type "checkbox"
-                             :value true
+                             :value false
                              :checked (:auto-confirm-costs @s)
                              :on-change #(swap! s assoc-in [:auto-confirm-costs] (.. % -target -checked))}]
              (tr [:settings.auto-confirm-costs "Automatically confirm trivial costs (costs where there is only one valid selection)"])]]

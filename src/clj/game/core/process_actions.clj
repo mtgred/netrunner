@@ -44,9 +44,12 @@
 
 (defn update-player-setting
   [state side {:keys [setting value]}]
-  (swap! state assoc-in [side :options setting] value)
-  (toast state side (str "The " (name setting) " setting has been "
-                         (if value "enabled" "disabled"))))
+  (swap! state assoc-in [side :user :options setting] value)
+  (let [setting-name (case setting
+                       :auto-confirm-costs "automatically paying trivial costs"
+                       "unknown setting")
+        funct (if value "Enabled" "Disabled")]
+    (toast state side (str funct " " setting-name))))
 
 (def commands
   {"ability" #'play-ability

@@ -25,7 +25,8 @@
 
 (defn- auto-confirm-cost?
   [state side]
-  (get-in @state [side :options :auto-confirm-costs]))
+  (println (get-in @state [side :options]))
+  (get-in @state [side :user :options :auto-confirm-costs]))
 
 ;; Click
 (defmethod value :click [cost] (:cost/amount cost))
@@ -441,27 +442,34 @@
   (<= 0 (- (count (filter #(not (same-card? card %)) (all-installed state side))) (value cost))))
 (defmethod handler :trash-other-installed
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
-     :choices {:all true
-               :max (value cost)
-               :card #(and (installed? %)
-                           (not (same-card? % card))
-                           (if (= side :runner)
-                             (runner? %)
-                             (corp? %)))}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
-                                                             :unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "trashes " (quantify (count async-result) "installed card")
-                                             " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :trash-other-installed
-                               :paid/value (count async-result)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(installed-not-same-card [state side card]
+            (filter #(not (same-card? card %)) (all-installed state side)))
+          (resolve-trashes [state side eid cost targets]
+            (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                       :unpreventable true})
+                      (complete-with-result
+                        state side eid
+                        {:paid/msg (str "trashes " (quantify (count async-result) "installed card")
+                                        " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                         :paid/type :trash-other-installed
+                         :paid/value (count async-result)
+                         :paid/targets targets})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (installed-not-same-card state side card))))
+      (resolve-trashes state side eid cost (installed-not-same-card state side card))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card #(and (installed? %)
+                               (not (same-card? % card))
+                               (if (= side :runner)
+                                 (runner? %)
+                                 (corp? %)))}
+         :async true
+         :effect (req (resolve-trashes state side eid cost targets))}
+        card nil))))
 
 ;; TrashInstalledCard - this may target the source card (itself)
 (defmethod value :trash-installed [cost] (:cost/amount cost))
