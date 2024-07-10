@@ -67,7 +67,7 @@
   (.setItem js/localStorage "log-player-highlight" (:log-player-highlight @s))
   (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
   (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
-  (.setItem js/localStore "auto-confirm-costs" (:auto-confirm-costs @s))
+  (.setItem js/localStorage "auto-confirm-costs" (:auto-confirm-costs @s))
   (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
   (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
