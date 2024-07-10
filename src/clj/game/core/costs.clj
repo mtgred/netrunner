@@ -407,25 +407,30 @@
   (<= 0 (- (count (all-installed-runner-type state :program)) (value cost))))
 (defmethod handler :rfg-program
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "program")
-                  " to remove from the game")
-     :choices {:all true
-               :max (value cost)
-               :card (every-pred installed? program? (complement facedown?))}
-     :async true
-     :effect (req (doseq [t targets]
-                    (move state side (assoc-in t [:persistent :from-cid] (:cid card)) :rfg))
-                  (complete-with-result
-                    state side eid
-                    {:paid/msg (str "removes " (quantify (value cost) "installed program")
-                                   " from the game"
-                                   " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                     :paid/type :rfg-program
-                     :paid/value (value cost)
-                     :paid/targets targets}))}
-    card nil))
+  (letfn [(resolve-rfg [state side eid cost targets]
+            (doseq [t targets]
+              (move state side (assoc-in t [:persistent :from-cid] (:cid card)) :rfg))
+            (complete-with-result
+              state side eid
+              {:paid/msg (str "removes " (quantify (value cost) "installed program")
+                              " from the game"
+                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
+               :paid/type :rfg-program
+               :paid/value (value cost)
+               :paid/targets targets}))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (filter program? (all-installed-runner-type state :program)))))
+      (resolve-rfg state side eid cost (all-installed-runner-type state :program))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "program")
+                      " to remove from the game")
+         :choices {:all true
+                   :max (value cost)
+                   :card (every-pred installed? program? (complement facedown?))}
+         :async true
+         :effect (req (resolve-rfg state side eid cost targets))}
+        card nil))))
 
 ;; TrashOtherInstalledCard - this may NOT target the source card (itself), use :trash-installed instead
 (defmethod value :trash-other-installed [cost] (:cost/amount cost))
