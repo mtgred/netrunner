@@ -3357,6 +3357,25 @@
      (is (= "Easy Mark" (:title (last (:deck (get-runner)))))
          "Easy Mark on bottom of stack")))
 
+(deftest john-masanori-nisei-token-issue-5077
+  (do-game
+    (new-game {:runner {:hand ["John Masanori"]}
+               :corp {:hand ["Nisei MK II" "Vanilla" "Ichi 1.0"]
+                      :credits 15}})
+    (play-and-score state "Nisei MK II")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ichi 1.0" "HQ")
+    (rez state corp (get-ice state :hq 0))
+    (rez state corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "John Masanori")
+    (run-on state :hq)
+    (run-continue-until state :movement)
+    (run-continue-until state :movement)
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (is (= 1 (count-tags state)) "Took a tag")
+    (is (not (:run @state)) "No more run")))
+
 (deftest joshua-b
   ;; Joshua B. - Take 1 tag at turn end if you choose to gain the extra click
   (do-game
