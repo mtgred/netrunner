@@ -3440,7 +3440,8 @@
   (do-game
     (new-game {:corp {:id "Mti Mwekundu: Life Improved"
                       :hand ["Komainu" "Vanilla"]}
-               :runner {:hand ["Ika" "Easy Mark"]}})
+               :runner {:id "Rielle \"Kit\" Peddler: Transhuman"
+                        :hand ["Ika" "Easy Mark"]}})
     (play-from-hand state :corp "Komainu" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Ika")
@@ -3448,11 +3449,11 @@
           kom (get-ice state :hq 0)]
       (run-on state :hq)
       (rez state :corp kom)
+      (run-continue-until state :encounter-ice)
       (card-ability state :runner ika 0) ; host on a piece of ice
       (click-card state :runner (refresh kom))
       (let [ika (first (:hosted (refresh kom)))]
         (is (= "Ika" (:title ika)))
-        (run-continue-until state :encounter-ice)
         (run-continue state :movement)
         (run-continue state)
         (click-prompt state :corp "Yes")
