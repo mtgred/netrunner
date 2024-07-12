@@ -2130,8 +2130,11 @@
    :abilities [{:label "Prevent 1 net damage to place power counter on Prāna Condenser"
                 :msg "prevent 1 net damage, place 1 power counter, and gain 3 [Credits]"
                 :async true
-                :req (req true)
+                :req (req (and (= (get-in @state [:prevent :current :type]) :net)
+                               (not= (get-in card [:special :last-prevented-eid])
+                                     (get-in @state [:prevent :current :eid :eid]))))
                 :effect (req (add-counter state side card :power 1)
+                             (update! state side (assoc-in (get-card state card) [:special :last-prevented-eid] (get-in @state [:prevent :current :eid :eid])))
                              (gain-credits state :corp eid 3)
                              (damage-prevent state :corp :net 1))}
                {:msg (msg "deal " (get-counters card :power) " net damage")

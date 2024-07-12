@@ -4153,6 +4153,30 @@
         (card-ability state :corp  pc 1)
         (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
 
+(deftest prana-condenser-once-per-instance
+  (do-game
+    (new-game {:corp {:hand ["Prāna Condenser" "Fujii Asset Retrieval"]
+                      :id "Jinteki: Personal Evolution"}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Prāna Condenser" "New remote")
+    (take-credits state :corp)
+    (let [pran (get-content state :remote1 0)]
+      (rez state :corp pran)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Steal")
+      (click-prompt state :corp "Fujii Asset Retrieval")
+      (is (changed? [(:credit (get-corp)) 3]
+                    (card-ability state :corp (refresh pran) 0))
+          "Prevented one damage")
+      (is (changed? [(:credit (get-corp)) 0]
+                    (card-ability state :corp (refresh pran) 0))
+          "Couldn't prevent the other!")
+      (click-prompt state :corp "Done")
+      (is (= 1 (count (:discard (get-runner)))) "Took 1 net")
+      (is (changed? [(:credit (get-corp)) 3]
+                    (card-ability state :corp (refresh pran) 0))
+          "Prevented one damage (PE)"))))
+
 (deftest prana-condenser-refuse-to-prevent-damage
     ;; Refuse to prevent damage
     (do-game

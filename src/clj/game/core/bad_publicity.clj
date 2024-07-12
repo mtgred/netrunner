@@ -45,7 +45,7 @@
                         (cards-can-prevent? state :corp prevent :bad-publicity))
                  (do (system-msg state :corp "has the option to avoid bad publicity")
                      (show-wait-prompt state :runner "Corp to prevent bad publicity")
-                     (swap! state assoc-in [:prevent :current] :bad-publicity)
+                     (swap! state assoc-in [:prevent :current] {:type :bad-publicity :eid eid})
                      (show-prompt
                        state :corp nil
                        (str "Avoid " (when (< 1 n) "any of the ") n " bad publicity?") ["Done"]
