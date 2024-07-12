@@ -1923,10 +1923,10 @@
    :events [{:event :subroutines-broken
              :condition :hosted
              :async true
-             :req (req (and (same-card? target (:host card))
-                            (empty? (remove :broken (:subroutines target)))))
-             :msg (msg "trash itself and " (card-str state target))
-             :effect (effect (trash :corp eid target {:unpreventable true :cause-card card}))}]})
+             :req (req (and (same-card? (:card context) (:host card))
+                            (:all-subs-broken context)))
+             :msg (msg "trash itself and " (card-str state (:card context)))
+             :effect (effect (trash :corp eid (:card context) {:unpreventable true :cause-card card}))}]})
 
 (defcard "Patch"
   {:on-play {:choices {:card #(and (ice? %)

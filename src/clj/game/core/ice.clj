@@ -1,6 +1,6 @@
 (ns game.core.ice
   (:require
-    [game.core.board :refer [all-active-installed all-installed]]
+    [game.core.board :refer [all-active-installed all-installed card->server]]
     [game.core.card :refer [get-card ice? installed? rezzed? has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost]]
@@ -534,6 +534,16 @@
               (map :label (sort-by :index broken-subs)))
         "\")")))
 
+(defn break-subs-event-context
+  [state _ ice broken-subs breaker]
+  {;; pass a few more pieces of information relevant to other cards
+   :outermost (when-let [server-ice (:ices (card->server state ice))] (same-card? ice (last server-ice)))
+   :during-run (if (:run @state) true nil)
+   :all-subs-broken (all-subs-broken? ice)
+   :broken-subs broken-subs
+   :breaker (:cid breaker)
+   :card ice})
+
 (defn break-subroutines
   ([ice breaker cost n] (break-subroutines ice breaker cost n nil))
   ([ice breaker cost n args]
@@ -567,7 +577,7 @@
                                              on-break-subs (when ice (:on-break-subs (card-def ice)))
                                              event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
                                          (wait-for
-                                           (trigger-event-simult state side :subroutines-broken event-args ice broken-subs)
+                                           (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state side ice broken-subs breaker))
                                            (let [ice (get-card state ice)
                                                  card (get-card state card)]
                                              (if (and ice

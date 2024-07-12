@@ -2715,9 +2715,9 @@
 
 (defcard "Synth DNA Modification"
   {:events [{:event :subroutines-broken
-             :req (req (and (has-subtype? (first targets) "AP")
+             :req (req (and (has-subtype? (:card context) "AP")
                             (first-event? state side :subroutines-broken
-                                          (fn [targets] (has-subtype? (first targets) "AP")))))
+                                          #(has-subtype? (:card (first %)) "AP"))))
              :msg "do 1 net damage"
              :async true
              :effect (effect (damage eid :net 1 {:card card}))}]})

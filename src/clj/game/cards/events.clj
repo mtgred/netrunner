@@ -84,13 +84,13 @@
              :effect (effect (make-run eid target card))}
    :events [{:event :subroutines-broken
              :async true
-             :req (req (and (has-subtype? target subtype)
-                            (all-subs-broken? target)
-                            (let [pred #(and (has-subtype? (first %) subtype)
-                                             (all-subs-broken? (first %)))]
+             :req (req (and (has-subtype? (:card target) subtype)
+                            (:all-subs-broken target)
+                            (let [pred #(and (has-subtype? (:card (first %)) subtype)
+                                             (all-subs-broken? (:card (first %))))]
                               (first-run-event? state side :subroutines-broken pred))))
-             :msg (msg "trash " (card-str state target))
-             :effect (effect (trash eid target {:cause-card card}))}]})
+             :msg (msg "trash " (card-str state (:card target)))
+             :effect (effect (trash eid (:card target) {:cause-card card}))}]})
 
 ;; Card definitions
 

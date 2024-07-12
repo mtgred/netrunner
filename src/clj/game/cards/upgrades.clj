@@ -707,8 +707,8 @@
 
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
-             :req (req (and (all-subs-broken? target)
-                            (protecting-same-server? card target)))
+             :req (req (and (:all-subs-broken target)
+                            (protecting-same-server? card (:card target))))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
                            (str "trash " (enumerate-str (map :title (take 2 deck))) " from the stack")
@@ -815,9 +815,9 @@
               (effect-completed state side eid)))]
     {:events [{:event :subroutines-broken
                :req (req (and this-server tagged))
-               :msg (msg "gain " (* 2 (count (second targets))) " [Credits]")
+               :msg (msg "gain " (* 2 (count (:broken-subs context))) " [Credits]")
                :async true
-               :effect (effect (hp-gain-credits :corp eid (count (second targets))))}]}))
+               :effect (effect (hp-gain-credits :corp eid (count (:broken-subs context))))}]}))
 
 (defcard "Hired Help"
   (let [prompt-to-trash-agenda-or-etr
@@ -1803,7 +1803,7 @@
 
 (defcard "Valley Grid"
   {:events [{:event :subroutines-broken
-             :req (req (and this-server (all-subs-broken? target)))
+             :req (req (and this-server (:all-subs-broken context)))
              :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
              :effect (effect (register-lingering-effect
                                card

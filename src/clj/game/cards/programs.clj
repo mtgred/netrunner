@@ -29,7 +29,7 @@
    [game.core.hosting :refer [host]]
    [game.core.identities :refer [disable-card enable-card]]
    [game.core.ice :refer [add-sub all-subs-broken-by-card? all-subs-broken?
-                          any-subs-broken-by-card? auto-icebreaker break-sub
+                          any-subs-broken-by-card? auto-icebreaker break-sub break-subs-event-context
                           break-subroutine! break-subroutines-msg breaker-strength-bonus dont-resolve-subroutine!
                           get-strength ice-strength pump pump-ice set-current-ice strength-pump
                           unbroken-subroutines-choice update-all-icebreakers update-breaker-strength]]
@@ -370,8 +370,8 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 (strength-pump 2 2)]
                     :events [{:event :subroutines-broken
-                              :req (req (and (all-subs-broken-by-card? target card)
-                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
+                              :req (req (and (all-subs-broken-by-card? (:card target) card)
+                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (:card (first %)) card))))
                               :async true
                               :effect (effect (continue-ability
                                                 {:prompt "Choose 1 card in the grip to trash"
@@ -488,11 +488,11 @@
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
                                 (strength-pump 1 1)]
                     :events [{:event :subroutines-broken
-                              :req (req (and (has-subtype? target "Barrier")
-                                             (all-subs-broken-by-card? target card)))
-                              :msg (msg "add " (:title target)
+                              :req (req (and (has-subtype? (:card target) "Barrier")
+                                             (all-subs-broken-by-card? (:card target) card)))
+                              :msg (msg "add " (:title (:card target))
                                         " to HQ after breaking all its subroutines")
-                              :effect (effect (move :corp target :hand nil)
+                              :effect (effect (move :corp (:card target) :hand nil)
                                               (continue :runner nil))}]}))
 
 (defcard "Atman"
@@ -736,8 +736,8 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 1 1)]
                     :events [{:event :subroutines-broken
-                              :req (req (and (all-subs-broken-by-card? target card)
-                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
+                              :req (req (and (all-subs-broken-by-card? (:card target) card)
+                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (:card (first %)) card))))
                               :msg "gain 2 [Credits]"
                               :async true
                               :effect (effect (gain-credits :runner eid 2))}]}))
@@ -1067,7 +1067,7 @@
                                                        :effect (req (bypass-ice state))}}}
 
                              {:event :subroutines-broken
-                              :req (req (all-subs-broken-by-card? target card))
+                              :req (req (all-subs-broken-by-card? (:card target) card))
                               :msg "place 1 power counter on itself"
                               :async true
                               :effect (effect (add-counter card :power 1)
@@ -1544,7 +1544,7 @@
                                  (let [ice (get-card state current-ice)
                                        on-break-subs (when ice (:on-break-subs (card-def ice)))
                                        event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
-                                   (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                                   (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state side ice subs-to-break card))
                                              (effect-completed state side eid)))))}]}))
 
 (defcard "Gravedigger"
@@ -1981,8 +1981,8 @@
                                                card nil))}
                                 (strength-pump 1 2)]
                     :events [{:event :subroutines-broken
-                              :req (req (and (all-subs-broken-by-card? target card)
-                                             (has-subtype? target "Code Gate")))
+                              :req (req (and (all-subs-broken-by-card? (:card target) card)
+                                             (has-subtype? (:card target) "Code Gate")))
                               :msg "place 1 power counter on itself"
                               :async true
                               :effect (effect (add-counter card :power 1)
@@ -2066,13 +2066,13 @@
   (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
                                 (strength-pump 1 1)]
                     :events [{:event :subroutines-broken
-                              :req (req (all-subs-broken-by-card? target card))
+                              :req (req (all-subs-broken-by-card? (:card target) card))
                               :msg "prevent the first 3 subroutines from resolving on the next encountered ice"
                               :effect
                               (effect
                                 (register-events
                                   card
-                                  (let [broken-ice target]
+                                  (let [broken-ice (:card target)]
                                     [{:event :encounter-ice
                                       :duration :end-of-run
                                       :unregister-once-resolved true
@@ -2186,7 +2186,7 @@
 (defcard "Mongoose"
   (auto-icebreaker {:events [{:event :subroutines-broken
                               :silent (req true)
-                              :req (req (and (any-subs-broken-by-card? target card)
+                              :req (req (and (any-subs-broken-by-card? (:card target) card)
                                              run))
                               :effect (req (let [broken-ice target]
                                              (register-lingering-effect
@@ -2390,8 +2390,8 @@
   (auto-icebreaker {:abilities [(break-sub 2 0 "Sentry")
                                 (strength-pump 2 3)]
                     :events [{:event :subroutines-broken
-                              :req (req (and (all-subs-broken-by-card? target card)
-                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
+                              :req (req (and (all-subs-broken-by-card? (:card target) card)
+                                             (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (:card (first %)) card))))
                               :async true
                               :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]}))
 
@@ -3133,7 +3133,7 @@
 
 (defcard "Takobi"
   {:events [{:event :subroutines-broken
-             :optional {:req (req (all-subs-broken? target))
+             :optional {:req (req (:all-subs-broken target))
                         :prompt (msg "Place 1 power counter on " (:title card) "?")
                         :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability
@@ -3320,7 +3320,7 @@
                                                      (some #(and (has-subtype? % "Trojan") (program? %)) (:hosted current-ice)))})
                                   runner-draw]
                       :events [{:event :subroutines-broken
-                                :req (req (every? #(or (= (:breaker %) nil) (= (:breaker %) (:cid card))) (:subroutines target)))
+                                :req (req (every? #(or (= (:breaker %) nil) (= (:breaker %) (:cid card))) (:subroutines (:card target))))
                                 :effect (req (continue-ability state side runner-draw card nil))}]})))
 
 (defcard "Unity"
