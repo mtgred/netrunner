@@ -435,7 +435,7 @@
         ;; If Adjusted Matrix ever gets correctly implemented, there will be
         ;; a minor edge case here if the runner uses a non-click break ab on a
         ;; card hosting adjusted matrix -nbkelly, 2022
-        actual-breakers (map #(find-cid % all-cards) breakers)
+        actual-breakers (map #(find-cid (:cid %) all-cards) breakers)
         abs (mapcat #(if (= (:side %) "Runner") (:abilities %) (:runner-abilities %)) actual-breakers)
         costs (map :break-cost abs)
         clicks (filter #(= :lose-click (:cost/type %)) (flatten costs))]
@@ -1173,7 +1173,7 @@
                         (chiyashi-auto-trash state side eid (dec n)))
               (effect-completed state side eid)))]
     {:events [{:event :subroutines-broken
-               :req (req (and (same-card? card (:card context))
+               :req (req (and (same-card? card (:ice context))
                               (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner)))))
                :async true
                :effect (effect (chiyashi-auto-trash :corp eid (count (:broken-subs context))))}]
@@ -3343,7 +3343,7 @@
 
 (defcard "Paper Wall"
   {:events [{:event :subroutines-broken
-             :req (req (and (same-card? card (:card context))
+             :req (req (and (same-card? card (:ice context))
                             (:all-subs-broken context)))
              :async true
              :effect (effect (trash :corp eid card {:cause-card card :cause :effect}))}]

@@ -297,7 +297,7 @@
                      on-break-subs (when ice (:on-break-subs (card-def current-ice)))
                      event-args (when on-break-subs
                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
-                 (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state side ice subs-to-break card))
+                 (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice subs-to-break card))
                            (if (empty? sub-groups-to-break)
                              (effect-completed state side eid)
                              (continue-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil))))))})
@@ -379,7 +379,7 @@
                (wait-for
                  (resolve-ability state side (make-eid state {:source card :source-type :ability})
                                   (:additional-ability break-ability) (get-card state card) nil)
-                 (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state side ice subs-to-break card))
+                 (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice subs-to-break card))
                            (if (empty? sub-groups-to-break)
                              (effect-completed state side eid)
                              (continue-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)))))))})

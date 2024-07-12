@@ -1150,14 +1150,14 @@
              {:req (req
                      (let [pred (every-pred :all-subs-broken :outermost :during-run)]
                        (and (pred context)
-                            (get-card state (:card target))
+                            (get-card state (:ice context))
                             (first-event? state side :subroutines-broken #(pred (first %))))))
-              :prompt (msg "Remove this hardware from the game to trash " (:title (:card target)) "?")
+              :prompt (msg "Remove this hardware from the game to trash " (:title (:ice context)) "?")
               :yes-ability
               {:async true
                :cost [(->c :remove-from-game)]
-               :msg (msg "trash " (card-str state (:card context)))
-               :effect (effect (trash eid (:card context) {:cause-card card}))}}}]})
+               :msg (msg "trash " (card-str state (:ice context)))
+               :effect (effect (trash eid (:ice context) {:cause-card card}))}}}]})
 
 (defcard "Hippocampic Mechanocytes"
   {:on-install {:async true
@@ -2234,7 +2234,7 @@
              :req (req (= :hq target))
              :effect (req (let [evs (run-events state side :subroutines-broken)
                                 relevant (filter #(let [context (first %)
-                                                        t (get-card state (:card context))]
+                                                        t (get-card state (:ice context))]
                                                     (and (:all-subs-broken context)
                                                          (= :hq (second (get-zone t)))))
                                                  evs)

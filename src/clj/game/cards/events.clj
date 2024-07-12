@@ -84,13 +84,13 @@
              :effect (effect (make-run eid target card))}
    :events [{:event :subroutines-broken
              :async true
-             :req (req (and (has-subtype? (:card target) subtype)
-                            (:all-subs-broken target)
-                            (let [pred #(and (has-subtype? (:card (first %)) subtype)
-                                             (all-subs-broken? (:card (first %))))]
-                              (first-run-event? state side :subroutines-broken pred))))
-             :msg (msg "trash " (card-str state (:card target)))
-             :effect (effect (trash eid (:card target) {:cause-card card}))}]})
+             :req (req (let [pred (every-pred :all-subs-broken #(has-subtype? (:ice %) subtype))]
+                         (and (pred context)
+                              ;; don't need to show messages if the ice is already trashed!
+                              (get-card state (:ice context))
+                              (first-run-event? state side :subroutines-broken #(pred (first %))))))
+             :msg (msg "trash " (card-str state (:ice context)))
+             :effect (effect (trash eid (:ice context) {:cause-card card}))}]})
 
 ;; Card definitions
 

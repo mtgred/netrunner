@@ -535,14 +535,15 @@
         "\")")))
 
 (defn break-subs-event-context
-  [state _ ice broken-subs breaker]
-  {;; pass a few more pieces of information relevant to other cards
-   :outermost (when-let [server-ice (:ices (card->server state ice))] (same-card? ice (last server-ice)))
-   :during-run (if (:run @state) true nil)
+  [state ice broken-subs breaker]
+  {:outermost (when-let [server-ice (:ices (card->server state ice))] (same-card? ice (last server-ice)))
+   :during-run (some? (:run @state))
    :all-subs-broken (all-subs-broken? ice)
    :broken-subs broken-subs
-   :breaker (:cid breaker)
-   :card ice})
+   ;; enough info to backtrack and find breakers without bloating the gamestate
+   ;; could just be the card itself if we don't care too much though
+   :breaker (select-keys breaker [:cid :title :type :subtypes])
+   :ice ice})
 
 (defn break-subroutines
   ([ice breaker cost n] (break-subroutines ice breaker cost n nil))
@@ -577,7 +578,7 @@
                                              on-break-subs (when ice (:on-break-subs (card-def ice)))
                                              event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
                                          (wait-for
-                                           (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state side ice broken-subs breaker))
+                                           (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
                                            (let [ice (get-card state ice)
                                                  card (get-card state card)]
                                              (if (and ice

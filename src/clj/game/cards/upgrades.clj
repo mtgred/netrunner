@@ -707,8 +707,8 @@
 
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
-             :req (req (and (:all-subs-broken target)
-                            (protecting-same-server? card (:card target))))
+             :req (req (and (:all-subs-broken context)
+                            (protecting-same-server? card (:ice context))))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
                            (str "trash " (enumerate-str (map :title (take 2 deck))) " from the stack")
