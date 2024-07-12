@@ -64,7 +64,8 @@
                  [integrant "0.8.0"]
                  [cljc.java-time "0.1.18"]
                  [time-literals "0.1.5"]
-                 [metosin/reitit "0.5.18"]]
+                 [metosin/reitit "0.5.18"]
+                 [de.ubercode.clostache/clostache "1.4.0"]]
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 
@@ -105,4 +106,5 @@
             "create-sample-data" ["run" "-m" "tasks.db/create-sample-data"]
             "get-game-stats" ["run" "-m" "tasks.game-stats/all-games"]
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
-            "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]})
+            "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]
+            "generate-docker" ["run" "-m" "tasks.generate-docker/command"]})
