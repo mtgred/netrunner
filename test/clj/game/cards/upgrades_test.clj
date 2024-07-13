@@ -3378,6 +3378,38 @@
       (take-credits state :corp)
       (is (no-prompt? state :corp))))
 
+(deftest overseer-matrix-duplicated-prompt-issue
+  ;; Doesn't cause duplicate ghost buttons in the prompts
+  ;; this test is primarily to assert that the issue is on the front-end,
+  ;; rather than the backend
+  (do-game
+    (new-game {:corp {:hand [(qty "Overseer Matrix" 3) (qty "Daruma" 3) "Yakov Erikovich Avdakov"]
+                      :credits 50}
+               :runner {:credits 50}})
+    (core/gain state :corp :click 5)
+    (play-from-hand state :corp "Overseer Matrix" "New remote")
+    (dotimes [_ 2]
+      (play-from-hand state :corp "Overseer Matrix" "Server 1"))
+    (dotimes [_ 3]
+      (play-from-hand state :corp "Daruma" "Server 1"))
+    (dotimes [n 3]
+      (rez state :corp (get-content state :remote1 n)))
+    (play-from-hand state :corp "Yakov Erikovich Avdakov" "Server 1")
+    (rez state :corp (get-content state :remote1 6))
+    (take-credits state :corp)
+    (run-on state "Server 1")
+    (run-continue-until state :success)
+    (let [expected-prompt '("Overseer Matrix" "Overseer Matrix" "Overseer Matrix" "Yakov Erikovich Avdakov")]
+      (click-card state :runner (get-content state :remote1 5))
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (= expected-prompt (map :title (prompt-buttons :corp))) "Only expected buttons (first time)")
+      (dotimes [n 3]
+        (click-prompt state :corp "Overseer Matrix")
+        (click-prompt state :corp "1"))
+      (click-card state :runner (get-content state :remote1 4))
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (= expected-prompt (map :title (prompt-buttons :corp))) "Only expected buttons (second time)"))))
+
 (deftest panic-button
   (do-game
     (new-game {:corp {:hand ["Panic Button"]

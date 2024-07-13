@@ -1652,7 +1652,7 @@
        ;; otherwise choice of all present choices
        :else
        (doall (for [{:keys [idx uuid value]} choices]
-                (when (not= value "Hide")
+                (when (and (seq value) (not= value "Hide"))
                   [:button {:key idx
                             :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
                                            (card-highlight-mouse-out % value button-channel))
