@@ -303,7 +303,8 @@
   [card show-extra-info]
   (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
-        uniq (when (:uniqueness card) "◇ ")]
+        uniq (when (:uniqueness card) "◇ ")
+        subtypes (or (when (seq (:subtypes card)) (s/join " - " (:subtypes card))) (:subtype card))]
     [:div
      [:h4 uniq title icon
       (when-let [influence (:factioncost card)]
@@ -332,7 +333,7 @@
 
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
-       (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
+       (if-not subtypes "" (str ": " subtypes))]
       [:pre (render-icons (tr-data :text (get @all-cards (:title card))))]
 
       (when show-extra-info

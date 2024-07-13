@@ -19,7 +19,7 @@
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
-                                      card-preview-mouse-over zoom-channel]]
+                                      card-preview-mouse-over put-game-card-in-channel zoom-channel]]
    [nr.gameboard.player-stats :refer [stat-controls stats-view]]
    [nr.gameboard.replay :refer [replay-panel]]
    [nr.gameboard.right-pane :refer [content-pane]]
@@ -316,7 +316,7 @@
   [{:keys [code] :as card}]
   (when code
     [:div.card-frame
-     [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel card)
+     [:div.blue-shade.card {:on-mouse-enter #(put-game-card-in-channel card zoom-channel)
                             :on-mouse-leave #(put! zoom-channel false)}
       (when-let [url (image-url card)]
         [:div
@@ -670,7 +670,7 @@
                             :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
                                                        (spectator-view-hidden?)
                                                        (= (:side @game-state) (keyword (lower-case side))))
-                                               (put! zoom-channel card))
+                                               (put-game-card-in-channel card zoom-channel))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(when (not disable-click)
                                          (handle-card-click card))
@@ -1309,7 +1309,7 @@
                                [:img.start-card {:src (str "/img/" card-back "-" (lower-case (:side @my-ident)) ".png")}]]
                               [:div.card-front
                                (when-let [url (image-url card)]
-                                 [:div {:on-mouse-enter #(put! zoom-channel card)
+                                 [:div {:on-mouse-enter #(put-game-card-in-channel card zoom-channel)
                                         :on-mouse-leave #(put! zoom-channel false)}
                                   [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]
                              (when-let [elem (.querySelector js/document (str "#startcard" i))]
