@@ -2732,8 +2732,9 @@
                                    (corp? %)
                                    (or (in-hand? %)
                                        (in-discard? %)))}
-             :msg (msg (corp-install-msg target))
-             :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}]})
+             :effect (effect (corp-install eid target nil {:ignore-install-cost true
+                                                           :msg-keys {:install-source card
+                                                                      :display-origin true}}))}]})
 
 (defcard "Tech Startup"
   {:derezzed-events [corp-rez-toast]

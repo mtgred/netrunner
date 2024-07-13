@@ -126,6 +126,9 @@
 (defn- corp-install-message
   "Prints the correct install message."
   [state side card server install-state cost-str args]
+  (let [display-origin (get-in args [:msg-keys :display-origin])
+        source (get-in args [:msg-keys :install-source :title])
+        origin-index (get-in args [:msg-keys :index])]
   (when (:display-message args true)
     (let [card-name (if (or (#{:rezzed-no-cost :face-up} install-state)
                             (rezzed? card))
@@ -133,12 +136,24 @@
                       (if (ice? card) "ice" "a card"))
           server-name (if (= server "New remote")
                         (str (remote-num->name (dec (:rid @state))) " (new remote)")
-                        server)]
-      (system-msg state side (str (build-spend-msg cost-str "install") card-name
+                        server)
+          origin (if display-origin
+                   (str " from "
+                        (when origin-index (str " position " (inc origin-index) " of "))
+                        (name-zone :corp (:zone card)))
+                   "")
+          install (str (when source (str "use " source " to ")) "install")]
+      (system-msg state side (str (build-spend-msg cost-str install) card-name origin
                                   (if (ice? card) " protecting " " in ") server-name))
       (when (and (= :face-up install-state)
                  (agenda? card))
-        (implementation-msg state card)))))
+        (implementation-msg state card))))))
+
+;; Unused in the corp install system, necessary for card definitions
+(defn corp-install-msg
+  "Gets a message describing where a card has been installed from. Example: Interns."
+  [card]
+  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 (defn corp-install-list
   "Returns a list of targets for where a given card can be installed."
@@ -323,12 +338,6 @@
        :else
        (do (swap! state dissoc-in [:corp :install-list])
            (corp-install-pay state side eid card server args))))))
-
-;; Unused in the corp install system, necessary for card definitions
-(defn corp-install-msg
-  "Gets a message describing where a card has been installed from. Example: Interns."
-  [card]
-  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 ;;; Installing a runner card
 (defn- runner-can-install-reason
