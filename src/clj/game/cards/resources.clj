@@ -1537,11 +1537,11 @@
 
 (defcard "Guru Davinder"
   {:static-abilities [{:type :cannot-pay-net
-                       :value (constantly true)}
+                       :value true}
                       {:type :cannot-pay-meat
-                       :value (constantly true)}
+                       :value true}
                       {:type :cannot-pay-brain
-                       :value (constantly true)}]
+                       :value true}]
    :events [{:event :pre-damage
              :req (req (and (#{:meat :net} (:type context))
                             (pos? (:amount context))))

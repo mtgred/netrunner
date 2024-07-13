@@ -856,7 +856,7 @@
                               state side card
                               {:type :cannot-pay-credit
                                :req (req true)
-                               :value (constantly true)
+                               :value true
                                :duration :subroutine-currently-resolving}))}]
      :subroutines [sub
                    sub
@@ -3500,10 +3500,8 @@
                                    state side card
                                    {:type :cannot-pay-credit
                                     ;; you're allowed to spend 0 credits, our rules are just cursed
-                                    :req (req (if (:amount context)
-                                                (pos? (:amount context))
-                                                true))
-                                    :value (constantly true)
+                                    :req (req (or (nil? (:amount context)) (pos? (:amount context))))
+                                    :value true
                                     :duration :end-of-run})))}]})
 
 (defcard "Sadaka"
