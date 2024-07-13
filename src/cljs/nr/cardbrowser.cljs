@@ -304,7 +304,8 @@
   (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
         uniq (when (:uniqueness card) "◇ ")
-        subtypes (or (when (seq (:subtypes card)) (s/join " - " (:subtypes card))) (:subtype card))]
+        subtypes (or (when (seq (:subtypes card)) (s/join " - " (:subtypes card))) (:subtype card))
+        impl (when (and (:implementation card) (not= (:implementation card) "full")) (:implementation card))]
     [:div
      [:h4 uniq title icon
       (when-let [influence (:factioncost card)]
@@ -330,6 +331,9 @@
        [:div.heading (str (tr [:card-browser.min-deck "Minimum deck size"]) ": " min-deck-size)])
      (when-let [influence-limit (:influencelimit card)]
        [:div.heading (str (tr [:card-browser.inf-limit "Influence limit"]) ": " influence-limit)])
+
+     (when impl
+       [:div.heading (str (tr [:card-browser.implementation-note "Implementation note"]) ": " impl)])
 
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
