@@ -6026,6 +6026,24 @@
       (is (= 1 (core/get-strength (refresh iw1))) "Rime no longer gives bonus strength to ice on previous server")
       (is (= 2 (core/get-strength (refresh iw2))) "Rime only gives ice on current server bonus strength"))))
 
+(deftest rsvp-full-test
+  (do-game
+    (new-game {:corp {:hand ["RSVP" "Forced Connection"]}
+               :runner {:credits 50}})
+    (play-from-hand state :corp "RSVP" "HQ")
+    (take-credits state :corp)
+    (let [rsvp (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp rsvp)
+      (run-continue state :encounter-ice)
+      (card-subroutine state :corp (refresh rsvp) 0)
+      (run-continue-until state :success)
+      ;; we're still allowed to pay 0 credits for traces and trashes
+      (click-prompt state :corp "0")
+      (is (= 0 (:choices (prompt-map :runner))))
+      (click-prompt state :runner "0")
+      (click-prompt state :runner "Pay 0 [Credits] to trash")))) ; trash
+
 (deftest sadaka-sub-1-look-at-the-top-3-cards-of-r-d-arrange-those-or-shuffle-r-d-you-may-draw-1-card
   ;; Sub 1 - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card
   (do-game

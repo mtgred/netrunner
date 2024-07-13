@@ -849,8 +849,7 @@
                                            "do 1 net damage"
                                            (str "force the runner to " (decapitalize target))))}
                               card nil)))}]
-    {:implementation "preventing paid abilities with credit costs not implemented (yet)"
-     :events [{:event :pre-resolve-subroutine
+    {:events [{:event :pre-resolve-subroutine
                :req (req (threat-level 3 state))
                :silent (req true)
                :effect (req (register-lingering-effect
@@ -3492,6 +3491,20 @@
 (defcard "Rototurret"
   {:subroutines [trash-program-sub
                  end-the-run]})
+
+(defcard "RSVP"
+  {:subroutines [{:label "Runner cannot spend credits this run"
+                  :msg "prevent the runner from spending credits this run"
+                  :effect (req (when run
+                                 (register-lingering-effect
+                                   state side card
+                                   {:type :cannot-pay-credit
+                                    ;; you're allowed to spend 0 credits, our rules are just cursed
+                                    :req (req (if (:amount context)
+                                                (pos? (:amount context))
+                                                true))
+                                    :value (constantly true)
+                                    :duration :end-of-run})))}]})
 
 (defcard "Sadaka"
   (let [maybe-draw-effect

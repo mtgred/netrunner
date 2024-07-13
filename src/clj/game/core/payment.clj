@@ -90,7 +90,7 @@
   "Checks installed cards to see if payment type is being prevented by an active card"
   [state side cost]
   (let [kw-cost (keyword (str "cannot-pay-" (name (:cost/type cost))))]
-    (any-effects state side kw-cost)))
+    (any-effects state side kw-cost true? {:amount (:cost/amount cost)})))
 
 (defn can-pay?
   "Returns nil if the player cannot pay the cost args, or a truthy map otherwise.
