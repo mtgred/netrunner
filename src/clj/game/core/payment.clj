@@ -4,7 +4,7 @@
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [ice?]]
     [game.core.eid :refer [make-eid]]
-    [game.core.flags :refer [card-flag?]]
+    [game.core.effects :refer [any-effects]]
     [game.core.toasts :refer [toast]]
     [jinteki.utils :refer [capitalize]]))
 
@@ -86,11 +86,11 @@
   (= [(->c :click 4) (->c :credit 2)] (merge-costs [[(->c :click 1)] [(->c :click 3)] [(->c :credit 1)] [(->c :credit 1)]]))
   (= [(->c :click 4) (->c :credit 2)] (merge-costs [[(->c :credit 1)] [(->c :credit 1)] [(->c :click 1)] [(->c :click 3)]])))
 
-(defn- flag-stops-pay?
-  "Checks installed cards to see if payment type is prevented by a flag"
+(defn- any-effect-stops-pay?
+  "Checks installed cards to see if payment type is being prevented by an active card"
   [state side cost]
-  (let [flag (keyword (str "cannot-pay-" (name (:cost/type cost))))]
-    (some #(card-flag? % flag true) (all-active-installed state side))))
+  (let [kw-cost (keyword (str "cannot-pay-" (name (:cost/type cost))))]
+    (any-effects state side kw-cost)))
 
 (defn can-pay?
   "Returns nil if the player cannot pay the cost args, or a truthy map otherwise.
@@ -101,7 +101,7 @@
    (let [remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
          costs (merge-costs (filter some? args) remove-zero-credit-cost)]
-     (if (every? #(and (not (flag-stops-pay? state side %))
+     (if (every? #(and (not (any-effect-stops-pay? state side %))
                        (payable? % state side eid card))
                  costs)
        costs

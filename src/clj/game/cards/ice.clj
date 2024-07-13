@@ -850,6 +850,15 @@
                                            (str "force the runner to " (decapitalize target))))}
                               card nil)))}]
     {:implementation "preventing paid abilities with credit costs not implemented (yet)"
+     :events [{:event :pre-resolve-subroutine
+               :req (req (threat-level 3 state))
+               :silent (req true)
+               :effect (req (register-lingering-effect
+                              state side card
+                              {:type :cannot-pay-credit
+                               :req (req true)
+                               :value (constantly true)
+                               :duration :subroutine-currently-resolving}))}]
      :subroutines [sub
                    sub
                    sub]}))
