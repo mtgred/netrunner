@@ -589,23 +589,28 @@
   (<= 0 (- (count (all-installed-runner-type state :program)) (value cost))))
 (defmethod handler :program
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed program") " to trash")
-     :choices {:all true
-               :max (value cost)
-               :card (every-pred installed? program? (complement facedown?))}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
-                                                             :unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "trashes " (quantify (count async-result) "installed program")
-                                             " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :program
-                               :paid/value (count async-result)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(resolve-trashes [state side eid cost targets]
+            (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                       :unpreventable true})
+                      (complete-with-result
+                        state side eid
+                        {:paid/msg (str "trashes " (quantify (count async-result) "installed program")
+                                        " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                         :paid/type :program
+                         :paid/value (count async-result)
+                         :paid/targets targets})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (filter program? (all-installed state side)))))
+      (resolve-trashes state side eid cost (filter program? (all-installed state side)))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "installed program") " to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card (every-pred installed? program? (complement facedown?))}
+         :async true
+         :effect (req (resolve-trashes state side eid cost targets))}
+        card nil))))
 
 ;; TrashInstalledResource
 (defmethod value :resource [cost] (:cost/amount cost))
@@ -616,23 +621,28 @@
   (<= 0 (- (count (all-installed-runner-type state :resource)) (value cost))))
 (defmethod handler :resource
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed resource") " to trash")
-     :choices {:all true
-               :max (value cost)
-               :card (every-pred installed? resource? (complement facedown?))}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
-                                                             :unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "trashes " (quantify (count async-result) "installed resource")
-                                             " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :resource
-                               :paid/value (count async-result)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(resolve-trashes [state side eid cost targets]
+            (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                       :unpreventable true})
+                      (complete-with-result
+                        state side eid
+                        {:paid/msg (str "trashes " (quantify (count async-result) "installed resource")
+                                        " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                         :paid/type :resource
+                         :paid/value (count async-result)
+                         :paid/targets targets})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (filter resource? (all-installed state side)))))
+      (resolve-trashes state side eid cost (filter resource? (all-installed state side)))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "installed resource") " to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card (every-pred installed? resource? (complement facedown?))}
+         :async true
+         :effect (req (resolve-trashes state side eid cost targets))}
+        card nil))))
 
 ;; TrashInstalledConnection
 (defmethod value :connection [cost] (:cost/amount cost))
@@ -643,26 +653,31 @@
   (<= 0 (- (count (filter #(has-subtype? % "Connection") (all-active-installed state :runner))) (value cost))))
 (defmethod handler :connection
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed connection resource") " to trash")
-     :choices {:all true
-               :max (value cost)
-               :card (every-pred installed?
-                                 resource?
-                                 #(has-subtype? % "Connection")
-                                 (complement facedown?))}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
-                                                             :unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "trashes " (quantify (count async-result) "installed connection resource")
-                                             " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :connection
-                               :paid/value (count async-result)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(resolve-trashes [state side eid cost targets]
+            (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                       :unpreventable true})
+                      (complete-with-result
+                        state side eid
+                        {:paid/msg (str "trashes " (quantify (count async-result) "installed connection resource")
+                                        " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                         :paid/type :connection
+                         :paid/value (count async-result)
+                         :paid/targets targets})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (filter (every-pred resource? #(has-subtype? % "Connection")) (all-installed state side)))))
+      (resolve-trashes state side eid cost (filter (every-pred resource? #(has-subtype? % "Connection")) (all-installed state side)))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "installed connection resource") " to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card (every-pred installed?
+                                     resource?
+                                     #(has-subtype? % "Connection")
+                                     (complement facedown?))}
+         :async true
+         :effect (req (resolve-trashes state side eid cost targets))}
+        card nil))))
 
 ;; TrashRezzedIce
 (defmethod value :ice [cost] (:cost/amount cost))
@@ -673,23 +688,28 @@
   (<= 0 (- (count (filter (every-pred installed? rezzed? ice?) (all-installed state :corp))) (value cost))))
 (defmethod handler :ice
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (quantify (value cost) "installed rezzed ice" "") " to trash")
-     :choices {:all true
-               :max (value cost)
-               :card (every-pred installed? rezzed? ice?)}
-     :async true
-     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
-                                                             :unpreventable true})
-                            (complete-with-result
-                              state side eid
-                              {:paid/msg (str "trashes " (quantify (count async-result) "installed rezzed ice" "")
-                                             " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :ice
-                               :paid/value (count async-result)
-                               :paid/targets targets})))}
-    card nil))
+  (letfn [(resolve-trashes [state side eid cost targets]
+            (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                       :unpreventable true})
+                      (complete-with-result
+                        state side eid
+                        {:paid/msg (str "trashes " (quantify (count async-result) "installed rezzed ice" "")
+                                        " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                         :paid/type :ice
+                         :paid/value (count async-result)
+                         :paid/targets targets})))]
+    (if (and (auto-confirm-cost? state side)
+             (= (value cost) (count (filter (every-pred installed? rezzed? ice?) (all-installed state side)))))
+      (resolve-trashes state side eid cost (filter (every-pred installed? rezzed? ice?) (all-installed state side)))
+      (continue-ability
+        state side
+        {:prompt (str "Choose " (quantify (value cost) "installed rezzed ice" "") " to trash")
+         :choices {:all true
+                   :max (value cost)
+                   :card (every-pred installed? rezzed? ice?)}
+         :async true
+         :effect (req (resolve-trashes state side eid cost targets))}
+        card nil))))
 
 ;; TrashFromDeck
 (defmethod value :trash-from-deck [cost] (:cost/amount cost))
