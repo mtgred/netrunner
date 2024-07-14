@@ -4738,22 +4738,41 @@
       (click-prompt state :runner "Yes")
       (is (has-subtype? (get-ice state :hq 0) "Barrier") "Enigma has been given Barrier")))
 
+(deftest laamb-subtype-goes-away-even-when-card-swapped
+  (do-game
+    (new-game {:corp {:hand ["Thimblerig" "Vanilla"]}
+               :runner {:hand ["Laamb"] :credits 10}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Thimblerig" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Laamb")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 1))
+    (run-continue state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (is (has-subtype? (get-ice state :hq 1) "Barrier"))
+    (run-continue state :movement)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Vanilla")
+    (is (= "Thimblerig" (:title (get-ice state :hq 0))))
+    (is (not (has-subtype? (get-ice state :hq 0) "Barrier")))))
+
 (deftest laamb-ability-only-lasts-until-end-of-encounter
-    ;; Ability only lasts until end of encounter
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Enigma"]}
-                 :runner {:hand ["Laamb"]
-                          :credits 30}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Laamb")
-      (run-on state "HQ")
-      (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
-      (click-prompt state :runner "Yes")
-      (run-continue state)
-      (is (not (has-subtype? (get-ice state :hq 0) "Barrier")) "Enigma no longer has Barrier subtype")))
+  ;; Ability only lasts until end of encounter
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:hand ["Laamb"]
+                        :credits 30}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Laamb")
+    (run-on state "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (run-continue state)
+    (is (not (has-subtype? (get-ice state :hq 0) "Barrier")) "Enigma no longer has Barrier subtype")))
 
 (deftest laamb-returning-the-ice-to-hand-after-using-ability-resets-subtype-issue-3193
     ;; Returning the ice to hand after using ability resets subtype. Issue #3193
