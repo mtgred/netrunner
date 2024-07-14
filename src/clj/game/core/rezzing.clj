@@ -78,8 +78,8 @@
                              {:time-out 0 :close-button true}))
                     (if (ice? card)
                       (do (update-ice-strength state side card)
-                          (play-sfx state side "rez-ice"))
-                      (play-sfx state side "rez-other"))
+                          (when-not (:silent args) (play-sfx state side "rez-ice")))
+                      (when-not (:silent args) (play-sfx state side "rez-other")))
                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                     (when-let [card-ability (:on-rez cdef)]
                       (register-pending-event state :rez card card-ability))
