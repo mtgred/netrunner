@@ -152,11 +152,12 @@
                                                 state side
                                                 {:prompt "Choose a remote server"
                                                  :waiting-prompt true
-                                                 :msg "install a card from HQ ignoring all costs"
                                                  :choices (req (conj (vec (filter #(not= original-server %)
                                                                                   (get-remote-names state))) "New remote"))
                                                  :async true
-                                                 :effect (effect (corp-install eid chosen-card target {:ignore-install-cost true}))}
+                                                 :effect (effect (corp-install eid chosen-card target {:ignore-install-cost true
+                                                                                                       :msg-keys {:install-source card
+                                                                                                                  :display-origin true}}))}
                                                 card nil)))}
                               card nil)))}]
    ;; This effect will be resolved when the ID is reenabled after Strike / Direct Access
@@ -377,7 +378,8 @@
                                                      (or (is-remote? z) (not (asset? %)))
                                                      (not (agenda? %)))}
                                :async true
-                               :effect (effect (corp-install eid target (zone->name z) nil))}
+                               :effect (effect (corp-install eid target (zone->name z) {:msg-keys {:install-source card
+                                                                                                   :display-origin true}}))}
                               card nil)))}]})
 
 (defcard "Ayla \"Bios\" Rahim: Simulant Specialist"
@@ -623,11 +625,9 @@
                                             :cancel-effect
                                             (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
                                                     (effect-completed eid))
-                                            :msg (msg "install the "
-                                                      (pprint/cl-format nil "~:R"
-                                                        (inc (first (keep-indexed #(when (same-card? target %2) %1) top))))
-                                                      " card from the top of R&D")
-                                            :effect (effect (corp-install eid target nil))}
+                                            :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                                                     :index (first (keep-indexed #(when (same-card? target %2) %1) top))
+                                                                                                     :display-origin true}}))}
                                            card nil))))}]}))
 
 (defcard "Esâ Afontov: Eco-Insurrectionist"
@@ -1356,7 +1356,7 @@
                                 :choices {:card #(and (ice? %)
                                                       (in-hand? %))}
                                 :async true
-                                :msg "install a piece of ice at the innermost position of this server. Runner is now approaching that piece of ice"
+                                :msg "install a piece of ice from HQ at the innermost position of this server. Runner is now approaching that piece of ice"
                                 :effect (req (wait-for (corp-install state side target (zone->name (target-server run))
                                                                      {:ignore-all-cost true
                                                                       :front true})
@@ -1514,7 +1514,8 @@
                              :choices {:card #(and (corp? %)
                                                    (ice? %)
                                                    (in-hand? %))}
-                             :effect (req (wait-for (corp-install state side target nil nil)
+                             :effect (req (wait-for (corp-install state side target nil {:msg-keys {:install-source card
+                                                                                                    :display-origin true}})
                                                     (continue-ability state side (when (< n 3) (nd (inc n))) card nil)))})]
     {:events [{:event :pre-first-turn
                :req (req (= side :corp))
@@ -1837,7 +1838,8 @@
                                   ((constantly false)
                                    (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
                                   true))))
-                          (wait-for (corp-install state side chosen target nil)
+                          (wait-for (corp-install state side chosen target {:msg-keys {:install-source card
+                                                                                       :display-origin true}})
                                     (add-prop state :corp (find-latest state chosen) :advance-counter 1 {:placed true})
                                     (effect-completed state side eid)))})]
     {:abilities [{:async true
