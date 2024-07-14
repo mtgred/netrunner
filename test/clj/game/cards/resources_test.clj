@@ -340,6 +340,32 @@
     (click-prompt state :runner "Done")
     (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed")))
 
+(deftest assimilator-unique-cards-enforced
+  (do-game
+    (new-game {:runner {:hand ["Kati Jones" "Assimilator" "Hunting Grounds"]
+                        :deck ["Kati Jones"]
+                        :credits 50}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "Kati Jones")
+    (let [kat1 (get-resource state 0)]
+      (card-ability state :runner kat1 0)
+      (is (= 3 (get-counters (refresh kat1) :credit)) "3 credits on kati")
+      ;; install another one facedown
+      (play-from-hand state :runner "Hunting Grounds")
+      (card-ability state :runner (get-resource state 1) 0)
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (refresh kat1))
+      (is (= "Kati Jones" (:printed-title (get-runner-facedown state 0))) "Kati Jones facedown")
+      ;; flip it faceup
+      (play-from-hand state :runner "Assimilator")
+      (card-ability state :runner (get-resource state 1) 0)
+      (click-card state :runner (get-runner-facedown state 0))
+      (is (= 2 (count (:discard (get-runner)))) "trashed the already installed kati")
+      (is (= "Kati Jones" (:title (get-resource state 1))) "New kati installed")
+      (is (not (refresh kat1)) "old kati trashed")
+      (is (= 0 (get-counters (get-resource state 1) :credit)) "0 credits on new kati"))))
+
 (deftest avgustina-ivanovskaya
   ;; First time each turn you install a virus program, resist 1
   (do-game
