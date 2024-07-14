@@ -1493,11 +1493,10 @@
                                                (asset? %)
                                                (upgrade? %))
                                            (in-discard? %))}
-                     :effect (req (wait-for (corp-install state side (make-eid state {:source card :source-type :corp-install})
-                                                          target nil {:msg-keys {:install-source card
-                                                                                 :display-origin true}})
-                                            (system-msg state side (str "uses " (:title card) " to place 2 advancements counters on the installed card"))
-                                            (add-prop state side eid async-result :advance-counter 2 {:placed true})))}]
+                     :effect (req (corp-install state side (assoc eid :source card :source-type :corp-install)
+                                                target nil {:counters {:advancement 2}
+                                                            :msg-keys {:install-source card
+                                                                       :display-origin true}}))}]
     {:on-play
      {:prompt "Choose any number of cards in HQ to trash"
       :rfg-instead-of-trashing true
@@ -1708,10 +1707,10 @@
 
 (defcard "Mitosis"
   (letfn [(mitosis-ability [state side card eid target-cards]
-            (wait-for (corp-install state side (first target-cards) "New remote" {:msg-keys {:install-source card
+            (wait-for (corp-install state side (first target-cards) "New remote" {:counters {:advancement 2}
+                                                                                  :msg-keys {:install-source card
                                                                                              :display-origin true}})
                       (let [installed-card async-result]
-                        (add-prop state side installed-card :advance-counter 2 {:placed true})
                         (register-turn-flag!
                           state side
                           card :can-rez
@@ -1736,9 +1735,6 @@
                             (corp? %)
                             (in-hand? %))
                 :max 2}
-      :msg (msg (if (= 2 (count targets))
-                  "install 2 cards from HQ in new remote servers, and place two advancements on each of them"
-                  "install a card from HQ in a new remote server, and place two advancements on it"))
       :async true
       :effect (req (mitosis-ability state side card eid targets))}}))
 
@@ -1750,10 +1746,10 @@
                           (corp? %)
                           (in-hand? %))}
     :async true
-    :effect (req (wait-for (corp-install state side target "New remote" {:msg-keys {:install-source card
+    :effect (req (wait-for (corp-install state side target "New remote" {:counters {:advancement 3}
+                                                                         :msg-keys {:install-source card
                                                                                     :display-origin true}})
                            (let [installed-card async-result]
-                             (add-prop state side installed-card :advance-counter 3 {:placed true})
                              (register-persistent-flag!
                                state side
                                installed-card :can-rez

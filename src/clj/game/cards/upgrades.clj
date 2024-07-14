@@ -170,13 +170,10 @@
                                (corp? %))}
          :async true
          :cancel-effect (req (effect-completed state side eid))
-         :effect (req (wait-for (corp-install state :corp target nil {:ignore-all-cost true :display-message false})
-                                (let [inst-target (find-latest state target)]
-                                  (add-prop state :corp inst-target :advance-counter 1 {:placed true})
-                                  (system-msg state :corp
-                                              (str "uses " (:title card) " to install and place a counter on "
-                                                   (card-str state inst-target) ", ignoring all costs"))
-                                  (effect-completed state side eid))))}]
+         :effect (req (corp-install state :corp eid target nil {:ignore-all-cost true
+                                                                :counters {:advancement 1}
+                                                                :msg-keys {:install-source card
+                                                                           :display-origin true}}))}]
     {:events [{:event :agenda-scored
                :req (req (= (:previous-zone (:card context)) (get-zone card)))
                :interactive (req (some corp-installable-type? (:hand corp)))
