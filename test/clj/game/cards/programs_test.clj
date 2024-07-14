@@ -2786,6 +2786,28 @@
       (is (= 4 (core/available-mu state)) "0 MU used")
       (is (= 6 (get-strength adpt)) "Adept at 6 strength hosted"))))
 
+(deftest dhegdheer-corp-cant-use-the-card
+  (do-game
+    (new-game {:runner {:hand ["Dhegdheer" (qty "Fermenter" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dhegdheer")
+    (play-from-hand state :runner "Fermenter")
+    (click-prompt state :runner "Dhegdheer")
+    (play-from-hand state :runner "Fermenter")
+    (click-prompt state :runner "The Rig")
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-corp)) 0 (:credit (get-runner)) 0]
+                  (card-ability state :corp (get-program state 1) 0))
+        "Fermenter on the table cannot be used by the corp")
+    (is (changed?
+          [(:credit (get-corp)) 0 (:credit (get-runner)) 0]
+          (let [ferm (first (:hosted (get-program state 0)))]
+            (is (empty? (:corp-abilities ferm)) "No corp abilities")
+            (is (empty? (filter :corp (map :side (:abilities ferm)))) "No corp side abilities")
+            (card-ability state :corp ferm 0)
+            (is (= ferm (first (:hosted (get-program state 0)))) "Fermenter went nowhere")))
+        "Fermenter hosted on dhegdheer cannot be used by the corp")))
+
 (deftest disrupter
   ;; Disrupter
   (do-game

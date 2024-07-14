@@ -27,7 +27,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards]]))
+    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]))
 
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
@@ -61,6 +61,7 @@
          args (assoc args :card card)
          ability (nth (:abilities card) ability-idx)
          cannot-play (or (:disabled card)
+                         (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
        (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
