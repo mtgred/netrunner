@@ -129,25 +129,31 @@
   (let [display-origin (get-in args [:msg-keys :display-origin])
         source (get-in args [:msg-keys :install-source :title])
         origin-index (get-in args [:msg-keys :index])]
-  (when (:display-message args true)
-    (let [card-name (if (or (#{:rezzed-no-cost :face-up} install-state)
-                            (rezzed? card))
-                      (:title card)
-                      (if (ice? card) "ice" "a card"))
-          server-name (if (= server "New remote")
-                        (str (remote-num->name (dec (:rid @state))) " (new remote)")
-                        server)
-          origin (if display-origin
-                   (str " from "
-                        (when origin-index (str " position " (inc origin-index) " of "))
-                        (name-zone :corp (:zone card)))
-                   "")
-          install (str (when source (str "use " source " to ")) "install")]
-      (system-msg state side (str (build-spend-msg cost-str install) card-name origin
-                                  (if (ice? card) " protecting " " in ") server-name))
-      (when (and (= :face-up install-state)
-                 (agenda? card))
-        (implementation-msg state card))))))
+    (when (:display-message args true)
+      (let [card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
+                              ;; note that cards which the corp is instructed to rez, but cannot
+                              ;; (or chooses not to rez) are revealed, so they're safe to name here
+                              (get-in args [:msg-keys :known])
+                              (:seen card)
+                              (rezzed? card))
+                        (:title card)
+                        (if (ice? card) "ice" "a card"))
+            server-name (if (= server "New remote")
+                          (str (remote-num->name (dec (:rid @state))) " (new remote)")
+                          server)
+            origin (if display-origin
+                     (str " from "
+                          (when origin-index (str " position " (inc origin-index) " of "))
+                          (name-zone :corp (:zone card)))
+                     "")
+            lhs (if source
+                  (str (build-spend-msg cost-str "use") source " to install ")
+                  (build-spend-msg cost-str "install"))]
+        (system-msg state side (str lhs card-name origin
+                                    (if (ice? card) " protecting " " in ") server-name))
+        (when (and (= :face-up install-state)
+                   (agenda? card))
+          (implementation-msg state card))))))
 
 ;; Unused in the corp install system, necessary for card definitions
 (defn corp-install-msg
@@ -189,7 +195,7 @@
               (assoc :advanceable (:advanceable cdef) :new true)
               (dissoc :seen :disabled))]
     (when-not host-card
-      (corp-install-message state side c server install-state cost-str args))
+      (corp-install-message state side card server install-state cost-str args))
     (play-sfx state side "install-corp")
     (let [moved-card (if host-card
                        (host state side host-card (assoc c :installed true))
