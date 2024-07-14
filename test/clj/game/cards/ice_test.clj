@@ -1250,21 +1250,21 @@
     (take-credits state :corp)
     (run-on state :hq)
     (let [bran (get-ice state :hq 0)
-          unrezzed-msg "Corp uses Brân 1.0 to install an unseen card from Archives."
-          rezzed-msg "Corp uses Brân 1.0 to install Ice Wall from Archives."
+          unrezzed-msg "pays 0 [Credits] to use Brân 1.0 to install ice from Archives protecting HQ"
+          rezzed-msg "pays 0 [Credits] to use Brân 1.0 to install Ice Wall from Archives protecting HQ"
           declined-msg "Corp declines to use Brân 1.0 to install a card."]
       (rez state :corp bran)
       (run-continue state)
       (card-subroutine state :corp bran 0)
       (click-card state :corp "Mausolus")
-      (is (second-last-log-contains? state unrezzed-msg) "Mausolus is face down and should not be revealed in the log")
+      (is (last-log-contains? state unrezzed-msg) "Mausolus is face down and should not be revealed in the log")
       (card-subroutine state :corp bran 1)
       (run-empty-server state :archives)
       (run-on state :hq)
       (run-continue state)
       (card-subroutine state :corp bran 0)
       (click-card state :corp "Ice Wall")
-      (is (second-last-log-contains? state rezzed-msg) "Ice Wall is face up and should be revealed in the log")
+      (is (last-log-contains? state rezzed-msg) "Ice Wall is face up and should be revealed in the log")
       (card-subroutine state :corp bran 1)
       (run-on state :hq)
       (run-continue state)

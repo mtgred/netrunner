@@ -387,9 +387,9 @@
     :choices {:card #(and (corp-installable-type? %)
                           (or (in-hand? %)
                               (in-discard? %)))}
-    :msg (msg (corp-install-msg target))
     :async true
-    :effect (effect (corp-install eid target nil args))}))
+    :effect (effect (corp-install eid target nil (assoc args :msg-keys {:install-source card
+                                                                        :display-origin true})))}))
 
 (def cannot-steal-or-trash-sub
   {:label "The Runner cannot steal or trash Corp cards for the remainder of this run"
@@ -628,8 +628,8 @@
                                               :waiting-prompt true
                                               :choices (req (remove #(= this %) (corp-install-list state nice)))
                                               :async true
-                                              :msg (msg (corp-install-msg nice))
-                                              :effect (effect (corp-install eid nice target nil))}
+                                              :effect (effect (corp-install eid nice target {:msg-keys {:install-source card
+                                                                                                        :display-origin true}}))}
                                              card nil)))}})
 
 (defcard "Anemone"
@@ -802,7 +802,10 @@
                             {:prompt "Choose a card to install"
                              :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
                              :async true
-                             :effect (effect (corp-install eid target nil {:ignore-all-cost true}))
+                             :effect (effect (corp-install eid target nil {:ignore-all-cost true
+                                                                           :msg-keys {:install-source card
+                                                                                      :index (first (positions #{target} (take 5 (:deck corp))))
+                                                                                      :display-origin true}}))
                              :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
                                                     (effect-completed eid))}
                             card nil))}
@@ -983,7 +986,9 @@
                                       {:prompt (str "Choose a location to install " (:title target))
                                        :choices (req (remove #(= this %) (corp-install-list state nice)))
                                        :async true
-                                       :effect (effect (corp-install eid nice target {:ignore-all-cost true}))}
+                                       :effect (effect (corp-install eid nice target {:ignore-all-cost true
+                                                                                      :msg-keys {:install-source card
+                                                                                                 :display-origin true}}))}
                                       card nil)))}
     {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
      :prompt "Choose a piece of ice to install from HQ in this server"
@@ -993,6 +998,8 @@
      :effect (req (corp-install state side eid
                                 target (zone->name (target-server run))
                                 {:ignore-all-cost true
+                                 :msg-keys {:install-source card
+                                            :display-origin true}
                                  :index (max (dec run-position) 0)}))}]})
 
 (defcard "Bloop"
@@ -1057,10 +1064,11 @@
                   :choices {:card #(and (ice? %)
                                         (or (in-hand? %)
                                             (in-discard? %)))}
-                  :msg (msg (corp-install-msg target))
                   :effect (req (wait-for (corp-install state :corp target
                                                        (zone->name (second (get-zone card)))
                                                        {:ignore-install-cost true
+                                                        :msg-keys {:install-source card
+                                                                   :display-origin true}
                                                         :index (:index card)})
                                          (effect-completed state side eid)))
                   :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card) " to install a card"))
@@ -1319,8 +1327,8 @@
                   :async true
                   :choices {:card #(and (corp-installable-type? %)
                                         (in-discard? %))}
-                  :msg (msg (corp-install-msg target))
-                  :effect (effect (corp-install eid target nil nil))}]
+                  :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                           :display-origin true}}))}]
    :static-abilities [(ice-strength-bonus (req (protecting-archives? card)) 3)]})
 
 (defcard "Curtain Wall"
@@ -2254,6 +2262,8 @@
      :effect (req (wait-for (corp-install state side (make-eid state eid)
                                           target (zone->name (target-server run))
                                           {:ignore-all-cost true
+                                           :msg-keys {:install-source card
+                                                      :display-origin true}
                                            :index (card-index state card)})
                             (let [new-ice async-result]
                               (register-events
@@ -3036,12 +3046,13 @@
                                                      (effect-completed state side eid)))))})]})
 
 (defcard "Minelayer"
-  {:subroutines [{:msg "install a piece of ice from HQ"
-                  :async true
+  {:subroutines [{:async true
                   :choices {:card #(and (ice? %)
                                         (in-hand? %))}
                   :prompt "Choose a piece of ice to install from HQ"
-                  :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true}))}]})
+                  :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true
+                                                                                             :msg-keys {:install-source card
+                                                                                                        :display-origin true}}))}]})
 
 (defcard "Mirāju"
   {:events [{:event :end-of-encounter
@@ -3219,8 +3230,8 @@
              :choices {:card #(and (corp-installable-type? %)
                                    (in-hand? %))}
              :async true
-             :effect (effect (corp-install eid target nil nil))
-             :msg (msg (corp-install-msg target))}]
+             :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                      :display-origin true}}))}]
     (next-ice-variable-subs sub)))
 
 (defcard "NEXT Sapphire"
@@ -4150,7 +4161,9 @@
                                                                      {:prompt (str "Choose a location to install " (:title target))
                                                                       :choices (req (remove #(= this %) (corp-install-list state nice)))
                                                                       :async true
-                                                                      :effect (effect (corp-install eid nice target {:ignore-install-cost true}))}
+                                                                      :effect (effect (corp-install eid nice target {:ignore-install-cost true
+                                                                                                                     :msg-keys {:install-source card
+                                                                                                                                :display-origin true}}))}
                                                                      card nil)))}
                                    card nil)))}
                  {:label "Give +2 strength to each piece of ice for the remainder of the run"
