@@ -171,7 +171,7 @@
          :async true
          :cancel-effect (req (effect-completed state side eid))
          :effect (req (corp-install state :corp eid target nil {:ignore-all-cost true
-                                                                :counters {:advancement 1}
+                                                                :counters {:advance-counter 1}
                                                                 :msg-keys {:install-source card
                                                                            :display-origin true}}))}]
     {:events [{:event :agenda-scored

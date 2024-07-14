@@ -109,9 +109,9 @@
   "Places counters on a card via installation"
   [state side eid target-card {:keys [counters] :as args}]
   ;; for now, only advancement counters are checked
-  (if-not (:advancement counters)
+  (if-not (:advance-counter counters)
     (effect-completed state side eid)
-    (add-prop state side eid target-card :advance-counter (:advancement counters) {:placed true})))
+    (add-prop state side eid target-card :advance-counter (:advance-counter counters) {:placed true})))
 
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
@@ -133,10 +133,10 @@
       :else (effect-completed state side eid))))
 
 (defn- format-counters-msg
-  [{:keys [advancement] :as counters}]
+  [{:keys [advance-counter] :as counters}]
   ;; TODO - rewrite this if/when we support more counter types through installs
-  (if advancement
-    (str ", and place " (quantify advancement "Advancement counter") " on it")
+  (if advance-counter
+    (str ", and place " (quantify advance-counter "Advancement counter") " on it")
     ""))
 
 (defn- corp-install-message

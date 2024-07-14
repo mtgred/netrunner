@@ -1494,7 +1494,7 @@
                                                (upgrade? %))
                                            (in-discard? %))}
                      :effect (req (corp-install state side (assoc eid :source card :source-type :corp-install)
-                                                target nil {:counters {:advancement 2}
+                                                target nil {:counters {:advance-counter 2}
                                                             :msg-keys {:install-source card
                                                                        :display-origin true}}))}]
     {:on-play
@@ -1707,7 +1707,7 @@
 
 (defcard "Mitosis"
   (letfn [(mitosis-ability [state side card eid target-cards]
-            (wait-for (corp-install state side (first target-cards) "New remote" {:counters {:advancement 2}
+            (wait-for (corp-install state side (first target-cards) "New remote" {:counters {:advance-counter 2}
                                                                                   :msg-keys {:install-source card
                                                                                              :display-origin true}})
                       (let [installed-card async-result]
@@ -1746,7 +1746,7 @@
                           (corp? %)
                           (in-hand? %))}
     :async true
-    :effect (req (wait-for (corp-install state side target "New remote" {:counters {:advancement 3}
+    :effect (req (wait-for (corp-install state side target "New remote" {:counters {:advance-counter 3}
                                                                          :msg-keys {:install-source card
                                                                                     :display-origin true}})
                            (let [installed-card async-result]

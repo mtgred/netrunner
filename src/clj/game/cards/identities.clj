@@ -1838,7 +1838,7 @@
                                   ((constantly false)
                                    (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
                                   true))))
-                          (corp-install state side eid chosen target {:counters {:advancement 1}
+                          (corp-install state side eid chosen target {:counters {:advance-counter 1}
                                                                       :msg-keys {:install-source card
                                                                                  :display-origin true}}))})]
     {:abilities [{:async true
