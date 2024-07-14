@@ -7,7 +7,7 @@
    [game.core.damage :refer [damage]]
    [game.core.eid :refer [complete-with-result make-eid]]
    [game.core.engine :refer [checkpoint resolve-ability trigger-event-sync]]
-   [game.core.effects :refer [is-disabled-reg?]]
+   [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
    [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
@@ -102,12 +102,14 @@
 
 (defn total-available-credits
   [state side eid card]
-  (+ (get-in @state [side :credit])
-     (->> (eligible-pay-credit-cards state side eid card)
-          (map #(+ (get-counters % :recurring)
-                   (get-counters % :credit)
-                   (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
-          (reduce +))))
+  (if-not (any-effects state side :cannot-pay-credit)
+    (+ (get-in @state [side :credit])
+       (->> (eligible-pay-credit-cards state side eid card)
+            (map #(+ (get-counters % :recurring)
+                     (get-counters % :credit)
+                     (-> (card-def %) :interactions :pay-credits ((fn [x] (:custom-amount x 0))))))
+            (reduce +)))
+    0))
 
 (defn- eligible-pay-stealth-credit-cards
   [state side eid card]

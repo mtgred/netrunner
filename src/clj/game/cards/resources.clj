@@ -1536,7 +1536,12 @@
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
-  {:flags {:cannot-pay-net true}
+  {:static-abilities [{:type :cannot-pay-net
+                       :value true}
+                      {:type :cannot-pay-meat
+                       :value true}
+                      {:type :cannot-pay-brain
+                       :value true}]
    :events [{:event :pre-damage
              :req (req (and (#{:meat :net} (:type context))
                             (pos? (:amount context))))

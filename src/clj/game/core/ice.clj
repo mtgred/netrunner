@@ -275,11 +275,11 @@
                (update-current-encounter state :replace-subroutine nil)
                (update-current-encounter state :prevent-subroutine nil)
                (if prevent
-                 (checkpoint state nil eid)
+                 (checkpoint state nil eid {:duration :subroutine-currently-resolving})
                  ;; see if there are any effects which can prevent this subroutine
                  (wait-for (resolve-ability state side (make-eid state eid) (:sub-effect sub) (get-card state ice) nil)
                            (queue-event state :subroutine-fired {:sub sub :ice ice})
-                           (checkpoint state nil eid)))))))
+                           (checkpoint state nil eid {:duration :subroutine-currently-resolving})))))))
 
 (defn- resolve-next-unbroken-sub
   ([state side ice subroutines]
