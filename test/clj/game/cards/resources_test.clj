@@ -1376,6 +1376,20 @@
        (take-credits state :runner)
        (is (= 2 (get-strength (refresh cor))) "Corroder strength back down to normal"))))
 
+(deftest cybertrooper-talut-with-flame-out
+  (do-game
+    (new-game {:runner {:hand ["Flame-out" "Gauss" "Cybertrooper Talut"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cybertrooper Talut")
+    (play-from-hand state :runner "Flame-out")
+    (play-from-hand state :runner "Gauss")
+    (click-prompt state :runner "Flame-out")
+    (let [gauss (first (:hosted (get-hardware state 0)))]
+      (is (= 6 (get-strength (refresh gauss))) "6 str gauss")
+      (run-on state :hq)
+      (is (= 6 (get-strength (refresh gauss))) "6 str gauss - maintained during run"))))
+
 (deftest dadiana-chacon-can-fire-mid-trace
     ;; Can fire mid-trace
     (do-game
