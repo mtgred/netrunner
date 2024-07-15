@@ -6988,6 +6988,24 @@
      (click-prompt state :runner "No action")
      (is (not (:run @state)))))
 
+(deftest makers-eye-can-access-upgrades-installed-during-run
+  (do-game
+    (new-game {:corp {:hand ["Drafter" "Crisium Grid"]
+                      :deck [(qty "Hedge Fund" 3)]}
+               :runner {:hand ["The Maker's Eye"]}})
+    (play-from-hand state :corp "Drafter" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Maker's Eye")
+    (let [dra (get-ice state :rd 0)]
+      (rez state :corp dra)
+      (run-continue state :encounter-ice)
+      (card-subroutine state :corp (refresh dra) 1)
+      (click-card state :corp "Crisium Grid")
+      (click-prompt state :corp "R&D")
+      (run-continue-until state :success)
+      (click-prompt state :runner "Unrezzed upgrade")
+      (click-prompt state :runner "No action"))))
+
 (deftest the-maker-s-eye-doppelganger-interaction
     ;; Doppelgänger interaction
     (do-game
