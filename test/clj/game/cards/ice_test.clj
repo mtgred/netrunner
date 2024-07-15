@@ -2401,7 +2401,7 @@
       (is (zero? (get-in @state [:run :position])) "Now approaching server")
       (run-continue state)
       (click-prompt state :corp "Formicary")
-      (is (= "Rez and move Formicary protecting Archives at position 0 to protect the approched server?" (:msg (prompt-map :corp))))
+      (is (= "Rez and move Formicary protecting Archives at position 0 to protect the approached server?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes") ; Move Formicary
       (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
       (is (= 1 (get-in @state [:run :position])) "Now encountering Formicary")
@@ -2512,8 +2512,7 @@
       (run-continue state)
       (run-continue state)
       (click-prompt state :runner "Spend [Click][Click]")
-      (click-prompt state :runner "No action")
-  )))
+      (click-prompt state :runner "No action"))))
 
 (deftest formicary-with-trojan-doesnt-reset-mu-when-moving
   ;; Rezzing and moving Formicary with trojan doesn't make the trojan mu-cost disappear
@@ -2544,7 +2543,7 @@
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Formicary")
     (run-continue state)
-    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approached server?" (:msg (prompt-map :corp))))))
 
 (deftest formicary-project-yagi-uda-swap
   ;; swapping Formicary in via Project Yagi-Uda should register Formicary ability
@@ -2564,7 +2563,7 @@
     (click-prompt state :runner "No")
     (run-continue state)
     (run-continue state)
-    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approached server?" (:msg (prompt-map :corp))))))
 
 (deftest formicary-tenma-line-swap
   ;; swapping Formicary via Tenma Line should keep Formicary ability
@@ -2584,7 +2583,25 @@
     (take-credits state :corp)
     (run-on state "Archives")
     (run-continue state)
-    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approached server?" (:msg (prompt-map :corp))))))
+
+(deftest formicary-ddos-functionality
+  ;; formicary can be rezzed and then moved to the outermost position of a server if it was
+  ;; not already the outermost ice of the server it lives on
+  (do-game
+    (new-game {:corp ["Formicary" "Vanilla"]
+               :runner ["DDoS"]})
+    (play-from-hand state :runner "Formicary" "HQ")
+    (play-from-hand state :runner "Vanilla" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "DDoS")
+    (card-ability state :runner (get-resource state 0) 0)
+    (run-on state :rd)
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting HQ at position 0 to protect the approached server?" (:msg (prompt-map :corp))))
+    (click-prompt state :corp "Yes")
+    (let [fc (get-ice state :rd 0)]
+      (is (rezzed? fc) "formicary rezzed outermost on R&D"))))
 
 (deftest free-lunch-basic-behavior
   ;; Basic behavior
