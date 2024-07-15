@@ -1262,6 +1262,24 @@
         (click-card state :runner par)
         (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
 
+(deftest brahman-doesnt-host-mantle
+  (do-game
+    (new-game {:runner {:hand ["Brahman" "Mantle"]}
+               :corp {:hand ["Vanilla"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Brahman")
+    (play-from-hand state :runner "Mantle")
+    (run-on state :hq)
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (click-card state :runner "Mantle")
+    (is (empty? (:hosted (get-program state 0))) "brahman not hosting anything")
+    (is (= "Mantle" (:title (get-program state 1))) "Mantle still in the rig")
+    (is (no-prompt? state :runner))))
+
 (deftest brahman-brahman-works-with-nisei-tokens
     ;; Brahman works with Nisei tokens
     (do-game
