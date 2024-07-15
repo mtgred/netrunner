@@ -4201,6 +4201,22 @@
         (click-prompt state :runner "Place 1 [Credits] on Net Mercur")
         (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur"))))
 
+(deftest net-mercur-psi-game
+  (do-game
+    (new-game {:runner {:hand ["Net Mercur"]}
+               :corp {:hand ["See How They Run"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Net Mercur")
+    (core/add-counter state :runner (get-resource state 0) :credit 2)
+    (take-credits state :runner)
+    (play-and-score state "See How They Run")
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "2 [Credits]")
+    (is (= "Choose a credit providing card (0 of 2 [Credits])" (:msg (prompt-map :runner))))
+    (click-card state :runner "Net Mercur")
+    (click-card state :runner "Net Mercur")
+    (is (no-prompt? state :runner) "No more prompt")))
+
 (deftest net-mercur-prevention-prompt-issue-4464
     ;; Prevention prompt. Issue #4464
     (do-game
