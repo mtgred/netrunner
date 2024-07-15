@@ -109,9 +109,9 @@
   "Places counters on a card via installation"
   [state side eid target-card {:keys [counters] :as args}]
   ;; for now, only advancement counters are checked
-  (if-not (:advance-counter counters)
-    (effect-completed state side eid)
-    (add-prop state side eid target-card :advance-counter (:advance-counter counters) {:placed true})))
+  (if (:advance-counter counters)
+    (add-prop state side eid target-card :advance-counter (:advance-counter counters) {:placed true})
+    (effect-completed state side eid)))
 
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
@@ -141,15 +141,13 @@
 
 (defn- corp-install-message
   "Prints the correct install message."
-  [state side card server install-state cost-str args]
-  (let [display-origin (get-in args [:msg-keys :display-origin])
-        source (get-in args [:msg-keys :install-source :title])
-        origin-index (get-in args [:msg-keys :index])]
+  [state side card server install-state cost-str {:keys [counters msg-keys] :as args}]
+  (let [{:keys [display-origin install-source origin-index known]} msg-keys]
     (when (:display-message args true)
       (let [card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
                               ;; note that cards which the corp is instructed to rez, but cannot
                               ;; (or chooses not to rez) are revealed, so they're safe to name here
-                              (get-in args [:msg-keys :known])
+                              known
                               (:seen card)
                               (rezzed? card))
                         (:title card)
@@ -162,12 +160,12 @@
                           (when origin-index (str " position " (inc origin-index) " of "))
                           (name-zone :corp (:zone card)))
                      "")
-            lhs (if source
-                  (str (build-spend-msg cost-str "use") source " to install ")
+            lhs (if install-source
+                  (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
                   (build-spend-msg cost-str "install"))]
         (system-msg state side (str lhs card-name origin
                                     (if (ice? card) " protecting " " in ") server-name
-                                    (format-counters-msg (:counters args))))
+                                    (format-counters-msg counters)))
         (when (and (= :face-up install-state)
                    (agenda? card))
           (implementation-msg state card))))))
