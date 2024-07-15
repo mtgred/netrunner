@@ -2589,10 +2589,10 @@
   ;; formicary can be rezzed and then moved to the outermost position of a server if it was
   ;; not already the outermost ice of the server it lives on
   (do-game
-    (new-game {:corp ["Formicary" "Vanilla"]
-               :runner ["DDoS"]})
-    (play-from-hand state :runner "Formicary" "HQ")
-    (play-from-hand state :runner "Vanilla" "HQ")
+    (new-game {:corp {:hand ["Formicary" "Vanilla"]}
+               :runner {:hand ["DDoS"]}})
+    (play-from-hand state :corp "Formicary" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "DDoS")
     (card-ability state :runner (get-resource state 0) 0)
