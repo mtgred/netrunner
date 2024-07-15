@@ -133,9 +133,9 @@
                                       (not (agenda? %))
                                       (in-hand? %)
                                       (corp? %))}
-                :msg (msg (corp-install-msg target))
                 :cost [(->c :trash-can)]
-                :effect (effect (corp-install eid target nil nil))}]})
+                :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                         :display-origin true}}))}]})
 
 (defcard "Aggressive Secretary"
   (advance-ambush 2 {:req (req (pos? (get-counters (get-card state card) :advancement)))
@@ -388,8 +388,8 @@
                                       (corp? %))}
                 :cost [(->c :trash-can)]
                 :async true
-                :effect (effect (corp-install eid target nil nil))
-                :msg (msg (corp-install-msg target))}]})
+                :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                         :display-origin true}}))}]})
 
 (defcard "Blacklist"
   {:on-rez {:effect (effect (lock-zone (:cid card) :runner :discard))}
@@ -1430,8 +1430,8 @@
                                             :prompt "Choose 1 card to install"
                                             :choices {:card #(and (corp-installable-type? %)
                                                                   (in-hand? %))}
-                                            :msg (msg (corp-install-msg target))
-                                            :effect (effect (corp-install eid target nil nil))}
+                                            :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                                                     :display-origin true}}))}
                                            card nil)))}]}))
 
 (defcard "Jeeves Model Bioroids"
@@ -1807,7 +1807,9 @@
                                (shuffle! state side :deck)
                                (if (operation? target)
                                  (play-instant state side eid target nil)
-                                 (corp-install state side eid target nil nil))))}]})
+                                 (corp-install state side eid target nil {:msg-keys {:install-source card
+                                                                                     :known true
+                                                                                     :display-origin true}}))))}]})
 
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
@@ -2101,7 +2103,10 @@
                                              (wait-for
                                                (corp-install
                                                  state side agenda nil
-                                                 {:install-state (:install-state (card-def agenda) :unrezzed)})
+                                                 {:install-state (:install-state (card-def agenda) :unrezzed)
+                                                  :msg-keys {:install-source card
+                                                             :known true
+                                                             :display-origin true}})
                                                (remove-from-currently-drawing state side agenda)
                                                (continue-ability state side (pdhelper (next agendas)) card nil))))}
                 :no-ability {:async true
@@ -2732,8 +2737,9 @@
                                    (corp? %)
                                    (or (in-hand? %)
                                        (in-discard? %)))}
-             :msg (msg (corp-install-msg target))
-             :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}]})
+             :effect (effect (corp-install eid target nil {:ignore-install-cost true
+                                                           :msg-keys {:install-source card
+                                                                      :display-origin true}}))}]})
 
 (defcard "Tech Startup"
   {:derezzed-events [corp-rez-toast]
@@ -2749,7 +2755,9 @@
                                (wait-for
                                  (reveal state side target)
                                  (shuffle! state side :deck)
-                                 (corp-install state side eid target nil nil))))}]})
+                                 (corp-install state side eid target nil {:msg-keys {:install-source card
+                                                                                     :known true
+                                                                                     :display-origin true}}))))}]})
 
 (defcard "TechnoCo"
   (letfn [(is-techno-target [card]
@@ -2823,8 +2831,9 @@
              :choices {:card #(and (corp-installable-type? %)
                                    (or (in-hand? %)
                                        (in-discard? %)))}
-             :msg (msg (corp-install-msg target))
-             :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}]})
+             :effect (effect (corp-install eid target nil {:ignore-install-cost true
+                                                           :msg-keys {:install-source card
+                                                                      :display-origin true}}))}]})
 
 (defcard "The Root"
   {:recurring 3
@@ -2932,7 +2941,6 @@
               :choices {:card #(and (corp? %)
                                     (in-hand? %)
                                     (not (operation? %)))}
-              :msg (msg (corp-install-msg target))
               :effect
               (effect
                 (continue-ability
@@ -2941,7 +2949,9 @@
                      :prompt "Choose a server"
                      :choices (req (remove (set (zone->name (get-zone card)))
                                            (installable-servers state card-to-install)))
-                     :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true}))})
+                     :effect (effect (corp-install eid card-to-install target {:ignore-all-cost true
+                                                                               :msg-keys {:install-source card
+                                                                                          :display-origin true}}))})
                   card nil))}
    :abilities [{:label "Install 1 card"
                 :async true
@@ -2951,7 +2961,9 @@
                                       (in-hand? %)
                                       (not (operation? %)))}
                 :msg (msg (corp-install-msg target))
-                :effect (effect (corp-install eid target nil {:ignore-all-cost true}))}]})
+                :effect (effect (corp-install eid target nil {:ignore-all-cost true
+                                                              :msg-keys {:install-source card
+                                                                         :display-origin true}}))}]})
 
 (defcard "Vera Ivanovna Shuyskaya"
   (let [select-and-trash {:async true
@@ -3074,9 +3086,9 @@
                  :async true
                  :choices {:card #(and (corp-installable-type? %)
                                        (in-hand? %))}
-                 :msg (msg (corp-install-msg target))
                  :effect
-                 (req (wait-for (corp-install state side (make-eid state eid) target nil nil)
+                 (req (wait-for (corp-install state side (make-eid state eid) target nil {:msg-keys {:install-source card
+                                                                                                     :display-origin true}})
                                 (let [installed-card async-result]
                                   (register-turn-flag!
                                     state side

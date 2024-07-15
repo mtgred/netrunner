@@ -16,6 +16,7 @@
     [game.core.memory :refer [expected-mu sufficient-mu? update-mu]]
     [game.core.moving :refer [move trash trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
+    [game.core.props :refer [add-prop]]
     [game.core.revealing :refer [reveal]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
@@ -104,6 +105,14 @@
                     (effect-completed state :corp eid)))}
     nil nil))
 
+(defn- corp-install-place-counters
+  "Places counters on a card via installation"
+  [state side eid target-card {:keys [counters] :as args}]
+  ;; for now, only advancement counters are checked
+  (if (:advance-counter counters)
+    (add-prop state side eid target-card :advance-counter (:advance-counter counters) {:placed true})
+    (effect-completed state side eid)))
+
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
   [state side eid card dest-zone server]
@@ -123,22 +132,49 @@
       ;; do nothing
       :else (effect-completed state side eid))))
 
+(defn- format-counters-msg
+  [{:keys [advance-counter] :as counters}]
+  ;; TODO - rewrite this if/when we support more counter types through installs
+  (if advance-counter
+    (str ", and place " (quantify advance-counter "Advancement counter") " on it")
+    ""))
+
 (defn- corp-install-message
   "Prints the correct install message."
-  [state side card server install-state cost-str args]
-  (when (:display-message args true)
-    (let [card-name (if (or (#{:rezzed-no-cost :face-up} install-state)
-                            (rezzed? card))
-                      (:title card)
-                      (if (ice? card) "ice" "a card"))
-          server-name (if (= server "New remote")
-                        (str (remote-num->name (dec (:rid @state))) " (new remote)")
-                        server)]
-      (system-msg state side (str (build-spend-msg cost-str "install") card-name
-                                  (if (ice? card) " protecting " " in ") server-name))
-      (when (and (= :face-up install-state)
-                 (agenda? card))
-        (implementation-msg state card)))))
+  [state side card server install-state cost-str {:keys [counters msg-keys] :as args}]
+  (let [{:keys [display-origin install-source origin-index known]} msg-keys]
+    (when (:display-message args true)
+      (let [card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
+                              ;; note that cards which the corp is instructed to rez, but cannot
+                              ;; (or chooses not to rez) are revealed, so they're safe to name here
+                              known
+                              (:seen card)
+                              (rezzed? card))
+                        (:title card)
+                        (if (ice? card) "ice" "a card"))
+            server-name (if (= server "New remote")
+                          (str (remote-num->name (dec (:rid @state))) " (new remote)")
+                          server)
+            origin (if display-origin
+                     (str " from "
+                          (when origin-index (str " position " (inc origin-index) " of "))
+                          (name-zone :corp (:zone card)))
+                     "")
+            lhs (if install-source
+                  (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
+                  (build-spend-msg cost-str "install"))]
+        (system-msg state side (str lhs card-name origin
+                                    (if (ice? card) " protecting " " in ") server-name
+                                    (format-counters-msg counters)))
+        (when (and (= :face-up install-state)
+                   (agenda? card))
+          (implementation-msg state card))))))
+
+;; Unused in the corp install system, necessary for card definitions
+(defn corp-install-msg
+  "Gets a message describing where a card has been installed from. Example: Interns."
+  [card]
+  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 (defn corp-install-list
   "Returns a list of targets for where a given card can be installed."
@@ -174,7 +210,7 @@
               (assoc :advanceable (:advanceable cdef) :new true)
               (dissoc :seen :disabled))]
     (when-not host-card
-      (corp-install-message state side c server install-state cost-str args))
+      (corp-install-message state side card server install-state cost-str args))
     (play-sfx state side "install-corp")
     (let [moved-card (if host-card
                        (host state side host-card (assoc c :installed true))
@@ -184,56 +220,60 @@
               (update-advancement-requirement state moved-card))
           moved-card (get-card state moved-card)]
       ;; Check to see if a second agenda/asset was installed.
-      (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
-                (let [eid (assoc eid :source moved-card)]
-                  (queue-event state :corp-install {:card (get-card state moved-card)
-                                                    :install-state install-state})
-                  (update-disabled-cards state)
-                  (case install-state
-                    ;; Ignore all costs
-                    :rezzed-no-cost
-                    (if-not (agenda? moved-card)
-                      (rez state side (assoc eid :source-type :rez)
-                           moved-card {:ignore-cost :all-costs
-                                       :no-msg no-msg})
+      (wait-for
+        (corp-install-asset-agenda state side moved-card dest-zone server)
+        (wait-for
+          (corp-install-place-counters state side moved-card args)
+          (let [moved-card (get-card state moved-card)
+                eid (assoc eid :source moved-card)]
+            (queue-event state :corp-install {:card (get-card state moved-card)
+                                              :install-state install-state})
+            (update-disabled-cards state)
+            (case install-state
+              ;; Ignore all costs
+              :rezzed-no-cost
+              (if-not (agenda? moved-card)
+                (rez state side (assoc eid :source-type :rez)
+                     moved-card {:ignore-cost :all-costs
+                                 :no-msg no-msg})
+                (reveal-if-unrezzed state side eid moved-card))
+              ;; Ignore rez cost only
+              :rezzed-no-rez-cost
+              (wait-for (rez state side (make-eid state (assoc eid :source-type :rez))
+                             moved-card {:ignore-cost :rez-costs
+                                         :no-msg no-msg})
+                        (reveal-if-unrezzed state side eid moved-card))
+              ;; Pay costs
+              :rezzed
+              (let [eid (assoc eid :source-type :rez)]
+                (cond
+                  (agenda? moved-card)
+                  (do (when-let [dre (:derezzed-events cdef)]
+                        (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
                       (reveal-if-unrezzed state side eid moved-card))
-                    ;; Ignore rez cost only
-                    :rezzed-no-rez-cost
-                    (wait-for (rez state side (make-eid state (assoc eid :source-type :rez))
-                                   moved-card {:ignore-cost :rez-costs
-                                               :no-msg no-msg})
-                              (reveal-if-unrezzed state side eid moved-card))
-                    ;; Pay costs
-                    :rezzed
-                    (let [eid (assoc eid :source-type :rez)]
-                      (cond
-                        (agenda? moved-card)
-                        (do (when-let [dre (:derezzed-events cdef)]
-                              (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
+                  (zero? cost-bonus)
+                  (wait-for (rez state side moved-card {:no-msg no-msg})
                             (reveal-if-unrezzed state side eid moved-card))
-                        (zero? cost-bonus)
-                        (wait-for (rez state side moved-card {:no-msg no-msg})
-                                  (reveal-if-unrezzed state side eid moved-card))
-                        :else
-                        (wait-for (rez state side moved-card {:no-msg no-msg
-                                                              :cost-bonus cost-bonus})
-                                  (reveal-if-unrezzed state side eid moved-card))))
-                    ;; "Face-up" cards
-                    :face-up
-                    (let [moved-card (-> (get-card state moved-card)
-                                         (assoc :seen true)
-                                         (cond-> (not (agenda? card)) (assoc :rezzed true)))
-                          moved-card (if (:install-state cdef)
-                                       (card-init state side moved-card {:resolve-effect false
-                                                                         :init-data true})
-                                       (update! state side moved-card))]
-                      (wait-for (checkpoint state nil (make-eid state eid))
-                                (complete-with-result state side eid (get-card state moved-card))))
-                    ;; All other cards
-                    (do (when-let [dre (:derezzed-events cdef)]
-                          (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
-                        (wait-for (checkpoint state nil (make-eid state eid))
-                                  (complete-with-result state side eid (get-card state moved-card))))))))))
+                  :else
+                  (wait-for (rez state side moved-card {:no-msg no-msg
+                                                        :cost-bonus cost-bonus})
+                            (reveal-if-unrezzed state side eid moved-card))))
+              ;; "Face-up" cards
+              :face-up
+              (let [moved-card (-> (get-card state moved-card)
+                                   (assoc :seen true)
+                                   (cond-> (not (agenda? card)) (assoc :rezzed true)))
+                    moved-card (if (:install-state cdef)
+                                 (card-init state side moved-card {:resolve-effect false
+                                                                   :init-data true})
+                                 (update! state side moved-card))]
+                (wait-for (checkpoint state nil (make-eid state eid))
+                          (complete-with-result state side eid (get-card state moved-card))))
+              ;; All other cards
+              (do (when-let [dre (:derezzed-events cdef)]
+                    (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
+                  (wait-for (checkpoint state nil (make-eid state eid))
+                            (complete-with-result state side eid (get-card state moved-card)))))))))))
 
 (defn get-slot
   [state card server {:keys [host-card]}]
@@ -323,12 +363,6 @@
        :else
        (do (swap! state dissoc-in [:corp :install-list])
            (corp-install-pay state side eid card server args))))))
-
-;; Unused in the corp install system, necessary for card definitions
-(defn corp-install-msg
-  "Gets a message describing where a card has been installed from. Example: Interns."
-  [card]
-  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 ;;; Installing a runner card
 (defn- runner-can-install-reason

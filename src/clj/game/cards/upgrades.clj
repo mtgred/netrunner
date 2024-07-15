@@ -170,13 +170,10 @@
                                (corp? %))}
          :async true
          :cancel-effect (req (effect-completed state side eid))
-         :effect (req (wait-for (corp-install state :corp target nil {:ignore-all-cost true :display-message false})
-                                (let [inst-target (find-latest state target)]
-                                  (add-prop state :corp inst-target :advance-counter 1 {:placed true})
-                                  (system-msg state :corp
-                                              (str "uses " (:title card) " to install and place a counter on "
-                                                   (card-str state inst-target) ", ignoring all costs"))
-                                  (effect-completed state side eid))))}]
+         :effect (req (corp-install state :corp eid target nil {:ignore-all-cost true
+                                                                :counters {:advance-counter 1}
+                                                                :msg-keys {:install-source card
+                                                                           :display-origin true}}))}]
     {:events [{:event :agenda-scored
                :req (req (= (:previous-zone (:card context)) (get-zone card)))
                :interactive (req (some corp-installable-type? (:hand corp)))
@@ -206,7 +203,9 @@
                                       (in-hand? %))}
                 :msg "host a piece of Bioroid ice"
                 :async true
-                :effect (req (corp-install state side eid target card {:ignore-all-cost true}))}]
+                :effect (req (corp-install state side eid target card {:ignore-all-cost true
+                                                                       :msg-keys {:install-source card
+                                                                                  :display-origin true}}))}]
    :events [{:event :pass-all-ice
              :optional
              {:req (req (and this-server
@@ -919,7 +918,10 @@
                               (wait-for
                                 (reveal state side ice)
                                 (system-msg state side (str "reveals that they drew " (:title ice)))
-                                (wait-for (corp-install state side ice server {:cost-bonus -4})
+                                (wait-for (corp-install state side ice server {:cost-bonus -4
+                                                                               :msg-keys {:install-source card
+                                                                                          :known true
+                                                                                          :display-origin true}})
                                           (remove-from-currently-drawing state side ice)
                                           (continue-ability
                                             state side
@@ -1763,7 +1765,9 @@
                  :interactive (req true)
                  :choices (req (cancellable (filter ice? (:deck corp)) true))
                  :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
-                 :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3})
+                 :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
+                                                                                                  :msg-keys {:install-source card
+                                                                                                             :display-origin true}})
                                         (shuffle! state :corp :deck)
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid)))
