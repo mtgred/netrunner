@@ -5682,6 +5682,22 @@
     (click-prompt state :runner "End the run")
     (is (not (:run @state)) "Run has ended")))
 
+(deftest street-magic-no-lingering-prompt
+  ;; Street Magic
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Little Engine"]}
+               :runner {:hand ["Street Magic"]}})
+    (play-from-hand state :corp "Little Engine" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Magic")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "End the run")
+    (is (not (:run @state)) "Run has ended")
+    (is (no-prompt? state :runner) "No lingering prompt")))
+
 (deftest street-peddler
   ;; Street Peddler
   (do-game
