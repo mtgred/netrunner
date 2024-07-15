@@ -593,8 +593,8 @@
 (defcard "Cyberdelia"
   {:static-abilities [(mu+ 1)]
    :events [{:event :subroutines-broken
-             :req (req (and (all-subs-broken? target)
-                            (first-event? state side :subroutines-broken #(all-subs-broken? (first %)))))
+             :req (req (and (:all-subs-broken context)
+                            (first-event? state side :subroutines-broken #(:all-subs-broken (first %)))))
              :msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
              :async true
              :effect (effect (gain-credits eid 1))}]})
@@ -1145,27 +1145,19 @@
                                       (lose-credits state :corp eid 3)))}}}]})
 
 (defcard "Hippo"
-  (letfn [(build-hippo-pred [outermost-ices]
-            (fn [events]
-              (->> outermost-ices
-                   (map #(and (same-card? % (first events))
-                                            (all-subs-broken? (first events))))
-                   (filter true?)
-                   seq)))]
-    {:events [{:event :subroutines-broken
-               :optional
-               {:req (req (let [servers (->> (:corp @state) :servers seq flatten)
-                                outermost-ices (filter #(some? %) (map #(last (:ices %)) servers))
-                                pred (build-hippo-pred outermost-ices)]
-                            (and (same-card? (last run-ices) target)
-                                 (all-subs-broken? target)
-                                 (first-event? state side :subroutines-broken pred))))
-                :prompt (msg "Remove this hardware from the game to trash " (:title target) "?")
-                :yes-ability
-                {:async true
-                 :cost [(->c :remove-from-game)]
-                 :msg (msg "trash " (card-str state target))
-                 :effect (effect (trash eid target {:cause-card card}))}}}]}))
+  {:events [{:event :subroutines-broken
+             :optional
+             {:req (req
+                     (let [pred (every-pred :all-subs-broken :outermost :during-run)]
+                       (and (pred context)
+                            (get-card state (:ice context))
+                            (first-event? state side :subroutines-broken #(pred (first %))))))
+              :prompt (msg "Remove this hardware from the game to trash " (:title (:ice context)) "?")
+              :yes-ability
+              {:async true
+               :cost [(->c :remove-from-game)]
+               :msg (msg "trash " (card-str state (:ice context)))
+               :effect (effect (trash eid (:ice context) {:cause-card card}))}}}]})
 
 (defcard "Hippocampic Mechanocytes"
   {:on-install {:async true
@@ -2240,19 +2232,15 @@
   {:static-abilities [(mu+ 2)]
    :events [{:event :breach-server
              :req (req (= :hq target))
-             :effect (req (let [broken-ice
-                                (->> (run-events state side :subroutines-broken)
-                                     (filter (fn [[ice _broken-subs]]
-                                               (and (= :hq (second (get-zone ice)))
-                                                    (all-subs-broken? ice)
-                                                    (get-card state ice))))
-                                     (keep #(:cid (first %)))
-                                     (into #{}))
-                                hq-ice
-                                (->> (get-in @state (concat [:corp :servers :hq :ices]))
-                                     (keep :cid)
-                                     (filter broken-ice))]
-                            (access-bonus state :runner :hq (count hq-ice))))}]})
+             :effect (req (let [evs (run-events state side :subroutines-broken)
+                                relevant (filter #(let [context (first %)
+                                                        t (get-card state (:ice context))]
+                                                    (and (:all-subs-broken context)
+                                                         (= :hq (second (get-zone t)))))
+                                                 evs)
+                                by-cid (map #(get-in (first %) [:card :cid]) relevant)
+                                bonus-count (count (distinct by-cid))]
+                            (access-bonus state :runner :hq bonus-count)))}]})
 
 (defcard "The Personal Touch"
   {:hosting {:card #(and (has-subtype? % "Icebreaker")

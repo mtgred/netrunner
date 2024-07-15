@@ -2481,6 +2481,37 @@
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (no-prompt? state :runner) "no prompt")))
 
+(deftest hippo-full-impl-test
+      ;; Hippo shouldn't fire after the Runner has broken all subs on an outermost ice, that was then shifted inwards
+    (do-game
+      (new-game {:corp {:deck ["Thimblerig" "Quandary" "Ice Wall"]
+                        :credits 15}
+                 :runner {:deck ["Unity" "Hippo"]
+                          :credits 15}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (play-from-hand state :corp "Quandary" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Unity")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "No")
+      (run-continue state)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp (get-ice state :hq 0))
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 1)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (not= (-> (get-runner) :prompt first :msg) "Remove Hippo from the game to trash Quandary?"))))
+
 (deftest hippo-can-t-be-used-after-first-ice-issue-4792
     ;; Can't be used after first ice. Issue #4792
     (do-game

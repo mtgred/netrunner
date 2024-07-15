@@ -424,12 +424,10 @@
   "Checks if the runner has spent(lost) a click to break a subroutine this run"
   [state run]
   (let [all-cards (get-all-cards state)
-        events (:events run)
-        breaks (filter #(= :subroutines-broken (first %)) events)
-        cards (vec (map #(first (second %)) breaks))
-        subs (map #(:subroutines %) cards)
-        broken-subs (map #(filter :broken %) subs)
-        breakers (mapcat #(map :breaker %) broken-subs)
+        events (run-events state :runner :subroutines-broken)
+        breakers (map #(let [context (first %)]
+                         (:breaker context))
+                      events)
         ;; this is the list of every breaker the runner used to
         ;; break a subroutine this run. If we check that it has a
         ;; 'lose-click' break ability, we should be safe most of the
@@ -437,7 +435,7 @@
         ;; If Adjusted Matrix ever gets correctly implemented, there will be
         ;; a minor edge case here if the runner uses a non-click break ab on a
         ;; card hosting adjusted matrix -nbkelly, 2022
-        actual-breakers (map #(find-cid % all-cards) breakers)
+        actual-breakers (map #(find-cid (:cid %) all-cards) breakers)
         abs (mapcat #(if (= (:side %) "Runner") (:abilities %) (:runner-abilities %)) actual-breakers)
         costs (map :break-cost abs)
         clicks (filter #(= :lose-click (:cost/type %)) (flatten costs))]
@@ -885,10 +883,10 @@
               (wait-for (gain-credits state :corp (make-eid state eid) 1)
                         (bailiff-gain-credits state side eid (dec n)))
               (effect-completed state side eid)))]
-    {:on-break-subs {:msg (msg (let [n-subs (count (second targets))]
+    {:on-break-subs {:msg (msg (let [n-subs (count (:broken-subs context))]
                                  (str "gain " n-subs " [Credits] from the runner breaking subs")))
                      :async true
-                     :effect (effect (bailiff-gain-credits eid (count (second targets))))}
+                     :effect (effect (bailiff-gain-credits eid (count (:broken-subs context))))}
      :subroutines [end-the-run]}))
 
 (defcard "Ballista"
@@ -1191,10 +1189,10 @@
                         (chiyashi-auto-trash state side eid (dec n)))
               (effect-completed state side eid)))]
     {:events [{:event :subroutines-broken
-               :req (req (and (same-card? card (first targets))
+               :req (req (and (same-card? card (:ice context))
                               (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner)))))
                :async true
-               :effect (effect (chiyashi-auto-trash :corp eid (count (second targets))))}]
+               :effect (effect (chiyashi-auto-trash :corp eid (count (:broken-subs context))))}]
      :subroutines [(do-net-damage 2)
                    (do-net-damage 2)
                    end-the-run]}))
@@ -1908,13 +1906,13 @@
                         (gf-lose-credits state side eid (dec n)))
               (effect-completed state side eid)))]
     {:implementation "Auto breaking will break even with too few credits"
-     :on-break-subs {:req (req (some :printed (second targets)))
-                     :msg (msg (let [n-subs (count (filter :printed (second targets)))]
+     :on-break-subs {:req (req (some :printed (:broken-subs context)))
+                     :msg (msg (let [n-subs (count (filter :printed (:broken-subs context)))]
                                  (str "force the runner to lose "
                                       n-subs
                                       " [Credits] for breaking printed subs")))
                      :async true
-                     :effect (effect (gf-lose-credits eid (count (filter :printed (second targets)))))}
+                     :effect (effect (gf-lose-credits eid (count (filter :printed (:broken-subs context)))))}
      :subroutines [(end-the-run-unless-runner-pays (->c :credit 3))
                    (end-the-run-unless-runner-pays (->c :credit 3))]}))
 
@@ -3364,8 +3362,8 @@
 
 (defcard "Paper Wall"
   {:events [{:event :subroutines-broken
-             :req (req (and (same-card? card target)
-                            (empty? (remove :broken (:subroutines target)))))
+             :req (req (and (same-card? card (:ice context))
+                            (:all-subs-broken context)))
              :async true
              :effect (effect (trash :corp eid card {:cause-card card :cause :effect}))}]
    :subroutines [end-the-run]})
