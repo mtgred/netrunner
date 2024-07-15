@@ -67,7 +67,7 @@
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? remote->name target-server unknown->kw
                               zone->name zones->sorted-names]]
@@ -2602,6 +2602,7 @@
                 :msg "gain 1 [Credits] and draw 1 card"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1)
+                                       (play-sfx state side "professional-contacts")
                                        (draw state side eid 1)))}]})
 
 (defcard "Psych Mike"
