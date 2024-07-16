@@ -2713,7 +2713,10 @@
 
 (deftest media-blitz-isnt-so-cursed-after-all
   (do-game
-    (new-game {:corp {:hand ["Media Blitz" "Bladderwort"]}
+    (new-game {:corp {:hand ["Ad Blitz" "Media Blitz" "Bladderwort"]
+                      :discard ["NGO Front"]
+                      :credits 10
+                      :id "Spark Agency: Worldswide Reach"}
                :runner {:scored ["Rebranding Team"]}})
     (play-from-hand state :corp "Bladderwort" "New remote")
     (let [bla (get-content state :remote1 0)]
@@ -2722,6 +2725,12 @@
       (play-from-hand state :corp "Media Blitz")
       (click-prompt state :corp "Rebranding Team")
       (is (has-subtype? (refresh bla) "Advertisement") "Gained advertisement")
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Ad Blitz")
+      (is (changed? [(:credit get-runner) -1]
+                    (click-prompt state :corp "NGO Front")
+                    (click-prompt state :corp "New remote"))
+          "Runner lost 1 from first advertisement rez!")
       (core/move state :corp (first (get-in @state [:corp :current])) :discard)
       (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
       (is (= "Media Blitz" (first (:discard (get-corp))))))))
