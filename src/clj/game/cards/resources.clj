@@ -979,8 +979,7 @@
 (defcard "Daeg, First Net-Cat"
   (let [ability {:async true
                  :interactive (req true)
-                 :msg "charge"
-                 :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]
+                 :effect (effect (continue-ability (charge-ability state side) card nil))}]
     {:events [(assoc ability :event :agenda-scored)
               (assoc ability :event :agenda-stolen)]}))
 
@@ -2977,7 +2976,7 @@
                 :req (req (can-charge state side))
                 :cost [(->c :trash-can)]
                 :async true
-                :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+                :effect (effect (continue-ability (charge-ability state side) card nil))}]})
 
 (defcard "Street Magic"
   (letfn [(runner-break [unbroken-subs]

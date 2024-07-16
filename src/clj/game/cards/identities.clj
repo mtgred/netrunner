@@ -480,7 +480,7 @@
              :async true
              :req (req (and (= (:server target) [:rd])
                             (first-event? state side :run #(= [:rd] (:server (first %))))))
-             :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+             :effect (effect (continue-ability (charge-ability state side) card nil))}]})
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
   {:static-abilities [(corp-hand-size+ (req (:credit corp)))]
