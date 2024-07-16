@@ -2735,7 +2735,7 @@
       (core/move state :corp (first (get-in @state [:corp :current])) :discard)
       (core/fake-checkpoint state)
       (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
-      (is (= "Media Blitz" (second (:discard (get-corp))))))))
+      (is (= "Media Blitz" (:title (second (:discard (get-corp)))))))))
 
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
