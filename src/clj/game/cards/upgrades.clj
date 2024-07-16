@@ -170,13 +170,10 @@
                                (corp? %))}
          :async true
          :cancel-effect (req (effect-completed state side eid))
-         :effect (req (wait-for (corp-install state :corp target nil {:ignore-all-cost true :display-message false})
-                                (let [inst-target (find-latest state target)]
-                                  (add-prop state :corp inst-target :advance-counter 1 {:placed true})
-                                  (system-msg state :corp
-                                              (str "uses " (:title card) " to install and place a counter on "
-                                                   (card-str state inst-target) ", ignoring all costs"))
-                                  (effect-completed state side eid))))}]
+         :effect (req (corp-install state :corp eid target nil {:ignore-all-cost true
+                                                                :counters {:advance-counter 1}
+                                                                :msg-keys {:install-source card
+                                                                           :display-origin true}}))}]
     {:events [{:event :agenda-scored
                :req (req (= (:previous-zone (:card context)) (get-zone card)))
                :interactive (req (some corp-installable-type? (:hand corp)))
@@ -207,7 +204,9 @@
                                       (in-hand? %))}
                 :msg "host a piece of Bioroid ice"
                 :async true
-                :effect (req (corp-install state side eid target card {:ignore-all-cost true}))}]
+                :effect (req (corp-install state side eid target card {:ignore-all-cost true
+                                                                       :msg-keys {:install-source card
+                                                                                  :display-origin true}}))}]
    :events [{:event :pass-all-ice
              :optional
              {:req (req (and this-server
@@ -711,8 +710,8 @@
 
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
-             :req (req (and (all-subs-broken? target)
-                            (protecting-same-server? card target)))
+             :req (req (and (:all-subs-broken context)
+                            (protecting-same-server? card (:ice context))))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
                            (str "trash " (enumerate-str (map :title (take 2 deck))) " from the stack")
@@ -819,9 +818,9 @@
               (effect-completed state side eid)))]
     {:events [{:event :subroutines-broken
                :req (req (and this-server tagged))
-               :msg (msg "gain " (* 2 (count (second targets))) " [Credits]")
+               :msg (msg "gain " (* 2 (count (:broken-subs context))) " [Credits]")
                :async true
-               :effect (effect (hp-gain-credits :corp eid (count (second targets))))}]}))
+               :effect (effect (hp-gain-credits :corp eid (count (:broken-subs context))))}]}))
 
 (defcard "Hired Help"
   (let [prompt-to-trash-agenda-or-etr
@@ -923,7 +922,10 @@
                               (wait-for
                                 (reveal state side ice)
                                 (system-msg state side (str "reveals that they drew " (:title ice)))
-                                (wait-for (corp-install state side ice server {:cost-bonus -4})
+                                (wait-for (corp-install state side ice server {:cost-bonus -4
+                                                                               :msg-keys {:install-source card
+                                                                                          :known true
+                                                                                          :display-origin true}})
                                           (remove-from-currently-drawing state side ice)
                                           (continue-ability
                                             state side
@@ -1770,7 +1772,9 @@
                  :interactive (req true)
                  :choices (req (cancellable (filter ice? (:deck corp)) true))
                  :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
-                 :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3})
+                 :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
+                                                                                                  :msg-keys {:install-source card
+                                                                                                             :display-origin true}})
                                         (shuffle! state :corp :deck)
                                         (system-msg state side (str "shuffles R&D"))
                                         (effect-completed state side eid)))
@@ -1810,7 +1814,7 @@
 
 (defcard "Valley Grid"
   {:events [{:event :subroutines-broken
-             :req (req (and this-server (all-subs-broken? target)))
+             :req (req (and this-server (:all-subs-broken context)))
              :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
              :effect (effect (register-lingering-effect
                                card

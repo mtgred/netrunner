@@ -725,7 +725,27 @@
             (fire-subs state att))
           "Runner took 3 damage and couldn't choose to spend credits"))))
 
-(deftest ^:kaocha/pending attini-threat-ability-cannot-spend-credits
+(deftest attini-threat-vs-prana-condenser
+  (do-game
+    (new-game {:corp {:hand ["Attini" "Prāna Condenser" "Obokata Protocol"]
+                      :credits 10}})
+    (play-from-hand state :corp "Prāna Condenser" "New remote")
+    (play-from-hand state :corp "Attini" "HQ")
+    (play-and-score state "Obokata Protocol")
+    (let [att (get-ice state :hq 0)
+          pc (get-content state :remote1 0)]
+      (rez state :corp pc)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (rez state :corp att)
+      (run-continue state :encounter-ice)
+      (fire-subs state (refresh att))
+      (dotimes [_ 3]
+        (is (changed? [(:credit (get-corp)) 3]
+                      (card-ability state :corp (get-content state :remote1 0) 0))
+            "prevented 1 net with prana")))))
+
+(deftest attini-threat-ability-cannot-spend-credits
   (do-game
     (new-game {:corp {:hand ["Attini" "Obokata Protocol"]
                       :credits 10}
@@ -736,10 +756,17 @@
     (let [att (get-ice state :hq 0)]
       (play-from-hand state :runner "Caldera")
       (run-on state "HQ")
-      (rez state :corp (refresh att))
+      (rez state :corp att)
       (run-continue state)
-      (is (changed? [(count (:hand (get-runner))) -3]
-            (fire-subs state att))
+      (is (changed?
+            [(count (:hand (get-runner))) -3]
+            (fire-subs state (refresh att))
+            (dotimes [_ 3]
+              (is (changed?
+                    [(:credit (get-runner)) 0]
+                    (card-ability state :runner (get-resource state 0) 0)
+                    (click-prompt state :runner "Done"))
+                  "couldn't spend on caldera")))
           "Runner took 3 damage and couldn't prevent any of them by spending credits"))))
 
 (deftest authenticator-encounter-decline-to-take-tag
@@ -1250,21 +1277,21 @@
     (take-credits state :corp)
     (run-on state :hq)
     (let [bran (get-ice state :hq 0)
-          unrezzed-msg "Corp uses Brân 1.0 to install an unseen card from Archives."
-          rezzed-msg "Corp uses Brân 1.0 to install Ice Wall from Archives."
+          unrezzed-msg "pays 0 [Credits] to use Brân 1.0 to install ice from Archives protecting HQ"
+          rezzed-msg "pays 0 [Credits] to use Brân 1.0 to install Ice Wall from Archives protecting HQ"
           declined-msg "Corp declines to use Brân 1.0 to install a card."]
       (rez state :corp bran)
       (run-continue state)
       (card-subroutine state :corp bran 0)
       (click-card state :corp "Mausolus")
-      (is (second-last-log-contains? state unrezzed-msg) "Mausolus is face down and should not be revealed in the log")
+      (is (last-log-contains? state unrezzed-msg) "Mausolus is face down and should not be revealed in the log")
       (card-subroutine state :corp bran 1)
       (run-empty-server state :archives)
       (run-on state :hq)
       (run-continue state)
       (card-subroutine state :corp bran 0)
       (click-card state :corp "Ice Wall")
-      (is (second-last-log-contains? state rezzed-msg) "Ice Wall is face up and should be revealed in the log")
+      (is (last-log-contains? state rezzed-msg) "Ice Wall is face up and should be revealed in the log")
       (card-subroutine state :corp bran 1)
       (run-on state :hq)
       (run-continue state)
@@ -2401,7 +2428,7 @@
       (is (zero? (get-in @state [:run :position])) "Now approaching server")
       (run-continue state)
       (click-prompt state :corp "Formicary")
-      (is (= "Rez and move Formicary protecting Archives at position 0 to protect the approched server?" (:msg (prompt-map :corp))))
+      (is (= "Rez and move Formicary protecting Archives at position 0 to protect the approached server?" (:msg (prompt-map :corp))))
       (click-prompt state :corp "Yes") ; Move Formicary
       (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 pieces of ice protecting HQ")
       (is (= 1 (get-in @state [:run :position])) "Now encountering Formicary")
@@ -2512,8 +2539,7 @@
       (run-continue state)
       (run-continue state)
       (click-prompt state :runner "Spend [Click][Click]")
-      (click-prompt state :runner "No action")
-  )))
+      (click-prompt state :runner "No action"))))
 
 (deftest formicary-with-trojan-doesnt-reset-mu-when-moving
   ;; Rezzing and moving Formicary with trojan doesn't make the trojan mu-cost disappear
@@ -2544,7 +2570,7 @@
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "Formicary")
     (run-continue state)
-    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approached server?" (:msg (prompt-map :corp))))))
 
 (deftest formicary-project-yagi-uda-swap
   ;; swapping Formicary in via Project Yagi-Uda should register Formicary ability
@@ -2564,7 +2590,7 @@
     (click-prompt state :runner "No")
     (run-continue state)
     (run-continue state)
-    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approached server?" (:msg (prompt-map :corp))))))
 
 (deftest formicary-tenma-line-swap
   ;; swapping Formicary via Tenma Line should keep Formicary ability
@@ -2584,7 +2610,25 @@
     (take-credits state :corp)
     (run-on state "Archives")
     (run-continue state)
-    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approched server?" (:msg (prompt-map :corp))))))
+    (is (= "Rez and move Formicary protecting R&D at position 0 to protect the approached server?" (:msg (prompt-map :corp))))))
+
+(deftest formicary-ddos-functionality
+  ;; formicary can be rezzed and then moved to the outermost position of a server if it was
+  ;; not already the outermost ice of the server it lives on
+  (do-game
+    (new-game {:corp {:hand ["Formicary" "Vanilla"]}
+               :runner {:hand ["DDoS"]}})
+    (play-from-hand state :corp "Formicary" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "DDoS")
+    (card-ability state :runner (get-resource state 0) 0)
+    (run-on state :rd)
+    (run-continue state)
+    (is (= "Rez and move Formicary protecting HQ at position 0 to protect the approached server?" (:msg (prompt-map :corp))))
+    (click-prompt state :corp "Yes")
+    (let [fc (get-ice state :rd 0)]
+      (is (rezzed? fc) "formicary rezzed outermost on R&D"))))
 
 (deftest free-lunch-basic-behavior
   ;; Basic behavior
@@ -5998,6 +6042,24 @@
       (rez state :corp (get-ice state :rd 1))
       (is (= 1 (core/get-strength (refresh iw1))) "Rime no longer gives bonus strength to ice on previous server")
       (is (= 2 (core/get-strength (refresh iw2))) "Rime only gives ice on current server bonus strength"))))
+
+(deftest rsvp-full-test
+  (do-game
+    (new-game {:corp {:hand ["RSVP" "Forced Connection"]}
+               :runner {:credits 50}})
+    (play-from-hand state :corp "RSVP" "HQ")
+    (take-credits state :corp)
+    (let [rsvp (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp rsvp)
+      (run-continue state :encounter-ice)
+      (card-subroutine state :corp (refresh rsvp) 0)
+      (run-continue-until state :success)
+      ;; we're still allowed to pay 0 credits for traces and trashes
+      (click-prompt state :corp "0")
+      (is (= 0 (:choices (prompt-map :runner))))
+      (click-prompt state :runner "0")
+      (click-prompt state :runner "Pay 0 [Credits] to trash")))) ; trash
 
 (deftest sadaka-sub-1-look-at-the-top-3-cards-of-r-d-arrange-those-or-shuffle-r-d-you-may-draw-1-card
   ;; Sub 1 - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card

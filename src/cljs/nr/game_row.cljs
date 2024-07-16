@@ -147,8 +147,13 @@
     minutes))
 
 (defn game-time [game]
-(when (:started game)
-  [:div.game-time (str (time-since (:date game)) "m")]))
+  ;; NOTE: while running locally (repl), the :date field ends up being
+  ;; native code, rather than Instant type. I don't understand this,
+  ;; but when running via uberjar (or after reloading web/lobby.clj)
+  ;; it is of the correct type. IDK how to fix the problem, but this
+  ;; is a workable temporary fix - NBKelly, Jul 2024
+  (when (and (:started game) (= (type (:date game)) (type (inst/now))))
+    [:div.game-time (str (time-since (:date game)) "m")]))
 
 (defn players-row [{players :players :as game}]
   (into

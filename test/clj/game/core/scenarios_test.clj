@@ -5,6 +5,26 @@
    [game.core.card :refer :all]
    [game.test-framework :refer :all]))
 
+(deftest maxx-annicam-buffer-drive-one-card-in-stack
+  (testing "for issue #4966"
+    (do-game
+      (new-game {:runner {:hand ["Labor Rights" "Buffer Drive" "Aniccam"]
+                          :discard ["Hacktivist Meeting" "Sure Gamble"]
+                          :credits 10
+                          :id "MaxX: Maximum Punk Rock"}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (play-from-hand state :runner "Aniccam")
+      (play-from-hand state :runner "Labor Rights")
+      (click-card state :runner "Hacktivist Meeting")
+      (click-card state :runner "Sure Gamble")
+      (take-credits state :runner)
+      (let [in-hand (:title (first (:hand (get-runner))))
+            in-deck (:title (first (:deck (get-runner))))]
+        (take-credits state :corp)
+        (click-prompt state :runner in-deck)
+        (is (= [in-hand in-deck] (map :title (:hand (get-runner)))) "Aniccam drew the bottomed card")))))
+
 (deftest degree-mill-cvs
   (testing "for issue #4515"
     (do-game

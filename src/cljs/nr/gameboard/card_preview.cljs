@@ -9,6 +9,13 @@
         title (.getAttribute target "data-card-title")]
     (not-empty title)))
 
+(defn put-game-card-in-channel
+  [card channel]
+  (if-let [server-card (get-in @app-state [:all-cards-and-flips (:title card)])]
+    (put! channel (merge server-card card))
+    (put! channel card))
+  nil)
+
 (defn card-preview-mouse-over
   [e channel]
   (.preventDefault e)

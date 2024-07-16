@@ -25,7 +25,9 @@
         "rez-other"
         "run-successful"
         "run-unsuccessful"
-        "virus-purge"]
+        "virus-purge"
+        ;; noises for bespoke cards
+        "professional-contacts"]
        (map audio-sfx)
        (into {})))
 
