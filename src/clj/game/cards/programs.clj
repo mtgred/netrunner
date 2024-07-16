@@ -2393,7 +2393,7 @@
                               :req (req (and (all-subs-broken-by-card? target card)
                                              (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (first %) card))))
                               :async true
-                              :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]}))
+                              :effect (effect (continue-ability (charge-ability state side) card nil))}]}))
 
 (defcard "Origami"
   {:static-abilities [{:type :hand-size
