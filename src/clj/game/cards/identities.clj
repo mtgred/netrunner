@@ -1845,16 +1845,18 @@
                                          (<= (get-advancement-requirement card) (get-counters card :advancement)))
                                   ((constantly false)
                                    (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
-                                  true))))
-             :display-origin true}}))})]
+                                  true)))
+                            (corp-install state side eid chosen target {:counters {:advance-counter 1}
+                                                                        :msg-keys {:install-source card
+                                                                                   :display-origin true}})))})]
     {:abilities [{:action true
                   :async true
                   :label "Install a card from HQ"
                   :cost [(->c :click 1) (->c :credit 1)]
                   :prompt "Choose a card to install from HQ"
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
-                                     (corp? %)
-                                     (in-hand? %))}
+                                        (corp? %)
+                                        (in-hand? %))}
                   :msg (msg "install a card in a remote server and place 1 advancement token on it")
                   :effect (effect (continue-ability (install-card target) card nil))}]
      :events [{:event :corp-turn-begins
