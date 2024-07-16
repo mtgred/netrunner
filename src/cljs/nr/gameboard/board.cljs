@@ -1526,7 +1526,7 @@
     [runner-run-div run encounters]))
 
 (defn trace-div
-  [{:keys [base strength player link bonus choices corp-credits runner-credits]}]
+  [{:keys [base strength player link bonus choices corp-credits runner-credits unbeatable beat-trace] :as prompt-state}]
   [:div
    (when base
      ;; This is the initial trace prompt
@@ -1554,13 +1554,23 @@
           [:span link " " [:span {:class "anr-icon link"}] (str " + " )]
           (let [strength (if bonus (+ base bonus) base)]
             [:span (str strength " + ")]))))
-    [:select#credit {:onKeyUp #(when (= "Enter" (.-key %))
+    [:select#credit {:value (or (get-in @app-state [:select :credits]) 0)
+                     :on-change #(swap! app-state assoc-in [:select :credits] (.. % -target -value))
+                     :onKeyUp #(when (= "Enter" (.-key %))
                                  (-> "#trace-submit" js/$ .click)
                                  (.stopPropagation %))}
      (doall (for [i (range (inc choices))]
               [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
-   [:button#trace-submit {:on-click #(send-command "choice"
-                                                   {:choice (-> "#credit" js/$ .val str->int)})}
+   (when (or unbeatable beat-trace)
+     (let [beat-str (if unbeatable
+                      (tr [:game.unbeatable "Make Unbeatable"])
+                      (tr [:game.beat-trace "Beat Trace"]))]
+       [:button#trace-unbeatable
+        {:on-click
+         #(swap! app-state assoc-in [:select :credits] (or unbeatable beat-trace))}
+        [:div (str beat-str " (" (or unbeatable beat-trace)) [:span {:class "anr-icon credit"}] ")"]]))
+   [:button#trace-submit {:on-click #(do (send-command "choice" {:choice (-> "#credit" js/$ .val str->int)})
+                                         (swap! app-state assoc-in [:select :credits] 0))}
     (tr [:game.ok "OK"])]])
 
 (defn prompt-div
