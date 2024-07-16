@@ -11,7 +11,7 @@
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
    [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
-   [game.core.payment :refer [handler label payable? value stealth-value allowed-during-run]]
+   [game.core.payment :refer [handler label payable? value stealth-value]]
    [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez]]
@@ -24,7 +24,6 @@
    [game.utils :refer [enumerate-str quantify same-card?]]))
 
 ;; Click
-(defmethod allowed-during-run :click [cost] (:cost/allowed-during-run cost))
 (defmethod value :click [cost] (:cost/amount cost))
 (defmethod label :click [cost]
   (->> (repeat "[Click]")
@@ -32,8 +31,7 @@
        (apply str)))
 (defmethod payable? :click
   [cost state side _ _]
-  (and (<= 0 (- (get-in @state [side :click]) (value cost)))
-       (or (allowed-during-run cost) (not (:run @state)))))
+  (<= 0 (- (get-in @state [side :click]) (value cost))))
 (defmethod handler :click
   [cost state side eid _card]
   (let [a (:action eid)]

@@ -61,6 +61,8 @@
          args (assoc args :card card)
          ability (nth (:abilities card) ability-idx)
          cannot-play (or (:disabled card)
+                         ;; cannot play actions during runs
+                         (and (= (:type ability) :action) (:run @state))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
        (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
