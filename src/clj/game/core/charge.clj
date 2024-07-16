@@ -27,7 +27,7 @@
 (defn charge-ability
   "Creates a charge prompt (if there is a valid target) to charge a card once"
   ([state side]
-   (charge-ability state 1))
+   (charge-ability state side 1))
   ([state side n]
    (when (can-charge state side)
      {:waiting-prompt true

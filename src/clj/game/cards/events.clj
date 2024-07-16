@@ -2096,7 +2096,7 @@
                                                 (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)))}
                                 card nil))}
              {:async true
-              :effect (effect (continue-ability (charge-ability state side eid card) card nil))
+              :effect (effect (continue-ability (charge-ability state side) card nil))
               :msg "charge a card"}]
         choice (fn choice [abis rem]
                  {:prompt (str "Choose an ability to resolve (" rem " remaining)")
