@@ -1638,17 +1638,13 @@
 (defcard "Media Blitz"
   {:on-play
    {:async true
-    :effect
-    (effect
-      (continue-ability
-        {:prompt "Choose an agenda in the runner's score area"
-         :choices {:card #(and (agenda? %)
-                               (is-scored? state :runner %))}
-         :change-in-game-state (req (seq (:scored runner)))
-         :effect (req (update! state side (assoc card :title (:title target) :abilities (ability-init (card-def target))))
-                      (card-init state side (get-card state card) {:resolve-effect false :init-data true})
-                      (update! state side (assoc (get-card state card) :title "Media Blitz")))}
-        card nil))}})
+    :prompt "Choose an agenda in the runner's score area"
+    :choices {:req (req (and (agenda? target)
+                             (is-scored? state :runner target)))}
+    :change-in-game-state (req (seq (:scored runner)))
+    :effect (req (update! state side (assoc card :title (:title target) :abilities (ability-init (card-def target))))
+                 (card-init state side (get-card state card) {:resolve-effect false :init-data true})
+                 (update! state side (assoc (get-card state card) :title "Media Blitz")))}})
 
 (defcard "Medical Research Fundraiser"
   {:on-play

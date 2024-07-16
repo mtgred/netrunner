@@ -2711,6 +2711,21 @@
     (click-prompt state :runner "Steal")
     (is (last-log-contains? state "Media Blitz is trashed") "Media Blitz should be trashed")))
 
+(deftest media-blitz-isnt-so-cursed-after-all
+  (do-game
+    (new-game {:corp {:hand ["Media Blitz" "Bladderwort"]}
+               :runner {:scored ["Rebranding Team"]}})
+    (play-from-hand state :corp "Bladderwort" "New remote")
+    (let [bla (get-content state :remote1 0)]
+      (rez state :corp bla)
+      (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
+      (play-from-hand state :corp "Media Blitz")
+      (click-prompt state :corp "Rebranding Team")
+      (is (has-subtype? (refresh bla) "Advertisement") "Gained advertisement")
+      (core/move state :corp (first (get-in @state [:corp :current])) :discard)
+      (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
+      (is (= "Media Blitz" (first (:discard (get-corp))))))))
+
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
   (do-game
