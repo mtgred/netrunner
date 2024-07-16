@@ -2723,17 +2723,19 @@
       (rez state :corp bla)
       (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
       (play-from-hand state :corp "Media Blitz")
-      (click-prompt state :corp "Rebranding Team")
+      (click-card state :corp "Rebranding Team")
       (is (has-subtype? (refresh bla) "Advertisement") "Gained advertisement")
       (core/gain state :corp :click 10)
       (play-from-hand state :corp "Ad Blitz")
-      (is (changed? [(:credit get-runner) -1]
-                    (click-prompt state :corp "NGO Front")
+      (is (changed? [(:credit (get-runner)) -1]
+                    (click-prompt state :corp "1")
+                    (click-card state :corp "NGO Front")
                     (click-prompt state :corp "New remote"))
           "Runner lost 1 from first advertisement rez!")
       (core/move state :corp (first (get-in @state [:corp :current])) :discard)
+      (core/fake-checkpoint state)
       (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
-      (is (= "Media Blitz" (first (:discard (get-corp))))))))
+      (is (= "Media Blitz" (second (:discard (get-corp))))))))
 
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
