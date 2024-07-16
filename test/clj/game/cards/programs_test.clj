@@ -1262,6 +1262,24 @@
         (click-card state :runner par)
         (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
 
+(deftest brahman-doesnt-host-mantle
+  (do-game
+    (new-game {:runner {:hand ["Brahman" "Mantle"]}
+               :corp {:hand ["Vanilla"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Brahman")
+    (play-from-hand state :runner "Mantle")
+    (run-on state :hq)
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (click-card state :runner "Mantle")
+    (is (empty? (:hosted (get-program state 0))) "brahman not hosting anything")
+    (is (= "Mantle" (:title (get-program state 1))) "Mantle still in the rig")
+    (is (no-prompt? state :runner))))
+
 (deftest brahman-brahman-works-with-nisei-tokens
     ;; Brahman works with Nisei tokens
     (do-game
@@ -2785,6 +2803,28 @@
       (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
       (is (= 4 (core/available-mu state)) "0 MU used")
       (is (= 6 (get-strength adpt)) "Adept at 6 strength hosted"))))
+
+(deftest dhegdheer-corp-cant-use-the-card
+  (do-game
+    (new-game {:runner {:hand ["Dhegdheer" (qty "Fermenter" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dhegdheer")
+    (play-from-hand state :runner "Fermenter")
+    (click-prompt state :runner "Dhegdheer")
+    (play-from-hand state :runner "Fermenter")
+    (click-prompt state :runner "The Rig")
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-corp)) 0 (:credit (get-runner)) 0]
+                  (card-ability state :corp (get-program state 1) 0))
+        "Fermenter on the table cannot be used by the corp")
+    (is (changed?
+          [(:credit (get-corp)) 0 (:credit (get-runner)) 0]
+          (let [ferm (first (:hosted (get-program state 0)))]
+            (is (empty? (:corp-abilities ferm)) "No corp abilities")
+            (is (empty? (filter :corp (map :side (:abilities ferm)))) "No corp side abilities")
+            (card-ability state :corp ferm 0)
+            (is (= ferm (first (:hosted (get-program state 0)))) "Fermenter went nowhere")))
+        "Fermenter hosted on dhegdheer cannot be used by the corp")))
 
 (deftest disrupter
   ;; Disrupter
@@ -4738,22 +4778,41 @@
       (click-prompt state :runner "Yes")
       (is (has-subtype? (get-ice state :hq 0) "Barrier") "Enigma has been given Barrier")))
 
+(deftest laamb-subtype-goes-away-even-when-card-swapped
+  (do-game
+    (new-game {:corp {:hand ["Thimblerig" "Vanilla"]}
+               :runner {:hand ["Laamb"] :credits 10}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Thimblerig" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Laamb")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 1))
+    (run-continue state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (is (has-subtype? (get-ice state :hq 1) "Barrier"))
+    (run-continue state :movement)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Vanilla")
+    (is (= "Thimblerig" (:title (get-ice state :hq 0))))
+    (is (not (has-subtype? (get-ice state :hq 0) "Barrier")))))
+
 (deftest laamb-ability-only-lasts-until-end-of-encounter
-    ;; Ability only lasts until end of encounter
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Enigma"]}
-                 :runner {:hand ["Laamb"]
-                          :credits 30}})
-      (play-from-hand state :corp "Enigma" "HQ")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Laamb")
-      (run-on state "HQ")
-      (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
-      (click-prompt state :runner "Yes")
-      (run-continue state)
-      (is (not (has-subtype? (get-ice state :hq 0) "Barrier")) "Enigma no longer has Barrier subtype")))
+  ;; Ability only lasts until end of encounter
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Enigma"]}
+               :runner {:hand ["Laamb"]
+                        :credits 30}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Laamb")
+    (run-on state "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (run-continue state)
+    (is (not (has-subtype? (get-ice state :hq 0) "Barrier")) "Enigma no longer has Barrier subtype")))
 
 (deftest laamb-returning-the-ice-to-hand-after-using-ability-resets-subtype-issue-3193
     ;; Returning the ice to hand after using ability resets subtype. Issue #3193

@@ -340,6 +340,32 @@
     (click-prompt state :runner "Done")
     (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed")))
 
+(deftest assimilator-unique-cards-enforced
+  (do-game
+    (new-game {:runner {:hand ["Kati Jones" "Assimilator" "Hunting Grounds"]
+                        :deck ["Kati Jones"]
+                        :credits 50}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "Kati Jones")
+    (let [kat1 (get-resource state 0)]
+      (card-ability state :runner kat1 0)
+      (is (= 3 (get-counters (refresh kat1) :credit)) "3 credits on kati")
+      ;; install another one facedown
+      (play-from-hand state :runner "Hunting Grounds")
+      (card-ability state :runner (get-resource state 1) 0)
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (refresh kat1))
+      (is (= "Kati Jones" (:printed-title (get-runner-facedown state 0))) "Kati Jones facedown")
+      ;; flip it faceup
+      (play-from-hand state :runner "Assimilator")
+      (card-ability state :runner (get-resource state 1) 0)
+      (click-card state :runner (get-runner-facedown state 0))
+      (is (= 2 (count (:discard (get-runner)))) "trashed the already installed kati")
+      (is (= "Kati Jones" (:title (get-resource state 1))) "New kati installed")
+      (is (not (refresh kat1)) "old kati trashed")
+      (is (= 0 (get-counters (get-resource state 1) :credit)) "0 credits on new kati"))))
+
 (deftest avgustina-ivanovskaya
   ;; First time each turn you install a virus program, resist 1
   (do-game
@@ -1349,6 +1375,20 @@
        (is (= 4 (get-strength (refresh cor))) "Strength back down to 4")
        (take-credits state :runner)
        (is (= 2 (get-strength (refresh cor))) "Corroder strength back down to normal"))))
+
+(deftest cybertrooper-talut-with-flame-out
+  (do-game
+    (new-game {:runner {:hand ["Flame-out" "Gauss" "Cybertrooper Talut"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cybertrooper Talut")
+    (play-from-hand state :runner "Flame-out")
+    (play-from-hand state :runner "Gauss")
+    (click-prompt state :runner "Flame-out")
+    (let [gauss (first (:hosted (get-hardware state 0)))]
+      (is (= 6 (get-strength (refresh gauss))) "6 str gauss")
+      (run-on state :hq)
+      (is (= 6 (get-strength (refresh gauss))) "6 str gauss - maintained during run"))))
 
 (deftest dadiana-chacon-can-fire-mid-trace
     ;; Can fire mid-trace
@@ -3357,6 +3397,25 @@
      (is (= "Easy Mark" (:title (last (:deck (get-runner)))))
          "Easy Mark on bottom of stack")))
 
+(deftest john-masanori-nisei-token-issue-5077
+  (do-game
+    (new-game {:runner {:hand ["John Masanori"]}
+               :corp {:hand ["Nisei MK II" "Vanilla" "Ichi 1.0"]
+                      :credits 15}})
+    (play-and-score state "Nisei MK II")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ichi 1.0" "HQ")
+    (rez state corp (get-ice state :hq 0))
+    (rez state corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "John Masanori")
+    (run-on state :hq)
+    (run-continue-until state :movement)
+    (run-continue-until state :movement)
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (is (= 1 (count-tags state)) "Took a tag")
+    (is (not (:run @state)) "No more run")))
+
 (deftest joshua-b
   ;; Joshua B. - Take 1 tag at turn end if you choose to gain the extra click
   (do-game
@@ -4141,6 +4200,22 @@
             "Used 1 credit from Cloak")
         (click-prompt state :runner "Place 1 [Credits] on Net Mercur")
         (is (= 1 (get-counters (refresh nm) :credit)) "1 credit placed on Net Mercur"))))
+
+(deftest net-mercur-psi-game
+  (do-game
+    (new-game {:runner {:hand ["Net Mercur"]}
+               :corp {:hand ["See How They Run"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Net Mercur")
+    (core/add-counter state :runner (get-resource state 0) :credit 2)
+    (take-credits state :runner)
+    (play-and-score state "See How They Run")
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "2 [Credits]")
+    (is (= "Choose a credit providing card (0 of 2 [Credits])" (:msg (prompt-map :runner))))
+    (click-card state :runner "Net Mercur")
+    (click-card state :runner "Net Mercur")
+    (is (no-prompt? state :runner) "No more prompt")))
 
 (deftest net-mercur-prevention-prompt-issue-4464
     ;; Prevention prompt. Issue #4464
@@ -5115,6 +5190,7 @@
       (is (= 3 (:click (get-runner))) "Runner still has 3 clicks left")
       (card-ability state :runner (get-resource state 0) 0)
       (click-prompt state :runner "HQ")
+      (is (last-log-contains? state "make a run on HQ"))
       (run-continue state)
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
       (is (= 9 (get-counters (get-resource state 0) :credit)) "Red team has 9 credits remaining")
@@ -5661,6 +5737,22 @@
       (is (= (+ 5 credits) (:credit (get-runner))) "Runner gained 5 credits"))
     (click-prompt state :runner "End the run")
     (is (not (:run @state)) "Run has ended")))
+
+(deftest street-magic-no-lingering-prompt
+  ;; Street Magic
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Little Engine"]}
+               :runner {:hand ["Street Magic"]}})
+    (play-from-hand state :corp "Little Engine" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Magic")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "End the run")
+    (is (not (:run @state)) "Run has ended")
+    (is (no-prompt? state :runner) "No lingering prompt")))
 
 (deftest street-peddler
   ;; Street Peddler

@@ -116,7 +116,9 @@
                                     (trash-cards eid choices {:unpreventable true :cause-card card}))
              :effect (req (wait-for (corp-install state side target nil
                                                   {:ignore-all-cost true
-                                                   :install-state :rezzed-no-cost})
+                                                   :install-state :rezzed-no-cost
+                                                   :msg-keys {:install-source card
+                                                              :display-origin true}})
                                     (let [choices (remove-once #(= target %) choices)]
                                       (cond
                                         ;; Shuffle ends the ability
@@ -207,18 +209,13 @@
                                        :choices (cancellable (filter corp-installable-type?
                                                                      (take 5 (:deck corp))))
                                        :async true
-                                       :effect (req (let [target-position (first (positions #{target} (take 3 (:deck corp))))
-                                                          position (case target-position
-                                                                     0 "first "
-                                                                     1 "second "
-                                                                     2 "third "
-                                                                     3 "fourth "
-                                                                     4 "fifth "
-                                                                     "this-should-not-happen ")]
-                                                      (system-msg state side (str "uses " (:title card) " to install the " position "card from R&D"))
+                                       :effect (req (let [target-position (first (positions #{target} (take 5 (:deck corp))))]
                                                       (corp-install state side
                                                         eid target nil
                                                         {:ignore-all-cost true
+                                                         :msg-keys {:install-source card
+                                                                    :index target-position
+                                                                    :display-origin true}
                                                          :install-state :rezzed-no-cost})))
                                        :cancel-effect
                                        (effect (system-msg
@@ -650,12 +647,10 @@
                                    (not (operation? %))
                                    (or (in-hand? %)
                                        (in-discard? %)))}
-             :msg (msg (corp-install-msg target)
-                       (when (zero? n)
-                         ", creating a new remote server")
-                       ", ignoring all install costs")
              :async true
-             :effect (req (wait-for (corp-install state side target server-name {:ignore-all-cost true})
+             :effect (req (wait-for (corp-install state side target server-name {:ignore-all-cost true
+                                                                                 :msg-keys {:install-source card
+                                                                                            :display-origin true}})
                                     (continue-ability state side
                                                       (when (< n 2)
                                                         (install-ability (last (get-remote-names state)) (inc n)))
@@ -760,6 +755,8 @@
                     :async true
                     :effect (req (corp-install state side eid target nil
                                                {:install-state :rezzed
+                                                :msg-keys {:install-source card
+                                                           :display-origin true}
                                                 :combined-credit-discount 5}))}
         score-abi {:interactive (req true)
                    :optional
@@ -776,14 +773,14 @@
                                                        (sort-by :title)
                                                        (seq))
                                                   ["Done"]))
-                                  :msg (msg (if (= target "Done")
-                                              "shuffle R&D"
-                                              (str "install and rez " (:title target) " from R&D, ignoring all costs")))
                                   :effect (req (shuffle! state side :deck)
                                                (if (= "Done" target)
-                                                 (effect-completed state side eid)
+                                                 (do (system-msg state side (str "uses " (:title card) " to shuffle R&D"))
+                                                     (effect-completed state side eid))
                                                  (corp-install state side eid target nil
                                                                {:install-state :rezzed-no-cost
+                                                                :msg-keys {:install-source card
+                                                                           :display-origin true}
                                                                 :ignore-all-cost true})))}
                                  card nil))}}}]
     {:on-score score-abi
@@ -1059,10 +1056,10 @@
               :choices {:card #(and (corp-installable-type? %)
                                     (in-discard? %)
                                     (not (faceup? %)))}
-              :effect (effect (corp-install eid target nil nil))
+              :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                       :display-origin true}}))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                     (effect-completed eid))
-              :msg (msg (corp-install-msg target))}})
+                                     (effect-completed eid))}})
 
 (defcard "Hyperloop Extension"
   (let [he {:msg "gain 3 [Credits]"
@@ -1193,7 +1190,9 @@
                                     (or (in-hand? %) (in-discard? %)))}
               :msg (msg "install and rez " (:title target) ", ignoring all costs")
               :async true
-              :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}})
+              :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost
+                                                            :msg-keys {:install-source card
+                                                                       :display-origin true}}))}})
 
 (defcard "Lightning Laboratory"
   ;; TODO - I feel this card is OVERLY verbose
@@ -1396,8 +1395,9 @@
                             :async true
                             :effect (effect (corp-install
                                               eid target "New remote"
-                                              (when (<= 5 (get-counters (get-card state card) :advancement))
-                                                {:install-state :rezzed-no-cost})))}}}]})
+                                              {:install-state (when (<= 5 (get-counters (get-card state card) :advancement)) :rezzed-no-cost)
+                                               :msg-keys {:install-source card
+                                                          :display-origin true}}))}}}]})
 
 (defcard "NEXT Wave 2"
   {:on-score
@@ -1842,7 +1842,9 @@
                                                      (corp-install-list state chosen-ice))
                                     :effect (effect (shuffle! :deck)
                                                     (corp-install eid chosen-ice target
-                                                                  {:install-state :rezzed-no-rez-cost}))})
+                                                                  {:install-state :rezzed-no-rez-cost
+                                                                   :msg-keys {:install-source card
+                                                                              :display-origin true}}))})
                                  card nil))}
                     {:prompt "You have no ice in R&D"
                      :choices ["Carry on!"]
@@ -2144,7 +2146,9 @@
                                    (not (operation? %))
                                    (in-hand? %))}
              :effect (req (wait-for
-                            (corp-install state side target nil {:ignore-all-cost true})
+                            (corp-install state side target nil {:ignore-all-cost true
+                                                                 :msg-keys {:install-source card
+                                                                            :display-origin true}})
                             (continue-ability state side (when (< n max-ops) (sft (inc n) max-ops)) card nil)))})]
     {:on-score {:async true
                 :msg "install cards from HQ, ignoring all costs"
@@ -2208,8 +2212,8 @@
                 :choices {:card #(and (ice? %)
                                       (or (in-hand? %)
                                           (in-discard? %)))}
-                :msg (msg (corp-install-msg target))
                 :async true
+                :msg "install an ice from HQ or Archives"
                 :effect (effect
                           (continue-ability
                             (let [chosen-ice target]
@@ -2226,7 +2230,9 @@
                                               :async true
                                               :effect (req (let [target (Integer/parseInt target)]
                                                              (corp-install state side eid chosen-ice chosen-server
-                                                                           {:ignore-all-cost true :index target})))})
+                                                                           {:ignore-all-cost true :index target
+                                                                            :msg-keys {:install-source card
+                                                                                       :display-origin true}})))})
                                            card nil))})
                             card nil))}]})
 

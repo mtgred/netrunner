@@ -387,9 +387,9 @@
     :choices {:card #(and (corp-installable-type? %)
                           (or (in-hand? %)
                               (in-discard? %)))}
-    :msg (msg (corp-install-msg target))
     :async true
-    :effect (effect (corp-install eid target nil args))}))
+    :effect (effect (corp-install eid target nil (assoc args :msg-keys {:install-source card
+                                                                        :display-origin true})))}))
 
 (def cannot-steal-or-trash-sub
   {:label "The Runner cannot steal or trash Corp cards for the remainder of this run"
@@ -424,12 +424,10 @@
   "Checks if the runner has spent(lost) a click to break a subroutine this run"
   [state run]
   (let [all-cards (get-all-cards state)
-        events (:events run)
-        breaks (filter #(= :subroutines-broken (first %)) events)
-        cards (vec (map #(first (second %)) breaks))
-        subs (map #(:subroutines %) cards)
-        broken-subs (map #(filter :broken %) subs)
-        breakers (mapcat #(map :breaker %) broken-subs)
+        events (run-events state :runner :subroutines-broken)
+        breakers (map #(let [context (first %)]
+                         (:breaker context))
+                      events)
         ;; this is the list of every breaker the runner used to
         ;; break a subroutine this run. If we check that it has a
         ;; 'lose-click' break ability, we should be safe most of the
@@ -437,7 +435,7 @@
         ;; If Adjusted Matrix ever gets correctly implemented, there will be
         ;; a minor edge case here if the runner uses a non-click break ab on a
         ;; card hosting adjusted matrix -nbkelly, 2022
-        actual-breakers (map #(find-cid % all-cards) breakers)
+        actual-breakers (map #(find-cid (:cid %) all-cards) breakers)
         abs (mapcat #(if (= (:side %) "Runner") (:abilities %) (:runner-abilities %)) actual-breakers)
         costs (map :break-cost abs)
         clicks (filter #(= :lose-click (:cost/type %)) (flatten costs))]
@@ -628,8 +626,8 @@
                                               :waiting-prompt true
                                               :choices (req (remove #(= this %) (corp-install-list state nice)))
                                               :async true
-                                              :msg (msg (corp-install-msg nice))
-                                              :effect (effect (corp-install eid nice target nil))}
+                                              :effect (effect (corp-install eid nice target {:msg-keys {:install-source card
+                                                                                                        :display-origin true}}))}
                                              card nil)))}})
 
 (defcard "Anemone"
@@ -802,7 +800,10 @@
                             {:prompt "Choose a card to install"
                              :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
                              :async true
-                             :effect (effect (corp-install eid target nil {:ignore-all-cost true}))
+                             :effect (effect (corp-install eid target nil {:ignore-all-cost true
+                                                                           :msg-keys {:install-source card
+                                                                                      :index (first (positions #{target} (take 5 (:deck corp))))
+                                                                                      :display-origin true}}))
                              :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
                                                     (effect-completed eid))}
                             card nil))}
@@ -849,7 +850,15 @@
                                            "do 1 net damage"
                                            (str "force the runner to " (decapitalize target))))}
                               card nil)))}]
-    {:implementation "preventing paid abilities with credit costs not implemented (yet)"
+    {:events [{:event :pre-resolve-subroutine
+               :req (req (threat-level 3 state))
+               :silent (req true)
+               :effect (req (register-lingering-effect
+                              state side card
+                              {:type :cannot-pay-credit
+                               :req (req true)
+                               :value true
+                               :duration :subroutine-currently-resolving}))}]
      :subroutines [sub
                    sub
                    sub]}))
@@ -874,10 +883,10 @@
               (wait-for (gain-credits state :corp (make-eid state eid) 1)
                         (bailiff-gain-credits state side eid (dec n)))
               (effect-completed state side eid)))]
-    {:on-break-subs {:msg (msg (let [n-subs (count (second targets))]
+    {:on-break-subs {:msg (msg (let [n-subs (count (:broken-subs context))]
                                  (str "gain " n-subs " [Credits] from the runner breaking subs")))
                      :async true
-                     :effect (effect (bailiff-gain-credits eid (count (second targets))))}
+                     :effect (effect (bailiff-gain-credits eid (count (:broken-subs context))))}
      :subroutines [end-the-run]}))
 
 (defcard "Ballista"
@@ -983,7 +992,9 @@
                                       {:prompt (str "Choose a location to install " (:title target))
                                        :choices (req (remove #(= this %) (corp-install-list state nice)))
                                        :async true
-                                       :effect (effect (corp-install eid nice target {:ignore-all-cost true}))}
+                                       :effect (effect (corp-install eid nice target {:ignore-all-cost true
+                                                                                      :msg-keys {:install-source card
+                                                                                                 :display-origin true}}))}
                                       card nil)))}
     {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
      :prompt "Choose a piece of ice to install from HQ in this server"
@@ -993,6 +1004,8 @@
      :effect (req (corp-install state side eid
                                 target (zone->name (target-server run))
                                 {:ignore-all-cost true
+                                 :msg-keys {:install-source card
+                                            :display-origin true}
                                  :index (max (dec run-position) 0)}))}]})
 
 (defcard "Bloop"
@@ -1058,10 +1071,11 @@
                   :choices {:card #(and (ice? %)
                                         (or (in-hand? %)
                                             (in-discard? %)))}
-                  :msg (msg (corp-install-msg target))
                   :effect (req (wait-for (corp-install state :corp target
                                                        (zone->name (second (get-zone card)))
                                                        {:ignore-install-cost true
+                                                        :msg-keys {:install-source card
+                                                                   :display-origin true}
                                                         :index (:index card)})
                                          (effect-completed state side eid)))
                   :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card) " to install a card"))
@@ -1176,10 +1190,10 @@
                         (chiyashi-auto-trash state side eid (dec n)))
               (effect-completed state side eid)))]
     {:events [{:event :subroutines-broken
-               :req (req (and (same-card? card (first targets))
+               :req (req (and (same-card? card (:ice context))
                               (seq (filter #(has-subtype? % "AI") (all-active-installed state :runner)))))
                :async true
-               :effect (effect (chiyashi-auto-trash :corp eid (count (second targets))))}]
+               :effect (effect (chiyashi-auto-trash :corp eid (count (:broken-subs context))))}]
      :subroutines [(do-net-damage 2)
                    (do-net-damage 2)
                    end-the-run]}))
@@ -1320,8 +1334,8 @@
                   :async true
                   :choices {:card #(and (corp-installable-type? %)
                                         (in-discard? %))}
-                  :msg (msg (corp-install-msg target))
-                  :effect (effect (corp-install eid target nil nil))}]
+                  :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                           :display-origin true}}))}]
    :static-abilities [(ice-strength-bonus (req (protecting-archives? card)) 3)]})
 
 (defcard "Curtain Wall"
@@ -1777,7 +1791,7 @@
      :interactive (req (not= ((get-autoresolve :auto-fire) state side eid card nil) "No"))
      :silent (req (= ((get-autoresolve :auto-fire) state side eid card nil) "No"))
      :optional
-     {:prompt (msg "Rez and move " (card-str state card {:visible true}) " to protect the approched server?")
+     {:prompt (msg "Rez and move " (card-str state card {:visible true}) " to protect the approached server?")
       :autoresolve (get-autoresolve :auto-fire)
       :req (req (and (can-rez? state side card)
                      (can-pay? state side eid card nil (get-rez-cost state side card nil))))
@@ -1893,13 +1907,13 @@
                         (gf-lose-credits state side eid (dec n)))
               (effect-completed state side eid)))]
     {:implementation "Auto breaking will break even with too few credits"
-     :on-break-subs {:req (req (some :printed (second targets)))
-                     :msg (msg (let [n-subs (count (filter :printed (second targets)))]
+     :on-break-subs {:req (req (some :printed (:broken-subs context)))
+                     :msg (msg (let [n-subs (count (filter :printed (:broken-subs context)))]
                                  (str "force the runner to lose "
                                       n-subs
                                       " [Credits] for breaking printed subs")))
                      :async true
-                     :effect (effect (gf-lose-credits eid (count (filter :printed (second targets)))))}
+                     :effect (effect (gf-lose-credits eid (count (filter :printed (:broken-subs context)))))}
      :subroutines [(end-the-run-unless-runner-pays (->c :credit 3))
                    (end-the-run-unless-runner-pays (->c :credit 3))]}))
 
@@ -2255,6 +2269,8 @@
      :effect (req (wait-for (corp-install state side (make-eid state eid)
                                           target (zone->name (target-server run))
                                           {:ignore-all-cost true
+                                           :msg-keys {:install-source card
+                                                      :display-origin true}
                                            :index (card-index state card)})
                             (let [new-ice async-result]
                               (register-events
@@ -3037,12 +3053,13 @@
                                                      (effect-completed state side eid)))))})]})
 
 (defcard "Minelayer"
-  {:subroutines [{:msg "install a piece of ice from HQ"
-                  :async true
+  {:subroutines [{:async true
                   :choices {:card #(and (ice? %)
                                         (in-hand? %))}
                   :prompt "Choose a piece of ice to install from HQ"
-                  :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true}))}]})
+                  :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true
+                                                                                             :msg-keys {:install-source card
+                                                                                                        :display-origin true}}))}]})
 
 (defcard "Mirāju"
   {:events [{:event :end-of-encounter
@@ -3220,8 +3237,8 @@
              :choices {:card #(and (corp-installable-type? %)
                                    (in-hand? %))}
              :async true
-             :effect (effect (corp-install eid target nil nil))
-             :msg (msg (corp-install-msg target))}]
+             :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                      :display-origin true}}))}]
     (next-ice-variable-subs sub)))
 
 (defcard "NEXT Sapphire"
@@ -3346,8 +3363,8 @@
 
 (defcard "Paper Wall"
   {:events [{:event :subroutines-broken
-             :req (req (and (same-card? card target)
-                            (empty? (remove :broken (:subroutines target)))))
+             :req (req (and (same-card? card (:ice context))
+                            (:all-subs-broken context)))
              :async true
              :effect (effect (trash :corp eid card {:cause-card card :cause :effect}))}]
    :subroutines [end-the-run]})
@@ -3484,6 +3501,18 @@
 (defcard "Rototurret"
   {:subroutines [trash-program-sub
                  end-the-run]})
+
+(defcard "RSVP"
+  {:subroutines [{:label "Runner cannot spend credits this run"
+                  :msg "prevent the runner from spending credits this run"
+                  :effect (req (when run
+                                 (register-lingering-effect
+                                   state side card
+                                   {:type :cannot-pay-credit
+                                    ;; you're allowed to spend 0 credits, our rules are just cursed
+                                    :req (req (or (nil? (:amount context)) (pos? (:amount context))))
+                                    :value true
+                                    :duration :end-of-run})))}]})
 
 (defcard "Sadaka"
   (let [maybe-draw-effect
@@ -4151,7 +4180,9 @@
                                                                      {:prompt (str "Choose a location to install " (:title target))
                                                                       :choices (req (remove #(= this %) (corp-install-list state nice)))
                                                                       :async true
-                                                                      :effect (effect (corp-install eid nice target {:ignore-install-cost true}))}
+                                                                      :effect (effect (corp-install eid nice target {:ignore-install-cost true
+                                                                                                                     :msg-keys {:install-source card
+                                                                                                                                :display-origin true}}))}
                                                                      card nil)))}
                                    card nil)))}
                  {:label "Give +2 strength to each piece of ice for the remainder of the run"

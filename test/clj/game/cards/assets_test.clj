@@ -6332,8 +6332,8 @@
     (play-from-hand state :corp "15 Minutes" "New remote")
     (rez state :corp (get-content state :remote1 0))
     ;; Toggle autoresolve
-    (card-ability state :runner (get-content state :remote1 0) 0)
-    (click-prompt state :runner "Always")
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-prompt state :corp "Always")
     (play-and-score state "15 Minutes")
     (is (last-log-contains? state "Sure Gamble, Hippo, and Endurance") "Revealed Runner grip")
     (is (changed? [(count (:hand (get-runner))) -1]

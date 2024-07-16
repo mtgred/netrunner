@@ -764,3 +764,22 @@
       (click-card state :corp icew)
       (click-card state :corp "Enigma")
       (is (nil? (:icon (find-card "Ice Wall" (:hand (get-corp)))))))))
+
+(deftest runner-forced-to-discard-below-hand-size-ends-the-game
+  (do-game
+    (new-game {:corp {:hand ["Brainstorm"] :credits 20}
+               :runner {:hand [(qty "Sure Gamble" 8)]}})
+    (play-from-hand state :corp "Brainstorm" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [bs (get-ice state :hq 0)]
+      (rez state :corp bs)
+      (is (changed? [(:brain-damage (get-runner)) 8]
+                    (run-continue-until state :encounter-ice)
+                    (fire-subs state (refresh bs)))
+          "Runner has 8 core damage")
+      (is (= -3 (hand-size :runner)) "Runner has -3 hand size")
+      (is (not (:winner @state)) "Runner hasn't lost yet")
+      (run-continue-until state :success)
+      (take-credits state :runner)
+      (is (= :corp (:winner @state)) "Runner lost due to negative hand size"))))

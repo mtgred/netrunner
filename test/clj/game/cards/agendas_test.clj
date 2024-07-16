@@ -3422,6 +3422,19 @@
       (is (= 2 (:agenda-point (get-corp))) "Corp should score"))
     (is (zero? (count (:deck (get-corp)))))))
 
+(deftest quantum-predictive-model-aoycr-test
+  (do-game
+    (new-game {:corp {:hand ["Quantum Predictive Model" "An Offer You Can't Refuse"]}})
+    (gain-tags state :runner 1)
+    (is (= 1 (count-tags state)) "runner tagged")
+    (play-from-hand state :corp "An Offer You Can't Refuse")
+    (click-prompt state :corp "HQ")
+    (click-prompt state :runner "Yes")
+    (run-continue state :success)
+    (click-prompt state :runner "OK")
+    (is (= 0 (:agenda-point (get-runner))) "Corp got the QPM")
+    (is (= 1 (:agenda-point (get-corp))) "Corp got the QPM")))
+
 (deftest rebranding-team
   ;; Rebranding Team
   (do-game

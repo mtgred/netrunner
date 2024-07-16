@@ -67,7 +67,7 @@
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? remote->name target-server unknown->kw
                               zone->name zones->sorted-names]]
@@ -1557,7 +1557,12 @@
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
-  {:flags {:cannot-pay-net true}
+  {:static-abilities [{:type :cannot-pay-net
+                       :value true}
+                      {:type :cannot-pay-meat
+                       :value true}
+                      {:type :cannot-pay-brain
+                       :value true}]
    :events [{:event :pre-damage
              :req (req (and (#{:meat :net} (:type context))
                             (pos? (:amount context))))
@@ -2487,6 +2492,7 @@
                                                    (= (zone->name (:server context))
                                                       (:card-target card)))))))))
               {:event :runner-turn-ends
+               :silent (req true)
                :effect (effect (update! (dissoc (get-card state card) :card-target)))}]}))
 
 (defcard "Paule's Café"
@@ -2634,6 +2640,7 @@
                 :msg "gain 1 [Credits] and draw 1 card"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1)
+                                       (play-sfx state side "professional-contacts")
                                        (draw state side eid 1)))}]})
 
 (defcard "Psych Mike"
@@ -2726,7 +2733,8 @@
                                      (filter is-central?)
                                      (remove (into #{} (:made-run runner-reg)))
                                      (map central->name))))
-                :msg "make a run on central server"
+                :label "make a run on a central server"
+                :msg (msg "make a run on " target)
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid target card))}]})

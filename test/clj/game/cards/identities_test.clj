@@ -5086,10 +5086,17 @@
     ;; Pay-credits prompt
     (do-game
       (new-game {:corp {:id "Weyland Consortium: Because We Built It"
-                        :hand ["Ice Wall"]}})
+                        :hand ["Ice Wall" "Project Atlas"]}})
+      (core/gain state :corp :click 1)
       (play-from-hand state :corp "Ice Wall" "New remote")
-      (let [iw (get-ice state :remote1 0)
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (let [pa (get-content state :remote2 0)
+            iw (get-ice state :remote1 0)
             bwbi (get-in @state [:corp :identity])]
+        (is (changed? [(:credit (get-corp)) -1]
+                      (click-advance state :corp (refresh pa))
+                      (is (no-prompt? state :corp)) "not prompted to pay")
+            "Used 1 credit from the credit pool at advance an agenda")
         (is (changed? [(:credit (get-corp)) 0]
               (click-advance state :corp (refresh iw))
               (click-card state :corp bwbi))

@@ -12,7 +12,7 @@
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
-    [game.core.ice :refer [break-subroutine! get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
+    [game.core.ice :refer [break-subroutine! break-subs-event-context get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string ->c]]
@@ -27,7 +27,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards]]))
+    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]))
 
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
@@ -63,6 +63,7 @@
          cannot-play (or (:disabled card)
                          ;; cannot play actions during runs
                          (and (= (:type ability) :action) (:run @state))
+                         (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
        (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
@@ -299,7 +300,7 @@
                      on-break-subs (when ice (:on-break-subs (card-def current-ice)))
                      event-args (when on-break-subs
                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
-                 (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                 (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice subs-to-break card))
                            (if (empty? sub-groups-to-break)
                              (effect-completed state side eid)
                              (continue-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil))))))})
@@ -381,7 +382,7 @@
                (wait-for
                  (resolve-ability state side (make-eid state {:source card :source-type :ability})
                                   (:additional-ability break-ability) (get-card state card) nil)
-                 (wait-for (trigger-event-simult state side :subroutines-broken event-args ice subs-to-break)
+                 (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice subs-to-break card))
                            (if (empty? sub-groups-to-break)
                              (effect-completed state side eid)
                              (continue-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)))))))})
