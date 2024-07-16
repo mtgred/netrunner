@@ -1071,7 +1071,7 @@
              :prompt "Choose one"
              :waiting-prompt true
              :req (req this-server)
-             :choices (req [(when (can-pay? state :runner eid card nil [(->c :click 2 {:allowed-during-run true})])
+             :choices (req [(when (can-pay? state :runner eid card nil [(->c :click 2)])
                               "Spend [Click][Click]")
                             (when (can-pay? state :runner eid card nil [(->c :credit 5)])
                               "Pay 5 [Credits]")
@@ -1079,8 +1079,8 @@
              :async true
              :effect (req (cond+
                             [(and (= target "Spend [Click][Click]")
-                                  (can-pay? state :runner eid card nil [(->c :click 2 {:allowed-during-run true})]))
-                             (wait-for (pay state side (make-eid state eid) card (->c :click 2 {:allowed-during-run true}))
+                                  (can-pay? state :runner eid card nil [(->c :click 2)]))
+                             (wait-for (pay state side (make-eid state eid) card (->c :click 2))
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [(and (= target "Pay 5 [Credits]")
@@ -1525,7 +1525,7 @@
 (defcard "Ruhr Valley"
   {:static-abilities [{:type :run-additional-cost
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
-                       :value [(->c :click 1 {:allowed-during-run true})]}]})
+                       :value [(->c :click 1)]}]})
 
 (defcard "Rutherford Grid"
   {:static-abilities [{:type :trace-base-strength
@@ -1621,11 +1621,11 @@
                        :req (req (or (= (get-zone target) (:previous-zone card))
                                      (= (central->zone (get-zone target))
                                         (butlast (:previous-zone card)))))
-                       :value (req (->c :click 1 {:allowed-during-run true}))}))}
+                       :value (req (->c :click 1))}))}
    :static-abilities [{:type :steal-additional-cost
                        :req (req (or (in-same-server? card target)
                                      (from-same-server? card target)))
-                       :value (req (->c :click 1 {:allowed-during-run true}))}]})
+                       :value (req (->c :click 1))}]})
 
 (defcard "Surat City Grid"
   {:events [{:event :rez

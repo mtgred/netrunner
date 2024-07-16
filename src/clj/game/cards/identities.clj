@@ -2149,7 +2149,7 @@
              :effect (effect (continue-ability
                                {:prompt "Choose one"
                                 :player :runner
-                                :choices (req [(when (can-pay? state :runner eid card nil [(->c :credit 2) (->c :click 1 {:allowed-during-run true})])
+                                :choices (req [(when (can-pay? state :runner eid card nil [(->c :credit 2) (->c :click 1)])
                                                  "Pay [Click] and 2 [Credits]")
                                                "Suffer 1 core damage"])
                                 :async true
@@ -2158,7 +2158,7 @@
                                             (str "force the runner to " (decapitalize target))
                                             "do 1 core damage"))
                                 :effect (req (if (= target "Pay [Click] and 2 [Credits]")
-                                               (wait-for (pay state side (make-eid state eid) card [(->c :click 1 {:allowed-during-run true}) (->c :credit 2)])
+                                               (wait-for (pay state side (make-eid state eid) card [(->c :click 1) (->c :credit 2)])
                                                          (system-msg state side (:msg async-result))
                                                          (effect-completed state :runner eid))
                                                (damage state side eid :brain 1 {:card card})))}
