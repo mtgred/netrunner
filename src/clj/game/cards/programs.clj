@@ -477,7 +477,8 @@
                    :msg (msg "shuffle " (card-str state target) " into R&D")
                    :effect (effect (move :corp target :deck)
                                    (shuffle! :corp :deck))}})]
-    {:abilities [{:cost [(->c :click 1)]
+    {:abilities [{:action true
+                  :cost [(->c :click 1)]
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
@@ -611,7 +612,8 @@
 
 (defcard "Bishop"
   {:implementation "[Erratum] Program: Caïssa - Trojan"
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :label "Host on another piece of ice"
                 :effect (req (let [b (get-card state card)
                                    hosted? (ice? (:host b))
@@ -881,7 +883,8 @@
                             this-card-run))
              :effect (effect (register-events
                               card [(breach-access-bonus :rd (max 0 (get-virus-counters state card)) {:duration :end-of-run})]))}]
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :msg "make a run on R&D"
                 :makes-run true
                 :async true
@@ -905,7 +908,8 @@
                                          :effect (effect (add-counter :runner card :virus target))}
                                 ab (if (= 1 amt-trashed) sing-ab mult-ab)]
                             (continue-ability state side ab card targets)))}]
-   :abilities [{:req (req (pos? (get-virus-counters state card)))
+   :abilities [{:action true
+                :req (req (pos? (get-virus-counters state card)))
                 :cost [(->c :click 1)]
                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters"
                 :async true
@@ -1001,7 +1005,8 @@
 (defcard "Crypsis"
   (auto-icebreaker {:abilities [(break-sub 1 1 "All")
                                 (strength-pump 1 1)
-                                {:cost [(->c :click 1)]
+                                {:action true
+                                 :cost [(->c :click 1)]
                                  :keep-menu-open :while-clicks-left
                                  :msg "place 1 virus counter on itself"
                                  :effect (effect (add-counter card :virus 1))}]
@@ -1096,7 +1101,8 @@
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
                                            (continue-ability state side (custsec-host from) card nil))))}
-     :abilities [{:cost [(->c :click 1)]
+     :abilities [{:action true
+                  :cost [(->c :click 1)]
                   :keep-menu-open :while-clicks-left
                   :label "Install a hosted program"
                   :prompt "Choose a program to install"
@@ -1256,7 +1262,8 @@
                                       (program? target)))
                        :no-mu true
                        :max-mu 3}]
-   :abilities [{:label "Search the stack for a virus program and add it to the grip"
+   :abilities [{:action true
+                :label "Search the stack for a virus program and add it to the grip"
                 :prompt "Choose a Virus"
                 :msg (msg "add " (:title target) " from the stack to the grip")
                 :choices (req (cancellable (filter #(and (program? %)
@@ -1347,7 +1354,8 @@
                   {:msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
                    :async true
                    :effect (effect (reveal eid (:hand corp)))}})]
-    {:abilities [{:cost [(->c :click 1)]
+    {:abilities [{:action true
+                  :cost [(->c :click 1)]
                   :msg "make a run on HQ"
                   :makes-run true
                   :async true
@@ -1440,7 +1448,8 @@
   {:on-install {:effect (effect (add-counter card :virus 1))}
    :events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
-   :abilities [{:req (req (pos? (get-virus-counters state card)))
+   :abilities [{:action true
+                :req (req (pos? (get-virus-counters state card)))
                 :cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain 2 [Credits] for each hosted virus counter"
                 :msg (msg (str "gain " (* 2 (get-virus-counters state card)) " [Credits]"))
@@ -1510,7 +1519,8 @@
              :effect (effect (add-counter :runner card :virus 1))}
             {:event :corp-click-draw
              :effect (effect (add-counter :runner card :virus 1))}]
-   :abilities [{:cost [(->c :click 1) (->c :trash-can)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain credits"
                 :async true
                 :effect (effect (gain-credits eid (get-virus-counters state card)))
@@ -1554,7 +1564,8 @@
            :effect (effect (add-counter :runner card :virus 1))}]
     {:events [(assoc e :event :runner-trash)
               (assoc e :event :corp-trash)]
-     :abilities [{:async true
+     :abilities [{:action true
+                  :async true
                   :cost [(->c :click 1) (->c :virus 1)]
                   :keep-menu-open :while-virus-tokens-left
                   :msg "force the Corp to trash the top card of R&D"
@@ -1644,7 +1655,8 @@
   {:events [{:event :successful-run
              :silent (req true)
              :effect (effect (add-counter card :virus 1))}]
-   :abilities [{:cost [(->c :click 1) (->c :virus 2)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :virus 2)]
                 :keep-menu-open :while-2-virus-tokens-left
                 :req (req (pos? (count (:hand corp))))
                 :msg "force the Corp to trash 1 card from HQ"
@@ -1704,7 +1716,8 @@
              :effect (req (reset-card-to-printed-subs state side target))}]
    :on-trash subroutines-should-update
    :move-zone (req (continue-ability state side subroutines-should-update card nil))
-   :abilities [{:label "Host on a piece of ice"
+   :abilities [{:action true
+                :label "Host on a piece of ice"
                 :prompt "Choose a piece of ice"
                 :cost [(->c :click 1)]
                 :choices {:req (req (and (ice? target)
@@ -1765,7 +1778,8 @@
 (defcard "Incubator"
   {:events [{:event :runner-turn-begins
              :effect (effect (add-counter card :virus 1))}]
-   :abilities [{:cost [(->c :click 1) (->c :trash-can)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :trash-can)]
                 :label "move hosted virus counters"
                 :msg (msg "move " (get-counters card :virus) " virus counter to " (:title target))
                 :choices {:card #(and (installed? %)
@@ -1833,13 +1847,15 @@
                    :async true
                    :effect (effect (shuffle! :corp :deck)
                                    (trash eid (assoc target :seen true) {:cause-card card}))}})]
-    {:abilities [{:cost [(->c :click 1)]
+    {:abilities [{:action true
+                  :cost [(->c :click 1)]
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
                   :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
 
+;; TODO - this card is overly messy and can be cleaned up. NBKelly, 2024
 (defcard "Knight"
   (let [knight-req (req (and (same-card? current-ice (get-nested-host card))
                              (<= (get-strength current-ice) (get-strength card))))]
@@ -1993,7 +2009,8 @@
                    (strength-pump 3 5)))
 
 (defcard "Magnum Opus"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :async true
                 :effect (effect (gain-credits eid 2))
@@ -2106,7 +2123,8 @@
                                    (break-sub nil (cost-value eid :x-credits) "All")
                                    card nil)
                                  (effect-completed state side eid))))}
-        host-abi {:label "Host 1 copy of Matryoshka"
+        host-abi {:action true
+                  :label "Host 1 copy of Matryoshka"
                   :prompt (msg "Choose 1 copy of " (:title card) " in the grip")
                   :keep-menu-open :while-clicks-left
                   :cost [(->c :click 1)]
@@ -2168,7 +2186,8 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")]}))
 
 (defcard "Misdirection"
-  {:abilities [{:cost [(->c :click 2) (->c :x-credits)]
+  {:abilities [{:action true
+                :cost [(->c :click 2) (->c :x-credits)]
                 :label "remove X tags"
                 :async true
                 :msg (msg "remove " (quantify (cost-value eid :x-credits) "tag"))
@@ -2407,7 +2426,8 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Paintbrush"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :label "give ice a subtype"
                 :choices {:card #(and (installed? %)
                                       (ice? %)
@@ -2516,7 +2536,8 @@
 
 (defcard "Pawn"
   {:implementation "[Erratum] Program: Caïssa - Trojan. Developer Note: All abilities are manual"
-   :abilities [{:label "Host on the outermost piece of ice of a central server"
+   :abilities [{:action true
+                :label "Host on the outermost piece of ice of a central server"
                 :cost [(->c :click 1)]
                 :prompt "Choose the outermost piece of ice of a central server"
                 :choices {:req (req (and (ice? target)
@@ -2722,13 +2743,15 @@
 (defcard "Puffer"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
                                 (strength-pump 2 1)
-                                {:cost [(->c :click 1)]
+                                {:action true
+                                 :cost [(->c :click 1)]
                                  :msg "place 1 power counter"
                                  :label "Place 1 power counter"
                                  :async true
                                  :effect (req (add-counter state side card :power 1)
                                               (checkpoint state side eid))}
-                                {:cost [(->c :click 1)]
+                                {:action true
+                                 :cost [(->c :click 1)]
                                  :msg "remove 1 power counter"
                                  :label "Remove 1 power counter"
                                  :async true
@@ -2818,7 +2841,8 @@
 
 (defcard "Rook"
   {:implementation "[Erratum] Program: Caïssa - Trojan"
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :label "Host on another ice"
                 :async true
                 :effect (req (let [r (get-card state card)
@@ -2964,7 +2988,8 @@
                                      :repeatable false})]})
 
 (defcard "Sneakdoor Beta"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :msg "make a run on Archives"
                 :makes-run true
                 :async true
@@ -2980,7 +3005,8 @@
                                 (make-run eid :archives (get-card state card)))}]})
 
 (defcard "Sneakdoor Prime A"
-  {:abilities [{:cost [(->c :click 2)]
+  {:abilities [{:action true
+                :cost [(->c :click 2)]
                 :prompt "Choose a server"
                 :choices (req (cancellable
                                 (->> runnable-servers
@@ -3003,7 +3029,8 @@
                                   (make-run state side eid initial-server card)))}]})
 
 (defcard "Sneakdoor Prime B"
-  {:abilities [{:cost [(->c :click 2)]
+  {:abilities [{:action true
+                :cost [(->c :click 2)]
                 :prompt "Choose a server"
                 :choices (req (cancellable
                                 (->> runnable-servers
@@ -3078,7 +3105,8 @@
                                                  (str "trash " position (:title target)))))
                                    :effect (effect (trash :runner eid (assoc target :seen true) {:cause-card card}))}
                                   card nil)))}})]
-    {:abilities [{:cost [(->c :click 1)]
+    {:abilities [{:action true
+                  :cost [(->c :click 1)]
                   :once :per-turn
                   :msg "make a run on R&D"
                   :makes-run true
@@ -3182,7 +3210,8 @@
                      :req (req true)
                      :effect (req (update-current-encounter state :prevent-subroutine true))
                      :msg (msg (str "prevent a subroutine (" (:label target) ") from resolving"))}]
-    {:abilities [{:label "Make a run on targeted server"
+    {:abilities [{:action true
+                  :label "Make a run on targeted server"
                   :cost [(->c :click 1) (->c :credit 2)]
                   :req (req (some #(= (:card-target card) %) runnable-servers))
                   :msg (msg "make a run on " (:card-target card) ". Prevent the first subroutine that would resolve from resolving")
@@ -3337,7 +3366,8 @@
              :silent (req true)
              :req (req (= :rd (target-server context)))
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:cost [(->c :click 1) (->c :power 3)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :power 3)]
                 :once :per-turn
                 :msg "gain [Click][Click]"
                 :effect (effect (gain-clicks 2))}]})
