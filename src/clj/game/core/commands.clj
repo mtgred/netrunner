@@ -225,7 +225,7 @@
                               (not (installed? %)))}
         :async true
         :effect (req (runner-install state side eid target {:ignore-all-cost ignore-all-cost}))})
-     nil nil)))
+     (make-card {:title (str "/install" (when ignore-all-cost "-free") " command")}) nil)))
 
 (defn command-install-free
   [state side]
