@@ -66,14 +66,26 @@
                                         (effect-completed state side eid))
                                       (effect-completed state side eid))))))))
 
+(defn- beat-trace-amount
+  "finds the number of credits the responder needs to spend to gaurantee success"
+  [initiator corp-credits-fn runner-credits-fn link base strength eid]
+  (let [runner-credits (runner-credits-fn eid)
+        corp-credits (corp-credits-fn eid)
+        required (if (= initiator :corp)
+                   (- strength link)
+                   (- strength base))]
+    (when (<= required (if (= initiator :corp) runner-credits corp-credits))
+      (max required 0))))
+
 (defn- trace-reply
   "Shows a trace prompt to the second player, after the first has already spent credits to boost."
-  [state side eid card {:keys [player other base bonus link] :as trace} boost]
-  (let [other-type (if (corp-start? trace) "link" "trace")
+  [state side eid card {:keys [player other base bonus link corp-credits runner-credits] :as trace} boost]
+  (let [trace (dissoc trace :unbeatable)
+        other-type (if (corp-start? trace) "link" "trace")
         strength (if (corp-start? trace)
                    ((fnil + 0 0 0) base bonus boost)
                    ((fnil + 0 0) link boost))
-        trace (assoc trace :strength strength)]
+        trace (assoc trace :strength strength :beat-trace (beat-trace-amount player corp-credits runner-credits link base strength eid))]
     (wait-for (pay state player (make-eid state eid) card [(->c :credit boost)])
               (let [payment-str (:msg async-result)]
                 (system-msg state player (str payment-str
@@ -114,6 +126,17 @@
   [state value]
   (swap! state assoc-in [:trace :force-base] value))
 
+(defn- find-unbeatable-amount
+  "finds the number of credits the initiator needs to spend to gaurantee success"
+  [initiator corp-credits-fn runner-credits-fn link base eid]
+  (let [runner-credits (runner-credits-fn eid)
+        corp-credits (corp-credits-fn eid)
+        required (if (= initiator :corp)
+                   (- (+ runner-credits link 1) base)
+                   (- (+ base corp-credits) link))]
+    (when (<= required (if (= initiator :corp) corp-credits runner-credits))
+      (max required 0))))
+
 (defn init-trace
   ([state side card] (init-trace state side (make-eid state {:source-type :trace}) card {:base 0}))
   ([state side card trace] (init-trace state side (make-eid state {:source-type :trace}) card trace))
@@ -133,6 +156,7 @@
                    runner-credits #(total-available-credits state :runner % card)
                    trace (merge trace {:player initiator
                                        :other (if (= :corp initiator) :runner :corp)
+                                       :unbeatable (find-unbeatable-amount initiator corp-credits runner-credits link base eid)
                                        :base base
                                        :bonus bonus
                                        :link link

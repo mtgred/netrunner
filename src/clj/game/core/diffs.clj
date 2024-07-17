@@ -200,6 +200,8 @@
    :base
    :bonus
    :strength
+   :unbeatable
+   :beat-trace
    :link
    :corp-credits
    :runner-credits])
