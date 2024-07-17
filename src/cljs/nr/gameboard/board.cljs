@@ -35,6 +35,15 @@
 (defonce board-dom (atom {}))
 (defonce card-menu (r/atom {}))
 
+(defonce corp-prompt-state (r/cursor game-state [:corp :prompt :prompt-state]))
+(defonce runner-prompt-state (r/cursor game-state [:runner :prompt :prompt-state]))
+
+(defn- any-prompt-open?
+  [side]
+  (if (= side :corp)
+    @corp-prompt-state
+    @runner-prompt-state))
+
 (defn- image-url [{:keys [side code] :as card}]
   (let [lang (get-in @app-state [:options :language] "en")
         res (get-in @app-state [:options :card-resolution] "default")
@@ -51,10 +60,6 @@
 
 
 (defonce button-channel (chan))
-
-(def any-prompt-open?
-  (let [side (:side @game-state)]
-    (get-in @game-state [side :prompt :prompt-state])))
 
 (defn open-card-menu
   ([source] (open-card-menu source nil))
@@ -175,7 +180,7 @@
         ;; Runner clicking on a runner card
         (and (= side :runner)
              (= "Runner" (:side card))
-             (not any-prompt-open?)
+             (not (any-prompt-open? side))
              (= "hand" (first zone))
              (playable? card))
         (send-command "play" {:card (card-for-click card)})
@@ -183,7 +188,7 @@
         ;; Corp clicking on a corp card
         (and (= side :corp)
              (= "Corp" (:side card))
-             (not any-prompt-open?)
+             (not (any-prompt-open? side))
              (= "hand" (first zone))
              (playable? card))
         (if (= "Operation" type)
@@ -659,7 +664,7 @@
      [:div.blue-shade.card {:class (str (cond selected "selected"
                                               (same-card? card (:button @app-state)) "hovered"
                                               (same-card? card (-> @game-state :encounters :ice)) "encountered"
-                                              (and (not any-prompt-open?) (playable? card)) "playable"
+                                              (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
                                               new "new"))
