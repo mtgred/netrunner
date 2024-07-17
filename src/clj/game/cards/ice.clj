@@ -2238,7 +2238,7 @@
 
 (defcard "Howler"
   {:subroutines
-   [{:label "Install a piece of Bioroid ice from HQ or Archives"
+   [{:label "Install and rez a piece of Bioroid ice from HQ or Archives"
      :req (req (some #(and (corp? %)
                            (or (in-hand? %)
                                (in-discard? %))
@@ -2254,6 +2254,7 @@
      :effect (req (wait-for (corp-install state side (make-eid state eid)
                                           target (zone->name (target-server run))
                                           {:ignore-all-cost true
+                                           :install-state :rezzed-no-cost
                                            :index (card-index state card)})
                             (let [new-ice async-result]
                               (register-events
