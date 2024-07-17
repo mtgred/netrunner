@@ -1463,7 +1463,7 @@
               :once :per-encounter
               :async true
               :req (req (and this-server (same-card? current-ice (:host card))))
-              :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+              :effect (effect (continue-ability (charge-ability state side) card nil))}]})
 
 (defcard "Force of Nature"
   (auto-icebreaker {:abilities [(break-sub 2 2 "Code Gate")
@@ -2393,7 +2393,7 @@
                               :req (req (and (all-subs-broken-by-card? (:ice context) card)
                                              (first-event? state side :subroutines-broken #(all-subs-broken-by-card? (:ice (first %)) card))))
                               :async true
-                              :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]}))
+                              :effect (effect (continue-ability (charge-ability state side) card nil))}]}))
 
 (defcard "Origami"
   {:static-abilities [{:type :hand-size
