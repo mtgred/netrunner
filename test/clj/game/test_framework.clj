@@ -182,7 +182,8 @@
           (core/card-init state :corp c {:resolve-effect false :init-data true})))
       (doseq [ctitle score-area-runner]
         (core/move state :runner (find-card ctitle (get-in @state [:corp :deck])) :scored {:force true}))
-      (core/move state :corp  (take hand-size (get-in @state [:corp :deck])) :hand))))
+      (doseq [c (take hand-size (get-in @state [:corp :deck]))]
+        (core/move state :corp c :hand)))))
 
 (defn ensure-no-prompts [state]
   (is' (no-prompt? state :corp) "Corp has prompts open")
