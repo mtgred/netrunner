@@ -1937,6 +1937,25 @@
        (play-from-hand state :runner "DJ Fenris")
        (is (every? #(legal? :standard :legal %) (prompt-buttons :runner)) "Only legal IDs are available")))))
 
+(deftest dj-loup-vs-malia
+  (do-game
+    (new-game {:runner {:hand ["DJ Fenris"]
+                        :deck ["Easy Mark"]
+                        :credits 10}
+               :corp {:hand ["Malia Z0L0K4"]}})
+    (play-from-hand state :corp "Malia Z0L0K4" "New remote")
+    (let [malia (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "DJ Fenris")
+      (click-prompt state :runner "René \"Loup\" Arcemont: Party Animal")
+      (rez state :corp malia)
+      (click-card state :corp "DJ Fenris")
+      (run-empty-server state :remote1)
+      (is (changed? [(:credit (get-runner)) -2
+                     (count (:hand (get-runner))) 1]
+                    (click-prompt state :runner "Pay 3 [Credits] to trash"))
+          "Loup triggered (see https://nullsignal.games/blog/card-text-updates-v1-2-released/ for ruling"))))
+
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
   (do-game
