@@ -1660,16 +1660,16 @@
 
        ;; otherwise choice of all present choices
        :else
-       (doall (for [{:keys [idx uuid value]} choices]
-                (when (not= value "Hide")
-                  [:button {:key idx
-                            :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
-                                           (card-highlight-mouse-out % value button-channel))
-                            :on-mouse-over
-                            #(card-highlight-mouse-over % value button-channel)
-                            :on-mouse-out
-                            #(card-highlight-mouse-out % value button-channel)}
-                   (render-message (or (not-empty (get-title value)) value))]))))]))
+       (doall (for [{:keys [idx uuid value]} choices
+                    :when (not= value "Hide")]
+                [:button {:key idx
+                          :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
+                                         (card-highlight-mouse-out % value button-channel))
+                          :on-mouse-over
+                          #(card-highlight-mouse-over % value button-channel)
+                          :on-mouse-out
+                          #(card-highlight-mouse-out % value button-channel)}
+                 (render-message (or (not-empty (get-title value)) value))])))]))
 
 (defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
   [:div.panel.blue-shade

@@ -43,7 +43,7 @@
 
 (defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
-    (swap! game-state #(differ/patch @last-state diff))
+    (reset! game-state (differ/patch @last-state diff))
     (check-lock?)
     (reset! last-state @game-state)))
 
