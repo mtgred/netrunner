@@ -19,7 +19,7 @@
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
-                                      card-preview-mouse-over zoom-channel]]
+                                      card-preview-mouse-over put-game-card-in-channel zoom-channel]]
    [nr.gameboard.player-stats :refer [stat-controls stats-view]]
    [nr.gameboard.replay :refer [replay-panel]]
    [nr.gameboard.right-pane :refer [content-pane]]
@@ -316,7 +316,7 @@
   [{:keys [code] :as card}]
   (when code
     [:div.card-frame
-     [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel card)
+     [:div.blue-shade.card {:on-mouse-enter #(put-game-card-in-channel card zoom-channel)
                             :on-mouse-leave #(put! zoom-channel false)}
       (when-let [url (image-url card)]
         [:div
@@ -670,7 +670,7 @@
                             :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
                                                        (spectator-view-hidden?)
                                                        (= (:side @game-state) (keyword (lower-case side))))
-                                               (put! zoom-channel card))
+                                               (put-game-card-in-channel card zoom-channel))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(when (not disable-click)
                                          (handle-card-click card))
@@ -1309,7 +1309,7 @@
                                [:img.start-card {:src (str "/img/" card-back "-" (lower-case (:side @my-ident)) ".png")}]]
                               [:div.card-front
                                (when-let [url (image-url card)]
-                                 [:div {:on-mouse-enter #(put! zoom-channel card)
+                                 [:div {:on-mouse-enter #(put-game-card-in-channel card zoom-channel)
                                         :on-mouse-leave #(put! zoom-channel false)}
                                   [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]
                              (when-let [elem (.querySelector js/document (str "#startcard" i))]
@@ -1526,42 +1526,51 @@
     [runner-run-div run encounters]))
 
 (defn trace-div
-  [{:keys [base strength player link bonus choices corp-credits runner-credits]}]
-  [:div
-   (when base
-     ;; This is the initial trace prompt
-     (if (nil? strength)
-       (if (= "corp" player)
-         ;; This is a trace prompt for the corp, show runner link + credits
-         [:div.info (tr [:side.runner "Runner"]) ": " link [:span {:class "anr-icon link"}]
-          " + " runner-credits [:span {:class "anr-icon credit"}]]
-         ;; Trace in which the runner pays first, showing base trace strength and corp credits
-         [:div.info (tr [:game.trace "Trace"]) ": " (if bonus (+ base bonus) base)
-          " + " corp-credits [:span {:class "anr-icon credit"}]])
-       ;; This is a trace prompt for the responder to the trace, show strength
-       (if (= "corp" player)
-         [:div.info "vs Trace: " strength]
-         [:div.info "vs Runner: " strength [:span {:class "anr-icon link"}]])))
-   [:div.credit-select
-    ;; Inform user of base trace / link and any bonuses
-    (when base
-      (if (nil? strength)
-        (if (= "corp" player)
-          (let [strength (if bonus (+ base bonus) base)]
-            [:span (str strength " + ")])
-          [:span link " " [:span {:class "anr-icon link"}] (str " + " )])
-        (if (= "corp" player)
-          [:span link " " [:span {:class "anr-icon link"}] (str " + " )]
-          (let [strength (if bonus (+ base bonus) base)]
-            [:span (str strength " + ")]))))
-    [:select#credit {:onKeyUp #(when (= "Enter" (.-key %))
-                                 (-> "#trace-submit" js/$ .click)
-                                 (.stopPropagation %))}
-     (doall (for [i (range (inc choices))]
-              [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
-   [:button#trace-submit {:on-click #(send-command "choice"
-                                                   {:choice (-> "#credit" js/$ .val str->int)})}
-    (tr [:game.ok "OK"])]])
+  [{:keys [base strength player link bonus choices corp-credits runner-credits unbeatable beat-trace] :as prompt-state}]
+  (r/with-let [!value (r/atom 0)]
+    [:div
+     (when base
+       ;; This is the initial trace prompt
+       (if (nil? strength)
+         (if (= "corp" player)
+           ;; This is a trace prompt for the corp, show runner link + credits
+           [:div.info (tr [:side.runner "Runner"]) ": " link [:span {:class "anr-icon link"}]
+            " + " runner-credits [:span {:class "anr-icon credit"}]]
+           ;; Trace in which the runner pays first, showing base trace strength and corp credits
+           [:div.info (tr [:game.trace "Trace"]) ": " (if bonus (+ base bonus) base)
+            " + " corp-credits [:span {:class "anr-icon credit"}]])
+         ;; This is a trace prompt for the responder to the trace, show strength
+         (if (= "corp" player)
+           [:div.info "vs Trace: " strength]
+           [:div.info "vs Runner: " strength [:span {:class "anr-icon link"}]])))
+     [:div.credit-select
+      ;; Inform user of base trace / link and any bonuses
+      (when base
+        (if (nil? strength)
+          (if (= "corp" player)
+            (let [strength (if bonus (+ base bonus) base)]
+              [:span (str strength " + ")])
+            [:span link " " [:span {:class "anr-icon link"}] (str " + " )])
+          (if (= "corp" player)
+            [:span link " " [:span {:class "anr-icon link"}] (str " + " )]
+            (let [strength (if bonus (+ base bonus) base)]
+              [:span (str strength " + ")]))))
+      [:select#credit {:value @!value
+                       :on-change #(reset! !value (.. % -target -value))
+                       :onKeyUp #(when (= "Enter" (.-key %))
+                                   (-> "#trace-submit" js/$ .click)
+                                   (.stopPropagation %))}
+       (doall (for [i (range (inc choices))]
+                [:option {:value i :key i} i]))] (str " " (tr [:game.credits "credits"]))]
+     (when (or unbeatable beat-trace)
+       (let [beat-str (if unbeatable
+                        (tr [:game.unbeatable "Make Unbeatable"])
+                        (tr [:game.beat-trace "Beat Trace"]))]
+         [:button#trace-unbeatable
+          {:on-click #(reset! !value (or unbeatable beat-trace))}
+          [:div (str beat-str " (" (or unbeatable beat-trace)) [:span {:class "anr-icon credit"}] ")"]]))
+     [:button#trace-submit {:on-click #(send-command "choice" {:choice (-> "#credit" js/$ .val str->int)})}
+      (tr [:game.ok "OK"])]]))
 
 (defn prompt-div
   [me {:keys [card msg prompt-type choices] :as prompt-state}]
@@ -1651,16 +1660,16 @@
 
        ;; otherwise choice of all present choices
        :else
-       (doall (for [{:keys [idx uuid value]} choices]
-                (when (not= value "Hide")
-                  [:button {:key idx
-                            :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
-                                           (card-highlight-mouse-out % value button-channel))
-                            :on-mouse-over
-                            #(card-highlight-mouse-over % value button-channel)
-                            :on-mouse-out
-                            #(card-highlight-mouse-out % value button-channel)}
-                   (render-message (or (not-empty (get-title value)) value))]))))]))
+       (doall (for [{:keys [idx uuid value]} choices
+                    :when (not= value "Hide")]
+                [:button {:key idx
+                          :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
+                                         (card-highlight-mouse-out % value button-channel))
+                          :on-mouse-over
+                          #(card-highlight-mouse-over % value button-channel)
+                          :on-mouse-out
+                          #(card-highlight-mouse-out % value button-channel)}
+                 (render-message (or (not-empty (get-title value)) value))])))]))
 
 (defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
   [:div.panel.blue-shade

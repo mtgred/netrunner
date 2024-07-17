@@ -3436,6 +3436,30 @@
       (run-continue-until state :movement)
       (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))
 
+(deftest mti-mwekundu-life-improved-doesnt-erase-trojans
+  (do-game
+    (new-game {:corp {:id "Mti Mwekundu: Life Improved"
+                      :hand ["Komainu" "Vanilla"]}
+               :runner {:id "Rielle \"Kit\" Peddler: Transhuman"
+                        :hand ["Ika" "Easy Mark"]}})
+    (play-from-hand state :corp "Komainu" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ika")
+    (let [ika (get-program state 0)
+          kom (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp kom)
+      (run-continue-until state :encounter-ice)
+      (card-ability state :runner ika 0) ; host on a piece of ice
+      (click-card state :runner (refresh kom))
+      (let [ika (first (:hosted (refresh kom)))]
+        (is (= "Ika" (:title ika)))
+        (run-continue state :movement)
+        (run-continue state)
+        (click-prompt state :corp "Yes")
+        (click-card state :corp "Vanilla")
+        (is (same-card? (first (:hosted (get-ice state :hq 1))) (refresh ika)) "Ika still around")))))
+
 (deftest mti-mwekundu-life-improved-bogus-prompt-when-no-ice-in-hand
     ;; Bogus prompt when no ice in hand
     (do-game

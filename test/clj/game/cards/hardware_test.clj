@@ -925,6 +925,19 @@
     (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
+(deftest brain-chip-vs-undo-click
+  (do-game
+    (new-game {:runner {:hand ["Brain Chip"]}
+               :corp {:hand ["City Works Project"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Brain Chip")
+    (is (changed?
+          [(hand-size :runner) 3 (core/available-mu state) 3]
+          (run-empty-server state :hq)
+          (click-prompt state :runner "Steal")))
+    (is (changed? [(hand-size :runner) -3 (core/available-mu state) -3]
+                  (core/command-undo-click state :runner)))))
+
 (deftest buffer-drive-the-player-may-decline-to-move-a-card-to-the-bottom-of-the-stack
     ;; The player may decline to move a card to the bottom of the stack
     (do-game
@@ -2480,6 +2493,37 @@
       (run-continue state)
       (is (not-empty (get-hardware state)) "Hippo installed")
       (is (no-prompt? state :runner) "no prompt")))
+
+(deftest hippo-full-impl-test
+      ;; Hippo shouldn't fire after the Runner has broken all subs on an outermost ice, that was then shifted inwards
+    (do-game
+      (new-game {:corp {:deck ["Thimblerig" "Quandary" "Ice Wall"]
+                        :credits 15}
+                 :runner {:deck ["Unity" "Hippo"]
+                          :credits 15}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (play-from-hand state :corp "Quandary" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hippo")
+      (play-from-hand state :runner "Unity")
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (click-prompt state :runner "No")
+      (run-continue state)
+      (click-prompt state :corp "Yes")
+      (click-card state :corp (get-ice state :hq 0))
+      (run-jack-out state)
+      (run-on state "R&D")
+      (rez state :corp (get-ice state :rd 0))
+      (run-continue state)
+      (card-ability state :runner (get-program state 0) 1)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner "End the run")
+      (is (not= (-> (get-runner) :prompt first :msg) "Remove Hippo from the game to trash Quandary?"))))
 
 (deftest hippo-can-t-be-used-after-first-ice-issue-4792
     ;; Can't be used after first ice. Issue #4792

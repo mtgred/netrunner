@@ -26,10 +26,10 @@
 
 (defn charge-ability
   "Creates a charge prompt (if there is a valid target) to charge a card once"
-  ([state side eid card]
-   (charge-ability state side eid card 1))
-  ([state side eid card n]
-   (if (can-charge state side)
+  ([state side]
+   (charge-ability state side 1))
+  ([state side n]
+   (when (can-charge state side)
      {:waiting-prompt true
       :prompt "Choose an installed card"
       :choices {:card #(can-charge state side %)}
@@ -37,5 +37,4 @@
       :msg (msg "charge " (:title target) (when (> n 1) (str n " times")))
       :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to charge a card"))
                              (effect-completed eid))
-      :effect (req (charge-card state side eid target n))}
-     (effect-completed state side eid))))
+      :effect (req (charge-card state side eid target n))})))

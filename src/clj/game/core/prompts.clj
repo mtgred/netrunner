@@ -75,7 +75,7 @@
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
    Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
-  ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link targets]}]
+  ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link targets unbeatable beat-trace]}]
    (let [prompt (if (string? message) message (message state side eid card targets))
          corp-credits (corp-credits eid)
          runner-credits (runner-credits eid)
@@ -92,6 +92,8 @@
                   :base base
                   :bonus bonus
                   :strength strength
+                  :unbeatable unbeatable
+                  :beat-trace beat-trace
                   :link link}]
      (add-to-prompt-queue state side newitem))))
 

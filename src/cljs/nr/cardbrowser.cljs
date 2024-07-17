@@ -303,7 +303,9 @@
   [card show-extra-info]
   (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
-        uniq (when (:uniqueness card) "◇ ")]
+        uniq (when (:uniqueness card) "◇ ")
+        subtypes (or (when (seq (:subtypes card)) (s/join " - " (:subtypes card))) (:subtype card))
+        impl (when (and (:implementation card) (not= (:implementation card) "full")) (:implementation card))]
     [:div
      [:h4 uniq title icon
       (when-let [influence (:factioncost card)]
@@ -330,9 +332,12 @@
      (when-let [influence-limit (:influencelimit card)]
        [:div.heading (str (tr [:card-browser.inf-limit "Influence limit"]) ": " influence-limit)])
 
+     (when impl
+       [:div.heading (str (tr [:card-browser.implementation-note "Implementation note"]) ": " impl)])
+
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
-       (if (empty? (:subtype card)) "" (str ": " (:subtype card)))]
+       (if-not subtypes "" (str ": " subtypes))]
       [:pre (render-icons (tr-data :text (get @all-cards (:title card))))]
 
       (when show-extra-info

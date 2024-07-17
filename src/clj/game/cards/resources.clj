@@ -67,7 +67,7 @@
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? remote->name target-server unknown->kw
                               zone->name zones->sorted-names]]
@@ -979,8 +979,7 @@
 (defcard "Daeg, First Net-Cat"
   (let [ability {:async true
                  :interactive (req true)
-                 :msg "charge"
-                 :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]
+                 :effect (effect (continue-ability (charge-ability state side) card nil))}]
     {:events [(assoc ability :event :agenda-scored)
               (assoc ability :event :agenda-stolen)]}))
 
@@ -1536,7 +1535,12 @@
                             (continue-ability state side ab card targets)))}]})
 
 (defcard "Guru Davinder"
-  {:flags {:cannot-pay-net true}
+  {:static-abilities [{:type :cannot-pay-net
+                       :value true}
+                      {:type :cannot-pay-meat
+                       :value true}
+                      {:type :cannot-pay-brain
+                       :value true}]
    :events [{:event :pre-damage
              :req (req (and (#{:meat :net} (:type context))
                             (pos? (:amount context))))
@@ -2597,6 +2601,7 @@
                 :msg "gain 1 [Credits] and draw 1 card"
                 :async true
                 :effect (req (wait-for (gain-credits state side 1)
+                                       (play-sfx state side "professional-contacts")
                                        (draw state side eid 1)))}]})
 
 (defcard "Psych Mike"
@@ -2894,7 +2899,7 @@
                                :label "Take 1 [Credits] (start of turn)"
                                :req (req (and (:runner-phase-12 @state)
                                               (pos? (get-counters card :credit))))
-                               :msg "take 1 [Credits]"
+                               :msg "gain 1 [Credits]"
                                :async true
                                :effect (req (add-counter state side card :credit -1)
                                          (gain-credits state side eid 1))}]
@@ -2977,7 +2982,7 @@
                 :req (req (can-charge state side))
                 :cost [(->c :trash-can)]
                 :async true
-                :effect (effect (continue-ability (charge-ability state side eid card) card nil))}]})
+                :effect (effect (continue-ability (charge-ability state side) card nil))}]})
 
 (defcard "Street Magic"
   (letfn [(runner-break [unbroken-subs]

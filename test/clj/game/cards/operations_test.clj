@@ -1535,27 +1535,17 @@
 (deftest exchange-of-information
   ;; Exchange of Information
   (do-game
-      (new-game {:corp {:deck ["Exchange of Information"
-                               "Market Research"
-                               "Breaking News"
-                               "Project Beale"
-                               "Explode-a-palooza"]}})
-      (score-agenda state :corp (find-card "Market Research" (:hand (get-corp))))
-      (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
-      (is (= 2 (count-tags state)) "Runner gained 2 tags")
-      (take-credits state :corp)
-      (is (zero? (count-tags state)) "Runner lost 2 tags")
-      (core/steal state :runner (make-eid state) (find-card "Project Beale" (:hand (get-corp))))
-      (core/steal state :runner (make-eid state) (find-card "Explode-a-palooza" (:hand (get-corp))))
-      (take-credits state :runner)
-      (is (= 4 (:agenda-point (get-runner))))
-      (is (= 3 (:agenda-point (get-corp))))
-      (gain-tags state :runner 1)
-      (play-from-hand state :corp "Exchange of Information")
-      (click-card state :corp (find-card "Project Beale" (:scored (get-runner))))
-      (click-card state :corp (find-card "Breaking News" (:scored (get-corp))))
-      (is (= 3 (:agenda-point (get-runner))))
-      (is (= 4 (:agenda-point (get-corp))))))
+    (new-game {:corp {:hand ["Exchange of Information"]
+                      :score-area ["Market Research" "Breaking News"]}
+               :runner {:score-area ["Project Beale" "Explode-a-palooza"]}})
+    (is (= 4 (:agenda-point (get-runner))))
+    (is (= 3 (:agenda-point (get-corp))))
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "Project Beale" (:scored (get-runner))))
+    (click-card state :corp (find-card "Breaking News" (:scored (get-corp))))
+    (is (= 3 (:agenda-point (get-runner))))
+    (is (= 4 (:agenda-point (get-corp))))))
 
 (deftest exchange-of-information-swapping-a-just-scored-breaking-news-keeps-the-tags
     ;; Swapping a just scored Breaking News keeps the tags
@@ -2711,6 +2701,32 @@
     (click-prompt state :runner "Steal")
     (is (last-log-contains? state "Media Blitz is trashed") "Media Blitz should be trashed")))
 
+(deftest media-blitz-isnt-so-cursed-after-all
+  (do-game
+    (new-game {:corp {:hand ["Ad Blitz" "Media Blitz" "Bladderwort"]
+                      :discard ["NGO Front"]
+                      :credits 10
+                      :id "Spark Agency: Worldswide Reach"}
+               :runner {:score-area ["Rebranding Team"]}})
+    (play-from-hand state :corp "Bladderwort" "New remote")
+    (let [bla (get-content state :remote1 0)]
+      (rez state :corp bla)
+      (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
+      (play-from-hand state :corp "Media Blitz")
+      (click-card state :corp "Rebranding Team")
+      (is (has-subtype? (refresh bla) "Advertisement") "Gained advertisement")
+      (core/gain state :corp :click 10)
+      (play-from-hand state :corp "Ad Blitz")
+      (is (changed? [(:credit (get-runner)) -1]
+                    (click-prompt state :corp "1")
+                    (click-card state :corp "NGO Front")
+                    (click-prompt state :corp "New remote"))
+          "Runner lost 1 from first advertisement rez!")
+      (core/move state :corp (first (get-in @state [:corp :current])) :discard)
+      (core/fake-checkpoint state)
+      (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
+      (is (= "Media Blitz" (:title (second (:discard (get-corp)))))))))
+
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
   (do-game
@@ -3627,7 +3643,7 @@
       (click-card state :corp (find-card "Project Vitruvius" (:discard (get-corp))))
       (click-prompt state :corp "New remote")
       (is (not(:seen (get-content state :remote1 0))) "Agenda is facedown")
-      (is (last-log-contains? state "Corp uses Restore to install Project Vitruvius from Archives.") "Should write correct log")))
+      (is (last-n-log-contains? state 1 "uses Restore to install Project ") "Should write correct log")))
 
 (deftest restore-show-removed-count-in-log-when-installed
     ;; Show removed count in log when installed

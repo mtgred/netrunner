@@ -136,10 +136,10 @@
              :choices {:card #(and (corp-installable-type? %)
                                    (in-hand? %))}
              :async true
-             :msg (msg (corp-install-msg target))
              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card from HQ"))
                                     (continue-ability lose-click-abi card nil))
-             :effect (req (wait-for (corp-install state side target nil nil)
+             :effect (req (wait-for (corp-install state side target nil {:msg-keys {:install-source card
+                                                                                    :display-origin true}})
                                     (continue-ability state side lose-click-abi card nil)))}}))
 
 (defcard "Ad Blitz"
@@ -152,7 +152,9 @@
                                      (has-subtype? % "Advertisement")
                                      (or (in-hand? %)
                                          (in-discard? %)))}
-               :effect (req (wait-for (corp-install state side target nil {:install-state :rezzed})
+               :effect (req (wait-for (corp-install state side target nil {:install-state :rezzed
+                                                                           :msg-keys {:install-source card
+                                                                                      :display-origin true}})
                                       (continue-ability state side (ab (inc n) total) card nil)))}))]
     {:on-play
      {:prompt "How many Advertisements do you want to install and rez?"
@@ -503,6 +505,8 @@
     :effect (req (wait-for
                    (reveal state side target)
                    (corp-install state side eid target nil {:ignore-all-cost true
+                                                            :msg-keys {:install-source card
+                                                                       :display-origin true}
                                                             :install-state :rezzed-no-cost})))}})
 
 (defcard "Business As Usual"
@@ -538,7 +542,9 @@
              :change-in-game-state (req (seq (:hand corp)))
              :async true
              :effect (req (wait-for
-                            (corp-install state side target nil {:install-state :face-up})
+                            (corp-install state side target nil {:install-state :face-up
+                                                                 :msg-keys {:install-source card
+                                                                            :display-origin true}})
                             (let [agenda async-result]
                               (system-msg state side (str "hosts " (:title card) " on " (:title agenda)))
                               (install-as-condition-counter state side eid card agenda))))}
@@ -755,7 +761,8 @@
                                                    {:prompt "Choose a server"
                                                     :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state card-to-install))
                                                     :async true
-                                                    :effect (effect (corp-install eid card-to-install target nil))})
+                                                    :effect (effect (corp-install eid card-to-install target {:msg-keys {:install-source card
+                                                                                                                         :display-origin true}}))})
                                                  target nil)
                                                (end-effect state side eid card targets)))
                         :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
@@ -963,7 +970,8 @@
                                                         (in-hand? %)
                                                         (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
                                   :effect (req (wait-for
-                                                 (corp-install state side target server nil)
+                                                 (corp-install state side target server {:msg-keys {:install-source card
+                                                                                                    :display-origin true}})
                                                  (let [server (remote->name (second (:zone async-result)))]
                                                    (if (< n ((get-x-fn) state side eid card targets))
                                                      (continue-ability state side (install-cards server (inc n)) card nil)
@@ -1081,12 +1089,11 @@
                                                    (not (operation? %))
                                                    (in-discard? %))}
                              :effect (req (wait-for
-                                            (corp-install state side target nil nil)
-                                            (do (system-msg state side (str "uses " (:title card) " to "
-                                                                            (corp-install-msg target)))
-                                                (if (< n 2)
-                                                  (continue-ability state side (fhp (inc n)) card nil)
-                                                  (effect-completed state side eid)))))})]
+                                            (corp-install state side target nil {:msg-keys {:install-source card
+                                                                                            :display-origin true}})
+                                            (if (< n 2)
+                                              (continue-ability state side (fhp (inc n)) card nil)
+                                              (effect-completed state side eid))))})]
     {:on-play
      {:async true
       :change-in-game-state (req (seq (:discard corp)))
@@ -1198,10 +1205,10 @@
                                                     (corp-installable-type? %)
                                                     (in-hand? %))}
                               :async true
-                              :msg (msg (corp-install-msg target))
                               :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card from HQ"))
                                                      (effect-completed eid))
-                              :effect (req (wait-for (corp-install state :corp (make-eid state eid) target nil nil)
+                              :effect (req (wait-for (corp-install state :corp (make-eid state eid) target nil {:msg-keys {:install-source card
+                                                                                                                           :display-origin true}})
                                                      (let [installed-card async-result]
                                                        (if (not (zero? (count-tags state)))
                                                          (continue-ability
@@ -1430,9 +1437,10 @@
                           (corp? %)
                           (or (in-hand? %)
                               (in-discard? %)))}
-    :msg (msg (corp-install-msg target))
     :async true
-    :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}})
+    :effect (effect (corp-install eid target nil {:ignore-install-cost true
+                                                  :msg-keys {:install-source card
+                                                             :display-origin true}}))}})
 
 (defcard "Invasion of Privacy"
   (letfn [(iop [x]
@@ -1485,10 +1493,10 @@
                                                (asset? %)
                                                (upgrade? %))
                                            (in-discard? %))}
-                     :effect (req (wait-for (corp-install state side (make-eid state {:source card :source-type :corp-install})
-                                                          target nil nil)
-                                            (system-msg state side (str "uses " (:title card) " to place 2 advancements counters on the installed card"))
-                                            (add-prop state side eid async-result :advance-counter 2 {:placed true})))}]
+                     :effect (req (corp-install state side (assoc eid :source card :source-type :corp-install)
+                                                target nil {:counters {:advance-counter 2}
+                                                            :msg-keys {:install-source card
+                                                                       :display-origin true}}))}]
     {:on-play
      {:prompt "Choose any number of cards in HQ to trash"
       :rfg-instead-of-trashing true
@@ -1540,10 +1548,10 @@
                                                     (corp-installable-type? %)
                                                     (in-hand? %))}
                               :async true
-                              :msg (msg (corp-install-msg target))
                               :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                      (effect-completed eid))
-                              :effect (effect (corp-install eid target nil nil))}
+                              :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                                       :display-origin true}}))}
                              card nil)))}})
 
 (defcard "Liquidation"
@@ -1638,17 +1646,13 @@
 (defcard "Media Blitz"
   {:on-play
    {:async true
-    :effect
-    (effect
-      (continue-ability
-        {:prompt "Choose an agenda in the runner's score area"
-         :choices {:card #(and (agenda? %)
-                               (is-scored? state :runner %))}
-         :change-in-game-state (req (seq (:scored runner)))
-         :effect (req (update! state side (assoc card :title (:title target) :abilities (ability-init (card-def target))))
-                      (card-init state side (get-card state card) {:resolve-effect false :init-data true})
-                      (update! state side (assoc (get-card state card) :title "Media Blitz")))}
-        card nil))}})
+    :prompt "Choose an agenda in the runner's score area"
+    :choices {:req (req (and (agenda? target)
+                             (is-scored? state :runner target)))}
+    :change-in-game-state (req (seq (:scored runner)))
+    :effect (req (update! state side (assoc card :title (:title target) :abilities (ability-init (card-def target))))
+                 (card-init state side (get-card state card) {:resolve-effect false :init-data true})
+                 (update! state side (assoc (get-card state card) :title "Media Blitz")))}})
 
 (defcard "Medical Research Fundraiser"
   {:on-play
@@ -1699,9 +1703,10 @@
 
 (defcard "Mitosis"
   (letfn [(mitosis-ability [state side card eid target-cards]
-            (wait-for (corp-install state side (first target-cards) "New remote" nil)
+            (wait-for (corp-install state side (first target-cards) "New remote" {:counters {:advance-counter 2}
+                                                                                  :msg-keys {:install-source card
+                                                                                             :display-origin true}})
                       (let [installed-card async-result]
-                        (add-prop state side installed-card :advance-counter 2 {:placed true})
                         (register-turn-flag!
                           state side
                           card :can-rez
@@ -1726,9 +1731,6 @@
                             (corp? %)
                             (in-hand? %))
                 :max 2}
-      :msg (msg (if (= 2 (count targets))
-                  "install 2 cards from HQ in new remote servers, and place two advancements on each of them"
-                  "install a card from HQ in a new remote server, and place two advancements on it"))
       :async true
       :effect (req (mitosis-ability state side card eid targets))}}))
 
@@ -1740,9 +1742,10 @@
                           (corp? %)
                           (in-hand? %))}
     :async true
-    :effect (req (wait-for (corp-install state side target "New remote" nil)
+    :effect (req (wait-for (corp-install state side target "New remote" {:counters {:advance-counter 3}
+                                                                         :msg-keys {:install-source card
+                                                                                    :display-origin true}})
                            (let [installed-card async-result]
-                             (add-prop state side installed-card :advance-counter 3 {:placed true})
                              (register-persistent-flag!
                                state side
                                installed-card :can-rez
@@ -1923,10 +1926,10 @@
    :events [{:event :subroutines-broken
              :condition :hosted
              :async true
-             :req (req (and (same-card? target (:host card))
-                            (empty? (remove :broken (:subroutines target)))))
-             :msg (msg "trash itself and " (card-str state target))
-             :effect (effect (trash :corp eid target {:unpreventable true :cause-card card}))}]})
+             :req (req (and (same-card? (:ice context) (:host card))
+                            (:all-subs-broken context)))
+             :msg (msg "trash itself and " (card-str state (:ice context)))
+             :effect (effect (trash :corp eid (:ice context) {:unpreventable true :cause-card card}))}]})
 
 (defcard "Patch"
   {:on-play {:choices {:card #(and (ice? %)
@@ -1994,9 +1997,9 @@
                                                             card nil)
                                                           (continue-ability
                                                             state side
-                                                            {:msg (msg (corp-install-msg target-card))
-                                                             :async true
-                                                             :effect (effect (corp-install eid target-card nil nil))}
+                                                            {:async true
+                                                             :effect (effect (corp-install eid target-card nil {:msg-keys {:install-source card
+                                                                                                                           :display-origin true}}))}
                                                             card nil))))}
                                         card nil)
                                       (effect-completed state side eid))))}})
@@ -2090,7 +2093,9 @@
             {:prompt "Choose a remote server"
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
-             :effect (effect (corp-install eid (assoc chosen :advance-counter 3) target {:ignore-all-cost true}))})]
+             :effect (effect (corp-install eid (assoc chosen :advance-counter 3) target {:ignore-all-cost true
+                                                                                         :msg-keys {:install-source card
+                                                                                                    :display-origin true}}))})]
     {:on-play
      {:prompt "Choose a piece of ice in HQ to install"
       :change-in-game-state (req (seq (:hand corp)))
@@ -2143,7 +2148,9 @@
              :waiting-prompt true
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
-             :effect (effect (corp-install eid chosen target nil))})]
+             :effect (effect (corp-install eid chosen target {:msg-keys {:install-source card
+                                                                         :index (first (positions #{chosen} (take 5 (:deck corp))))
+                                                                         :display-origin true}}))})]
     {:on-play
      {:async true
       :change-in-game-state (req (seq (:deck corp)))
@@ -2166,7 +2173,6 @@
                   (cancellable (filter #(and (corp-installable-type? %)
                                              (some #{"New remote"} (installable-servers state %)))
                                        top-five))
-                  :msg "install a card from the top of the R&D in a remote server"
                   :effect (effect (continue-ability (install-card target) card nil))
                   :cancel-effect (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
                                          (effect-completed eid))}
@@ -2275,7 +2281,8 @@
                                     (corp-installable-type? %)
                                     (in-hand? %))}
               :async true
-              :effect (effect (corp-install eid target nil nil))}]
+              :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                       :display-origin true}}))}]
         can-install? (fn [hand]
                        (seq (remove #(or (agenda? %)
                                          (operation? %))
@@ -2324,7 +2331,9 @@
              :choices {:card #(and (corp? %)
                                    (not (operation? %))
                                    (in-hand? %))}
-             :effect (req (wait-for (corp-install state side target nil {:ignore-all-cost true})
+             :effect (req (wait-for (corp-install state side target nil {:ignore-all-cost true
+                                                                         :msg-keys {:install-source card
+                                                                                    :display-origin true}})
                                     (if (< n 2)
                                       (continue-ability state side (replant (inc n)) card nil)
                                       (effect-completed state side eid))))})]
@@ -2347,16 +2356,15 @@
                           (in-discard? %))}
     :async true
     :effect (req (wait-for
-                   (corp-install state side target nil {:install-state :rezzed})
-                   (let [seen (assoc target :seen true)]
-                     (system-msg state side (str "uses " (:title card) " to "
-                                                 (corp-install-msg seen)))
-                     (let [leftover (filter #(= (:title target) (:title %)) (-> @state :corp :discard))]
-                       (when (seq leftover)
-                         (doseq [c leftover]
-                           (move state side c :rfg))
-                         (system-msg state side (str "removes " (count leftover) " copies of " (:title target) " from the game"))))
-                     (effect-completed state side eid))))}})
+                   (corp-install state side target nil {:install-state :rezzed
+                                                        :msg-keys {:install-source card
+                                                                   :display-origin true}})
+                   (let [leftover (filter #(= (:title target) (:title %)) (-> @state :corp :discard))]
+                     (when (seq leftover)
+                       (doseq [c leftover]
+                         (move state side c :rfg))
+                       (system-msg state side (str "removes " (count leftover) " copies of " (:title target) " from the game"))))
+                   (effect-completed state side eid)))}})
 
 (defcard "Restoring Face"
   {:on-play
@@ -2591,7 +2599,9 @@
                              :effect (req (wait-for
                                             (reveal state side chosen-ice)
                                             (shuffle! state side :deck)
-                                            (corp-install state side eid chosen-ice target {:cost-bonus -3})))})
+                                            (corp-install state side eid chosen-ice target {:cost-bonus -3
+                                                                                            :msg-keys {:install-source card
+                                                                                                       :display-origin true}})))})
                           card nil))}
                      card nil)
                    (do (shuffle! state side :deck)
@@ -2634,7 +2644,8 @@
                :choices {:card #(and (corp? %)
                                      (not (operation? %))
                                      (in-hand? %))}
-               :effect (req (wait-for (corp-install state side target nil nil)
+               :effect (req (wait-for (corp-install state side target nil {:msg-keys {:install-source card
+                                                                                      :display-origin true}})
                                       (continue-ability state side (shelper (inc n)) card nil)))}))]
     {:on-play
      {:async true
@@ -3148,6 +3159,8 @@
                  :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                         (effect-completed eid))
                  :effect (effect (corp-install eid target nil {:ignore-all-cost true
+                                                               :msg-keys {:install-source card
+                                                                          :display-origin true}
                                                                :install-state :rezzed-no-cost}))}]
     {:on-play {:req (req tagged)
                :msg (msg "trash " (:title target))
@@ -3176,11 +3189,11 @@
                         :choices {:card #(and (in-hand? %)
                                               (corp? %)
                                               (not (operation? %)))}
-                        :msg (msg (corp-install-msg target))
                         :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                (effect-completed eid))
                         :async true
-                        :effect (effect (corp-install eid target nil nil))}
+                        :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                                 :display-origin true}}))}
                        card nil))))}})
 
 (defcard "Under the Bus"

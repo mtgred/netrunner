@@ -170,6 +170,21 @@
   (doseq [ctitle cards]
     (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
+(defn starting-score-areas
+  "Moves all cards that should be in the score areas zones into their respective score areas"
+  [state score-area-corp score-area-runner]
+  (when (or (seq score-area-corp) (seq score-area-runner))
+    (let [hand-size (count (get-in @state [:corp :hand]))]
+      (doseq [c (get-in @state [:corp :hand])]
+        (core/move state :corp c :deck))
+      (doseq [ctitle score-area-corp]
+        (let [c (core/move state :corp (find-card ctitle (get-in @state [:corp :deck])) :scored)]
+          (core/card-init state :corp c {:resolve-effect false :init-data true})))
+      (doseq [ctitle score-area-runner]
+        (core/move state :runner (find-card ctitle (get-in @state [:corp :deck])) :scored {:force true}))
+      (doseq [c (take hand-size (get-in @state [:corp :deck]))]
+        (core/move state :corp c :hand)))))
+
 (defn ensure-no-prompts [state]
   (is' (no-prompt? state :corp) "Corp has prompts open")
   (is' (no-prompt? state :runner) "Runner has prompts open"))
@@ -222,10 +237,14 @@
   [{:keys [corp runner options]}]
   {:corp {:deck (or (transform "Corp" (conj (:deck corp)
                                             (:hand corp)
+                                            (:score-area runner)
+                                            (:score-area corp)
                                             (:discard corp)))
                     (transform "Corp" (qty "Hedge Fund" 3)))
           :hand (when-let [hand (:hand corp)]
                   (flatten hand))
+          :score-area (when-let [scored (:score-area corp)]
+                    (flatten scored))
           :discard (when-let [discard (:discard corp)]
                      (flatten discard))
           :identity (when-let [id (or (:id corp) (:identity corp))]
@@ -238,6 +257,8 @@
                       (transform "Runner" (qty "Sure Gamble" 3)))
             :hand (when-let [hand (:hand runner)]
                     (flatten hand))
+            :score-area (when-let [scored (:score-area runner)]
+                    (flatten scored))
             :discard (when-let [discard (:discard runner)]
                        (flatten discard))
             :identity (when-let [id (or (:id runner) (:identity runner))]
@@ -275,6 +296,7 @@
          (click-prompt state :runner "Keep"))
        (when-not dont-start-turn (core/start-turn state :corp nil)))
      ;; Gotta move cards where they need to go
+     (starting-score-areas state (:score-area corp) (:score-area runner))
      (doseq [side [:corp :runner]]
        (let [side-map (if (= :corp side) corp runner)]
          (when-let [hand (:hand side-map)]

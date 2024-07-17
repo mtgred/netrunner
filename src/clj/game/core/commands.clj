@@ -145,7 +145,7 @@
 (defn rez-all
   [state side eid cards]
   (if-let [c (first cards)]
-    (wait-for (rez state side c {:ignore-cost :all-costs :force true})
+    (wait-for (rez state side c {:ignore-cost :all-costs :force true :silent (next cards)})
               (rez-all state side eid (next cards)))
     (effect-completed state side eid)))
 
@@ -208,6 +208,28 @@
     (remove-from-prompt-queue state side prompt)
     (swap! state dissoc-in [side :selected])
     (effect-completed state side (:eid prompt))))
+
+(defn command-install
+  ([state side] (command-install state side nil))
+  ([state side {:keys [ignore-all-cost] :as args}]
+   (resolve-ability
+     state side
+     (if (= side :corp)
+       {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+        :choices {:card #(and (corp? %)
+                              (not (installed? %)))}
+        :async true
+        :effect (req (corp-install state side eid target nil {:ignore-all-cost ignore-all-cost}))}
+       {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+        :choices {:card #(and (runner? %)
+                              (not (installed? %)))}
+        :async true
+        :effect (req (runner-install state side eid target {:ignore-all-cost ignore-all-cost}))})
+     (make-card {:title (str "/install" (when ignore-all-cost "-free") " command")}) nil)))
+
+(defn command-install-free
+  [state side]
+  (command-install state side {:ignore-all-cost true}))
 
 (defn command-install-ice
   [state side]
@@ -395,7 +417,9 @@
                                       :delta (- (constrain-value value -1000 1000)
                                                 (get-in @%1 [%2 :hand-size :total]))})
         "/host"       command-host
+        "/install" command-install
         "/install-ice" command-install-ice
+        "/install-free" command-install-free
         "/jack-out"   (fn [state side]
                         (when (and (= side :runner)
                                    (or (:run @state)

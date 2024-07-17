@@ -34,9 +34,9 @@
 (defmethod ws/event-msg-handler :chat/blocked
   [{{:keys [reason]} :?data}]
   (let [reason-str (case reason
-                     :rate-exceeded "Rate exceeded"
-                     :length-exceeded "Length exceeded")]
-    (non-game-toast (str "Message Blocked" (when reason-str (str ": " reason-str)))
+                     :rate-exceeded (tr [:chat.rate-exceeded "Rate exceeded"])
+                     :length-exceeded (tr [:chat.length-exceeded "Length exceeded"]))]
+    (non-game-toast (tr [:chat.message-blocked] reason-str)
                     "warning" nil)))
 
 (defn current-block-list []

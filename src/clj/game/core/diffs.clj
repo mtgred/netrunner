@@ -200,19 +200,34 @@
    :base
    :bonus
    :strength
+   :unbeatable
+   :beat-trace
    :link
    :corp-credits
    :runner-credits])
 
 (defn prompt-summary
   [prompt same-side?]
-  (if same-side?
-    (not-empty (select-non-nil-keys prompt prompt-keys))
-    nil))
+  (when same-side?
+    (-> prompt
+        (update :card #(not-empty (select-non-nil-keys % card-keys)))
+        (update :choices (fn [choices]
+                           (if (sequential? choices)
+                             (->> choices
+                                  (mapv
+                                   (fn [choice]
+                                     (if (-> choice :value :cid)
+                                       (update choice :value select-non-nil-keys card-keys)
+                                       choice)))
+                                  (not-empty))
+                             choices)))
+        (select-non-nil-keys prompt-keys)
+        (not-empty))))
 
 (defn toast-summary
   [toast same-side?]
-  (if same-side? toast nil))
+  (when same-side?
+    toast))
 
 (def player-keys
   [:aid

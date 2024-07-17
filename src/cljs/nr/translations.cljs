@@ -89,7 +89,8 @@
      :delete "Delete Message"
      :delete-all "Delete All Messages From User"
      :block "Block User"
-     :cancel "Cancel"}
+     :cancel "Cancel"
+     :message-blocked (fn [[reason-str]] (str "Message Blocked" (when reason-str (str ": " reason-str))))}
     :nav
     {:chat "Chat"
      :cards "Cards"
@@ -321,9 +322,9 @@
    :clicks-gained "Clicks Gained"
    :credits-gained "Credits Gained"
    :credits-spent "Credits Spent"
-   :credits-click "Credits by Click"
+   :credits-click "Credits by the Basic Action"
    :cards-drawn "Cards Drawn"
-   :cards-click "Cards Drawn by Click"
+   :cards-click "Cards Drawn by the Basic Action"
    :damage-done "Damage Done"
    :cards-rezzed "Cards Rezzed"
    :tags-gained "Tags Gained"

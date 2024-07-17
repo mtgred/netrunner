@@ -57,7 +57,7 @@
     (when (:started game)
       (let [c (count (:spectators game))]
         (when (pos? c)
-          [:div.spectators-count.float-right (str c " Spectator" (when (< 1 c) "s"))
+          [:div.spectators-count.float-right (tr [:game.spec-count] c)
            [:div.blue-shade.spectators
             (for [p (:spectators game)]
               ^{:key (get-in p [:user :_id])}
