@@ -278,7 +278,7 @@
     (map add-deck cards)))
 
 (defn new-deck
-  ([s side] (new-deck s side "New Deck" "standard" [] nil))
+  ([s side] (new-deck s side (tr [:deck-builder.new-deck "New Deck"]) "standard" [] nil))
   ([s side name format cards id]
   (let [old-deck (:deck @s)
         identities (->> (side-identities side)

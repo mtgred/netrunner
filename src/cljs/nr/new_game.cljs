@@ -88,8 +88,8 @@
    [singleton-only options fmt-state]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
-    [:p "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]
-    [:p "1) Nova Initiumia: Catalyst & Impetus" " 2) Ampere: Cybernetics For Anyone"]]])
+    [:p (tr [:lobby.singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."])]
+    [:p (tr [:lobby.singleton-example "1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone"])]]])
 
 (defn allow-spectators [options]
   [:p
@@ -108,9 +108,8 @@
      (tr [:lobby.hidden "Make players' hidden information visible to spectators"])]]
    [:div.infobox.blue-shade
     {:style {:display (if (:spectatorhands @options) "block" "none")}}
-    [:p "This will reveal both players' hidden information to ALL spectators of your game, "
-     "including hand and face-down cards."]
-    [:p "We recommend using a password to prevent strangers from spoiling the game."]]])
+    [:p (tr [:lobby.hidden-details "This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards."])]
+    [:p (tr [:lobby.hidden-password "We recommend using a password to prevent strangers from spoiling the game."])]]])
 
 (defn password-input [options]
   [:<>
@@ -150,7 +149,7 @@
                           :placeholder (tr [:lobby.timer-length "Timer length (minutes)"])}]])
    [:div.infobox.blue-shade
     {:style {:display (if (:timed @options) "block" "none")}}
-    [:p "Timer is only for convenience: the game will not stop when timer runs out."]]])
+    [:p (tr [:lobby.timed-game-details "Timer is only for convenience: the game will not stop when timer runs out."])]]])
 
 (defn save-replay [options]
   [:<>
@@ -162,11 +161,9 @@
      (str "🟢 " (tr [:lobby.save-replay "Save replay"]))]]
    [:div.infobox.blue-shade
     {:style {:display (if (:save-replay @options) "block" "none")}}
-    [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
-     " The file is available only after the game is finished."]
-    [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
-    [:p [:b "BETA Functionality:"] " Be aware that we might need to reset the saved replays, so " [:b "make sure to download games you want to keep."]
-     " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]])
+    [:p (tr [:lobby.save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."])]
+    [:p (tr [:lobby.save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."])]
+    [:p (tr [:lobby.save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."])]]])
 
 (defn api-access [options user]
   [:<>
@@ -182,7 +179,7 @@
          (str " " (tr [:lobby.api-requires-key "(Requires an API Key in Settings)"])))]])
    [:div.infobox.blue-shade
     {:style {:display (if (:api-access @options) "block" "none")}}
-    [:p "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"]]])
+    [:p (tr [:lobby.api-access-details "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"])]]])
 
 (defn options-section [options user]
   [:section

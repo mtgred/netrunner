@@ -20,7 +20,7 @@
                              :deck-id (:_id deck)}]
                1500
                #(when (sente/cb-error? %)
-                  (non-game-toast "Cannot select that deck" "error")))
+                  (non-game-toast (tr [:lobby.select-error "Cannot select that deck"]) "error")))
   (reagent-modals/close-modal!))
 
 (defn select-deck-modal [user current-game]
@@ -82,7 +82,7 @@
 (defn singleton-info-box [current-game]
   (when (:singleton @current-game)
     [:div.infobox.blue-shade
-     [:p "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."]]))
+     [:p (tr [:lobby.singleton-restriction "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."])]]))
 
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
@@ -154,13 +154,9 @@
         [:<>
          [:li (str "🟢 " (tr [:lobby.save-replay "Save replay"]))]
          [:div.infobox.blue-shade {:style {:display (if save-replay "block" "none")}}
-          [:p "This will save a replay file of this match with open information (e.g. open cards in hand)."
-           " The file is available only after the game is finished."]
-          [:p "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]
-          [:p [:b "BETA Functionality:"]
-           " Be aware that we might need to reset the saved replays, so "
-           [:b "make sure to download games you want to keep."]
-           " Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]])
+          [:p (tr [:lobby.save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."])]
+          [:p (tr [:lobby.save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."])]
+          [:p (tr [:lobby.save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."])]]])
       (when api-access
         [:li (tr [:lobby.api-access "Allow API access to game information"])])]]))
 
