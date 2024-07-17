@@ -2251,12 +2251,11 @@
                            (or (in-hand? %)
                                (in-discard? %))
                            (has-subtype? % "Bioroid"))}
-     :effect (req (wait-for (corp-install state side (make-eid state eid)
-                                          target (zone->name (target-server run))
+     :effect (req (wait-for (corp-install state side target (zone->name (target-server run))
                                           {:ignore-all-cost true
                                            :install-state :rezzed-no-cost
                                            :index (card-index state card)})
-                            (let [new-ice async-result]
+                            (let [new-ice (:card async-result)]
                               (register-events
                                 state side card
                                 [{:event :run-ends

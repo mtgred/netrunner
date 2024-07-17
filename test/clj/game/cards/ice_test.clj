@@ -3526,6 +3526,43 @@
         (is (not (rezzed? (get-ice state :hq 0))))
         (is (find-card "Howler" (:discard (get-corp))))))))
 
+(deftest howler-runner-can-jack-out
+  (do-game
+    (new-game {:corp {:hand ["Howler" "Eli 1.0"]}})
+    (play-from-hand state :corp "Howler" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (fire-subs state (get-ice state :hq 0))
+    (click-card state :corp "Eli 1.0")
+    (is (find-card "Eli 1.0" (get-ice state :hq)))
+    (run-continue state :movement)
+    (run-jack-out state)
+    (is (no-prompt? state :runner))
+    (is (not (:run @state)))
+    (is (find-card "Howler" (:discard (get-corp))))))
+
+(deftest howler-runner-can-break-ice
+  (do-game
+    (new-game {:corp {:hand ["Howler" "Eli 1.0"]}
+               :runner {:hand ["Corroder"]
+                        :credits 10}})
+    (play-from-hand state :corp "Howler" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Corroder")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (fire-subs state (get-ice state :hq 0))
+    (click-card state :corp "Eli 1.0")
+    (is (find-card "Eli 1.0" (get-ice state :hq)))
+    (is (rezzed? (get-ice state :hq 0)) "Eli is rezzed")
+    (run-continue state :movement)
+    (run-continue-until state :encounter-ice)
+    (is (= "Eli 1.0" (:title (core/get-current-ice state))) "The runner should be encountering Eli")
+    (auto-pump-and-break state (get-program state 0))))
+
 (deftest hydra
   ;; Hydra - do an effect Runner is tagged, otherwise give Runner 1 tag
   (do-game
