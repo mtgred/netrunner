@@ -925,6 +925,19 @@
     (is (= 5 (hand-size :runner)) "Hand size reset")
     (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
+(deftest brain-chip-vs-undo-click
+  (do-game
+    (new-game {:runner {:hand ["Brain Chip"]}
+               :corp {:hand ["City Works Project"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Brain Chip")
+    (is (changed?
+          [(hand-size :runner) 3 (core/available-mu state) 3]
+          (run-empty-server state :hq)
+          (click-prompt state :runner "Steal")))
+    (is (changed? [(hand-size :runner) -3 (core/available-mu state) -3]
+                  (core/command-undo-click state :runner)))))
+
 (deftest buffer-drive-the-player-may-decline-to-move-a-card-to-the-bottom-of-the-stack
     ;; The player may decline to move a card to the bottom of the stack
     (do-game
