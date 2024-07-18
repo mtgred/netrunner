@@ -601,7 +601,7 @@
                  (not (inst/is-after (inst/now) (inst/plus-seconds last-update (- time-inactive 29)))))
         (let [uids (keep :uid (get-players-and-spectators lobby))]
           (doseq [uid uids]
-            (when uid (ws/chsk-send! uid [:game/timeout-soon gameid]))))))
+            (when uid (ws/chsk-send! uid [:game/timeout-soon gameid])))))
       (when (and gameid (inst/is-after (inst/now) (inst/plus-seconds last-update time-inactive)))
         (let [uids (keep :uid (get-players-and-spectators lobby))]
           (vreset! changed? true)
