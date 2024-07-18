@@ -32,8 +32,7 @@
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
   [state ability]
-  (when (or (:action ability)
-            (= :click (:cost/type (first (:cost ability)))))
+  (when (:action ability)
     (let [state' (dissoc @state :log :history)
           click-states (vec (take-last 4 (conj (:click-states state') state')))]
       (swap! state assoc :click-states click-states))))
