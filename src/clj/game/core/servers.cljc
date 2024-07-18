@@ -62,7 +62,7 @@
     :archives -3
     :rd -2
     :hq -1
-    (string->num
+    (parse-long
       (last (safe-split (str zone) #":remote")))))
 
 (defn zones->sorted-names
