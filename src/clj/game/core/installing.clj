@@ -193,10 +193,12 @@
   [state side eid moved-card]
   (let [rezzed-card (get-card state moved-card)]
     (if (rezzed? rezzed-card)
-      (checkpoint state nil eid)
+      (wait-for (checkpoint state nil)
+                (complete-with-result state side eid (get-card state moved-card)))
       (wait-for (reveal state :corp rezzed-card)
                 (system-msg state :corp (str "reveals " (card-str state rezzed-card {:visible true})))
-                (checkpoint state nil eid)))))
+                (wait-for (checkpoint state nil)
+                          (complete-with-result state side eid (get-card state moved-card)))))))
 
 (defn- corp-install-continue
   "Used by corp-install to actually install the card, rez it if it's supposed to be installed
