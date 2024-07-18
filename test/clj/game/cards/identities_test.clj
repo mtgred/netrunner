@@ -2681,7 +2681,10 @@
     (is (no-prompt? state :corp))
     (is (no-prompt? state :runner))
     (run-continue-until state :success)
-    (click-prompt state :runner "Pay 1 [Credits] to trash")))
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (nil? (:run state)) "Run ended")
+    (is (no-prompt? state :corp) "No lingering corp prompt")
+    (is (no-prompt? state :runner) "No lingering runner prompt")))
 
 (deftest jinteki-replicating-nightmare-scenarios
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
