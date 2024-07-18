@@ -6606,6 +6606,29 @@
     (run-continue state)
     (is (= 1 (count (:discard (get-corp)))) "Enigma is trashed")))
 
+(deftest spooned-works-after-not-breaking-the-first-ice
+  ;; Spooned
+  (do-game
+    (new-game {:corp {:deck ["Vanilla" "Ice Wall"]}
+               :runner {:deck ["Spooned" "Engolo"]
+                        :id "Rielle \"Kit\" Peddler: Transhuman"
+                        :credits 10}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Engolo")
+    (play-from-hand state :runner "Spooned")
+    (click-prompt state :runner "HQ")
+    (run-continue-until state :encounter-ice)
+    (click-prompt state :runner "No")
+    (run-continue-until state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (is (= '("Vanilla") (map :title (:discard (get-corp)))) "Vanilla trashed")))
+
 (deftest spot-the-prey
   ;; Spot the Prey
   (do-game
