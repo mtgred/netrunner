@@ -250,6 +250,24 @@
    :dont-start-game (:dont-start-game options)
    :format (or (:format options) :casual)})
 
+(defn stack-deck
+  "Stacks the top of the deck with the named cards in order, if possible"
+  [state side ordered-names]
+  (let [ordered-names (flatten ordered-names)
+        deck-frequencies (frequencies (map :title (get-in @state [side :deck])))]
+    (doseq [ctitle ordered-names]
+      (let [c (find-card ctitle (get-in @state [side :deck]))]
+        (is c (str "Unable to find card " ctitle " in deck while stacking deck (were any cards in the hand by mistake?)"))
+        (when c (core/move state side c :set-aside))))
+    (doseq [ctitle (reverse ordered-names)]
+      (when-let [c (find-card ctitle (get-in @state [side :set-aside]))]
+        (core/move state side c :deck {:front true})))
+    (is (= deck-frequencies (frequencies (map :title (get-in @state [side :deck]))))
+        "Deck is still composed of the same set of cards after being stacked")
+    (let [top-n-titles (map :title (take (count ordered-names) (get-in @state [side :deck])))]
+      (is (= ordered-names top-n-titles)
+          (str "Deck is (from top to bottom): " (str/join ", " ordered-names))))))
+
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
   ([] (new-game nil))

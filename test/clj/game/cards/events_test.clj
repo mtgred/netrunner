@@ -6464,19 +6464,35 @@
   (do-game
     (new-game {:corp {:hand [(qty "Hedge Fund" 5)]
                       :deck ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
-                               "DNA Tracker" "Excalibur" "Fire Wall"]}
+                             "DNA Tracker" "Excalibur" "Fire Wall"]}
                :runner {:hand ["Showing Off"]}})
-      (core/move state :corp (find-card "Accelerated Beta Test" (:deck (get-corp))) :deck)
-      (core/move state :corp (find-card "Brainstorm" (:deck (get-corp))) :deck)
-      (core/move state :corp (find-card "Chiyashi" (:deck (get-corp))) :deck)
-      (core/move state :corp (find-card "DNA Tracker" (:deck (get-corp))) :deck)
-      (core/move state :corp (find-card "Excalibur" (:deck (get-corp))) :deck)
-      (core/move state :corp (find-card "Fire Wall" (:deck (get-corp))) :deck)
+    (stack-deck state :corp ["Accelerated Beta Test" "Brainstorm" "Chiyashi"
+                             "DNA Tracker" "Excalibur" "Fire Wall"])
+    (take-credits state :corp)
+    (play-run-event state "Showing Off" :rd)
+    (is (accessing state "Fire Wall") "The accessed card is on the bottom of the deck")
+    (is (= "Accelerated Beta Test" (-> (get-corp) :deck first :title)) "The top of the deck is an entirely different card")
+    (click-prompt state :runner "No action")))
+
+(deftest showing-off-vs-medium
+  (let [deck-order ["Hedge Fund" "IPO" "Restructure" "Ice Wall" "Orion" "Extract" "Scarcity of Resources"]]
+    (do-game
+      (new-game {:corp {:hand []
+                        :deck deck-order}
+                 :runner {:hand ["Showing Off" "Medium"]}})
+      (stack-deck state :corp deck-order)
       (take-credits state :corp)
-      (play-run-event state "Showing Off" :rd)
-      (is (accessing state "Fire Wall") "The accessed card is on the bottom of the deck")
-      (is (= "Accelerated Beta Test" (-> (get-corp) :deck first :title)) "The top of the deck is an entirely different card")
-      (click-prompt state :runner "No action")))
+      (play-from-hand state :runner "Medium")
+      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (play-from-hand state :runner "Showing Off")
+      (run-continue-until state :success)
+      (click-prompt state :runner "3")
+      (dotimes [n 4]
+        (let [target-card (nth (reverse deck-order) n)]
+          (is (= (:msg (prompt-map :runner)) (str "You accessed " target-card "."))
+              (str "Accessing the card at index " n " of the bottom of the deck (" target-card ")")))
+        (click-prompt state :runner "No action"))
+      (is (no-prompt? state :runner) "No longer accessing cards"))))
 
 (deftest singularity
   ;; Singularity - Run a remote; if successful, trash all contents at no cost
