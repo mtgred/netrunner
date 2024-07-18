@@ -1053,7 +1053,8 @@
              :choices {:req (req (and (ice? target)
                                       (can-be-advanced? state target)))}
              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
-    {:abilities [{:label "Move this ice to the outermost position of any server"
+    {:abilities [{:action true
+                  :label "Move this ice to the outermost position of any server"
                   :cost [(->c :click 1)]
                   :prompt "Choose a server"
                   :choices (req servers)

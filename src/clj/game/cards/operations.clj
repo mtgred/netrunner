@@ -1636,7 +1636,8 @@
    :static-abilities [{:type :tags
                        :value 1}]
    :leave-play (req (system-msg state :corp "trashes MCA Informant"))
-   :runner-abilities [{:label "Trash MCA Informant host"
+   :runner-abilities [{:action true
+                       :label "Trash MCA Informant host"
                        :cost [(->c :click 1) (->c :credit 2)]
                        :async true
                        :effect (effect (system-msg :runner (str "spends [Click] and 2 [Credits] to trash "

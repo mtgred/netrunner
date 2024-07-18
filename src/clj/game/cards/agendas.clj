@@ -84,7 +84,8 @@
 ;; Card definitions
 
 (defcard "15 Minutes"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :msg "shuffle itself into R&D"
                 :label "Shuffle this agenda into R&D"
                 :effect (effect (move :corp card :deck nil)
@@ -465,7 +466,8 @@
                                             (add-counters state side card eid)))}
        :no-ability {:async true
                     :effect (effect (add-counters card eid))}}}
-     :abilities [{:cost [(->c :click 1) (->c :agenda 1)]
+     :abilities [{:action true
+                  :cost [(->c :click 1) (->c :agenda 1)]
                   :async true
                   :label "Do 2 meat damage"
                   :once :per-turn
@@ -689,7 +691,8 @@
 
 (defcard "Domestic Sleepers"
   {:agendapoints-corp (req (if (pos? (get-counters card :agenda)) 1 0))
-   :abilities [{:cost [(->c :click 3)]
+   :abilities [{:action true
+                :cost [(->c :click 3)]
                 :msg "place 1 agenda counter on itself"
                 :effect (effect (add-agenda-point-counters card 1))}]})
 
@@ -722,7 +725,8 @@
 (defcard "Efficiency Committee"
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 3))}
-   :abilities [{:cost [(->c :click 1) (->c :agenda 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :agenda 1)]
                 :effect (effect (gain-clicks 2)
                                 (register-turn-flag!
                                   card :can-advance
@@ -735,7 +739,8 @@
 (defcard "Elective Upgrade"
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :agenda 2))}
-   :abilities [{:cost [(->c :click 1) (->c :agenda 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :agenda 1)]
                 :once :per-turn
                 :effect (effect (gain-clicks 2))
                 :msg "gain [Click][Click]"}]})
@@ -785,7 +790,8 @@
   (ice-boost-agenda "Code Gate"))
 
 (defcard "Escalate Vitriol"
-  {:abilities [{:label "Gain 1 [Credit] for each Runner tag"
+  {:abilities [{:action true
+                :label "Gain 1 [Credit] for each Runner tag"
                 :cost [(->c :click 1)]
                 :once :per-turn
                 :msg (msg "gain " (count-tags state) " [Credits]")
@@ -796,7 +802,8 @@
   {:on-score {:effect (effect (add-counter card :agenda 1)
                               (shuffle-into-deck :hand))
               :interactive (req true)}
-   :abilities [{:cost [(->c :click 1) (->c :agenda 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :agenda 1)]
                 :msg "draw 5 cards"
                 :keep-menu-open :while-agenda-tokens-left
                 :async true
@@ -889,7 +896,8 @@
 (defcard "Geothermal Fracking"
   {:on-score {:effect (effect (add-counter card :agenda 2))
               :silent (req true)}
-   :abilities [{:cost [(->c :click 1) (->c :agenda 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :agenda 1)]
                 :msg "gain 7 [Credits] and take 1 bad publicity"
                 :async true
                 :keep-menu-open :while-agenda-tokens-left
@@ -897,14 +905,16 @@
                                        (gain-bad-publicity state side eid 1)))}]})
 
 (defcard "Gila Hands Arcology"
-  {:abilities [{:cost [(->c :click 2)]
+  {:abilities [{:action true
+                :cost [(->c :click 2)]
                 :msg "gain 3 [Credits]"
                 :async true
                 :keep-menu-open :while-2-clicks-left
                 :effect (effect (gain-credits eid 3))}]})
 
 (defcard "Glenn Station"
-  {:abilities [{:label "Host a card from HQ"
+  {:abilities [{:action true
+                :label "Host a card from HQ"
                 :req (req (and (not-empty (:hand corp))
                                (empty? (filter corp? (:hosted card)))))
                 :cost [(->c :click 1)]
@@ -912,7 +922,8 @@
                 :prompt "Choose a card to host"
                 :choices {:card #(and (corp? %) (in-hand? %))}
                 :effect (effect (host card target {:facedown true}))}
-               {:label "Add a hosted card to HQ"
+               {:action true
+                :label "Add a hosted card to HQ"
                 :req (req (not-empty (filter corp? (:hosted card))))
                 :cost [(->c :click 1)]
                 :msg "add a hosted card to HQ"
@@ -930,14 +941,16 @@
   {:agendapoints-runner (req 2)})
 
 (defcard "Government Contracts"
-  {:abilities [{:cost [(->c :click 2)]
+  {:abilities [{:action true
+                :cost [(->c :click 2)]
                 :async true
                 :keep-menu-open :while-2-clicks-left
                 :effect (effect (gain-credits eid 4))
                 :msg "gain 4 [Credits]"}]})
 
 (defcard "Government Takeover"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :async true
                 :keep-menu-open :while-clicks-left
                 :effect (effect (gain-credits eid 3))
@@ -994,7 +1007,8 @@
 (defcard "High-Risk Investment"
   {:on-score {:effect (effect (add-counter card :agenda 1))
               :silent (req true)}
-   :abilities [{:cost [(->c :click 1) (->c :agenda 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :agenda 1)]
                 :label "gain credits"
                 :msg (msg "gain " (:credit runner) " [Credits]")
                 :async true
@@ -1436,7 +1450,8 @@
   {:stolen {:msg "give the Runner 1 tag"
             :async true
             :effect (effect (gain-tags eid 1))}
-   :abilities [{:cost [(->c :click 1) (->c :tag 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :tag 1)]
                 :req (req (is-scored? state :runner card))
                 :msg "shuffle itself into R&D"
                 :label "Shuffle this agenda into R&D"
@@ -1516,7 +1531,8 @@
               :effect (effect (rez eid target {:ignore-cost :all-costs}))}})
 
 (defcard "Private Security Force"
-  {:abilities [{:req (req tagged)
+  {:abilities [{:action true
+                :req (req tagged)
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :effect (effect (damage eid :meat 1 {:card card}))
@@ -1851,7 +1867,8 @@
                                 card nil))}})
 
 (defcard "Restructured Datapool"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :label "give runner 1 tag"
                 :keep-menu-open :while-clicks-left
                 :trace {:base 2

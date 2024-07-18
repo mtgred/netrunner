@@ -276,7 +276,8 @@
                       (effect-completed state side eid))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
-     :abilities [{:cost [(->c :click 2)]
+     :abilities [{:action true
+                  :cost [(->c :click 2)]
                   :label "Install a hosted program"
                   :prompt "Choose a program to install"
                   :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install)
@@ -300,7 +301,8 @@
                       (effect-completed state side eid))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
-     :abilities [{:cost [(->c :click 2)]
+     :abilities [{:action true
+                  :cost [(->c :click 2)]
                   :label "Install a hosted program"
                   :prompt "Choose a program to install"
                   :choices (req (:hosted card))
@@ -309,7 +311,8 @@
                   :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:ignore-all-cost true}))}]}))
 
 (defcard "Bookmark"
-  {:abilities [{:label "Host up to 3 cards from the grip facedown"
+  {:abilities [{:action true
+                :label "Host up to 3 cards from the grip facedown"
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :msg "host up to 3 cards from the grip facedown"
@@ -318,7 +321,8 @@
                                       (in-hand? %))}
                 :effect (req (doseq [c targets]
                                (host state side (get-card state card) c {:facedown true})))}
-               {:label "Add all hosted cards to the grip"
+               {:action true
+                :label "Add all hosted cards to the grip"
                 :cost [(->c :click 1)]
                 :msg "add all hosted cards to the grip"
                 :effect (req (doseq [c (:hosted card)]
@@ -429,7 +433,8 @@
                   :effect (effect (move target :deck {:front true}))}]}))
 
 (defcard "Capstone"
-  {:abilities [{:req (req (pos? (count (:hand runner))))
+  {:abilities [{:action true
+                :req (req (pos? (count (:hand runner))))
                 :label "trash and install cards"
                 :cost [(->c :click 1)]
                 :async true
@@ -498,7 +503,8 @@
                                            (when (pos? (count from))
                                              (reorder-choice :corp :corp from '() (count from) from)))
                                          card nil))}})
-        access-ability {:cost [(->c :click 1) (->c :power 1)]
+        access-ability {:action true
+                        :cost [(->c :click 1) (->c :power 1)]
                         :req (req (some #{:rd} (:successful-run runner-reg)))
                         :label "Breach R&D"
                         :msg "breach R&D"
@@ -742,7 +748,8 @@
 (defcard "Dorm Computer"
   {:flags {:forced-to-avoid-tag true}
    :data {:counter {:power 4}}
-   :abilities [{:cost [(->c :click 1) (->c :power 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1) (->c :power 1)]
                 :req (req (not run))
                 :prompt "Choose a server"
                 :choices (req runnable-servers)
@@ -1032,7 +1039,8 @@
                                              card nil))))}]}))
 
 (defcard "Gebrselassie"
-  {:abilities [{:msg "host itself on an installed non-AI icebreaker"
+  {:abilities [{:action true
+                :msg "host itself on an installed non-AI icebreaker"
                 :cost [(->c :click 1)]
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker")
@@ -1246,7 +1254,8 @@
    :abilities [(set-autoresolve :auto-fire "Knobkierie")]})
 
 (defcard "Lemuria Codecracker"
-  {:abilities [{:cost [(->c :click 1) (->c :credit 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1) (->c :credit 1)]
                 :req (req (some #{:hq} (:successful-run runner-reg)))
                 :choices {:card installed?}
                 :effect (effect (expose eid target))
@@ -1412,7 +1421,8 @@
              :silent (req true)
              :req (req (= :rd (target-server context)))
              :effect (effect (add-counter card :power 1))}]
-   :abilities [{:async true
+   :abilities [{:action true
+                :async true
                 :cost [(->c :click 1) (->c :power 3)]
                 :msg "breach R&D"
                 :effect (req (breach-server state side eid [:rd] {:no-root true}))}]})
@@ -1671,7 +1681,8 @@
              :async true
              :msg "place 1 [Credits]"
              :effect (req (add-counter state :runner eid card :credit 1 nil))}]
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :label "Gain 1 [Credits]. Take all hosted credits"
                 :async true
                 :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
@@ -1941,7 +1952,8 @@
      :abilities [ability]}))
 
 (defcard "Rubicon Switch"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :label "Derez a piece of ice rezzed this turn"
                 :once :per-turn
                 :async true
@@ -2018,7 +2030,8 @@
                                         state side card
                                         [(breach-access-bonus kw bonus {:duration :end-of-run})])
                                       (make-run state side eid srv card))))})]
-    {:abilities [{:req (req (<= 2 (count (:hand runner))))
+    {:abilities [{:action true
+                  :req (req (<= 2 (count (:hand runner))))
                   :label "Run HQ or R&D"
                   :prompt "Choose one"
                   :waiting-prompt true
@@ -2175,7 +2188,8 @@
                 :effect (effect (draw :runner eid 3))}]})
 
 (defcard "Spy Camera"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :async true
                 :label "Look at the top X cards of the stack"
                 :msg "look at the top X cards of the stack and rearrange them"
@@ -2405,7 +2419,8 @@
 
 (defcard "Unregistered S&W '35"
   {:abilities
-   [{:cost [(->c :click 2)]
+   [{:action true
+     :cost [(->c :click 2)]
      :req (req (and (some #{:hq} (:successful-run runner-reg))
                     (seq (filter
                            #(and (rezzed? %)
@@ -2494,7 +2509,8 @@
                             card nil))}]})
 
 (defcard "Window"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :msg "draw 1 card from the bottom of the stack"
                 :effect (effect (move (last (:deck runner)) :hand))}]})
@@ -2521,7 +2537,8 @@
              :effect (req (draw state :runner eid 1))}]})
 
 (defcard "Zer0"
-  {:abilities [{:cost [(->c :click 1) (->c :net 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1) (->c :net 1)]
                 :once :per-turn
                 :msg "gain 1 [Credits] and draw 2 cards"
                 :async true

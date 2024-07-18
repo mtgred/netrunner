@@ -195,7 +195,8 @@
 
 (defcard "Awakening Center"
   {:can-host (req (ice? target))
-   :abilities [{:label "Host a piece of Bioroid ice"
+   :abilities [{:action true
+                :label "Host a piece of Bioroid ice"
                 :cost [(->c :click 1)]
                 :prompt "Choose a piece of Bioroid ice in HQ to host"
                 :choices {:card #(and (ice? %)
@@ -234,7 +235,8 @@
 
 (defcard "Bamboo Dome"
   {:install-req (req (filter #{"R&D"} targets))
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :req (req (pos? (count (:deck corp))))
                 :async true
                 :msg (msg (str "reveal " (enumerate-str (map :title (take 3 (:deck corp)))) " from the top of R&D"))
@@ -354,7 +356,8 @@
                        :value -5}]})
 
 (defcard "Bryan Stinson"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :req (req (and (< (:credit runner) 6)
                                (pos? (count (filter #(and (operation? %)
@@ -477,7 +480,8 @@
              :req (req (pos? (get-counters card :power)))
              :msg "remove all hosted power counters"
              :effect (effect (add-counter card :power (- (get-counters card :power))))}]
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :msg "place 1 power counter on itself"
                 :effect (effect (add-counter card :power 1))}]})
@@ -1576,11 +1580,13 @@
 
 (defcard "Shell Corporation"
   {:abilities
-   [{:cost [(->c :click 1)]
+   [{:action true
+     :cost [(->c :click 1)]
      :msg "store 3 [Credits]"
      :once :per-turn
      :effect (effect (add-counter card :credit 3))}
-    {:cost [(->c :click 1)]
+    {:action true
+     :cost [(->c :click 1)]
      :msg (msg "gain " (get-counters card :credit) " [Credits]")
      :once :per-turn
      :label "Take all credits"
@@ -1671,7 +1677,8 @@
         (fn [state side]
           (no-event? state side :corp-install #(= [:hand] (:previous-zone (:card (first %))))))
         abi
-        {:cost [(->c :click) (->c :credit 4)]
+        {:action true
+         :cost [(->c :click) (->c :credit 4)]
          :label "Place advancement counters on a card in or protecting this server"
          :once :per-turn
          :choices {:req (req (same-server? card target))}

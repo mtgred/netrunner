@@ -34,16 +34,18 @@
              [(or (hardware? card)
                   (program? card)
                   (resource? card))
-              (runner-can-pay-and-install?
-                state :runner {:source card :source-type :runner-install}
-                card {:base-cost [(->c :click 1)]
-                      :no-toast true})]
+              (and (not (:run @state))
+                   (runner-can-pay-and-install?
+                     state :runner {:source card :source-type :runner-install}
+                     card {:base-cost [(->c :click 1)]
+                           :no-toast true}))]
              [(or (event? card)
                   (operation? card))
-              (can-play-instant?
-                state side {:source card :source-type :play}
-                card {:base-cost [(->c :click 1)]
-                      :silent true})])
+              (and (not (:run @state))
+                   (can-play-instant?
+                     state side {:source card :source-type :play}
+                     card {:base-cost [(->c :click 1)]
+                           :silent true}))])
            true)
     (assoc card :playable true)
     card))
@@ -62,6 +64,9 @@
              ;; (is-disabled? state side card)
              ;; --n kelly, apr 2024
              (not (is-disabled-reg? state card))
+             ;; actions cannot be used during runs
+             (not (and (:action ability)
+                       (:run @state)))
              (can-pay? state side eid card nil cost)
              (can-trigger? state side eid ability card nil))
       (assoc ability :playable true)

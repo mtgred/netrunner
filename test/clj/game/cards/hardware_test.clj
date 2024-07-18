@@ -1924,6 +1924,8 @@
       (click-prompt state :runner "Add installed program to the top of the stack")
       (click-card state :runner fo)
       (is (= 2 (:credit (get-runner))) "Runner has not paid any credits from their credit pool")
+      (run-continue state :movement)
+      (run-jack-out state)
       (take-credits state :runner)
       (is (empty? (:hosted (refresh fo))) "Mimic trashed"))))
 
@@ -2735,6 +2737,7 @@
           (is (changed? [(:credit (get-runner)) 2]
                 (card-ability state :runner tt 0))
               "Got 1c from Keiko for using Trickster Taka")
+          (run-jack-out state)
           (is (changed? [(:credit (get-runner)) -1]
                 (play-from-hand state :runner "Mystic Maemi"))
               "Did not get 1c back from installing Mystic Maemi")))))
@@ -2933,7 +2936,10 @@
        (is (:run @state) "Run prevented from ending")
        (is (no-prompt? state :runner) "Prevent prompt gone")
        ;; trigger border control
+       (run-continue state)
+       (run-jack-out state)
        (play-from-hand state :runner "Lucky Charm")
+       (run-on state "Server 1")
        (card-ability state :corp (refresh bc) 0)
        (is (= 1 (count (:discard (get-corp)))) "Border Control trashed")
        (is (:run @state) "Run not ended yet")
@@ -2943,11 +2949,15 @@
        (is (= 2 (count (:rfg (get-runner)))) "2nd Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        ;; win batty psi game and fire ice wall sub
+       (run-continue-until state :movement)
+       (run-jack-out state)
        (play-from-hand state :runner "Lucky Charm")
+       (run-on state "Server 1")
        (card-ability state :corp mb 0)
        (click-prompt state :corp "1 [Credits]")
        (click-prompt state :runner "0 [Credits]")
-       (card-subroutine state :corp (refresh iw) 0)
+       (click-card state :corp iw)
+       (click-prompt state :corp "End the run")
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)

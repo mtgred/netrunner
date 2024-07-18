@@ -32,8 +32,7 @@
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
   [state ability]
-  (when (or (:action ability)
-            (= :click (:cost/type (first (:cost ability)))))
+  (when (:action ability)
     (let [state' (dissoc @state :log :history)
           click-states (vec (take-last 4 (conj (:click-states state') state')))]
       (swap! state assoc :click-states click-states))))
@@ -61,6 +60,8 @@
          args (assoc args :card card)
          ability (nth (:abilities card) ability-idx)
          cannot-play (or (:disabled card)
+                         ;; cannot play actions during runs
+                         (and (:action ability) (:run @state))
                          (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
@@ -77,7 +78,7 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card] :as context}]
-  (when-let [card (get-card state card)]
+  (when-let [card (when-not (get-in @state [side :prompt-state :prompt-type]) (get-card state card))]
     (let [context (assoc context :card card)]
       (case (:type card)
         ("Event" "Operation")

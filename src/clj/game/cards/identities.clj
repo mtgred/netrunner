@@ -383,7 +383,8 @@
                               card nil)))}]})
 
 (defcard "Ayla \"Bios\" Rahim: Simulant Specialist"
-  {:abilities [{:label "Add 1 hosted card to the grip"
+  {:abilities [{:action true
+                :label "Add 1 hosted card to the grip"
                 :cost [(->c :click 1)]
                 :async true
                 :prompt "Choose a hosted card"
@@ -566,7 +567,8 @@
                                                                      (quantify (count to-be-trashed) "card")))
                                         ; these cards get trashed by the game and not by players
                                          (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
-     :abilities [{:label "Flip identity to Earth Station: Ascending to Orbit"
+     :abilities [{:action true
+                  :label "Flip identity to Earth Station: Ascending to Orbit"
                   :req (req (not (:flipped card)))
                   :cost [(->c :click 1)]
                   :msg "flip [their] identity to Earth Station: Ascending to Orbit"
@@ -605,7 +607,8 @@
                  :effect (req (add-counter state side card :power 1))}]
   {:events [(assoc ability :event :runner-trash :req (req (valid-trash target)))
             (assoc ability :event :agenda-stolen :req (req true))]
-   :abilities [{:label "Look at the top 3 cards of R&D"
+   :abilities [{:action true
+                :label "Look at the top 3 cards of R&D"
                 :cost [(->c :click 1) (->c :power 1)]
                 :msg "look at the top 3 cards of R&D"
                 :effect (req (let [top (take 3 (:deck corp))]
@@ -925,7 +928,8 @@
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :label "Reveal the top card of the Stack"
                 :async true
                 :effect (req (if-let [revealed-card (-> runner :deck first)]
@@ -933,7 +937,8 @@
                                                                (:title revealed-card) " from the top of the Stack"))
                                    (reveal state side eid revealed-card))
                                (effect-completed state side eid)))}
-               {:cost [(->c :click 1)]
+               {:action true
+                :cost [(->c :click 1)]
                 :label "Reveal a random card from the Grip"
                 :async true
                 :effect (req (if-let [revealed-card (-> runner :hand shuffle first)]
@@ -1040,7 +1045,8 @@
                                (toast state :corp "Flip to: The Greenhouse (Place 4 advancement tokens on a card)" "info")
                                ;; default case
                                (toast state :corp "No flip identity specified" "info")))}
-               {:cost [(->c :click 3)]
+               {:action true
+                :cost [(->c :click 3)]
                 :req (req (not (:biotech-used card)))
                 :label "Flip this identity"
                 :async true
@@ -1102,7 +1108,8 @@
              :effect (effect (gain-credits :corp eid 1))}]})
 
 (defcard "Kabonesa Wu: Netspace Thrillseeker"
-  {:abilities [{:label "Install a non-virus program from the stack, lowering the cost by 1 [Credit]"
+  {:abilities [{:action true
+                :label "Install a non-virus program from the stack, lowering the cost by 1 [Credit]"
                 :cost [(->c :click 1)]
                 :prompt "Choose a program"
                 :choices (req (cancellable
@@ -1727,7 +1734,8 @@
                                 card nil)))}]}))
 
 (defcard "Omar Keung: Conspiracy Theorist"
-  {:abilities [{:cost [(->c :click 1)]
+  {:abilities [{:action true
+                :cost [(->c :click 1)]
                 :msg "make a run on Archives"
                 :once :per-turn
                 :makes-run true
@@ -1837,17 +1845,18 @@
                                          (<= (get-advancement-requirement card) (get-counters card :advancement)))
                                   ((constantly false)
                                    (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
-                                  true))))
-                          (corp-install state side eid chosen target {:counters {:advance-counter 1}
-                                                                      :msg-keys {:install-source card
-                                                                                 :display-origin true}}))})]
-    {:abilities [{:async true
+                                  true)))
+                            (corp-install state side eid chosen target {:counters {:advance-counter 1}
+                                                                        :msg-keys {:install-source card
+                                                                                   :display-origin true}})))})]
+    {:abilities [{:action true
+                  :async true
                   :label "Install a card from HQ"
                   :cost [(->c :click 1) (->c :credit 1)]
                   :prompt "Choose a card to install from HQ"
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
-                                     (corp? %)
-                                     (in-hand? %))}
+                                        (corp? %)
+                                        (in-hand? %))}
                   :msg (msg "install a card in a remote server and place 1 advancement token on it")
                   :effect (effect (continue-ability (install-card target) card nil))}]
      :events [{:event :corp-turn-begins
@@ -2036,7 +2045,8 @@
                                       (same-card? (:card context) (:basic-action-card corp))
                                       (= "Trash 1 resource if the Runner is tagged" (:label (:ability context)))))
                        :value (->c :credit -2)}]
-   :abilities [{:cost [(->c :click 1)]
+   :abilities [{:action true
+                :cost [(->c :click 1)]
                 :effect (req (if (:sync-flipped card)
                                (update! state side (-> card (assoc :sync-flipped false :face :front :code "09001")))
                                (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
