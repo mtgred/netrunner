@@ -28,6 +28,47 @@
     (click-prompt state :runner "Pay 2 [Credits] to trash")
     (is (no-prompt? state :runner) "Runner cannot access HQ")))
 
+(deftest adrian-seis-vs-additional-accesses
+  (do-game
+    (new-game {:corp {:hand ["Adrian Seis" "Hedge Fund"]
+                      :deck [(qty "Hedge Fund" 15)]}
+               :runner {:hand ["Trick Shot" "\"Pretty\" Mary da Silva"]}})
+    (play-from-hand state :corp "Adrian Seis" "R&D")
+    (rez state :corp (get-content state :rd 0))
+    (end-turn state :corp)
+    (click-prompt state :corp "No")
+    (is (= "Adrian Seis" (:title (get-content state :rd 0))))
+    (start-turn state :runner)
+    (play-from-hand state :runner "\"Pretty\" Mary da Silva")
+    (play-from-hand state :runner "Trick Shot")
+    (run-continue state :success)
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (click-prompt state :runner "Pay 2 [Credits] to trash")
+    (click-card state :runner "Trick Shot")
+    (click-card state :runner "Trick Shot")
+    (click-prompt state :runner "Cancel")
+    (is (no-prompt? state :runner) "Runner cannot access R&D")))
+
+(deftest adrian-ash-cursed-interaction
+  (do-game
+    (new-game {:corp {:hand ["Adrian Seis" "Hedge Fund" "Ash 2X3ZB9CY"]
+                      :deck [(qty "Hedge Fund" 15)]}})
+    (play-from-hand state :corp "Adrian Seis" "R&D")
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "R&D")
+    (rez state :corp (get-content state :rd 0))
+    (rez state :corp (get-content state :rd 1))
+    (take-credits state :corp)
+    (click-prompt state :corp "No")
+    (run-on state :rd)
+    (run-continue state :success)
+    (click-prompt state :corp "Adrian Seis")
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (click-prompt state :corp "0")
+    (click-prompt state :runner "0")
+    (is (no-prompt? state :runner) "Runner cannot access anything!")))
+
 (deftest akitaro-watanabe
   (do-game
     (new-game {:corp {:hand ["Akitaro Watanabe" (qty "Fire Wall" 2)]
