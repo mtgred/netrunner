@@ -8,6 +8,7 @@
                                parse-state]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [toastr-options]]
+   [nr.sounds :refer [play-sfx]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [reagent.ratom :as ratom]))
@@ -53,6 +54,14 @@
     (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})
     (leave-game!)))
 
+(defn handle-timeout-soon [gameid]
+  (when (= gameid (current-gameid app-state))
+    (play-sfx ["time-out"])
+    (toast (tr [:game.timeout-soon "Game will time out within 30 seconds for inactivity"])
+           "error"
+           {:time-out 29000
+            :close-button true})))
+
 (defn handle-error []
   (toast (tr [:game.error "Internal Server Error. Please type /bug in the chat and follow the instructions."])
          "error"
@@ -66,6 +75,7 @@
 (defmethod ws/event-msg-handler :game/resync [{data :?data}] (reset-game! (parse-state data)))
 (defmethod ws/event-msg-handler :game/diff [{data :?data}] (handle-diff! (parse-state data)))
 (defmethod ws/event-msg-handler :game/timeout [{data :?data}] (handle-timeout data))
+(defmethod ws/event-msg-handler :game/timeout-soon [{data :?data}] (handle-timeout-soon data))
 (defmethod ws/event-msg-handler :game/error [_] (handle-error))
 
 (defn send-command
