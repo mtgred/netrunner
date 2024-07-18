@@ -2944,7 +2944,7 @@
        (click-prompt state :corp "1 [Credits]")
        (click-prompt state :runner "0 [Credits]")
        (click-card state :corp iw)
-        (click-prompt state :corp "End the run")
+       (click-prompt state :corp "End the run")
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
        (card-ability state :runner (get-hardware state 0) 0)
