@@ -2666,6 +2666,26 @@
       (play-from-hand state :runner "Scrubbed")
       (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")))
 
+(deftest jinteki-replicating-perfection-vs-sandstorm
+  (do-game
+    (new-game {:corp {:id "Jinteki: Replicating Perfection"
+                      :hand ["Sand Storm" "Rashida Jaheem"]}})
+    (play-from-hand state :corp "Sand Storm" "HQ")
+    (play-from-hand state :corp "Rashida Jaheem" "New remote")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (card-subroutine state :corp (get-ice state :hq 0) 0)
+    (click-prompt state :corp "Server 1")
+    (is (no-prompt? state :corp))
+    (is (no-prompt? state :runner))
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (nil? (:run state)) "Run ended")
+    (is (no-prompt? state :corp) "No lingering corp prompt")
+    (is (no-prompt? state :runner) "No lingering runner prompt")))
+
 (deftest jinteki-replicating-nightmare-scenarios
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
   ;; also take into account Front Company, Off the Grid, Marathon
