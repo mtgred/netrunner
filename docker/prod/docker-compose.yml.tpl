@@ -3,7 +3,7 @@ services:
   endpoint:
     image: nginx:alpine
     ports:
-      - 8042:8000
+      - {{ port-endpoint }}:8000
     volumes:
       - ./docker/prod/nginx.conf:/etc/nginx/nginx.conf:ro
       - {{ folder-resources }}:/usr/share/netrunner

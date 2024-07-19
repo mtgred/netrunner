@@ -18,6 +18,7 @@
     [["-t" "--template PATH" "Path to docker-compose template" :default "docker/prod/docker-compose.yml.tpl"]
      ["-o" "--output PATH" "Path to generated docker-compose file" :default "docker-compose.prod.yml"]
      ["-i" "--image IMAGE-NAME" "Image name is required" "Netrunner Docker image name" :missing "Image name is required"]
+     ["-p" "--port PORT" "Port exposing Netrunner" :default "1042"]
      ["-r" "--folder-resources FOLDER-RESOURCES" "Path to the public resources" :default "resources/public"]
      ["-f" "--config CONFIG-FILE" "Path to the configuration file" :default "./docker/prod/prod.edn"]
      ["-m" "--image-mongodb IMAGE-NAME-MONGODB" "Image name of MongoDB" :default "mongo"]
@@ -40,6 +41,7 @@
             (spit (:output options) (cp/render tpl {
                                                     :image-name (:image options)
                                                     :config-file (:config options)
+                                                    :port-endpoint (:port options)
                                                     :folder-resources (:folder-resources options)
                                                     :image-name-mongodb (:image-mongodb options)
                                                     :folder-mongodb (:folder-mongodb options)
