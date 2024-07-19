@@ -1747,10 +1747,7 @@
                     :async true
                     :effect (req (if (= target "Do 1 core damage")
                                    (damage state side eid :brain 1 {:card card})
-                                   ;; note - we need to clear the waiting prompt here or else forced
-                                   ;; ice encounters will break -nbkelly, 2024
-                                   (do (clear-wait-prompt state :runner)
-                                       (end-run state :corp eid card))))}]
+                                   (end-run state :corp eid card)))}]
      :runner-abilities [(bioroid-break 3 3)]}))
 
 (defcard "Fenris"

@@ -1647,7 +1647,30 @@
     (is (no-prompt? state :corp) "No corp prompt")
     (is (no-prompt? state :runner) "No runner prompt")
     (take-credits state :runner)))
-    
+
+(deftest ganked-vs-informant-or-maw-timing
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Ganked!" "Hedge Fund"]}
+               :runner {:hand ["Aeneas Informant" "Maw"]
+                        :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ganked!" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maw")
+    (play-from-hand state :runner "Aeneas Informant")
+    (run-on state :remote1)
+    (rez state :corp (get-ice state :remote1 0))
+    (run-continue-until state :success)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Ice Wall")
+    (is (= '("Ganked!" "Hedge fund") (map :title (:discard (get-corp)))) "Maw fired too")
+    (click-prompt state :runner "Yes")
+    (let [iwall (:ice (core/get-current-encounter state))]
+      (is (= "Ice Wall" (:title iwall)))
+      (is (:run @state))
+      (fire-subs state iwall)
+      (is (not (:run @state))))))
+
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game

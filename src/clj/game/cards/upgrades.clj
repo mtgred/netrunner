@@ -736,8 +736,18 @@
                                (rezzed? target)
                                (protecting-same-server? card target)))}
       :msg (msg "force the Runner to encounter " (card-str state target))
-      :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true :cause-card card})
-                             (force-ice-encounter state side eid target)))}
+      :effect (req
+                ;; note - post-access events (like maw, aeneas informant)
+                ;; need to fire before ganked does - same for corp side post-access events
+                (let [target-card target]
+                  (register-events
+                    state side card
+                    [{:event :post-access-card
+                      :duration :end-of-run
+                      :unregister-once-resolved true
+                      :async true
+                      :effect (req (force-ice-encounter state side eid target-card))}]))
+                (trash state side eid (assoc card :seen true) {:unpreventable true :cause-card card}))}
      :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}})
 
 (defcard "Georgia Emelyov"
