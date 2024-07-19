@@ -14,6 +14,9 @@ services:
 
   server:
     image: {{ image-name }}
+    build:
+        context: .
+        dockerfile: ./docker/prod/Dockerfile
     volumes:
       - "./docker/prod/prod.edn:/opt/netrunner/prod.edn"
     depends_on:
