@@ -6,7 +6,7 @@ services:
       - 8042:8000
     volumes:
       - ./docker/prod/nginx.conf:/etc/nginx/nginx.conf:ro
-      - {{ resources-folder }}:/usr/share/netrunner
+      - {{ folder-resources }}:/usr/share/netrunner
     depends_on:
       - server
     links:
@@ -18,7 +18,7 @@ services:
         context: .
         dockerfile: ./docker/prod/Dockerfile
     volumes:
-      - "./docker/prod/prod.edn:/opt/netrunner/prod.edn"
+      - {{ config-file }}:/opt/netrunner/prod.edn
     depends_on:
       - database
     links:
