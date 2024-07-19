@@ -3,6 +3,7 @@
 (def landing-content
 [:div.landing.panel.content-page.blue-shade
 [:h2 "Welcome!"]
+[:p "This website is for the facilitation of Netrunner games online. Please note that jinteki.net does not provide an accurate representation of the " [:u "rules"] " of the game."]
 [:h4 "The use of Jinteki.net:"]
 [:ul.list.compact
   [:li "Please be respectful. Any disrespectful conduct will not be tolerated regardless of the circumstance or rationale."]
@@ -27,9 +28,11 @@ If reporting an incident, please include screenshots if possible."]
 )
 
 (defn landing []
-  [:div.container
+  [:div.page-container
    [:div.apex-bg]
 
-   [:h4 "Looking for other community spaces or resources? Visit " [:a {:href "https://www.nearearthhub.net/" :target "_blank"} "nearearthhub.net"]]
+  [:div.landing-message
+    [:h4 "Visit " [:a {:href "https://www.nearearthhub.net/" :target "_blank"} "nearearthhub.net"] " for links to rules and other resources"]
+  ]
    landing-content])
 
