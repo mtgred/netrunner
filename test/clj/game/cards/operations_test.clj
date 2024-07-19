@@ -1252,6 +1252,23 @@
       (is (not (rezzed? (refresh ec2))) "Second Eve Campaign was derezzed")
       (is (= 32 (get-counters (refresh ec1) :credit)) "First Eve gained 16  more credits on rez"))))
 
+(deftest divert-power-vs-mumba-temple
+  (do-game
+    (new-game {:corp {:hand ["Divert Power" "Vanilla" "Brân 1.0" "Mumba Temple"]
+                      :cCredits 10}})
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Brân 1.0" "HQ")
+    (play-from-hand state :corp "Mumba Temple" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :corp "Divert Power")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Brân 1.0")
+    (dotimes [_ 2]
+      (click-card state :corp "Mumba Temple"))))
+
 (deftest door-to-door
   ;; Door to Door
   (do-game
