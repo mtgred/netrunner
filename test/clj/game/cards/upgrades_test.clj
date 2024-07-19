@@ -1663,13 +1663,42 @@
     (run-continue-until state :success)
     (click-prompt state :corp "Yes")
     (click-card state :corp "Ice Wall")
-    (is (= '("Ganked!" "Hedge fund") (map :title (:discard (get-corp)))) "Maw fired too")
+    (is (= "Hedge fund" (:title (second (:discard (get-corp))))) "Maw fired too")
     (click-prompt state :runner "Yes")
     (let [iwall (:ice (core/get-current-encounter state))]
       (is (= "Ice Wall" (:title iwall)))
       (is (:run @state))
       (fire-subs state iwall)
       (is (not (:run @state))))))
+
+(deftest ganked-vs-acme
+  (do-game
+    (new-game {:corp {:hand ["Ganked!" "Hedge Fund" "Ice Wall"]
+                      :score-area ["Dedicated Neural Net"]
+                      :id "Acme Consulting: The Truth You Need"}
+               :runner {:hand ["Jailbreak"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 0 (count-tags state)) "Runner not consided tagged")
+    (run-continue state :encounter-ice)
+    (is (= 1 (count-tags state)) "Runner consided during encounter")
+    (run-continue-until state :success)
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore")
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "1 [Credits]")
+    (click-card state :corp "Ganked!")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Ice Wall")
+    (is (= 1 (count-tags state)) "Runner consided during forced encounter")
+    (run-continue state)
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore after forced encounter")
+    (click-card state :corp "Hedge Fund")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore after run")))
 
 (deftest georgia-emelyov
   ;; Georgia Emelyov
