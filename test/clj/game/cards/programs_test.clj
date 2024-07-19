@@ -8031,6 +8031,36 @@
             "Vanilla is innermost, Ice Wall is outermost again")
         (is (= [0 1] (map :index (get-ice state :hq)))))))
 
+(deftest surfer-vs-laamb
+  (do-game
+    (new-game {:runner {:hand ["Surfer" "Laamb"]
+                        :credits 20}
+               :corp {:hand ["Anansi" "Vanilla" "Enigma"]
+                      :credits 11}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Anansi" "HQ")
+    (take-credits state :corp)
+    (let [anansi (get-ice state :hq 2)]
+      (play-from-hand state :runner "Surfer")
+      (play-from-hand state :runner "Laamb")
+      (let [laamb (get-program state 1)
+            surfer (get-program state 0)]
+        (run-on state :hq)
+        (rez state :corp anansi)
+        (run-continue-until state :encounter-ice)
+        (click-prompt state :runner "Yes")
+        (is (has-subtype? (refresh anansi) "Barrier") "Anansi painted")
+        (card-ability state :runner surfer 0)
+        (click-card state :runner (get-ice state :hq 1))
+        (is (has-subtype? (refresh anansi) "Barrier") "Anansi still painted")
+        (card-ability state :runner surfer 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (is (has-subtype? (refresh anansi) "Barrier") "Anansi still painted (again)")
+        (card-ability state :runner laamb 1)
+        (card-ability state :runner (refresh laamb) 0)
+        (click-prompt state :runner "Do 1 net damage")))))
+
 (deftest switchblade
   ;; Switchblade
   (do-game
