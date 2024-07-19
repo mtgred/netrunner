@@ -1624,6 +1624,30 @@
      (is (no-prompt? state :corp) "No more prompts")
      (is (no-prompt? state :runner) "No more prompts")))
 
+(deftest ganked-vs-fc3.0-run-actually-ends
+  (do-game
+    (new-game {:corp {:hand ["Fairchild 3.0" "Ganked!"]}
+               :runner {:credits 10}})
+    (play-from-hand state :corp "Fairchild 3.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue-until state :success)
+    (is (last-log-contains? state "Runner accesses Ganked!") "Ganked! message printed to log")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Fairchild 3.0")
+    (let [fc3 (:ice (core/get-current-encounter state))]
+      (is (= "Fairchild 3.0" (:title fc3)) "Encountering fc3.0")
+      (fire-subs state fc3))
+    (click-prompt state :runner "Pay 3 [Credits]")
+    (click-prompt state :runner "Pay 3 [Credits]")
+    (click-prompt state :corp "End the run")
+    (is (not (:run @state)) "No more run")
+    (is (not (core/get-current-encounter state)) "No more encounter")
+    (is (no-prompt? state :corp) "No corp prompt")
+    (is (no-prompt? state :runner) "No runner prompt")
+    (take-credits state :runner)))
+    
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game
