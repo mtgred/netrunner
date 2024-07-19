@@ -10,6 +10,7 @@
    [nr.features :refer [features]]
    [nr.gameboard.board :refer [gameboard]]
    [nr.help :refer [help]]
+   [nr.landing :refer [landing]]
    [nr.lobby :refer [game-lobby]]
    [nr.stats :refer [stats]]
    [nr.tournament :refer [tournament]]
@@ -18,7 +19,7 @@
    [reitit.frontend :as rf]
    [reitit.frontend.easy :as rfe]))
 
-(defonce current-view (r/atom {:data {:view chat-page}}))
+(defonce current-view (r/atom {:data {:view landing}}))
 
 (defn update-current-view [match _history]
   (reset! current-view match))
@@ -32,7 +33,9 @@
 
 (def routes
   (rf/router
-    [["/" {:name :nav/chat
+    [["/" {:name :nav/welcome
+           :view landing}]
+      ["/chat" {:name :nav/chat
            :view chat-page}]
      ["/cards" {:name :nav/cards
                 :view card-browser}]
@@ -41,9 +44,9 @@
      ["/play" {:name :nav/lobby
                :view lobby-or-game}]
      ["/replay/:rid" {:name :nav/replay-lobby
-               :view lobby-or-game}]
-     ["/bug-report/:rid" {:name :nav/bug-report
                       :view lobby-or-game}]
+     ["/bug-report/:rid" {:name :nav/bug-report
+                          :view lobby-or-game}]
      ["/help" {:name :nav/help
                :view help}]
      ["/account" {:name :nav/account
@@ -59,7 +62,9 @@
      ["/users" {:name :nav/users
                 :view users}]
      ["/features" {:name :nav/features
-                   :view features}]]))
+                   :view features}]
+     ["/landing" {:name :nav/landing
+                   :view landing}]]))
 
 (defn init-routes!
   "Start the routing"
