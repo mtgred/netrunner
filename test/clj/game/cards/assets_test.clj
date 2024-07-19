@@ -2496,6 +2496,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (take-credits state :corp)
+      (end-phase-12 state :runner)
       (is (= 1 (count (:hand (get-runner)))) "Labor Rights is in the grip")
       (play-from-hand state :runner "Labor Rights")
       (is (zero? (count (:hand (get-runner)))))
