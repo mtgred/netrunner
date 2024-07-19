@@ -18,6 +18,8 @@
 (defn playable? [card state side]
   (if (and ((if (= :corp side) corp? runner?) card)
            (in-hand? card)
+           (not (:corp-phase-12 @state))
+           (not (:runner-phase-12 @state))
            (cond+
              [(or (agenda? card)
                   (asset? card)

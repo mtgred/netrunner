@@ -78,17 +78,20 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card] :as context}]
-  (when-let [card (when-not (get-in @state [side :prompt-state :prompt-type]) (get-card state card))]
-    (let [context (assoc context :card card)]
-      (case (:type card)
-        ("Event" "Operation")
-        (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                  :ability 3
-                                  :targets [context]})
-        ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
-        (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                  :ability 2
-                                  :targets [context]})))))
+  (when-let [card (get-card state card)]
+    (when (and (not (get-in @state [side :prompt-state :prompt-type]))
+               (not (and (= side :corp) (:corp-phase-12 @state)))
+               (not (and (= side :runner) (:runner-phase-12 @state))))
+      (let [context (assoc context :card card)]
+        (case (:type card)
+          ("Event" "Operation")
+          (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                    :ability 3
+                                    :targets [context]})
+          ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
+          (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                    :ability 2
+                                    :targets [context]}))))))
 
 (defn click-draw
   "Click to draw."
