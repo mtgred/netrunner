@@ -20,8 +20,8 @@
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
-   [game.core.events :refer [event-count first-event? first-run-event?
-                             first-successful-run-on-server? no-event? not-last-turn? run-events turn-events]]
+   [game.core.events :refer [event-count first-event?
+                             first-successful-run-on-server? no-event? not-last-turn? run-events run-event-count turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [card-flag? clear-persistent-flag!
@@ -450,7 +450,7 @@
              :req (req (and (:card-target card)
                             (first-event? state :runner :play-event)
                             (is-type? (:card context) (:card-target card))))
-
+             :async true
              :effect (effect (gain-credits :corp eid 2))
              :msg (msg "gain 2 [Credits] from " (:card-target card))}]})
 
@@ -1020,7 +1020,7 @@
   {:flags {:forced-to-avoid-tag true}
    :events [{:event :pre-tag
              :async true
-             :req (req (and run (first-run-event? state side :pre-tag)))
+             :req (req (and run (<= (run-event-count state side :pre-tag) 1)))
              :msg "avoid the first tag during this run"
              :effect (effect (tag-prevent :runner eid 1))}]})
 
