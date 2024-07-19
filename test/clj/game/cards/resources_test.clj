@@ -2102,6 +2102,8 @@
                             :deck [(qty "Sure Gamble" 5)]
                             :hand ["DreamNet"]}})
         (take-credits state :corp)
+        (end-phase-12 state :runner)
+        (click-prompt state :runner "Done")
         (play-from-hand state :runner "DreamNet")
         (is (changed? [(:credit (get-runner)) 1]
               (run-empty-server state :archives))
@@ -7149,6 +7151,7 @@
               (click-card state :runner (first (:hosted (refresh iw1)))))
             "2 credits placed on Urban Art Vernissage")
         (is (= 1 (count (:hand (get-runner)))) "1 card added to the grip")
+        (end-phase-12 state :runner)
         (play-from-hand state :runner "Monkeywrench")
         (dotimes [_ 2]
           (click-card state :runner uav)))))

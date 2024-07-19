@@ -3088,6 +3088,7 @@
     (run-empty-server state "Server 1")
     (click-prompt state :runner "Steal")
     (take-credits state :runner)
+    (end-phase-12 state :corp)
     (is (changed? [(count-tags state) 2]
           (play-from-hand state :corp "Oppo Research"))
         "Runner got 2 tags")

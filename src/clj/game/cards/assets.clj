@@ -23,7 +23,7 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [register-lingering-effect update-disabled-cards]]
+   [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
@@ -1355,7 +1355,7 @@
                         :async true
                         :effect (effect (continue-ability (trash-ability target) card nil))}]
     {:additional-cost [(->c :forfeit)]
-     :flags {:corp-phase-12 (constantly true)}
+     :flags {:corp-phase-12 (req (not (is-disabled-reg? state card)))}
      :derezzed-events [corp-rez-toast]
      :abilities [choose-ability]}))
 

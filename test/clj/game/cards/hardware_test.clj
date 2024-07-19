@@ -1338,7 +1338,8 @@
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn begins trash 1 card, then draw or remove tag
   (do-game
-    (new-game {:runner {:deck ["Sure Gamble"]
+    (new-game {:corp {:hand []}
+               :runner {:deck ["Sure Gamble"]
                         :hand ["Chop Bot 3000" (qty "Spy Camera" 4)]}})
     (core/gain state :runner :tag 2)
     (take-credits state :corp)
@@ -1349,11 +1350,15 @@
     (play-from-hand state :runner "Spy Camera")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (true? (:runner-phase-12 @state)) "Does trigger when one other card is installed")
+    (is (:runner-phase-12 @state) "Does trigger when one other card is installed")
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "Done")
     (play-from-hand state :runner "Spy Camera")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (true? (:runner-phase-12 @state)) "Does trigger when two other cards are installed")
+    (is (:runner-phase-12 @state) "Does trigger when two other cards are installed")
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "Done")
     (is (= 2 (count-tags state)) "Runner has 2 tags")
     (let [chop-bot (get-hardware state 0)]
       (is (empty? (:discard (get-runner))) "No cards in trash")
