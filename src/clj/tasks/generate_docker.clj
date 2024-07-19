@@ -17,7 +17,10 @@
   (def cli-options
     [["-t" "--template PATH" "Path to docker-compose template" :default "docker/prod/docker-compose.yml.tpl"]
      ["-o" "--output PATH" "Path to generated docker-compose file" :default "docker-compose.prod.yml"]
-     ["-n" "--name IMAGE-NAME" "Image name is required" "Netrunner Docker image name" :missing "Image name is required"]
+     ["-i" "--image IMAGE-NAME" "Image name is required" "Netrunner Docker image name" :missing "Image name is required"]
+     ["-r" "--folder-resources FOLDER-RESOURCES" "Path to the public ressources" :default "resources/public"]
+     ["-m" "--image-mongodb IMAGE-NAME-MONGODB" "Image name of MongoDB" :default "mongo"]
+     ["-d" "--folder-mongodb FOLDER-MONGODB" "Folder of the MongoDB database" :default "data"]
      ["-c" "--close-mongodb" "Disable MongoDB connectivity outside of Docker internal network"
       :id :expose-mongodb :default true :parse-fn not]])
 
@@ -33,6 +36,11 @@
                 (not-empty arguments))
           (exit 1 (str/join \newline (conj errors (usage summary))))
           (let [tpl (slurp (:template options))]
-            (spit (:output options) (cp/render tpl {:image-name (:name options) :expose-mongodb (:expose-mongodb options)}))))))
+            (spit (:output options) (cp/render tpl {
+                                                    :image-name (:image options)
+                                                    :resources-folder (:folder-resources options)
+                                                    :image-name-mongodb (:image-mongodb options)
+                                                    :folder-mongodb (:folder-mongodb options)
+                                                    :expose-mongodb (:expose-mongodb options)}))))))
 
 

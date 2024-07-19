@@ -6,7 +6,7 @@ services:
       - 8042:8000
     volumes:
       - ./docker/prod/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./resources/prod/:/usr/share/netrunner
+      - {{ resources-folder }}:/usr/share/netrunner
     depends_on:
       - server
     links:
@@ -25,7 +25,7 @@ services:
       - database:mongo
 
   database:
-    image: mongo
+    image: {{ image-name-mongodb }}
     container_name: mongodb
     restart: unless-stopped
 {{#expose-mongodb}}
@@ -33,4 +33,4 @@ services:
       - 27017-27019:27017-27019
 {{/expose-mongodb}}
     volumes:
-      - ./data/db-prod:/data/db
+      - {{ folder-mongodb }}:/data/db
