@@ -92,7 +92,8 @@
      :cancel "Cancel"
      :message-blocked (fn [[reason-str]] (str "Message Blocked" (when reason-str (str ": " reason-str))))}
     :nav
-    {:chat "Chat"
+    {:welcome "Welcome"
+     :chat "Chat"
      :cards "Cards"
      :deck-builder "Deck Builder"
      :play "Play"
