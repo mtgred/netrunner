@@ -9,6 +9,14 @@
                              (str "/sound/" sound ".mp3")]})]
     [sound (new Howl args)]))
 
+(defonce bespoke-sounds
+  ["bloop"
+   "echo"
+   "end-of-the-line"
+   "professional-contacts"
+   "pulse"
+   "wave"])
+
 (defonce sound-names
   ["agenda-score"
    "agenda-steal"
@@ -25,16 +33,14 @@
    "rez-other"
    "run-successful"
    "run-unsuccessful"
-   "virus-purge"
-   ;; noises for bespoke cards
-   "professional-contacts"])
+   "virus-purge"])
 
 (defn random-sound
   []
   (first (shuffle sound-names)))
 
 (defonce soundbank
-  (->> sound-names
+  (->> (concat sound-names bespoke-sounds)
        (map audio-sfx)
        (into {})))
 
