@@ -19,10 +19,10 @@
      ["-o" "--output PATH" "Path to generated docker-compose file" :default "docker-compose.prod.yml"]
      ["-i" "--image IMAGE-NAME" "Image name is required" "Netrunner Docker image name" :missing "Image name is required"]
      ["-p" "--port PORT" "Port exposing Netrunner" :default "1042"]
-     ["-r" "--folder-resources FOLDER-RESOURCES" "Path to the public resources" :default "resources/public"]
+     ["-r" "--folder-resources FOLDER-RESOURCES" "Path to the public resources" :default "./resources/public/"]
      ["-f" "--config CONFIG-FILE" "Path to the configuration file" :default "./docker/prod/prod.edn"]
      ["-m" "--image-mongodb IMAGE-NAME-MONGODB" "Image name of MongoDB" :default "mongo"]
-     ["-d" "--folder-mongodb FOLDER-MONGODB" "Folder of the MongoDB database" :default "data"]
+     ["-d" "--folder-mongodb FOLDER-MONGODB" "Folder of the MongoDB database" :default "./data/"]
      ["-c" "--close-mongodb" "Disable MongoDB connectivity outside of Docker internal network"
       :id :expose-mongodb :default true :parse-fn not]])
 
