@@ -158,7 +158,6 @@
    [{:event :run
      :req (req (first-event? state side :run))
      :player :corp
-     :once :per-turn
      :async true
      :waiting-prompt true
      :prompt "Choose one"
@@ -619,7 +618,6 @@
                              :effect (effect (purge eid))}}}
    :events [{:event :purge
              :req (req (first-event? state :corp :purge))
-             :once :per-turn
              :msg "gain 4 [Credits]"
              :async true
              :effect (req (gain-credits state :corp eid 4))}]})
@@ -627,8 +625,9 @@
 (defcard "Dedicated Neural Net"
   {:events [{:event :successful-run
              :interactive (req true)
-             :psi {:req (req (= :hq (target-server context)))
-                   :once :per-turn
+             :psi {:req (req (= :hq (target-server context))
+                             (first-event? state side :successful-run
+                                           #(= :hq (target-server (first %)))))
                    :not-equal {:effect (effect (register-lingering-effect
                                                  card
                                                  {:type :corp-choose-hq-access

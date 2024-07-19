@@ -628,7 +628,6 @@
 (defcard "Daredevil"
   {:static-abilities [(mu+ 2)]
    :events [{:event :run
-             :once :per-turn
              :req (req (and (<= 2 (:position target))
                             (first-event? state side :run #(<= 2 (:position (first %))))))
              :msg "draw 2 cards"
@@ -1487,9 +1486,9 @@
 
 (defcard "Muresh Bodysuit"
   {:events [{:event :pre-damage
-             :once :per-turn
              :once-key :muresh-bodysuit
-             :req (req (= (:type context) :meat))
+             :req (req (and (= (:type context) :meat)
+                            (first-event? state side :pre-damage #(= :meat (:type (first %))))))
              :msg "prevent the first meat damage this turn"
              :effect (effect (damage-prevent :meat 1))}]})
 
@@ -1529,7 +1528,6 @@
   {:static-abilities [(mu+ 1)
                       (runner-hand-size+ (req (count-tags state)))]
    :events [{:event :run-ends
-             :once :per-turn
              :interactive (req true) ;;interact with other run-ends effects which modify the deck (ie boomerang)
              :req (req (and (:successful target)
                             (#{:rd :hq} (target-server target))
@@ -1917,7 +1915,7 @@
         event {:req (req (zero? (count (:hand runner))))
                :async true
                :effect (effect (continue-ability ability card targets))}]
-    {:implementation "Only watches trashes, playing events, and installing"
+    {:implementation "Only watches trashes, playing events, and installing. Doesn't know about your hand size pre-install."
      :on-install {:async true
                   :msg "suffer 1 meat damage"
                   :effect (effect (damage eid :meat 1 {:unboostable true
@@ -2163,7 +2161,6 @@
                             (first-event? state side :runner-trash
                                           (fn [targets]
                                             (some #(corp? (:card %)) targets)))))
-             :once :per-turn
              :msg "place 1 power counter on itself"
              :effect (effect (add-counter :runner card :power 1)
                              (effect-completed eid))}]})

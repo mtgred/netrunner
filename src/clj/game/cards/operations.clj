@@ -704,9 +704,9 @@
 
 (defcard "Defective Brainchips"
   {:events [{:event :pre-damage
-             :req (req (= (:type context) :brain))
+             :req (req (and (= (:type context) :brain)
+                            (first-event? state side :pre-damage #(= :brain (:type (first %))))))
              :msg "do 1 additional core damage"
-             :once :per-turn
              :effect (effect (damage-bonus :brain 1))}]})
 
 (defcard "Digital Rights Management"
@@ -2474,7 +2474,7 @@
    :static-abilities [{:type :play-cost
                        :value 1}]
    :events [{:event :play-event
-             :once :per-turn
+             :req (req (first-event? state side :play-event))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})

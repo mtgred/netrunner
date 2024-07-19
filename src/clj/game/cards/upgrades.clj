@@ -1327,8 +1327,13 @@
                        :value true}]})
 
 (defcard "NeoTokyo Grid"
-  (let [ng {:req (req (in-same-server? card (:card context)))
-            :once :per-turn
+  (let [only-ev
+        (fn [state side ev no-ev card]
+          (and (first-event? state side ev #(in-same-server? card (:card (first %))))
+               (no-event? state side no-ev #(in-same-server? card (:card (first %))))))
+        ng {:req (req (and (in-same-server? card (:card context))
+                           (or (only-ev state side :advance :advancement-placed card)
+                               (only-ev state side :advancement-placed :advance card))))
             :msg "gain 1 [Credits]"
             :async true
             :effect (effect (gain-credits eid 1))}]

@@ -1315,7 +1315,6 @@
                  (installed? (:card target))))]
     {:events [{:event :runner-trash
                :async true
-               :once :per-turn
                :once-per-instance false
                :req (req (and (valid-trash target)
                               (first-event? state side :runner-trash #(valid-trash (first %)))))
@@ -1332,8 +1331,8 @@
 
 (defcard "Hyoubu Research Facility"
   {:events [{:event :reveal-spent-credits
-             :req (req (some? (first targets)))
-             :once :per-turn
+             :req (req (and (some? (first targets))
+                            (first-event? state side :reveal-spent-credits)))
              :msg (msg "gain " target " [Credits]")
              :async true
              :effect (effect (gain-credits :corp eid target))}]})
