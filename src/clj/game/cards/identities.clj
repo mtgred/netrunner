@@ -21,7 +21,7 @@
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
    [game.core.events :refer [event-count first-event?
-                             first-successful-run-on-server? no-event? not-last-turn? run-events turn-events]]
+                             first-successful-run-on-server? no-event? not-last-turn? run-events run-event-count turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [card-flag? clear-persistent-flag!
@@ -445,7 +445,6 @@
                             (not (:facedown context))))
              :async true
              :effect (effect (gain-credits :corp eid 2))
-             :once :per-turn
              :msg (msg "gain 2 [Credits] from " (:card-target card))}
             {:event :play-event
              :req (req (and (:card-target card)
@@ -453,7 +452,6 @@
                             (is-type? (:card context) (:card-target card))))
              :async true
              :effect (effect (gain-credits :corp eid 2))
-             :once :per-turn
              :msg (msg "gain 2 [Credits] from " (:card-target card))}]})
 
 (defcard "Blue Sun: Powering the Future"
@@ -479,7 +477,6 @@
 
 (defcard "Captain Padma Isbister: Intrepid Explorer"
   {:events [{:event :run
-             :once :per-turn
              :async true
              :req (req (and (= (:server target) [:rd])
                             (first-event? state side :run #(= [:rd] (:server (first %))))))
@@ -848,7 +845,6 @@
                             (not (:facedown context))))
              :interactive (req (some #(card-flag? % :runner-install-draw)
                                      (all-installed state :runner)))
-             :once :per-turn
              :async true
              :waiting-prompt true
              :effect
@@ -923,8 +919,9 @@
 
 (defcard "Hyoubu Institute: Absolute Clarity"
   {:events [{:event :corp-reveal
-             :once :per-turn
-             :req (req (first-event? state side :corp-reveal #(pos? (count %))))
+             :req (req (and
+                         (pos? (count targets))
+                         (first-event? state side :corp-reveal #(pos? (count %)))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]
@@ -1023,8 +1020,7 @@
   {:flags {:forced-to-avoid-tag true}
    :events [{:event :pre-tag
              :async true
-             :once :per-run
-             :req (req (:run @state))
+             :req (req (and run (<= (run-event-count state side :pre-tag) 1)))
              :msg "avoid the first tag during this run"
              :effect (effect (tag-prevent :runner eid 1))}]})
 
@@ -1243,8 +1239,8 @@
 
 (defcard "Los: Data Hijacker"
   {:events [{:event :rez
-             :once :per-turn
-             :req (req (ice? (:card context)))
+             :req (req (and (ice? (:card context))
+                            (first-event? state side :rez #(ice? (:card (first %))))))
              :msg "gain 2 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 2))}]})
@@ -1579,10 +1575,10 @@
                                (trash eid target {:unpreventable true}))}}}]})
 
 (defcard "Nuvem SA: Law of the Land"
-  (let [abi2 {:once :per-turn
-              :event :corp-trash
+  (let [abi2 {:event :corp-trash
               :req (req (and (= :corp (:active-player @state))
-                             (= [:deck] (:zone (:card target)))))
+                             (= [:deck] (:zone (:card target)))
+                             (first-event? state side :corp-trash #(= [:deck] (:zone (:card (first %)))))))
               :msg "gain 2 [Credits]"
               :async true
               :effect (effect (gain-credits :corp eid 2))}
@@ -1812,7 +1808,7 @@
 
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice
-             :once :per-turn
+             :req (req (first-event? state side :encounter-ice))
              :msg (msg "make " (:title (:ice context))
                        " gain Code Gate until the end of the run")
              :effect (effect (register-lingering-effect

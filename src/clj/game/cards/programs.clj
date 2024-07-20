@@ -2333,6 +2333,8 @@
 (defcard "Net Shield"
   {:interactions {:prevent [{:type #{:net}
                              :req (req true)}]}
+   ;; TODO - once a proper prevention system is set up, we can actually enforce the conditions
+   ;; on this card. nbkelly, 2024
    :abilities [{:cost [(->c :credit 1)]
                 :once :per-turn
                 :msg "prevent the first net damage this turn"

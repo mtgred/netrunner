@@ -1114,8 +1114,8 @@
                                       targets))
                    trash-event (fn [side-trash]
                                  {:event side-trash
-                                  :once :per-turn
                                   :once-per-instance true
+                                  :once :per-turn
                                   :req (req (and (prog-or-hw targets)
                                                  (first-event? state side side-trash prog-or-hw)))
                                   :msg "place 1 power counter on itself"
@@ -1707,15 +1707,15 @@
   {:events [mark-changed-event
             (assoc identify-mark-ability :event :runner-turn-begins)
             {:event :run-ends
-              :async true
-              :interactive (req true)
-              :once :per-turn
-              :req (req (first-event? state side :run-ends #(is-mark? state (target-server (first %)))))
-              :effect
-              (req (if (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %))))
-                     (do (system-msg state :runner (str "uses " (:title card) " to gain 2 [Credits]"))
-                         (gain-credits state :runner eid 2))
-                     (effect-completed state side eid)))}]})
+             :async true
+             :interactive (req true)
+             :once :per-turn
+             :req (req (first-event? state side :run-ends #(is-mark? state (target-server (first %)))))
+             :effect
+             (req (if (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %))))
+                    (do (system-msg state :runner (str "uses " (:title card) " to gain 2 [Credits]"))
+                        (gain-credits state :runner eid 2))
+                    (effect-completed state side eid)))}]})
 
 (defcard "Inside Man"
   {:recurring 2
@@ -2397,7 +2397,6 @@
                                       (remove (fn [[context]]
                                                 (= (:action context) :corp-click-credit)))
                                       count))))
-             :once :per-turn
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}]

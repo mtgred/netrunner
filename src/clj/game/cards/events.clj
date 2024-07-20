@@ -710,7 +710,7 @@
      :events [{:event :encounter-ice
                :optional
                {:prompt "Install a program?"
-                :once :per-run
+                :req (req (first-run-event? state side :encounter-ice))
                 :yes-ability
                 {:async true
                  :prompt "Choose where to install the program from"
@@ -2032,7 +2032,6 @@
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
              :req (req (first-run-event? state side :encounter-ice))
-             :once :per-run
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
 
@@ -2864,9 +2863,9 @@
 
 (defcard "Power to the People"
   {:events [{:event :access
-             :req (req (agenda? target))
+             :req (req (and (agenda? target)
+                            (first-event? state side :access #(agenda? (first %)))))
              :duration :end-of-turn
-             :once :per-turn
              :unregister-once-resolved true
              :msg "gain 7 [Credits]"
              :async true
