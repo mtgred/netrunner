@@ -1624,6 +1624,82 @@
      (is (no-prompt? state :corp) "No more prompts")
      (is (no-prompt? state :runner) "No more prompts")))
 
+(deftest ganked-vs-fc3.0-run-actually-ends
+  (do-game
+    (new-game {:corp {:hand ["Fairchild 3.0" "Ganked!"]}
+               :runner {:credits 10}})
+    (play-from-hand state :corp "Fairchild 3.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue-until state :success)
+    (is (last-log-contains? state "Runner accesses Ganked!") "Ganked! message printed to log")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Fairchild 3.0")
+    (let [fc3 (:ice (core/get-current-encounter state))]
+      (is (= "Fairchild 3.0" (:title fc3)) "Encountering fc3.0")
+      (fire-subs state fc3))
+    (click-prompt state :runner "Pay 3 [Credits]")
+    (click-prompt state :runner "Pay 3 [Credits]")
+    (click-prompt state :corp "End the run")
+    (is (not (:run @state)) "No more run")
+    (is (not (core/get-current-encounter state)) "No more encounter")
+    (is (no-prompt? state :corp) "No corp prompt")
+    (is (no-prompt? state :runner) "No runner prompt")
+    (take-credits state :runner)))
+
+(deftest ganked-vs-informant-or-maw-timing
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Ganked!" "Hedge Fund"]}
+               :runner {:hand ["Aeneas Informant" "Maw"]
+                        :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ganked!" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maw")
+    (play-from-hand state :runner "Aeneas Informant")
+    (run-on state :remote1)
+    (rez state :corp (get-ice state :remote1 0))
+    (run-continue-until state :success)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Ice Wall")
+    (is (= "Hedge Fund" (:title (second (:discard (get-corp))))) "Maw fired too")
+    (click-prompt state :runner "Yes")
+    (let [iwall (:ice (core/get-current-encounter state))]
+      (is (= "Ice Wall" (:title iwall)))
+      (is (:run @state))
+      (fire-subs state iwall)
+      (is (not (:run @state))))))
+
+(deftest ganked-vs-acme
+  (do-game
+    (new-game {:corp {:hand ["Ganked!" "Hedge Fund" "Ice Wall"]
+                      :score-area ["Dedicated Neural Net"]
+                      :id "Acme Consulting: The Truth You Need"}
+               :runner {:hand ["Jailbreak"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 0 (count-tags state)) "Runner not consided tagged")
+    (run-continue state :encounter-ice)
+    (is (= 1 (count-tags state)) "Runner consided during encounter")
+    (run-continue-until state :success)
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore")
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "1 [Credits]")
+    (click-card state :corp "Ganked!")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Ice Wall")
+    (is (= 1 (count-tags state)) "Runner consided during forced encounter")
+    (run-continue state)
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore after forced encounter")
+    (click-card state :corp "Hedge Fund")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore after run")))
+
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game

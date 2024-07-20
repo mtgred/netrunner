@@ -1722,15 +1722,21 @@
              :waiting-prompt true
              :choices (req [(when (can-pay? state :runner eid card nil [(->c :credit 3)])
                               "Pay 3 [Credits]")
-                            (when (or (not (can-pay? state :runner eid card nil [(->c :credit 3)]))
-                                      (can-pay? state :runner eid card nil [(->c :trash-installed 1)]))
-                              "Trash an installed card")])
+                            (when (can-pay? state :runner eid card nil [(->c :trash-installed 1)])
+                              "Trash an installed card")
+                            (when (and (not (can-pay? state :runner eid card nil [(->c :trash-installed 1)]))
+                                       (not (can-pay? state :runner eid card nil [(->c :credit 3)])))
+                              "Done")])
              :async true
-             :effect (req (if (= target "Pay 3 [Credits]")
+             :effect (req (cond
+                            (= target "Pay 3 [Credits]")
                             (wait-for (pay state side (make-eid state eid) card (->c :credit 3))
                                       (system-msg state side (:msg async-result))
                                       (effect-completed state side eid))
-                            (continue-ability state :runner runner-trash-installed-sub card nil)))}]
+                            (= target "Trash an installed card")
+                            (continue-ability state :runner runner-trash-installed-sub card nil)
+                            (= target "Done")
+                            (effect-completed state side eid)))}]
     {:subroutines [sub
                    sub
                    {:label "Do 1 core damage or end the run"
@@ -1741,7 +1747,7 @@
                     :async true
                     :effect (req (if (= target "Do 1 core damage")
                                    (damage state side eid :brain 1 {:card card})
-                                   (end-run state side eid card)))}]
+                                   (end-run state :corp eid card)))}]
      :runner-abilities [(bioroid-break 3 3)]}))
 
 (defcard "Fenris"
