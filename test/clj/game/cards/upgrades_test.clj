@@ -1663,7 +1663,7 @@
     (run-continue-until state :success)
     (click-prompt state :corp "Yes")
     (click-card state :corp "Ice Wall")
-    (is (= "Hedge fund" (:title (second (:discard (get-corp))))) "Maw fired too")
+    (is (= "Hedge Fund" (:title (second (:discard (get-corp))))) "Maw fired too")
     (click-prompt state :runner "Yes")
     (let [iwall (:ice (core/get-current-encounter state))]
       (is (= "Ice Wall" (:title iwall)))
