@@ -6552,31 +6552,35 @@
     ;; Happy Path
     (do-game
       (new-game {:corp   {:deck ["Enigma" "Blacklist" "Hedge Fund"]}
-                 :runner {:deck ["Pawn" "Knight"]}})
+                 :runner {:hand ["Pawn"] :discard ["Knight"]}})
       (play-from-hand state :corp "Enigma" "Archives")
       (take-credits state :corp)
-      (trash-from-hand state :runner "Knight")
       (play-from-hand state :runner "Pawn")
-      ;;currently Pawn successful run check is not implemented, nor is hosted location check
-      (card-ability state :runner (get-program state 0) 2)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-card state :runner "Enigma")
+      (run-empty-server state :hq)
       (click-card state :runner (find-card "Knight" (:discard (get-runner))))
-      (is (not (nil? (find-card "Pawn" (:discard (get-runner))))))))
+      (is (= "Pawn" (:title (first (:discard (get-runner))))) "Pawn trashed")
+      (is (= "Knight" (:title (get-program state 0))) "Knight installed")))
 
 (deftest pawn-heap-locked
     ;; Heap locked
     (do-game
       (new-game {:corp   {:deck ["Enigma" "Blacklist" "Hedge Fund"]}
-                 :runner {:deck ["Pawn" "Knight"]}})
+                 :runner {:deck ["Pawn" "Bishop"] :discard ["Knight"]}})
       (play-from-hand state :corp "Enigma" "Archives")
       (play-from-hand state :corp "Blacklist" "New remote")
-      (rez state :corp (refresh (get-content state :remote1 0)))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
-      (trash-from-hand state :runner "Knight")
       (play-from-hand state :runner "Pawn")
-      (card-ability state :runner (get-program state 0) 2)
-      (is (no-prompt? state :runner) "Install prompt did not come up")
-      (is (nil? (find-card "Pawn" (:discard (get-runner)))))
-      (is (not (nil? (find-card "Knight" (:discard (get-runner))))))))
+      (card-ability state :runner (get-program state 0) 0)
+      (click-card state :runner "Enigma")
+      (run-empty-server state :hq)
+      (click-card state :runner (find-card "Knight" (:discard (get-runner))))
+      (is (not (no-prompt? state :runner)) "Invalid choice - heap is locked")
+      (click-card state :runner "Bishop")
+      (is (= ["Knight" "Pawn"] (map :title (:discard (get-runner)))) "Pawn trashed")
+      (is (= "Bishop" (:title (get-program state 0))) "Knight installed")))
 
 (deftest pelangi
   ;; Pelangi
