@@ -181,7 +181,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event swap]}]
+  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event shuffled swap]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (if (fake-identity? card)
        ;; Make Fake-Identity cards "disappear"
@@ -194,6 +194,12 @@
                   (or force
                       (not (zone-locked? state (to-keyword (:side card)) (first (get-zone card))))))
          (let [dest (if (sequential? to) (vec to) [to])
+               dest-replacement-fn (:move-zone-replacement (card-def card))
+               dest-replacement (when dest-replacement-fn
+                                  (dest-replacement-fn state side (make-eid state) card [{:card card
+                                                                                          :target-zone dest
+                                                                                          :shuffled shuffled}]))
+               dest (or dest-replacement dest)
                moved-card (get-moved-card state side card to)]
            (update-effects state card moved-card)
            (remove-old-card state side card)
@@ -218,7 +224,7 @@
              (trigger-event state side :card-moved {:card card
                                                     :moved-card (get-card state moved-card)}))
            ;; move-zone-fn and the event can both modify the card, so re-bind here
-           (let [moved-card (get-card state moved-card)]
+           (when [moved-card (get-card state moved-card)]
              ; This is for removing `:location :X` events that are non-default locations,
              ; such as Subliminal Messaging only registering in :discard. We first unregister
              ; any non-default events from the previous zone and the register the non-default
