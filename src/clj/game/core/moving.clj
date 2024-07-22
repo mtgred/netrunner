@@ -224,7 +224,7 @@
              (trigger-event state side :card-moved {:card card
                                                     :moved-card (get-card state moved-card)}))
            ;; move-zone-fn and the event can both modify the card, so re-bind here
-           (when [moved-card (get-card state moved-card)]
+           (let [moved-card (get-card state moved-card)]
              ; This is for removing `:location :X` events that are non-default locations,
              ; such as Subliminal Messaging only registering in :discard. We first unregister
              ; any non-default events from the previous zone and the register the non-default
