@@ -2537,7 +2537,43 @@
                 (strength-pump 2 2)))
 
 (defcard "Pawn"
-  {:implementation "[Erratum] Program: Caïssa - Trojan. Developer Note: All abilities are manual"
+  (letfn [(next-ice-inwards
+            [state ice]
+            (when (pos? (:index ice))
+              (nth (get-in @state (vec (concat [:corp] (:zone ice)))) (dec (:index ice)))))
+          (can-move-inwards?
+            [state {:keys [host] :as card}]
+            (and host (pos? (:index host))
+                 (can-host? state (next-ice-inwards state host))))]
+    {:implementation "[Erratum] Program: Caïssa - Trojan"
+     :events [{:event :successful-run
+               :interactive (req true)
+               :async true
+               :req (req (ice? (:host card)))
+               :effect (req (if (can-move-inwards? state card)
+                              (continue-ability
+                                state side
+                                {:msg (msg "host itself on " (card-str state target))
+                                 :effect (req (host state side target card))}
+                                card [(next-ice-inwards state (:host card))])
+                              (continue-ability
+                                state side
+                                {:prompt "Choose another Caïssa to install"
+                                 :show-discard true
+                                 :choices {:req (req (and (has-subtype? target "Caïssa")
+                                                          (or (in-hand? target)
+                                                              (and (not (zone-locked? state :runner :discard))
+                                                                   (in-discard? target)))))}
+                                 :msg (msg "trash itself and install " (:title target) ", ignoring all costs")
+                                 :async true
+                                 :effect (req (wait-for
+                                                (trash state side card {:cause-card card
+                                                                        :unpreventable true})
+                                                (runner-install state side eid target {:ignore-all-cost true})))
+                                 :cancel-effect (req (system-msg state side (str "uses Pawn to trash itself"))
+                                                     (trash state side eid card {:cause-card card
+                                                                                 :unpreventable true}))}
+                                card nil)))}]
    :abilities [{:action true
                 :label "Host on the outermost piece of ice of a central server"
                 :cost [(->c :click 1)]
@@ -2545,34 +2581,10 @@
                 :choices {:req (req (and (ice? target)
                                          (can-host? state target)
                                          (= (last (get-zone target)) :ices)
+                                         (= target (last (get-in @state (vec (concat [:corp] (:zone target))))))
                                          (is-central? (second (get-zone target)))))}
                 :msg (msg "host itself on " (card-str state target))
-                :effect (effect (host target card))}
-               {:label "Host on the next innermost piece of ice"
-                :prompt "Choose the next innermost piece of ice"
-                :choices {:req (req (and (ice? target)
-                                         (can-host? state target)
-                                         (= (last (get-zone target)) :ices)
-                                         (is-central? (second (get-zone target)))))}
-                :msg (msg "host itself on " (card-str state target))
-                :effect (effect (host target card))}
-               {:req (req (not (zone-locked? state :runner :discard)))
-                :label "Trash to install a Caïssa program from the grip or heap, ignoring all costs"
-                :async true
-                :effect (req (let [this-pawn (:cid card)]
-                               (wait-for (trash state side card nil)
-                                         (continue-ability
-                                           state side
-                                           {:prompt "Choose a Caïssa program to install from the grip or heap"
-                                            :show-discard true
-                                            :choices {:card #(and (has-subtype? % "Caïssa")
-                                                                  (not= (:cid %) this-pawn)
-                                                                  (or (in-hand? %)
-                                                                      (in-discard? %)))}
-                                            :msg (msg "install " (:title target))
-                                            :async true
-                                            :effect (effect (runner-install eid target {:ignore-all-cost true}))}
-                                           card nil))))}]})
+                :effect (effect (host target card))}]}))
 
 (defcard "Peacock"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Code Gate")
