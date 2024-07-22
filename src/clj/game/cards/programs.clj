@@ -2543,7 +2543,8 @@
             [state {:keys [host] :as card}]
             (and host (pos? (:index host))
                  (can-host? state (next-ice-inwards state host))))]
-    {:events [{:event :successful-run
+    {:implementation "[Erratum] Program: Caïssa - Trojan"
+     :events [{:event :successful-run
                :interactive (req true)
                :async true
                :req (req (ice? (:host card)))
