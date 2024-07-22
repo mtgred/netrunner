@@ -288,4 +288,5 @@
           main/handle-notification lobby? (str (:username user) " has left the game.")))))
   (lobby/send-lobby-list uid)
   (lobby/broadcast-lobby-list)
+  (app-state/deregister-user! uid)
   (when ?reply-fn (?reply-fn true)))
