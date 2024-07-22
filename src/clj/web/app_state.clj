@@ -56,9 +56,7 @@
   "Remove user from app-state. Mutates."
   [uid]
   (let [users (:users @app-state)
-        _ (println "USERS" users)
-        new-users (dissoc users uid)
-        _ (println "NEW USERS" new-users)]
+        new-users (dissoc users uid)]
     (swap! app-state #(assoc %1 :users new-users))))
 
 (defn pause-lobby-updates
