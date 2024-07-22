@@ -10,7 +10,8 @@
     [sound (new Howl args)]))
 
 (defonce bespoke-sounds
-  ["bloop"
+  ["archer"
+   "bloop"
    "echo"
    "end-of-the-line"
    "professional-contacts"

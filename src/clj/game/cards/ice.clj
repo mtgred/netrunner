@@ -782,6 +782,7 @@
 
 (defcard "Archer"
   {:additional-cost [(->c :forfeit)]
+   :rez-sound "archer"
    :subroutines [(gain-credits-sub 2)
                  trash-program-sub
                  trash-program-sub
