@@ -200,7 +200,7 @@
                                                                                           :target-zone dest
                                                                                           :shuffled shuffled}]))
                dest (or dest-replacement dest)
-               moved-card (get-moved-card state side card to)]
+               moved-card (get-moved-card state side card (or (last dest-replacement) to))]
            (update-effects state card moved-card)
            (remove-old-card state side card)
            (let [pos-to-move-to (cond index index
