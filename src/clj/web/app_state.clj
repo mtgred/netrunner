@@ -77,7 +77,5 @@
 (defn deregister-user!
   "Remove user from app-state. Mutates."
   [uid]
-  (let [users (:users @app-state)
-        new-users (dissoc users uid)]
-    (pause-lobby-updates uid)
-    (swap! app-state #(assoc %1 :users new-users))))
+  (pause-lobby-updates uid)
+  (swap! app-state dissoc-in [:users uid]))
