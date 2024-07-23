@@ -16,7 +16,7 @@
   "average time | oldest"
   [subs]
   (let [now (inst/now)
-        age #(duration/get (duration/between % now) chrono/minutes)
+        age #(quot (duration/get (duration/between % now) chrono/seconds) 60)
         subs-by-minute (sort (map age subs))
         oldest (or (last subs-by-minute) 0)
         average (quot (reduce + 0 subs-by-minute) (max 1 (count subs)))]
