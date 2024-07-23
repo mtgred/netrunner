@@ -59,9 +59,7 @@
 
 (defn pause-lobby-updates
   [uid]
-  (let [lobby-update (:lobby-updates @app-state)
-        new-lobby-updates (dissoc lobby-update uid)]
-    (swap! app-state #(assoc %1 :lobby-updates new-lobby-updates))))
+  (swap! app-state dissoc-in [:lobby-updates uid]))
 
 (defn continue-lobby-updates
   [uid]
