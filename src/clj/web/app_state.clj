@@ -2,7 +2,7 @@
   (:require
    [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljc.java-time.instant :as inst]
-   [medley.core :refer [find-first]]))
+   [medley.core :refer [dissoc-in find-first]]))
 
 (defonce app-state
   (atom {:lobbies {}
