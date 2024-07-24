@@ -4,8 +4,7 @@
    [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.replay :refer [init-replay]]
-   [nr.gameboard.state :refer [check-lock? game-state get-side last-state
-                               parse-state]]
+   [nr.gameboard.state :refer [check-lock? game-state get-side last-state]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [toastr-options]]
    [nr.ws :as ws]
@@ -42,7 +41,7 @@
   (-> "#gamelobby" js/$ .fadeIn))
 
 (defn handle-diff! [{:keys [gameid diff]}]
-  (when (= gameid (str (current-gameid app-state)))
+  (when (= gameid (current-gameid app-state))
     (reset! game-state (differ/patch @last-state diff))
     (check-lock?)
     (reset! last-state @game-state)))
@@ -62,9 +61,9 @@
 
 (defmethod ws/event-msg-handler :game/start [{data :?data}]
   (reset! angel-arena/queueing false)
-  (launch-game! (parse-state data)))
-(defmethod ws/event-msg-handler :game/resync [{data :?data}] (reset-game! (parse-state data)))
-(defmethod ws/event-msg-handler :game/diff [{data :?data}] (handle-diff! (parse-state data)))
+  (launch-game! data))
+(defmethod ws/event-msg-handler :game/resync [{data :?data}] (reset-game! data))
+(defmethod ws/event-msg-handler :game/diff [{data :?data}] (handle-diff! data))
 (defmethod ws/event-msg-handler :game/timeout [{data :?data}] (handle-timeout data))
 (defmethod ws/event-msg-handler :game/error [_] (handle-error))
 
@@ -84,13 +83,6 @@
   (when (not (:replay @game-state))
     (ws/ws-send! [:game/mute-spectators {:gameid (current-gameid app-state)}])))
 
-(defn stack-cards []
-  (swap! app-state update-in [:options :stacked-cards] not))
-
-; (defn flip-runner-board []
-;   (let [layout (if (= "irl" (get-in @app-state [:options :runner-board-order])) "jnet" "irl")]
-;     (swap! app-state assoc-in [:options :runner-board-order] layout)))
-
 (defn concede []
   (when (not (:replay @game-state))
     (ws/ws-send! [:game/concede {:gameid (current-gameid app-state)}])))
@@ -108,7 +100,8 @@
       (build-report-url error)
       "');\">Report on GitHub</button></div>")))
 
-(defn ack-toast ([id] (send-command "toast" {:id id})))
+(defn ack-toast [id]
+  (send-command "toast" {:id id}))
 
 (defn toast
   "Display a toast warning with the specified message.
