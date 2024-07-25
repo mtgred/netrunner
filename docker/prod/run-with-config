@@ -1,0 +1,17 @@
+#!/bin/bash
+
+JAR_FILE=$1
+CONFIG_FILE=$2
+
+# Echo a message to indicate the start of the process
+echo "Adding configuration file $CONFIG_FILE to JAR $JAR_FILE..."
+
+# Add the configuration file to the root of the JAR
+zip -j $JAR_FILE $CONFIG_FILE
+
+# Echo a message to indicate that the configuration file has been added
+echo "...configuration file added successfully!"
+
+# Run the JAR file
+echo "Running jar file..."
+java -jar $JAR_FILE
