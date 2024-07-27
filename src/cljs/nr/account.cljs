@@ -9,7 +9,7 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
-   [nr.sounds :refer [play-sfx random-sound]]
+   [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
@@ -33,6 +33,7 @@
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings.updating "Updating profile..."]))
   (swap! app-state assoc-in [:options :pronouns] (:pronouns @s))
+  (swap! app-state assoc-in [:options :bespoke-sounds] (:bespoke-sounds @s))
   (swap! app-state assoc-in [:options :language] (:language @s))
   (swap! app-state assoc-in [:options :sounds] (:sounds @s))
   (swap! app-state assoc-in [:options :default-format] (:default-format @s))
@@ -321,20 +322,36 @@
            [:div (tr [:settings.volume "Volume"])
             [:input {:type "range"
                      :min 1 :max 100 :step 1
-                     :on-mouse-up #(play-sfx [(random-sound)] (int (.. % -target -value)))
+                     :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
                      :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
+          ;; todo - this should probably be a table/accordion or something
+          ;; but I'm not smart enough to do that right now, so that's a job for later
+          [:section
+           [:h3 (tr [:settings.bespoke-sounds-header "Card-Specific Sounds"])]
+           (doall
+             (for [grouping (distinct (map :grouping (vals bespoke-sounds)))]
+               ^{:key grouping}
+               [:div
+                [:label [:input {:type "checkbox"
+                                 :value true
+                                 :checked (get-in @s [:bespoke-sounds grouping])
+                                 :on-change #(let [checked (.. % -target -checked)]
+                                               (when checked
+                                                 (play-sfx [(select-random-from-grouping grouping)] {:volume (or (:volume @s) 50) :force true}))
+                                               (swap! s assoc-in [:bespoke-sounds grouping] checked))}]
+                 (tr [(keyword (str "settings.bespoke-sounds." (name grouping))) (name grouping)])]]))]
 
-        [:section
-         [:h3 (tr [:lobby.format "Default game format"])]
-         [:select.format
-          {:value (or (:default-format @s) "standard")
-           :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
-          (doall
-           (for [[k v] slug->format]
-             ^{:key k}
-             [:option {:value k} (tr-format v)]))]]
+          [:section
+           [:h3 (tr [:lobby.format "Default game format"])]
+           [:select.format
+            {:value (or (:default-format @s) "standard")
+             :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
+            (doall
+              (for [[k v] slug->format]
+                ^{:key k}
+                [:option {:value k} (tr-format v)]))]]
 
           [:section
            [:h3 (tr [:settings.layout-options "Layout options"])]
@@ -572,6 +589,7 @@
                        :card-zoom (get-in @app-state [:options :card-zoom])
                        :pin-zoom (get-in @app-state [:options :pin-zoom])
                        :pronouns (get-in @app-state [:options :pronouns])
+                       :bespoke-sounds (get-in @app-state [:options :bespoke-sounds])
                        :language (get-in @app-state [:options :language])
                        :sounds (get-in @app-state [:options :sounds])
                        :default-format (get-in @app-state [:options :default-format])

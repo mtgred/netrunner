@@ -10,13 +10,30 @@
     [sound (new Howl args)]))
 
 (defonce bespoke-sounds
-  ["archer"
-   "bloop"
-   "echo"
-   "end-of-the-line"
-   "professional-contacts"
-   "pulse"
-   "wave"])
+  {"archer" {:grouping :archer :default "rez-ice"}
+   "bloop" {:grouping :harmonics :default "rez-ice"}
+   "echo" {:grouping :harmonics :default "rez-ice"}
+   "end-of-the-line" {:grouping :end-of-the-line :default "play-instant"}
+   "pulse" {:grouping :harmonics :default "rez-ice"}
+   "wave" {:grouping :harmonics :default "rez-ice"}})
+
+(defn select-random-from-grouping
+  [key]
+  (let [all-keys (vec (keys bespoke-sounds))
+        key->group (map (fn [x] [x (get-in bespoke-sounds [x :grouping])]) all-keys)
+        relevant (filter #(= (name (second %)) (name key)) key->group)
+        just-sounds (vec (shuffle (map first relevant)))]
+    (first just-sounds)))
+
+(defn pick-sound
+  [name force]
+  (if force
+    name
+    (if-let [sound (get-in bespoke-sounds [name])]
+      (if (get-in @app-state [:options :bespoke-sounds (:grouping sound)])
+        name
+        (:default sound))
+      name)))
 
 (defonce sound-names
   ["agenda-score"
@@ -30,6 +47,7 @@
    "install-corp"
    "install-runner"
    "play-instant"
+   "professional-contacts"
    "rez-ice"
    "rez-other"
    "run-successful"
@@ -41,7 +59,7 @@
   (first (shuffle sound-names)))
 
 (defonce soundbank
-  (->> (concat sound-names bespoke-sounds)
+  (->> (concat sound-names (vec (keys bespoke-sounds)))
        (map audio-sfx)
        (into {})))
 
@@ -60,12 +78,12 @@
 (defn play-sfx
   "Plays a list of sounds one after another."
   ([sfx] (play-sfx sfx nil))
-  ([sfx vol]
-   (when-let [sfx-key (first sfx)]
+  ([sfx {:keys [volume force] :as args}]
+   (when-let [sfx-key (pick-sound (first sfx) force)]
      (let [sound (get soundbank sfx-key)]
-       (.volume sound (/ (or vol (str->int (get-in @app-state [:options :sounds-volume]))) 100))
+       (.volume sound (/ (or volume (str->int (get-in @app-state [:options :sounds-volume]))) 100))
        (.play sound))
-     (play-sfx (rest sfx) vol))))
+     (play-sfx (rest sfx) args))))
 
 (def sfx-last-played (atom nil))
 

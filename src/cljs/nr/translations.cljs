@@ -290,7 +290,12 @@
     :ffg "FFG"
     :api-keys "API Keys"
     :delete-api-key "Delete"
-    :create-api-key "Create API Key"}
+    :create-api-key "Create API Key"
+    :bespoke-sounds-header "Card-Specific Sounds"
+    :bespoke-sounds
+    {:archer "Archer"
+     :harmonics "Harmonics Suite (Bloop, Echo, Pulse, Wave)"
+     :end-of-the-line "End of the Line"}}
   :stats
   {:game-stats "Game Stats"
    :corp-stats "Corp Stats"
