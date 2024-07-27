@@ -4015,7 +4015,7 @@
                                               :waiting-prompt true
                                               :choices (req (filter ice? (:hand corp)))
                                               :async true
-                                              :effect (req (wait-for (swap-cards-async state side (make-eid state eid) target current-ice)
+                                              :effect (req (wait-for (swap-cards-async state side (make-eid state eid) target (get-card state card))
                                                                      (gain-credits state :corp eid 4)))
                                               :msg (msg "swap " (card-str state card)
                                                         " with a piece of ice from HQ and gain 4 [Credits]")}}}

@@ -7301,6 +7301,30 @@
           (click-prompt state :corp "OK"))
         "Corp gained no credits")))
 
+(deftest tatu-bola-swaps-correct-ice-when-swapped
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Vanilla" "Ice Wall"]}
+               :runner {:hand ["Inversificator"]
+                        :credits 10
+                        :id "Rielle \"Kit\" Peddler: Transhuman"}})
+    (play-from-hand state :corp "Tatu-Bola" "HQ")
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Inversificator")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (run-continue state :movement)
+    (click-prompt state :runner "Yes")
+    (click-card state :runner "Vanilla")
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Ice Wall")
+    (is (= "Ice Wall" (:title (get-ice state :rd 0))) "Ice wall on R&D")
+    (is (= "Vanilla" (:title (get-ice state :hq 0))) "Vanilla on HQ")
+    (is (= ["Tatu-Bola"] (map :title (:hand (get-corp)))) "Tatu bola in HQ")))
+
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
   ;; Thimblerig does not open a prompt if it's the only piece of ice
   (do-game
