@@ -1036,7 +1036,7 @@
      :delete "删除消息"
      :delete-all "删除该用户发送的所有消息"
      :block "屏蔽用户"
-     :cancel "取消"}
+     :cancel "取消"
      :message-blocked (fn [[reason-str]] (str "消息堵塞" (when reason-str (str ": " reason-str))))}
     :nav
     {:chat "聊天"
@@ -1478,6 +1478,7 @@
    :win-points (fn [[turn]] (str "于第" turn "回合因议案分数而获胜"))
    :win-other (fn [[turn reason]] (str "于第" turn "回合因" reason "而获胜" ))}
    }
+   
    :la-pig
    {:missing ":la-pig missing text"
     :side
