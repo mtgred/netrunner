@@ -326,8 +326,7 @@
                      :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
-          ;; todo - this should probably be a table/accordion or something
-          ;; but I'm not smart enough to do that right now, so that's a job for later
+
           [:section
            [:h3 (tr [:settings.bespoke-sounds-header "Card-Specific Sounds"])]
            (doall
