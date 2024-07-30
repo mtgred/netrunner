@@ -17,7 +17,7 @@
     (is (not (:run @state)) "Run ended")
     (take-credits state :runner)
     (is (nil? (get-in @state [:corp :prompt-state])) "Cleared the dummy run prompt at the end of the run")
-    (is (changed? [(:credits (get-corp)) 4]
+    (is (changed? [(:credit (get-corp)) 4]
                   (play-from-hand state :corp "Hedge Fund"))
         "Was able to play hedge fund")))
 
