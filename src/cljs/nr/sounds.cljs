@@ -9,25 +9,32 @@
                              (str "/sound/" sound ".mp3")]})]
     [sound (new Howl args)]))
 
+(defonce sound-names
+  ["agenda-score"
+   "agenda-steal"
+   "click-advance"
+   "click-card"
+   "click-credit"
+   "click-run"
+   "click-remove-tag"
+   "game-end"
+   "install-corp"
+   "install-runner"
+   "play-instant"
+   "rez-ice"
+   "rez-other"
+   "run-successful"
+   "run-unsuccessful"
+   "virus-purge"
+   ;; noises for bespoke cards
+   "professional-contacts"])
+
+(defn random-sound
+  []
+  (first (shuffle sound-names)))
+
 (defonce soundbank
-  (->> ["agenda-score"
-        "agenda-steal"
-        "click-advance"
-        "click-card"
-        "click-credit"
-        "click-run"
-        "click-remove-tag"
-        "game-end"
-        "install-corp"
-        "install-runner"
-        "play-instant"
-        "rez-ice"
-        "rez-other"
-        "run-successful"
-        "run-unsuccessful"
-        "virus-purge"
-        ;; noises for bespoke cards
-        "professional-contacts"]
+  (->> sound-names
        (map audio-sfx)
        (into {})))
 
@@ -45,12 +52,13 @@
 
 (defn play-sfx
   "Plays a list of sounds one after another."
-  [sfx]
-  (when-let [sfx-key (first sfx)]
-    (let [sound (get soundbank sfx-key)]
-      (.volume sound (/ (str->int (get-in @app-state [:options :sounds-volume])) 100))
-      (.play sound))
-    (play-sfx (rest sfx))))
+  ([sfx] (play-sfx sfx nil))
+  ([sfx vol]
+   (when-let [sfx-key (first sfx)]
+     (let [sound (get soundbank sfx-key)]
+       (.volume sound (/ (or vol (str->int (get-in @app-state [:options :sounds-volume]))) 100))
+       (.play sound))
+     (play-sfx (rest sfx) vol))))
 
 (def sfx-last-played (atom nil))
 
