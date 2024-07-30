@@ -8,7 +8,7 @@
    [monger.db]
    [monger.operators :refer :all]
    [tasks.setup :refer [connect disconnect]]
-   [web.decks :refer [hash-deck prepare-deck-for-db update-deck]]
+   [web.decks :refer [prepare-deck-for-db update-deck]]
    [web.mongodb :refer [->object-id]]
    [web.nrdb :refer [download-public-decklist]]
    [web.user :refer [create-user]]
@@ -89,11 +89,9 @@
                        :date (inst/now)
                        :format "standard")
            updated-deck (update-deck deck)
-           status (calculate-deck-status updated-deck)
-           deck-hash (hash-deck updated-deck)]
+           status (calculate-deck-status updated-deck)]
        (if-not (empty? (:cards deck))
          {:deck deck
-          :deck-hash deck-hash
           :status status}
          (throw (Exception. "A deck contains no cards. Did you forget to run `lein fetch`?")))))))
 
@@ -108,8 +106,8 @@
 
 (defn- create-sample-deck
   [username decks]
-  (let [{deck :deck, deck-hash :deck-hash, status :status} (rand-nth decks)]
-    (prepare-deck-for-db deck username status deck-hash)))
+  (let [{deck :deck, status :status} (rand-nth decks)]
+    (prepare-deck-for-db deck username status)))
 
 (defn- create-sample-game-log
   [username]

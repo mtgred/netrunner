@@ -80,7 +80,7 @@
           deck (-> deck
                    (select-keys
                      (if (:started lobby)
-                       [:name :date :identity :hash]
+                       [:name :date :identity]
                        [:name :date]))
                    (assoc :_id (str _id) :status status))]
       (assoc player :deck deck))
