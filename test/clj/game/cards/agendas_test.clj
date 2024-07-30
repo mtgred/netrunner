@@ -3542,6 +3542,7 @@
       (is (= "Hedge Fund" (:title (last (:deck (get-corp))))))
       (is (= "Sweeps Week" (:title (last (butlast (:deck (get-corp)))))))
       (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
+      (is (not (last-log-contains? state "Grip")) "Runner not mentioned in log")
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
 
