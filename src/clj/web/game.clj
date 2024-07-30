@@ -86,7 +86,7 @@
 
 (defn strip-deck [player]
   (-> player
-      (update :deck select-keys [:_id :identity :name :hash])
+      (update :deck select-keys [:_id :identity :name])
       (update-in [:deck :_id] str)
       (update-in [:deck :identity] select-keys [:title :faction])))
 
