@@ -175,9 +175,19 @@
 (defn command-undo-click
   "Resets the game state back to start of the click"
   [state side]
-  (when-let [click-state (peek (:click-states @state))]
+  (when-let [last-click-state (peek (:click-states @state))]
     (when (= (:active-player @state) side)
-      (reset! state (assoc click-state :log (:log @state) :click-states (pop (:click-states @state)) :run nil :history (:history @state)))
+      (let [current-log (:log @state)
+            current-history (:history @state)
+            previous-click-states (pop (:click-states @state))
+            turn-state (:turn-state @state)
+            last-click-state (assoc last-click-state
+                               :log current-log
+                               :click-states previous-click-states
+                               :turn-state turn-state
+                               :history current-history
+                               :run nil)]
+        (reset! state last-click-state))
       (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
@@ -188,7 +198,13 @@
   (when-let [turn-state (:turn-state @state)]
     (swap! state assoc-in [side :undo-turn] true)
     (when (and (-> @state :runner :undo-turn) (-> @state :corp :undo-turn))
-      (reset! state (assoc turn-state :log (:log @state) :turn-state turn-state :history (:history @state)))
+      (let [current-log (:log @state)
+            current-history (:history @state)
+            original-turn-state (assoc turn-state
+                                  :log current-log
+                                  :history current-history
+                                  :turn-state turn-state)]
+        (reset! state original-turn-state))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of turn")))))
 
