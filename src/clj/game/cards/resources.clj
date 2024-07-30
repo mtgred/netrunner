@@ -2263,7 +2263,7 @@
                                             run
                                             (= :corp (:active-player @state))
                                             (#{:psi :trace} (:source-type eid))
-                                            (#{:net :meat :brain :tag} (get-in @state [:prevent :current]))))
+                                            (#{:net :meat :brain :tag} (get-in @state [:prevent :current :type]))))
                                 :type :credit}}})
 
 (defcard "Network Exchange"
@@ -2337,7 +2337,7 @@
                                :req (req (first-chance? state side))}]}
      :abilities [{:msg "force the Corp to trace"
                   :async true
-                  :effect (req (let [prevent-type (get-in @state [:prevent :current])]
+                  :effect (req (let [prevent-type (get-in @state [:prevent :current :type])]
                                  (wait-for (trash state side card {:unpreventable true :cause-card card})
                                            (continue-ability state side (start-trace prevent-type)
                                                              card nil))))}]}))
