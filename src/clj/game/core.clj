@@ -304,11 +304,6 @@
    corp-recur])
 
 (expose-vars
-  [game.core.diffs
-   public-states
-   public-diffs])
-
-(expose-vars
   [game.core.drawing
    draw
    draw-bonus
