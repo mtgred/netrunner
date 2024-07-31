@@ -1,0 +1,7 @@
+Bloop: The Bloop sea creature .Wav by Scpsea -- https://freesound.org/s/701050/ -- License: Creative Commons 0
+Echo: space_blip4.aif by tim.kahn -- https://freesound.org/s/52754/ -- License: Attribution 4.0
+End of the Line: pistol_riccochet.ogg by Diboz -- https://freesound.org/s/213925/ -- License: Creative Commons 0
+Pulse: pulse 1.wav by cameronmusic -- https://freesound.org/s/138421/ -- License: Attribution 3.0
+Wave: deep-bass-wave-130.mp3 by iscence -- https://freesound.org/s/65516/ -- License: Creative Commons 0
+
+Archer: archer by d/0 -- https://github.com/db0/Android-Netrunner-OCTGN -- used with permission from D/0

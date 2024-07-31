@@ -76,10 +76,11 @@
                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                                          Please rez prior to clicking Start Turn in the future." "warning"
                              {:time-out 0 :close-button true}))
-                    (if (ice? card)
-                      (do (update-ice-strength state side card)
-                          (when-not (:silent args) (play-sfx state side "rez-ice")))
-                      (when-not (:silent args) (play-sfx state side "rez-other")))
+                    (let [rez-byte (:rez-sound (card-def card))]
+                      (if (ice? card)
+                        (do (update-ice-strength state side card)
+                            (when-not (:silent args) (play-sfx state side (or rez-byte "rez-ice"))))
+                      (when-not (:silent args) (play-sfx state side (or rez-byte "rez-other")))))
                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                     (when-let [card-ability (:on-rez cdef)]
                       (register-pending-event state :rez card card-ability))
