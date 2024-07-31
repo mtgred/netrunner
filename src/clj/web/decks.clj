@@ -97,6 +97,7 @@
       (response 409 {:message "Unknown deck id"}))))
 
 (defmethod ws/-msg-handler :decks/import
+  decks--import
   [{{db :system/db
      {username :username} :user} :ring-req
     uid :uid

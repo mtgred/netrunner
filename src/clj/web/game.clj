@@ -122,6 +122,7 @@
     lobbies))
 
 (defmethod ws/-msg-handler :game/start
+  game--start
   [{{db :system/db} :ring-req
     uid :uid
     {gameid :gameid} :?data}]
@@ -139,6 +140,7 @@
           (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?))))))))
 
 (defmethod ws/-msg-handler :game/leave
+  game--leave
   [{{db :system/db user :user} :ring-req
     uid :uid
     {gameid :gameid} :?data
@@ -160,6 +162,7 @@
     (vals (:lobbies @app-state/app-state))))
 
 (defmethod ws/-msg-handler :game/rejoin
+  game--rejoin
   [{{user :user} :ring-req
     uid :uid
     ?data :?data}]
@@ -175,6 +178,7 @@
           (update-and-send-diffs! main/handle-rejoin lobby? user))))))
 
 (defmethod ws/-msg-handler :game/concede
+  game--concede
   [{uid :uid
     {gameid :gameid} :?data}]
   (let [lobby (app-state/get-lobby gameid)
@@ -184,6 +188,7 @@
         (update-and-send-diffs! main/handle-concede lobby side)))))
 
 (defmethod ws/-msg-handler :game/action
+  game--action
   [{uid :uid
     {:keys [gameid command args]} :?data}]
   (try
@@ -216,6 +221,7 @@
                     "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))
 
 (defmethod ws/-msg-handler :game/resync
+  game--resync
   [{uid :uid
     {gameid :gameid} :?data}]
   (let [lobby (app-state/get-lobby gameid)]
@@ -230,6 +236,7 @@
                       "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))))
 
 (defmethod ws/-msg-handler :game/watch
+  game--watch
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid password]} :?data
@@ -259,6 +266,7 @@
           (when ?reply-fn (?reply-fn 404)))))))
 
 (defmethod ws/-msg-handler :game/mute-spectators
+  game--mute-spectators
   [{{user :user} :ring-req
     uid :uid
     {gameid :gameid} :?data}]
@@ -273,6 +281,7 @@
       (lobby/send-lobby-state lobby?))))
 
 (defmethod ws/-msg-handler :game/say
+  game--say
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid msg]} :?data}]
@@ -285,6 +294,7 @@
       (handle-message-and-send-diffs! lobby? side user msg))))
 
 (defmethod ws/-msg-handler :game/typing
+  game--typing
   [{uid :uid
     {:keys [gameid typing]} :?data}]
   (let [{:keys [state players] :as lobby} (app-state/get-lobby gameid)]
@@ -293,6 +303,7 @@
         (ws/chsk-send! uid [:game/typing typing])))))
 
 (defmethod ws/-msg-handler :chsk/uidport-close
+  chsk--uidport-close
   [{{db :system/db
      user :user} :ring-req
     uid :uid
