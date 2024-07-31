@@ -13,6 +13,7 @@
    [web.ws :as ws]))
 
 (defmethod ws/-msg-handler :admin/announce
+  admin--announce
   [{{user :user} :ring-req
     {message :message} :?data
     reply-fn :?reply-fn}]
@@ -85,6 +86,7 @@
    :banned :banned})
 
 (defmethod ws/-msg-handler :admin/edit-user
+  admin--edit-user
   [{{db :system/db user :user} :ring-req
     {:keys [action user-type username] :as data} :?data
     uid :uid}]
@@ -114,6 +116,7 @@
     (ws/broadcast-to! [uid] :admin/user-edit {:error "Not allowed"})))
 
 (defmethod ws/-msg-handler :admin/fetch-users
+  admin--fetch-users
   [{{db :system/db user :user} :ring-req
     uid :uid}]
   (if (and (active-user? user)
