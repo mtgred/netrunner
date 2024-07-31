@@ -498,3 +498,12 @@
      :corp-diff (differ/diff old-corp new-corp)
      :spect-diff (differ/diff old-spect new-spect)
      :hist-diff (differ/diff old-hist new-hist)}))
+
+(defn message-diffs [old-state new-state]
+  (let [old-messages (select-keys old-state [:log])
+        new-messages (select-keys @new-state [:log])
+        message-diff (differ/diff old-messages new-messages)]
+    {:runner-diff message-diff
+     :corp-diff message-diff
+     :spect-diff message-diff
+     :hist-diff message-diff}))

@@ -30,9 +30,11 @@
                                      :text message})))
 
 (defn handle-notification
-  [state text]
-  (when state
-    (core/system-say state nil text)))
+  ([state text]
+   (when state
+     (core/system-say state nil text)))
+  ([state _ text] (handle-notification state text))
+  ([state _ _ text] (handle-notification state text)))
 
 (defn handle-announcement
   [state text]
