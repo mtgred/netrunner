@@ -489,12 +489,12 @@
      :spect-state (strip-for-spectators replay-state corp-state runner-state)
      :hist-state replay-state}))
 
-(defn public-diffs [old-state new-state]
+(defn public-diffs [old-state new-state spectators?]
   (let [{old-corp :corp-state old-runner :runner-state
          old-spect :spect-state old-hist :hist-state} (when old-state (public-states (atom old-state)))
         {new-corp :corp-state new-runner :runner-state
          new-spect :spect-state new-hist :hist-state} (public-states new-state)]
     {:runner-diff (differ/diff old-runner new-runner)
      :corp-diff (differ/diff old-corp new-corp)
-     :spect-diff (differ/diff old-spect new-spect)
+     :spect-diff (when spectators? (differ/diff old-spect new-spect))
      :hist-diff (differ/diff old-hist new-hist)}))

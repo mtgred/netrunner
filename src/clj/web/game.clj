@@ -40,7 +40,9 @@
   (when (and state @state)
     (let [old-state @state
           _ (apply f state args)
-          diffs (diffs/public-diffs old-state state)]
+          spectators? (seq (:spectators lobby))
+          diffs (diffs/public-diffs old-state state spectators?)]
+      (println spectators?)
       (swap! state update :history conj (:hist-diff diffs))
       (send-state-diffs lobby diffs))))
 
