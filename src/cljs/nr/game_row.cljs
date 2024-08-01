@@ -46,16 +46,70 @@
 (defn watch-button [lobby-state user game current-game editing]
   (when (can-watch? user game current-game editing)
     (if (not (:password game))
-      [:button {:on-click #(do (join-game lobby-state game "watch")
-                               (resume-sound))}
-       (tr [:lobby.watch "Watch"])]
-      [:button {:on-click #(if (:password game)
-                             (authenticated
-                               (fn [_]
-                                 (swap! lobby-state assoc :password-game {:game game :action "watch"})))
-                             (do (join-game lobby-state game "watch")
-                                 (resume-sound)))}
-       (tr [:lobby.watch "Watch"])])))
+      (if-not (:spectatorhands game)
+        ;; no password, no hidden info: just a simple button
+        [:button {:on-click #(do (join-game lobby-state game "watch")
+                                 (resume-sound))}
+         (tr [:lobby.watch "Watch"])]
+        ;; no password, hidden info: select a side, or both (traditional)
+        [:div.split-button
+         [:button {:on-click #(do (join-game lobby-state game "watch")
+                                  (resume-sound))}
+          (tr [:lobby.watch "Watch"])]
+         [:button.dropdown-toggle {:data-toggle "dropdown"}
+          [:b.caret]]
+         [:ul.dropdown-menu.blue-shade
+          [:a.block-link {:on-click #(do (join-game lobby-state game "watch" "Corp")
+                                         (resume-sound))}
+           (tr [:lobby.corp-perspective "Corp Perspective"])]
+          [:a.block-link {:on-click #(do (join-game lobby-state game "watch" "Runner")
+                                         (resume-sound))}
+           (tr [:lobby.runner-perspective "Runner Perspective"])]
+          [:a.block-link {:on-click #(do (join-game lobby-state game "watch")
+                                         (resume-sound))}
+           (tr [:lobby.both-perspective "Both"])]]])
+      (if-not (:spectatorhands game)
+        ;; password, no hidden info
+        [:button {:on-click #(if (:password game)
+                               (authenticated
+                                 (fn [_]
+                                   (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                               (do (join-game lobby-state game "watch")
+                                   (resume-sound)))}
+         (tr [:lobby.watch "Watch"])]
+        ;; password, hidden info
+        [:div.split-button
+         [:button {:on-click #(if (:password game)
+                               (authenticated
+                                 (fn [_]
+                                   (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                               (do (join-game lobby-state game "watch")
+                                   (resume-sound)))}
+          (tr [:lobby.watch "Watch"])]
+         [:button.dropdown-toggle {:data-toggle "dropdown"}
+          [:b.caret]]
+         [:ul.dropdown-menu.blue-shade
+          [:a.block-link {:on-click #(if (:password game)
+                                       (authenticated
+                                         (fn [_]
+                                           (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                                       (do (join-game lobby-state game "watch" "Corp")
+                                           (resume-sound)))}
+           (tr [:lobby.corp-perspective "Corp Perspective"])]
+          [:a.block-link {:on-click #(if (:password game)
+                                       (authenticated
+                                         (fn [_]
+                                           (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                                       (do (join-game lobby-state game "watch" "Runner")
+                                           (resume-sound)))}
+           (tr [:lobby.runner-perspective "Runner Perspective"])]
+          [:a.block-link {:on-click #(if (:password game)
+                                       (authenticated
+                                         (fn [_]
+                                           (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                                       (do (join-game lobby-state game "watch")
+                                           (resume-sound)))}
+           (tr [:lobby.both-perspective "Both"])]]]))))
 
 (defn can-join? [user {:keys [room started players]} current-game editing]
   (if (= "tournament" room)
