@@ -422,7 +422,7 @@
 
 (def state-keys
   [:active-player
-   :angel-arena-info
+   ;; :angel-arena-info
    :corp
    :corp-phase-12
    :encounters

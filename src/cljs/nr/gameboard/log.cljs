@@ -225,7 +225,7 @@
 (defn log-pane []
   (fn []
     [:div.log
-     [angel-arena-log/inactivity-pane]
+     ;; [angel-arena-log/inactivity-pane]
      [log-messages]
      [log-typing]
      [log-input]]))

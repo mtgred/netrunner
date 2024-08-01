@@ -24,7 +24,7 @@
    [taoensso.sente :as sente]
    [time-literals.data-readers]
    [time-literals.read-write :as read-write]
-   [web.angel-arena :as angel-arena]
+   ;; [web.angel-arena :as angel-arena]
    [web.api :refer [make-app make-dev-app]]
    [web.app-state :as app-state]
    [web.game]
@@ -64,11 +64,11 @@
     (make-dev-app opts)))
 
 (defmethod ig/init-key :web/app-state [_ _]
+  ;; (reset! angel-arena/arena-queue [])
   (reset! app-state/app-state
           {:lobbies {}
            :lobby-updates {}
-           :users {}})
-  (reset! angel-arena/arena-queue []))
+           :users {}}))
 
 (defmethod ig/init-key :web/server [_ {:keys [app port]}]
   (run-server app {:port port
@@ -83,8 +83,8 @@
 
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
-     (tick #(angel-arena/check-for-inactivity db) interval)]))
+    [;;(tick #(angel-arena/check-for-inactivity db) interval)
+     (tick #(lobby/clear-inactive-lobbies db time-inactive) interval)]))
 
 (defmethod ig/halt-key! :web/lobby [_ futures]
   (run! future-cancel futures))
