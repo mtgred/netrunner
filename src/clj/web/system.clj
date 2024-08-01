@@ -83,8 +83,8 @@
 
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [;;(tick #(angel-arena/check-for-inactivity db) interval)
-     (tick #(lobby/clear-inactive-lobbies db time-inactive) interval)]))
+    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
+     #_(tick #(angel-arena/check-for-inactivity db) interval)]))
 
 (defmethod ig/halt-key! :web/lobby [_ futures]
   (run! future-cancel futures))
