@@ -30,10 +30,10 @@
                 (optional-stat s (tr [:stats.rashida-count "Rashida Count"]) [:rashida-count])
                 ;; psi games
                 (optional-stat s (tr [:stats.psi-game-total "Psi Game: Games Played"]) [:psi-game :games-played])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Wins"]) [:psi-game :wins])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Bid 0"]) [:psi-game :bet-0])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Bid 1"]) [:psi-game :bet-1])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Bid 2"]) [:psi-game :bet-2])
+                (optional-stat s (tr [:stats.psi-game-total-wins "Psi Game: Wins"]) [:psi-game :wins])
+                (optional-stat s (tr [:stats.psi-game-total-bid-0 "Psi Game: Bid 0"]) [:psi-game :bet-0])
+                (optional-stat s (tr [:stats.psi-game-total-bid-1 "Psi Game: Bid 1"]) [:psi-game :bet-1])
+                (optional-stat s (tr [:stats.psi-game-total-bid-2 "Psi Game: Bid 2"]) [:psi-game :bet-2])
                 ])))
 
 (defn runner-stats [s]
@@ -53,10 +53,10 @@
                 (computed-stat s (tr [:stats.unique-accesses "Unique Cards Accessed"]) [:access :unique-cards] count)
                 ;; psi games
                 (optional-stat s (tr [:stats.psi-game-total "Psi Game: Games Played"]) [:psi-game :games-played])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Wins"]) [:psi-game :wins])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Bid 0"]) [:psi-game :bet-0])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Bid 1"]) [:psi-game :bet-1])
-                (optional-stat s (tr [:stats.psi-game-total "Psi Game: Bid 2"]) [:psi-game :bet-2])
+                (optional-stat s (tr [:stats.psi-game-total-wins "Psi Game: Wins"]) [:psi-game :wins])
+                (optional-stat s (tr [:stats.psi-game-total-bid-0 "Psi Game: Bid 0"]) [:psi-game :bet-0])
+                (optional-stat s (tr [:stats.psi-game-total-bid-1 "Psi Game: Bid 1"]) [:psi-game :bet-1])
+                (optional-stat s (tr [:stats.psi-game-total-bid-2 "Psi Game: Bid 2"]) [:psi-game :bet-2])
                 ])))
 
 (defn show-stat

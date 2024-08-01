@@ -408,17 +408,17 @@
                 custom-bg-url (r/atom (:custom-bg-url @s))]
             [:section
              [:h3  (tr [:settings.background "Game board background"])]
-             (doall (for [option [{:name "The Root"        :ref "lobby-bg"}
-                                  {:name "Freelancer"      :ref "freelancer-bg"}
-                                  {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
-                                  {:name "Traffic Jam"     :ref "traffic-jam-bg"}
-                                  {:name "Rumor Mill"      :ref "rumor-mill-bg"}
-                                  {:name "Find The Truth"  :ref "find-the-truth-bg"}
-                                  {:name "Push Your Luck"  :ref "push-your-luck-bg"}
-                                  {:name "Apex"            :ref "apex-bg"}
-                                  {:name "Worlds 2020"     :ref "worlds2020"}
-                                  {:name "Monochrome"      :ref "monochrome-bg"}
-                                  {:name (str "Custom BG" (when custom-bg-selected " (input URL below)"))
+             (doall (for [option [{:name (tr [:settings.the-root-bg "The Root"])              :ref "lobby-bg"}
+                                  {:name (tr [:settings.freelancer-bg "Freelancer"])          :ref "freelancer-bg"}
+                                  {:name (tr [:settings.mushin-no-shin-bg "Mushin No Shin"])  :ref "mushin-no-shin-bg"}
+                                  {:name (tr [:settings.traffic-jam-bg "Traffic Jam"])        :ref "traffic-jam-bg"}
+                                  {:name (tr [:settings.rumor-mill-bg "Rumor Mill"])          :ref "rumor-mill-bg"}
+                                  {:name (tr [:settings.find-the-truth-bg "Find The Truth"])  :ref "find-the-truth-bg"}
+                                  {:name (tr [:settings.push-your-luck-bg "Push Your Luck"])  :ref "push-your-luck-bg"}
+                                  {:name (tr [:settings.apex-bg "Apex"])                      :ref "apex-bg"}
+                                  {:name (tr [:settings.worlds2020-bg "Worlds 2020"])         :ref "worlds2020"}
+                                  {:name (tr [:settings.monochrome-bg "Monochrome"])          :ref "monochrome-bg"}
+                                  {:name (str (tr [:settings.custom-bg "Custom BG"]) (when custom-bg-selected (tr [:settings.input-url-below " (input URL below)"])))
                                    :ref "custom-bg"}]]
                       [:div.radio {:key (:name option)}
                        [:label [:input {:type "radio"
@@ -447,9 +447,9 @@
                       (:name option)]]))]
 
           [:section
-           [:h3  "Card preview zoom"]
-           (doall (for [option [{:name "Card Image" :ref "image"}
-                                {:name "Card Text" :ref "text"}]]
+           [:h3  (tr [:settings.card-preview-zoom "Card preview zoom"])]
+           (doall (for [option [{:name (tr [:settings.card-iamge "Card Image"]) :ref "image"}
+                                {:name (tr [:settings.card-text "Card Text"]) :ref "text"}]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "card-zoom"
