@@ -452,6 +452,7 @@
   (-> @state
       (update-in [:corp :user] user-summary)
       (update-in [:runner :user] user-summary)
+      (assoc :stats (when (:winner @state) (:stats @state)))
       (assoc :run (run-summary state))
       (assoc :encounters (encounters-summary state))
       (select-non-nil-keys state-keys)))
