@@ -64,7 +64,7 @@
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
-  (doseq [c (filter :new (all-installed-and-scored state side))]
+  (doseq [c (filter :new (concat (all-installed-and-scored state side) (get-in @state [side :discard])))]
     (update! state side (dissoc c :new)))
 
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
