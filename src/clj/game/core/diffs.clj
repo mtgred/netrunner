@@ -523,4 +523,6 @@
     {:runner-diff message-diff
      :corp-diff message-diff
      :spect-diff message-diff
+     :runner-spect-diff message-diff
+     :corp-spect-diff message-diff
      :hist-diff message-diff}))
