@@ -294,8 +294,7 @@
           players (remove #(= uid (:uid %)) (:players lobby))
           spectators (remove #(= uid (:uid %)) (:spectators lobby))
           corp-spectators (remove #(= uid (:uid %)) (:corp-spectators lobby))
-          runner-spectators (remove #(= uid (:uid %)) (:runner-spectators lobby))
-          ]
+          runner-spectators (remove #(= uid (:uid %)) (:runner-spectators lobby))]
       (if (pos? (count players))
         (-> lobbies
             (update gameid send-message leave-message)
@@ -651,7 +650,7 @@
   (let [lobby (app-state/get-lobby gameid)]
     (when (and lobby (allowed-in-lobby user lobby))
       (let [correct-password? (check-password lobby user password)
-            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (side: " request-side ")")) "."))
+            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) "."))
             new-app-state (swap! app-state/app-state
                                  update :lobbies #(-> %
                                                       (handle-watch-lobby gameid uid user correct-password? watch-message request-side)

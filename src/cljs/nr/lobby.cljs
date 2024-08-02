@@ -87,7 +87,7 @@
 (defn leave-game []
   (if (= "local-replay" (:gameid @app-state))
     (do
-      (swap! app-state assoc :gameid nil)
+      (swap! app-state assoc :gameid nil))
       (leave-game!))
     (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
                  8000

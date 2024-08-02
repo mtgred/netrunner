@@ -92,14 +92,14 @@
           [:a.block-link {:on-click #(if (:password game)
                                        (authenticated
                                          (fn [_]
-                                           (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                                           (swap! lobby-state assoc :password-game {:game game :action "watch" :request-side "Corp"})))
                                        (do (join-game lobby-state game "watch" "Corp")
                                            (resume-sound)))}
            (tr [:lobby.corp-perspective "Corp Perspective"])]
           [:a.block-link {:on-click #(if (:password game)
                                        (authenticated
                                          (fn [_]
-                                           (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                                           (swap! lobby-state assoc :password-game {:game game :action "watch" :request-side "Runner"})))
                                        (do (join-game lobby-state game "watch" "Runner")
                                            (resume-sound)))}
            (tr [:lobby.runner-perspective "Runner Perspective"])]

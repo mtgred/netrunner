@@ -233,7 +233,7 @@
   (let [lobby (app-state/get-lobby gameid)]
     (when (and lobby (lobby/allowed-in-lobby user lobby))
       (let [correct-password? (lobby/check-password lobby user password)
-            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (side: " request-side ")")) "."))
+            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) "."))
             new-app-state (swap! app-state/app-state
                                  update :lobbies
                                  #(-> %
