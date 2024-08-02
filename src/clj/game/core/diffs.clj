@@ -422,7 +422,7 @@
 
 (def state-keys
   [:active-player
-   :angel-arena-info
+   ;; :angel-arena-info
    :corp
    :corp-phase-12
    :encounters
@@ -452,6 +452,7 @@
   (-> @state
       (update-in [:corp :user] user-summary)
       (update-in [:runner :user] user-summary)
+      (assoc :stats (when (:winner @state) (:stats @state)))
       (assoc :run (run-summary state))
       (assoc :encounters (encounters-summary state))
       (select-non-nil-keys state-keys)))
@@ -514,3 +515,12 @@
      :runner-spect-diff (when runner-spectators? (differ/diff old-runner-spect new-runner-spect))
      :corp-spect-diff (when corp-spectators? (differ/diff old-corp-spect new-corp-spect))
      :hist-diff (differ/diff old-hist new-hist)}))
+
+(defn message-diffs [old-state new-state]
+  (let [old-messages (select-keys old-state [:log])
+        new-messages (select-keys @new-state [:log])
+        message-diff (differ/diff old-messages new-messages)]
+    {:runner-diff message-diff
+     :corp-diff message-diff
+     :spect-diff message-diff
+     :hist-diff message-diff}))

@@ -1743,8 +1743,10 @@
              :async true
              :msg (req (let [n (count chosen)]
                          (str "add " (quantify n "card") " from HQ to the bottom of R&D and draw " (quantify n "card")
-                              ". The Runner randomly adds " (quantify (min n (count (:hand runner))) "card")
-                              " from [runner-pronoun] Grip to the bottom of the Stack")))
+                              (when (<= n (count (:hand runner)))
+                                (str
+                                  ". The Runner randomly adds " (quantify n "card")
+                                  " from [runner-pronoun] Grip to the bottom of the Stack")))))
              :effect (req (let [n (count chosen)]
                             (if (= target "Done")
                               (do (doseq [c (reverse chosen)] (move state :corp c :deck))

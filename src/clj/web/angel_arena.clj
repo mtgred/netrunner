@@ -27,6 +27,7 @@
                    [form {:corp [] :runner []}]))))
 
 (defmethod ws/-msg-handler :angel-arena/fetch-runs
+  angel-arena--fetch-runs
   [{{db :system/db
      user :user} :ring-req
     ?reply-fn :?reply-fn}]
@@ -37,6 +38,7 @@
 (def coll "angel-arena")
 
 (defmethod ws/-msg-handler :angel-arena/fetch-history
+  angel-arena--fetch-history
   [{{db :system/db
      user :user} :ring-req
     ?reply-fn :?reply-fn}]
@@ -48,6 +50,7 @@
       (?reply-fn runs))))
 
 (defmethod ws/-msg-handler :angel-arena/fetch-queue-times
+  angel-arena--fetch-queue-times
   [{{user :user} :ring-req
     ?reply-fn :?reply-fn}]
   (when user
@@ -60,6 +63,7 @@
       (?reply-fn response))))
 
 (defmethod ws/-msg-handler :angel-arena/start-run
+  angel-arena--start-run
   [{{db :system/db
      {:keys [username]} :user} :ring-req
     {:keys [deck-id]} :?data}]
@@ -75,6 +79,7 @@
         (println "Caught exception while starting a new run: " (.getMessage e))))))
 
 (defmethod ws/-msg-handler :angel-arena/abandon-run
+  angel-arena--abandon-run
   [{{db :system/db
      {:keys [username]} :user} :ring-req
     uid :uid
@@ -179,6 +184,7 @@
   (add-new-match! db opponent player gameid))
 
 (defmethod ws/-msg-handler :angel-arena/queue
+  angel-arena--queue
   [{{db :system/db user :user} :ring-req
     uid :uid
     {:keys [deck-id]} :?data}]
@@ -233,6 +239,7 @@
             (swap! arena-queue conj player)))))))
 
 (defmethod ws/-msg-handler :angel-arena/dequeue
+  angel-arena--dequeue
   [{{{:keys [username]} :user} :ring-req}]
   (when username
     (remove-from-queue! username)))
@@ -340,6 +347,7 @@
       (update-in [:angel-arena-info :inactivity-counter inactive-side] (fnil dec max-inactivity-count))))
 
 (defmethod ws/-msg-handler :angel-arena/more-time
+  angel-arena--more-time
   [{{{:keys [username]} :user} :ring-req
     uid :uid
     {:keys [gameid]} :?data}]
@@ -359,6 +367,7 @@
       (game/update-and-send-diffs! request-more-time lobby inactive-side))))
 
 (defmethod ws/-msg-handler :angel-arena/claim-victory
+  angel-arena--claim-victory
   [{{db :system/db
      {:keys [username]} :user} :ring-req
     {:keys [gameid]} :?data}]
@@ -378,6 +387,7 @@
         (game/send-state-diffs lobby (diffs/public-diffs old-state state))))))
 
 (defmethod ws/-msg-handler :angel-arena/cancel-match
+  angel-arena--cancel-match
   [{{db :system/db
      {:keys [username]} :user} :ring-req
     {:keys [gameid]} :?data}]

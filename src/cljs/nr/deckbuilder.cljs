@@ -768,8 +768,7 @@
              [:span.invalid " (" (tr [:deck-builder.max "maximum"]) " " (inc min-point) ")"])]))
       (when (validator/format-point-limit (:format deck))
         [:div [deck-points-span deck]])
-      [:div [deck-status-span deck true true false]]
-      (when (:hash deck) [:div (tr [:deck-builder.hash "Tournament hash"]) ": " (:hash deck)])]]))
+      [:div [deck-status-span deck true true false]]]]))
 
 (defn decklist-contents
   [s deck cards]

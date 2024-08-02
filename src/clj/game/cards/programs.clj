@@ -1041,7 +1041,7 @@
              :async true
              :optional {:req (req (and (= :hq target)
                                        (seq (filter corp? (:hosted card)))))
-                        :prompt "Trash this program to access 2 additional cards from HQ?"
+                        :prompt "1 [Credits]: Trash this program to access 2 additional cards from HQ?"
                         :yes-ability {:async true
                                       :effect (effect (access-bonus :hq 2)
                                                       (effect-completed eid))

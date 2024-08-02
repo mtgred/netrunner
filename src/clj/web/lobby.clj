@@ -82,7 +82,7 @@
           deck (-> deck
                    (select-keys
                      (if (:started lobby)
-                       [:name :date :identity :hash]
+                       [:name :date :identity]
                        [:name :date]))
                    (assoc :_id (str _id) :status status))]
       (assoc player :deck deck))
@@ -231,6 +231,7 @@
   (update lobby :messages conj message))
 
 (defmethod ws/-msg-handler :lobby/create
+  lobby--create
   [{{user :user} :ring-req
     uid :uid
     ?data :?data}]
@@ -258,6 +259,7 @@
       (clear-lobby-state uid))))
 
 (defmethod ws/-msg-handler :lobby/list
+  lobby--list
   [{uid :uid}]
   (send-lobby-list uid))
 
@@ -338,6 +340,7 @@
       lobby?))
 
 (defmethod ws/-msg-handler :lobby/leave
+  lobby--leave
   [{{db :system/db user :user} :ring-req
     uid :uid
     {gameid :gameid} :?data
@@ -388,6 +391,7 @@
       lobbies)))
 
 (defmethod ws/-msg-handler :lobby/deck
+  lobby--deck
   [{{db :system/db user :user} :ring-req
     uid :uid
     {:keys [gameid deck-id]} :?data
@@ -414,6 +418,7 @@
     lobbies))
 
 (defmethod ws/-msg-handler :lobby/say
+  lobby--say
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid text]} :?data}]
@@ -503,6 +508,7 @@
       (when ?reply-fn (?reply-fn 404) nil))))
 
 (defmethod ws/-msg-handler :lobby/join
+  lobby--join
   [{{user :user} :ring-req
     uid :uid
     {gameid :gameid :as ?data} :?data
@@ -552,6 +558,7 @@
 
 
 (defmethod ws/-msg-handler :lobby/swap
+  lobby--swap
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid side]} :?data}]
@@ -569,6 +576,7 @@
         (broadcast-lobby-list)))))
 
 (defmethod ws/-msg-handler :lobby/rename-game
+  lobby--rename-game
   [{{db :system/db user :user} :ring-req
     {:keys [gameid]} :?data}]
   (when-let [lobby (app-state/get-lobby gameid)]
@@ -586,6 +594,7 @@
                     :date (inst/now)})))))
 
 (defmethod ws/-msg-handler :lobby/delete-game
+  lobby--delete-game
   [{{db :system/db user :user} :ring-req
     {:keys [gameid]} :?data}]
   (let [lobby (app-state/get-lobby gameid)
@@ -643,6 +652,7 @@
       lobbies)))
 
 (defmethod ws/-msg-handler :lobby/watch
+  lobby--watch
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid password request-side]} :?data
@@ -674,11 +684,13 @@
       lobbies)))
 
 (defmethod ws/-msg-handler :lobby/pause-updates
+  lobby--pause-updates
   [{{user :user} :ring-req
     uid :uid}]
   (app-state/pause-lobby-updates uid))
 
 (defmethod ws/-msg-handler :lobby/continue-updates
+  lobby--continue-updates
   [{{user :user} :ring-req
     uid :uid}]
   (app-state/continue-lobby-updates uid)

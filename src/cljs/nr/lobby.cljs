@@ -214,7 +214,7 @@
                  ^{:key k}
                  [format-toggle k (contains? visible-formats k)]))]]
      [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]
-     [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
+     ;; [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
      [room-tab user s games "competitive" (tr [:lobby.tournament "Tournament"])]]
     (when-not (= "angel-arena" (:room @s))
       [:div.lobby-buttons

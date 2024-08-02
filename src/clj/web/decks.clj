@@ -32,12 +32,11 @@
       (update :identity #(@all-cards (:title %)))))
 
 (defn prepare-deck-for-db
-  [deck username status deck-hash]
+  [deck username status]
   (-> deck
       (update :cards (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
       (assoc :username username
-             :status status
-             :hash deck-hash)))
+             :status status)))
 
 (defn- deck-locked?
   [db deck-id]
@@ -50,19 +49,6 @@
   (let [salt (byte-array (map byte (slugify deck-name)))]
     (if (empty? salt) (byte-array (map byte "default-salt")) salt)))
 
-(defn hash-deck
-  [deck]
-  (let [check-deck (-> deck
-                       (update :cards #(map update-card %))
-                       (update :identity #(get @all-cards (:title %))))
-        id (-> deck :identity :title)
-        sorted-cards (sort-by #(:code (:card %)) (:cards check-deck))
-        decklist (str/join (for [entry sorted-cards]
-                           (str (:qty entry) (:code (:card entry)))))
-        deckstr (str id decklist)
-        salt (make-salt (:name deck))]
-    (last (str/split (pbkdf2/encrypt deckstr 100000 "HMAC-SHA1" salt) #"\$"))))
-
 (defn decks-create-handler
   [{db :system/db
     {username :username} :user
@@ -70,8 +56,7 @@
   (if (and username deck)
     (let [updated-deck (update-deck deck)
           status (calculate-deck-status updated-deck)
-          deck-hash (hash-deck updated-deck)
-          deck (prepare-deck-for-db deck username status deck-hash)]
+          deck (prepare-deck-for-db deck username status)]
       (response 200 (mc/insert-and-return db "decks" deck)))
     (response 401 {:message "Unauthorized"})))
 
@@ -82,8 +67,7 @@
   (if (and username deck)
     (let [updated-deck (update-deck deck)
           status (calculate-deck-status updated-deck)
-          deck-hash (hash-deck updated-deck)
-          deck (prepare-deck-for-db deck username status deck-hash)]
+          deck (prepare-deck-for-db deck username status)]
       (if-let [deck-id (:_id deck)]
         (if-not (deck-locked? db deck-id)
           (if (:identity deck)
@@ -113,6 +97,7 @@
       (response 409 {:message "Unknown deck id"}))))
 
 (defmethod ws/-msg-handler :decks/import
+  decks--import
   [{{db :system/db
      {username :username} :user} :ring-req
     uid :uid
@@ -126,8 +111,7 @@
                              :format "standard")
               updated-deck (update-deck db-deck)
               status (calculate-deck-status updated-deck)
-              deck-hash (hash-deck updated-deck)
-              deck (prepare-deck-for-db db-deck username status deck-hash)]
+              deck (prepare-deck-for-db db-deck username status)]
           (mc/insert db "decks" deck)
           (ws/broadcast-to! [uid] :decks/import-success "Imported"))
         (ws/broadcast-to! [uid] :decks/import-failure "Failed to parse imported deck.")))
