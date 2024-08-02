@@ -1829,8 +1829,8 @@
             {:class (warning-class @remaining)}
             (str
               (when-not (:pos @remaining) "-")
-              (:minutes @remaining) "m:"
-              (:seconds @remaining) "s remaining")]))})))
+              (:minutes @remaining) (tr [:game.minutes "m:"])
+              (:seconds @remaining) (tr [:game.seconds-remaining "s remaining"]))]))})))
 
 (defn- time-since
   "Helper method for match duration. Computes how much time since game start"
@@ -1864,8 +1864,8 @@
          (when (not @hidden)
            [:span.float-center.timer
             (str
-              (:minutes @duration) "m:"
-              (:seconds @duration) "s")])
+              (:minutes @duration) (tr [:game.minutes "m:"])
+              (:seconds @duration) (tr [:game.seconds "s"]))])
          )})))
 
 (defn starting-timestamp [start-date timer]

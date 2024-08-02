@@ -202,20 +202,36 @@
      :cancel "Cancel"
      :title "Title"
      :side "Side"
+     :singleton "Singleton"
+     :singleton-b "(singleton)"
      :format "Format"
+     :default-game-format "Default game format"
+     :singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."
+     :singleton-example "1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone"
      :options "Options"
      :spectators "Allow spectators"
      :hidden "Make players' hidden information visible to spectators"
+     :hidden-details "This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards."
+     :hidden-password "We recommend using a password to prevent strangers from spoiling the game."
      :password-protected "Password protected"
      :password "Password"
+     :timed-game "Start with timer"
+     :timer-length "Timer length (minutes)"
+     :timed-game-details "Timer is only for convenience: the game will not stop when timer runs out."
+     :save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."
+     :save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."
+     :save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."
+     :api-access-details "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"
      :start "Start"
      :leave "Leave"
+     :singleton-restriction "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."
      :swap "Swap sides"
      :waiting "Waiting players deck selection"
      :players "Players"
      :deck-selected "Deck selected"
      :select-deck "Select Deck"
      :chat "Chat"
+     :select-error "Cannot select that deck"
      :select-title "Select your deck"
      :spectator-count (fn [[cnt]] (str cnt " Spectator" (when (not= cnt 1) "s")))
      :closed-msg "Game lobby closed due to inactivity"
@@ -235,9 +251,10 @@
      :invalid-password "Invalid password"
      :not-allowed "Not allowed"
      :aborted "Connection aborted"
-     :lobby.api-access "Allow API access to game information"
-     :lobby.api-requires-key "(Requires an API Key in Settings)"
+     :api-access "Allow API access to game information"
+     :api-requires-key "(Requires an API Key in Settings)"
      :game-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Game" " Games")))
+     :filter "Filter"
      :filtered "(filtered)"}
    :settings
    {:invalid-password "Invalid login or password"
@@ -580,6 +597,9 @@
    :trace "Trace"
    :credits "credits"
    :card "Card"
+   :minutes "m:"
+   :seconds "s"
+   :seconds-remaining "s remaining"
    :time-taken (fn [[t]] (str "Time taken: " t " minutes"))
    :win-decked (fn [[turn]] (str "wins due to the Corp being decked on turn " turn))
    :win-flatlined (fn [[turn]] (str "wins by flatline on turn " turn))
@@ -804,8 +824,8 @@
      :invalid-password "Senha invalida"
      :not-allowed "Não autorizado"
      :aborted "Conecção abortada"
-     :lobby.api-access "Permitir acesso API para informações do jogo"
-     :lobby.api-requires-key "(Requer uma Chave de API nas Configurações)"
+     :api-access "Permitir acesso API para informações do jogo"
+     :api-requires-key "(Requer uma Chave de API nas Configurações)"
      :game-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Jogo" " Jogos")))
      :filtered "(filtrado)"}
    :settings
@@ -1206,21 +1226,36 @@
      :create "创建"
      :cancel "取消"
      :title "房间名"
-     :side "阵营"
+     :singleton "单张卡牌"
+     :singleton-b "(单张卡牌)"
      :format "赛制"
+     :default-game-format "默认游戏赛制"
+     :singleton-details "这将限制牌组中每种同名卡牌仅限1张。建议你使用下列基于此模式的特性ID组建的牌组。"
+     :singleton-example "1) 复始：触媒&促力 2) 安培：全民的义体"
      :options "选项"
      :spectators "允许旁观"
      :hidden "允许旁观者查看玩家的隐藏信息"
+     :hidden-details "这将向游戏的所有观众揭示两名玩家的隐藏信息，包括手牌和面朝下的牌。"
+     :hidden-password "我们建议使用密码来防止陌生人破坏游戏。"
      :password-protected "密码保护"
      :password "密码"
+     :timed-game "带有计时器"
+     :timer-length "计时器长度（分钟）"
+     :timed-game-details "计时器仅为方便使用：当计时器结束时，游戏不会停止。"
+     :save-replay-details "这将保存此游戏的回放文件，其中包含公开信息（例如公开手牌）。该文件仅在游戏结束后可用。"
+     :save-replay-unshared "只会保留你最近的15个未分享游戏，因此请务必在之后下载或分享游戏。"
+     :save-replay-beta "测试功能：请注意，我们可能会重置已保存的录像，因此请确保下载你想要保留的游戏。此外，请记住，我们可能会在未来对网站进行更改，这可能会使回放不兼容。"
+     :api-access-details "这允许第三方扩展访问有关你游戏的信息。需要在“设置”中创建API密钥"
      :start "开始"
      :leave "离开"
+     :singleton-restriction "这局要求为单张卡牌模式。这意味着牌组中每种同名卡牌限1张。"
      :swap "交换阵营"
      :waiting "等待玩家选择牌组"
      :players "玩家"
      :deck-selected "牌组已选择"
      :select-deck "选择牌组"
      :chat "聊天"
+     :select-error "不能选择那个牌组"
      :select-title "请选择牌组"
      :spectator-count (fn [[cnt]] (str cnt "位观众"))
      :closed-msg "房间因长期无活动而关闭"
@@ -1240,9 +1275,10 @@
      :invalid-password "密码不正确"
      :not-allowed "操作被禁止"
      :aborted "连接已中断"
-     :lobby.api-access "允许 API 访问游戏信息"
-     :lobby.api-requires-key "(需要设置 API 密钥)"
+     :api-access "允许 API 访问游戏信息"
+     :api-requires-key "(需要设置 API 密钥)"
      :game-count (fn [[cnt]] (str cnt "局对战"))
+     :filter "过滤"
      :filtered "（过滤后）"}
    :settings
    {:invalid-password "用户名或密码无效"
@@ -1585,6 +1621,9 @@
    :trace "追踪强度"
    :credits "个信用点"
    :card "卡牌"
+   :minutes "分:"
+   :seconds "秒"
+   :seconds-remaining "秒剩余"
    :time-taken (fn [[t]] (str "对战用时：" t "分钟"))
    :win-decked (fn [[turn]] (str "于第" turn "回合因公司无牌可抽而获胜"))
    :win-flatlined (fn [[turn]] (str "于第" turn "回合通过杀死潜袭者而获胜"))
@@ -2217,8 +2256,8 @@
      :invalid-password "Mot de passe invalide"
      :not-allowed "Interdit"
      :aborted "Connexion interrompue"
-     :lobby.api-access "Autoriser l'accès API aux informations de la partie"
-     :lobby.api-requires-key "(Nécessite un clé API dans les réglages)"
+     :api-access "Autoriser l'accès API aux informations de la partie"
+     :api-requires-key "(Nécessite un clé API dans les réglages)"
      :game-count (fn [[cnt]] (str cnt (if (= 1 cnt) " Partie" " Parties")))
      :filtered "(filtres activés)"}
    :settings
@@ -3053,8 +3092,8 @@
      :invalid-password "Nieprawidłowe hasło"
      :not-allowed "Niedozwolone"
      :aborted "Połączenie przerwane"
-     :lobby.api-access "Zezwól na dostęp API do danych rozgrywki"
-     :lobby.api-requires-key "(Wymaga podania klucza API w ustawieniach)"
+     :api-access "Zezwól na dostęp API do danych rozgrywki"
+     :api-requires-key "(Wymaga podania klucza API w ustawieniach)"
      :game-count (fn [[cnt]] (str "Gry: " cnt))
      :filtered "(filtrowane)"}
    :settings
@@ -3488,8 +3527,8 @@
      :invalid-password "不正なパスワード"
      :not-allowed "Not allowed"
      :aborted "Connection aborted"
-     :lobby.api-access "Allow API access to game information"
-     :lobby.api-requires-key "(Requires an API Key in Settings)"
+     :api-access "Allow API access to game information"
+     :api-requires-key "(Requires an API Key in Settings)"
      :game-count (fn [[cnt]] (str "ルーム数 " cnt))
      :filtered "(絞り込み)"}
    :settings
@@ -3923,8 +3962,8 @@
      :invalid-password "Неправильный пароль"
      :not-allowed "Не разрешено"
      :aborted "Соединение разорвано"
-     :lobby.api-access "Разрешить доступ к данным игры через API"
-     :lobby.api-requires-key "(Требуется ключ API в Настройках)"
+     :api-access "Разрешить доступ к данным игры через API"
+     :api-requires-key "(Требуется ключ API в Настройках)"
      :game-count (ru-quant "игр" "игра" "игры")
      :filtered "(с фильтром)"}
    :settings
