@@ -259,7 +259,8 @@
   (let [lobby (app-state/get-lobby gameid)]
     (when (and lobby (lobby/allowed-in-lobby user lobby))
       (let [correct-password? (lobby/check-password lobby user password)
-            watch-message (make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) "."))
+            watch-str (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) ".")
+            watch-message (make-system-message watch-str)
             new-app-state (swap! app-state/app-state
                                  update :lobbies
                                  #(-> %
@@ -268,11 +269,11 @@
             lobby? (get-in new-app-state [:lobbies gameid])]
         (cond
           (and lobby? (lobby/spectator? uid lobby?) (lobby/allowed-in-lobby user lobby?))
-          (let [message (str (:username user) " joined the game as a spectator.")]
+          (do
             (lobby/send-lobby-state lobby?)
             (lobby/send-lobby-ting lobby?)
             (lobby/broadcast-lobby-list)
-            (main/handle-notification (:state lobby?) message)
+            (main/handle-notification (:state lobby?) watch-str)
             (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
             (when ?reply-fn (?reply-fn 200)))
           (false? correct-password?)

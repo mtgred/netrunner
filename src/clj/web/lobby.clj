@@ -630,7 +630,6 @@
       (broadcast-lobby-list))))
 
 (defn watch-lobby [lobby uid user request-side]
-  (println (str "request-side: `" request-side "`"))
   (if (already-in-game? user lobby)
     lobby
     (let [lobby (update lobby :spectators conj {:uid uid
