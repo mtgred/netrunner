@@ -99,8 +99,8 @@
 (defn watch-button [lobby-state user game current-game editing]
   (when (can-watch? user game current-game editing)
     (if (not (:password game))
-      (watch-game-button (:spectatorhands game) lobby-state game)
-      (watch-protected-game-button (:spectatorhands game) lobby-state game))))
+      [watch-game-button (:spectatorhands game) lobby-state game]
+      [watch-protected-game-button (:spectatorhands game) lobby-state game])))
 
 (defn can-join? [user {:keys [room started players]} current-game editing]
   (if (= "tournament" room)
