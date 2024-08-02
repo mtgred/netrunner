@@ -92,7 +92,7 @@
     (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
                  8000
                  #(when (sente/cb-success? %)
-                    (leave-game!)))))
+                    (leave-game!))))
 
 (defn- hidden-formats
   "Remove games which the user has opted to hide"
