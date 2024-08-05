@@ -881,7 +881,7 @@
 (defn- change-format
   [s new-format]
   (swap! s assoc-in [:deck :format] new-format)
-  (if-not (legal-in-format (get-in @s [:deck :identity]) new-format)
+  (when-not (legal-in-format (get-in @s [:deck :identity]) new-format)
     (let [side (get-in @s [:deck :identity :side])
           new-id (first (sort-by :title (side-identities side new-format)))]
       (when new-id
