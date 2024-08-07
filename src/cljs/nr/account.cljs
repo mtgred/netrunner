@@ -325,7 +325,7 @@
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
         [:section
-         [:h3 (tr [:lobby.default-game-format "Default game format"])]
+         [:h3 (tr [:lobby.format "Format"])]
          [:select.format
           {:value (or (:default-format @s) "standard")
            :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
@@ -498,7 +498,7 @@
                              :name "use-high-res"
                              :checked (= "high" (:card-resolution @s))
                              :on-change #(swap! s assoc-in [:card-resolution] (if (.. % -target -checked) "high" "default"))}]
-             (tr [:settings.high-res "Enable high resolution card images"])]]]
+             (tr [:settings.high-res "Enable high-resolution card images"])]]]
 
           [:section {:id "alt-art"}
            [:h3 (tr [:settings.alt-art "Alt arts"])]

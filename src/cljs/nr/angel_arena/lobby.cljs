@@ -308,7 +308,7 @@
              (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")")))])
 
      [:div {:class "game-format"}
-      [:span.format-label (tr [:lobby.format "Format"]) ":  "]
+      [:span.format-label (tr [:lobby.default-game-format "Default game format"]) ":  "]
       [:span.format-type (tr-format (slug->format format "Unknown"))]]
 
      (into [:div]

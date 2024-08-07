@@ -178,7 +178,7 @@
 
 (defn game-format [{fmt :format singleton? :singleton}]
   [:div {:class "game-format"}
-   [:span.format-label (tr [:lobby.format "Format"]) ":  "]
+   [:span.format-label (tr [:lobby.default-game-format "Default game format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
 
