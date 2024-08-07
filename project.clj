@@ -91,10 +91,10 @@
                               "-XX:+DebugNonSafepoints"]}
              :debugger {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5010"]}}
 
-  :aliases {"fetch" ["run" "-m" "tasks.fetch/command"]
-            "kaocha" ["run" "-m" "kaocha.runner"]
+  :aliases {"fetch" ^{:doc "Fetch card data and images from github"} ["run" "-m" "tasks.fetch/command"]
+            "kaocha" ^{:doc "Run tests with kaocha"} ["run" "-m" "kaocha.runner"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
-            "load-generator" ["run" "-m" "tasks.load-generator/command"]
+            "load-generator" ^{:doc "Performance test lobbies"} ["run" "-m" "tasks.load-generator/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
             "add-deck-to-all" ["run" "-m" "tasks.decks/add-for-all-users"]
@@ -106,5 +106,5 @@
             "get-game-stats" ["run" "-m" "tasks.game-stats/all-games"]
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
             "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]
-            "missing-translations" ["run" "-m" "tasks.translations/missing-translations"]
-            "undefined-translations" ["run" "-m" "tasks.translations/undefined-translations"]})
+            "missing-translations" ^{:doc "Print translations in :en that aren't in other languages. Can be passed a language (fr, ko, ...) to filter to that language."} ["run" "-m" "tasks.translations/missing-translations"]
+            "undefined-translations" ^{:doc "Find usages of (tr [...]) in code that don't exist in :en translation."} ["run" "-m" "tasks.translations/undefined-translations"]})
