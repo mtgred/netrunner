@@ -476,6 +476,14 @@
         (assoc :corp (if spectator-hands? (:corp corp-state) (:corp runner-state)))
         (assoc :runner (if spectator-hands? (:runner runner-state) (:runner corp-state))))))
 
+(defn strip-for-corp-spect
+  [stripped-state corp-state runner-state]
+  (assoc stripped-state :corp (:corp corp-state) :runner (:runner corp-state)))
+
+(defn strip-for-runner-spect
+  [stripped-state corp-state runner-state]
+  (assoc stripped-state :corp (:corp runner-state) :runner (:runner runner-state)))
+
 (defn public-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
@@ -488,16 +496,24 @@
     {:corp-state corp-state
      :runner-state runner-state
      :spect-state (strip-for-spectators replay-state corp-state runner-state)
+     :corp-spect-state (strip-for-corp-spect replay-state corp-state runner-state)
+     :runner-spect-state (strip-for-runner-spect replay-state corp-state runner-state)
      :hist-state replay-state}))
 
-(defn public-diffs [old-state new-state]
+(defn public-diffs [old-state new-state spectators? corp-spectators? runner-spectators?]
   (let [{old-corp :corp-state old-runner :runner-state
-         old-spect :spect-state old-hist :hist-state} (when old-state (public-states (atom old-state)))
+         old-spect :spect-state old-hist :hist-state
+         old-corp-spect :corp-spect-state
+         old-runner-spect :runner-spect-state} (when old-state (public-states (atom old-state)))
         {new-corp :corp-state new-runner :runner-state
-         new-spect :spect-state new-hist :hist-state} (public-states new-state)]
+         new-spect :spect-state new-hist :hist-state
+         new-corp-spect :corp-spect-state
+         new-runner-spect :runner-spect-state} (public-states new-state)]
     {:runner-diff (differ/diff old-runner new-runner)
      :corp-diff (differ/diff old-corp new-corp)
-     :spect-diff (differ/diff old-spect new-spect)
+     :spect-diff (when spectators? (differ/diff old-spect new-spect))
+     :runner-spect-diff (when runner-spectators? (differ/diff old-runner-spect new-runner-spect))
+     :corp-spect-diff (when corp-spectators? (differ/diff old-corp-spect new-corp-spect))
      :hist-diff (differ/diff old-hist new-hist)}))
 
 (defn message-diffs [old-state new-state]
@@ -507,4 +523,6 @@
     {:runner-diff message-diff
      :corp-diff message-diff
      :spect-diff message-diff
+     :runner-spect-diff message-diff
+     :corp-spect-diff message-diff
      :hist-diff message-diff}))

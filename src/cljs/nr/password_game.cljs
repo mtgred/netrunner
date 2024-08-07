@@ -7,15 +7,16 @@
    [taoensso.sente :as sente]))
 
 (defn join-game
-  [lobby-state state game action]
+  [lobby-state state game action request-side]
   (authenticated
     (fn [_]
       (ws/ws-send! [(case action
                       "join" :lobby/join
                       "watch" :lobby/watch
                       "rejoin" :game/rejoin)
-                    {:gameid (:gameid game)
-                     :password (:password @state)}]
+                    (cond-> {:gameid (:gameid game)
+                             :password (:password @state)}
+                      request-side (conj {:request-side request-side}))]
                    8000
                    #(if (sente/cb-success? %)
                       (case %
@@ -27,6 +28,7 @@
 (defn password-game [lobby-state]
   (r/with-let [game (r/cursor lobby-state [:password-game :game])
                action (r/cursor lobby-state [:password-game :action])
+               request-side (r/cursor lobby-state [:password-game :request-side])
                state (r/atom {:password nil
                               :error-msg nil})]
     (fn [lobby-state]
@@ -40,10 +42,10 @@
                             :maxLength "30"
                             :on-key-press (fn [e]
                                             (when (= 13 (.. e -charCode))
-                                              (join-game lobby-state state @game @action)))}]]
+                                              (join-game lobby-state state @game @action @request-side)))}]]
        [:p
         [:button {:type "button"
-                  :on-click #(join-game lobby-state state @game @action)}
+                  :on-click #(join-game lobby-state state @game @action @request-side)}
          (tr-watch-join @action)]
         [:span.fake-link {:on-click #(do
                                        (swap! lobby-state dissoc :password-game)
