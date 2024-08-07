@@ -180,7 +180,7 @@
   [:div {:class "game-format"}
    [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
-   [:span.format-singleton (str (when singleton? " (singleton)"))]])
+   [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
 
 (defn- time-since
   "Helper method for game-time. Computes how many minutes since game start"

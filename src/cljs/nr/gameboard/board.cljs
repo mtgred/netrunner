@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-side]]
+   [nr.translations :refer [tr tr-side tr-game-prompt]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face render-icons render-message]]
    [reagent.core :as r]))
@@ -405,7 +405,7 @@
        [:ul (map-indexed
              (fn [_ label]
                ^{:key label}
-               [card-menu-item label
+               [card-menu-item (tr-game-prompt label)
                 #(do (close-card-menu)
                      (if (= "Expend" label)
                        (send-command "expend" {:card card :server label})
@@ -597,7 +597,7 @@
                                     "score" false
                                     false)]
                ^{:key action}
-               [card-menu-item (capitalize action)
+               [card-menu-item (capitalize (tr-game-prompt action))
                 #(do (send-command action {:card card})
                      (if keep-menu-open
                        (swap! card-menu assoc :keep-menu-open keep-menu-open)
@@ -1721,7 +1721,7 @@
          (let [servers (get-in @game-state [:runner :runnable-list])]
            (map-indexed (fn [_ label]
                           ^{:key label}
-                          [card-menu-item label
+                          [card-menu-item (tr-game-prompt label)
                            #(do (close-card-menu)
                                 (send-command "run" {:server label}))])
                         servers))]]]])
@@ -1829,8 +1829,8 @@
             {:class (warning-class @remaining)}
             (str
               (when-not (:pos @remaining) "-")
-              (:minutes @remaining) "m:"
-              (:seconds @remaining) "s remaining")]))})))
+              (:minutes @remaining) (tr [:game.minutes "m:"])
+              (:seconds @remaining) (tr [:game.seconds-remaining "s remaining"]))]))})))
 
 (defn- time-since
   "Helper method for match duration. Computes how much time since game start"
@@ -1864,8 +1864,8 @@
          (when (not @hidden)
            [:span.float-center.timer
             (str
-              (:minutes @duration) "m:"
-              (:seconds @duration) "s")])
+              (:minutes @duration) (tr [:game.minutes "m:"])
+              (:seconds @duration) (tr [:game.seconds "s"]))])
          )})))
 
 (defn starting-timestamp [start-date timer]

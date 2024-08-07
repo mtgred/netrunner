@@ -28,11 +28,15 @@
 
 (defn- validate-lang
   [lang]
-  (contains? #{"de" "es" "fr" "it" "ja" "ko" "pl" "zh"} lang))
+  (contains? #{"de" "es" "fr" "it" "ja" "ko" "pl" "zh-simp" "zh-trad"} lang))
 
 (defn lang-handler [{db :system/db {lang :lang} :path-params}]
   (if (validate-lang lang)
-    (response 200 (mapv #(dissoc % :_id) (mc/find-maps db (str "cards-" lang))))
+    (response 200 (mapv #(dissoc % :_id) (mc/find-maps db 
+      (cond 
+        (= "zh-simp" lang) (str "cards-zh-hans") 
+        (= "zh-trad" lang) (str "cards-zh-hant")
+        :else (str "cards-" lang)))))
     (response 200 {})))
 
 (defn alt-arts-handler [{db :system/db}]
