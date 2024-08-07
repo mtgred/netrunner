@@ -472,7 +472,7 @@
          [:button.small {:type "button"
                          :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
         (if (empty? (:remote-annotations @replay-status))
-          (tr [:annotations-no-published-annotations "No published annotations."])
+          (tr [:annotations.no-published-annotations "No published annotations."])
           [:ul
            (doall
              (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]

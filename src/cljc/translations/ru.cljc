@@ -91,9 +91,9 @@
          :users "Пользователи"
          :features "Возможности"
          :game-count (ru-quant "игр" "игра" "игры")}
-   :menu {:settings :en.nav/settings
+   :menu {:settings :ru.nav/settings
           :logout "Отключиться"
-          :admin :en.nav/admin
+          :admin :ru.nav/admin
           :moderator "Модератор"
           :donor "Спонсор"}
    :card-browser {:search-hint "Искать карты"
@@ -316,8 +316,7 @@
                  :turn-placeholder "Заметки к этому ходу"
                  :click-placeholder "Заметки к этому клику"
                  :available-annotations "Доступные аннотации"
-                 :annotations-no-published-annotations "Нет опубликованных аннотаций."
-                 :annotations.available-annotations "Доступные аннотации"
+                 :no-published-annotations "Нет опубликованных аннотаций."
                  :notes.publish "Опубликовать"
                  :notes.clear-annotations "Очистить локальные аннотации"
                  :import-local "Импортировать файл с аннотациями"

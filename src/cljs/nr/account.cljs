@@ -498,7 +498,7 @@
                              :name "use-high-res"
                              :checked (= "high" (:card-resolution @s))
                              :on-change #(swap! s assoc-in [:card-resolution] (if (.. % -target -checked) "high" "default"))}]
-             (tr [:settings.high-res "Enable high resolution card images"])]]]
+             (tr [:settings.high-res "Enable high-resolution card images"])]]]
 
           [:section {:id "alt-art"}
            [:h3 (tr [:settings.alt-art "Alt arts"])]

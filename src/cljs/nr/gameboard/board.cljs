@@ -1420,7 +1420,7 @@
        (or (= "encounter-ice" (:phase @run))
            @encounters)
        [cond-button
-        (tr [:game.fire-unbroken "Fire unbroken subs"])
+        (tr [:game.fire-unbroken "Fire unbroken subroutines"])
         (and (seq (:subroutines ice))
              (some #(and (not (:broken %))
                          (not (:fired %))
