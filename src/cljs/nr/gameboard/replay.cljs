@@ -7,7 +7,7 @@
    [nr.ajax :refer [DELETE GET PUT]]
    [nr.appstate :refer [app-state]]
    [nr.gameboard.state :refer [game-state last-state replay-side]]
-   [nr.translation-helpers :refer [tr]]
+   [nr.translations :refer [tr]]
    [nr.utils :refer [non-game-toast render-message]]
    [nr.ws :as ws]
    [reagent.core :as r]))

@@ -11,7 +11,7 @@
     [nr.auth :refer [authenticated] :as auth]
     [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
     [nr.deck-status :refer [deck-status-span]]
-    [nr.translation-helpers :refer [tr tr-faction tr-format tr-side tr-type tr-data]]
+    [nr.translations :refer [tr tr-faction tr-format tr-side tr-type tr-data]]
     [nr.utils :refer [alliance-dots banned-span cond-button
                       deck-points-card-span dots-html format->slug format-date-time
                       influence-dot influence-dots mdy-formatter non-game-toast num->percent

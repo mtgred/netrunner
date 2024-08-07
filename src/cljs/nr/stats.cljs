@@ -9,7 +9,7 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.avatar :refer [avatar]]
    [nr.end-of-game-stats :refer [build-game-stats]]
-   [nr.translation-helpers :refer [tr tr-format tr-lobby tr-side]]
+   [nr.translations :refer [tr tr-format tr-lobby tr-side]]
    [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
                      notnum->zero num->percent player-highlight-option-class
                      render-message render-player-highlight set-scroll-top store-scroll-top]]

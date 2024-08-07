@@ -2,7 +2,7 @@
   (:require
    [nr.account :refer [post-options]]
    [nr.appstate :refer [app-state]]
-   [nr.translation-helpers :refer [tr]]))
+   [nr.translations :refer [tr]]))
 
 (defn settings-pane []
   (fn []

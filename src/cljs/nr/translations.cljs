@@ -1,4 +1,4 @@
-(ns nr.translation-helpers
+(ns nr.translations
   (:require
    [clojure.string :as str]
    [i18n.core :as tr]

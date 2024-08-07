@@ -7,7 +7,7 @@
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
             [nr.gameboard.state :refer [game-state]]
             [nr.gameboard.settings :refer [settings-pane]]
-            [nr.translation-helpers :refer [tr]]
+            [nr.translations :refer [tr]]
             [reagent.core :as r]))
 
 (defonce loaded-tabs (r/atom {}))

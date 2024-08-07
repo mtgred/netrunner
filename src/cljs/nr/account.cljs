@@ -9,7 +9,7 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
-   [nr.translation-helpers :refer [tr tr-format]]
+   [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
    [reagent-modals.modals :as reagent-modals]

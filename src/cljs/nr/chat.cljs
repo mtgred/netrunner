@@ -13,7 +13,7 @@
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over]]
    [nr.news :refer [news]]
-   [nr.translation-helpers :refer [tr tr-pronouns]]
+   [nr.translations :refer [tr tr-pronouns]]
    [nr.utils :refer [non-game-toast render-message set-scroll-top
                      store-scroll-top format-date-time day-word-with-time-formatter]]
    [nr.ws :as ws]

@@ -1,7 +1,7 @@
 (ns nr.gameboard.diagrams
   (:require
    [nr.appstate :refer [app-state]]
-   [nr.translation-helpers :refer [tr]]
+   [nr.translations :refer [tr]]
    [nr.utils :refer [render-icons]]))
 
 (defn- bullet

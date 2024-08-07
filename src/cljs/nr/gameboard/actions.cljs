@@ -6,7 +6,7 @@
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state
                                parse-state]]
-   [nr.translation-helpers :refer [tr]]
+   [nr.translations :refer [tr]]
    [nr.utils :refer [toastr-options]]
    [nr.ws :as ws]
    [reagent.core :as r]

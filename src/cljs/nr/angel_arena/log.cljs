@@ -2,7 +2,7 @@
   (:require
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.translation-helpers :refer [tr]]
+   [nr.translations :refer [tr]]
    [nr.utils :refer [time-span-string]]
    [nr.ws :as ws]
    [reagent.core :as r]))

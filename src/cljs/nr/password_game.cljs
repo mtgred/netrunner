@@ -1,7 +1,7 @@
 (ns nr.password-game
   (:require
    [nr.auth :refer [authenticated]]
-   [nr.translation-helpers :refer [tr tr-watch-join]]
+   [nr.translations :refer [tr tr-watch-join]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [taoensso.sente :as sente]))
