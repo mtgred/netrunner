@@ -9,7 +9,7 @@
                                       card-preview-mouse-over zoom-channel]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
    [nr.help :refer [command-info]]
-   [nr.translations :refer [tr]]
+   [nr.translation-helpers :refer [tr]]
    [nr.utils :refer [influence-dot player-highlight-option-class
                      render-message render-player-highlight]]
    [nr.ws :as ws]

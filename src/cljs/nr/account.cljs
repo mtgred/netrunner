@@ -9,7 +9,7 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
-   [nr.translations :refer [tr tr-format]]
+   [nr.translation-helpers :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
    [reagent-modals.modals :as reagent-modals]
@@ -325,7 +325,7 @@
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
         [:section
-         [:h3 (tr [:lobby.default-game-format "Default game format"])]
+         [:h3 (tr [:lobby.format "Format"])]
          [:select.format
           {:value (or (:default-format @s) "standard")
            :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}

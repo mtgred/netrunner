@@ -1,6 +1,7 @@
-(ns nr.translations
+(ns nr.translation-helpers
   (:require
-   [clojure.string :refer [lower-case replace]]
+   [clojure.string :as str]
+   [jinteki.utils :refer [slugify]]
    [nr.appstate :refer [app-state]]
    [translations.core :as tr]))
 
@@ -8,16 +9,14 @@
   (apply tr/tr-impl app-state resource params))
 
 (defn tr-string [prefix s]
-  (let [side (lower-case (replace (or s "") " " "-"))
+  (let [side (str/lower-case (str/replace (or s "") " " "-"))
         kw (keyword (str prefix "." side))]
     (tr [kw "Unknown"])))
 
 (defn tr-string-s [prefix s]
   (let [s (-> (or s "")
-              (replace "&nbsp;" ""))
-        side (-> s
-                 (replace " " "-")
-                 (lower-case))
+              (str/replace "&nbsp;" ""))
+        side (slugify s)
         kw (keyword (str prefix "." side))]
     (tr [kw s])))
 

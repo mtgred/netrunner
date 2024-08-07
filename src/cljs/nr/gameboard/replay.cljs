@@ -7,7 +7,7 @@
    [nr.ajax :refer [DELETE GET PUT]]
    [nr.appstate :refer [app-state]]
    [nr.gameboard.state :refer [game-state last-state replay-side]]
-   [nr.translations :refer [tr]]
+   [nr.translation-helpers :refer [tr]]
    [nr.utils :refer [non-game-toast render-message]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -485,7 +485,7 @@
                                   :on-click #(delete-remote-annotations n)} "X"])]))])
         [:div.button-row
          [:button {:type "button"
-                   :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]
+                   :on-click #(publish-annotations)} (tr [:annotations.publish "Publish"])]]
         [:hr]])
      [:h4 (tr [:annotations.import-local "Import local annotation file"])]
      [:input {:field :file

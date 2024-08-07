@@ -6,7 +6,7 @@
    [nr.ajax :refer [GET POST]]
    [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
-   [nr.translations :refer [tr]]
+   [nr.translation-helpers :refer [tr]]
    [reagent.core :as r]))
 
 (defn authenticated [f]

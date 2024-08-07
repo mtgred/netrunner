@@ -5,15 +5,18 @@
    [clojure.pprint :as pp]
    [clojure.set :as set]
    [clojure.string :as str]
+   [game.utils :refer [dissoc-in]]
    [taoensso.encore :as encore]
-   [translations.core :as tr.core]) 
+   [translations.core :as tr.core])
   (:import
    [java.io File]))
 
 (defn get-nodes [lang]
-  (into #{} (map (comp vec butlast))
-        (encore/node-paths
-         (get tr.core/translation-dictionary lang))))
+  (->> lang
+       (get (tr.core/translation-dictionary))
+       (encore/node-paths)
+       (remove #(= :angel-arena (first %)))
+       (into #{} (map (comp vec butlast)))))
 
 (defn to-keyword [s]
   (cond
@@ -22,22 +25,33 @@
     :else (keyword s)))
 
 (defn missing-translations
+  "Treat :en as the single source of truth. Compare each other language against it.
+  Print when the other language is missing entries, and also print when the other
+  language has defined entries not in :en.
+
+  Ignores :angel-arena entries because that's being phased out."
   [& args]
   (let [en-nodes (get-nodes :en)
-        other-langs (keys (dissoc tr.core/translation-dictionary :en))]
+        other-langs (keys (dissoc (tr.core/translation-dictionary) :en))]
     (doseq [lang (or (seq (map to-keyword args)) other-langs)
             :let [lang-nodes (get-nodes lang)]]
       (println "Checking" lang)
-      (pp/pprint
-       (sort (set/difference en-nodes lang-nodes)))
-      (newline))))
+      (when-let [diff (seq (set/difference en-nodes lang-nodes))]
+        (println "Missing from" lang)
+        (pp/pprint (sort diff))
+        (newline))
+      (when-let [diff (seq (set/difference lang-nodes en-nodes))]
+        (println "Missing from :en")
+        (pp/pprint (sort diff))
+        (newline)))
+    (println "Finished!")))
 
 (comment
-  (missing-translations))
+  (missing-translations :fr))
 
 (defn undefined-translations
   [& _args]
-  (let [en-nodes (->> (get tr.core/translation-dictionary :en)
+  (let [en-nodes (->> (get (tr.core/translation-dictionary) :en)
                       (encore/node-paths)
                       (map #(vector (vec (butlast %)) (last %)))
                       (into {}))
@@ -65,7 +79,57 @@
                     (not en-node))]
       (println file-name)
       (pp/pprint [k (when (or en-node default)
-                      [en-node default])]))))
+                      [en-node default])]))
+    (println "Finished!")))
 
 (comment
   (undefined-translations))
+
+(def keys-to-dissoc
+  #{:missing ; default text
+    :card-type ; handled by tr-type
+    :side ; handled by tr-side
+    :faction ; handled by tr-faction
+    :format ; handled by tr-format
+    :lobby ; handled by tr-lobby and tr-watch-join
+    :pronouns ; handled by tr-pronouns
+    :set ; handled by tr-set
+    :game-prompt ; handled by tr-game-prompt
+    })
+
+(def nested-keys-to-dissoc
+  #{[:card-browser :sort-by] ; handled by tr-sort
+    [:card-browser :influence] ; currently unused
+    [:deck-builder :hash] ; currently unused
+    })
+
+(defn dissoc-programmatic-keys [dict]
+  (reduce dissoc-in
+          (apply dissoc dict keys-to-dissoc)
+          nested-keys-to-dissoc))
+
+(defn unused-translations
+  [& _args]
+  (let [regexen (->> (get (tr.core/translation-dictionary) :en)
+                     (dissoc-programmatic-keys)
+                     (encore/node-paths)
+                     (map #(vec (butlast %)))
+                     (map #(let [s (str/join "." (map name %))
+                                 patt (str "\\(tr \\[(:" s ")( \\\"(.*?)\\\")?\\]")]
+                             [% (re-pattern patt)]))
+                     (into #{}))
+        files (->> (io/file "src")
+                   (file-seq)
+                   (filter #(.isFile ^File %))
+                   (filter #(str/includes? (str %) ".clj"))
+                   (map (juxt str slurp)))]
+    (doseq [[path regex] (sort regexen)
+            :when (->> files
+                       (filter (fn [[_file-name contents]]
+                                 (seq (re-seq regex contents))))
+                       (empty?))]
+      (println path))
+    (println "Finished!")))
+
+(comment
+  (unused-translations))

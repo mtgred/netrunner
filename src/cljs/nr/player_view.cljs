@@ -1,7 +1,7 @@
 (ns nr.player-view
   (:require [reagent.core :as r]
             [nr.avatar :refer [avatar]]
-            [nr.translations :refer [tr tr-side]]
+            [nr.translation-helpers :refer [tr tr-side]]
             [nr.utils :refer [faction-icon notnum->zero num->percent]]))
 
 (defn user-status-span

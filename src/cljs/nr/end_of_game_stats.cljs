@@ -1,5 +1,5 @@
 (ns nr.end-of-game-stats
-  (:require [nr.translations :refer [tr]]
+  (:require [nr.translation-helpers :refer [tr]]
             [nr.utils :refer [map-longest]]))
 
 (defn computed-stat

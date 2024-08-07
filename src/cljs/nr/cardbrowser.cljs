@@ -10,7 +10,7 @@
    [nr.account :refer [alt-art-name]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-faction tr-format tr-set tr-side tr-sort tr-type tr-data]]
+   [nr.translation-helpers :refer [tr tr-faction tr-format tr-set tr-side tr-sort tr-type tr-data]]
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
                      format->slug get-image-path image-or-face influence-dots
                      non-game-toast render-icons restricted-span rotated-span set-scroll-top slug->format

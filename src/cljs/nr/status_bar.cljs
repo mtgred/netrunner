@@ -5,7 +5,7 @@
    [nr.gameboard.replay :refer [set-replay-side]]
    [nr.lobby :refer [filter-games leave-game]]
    [nr.player-view :refer [player-view]]
-   [nr.translations :refer [tr]]
+   [nr.translation-helpers :refer [tr]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 

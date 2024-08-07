@@ -5,7 +5,7 @@
    [nr.avatar :refer [avatar]]
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.translations :refer [tr tr-pronouns]]))
+   [nr.translation-helpers :refer [tr tr-pronouns]]))
 
 (defn stat-controls
   "Create an overlay to increase/decrease a player attribute (e.g. credits)."

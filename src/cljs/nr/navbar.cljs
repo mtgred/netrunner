@@ -4,7 +4,7 @@
    [goog.history.EventType :as EventType]
    [nr.appstate :refer [app-state]]
    [nr.routes :as routes]
-   [nr.translations :refer [tr]])
+   [nr.translation-helpers :refer [tr]])
   (:import
    goog.history.Html5History))
 

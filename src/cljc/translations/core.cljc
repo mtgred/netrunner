@@ -11,7 +11,7 @@
    [translations.ru]
    [translations.zh-simp]))
 
-(def translation-dictionary
+(defn translation-dictionary []
   {:en translations.en/translations
    :fr translations.fr/translations
    :ja translations.ja/translations
@@ -22,8 +22,8 @@
    :ru translations.ru/translations
    :zh-simp translations.zh-simp/translations})
 
-(defn opts [] {:dict translation-dictionary})
+(def opts {:dict (translation-dictionary)})
 
 (defn tr-impl [app-state resource & params]
   (let [lang (keyword (get-in @app-state [:options :language] :en))]
-    (tempura/tr (opts) [lang :en] resource (vec params))))
+    (tempura/tr opts [lang :en] resource (vec params))))

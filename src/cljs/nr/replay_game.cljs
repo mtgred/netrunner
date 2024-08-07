@@ -2,7 +2,7 @@
   (:require
     [nr.auth :refer [authenticated]]
     [nr.ws :as ws]
-    [nr.translations :refer [tr]]
+    [nr.translation-helpers :refer [tr]]
     [reagent.core :as r]))
 
 (defn on-load [onload-ev]

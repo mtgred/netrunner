@@ -8,7 +8,7 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.player-view :refer [player-view]]
    [nr.sounds :refer [resume-sound]]
-   [nr.translations :refer [tr tr-format]]
+   [nr.translation-helpers :refer [tr tr-format]]
    [nr.utils :refer [slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))

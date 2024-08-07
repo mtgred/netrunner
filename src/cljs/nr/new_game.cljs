@@ -3,7 +3,7 @@
    [jinteki.utils :refer [str->int]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
-   [nr.translations :refer [tr tr-format tr-side]]
+   [nr.translation-helpers :refer [tr tr-format tr-side]]
    [nr.utils :refer [slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))

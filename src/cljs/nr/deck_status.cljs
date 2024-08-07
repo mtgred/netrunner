@@ -1,7 +1,7 @@
 (ns nr.deck-status
   (:require
     [jinteki.validator :refer [calculate-deck-status trusted-deck-status]]
-    [nr.translations :refer [tr tr-format]]
+    [nr.translation-helpers :refer [tr tr-format]]
     [nr.utils :refer [slug->format]]
     [clojure.string :as str]))
 

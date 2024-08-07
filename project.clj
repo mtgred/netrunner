@@ -107,4 +107,5 @@
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
             "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]
             "missing-translations" ^{:doc "Print translations in :en that aren't in other languages. Can be passed a language (fr, ko, ...) to filter to that language."} ["run" "-m" "tasks.translations/missing-translations"]
-            "undefined-translations" ^{:doc "Find usages of (tr [...]) in code that don't exist in :en translation."} ["run" "-m" "tasks.translations/undefined-translations"]})
+            "undefined-translations" ^{:doc "Find usages of (tr [...]) in code that don't exist in :en translation."} ["run" "-m" "tasks.translations/undefined-translations"]
+            "unused-translations" ^{:doc "Find entries in :en translation that aren't used in code."} ["run" "-m" "tasks.translations/unused-translations"]})

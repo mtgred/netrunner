@@ -7,7 +7,7 @@
    [nr.deckbuilder :refer [deck-name]]
    [nr.lobby-chat :refer [lobby-chat]]
    [nr.player-view :refer [player-view]]
-   [nr.translations :refer [tr tr-side]]
+   [nr.translation-helpers :refer [tr tr-side]]
    [nr.utils :refer [cond-button format-date-time mdy-formatter
                      non-game-toast]]
    [nr.ws :as ws]

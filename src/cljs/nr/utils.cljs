@@ -10,7 +10,7 @@
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr-data]]
+   [nr.translation-helpers :refer [tr-data]]
    [reagent.dom :as rd]))
 
 ;; Dot definitions
