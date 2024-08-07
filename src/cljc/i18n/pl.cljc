@@ -81,9 +81,9 @@
          :users "Użytkownicy"
          :features "Cechy"
          :game-count (fn [[cnt]] (str "Gry: " cnt))}
-   :menu {:settings :en.nav/settings
+   :menu {:settings :pl.nav/settings
           :logout "Wylogowanie"
-          :admin :en.nav/admin
+          :admin :pl.nav/admin
           :moderator "Moderator"}
    :card-browser {:search-hint "Szukaj kart"
                   :sort "Porządkowanie"
