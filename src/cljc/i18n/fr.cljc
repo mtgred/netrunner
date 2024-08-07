@@ -1,4 +1,4 @@
-(ns translations.fr)
+(ns i18n.fr)
 
 (def translations
   {:missing ":fr texte manquant"

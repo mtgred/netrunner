@@ -1,4 +1,4 @@
-(ns translations.ru)
+(ns i18n.ru)
 
 (defn ru-quant [group1 group2 group3]
   (fn [[cnt]]

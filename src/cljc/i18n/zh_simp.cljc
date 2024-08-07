@@ -1,4 +1,4 @@
-(ns translations.zh-simp)
+(ns i18n.zh-simp)
 
 (def translations
   {:missing ":zh-simp missing text"

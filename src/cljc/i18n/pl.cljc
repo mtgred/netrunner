@@ -1,4 +1,4 @@
-(ns translations.pl)
+(ns i18n.pl)
 
 (def translations
   {:missing ":pl missing text"

@@ -1,9 +1,9 @@
 (ns nr.translation-helpers
   (:require
    [clojure.string :as str]
+   [i18n.core :as tr]
    [jinteki.utils :refer [slugify]]
-   [nr.appstate :refer [app-state]]
-   [translations.core :as tr]))
+   [nr.appstate :refer [app-state]]))
 
 (defn tr [resource & params]
   (apply tr/tr-impl app-state resource params))

@@ -1,4 +1,4 @@
-(ns translations.pt)
+(ns i18n.pt)
 
 (def translations
   {:missing ":pt missing text"

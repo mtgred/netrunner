@@ -6,8 +6,8 @@
    [clojure.set :as set]
    [clojure.string :as str]
    [game.utils :refer [dissoc-in]]
-   [taoensso.encore :as encore]
-   [translations.core :as tr.core])
+   [i18n.core :as tr.core]
+   [taoensso.encore :as encore])
   (:import
    [java.io File]))
 

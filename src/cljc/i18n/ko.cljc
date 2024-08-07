@@ -1,4 +1,4 @@
-(ns translations.ko)
+(ns i18n.ko)
 
 (def translations
   {:missing ":ko 텍스트를 찾을 수 없음"

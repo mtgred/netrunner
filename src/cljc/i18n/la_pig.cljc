@@ -1,4 +1,4 @@
-(ns translations.la-pig)
+(ns i18n.la-pig)
 
 (def translations
   {:missing ":la-pig missing text"

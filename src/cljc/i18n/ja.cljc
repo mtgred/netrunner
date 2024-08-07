@@ -1,4 +1,4 @@
-(ns translations.ja)
+(ns i18n.ja)
 
 (def translations
   {:missing ":ja missing text"
