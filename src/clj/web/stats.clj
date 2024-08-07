@@ -156,6 +156,7 @@
                                       {:runner.player.username username}]}
                                 {:replay {$exists true}}
                                 {:replay-shared false}]})
+                (mq/fields [:gameid])
                 (mq/sort (array-map :start-date -1))
                 (mq/skip 15))]
     (doseq [game games]
@@ -180,34 +181,35 @@
 (defn game-finished
   [db {:keys [state gameid room] :as game}]
   (when state
-    (try
-      (mc/update db :game-logs
-                 {:gameid (str gameid)}
-                 {$set {:winner (:winner @state)
-                        :reason (:reason @state)
-                        :end-date (inst/now)
-                        :stats (-> (:stats @state)
-                                   (dissoc-in [:time :started])
-                                   (dissoc-in [:time :ended]))
-                        :turn (:turn @state)
-                        :corp.agenda-points (get-in @state [:corp :agenda-point])
-                        :runner.agenda-points (get-in @state [:runner :agenda-point])
-                        :bug-reported (:bug-reported @state)
-                        :replay (when (or (get-in @state [:options :save-replay])
-                                          (:bug-reported @state))
-                                  (generate-replay state))
-                        :has-replay (get-in @state [:options :save-replay] false)
-                        ; Angel arena always shares replays, otherwise players can opt-in
-                        :replay-shared (:bug-reported @state)
-                        :log (:log @state)}})
-      (delete-old-replay db (get-in @state [:corp :user]))
-      (delete-old-replay db (get-in @state [:corp :runner]))
-      ;; (when (and (= "angel-arena" room)
-      ;;            (:winner @state))
-      ;;   (angel-arena-stats/game-finished db game))
-      (catch Exception e
-        (println "Caught exception saving game stats: " (.getMessage e))
-        (println "Stats: " (:stats @state))))))
+    (let [should-save-replay (or (get-in @state [:options :save-replay])
+                                 (:bug-reported @state))
+          should-share-replay (:bug-reported @state)]
+      (try
+        (mc/update db :game-logs
+                   {:gameid (str gameid)}
+                   {$set {:winner (:winner @state)
+                          :reason (:reason @state)
+                          :end-date (inst/now)
+                          :stats (-> (:stats @state)
+                                     (dissoc-in [:time :started])
+                                     (dissoc-in [:time :ended]))
+                          :turn (:turn @state)
+                          :corp.agenda-points (get-in @state [:corp :agenda-point])
+                          :runner.agenda-points (get-in @state [:runner :agenda-point])
+                          :bug-reported (:bug-reported @state)
+                          :replay (when should-save-replay (generate-replay state))
+                          :has-replay (get-in @state [:options :save-replay] false)
+                          :replay-shared should-share-replay
+                          :log (:log @state)}})
+        (when (and should-save-replay (not should-share-replay))
+          (delete-old-replay db (get-in @state [:corp :user]))
+          (delete-old-replay db (get-in @state [:corp :runner])))
+        ;; (when (and (= "angel-arena" room)
+        ;;            (:winner @state))
+        ;;   (angel-arena-stats/game-finished db game))
+        (catch Exception e
+          (println "Caught exception saving game stats: " (.getMessage e))
+          (println "Stats: " (:stats @state)))))))
 
 (defn history
   [{db :system/db
