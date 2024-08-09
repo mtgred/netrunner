@@ -19,7 +19,7 @@
    [game.core.say :refer [indicate-action say system-msg system-say]]
    [game.core.set-up :refer [keep-hand mulligan]]
    [game.core.shuffling :refer [shuffle-deck]]
-   [game.core.toasts :refer [ack-toast]]
+   [game.core.toasts :refer [ack-toast toast]]
    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
    [game.core.winning :refer [concede]]))
 
@@ -41,6 +41,15 @@
         (command state side)
         (system-say state side (str "[!]" (:username author) " uses a command: " text)))
       (say state side args))))
+
+(defn update-player-setting
+  [state side {:keys [setting value]}]
+  (swap! state assoc-in [side :user :options setting] value)
+  (let [setting-name (case setting
+                       :auto-confirm-costs "automatically paying trivial costs"
+                       "unknown setting")
+        funct (if value "Enabled" "Disabled")]
+    (toast state side (str funct " " setting-name))))
 
 (def commands
   {"ability" #'play-ability
@@ -83,6 +92,7 @@
    "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) (dissoc %3 :card))
    "trash-resource" #'trash-resource
    "unbroken-subroutines" #'play-unbroken-subroutines
+   "update-player-setting" #'update-player-setting
    "view-deck" #'view-deck})
 
 (defn process-action
