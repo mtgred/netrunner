@@ -14,11 +14,11 @@
     (tr [kw "Unknown"])))
 
 (defn tr-string-s [prefix s]
-  (let [s (-> (or s "")
-              (str/replace "&nbsp;" ""))
-        side (slugify s)
+  (let [s-trim (-> (or s "")
+              (str/replace "&nbsp;&nbsp;&nbsp;&nbsp;" ""))
+        side (slugify s-trim)
         kw (keyword (str prefix "." side))]
-    (tr [kw s])))
+    (str/replace (or s "") s-trim (tr [kw s-trim]))))
 
 (defn tr-type [s] (tr-string "card-type" s))
 (defn tr-side [s] (tr-string "side" s))
