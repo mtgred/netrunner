@@ -1962,7 +1962,7 @@
                :max (req (get-counters (get-card state card) :advancement))}
      :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the stack")
      :effect (req (doseq [c targets]
-                    (move state :runner c :deck))
+                    (move state :runner c :deck {:shuffled true}))
                   (shuffle! state :runner :deck)
                   (effect-completed state side eid))}))
 

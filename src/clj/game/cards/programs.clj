@@ -15,7 +15,7 @@
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [any-effects register-lingering-effect unregister-effects-for-card update-disabled-cards]]
+   [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [ability-as-handler checkpoint dissoc-req not-used-once? pay
                              print-msg register-events register-once
@@ -2308,11 +2308,22 @@
                   :once :per-turn ;; prevents self triggering
                   :interactive (req true)
                   :effect (effect (move card :rfg))}]
-    (auto-icebreaker {:abilities [(break-sub 2 2 "All")
-                                  (strength-pump 1 1)]
-                      :uninstall (effect (continue-ability self-rfg card nil))
-                      :events [(assoc self-rfg :event :agenda-scored)
-                               (assoc self-rfg :event :agenda-stolen)]})))
+    (auto-icebreaker
+      {:abilities [(break-sub 2 2 "All")
+                   (strength-pump 1 1)]
+       :move-zone-replacement (req (let [old (:card context)
+                                         target-zone (:zone context)]
+                                     (when (and (:installed old)
+                                                ;; if it's shuffled in, we're not allowed to move it
+                                                ;; cursed ruling, the card should have been an
+                                                ;; interrupt.
+                                                (not (:shuffled context))
+                                                (not (is-disabled-reg? state old))
+                                                (not (:facedown old))
+                                                (not= [:rfg] target-zone))
+                                       [:rfg])))
+       :events [(assoc self-rfg :event :agenda-scored)
+                (assoc self-rfg :event :agenda-stolen)]})))
 
 (defcard "Nerve Agent"
   {:events [{:event :successful-run

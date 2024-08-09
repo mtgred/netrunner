@@ -181,7 +181,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event swap]}]
+  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event shuffled swap]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (if (fake-identity? card)
        ;; Make Fake-Identity cards "disappear"
@@ -194,7 +194,13 @@
                   (or force
                       (not (zone-locked? state (to-keyword (:side card)) (first (get-zone card))))))
          (let [dest (if (sequential? to) (vec to) [to])
-               moved-card (get-moved-card state side card to)]
+               dest-replacement-fn (:move-zone-replacement (card-def card))
+               dest-replacement (when dest-replacement-fn
+                                  (dest-replacement-fn state side (make-eid state) card [{:card card
+                                                                                          :target-zone dest
+                                                                                          :shuffled shuffled}]))
+               dest (or dest-replacement dest)
+               moved-card (get-moved-card state side card (or (last dest-replacement) to))]
            (update-effects state card moved-card)
            (remove-old-card state side card)
            (let [pos-to-move-to (cond index index
