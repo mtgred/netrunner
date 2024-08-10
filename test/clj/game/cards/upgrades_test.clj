@@ -1052,6 +1052,25 @@
        (is (= 3 (:click (get-runner))) "No extra cost to run HQ")
        (is (= 2 (:credit (get-runner))) "No extra cost to run HQ"))))
 
+(deftest cold-site-server-vs-undo-click
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Cold Site Server"]}
+               :runner {:deck ["Dirty Laundry"]}})
+     (core/gain state :corp :credit 10 :click 10)
+     (play-from-hand state :corp "Cold Site Server" "HQ")
+     (let [css (get-content state :hq 0)]
+       (rez state :corp (refresh css))
+       (card-ability state :corp css 0))
+     (take-credits state :corp)
+     (is (changed? [(:credit (get-runner)) 0
+                    (:click (get-runner)) 0]
+                   (play-from-hand state :runner "Dirty Laundry")
+                   (click-prompt state :runner "HQ")
+                   (is (second-last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
+                   (core/command-undo-click state :runner))
+         "Undo click undid the CSS costs")))
+
 (deftest cold-site-server-run-event
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
