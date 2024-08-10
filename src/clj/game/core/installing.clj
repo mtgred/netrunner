@@ -410,6 +410,8 @@
   [state side card cost-str
    {:keys [no-cost host-card facedown custom-message msg-keys ignore-install-cost] :as args}]
   (let [{:keys [display-origin install-source origin-index known]} msg-keys
+        hide-zero-cost (:hide-zero-cost msg-keys true)
+        cost-str (if (and hide-zero-cost (= cost-str "pays 0 [Credits]")) nil cost-str)
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
         card-name (if facedown
                     (if known
