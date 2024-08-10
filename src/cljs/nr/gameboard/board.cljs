@@ -72,8 +72,8 @@
 (defn action-list
   [{:keys [type zone rezzed advanceable
            advancementcost current-advancement-requirement] :as card}]
-  (let [active-player (r/cursor game-state [:active-player])
-        side (r/cursor game-state [:side])]
+  (r/with-let [active-player (r/cursor game-state [:active-player])
+               side (r/cursor game-state [:side])]
     (cond->> []
       ;; advance
       (or (and (= type "Agenda")
