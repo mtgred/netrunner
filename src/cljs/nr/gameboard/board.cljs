@@ -1691,7 +1691,9 @@
        [:button {:on-click #(send-command "end-turn")}
         (tr [:game.end-turn "End Turn"])])
      (when @end-turn
-       [:button {:on-click #(send-command "start-turn")}
+       [:button {:on-click #(do
+                              (swap! app-state assoc :start-shown true)
+                              (send-command "start-turn"))}
         (tr [:game.start-turn "Start Turn"])]))
    (when (and (= (keyword @active-player) side)
               (or @runner-phase-12 @corp-phase-12))
