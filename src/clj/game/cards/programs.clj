@@ -2250,7 +2250,9 @@
           (muse-abi [where]
             {:prompt "Choose a non-daemon program"
              :msg (msg (if (= target "Done")
-                         "shuffle the stack"
+                         (if (= :deck where)
+                           "shuffle the stack"
+                           "do nothing")
                          (str "install " (:title target))))
              :choices (req (concat
                              (->> (where runner)
