@@ -2957,6 +2957,7 @@
   {:abilities [{:req (req (not (install-locked? state side)))
                 :label "Install a program from the stack"
                 :cost [(->c :trash-can) (->c :credit 2)]
+                :msg (msg "install a program from the stack")
                 :async true
                 :effect (effect (continue-ability
                                   {:prompt "Choose a program to install"
