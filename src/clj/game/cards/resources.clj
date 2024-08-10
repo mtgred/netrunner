@@ -1317,7 +1317,7 @@
             {:event :counter-added
              :async true
              :req (req (<= 4 (get-counters (get-card state card) :power)))
-             :msg "gain 9 [Credit]"
+             :msg "trash itself and gain 9 [Credit]"
              :effect (req (wait-for (trash state side card {:unpreventable :true
                                                             :cause-card card})
                                     (gain-credits state side eid 9)))}]})
