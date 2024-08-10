@@ -552,7 +552,8 @@
                 :req (req (some #(and (program? %)
                                       (runner-can-pay-and-install?
                                         state side
-                                        (assoc eid :source card :source-type :runner-install) % nil))
+                                        (assoc eid :source card :source-type :runner-install) %
+                                        {:no-toast true}))
                                 (:discard runner)))
                 :choices {:req (req (and (program? target)
                                          (in-discard? target)
@@ -1026,7 +1027,8 @@
                                                                             (runner-can-pay-and-install?
                                                                               state side
                                                                               (assoc eid :source card :source-type :runner-install)
-                                                                              % {:cost-bonus -2}))
+                                                                              % {:cost-bonus -2
+                                                                                 :no-toast true}))
                                                                       set-aside-cards)
                                                               ["Done"]))
                                               :effect (req (if (= "Done" target)
@@ -2111,7 +2113,8 @@
                                       (runner-can-pay-and-install?
                                         state side
                                         (assoc eid :source card :source-type :runner-install)
-                                        % {:cost-bonus -3}))
+                                        % {:cost-bonus -3
+                                           :no-toast true}))
                                 (:discard runner)))
                 :cost [(->c :trash-can)]
                 :msg "install a program"

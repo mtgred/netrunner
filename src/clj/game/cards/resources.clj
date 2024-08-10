@@ -2685,7 +2685,7 @@
                                     (has-subtype? % "Virtual")))
                            (runner-can-pay-and-install?
                              state side
-                             (assoc eid :source card :source-type :runner-install) % nil))
+                             (assoc eid :source card :source-type :runner-install) % {:no-toast true}))
                      (:discard runner)))
      :cost [(->c :click 1) (->c :trash-can) (->c :trash-from-hand 1)]
      :msg "install a program, piece of hardware, or Virtual resource from the heap"
@@ -3066,7 +3066,8 @@
                                              state side
                                              (assoc eid :source card :source-type :runner-install)
                                              (get-card state %)
-                                             {:cost-bonus -1}))
+                                             {:cost-bonus -1
+                                              :no-toast true}))
                                 (seq (:hosted card))))
                 :effect (req (set-aside state side eid (:hosted card))
                              (let [set-aside-cards (get-set-aside state side eid)]
