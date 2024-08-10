@@ -2968,9 +2968,6 @@
                 :effect (effect
                           (continue-ability
                             {:prompt "Choose a program to install"
-                             :msg (msg (if (= target "Done")
-                                         "shuffle the stack"
-                                         (str "install " (:title target) " from the stack")))
                              :choices (req (concat
                                              (->> (:deck runner)
                                                   (filter
@@ -2985,7 +2982,8 @@
                              :effect (req (trigger-event state side :searched-stack)
                                           (shuffle! state side :deck)
                                           (if (= target "Done")
-                                            (effect-completed state side eid)
+                                            (do (system-msg state side (str (:latest-payment-str eid) " to shuffle the Stack"))
+                                                (effect-completed state side eid))
                                             (runner-install state side (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
                                                                                                                                                 :display-origin true
                                                                                                                                                 :include-cost-from-eid eid}})))}
