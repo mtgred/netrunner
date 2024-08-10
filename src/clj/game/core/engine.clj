@@ -2,6 +2,7 @@
   (:require
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
+    [clojure.string :as string]
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
@@ -357,6 +358,10 @@
   (let [payment-str (:msg async-result)
         cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
         ability (assoc-in ability [:eid :cost-paid] cost-paid)
+        ;; this lets nested abilities access payment strs from outside the nesting
+        ;; which is admittedly a little cursed
+        last-payment-str (get-in ability [:eid :latest-payment-str])
+        ability (assoc-in ability [:eid :latest-payment-str] (if-not (string/blank? payment-str) payment-str last-payment-str))
         ;; After paying costs, counters will be removed, so fetch the latest version.
         ;; We still want the card if the card is trashed, so default to given
         ;; when the latest is gone.
