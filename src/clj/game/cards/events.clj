@@ -423,8 +423,7 @@
                                                                              (:cid %))
                                                                           (<= (second c) target)))
                                                              affordable-ice))}
-                                 :msg (msg "derez " (card-str state target))
-                                 :effect (effect (derez target))}
+                                 :effect (effect (derez target {:source-card card}))}
                                 card nil))}
              card nil)))}})
 
@@ -1265,10 +1264,9 @@
   {:on-play
    {:req (req (some #{:hq} (:successful-run runner-reg)))
     :change-in-game-state (req (some (every-pred ice? rezzed?) (all-installed state :corp)))
-    :msg (msg "derez " (:title target))
     :choices {:card #(and (ice? %)
                           (rezzed? %))}
-    :effect (effect (derez target))}})
+    :effect (effect (derez target {:source-card card}))}})
 
 (defcard "Emergent Creativity"
   (letfn [(ec [trash-cost to-trash]
@@ -1413,7 +1411,7 @@
                           (ice? %))}
     :msg (msg "derez " (enumerate-str (map :title targets)))
     :effect (req (doseq [c targets]
-                   (derez state side c)))}})
+                   (derez state side c {:no-msg true})))}})
 
 (defcard "Exploratory Romp"
   {:makes-run true
@@ -2347,7 +2345,7 @@
                                                           (get-card state card))))
                                                 (filter rezzed?))]
                             (doseq [ice rezzed-ice]
-                              (derez state :runner ice))
+                              (derez state :runner ice {:no-msg true}))
                             (when (seq rezzed-ice)
                               (system-msg state :runner (str "uses " (:title card) " to derez " (enumerate-str (map :title rezzed-ice)))))))}]})
 
@@ -4239,7 +4237,6 @@
                           {:prompt "Choose a piece of ice protecting this server to derez"
                            :waiting-prompt true
                            :choices {:req (req (some #{target} rezzed-targets))}
-                           :msg (msg "derez " (card-str state target))
                            :async true
                            :effect
                            (req (let [chosen-ice target]
@@ -4258,7 +4255,7 @@
                                                      (req 
                                                        (system-msg state :corp (str "rezzes " (card-str state chosen-ice) ", ignoring all costs"))
                                                        (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
-                                  (derez state side target)
+                                  (derez state side target {:source-card card})
                                   (effect-completed state side eid)))}
                           card nil)
                         (effect-completed state side eid))))}]

@@ -320,8 +320,7 @@
                                    (rezzed? current-ice)
                                    (has-subtype? current-ice ice-type)
                                    (all-subs-broken-by-card? current-ice card)))
-                    :msg (msg "derez " (:title current-ice))
-                    :effect (effect (derez current-ice))}]})))
+                    :effect (effect (derez current-ice {:source-card card}))}]})))
 
 (defn- trash-to-bypass
   "Trash to bypass current ice
@@ -996,8 +995,7 @@
                                (all-subs-broken? current-ice)))
                 :label "derez an ice"
                 :cost [(->c :trash-can)]
-                :msg (msg "derez " (:title current-ice))
-                :effect (effect (derez current-ice))}]})
+                :effect (effect (derez current-ice {:source-card card}))}]})
 
 (defcard "Crowbar"
   (break-and-enter "Code Gate"))
@@ -1461,8 +1459,7 @@
                                  :cost [(->c :credit 6)]
                                  :req (req (and (get-current-encounter state)
                                                 (has-subtype? current-ice "Sentry")))
-                                 :msg (msg "derez " (:title current-ice))
-                                 :effect (effect (derez current-ice))}
+                                 :effect (effect (derez current-ice {:source-card card}))}
                                 (strength-pump 1 1)]}))
 
 (defcard "Flux Capacitor"
@@ -3252,7 +3249,7 @@
   (let [action (req (add-counter state side card :virus 1)
                     (when (and (rezzed? (get-card state (:host card)))
                                (<= 3 (get-virus-counters state (get-card state card))))
-                      (derez state side (get-card state (:host card)))))]
+                      (derez state side (get-card state (:host card)) {:source-card card})))]
     {:implementation "[Erratum] Program: Virus - Trojan"
      :hosting {:req (req (and (ice? target)
                               (installed? target)
