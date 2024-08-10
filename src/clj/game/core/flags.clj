@@ -277,8 +277,8 @@
   ([state side card] (can-score? state side card nil))
   ([state side card {:keys [no-req ignore-turn]}]
    (and
-     (or (= (:active-player @state) :corp) ignore-turn)
      ;; Cannot (normally) score agendas outside of your turn
+     (or (= (:active-player @state) :corp) ignore-turn)
      (agenda? card)
      ;; The Agenda is not already scored
      (not (in-scored? card))
