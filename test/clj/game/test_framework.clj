@@ -976,5 +976,6 @@
   The expression will be evaluated before the body and then after, and the two results
   will be compared. If the difference is equal to the binding's number, then the test is
   a pass. Otherwise, it will be a failure. Each binding pair generates a new assertion."
+  {:style/indent [1 [[:defn]] :form]}
   [bindings & body]
   (bad-usage "changed?"))
