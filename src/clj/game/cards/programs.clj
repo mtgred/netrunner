@@ -110,7 +110,7 @@
                             (runner-can-pay-and-install?
                               state :runner
                               (assoc eid :source card :source-type :runner-install)
-                              card nil)))
+                              card {:no-toast true})))
              :effect (effect
                        (continue-ability
                          {:req (req (and (not-any? #(and (= title (:title %))
