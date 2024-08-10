@@ -703,7 +703,7 @@
     :choices {:card #(rezzed? %)}
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (effect (derez target))}})
+    :effect (effect (derez target {:source-card card}))}})
 
 (defcard "Eden Fragment"
   {:static-abilities [{:type :ignore-install-cost
@@ -1216,7 +1216,7 @@
                                          :min derez-count}
                                :msg (msg "derez " (enumerate-str (map #(card-str state %) targets)))
                                :effect (req (doseq [t targets]
-                                              (derez state side t)))}
+                                              (derez state side t {:no-msg true})))}
                               card nil)))})
           (ice-free-rez [state side targets card zone eid]
             (if (zero? (count targets))
@@ -1955,7 +1955,7 @@
                                            [{:event (if (= side :corp) :corp-turn-ends :runner-turn-ends)
                                              :unregister-once-resolved true
                                              :duration :end-of-turn
-                                             :effect (effect (derez c))}])
+                                             :effect (effect (derez c {:source-card card}))}])
                                          (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
@@ -2078,7 +2078,7 @@
                          :once :per-turn
                          :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
                          :async true
-                         :effect (effect (derez target)
+                         :effect (effect (derez target {:no-msg true})
                                          (gain-credits eid 1))})
                       card nil)))}
             {:event :derez

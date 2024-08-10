@@ -434,7 +434,7 @@
                                (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
                 :cost [(->c :trash-can)]
                 :async true
-                :effect (effect (derez current-ice)
+                :effect (effect (derez current-ice {:source-card card})
                                 (gain-tags eid 1))}]})
 
 (defcard "Bank Job"
@@ -816,7 +816,7 @@
                     :async true
                     :effect (req (wait-for (trash state side card {:cause-card card})
                                            (when-not (get-card state card)
-                                             (derez state :runner (:card context))
+                                             (derez state :runner (:card context) {:no-msg true})
                                              (register-turn-flag!
                                                state side card :can-rez
                                                (fn [state _ card]
@@ -2117,9 +2117,10 @@
                 :choices {:card #(and (ice? %)
                                       (rezzed? %)
                                       (is-remote? (second (get-zone %))))}
-                :msg "derez a piece of ice protecting a remote server"
+                :label "Derez a piece of ice protecting a remote server"
+                :msg (msg "derez " (card-str state target))
                 :cost [(->c :trash-can)]
-                :effect (effect (derez target))}]})
+                :effect (effect (derez target {:no-msg true}))}]})
 
 (defcard "Miss Bones"
   {:data {:counter {:credit 12}}
@@ -2183,7 +2184,7 @@
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
                                       (rezzed? %))}
-                :effect (effect (derez target))}
+                :effect (effect (derez target {:source-card card}))}
    :uninstall
    (effect
      (continue-ability

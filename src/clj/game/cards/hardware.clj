@@ -467,8 +467,7 @@
               :yes-ability
               {:async true
                :cost [(->c :remove-from-game)]
-               :msg (msg "derez " (card-str state target))
-               :effect (effect (derez target)
+               :effect (effect (derez target {:source-card card})
                                (effect-completed eid))}}}]})
 
 (defcard "Carnivore"
@@ -1960,11 +1959,11 @@
                 :effect (effect (continue-ability
                                   (let [spent-credits target]
                                     {:choices {:card #(and (ice? %)
-                                                          (= :this-turn (:rezzed %))
-                                                          (<= (:cost %) target))}
-                                    :effect (effect (derez target))
-                                    :msg (msg "spend " spent-credits "[Credits] and derez " (:title target))})
-                                    card nil))}]})
+                                                           (= :this-turn (:rezzed %))
+                                                           (<= (:cost %) target))}
+                                     :effect (effect (derez target {:source-card card}))
+                                     :msg (msg "spend " spent-credits "[Credits] and derez " (:title target))})
+                                  card nil))}]})
 
 (defcard "Security Chip"
   {:abilities [{:label "Add [Link] strength to a non-Cloud icebreaker until the end of the run"

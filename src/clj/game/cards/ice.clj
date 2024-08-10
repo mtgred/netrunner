@@ -1139,7 +1139,7 @@
                                  (wait-for (resolve-ability state :runner
                                                             (make-eid state eid)
                                                             (offer-jack-out) card nil)
-                                           (derez state side card)
+                                           (derez state side card {:source-card card})
                                            (encounter-ends state side eid))))}]})
 
 (defcard "Changeling"
@@ -1176,10 +1176,10 @@
                        :value (req (:subtype-target card))}]
    :events [{:event :runner-turn-ends
              :req (req (rezzed? card))
-             :effect (effect (derez :corp card))}
+             :effect (effect (derez :corp card {:source-card card}))}
             {:event :corp-turn-ends
              :req (req (rezzed? card))
-             :effect (effect (derez :corp card))}]
+             :effect (effect (derez :corp card {:source-card card}))}]
    :subroutines [end-the-run]})
 
 (defcard "Chiyashi"
@@ -2005,7 +2005,7 @@
             :waiting-prompt true
             :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card)))
                                    (effect-completed eid))
-            :effect (effect (derez target)
+            :effect (effect (derez target {:source-card card})
                             (system-msg (str "prevents the runner from using printed abilities on bioroid ice for the rest of the turn"))
                             (register-lingering-effect
                              card
@@ -2285,7 +2285,7 @@
                                   :duration :end-of-run
                                   :async true
                                   :msg (req (msg "derez " (:title new-ice) " and trash itself"))
-                                  :effect (effect (derez new-ice)
+                                  :effect (effect (derez new-ice {:no-msg true})
                                                   (trash eid card {:cause :subroutine}))}]))))}]})
 
 (defcard "Hudson 1.0"
@@ -2765,10 +2765,10 @@
                          :value (req (:subtype-target card))}]
      :events [{:event :runner-turn-ends
                :req (req (rezzed? card))
-               :effect (effect (derez :corp card))}
+               :effect (effect (derez :corp card {:source-card card}))}
               {:event :corp-turn-ends
                :req (req (rezzed? card))
-               :effect (effect (derez :corp card))}]
+               :effect (effect (derez :corp card {:source-card card}))}]
      :subroutines [{:label "(Code Gate) Force the Runner to lose [Click] and 1 [Credit]"
                     :msg "force the Runner to lose [Click] and 1 [Credit]"
                     :req (req (has-subtype? card "Code Gate"))
@@ -3072,7 +3072,7 @@
              :async true
              :req (req (and (same-card? card (:ice context))
                             (:broken (first (filter :printed (:subroutines (:ice context)))))))
-             :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
+             :msg "make the Runner continue the run on Archives"
              :effect (req (when (and (:run @state)
                                      (= 1 (count (:encounters @state)))
                                      (not= :success (:phase (:run @state))))
@@ -3081,7 +3081,7 @@
                                                      (make-eid state eid)
                                                      (offer-jack-out)
                                                      card nil)
-                                    (derez state side card)
+                                    (derez state side card {:source-card card})
                                     (effect-completed state side eid)))}]
    :subroutines [{:async true
                   :label "Draw 1 card, then shuffle 1 card from HQ into R&D"
@@ -4120,7 +4120,7 @@
   {:on-rez {:trace {:base 2
                     :msg "keep TMI rezzed"
                     :label "Keep TMI rezzed"
-                    :unsuccessful {:effect (effect (derez card))}}}
+                    :unsuccessful {:effect (effect (derez card {:source-card card}))}}}
    :subroutines [end-the-run]})
 
 (defcard "Tollbooth"
