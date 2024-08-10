@@ -1921,6 +1921,7 @@
                   :effect (effect (damage eid :meat 1 {:unboostable true
                                                        :card card}))}
      :events [(assoc event :event :play-event)
+              (assoc event :event :runner-hand-changed?)
               (assoc event
                      :event :runner-trash
                      :once-per-instance true

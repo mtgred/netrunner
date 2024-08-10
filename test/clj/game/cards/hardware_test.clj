@@ -4464,6 +4464,25 @@
       (is (= ["Bankroll" "Cache"] (->> (get-runner) :hand (map :title)))
           "Acacia is on the bottom of the deck so Runner drew Cache")))
 
+(deftest respirocytes-vs-reeducation-and-djupstad-grid
+  (do-game
+    (new-game {:runner {:hand ["Respirocytes" "Easy Mark"] :deck ["Ika"]}
+               :corp {:hand ["Reeducation" "Djupstad Grid" "IPO"] :credits 20}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Respirocytes")
+    (is (= ["Ika"] (map :title (:hand (get-runner)))) "Ika drawn")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Djupstad Grid" "New remote")
+    (play-from-hand state :corp "Reeducation" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (score-agenda state :corp (get-content state :remote1 1))
+    (click-prompt state :corp "Reeducation")
+    (click-prompt state :corp "IPO")
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Done")
+    (is (= 0 (count (:hand (get-runner)))))
+    (is (= ["Easy Mark" "Ika"] (map :title (:discard (get-runner)))))))
+
 (deftest rubicon-switch
   ;; Rubicon Switch
   (do-game
