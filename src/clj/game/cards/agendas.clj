@@ -21,7 +21,7 @@
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
-   [game.core.engine :refer [pay register-events resolve-ability
+   [game.core.engine :refer [checkpoint pay queue-event register-events resolve-ability
                              unregister-events]]
    [game.core.events :refer [first-event? first-run-event? no-event? run-events run-event-count turn-events]]
    [game.core.finding :refer [find-latest]]
@@ -430,7 +430,10 @@
                                                      " from the grip"
                                                      " to the bottom of the stack."
                                                      " The Runner draws 1 card"))
-                         (draw state :runner eid 1)))
+                         (queue-event state :runner-hand-changed?)
+                         (wait-for
+                           (checkpoint state side)
+                           (draw state :runner eid 1))))
                      (effect-completed state side eid)))}}}})
 
 (defcard "Braintrust"
@@ -1752,9 +1755,11 @@
                               (do (doseq [c (reverse chosen)] (move state :corp c :deck))
                                   (wait-for (draw state :corp n)
                                             ; if corp chooses more cards than runner's hand, don't shuffle runner hand back into Stack
-                                            (when (<= n (count (:hand runner)))
-                                              (doseq [r (take n (shuffle (:hand runner)))] (move state :runner r :deck)))
-                                            (effect-completed state side eid)))
+                                            (if (<= n (count (:hand runner)))
+                                              (do (doseq [r (take n (shuffle (:hand runner)))] (move state :runner r :deck))
+                                                  (queue-event state :runner-hand-changed?)
+                                                  (checkpoint state side eid))
+                                              (effect-completed state side eid))))
                               (continue-ability state side (corp-choice original '() original) card nil))))})
           (corp-choice [remaining chosen original] ; Corp chooses cards until they press 'Done'
             {:prompt "Choose a card to move to bottom of R&D"
