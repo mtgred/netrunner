@@ -408,11 +408,17 @@
 (defn- runner-install-message
   "Prints the correct msg for the card install"
   [state side card cost-str
-   {:keys [no-cost host-card facedown custom-message msg-keys ignore-install-cost] :as args}]
+   {:keys [no-cost host-card facedown custom-message msg-keys ignore-install-cost ignore-all-cost cost-bonus] :as args}]
   (let [{:keys [display-origin install-source origin-index known]} msg-keys
         hide-zero-cost (:hide-zero-cost msg-keys true)
         cost-str (if (and hide-zero-cost (= cost-str "pays 0 [Credits]")) nil cost-str)
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
+        discount-str (cond
+                       ignore-all-cost " (ignoring all costs)"
+                       ignore-install-cost " (ignoring it's install cost)"
+                       (and cost-bonus (pos? cost-bonus)) (str " (paying " cost-bonus " [Credits] more)")
+                       (and cost-bonus (neg? cost-bonus)) (str " (paying " (* -1 cost-bonus) " [Credits] less)")
+                       :else nil)
         card-name (if facedown
                     (if known
                       (str (:title card) " as a facedown card")
@@ -436,13 +442,12 @@
                               (str cost-str ",")))
         lhs (if install-source
               (str (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
-              (build-spend-msg modified-cost-str "install"))
-        ignore-cost-str (when ignore-install-cost " (ignoring it's install cost)")]
+              (build-spend-msg modified-cost-str "install"))]
     (when (:display-message args true)
       (if custom-message
         (system-msg state side (custom-message cost-str))
         (system-msg state side
-                    (str pre-lhs lhs card-name origin ignore-cost-str
+                    (str pre-lhs lhs card-name origin discount-str
                          (when host-card (str " on " (card-str state host-card)))
                          (when no-cost " at no cost")))))))
 
