@@ -36,8 +36,11 @@
   [cost state side eid _card]
   (let [a (:action eid)
         idx (get-in eid [:source-info :ability-idx])
-        is-game-action? (when (= :ability (:source-type eid))
-                          (:action (nth (get-in eid [:source :abilities]) idx nil)))
+        source-abilities (get-in eid [:source :abilities])
+        is-game-action? (when (and (= :ability (:source-type eid))
+                                   (number? idx)
+                                   (seq source-abilities))
+                          (:action (nth source-abilities idx {})))
         source-type (get-in eid [:source :type])]
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
