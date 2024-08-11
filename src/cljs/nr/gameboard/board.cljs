@@ -72,33 +72,36 @@
 (defn action-list
   [{:keys [type zone rezzed advanceable
            advancementcost current-advancement-requirement] :as card}]
-  (cond->> []
-    ;; advance
-    (or (and (= type "Agenda")
-             (#{"servers" "onhost"} (first zone)))
-        (= advanceable "always")
-        (and rezzed
-             (= advanceable "while-rezzed"))
-        (and (not rezzed)
-             (= advanceable "while-unrezzed")))
-    (cons "advance")
-    ;; score
-    (and (= type "Agenda")
-         (#{"servers" "onhost"} (first zone))
-         (>= (get-counters card :advancement)
-             (or current-advancement-requirement advancementcost)))
-    (cons "score")
-    ;; trash
-    (#{"ICE" "Program"} type)
-    (cons "trash")
-    ;; rez
-    (and (#{"Asset" "ICE" "Upgrade"} type)
-         (not rezzed))
-    (cons "rez")
-    ;; derez
-    (and (#{"Asset" "ICE" "Upgrade"} type)
-         rezzed)
-    (cons "derez")))
+  (r/with-let [active-player (r/cursor game-state [:active-player])
+               side (r/cursor game-state [:side])]
+    (cond->> []
+      ;; advance
+      (or (and (= type "Agenda")
+               (#{"servers" "onhost"} (first zone)))
+          (= advanceable "always")
+          (and rezzed
+               (= advanceable "while-rezzed"))
+          (and (not rezzed)
+               (= advanceable "while-unrezzed")))
+      (cons "advance")
+      ;; score
+      (and (= type "Agenda")
+           (#{"servers" "onhost"} (first zone))
+           (= (keyword @active-player) @side)
+           (>= (get-counters card :advancement)
+               (or current-advancement-requirement advancementcost)))
+      (cons "score")
+      ;; trash
+      (#{"ICE" "Program"} type)
+      (cons "trash")
+      ;; rez
+      (and (#{"Asset" "ICE" "Upgrade"} type)
+           (not rezzed))
+      (cons "rez")
+      ;; derez
+      (and (#{"Asset" "ICE" "Upgrade"} type)
+           rezzed)
+      (cons "derez"))))
 
 (def click-card-keys
   [:cid :side :host :type :zone :ghost])

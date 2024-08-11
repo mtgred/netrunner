@@ -2122,7 +2122,7 @@
                               (in-hand? target)))}
      :msg (msg "score " (:title target))
      :async true
-     :effect (effect (score eid target {:no-req true}))}))
+     :effect (effect (score eid target {:no-req true :ignore-turn true}))}))
 
 (defcard "Political Dealings"
   (letfn [(pdhelper [agendas]
