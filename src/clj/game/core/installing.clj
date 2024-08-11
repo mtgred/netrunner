@@ -424,7 +424,7 @@
                       (str (:title card) " as a facedown card")
                       "a card facedown")
                     (:title card))
-        origin (if display-origin
+        origin (if (and display-origin (not= (:previous-zone card) [:onhost]))
                  (str " from "
                       (when origin-index (str " position " (inc origin-index) " of "))
                       (cond
@@ -435,6 +435,8 @@
                  "")
         pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
                   (str prepend-cost-str ", and then "))
+        from-host? (when (and display-origin (= (:previous-zone card) [:onhost]))
+                     "hosted ")
         modified-cost-str (if (string/blank? cost-str)
                             prepend-cost-str
                             (if (string/blank? pre-lhs)
@@ -447,7 +449,7 @@
       (if custom-message
         (system-msg state side (custom-message cost-str))
         (system-msg state side
-                    (str pre-lhs lhs card-name origin discount-str
+                    (str pre-lhs lhs from-host? card-name origin discount-str
                          (when host-card (str " on " (card-str state host-card)))
                          (when no-cost " at no cost")))))))
 
