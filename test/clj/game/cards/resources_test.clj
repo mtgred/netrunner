@@ -4903,7 +4903,7 @@
                 (card-ability state :runner pau 1)
                 (click-card state :runner cor))
               "Pay 1 credit for Corroder (2 - 4 + 1 base)")
-          (is (last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted Corroder ") "Correct message for Corroder install")))))
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 0 [Credits], to use Paule's Café to install hosted Corroder ") "Correct message for Corroder install")))))
 
 (deftest penumbral-toolkit-install-cost-reduction-after-hq-run
     ;; install cost reduction after HQ run
