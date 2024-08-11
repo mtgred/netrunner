@@ -34,12 +34,18 @@
   (<= 0 (- (get-in @state [side :click]) (value cost))))
 (defmethod handler :click
   [cost state side eid _card]
-  (let [a (:action eid)]
+  (let [a (:action eid)
+        idx (get-in eid [:source-info :ability-idx])
+        is-game-action? (when (= :ability (:source-type eid))
+                          (:action (nth (get-in eid [:source :abilities]) idx nil)))
+        source-type (get-in eid [:source :type])]
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
                                   {:action a
+                                   :is-game-action? is-game-action?
+                                   :source-type source-type
                                    :value (value cost)
                                    :ability-idx (:ability-idx (:source-info eid))})
               ;; sending the idx is mandatory to make wage workers functional
