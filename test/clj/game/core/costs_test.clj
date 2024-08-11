@@ -78,7 +78,7 @@
       (play-from-hand state :runner "Career Fair")
       (is (last-log-contains? state "Runner spends [Click] and pays 0 [Credits] to play Career Fair.") "Play Career Fair, zero cost")
       (click-card state :runner (find-card "Daily Casts" (:hand (get-runner))))
-      (is (last-log-contains? state "Runner pays 0 [Credits] to install Daily Casts.") "Choose Daily cast, zero cost install")
+      (is (last-log-contains? state "Runner uses Career Fair to install Daily Casts from the Grip") "Choose Daily cast, zero cost install")
       (play-from-hand state :runner "Daily Casts")
       (is (last-log-contains? state "Runner spends [Click] and pays 3 [Credits] to install Daily Casts.") "Install resource, three cost")
       (run-on state :archives)

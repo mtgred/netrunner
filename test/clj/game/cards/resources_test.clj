@@ -269,7 +269,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (click-prompt state :runner "Chatterjee University")
     (click-card state :runner "Vanity Project")
-    (is (last-n-log-contains? state 1 "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
+    (is (last-log-contains? state "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
     (is (= "Chatterjee University" (:title (get-resource state 1))))
     (is (empty? (:scored (get-runner))))))
 
@@ -4870,21 +4870,18 @@
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner mo))
               "Pay 4 for MOpus install (1+5-2)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 3 [Credits] to install Magnum Opus using Paule's Café\\.") "Correct message for MOpus install")
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Magnum Opus.") "Correct message for Mopus install")
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner des))
               "Pay 4 for Desperado install (1+3)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 3 [Credits] to install Desperado using Paule's Café\\.") "Correct message for Desperado install")
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Desperado.") "Correct message for Desperado install")
           (take-credits state :runner)
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -3]
                 (click-card state :runner cor))
               "Pay 3 for Corroder install in Corp turn (1+2)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 2 [Credits] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
+          (is (last-log-contains? state "pays 1 [Credits], and then pays 2 [Credits], to use Paule's Café to install hosted Corroder") "Correct message for Corroder install")))))
 
 (deftest paule-s-cafe-can-t-lower-cost-below-1-issue-4816
     ;; Can't lower cost below 1. Issue #4816
@@ -4906,8 +4903,7 @@
                 (card-ability state :runner pau 1)
                 (click-card state :runner cor))
               "Pay 1 credit for Corroder (2 - 4 + 1 base)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 0 [Credits] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
+          (is (last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted Corroder ") "Correct message for Corroder install")))))
 
 (deftest penumbral-toolkit-install-cost-reduction-after-hq-run
     ;; install cost reduction after HQ run
@@ -5152,8 +5148,8 @@
       (click-prompt state :runner (find-card "Mimic" (:discard (get-runner))))
       (is (= 1 (count (get-program state))) "1 Program installed")
       (is (= 2 (:credit (get-runner))) "Runner paid install cost")
-      (is (last-n-log-contains? state 2 "Clone Chip"))
-      (is (second-last-log-contains? state "uses Reclaim to install Mimic"))))
+      (is (last-log-contains? state "Clone Chip"))
+      (is (last-log-contains? state "Reclaim to install Mimic"))))
 
 (deftest reclaim-no-cards-in-hand
     ;; No cards in hand
