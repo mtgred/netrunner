@@ -3140,7 +3140,7 @@
                                     card :can-score
                                     (fn [state _ card]
                                       (if (same-card? card installed-card)
-                                        ((constantly false) (toast state :corp "Cannot score due to Warm Reception." "Warning"))
+                                        ((constantly false) (toast state :corp "Cannot score due to Warm Reception." "warning"))
                                         true)))
                                   (effect-completed state side eid))))}
         derez {:label "Derez another card (start of turn)"
