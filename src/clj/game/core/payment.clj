@@ -55,7 +55,7 @@
                (:cost/args acc)
                (:cost/args cur)))))
 
-(defn- cost-ranks
+(defn- display-cost-ranks
   [cost]
   (case (:cost/type cost)
     :click 1
@@ -64,6 +64,17 @@
     (:trash-can :remove-from-game) 4
     ; :else
     5))
+
+(defn- impl-cost-ranks
+  [cost]
+  (case (:cost/type cost)
+    :click 1
+    :lose-click 2
+    :credit 3
+    (:advancement :power :virus) 4
+    (:trash-can :remove-from-game) 5
+    ; :else
+    6))
 
 (defn merge-costs
   "Combines disparate costs into a single cost per type."
@@ -79,7 +90,7 @@
                      (and (= :credit (:cost/type %))
                           (zero? (:cost/amount %)))
                      false))
-          (sort-by cost-ranks)
+          (sort-by impl-cost-ranks)
           (into [])))))
 
 (comment
@@ -129,6 +140,7 @@
   [costs]
   (let [cost-string
         (->> (merge-costs costs)
+             (sort-by display-cost-ranks)
              (map label)
              (interpose ", ")
              (apply str))]
