@@ -5269,6 +5269,22 @@
     ;; No Malandragem prompt because it's once per turn
     (is (no-prompt? state :runner))))
 
+(deftest malandragem-once-per-turn
+  (do-game
+    (new-game {:runner {:hand ["Malandragem"]}
+               :corp {:hand [(qty "Vanilla" 2)]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Malandragem")
+    (run-on state :hq)
+    (run-continue state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (run-continue-until state :encounter-ice)
+    (is (no-prompt? state :runner) "Only triggers once per turn")))
+
 (deftest malandragem-rfg-when-empty
   (do-game
     (new-game {:runner {:hand ["Malandragem"]}
