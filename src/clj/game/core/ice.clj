@@ -577,6 +577,8 @@
                                        (let [ice (get-card state ice)
                                              on-break-subs (when ice (:on-break-subs (card-def ice)))
                                              event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
+                                         (when (same-card? ice (get-current-ice state))
+                                           (set-current-ice state ice))
                                          (wait-for
                                            (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
                                            (let [ice (get-card state ice)

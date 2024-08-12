@@ -493,8 +493,7 @@
                                              (all-subs-broken-by-card? (:ice context) card)))
                               :msg (msg "add " (:title (:ice context))
                                         " to HQ after breaking all its subroutines")
-                              :effect (req (set-current-ice state (:ice context))
-                                           (move state :corp (:ice context) :hand nil)
+                              :effect (req (move state :corp (:ice context) :hand nil)
                                            (continue state :runner nil))}]}))
 
 (defcard "Atman"
