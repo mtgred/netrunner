@@ -162,7 +162,10 @@
 (defn installable-servers
   "Get list of servers the specified card can be installed in"
   [state card]
-  (let [base-list (concat (server-list state) ["New remote"])]
+  (let [max-servers (when-not (get (:disabled-card-reg @state) (get-in @state [:corp :identity :cid]))
+                      (get-in (card-def (get-in @state [:corp :identity])) [:flags :server-limit]))
+        at-remote-limit? (and max-servers (>= (count (get-remotes state)) max-servers))
+        base-list (if at-remote-limit? (server-list state) (concat (server-list state) ["New remote"]))]
     (if-let [install-req (-> card card-def :install-req)]
       ;; Install req function overrides normal list of install locations
       (install-req state :corp card (make-eid state) base-list)

@@ -134,7 +134,8 @@
    :abilities [(set-autoresolve :auto-fire "419: Amoral Scammer")]})
 
 (defcard "A Teia: IP Recovery"
-  {:events [{:event :corp-install
+  {:flags {:server-limit 2}
+   :events [{:event :corp-install
              :async true
              :req (req (and (is-remote? (second (get-zone (:card context))))
                             (first-event? state side :corp-install #(is-remote? (second (get-zone (:card (first %))))))))
@@ -538,7 +539,8 @@
                                               :flipped true
                                               :face :back
                                               :code (str (subs (:code card) 0 5) "flip")))))]
-    {:events [{:event :pre-first-turn
+    {:flags {:server-limit 1}
+     :events [{:event :pre-first-turn
                :req (req (= side :corp))
                :effect (effect (update! (assoc card :flipped false :face :front)))}
               {:event :successful-run
