@@ -1,6 +1,9 @@
 (ns game.core.process-actions
   (:require
    [clojure.string :as str]
+   [cljc.java-time.instant :as inst]
+   [cljc.java-time.duration :as duration]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [game.core.actions :refer [click-advance click-credit click-draw click-run
                               close-deck do-purge generate-install-list
                               generate-runnable-zones move-card expend-ability
@@ -85,9 +88,33 @@
    "unbroken-subroutines" #'play-unbroken-subroutines
    "view-deck" #'view-deck})
 
+(def unmonitored-commands
+  ["generate-install-list"
+   "generate-runnable-zones"
+   "system-msg"
+   "toast"])
+
+(def command-tolerance-ms 30)
+
+(defn process-monitored-command?
+  [command state side]
+  (let [is-unmonitored? (some #(= % command) unmonitored-commands)
+        last-cmd-time (get-in @state [side :last-processed-action])
+        current-time (inst/now)
+        diff-millis (if last-cmd-time
+                      (- (.toEpochMilli current-time) (.toEpochMilli last-cmd-time))
+                      (inc command-tolerance-ms))]
+    (if is-unmonitored?
+      true
+      (if (> (abs diff-millis) command-tolerance-ms)
+        (do (swap! state assoc-in [side :last-processed-action] current-time)
+            true)
+        nil))))
+
 (defn process-action
   [command state side args]
   (when-let [c (get commands command)]
-    (c state side args)
-    (checkpoint+clean-up state)
+    (when (process-monitored-command? command state side)
+      (c state side args)
+      (checkpoint+clean-up state))
     true))
