@@ -773,7 +773,8 @@
             (card-ability state :runner (refresh ankusa) 0)
             (click-prompt state :runner "End the run")
             (click-prompt state :runner "End the run")
-            (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand"))
+            (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand")
+            (run-continue state))
           "Slee did not gain counters for ankusa bounce"))))
 
 (deftest battering-ram-automated-test
