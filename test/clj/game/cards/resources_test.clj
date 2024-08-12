@@ -5249,6 +5249,24 @@
     (click-card state :runner "Red Team")
     (click-prompt state :runner "Liberated Account")))
 
+(deftest red-team-vs-undo-click
+  (do-game
+    (new-game {:runner {:hand ["Red Team"]
+                        :credits 6}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Red Team")
+    (let [rt (get-resource state 0)]
+      (card-ability state :runner (refresh rt) 0)
+      (click-prompt state :runner "R&D")
+      (run-jack-out state)
+      (card-ability state :runner (refresh rt) 0)
+      (is (= ["Archives" "HQ" "Cancel"] (prompt-buttons :runner)) "No option to run R&D")
+      (click-prompt state :runner "HQ")
+      (core/command-undo-click state :runner)
+      (core/command-undo-click state :runner)
+      (card-ability state :runner (refresh rt) 0)
+      (is (= ["Archives" "R&D" "HQ" "Cancel"] (prompt-buttons :runner)) "All three options are there after undoing clicks"))))
+
 (deftest rolodex
   ;; Rolodex - Full test
   (do-game
