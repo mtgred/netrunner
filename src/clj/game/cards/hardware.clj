@@ -134,11 +134,11 @@
                  :effect (req (register-events
                                   state side card
                                   [{:event :encounter-ice
-                                    :req (req (first-run-event? state side :encounter-ice))
                                     :unregister-once-resolved true
                                     :duration :end-of-run
                                     :optional
                                     {:prompt "Spend [Click][Click] to bypass encountered ice?"
+                                     :req (req (first-run-event? state side :encounter-ice))
                                      :yes-ability {:cost [(->c :click 2)]
                                                    :req (req (>= (:click runner) 2))
                                                    :msg (msg "bypass " (card-str state (:ice context)))
