@@ -5282,6 +5282,39 @@
       (is (= [:rd] (:server (get-run))) "Run not redirected since Mirāju wasn't passed")
       (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed"))))
 
+(deftest miraju-loop-issue-4958
+  (do-game
+    (new-game {:corp {:hand [(qty "Mirāju" 2)] :credits 50}
+               :runner {:hand ["Buzzsaw"] :credits 50}})
+    (play-from-hand state :corp "Mirāju" "HQ")
+    (play-from-hand state :corp "Mirāju" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buzzsaw")
+    (let [hq-ice (get-ice state :hq 0)
+          arc-ice (get-ice state :archives 0)
+          buzz (get-program state 0)
+          sub "Draw 1 card, then shuffle 1 card from HQ into R&D"]
+      (rez state :corp hq-ice)
+      (run-on state "HQ")
+      (run-continue state :encounter-ice)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner sub)
+      (run-continue state)
+      (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
+      (click-prompt state :runner "No")
+      (is (not (rezzed? (refresh hq-ice))) "HQ Ice derezzed")
+      (dotimes [n 10]
+        (is (= 1 (:position (get-in @state [:run]))) "Outside of miraju")
+        (rez state :corp (refresh arc-ice))
+        (run-continue state :encounter-ice)
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner sub)
+        (run-continue state)
+        (is (= [:archives] (:server (get-run))) "Still on archives")
+        (click-prompt state :runner "No")
+        (is (not (rezzed? (refresh arc-ice))) "Miraju on archives was derezzed"))
+      (run-continue-until state :success))))
+
 (deftest mlinzi-each-side-of-each-subroutine
   ;; Each side of each subroutine
   (do-game
