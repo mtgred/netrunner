@@ -33,8 +33,7 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
-   [game.core.installing :refer [corp-install corp-install-list
-                                 corp-install-msg]]
+   [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-ice
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
@@ -539,7 +538,7 @@
                            {:async true
                             :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                             :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
-                                             (corp-install-list state chosen-ice))
+                                             (installable-servers state chosen-ice))
                             :effect (effect (shuffle! :deck)
                                             (corp-install eid chosen-ice target
                                                           {:ignore-all-cost true
@@ -571,7 +570,7 @@
                            {:async true
                             :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                             :choices (filter #(#{"HQ" "Archives" "R&D"} %)
-                                             (corp-install-list state chosen-ice))
+                                             (installable-servers state chosen-ice))
                             :effect (effect (shuffle! :deck)
                                             (corp-install eid chosen-ice target
                                                           {:ignore-all-cost true
@@ -1845,7 +1844,7 @@
                                    {:async true
                                     :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                                     :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
-                                                     (corp-install-list state chosen-ice))
+                                                     (installable-servers state chosen-ice))
                                     :effect (effect (shuffle! :deck)
                                                     (corp-install eid chosen-ice target
                                                                   {:install-state :rezzed-no-rez-cost

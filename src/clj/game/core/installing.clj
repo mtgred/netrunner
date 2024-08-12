@@ -176,11 +176,6 @@
   [card]
   (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
-(defn corp-install-list
-  "Returns a list of targets for where a given card can be installed."
-  [state card]
-  (installable-servers state card))
-
 (defn reveal-if-unrezzed
   "Used to reveal a card if it cannot be rezzed when an instruction says to rez it
   This is currently required under CR, and is treated as an actual functional reveal
@@ -349,7 +344,7 @@
        (not server)
        (continue-ability state side
                          {:prompt (str "Choose a location to install " (:title card))
-                          :choices (corp-install-list state card)
+                          :choices (installable-servers state card)
                           :async true
                           :effect (effect (corp-install eid card target args))}
                          card nil)

@@ -32,8 +32,7 @@
    [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice]]
    [game.core.identities :refer [disable-identity enable-identity]]
    [game.core.initializing :refer [ability-init card-init]]
-   [game.core.installing :refer [corp-install corp-install-list
-                                 corp-install-msg install-as-condition-counter]]
+   [game.core.installing :refer [corp-install corp-install-msg install-as-condition-counter]]
    [game.core.memory :refer [mu+ update-mu]]
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
@@ -759,7 +758,7 @@
                                                  state side
                                                  (let [card-to-install target]
                                                    {:prompt "Choose a server"
-                                                    :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state card-to-install))
+                                                    :choices (remove #{"HQ" "R&D" "Archives"} (installable-servers state card-to-install))
                                                     :async true
                                                     :effect (effect (corp-install eid card-to-install target {:msg-keys {:install-source card
                                                                                                                          :display-origin true}}))})
@@ -968,7 +967,7 @@
                                   :choices {:card #(and (corp? %)
                                                         (not (operation? %))
                                                         (in-hand? %)
-                                                        (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
+                                                        (seq (filter (fn [c] (= server c)) (installable-servers state %))))}
                                   :effect (req (wait-for
                                                  (corp-install state side target server {:msg-keys {:install-source card
                                                                                                     :display-origin true}})
