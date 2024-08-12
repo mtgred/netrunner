@@ -179,11 +179,7 @@
 (defn corp-install-list
   "Returns a list of targets for where a given card can be installed."
   [state card]
-  (let [hosts (filter #(when-let [can-host (:can-host (card-def %))]
-                        (and (rezzed? %)
-                             (can-host state :corp (make-eid state) % [card])))
-                      (all-installed state :corp))]
-    (concat hosts (installable-servers state card))))
+  (installable-servers state card))
 
 (defn reveal-if-unrezzed
   "Used to reveal a card if it cannot be rezzed when an instruction says to rez it
