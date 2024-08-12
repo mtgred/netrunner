@@ -1713,14 +1713,14 @@
                           card :can-rez
                           (fn [state _ card]
                             (if (same-card? card installed-card)
-                              ((constantly false) (toast state :corp "Cannot rez due to Mitosis." "Warning"))
+                              ((constantly false) (toast state :corp "Cannot rez due to Mitosis." "warning"))
                               true)))
                         (register-turn-flag!
                           state side
                           card :can-score
                           (fn [state _ card]
                             (if (same-card? card installed-card)
-                              ((constantly false) (toast state :corp "Cannot score due to Mitosis." "Warning"))
+                              ((constantly false) (toast state :corp "Cannot score due to Mitosis." "warning"))
                               true)))
                         (if (seq (rest target-cards))
                           (mitosis-ability state side card eid (rest target-cards))
