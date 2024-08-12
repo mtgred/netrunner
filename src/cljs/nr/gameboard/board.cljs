@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-side]]
+   [nr.translations :refer [tr tr-side tr-game-prompt]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face render-icons render-message]]
    [reagent.core :as r]))
@@ -72,33 +72,36 @@
 (defn action-list
   [{:keys [type zone rezzed advanceable
            advancementcost current-advancement-requirement] :as card}]
-  (cond->> []
-    ;; advance
-    (or (and (= type "Agenda")
-             (#{"servers" "onhost"} (first zone)))
-        (= advanceable "always")
-        (and rezzed
-             (= advanceable "while-rezzed"))
-        (and (not rezzed)
-             (= advanceable "while-unrezzed")))
-    (cons "advance")
-    ;; score
-    (and (= type "Agenda")
-         (#{"servers" "onhost"} (first zone))
-         (>= (get-counters card :advancement)
-             (or current-advancement-requirement advancementcost)))
-    (cons "score")
-    ;; trash
-    (#{"ICE" "Program"} type)
-    (cons "trash")
-    ;; rez
-    (and (#{"Asset" "ICE" "Upgrade"} type)
-         (not rezzed))
-    (cons "rez")
-    ;; derez
-    (and (#{"Asset" "ICE" "Upgrade"} type)
-         rezzed)
-    (cons "derez")))
+  (r/with-let [active-player (r/cursor game-state [:active-player])
+               side (r/cursor game-state [:side])]
+    (cond->> []
+      ;; advance
+      (or (and (= type "Agenda")
+               (#{"servers" "onhost"} (first zone)))
+          (= advanceable "always")
+          (and rezzed
+               (= advanceable "while-rezzed"))
+          (and (not rezzed)
+               (= advanceable "while-unrezzed")))
+      (cons "advance")
+      ;; score
+      (and (= type "Agenda")
+           (#{"servers" "onhost"} (first zone))
+           (= (keyword @active-player) @side)
+           (>= (get-counters card :advancement)
+               (or current-advancement-requirement advancementcost)))
+      (cons "score")
+      ;; trash
+      (#{"ICE" "Program"} type)
+      (cons "trash")
+      ;; rez
+      (and (#{"Asset" "ICE" "Upgrade"} type)
+           (not rezzed))
+      (cons "rez")
+      ;; derez
+      (and (#{"Asset" "ICE" "Upgrade"} type)
+           rezzed)
+      (cons "derez"))))
 
 (def click-card-keys
   [:cid :side :host :type :zone :ghost])
@@ -401,7 +404,7 @@
         label-fn (fn [label]
                    (if (:cid label)
                      (:title label)
-                     label))]
+                     (tr-game-prompt label)))]
     (when servers
       [:div.panel.blue-shade.servers-menu (when active-menu?
                                             {:class "active-menu"
@@ -601,7 +604,7 @@
                                     "score" false
                                     false)]
                ^{:key action}
-               [card-menu-item (capitalize action)
+               [card-menu-item (capitalize (tr-game-prompt action))
                 #(do (send-command action {:card card})
                      (if keep-menu-open
                        (swap! card-menu assoc :keep-menu-open keep-menu-open)
@@ -1424,7 +1427,7 @@
        (or (= "encounter-ice" (:phase @run))
            @encounters)
        [cond-button
-        (tr [:game.fire-unbroken "Fire unbroken subs"])
+        (tr [:game.fire-unbroken "Fire unbroken subroutines"])
         (and (seq (:subroutines ice))
              (some #(and (not (:broken %))
                          (not (:fired %))
@@ -1695,7 +1698,9 @@
        [:button {:on-click #(send-command "end-turn")}
         (tr [:game.end-turn "End Turn"])])
      (when @end-turn
-       [:button {:on-click #(send-command "start-turn")}
+       [:button {:on-click #(do
+                              (swap! app-state assoc :start-shown true)
+                              (send-command "start-turn"))}
         (tr [:game.start-turn "Start Turn"])]))
    (when (and (= (keyword @active-player) side)
               (or @runner-phase-12 @corp-phase-12))
@@ -1725,7 +1730,7 @@
          (let [servers (get-in @game-state [:runner :runnable-list])]
            (map-indexed (fn [_ label]
                           ^{:key label}
-                          [card-menu-item label
+                          [card-menu-item (tr-game-prompt label)
                            #(do (close-card-menu)
                                 (send-command "run" {:server label}))])
                         servers))]]]])
@@ -1833,8 +1838,8 @@
             {:class (warning-class @remaining)}
             (str
               (when-not (:pos @remaining) "-")
-              (:minutes @remaining) "m:"
-              (:seconds @remaining) "s remaining")]))})))
+              (:minutes @remaining) (tr [:game.minutes "m:"])
+              (:seconds @remaining) (tr [:game.seconds-remaining "s remaining"]))]))})))
 
 (defn- time-since
   "Helper method for match duration. Computes how much time since game start"
@@ -1868,8 +1873,8 @@
          (when (not @hidden)
            [:span.float-center.timer
             (str
-              (:minutes @duration) "m:"
-              (:seconds @duration) "s")])
+              (:minutes @duration) (tr [:game.minutes "m:"])
+              (:seconds @duration) (tr [:game.seconds "s"]))])
          )})))
 
 (defn starting-timestamp [start-date timer]

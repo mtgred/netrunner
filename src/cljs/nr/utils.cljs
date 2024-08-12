@@ -197,12 +197,12 @@
   "A sequence of card pattern pairs consisting of a regex, used to match a card
   name in text, and the span fragment that should replace it"
   []
-  (letfn [(span-of [title tr-title] [:span {:class "fake-link" :data-card-title title} tr-title])]
+  (letfn [(span-of [title tr-title] [:span {:class "fake-link" :data-card-title title} (or tr-title title)])]
     (distinct (concat
      (->> (:all-cards-and-flips @app-state)
           (vals)
           (remove :replaced_by)
-          (map (fn [c] [(:title c) (span-of (:title c) (:title c))]))
+          (map (fn [c] [(:title c) (span-of (:title c) (tr-data :title c))]))
           (sort-by (comp count str first) >))
      (->> (:all-cards-and-flips @app-state)
           (vals)

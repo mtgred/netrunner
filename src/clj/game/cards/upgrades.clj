@@ -345,7 +345,7 @@
                                                                  (not (same-card? % rezzed-card)))}
                                            :async true
                                            :msg (msg "derez " (card-str state target) " to give " (card-str state rezzed-card) " +3 strength for the remainder of the run")
-                                           :effect (req (derez state side (get-card state target))
+                                           :effect (req (derez state side (get-card state target) {:no-msg true})
                                                         (pump-ice state side rezzed-card 3 :end-of-run)
                                                         (effect-completed state side eid))}}}
                            card nil)))}]})

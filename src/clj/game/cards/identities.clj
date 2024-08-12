@@ -343,7 +343,7 @@
                                      (filter #(and (program? %)
                                                    (runner-can-pay-and-install?
                                                      state side
-                                                     (assoc eid :source-type :runner-install) % false))
+                                                     (assoc eid :source-type :runner-install) % {:no-toast true}))
                                              (:hand runner))))
                      :msg (msg "install " (:title target) " from the grip")
                      :effect (req (wait-for (runner-install state :runner

@@ -437,7 +437,7 @@
              :effect (effect (system-msg :corp
                                          (str "derezzes " (:title (:ice context))
                                               " and trashes Bioroid Efficiency Research"))
-                             (derez :corp (:ice context))
+                             (derez :corp (:ice context) {:source-card card})
                              (trash :corp eid card {:unpreventable true :cause-card card}))}]})
 
 (defcard "Biotic Labor"
@@ -815,7 +815,7 @@
     :change-in-game-state (req (seq (all-installed state :corp)))
     :async true
     :effect (req (doseq [c targets]
-                   (derez state side c))
+                   (derez state side c {:source-card card}))
                  (let [discount (* -3 (count targets))]
                    (continue-ability
                      state side

@@ -15,7 +15,7 @@
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [any-effects register-lingering-effect unregister-effects-for-card update-disabled-cards]]
+   [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [ability-as-handler checkpoint dissoc-req not-used-once? pay
                              print-msg register-events register-once
@@ -110,7 +110,7 @@
                             (runner-can-pay-and-install?
                               state :runner
                               (assoc eid :source card :source-type :runner-install)
-                              card nil)))
+                              card {:no-toast true})))
              :effect (effect
                        (continue-ability
                          {:req (req (and (not-any? #(and (= title (:title %))
@@ -320,8 +320,7 @@
                                    (rezzed? current-ice)
                                    (has-subtype? current-ice ice-type)
                                    (all-subs-broken-by-card? current-ice card)))
-                    :msg (msg "derez " (:title current-ice))
-                    :effect (effect (derez current-ice))}]})))
+                    :effect (effect (derez current-ice {:source-card card}))}]})))
 
 (defn- trash-to-bypass
   "Trash to bypass current ice
@@ -996,8 +995,7 @@
                                (all-subs-broken? current-ice)))
                 :label "derez an ice"
                 :cost [(->c :trash-can)]
-                :msg (msg "derez " (:title current-ice))
-                :effect (effect (derez current-ice))}]})
+                :effect (effect (derez current-ice {:source-card card}))}]})
 
 (defcard "Crowbar"
   (break-and-enter "Code Gate"))
@@ -1461,8 +1459,7 @@
                                  :cost [(->c :credit 6)]
                                  :req (req (and (get-current-encounter state)
                                                 (has-subtype? current-ice "Sentry")))
-                                 :msg (msg "derez " (:title current-ice))
-                                 :effect (effect (derez current-ice))}
+                                 :effect (effect (derez current-ice {:source-card card}))}
                                 (strength-pump 1 1)]}))
 
 (defcard "Flux Capacitor"
@@ -2308,11 +2305,22 @@
                   :once :per-turn ;; prevents self triggering
                   :interactive (req true)
                   :effect (effect (move card :rfg))}]
-    (auto-icebreaker {:abilities [(break-sub 2 2 "All")
-                                  (strength-pump 1 1)]
-                      :uninstall (effect (continue-ability self-rfg card nil))
-                      :events [(assoc self-rfg :event :agenda-scored)
-                               (assoc self-rfg :event :agenda-stolen)]})))
+    (auto-icebreaker
+      {:abilities [(break-sub 2 2 "All")
+                   (strength-pump 1 1)]
+       :move-zone-replacement (req (let [old (:card context)
+                                         target-zone (:zone context)]
+                                     (when (and (:installed old)
+                                                ;; if it's shuffled in, we're not allowed to move it
+                                                ;; cursed ruling, the card should have been an
+                                                ;; interrupt.
+                                                (not (:shuffled context))
+                                                (not (is-disabled-reg? state old))
+                                                (not (:facedown old))
+                                                (not= [:rfg] target-zone))
+                                       [:rfg])))
+       :events [(assoc self-rfg :event :agenda-scored)
+                (assoc self-rfg :event :agenda-stolen)]})))
 
 (defcard "Nerve Agent"
   {:events [{:event :successful-run
@@ -2957,6 +2965,7 @@
   {:abilities [{:req (req (not (install-locked? state side)))
                 :label "Install a program from the stack"
                 :cost [(->c :trash-can) (->c :credit 2)]
+                :msg (msg "install a program from the stack")
                 :async true
                 :effect (effect (continue-ability
                                   {:prompt "Choose a program to install"
@@ -3240,7 +3249,7 @@
   (let [action (req (add-counter state side card :virus 1)
                     (when (and (rezzed? (get-card state (:host card)))
                                (<= 3 (get-virus-counters state (get-card state card))))
-                      (derez state side (get-card state (:host card)))))]
+                      (derez state side (get-card state (:host card)) {:source-card card})))]
     {:implementation "[Erratum] Program: Virus - Trojan"
      :hosting {:req (req (and (ice? target)
                               (installed? target)

@@ -1962,7 +1962,7 @@
                :max (req (get-counters (get-card state card) :advancement))}
      :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the stack")
      :effect (req (doseq [c targets]
-                    (move state :runner c :deck))
+                    (move state :runner c :deck {:shuffled true}))
                   (shuffle! state :runner :deck)
                   (effect-completed state side eid))}))
 
@@ -2122,7 +2122,7 @@
                               (in-hand? target)))}
      :msg (msg "score " (:title target))
      :async true
-     :effect (effect (score eid target {:no-req true}))}))
+     :effect (effect (score eid target {:no-req true :ignore-turn true}))}))
 
 (defcard "Political Dealings"
   (letfn [(pdhelper [agendas]
@@ -2844,7 +2844,7 @@
                :prompt "Derez a card"
                :choices {:card #(and (installed? %)
                                      (rezzed? %))}
-               :effect (req (derez state side target)
+               :effect (req (derez state side target {:source-card card})
                             (continue-ability state side (derez-card (dec advancements)) card nil))}))]
     {:advanceable :always
      :abilities [{:label "Derez 1 card for each advancement token"
@@ -3143,20 +3143,20 @@
                                         ((constantly false) (toast state :corp "Cannot score due to Warm Reception." "Warning"))
                                         true)))
                                   (effect-completed state side eid))))}
-        derez {:label "Derez another card (start of turn)"
-               :req (req unprotected)
-               :prompt "Choose another card to derez"
-               :choices {:not-self true
-                         :card #(rezzed? %)}
-               :msg (msg "derez itself to derez " (card-str state target))
-               :effect (effect (derez card)
-                               (derez target))}]
+        derez-abi {:label "Derez another card (start of turn)"
+                   :req (req unprotected)
+                   :prompt "Choose another card to derez"
+                   :choices {:not-self true
+                             :card #(rezzed? %)}
+                   :msg (msg "derez itself to derez " (card-str state target))
+                   :effect (effect (derez card {:source-card card})
+                                   (derez target {:source-card card}))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
                :interactive (req true)
                :async true
                :effect (req (wait-for (resolve-ability state side install card nil)
-                                      (continue-ability state side derez card nil)))}]}))
+                                      (continue-ability state side derez-abi card nil)))}]}))
 
 (defcard "Watchdog"
   (letfn [(not-triggered? [state]

@@ -207,7 +207,7 @@
     [:div.rooms
      [:div#filter.dropdown
       [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-       "Filter"
+       (tr [:lobby.filter "Filter"])
        [:b.caret]]
        [:div.dropdown-menu.blue-shade
         (doall (for [[k] slug->format]
