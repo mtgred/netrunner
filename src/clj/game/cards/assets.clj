@@ -3219,7 +3219,9 @@
                                (effect-completed state side eid)))}]})
 
 (defcard "Worlds Plaza"
-  {:abilities [{:action true
+  {:can-host (req (and (or (asset? target) (agenda? target))
+                       (> 2 (count (:hosted card)))))
+   :abilities [{:action true
                 :label "Install an asset on this asset"
                 :req (req (< (count (:hosted card)) 3))
                 :cost [(->c :click 1)]
