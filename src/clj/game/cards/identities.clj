@@ -134,7 +134,8 @@
    :abilities [(set-autoresolve :auto-fire "419: Amoral Scammer")]})
 
 (defcard "A Teia: IP Recovery"
-  {:events [{:event :corp-install
+  {:flags {:server-limit 2}
+   :events [{:event :corp-install
              :async true
              :req (req (and (is-remote? (second (get-zone (:card context))))
                             (first-event? state side :corp-install #(is-remote? (second (get-zone (:card (first %))))))))
@@ -342,7 +343,7 @@
                                      (filter #(and (program? %)
                                                    (runner-can-pay-and-install?
                                                      state side
-                                                     (assoc eid :source-type :runner-install) % false))
+                                                     (assoc eid :source-type :runner-install) % {:no-toast true}))
                                              (:hand runner))))
                      :msg (msg "install " (:title target) " from the grip")
                      :effect (req (wait-for (runner-install state :runner
@@ -538,7 +539,8 @@
                                               :flipped true
                                               :face :back
                                               :code (str (subs (:code card) 0 5) "flip")))))]
-    {:events [{:event :pre-first-turn
+    {:flags {:server-limit 1}
+     :events [{:event :pre-first-turn
                :req (req (= side :corp))
                :effect (effect (update! (assoc card :flipped false :face :front)))}
               {:event :successful-run

@@ -56,7 +56,7 @@
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
                                            (send-message state current-game))}
-            [:input {:placeholder (tr [:chat.placeholder "Say something"])
+            [:input {:placeholder (tr [:chat.placeholder "Say something..."])
                      :type "text"
                      :value @current-input
                      :on-change #(swap! state assoc :msg (-> % .-target .-value))}]

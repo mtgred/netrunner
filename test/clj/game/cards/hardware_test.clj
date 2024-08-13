@@ -166,6 +166,31 @@
         "Costs 2 clicks")
     (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
 
+(deftest alarm-clock-vs-malandragem
+  (do-game
+    (new-game {:corp {:hand [(qty "Ice Wall" 2)]
+                      :score-area ["Vanity Project"]}
+               :runner {:hand ["Alarm Clock" "Malandragem"]
+                        :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Alarm Clock")
+    (play-from-hand state :runner "Malandragem")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "Yes")
+    (is (:run @state) "Run has started")
+    (run-continue state)
+    (click-prompt state :runner "Malandragem (rfg)")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :runner))
+    (run-continue-until state :encounter-ice)
+    (is (no-prompt? state :runner) "Already encountered an ice, can't bypass on the second enc")))
+
 (deftest amanuensis
   (do-game
     (new-game {:runner {:hand ["Amanuensis"]
@@ -4463,6 +4488,25 @@
       (click-card state :runner "Acacia")
       (is (= ["Bankroll" "Cache"] (->> (get-runner) :hand (map :title)))
           "Acacia is on the bottom of the deck so Runner drew Cache")))
+
+(deftest respirocytes-vs-reeducation-and-djupstad-grid
+  (do-game
+    (new-game {:runner {:hand ["Respirocytes" "Easy Mark"] :deck ["Ika"]}
+               :corp {:hand ["Reeducation" "Djupstad Grid" "IPO"] :credits 20}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Respirocytes")
+    (is (= ["Ika"] (map :title (:hand (get-runner)))) "Ika drawn")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Djupstad Grid" "New remote")
+    (play-from-hand state :corp "Reeducation" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (score-agenda state :corp (get-content state :remote1 1))
+    (click-prompt state :corp "Reeducation")
+    (click-prompt state :corp "IPO")
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Done")
+    (is (= 0 (count (:hand (get-runner)))))
+    (is (= ["Easy Mark" "Ika"] (map :title (:discard (get-runner)))))))
 
 (deftest rubicon-switch
   ;; Rubicon Switch

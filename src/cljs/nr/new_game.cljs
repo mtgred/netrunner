@@ -77,7 +77,7 @@
 
 (defn format-section [fmt-state options]
   [:section
-   [:h3 (tr [:lobby.format "Format"])]
+   [:h3 (tr [:lobby.default-game-format "Default game format"])]
    [:select.format
     {:value (or @fmt-state "standard")
      :on-change #(reset! fmt-state (.. % -target -value))}
@@ -179,7 +179,7 @@
          (str " " (tr [:lobby.api-requires-key "(Requires an API Key in Settings)"])))]])
    [:div.infobox.blue-shade
     {:style {:display (if (:api-access @options) "block" "none")}}
-    [:p (tr [:lobby.api-access-details "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings"])]]])
+    [:p (tr [:lobby.api-access-details "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings."])]]])
 
 (defn options-section [options user]
   [:section

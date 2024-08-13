@@ -165,7 +165,7 @@
                                   (reset-command-menu state)
                                   (send-msg state))}
            [:input#log-input
-            {:placeholder (tr [:chat.placeholder "Say something"])
+            {:placeholder (tr [:chat.placeholder "Say something..."])
              :type "text"
              :autoComplete "off"
              :ref #(reset! !input-ref %)

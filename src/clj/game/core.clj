@@ -547,7 +547,6 @@
    corp-can-pay-and-install?
    corp-install
    corp-install-cost
-   corp-install-list
    corp-install-msg
    install-as-condition-counter
    install-locked?

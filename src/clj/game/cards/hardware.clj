@@ -134,11 +134,11 @@
                  :effect (req (register-events
                                   state side card
                                   [{:event :encounter-ice
-                                    :req (req (first-run-event? state side :encounter-ice))
                                     :unregister-once-resolved true
                                     :duration :end-of-run
                                     :optional
                                     {:prompt "Spend [Click][Click] to bypass encountered ice?"
+                                     :req (req (first-run-event? state side :encounter-ice))
                                      :yes-ability {:cost [(->c :click 2)]
                                                    :req (req (>= (:click runner) 2))
                                                    :msg (msg "bypass " (card-str state (:ice context)))
@@ -467,8 +467,7 @@
               :yes-ability
               {:async true
                :cost [(->c :remove-from-game)]
-               :msg (msg "derez " (card-str state target))
-               :effect (effect (derez target)
+               :effect (effect (derez target {:source-card card})
                                (effect-completed eid))}}}]})
 
 (defcard "Carnivore"
@@ -552,7 +551,8 @@
                 :req (req (some #(and (program? %)
                                       (runner-can-pay-and-install?
                                         state side
-                                        (assoc eid :source card :source-type :runner-install) % nil))
+                                        (assoc eid :source card :source-type :runner-install) %
+                                        {:no-toast true}))
                                 (:discard runner)))
                 :choices {:req (req (and (program? target)
                                          (in-discard? target)
@@ -1026,7 +1026,8 @@
                                                                             (runner-can-pay-and-install?
                                                                               state side
                                                                               (assoc eid :source card :source-type :runner-install)
-                                                                              % {:cost-bonus -2}))
+                                                                              % {:cost-bonus -2
+                                                                                 :no-toast true}))
                                                                       set-aside-cards)
                                                               ["Done"]))
                                               :effect (req (if (= "Done" target)
@@ -1921,6 +1922,7 @@
                   :effect (effect (damage eid :meat 1 {:unboostable true
                                                        :card card}))}
      :events [(assoc event :event :play-event)
+              (assoc event :event :runner-hand-changed?)
               (assoc event
                      :event :runner-trash
                      :once-per-instance true
@@ -1960,11 +1962,11 @@
                 :effect (effect (continue-ability
                                   (let [spent-credits target]
                                     {:choices {:card #(and (ice? %)
-                                                          (= :this-turn (:rezzed %))
-                                                          (<= (:cost %) target))}
-                                    :effect (effect (derez target))
-                                    :msg (msg "spend " spent-credits "[Credits] and derez " (:title target))})
-                                    card nil))}]})
+                                                           (= :this-turn (:rezzed %))
+                                                           (<= (:cost %) target))}
+                                     :effect (effect (derez target {:source-card card}))
+                                     :msg (msg "spend " spent-credits "[Credits] and derez " (:title target))})
+                                  card nil))}]})
 
 (defcard "Security Chip"
   {:abilities [{:label "Add [Link] strength to a non-Cloud icebreaker until the end of the run"
@@ -2111,7 +2113,8 @@
                                       (runner-can-pay-and-install?
                                         state side
                                         (assoc eid :source card :source-type :runner-install)
-                                        % {:cost-bonus -3}))
+                                        % {:cost-bonus -3
+                                           :no-toast true}))
                                 (:discard runner)))
                 :cost [(->c :trash-can)]
                 :msg "install a program"

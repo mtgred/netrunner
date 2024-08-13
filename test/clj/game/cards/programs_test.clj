@@ -5269,6 +5269,22 @@
     ;; No Malandragem prompt because it's once per turn
     (is (no-prompt? state :runner))))
 
+(deftest malandragem-once-per-turn
+  (do-game
+    (new-game {:runner {:hand ["Malandragem"]}
+               :corp {:hand [(qty "Vanilla" 2)]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Malandragem")
+    (run-on state :hq)
+    (run-continue state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (run-continue-until state :encounter-ice)
+    (is (no-prompt? state :runner) "Only triggers once per turn")))
+
 (deftest malandragem-rfg-when-empty
   (do-game
     (new-game {:runner {:hand ["Malandragem"]}
@@ -5990,6 +6006,36 @@
       (play-from-hand state :runner "Uninstall")
       (click-card state :runner (get-program state 0))
       (is (= 3 (count (:rfg (get-runner)))) "Nanuq removed from the game when uninstalled")))
+
+(deftest nanuq-vs-keegan-lane
+  (do-game
+    (new-game {:corp {:hand ["Keegan Lane"]}
+               :runner {:hand ["Nanuq"]}})
+    (play-from-hand state :corp "Keegan Lane" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nanuq")
+    (run-on state :hq)
+    (gain-tags state :runner 1)
+    (rez state :corp (get-content state :hq 0))
+    (card-ability state :corp (get-content state :hq 0) 0)
+    (click-card state :corp "Nanuq")
+    (is (= 1 (count (:rfg (get-runner)))) "Nanuq in rfg")
+    (is (= 0 (count (:discard (get-runner)))) "Nanuq not in discard")))
+
+(deftest nanuq-vs-degree-mill
+  ;; note - if they're shuffled in, they don't get rfg'd...
+  (do-game
+    (new-game {:corp {:hand ["Degree Mill"]}
+               :runner {:deck ["PAD Tap" "Nanuq"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nanuq")
+    (play-from-hand state :runner "PAD Tap")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay to steal")
+    (click-card state :runner "Nanuq")
+    (click-card state :runner "PAD Tap")
+    (is (= 2 (count (:deck (get-runner)))) "Both cards in deck")
+    (is (= 0 (count (:rfg (get-runner)))) "Nanuq not rfg'd")))
 
 (deftest nfr
   ;; Nfr

@@ -31,7 +31,7 @@
    [game.core.hand-size :refer [corp-hand-size+]]
    [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
-   [game.core.installing :refer [corp-install corp-install-list]]
+   [game.core.installing :refer [corp-install]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
                              swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
@@ -345,7 +345,7 @@
                                                                  (not (same-card? % rezzed-card)))}
                                            :async true
                                            :msg (msg "derez " (card-str state target) " to give " (card-str state rezzed-card) " +3 strength for the remainder of the run")
-                                           :effect (req (derez state side (get-card state target))
+                                           :effect (req (derez state side (get-card state target) {:no-msg true})
                                                         (pump-ice state side rezzed-card 3 :end-of-run)
                                                         (effect-completed state side eid))}}}
                            card nil)))}]})

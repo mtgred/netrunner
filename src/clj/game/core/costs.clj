@@ -887,7 +887,7 @@
                :all true
                :card (every-pred installed? (if (= :corp side) corp? runner?))}
      :async true
-     :effect (req (let [cards (keep #(move state side % :deck) targets)]
+     :effect (req (let [cards (keep #(move state side % :deck {:shuffled true}) targets)]
                     (shuffle! state side :deck)
                     (complete-with-result
                       state side eid

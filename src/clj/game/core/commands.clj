@@ -1,6 +1,7 @@
 (ns game.core.commands
   (:require
    [clojure.string :as string]
+   [game.core.actions :refer [score]]
    [game.core.board :refer [all-installed server->zone]]
    [game.core.card :refer [agenda? can-be-advanced? corp? get-card
                            has-subtype? ice? in-hand? installed? rezzed? runner?]]
@@ -296,6 +297,19 @@
     ["Done"]
     identity))
 
+(defn command-score
+  [state side]
+  (when (= :corp side)
+    (resolve-ability
+     state side
+     {:prompt "Choose an agenda to score"
+      :choices {:req (req (and (agenda? target)
+                               (or (installed? target)
+                                   (in-hand? target))))}
+      :msg (msg "score " (card-str state target {:visible true}) ", ignoring all restrictions")
+      :effect (effect (score eid target {:no-req true :ignore-turn true}))}
+     (make-card {:title "the '/score' command"}) nil)))
+
 (defn command-summon
   [state side args]
   (let [card-name (string/join " " args)]
@@ -502,6 +516,7 @@
         "/sabotage"   #(when (= %2 :runner) (resolve-ability %1 %2 (sabotage-ability (constrain-value value 0 1000)) nil nil))
         "/save-replay" command-save-replay
         "/set-mark"   #(command-set-mark %1 %2 args)
+        "/score"      command-score
         "/show-hand" #(resolve-ability %1 %2
                                          {:effect (effect (system-msg (str
                                                                        (if (= :corp %2)

@@ -1094,7 +1094,8 @@
                         :deck [(qty "PAD Campaign" 2)]}})
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
       (play-from-hand state :corp "PAD Campaign" "New remote")
-      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "PAD Campaign")
+      (is (= ["Server 1"] (prompt-buttons :corp)) "Can only install in server 1 (no new remote)")
       (is (= 1 (count (core/get-remotes state))) "Could not install second remote")))
 
 (deftest earth-station-sea-headquarters-creating-more-servers-while-the-identity-is-disabled

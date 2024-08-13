@@ -32,8 +32,7 @@
    [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice]]
    [game.core.identities :refer [disable-identity enable-identity]]
    [game.core.initializing :refer [ability-init card-init]]
-   [game.core.installing :refer [corp-install corp-install-list
-                                 corp-install-msg install-as-condition-counter]]
+   [game.core.installing :refer [corp-install corp-install-msg install-as-condition-counter]]
    [game.core.memory :refer [mu+ update-mu]]
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
@@ -437,7 +436,7 @@
              :effect (effect (system-msg :corp
                                          (str "derezzes " (:title (:ice context))
                                               " and trashes Bioroid Efficiency Research"))
-                             (derez :corp (:ice context))
+                             (derez :corp (:ice context) {:source-card card})
                              (trash :corp eid card {:unpreventable true :cause-card card}))}]})
 
 (defcard "Biotic Labor"
@@ -759,7 +758,7 @@
                                                  state side
                                                  (let [card-to-install target]
                                                    {:prompt "Choose a server"
-                                                    :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state card-to-install))
+                                                    :choices (remove #{"HQ" "R&D" "Archives"} (installable-servers state card-to-install))
                                                     :async true
                                                     :effect (effect (corp-install eid card-to-install target {:msg-keys {:install-source card
                                                                                                                          :display-origin true}}))})
@@ -815,7 +814,7 @@
     :change-in-game-state (req (seq (all-installed state :corp)))
     :async true
     :effect (req (doseq [c targets]
-                   (derez state side c))
+                   (derez state side c {:source-card card}))
                  (let [discount (* -3 (count targets))]
                    (continue-ability
                      state side
@@ -968,7 +967,7 @@
                                   :choices {:card #(and (corp? %)
                                                         (not (operation? %))
                                                         (in-hand? %)
-                                                        (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
+                                                        (seq (filter (fn [c] (= server c)) (installable-servers state %))))}
                                   :effect (req (wait-for
                                                  (corp-install state side target server {:msg-keys {:install-source card
                                                                                                     :display-origin true}})
@@ -1713,14 +1712,14 @@
                           card :can-rez
                           (fn [state _ card]
                             (if (same-card? card installed-card)
-                              ((constantly false) (toast state :corp "Cannot rez due to Mitosis." "Warning"))
+                              ((constantly false) (toast state :corp "Cannot rez due to Mitosis." "warning"))
                               true)))
                         (register-turn-flag!
                           state side
                           card :can-score
                           (fn [state _ card]
                             (if (same-card? card installed-card)
-                              ((constantly false) (toast state :corp "Cannot score due to Mitosis." "Warning"))
+                              ((constantly false) (toast state :corp "Cannot score due to Mitosis." "warning"))
                               true)))
                         (if (seq (rest target-cards))
                           (mitosis-ability state side card eid (rest target-cards))
