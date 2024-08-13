@@ -531,7 +531,7 @@
   {:events [{:event :end-of-encounter
              :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))
              :msg (req (let [unbroken-count (count (remove :broken (:subroutines (:ice context))))]
-                        (str "place " (quantify unbroken-count "power counter") " on itself")))
+                         (str "place " (quantify unbroken-count "power counter") " on itself")))
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :power 5)]

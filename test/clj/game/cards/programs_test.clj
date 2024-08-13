@@ -753,6 +753,30 @@
         (click-prompt state :runner "End the run")
         (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand"))))
 
+(deftest ankusa-vs-chief-slee
+  (do-game
+    (new-game {:corp {:hand ["Battlement" "Chief Slee"]}
+               :runner {:hand ["Ankusa"] :credits 16}})
+    (play-from-hand state :corp "Battlement" "HQ")
+    (play-from-hand state :corp "Chief Slee" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ankusa")
+    (let [slee (get-content state :remote1 0)
+          ankusa (get-program state 0)]
+      (rez state :corp slee)
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state :encounter-ice)
+      (is (changed? [(get-counters (refresh slee) :power) 0]
+            (card-ability state :runner (refresh ankusa) 1)
+            (card-ability state :runner (refresh ankusa) 1)
+            (card-ability state :runner (refresh ankusa) 0)
+            (click-prompt state :runner "End the run")
+            (click-prompt state :runner "End the run")
+            (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand")
+            (run-continue state))
+          "Slee did not gain counters for ankusa bounce"))))
+
 (deftest battering-ram-automated-test
   (basic-program-test {:name "Atman"
                        :click-prompt-on-install "0"

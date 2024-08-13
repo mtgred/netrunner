@@ -492,8 +492,8 @@
                                              (all-subs-broken-by-card? (:ice context) card)))
                               :msg (msg "add " (:title (:ice context))
                                         " to HQ after breaking all its subroutines")
-                              :effect (effect (move :corp (:ice context) :hand nil)
-                                              (continue :runner nil))}]}))
+                              :effect (req (move state :corp (:ice context) :hand nil)
+                                           (continue state :runner nil))}]}))
 
 (defcard "Atman"
   {:on-install {:cost [(->c :x-credits)]
