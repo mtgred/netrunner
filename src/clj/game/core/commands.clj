@@ -104,6 +104,9 @@
                                                         (card-str state target))))))))}
     (make-card {:title "/counter command"}) nil))
 
+(defn command-enable-api-access [state _]
+  (swap! state assoc-in [:options :api-access] true))
+
 (defn command-facedown [state side]
   (resolve-ability state side
                    {:prompt "Choose a card to install facedown"
@@ -427,6 +430,7 @@
                         (when (and (= side :corp)
                                     (:run @state))
                           (end-run state side (make-eid state) nil)))
+        "/enable-api-access" command-enable-api-access
         "/error"      show-error-toast
         "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
         "/handsize"   #(change %1 %2 {:key :hand-size
@@ -473,7 +477,6 @@
                                                       :not-equal {:msg "resolve unequal bets effect"}}))
         "/reload-id"  command-reload-id
         "/replace-id" #(command-replace-id %1 %2 args)
-    :async true
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
                                           {:choices {:card (fn [t] (same-side? (:side t) %2))}
