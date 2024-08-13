@@ -177,12 +177,18 @@
     :has-args :optional
     :usage "/draw n"
     :help "Draw n cards"}
+   {:name "/enable-api-access"
+    :usage "/enable-api-access"
+    :help "Enables API access for the current game"}
    {:name "/enable-card"
     :usage "/enable-card"
     :help "Enable a card"}
    {:name "/end-run"
     :usage "/end-run"
     :help "End the run (Corp only)"}
+   {:name "/error"
+    :usage "/error"
+    :help "Displays an error toast"}
    {:name "/facedown"
     :usage "/facedown"
     :help "Install a card facedown (Runner only)"}
@@ -193,9 +199,15 @@
    {:name "/host"
     :usage "/host"
     :help "Manually host a card on another card"}
+   {:name "/install"
+    :usage "/install"
+    :help "Install an arbitrary card from hand or your discard pile"}
    {:name "/install-ice"
     :usage "/install-ice"
     :help "Install a piece of ice at any position in a server (Corp only)"}
+   {:name "/install-free"
+    :usage "/install-free"
+    :help "Install an arbitrary card from hand or your discard pile, ignoring all costs"}
    {:name "/jack-out"
     :usage "/jack-out"
     :help "Jack out (Runner only)"}
