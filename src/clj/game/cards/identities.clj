@@ -1084,10 +1084,10 @@
 
 (defcard "Jinteki: Potential Unleashed"
   {:events [{:async true
-             :event :pre-resolve-damage
+             :event :damage
              :req (req (and
-                         (= target :net)
-                         (pos? (last targets))))
+                         (= (:damage-type context) :net)
+                         (pos? (:amount context))))
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses " (:title card) " to trash " (:title c)
                                                          " from the top of the stack"))

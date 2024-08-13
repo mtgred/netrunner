@@ -2642,6 +2642,25 @@
     (play-from-hand state :corp "Neural EMP")
     (is (= 5 (count (:discard (get-runner)))))))
 
+(deftest jinteki-potential-unleashed-vs-tori-hanzo
+  ;; Potential Unleashed - when the runner takes at least one net damage, mill 1 from their deck
+  (do-game
+    (new-game {:corp {:id "Jinteki: Potential Unleashed"
+                      :deck ["Kakugo" "Tori Hanzō"]
+                      :credits 15}
+               :runner {:hand ["Sure Gamble"]
+                        :deck ["Easy Mark"]}})
+    (play-from-hand state :corp "Kakugo" "New remote")
+    (play-from-hand state :corp "Tori Hanzō" "Server 1")
+    (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (run-continue-until state :movement)
+    (click-prompt state :corp "Yes")
+    (is (= ["Sure Gamble"] (map :title (:discard (get-runner)))) "Gamble trashed, easy mark not milled")
+    (is (= 1 (:brain-damage (get-runner))))))
+
 (deftest jinteki-replicating-perfection
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
   (do-game
