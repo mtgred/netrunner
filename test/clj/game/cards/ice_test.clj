@@ -4099,6 +4099,20 @@
         (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
         (click-prompt state :runner "Take 1 core damage")))))
 
+(deftest kamali-1-0-fire-all-subs
+  (do-game
+    (new-game {:corp {:hand ["Kamali 1.0"]}})
+    (play-from-hand state :corp "Kamali 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (fire-subs state (get-ice state :hq 0))
+    (dotimes [_ 3]
+      (click-prompt state :runner "Take 1 core damage"))
+    (is (no-prompt? state :runner) "No lingering prompt (runner)")
+    (is (no-prompt? state :runner) "No lingering prompt (corp)")))
+
 (deftest karuna
   (do-game
     (new-game {:corp {:hand ["Karunā"]}
@@ -4487,6 +4501,26 @@
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in stack")
     (is (not (:run @state)) "Run is ended")))
+
+(deftest loki-vs-kamali-1-0-fire-all-subs
+  (doseq [loki-opt ["End the run" "Shuffle the grip into the stack"]]
+    (do-game
+      (new-game {:corp {:hand ["Loki" "Kamali 1.0"] :credits 20}
+                 :runner {:hand [(qty "Sure Gamble" 4)]}})
+      (play-from-hand state :corp "Kamali 1.0" "HQ")
+      (play-from-hand state :corp "Loki" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state :encounter-ice)
+      (click-card state :corp "Kamali 1.0")
+      (fire-subs state (get-ice state :hq 1))
+      (dotimes [_ 3]
+        (click-prompt state :runner "Take 1 core damage"))
+      (click-prompt state :runner loki-opt)
+      (is (no-prompt? state :runner) "No lingering prompt (runner)")
+      (is (no-prompt? state :runner) "No lingering prompt (corp)"))))
 
 (deftest loot-box
   ;; Loot Box
