@@ -268,6 +268,9 @@
    {:name "/save-replay"
     :usage "/save-replay"
     :help "Save a replay of the game"}
+   {:name "/score"
+    :usage "/score"
+    :help "Score an agenda from hand or from the board, ignoring all restrictions (corp only)"}
    {:name "/set-mark"
     :has-args :required
     :usage "/set-mark n"
