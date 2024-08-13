@@ -41,14 +41,14 @@
                                    (number? idx)
                                    (seq source-abilities))
                           (:action (nth source-abilities idx {})))
-        source-type (get-in eid [:source :type])]
+        source (get-in eid [:source])]
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
                                   {:action a
                                    :is-game-action? is-game-action?
-                                   :source-type source-type
+                                   :stripped-source-card (select-keys source [:cid :title :type])
                                    :value (value cost)
                                    :ability-idx (:ability-idx (:source-info eid))})
               ;; sending the idx is mandatory to make wage workers functional

@@ -1847,7 +1847,7 @@
              :req (req (let [all-cards (get-all-cards state)
                              pred (fn [context]
                                     (and (:is-game-action? context)
-                                         (= "Resource" (:source-type context))))]
+                                         (resource? (:stripped-source-card context))))]
                          (and pred
                               (first-event? state side :runner-spent-click
                                             #(pred (first %))))))
