@@ -148,7 +148,7 @@
 (defn- expand-one
   "Reducer function to create a previous card from a newer card definition."
   [acc {:keys [code set_code]} c]
-  (let [number (str->int (subs code 3))
+  (let [number (str->int (subs code 2))
         prev-set (find-first #(= set_code (:code %)) @cards/sets)
         prev (-> c
                  (assoc
