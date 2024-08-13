@@ -2504,30 +2504,28 @@
    :subroutines [end-the-run]})
 
 (defcard "Kamali 1.0"
-  (letfn [(sub-map [cost]
+  (letfn [(brain-damage-unless-runner-pays [cost text]
             {:player :runner
              :async true
-             :waiting-prompt true
+             :label (str "Do 1 core damage unless the Runner trashes 1 installed " text)
              :prompt "Choose one"
+             :waiting-prompt true
              :choices (req ["Take 1 core damage"
                             (when (can-pay? state :runner eid card nil cost)
-                              (capitalize (build-cost-label cost)))])
-             :msg (msg (if (= target "Take 1 core damage")
+                              (capitalize (cost->string cost)))])
+             :msg (msg (if (= "Take 1 core damage" target)
                          "do 1 core damage"
                          (str "force the runner to " (decapitalize target))))
-             :effect (req (if (= target "Take 1 core damage")
-                            (damage state :runner eid :brain 1 {:card card})
+             :effect (req (if (= "Take 1 core damage" target)
+                            (damage state side eid :brain 1 {:card card})
                             (wait-for (pay state :runner (make-eid state eid) card cost)
-                                      (system-msg state :runner (:msg async-result))
-                                      (effect-completed state side eid))))})
-          (brain-damage-unless-runner-pays [cost]
-            {:label (str "Force the Runner to take 1 core damage or " (build-cost-label cost))
-             :async true
-             :effect (req (wait-for (resolve-ability state side (sub-map cost) card nil)
-                                    (clear-wait-prompt state :corp)))})]
-    {:subroutines [(brain-damage-unless-runner-pays [(->c :resource 1)])
-                   (brain-damage-unless-runner-pays [(->c :hardware 1)])
-                   (brain-damage-unless-runner-pays [(->c :program 1)])]
+                                      (when-let [payment-str (:msg async-result)]
+                                        (system-msg state :runner
+                                                    (str payment-str " due to " (:title card))))
+                                      (effect-completed state side eid))))})]
+    {:subroutines [(brain-damage-unless-runner-pays [(->c :resource 1)] "resource")
+                   (brain-damage-unless-runner-pays [(->c :hardware 1)] "piece of hardware")
+                   (brain-damage-unless-runner-pays [(->c :program 1)] "program")]
      :runner-abilities [(bioroid-break 1 1)]}))
 
 (defcard "Karunā"
