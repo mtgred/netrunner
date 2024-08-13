@@ -400,7 +400,11 @@
   "The pop-up on a card in hand when clicked"
   [card]
   (let [servers (get-in @game-state [:corp :install-list])
-        active-menu? (= (:cid card) (:source @card-menu))]
+        active-menu? (= (:cid card) (:source @card-menu))
+        label-fn (fn [label]
+                   (if (:cid label)
+                     (:title label)
+                     (tr-game-prompt label)))]
     (when servers
       [:div.panel.blue-shade.servers-menu (when active-menu?
                                             {:class "active-menu"
@@ -408,7 +412,7 @@
        [:ul (map-indexed
              (fn [_ label]
                ^{:key label}
-               [card-menu-item (tr-game-prompt label)
+               [card-menu-item (label-fn label)
                 #(do (close-card-menu)
                      (if (= "Expend" label)
                        (send-command "expend" {:card card :server label})

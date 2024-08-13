@@ -5,7 +5,7 @@
    [game.core.access :refer [access-bonus access-card breach-server max-access]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-runner 
-                            all-installed-runner-type card->server
+                            all-installed-runner-type installable-servers card->server
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? card-index can-be-advanced?
                            corp? corp-installable-type? faceup?
@@ -38,8 +38,7 @@
                           update-ice-strength]]
    [game.core.identities :refer [disable-card enable-card]]
    [game.core.initializing :refer [card-init]]
-   [game.core.installing :refer [corp-install corp-install-list
-                                 corp-install-msg]]
+   [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.memory :refer [available-mu init-mu-cost]]
    [game.core.moving :refer [as-agenda mill move swap-cards swap-cards-async
                              swap-ice swap-installed trash
@@ -624,7 +623,7 @@
                            (continue-ability state side
                                              {:prompt "Choose a server"
                                               :waiting-prompt true
-                                              :choices (req (remove #(= this %) (corp-install-list state nice)))
+                                              :choices (req (remove #(= this %) (installable-servers state nice)))
                                               :async true
                                               :effect (effect (corp-install eid nice target {:msg-keys {:install-source card
                                                                                                         :display-origin true}}))}
@@ -990,7 +989,7 @@
                         nice target]
                     (continue-ability state side
                                       {:prompt (str "Choose a location to install " (:title target))
-                                       :choices (req (remove #(= this %) (corp-install-list state nice)))
+                                       :choices (req (remove #(= this %) (installable-servers state nice)))
                                        :async true
                                        :effect (effect (corp-install eid nice target {:ignore-all-cost true
                                                                                       :msg-keys {:install-source card
@@ -4184,7 +4183,7 @@
                                                        nice target]
                                                    (continue-ability state side
                                                                      {:prompt (str "Choose a location to install " (:title target))
-                                                                      :choices (req (remove #(= this %) (corp-install-list state nice)))
+                                                                      :choices (req (remove #(= this %) (installable-servers state nice)))
                                                                       :async true
                                                                       :effect (effect (corp-install eid nice target {:ignore-install-cost true
                                                                                                                      :msg-keys {:install-source card

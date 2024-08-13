@@ -31,7 +31,7 @@
    [game.core.hand-size :refer [corp-hand-size+]]
    [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
-   [game.core.installing :refer [corp-install corp-install-list]]
+   [game.core.installing :refer [corp-install]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
                              swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
