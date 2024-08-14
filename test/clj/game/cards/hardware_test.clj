@@ -5245,8 +5245,7 @@
           "Install at no cost")
       (is (= "Femme Fatale" (:title (get-program state 0))) "Femme Fatale is installed")
       (is (second-last-log-contains? state (str "Runner uses The Wizard's Chest"
-                                                " to reveal Legwork, Corroder, Ice Carver, Prepaid VoicePAD, Femme Fatale from the top of the stack"
-                                                " and install Femme Fatale, ignoring all costs."))))))
+                                                " to reveal Legwork, Corroder, Ice Carver, Prepaid VoicePAD, Femme Fatale from the top of the stack."))))))
 
 (deftest the-wizards-chest-single-card-selection
   (do-game
@@ -5272,8 +5271,7 @@
           "Install at no cost")
       (is (= "Femme Fatale" (:title (get-program state 0))) "Femme Fatale is installed")
       (is (second-last-log-contains? state (str "Runner uses The Wizard's Chest"
-                                                " to reveal Legwork, Ice Carver, Prepaid VoicePAD, Femme Fatale, Earthrise Hotel from the top of the stack"
-                                                " and install Femme Fatale, ignoring all costs."))))))
+                                                " to reveal Legwork, Ice Carver, Prepaid VoicePAD, Femme Fatale, Earthrise Hotel from the top of the stack."))))))
 
 (deftest time-bomb
   (do-game

@@ -297,12 +297,12 @@
                  :req (req (and (pos? (count (:hand runner)))
                                 (:runner-phase-12 @state)))
                  :async true
-                 :msg "install a card facedown"
                  :effect (effect
                            (runner-install
                              (assoc eid :source card :source-type :runner-install)
                              target
-                             {:facedown true :no-msg true}))}]
+                             {:facedown true
+                              :msg-keys {:install-source card}}))}]
     {:implementation "Install restriction not enforced"
      :events [(assoc ability :event :runner-turn-begins)]
      :flags {:runner-phase-12 (req true)}
@@ -345,10 +345,10 @@
                                                      state side
                                                      (assoc eid :source-type :runner-install) % {:no-toast true}))
                                              (:hand runner))))
-                     :msg (msg "install " (:title target) " from the grip")
                      :effect (req (wait-for (runner-install state :runner
                                                             (assoc (make-eid state eid) :source card :source-type :runner-install)
-                                                            (assoc-in target [:special :street-artist] true) nil)
+                                                            (assoc-in target [:special :street-artist] true) {:msg-keys {:install-source card
+                                                                                                                         :display-origin true}})
                                             (register-once state side {:once :per-turn} card)
                                             (register-events
                                               state side card
@@ -860,9 +860,9 @@
                              {:prompt (str "Choose a " card-type " to install")
                               :choices {:card #(and (is-type? % card-type)
                                                     (in-hand? %))}
-                              :msg (msg "install " (:title target))
                               :async true
-                              :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}}}
+                              :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                                       :display-origin true}}))}}}
                            {:prompt (str "You have no " card-type " to install")
                             :choices ["Carry on!"]
                             :prompt-type :bogus}))
@@ -1116,7 +1116,6 @@
                                               (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
                                                         [(->c :credit (install-cost state side % {:cost-bonus -1}))]))
                                         (:deck runner))))
-                :msg (msg "install " (:title target) " from the stack, lowering the cost by 1 [Credit]")
                 :async true
                 :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
@@ -1131,7 +1130,10 @@
                                                    (move state side program :rfg)))}])
                                 (runner-install (assoc eid :source card :source-type :runner-install)
                                                 (assoc-in target [:special :kabonesa] true)
-                                                {:cost-bonus -1}))}]})
+                                                {:cost-bonus -1
+                                                 :msg-keys {:display-origin true
+                                                            :include-cost-from-eid eid
+                                                            :install-source card}}))}]})
 
 (defcard "Kate \"Mac\" McCaffrey: Digital Tinker"
   ;; Effect marks Kate's ability as "used" if it has already met it's trigger condition this turn
@@ -1174,8 +1176,9 @@
                                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                       [(->c :credit (install-cost state side target {:cost-bonus -1}))])))}
                             :async true
-                            :msg (msg "install " (:title target) " from the grip, lowering the cost by 1 [Credits]")
-                            :effect (effect (runner-install eid target {:cost-bonus -1}))})
+                            :effect (effect (runner-install eid target {:cost-bonus -1
+                                                                        :msg-keys {:display-origin true
+                                                                                   :install-source card}}))})
                          card nil))}]})
 
 (defcard "Laramy Fisk: Savvy Investor"
@@ -1876,8 +1879,9 @@
                              (in-hand? target)
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                        [(->c :credit (install-cost state side target {:cost-bonus -2}))])))}
-             :msg (msg "install " (:title target) " from the grip, paying 2 [Credit] less")
-             :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -2}))}]})
+             :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -2
+                                                                                                           :msg-keys {:display-origin true
+                                                                                                                      :install-source card}}))}]})
 
 (defcard "Seidr Laboratories: Destiny Defined"
   {:implementation "Manually triggered"
