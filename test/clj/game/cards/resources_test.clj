@@ -3472,16 +3472,36 @@
           juli (get-resource state 1)]
       (is (changed? [(get-counters (refresh juli) :power) -1
                      (:click (get-runner)) 0]
-                    (card-ability state :runner artist 0))
+            (card-ability state :runner artist 0))
           "Runner gained 1 click from Juli Moreira Lee")
       (is (changed? [(get-counters (refresh juli) :power) 0]
-                    (card-ability state :runner artist 1))
+            (card-ability state :runner artist 1))
           "No further Juli Moreira Lee trigger")
       (take-credits state :runner)
       (take-credits state :corp)
       (core/add-counter state :runner (refresh juli) :power -2)
       (card-ability state :runner artist 0)
       (is (= 1 (count (:discard (get-runner)))) "Juli Moreira Lee trashed"))))
+
+(deftest juli-when-resource-trashed
+  (do-game
+    (new-game {:runner {:hand [(qty "Juli Moreira Lee" 2) (qty "Telework Contract" 2)]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Juli Moreira Lee")
+    (play-from-hand state :runner "Telework Contract")
+    (is (changed? [(get-counters (get-resource state 0) :power) -1
+                   (:click (get-runner)) 0]
+          (card-ability state :runner (get-resource state 1) 0))
+        "Runner gained 1 click from Juli Moreira Lee")
+    (trash state :runner (get-resource state 1))
+    (trash state :runner (get-resource state 0))
+    (play-from-hand state :runner "Juli Moreira Lee")
+    (play-from-hand state :runner "Telework Contract")
+    (is (changed? [(get-counters (get-resource state 0) :power) 0
+                   (:click (get-runner)) -1]
+          (card-ability state :runner (get-resource state 1) 0))
+        "Runner did NOT gain 1 click from Juli Moreira Lee")))
 
 (deftest kasi-string
   ;; Kasi String

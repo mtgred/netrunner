@@ -1851,15 +1851,13 @@
    :events [(trash-on-empty :power)
             {:event :runner-spent-click
              :once :per-turn
-             :req (req (let [all-cards (get-all-cards state)]
-                         ;; TODO - assert this works when (e.g.) using the last click on lib-acc
-                         ;; and having it trashed (all-cards wont find it)
-                         ;; also asset that the first-event? fn actually works right...
-                         ;; -nbk, mar '24
-                         (and (resource? (find-cid (:action target) all-cards))
+             :req (req (let [all-cards (get-all-cards state)
+                             pred (fn [context]
+                                    (and (:is-game-action? context)
+                                         (resource? (:stripped-source-card context))))]
+                         (and pred
                               (first-event? state side :runner-spent-click
-                                            #(resource?
-                                               (find-cid (:action (first %)) all-cards))))))
+                                            #(pred (first %))))))
              :cost [(->c :power 1)]
              :msg "gain [Click]"
              :effect (effect (gain-clicks 1))}]})
