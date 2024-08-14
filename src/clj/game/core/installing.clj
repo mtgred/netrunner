@@ -1,6 +1,7 @@
 (ns game.core.installing
   (:require
     [cond-plus.core :refer [cond+]]
+    [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-installed get-remotes installable-servers server->zone all-installed-runner-type]]
     [game.core.card :refer [agenda? asset? condition-counter? convert-to-condition-counter  corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
@@ -142,33 +143,33 @@
 (defn- corp-install-message
   "Prints the correct install message."
   [state side card server install-state cost-str {:keys [counters msg-keys] :as args}]
-  (let [{:keys [display-origin install-source origin-index known]} msg-keys]
-    (when (:display-message args true)
-      (let [card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
-                              ;; note that cards which the corp is instructed to rez, but cannot
-                              ;; (or chooses not to rez) are revealed, so they're safe to name here
-                              known
-                              (:seen card)
-                              (rezzed? card))
-                        (:title card)
-                        (if (ice? card) "ice" "a card"))
-            server-name (if (= server "New remote")
-                          (str (remote-num->name (dec (:rid @state))) " (new remote)")
-                          server)
-            origin (if display-origin
-                     (str " from "
-                          (when origin-index (str " position " (inc origin-index) " of "))
-                          (name-zone :corp (:zone card)))
-                     "")
-            lhs (if install-source
-                  (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
-                  (build-spend-msg cost-str "install"))]
-        (system-msg state side (str lhs card-name origin
-                                    (if (ice? card) " protecting " " in ") server-name
-                                    (format-counters-msg counters)))
-        (when (and (= :face-up install-state)
-                   (agenda? card))
-          (implementation-msg state card))))))
+  (when (:display-message args true)
+    (let [{:keys [display-origin install-source origin-index known]} msg-keys
+          card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
+                            ;; note that cards which the corp is instructed to rez, but cannot
+                            ;; (or chooses not to rez) are revealed, so they're safe to name here
+                            known
+                            (:seen card)
+                            (rezzed? card))
+                      (:title card)
+                      (if (ice? card) "ice" "a card"))
+          server-name (if (= server "New remote")
+                        (str (remote-num->name (dec (:rid @state))) " (new remote)")
+                        server)
+          origin (if display-origin
+                   (str " from "
+                        (when origin-index (str " position " (inc origin-index) " of "))
+                        (name-zone :corp (:zone card)))
+                   "")
+          lhs (if install-source
+                (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
+                (build-spend-msg cost-str "install"))]
+      (system-msg state side (str lhs card-name origin
+                                  (if (ice? card) " protecting " " in ") server-name
+                                  (format-counters-msg counters)))
+      (when (and (= :face-up install-state)
+                 (agenda? card))
+        (implementation-msg state card)))))
 
 ;; Unused in the corp install system, necessary for card definitions
 (defn corp-install-msg
@@ -397,16 +398,51 @@
 
 (defn- runner-install-message
   "Prints the correct msg for the card install"
-  [state side card-title cost-str
-   {:keys [no-cost host-card facedown custom-message]}]
-  (if facedown
-    (system-msg state side "installs a card facedown")
-    (if custom-message
-      (system-msg state side (custom-message cost-str))
-      (system-msg state side
-                  (str (build-spend-msg cost-str "install") card-title
-                       (when host-card (str " on " (card-str state host-card)))
-                       (when no-cost " at no cost"))))))
+  [state side card cost-str
+   {:keys [no-cost host-card facedown custom-message msg-keys ignore-install-cost ignore-all-cost cost-bonus] :as args}]
+  (let [{:keys [display-origin install-source origin-index known]} msg-keys
+        hide-zero-cost (:hide-zero-cost msg-keys facedown)
+        cost-str (if (and hide-zero-cost (= cost-str "pays 0 [Credits]")) nil cost-str)
+        prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
+        discount-str (cond
+                       ignore-all-cost " (ignoring all costs)"
+                       ignore-install-cost " (ignoring it's install cost)"
+                       (and cost-bonus (pos? cost-bonus)) (str " (paying " cost-bonus " [Credits] more)")
+                       (and cost-bonus (neg? cost-bonus)) (str " (paying " (* -1 cost-bonus) " [Credits] less)")
+                       :else nil)
+        card-name (if facedown
+                    (if known
+                      (str (:title card) " as a facedown card")
+                      "a card facedown")
+                    (:title card))
+        origin (if (and display-origin (not= (:previous-zone card) [:onhost]))
+                 (str " from "
+                      (when origin-index (str " position " (inc origin-index) " of "))
+                      (cond
+                        (= (:previous-zone card) [:set-aside])
+                        "among the set-aside cards"
+                        :else
+                        (str "the " (name-zone :runner (:previous-zone card)))))
+                 "")
+        pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
+                  (str prepend-cost-str ", and then "))
+        from-host? (when (and display-origin (= (:previous-zone card) [:onhost]))
+                     "hosted ")
+        modified-cost-str (if (string/blank? cost-str)
+                            prepend-cost-str
+                            (if (string/blank? pre-lhs)
+                              cost-str
+                              (str cost-str ",")))
+        lhs (if install-source
+              (str (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
+              (build-spend-msg modified-cost-str "install"))]
+    (when (:display-message args true)
+      (if custom-message
+        (system-msg state side (custom-message cost-str))
+        (system-msg state side
+                    (str pre-lhs lhs from-host? card-name origin discount-str
+                         (when host-card (str " on " (card-str state host-card)))
+                         (when no-cost " at no cost")))))))
 
 (defn runner-install-continue
   [state side eid card
@@ -426,7 +462,7 @@
                                                   :init-data true
                                                   :no-mu no-mu}))]
     (when-not no-msg
-      (runner-install-message state side (:title installed-card) payment-str args))
+      (runner-install-message state side installed-card payment-str args))
     (when-not facedown
       (implementation-msg state card))
     (play-sfx state side "install-runner")

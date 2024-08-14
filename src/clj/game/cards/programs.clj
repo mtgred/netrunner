@@ -128,7 +128,7 @@
                                       state side
                                       (cond
                                         (= target "Yes") {:async true
-                                                          :effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install) card nil))}
+                                                          :effect (effect (runner-install :runner (assoc eid :source card :source-type :runner-install) card {:msg-keys {:install-source card :display-origin true}}))}
                                         ;; Add a register to note that the player was already asked about installing,
                                         ;; to prevent multiple copies from prompting multiple times.
                                         (= target "No") {:effect (req (swap! state assoc-in [:run :register (keyword (str "conspiracy-" title)) (:cid current-ice)] true))}
@@ -1107,9 +1107,10 @@
                   :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install)
                                                                 % nil [(->c :credit (install-cost state side %))])
                                                      (:hosted card))))
-                  :msg (msg "install " (:title target))
                   :async true
-                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]}))
+                  :effect (req
+                            (runner-install state side (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                                :include-cost-from-eid eid}}))}]}))
 
 (defcard "Cyber-Cypher"
   (auto-icebreaker
@@ -1182,7 +1183,6 @@
                           (continue-ability
                             {:waiting-prompt true
                              :prompt "Choose a card to install"
-                             :msg (msg "install " (:title target) " from the grip at no cost")
                              :choices {:req (req (and (in-hand? target)
                                                       (or (hardware? target)
                                                           (program? target)
@@ -1190,8 +1190,12 @@
                                                       (<= (install-cost state side target)
                                                           (get-counters (cost-target eid :trash-can) :power))))}
                              :async true
-                             :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
-                                                             target {:ignore-install-cost true}))}
+                             :effect (effect
+                                       (runner-install (assoc eid :source card :source-type :runner-install)
+                                                       target {:ignore-install-cost true
+                                                               :msg-keys {:install-source card
+                                                                          :include-cost-from-eid eid
+                                                                          :display-origin true}}))}
                             card nil))}]})
 
 (defcard "Deep Thought"
@@ -2246,9 +2250,6 @@
                      (= (:title card) "Ika"))))
           (muse-abi [where]
             {:prompt "Choose a non-daemon program"
-             :msg (msg (if (= target "Done")
-                         "shuffle the stack"
-                         (str "install " (:title target))))
              :choices (req (concat
                              (->> (where runner)
                                   (filter
@@ -2263,27 +2264,30 @@
              :async true
              :effect (req (when (= :deck where)
                             (trigger-event state side :searched-stack)
+                            (system-msg state side (str "uses " (:title card) " to shuffle the stack"))
                             (shuffle! state side :deck))
-                          (if (not= target "Done")
-                            ;; does the card need to be installed on muse?
-                            (if-not (has-subtype? target "Trojan")
-                              (runner-install state side (assoc eid :source card :source-type :runner-install) target {:host-card (get-card state card)})
-                              ;;otherwise, pick a target card to host the trojan on
-                              (if (trojan-auto-hosts? target)
-                                ;; if the trojan does it for free, so be it
-                                (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)
-                                ;; do it the hard way
-                                (let [target-card target]
-                                  (continue-ability
-                                    state side
-                                    {:prompt (msg "Choose a piece of ice to host " (:title target-card))
-                                     :choices {:card #(and (installed? %)
-                                                           (ice? %))}
-                                     :async true
-                                     :effect (req (runner-install state side (assoc eid :source card :source-type :runner-install) target-card {:host-card (get-card state target)}))}
-                                    card nil))))
-                            ;; declined to install
-                            (effect-completed state side eid)))})]
+                          (let [msg-keys {:install-source card
+                                          :display-origin true}]
+                            (if (not= target "Done")
+                              ;; does the card need to be installed on muse?
+                              (if-not (has-subtype? target "Trojan")
+                                (runner-install state side (assoc eid :source card :source-type :runner-install) target {:host-card (get-card state card) :msg-keys msg-keys})
+                                ;;otherwise, pick a target card to host the trojan on
+                                (if (trojan-auto-hosts? target)
+                                  ;; if the trojan does it for free, so be it
+                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target {:msg-keys msg-keys})
+                                  ;; do it the hard way
+                                  (let [target-card target]
+                                    (continue-ability
+                                      state side
+                                      {:prompt (msg "Choose a piece of ice to host " (:title target-card))
+                                       :choices {:card #(and (installed? %)
+                                                             (ice? %))}
+                                       :async true
+                                       :effect (req (runner-install state side (assoc eid :source card :source-type :runner-install) target-card {:host-card (get-card state target) :msg-keys msg-keys}))}
+                                      card nil))))
+                              ;; declined to install
+                              (effect-completed state side eid))))})]
     {:on-install {:async true
                   :interactive (req true)
                   :prompt "Choose where to install from"
@@ -2577,7 +2581,9 @@
                                  :effect (req (wait-for
                                                 (trash state side card {:cause-card card
                                                                         :unpreventable true})
-                                                (runner-install state side eid target {:ignore-all-cost true})))
+                                                (runner-install state side eid target {:ignore-all-cost true
+                                                                                       :msg-keys {:display-origin true
+                                                                                                  :install-source card}})))
                                  :cancel-effect (req (system-msg state side (str "uses Pawn to trash itself"))
                                                      (trash state side eid card {:cause-card card
                                                                                  :unpreventable true}))}
@@ -2945,12 +2951,13 @@
                 :label "Install a program"
                 :once :per-turn
                 :req (req (not (install-locked? state side)))
-                :msg (msg "install " (:title target) " from the grip")
                 :prompt "Choose a program to install"
                 :choices {:card #(and (program? %)
                                       (in-hand? %))}
                 :async true
-                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target nil))}]})
+                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                         :display-origin true
+                                                                                                                         :include-cost-from-eid eid}}))}]})
 
 (defcard "Scheherazade"
   {:static-abilities [{:type :can-host
@@ -2967,28 +2974,29 @@
                 :cost [(->c :trash-can) (->c :credit 2)]
                 :msg (msg "install a program from the stack")
                 :async true
-                :effect (effect (continue-ability
-                                  {:prompt "Choose a program to install"
-                                   :msg (msg (if (= target "Done")
-                                               "shuffle the stack"
-                                               (str "install " (:title target) " from the stack")))
-                                   :choices (req (concat
-                                                   (->> (:deck runner)
-                                                        (filter
-                                                          #(and (program? %)
-                                                                (can-pay? state side
-                                                                          (assoc eid :source card :source-type :runner-install)
-                                                                          % nil [(->c :credit (install-cost state side %))])))
-                                                        (sort-by :title)
-                                                        (seq))
-                                                  ["Done"]))
-                                   :async true
-                                   :effect (req (trigger-event state side :searched-stack)
-                                                (shuffle! state side :deck)
-                                                (if (= target "Done")
-                                                  (effect-completed state side eid)
-                                                  (runner-install state side (assoc eid :source card :source-type :runner-install) target nil)))}
-                                  card nil))}]})
+                :effect (effect
+                          (continue-ability
+                            {:prompt "Choose a program to install"
+                             :choices (req (concat
+                                             (->> (:deck runner)
+                                                  (filter
+                                                    #(and (program? %)
+                                                          (can-pay? state side
+                                                                    (assoc eid :source card :source-type :runner-install)
+                                                                    % nil [(->c :credit (install-cost state side %))])))
+                                                  (sort-by :title)
+                                                  (seq))
+                                             ["Done"]))
+                             :async true
+                             :effect (req (trigger-event state side :searched-stack)
+                                          (shuffle! state side :deck)
+                                          (if (= target "Done")
+                                            (do (system-msg state side (str (:latest-payment-str eid) " to shuffle the Stack"))
+                                                (effect-completed state side eid))
+                                            (runner-install state side (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                                                :display-origin true
+                                                                                                                                                :include-cost-from-eid eid}})))}
+                            card nil))}]})
 
 (defcard "Sharpshooter"
   (auto-icebreaker {:abilities [(break-sub [(->c :trash-can)] 0 "Destroyer")
