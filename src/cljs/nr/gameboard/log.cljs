@@ -1,6 +1,7 @@
 (ns nr.gameboard.log
   (:require
    [clojure.string :as string]
+   [jinteki.utils :refer [command-info]]
    [nr.angel-arena.log :as angel-arena-log]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.avatar :refer [avatar]]
@@ -8,7 +9,6 @@
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.help :refer [command-info]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [influence-dot player-highlight-option-class
                      render-message render-player-highlight]]

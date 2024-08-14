@@ -1,10 +1,24 @@
 (ns game.core.say-test
   (:require
    [clojure.test :refer :all]
+   [clojure.repl :as repl]
    [game.core :as core]
    [game.core.card :refer :all]
+   [game.core.commands :refer [parse-command]]
    [game.core.mark :refer :all]
-   [game.test-framework :refer :all]))
+   [game.test-framework :refer :all]
+   [jinteki.utils :refer [command-info]]))
+
+(deftest commands-are-documented-test
+  (let [cmd-source (with-out-str (repl/source game.core.commands/parse-command))
+        implemented-cmds (map str (re-seq #"(?<=\")\/[^ \"]*(?=\")" cmd-source))
+        documented-cmds (map :name command-info)]
+    (doseq [cmd implemented-cmds]
+      (when-not (some #(= % cmd) documented-cmds)
+        (is false (str "command '" cmd "' is undocumented"))))
+    (doseq [cmd documented-cmds]
+      (when-not (some #(= % cmd) implemented-cmds)
+        (is false (str "command '" cmd "' is documented but not implemented"))))))
 
 (deftest chat-commands
 
