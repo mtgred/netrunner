@@ -229,8 +229,8 @@
                             :cost "Цена"
                             :set-number "Номер в наборе"}}
    :deck-builder {:loading-msg "Загрузка коллекции колод..."
-                  :new-corp "Новая колода Корпорации"
-                  :new-runner "Новая колода Бегущего"
+                  :new-corp "Создать Корпу"
+                  :new-runner "Создать Бегущего"
                   :import-button "Импорт колоды"
                   :reset "Сброс"
                   :import-title "Введите ID общедоступной колоды с NRDB или ссылку"
@@ -270,9 +270,9 @@
                   :legal ": легальна"
                   :illegal ": нелегальна"
                   :games "Игр"
-                  :completed "Завершено"
+                  :completed "Зав."
                   :won "Побед"
-                  :lost "Поражений"}
+                  :lost "Пр."}
      :game-prompt {:trash "снести"
                  :advance "продвинуть"
                  :score "засчитать"
