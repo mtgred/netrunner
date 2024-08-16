@@ -14,7 +14,7 @@
     [:div.float-right
      (tr [:nav/game-count] @c)
      (when (not @connected?)
-       [:a.reconnect-button {:on-click #(ws/chsk-reconnect!)} "Attempt reconnect"])]))
+       [:a.reconnect-button {:on-click #(ws/chsk-reconnect!)} (tr [:game.attempt-reconnect "Attempt reconnect"])])]))
 
 (defn in-game-buttons [user current-game gameid]
   (when (and (:started @current-game)
