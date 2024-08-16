@@ -175,7 +175,7 @@
           :delete "Удалить сообщение"
           :delete-all "Удалить все сообщения пользователя"
           :block "Заблокировать пользователя"
-          :cancel "Отмена"}
+          :cancel "Отмена"
           :message-blocked (fn [[reason-str]] (str "Сообщение заблокировано" (when reason-str (str ": " reason-str))))
           :length-exceeded "Превышена длина"
           :rate-exceeded "Превышена частота"}
