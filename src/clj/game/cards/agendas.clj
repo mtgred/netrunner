@@ -2244,7 +2244,7 @@
 (defcard "Tomorrow's Headline"
   (let [ability
         {:interactive (req true)
-         :msg "give Runner 1 tag"
+         :msg "give the Runner 1 tag"
          :async true
          :effect (req (gain-tags state :corp eid 1))}]
     {:on-score ability
