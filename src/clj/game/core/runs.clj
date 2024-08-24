@@ -716,7 +716,8 @@
                                   (if-let [_ (get-in @state [:end-run :end-run-prevent])]
                                     (effect-completed state side eid)
                                     (do (system-msg state :runner "will not prevent the run from ending")
-                                        (resolve-end-run state side eid))))))
+                                        (resolve-end-run state side eid))))
+                                {:prompt-type :prevent}))
                (resolve-end-run state side eid)))))
      (effect-completed state side eid))))
 
@@ -751,7 +752,8 @@
                                           (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
                                             (effect-completed state side (make-result eid false))
                                             (do (system-msg state :corp "will not prevent the Runner from jacking out")
-                                                (resolve-jack-out state side eid))))))
+                                                (resolve-jack-out state side eid))))
+                                        {:prompt-type :prevent}))
                        (do (when-not (string/blank? payment-str)
                              (system-msg state :runner (str payment-str " to jack out")))
                            (resolve-jack-out state side eid))))

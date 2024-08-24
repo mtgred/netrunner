@@ -37,6 +37,13 @@
           click-states (vec (take-last 4 (conj (:click-states @state) state')))]
       (swap! state assoc :click-states click-states))))
 
+(defn- valid-prompt-state?
+  [state side]
+  (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
+    (or (= nil prompt-type)
+        (= :run prompt-type)
+        (= :prevent prompt-type))))
+
 ;;; Neutral actions
 (defn- do-play-ability [state side eid {:keys [card ability ability-idx targets ignore-cost]}]
   (let [source {:source card
@@ -62,6 +69,8 @@
          cannot-play (or (:disabled card)
                          ;; cannot play actions during runs
                          (and (:action ability) (:run @state))
+                         ;; while resolving another ability or promppt
+                         (not (valid-prompt-state? state side))
                          (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
