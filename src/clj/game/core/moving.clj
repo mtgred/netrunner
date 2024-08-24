@@ -301,7 +301,8 @@
                                      (swap! state update-in [:trash :trash-prevent] dissoc ktype)
                                      (effect-completed state side eid))
                                  (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                     (complete-with-result state side eid card))))))
+                                     (complete-with-result state side eid card))))
+                             {:prompt-type :prevent}))
             ;; No prevention effects: add the card to the trash-list
             (complete-with-result state side eid card)))))
     (effect-completed state side eid)))

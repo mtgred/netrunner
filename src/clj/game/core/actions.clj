@@ -37,6 +37,19 @@
           click-states (vec (take-last 4 (conj (:click-states @state) state')))]
       (swap! state assoc :click-states click-states))))
 
+(defn- no-blocking-prompt?
+  [state side]
+  (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
+    (or (= nil prompt-type)
+        (= :run prompt-type)
+        (= :prevent prompt-type))))
+
+(defn- no-blocking-or-prevent-prompt?
+  [state side]
+  (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
+    (or (= nil prompt-type)
+        (= :run prompt-type))))
+
 ;;; Neutral actions
 (defn- do-play-ability [state side eid {:keys [card ability ability-idx targets ignore-cost]}]
   (let [source {:source card
@@ -59,21 +72,30 @@
    (let [card (get-card state card)
          args (assoc args :card card)
          ability (nth (:abilities card) ability-idx)
+         blocking-prompt? (not (no-blocking-prompt? state side))
          cannot-play (or (:disabled card)
                          ;; cannot play actions during runs
                          (and (:action ability) (:run @state))
+                         ;; while resolving another ability or promppt
+                         blocking-prompt?
                          (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
+     (when blocking-prompt?
+       (toast state side (str "You cannot play abilities while other abilities are resolving.")
+              "warning"))
      (when-not cannot-play
        (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
 
 (defn expend-ability
   "Called when the player clicks a card from hand."
   [state side {:keys [card]}]
-  (let [card (get-card state card)
-        eid (make-eid state {:source card :source-type :ability})
-        expend-ab (expend (:expend card))]
-    (resolve-ability state side eid expend-ab card nil)))
+  (if (no-blocking-or-prevent-prompt? state side)
+    (let [card (get-card state card)
+          eid (make-eid state {:source card :source-type :ability})
+          expend-ab (expend (:expend card))]
+      (resolve-ability state side eid expend-ab card nil))
+    (toast state side (str "You cannot play abilities while other abilities are resolving.")
+              "warning")))
 
 (defn play
   "Called when the player clicks a card from hand."
@@ -484,7 +506,11 @@
   "Triggers an ability that was dynamically added to a card's data but is not necessarily present in its
   :abilities vector."
   [state side args]
-  ((dynamic-abilities (:dynamic args)) state (keyword side) args))
+  (if (no-blocking-or-prevent-prompt? state side)
+    ((dynamic-abilities (:dynamic args)) state (keyword side) args)
+    (toast state side (str "You cannot play abilities while other abilities are resolving.")
+           "warning")))
+
 
 (defn play-corp-ability
   "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
@@ -513,17 +539,22 @@
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
   [state side {:keys [card subroutine]}]
-  (let [card (get-card state card)
-        sub (nth (:subroutines card) subroutine nil)]
-    (when card
-      (resolve-subroutine! state side card sub))))
+  (if (no-blocking-or-prevent-prompt? state side)
+    (let [card (get-card state card)
+          sub (nth (:subroutines card) subroutine nil)]
+      (when card
+        (resolve-subroutine! state side card sub)))
+    (toast state side (str "You cannot fire subroutines while abilities are being resolved.")
+           "warning")))
 
 (defn play-unbroken-subroutines
   "Triggers each unbroken subroutine on a card in order, waiting for each to complete"
   [state side {:keys [card]}]
-  (let [card (get-card state card)]
-    (when card
-      (resolve-unbroken-subs! state side card))))
+  (if (no-blocking-or-prevent-prompt? state side)
+    (when-let [card (get-card state card)]
+      (resolve-unbroken-subs! state side card))
+    (toast state side (str "You cannot fire subroutines while abilities are being resolved.")
+           "warning")))
 
 ;;; Corp actions
 (defn trash-resource
