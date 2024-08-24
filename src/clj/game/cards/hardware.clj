@@ -714,7 +714,7 @@
              :hq 1
              {:req (req (and (= :hq target)
                              (first-event? state side :breach-server #(= :hq (first %)))))
-              :msg "access 1 additional cards from HQ"})]})
+              :msg "access 1 additional card from HQ"})]})
 
 (defcard "Doppelgänger"
   {:static-abilities [(mu+ 1)]
