@@ -3068,6 +3068,31 @@
     (play-and-score state "Hostile Takeover")
     (is (last-log-contains? state "uses Marrow to sabotage 1") "Sabotage happened")))
 
+(deftest marrow-plays-nice-with-on-score-effects
+  (do-game
+    (new-game {:runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                        :hand ["Marrow" "Easy Mark"]}
+               :corp {:hand ["Longevity Serum" "Regenesis" "Vanilla" "Ice Wall"]
+                      :discard ["Jumon"]
+                      :deck [(qty "IPO" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Marrow")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "Done")
+    (take-credits state :runner)
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Jumon")
+    (is (= 3 (:agenda-point (get-corp))) "2+1 agenda points from jumon + regen")
+    (click-prompt state :corp "Done")
+    (play-and-score state "Longevity Serum")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Done")
+    (is (= ["IPO" "IPO" "IPO" "IPO"] (map :title (:discard (get-corp)))) "4 Ips sabotaged")
+    (is (= ["Vanilla"] (map :title (:deck (get-corp)))) "Just vanilla in deck")))
+
 (deftest masterwork-v37
   ;; Masterwork (v37)
   (do-game
