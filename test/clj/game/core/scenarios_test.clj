@@ -43,6 +43,7 @@
         (is (= 1 (count (:discard (get-runner)))))))))
 
 (deftest masterwork-overinstall-boomerang-complex-case-full-game
+  ;; I never want to write a unit test this long again
   (testing "for issue #7662"
     (do-game
       (new-game {:corp {:hand [(qty "Tree Line" 2) "Rashida Jaheem"
@@ -377,11 +378,9 @@
       (click-draw state :runner)
       (click-card state :runner "Hermes")
       (play-from-hand state :runner "Boomerang")
-      (click-prompt state :runner "Done") ;; does it require the credits picked?
-      ;;(click-card state :runner "Paladin Poemu")
-      (click-card state :runner (get-ice state :remote2 0))
-      ;; here is where the bug supposedly occurs...
-      )))
+      ;; here is where the bug occurs - if this doesn't throw an error, we're good
+      (click-card state :runner "Paladin Poemu")
+      (click-card state :runner (get-ice state :remote2 0)))))
 
 (deftest maxx-annicam-buffer-drive-one-card-in-stack
   (testing "for issue #4966"
