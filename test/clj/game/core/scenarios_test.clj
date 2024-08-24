@@ -42,6 +42,347 @@
         (is (no-prompt? state :runner) "No lingering prompt")
         (is (= 1 (count (:discard (get-runner)))))))))
 
+(deftest masterwork-overinstall-boomerang-complex-case-full-game
+  (testing "for issue #7662"
+    (do-game
+      (new-game {:corp {:hand [(qty "Tree Line" 2) "Rashida Jaheem"
+                               "Artificial Cryptocrash"
+                               "Magnet" "Subliminal Messaging"]
+                        :deck ["Subliminal Messaging"
+                               "Business As Usual"
+                               "Mestnichestvo"
+                               "Tomorrow's Headline"
+                               "Tree Line"
+                               "Ubiquitous Vig"
+                               "Rashida Jaheem"
+                               (qty "Logjam" 3)
+                               (qty "Offworld Office" 3)
+                               (qty "NGO Front" 2)
+                               "Artificial Cryptocrash"
+                               (qty "Federal Fundraising" 2)
+                               "Spin Doctor"
+                               (qty "Vladisibirsk City Grid" 2)
+                               "Hedge Fund"]
+                        :identity "Pravdivost Consulting: Political Solutions"}
+                 :runner {:hand ["Paladin Poemu" "The Twinning" "Dr. Nuka Vrolyck"
+                                 "Dirty Laundry" "Jailbreak"]
+                          :deck [(qty "Pinhole Threading" 2)
+                                 (qty "Cezve" 2)
+                                 "Dirty Laundry"
+                                 (qty "Miss Bones" 2)
+                                 (qty "The Class Act" 2)
+                                 "Carmen"
+                                 (qty "Boomerang" 2)
+                                 "Diversion of Funds"
+                                 "Inside Job"
+                                 (qty "Bravado" 2)
+                                 "Aumakua"
+                                 (qty "Sure Gamble" 2)
+                                 "Hermes"
+                                 "Mutual Favor"
+                                 "WAKE Implant v2A-JRJ"]
+                          :identity "Zahya Sadeghi: Versatile Smuggler"}})
+      ;; Corp Turn 1
+      (play-from-hand state :corp "Subliminal Messaging")
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (play-from-hand state :corp "Tree Line" "HQ")
+      (stack-deck state :corp
+                  ["Subliminal Messaging" "Business As Usual" "Mestnichestvo"
+                   "Artificial Cryptocrash" "Hedge Fund" "Tomorrow's Headline"
+                   "Logjam" "NGO Front" "Federal Fundraising" "Logjam" "Offworld Office"
+                   "Rashida Jaheem" "Offworld Office" "Vladisibirsk City Grid"
+                   "Vladisibirsk City Grid" "Spin Doctor" "Federal Fundraising"
+                   "Offworld Office" "Tree Line"
+                   "NGO Front" "Ubiquitous Vig"])
+      (click-credit state :corp)
+      ;; Hand is: Magnet, Tree Line, Cryptocrash
+      (is-hand? state :corp ["Tree Line" "Artificial Cryptocrash" "Magnet"])
+      (is (= 7 (:credit (get-corp))) "Corp Turn 1: 3 in hand, 7 credits")
+      (end-turn state :corp)
+      (start-turn state :runner)
+      ;; Runner Turn 1
+      (stack-deck state :runner
+                  ["Pinhole Threading" "Dirty Laundry" "Cezve" "Miss Bones" "Miss Bones"
+                   "The Class Act" "Carmen" "The Class Act" "Pinhole Threading"
+                   "Boomerang" "Diversion of Funds" "Inside Job" "Bravado"
+                   "Aumakua" "Mutual Favor" "Sure Gamble" "Bravado" "Cezve"
+                   "WAKE Implant v2A-JRJ" "Boomerang" "Hermes" "Sure Gamble"])
+      (play-from-hand state :runner "Jailbreak")
+      (click-prompt state :runner "R&D")
+      (run-continue-until state :success)
+      (click-card state :corp (get-ice state :hq 0))
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Yes")
+      (run-empty-server state :remote1)
+      (do-trash-prompt state 1)
+      (play-from-hand state :runner "Paladin Poemu")
+      (play-from-hand state :runner "Dr. Nuka Vrolyck")
+      ;; Hand is: The Twinning, Dirty Laundry, Pinhole Threading
+      (is-hand? state :runner ["The Twinning" "Dirty Laundry" "Pinhole Threading"])
+      (is (= 4 (:credit (get-runner))) "Runner Turn 1: 3 in hand, 4 credits")
+      (end-turn state :runner)
+      ;; Corp Turn 2
+      (start-turn state :corp)
+      (click-draw state :corp)
+      (play-from-hand state :corp "Subliminal Messaging")
+      (click-draw state :corp)
+      (play-from-hand state :corp "Tree Line" "R&D")
+      ;; Hand is: Artificial Cryptocrash, Magnet, Business As Usual, Mestnichestvo
+      (is-hand? state :corp
+                ["Artificial Cryptocrash" "Magnet" "Business As Usual" "Mestnichestvo"])
+      (is (= 8 (:credit (get-corp))) "Corp Turn 2: 4 in hand, 8 credits")
+      (end-turn state :corp)
+      ;; Runner Turn 2
+      (start-turn state :runner)
+      (card-ability state :runner (get-resource state 1) 0)
+      (play-from-hand state :runner "Dirty Laundry")
+      (click-prompt state :runner "Archives")
+      (run-continue state)
+      (click-card state :corp (get-ice state :rd 0))
+      (play-from-hand state :runner "The Twinning")
+      (click-prompt state :runner "Done")
+      (play-from-hand state :runner "Cezve")
+      (click-card state :runner "Paladin Poemu")
+      ;; Hand is: Dirty Laundry, Pinhole Threading, Miss Bones
+      (is-hand? state :runner ["Dirty Laundry" "Pinhole Threading" "Miss Bones"])
+      (is (= 3 (:credit (get-runner))) "Runner Turn 2: 3 in hand, 3 credits")
+      (end-turn state :runner)
+      ;; Corp Turn 3
+      (start-turn state :corp)
+      (click-draw state :corp)
+      (play-from-hand state :corp "Hedge Fund")
+      (play-from-hand state :corp "Mestnichestvo" "New remote")
+      (end-turn state :corp)
+      ;; Hand is: 2x Cryptocrash, Magnet, Business - 12 creds
+      (is-hand? state :corp ["Artificial Cryptocrash" "Artificial Cryptocrash"
+                             "Magnet" "Business As Usual"])
+      (is (= 12 (:credit (get-corp))) "Corp Turn 3: 12 creds")
+      ;; Runner Turn 3
+      (start-turn state :runner)
+      (card-ability state :runner (get-resource state 1) 0)
+      (play-from-hand state :runner "Dirty Laundry")
+      (click-prompt state :runner "Archives")
+      (run-continue state)
+      (click-card state :corp "Mestnichestvo")
+      (play-from-hand state :runner "The Class Act")
+      (click-credit state :runner)
+      (end-turn state :runner)
+      ;; Hand is: 2x pinhole, 2x bones, carmen, class act, boomerang, diversion - 3 creds
+      (is (= 3 (:credit (get-runner))) "Runner Turn 3: 3 creds")
+      (is-hand? state :runner ["Pinhole Threading" "Pinhole Threading" "Carmen"
+                               "Miss Bones" "Miss Bones" "The Class Act" "Boomerang"
+                               "Diversion of Funds"])
+      ;; Corp Turn 4
+      (start-turn state :corp)
+      (play-from-hand state :corp "Tomorrow's Headline" "Server 2")
+      (click-credit state :corp)
+      (click-credit state :corp)
+      (is-hand? state :corp ["Artificial Cryptocrash" "Artificial Cryptocrash"
+                             "Magnet" "Business As Usual"])
+      (is (= 14 (:credit (get-corp))) "Corp Turn 4: 14 creds")
+      (end-turn state :corp)
+      ;; Runner Turn 4
+      (start-turn state :runner)
+      (play-from-hand state :runner "Boomerang")
+      (click-card state :runner "Paladin Poemu")
+      (click-card state :runner "Paladin Poemu")
+      (click-card state :runner (get-ice state :hq 0))
+      (play-from-hand state :runner "Diversion of Funds")
+      (run-continue-until state :success)
+      (click-card state :corp "Tomorrow's Headline")
+      (click-prompt state :runner "Diversion of Funds")
+      (run-on state :hq)
+      (core/move state :corp
+                 (find-card "Artificial Cryptocrash" (:hand (get-corp))) :discard)
+      (run-continue-until state :success)
+      (click-prompt state :runner "2")
+      (dotimes [_ 3]
+        (if (= ["No action"] (prompt-buttons :runner))
+          (click-prompt state :runner "No action")
+          (click-prompt state :runner "Steal")))
+      (click-prompt state :runner "Yes")
+      (core/move state :corp
+                 (find-card "Artificial Cryptocrash" (:discard (get-corp))) :hand)
+      (end-turn state :runner)
+      (click-card state :runner (find-card "Miss Bones" (:hand (get-runner))))
+      (is (= 10 (:credit (get-runner))) "Runner Turn 4: 10 creds")
+      (is-hand? state :runner ["Pinhole Threading" "Pinhole Threading" "Carmen"
+                               "Miss Bones" "The Class Act"])
+      ;; Corp Turn 5
+      (start-turn state :corp)
+      (trash state :corp (get-ice state :hq 0))
+      (play-from-hand state :corp "Magnet" "HQ")
+      (dotimes [_ 2]
+        (click-advance state :corp (get-content state :remote2 0)))
+      (score state :corp (get-content state :remote2 0))
+      (end-turn state :corp)
+      (is (= 7 (:credit (get-corp))) "Corp Turn 5: 7 creds")
+      (is-hand? state :corp ["Business As Usual" "Artificial Cryptocrash" "Logjam"])
+      ;; Runner Turn 5
+      (start-turn state :runner)
+      (click-draw state :runner)
+      (click-card state :runner (find-card "Bravado" (:set-aside (get-runner))))
+      (remove-tag state :runner)
+      (play-from-hand state :runner "Carmen")
+      (dotimes [_ 2] (click-card state :runner "Paladin Poemu"))
+      (play-from-hand state :runner "The Class Act")
+      (end-turn state :runner)
+      (is (= 1 (:credit (get-runner))) "Runner Turn 5: 1 cred")
+      (is-hand? state :runner ["Pinhole Threading" "Pinhole Threading" "Miss Bones"
+                               "Inside Job" "Aumakua" "Mutual Favor" "Sure Gamble"
+                               "Bravado"])
+      ;; Corp Turn 6
+      (start-turn state :corp)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Yes")
+      (play-from-hand state :corp "Subliminal Messaging")
+      (play-from-hand state :corp "Artificial Cryptocrash" "Server 2")
+      (play-from-hand state :corp "NGO Front" "New remote")
+      (play-from-hand state :corp "Business As Usual")
+      (click-prompt state :corp "Place 1 advancement counter on each of up to 2 cards you can advance")
+      (click-card state :corp (get-content state :remote2 0))
+      (click-card state :corp (get-content state :remote3 0))
+      (end-turn state :corp)
+      (is (= 8 (:credit (get-corp))) "Corp Turn 6: 8 creds")
+      (is-hand? state :corp ["Logjam" "Subliminal Messaging"])
+      ;; Runner Turn 6
+      (start-turn state :runner)
+      (click-credit state :runner)
+      (click-credit state :runner)
+      (play-from-hand state :runner "Bravado")
+      (click-prompt state :runner "Server 2")
+      (rez state :corp (get-ice state :remote2 0))
+      (run-continue state :encounter-ice)
+      (click-prompt state :corp "No")
+      (fire-subs state (get-ice state :remote2 0))
+      (play-from-hand state :runner "Pinhole Threading")
+      (click-prompt state :runner "Archives")
+      (run-continue state)
+      (click-card state :corp (get-content state :remote2 0))
+      (click-card state :runner (get-content state :remote3 0))
+      (do-trash-prompt state 1)
+      (click-card state :runner (get-program state 0))
+      (end-turn state :runner)
+      (click-card state :runner (find-card "Miss Bones" (:hand (get-runner))))
+      (is (= 5 (:credit (get-runner))) "Runner Turn 6: 5 creds")
+      (is-hand? state :runner ["Pinhole Threading" "Inside Job" "Aumakua" "Mutual Favor"
+                               "Sure Gamble"])
+      ;; Corp Turn 7
+      (start-turn state :corp)
+      (dotimes [_ 2]
+        (click-advance state :corp (get-content state :remote2 0)))
+      (score state :corp (get-content state :remote2 0))
+      (play-from-hand state :corp "Subliminal Messaging")
+      (play-from-hand state :corp "Federal Fundraising" "New remote")
+      (end-turn state :corp)
+      (is (= 2 (:credit (get-corp))) "Corp Turn 7: 2 creds")
+      (is-hand? state :corp ["Logjam"])
+      ;; Runner Turn 7
+      (start-turn state :runner)
+      (dotimes [_ 2] (click-credit state :runner))
+      (run-on state :archives)
+      (run-continue state :success)
+      (click-card state :corp (get-ice state :rd 0))
+      (click-credit state :runner)
+      (is (= 3 (:credit (get-runner))) "Runner Turn 7: 3 creds")
+      (is-hand? state :runner ["Pinhole Threading" "Inside Job" "Aumakua" "Mutual Favor"
+                               "Sure Gamble"])
+      (end-turn state :runner)
+      ;; Corp Turn 7
+      (rez state :corp (get-content state :remote4 0))
+      (start-turn state :corp)
+      (end-phase-12 state :corp)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Logjam")
+      (click-prompt state :corp "Rashida Jaheem")
+      (click-prompt state :corp "Offworld Office")
+      (click-prompt state :corp "Done")
+      (click-prompt state :corp "Yes")
+      (play-from-hand state :corp "Offworld Office" "Server 2")
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (click-credit state :corp)
+      (end-turn state :corp)
+      (is (= 3 (:credit (get-corp))) "Corp Turn 8: 3 creds")
+      (is-hand? state :corp ["Logjam"])
+      ;; Runner Turn 8
+      (start-turn state :runner)
+      (dotimes [_ 2] (click-credit state :runner))
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Aumakua")
+      (dotimes [_ 3] (click-card state :runner "Paladin Poemu"))
+      (is (= 9 (:credit (get-runner))) "Runner Turn 8: 9 creds")
+      (is-hand? state :runner ["Pinhole Threading" "Inside Job" "Mutual Favor"])
+      (end-turn state :runner)
+      ;; Corp Turn 9
+      (rez state :corp (get-content state :remote5 0))
+      (start-turn state :corp)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Yes")
+      (end-phase-12 state :corp)
+      (click-prompt state :corp "Rashida Jaheem")
+      (click-prompt state :corp "Yes")
+      (is-hand? state :corp ["Logjam" "Logjam"
+                             "Subliminal Messaging" "Subliminal Messaging"
+                             "Offworld Office" "Vladisibirsk City Grid"])
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Federal Fundraising")
+      (click-prompt state :corp "Vladisibirsk City Grid")
+      (click-prompt state :corp "Spin Doctor")
+      (click-prompt state :corp "Done")
+      (click-prompt state :corp "Yes")
+      (play-from-hand state :corp "Spin Doctor" "New remote")
+      (play-from-hand state :corp "Vladisibirsk City Grid" "Server 2")
+      (play-from-hand state :corp "Subliminal Messaging")
+      (play-from-hand state :corp "Vladisibirsk City Grid" "Server 4")
+      (end-turn state :corp)
+      (is (= 7 (:credit (get-corp))) "Corp Turn 9: 7 creds")
+      (is-hand? state :corp ["Logjam" "Logjam" "Subliminal Messaging" "Offworld Office"])
+      ;; Runner Turn 9
+      (start-turn state :runner)
+      (click-draw state :runner)
+      (click-card state :runner "WAKE Implant v2A-JRJ")
+      (play-from-hand state :runner "Inside Job")
+      (click-prompt state :runner "Server 2")
+      (run-continue-until state :success)
+      (click-card state :corp (get-content state :remote4 1))
+      (click-card state :runner (get-content state :remote2 1))
+      (do-trash-prompt state 4)
+      (click-prompt state :runner "Steal")
+      (click-draw state :runner)
+      (play-from-hand state :runner "Cezve")
+      (dotimes [_ 2] (click-card state :runner "Paladin Poemu"))
+      (end-turn state :runner)
+      (is (= 3 (:credit (get-runner))) "Runner Turn 9: 3 creds")
+      (is-hand? state :runner ["Pinhole Threading" "Boomerang" "Mutual Favor"])
+      ;; Corp Turn 10
+      (rez state :corp (get-content state :remote6 0))
+      (start-turn state :corp)
+      (end-phase-12 state :corp)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Ubiquitous Vig")
+      (click-prompt state :corp "NGO Front")
+      (click-prompt state :corp "Tree Line")
+      (click-prompt state :corp "Done")
+      (click-prompt state :corp "No")
+      (play-from-hand state :corp "Tree Line" "Server 4")
+      (play-from-hand state :corp "Subliminal Messaging")
+      (play-from-hand state :corp "Offworld Office" "Server 2")
+      (play-from-hand state :corp "Logjam" "Archives")
+      (end-turn state :corp)
+      (is (= 8 (:credit (get-corp))) "Corp Turn 9: 7 creds")
+      (is-hand? state :corp ["Logjam" "Offworld Office" "Federal Fundraising"])
+      ;; Runner turn 10
+      (start-turn state :runner)
+      (click-draw state :runner)
+      (click-card state :runner "Hermes")
+      (play-from-hand state :runner "Boomerang")
+      (click-prompt state :runner "Done") ;; does it require the credits picked?
+      ;;(click-card state :runner "Paladin Poemu")
+      (click-card state :runner (get-ice state :remote2 0))
+      ;; here is where the bug supposedly occurs...
+      )))
+
 (deftest maxx-annicam-buffer-drive-one-card-in-stack
   (testing "for issue #4966"
     (do-game

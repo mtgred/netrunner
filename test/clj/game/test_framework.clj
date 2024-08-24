@@ -43,6 +43,12 @@
              '[game.cards.upgrades])))
 (load-all-cards)
 
+(defn is-hand?
+  [state side expected-hand]
+  (let [expected-hand (seq (sort (flatten expected-hand)))
+        hand (seq (sort (map :title (get-in @state [side :hand]))))]
+    (is (= expected-hand hand) (str "hand is not " expected-hand))))
+
 ;;; helper functions for prompt interaction
 (defn get-prompt
   [state side]
@@ -154,6 +160,10 @@
   "Clicks a button in a prompt. {choice} is a string or map only, no numbers."
   [state side choice & args]
   `(error-wrapper (click-prompt-impl ~state ~side ~choice ~@args)))
+
+(defn do-trash-prompt
+  [state cost]
+  (click-prompt state :runner (str "Pay " cost " [Credits] to trash")))
 
 ;; General utilities necessary for starting a new game
 (defn find-card
