@@ -44,6 +44,12 @@
         (= :run prompt-type)
         (= :prevent prompt-type))))
 
+(defn- no-prompt?
+  [state side]
+  (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
+    (or (= nil prompt-type)
+        (= :run prompt-type))))
+
 ;;; Neutral actions
 (defn- do-play-ability [state side eid {:keys [card ability ability-idx targets ignore-cost]}]
   (let [source {:source card
@@ -82,7 +88,8 @@
   (let [card (get-card state card)
         eid (make-eid state {:source card :source-type :ability})
         expend-ab (expend (:expend card))]
-    (resolve-ability state side eid expend-ab card nil)))
+    (when (no-prompt? state side)
+      (resolve-ability state side eid expend-ab card nil))))
 
 (defn play
   "Called when the player clicks a card from hand."
@@ -493,7 +500,8 @@
   "Triggers an ability that was dynamically added to a card's data but is not necessarily present in its
   :abilities vector."
   [state side args]
-  ((dynamic-abilities (:dynamic args)) state (keyword side) args))
+  (when (no-prompt? state side)
+    ((dynamic-abilities (:dynamic args)) state (keyword side) args)))
 
 (defn play-corp-ability
   "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
@@ -524,14 +532,14 @@
   [state side {:keys [card subroutine]}]
   (let [card (get-card state card)
         sub (nth (:subroutines card) subroutine nil)]
-    (when card
+    (when (and card (no-prompt? state side))
       (resolve-subroutine! state side card sub))))
 
 (defn play-unbroken-subroutines
   "Triggers each unbroken subroutine on a card in order, waiting for each to complete"
   [state side {:keys [card]}]
   (let [card (get-card state card)]
-    (when card
+    (when (and card (no-prompt? state side))
       (resolve-unbroken-subs! state side card))))
 
 ;;; Corp actions
