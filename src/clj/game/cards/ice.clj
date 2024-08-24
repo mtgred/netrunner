@@ -1270,7 +1270,7 @@
                                               (= target "Suffer 3 net damage")
                                               {:msg (msg "force the Runner to " (decapitalize target))
                                                :effect (req (pay state :runner eid card [(->c :net 3)]))})
-                                            card nil))}
+                                            card targets))}
                                card nil))}]})
 
 (defcard "Cobra"

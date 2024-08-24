@@ -1669,6 +1669,7 @@
       (is (changed? [(count-tags state) 2]
                     (click-prompt state :runner "Take 2 tags"))
           "Runner got 2 tags")
+      (is (last-log-contains? state "Cloud Eater to force the Runner to take 2 tag") "Correctly logs choice")
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
