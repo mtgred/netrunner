@@ -37,14 +37,14 @@
           click-states (vec (take-last 4 (conj (:click-states @state) state')))]
       (swap! state assoc :click-states click-states))))
 
-(defn- valid-prompt-state?
+(defn- no-blocking-prompt?
   [state side]
   (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
     (or (= nil prompt-type)
         (= :run prompt-type)
         (= :prevent prompt-type))))
 
-(defn- no-prompt?
+(defn- no-blocking-or-prevent-prompt?
   [state side]
   (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
     (or (= nil prompt-type)
@@ -76,7 +76,7 @@
                          ;; cannot play actions during runs
                          (and (:action ability) (:run @state))
                          ;; while resolving another ability or promppt
-                         (not (valid-prompt-state? state side))
+                         (not (no-blocking-prompt? state side))
                          (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
@@ -85,10 +85,10 @@
 (defn expend-ability
   "Called when the player clicks a card from hand."
   [state side {:keys [card]}]
-  (let [card (get-card state card)
-        eid (make-eid state {:source card :source-type :ability})
-        expend-ab (expend (:expend card))]
-    (when (no-prompt? state side)
+  (when (no-blocking-or-prevent-prompt? state side)
+    (let [card (get-card state card)
+          eid (make-eid state {:source card :source-type :ability})
+          expend-ab (expend (:expend card))]
       (resolve-ability state side eid expend-ab card nil))))
 
 (defn play
@@ -500,7 +500,7 @@
   "Triggers an ability that was dynamically added to a card's data but is not necessarily present in its
   :abilities vector."
   [state side args]
-  (when (no-prompt? state side)
+  (when (no-blocking-or-prevent-prompt? state side)
     ((dynamic-abilities (:dynamic args)) state (keyword side) args)))
 
 (defn play-corp-ability
@@ -530,16 +530,17 @@
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
   [state side {:keys [card subroutine]}]
-  (let [card (get-card state card)
-        sub (nth (:subroutines card) subroutine nil)]
-    (when (and card (no-prompt? state side))
-      (resolve-subroutine! state side card sub))))
+  (when (no-blocking-or-prevent-prompt? state side)
+    (let [card (get-card state card)
+          sub (nth (:subroutines card) subroutine nil)]
+      (when card
+        (resolve-subroutine! state side card sub)))))
 
 (defn play-unbroken-subroutines
   "Triggers each unbroken subroutine on a card in order, waiting for each to complete"
   [state side {:keys [card]}]
-  (let [card (get-card state card)]
-    (when (and card (no-prompt? state side))
+  (when (no-blocking-or-prevent-prompt? state side)
+    (when-let [card (get-card state card)]
       (resolve-unbroken-subs! state side card))))
 
 ;;; Corp actions
