@@ -3089,9 +3089,10 @@
     (click-prompt state :corp "Done")
     (click-card state :corp "Vanilla")
     (click-prompt state :corp "Done")
-    (click-prompt state :corp "Done")
-    (is (= ["IPO" "IPO" "IPO" "IPO"] (map :title (:discard (get-corp)))) "4 Ips sabotaged")
-    (is (= ["Vanilla"] (map :title (:deck (get-corp)))) "Just vanilla in deck")))
+    (click-card state :corp "Ice Wall")
+    (is (= ["IPO" "IPO" "IPO" "Ice Wall"] (map :title (:discard (get-corp))))
+        "3 Ipos and Ice Wall sabotaged")
+    (is (= ["Vanilla" "IPO"] (map :title (:deck (get-corp)))) "Just vanilla in deck")))
 
 (deftest masterwork-v37
   ;; Masterwork (v37)
