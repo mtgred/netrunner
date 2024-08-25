@@ -16,7 +16,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-bonus]]
-   [game.core.def-helpers :refer [corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn]]
+   [game.core.def-helpers :refer [choose-one-helper corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -520,20 +520,15 @@
                 :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
                 :effect (req (doseq [t targets]
                                (add-prop state :corp t :advance-counter 1 {:placed true})))}]
-  {:on-play
-   {:prompt "Choose one"
-    :change-in-game-state (req (or (something-can-be-advanced? state)
-                             (some #(pos? (get-counters % :virus)) (all-installed state :runner))))
-    :choices (req ["Place 1 advancement counter on each of up to 2 cards you can advance"
-                   (when (seq (get-all-installed state)) "Remove all virus counters from a card")
-                   (when (threat-level 3 state) "Do both")])
-    :async true
-    :effect (req (if (or (= target "Remove all virus counters from a card") (= target "Do both"))
-                   (wait-for (resolve-ability state side faux-purge card nil)
-                             (continue-ability
-                               state side (when (= target "Do both") kaguya)
-                               card nil))
-                   (continue-ability state side kaguya card nil)))}}))
+    {:on-play (choose-one-helper
+                {:optional :after-first
+                 :change-in-game-state (req (or (something-can-be-advanced? state)
+                                                (some #(pos? (get-counters % :virus)) (all-installed state :runner))))
+                 :count (req (if (threat-level 3 state) 2 1))}
+                [{:option "Place 1 advancement counter on up to two cards you can advance"
+                  :does kaguya}
+                 {:option "Remove all virus counters from 1 installed card"
+                  :does faux-purge}])}))
 
 (defcard "Casting Call"
   {:on-play {:choices {:card #(and (agenda? %)
