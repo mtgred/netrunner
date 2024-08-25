@@ -15,7 +15,7 @@
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
+   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out
                                   reorder-choice]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -4201,18 +4201,18 @@
                        (continue-ability state :runner (choose-cards (:hand corp) #{}) card nil)))}}}}))
 
 (defcard "Wildcat Strike"
-  {:on-play
-   {:player :corp
-    :waiting-prompt true
-    :prompt "Choose one"
-    :choices ["Runner gains 6 [Credits]" "Runner draws 4 cards"]
-    :msg (msg (if (= target "Runner gains 6 [Credits]")
-                "gain 6 [Credits]"
-                "draw 4 cards"))
-    :async true
-    :effect (req (if (= target "Runner gains 6 [Credits]")
-                   (gain-credits state :runner eid 6)
-                   (draw state :runner eid 4)))}})
+  {:on-play (choose-one-helper
+              {:player :corp}
+              [{:option "Runner gains 6 [Credits]"
+                :does {:msg "force the Runner to gain 6 [Credits]"
+                       :display-side :corp
+                       :async true
+                       :effect (req (gain-credits state :runner eid 6))}}
+               {:option "Runner draws 4 cards"
+                :does {:msg "force the Runner to draw 4 cards"
+                       :display-side :corp
+                       :async true
+                       :effect (req (draw state :runner eid 4))}}])})
 
 (defcard "Windfall"
   {:on-play
