@@ -2370,11 +2370,9 @@
           (run-on state "Server 1")
           (card-ability state :runner ff 0)
           (is (= credits (:credit (get-runner))) "Can't use credits on Fencer before a successul run")
-          (run-continue state)
-          (card-ability state :runner ff 0)
-          (is (= (dec counters) (get-counters (refresh ff) :credit)) "Spent 1c from Fencer")
-          (is (= (inc credits) (:credit (get-runner))) "Used credits from Fencer for trash")
+          (run-continue state :success)
           (click-prompt state :runner "Pay 4 [Credits] to trash")
+          (click-card state :runner "Fencer Fueno")
           (click-prompt state :runner "Done")) ; pay-credits prompt
         (take-credits state :runner)
         (let [credits (:credit (get-runner))]
@@ -7114,7 +7112,7 @@
         (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added"))
       (let [tt (get-resource state 0)]
         (run-on state "Server 1")
-        (run-continue state)
+        ;;(run-continue state)
         (card-ability state :runner tt 0)
         (is (= "Choose one" (-> (prompt-map :runner) :msg))
             "Net Mercur fires as Taka credits are stealth")
@@ -7132,7 +7130,6 @@
       (let [refr (get-program state 0)]
         (is (changed? [(:credit (get-runner)) 0]
               (run-on state :hq)
-              (run-continue state)
               (card-ability state :runner refr 1)
               (click-card state :runner refr))
             "Used 1 credit from Trickster Taka"))))

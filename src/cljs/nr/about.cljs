@@ -48,7 +48,7 @@
 
           [:h4 "UI Translators"]
           [:ul.list.compact
-           [:li "Chinese (Simplified): bbbbbbbbba, klingenling"]
+           [:li "Chinese (Simplified): bbbbbbbbba, klingeling"]
            [:li "French: canisinhorto"]
            [:li "Japanese: csbisa"]
            [:li "Korean: Seojun Park"]

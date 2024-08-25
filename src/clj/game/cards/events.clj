@@ -3110,6 +3110,7 @@
             {:event :run-ends
              :async true
              :req (req this-card-run)
+             :interactive (req true)
              :effect (req (let [cards-to-draw (get-counters (get-card state card) :power)]
                             (continue-ability
                               state side

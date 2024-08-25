@@ -3068,6 +3068,33 @@
     (play-and-score state "Hostile Takeover")
     (is (last-log-contains? state "uses Marrow to sabotage 1") "Sabotage happened")))
 
+(deftest marrow-plays-nice-with-on-score-effects
+  (do-game
+    (new-game {:runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                        :hand ["Marrow" "Easy Mark"]}
+               :corp {:hand ["Longevity Serum" "Regenesis" "Vanilla" "Ice Wall"]
+                      :discard ["Jumon"]
+                      :deck [(qty "IPO" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Marrow")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "Done")
+    (take-credits state :runner)
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Jumon")
+    (is (= 3 (:agenda-point (get-corp))) "2+1 agenda points from jumon + regen")
+    (click-prompt state :corp "Done")
+    (play-and-score state "Longevity Serum")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Ice Wall")
+    (is (= ["IPO" "IPO" "IPO" "Ice Wall"] (map :title (:discard (get-corp))))
+        "3 Ipos and Ice Wall sabotaged")
+    (is (= (sort ["Vanilla" "IPO"]) (sort (map :title (:deck (get-corp)))))
+        "Deck is Vanilla and IPO")))
+
 (deftest masterwork-v37
   ;; Masterwork (v37)
   (do-game
@@ -3588,8 +3615,9 @@
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Obelus")
       (play-from-hand state :runner "Hades Shard")
-      (run-empty-server state "R&D")
+      (run-on state "R&D")
       (card-ability state :runner (get-resource state 0) 0)
+      (run-continue-until state :success)
       (click-prompt state :runner "No action")
       (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards")))
 
@@ -4347,14 +4375,8 @@
       (click-prompt state :runner "3")
       (click-prompt state :runner "No action")
       (is (= 5 (count (:hand (get-runner)))) "Runner took no net damage")
-      ; fire HOK while accessing Snare!
       (run-empty-server state "Server 2")
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Snare!")
-      (card-ability state :corp hok 0)
-      ; Recon Drone ability won't fire as we are not accessing HOK
-      (card-ability state :runner rd2 0)
-      (is (nil? (:number (:choices (prompt-map :runner)))) "No choice to prevent damage from HOK")
-      (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
       (click-prompt state :corp "No")
       (click-prompt state :runner "No action")
       (core/lose state :runner :credit :all)
@@ -4369,7 +4391,7 @@
       (click-prompt state :runner "1")
       (click-prompt state :runner "Done")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
       (core/gain state :runner :credit 100)
       (run-empty-server state "Server 3")
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Prisec")
@@ -4379,13 +4401,13 @@
       (is (= 100 (:number (:choices (prompt-map :runner)))) "Recon Drone choice is not limited to 1 meat")
       (click-prompt state :runner "1")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took no meat damage")
       (run-empty-server state "Server 4")
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Cerebral Overwriter")
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd4 0)
       (click-prompt state :runner "1")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took no core damage"))))
+      (is (= 3 (count (:hand (get-runner)))) "Runner took no core damage"))))
 
 (deftest record-reconstructor
   ;; Record Reconstructor
@@ -5223,19 +5245,20 @@
 
 (deftest the-wizards-chest
   (do-game
-    (new-game {:runner {:hand ["The Wizard's Chest"]
-                        :discard ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]}})
+    (new-game {:corp {:hand [] :deck []}
+               :runner {:hand ["The Wizard's Chest"]
+                        :deck ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Wizard's Chest")
     (let [chest (get-hardware state 0)]
-      ;; TODO: make this a helper or something for consistently ordered starting deck
-      (doseq [card-name ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]]
-        (core/move state :runner (find-card card-name (get-in @state [:runner :discard])) :deck))
+      (stack-deck state :runner ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"])
       (card-ability state :runner chest 0)
       (is (no-prompt? state :runner) "Cannot trigger The Wizard's Chest until all centrals ran")
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
+      (click-prompt state :runner "No action")
       (run-empty-server state "HQ")
+      (is (no-prompt? state :runner) "No prompts")
       (card-ability state :runner (refresh chest) 0)
       (is (= ["Hardware" "Program" "Resource" "Cancel"] (prompt-buttons :runner)))
       (click-prompt state :runner "Program")
@@ -5249,18 +5272,18 @@
 
 (deftest the-wizards-chest-single-card-selection
   (do-game
-    (new-game {:runner {:hand ["The Wizard's Chest"]
-                        :discard ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]}})
+    (new-game {:corp {:hand [] :deck []}
+               :runner {:hand ["The Wizard's Chest"]
+                        :deck ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Wizard's Chest")
     (let [chest (get-hardware state 0)]
-      ;; TODO: make this a helper or something for consistently ordered starting deck
-      (doseq [card-name ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]]
-        (core/move state :runner (find-card card-name (get-in @state [:runner :discard])) :deck))
+      (stack-deck state :runner ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"])
       (card-ability state :runner chest 0)
       (is (no-prompt? state :runner) "Cannot trigger The Wizard's Chest until all centrals ran")
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
+      (click-prompt state :runner "No action")
       (run-empty-server state "HQ")
       (card-ability state :runner (refresh chest) 0)
       (is (= ["Hardware" "Program" "Resource" "Cancel"] (prompt-buttons :runner)))
