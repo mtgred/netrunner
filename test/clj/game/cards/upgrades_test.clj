@@ -1379,6 +1379,7 @@
     (play-from-hand state :corp "PAD Campaign" "HQ")
     (play-from-hand state :corp "PAD Campaign" "HQ")
     (click-prompt state :corp "OK")
+    (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "PAD Campaign" "HQ")
     (click-prompt state :corp "OK")
