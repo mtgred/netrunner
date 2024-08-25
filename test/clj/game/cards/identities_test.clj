@@ -2590,6 +2590,7 @@
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
+      (take-credits state :corp)
       (take-credits state :runner)
       (is (= 3 (count (:discard (get-corp)))) "Archives started with 3 cards")
       (is (zero? (count (:deck (get-corp)))) "R&D started empty")

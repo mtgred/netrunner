@@ -8,57 +8,39 @@
 (deftest adonis-campaign
   ;; Adonis Campaign
   (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
-                        :hand ["Adonis Campaign"]}})
-      (play-from-hand state :corp "Adonis Campaign" "New remote")
-      (let [ac (get-content state :remote1 0)]
-        (rez state :corp ac)
-        (is (= 1 (:credit (get-corp))))
-        (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+    (new-game {:corp {:deck ["Adonis Campaign"]}})
+    (play-from-hand state :corp "Adonis Campaign" "New remote")
+    (let [ac (get-content state :remote1 0)]
+      (rez state :corp ac)
+      (doseq [rem [12 9 6 3]]
+        (is (= rem (get-counters (refresh ac) :credit)) (str rem " counters on Adonis"))
         (take-credits state :corp)
-        (let [credits (:credit (get-corp))
-              counters (get-counters (refresh ac) :credit)]
-          (take-credits state :runner)
-          (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
-          (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis"))
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 6 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 3 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
-        (is (= "Adonis Campaign" (->> (get-corp) :discard first :title))))))
+        (is (changed? [(:credit (get-corp)) 3]
+              (take-credits state :runner))
+            "Gained 3c from Adonis Campaign"))
+      (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
+      (is (= "Adonis Campaign" (->> (get-corp) :discard first :title))))))
 
 (deftest adonis-campaign-with-gravedigger-async-issues
     ;; With Gravedigger, async issues
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
-                        :hand ["Adonis Campaign"]}
+      (new-game {:corp {:deck ["Adonis Campaign"]}
                  :runner {:hand ["Gravedigger"]}})
       (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gravedigger")
+      (take-credits state :runner)
       (let [ac (get-content state :remote1 0)]
-        (rez state :corp ac)
-        (is (= 1 (:credit (get-corp))))
-        (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+      (rez state :corp ac)
+      (doseq [rem [12 9 6 3]]
+        (is (= rem (get-counters (refresh ac) :credit)) (str rem " counters on Adonis"))
         (take-credits state :corp)
-        (play-from-hand state :runner "Gravedigger")
-        (let [credits (:credit (get-corp))
-              counters (get-counters (refresh ac) :credit)]
-          (take-credits state :runner)
-          (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
-          (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis"))
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 6 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 3 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
-        (is (= "Adonis Campaign" (->> (get-corp) :discard first :title)))
-        (is (= 1 (get-counters (get-program state 0) :virus))))))
+        (is (changed? [(:credit (get-corp)) 3]
+              (take-credits state :runner))
+            "Gained 3c from Adonis Campaign"))
+      (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
+      (is (= "Adonis Campaign" (->> (get-corp) :discard first :title)))
+      (is (= 1 (get-counters (get-program state 0) :virus))))))
 
 (deftest advanced-assembly-lines
   ;; Advanced Assembly Lines
@@ -4149,29 +4131,30 @@
 (deftest prana-condenser
   ;; Prāna Condenser
   (do-game
-      (new-game {:corp {:hand ["Prāna Condenser" (qty "Neural EMP" 2)]}
-                 :runner {:hand [(qty "Sure Gamble" 5)]}})
-      (play-from-hand state :corp "Prāna Condenser" "New remote")
-      (let [pc (get-content state :remote1 0)]
-        (rez state :corp pc)
-        (take-credits state :corp)
-        (run-empty-server state :archives)
-        (take-credits state :runner)
+    (new-game {:corp {:hand ["Prāna Condenser" (qty "Neural EMP" 2)]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Prāna Condenser" "New remote")
+    (let [pc (get-content state :remote1 0)]
+      (rez state :corp pc)
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Neural EMP")
+      (let [corp-credits (:credit (get-corp))]
+        (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+        (card-ability state :corp (refresh pc) 0)
+        (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power counter")
+        (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
         (play-from-hand state :corp "Neural EMP")
-        (let [corp-credits (:credit (get-corp))]
-          (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (card-ability state :corp (refresh pc) 0)
-          (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power counter")
-          (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
-          (play-from-hand state :corp "Neural EMP")
-          (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (card-ability state :corp pc 0)
-          (is (= 2 (get-counters (refresh pc) :power)) "Added another power counter")
-          (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
-          (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
-        (take-credits state :runner)
-        (card-ability state :corp  pc 1)
-        (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
+        (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+        (card-ability state :corp pc 0)
+        (is (= 2 (get-counters (refresh pc) :power)) "Added another power counter")
+        (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
+        (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp  pc 1)
+      (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
 
 (deftest prana-condenser-refuse-to-prevent-damage
     ;; Refuse to prevent damage
