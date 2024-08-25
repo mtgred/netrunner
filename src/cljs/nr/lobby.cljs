@@ -207,14 +207,14 @@
     [:div.rooms
      [:div#filter.dropdown
       [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-       "Filter"
+       (tr [:lobby.filter "Filter"])
        [:b.caret]]
        [:div.dropdown-menu.blue-shade
         (doall (for [[k] slug->format]
                  ^{:key k}
                  [format-toggle k (contains? visible-formats k)]))]]
      [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]
-     [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
+     ;; [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
      [room-tab user s games "competitive" (tr [:lobby.tournament "Tournament"])]]
     (when-not (= "angel-arena" (:room @s))
       [:div.lobby-buttons

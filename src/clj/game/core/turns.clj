@@ -59,12 +59,12 @@
   ; Functions to set up state for undo-turn functionality
   (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
   (swap! state assoc :click-states [])
-  (swap! state assoc :turn-state (dissoc @state :log :turn-state))
+  (swap! state assoc :turn-state (dissoc @state :log :history :turn-state))
 
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
-  (doseq [c (filter :new (all-installed-and-scored state side))]
+  (doseq [c (filter :new (concat (all-installed-and-scored state side) (get-in @state [side :discard])))]
     (update! state side (dissoc c :new)))
 
   (swap! state assoc :active-player side :per-turn nil :end-turn false)

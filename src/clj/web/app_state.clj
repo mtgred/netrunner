@@ -1,17 +1,21 @@
 (ns web.app-state
   (:require
-    [medley.core :refer [find-first]]))
+   [cljc.java-time.temporal.chrono-unit :as chrono]
+   [cljc.java-time.instant :as inst]
+   [medley.core :refer [dissoc-in find-first]]))
 
 (defonce app-state
   (atom {:lobbies {}
          :lobby-updates {}
          :users {}}))
 
+(defonce lobby-subs-timeout-hours 6)
+
 (defn register-user
   [app-state uid user]
   (-> app-state
       (assoc-in [:users uid] (assoc user :uid uid))
-      (assoc-in [:lobby-updates uid] true)))
+      (assoc-in [:lobby-updates uid] (inst/now))))
 
 (defn uid->lobby
   ([uid] (uid->lobby (:lobbies @app-state) uid))
@@ -52,23 +56,24 @@
   [uid user]
   (swap! app-state register-user uid user))
 
-(defn deregister-user!
-  "Remove user from app-state. Mutates."
-  [uid]
-  (let [users (:users @app-state)
-        _ (println "USERS" users)
-        new-users (dissoc users uid)
-        _ (println "NEW USERS" new-users)]
-    (swap! app-state #(assoc %1 :users new-users))))
 
 (defn pause-lobby-updates
   [uid]
-  (swap! app-state assoc-in [:lobby-updates uid] false))
+  (swap! app-state dissoc-in [:lobby-updates uid]))
 
 (defn continue-lobby-updates
   [uid]
-  (swap! app-state assoc-in [:lobby-updates uid] true))
+  (swap! app-state assoc-in [:lobby-updates uid] (inst/now)))
 
 (defn receive-lobby-updates?
   [uid]
-  (get-in @app-state [:lobby-updates uid] false))
+  (if-let [last-ping (get-in @app-state [:lobby-updates uid])]
+    (.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
+    (do (pause-lobby-updates uid)
+        nil)))
+
+(defn deregister-user!
+  "Remove user from app-state. Mutates."
+  [uid]
+  (pause-lobby-updates uid)
+  (swap! app-state dissoc-in [:users uid]))

@@ -33,8 +33,8 @@
   "Update :click-states to hold latest 4 moments before performing actions."
   [state ability]
   (when (:action ability)
-    (let [state' (dissoc @state :log :history)
-          click-states (vec (take-last 4 (conj (:click-states state') state')))]
+    (let [state' (dissoc @state :log :history :click-states :turn-state)
+          click-states (vec (take-last 4 (conj (:click-states @state) state')))]
       (swap! state assoc :click-states click-states))))
 
 ;;; Neutral actions
@@ -78,17 +78,20 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card] :as context}]
-  (when-let [card (when-not (get-in @state [side :prompt-state :prompt-type]) (get-card state card))]
-    (let [context (assoc context :card card)]
-      (case (:type card)
-        ("Event" "Operation")
-        (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                  :ability 3
-                                  :targets [context]})
-        ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
-        (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                  :ability 2
-                                  :targets [context]})))))
+  (when-let [card (get-card state card)]
+    (when (and (not (get-in @state [side :prompt-state :prompt-type]))
+               (not (and (= side :corp) (:corp-phase-12 @state)))
+               (not (and (= side :runner) (:runner-phase-12 @state))))
+      (let [context (assoc context :card card)]
+        (case (:type card)
+          ("Event" "Operation")
+          (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                    :ability 3
+                                    :targets [context]})
+          ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
+          (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                    :ability 2
+                                    :targets [context]}))))))
 
 (defn click-draw
   "Click to draw."
@@ -631,8 +634,8 @@
 (defn score
   "Score an agenda."
   ([state side eid card] (score state side eid card nil))
-  ([state side eid card {:keys [no-req]}]
-   (if-not (can-score? state side card {:no-req no-req})
+  ([state side eid card {:keys [no-req ignore-turn]}]
+   (if-not (can-score? state side card {:no-req no-req :ignore-turn ignore-turn})
      (effect-completed state side eid)
      (let [cost (score-additional-cost-bonus state side card)
            cost-strs (build-cost-string cost)

@@ -23,7 +23,7 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
-   [game.core.effects :refer [register-lingering-effect update-disabled-cards]]
+   [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [pay register-events resolve-ability]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
@@ -531,7 +531,7 @@
   {:events [{:event :end-of-encounter
              :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))
              :msg (req (let [unbroken-count (count (remove :broken (:subroutines (:ice context))))]
-                        (str "place " (quantify unbroken-count "power counter") " on itself")))
+                         (str "place " (quantify unbroken-count "power counter") " on itself")))
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :power 5)]
@@ -1315,7 +1315,6 @@
                  (installed? (:card target))))]
     {:events [{:event :runner-trash
                :async true
-               :once :per-turn
                :once-per-instance false
                :req (req (and (valid-trash target)
                               (first-event? state side :runner-trash #(valid-trash (first %)))))
@@ -1332,8 +1331,8 @@
 
 (defcard "Hyoubu Research Facility"
   {:events [{:event :reveal-spent-credits
-             :req (req (some? (first targets)))
-             :once :per-turn
+             :req (req (and (some? (first targets))
+                            (first-event? state side :reveal-spent-credits)))
              :msg (msg "gain " target " [Credits]")
              :async true
              :effect (effect (gain-credits :corp eid target))}]})
@@ -1355,7 +1354,7 @@
                         :async true
                         :effect (effect (continue-ability (trash-ability target) card nil))}]
     {:additional-cost [(->c :forfeit)]
-     :flags {:corp-phase-12 (constantly true)}
+     :flags {:corp-phase-12 (req (not (is-disabled-reg? state card)))}
      :derezzed-events [corp-rez-toast]
      :abilities [choose-ability]}))
 
@@ -1963,7 +1962,7 @@
                :max (req (get-counters (get-card state card) :advancement))}
      :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the stack")
      :effect (req (doseq [c targets]
-                    (move state :runner c :deck))
+                    (move state :runner c :deck {:shuffled true}))
                   (shuffle! state :runner :deck)
                   (effect-completed state side eid))}))
 
@@ -2123,7 +2122,7 @@
                               (in-hand? target)))}
      :msg (msg "score " (:title target))
      :async true
-     :effect (effect (score eid target {:no-req true}))}))
+     :effect (effect (score eid target {:no-req true :ignore-turn true}))}))
 
 (defcard "Political Dealings"
   (letfn [(pdhelper [agendas]
@@ -2845,7 +2844,7 @@
                :prompt "Derez a card"
                :choices {:card #(and (installed? %)
                                      (rezzed? %))}
-               :effect (req (derez state side target)
+               :effect (req (derez state side target {:source-card card})
                             (continue-ability state side (derez-card (dec advancements)) card nil))}))]
     {:advanceable :always
      :abilities [{:label "Derez 1 card for each advancement token"
@@ -3141,23 +3140,23 @@
                                     card :can-score
                                     (fn [state _ card]
                                       (if (same-card? card installed-card)
-                                        ((constantly false) (toast state :corp "Cannot score due to Warm Reception." "Warning"))
+                                        ((constantly false) (toast state :corp "Cannot score due to Warm Reception." "warning"))
                                         true)))
                                   (effect-completed state side eid))))}
-        derez {:label "Derez another card (start of turn)"
-               :req (req unprotected)
-               :prompt "Choose another card to derez"
-               :choices {:not-self true
-                         :card #(rezzed? %)}
-               :msg (msg "derez itself to derez " (card-str state target))
-               :effect (effect (derez card)
-                               (derez target))}]
+        derez-abi {:label "Derez another card (start of turn)"
+                   :req (req unprotected)
+                   :prompt "Choose another card to derez"
+                   :choices {:not-self true
+                             :card #(rezzed? %)}
+                   :msg (msg "derez itself to derez " (card-str state target))
+                   :effect (effect (derez card {:source-card card})
+                                   (derez target {:source-card card}))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
                :interactive (req true)
                :async true
                :effect (req (wait-for (resolve-ability state side install card nil)
-                                      (continue-ability state side derez card nil)))}]}))
+                                      (continue-ability state side derez-abi card nil)))}]}))
 
 (defcard "Watchdog"
   (letfn [(not-triggered? [state]

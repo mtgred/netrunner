@@ -304,11 +304,6 @@
    corp-recur])
 
 (expose-vars
-  [game.core.diffs
-   public-states
-   public-diffs])
-
-(expose-vars
   [game.core.drawing
    draw
    draw-bonus
@@ -552,7 +547,6 @@
    corp-can-pay-and-install?
    corp-install
    corp-install-cost
-   corp-install-list
    corp-install-msg
    install-as-condition-counter
    install-locked?

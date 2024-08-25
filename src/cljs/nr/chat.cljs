@@ -137,7 +137,7 @@
                                   (when-not (illegal-message s)
                                     (send-msg s channel)))}
    [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
-            :placeholder (tr [:chat/placeholder "Say something...."]) :accessKey "l" :value (:msg @s)
+            :placeholder (tr [:chat/placeholder "Say something..."]) :accessKey "l" :value (:msg @s)
             :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
    (let [disabled (illegal-message s)]
      [:button {:disabled disabled

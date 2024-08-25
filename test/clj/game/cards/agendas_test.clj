@@ -995,6 +995,19 @@
       (click-card state :corp "Ice Wall")
       (click-prompt state :runner "No action")))
 
+(deftest dedicated-neural-net-first-time-each-turn
+  (do-game
+    (new-game {:corp {:score-area ["Dedicated Neural Net"]
+                      :hand ["Hedge Fund" "IPO"]}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (click-prompt state :runner "No action")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner) "Neural net only works on the first event each turn")))
+
 (deftest degree-mill-basic-behavior
     ;; Basic behavior
     (do-game
@@ -3529,6 +3542,7 @@
       (is (= "Hedge Fund" (:title (last (:deck (get-corp))))))
       (is (= "Sweeps Week" (:title (last (butlast (:deck (get-corp)))))))
       (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
+      (is (not (last-log-contains? state "Grip")) "Runner not mentioned in log")
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
 

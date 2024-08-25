@@ -9,9 +9,12 @@
    goog.history.Html5History))
 
 (def navbar-links
-  [{:title (tr [:nav/chat "Chat"])
-    :cls "chat"
+  [{:title (tr [:nav/welcome "Welcome"])
+    :cls "landing"
     :route "/"}
+    {:title (tr [:nav/chat "Chat"])
+    :cls "chat"
+    :route "/chat"}
    {:title (tr [:nav/cards "Cards"])
     :cls "card"
     :route "/cards"}

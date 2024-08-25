@@ -4099,6 +4099,20 @@
         (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
         (click-prompt state :runner "Take 1 core damage")))))
 
+(deftest kamali-1-0-fire-all-subs
+  (do-game
+    (new-game {:corp {:hand ["Kamali 1.0"]}})
+    (play-from-hand state :corp "Kamali 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (fire-subs state (get-ice state :hq 0))
+    (dotimes [_ 3]
+      (click-prompt state :runner "Take 1 core damage"))
+    (is (no-prompt? state :runner) "No lingering prompt (runner)")
+    (is (no-prompt? state :runner) "No lingering prompt (corp)")))
+
 (deftest karuna
   (do-game
     (new-game {:corp {:hand ["Karunā"]}
@@ -4487,6 +4501,26 @@
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in stack")
     (is (not (:run @state)) "Run is ended")))
+
+(deftest loki-vs-kamali-1-0-fire-all-subs
+  (doseq [loki-opt ["End the run" "Shuffle the grip into the stack"]]
+    (do-game
+      (new-game {:corp {:hand ["Loki" "Kamali 1.0"] :credits 20}
+                 :runner {:hand [(qty "Sure Gamble" 4)]}})
+      (play-from-hand state :corp "Kamali 1.0" "HQ")
+      (play-from-hand state :corp "Loki" "HQ")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue state :encounter-ice)
+      (click-card state :corp "Kamali 1.0")
+      (fire-subs state (get-ice state :hq 1))
+      (dotimes [_ 3]
+        (click-prompt state :runner "Take 1 core damage"))
+      (click-prompt state :runner loki-opt)
+      (is (no-prompt? state :runner) "No lingering prompt (runner)")
+      (is (no-prompt? state :runner) "No lingering prompt (corp)"))))
 
 (deftest loot-box
   ;; Loot Box
@@ -5281,6 +5315,39 @@
       (is (= (refresh konjin) (core/get-current-ice state)))
       (is (= [:rd] (:server (get-run))) "Run not redirected since Mirāju wasn't passed")
       (is (not (rezzed? (refresh miraju))) "Mirāju is derezzed"))))
+
+(deftest miraju-loop-issue-4958
+  (do-game
+    (new-game {:corp {:hand [(qty "Mirāju" 2)] :credits 50}
+               :runner {:hand ["Buzzsaw"] :credits 50}})
+    (play-from-hand state :corp "Mirāju" "HQ")
+    (play-from-hand state :corp "Mirāju" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buzzsaw")
+    (let [hq-ice (get-ice state :hq 0)
+          arc-ice (get-ice state :archives 0)
+          buzz (get-program state 0)
+          sub "Draw 1 card, then shuffle 1 card from HQ into R&D"]
+      (rez state :corp hq-ice)
+      (run-on state "HQ")
+      (run-continue state :encounter-ice)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-prompt state :runner sub)
+      (run-continue state)
+      (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
+      (click-prompt state :runner "No")
+      (is (not (rezzed? (refresh hq-ice))) "HQ Ice derezzed")
+      (dotimes [n 10]
+        (is (= 1 (:position (get-in @state [:run]))) "Outside of miraju")
+        (rez state :corp (refresh arc-ice))
+        (run-continue state :encounter-ice)
+        (card-ability state :runner (get-program state 0) 0)
+        (click-prompt state :runner sub)
+        (run-continue state)
+        (is (= [:archives] (:server (get-run))) "Still on archives")
+        (click-prompt state :runner "No")
+        (is (not (rezzed? (refresh arc-ice))) "Miraju on archives was derezzed"))
+      (run-continue-until state :success))))
 
 (deftest mlinzi-each-side-of-each-subroutine
   ;; Each side of each subroutine
@@ -7300,6 +7367,30 @@
     (is (changed? [(:credit (get-corp)) 0]
           (click-prompt state :corp "OK"))
         "Corp gained no credits")))
+
+(deftest tatu-bola-swaps-correct-ice-when-swapped
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Vanilla" "Ice Wall"]}
+               :runner {:hand ["Inversificator"]
+                        :credits 10
+                        :id "Rielle \"Kit\" Peddler: Transhuman"}})
+    (play-from-hand state :corp "Tatu-Bola" "HQ")
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Inversificator")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (run-continue state :movement)
+    (click-prompt state :runner "Yes")
+    (click-card state :runner "Vanilla")
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Ice Wall")
+    (is (= "Ice Wall" (:title (get-ice state :rd 0))) "Ice wall on R&D")
+    (is (= "Vanilla" (:title (get-ice state :hq 0))) "Vanilla on HQ")
+    (is (= ["Tatu-Bola"] (map :title (:hand (get-corp)))) "Tatu bola in HQ")))
 
 (deftest thimblerig-thimblerig-does-not-open-a-prompt-if-it-s-the-only-piece-of-ice
   ;; Thimblerig does not open a prompt if it's the only piece of ice

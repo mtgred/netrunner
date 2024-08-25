@@ -1296,7 +1296,10 @@
   [state side server]
   (when (= :archives (get-server-type (first server)))
     (doseq [card (get-in @state [:corp :discard])]
-      (update! state side (assoc card :seen true)))))
+      ;; this lets us distinguish the most freshly revealed cards from archives
+      (if (:seen card)
+        (update! state side (dissoc card :new))
+        (update! state side (assoc card :seen true :new true))))))
 
 (defn clean-access-args
   [{:keys [access-first] :as args}]

@@ -269,10 +269,16 @@
                 (swap! s assoc :deck nil)
                 (end-delete s))))))))
 
-(defn side-identities [side]
+(defn- legal-in-format
+  [card format]
+  (or (= "casual" format)
+      (get-in card [:format (keyword format) :legal])))
+
+(defn side-identities [side format]
   (let [cards (->> (vals @all-cards)
                    (filter #(and (= (:side %) side)
-                                 (= (:type %) "Identity"))))
+                                 (= (:type %) "Identity")
+                                 (legal-in-format % format))))
         all-titles (map :title cards)
         add-deck (partial add-deck-name all-titles)]
     (map add-deck cards)))
@@ -281,7 +287,7 @@
   ([s side] (new-deck s side (tr [:deck-builder.new-deck "New Deck"]) "standard" [] nil))
   ([s side name format cards id]
   (let [old-deck (:deck @s)
-        identities (->> (side-identities side)
+        identities (->> (side-identities side format)
                         (sort-by :title))
         id (or id (first identities))]
     (set-deck-on-state s {:name name
@@ -768,8 +774,7 @@
              [:span.invalid " (" (tr [:deck-builder.max "maximum"]) " " (inc min-point) ")"])]))
       (when (validator/format-point-limit (:format deck))
         [:div [deck-points-span deck]])
-      [:div [deck-status-span deck true true false]]
-      (when (:hash deck) [:div (tr [:deck-builder.hash "Tournament hash"]) ": " (:hash deck)])]]))
+      [:div [deck-status-span deck true true false]]]]))
 
 (defn decklist-contents
   [s deck cards]
@@ -873,12 +878,21 @@
      :value (get-in @s [:deck :name])
      :on-change #(swap! s assoc-in [:deck :name] (.. % -target -value))}]])
 
+(defn- change-format
+  [s new-format]
+  (swap! s assoc-in [:deck :format] new-format)
+  (when-not (legal-in-format (get-in @s [:deck :identity]) new-format)
+    (let [side (get-in @s [:deck :identity :side])
+          new-id (first (sort-by :title (side-identities side new-format)))]
+      (when new-id
+        (swap! s assoc-in [:deck :identity] new-id)))))
+
 (defn format-editor
   [s]
   [:div
    [:h3 (tr [:deck-builder.format "Format"])]
    [:select.format {:value (get-in @s [:deck :format] "standard")
-                    :on-change #(swap! s assoc-in [:deck :format] (.. % -target -value))}
+                    :on-change #(change-format s (.. % -target -value))}
     (doall
       (for [[k v] slug->format]
         ^{:key k}
@@ -902,7 +916,7 @@
    [:h3 (tr [:deck-builder.identity "Identity"])]
    [:select.identity {:value (identity-option-string (get-in @s [:deck :identity]))
                       :on-change #(swap! s assoc-in [:deck :identity] (create-identity s %))}
-    (let [idents (side-identities (get-in @s [:deck :identity :side]))]
+    (let [idents (side-identities (get-in @s [:deck :identity :side]) (get-in @s [:deck :format]))]
       (for [card (sort-by :display-name idents)]
         ^{:key (:display-name card)}
         [:option

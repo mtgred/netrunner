@@ -1,7 +1,7 @@
 (ns game.core.state)
 
 (defrecord State
-  [angel-arena-info
+  [;; angel-arena-info
    active-player
    bonus
    click-state

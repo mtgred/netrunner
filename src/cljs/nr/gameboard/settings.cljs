@@ -62,7 +62,7 @@
                  (:name option)]]))]
 
      [:section
-      [:h4 (tr [:ingame-settings.runner-board-order "Board overlap"])]
+      [:h4 (tr [:ingame-settings.board-overlap "Board overlap"])]
       [:div
        [:label [:input {:type "checkbox"
                         :value true

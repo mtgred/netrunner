@@ -70,16 +70,18 @@
   :id)
 
 (defmethod -msg-handler :default
+  msg-handler--default
   ;; Handles any hecked messages from the client
   [{:keys [id ?data uid ?reply-fn]}]
   (println "Unhandled WS msg" id uid (pr-str ?data))
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
 
-(defmethod -msg-handler :chsk/ws-ping [_])
-(defmethod -msg-handler :chsk/ws-pong [_])
+(defmethod -msg-handler :chsk/ws-ping chsk--ws-ping [_])
+(defmethod -msg-handler :chsk/ws-pong chsk--ws-pong [_])
 ;; NOTE - :chsk/uidport-close is handled in game.clj
 (defmethod -msg-handler :chsk/uidport-open
+  chsk--uidport-open
   [{uid :uid
     {user :user} :ring-req}]
   (when (active-user? user)

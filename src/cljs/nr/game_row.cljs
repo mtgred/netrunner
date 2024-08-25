@@ -43,19 +43,64 @@
       (and (:allow-spectator game)
            (not (or current-game editing)))))
 
+(defn- watch-game-button
+  [spectatorhands lobby-state game]
+  (if-not spectatorhands
+    [:button {:on-click #(do (join-game lobby-state game "watch")
+                             (resume-sound))}
+     (tr [:lobby.watch "Watch"])]
+    (letfn [(join-fn [side]
+              #(do (join-game lobby-state game "watch" side)
+                   (resume-sound)))]
+      [:div.split-button
+       [:button {:on-click (join-fn nil)}
+        (tr [:lobby.watch "Watch"])]
+       [:button.dropdown-toggle {:data-toggle "dropdown"}
+        [:b.caret]]
+       [:ul.dropdown-menu.blue-shade
+        [:a.block-link {:on-click (join-fn "Corp")}
+       (tr [:lobby.corp-perspective "Corp Perspective"])]
+      [:a.block-link {:on-click (join-fn "Runner")}
+       (tr [:lobby.runner-perspective "Runner Perspective"])]
+      [:a.block-link {:on-click (join-fn nil)}
+       (tr [:lobby.both-perspective "Both"])]]])))
+
+(defn- watch-protected-game-button
+  [spectatorhands lobby-state game]
+  (if-not spectatorhands
+    [:button {:on-click #(if (:password game)
+                           (authenticated
+                             (fn [_]
+                               (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                           (do (join-game lobby-state game "watch")
+                               (resume-sound)))}
+     (tr [:lobby.watch "Watch"])]
+    (letfn [(join-fn
+              [side]
+              #(if (:password game)
+                 (authenticated
+                   (fn [_]
+                     (swap! lobby-state assoc :password-game {:game game :action "watch" :request-side side})))
+                 (do (join-game lobby-state game "watch" side)
+                     (resume-sound))))]
+      [:div.split-button
+       [:button {:on-click (join-fn nil)}
+        (tr [:lobby.watch "Watch"])]
+       [:button.dropdown-toggle {:data-toggle "dropdown"}
+        [:b.caret]]
+       [:ul.dropdown-menu.blue-shade
+        [:a.block-link {:on-click (join-fn "Corp")}
+       (tr [:lobby.corp-perspective "Corp Perspective"])]
+      [:a.block-link {:on-click (join-fn "Runner")}
+       (tr [:lobby.runner-perspective "Runner Perspective"])]
+      [:a.block-link {:on-click (join-fn nil)}
+       (tr [:lobby.both-perspective "Both"])]]])))
+
 (defn watch-button [lobby-state user game current-game editing]
   (when (can-watch? user game current-game editing)
     (if (not (:password game))
-      [:button {:on-click #(do (join-game lobby-state game "watch")
-                               (resume-sound))}
-       (tr [:lobby.watch "Watch"])]
-      [:button {:on-click #(if (:password game)
-                             (authenticated
-                               (fn [_]
-                                 (swap! lobby-state assoc :password-game {:game game :action "watch"})))
-                             (do (join-game lobby-state game "watch")
-                                 (resume-sound)))}
-       (tr [:lobby.watch "Watch"])])))
+      [watch-game-button (:spectatorhands game) lobby-state game]
+      [watch-protected-game-button (:spectatorhands game) lobby-state game])))
 
 (defn can-join? [user {:keys [room started players]} current-game editing]
   (if (= "tournament" room)
@@ -133,9 +178,9 @@
 
 (defn game-format [{fmt :format singleton? :singleton}]
   [:div {:class "game-format"}
-   [:span.format-label (tr [:lobby.format "Format"]) ":  "]
+   [:span.format-label (tr [:lobby.default-game-format "Default game format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
-   [:span.format-singleton (str (when singleton? " (singleton)"))]])
+   [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
 
 (defn- time-since
   "Helper method for game-time. Computes how many minutes since game start"

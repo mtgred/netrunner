@@ -1,6 +1,7 @@
 (ns game.core.commands
   (:require
    [clojure.string :as string]
+   [game.core.actions :refer [score]]
    [game.core.board :refer [all-installed server->zone]]
    [game.core.card :refer [agenda? can-be-advanced? corp? get-card
                            has-subtype? ice? in-hand? installed? rezzed? runner?]]
@@ -104,6 +105,9 @@
                                                         (card-str state target))))))))}
     (make-card {:title "/counter command"}) nil))
 
+(defn command-enable-api-access [state _]
+  (swap! state assoc-in [:options :api-access] true))
+
 (defn command-facedown [state side]
   (resolve-ability state side
                    {:prompt "Choose a card to install facedown"
@@ -175,9 +179,19 @@
 (defn command-undo-click
   "Resets the game state back to start of the click"
   [state side]
-  (when-let [click-state (peek (:click-states @state))]
+  (when-let [last-click-state (peek (:click-states @state))]
     (when (= (:active-player @state) side)
-      (reset! state (assoc click-state :log (:log @state) :click-states (pop (:click-states @state)) :run nil :history (:history @state)))
+      (let [current-log (:log @state)
+            current-history (:history @state)
+            previous-click-states (pop (:click-states @state))
+            turn-state (:turn-state @state)
+            last-click-state (assoc last-click-state
+                               :log current-log
+                               :click-states previous-click-states
+                               :turn-state turn-state
+                               :history current-history
+                               :run nil)]
+        (reset! state last-click-state))
       (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
@@ -188,7 +202,13 @@
   (when-let [turn-state (:turn-state @state)]
     (swap! state assoc-in [side :undo-turn] true)
     (when (and (-> @state :runner :undo-turn) (-> @state :corp :undo-turn))
-      (reset! state (assoc turn-state :log (:log @state) :turn-state turn-state :history (:history @state)))
+      (let [current-log (:log @state)
+            current-history (:history @state)
+            original-turn-state (assoc turn-state
+                                  :log current-log
+                                  :history current-history
+                                  :turn-state turn-state)]
+        (reset! state original-turn-state))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of turn")))))
 
@@ -276,6 +296,19 @@
               (enumerate-str)))
     ["Done"]
     identity))
+
+(defn command-score
+  [state side]
+  (when (= :corp side)
+    (resolve-ability
+     state side
+     {:prompt "Choose an agenda to score"
+      :choices {:req (req (and (agenda? target)
+                               (or (installed? target)
+                                   (in-hand? target))))}
+      :msg (msg "score " (card-str state target {:visible true}) ", ignoring all restrictions")
+      :effect (effect (score eid target {:no-req true :ignore-turn true}))}
+     (make-card {:title "the '/score' command"}) nil)))
 
 (defn command-summon
   [state side args]
@@ -411,6 +444,7 @@
                         (when (and (= side :corp)
                                     (:run @state))
                           (end-run state side (make-eid state) nil)))
+        "/enable-api-access" command-enable-api-access
         "/error"      show-error-toast
         "/facedown"   #(when (= %2 :runner) (command-facedown %1 %2))
         "/handsize"   #(change %1 %2 {:key :hand-size
@@ -457,7 +491,6 @@
                                                       :not-equal {:msg "resolve unequal bets effect"}}))
         "/reload-id"  command-reload-id
         "/replace-id" #(command-replace-id %1 %2 args)
-    :async true
         "/rez"        #(when (= %2 :corp)
                           (resolve-ability %1 %2
                                           {:choices {:card (fn [t] (same-side? (:side t) %2))}
@@ -483,6 +516,7 @@
         "/sabotage"   #(when (= %2 :runner) (resolve-ability %1 %2 (sabotage-ability (constrain-value value 0 1000)) nil nil))
         "/save-replay" command-save-replay
         "/set-mark"   #(command-set-mark %1 %2 args)
+        "/score"      command-score
         "/show-hand" #(resolve-ability %1 %2
                                          {:effect (effect (system-msg (str
                                                                        (if (= :corp %2)

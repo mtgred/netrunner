@@ -5,6 +5,43 @@
    [game.core.card :refer :all]
    [game.test-framework :refer :all]))
 
+(deftest masterwork-overinstall-boomerang-complex-case
+  (testing "for issue #7303"
+    (dotimes [order 2]
+      (do-game
+        (new-game {:corp {:hand ["Tree Line" "Winchester" "Surveyor"]
+                          :id "Weyland Consortium: Building a Better World"
+                          :credits 20}
+                   :runner {:hand ["The Class Act" "Masterwork (v37)" (qty "Boomerang" 2)]
+                            :id "Zahya Sadeghi: Versatile Smuggler"
+                            :credits 20
+                            :deck [(qty "Easy Mark" 10)]}})
+        (play-from-hand state :corp "Tree Line" "R&D")
+        (play-from-hand state :corp "Winchester" "HQ")
+        (play-from-hand state :corp "Surveyor" "HQ")
+        (rez state :corp (get-ice state :hq 0))
+        (rez state :corp (get-ice state :rd 0))
+        (take-credits state :corp)
+        (play-from-hand state :runner "Masterwork (v37)")
+        (play-from-hand state :runner "Boomerang")
+        (click-card state :runner "Surveyor")
+        (play-from-hand state :runner "The Class Act")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state "R&D")
+        (click-prompt state :runner "Yes")
+        (click-card state :runner (find-card "Boomerang" (:hand (get-runner))))
+        (if (= order 0)
+          (do (click-prompt state :runner "Boomerang")
+              (click-card state :runner "Tree Line")
+              (click-card state :runner (find-card "Easy Mark" (:set-aside (get-runner)))))
+          (do (click-prompt state :runner "Masterwork (v37)")
+              (click-card state :runner (find-card "Easy Mark" (:set-aside (get-runner))))
+              (click-card state :runner "Tree Line")))
+        (is (no-prompt? state :corp) "No lingering prompt")
+        (is (no-prompt? state :runner) "No lingering prompt")
+        (is (= 1 (count (:discard (get-runner)))))))))
+
 (deftest maxx-annicam-buffer-drive-one-card-in-stack
   (testing "for issue #4966"
     (do-game

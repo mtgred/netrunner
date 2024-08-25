@@ -31,7 +31,7 @@
    [game.core.hand-size :refer [corp-hand-size+]]
    [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
-   [game.core.installing :refer [corp-install corp-install-list]]
+   [game.core.installing :refer [corp-install]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
                              swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
@@ -345,7 +345,7 @@
                                                                  (not (same-card? % rezzed-card)))}
                                            :async true
                                            :msg (msg "derez " (card-str state target) " to give " (card-str state rezzed-card) " +3 strength for the remainder of the run")
-                                           :effect (req (derez state side (get-card state target))
+                                           :effect (req (derez state side (get-card state target) {:no-msg true})
                                                         (pump-ice state side rezzed-card 3 :end-of-run)
                                                         (effect-completed state side eid))}}}
                            card nil)))}]})
@@ -736,8 +736,18 @@
                                (rezzed? target)
                                (protecting-same-server? card target)))}
       :msg (msg "force the Runner to encounter " (card-str state target))
-      :effect (req (wait-for (trash state :corp (assoc card :seen true) {:unpreventable true :cause-card card})
-                             (force-ice-encounter state side eid target)))}
+      :effect (req
+                ;; note - post-access events (like maw, aeneas informant)
+                ;; need to fire before ganked does - same for corp side post-access events
+                (let [target-card target]
+                  (register-events
+                    state side card
+                    [{:event :post-access-card
+                      :duration :end-of-run
+                      :unregister-once-resolved true
+                      :async true
+                      :effect (req (force-ice-encounter state side eid target-card))}]))
+                (trash state side eid (assoc card :seen true) {:unpreventable true :cause-card card}))}
      :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}})
 
 (defcard "Georgia Emelyov"
@@ -1327,8 +1337,13 @@
                        :value true}]})
 
 (defcard "NeoTokyo Grid"
-  (let [ng {:req (req (in-same-server? card (:card context)))
-            :once :per-turn
+  (let [only-ev
+        (fn [state side ev no-ev card]
+          (and (first-event? state side ev #(in-same-server? card (:card (first %))))
+               (no-event? state side no-ev #(in-same-server? card (:card (first %))))))
+        ng {:req (req (and (in-same-server? card (:card context))
+                           (or (only-ev state side :advance :advancement-placed card)
+                               (only-ev state side :advancement-placed :advance card))))
             :msg "gain 1 [Credits]"
             :async true
             :effect (effect (gain-credits eid 1))}]

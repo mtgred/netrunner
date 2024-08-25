@@ -10,6 +10,7 @@
 (def supported-formats [:standard :startup :eternal])
 
 (defmethod ws/-msg-handler :angel-arena/formats
+  angel-arena--formats
   [{uid :uid}]
   (when uid
     (ws/chsk-send! uid [:angel-arena/formats supported-formats])))

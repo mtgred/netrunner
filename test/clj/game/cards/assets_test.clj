@@ -2236,6 +2236,22 @@
         (click-advance state :corp (last (:hosted (refresh fir))))
         (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
 
+(deftest full-immersion-rec-vs-ngo-front-issue-#5617
+  (do-game
+    (new-game {:corp {:hand ["Full Immersion RecStudio" "NGO Front"]}})
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [rec (get-content state :remote1 0)]
+      (rez state :corp rec)
+      (card-ability state :corp (refresh rec) 0)
+      (click-card state :corp "NGO Front")
+      (let [ngo (first (:hosted (refresh rec)))]
+        (core/add-counter state :corp ngo :advancement 1)
+        (rez state :corp (refresh ngo))
+        (card-ability state :corp (refresh ngo) 0)
+        (is (not (refresh ngo)) "NGO gone"))
+      (is (not (seq (:hosted (refresh rec)))) "Rec Studio empty"))
+    (is (= ["NGO Front"] (map :title (:discard (get-corp)))) "Ngo Front is trashed")))
+
 (deftest fumiko-yamamori
   ;; Fumiko Yamamori
   (do-game
@@ -2496,6 +2512,10 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (take-credits state :corp)
+      (card-ability state :runner (get-resource state 1) 0)
+      (card-ability state :runner (get-resource state 0) 0)
+      (end-phase-12 state :runner)
+      (is (= 5 (count (:discard (get-runner)))) "Both crowdfundings have expired")
       (is (= 1 (count (:hand (get-runner)))) "Labor Rights is in the grip")
       (play-from-hand state :runner "Labor Rights")
       (is (zero? (count (:hand (get-runner)))))

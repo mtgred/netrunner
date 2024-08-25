@@ -1,6 +1,7 @@
 (ns nr.gameboard.log
   (:require
    [clojure.string :as string]
+   [jinteki.utils :refer [command-info]]
    [nr.angel-arena.log :as angel-arena-log]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.avatar :refer [avatar]]
@@ -8,7 +9,6 @@
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.help :refer [command-info]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [influence-dot player-highlight-option-class
                      render-message render-player-highlight]]
@@ -165,7 +165,7 @@
                                   (reset-command-menu state)
                                   (send-msg state))}
            [:input#log-input
-            {:placeholder (tr [:chat.placeholder "Say something"])
+            {:placeholder (tr [:chat.placeholder "Say something..."])
              :type "text"
              :autoComplete "off"
              :ref #(reset! !input-ref %)
@@ -225,7 +225,7 @@
 (defn log-pane []
   (fn []
     [:div.log
-     [angel-arena-log/inactivity-pane]
+     ;; [angel-arena-log/inactivity-pane]
      [log-messages]
      [log-typing]
      [log-input]]))
